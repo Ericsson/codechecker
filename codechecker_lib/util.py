@@ -1,0 +1,154 @@
+# -------------------------------------------------------------------------
+#                     The CodeChecker Infrastructure
+#   This file is distributed under the University of Illinois Open Source
+#   License. See LICENSE.TXT for details.
+# -------------------------------------------------------------------------
+'''
+util module
+'''
+
+import datetime
+import os
+import hashlib
+import ntpath
+import sys
+import glob
+import socket
+import shutil
+
+from codechecker_lib import logger
+
+# WARNING! LOG should be only used in this module
+LOG = logger.get_new_logger('UTIL')
+
+
+# ---------------------------------------------------------------------
+def get_free_port():
+    ''' get a free port from the os'''
+
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.bind(('', 0))
+    free_port = s.getsockname()[1]
+    s.close()
+
+    return free_port
+
+
+# ---------------------------------------------------------------------
+def is_localhost(address):
+    return address == 'localhost' or \
+           address == socket.gethostbyname(socket.gethostname())
+
+
+# ---------------------------------------------------------------------
+def match_file_name(file_name, pattern):
+    file_name_parts = file_name.split('--')
+
+    if file_name_parts[0] == pattern:
+        # print('%s == %s  : TRUE'% (file_name_parts[0],pattern))
+        return True
+    else:
+        # print('%s == %s  : TRUE'% (file_name_parts[0],pattern))
+        return False
+
+
+# ---------------------------------------------------------------------
+def get_file_last_modification_time(file):
+    '''
+    Returns the last modification time of a file
+    '''
+    return datetime.datetime.fromtimestamp(os.path.getmtime(file))
+
+
+# ---------------------------------------------------------------------
+def get_env_var(env_var, needed=False):
+    '''
+    Read the environment variables and handle the exception if a necessary
+    environment variable is missing
+    '''
+
+    value = os.getenv(env_var)
+    if needed and not value:
+        LOG.ctitical('Failed to read necessary environment variable %s.'
+                     ' (Maybe codechecker was not configured properly)'
+                     % (env_var))
+        sys.exit(1)
+
+    return value
+
+
+# -------------------------------------------------------------------------
+def get_tmp_dir_hash():
+    '''Generate a hash based on the current time and process id.'''
+
+    pid = os.getpid()
+    time = datetime.datetime.now()
+
+    data = str(pid) + str(time)
+
+    dir_hash = hashlib.md5()
+    dir_hash.update(data)
+
+    LOG.debug('The generated temporary directory hash is %s'
+              % (dir_hash.hexdigest()))
+
+    return dir_hash.hexdigest()
+
+
+# -------------------------------------------------------------------------
+def get_file_name_from_path(path):
+    '''Get the filename from a path.'''
+    head, tail = ntpath.split(path)
+    return head, tail
+
+
+# -------------------------------------------------------------------------
+def get_obj_target(object_file_path):
+    return os.path.split(os.path.abspath(dir))[-2]
+
+
+# -------------------------------------------------------------------------
+def create_dir(path):
+    '''Create a directory safely if it does not exist yet.
+    This may be called from several processes or threads, creating the same
+    directory, and it fails only if the directory is not created.
+    '''
+
+    if not os.path.isdir(path):
+        try:
+            LOG.debug('Creating directory %s' % (path))
+            os.makedirs(path)
+        except Exception as e:
+            if not os.path.isdir(path):
+                LOG.error('Failed to create directory %s' % (path))
+                raise e
+
+    return
+
+
+# -------------------------------------------------------------------------
+def get_file_list(path, pattern):
+    glob_pattern = os.path.join(path, pattern)
+    return glob.glob(glob_pattern)
+
+
+# -------------------------------------------------------------------------
+def remove_file_list(file_list):
+    for rfile in file_list:
+        LOG.debug(rfile)
+        try:
+            os.remove(rfile)
+        except OSError:
+            # maybe another thread has already deleted it
+            LOG.debug('Failed to remove file %s' % (rfile))
+
+    return
+
+
+# -------------------------------------------------------------------------
+def remove_dir(path):
+
+    def error_handler(*args):
+        LOG.warning('Failed to remove directory %s' % (path))
+
+    shutil.rmtree(path, onerror=error_handler)

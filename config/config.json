@@ -1,0 +1,37 @@
+{
+  "environment_variables": {
+      "env_package_root" : "CC_PACKAGE_ROOT",
+      "env_verbose_name" : "CC_VERBOSE_LEVEL",
+      "env_alchemy_verbose_name" : "CC_ALCHEMY_LOG_LEVEL",
+      "env_path" : "PATH",
+      "env_ld_lib_path" : "LD_LIBRARY_PATH",
+      "cc_logger_bin" : "CC_LOGGER_BIN",
+      "cc_logger_file" : "CC_LOGGER_FILE",
+      "cc_logger_compiles" : "CC_LOGGER_GCC_LIKE",
+      "ld_preload" : "LD_PRELOAD",
+      "codechecker_enable_check" : "CODECHECKER_ENABLE_CHECK",
+      "codechecker_disable_check" : "CODECHECKER_DISABLE_CHECK",
+      "codechecker_workspace" : "CODECHECKER_WORKSPACE"
+  },
+  "package_variables": {
+      "default_db_username" : "codechecker",
+      "pgsql_data_dir_name" : "pgsql_data",
+      "build_log_file_name" : "build.log",
+      "report_output_dir_name" : "reports",
+      "path_dumps_name" : "dumps"
+  },
+  "checker_config": {
+      "checkers" : [
+          {"core" : true },
+          {"unix" : true },
+          {"deadcode" : true },
+          {"cplusplus" : true },
+          {"security.insecureAPI.UncheckedReturn" : true },
+          {"security.insecureAPI.getpw" : true },
+          {"security.insecureAPI.gets" : true },
+          {"security.insecureAPI.mktemp" : true },
+          {"security.insecureAPI.mkstemp" : true },
+          {"security.insecureAPI.vfork" : true }
+      ]
+  }
+}

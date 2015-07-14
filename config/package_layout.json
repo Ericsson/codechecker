@@ -1,0 +1,37 @@
+{
+    "static" : {
+        "init": "init",
+        "bin": "bin",
+        "cc_bin": "cc_bin",
+        "lib": "lib",
+        "plugin": "plugin",
+        "www": "www",
+        "docs": "www/docs",
+        "checker_md_docs": "www/docs/checker_md_docs",
+        "web_client": "www/scripts/codechecker-api",
+        "web_client_plugins": "www/scripts/plugins",
+        "web_client_dojo": "www/scripts/plugins/dojo",
+        "web_client_marked": "www/scripts/plugins/marked",
+        "web_client_jsplumb": "www/scripts/plugins/jsplumb",
+        "web_client_codemirror": "www/scripts/plugins/codemirror",
+        "web_client_highlightjs": "www/scripts/plugins/highlightjs",
+        "js_thrift": "www/scripts/plugins/thrift",
+        "config": "config",
+        "ld_logger": "ld_logger",
+        "codechecker_modules": "lib/python2.7",
+        "codechecker_lib": "lib/python2.7/codechecker_lib",
+        "codechecker_gen": "lib/python2.7/codechecker_gen",
+        "codechecker_db_model": "lib/python2.7/db_model",
+        "storage_server_modules": "lib/python2.7/storage_server",
+        "viewer_server_modules": "lib/python2.7/viewer_server",
+        "cmdline_client": "lib/python2.7/cmdline_client"
+    },
+    "runtime" : {
+        "ld_logger_bin" : "bin/ldlogger",
+        "ld_logger_lib_name" : "ldlogger.so",
+        "ld_logger_lib_path" : "ld_logger/lib",
+        "version_file" : "config/version.json",
+        "checkers_severity_map_file" : "config/checker_severity_map.json",
+        "gdb_config_file" : "config/gdbscript.gdb"
+    }
+}

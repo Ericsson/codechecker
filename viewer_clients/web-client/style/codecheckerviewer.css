@@ -1,0 +1,191 @@
+/*
+* -------------------------------------------------------------------------
+*                     The CodeChecker Infrastructure
+*   This file is distributed under the University of Illinois Open Source
+*   License. See LICENSE.TXT for details.
+* -------------------------------------------------------------------------
+*/
+
+html, body {
+  height     : 100%;
+  margin     : 0px;
+  padding    : 0px;
+  font-family: "Ubuntu", sans-serif;
+  font-size  : 10pt;
+}
+
+code, kbd, pre, samp, tt, xmp, listing, plaintext {
+  font-family     : monospace !important;
+  background-color: #e7e7e7;
+}
+
+.headerPane {
+  height : 32px;
+  width  : 100%;
+  padding: 0px;
+  margin : 0px;
+  background-image   : url(/images/ccvLogoMiddle.png);
+  background-position: center center;
+  background-repeat  : no-repeat;
+}
+
+.listOfRunsGrid td:nth-child(3):hover {
+  text-decoration: underline;
+  cursor: pointer;
+  cursor: hand;
+}
+
+.listOfRunsGrid td:nth-child(3) {
+  color: blue;
+}
+
+
+.overviewGrid {
+  font-family: 'Ubuntu', sans-serif;
+}
+
+
+.overviewGrid td:nth-child(2) {
+  color: blue;
+}
+.overviewGrid td:nth-child(2):hover {
+  text-decoration: underline;
+  cursor: pointer;
+  cursor: hand;
+}
+
+.overviewGrid td:nth-child(4) {
+  color: blue;
+}
+.overviewGrid td:nth-child(4):hover {
+  text-decoration: underline;
+  cursor: pointer;
+  cursor: hand;
+}
+
+.checkerstep {
+  border: 0px solid #aaa;
+  background-color: #eeb;
+}
+
+.codemirrorselection {
+  background-color: #00ffff;
+}
+
+.checkMsg {
+  background-color: #eeb;
+  border: 1px solid #aaa;
+  display: inline-block;
+  padding: 1px;
+  padding-left: 6px;
+  padding-right: 6px;
+  margin: 1px;
+  -webkit-border-radius: 5px;
+  -moz-border-radius: 5px;
+  border-radius: 5px;
+}
+
+.otherFileMsg {
+  background-color: #00ff00;
+  border: 1px solid #aaa;
+  display: inline-block;
+  padding: 1px;
+  padding-left: 6px;
+  padding-right: 6px;
+  margin: 1px;
+  -webkit-border-radius: 5px;
+  -moz-border-radius: 5px;
+  border-radius: 5px;
+  text-align: center;
+}
+
+.otherFileMsg:hover {
+  text-decoration: underline;
+  cursor: pointer;
+  cursor: hand;
+}
+
+.editor {
+  font-family: monospace !important;
+}
+
+.editor .header {
+  font-family: monospace !important;
+  padding: 3px;
+  border-bottom: 1px solid gray;
+  background-color: white;
+  word-wrap: break-word;
+}
+
+
+.editor .header .filename {
+  font-family: monospace !important;
+  margin-left: 2px;
+  font-weight: bold;
+}
+
+.editor .header .colons {
+  font-family: monospace !important;
+  margin-left : 2px;
+}
+
+
+.filterSpacer {
+  margin-left: 2px;
+  margin-right: 2px;
+}
+
+
+.plusIcon {
+  background-image: url("/images/plus.png");
+  background-repeat: no-repeat;
+  width: 16px;
+  height: 16px;
+  text-align: center;
+}
+
+.minusIcon {
+  background-image: url("/images/minus.png");
+  background-repeat: no-repeat;
+  width: 16px;
+  height: 16px;
+  text-align: center;
+}
+
+.arrowLeftIcon {
+  background-image: url("/images/arrowLeft.png");
+  background-repeat: no-repeat;
+  width: 16px;
+  height: 16px;
+  text-align: center;
+}
+
+.arrowRightIcon {
+  background-image: url("/images/arrowRight.png");
+  background-repeat: no-repeat;
+  width: 16px;
+  height: 16px;
+  text-align: center;
+}
+
+
+.diffWidget {
+  border: 0px;
+  margin: 5px;
+}
+
+.pagerWidget {
+  border: 0px;
+  margin: 5px;
+}
+
+.editorHeader {
+  border: 0px;
+  margin: 5px;
+}
+
+.dijitSelectLabel {
+  text-align : center;
+  overflow   : hidden;
+  width      : 120px;
+}

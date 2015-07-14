@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+  <head>
+
+    <title>CodeCheckerViewer</title>
+
+    <meta charset="UTF-8">
+
+    <!-- CSS -->
+    <link type="text/css" rel="stylesheet" href="scripts/plugins/dojo/dijit/themes/claro/claro.css"/>
+    <link type="text/css" rel="stylesheet" href="scripts/plugins/dojo/dojox/grid/resources/claroGrid.css"/>
+    <link type="text/css" rel="stylesheet" href="scripts/plugins/highlightjs/styles/xcode.css"/>
+    <link type="text/css" rel="stylesheet" href="scripts/plugins/codemirror/lib/codemirror.css"/>
+    <link type="text/css" rel="stylesheet" href="scripts/plugins/codemirror/addon/dialog/dialog.css"/>
+    <link type="text/css" rel="stylesheet" href="scripts/plugins/codemirror/addon/fold/foldgutter.css"/>
+    <link type="text/css" rel="stylesheet" href="style/codecheckerviewer.css"/>
+
+    <!-- Third party libraries -->
+    <script type="text/javascript" src="scripts/plugins/thrift/thrift.js"></script>
+    <script type="text/javascript" src="scripts/plugins/marked/marked.min.js"></script>
+    <script type="text/javascript" src="scripts/plugins/highlightjs/highlight.pack.js"></script>
+    <script type="text/javascript" src="scripts/plugins/codemirror/lib/codemirror.js"></script>
+    <script type="text/javascript" src="scripts/plugins/codemirror/mode/clike/clike.js"></script>
+    <script type="text/javascript" src="scripts/plugins/codemirror/addon/dialog/dialog.js"></script>
+    <script type="text/javascript" src="scripts/plugins/codemirror/addon/search/search.js"></script>
+    <script type="text/javascript" src="scripts/plugins/codemirror/addon/search/searchcursor.js"></script>
+    <script type="text/javascript" src="scripts/plugins/codemirror/addon/edit/matchbrackets.js"></script>
+    <script type="text/javascript" src="scripts/plugins/codemirror/addon/fold/foldcode.js"></script>
+    <script type="text/javascript" src="scripts/plugins/codemirror/addon/fold/foldgutter.js"></script>
+    <script type="text/javascript" src="scripts/plugins/codemirror/addon/fold/brace-fold.js"></script>
+    <script type="text/javascript" src="scripts/plugins/codemirror/addon/fold/xml-fold.js"></script>
+    <script type="text/javascript" src="scripts/plugins/jsplumb/external/jquery-1.9.0-min.js"></script>
+    <script type="text/javascript" src="scripts/plugins/jsplumb/jquery.jsPlumb-1.7.6-min.js"></script>
+
+    <!-- Services -->
+    <script type="text/javascript" src="scripts/codechecker-api/shared_types.js"             ></script>
+    <script type="text/javascript" src="scripts/codechecker-api/report-viewer-server_types.js"></script>
+    <script type="text/javascript" src="scripts/codechecker-api/codeCheckerDBAccess.js"      ></script>
+
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    <!-- Configure Dojo -->
+    <script>
+      var dojoConfig = {
+        baseUrl: "",
+        parseOnLoad: true,
+        async: true,
+        packages: [
+          { name: "dojo",  location: "scripts/plugins/dojo/dojo"  },
+          { name: "dijit", location: "scripts/plugins/dojo/dijit" },
+          { name: "dojox", location: "scripts/plugins/dojo/dojox" }
+        ]
+      };
+    </script>
+
+    <!-- Load Dojo -->
+    <script type="text/javascript" src="scripts/plugins/dojo/dojo/dojo.js"></script>
+
+    <!-- Start CodeChecker Viewer -->
+    <script type="text/javascript">
+      require([
+        "scripts/codecheckerviewer/CodeCheckerViewer.js",
+        "dojo/domReady!"],
+      function (CodeCheckerViewer) {
+        CCV = new CodeCheckerViewer();
+      });
+    </script>
+
+  </head>
+  <body class="claro">
+  </body>
+</html>

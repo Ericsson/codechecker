@@ -1,0 +1,86 @@
+#!/usr/bin/env python
+# -------------------------------------------------------------------------
+#                     The CodeChecker Infrastructure
+#   This file is distributed under the University of Illinois Open Source
+#   License. See LICENSE.TXT for details.
+# -------------------------------------------------------------------------
+'''
+    used to kickstart codechecker
+    save original environment without modifications
+    used to run the logging in the same env
+'''
+
+import os
+import sys
+import signal
+import subprocess
+import pickle
+import ntpath
+
+procPool = []
+
+
+def signal_term_handler(sig, frame):
+    pid = os.getpid()
+    for p in procPool:
+        os.kill(p, signal.SIGINT)
+    sys.exit(1)
+
+signal.signal(signal.SIGTERM, signal_term_handler)
+signal.signal(signal.SIGINT, signal_term_handler)
+
+
+def run_codechecker(original_env, checker_env):
+    '''
+    run the codechecker
+    original_env - will be saved for later usage by the build action logger
+    checker_env - codechecker will be run in the checker env
+    '''
+
+    package_bin = os.path.dirname(os.path.realpath(__file__))
+    package_root, bin_dir = ntpath.split(package_bin)
+
+    # saving original environment used for build action logging
+    original_env_file = os.path.join(package_root,
+                                     'config',
+                                     'original_env.pickle')
+
+    with open(original_env_file, 'wb') as env_save:
+        pickle.dump(original_env, env_save)
+
+    python = os.path.join('python')
+    common_lib = os.path.join(package_root,
+                              'lib',
+                              'python2.7')
+
+    gen_lib = os.path.join(package_root,
+                           'lib',
+                           'python2.7',
+                           'codechecker_gen')
+
+    checker_env['PYTHONPATH'] = common_lib + ':' + gen_lib
+
+    codechecker_main = os.path.join(package_root,
+                                    'cc_bin',
+                                    'CodeChecker.py')
+
+    checker_cmd = []
+    checker_cmd.append(python)
+    checker_cmd.append(codechecker_main)
+    checker_cmd.extend(sys.argv[1:])
+
+    proc = subprocess.Popen(checker_cmd, env=checker_env)
+    procPool.append(proc.pid)
+
+    proc.wait()
+
+
+def main():
+
+    original_env = os.environ.copy()
+
+    run_codechecker(original_env, original_env)
+
+
+if __name__ == "__main__":
+    main()
