@@ -189,7 +189,7 @@ class Context(context_base.ContextBase):
         compiler_bin = self.pckg_layout.get('compiler_bin')
         if not compiler_bin:
             return 'clang'
-        elif os.path.isabs(compiler_bin):
+        elif not os.path.isabs(compiler_bin):
             return compiler_bin
         else:
             return os.path.join(self.__package_root, compiler_bin)
