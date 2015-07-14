@@ -49,11 +49,11 @@ def check_psycopg2():
 
 
 # -----------------------------------------------------------------------------
-def check_clang(env):
+def check_clang(compiler_bin, env):
     '''
     simple check if clang is available
     '''
-    clang_version_cmd = ['clang', '--version']
+    clang_version_cmd = [compiler_bin, '--version']
     try:
         res = subprocess.call(clang_version_cmd, env=env)
         if not res:

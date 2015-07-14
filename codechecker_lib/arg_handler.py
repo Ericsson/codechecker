@@ -285,7 +285,8 @@ def handle_check(args):
     check_env = analyzer_env.get_check_env(context.path_env_extra,
                                              context.ld_lib_path_extra)
 
-    if not host_check.check_clang(check_env):
+    compiler_bin = context.compiler_bin
+    if not host_check.check_clang(compiler_bin, check_env):
         sys.exit(1)
 
 
