@@ -87,7 +87,7 @@ pip install thrift
 # create codechecker package
 git clone https://github.com/Ericsson/codechecker.git
 cd codechecker
-./build_package.py -o ~/codechecker_package --ld-logger ../ld-logger-src
+./build_package.py -o ~/codechecker_package
 cd ..
 ~~~~~~
 
