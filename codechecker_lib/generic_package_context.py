@@ -192,7 +192,13 @@ class Context(context_base.ContextBase):
         elif not os.path.isabs(compiler_bin):
             return compiler_bin
         else:
-            return os.path.join(self.__package_root, compiler_bin)
+            # check if it is a package relative path
+            relpath = os.path.dirname(compiler_bin)
+            if relpath:
+                return os.path.join(self.__package_root, compiler_bin)
+            else:
+                return compiler_bin
+
 
 
 # -----------------------------------------------------------------------------
