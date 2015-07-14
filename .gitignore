@@ -1,0 +1,19 @@
+
+*.py[cod]
+
+# build-logger build dir
+external-source-deps/build-logger/build/
+
+# external source
+external-source-deps/codemirror/
+external-source-deps/dojotoolkit/
+external-source-deps/jsplumb/
+external-source-deps/marked/
+external-source-deps/thrift/
+
+# doxygen generated files
+gen-docs/
+
+# thrift generated files
+thrift_api/gen-js/
+thrift_api/gen-py/
