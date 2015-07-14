@@ -56,6 +56,12 @@ Tested on Ubuntu LTS 14.04.2
 # get ubuntu packages
 sudo apt-get install clang-3.6 libpq-dev postgresql postgresql-client-common postgresql-common doxygen build-essential thrift-compiler python-virtualenv python-dev gcc-multilib git
 
+# check if clang is available
+which clang
+
+# create symlink for clang-3.6 if required
+sudo ln -s $(which clang-3.6) /usr/bin/clang
+
 # disable postgresql autostart
 # sudo update-rc.d -f postgresql remove
 # sudo service postgresql stop
