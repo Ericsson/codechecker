@@ -63,7 +63,17 @@ return declare(DropDownButton, {
         var catDialog;
 
         catDialog = new Dialog({
-          style   : "width: 300px; height: 400px; text-align: center;"
+            title: "Credits",
+            content: '<b> <a href="https://github.com/Ericsson/codechecker">codechecker</a> contributors: </b> <br><br>\
+                    <b>Daniel Krupp</b>    <a href="https://github.com/dkrupp">@dkrupp</a>       <br>daniel.krupp@ericsson.com<br>\
+                    <b>Gyorgy Orban</b>    <a href="https://github.com/gyorb">@gyorb</a>         <br>gyorgy.orban@ericsson.com<br>\
+                    <b>Boldizsar Toth</b>  <a href="https://github.com/bobszi">@bobszi</a>       <br>boldizsar.toth@ericsson.com<br>\
+                    <b>Alex Ispanovics</b> <a href="https://github.com/igalex">@igalex</a>       <br>alex.ispanovics@ericsson.com<br>\
+                    <b>Bence Babati</b>    <a href="https://github.com/babati">@babati</a>       <br>bence.babati@ericsson.com <br>\
+                    <b>Gabor Horvath</b>   <a href="https://github.com/Xazax-hun">@Xazax-hun</a> <br>\
+                    <b>Szabolcs Sipos</b>  <a href="https://github.com/labuwx">@labuwx</a>       <br>\
+                    ',
+          style   : "width: 350px; height: 300px; text-align: center;"
         });
 
         catDialog.show();
