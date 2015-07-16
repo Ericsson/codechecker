@@ -39,7 +39,7 @@ LOG.setLevel(logging.INFO)
 LOG.addHandler(log_handler)
 
 
-def start_test_client(pkg_root, test_modules, e, err, fail, skipp, viewer_port):
+def start_test_client(pkg_root, test_modules, e, err, fail, skipp, viewer_port, test_module_error):
 
     # set viewer env to find python modules
 
@@ -87,9 +87,17 @@ def start_test_client(pkg_root, test_modules, e, err, fail, skipp, viewer_port):
         # testing done
         e.set()
 
-    except Exception as ex:
-        LOG.error(str(ex))
+    except ImportError as ierr:
+        LOG.error(str(ierr))
+        LOG.error('Failed to load tests')
         e.set()
+        test_module_error.set()
+        return
+        #sys.exit(1)
+
+    #except Exception as ex:
+    #    LOG.error(str(ex))
+    #    e.set()
 
 
 def start_test_server(e, server_cmd, checking_env):
@@ -120,8 +128,19 @@ class GenericPackageTester(object):
         self.database = database
         self.start_test_client = \
             partial(start_test_client, pkg_root, test_modules)
-        with open(os.path.join(test_proj_path, 'project_info.json')) as inf_file:
-            self.project_info = json.load(inf_file)
+        try:
+            with open(os.path.join(test_proj_path, 'project_info.json')) as inf_file:
+                self.project_info = json.load(inf_file)
+        except IOError as ioerr:
+            LOG.error('Failed to open config for testing.')
+            LOG.error(ioerr)
+            sys.exit(1)
+        except ValueError as vaerr:
+            LOG.error('Config format error.')
+            LOG.error(vaerr)
+            sys.exit(1)
+
+
         os.environ['CC_TEST_PROJECT_INFO'] = \
             json.dumps(self.project_info['clang_' + clang_version])
         self.workspace = tempfile.mkdtemp()
@@ -145,9 +164,10 @@ class GenericPackageTester(object):
         try:
             penv = subprocess.check_output(command, env=env)
         except subprocess.CalledProcessError as perr:
+            self.log.error('Failed source codechecker package for testing')
             self.log.error(str(perr))
-            self.log.error('Failed to run command: ' + ' '.join(command))
-            raise perr
+            #self.log.error('Failed to run command: ' + ' '.join(command))
+            sys.exit(1)
 
         return pickle.loads(base64.b64decode(penv))
 
@@ -161,8 +181,8 @@ class GenericPackageTester(object):
             subprocess.check_call(command, cwd=project_path, env=self.env)
         except subprocess.CalledProcessError as perr:
             self.log.error(str(perr))
-            self.log.error('Failed to run command: ' + ' '.join(clean))
-            raise perr
+            self.log.error('Test project cleaning failed, check the config')
+            sys.exit(1)
 
     def _generate_suppress_file(self, suppress_file):
         # generate suppress file ---------
@@ -326,12 +346,12 @@ class GenericPackageTester(object):
                 name='test_client',
                 target=self.start_test_client,
                 args=(stop_server, err, fail, skipp,
-                      test_config['CC_TEST_VIEWER_PORT']))
+                      test_config['CC_TEST_VIEWER_PORT'],
+                      test_module_error))
             w1.start()
             # wait for test to finish
             w1.join()
 
-            self.log.info('CLIENT TESTS DONE.')
             return err, fail, skipp
 
         self.log.info('Cleaning checker workspace')
@@ -348,6 +368,7 @@ class GenericPackageTester(object):
         first_check(suppress_file)
         time.sleep(5)
         stop_server = multiprocessing.Event()
+        test_module_error = multiprocessing.Event()
 
         # second check
         self._clean_test_project(test_project_path, test_project_clean_cmd)
@@ -357,10 +378,13 @@ class GenericPackageTester(object):
         stop_server = multiprocessing.Event()
 
         err, fail, skipp = start_server()
-
         # delete suppress file
         os.remove(suppress_file)
+        if test_module_error.is_set():
+            LOG.error('Test module error')
+            sys.exit(1)
 
+        self.log.info('CLIENT TESTS DONE.')
         self.log.info('=====================================')
         self.log.info('TEST RESULTS:')
         self.log.info('=====================================')
@@ -391,7 +415,8 @@ class GenericPackageTester(object):
 
         self.log.info('=====================================')
         if fail or err:
-            raise Exception('Some tests have failed!')
+            LOG.error('Some tests have failed!')
+            sys.exit(1)
 
 
 def main():
