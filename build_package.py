@@ -339,14 +339,12 @@ def build_package(repository_root, build_package_config, env=None):
     if ld_logger_path:
         ld_logger_build = os.path.join(ld_logger_path, 'build')
 
-        check_if_true = lambda x: x in ['True', 'true']
-
         ld_logger32 = build_package_config.get('ld_logger_32')
         ld_logger64 = build_package_config.get('ld_logger_64')
         rebuild = build_package_config.get('rebuild_ld_logger') or clean
 
         arch = None
-        if not (ld_logger32 != ld_logger64):
+        if ld_logger32 == ld_logger64:
             # build both versions
             pass
         elif ld_logger32:
@@ -555,7 +553,6 @@ def main():
                         dest="output_dir")
     parser.add_argument("--clean",
                         action="store_true",
-                        default=False,
                         dest='clean',
                         help='Clean external dependecies')
 
@@ -567,14 +564,13 @@ def main():
     logger_group.add_argument("--ld-logger", action="store",
                               dest="ld_logger_path", default=default_logger_dir,
                               help="Ld logger source path.")
-    logger_group.add_argument('--32', action='store_true', default='False',
+    logger_group.add_argument('--32', action='store_true',
                               dest="ld_logger_32",
                               help='Build for 32bit architecture.')
-    logger_group.add_argument('--64', action='store_true', default='False',
+    logger_group.add_argument('--64', action='store_true',
                               dest="ld_logger_64",
                               help='Build for 64bit architecture.')
     logger_group.add_argument('--rebuild', action='store_true',
-                              default='False',
                               dest='rebuild_ld_logger',
                               help='Clean and rebuild logger.')
 
@@ -582,7 +578,7 @@ def main():
                         dest="compress", default=False,
                         help="Compress package to tar.gz")
 
-    parser.add_argument("-v", action="store_true", default=False, dest="verbose_log")
+    parser.add_argument("-v", action="store_true", dest="verbose_log")
 
     args = vars(parser.parse_args())
 
