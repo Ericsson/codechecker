@@ -132,7 +132,8 @@ CodeChecker server --dbusername test_user --dbport 5432 -w ~/checker_workspace -
 #firefox http://localhost:8080
 
 ~~~~~~
-If all goes well you can check analysis results in you web browser:
+If all goes well you can check analysis results in your web browser:
+
 ![CodeChecker Viewer](https://raw.githubusercontent.com/Ericsson/codechecker/master/docs/images/viewer.png)
 
 See user guide for further configuration and check options
