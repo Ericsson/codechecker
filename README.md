@@ -106,18 +106,34 @@ which clang
 source ~/checker_env/bin/activate
 
 # directory to store temporary files during the static analysis
-mkdir checker_workspace
-
-# set pgpass file for postgre
-export PGPASSFILE=~/.pgpass
+mkdir ~/checker_workspace
 
 # source codechecker
 source ~/codechecker_package/CodeChecker/init/init.sh
 
 # check project using the default postgresql database port and the newly created db user
-CodeChecker check --dbusername test_user --dbport 5432 -n test_project_check -w checker_workspace -b "cd my_test_project && make clean && make"
+CodeChecker check --dbusername test_user --dbport 5432 -n test_project_check -w ~/checker_workspace -b "cd my_test_project && make clean && make"
 
 ~~~~~~
+
+### Start the viewer Web server
+~~~~~~{.sh}
+
+# activate virtualenv
+source ~/checker_env/bin/activate
+
+# source codechecker
+source ~/codechecker_package/CodeChecker/init/init.sh
+
+# start web server on port 8080 on localhost only
+CodeChecker server --dbusername test_user --dbport 5432 -w ~/checker_workspace -v 8080
+
+#check results with firefox
+#firefox http://localhost:8080
+
+~~~~~~
+If all goes well you can check analysis results in you web browser:
+![CodeChecker Viewer](https://raw.githubusercontent.com/Ericsson/codechecker/master/docs/images/viewer.png)
 
 See user guide for further configuration and check options
 
