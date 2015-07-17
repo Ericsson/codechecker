@@ -106,8 +106,8 @@ class CheckerReportHandler(object):
           run = self.session.query(Run).filter(Run.name == name).first()
           if not run:
             raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,\
-                                'Cannot update, no such run name in the database.')
-          LOG.info('\033[91mIncremental checking is in progress. The previous ' + name + ' run will overwritten. \033[0m')
+                    'Update failed: run name ' + name + ' was not found in the database.')
+          LOG.info('\033[91mIncremental checking is in progress. The previous run results for ' + name +' will be overwritten! \033[0m')
           run.date = datetime.now()
           run.inc_count += 1
           self.session.commit()
