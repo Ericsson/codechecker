@@ -120,8 +120,14 @@ def start_test_server(e, server_cmd, checking_env):
 class GenericPackageTester(object):
 
     # ---------------------------------------------------------------------
-    def __init__(self, pkg_root, database, test_proj_path, test_modules,
+    def __init__(self,
+                 pkg_root,
+                 database,
+                 test_proj_path,
+                 test_project_config,
+                 test_modules,
                  clang_version, log):
+
         self.pkg_root = pkg_root
         self.log = log
         self.test_proj_path = test_proj_path
@@ -129,8 +135,13 @@ class GenericPackageTester(object):
         self.start_test_client = \
             partial(start_test_client, pkg_root, test_modules)
         try:
-            with open(os.path.join(test_proj_path, 'project_info.json')) as inf_file:
-                self.project_info = json.load(inf_file)
+            if test_project_config is None:
+                with open(os.path.join(test_proj_path, 'project_info.json')) as inf_file:
+                    self.project_info = json.load(inf_file)
+            else:
+                with open(test_project_config) as inf_file:
+                    self.project_info = json.load(inf_file)
+
         except IOError as ioerr:
             LOG.error('Failed to open config for testing.')
             LOG.error(ioerr)
@@ -433,6 +444,9 @@ def main():
     parser.add_argument('--project', default='tests/test_projects/bzip2',
                         action='store', dest='test_project',
                         help='Project to run the test checks on.')
+    parser.add_argument('--project-config',
+                        action='store', dest='test_project_config',
+                        help='Test project config. By default tries to use from the test_project.')
 
     parser.add_argument('--dbaddress', type=str, dest="dbaddress",
                         default='localhost',
@@ -453,8 +467,11 @@ def main():
     database = {k: vars(args)[k] for k in ('dbaddress', 'dbport', 'dbname',
                                            'dbusername')}
 
-    package_tester = GenericPackageTester(args.pkg_root, database,
-                                          args.test_project, args.test_modules,
+    package_tester = GenericPackageTester(args.pkg_root,
+                                          database,
+                                          args.test_project,
+                                          args.test_project_config,
+                                          args.test_modules,
                                           args.clang_version, LOG)
     package_tester.run_test()
 
