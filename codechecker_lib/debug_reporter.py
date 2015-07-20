@@ -41,11 +41,11 @@ def debug(context, dbusername, dbhost, dbport, dbname, force):
                     BuildAction.run_id == last_run.id,
                     sqlalchemy.sql.func.length(BuildAction.failure_txt) != 0))
 
-        analyzer_env = analyzer_env.get_check_env(context.path_env_extra,
+        debug_env = analyzer_env.get_check_env(context.path_env_extra,
                                                  context.ld_lib_path_extra)
 
         crash_handler = analyzer_crash_handler.AnalyzerCrashHandler(context,
-                                                                  analyzer_env)
+                                                                    debug_env)
 
         dumps_dir = context.dump_output_dir
         if not os.path.exists(dumps_dir):
