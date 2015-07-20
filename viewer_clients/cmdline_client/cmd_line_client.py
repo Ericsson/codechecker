@@ -14,7 +14,7 @@ import thrift_helper
 import shared
 import codeCheckerDBAccess
 
-SUPPORTED_VERSION = '2.0'
+SUPPORTED_VERSION = '3.0'
 
 
 # ------------------------------------------------------------
