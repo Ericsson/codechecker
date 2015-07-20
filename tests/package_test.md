@@ -12,7 +12,7 @@ test_package.py --help
 
 
 # What happens during the test
- * The chosen test project is builded, logged and checked twice. For this step the ld-logger must be present in the package.
+ * The chosen test project is built, logged and checked twice. For this step the ld-logger must be present in the package.
  * The test modules are invoked.
 
 
