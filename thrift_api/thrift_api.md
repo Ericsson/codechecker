@@ -4,8 +4,8 @@ These APIs should be used by the clients using the database to store or to get t
 
 ## Report viewer server API
 The report viewer server API should be used by any client to view the check results.
-See [report-viewer-server.thrift](https://raw.githubusercontent.com/Ericsson/codechecker/master/thrift-api/report-viewer-server.thrift).
+See [report-viewer-server.thrift](https://raw.githubusercontent.com/Ericsson/codechecker/master/thrift_api/report-viewer-server.thrift).
 
 ## Report storage server API
 The report storage server API is used internally in the package during runtime to store the results to the database.
-See [report-storage-server.thrift](https://raw.githubusercontent.com/Ericsson/codechecker/master/thrift-api/report-storage-server.thrift).
+See [report-storage-server.thrift](https://raw.githubusercontent.com/Ericsson/codechecker/master/thrift_api/report-storage-server.thrift).
