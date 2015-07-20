@@ -1,6 +1,16 @@
 # Introduction
 CodeChecker static analysis infrastructure built on clang static analyzer.  
 
+CodeChecker replaces [scan-build](http://clang-analyzer.llvm.org/scan-build.html) in Clang Static Analizer.
+
+It provides 
+ * a new command line tool for analyzing projects
+ * dynamic web based bug defect viewer (instead of static html)
+ * a Postgresql based defect storage & management
+ * incremental bug reporting (show only new bugs compared to a baseline)
+ * suppression of false positives
+ * better integration with build systems (through LD_PRELOAD mechanism)
+
 You can find a high level overview about the infrastructure in the presentation
 at the [2015 Euro LLVM](http://llvm.org/devmtg/2015-04/) Conference:
 
