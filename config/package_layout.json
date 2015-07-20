@@ -32,6 +32,6 @@
         "ld_logger_lib_path" : "ld_logger/lib",
         "version_file" : "config/version.json",
         "checkers_severity_map_file" : "config/checker_severity_map.json",
-        "gdb_config_file" : "config/gdbscript.gdb"
+        "gdb_config_file" : "config/gdbScript.gdb"
     }
 }
