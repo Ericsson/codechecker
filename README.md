@@ -68,10 +68,6 @@ Tested on Ubuntu LTS 14.04.2
 # get ubuntu packages
 sudo apt-get install clang-3.6 libpq-dev postgresql postgresql-client-common postgresql-common doxygen build-essential thrift-compiler python-virtualenv python-dev gcc-multilib git
 
-# disable postgresql autostart
-# sudo update-rc.d -f postgresql remove
-# sudo service postgresql stop
-
 # setup database for a test_user
 sudo -i -u postgres
 # add a test user with "test_pwd" password
