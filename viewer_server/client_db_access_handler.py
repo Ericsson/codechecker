@@ -22,7 +22,6 @@ from codeCheckerDBAccess import constants
 from codeCheckerDBAccess.ttypes import *
 
 from codechecker_lib import logger
-from codechecker_lib import db_version
 
 LOG = logger.get_new_logger('ACCESS HANDLER')
 
@@ -130,7 +129,8 @@ class ThriftRequestHandler():
                  session,
                  checker_md_docs,
                  checker_md_docs_map,
-                 suppress_handler):
+                 suppress_handler,
+                 db_version_info):
 
         self.__checker_md_docs = checker_md_docs
         self.__checker_doc_map = checker_md_docs_map
@@ -139,13 +139,19 @@ class ThriftRequestHandler():
         self.__session = session
 
         version = self.__session.query(DBVersion).first()
-
-        if db_version.DB_VERSION_INFO.is_compatible(version.major,
-                                                    version.minor):
-            LOG.debug('Version mismatch. Expected database version: '
-                      + str(db_version.DB_VERSION_INFO.get_expected_version()))
-            LOG.debug('Note: Supplied database version: '
-                      + str((version.major, version.minor)))
+        if version:
+            version_from_db = 'v'+str(version.major)+'.'+str(version.minor)
+            if db_version_info.is_compatible(version.major,
+                                             version.minor):
+                LOG.debug('Version mismatch. Expected database version: '
+                          + str(db_version_info))
+                LOG.debug('Version from the database is: ' + version_from_db)
+                LOG.debug('Please update your database.')
+                sys.exit(1)
+        else:
+            LOG.debug('No version information found in the database.')
+            LOG.debug('Please check your config')
+            sys.exit(1)
 
     # -----------------------------------------------------------------------
     def __queryResults(self, run_id, limit, offset, sort_types, report_filters):
