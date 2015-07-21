@@ -17,3 +17,24 @@ gen-docs/
 # thrift generated files
 thrift_api/gen-js/
 thrift_api/gen-py/
+
+# bzip build files
+tests/test_projects/bzip2/bzip2-1.0.6/blocksort.o
+tests/test_projects/bzip2/bzip2-1.0.6/bzip2
+tests/test_projects/bzip2/bzip2-1.0.6/bzip2.o
+tests/test_projects/bzip2/bzip2-1.0.6/bzip2recover
+tests/test_projects/bzip2/bzip2-1.0.6/bzip2recover.o
+tests/test_projects/bzip2/bzip2-1.0.6/bzlib.o
+tests/test_projects/bzip2/bzip2-1.0.6/compress.o
+tests/test_projects/bzip2/bzip2-1.0.6/crctable.o
+tests/test_projects/bzip2/bzip2-1.0.6/decompress.o
+tests/test_projects/bzip2/bzip2-1.0.6/huffman.o
+tests/test_projects/bzip2/bzip2-1.0.6/libbz2.a
+tests/test_projects/bzip2/bzip2-1.0.6/randtable.o
+tests/test_projects/bzip2/bzip2-1.0.6/sample1.rb2
+tests/test_projects/bzip2/bzip2-1.0.6/sample1.tst
+tests/test_projects/bzip2/bzip2-1.0.6/sample2.rb2
+tests/test_projects/bzip2/bzip2-1.0.6/sample2.tst
+tests/test_projects/bzip2/bzip2-1.0.6/sample3.rb2
+tests/test_projects/bzip2/bzip2-1.0.6/sample3.tst
+
