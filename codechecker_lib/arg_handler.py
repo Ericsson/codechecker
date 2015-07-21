@@ -224,7 +224,8 @@ def handle_server(args):
                                   args.view_port,
                                   db_connection_string,
                                   suppress_handler,
-                                  args.not_host_only)
+                                  args.not_host_only,
+                                  context.db_version_info)
 
 
 #===-----------------------------------------------------------------------===#
@@ -323,7 +324,8 @@ def handle_check(args):
     if args.jobs <= 0:
         args.jobs = 1
 
-    suppress_file = os.path.join(args.workspace, context.version) \
+    package_version = context.version['major'] + '.' + context.version['minor']
+    suppress_file = os.path.join(args.workspace, package_version) \
                             if not args.suppress \
                             else os.path.realpath(args.suppress)
 
@@ -340,7 +342,7 @@ def handle_check(args):
     with client.get_connection() as connection:
         try:
             context.run_id = connection.add_checker_run(' '.join(sys.argv), \
-                                        args.name, context.version, args.update)
+                                        args.name, package_version, args.update)
         except shared.ttypes.RequestFailed as thrift_ex:
             if 'violates unique constraint "runs_name_key"' not in thrift_ex.message:
                 # not the unique name was the problem

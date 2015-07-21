@@ -50,6 +50,8 @@ class RequestHander(SimpleHTTPRequestHandler):
 
         self.sc_session = server.sc_session
 
+        self.db_version_info = server.db_version_info
+
         BaseHTTPRequestHandler.__init__(self,
                                         request,
                                         client_address,
@@ -89,7 +91,8 @@ class RequestHander(SimpleHTTPRequestHandler):
             acc_handler = ThriftRequestHandler(session,
                                                checker_md_docs,
                                                checker_md_docs_map,
-                                               suppress_handler)
+                                               suppress_handler,
+                                               self.db_version_info)
 
             processor = codeCheckerDBAccess.Processor(acc_handler)
             processor.process(iprot, oprot)
@@ -153,7 +156,8 @@ class CCSimpleHttpServer(HTTPServer):
                  RequestHandlerClass,
                  db_conn_string,
                  pckg_data,
-                 suppress_handler):
+                 suppress_handler,
+                 db_version):
 
         LOG.debug('Initializing HTTP server')
 
@@ -162,7 +166,7 @@ class CCSimpleHttpServer(HTTPServer):
         self.checker_md_docs = pckg_data['checker_md_docs']
         self.checker_md_docs_map = pckg_data['checker_md_docs_map']
         self.suppress_handler = suppress_handler
-
+        self.db_version = db_version
         self.__engine = sqlalchemy.create_engine(db_conn_string,
                                                  client_encoding='utf8',
                                                  poolclass=sqlalchemy.pool.NullPool)
@@ -202,7 +206,7 @@ class CCSimpleHttpServer(HTTPServer):
 
 # ----------------------------------------------------------------------------
 def start_server(package_data, port, db_conn_string, suppress_handler,
-                 not_host_only):
+                 not_host_only, db_version_info):
     '''
     start http server to handle web client and thrift requests
     '''
@@ -222,7 +226,8 @@ def start_server(package_data, port, db_conn_string, suppress_handler,
                                      RequestHander,
                                      db_conn_string,
                                      package_data,
-                                     suppress_handler)
+                                     suppress_handler,
+                                     db_version_info)
 
     LOG.info('Waiting for client requests on ['
              + access_server_host + ':' + str(port) + ']')

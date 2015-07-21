@@ -33,7 +33,6 @@ from db_model.orm_model import *
 
 from codechecker_lib import logger
 from codechecker_lib import decorators
-from codechecker_lib import db_version
 
 LOG = logger.get_new_logger('CC SERVER')
 
@@ -482,7 +481,7 @@ def create_db_if_not_exists(uri, db_name):
     return False
 
 # -----------------------------------------------------------------------
-def run_server(dbUsername, port, db_name, dbhost, dbport, callback_event=None):
+def run_server(dbUsername, port, db_name, dbhost, dbport, db_version_info, callback_event=None):
     LOG.debug('Starting codechecker server ...')
 
     uri = 'postgres://' + dbUsername + '@' + dbhost + ':' + str(dbport)
@@ -514,15 +513,16 @@ def run_server(dbUsername, port, db_name, dbhost, dbport, callback_event=None):
         version = session.query(DBVersion).first()
         if version is None:
             # Version is not populated yet
-            expected = db_version.DB_VERSION_INFO.get_expected_version()
+            expected = db_version_info.get_expected_version()
             session.add(DBVersion(expected[0], expected[1]))
             session.commit()
-        elif db_version.DB_VERSION_INFO.is_compatible(version.major,
-                                                      version.minor):
+        elif db_version_info.is_compatible(version.major,
+                                           version.minor):
             LOG.debug('Version mismatch. Expected database version: ' +
-                      str(db_version.DB_VERSION_INFO.get_expected_version()))
-            LOG.debug('Note: Supplied database version: ' +
-                      str((version.major, version.minor)))
+                      str(db_version_info))
+            version_from_db = 'v'+str(version.major)+'.'+str(version.minor)
+            LOG.debug('Version from the database is: ' + version_from_db)
+            LOG.debug('Please update your database.')
             sys.exit(1)
 
     except sqlalchemy.exc.SQLAlchemyError as alch_err:

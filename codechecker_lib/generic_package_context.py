@@ -10,6 +10,7 @@ import json
 
 from codechecker_lib import context_base
 from codechecker_lib import logger
+from codechecker_lib import db_version
 
 LOG = logger.get_new_logger('CONTEXT')
 
@@ -24,7 +25,7 @@ class Context(context_base.ContextBase):
     logger_file = None
     logger_compilers = None
     ld_preload = None
-    __version = None
+    __package_version = None
     __package_root = None
 
     def __init__(self, package_root, pckg_layout, cfg_dict):
@@ -47,7 +48,10 @@ class Context(context_base.ContextBase):
 
         self.__package_root = package_root
 
-        self.__version = self.__get_version(self.version_file)
+        version, database_version = self.__get_version(self.version_file)
+        self.__package_version = version
+        self.__db_version_info = db_version.DBVersionInfo(database_version['major'],
+                                                   database_version['minor'])
         Context.__instance = self
 
     def set_env(self, env_vars):
@@ -67,12 +71,20 @@ class Context(context_base.ContextBase):
         '''
         get the package version fron the verison config file
         '''
-        with open(version_file, 'r') as vfile:
-            vfile_data = json.loads(vfile.read())
+        try:
+            with open(version_file, 'r') as vfile:
+                vfile_data = json.loads(vfile.read())
 
-        version = vfile_data['version']
-        package_version = version['major'] + '.' + version['minor']
-        return package_version
+            package_version = vfile_data['version']
+            db_version = vfile_data['db_version']
+
+        except ValueError as verr:
+            # db_version is required to know if the db schema is compatible
+            LOG.error('Failed to get version info from the version file')
+            LOG.error(verr)
+            sys.exit(1)
+
+        return package_version, db_version
 
     @property
     def default_checkers(self):
@@ -80,7 +92,11 @@ class Context(context_base.ContextBase):
 
     @property
     def version(self):
-        return self.__version
+        return self.__package_version
+
+    @property
+    def db_version_info(self):
+        return self.__db_version_info
 
     @property
     def version_file(self):
