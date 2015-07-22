@@ -157,7 +157,7 @@ class CCSimpleHttpServer(HTTPServer):
                  db_conn_string,
                  pckg_data,
                  suppress_handler,
-                 db_version):
+                 db_version_info):
 
         LOG.debug('Initializing HTTP server')
 
@@ -166,7 +166,7 @@ class CCSimpleHttpServer(HTTPServer):
         self.checker_md_docs = pckg_data['checker_md_docs']
         self.checker_md_docs_map = pckg_data['checker_md_docs_map']
         self.suppress_handler = suppress_handler
-        self.db_version = db_version
+        self.db_version_info = db_version_info
         self.__engine = sqlalchemy.create_engine(db_conn_string,
                                                  client_encoding='utf8',
                                                  poolclass=sqlalchemy.pool.NullPool)
