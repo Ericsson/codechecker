@@ -40,7 +40,6 @@ script:
     - thrift --version
 
     - ./build_package.py -o ./codechecker_package -v
-    - source ./codechecker_package/CodeChecker/init/init.sh
-    - CodeChecker -h
+    - ./test_package.py -p ./codechecker_package/CodeChecker -v stable --dbport 5432 --dbusername postgres
 
 
