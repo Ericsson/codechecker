@@ -26,6 +26,7 @@ addons:
             - doxygen
             - libpq-dev
             - clang-3.6
+            - libc6-dev-i386
 
     postgresql: "9.3"
 
