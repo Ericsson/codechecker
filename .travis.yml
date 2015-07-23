@@ -37,6 +37,8 @@ script:
     - which thrift
     - thrift --version
 
-    - ./build_package.py -o ./codechecker_package
+    - ./build_package.py -o ./codechecker_package -v
+    - source ./codechecker_package/CodeChecker/init/init.sh
+    - CodeChecker -h
 
 
