@@ -31,4 +31,5 @@ script:
     - clang-3.6 --version
     - doxygen --version
     - make --version
+    - thrift --version
 
