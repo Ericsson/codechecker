@@ -27,6 +27,7 @@ addons:
             - libpq-dev
             - clang-3.6
             - libc6-dev-i386
+            - gcc-multilib
 
     postgresql: "9.3"
 
