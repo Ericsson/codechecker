@@ -69,7 +69,7 @@ def get_env_var(env_var, needed=False):
 
     value = os.getenv(env_var)
     if needed and not value:
-        LOG.ctitical('Failed to read necessary environment variable %s.'
+        LOG.critical('Failed to read necessary environment variable %s.'
                      ' (Maybe codechecker was not configured properly)'
                      % (env_var))
         sys.exit(1)
