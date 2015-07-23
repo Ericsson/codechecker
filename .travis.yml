@@ -1,0 +1,34 @@
+branches:
+    only:
+        travis-ci
+
+language: python
+
+python:
+    - "2.7"
+
+install:
+    - pip install -r ./.travis_ci/python_requirements
+
+addons:
+    apt:
+        sources:
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-precise-3.5
+            - llvm-toolchain-precise-3.6
+            - llvm-toolchain-precise-3.7
+            - llvm-toolchain-precise
+        packages:
+            - doxygen
+            - libpq-dev
+            - clang-3.6
+            - thrift-compiler
+
+    postgresql: "9.3"
+
+script:
+    - python --version
+    - clang-3.6 --version
+    - doxygen --version
+    - make --version
+
