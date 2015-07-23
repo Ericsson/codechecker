@@ -1,7 +1,3 @@
-branches:
-    only:
-        travis-ci
-
 language: python
 
 python:
