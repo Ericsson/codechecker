@@ -117,7 +117,7 @@ class CCViewerHelper(ThriftAPIHelper):
 
         some_results = self.getRunResults(runId, limit, offset, sortType,
                                           reportFilters)
-        while someResults:
+        while some_results:
             results += some_results
             offset += len(some_results)  # == min(limit, real limit)
             some_results = self.getRunResults(runId, limit, offset, sortType,
