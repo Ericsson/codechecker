@@ -102,7 +102,9 @@ class CCViewerHelper(ThriftAPIHelper):
     def __init__(self, host, port, uri, auto_handle_connection=True):
         # import only if necessary; some tests may not add this to PYTHONPATH
         from codeCheckerDBAccess import codeCheckerDBAccess
+        from codeCheckerDBAccess.constants import MAX_QUERY_SIZE
 
+        self.max_query_size = MAX_QUERY_SIZE
         transport = THttpClient.THttpClient(host, port, uri)
         protocol = TJSONProtocol.TJSONProtocol(transport)
         client = codeCheckerDBAccess.Client(protocol)
@@ -110,14 +112,13 @@ class CCViewerHelper(ThriftAPIHelper):
                                              client, auto_handle_connection)
 
     def getAllRunResults(self, runId, sortType=None, reportFilters=None):
-        # an integer greater or equal to the real limit is recommended
-        limit = 5000
+        limit = self.max_query_size
         offset = 0
         results = []
 
         some_results = self.getRunResults(runId, limit, offset, sortType,
                                           reportFilters)
-        while someResults:
+        while some_results:
             results += some_results
             offset += len(some_results)  # == min(limit, real limit)
             some_results = self.getRunResults(runId, limit, offset, sortType,
