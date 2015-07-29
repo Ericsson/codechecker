@@ -51,27 +51,25 @@ def send_plist_content(connection, plist_file, build_action_id, run_id,
 
     report_ids = []
     for bug in bugs:
+        events = bug.events()
+        if events and should_skip(events[-1].start_pos.file_path):
+            # Issue #20: this bug is in a file which should be skipped
+            LOG.debug(bug.hash_value + ' is skipped (in ' +
+                      events[-1].start_pos.file_path + ")")
+            continue
+
         # create remaining data for bugs and send them to the server
         bug_paths = []
-        skip_bug = True
         for path in bug.paths():
-            if not should_skip(path.start_pos.file_path):
-                skip_bug = False
             bug_paths.append(shared.ttypes.BugPathPos(path.start_pos.line,
                 path.start_pos.col, path.end_pos.line, path.end_pos.col,
                 file_ids[path.start_pos.file_path]))
 
         bug_events = []
         for event in bug.events():
-            if not should_skip(event.start_pos.file_path):
-                skip_bug = False
             bug_events.append(shared.ttypes.BugPathEvent(event.start_pos.line,
                 event.start_pos.col, event.end_pos.line, event.end_pos.col,
                 event.msg, file_ids[event.start_pos.file_path]))
-
-        if skip_bug:
-            LOG.info(bug.hash_value + ' is skipped.')
-            continue
 
         bug_hash = bug.hash_value
         bug_hash_type = bug.hash_type

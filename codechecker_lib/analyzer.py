@@ -193,9 +193,6 @@ def run(analyzer, action):
             sys.exit(os.EX_OK)
 
     signal.signal(signal.SIGINT, signal_handler)
-
-    LOG.info(id(analyzer))
-
     current_cmd = list(analyzer.cmd)
 
     for checker_name, enabled in analyzer.checkers:
