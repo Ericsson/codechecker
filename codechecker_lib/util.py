@@ -36,8 +36,26 @@ def get_free_port():
 
 # ---------------------------------------------------------------------
 def is_localhost(address):
-    return address == 'localhost' or \
-           address == socket.gethostbyname(socket.gethostname())
+    '''
+    Check if address is one of the valid values and try to get the
+    IP-addresses from the system.
+    '''
+
+    valid_values = ['localhost', '0.0.0.0','*']
+
+    try:
+        valid_values.append(socket.gethostbyname('localhost'))
+    except Exception as ex:
+        # failed to get ip address for localhost
+        pass
+
+    try:
+        valid_values.append(socket.gethostbyname(socket.gethostname()))
+    except Exception as ex:
+        # failed to get ip address for host_name
+        pass
+
+    return address in valid_values
 
 
 # ---------------------------------------------------------------------
