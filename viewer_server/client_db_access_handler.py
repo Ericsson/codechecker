@@ -452,7 +452,7 @@ class ThriftRequestHandler():
                                         filePath=file_path))
 
             reportsToBuild = session.query(ReportsToBuildActions)\
-                                .filter(ReportsToBuildActions.report_id == Report.id)
+                                .filter(ReportsToBuildActions.report_id == report.id)
 
             buildTargets = []
             if reportsToBuild:
