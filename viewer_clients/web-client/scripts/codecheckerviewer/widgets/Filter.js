@@ -34,7 +34,7 @@ return declare(_WidgetBase, {
       placeHolder : "Path filter, i.e. *compress.*",
       style       : "width: 200px; margin-right: 5px;",
       onKeyPress  : function(evt) {
-        if (evt.keyIdentifier === "Enter") {
+        if (evt.keyCode === 13) { // "Enter"
           that.pathAndSelectOnChange();
         }
       }
