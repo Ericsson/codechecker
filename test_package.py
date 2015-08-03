@@ -155,12 +155,10 @@ class GenericPackageTester(object):
         os.environ['CC_TEST_PROJECT_INFO'] = \
             json.dumps(self.project_info['clang_' + clang_version])
         self.workspace = tempfile.mkdtemp()
-        self.log.info('Creating temporary directory: ' + self.workspace)
         self.env = self._get_check_env()
 
     def __del__(self):
         if hasattr(self, 'workspace') and os.path.exists(self.workspace):
-            self.log.info('Removing temporary directory: ' + self.workspace)
             shutil.rmtree(self.workspace)
 
     def _get_check_env(self, env=os.environ):
@@ -247,7 +245,7 @@ class GenericPackageTester(object):
         test_project_build_cmd = self.project_info['build_cmd']
 
         codechecker_workspace = self.workspace
-        self.env['CODECHECKER_VERBOSE'] = 'debug'
+        self.env['CODECHECKER_VERBOSE'] = '2'
         # self.env['CODECHECKER_ALCHEMY_LOG'] = '2'
 
         def first_check(suppress_file):
@@ -469,14 +467,12 @@ def main():
     database = {k: vars(args)[k] for k in ('dbaddress', 'dbport', 'dbname',
                                            'dbusername')}
 
-    LOG.info('Initializing new package tester')
     package_tester = GenericPackageTester(args.pkg_root,
                                           database,
                                           args.test_project,
                                           args.test_project_config,
                                           args.test_modules,
                                           args.clang_version, LOG)
-    LOG.info('Running tests')
     package_tester.run_test()
 
 if __name__ == '__main__':
