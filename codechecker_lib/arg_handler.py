@@ -318,6 +318,16 @@ def handle_check(args):
         perform_build_command(log_file, args.command, context)
 
 
+    try:
+        actions = log_parser.parse_log(log_file)
+    except Exception as ex:
+        LOG.error(ex)
+        sys.exit(1)
+
+    if not actions:
+        LOG.warning('There are not build actions in the log file.')
+        sys.exit(1)
+
     setup_connection_manager_db(args)
     client.ConnectionManager.port = util.get_free_port()
 
@@ -388,7 +398,6 @@ def handle_check(args):
         if args.skipfile:
             static_analyzer.add_skip(connection, os.path.realpath(args.skipfile))
 
-        actions = log_parser.parse_log(log_file)
 
     LOG.info("Static analysis is starting..")
     start_time = time.time()
