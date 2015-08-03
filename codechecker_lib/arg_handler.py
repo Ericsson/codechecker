@@ -325,7 +325,7 @@ def handle_check(args):
         sys.exit(1)
 
     if not actions:
-        LOG.warning('There are not build actions in the log file.')
+        LOG.warning('There are no build actions in the log file.')
         sys.exit(1)
 
     setup_connection_manager_db(args)
