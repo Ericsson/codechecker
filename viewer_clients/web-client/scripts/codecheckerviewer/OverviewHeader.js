@@ -55,12 +55,22 @@ return declare(ContentPane, {
       var pathState        = that.filters[i].textBoxPath.getValue();
       var checkerTypeState = that.filters[i].selectCheckerType.getValue();
 
-      if (that.overviewType === "run") {
-        filterObjArray.push( { supprState, severityState, pathState, checkerTypeState } );
-      } else if (that.overviewType === "diff") {
+      if (that.overviewType === 'run') {
+        filterObjArray.push({
+          supprState      : supprState,
+          severityState   : severityState,
+          pathState       : pathState,
+          checkerTypeState: checkerTypeState
+        });
+      } else if (that.overviewType === 'diff') {
         var resolvState = that.filters[i].selectResolv.getValue();
-        var filterObjToAdd = { supprState, resolvState, severityState, pathState, checkerTypeState };
-        filterObjArray.push(filterObjToAdd);
+        filterObjArray.push({
+          supprState      : supprState,
+          resolvState     : resolvState,
+          severityState   : severityState,
+          pathState       : pathState,
+          checkerTypeState: checkerTypeState
+        })
       }
 
     }
