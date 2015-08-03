@@ -67,7 +67,10 @@ def parse_log(logfilepath):
         try:
             actions = parse_compile_commands_json(logfile)
         except (ValueError, KeyError) as ex:
-            LOG.error('The compile database is not valid.')
+            if os.stat(logfilepath).st_size == 0:
+                LOG.error('The compile database is empty.')
+            else:
+                LOG.error('The compile database is not valid.')
             raise ex
 
     return actions
