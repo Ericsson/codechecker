@@ -4,6 +4,7 @@
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
 
+import os
 import sys
 
 from codechecker_lib import build_action
