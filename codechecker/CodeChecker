@@ -16,19 +16,10 @@ import signal
 import subprocess
 import pickle
 import ntpath
+import tempfile
+import shutil
 
 procPool = []
-
-
-def signal_term_handler(sig, frame):
-    pid = os.getpid()
-    for p in procPool:
-        os.kill(p, signal.SIGINT)
-    sys.exit(1)
-
-signal.signal(signal.SIGTERM, signal_term_handler)
-signal.signal(signal.SIGINT, signal_term_handler)
-
 
 def run_codechecker(original_env, checker_env):
     '''
@@ -39,14 +30,6 @@ def run_codechecker(original_env, checker_env):
 
     package_bin = os.path.dirname(os.path.realpath(__file__))
     package_root, bin_dir = ntpath.split(package_bin)
-
-    # saving original environment used for build action logging
-    original_env_file = os.path.join(package_root,
-                                     'config',
-                                     'original_env.pickle')
-
-    with open(original_env_file, 'wb') as env_save:
-        pickle.dump(original_env, env_save)
 
     python = os.path.join('python')
     common_lib = os.path.join(package_root,
@@ -78,9 +61,42 @@ def run_codechecker(original_env, checker_env):
 def main():
 
     original_env = os.environ.copy()
+    checker_env = original_env
 
-    run_codechecker(original_env, original_env)
+    tmp_dir = tempfile.mkdtemp()
 
+    original_env_file = os.path.join(tmp_dir, 'original_env.pickle')
+
+    try:
+        with open(original_env_file, 'wb') as env_save:
+            pickle.dump(original_env, env_save)
+
+        checker_env['CODECHECKER_ORIGINAL_BUILD_ENV'] = original_env_file
+    except Exception as ex:
+        print('Saving original build environment failed')
+        print(ex)
+
+    def signal_term_handler(sig, frame):
+        pid = os.getpid()
+        for p in procPool:
+            os.kill(p, signal.SIGINT)
+
+        # remove temporary directory
+        try:
+            shutil.rmtree(tmp_dir)
+        except Exception as ex:
+            print('Failed to remove temporary directory: ' + tmp_dir)
+            print('Manual cleanup is required.')
+            print(ex)
+
+        sys.exit(1)
+
+    signal.signal(signal.SIGTERM, signal_term_handler)
+    signal.signal(signal.SIGINT, signal_term_handler)
+
+    run_codechecker(original_env, checker_env)
+
+    shutil.rmtree(tmp_dir)
 
 if __name__ == "__main__":
     main()
