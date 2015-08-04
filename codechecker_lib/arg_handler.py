@@ -40,10 +40,12 @@ def perform_build_command(logfile, command, context):
 
 
     try:
-        original_env_file = os.path.join(context.package_root,'config/original_env.pickle')
+        original_env_file = os.environ['CODECHECKER_ORIGINAL_BUILD_ENV']
+        LOG.debug('Loading original build env from: ' + original_env_file)
 
         with open(original_env_file, 'rb') as env_file:
             original_env = pickle.load(env_file)
+
     except Exception as ex:
         LOG.warning(str(ex))
         LOG.warning('Failed to get saved original_env using a current copy for logging')
