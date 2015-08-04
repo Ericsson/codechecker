@@ -18,6 +18,7 @@ def parse_compile_commands_json(logfile):
     import json
 
     actions = []
+    filtered_build_actions = {}
 
     logfile.seek(0)
     data = json.load(logfile)
@@ -50,9 +51,16 @@ def parse_compile_commands_json(logfile):
         action.sources = sourcefile
         action.lang = lang
 
-        actions.append(action)
+        # filter out duplicate compilation commands
+        unique_key = action.cmp_key
+        if filtered_build_actions.get(unique_key) is None:
+            filtered_build_actions[unique_key] = action
+
         del action
         counter += 1
+
+    for ba_hash, ba in filtered_build_actions.iteritems():
+        actions.append(ba)
 
     return actions
 
@@ -73,4 +81,5 @@ def parse_log(logfilepath):
                 LOG.error('The compile database is not valid.')
             raise ex
 
+    LOG.info('Parsing log file done.')
     return actions
