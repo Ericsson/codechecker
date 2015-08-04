@@ -5,6 +5,8 @@
 # -------------------------------------------------------------------------
 ''''''
 
+import hashlib
+
 # -----------------------------------------------------------------------------
 class BuildAction(object):
     def __init__(self, build_action_id=0):
@@ -109,3 +111,17 @@ class BuildAction(object):
 
     def __eq__(self, other):
         return other._original_command == self._original_command
+
+    @property
+    def cmp_key(self):
+        '''
+        If the compilation database contains the same compilation action
+        multiple times it should be checked only once.
+        Use this key to compare compilation commands for the analysis.
+        '''
+        hash_content = []
+        hash_content.extend(self.analyzer_options)
+        hash_content.append(self.output)
+        hash_content.append(self.target)
+        hash_content.extend(self.sources)
+        return hashlib.sha1(''.join(hash_content)).hexdigest()
