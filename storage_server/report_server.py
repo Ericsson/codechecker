@@ -140,7 +140,7 @@ class CheckerReportHandler(object):
         return True
 
     @decorators.catch_sqlalchemy
-    def addBuildAction(self, run_id, build_cmd, check_cmd, build_target):
+    def addBuildAction(self, run_id, build_cmd, check_cmd):
         '''
         '''
         build_action = self.session.query(BuildAction) \
@@ -149,7 +149,7 @@ class CheckerReportHandler(object):
         if build_action.count() != 0:
             self.deleteBuildAction(build_action.first())
 
-        action = BuildAction(run_id, build_cmd, check_cmd, build_target)
+        action = BuildAction(run_id, build_cmd, check_cmd)
         self.session.add(action)
         self.session.commit()
         return action.id
@@ -418,27 +418,6 @@ class CheckerReportHandler(object):
             skipPathList.append(skipPath)
         self.session.bulk_save_objects(skipPathList)
         self.session.commit()
-        return True
-
-    @decorators.catch_sqlalchemy
-    def moduleToReport(self, run_id, module, report_ids):
-        '''
-        '''
-        for report_id in report_ids:
-            # check if there is already an entry with this report id
-            report = self.session.query(ModuleToReport) \
-                                 .filter(ModuleToReport.report_id == report_id)
-            if report.count() == 0:
-                # not found add to database
-                obj = ModuleToReport(run_id, module, report_id)
-                for i in xrange(3):
-                    try:
-                        self.session.add(obj)
-                        self.session.commit()
-                        break
-                    except sqlalchemy.exc.IntegrityError as ex:
-                        self.session.rollback()
-
         return True
 
     @decorators.catch_sqlalchemy

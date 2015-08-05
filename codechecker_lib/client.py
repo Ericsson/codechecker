@@ -29,7 +29,7 @@ LOG = logger.get_new_logger('CLIENT')
 
 # -----------------------------------------------------------------------------
 def send_plist_content(connection, plist_file, build_action_id, run_id,
-                       severity_map, should_skip, module_id=''):
+                       severity_map, should_skip):
     try:
         files, bugs = plist_parser.parse_plist(plist_file)
     except Exception as ex:
@@ -92,8 +92,6 @@ def send_plist_content(connection, plist_file, build_action_id, run_id,
                                           severity)
 
         report_ids.append(report_id)
-
-    connection.add_module_to_report(run_id, module_id, report_ids)
 
 
 # -----------------------------------------------------------------------------
@@ -218,10 +216,10 @@ class Connection(object):
     #    ''' bool addSkipPath(1: i64 run_id, 2: list<string> paths) '''
     #    return self._client.addSkipPath(ConnectionManager.run_id, path)
 
-    def add_build_action(self, build_cmd, check_cmd, target):
+    def add_build_action(self, build_cmd, check_cmd):
         ''' i64  addBuildAction(1: i64 run_id, 2: string build_cmd) '''
         return self._client.addBuildAction(ConnectionManager.run_id,
-                                            build_cmd, check_cmd, target)
+                                            build_cmd, check_cmd)
 
     def finish_build_action(self, action_id, failure):
         ''' bool finishBuildAction(1: i64 action_id, 2: string failure) '''
@@ -248,9 +246,6 @@ class Connection(object):
     def add_file_content(self, file_id, file_content):
         ''' bool addFileContent(1: i64 file_id, 2: binary file_content) '''
         return self._client.addFileContent(file_id, file_content)
-
-    def add_module_to_report(self, run_id, module_id, report_ids):
-        return self._client.moduleToReport(run_id, module_id, report_ids)
 
 
 # -----------------------------------------------------------------------------

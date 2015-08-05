@@ -265,7 +265,6 @@ return declare(DataGrid, {
         fileId         : reportDataList[i].fileId,
         lastBugPosition: reportDataList[i].lastBugPosition,
         severity       : CC_UTIL.severityFromCodeToString(reportDataList[i].severity),
-        moduleName     : reportDataList[i].moduleName,
         suppressComment: reportDataList[i].suppressComment === null ? "----" : reportDataList[i].suppressComment,
         fileWithBugPos : reportDataList[i].checkedFile + "\n@ Line " + reportDataList[i].lastBugPosition.startLine,
         runId          : runIdToAdd

@@ -106,17 +106,14 @@ class BuildAction(Base):
     # Seconds, -1 if unfinished
     duration = Column(Integer)
 
-    build_target = Column(String)
-
     # Relationships (One to Many)
     # plistlist = relationship('Plist')
 
-    def __init__(self, run_id, build_cmd, check_cmd, build_target):
+    def __init__(self, run_id, build_cmd, check_cmd):
         self.run_id, self.build_cmd, self.check_cmd, self.failure_txt = \
             run_id, build_cmd, check_cmd, ''
         self.date = datetime.now()
         self.duration = -1
-        self.build_target = build_target
 
     def mark_finished(self, failure_txt):
         self.failure_txt = failure_txt
@@ -252,18 +249,6 @@ class SkipPath(Base):
     def __init__(self, run_id, path, comment):
         self.path, self.run_id = path, run_id
         self.comment = comment
-
-
-class ModuleToReport(Base):
-    __tablename__ = 'modules_to_reports'
-
-    report_id = Column(Integer, ForeignKey('reports.id', deferrable = True, initially = "DEFERRED", ondelete='CASCADE'), primary_key=True)
-    run_id = Column(Integer)
-    module = Column(String)
-
-    def __init__(self, run_id, module, report_id):
-        self.module, self.report_id = module, report_id
-        self.run_id = run_id
 
 # End of ORM classes
 
