@@ -17,7 +17,7 @@ namespace js codeCheckerDBAccess
 namespace cpp cc.service.codechecker
 
 //=================================================
-const string API_VERSION = '3.0'
+const string API_VERSION = '4.0'
 const i64 MAX_QUERY_SIZE = 500
 //=================================================
 
