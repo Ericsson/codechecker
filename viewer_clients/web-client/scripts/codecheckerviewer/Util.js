@@ -77,10 +77,19 @@ return declare(null, {
     return null;
   },
 
-
   severityFromStringToCode : function(severityString) {
     return Severity[severityString.toUpperCase()];
+  },
+
+  getOverviewIdFromHashState : function(hashState) {
+    if (hashState.ovType == 'run') {
+      return "runoverviewtc_" + hashState.ovRunId;
+    } else if (hashState.ovType == 'diff') {
+      return "diffoverviewtc_" + hashState.diffRunIds[0] + "_" +  hashState.diffRunIds[1];
+    } else if (JSON.stringify(hashState) == "{}") {
+      return "bc_listofrunsgrid";
+    }
+
+    return undefined;
   }
-
-
 });});

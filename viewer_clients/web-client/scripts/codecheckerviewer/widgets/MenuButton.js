@@ -35,26 +35,10 @@ return declare(DropDownButton, {
 
     this.menuItemDocumentation = new MenuItem({
       label   : "Documentation",
-      onClick : (function(_this) {
-        return function() {
-
-          var documentationCP;
-
-          documentationCP = new ContentPane({
-            title    : "Documentation",
-            closable : true,
-            style    : "margin: 0px; padding: 0px; border: 0px;",
-            content  : domConstruct.create("iframe", {
-              src   : "/docs/index.html",
-              style : "height: 98%; width: 100%; margin: 0px; border: 0px; padding: 0px; padding-top: 4px;"
-            })
-          });
-
-          _this.mainTC.addChild(documentationCP);
-          _this.mainTC.selectChild(documentationCP);
-
-        };
-      })(this)
+      onClick : function(_this) {
+        var win = window.open("/docs/index.html", '_blank');
+        win.focus();
+      }
     });
 
     this.menuItemCredits = new MenuItem({

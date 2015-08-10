@@ -17,7 +17,7 @@ namespace js codeCheckerDBAccess
 namespace cpp cc.service.codechecker
 
 //=================================================
-const string API_VERSION = '3.0'
+const string API_VERSION = '4.0'
 const i64 MAX_QUERY_SIZE = 500
 //=================================================
 
@@ -45,10 +45,9 @@ struct ReportData{
                                           // execution step list.
   9: shared.Severity     severity         // checker severity
   10: string             moduleName       // name of the module if available
-  11: optional string    suppressComment // suppress commment if report is suppressed
+  11: optional string    suppressComment  // suppress commment if report is suppressed
 }
 typedef list<ReportData> ReportDataList
-
 
 //-----------------------------------------------------------------------------
 /**
@@ -134,6 +133,10 @@ service codeCheckerDBAccess {
   // get the run Ids and dates from the database to select one run
   RunDataList getRunData()
                          throws (1: shared.RequestFailed requestError),
+
+  ReportData getReport(
+                       1: i64 reportId)
+                       throws (1: shared.RequestFailed requestError),
 
   // get the results for one runId
   ReportDataList getRunResults(
@@ -238,4 +241,3 @@ service codeCheckerDBAccess {
                         throws (1: shared.RequestFailed requestError),
 
 }
-

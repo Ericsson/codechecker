@@ -6,6 +6,9 @@
 
 define([
   "dojo/_base/declare",
+  "dojo/hash",
+  "dojo/topic",
+  "dojo/io-query",
   "dijit/Dialog",
   "dijit/layout/BorderContainer",
   "dijit/layout/TabContainer",
@@ -16,39 +19,42 @@ define([
   "scripts/codecheckerviewer/Util.js",
   "scripts/codecheckerviewer/widgets/DiffWidget.js",
   "scripts/codecheckerviewer/widgets/MenuButton.js",
-], function ( declare, Dialog, BorderContainer, TabContainer, ContentPane
-            , Button, ListOfRunsGrid, OverviewTC, Util, DiffWidget
-            , MenuButton ) {
+], function ( declare, hash, topic, ioQuery, Dialog, BorderContainer
+            , TabContainer, ContentPane, Button, ListOfRunsGrid, OverviewTC
+            , Util, DiffWidget, MenuButton ) {
 return declare(null, {
-
 
   constructor : function() {
     var that = this;
-
+    var initialHash = hash();
 
     that.checkedRunIds = [];
     that.checkedNames  = [];
 
-
     that.initGlobals();
-
     that.buildLayout();
-
     that.buildListOfRuns();
-
     that.buildMenuButton();
-
     that.layout.startup();
-
     that.listOfRunsGrid.fillGridWithRunData();
-
     that.listOfRunsGrid.render();
 
+    topic.subscribe("/dojo/hashchange", function(changedHash) {
+      that.handleHashChange(changedHash);
+    });
+
+    // Restore previous state from cuttent hash (if any).
+    if (hash() != initialHash) {
+      hash(initialHash);
+    } else {
+      that.handleHashChange(initialHash);
+    }
   },
 
 
   initGlobals : function() {
-    CC_SERVICE = new codeCheckerDBAccess.codeCheckerDBAccessClient(new Thrift.Protocol(new Thrift.Transport("CodeCheckerService")));
+    CC_SERVICE = new codeCheckerDBAccess.codeCheckerDBAccessClient(
+      new Thrift.Protocol(new Thrift.Transport("CodeCheckerService")));
     CC_UTIL    = new Util();
   },
 
@@ -107,16 +113,14 @@ return declare(null, {
 
             var tempRunId = that.listOfRunsGrid.getItem(evt.rowIndex).runid[0];
             var tempName = that.listOfRunsGrid.getItem(evt.rowIndex).name[0];
-            var tempNumberOfBugs = that.listOfRunsGrid.getItem(evt.rowIndex).numberofbugs[0];
-            that.newRunOverviewTab(tempRunId, tempName, tempNumberOfBugs);
+
+            that.newRunOverviewTab(tempRunId, tempName);
 
             break;
 
           case "diffDisplay":
 
             var tempDiff = that.listOfRunsGrid.getItem(evt.rowIndex).diffActual[0];
-            var tempNumberOfBugs = that.listOfRunsGrid.getItem(evt.rowIndex).name[0];
-
             var checkedNumber = that.listOfRunsGrid.getCheckedNumber();
 
             if (tempDiff) {
@@ -181,8 +185,13 @@ return declare(null, {
 
 
     that.listOfRunsBC = new BorderContainer({
-      id    : "bc_listofrunsgrid",
-      title : that.listOfRunsGrid.title
+      id     : "bc_listofrunsgrid",
+      title  : that.listOfRunsGrid.title,
+      onShow : function() {
+        if (hash() != "") {
+          hash("");
+        }
+      }
     });
 
 
@@ -210,8 +219,6 @@ return declare(null, {
 
   buildMenuButton : function() {
     var that = this;
-
-
     var menuButton = new MenuButton({
       mainTC : that.mainTC,
     });
@@ -219,19 +226,61 @@ return declare(null, {
     that.headerPane.addChild(menuButton);
   },
 
-
-  newRunOverviewTab : function(runId, name, numberOfBugs) {
+  handleHashChange : function(changedHash) {
     var that = this;
+    if (!changedHash) {
+      that.mainTC.selectChild("bc_listofrunsgrid");
+    }
 
-
-    var idOfNewOverviewTC = "runoverviewtc_" + runId;
-
-    if (undefined !== dijit.byId(idOfNewOverviewTC)) {
-      that.mainTC.selectChild(dijit.byId(idOfNewOverviewTC));
-
+    var hashState = ioQuery.queryToObject(changedHash);
+    if (!hashState) {
       return;
     }
 
+    var ovId = CC_UTIL.getOverviewIdFromHashState(hashState);
+    if (undefined !== dijit.byId(ovId)) {
+      that.mainTC.selectChild(dijit.byId(ovId));
+      return;
+    }
+
+    if (hashState.ovType == 'run') {
+      that.handleNewRunOverviewTab(
+        ovId,
+        hashState.ovRunId,
+        hashState.ovName);
+    } else if (hashState.ovType == 'diff') {
+      that.handleNewDiffOverviewTab(
+        ovId,
+        hashState.diffRunIds[0],
+        hashState.diffRunIds[1],
+        hashState.diffNames[0],
+        hashState.diffNames[1]
+      );
+    }
+  },
+
+  newRunOverviewTab : function(runId, name) {
+    var hashState = {
+      ovType: 'run',
+      ovName: name,
+      ovRunId: runId
+    };
+
+    hash(ioQuery.objectToQuery(hashState));
+  },
+
+  newDiffOverviewTab : function(runId1, runId2, name1, name2) {
+    var hashState = {
+      ovType: 'diff',
+      diffNames: [name1, name2],
+      diffRunIds: [runId1, runId2]
+    };
+
+    hash(ioQuery.objectToQuery(hashState));
+  },
+
+  handleNewRunOverviewTab : function(idOfNewOverviewTC, runId, name) {
+    var that = this;
     var newOverviewTC = new OverviewTC({
       id           : idOfNewOverviewTC,
       runId        : runId,
@@ -243,45 +292,30 @@ return declare(null, {
         if (that.mainTC.selectedChildWidget === newOverviewTC) {
           that.mainTC.selectChild("bc_listofrunsgrid");
         }
-
         return true;
+      },
+      onShow : function() {
+        that.newRunOverviewTab(runId, name);
       }
     });
 
     try {
-
       newOverviewTC.overviewGrid.fillOverviewGrid(newOverviewTC.getStateOfFilters(),
         newOverviewTC.overviewPager.getPagerParams());
 
       newOverviewTC.overviewPager.disableArrowsAsNeeded();
-
       that.mainTC.addChild(newOverviewTC);
       that.mainTC.selectChild(newOverviewTC);
 
       newOverviewTC.overviewGrid.render();
-
     } catch (err) {
-
       newOverviewTC.destroyRecursive();
       console.log(err);
-
     }
-
   },
 
-
-  newDiffOverviewTab : function(runId1, runId2, name1, name2) {
+  handleNewDiffOverviewTab : function(idOfNewOverviewTC, runId1, runId2, name1, name2) {
     var that = this;
-
-
-    var idOfNewOverviewTC = "diffoverviewtc_" + runId1 + "_" + runId2;
-
-    if (undefined !== dijit.byId(idOfNewOverviewTC)) {
-      that.mainTC.selectChild(dijit.byId(idOfNewOverviewTC));
-
-      return;
-    }
-
     var newOverviewTC = new OverviewTC({
       id           : idOfNewOverviewTC,
       runId1       : runId1,
@@ -294,24 +328,19 @@ return declare(null, {
         if (that.mainTC.selectedChildWidget === newOverviewTC) {
           that.mainTC.selectChild("bc_listofrunsgrid");
         }
-
         return true;
+      },
+      onShow : function() {
+        that.newDiffOverviewTab(runId1, runId2, name1, name2);
       }
     });
 
     try {
-
       newOverviewTC.overviewGrid.fillOverviewGrid(newOverviewTC.getStateOfFilters());
-
-      // newOverviewTC.overviewGrid.fillOverviewGrid(newOverviewTC.getStateOfFilters(),
-      //   newOverviewTC.overviewPager.getPagerParams());
-      // newOverviewTC.overviewPager.disableArrowsAsNeeded();
-
       that.mainTC.addChild(newOverviewTC);
       that.mainTC.selectChild(newOverviewTC);
 
       newOverviewTC.overviewGrid.render();
-
     } catch (err) {
 
       newOverviewTC.destroyRecursive();

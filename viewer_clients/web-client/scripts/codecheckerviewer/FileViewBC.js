@@ -29,7 +29,6 @@ return declare(BorderContainer, {
   // currCheckerId
   // suppressed
   // runId
-  // overviewType
 
 
   constructor : function(args) {
@@ -53,7 +52,6 @@ return declare(BorderContainer, {
     var currCheckerId   = that.currCheckerId;
     var suppressed      = that.suppressed;
     var runId           = that.runId;
-    var overviewType    = that.overviewType;
 
     that.viewedFile   = checkedFile;
     that.viewedFileId = fileId;
