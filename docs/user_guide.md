@@ -200,7 +200,7 @@ For example:
 
 For example (using as a white list):
 ~~~~~~~~~~~~~~~~~~~~~
-+/dir/check.this/
++/dir/check.this/*
 -*
 ~~~~~~~~~~~~~~~~~~~~~
 
