@@ -255,8 +255,7 @@ def run(analyzer, action):
         with client.get_connection() as connection:
 
             action_id = connection.add_build_action(action.original_command,
-                                                    check_cmd_str,
-                                                    action.target)
+                                                    check_cmd_str)
 
             LOG.debug(' '.join(check_cmd))
             result = subprocess.Popen(check_cmd,
@@ -279,8 +278,7 @@ def run(analyzer, action):
                 client.send_plist_content(connection, report_plist, action_id,
                                           analyzer.run_id,
                                           analyzer.severity_map,
-                                          analyzer.should_skip,
-                                          analyzer.module_id)
+                                          analyzer.should_skip)
                 msg = 'Checking %s is done.' % (source_file)
                 LOG.debug(msg + '\n' + check_cmd_str)
                 LOG.info(msg)

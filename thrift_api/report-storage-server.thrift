@@ -47,8 +47,7 @@ service CheckerReport {
                 i64  addBuildAction(
                                     1: i64 run_id,
                                     2: string build_cmd,
-                                    3: string check_cmd,
-                                    4: string target)
+                                    3: string check_cmd)
                                     throws (1: shared.RequestFailed requestError),
 
                 i64  addReport(
@@ -78,12 +77,6 @@ service CheckerReport {
                 bool addFileContent(
                                     1: i64 file_id,
                                     2: binary file_content)
-                                    throws (1: shared.RequestFailed requestError),
-
-                bool moduleToReport(
-                                    1: i64 run_id,
-                                    2: string moduleId,
-                                    3: list<i64> report_ids)
                                     throws (1: shared.RequestFailed requestError),
 
                 bool finishCheckerRun(1: i64 run_id)
