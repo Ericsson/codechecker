@@ -9,6 +9,8 @@ import sys
 import signal
 import subprocess
 import ntpath
+import re
+import fnmatch
 
 from codechecker_lib import client
 from codechecker_lib import logger
@@ -165,16 +167,27 @@ class StaticAnalyzer(object):
         ''''''
         if os.path.exists(filepath):
             orig_skiplist = get_skiplist(filepath)
+            skiplist_with_comment = {}
+            for line in orig_skiplist:
+                if len(line) < 2 or line[0] not in ['-', '+']:
+                    LOG.warning("Skipping malformed skipfile pattern: " + line)
+                    continue
 
-            # FIXME temporarly empty comment is set
-            # should be read from the skip file
-            skiplist_with_comment = {path: '' for path in orig_skiplist}
+                # FIXME temporarly empty comment is set
+                # should be read from the skip file
+                skiplist_with_comment[line] = ''
+
+                rexpr = re.compile(fnmatch.translate(line[1:].strip() + '*'))
+                self._skip.append((line[0], rexpr))
+
             connection.add_skip_paths(skiplist_with_comment)
-            self._skip = orig_skiplist
 
     def should_skip(self, source):
         '''Should the analyzer skip the given source file?'''
-        return any(source.startswith(item) for item in self._skip)
+        for sign, rexpr in self._skip:
+            if rexpr.match(source):
+                return sign == '-'
+        return False
 
 # -----------------------------------------------------------------------------
 def get_skiplist(file_name):

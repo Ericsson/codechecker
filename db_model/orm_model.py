@@ -245,7 +245,8 @@ class SuppressBug(Base):
 class SkipPath(Base):
     __tablename__ = 'skip_path'
 
-    path = Column(String, primary_key=True)
+    id = Column(Integer, Sequence('skippath_id_seq'), primary_key=True)
+    path = Column(String)
     run_id = Column(Integer, ForeignKey('runs.id', deferrable = True, initially = "DEFERRED", ondelete='CASCADE'), primary_key=True)
     comment = Column(Binary)
 
