@@ -9,6 +9,8 @@ import sys
 import signal
 import subprocess
 import ntpath
+import re
+import fnmatch
 
 from codechecker_lib import client
 from codechecker_lib import logger
@@ -165,16 +167,27 @@ class StaticAnalyzer(object):
         ''''''
         if os.path.exists(filepath):
             orig_skiplist = get_skiplist(filepath)
+            skiplist_with_comment = {}
+            for line in orig_skiplist:
+                if len(line) < 2 or line[0] not in ['-', '+']:
+                    LOG.warning("Skipping malformed skipfile pattern: " + line)
+                    continue
 
-            # FIXME temporarly empty comment is set
-            # should be read from the skip file
-            skiplist_with_comment = {path: '' for path in orig_skiplist}
+                # FIXME temporarly empty comment is set
+                # should be read from the skip file
+                skiplist_with_comment[line] = ''
+
+                rexpr = re.compile(fnmatch.translate(line[1:].strip() + '*'))
+                self._skip.append((line[0], rexpr))
+
             connection.add_skip_paths(skiplist_with_comment)
-            self._skip = orig_skiplist
 
     def should_skip(self, source):
         '''Should the analyzer skip the given source file?'''
-        return any(source.startswith(item) for item in self._skip)
+        for sign, rexpr in self._skip:
+            if rexpr.match(source):
+                return sign == '-'
+        return False
 
 # -----------------------------------------------------------------------------
 def get_skiplist(file_name):
@@ -242,8 +255,7 @@ def run(analyzer, action):
         with client.get_connection() as connection:
 
             action_id = connection.add_build_action(action.original_command,
-                                                    check_cmd_str,
-                                                    action.target)
+                                                    check_cmd_str)
 
             LOG.debug(' '.join(check_cmd))
             result = subprocess.Popen(check_cmd,
@@ -266,8 +278,7 @@ def run(analyzer, action):
                 client.send_plist_content(connection, report_plist, action_id,
                                           analyzer.run_id,
                                           analyzer.severity_map,
-                                          analyzer.should_skip,
-                                          analyzer.module_id)
+                                          analyzer.should_skip)
                 msg = 'Checking %s is done.' % (source_file)
                 LOG.debug(msg + '\n' + check_cmd_str)
                 LOG.info(msg)

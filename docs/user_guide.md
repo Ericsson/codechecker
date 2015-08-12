@@ -177,14 +177,34 @@ Bugs can be suppressed on the viewer even when suppress file was not set by comm
 advised to always provide (the same) suppress file for the checks.
 
 ### Skip file:
-Paths and source files which will not be checked.
+
+With a skip file you can filter which files should or shouldn't be checked.
+
+Each line in a skip file should start with a '-' or '+' character followed by a
+path [glob pattern][GLOB]. A minus character means that if a checked file path -
+including the headers - matches with the pattern, the file will not be checked.
+The plus character means the opposite: if a file path matches with the pattern,
+it will be checked. If there is no matching pattern, the file will be checked.
+If you want a white list, just add a '-*' pattern to the end of the file.
+
+CodeChecker reads the file from top to bottom and stops at the first matching
+pattern.
 
 For example:
 ~~~~~~~~~~~~~~~~~~~~~
-/skip/all/source/in/path
-/do/not/check/this.file
+-/skip/all/source/in/directory*
+-/do/not/check/this.file
++/dir/check.this.file
+-/dir/*
 ~~~~~~~~~~~~~~~~~~~~~
 
+For example (using as a white list):
+~~~~~~~~~~~~~~~~~~~~~
++/dir/check.this/*
+-*
+~~~~~~~~~~~~~~~~~~~~~
+
+[GLOB]: https://en.wikipedia.org/wiki/Glob_(programming)
 
 ## Example Usage
 Checking with some extra checkers disabled and enabled

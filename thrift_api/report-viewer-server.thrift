@@ -44,8 +44,7 @@ struct ReportData{
   8: shared.BugPathEvent lastBugPosition  // This contains the range and message of the last item in the symbolic
                                           // execution step list.
   9: shared.Severity     severity         // checker severity
-  10: string             moduleName       // name of the module if available
-  11: optional string    suppressComment  // suppress commment if report is suppressed
+  10: optional string    suppressComment  // suppress commment if report is suppressed
 }
 typedef list<ReportData> ReportDataList
 
@@ -59,10 +58,8 @@ struct ReportFilter{
   2: optional string          checkerMsg,
   3: optional shared.Severity severity,
   4: optional string          checkerId,          // should filter in the fully qualified checker id name such as alpha.core.
-  5: optional string          buildTarget,        // such as i386, x86-64
-  6: optional string          moduleName,         // higher concept for identifying software components of
                                                   // the analyzed system. Projects can optionally use this concept.
-  7: optional bool            suppressed = false  // if the bug state is suppressed
+  5: optional bool            suppressed = false  // if the bug state is suppressed
 }
 
 /**
@@ -73,8 +70,7 @@ typedef list<ReportFilter> ReportFilterList
 //-----------------------------------------------------------------------------
 struct ReportDetails{
   1: shared.BugPathEvents pathEvents,
-  2: shared.BugPath       executionPath,
-  3: list<string>         buildTargets    // the report can belong to multiple targets:i386, x86-64 etc.
+  2: shared.BugPath       executionPath
 }
 
 //-----------------------------------------------------------------------------
@@ -88,9 +84,7 @@ struct ReportFileData{
 enum SortType {
   FILENAME,
   CHECKER_NAME,
-  SEVERITY,
-  BUILD_TARGET,
-  MODULE
+  SEVERITY
 }
 
 //-----------------------------------------------------------------------------

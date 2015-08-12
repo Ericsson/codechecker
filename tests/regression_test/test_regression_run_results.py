@@ -184,7 +184,7 @@ class RunResults(unittest.TestCase):
         runid = self._runid
         debug('Get all run results from the db for runid: ' + str(runid))
         sort_mode1 = SortMode(SortType.SEVERITY, Order.ASC)
-        sort_mode2 = SortMode(SortType.MODULE, Order.ASC)
+        sort_mode2 = SortMode(SortType.FILENAME, Order.ASC)
         sort_types = [sort_mode1, sort_mode2]
 
         run_result_count = self._cc_client.getRunResultCount(runid, [])
@@ -200,7 +200,7 @@ class RunResults(unittest.TestCase):
             bug2 = run_results[i + 1]
             self.assertTrue(bug1.severity <= bug2.severity)
             self.assertTrue((bug1.severity != bug2.severity) or
-                            (bug1.moduleName <= bug2.moduleName))
+                            (bug1.checkedFile <= bug2.checkedFile))
 
         for run_res in run_results:
             debug('{0:15s}  {1}'.format(run_res.checkedFile, run_res.checkerId))

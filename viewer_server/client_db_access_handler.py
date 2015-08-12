@@ -81,7 +81,6 @@ def construct_report_filter(report_filters):
         AND.append(Report.checker_message.like('%'))
         AND.append(Report.checker_id.like('%'))
         AND.append(File.filepath.like('%'))
-        AND.append(BuildAction.build_target.like('%'))
 
         OR.append(and_(*AND))
         filter_expression = or_(*OR)
@@ -98,15 +97,9 @@ def construct_report_filter(report_filters):
         if report_filter.filepath:
             AND.append(File.filepath.like(
                        conv(report_filter.filepath)))
-        if report_filter.buildTarget:
-            AND.append(BuildAction.build_target.like(
-                       conv(report_filter.buildTarget)))
         if report_filter.severity is not None:
             # severity value can be 0
             AND.append(Report.severity == report_filter.severity)
-        if report_filter.moduleName:
-            AND.append(ModuleToReport.module.like(
-                       conv(report_filter.moduleName)))
         if report_filter.suppressed:
             AND.append(Report.suppressed == 'True')
         else:
@@ -240,9 +233,7 @@ class ThriftRequestHandler():
         sort_type_map = {}
         sort_type_map[SortType.FILENAME] =  File.filepath
         sort_type_map[SortType.CHECKER_NAME] =  Report.checker_id
-        sort_type_map[SortType.BUILD_TARGET] =  BuildAction.build_target
         sort_type_map[SortType.SEVERITY] = Report.severity
-        sort_type_map[SortType.MODULE] = ModuleToReport.module
 
         #mapping the sqlalchemy functions
         order_type_map = {}
@@ -255,26 +246,14 @@ class ThriftRequestHandler():
 
             q = session.query(Report,
                               File,
-                              ReportsToBuildActions,
-                              BuildAction,
                               BugPathEvent,
-                              ModuleToReport,
                               SuppressBug) \
                 .filter(Report.run_id == run_id) \
                 .outerjoin(File,
                            and_(Report.file_id == File.id,
                                 File.run_id == run_id)) \
-                .outerjoin(ReportsToBuildActions,
-                           Report.id == ReportsToBuildActions.report_id) \
-                .outerjoin(BuildAction,
-                           and_(ReportsToBuildActions.build_action_id \
-                                == BuildAction.id,
-                                BuildAction.run_id == run_id)) \
                 .outerjoin(BugPathEvent,
                            Report.end_bugevent == BugPathEvent.id) \
-                .outerjoin(ModuleToReport,
-                           and_(Report.id == ModuleToReport.report_id,
-                                ModuleToReport.run_id == run_id)) \
                 .outerjoin(SuppressBug,
                            and_(SuppressBug.hash == Report.bug_id,
                                 SuppressBug.run_id == run_id)) \
@@ -292,7 +271,7 @@ class ThriftRequestHandler():
 
             results = []
 
-            for report, source_file, reptoba, buildaction, lbpe, module, suppress_bug in \
+            for report, source_file, lbpe, suppress_bug in \
                     q.limit(limit).offset(offset):
 
                 last_event_pos = \
@@ -319,7 +298,6 @@ class ThriftRequestHandler():
                                           lastBugPosition=last_event_pos,
                                           checkerId=report.checker_id,
                                           severity=report.severity,
-                                          moduleName=module.module,
                                           suppressComment=suppress_comment)
                                )
 
@@ -394,17 +372,8 @@ class ThriftRequestHandler():
                 .outerjoin(File,
                            and_(Report.file_id == File.id,
                                 File.run_id == run_id)) \
-                .outerjoin(ReportsToBuildActions,
-                           Report.id == ReportsToBuildActions.report_id) \
-                .outerjoin(BuildAction,
-                           and_(ReportsToBuildActions.build_action_id \
-                                == BuildAction.id,
-                                BuildAction.run_id == run_id)) \
                 .outerjoin(BugPathEvent,
                            Report.end_bugevent == BugPathEvent.id) \
-                .outerjoin(ModuleToReport,
-                           and_(Report.id == ModuleToReport.report_id,
-                                ModuleToReport.run_id == run_id)) \
                 .outerjoin(SuppressBug,
                            and_(SuppressBug.hash == Report.bug_id,
                                 SuppressBug.run_id == run_id)) \
@@ -525,23 +494,7 @@ class ThriftRequestHandler():
                                         fileId=bug_point.file_id,
                                         filePath=file_path))
 
-            reportsToBuild = session.query(ReportsToBuildActions)\
-                                .filter(ReportsToBuildActions.report_id == report.id)
-
-            buildTargets = []
-            if reportsToBuild:
-
-                baIds = [ baid.build_action_id for baid in reportsToBuild ]
-
-                reportBuildActions = session.query(BuildAction) \
-                                            .filter(BuildAction.id.in_(baIds)) \
-                                            .all()
-
-                for rba in reportBuildActions:
-                    buildTargets.append(rba.build_target)
-
-
-            return ReportDetails(bug_events_list, bug_point_list, buildTargets)
+            return ReportDetails(bug_events_list, bug_point_list)
 
         except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
             msg = str(alchemy_ex)
@@ -860,16 +813,8 @@ class ThriftRequestHandler():
                 .filter(Report.run_id == run_id) \
                 .outerjoin(File,
                            Report.file_id == File.id) \
-                .outerjoin(ReportsToBuildActions,
-                           Report.id == ReportsToBuildActions.report_id) \
-                .outerjoin(BuildAction,
-                           and_(ReportsToBuildActions.build_action_id
-                                == BuildAction.id,
-                                BuildAction.run_id == run_id)) \
                 .outerjoin(BugPathEvent,
                            Report.end_bugevent == BugPathEvent.id) \
-                .outerjoin(ModuleToReport,
-                           Report.id == ModuleToReport.report_id) \
                 .order_by(Report.checker_id) \
                 .filter(filter_expression) \
                 .all()
@@ -942,9 +887,7 @@ class ThriftRequestHandler():
         sort_type_map = {}
         sort_type_map[SortType.FILENAME] = File.filepath
         sort_type_map[SortType.CHECKER_NAME] = Report.checker_id
-        sort_type_map[SortType.BUILD_TARGET] = BuildAction.build_target
         sort_type_map[SortType.SEVERITY] = Report.severity
-        sort_type_map[SortType.MODULE] = ModuleToReport.module
 
         #mapping the sqlalchemy functions
         order_type_map = {}
@@ -956,26 +899,14 @@ class ThriftRequestHandler():
         try:
             q = session.query(Report,
                               File,
-                              ReportsToBuildActions,
-                              BuildAction,
                               BugPathEvent,
-                              ModuleToReport,
                               SuppressBug) \
                 .filter(Report.run_id == run_id) \
                 .outerjoin(File,
                            and_(Report.file_id == File.id,
                                 File.run_id == run_id)) \
-                .outerjoin(ReportsToBuildActions,
-                           Report.id == ReportsToBuildActions.report_id) \
-                .outerjoin(BuildAction,
-                           and_(ReportsToBuildActions.build_action_id \
-                                == BuildAction.id,
-                                BuildAction.run_id == run_id)) \
                 .outerjoin(BugPathEvent,
                            Report.end_bugevent == BugPathEvent.id) \
-                .outerjoin(ModuleToReport,
-                           and_(Report.id == ModuleToReport.report_id,
-                                ModuleToReport.run_id == run_id)) \
                 .outerjoin(SuppressBug,
                            and_(SuppressBug.hash == Report.bug_id,
                                 SuppressBug.run_id == run_id)) \
@@ -995,7 +926,7 @@ class ThriftRequestHandler():
 
             results = []
 
-            for report, source_file, reptoba, buildaction, lbpe, module, suppress_bug \
+            for report, source_file, lbpe, suppress_bug \
                                             in q.limit(limit).offset(offset):
 
                 lastEventPos = \
@@ -1019,7 +950,6 @@ class ThriftRequestHandler():
                                           lastBugPosition=lastEventPos,
                                           checkerId=report.checker_id,
                                           severity=report.severity,
-                                          moduleName=module.module,
                                           suppressComment=suppress_comment))
 
             return results
