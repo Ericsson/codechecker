@@ -62,7 +62,12 @@ return declare(null, {
     return checkerTypeOptionsArray;
   },
 
-
+  /**
+   * Converts a Thrift API severity id to human readable string.
+   *
+   * @param severityCode Thrift API severity id
+   * @return human readable severity string
+   */
   severityFromCodeToString : function(severityCode) {
     if (severityCode === "all"){
       return "All"
@@ -77,10 +82,22 @@ return declare(null, {
     return null;
   },
 
+  /**
+   * Converts a severity string to Thrift API severity id.
+   *
+   * @param severityString severity as string
+   * @return severity as number (id)
+   */
   severityFromStringToCode : function(severityString) {
     return Severity[severityString.toUpperCase()];
   },
 
+  /**
+   * Returns overview DOM id for the given browser hash state.
+   *
+   * @param hashState browser hash state object
+   * @return DOM id string or undefined
+   */
   getOverviewIdFromHashState : function(hashState) {
     if (hashState.ovType == 'run') {
       return "runoverviewtc_" + hashState.ovRunId;

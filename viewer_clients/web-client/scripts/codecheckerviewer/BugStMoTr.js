@@ -12,41 +12,50 @@ define([
   "dijit/Tree",
   "dijit/Tooltip"
 ], function ( declare, Memory, Observable, ObjectStoreModel, Tree, Tooltip ) {
+
+  /**
+   * Contains the bug tree (with steps) for a specified file.
+   */
+
 return declare(null, {
 
-  // fileId
-  // filePath
-  // reportDataStore
-
-
+  /**
+   * Construct a new object. The following arguments are required:
+   *   runId: a run id
+   *   fileId: the file's id
+   *   filePath: the files's path
+   */
   constructor : function(args) {
     var that = this;
     declare.safeMixin(that, args);
 
-    that.createBugStoreData(that.fileId, that.filePath);
-
-
     that.bugStore = new Observable(new Memory({
-      data        : that.bugStoreData,
+      data : [
+        {
+          id     : "root"
+        },
+        {
+          name   : "Loading bugs...",
+          id     : "unspecified",
+          parent : "root",
+          isLeaf : true
+        }
+      ],
       getChildren : function(node) {
         return this.query({ parent: node.id });
       }
     }));
 
-
-    that.bugModel = new ObjectStoreModel({
-      store : that.bugStore,
-      query : { id : "root" },
-      mayHaveChildren: function(item){
-        return (item.isLeaf === false);
-      }
-    });
-
-
     that.bugTree = new Tree({
       region       : "left",
       splitter     : true,
-      model        : that.bugModel,
+      model        : new ObjectStoreModel({
+          store : that.bugStore,
+          query : { id : "root" },
+          mayHaveChildren: function(item){
+            return (item.isLeaf === false);
+          }
+        }),
       openOnClick  : true,
       showRoot     : false,
       getIconClass : function(item, opened) {
@@ -72,12 +81,106 @@ return declare(null, {
       }
     });
 
+    that.loadBugStoreData();
   },
 
+  /**
+   * Queries run results for the file. The given onComplete callback function
+   * will be called with the result array as argument. On error it logs the
+   * error and calls onComplete with an empty array.
+   *
+   * This method is asynchronous.
+   *
+   * @param onComplete a callback function for the results.
+   */
+  _queryReportsForFile : function(onComplete) {
+    var that = this;
+    var limit = codeCheckerDBAccess.MAX_QUERY_SIZE;
+    var filter = new codeCheckerDBAccess.ReportFilter();
+    filter.filepath = that.filePath;
 
-  createBugStoreData : function(fileId, filePath) {
+    CC_SERVICE.getRunResults(that.runId, limit, 0,[], [filter],function(result){
+      if (result instanceof RequestFailed) {
+        console.error("Failed to load run results for "+ that.filePath, result);
+        onComplete([]);
+      } else {
+        onComplete(result);
+      }
+    });
+  },
+
+  /**
+   * Builds the execution path for the given report and adds it to the bug
+   * store. It calls onComplete at the end of the process with no parameters.
+   *
+   * This method is asynchronous.
+   *
+   * @param bugStore a bug store for storing new tree nodes.
+   * @param report a ReportData
+   * @param onComplete a callback function
+   */
+  _buildExecPathForReport : function(bugStore, report, onComplete) {
     var that = this;
 
+    bugStore.push({
+      name       : "Line " + report.lastBugPosition.startLine + " : " +
+        report.checkerId,
+      id         : report.bugHash,
+      parent     : CC_UTIL.severityFromCodeToString(report.severity),
+      range      : report.lastBugPosition,
+      reportId   : report.reportId,
+      checkerId  : report.checkerId,
+      suppressed : report.suppressed,
+      isLeaf     : false
+    });
+
+    bugStore.push({
+      name       : "Line " + report.lastBugPosition.startLine + " : " +
+        report.checkerMsg,
+      id         : report.bugHash + "_0",
+      parent     : report.bugHash,
+      range      : report.lastBugPosition,
+      filePath   : that.filePath,
+      fileId     : report.fileId,
+      reportId   : report.reportId,
+      checkerId  : report.checkerId,
+      suppressed : report.suppressed,
+      isLeaf     : true
+    });
+
+    CC_SERVICE.getReportDetails(report.reportId, function(details) {
+      if (details instanceof RequestFailed) {
+        console.error("Failed to load report details!", details);
+        onComplete();
+        return;
+      }
+
+      details.executionPath.forEach(function(step, index) {
+        bugStore.push({
+          name       : "Step " + (index + 1) + " : " +
+            step.filePath.split("/").pop() + " : Line " +
+            step.startLine,
+          id         : report.bugHash + "_" + (index + 1),
+          parent     : report.bugHash,
+          range      : step,
+          filePath   : step.filePath,
+          fileId     : step.fileId,
+          reportId   : report.reportId,
+          checkerId  : report.checkerId,
+          suppressed : report.suppressed,
+          isLeaf     : true
+        });
+      });
+
+      onComplete();
+    });
+  },
+
+  /**
+   * Start (async) loading the bug tree.
+   */
+  loadBugStoreData : function() {
+    var that = this;
     var bugStoreDataTmp = [
       {
         name : "Bugs by priority",
@@ -115,63 +218,25 @@ return declare(null, {
       }
     ];
 
+    that._queryReportsForFile(function(reports) {
+      var reportsComplete = 0;
 
-    var storeAsArray = that.reportDataStore._arrayOfAllItems;
+      reports.forEach(function(report) {
+        that._buildExecPathForReport(bugStoreDataTmp, report, function() {
+          ++reportsComplete;
+          if (reportsComplete === reports.length) {
+            // FIXME: it's slow on large array
+            bugStoreDataTmp.forEach(function(item) {
+              item.overwrite = true;
+              that.bugStore.put(item, item);
+            });
 
-    for (var i = 0 ; i < storeAsArray.length ; ++i) {
-
-      var item = storeAsArray[i];
-
-      if (item.fileId[0] === fileId) {
-        bugStoreDataTmp.push({
-          name       : "Line " + item.lastBugPosition[0].startLine + " : " + item.checkerId[0],
-          id         : item.bugHash[0],
-          parent     : item.severity[0],
-          range      : item.lastBugPosition[0],
-          reportId   : item.reportId[0],
-          checkerId  : item.checkerId[0],
-          suppressed : item.suppressed[0],
-          isLeaf     : false
+            if (that.onLoaded) {
+              that.onLoaded();
+            }
+          }
         });
-
-        bugStoreDataTmp.push({
-          name       : "Line " + item.lastBugPosition[0].startLine + " : " + item.checkerMsg[0],
-          id         : item.bugHash[0] + "_0",
-          parent     : item.bugHash[0],
-          range      : item.lastBugPosition[0],
-          filePath   : filePath,
-          fileId     : item.fileId[0],
-          reportId   : item.reportId[0],
-          checkerId  : item.checkerId[0],
-          suppressed : item.suppressed[0],
-          isLeaf     : true
-        });
-
-        var execPath = CC_SERVICE.getReportDetails(item.reportId[0]).executionPath;
-
-        for (var j = 0 ; j < execPath.length ; ++j) {
-
-          bugStoreDataTmp.push({
-            name       : "Step " + (j + 1) + " : " + execPath[j].filePath.split("/").pop() + " : Line " + execPath[j].startLine,
-            id         : item.bugHash[0] + "_" + (j + 1),
-            parent     : item.bugHash[0],
-            range      : execPath[j],
-            filePath   : execPath[j].filePath,
-            fileId     : execPath[j].fileId,
-            reportId   : item.reportId[0],
-            checkerId  : item.checkerId[0],
-            suppressed : item.suppressed[0],
-            isLeaf     : true
-          });
-
-        }
-
-      }
-
-    }
-
-    that.bugStoreData = bugStoreDataTmp;
+      });
+    });
   }
-
-
 });});

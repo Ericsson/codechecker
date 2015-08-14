@@ -15,11 +15,9 @@ define([
   "dijit/Dialog",
   "scripts/codecheckerviewer/OverviewGrid.js",
   "scripts/codecheckerviewer/OverviewHeader.js",
-  "scripts/codecheckerviewer/FileViewBC.js",
-  "scripts/codecheckerviewer/widgets/Pager.js",
+  "scripts/codecheckerviewer/FileViewBC.js"
 ], function ( declare, hash, topic, ioQuery, BorderContainer, TabContainer
-            , ContentPane, Dialog, OverviewGrid, OverviewHeader, FileViewBC
-            , Pager ) {
+            , ContentPane, Dialog, OverviewGrid, OverviewHeader, FileViewBC ) {
 return declare(TabContainer, {
 
   // overviewType ("run" or "diff")
@@ -48,9 +46,14 @@ return declare(TabContainer, {
       style  : "margin: 0px; padding: 0px;"
     });
 
+    that.overviewHeader = new OverviewHeader({
+      overviewType   : that.overviewType,
+      myOverviewTC   : that,
+      region         : "top",
+      style          : "background-color: white; margin: 0px; padding: 0px;"
+    });
 
     that.overviewGrid = null;
-
     if (that.overviewType === "run") {
 
       that.overviewBC.title = "Run Overview";
@@ -89,35 +92,9 @@ return declare(TabContainer, {
 
       } else if (evt.cell.field === "fileWithBugPos") {
         var row = that.overviewGrid.getItem(evt.rowIndex);
-        that.openFileView(row.reportId[0], row.runId[0]);
+        that.openFileView(row.reportId, row.runId);
       }
     };
-
-
-    that.overviewHeader = new OverviewHeader({
-      overviewType   : that.overviewType,
-      myOverviewTC   : that,
-      region         : "top",
-      style          : "background-color: white; margin: 0px; padding: 0px;"
-    });
-
-
-    if (that.overviewType === "run") {
-      that.overviewPagerCP = new ContentPane({
-        region : "bottom",
-        style  : "margin: 0px; padding: 0px;"
-      });
-
-
-      that.overviewPager = new Pager({
-        myOverviewTC : that,
-        style        : "text-align: right"
-      });
-
-      that.overviewPagerCP.addChild(that.overviewPager);
-      that.overviewBC.addChild(that.overviewPagerCP);
-    }
-
 
     that.overviewGridCP.addChild(that.overviewGrid);
     that.overviewBC.addChild(that.overviewGridCP);
@@ -133,6 +110,11 @@ return declare(TabContainer, {
     that.handleHashChange(hash());
   },
 
+  /**
+   * Handles a hash change.
+   *
+   * @param {String} changedHash the changed browser hash.
+   */
   handleHashChange : function(changedHash) {
     if (!changedHash) {
       return;
@@ -156,7 +138,7 @@ return declare(TabContainer, {
     var row;
     while ((row = that.overviewGrid.getItem(rowIndex)))
     {
-      if (row.reportId[0] == hashState.fvReportId) {
+      if (row.reportId == hashState.fvReportId) {
         break;
       }
       rowIndex++;
@@ -164,15 +146,15 @@ return declare(TabContainer, {
 
     if (row) {
       var reportData = {
-        checkerId       : row.checkerId[0],
-        bugHash         : row.bugHash[0],
-        checkedFile     : row.checkedFile[0],
+        checkerId       : row.checkerId,
+        bugHash         : row.bugHash,
+        checkedFile     : row.checkedFile,
         checkerMsg      : '',
-        reportId        : row.reportId[0],
-        suppressed      : row.suppressed[0],
-        fileId          : row.fileId[0],
-        lastBugPosition : row.lastBugPosition[0],
-        severity        : row.severity[0],
+        reportId        : row.reportId,
+        suppressed      : row.suppressed,
+        fileId          : row.fileId,
+        lastBugPosition : row.lastBugPosition,
+        severity        : row.severity,
         moduleName      : '',
         suppressComment : ''
       }
@@ -186,12 +168,19 @@ return declare(TabContainer, {
           return;
         }
 
+        reportData.severity = CC_UTIL.severityFromCodeToString(
+          reportData.severity);
         that.handleOpenFileView(reportData, parseInt(hashState.fvRunId), tabId);
         hash(changedHash);
       });
     }
   },
 
+  /**
+   * Show the documentation of the given checker.
+   *
+   * @param checkerId checker id.
+   */
   showDocumentation : function(checkerId) {
     var checkerDocDialog = new Dialog({
       title   : "Documentation for <b>" + checkerId + "</b>",
@@ -201,6 +190,12 @@ return declare(TabContainer, {
     checkerDocDialog.show();
   },
 
+  /**
+   * Returns the DOM id string of a tab using the given browser has state
+   * object.
+   *
+   * @param hashState hash state
+   */
   getFileViewId : function(hashState) {
     var that = this;
 
@@ -211,6 +206,13 @@ return declare(TabContainer, {
     return that.id + "_overview";
   },
 
+  /**
+   * Opens a new file view using the browser hash. See handleOpenFileView for
+   * implementation.
+   *
+   * @param reportId a report id
+   * @param runId run id for the report
+   */
   openFileView : function(reportId, runId) {
     var that = this;
     var hashState = ioQuery.queryToObject(hash());
@@ -219,6 +221,13 @@ return declare(TabContainer, {
     hash(ioQuery.objectToQuery(hashState));
   },
 
+  /**
+   * Handles a request for opening a new file overview.
+   *
+   * @param reportData a ReportData.
+   * @param runId run id
+   * @param tabId DOM id for the new tab
+   */
   handleOpenFileView : function(reportData, runId, tabId) {
     var that = this;
     var newFileViewBC = new FileViewBC({
@@ -242,12 +251,12 @@ return declare(TabContainer, {
     that.selectChild(newFileViewBC);
   },
 
-
+  /**
+   * Returns the state of filters (see OverviewHeader::getStateOfFilters).
+   */
   getStateOfFilters : function() {
     var that = this;
-
     return that.overviewHeader.getStateOfFilters();
   }
-
 
 });});
