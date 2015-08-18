@@ -299,7 +299,7 @@ initdb -U codechecker -D /path/to/pgsql_data -E "SQL_ASCII"
 postgres -U codechecker -D /path/to/pgsql_data -p 9999 &>pgsql_log &
 ~~~~~~~~~~~~~~~~~~~~~
 
-### Run CodeChecker on multiple hosts
+#### Run CodeChecker on multiple hosts
 Then you can run codechecker on multiple hosts but using the same run name (in this example this is called "distributed_run". 
 You will need to use the -–update (incremental mode) to reuse the same run name. In this example it is assumed that 
 postgres is listening on codechecker.central port 9999.
@@ -312,8 +312,8 @@ CodeChecker check -w /tmp/codechecker_ws -b "cd module_2;make" --dbport 9999 --d
 ~~~~~~~~~~~~~~~~~~~~~
 
 
-### PostgreSQL authentication
-If a CodeChecker is run with a user that is added later to the database authentication is required.
+#### PostgreSQL authentication (optional)
+If a CodeChecker is run with a user that needs database authentication, the
 PGPASSFILE environment variable should be set to a pgpass file
 For format and further information see PostgreSQL documentation:
 http://www.postgresql.org/docs/current/static/libpq-pgpass.html
