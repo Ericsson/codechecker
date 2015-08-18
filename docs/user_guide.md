@@ -93,6 +93,91 @@ CodeChecker check -w ~/codechecker_wp -n myProject -l ~/codechecker_wp/build_log
 
 ### 2.2 advanced usage
 
+~~~~~~~~~~~~~~~~~~~~~
+CodeChecker check --help
+usage: CodeChecker.py check [-h] -w WORKSPACE -n NAME
+                            (-b COMMAND | -l LOGFILE) [-j JOBS]
+                            [-f CONFIGFILE] [-s SKIPFILE] [-u SUPPRESS]
+                            [-e ENABLE] [-d DISABLE] [-c]
+                            [--dbaddress DBADDRESS] [--dbport DBPORT]
+                            [--dbname DBNAME] [--dbusername DBUSERNAME]
+                            [--update]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -w WORKSPACE, --workspace WORKSPACE
+                        Directory where the codechecker can store analysis
+                        related data.
+  -n NAME, --name NAME  Name of the project.
+  -b COMMAND, --build COMMAND
+                        Build command.
+  -l LOGFILE, --log LOGFILE
+                        Path to the log file which is created during the
+                        build.
+  -j JOBS, --jobs JOBS  Number of jobs.
+  -f CONFIGFILE, --config CONFIGFILE
+                        Config file for the checkers.
+  -s SKIPFILE, --skip SKIPFILE
+                        Path to skip file.
+  -u SUPPRESS, --suppress SUPPRESS
+                        Path to suppress file.
+  -e ENABLE, --enable ENABLE
+                        Enable checker.
+  -d DISABLE, --disable DISABLE
+                        Disable checker.
+  -c, --clean           Delete temporary report files after sending data to
+                        database storage server.
+  --dbaddress DBADDRESS
+                        Postgres database server address.
+  --dbport DBPORT       Postgres database server port.
+  --dbname DBNAME       Name of the database.
+~~~~~~~~~~~~~~~~~~~~~
+
+### Suppress file:
+~~~~~~~~~~~~~~~~~~~~~
+-u SUPPRESS
+~~~~~~~~~~~~~~~~~~~~~
+
+Suppress file can contain bug hashes and comments.
+Suppressed bugs will not be showed in the viewer by default.
+Usually a reason to suppress a bug is a false positive result (reporting a non-existent bug). Such false positives should be reported, so we can fix the checkers.
+A comment can be added to suppressed reports that describes why that report is false positive. You should not edit suppress file by hand. The server should handle it.
+The suppress file can be checked into the source code repository.
+Bugs can be suppressed on the viewer even when suppress file was not set by command line arguments. This case the suppress will not be permanent. For this reason it is
+advised to always provide (the same) suppress file for the checks.
+
+### Skip file:
+Paths and source files which will not be checked. 
+This is useful to skip the checking of used source code libraries or system headers.
+
+For example:
+~~~~~~~~~~~~~~~~~~~~~
+/skip/all/source/in/path
+/do/not/check/this.file
+~~~~~~~~~~~~~~~~~~~~~
+
+###Enable/Disable checkers
+~~~~~~~~~~~~~~~~~~~~~
+-e ENABLE, --enable ENABLE
+-d DISABLE, --disable DISABLE
+~~~~~~~~~~~~~~~~~~~~~
+You can enable or disable checkers or checker groups. If you want to enable more checker groups use -e multiple times. To get the actual list of checkers run ```CodeChecer checkers``` command.
+For example if you want to enable core and security checkers, but want to disable alpha checkers use
+
+~~~~~~~~~~~~~~~~~~~~~
+CodeChecker check -e core -e security -d alpha ...
+~~~~~~~~~~~~~~~~~~~~~
+
+###Multithreaded Checking
+~~~~~~~~~~~~~~~~~~~~~
+-j JOBS, --jobs JOBS  Number of jobs.
+~~~~~~~~~~~~~~~~~~~~~
+CodeChecker will execute analysis on as many threads as specified after -j argument.
+
+
+
+###Various deployment possibilities
+
 The codechecker server can be started separately when desired.
 In that case multiple clients can use the same database to store new results or view old ones.
 
@@ -160,29 +245,6 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
-~~~~~~~~~~~~~~~~~~~~~
-
-## 5. debug mode:
-
-In debug mode CodeChecker can generate logs for failed build actions. The logs can be helpful debugging the checkers.
-
-### Suppress file:
-
-Suppress file can contain bug hashes and comments.
-Suppressed bugs will not be showed in the viewer by default.
-Usually a reason to suppress a bug is a false positive result (reporting a non-existent bug). Such false positives should be reported, so we can fix the checkers.
-A comment can be added to suppressed reports that describes why that report is false positive. You should not edit suppress file by hand. The server should handle it.
-The suppress file can be checked into the source code repository.
-Bugs can be suppressed on the viewer even when suppress file was not set by command line arguments. This case the suppress will not be permanent. For this reason it is
-advised to always provide (the same) suppress file for the checks.
-
-### Skip file:
-Paths and source files which will not be checked.
-
-For example:
-~~~~~~~~~~~~~~~~~~~~~
-/skip/all/source/in/path
-/do/not/check/this.file
 ~~~~~~~~~~~~~~~~~~~~~
 
 
