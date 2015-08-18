@@ -74,7 +74,7 @@ In case you want to analyze your whole project, do not forget to clean your buil
 
 ## 2. check mode:
 
-### basic usage
+### Basic Usage
 Database and connections will be automatically configured.
 The main script starts and setups everything what is required for analyzing a project (database server, tables ...).
 
@@ -91,7 +91,7 @@ CodeChecker check -w ~/codechecker_wp -n myProject -l ~/codechecker_wp/build_log
 ~~~~~~~~~~~~~~~~~~~~~
 
 
-### advanced usage
+### Advanced Usage
 
 ~~~~~~~~~~~~~~~~~~~~~
 CodeChecker check --help
@@ -278,14 +278,14 @@ After the server has started open the outputed link to the browser (localhost:11
 [11318] - Waiting for client requests on [localhost:11443]
 ~~~~~~~~~~~~~~~~~~~~~
 
-## Configuring separate machine for the database (run CodeChecker in a cluster)
+### Run CodeChecker distributed in a cluster
 You may want to configure codechecker to do the analysis on separate machines in a distributed way.
-Start the database on a central machine on a remotely accessible address and port and then run ```CodeChecker check``` on multiple machines 
+Start the postgres database on a central machine on a remotely accessible address and port and then run ```CodeChecker check``` on multiple machines 
 and specify the remote dbaddress and dbport use the same run name.
 
 Create and start an empty database to which the codechecker server can connect
 
-### Setup PostgreSQL (one time only)
+#### Setup PostgreSQL (one time only)
 
 Before the first use, you have to setup PostgreSQL.
 PostgreSQL stores its data files in a data directory, so before you start the PostgreSQL server you have to create and init this data directory.
@@ -296,12 +296,13 @@ Do the following steps:
 mkdir -p /path/to/pgsql_data
 initdb -U codechecker -D /path/to/pgsql_data -E "SQL_ASCII"
 # Start PostgreSQL server on port 8764
-postgres -U codechecker -D /path/to/pgsql_data -p 8764 &>pgsql_log &
+postgres -U codechecker -D /path/to/pgsql_data -p 9999 &>pgsql_log &
 ~~~~~~~~~~~~~~~~~~~~~
 
 ### Run CodeChecker on multiple hosts
 Then you can run codechecker on multiple hosts but using the same run name (in this example this is called "distributed_run". 
-You will need to use the -–update (incremental mode) to reuse the same run name.
+You will need to use the -–update (incremental mode) to reuse the same run name. In this example it is assumed that 
+postgres is listening on codechecker.central port 9999.
 ~~~~~~~~~~~~~~~~~~~~~
 #On host 1 we check module1
 CodeChecker check -w /tmp/codechecker_ws -b "cd module_1;make" --dbport 9999 --dbaddress codechecker.central -n distributed_run --update
@@ -317,8 +318,8 @@ PGPASSFILE environment variable should be set to a pgpass file
 For format and further information see PostgreSQL documentation:
 http://www.postgresql.org/docs/current/static/libpq-pgpass.html
 
-Debugging CodeChecker
--------------
+##Debugging CodeChecker
+
 Environment variables can be used to turn on CodeChecker debug mode.
 
 Turn on CodeChecker debug level logging
