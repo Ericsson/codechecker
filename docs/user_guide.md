@@ -74,7 +74,7 @@ In case you want to analyze your whole project, do not forget to clean your buil
 
 ## 2. check mode:
 
-### 2.1 basic usage
+### Basic Usage
 Database and connections will be automatically configured.
 The main script starts and setups everything what is required for analyzing a project (database server, tables ...).
 
@@ -91,13 +91,101 @@ CodeChecker check -w ~/codechecker_wp -n myProject -l ~/codechecker_wp/build_log
 ~~~~~~~~~~~~~~~~~~~~~
 
 
-### 2.2 advanced usage
+### Advanced Usage
+
+~~~~~~~~~~~~~~~~~~~~~
+CodeChecker check --help
+usage: CodeChecker.py check [-h] -w WORKSPACE -n NAME
+                            (-b COMMAND | -l LOGFILE) [-j JOBS]
+                            [-f CONFIGFILE] [-s SKIPFILE] [-u SUPPRESS]
+                            [-e ENABLE] [-d DISABLE] [-c]
+                            [--dbaddress DBADDRESS] [--dbport DBPORT]
+                            [--dbname DBNAME] [--dbusername DBUSERNAME]
+                            [--update]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -w WORKSPACE, --workspace WORKSPACE
+                        Directory where the codechecker can store analysis
+                        related data.
+  -n NAME, --name NAME  Name of the project.
+  -b COMMAND, --build COMMAND
+                        Build command.
+  -l LOGFILE, --log LOGFILE
+                        Path to the log file which is created during the
+                        build.
+  -j JOBS, --jobs JOBS  Number of jobs.
+  -f CONFIGFILE, --config CONFIGFILE
+                        Config file for the checkers.
+  -s SKIPFILE, --skip SKIPFILE
+                        Path to skip file.
+  -u SUPPRESS, --suppress SUPPRESS
+                        Path to suppress file.
+  -e ENABLE, --enable ENABLE
+                        Enable checker.
+  -d DISABLE, --disable DISABLE
+                        Disable checker.
+  -c, --clean           Delete temporary report files after sending data to
+                        database storage server.
+  --dbaddress DBADDRESS
+                        Postgres database server address.
+  --dbport DBPORT       Postgres database server port.
+  --dbname DBNAME       Name of the database.
+~~~~~~~~~~~~~~~~~~~~~
+
+### Suppress file:
+~~~~~~~~~~~~~~~~~~~~~
+-u SUPPRESS
+~~~~~~~~~~~~~~~~~~~~~
+
+Suppress file can contain bug hashes and comments.
+Suppressed bugs will not be showed in the viewer by default.
+Usually a reason to suppress a bug is a false positive result (reporting a non-existent bug). Such false positives should be reported, so we can fix the checkers.
+A comment can be added to suppressed reports that describes why that report is false positive. You should not edit suppress file by hand. The server should handle it.
+The suppress file can be checked into the source code repository.
+Bugs can be suppressed on the viewer even when suppress file was not set by command line arguments. This case the suppress will not be permanent. For this reason it is
+advised to always provide (the same) suppress file for the checks.
+
+### Skip file:
+~~~~~~~~~~~~~~~~~~~~~
+-s SKIPFILE, --skip SKIPFILE
+~~~~~~~~~~~~~~~~~~~~~
+
+Paths and source files which will not be checked. 
+This is useful to skip the checking of used source code libraries or system headers.
+
+For example:
+~~~~~~~~~~~~~~~~~~~~~
+/skip/all/source/in/path
+/do/not/check/this.file
+~~~~~~~~~~~~~~~~~~~~~
+
+###Enable/Disable checkers
+~~~~~~~~~~~~~~~~~~~~~
+-e ENABLE, --enable ENABLE
+-d DISABLE, --disable DISABLE
+~~~~~~~~~~~~~~~~~~~~~
+You can enable or disable checkers or checker groups. If you want to enable more checker groups use -e multiple times. To get the actual list of checkers run ```CodeChecer checkers``` command.
+For example if you want to enable core and security checkers, but want to disable alpha checkers use
+
+~~~~~~~~~~~~~~~~~~~~~
+CodeChecker check -e core -e security -d alpha ...
+~~~~~~~~~~~~~~~~~~~~~
+
+###Multithreaded Checking
+~~~~~~~~~~~~~~~~~~~~~
+-j JOBS, --jobs JOBS  Number of jobs.
+~~~~~~~~~~~~~~~~~~~~~
+CodeChecker will execute analysis on as many threads as specified after -j argument.
+
+
+###Various deployment possibilities
 
 The codechecker server can be started separately when desired.
 In that case multiple clients can use the same database to store new results or view old ones.
 
 
-### 2.2.1 Codechecker server and database on the same machine
+#### Codechecker server and database on the same machine
 Codechecker server and the database are running on the same machine but the database server is started manually.
 In this case the database handler and the database can be started manually by running the server command.
 The workspace needs to be provided for both the server and the check commands.
@@ -117,7 +205,7 @@ CodeChecker check  -w ~/codechecker_wp -n myProject -b "make -j 4" --dbname myPr
 ~~~~~~~~~~~~~~~~~~~~~
 
 
-### 2.2.2 Codechecker server and database are on different machines
+#### Codechecker server and database are on different machines
 It is possible that the codechecker server and the PostgreSQL database that contains the analysis results are on different machines. To setup PostgreSQL see later section.
 
 In this case the codechecker server can be started using the following command:
@@ -166,54 +254,17 @@ optional arguments:
 
 In debug mode CodeChecker can generate logs for failed build actions. The logs can be helpful debugging the checkers.
 
-### Suppress file:
-
-Suppress file can contain bug hashes and comments.
-Suppressed bugs will not be showed in the viewer by default.
-Usually a reason to suppress a bug is a false positive result (reporting a non-existent bug). Such false positives should be reported, so we can fix the checkers.
-A comment can be added to suppressed reports that describes why that report is false positive. You should not edit suppress file by hand. The server should handle it.
-The suppress file can be checked into the source code repository.
-Bugs can be suppressed on the viewer even when suppress file was not set by command line arguments. This case the suppress will not be permanent. For this reason it is
-advised to always provide (the same) suppress file for the checks.
-
-### Skip file:
-
-With a skip file you can filter which files should or shouldn't be checked.
-
-Each line in a skip file should start with a '-' or '+' character followed by a
-path [glob pattern][GLOB]. A minus character means that if a checked file path -
-including the headers - matches with the pattern, the file will not be checked.
-The plus character means the opposite: if a file path matches with the pattern,
-it will be checked. If there is no matching pattern, the file will be checked.
-If you want a white list, just add a '-*' pattern to the end of the file.
-
-CodeChecker reads the file from top to bottom and stops at the first matching
-pattern.
-
-For example:
-~~~~~~~~~~~~~~~~~~~~~
--/skip/all/source/in/directory*
--/do/not/check/this.file
-+/dir/check.this.file
--/dir/*
-~~~~~~~~~~~~~~~~~~~~~
-
-For example (using as a white list):
-~~~~~~~~~~~~~~~~~~~~~
-+/dir/check.this/*
--*
-~~~~~~~~~~~~~~~~~~~~~
-
-[GLOB]: https://en.wikipedia.org/wiki/Glob_(programming)
-
 ## Example Usage
+
+### Checking files
+
 Checking with some extra checkers disabled and enabled
 
 ~~~~~~~~~~~~~~~~~~~~~
 CodeChecker check -w ~/Develop/workspace -j 4 -b "cd ~/Libraries/myproject && make clean && make -j4" -s ~/Develop/skip.list -u ~/Develop/suppress.txt -e unix.Malloc -d core.uninitialized.Branch  -n MyLittleProject -c --dbport 9999 --dbname cctestdb
 ~~~~~~~~~~~~~~~~~~~~~
 
-## View results
+### View results
 
 To view the results CodeChecker sever needs to be started.
 
@@ -231,38 +282,50 @@ After the server has started open the outputed link to the browser (localhost:11
 [11318] - Waiting for client requests on [localhost:11443]
 ~~~~~~~~~~~~~~~~~~~~~
 
-## Separate machine for the database
-Create and start an empty database to which the codechecker server can connect
+### Run CodeChecker distributed in a cluster
+You may want to configure codechecker to do the analysis on separate machines in a distributed way.
+Start the postgres database on a central machine (in this example it is called codechecker.central) on a remotely accessible address and port and then run 
+```CodeChecker check``` on multiple machines (called host1 and host2), specify the remote dbaddress and dbport and use the same run name.
 
-### Setup PostgreSQL (one time only)
+Create and start an empty database to which the codechecker server can connect.
 
-This step is optional. You only need to set up PostgresSQL when you want to manage the database separately from CodeChecker.
-If you skip this step, CodeChecker will manage Postgres itself.
+#### Setup PostgreSQL (one time only)
+
 Before the first use, you have to setup PostgreSQL.
 PostgreSQL stores its data files in a data directory, so before you start the PostgreSQL server you have to create and init this data directory.
 I will call the data directory to pgsql_data.
 
 Do the following steps:
 ~~~~~~~~~~~~~~~~~~~~~
+#on machine codechecker.central
+
 mkdir -p /path/to/pgsql_data
 initdb -U codechecker -D /path/to/pgsql_data -E "SQL_ASCII"
+# Start PostgreSQL server on port 8764
+postgres -U codechecker -D /path/to/pgsql_data -p 9999 &>pgsql_log &
 ~~~~~~~~~~~~~~~~~~~~~
 
-### Starting PostgreSQL server
-You can run the server with the following command:
-
+#### Run CodeChecker on multiple hosts
+Then you can run codechecker on multiple hosts but using the same run name (in this example this is called "distributed_run". 
+You will need to use the -–update (incremental mode) to reuse the same run name. In this example it is assumed that 
+postgres is listening on codechecker.central port 9999.
 ~~~~~~~~~~~~~~~~~~~~~
-postgres -U codechecker -D /path/to/pgsql_data -p 8764 &>pgsql_log &
+#On host1 we check module1
+CodeChecker check -w /tmp/codechecker_ws -b "cd module_1;make" --dbport 9999 --dbaddress codechecker.central -n distributed_run --update
+
+#On host2 we check module2 
+CodeChecker check -w /tmp/codechecker_ws -b "cd module_2;make" --dbport 9999 --dbaddress codechecker.central -n disributed_run --update
 ~~~~~~~~~~~~~~~~~~~~~
 
-### PostgreSQL authentication
-If a CodeChecker is run with a user that is added later to the database authentication is required.
+
+#### PostgreSQL authentication (optional)
+If a CodeChecker is run with a user that needs database authentication, the
 PGPASSFILE environment variable should be set to a pgpass file
 For format and further information see PostgreSQL documentation:
 http://www.postgresql.org/docs/current/static/libpq-pgpass.html
 
-Debugging CodeChecker
--------------
+##Debugging CodeChecker
+
 Environment variables can be used to turn on CodeChecker debug mode.
 
 Turn on CodeChecker debug level logging
