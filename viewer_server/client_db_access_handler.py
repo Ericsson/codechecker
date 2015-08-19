@@ -147,6 +147,76 @@ class ThriftRequestHandler():
             sys.exit(1)
 
     # -----------------------------------------------------------------------
+    def __queryReport(self, reportId):
+        session = self.__session
+
+        try:
+            q = session.query(Report,
+                              File,
+                              ReportsToBuildActions,
+                              BuildAction,
+                              BugPathEvent,
+                              ModuleToReport,
+                              SuppressBug) \
+                .filter(Report.id == reportId) \
+                .outerjoin(File,
+                           Report.file_id == File.id) \
+                .outerjoin(ReportsToBuildActions,
+                           Report.id == ReportsToBuildActions.report_id) \
+                .outerjoin(BuildAction,
+                           ReportsToBuildActions.build_action_id ==
+                           BuildAction.id) \
+                .outerjoin(BugPathEvent,
+                           Report.end_bugevent == BugPathEvent.id) \
+                .outerjoin(ModuleToReport,
+                           Report.id == ModuleToReport.report_id) \
+                .outerjoin(SuppressBug,
+                           SuppressBug.hash == Report.bug_id)
+
+            results = q.limit(1).all()
+            if len(results) < 1:
+                raise shared.ttypes.RequestFailed(
+                    shared.ttypes.ErrorCode.DATABASE,
+                    "Report " + reportId + " not found!")
+
+            report, source_file, reptoba, buildaction, lbpe, module, \
+                suppress_bug = results[0]
+
+            last_event_pos = \
+                shared.ttypes.BugPathEvent(
+                    startLine=lbpe.line_begin,
+                    startCol=lbpe.col_begin,
+                    endLine=lbpe.line_end,
+                    endCol=lbpe.col_end,
+                    msg=lbpe.msg,
+                    fileId=lbpe.file_id,
+                    filePath=source_file.filepath)
+
+            if suppress_bug:
+                suppress_comment = suppress_bug.comment
+            else:
+                suppress_comment = None
+
+            return ReportData(
+                    bugHash=report.bug_id,
+                    checkedFile=source_file.filepath,
+                    checkerMsg=report.checker_message,
+                    suppressed=report.suppressed,
+                    reportId=report.id,
+                    fileId=source_file.id,
+                    lastBugPosition=last_event_pos,
+                    checkerId=report.checker_id,
+                    severity=report.severity,
+                    moduleName=module.module,
+                    suppressComment=suppress_comment)
+        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
+            msg = str(alchemy_ex)
+            LOG.error(msg)
+            raise shared.ttypes.RequestFailed(
+                shared.ttypes.ErrorCode.DATABASE,
+                msg)
+
+    # -----------------------------------------------------------------------
     def __queryResults(self, run_id, limit, offset, sort_types, report_filters):
 
         max_query_limit = constants.MAX_QUERY_SIZE
@@ -274,6 +344,10 @@ class ThriftRequestHandler():
             LOG.error(msg)
             raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE, msg)
 
+    # -----------------------------------------------------------------------
+    @timefunc
+    def getReport(self, reportId):
+        return self.__queryReport(reportId)
 
     # -----------------------------------------------------------------------
     @timefunc
@@ -963,7 +1037,7 @@ class ThriftRequestHandler():
 
         session = self.__session
         base_line_hashes, new_check_hashes = \
-                                self.__get_hashes_for_diff(session, 
+                                self.__get_hashes_for_diff(session,
                                                            base_run_id,
                                                            new_run_id)
 

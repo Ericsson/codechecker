@@ -6,6 +6,9 @@
 
 define([
   "dojo/_base/declare",
+  "dojo/hash",
+  "dojo/topic",
+  "dojo/io-query",
   "dijit/layout/BorderContainer",
   "dijit/layout/TabContainer",
   "dijit/layout/ContentPane",
@@ -14,8 +17,9 @@ define([
   "scripts/codecheckerviewer/OverviewHeader.js",
   "scripts/codecheckerviewer/FileViewBC.js",
   "scripts/codecheckerviewer/widgets/Pager.js",
-], function ( declare, BorderContainer, TabContainer, ContentPane, Dialog
-            , OverviewGrid, OverviewHeader, FileViewBC, Pager ) {
+], function ( declare, hash, topic, ioQuery, BorderContainer, TabContainer
+            , ContentPane, Dialog, OverviewGrid, OverviewHeader, FileViewBC
+            , Pager ) {
 return declare(TabContainer, {
 
   // overviewType ("run" or "diff")
@@ -28,13 +32,16 @@ return declare(TabContainer, {
     declare.safeMixin(that, args);
   },
 
-
   postCreate : function () {
     var that = this;
     that.inherited(arguments);
 
-
-    that.overviewBC = new BorderContainer();
+    that.overviewBC = new BorderContainer({
+      id     : that.id + '_overview',
+      onShow : function() {
+        that.openFileView(undefined, undefined);
+      }
+    });
 
     that.overviewGridCP = new ContentPane({
       region : "center",
@@ -81,19 +88,8 @@ return declare(TabContainer, {
         that.showDocumentation(that.overviewGrid.getItem(evt.rowIndex).checkerId[0]);
 
       } else if (evt.cell.field === "fileWithBugPos") {
-
-        that.openFileView( that.overviewGrid.getItem(evt.rowIndex).fileId[0]
-                         , that.overviewGrid.getItem(evt.rowIndex).checkedFile[0]
-                         , that.overviewGrid.getItem(evt.rowIndex).bugHash[0]
-                         , that.overviewGrid.getItem(evt.rowIndex).severity[0]
-                         , that.overviewGrid.getItem(evt.rowIndex).lastBugPosition[0]
-                         , that.overviewGrid.getItem(evt.rowIndex).reportId[0]
-                         , that.overviewGrid.getItem(evt.rowIndex).checkerId[0]
-                         , that.overviewGrid.getItem(evt.rowIndex).suppressed[0]
-                         , that.overviewGrid.getItem(evt.rowIndex).runId[0]
-                         , that.overviewType
-                         );
-
+        var row = that.overviewGrid.getItem(evt.rowIndex);
+        that.openFileView(row.reportId[0], row.runId[0]);
       }
     };
 
@@ -128,8 +124,73 @@ return declare(TabContainer, {
     that.overviewBC.addChild(that.overviewHeader);
 
     that.addChild(that.overviewBC);
+
+    topic.subscribe("/dojo/hashchange", function(changedHash) {
+      that.handleHashChange(changedHash);
+    });
+
+    // Restore previous state from cuttent hash (if any).
+    that.handleHashChange(hash());
   },
 
+  handleHashChange : function(changedHash) {
+    if (!changedHash) {
+      return;
+    }
+
+    var that = this;
+    var hashState = ioQuery.queryToObject(changedHash);
+    var ovId = CC_UTIL.getOverviewIdFromHashState(hashState);
+    if (!hashState || ovId != that.id) {
+      return;
+    }
+
+    var tabId = that.getFileViewId(hashState);
+    if (undefined !== dijit.byId(tabId)) {
+      that.selectChild(dijit.byId(tabId));
+      return;
+    }
+
+    // Maybe it's in the GRID. Use it as a cache.
+    var rowIndex = 0;
+    var row;
+    while ((row = that.overviewGrid.getItem(rowIndex)))
+    {
+      if (row.reportId[0] == hashState.fvReportId) {
+        break;
+      }
+      rowIndex++;
+    }
+
+    if (row) {
+      var reportData = {
+        checkerId       : row.checkerId[0],
+        bugHash         : row.bugHash[0],
+        checkedFile     : row.checkedFile[0],
+        checkerMsg      : '',
+        reportId        : row.reportId[0],
+        suppressed      : row.suppressed[0],
+        fileId          : row.fileId[0],
+        lastBugPosition : row.lastBugPosition[0],
+        severity        : row.severity[0],
+        moduleName      : '',
+        suppressComment : ''
+      }
+
+      that.handleOpenFileView(reportData, parseInt(hashState.fvRunId), tabId);
+    } else {
+      // Need to query
+      CC_SERVICE.getReport(parseInt(hashState.fvReportId), function(reportData){
+        if (typeof reportData === "string") {
+          console.error("getReport failed: " + reportData);
+          return;
+        }
+
+        that.handleOpenFileView(reportData, parseInt(hashState.fvRunId), tabId);
+        hash(changedHash);
+      });
+    }
+  },
 
   showDocumentation : function(checkerId) {
     var checkerDocDialog = new Dialog({
@@ -140,28 +201,44 @@ return declare(TabContainer, {
     checkerDocDialog.show();
   },
 
-
-  openFileView : function( fileId, checkedFile, bugHash, severity, lastBugPosition
-                        , reportId, currCheckerId, suppressed, runId, overviewType) {
+  getFileViewId : function(hashState) {
     var that = this;
 
+    if (hashState.fvReportId && hashState.fvRunId) {
+      return that.id + "_" + hashState.fvReportId + "_" + hashState.fvRunId;
+    }
 
+    return that.id + "_overview";
+  },
+
+  openFileView : function(reportId, runId) {
+    var that = this;
+    var hashState = ioQuery.queryToObject(hash());
+    hashState.fvReportId = reportId;
+    hashState.fvRunId = runId;
+    hash(ioQuery.objectToQuery(hashState));
+  },
+
+  handleOpenFileView : function(reportData, runId, tabId) {
+    var that = this;
     var newFileViewBC = new FileViewBC({
-      fileId          : fileId,
-      checkedFile     : checkedFile,
-      bugHash         : bugHash,
-      severity        : severity,
-      lastBugPosition : lastBugPosition,
-      reportId        : reportId,
+      id              : tabId,
+      fileId          : reportData.fileId,
+      checkedFile     : reportData.checkedFile,
+      bugHash         : reportData.bugHash,
+      severity        : reportData.severity,
+      lastBugPosition : reportData.lastBugPosition,
+      reportId        : reportData.reportId,
       myOverviewTC    : that,
-      currCheckerId   : currCheckerId,
-      suppressed      : suppressed,
+      currCheckerId   : reportData.checkerId,
+      suppressed      : reportData.suppressed,
       runId           : runId,
-      overviewType    : overviewType
+      onShow          : function() {
+        that.openFileView(reportData.reportId, runId);
+      }
     });
 
     that.addChild(newFileViewBC);
-
     that.selectChild(newFileViewBC);
   },
 
