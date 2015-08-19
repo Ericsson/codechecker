@@ -147,6 +147,10 @@ Bugs can be suppressed on the viewer even when suppress file was not set by comm
 advised to always provide (the same) suppress file for the checks.
 
 ### Skip file:
+~~~~~~~~~~~~~~~~~~~~~
+-s SKIPFILE, --skip SKIPFILE
+~~~~~~~~~~~~~~~~~~~~~
+
 Paths and source files which will not be checked. 
 This is useful to skip the checking of used source code libraries or system headers.
 
@@ -181,7 +185,7 @@ The codechecker server can be started separately when desired.
 In that case multiple clients can use the same database to store new results or view old ones.
 
 
-### Codechecker server and database on the same machine
+#### Codechecker server and database on the same machine
 Codechecker server and the database are running on the same machine but the database server is started manually.
 In this case the database handler and the database can be started manually by running the server command.
 The workspace needs to be provided for both the server and the check commands.
@@ -201,7 +205,7 @@ CodeChecker check  -w ~/codechecker_wp -n myProject -b "make -j 4" --dbname myPr
 ~~~~~~~~~~~~~~~~~~~~~
 
 
-### Codechecker server and database are on different machines
+#### Codechecker server and database are on different machines
 It is possible that the codechecker server and the PostgreSQL database that contains the analysis results are on different machines. To setup PostgreSQL see later section.
 
 In this case the codechecker server can be started using the following command:
@@ -246,7 +250,7 @@ optional arguments:
   -h, --help            show this help message and exit
 ~~~~~~~~~~~~~~~~~~~~~
 
-### 5. debug mode:
+## 5. debug mode:
 
 In debug mode CodeChecker can generate logs for failed build actions. The logs can be helpful debugging the checkers.
 
@@ -280,10 +284,10 @@ After the server has started open the outputed link to the browser (localhost:11
 
 ### Run CodeChecker distributed in a cluster
 You may want to configure codechecker to do the analysis on separate machines in a distributed way.
-Start the postgres database on a central machine on a remotely accessible address and port and then run ```CodeChecker check``` on multiple machines 
-and specify the remote dbaddress and dbport use the same run name.
+Start the postgres database on a central machine (in this example it is called codechecker.central) on a remotely accessible address and port and then run 
+```CodeChecker check``` on multiple machines (called host1 and host2), specify the remote dbaddress and dbport and use the same run name.
 
-Create and start an empty database to which the codechecker server can connect
+Create and start an empty database to which the codechecker server can connect.
 
 #### Setup PostgreSQL (one time only)
 
@@ -293,6 +297,8 @@ I will call the data directory to pgsql_data.
 
 Do the following steps:
 ~~~~~~~~~~~~~~~~~~~~~
+#on machine codechecker.central
+
 mkdir -p /path/to/pgsql_data
 initdb -U codechecker -D /path/to/pgsql_data -E "SQL_ASCII"
 # Start PostgreSQL server on port 8764
@@ -304,10 +310,10 @@ Then you can run codechecker on multiple hosts but using the same run name (in t
 You will need to use the -–update (incremental mode) to reuse the same run name. In this example it is assumed that 
 postgres is listening on codechecker.central port 9999.
 ~~~~~~~~~~~~~~~~~~~~~
-#On host 1 we check module1
+#On host1 we check module1
 CodeChecker check -w /tmp/codechecker_ws -b "cd module_1;make" --dbport 9999 --dbaddress codechecker.central -n distributed_run --update
 
-#On host 2 we check module2 
+#On host2 we check module2 
 CodeChecker check -w /tmp/codechecker_ws -b "cd module_2;make" --dbport 9999 --dbaddress codechecker.central -n disributed_run --update
 ~~~~~~~~~~~~~~~~~~~~~
 
