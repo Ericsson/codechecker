@@ -150,14 +150,16 @@ advised to always provide (the same) suppress file for the checks.
 ~~~~~~~~~~~~~~~~~~~~~
 -s SKIPFILE, --skip SKIPFILE
 ~~~~~~~~~~~~~~~~~~~~~
-
-Paths and source files which will not be checked. 
-This is useful to skip the checking of used source code libraries or system headers.
+With a skip file you can filter which files should or shouldn't be checked.
+Each line in a skip file should start with a '-' or '+' character followed by a path glob pattern. A minus character means that if a checked file path - including the headers - matches with the pattern, the file will not be checked. The plus character means the opposite: if a file path matches with the pattern, it will be checked.
+CodeChecker reads the file from top to bottom and stops at the first matching pattern.
 
 For example:
 ~~~~~~~~~~~~~~~~~~~~~
-/skip/all/source/in/path
-/do/not/check/this.file
+-/skip/all/source/in/directory*
+-/do/not/check/this.file
++/dir/check.this.file
+-/dir/*
 ~~~~~~~~~~~~~~~~~~~~~
 
 ###Enable/Disable checkers
