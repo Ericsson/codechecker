@@ -497,11 +497,11 @@ def run_server(dbUsername, port, db_name, dbhost, dbport, db_version_info, callb
             session.commit()
         elif db_version_info.is_compatible(version.major,
                                            version.minor):
-            LOG.debug('Version mismatch. Expected database version: ' +
+            LOG.error('Version mismatch. Expected database version: ' +
                       str(db_version_info))
             version_from_db = 'v'+str(version.major)+'.'+str(version.minor)
-            LOG.debug('Version from the database is: ' + version_from_db)
-            LOG.debug('Please update your database.')
+            LOG.error('Version from the database is: ' + version_from_db)
+            LOG.error('Please update your database.')
             sys.exit(1)
 
     except sqlalchemy.exc.SQLAlchemyError as alch_err:
