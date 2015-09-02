@@ -181,7 +181,7 @@ return declare(null, {
   },
 
   /**
-   * Queries new results for a diff view (helper method for _queryDiff). 
+   * Queries new results for a diff view (helper method for _queryDiff).
    *
    * @param query a query in diff view format
    * @param options query options
@@ -337,6 +337,19 @@ return declare(null, {
     options.start = options.start || 0;
     options.count = options.count || codeCheckerDBAccess.MAX_QUERY_SIZE;
     options.sort  = options.sort  || [];
+
+    if (options.defaultSort) {
+      // merge default sort options
+      options.defaultSort.forEach(function(item) {
+        var overridden = options.sort.filter(function(sortItem) {
+          return sortItem.attribute === item.attribute;
+        });
+
+        if (overridden.length === 0) {
+          options.sort.push(item);
+        }
+      });
+    }
 
     var ovType = String(query.overviewType);
     var results;

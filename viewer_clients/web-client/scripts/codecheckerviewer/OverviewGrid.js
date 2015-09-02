@@ -96,7 +96,7 @@ return declare(DataGrid, {
       overviewType  : "run",
       runId         : that.myOverviewTC.runId,
       filters       : [],
-      sort          : that._getDefaultSortOptions()
+      defaultSort   : that._getDefaultSortOptions()
     };
 
     for (var i = 0 ; i < filterObjArray.length ; ++i) {
@@ -146,7 +146,7 @@ return declare(DataGrid, {
       newResultsFilters         : [],
       resolvedResultsFilters    : [],
       unresolvedResultsFilters  : [],
-      sort                      : that._getDefaultSortOptions()
+      defaultSort               : that._getDefaultSortOptions()
     };
 
     for (var i = 0 ; i < filterObjArray.length ; ++i) {
