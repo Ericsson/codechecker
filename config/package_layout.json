@@ -18,13 +18,13 @@
         "js_thrift": "www/scripts/plugins/thrift",
         "config": "config",
         "ld_logger": "ld_logger",
-        "codechecker_modules": "lib/python2.7",
-        "codechecker_lib": "lib/python2.7/codechecker_lib",
-        "codechecker_gen": "lib/python2.7/codechecker_gen",
-        "codechecker_db_model": "lib/python2.7/db_model",
-        "storage_server_modules": "lib/python2.7/storage_server",
-        "viewer_server_modules": "lib/python2.7/viewer_server",
-        "cmdline_client": "lib/python2.7/cmdline_client"
+        "codechecker_modules": "cc_lib/python2.7",
+        "codechecker_lib": "cc_lib/python2.7/codechecker_lib",
+        "codechecker_gen": "cc_lib/python2.7/codechecker_gen",
+        "codechecker_db_model": "cc_lib/python2.7/db_model",
+        "storage_server_modules": "cc_lib/python2.7/storage_server",
+        "viewer_server_modules": "cc_lib/python2.7/viewer_server",
+        "cmdline_client": "cc_lib/python2.7/cmdline_client"
     },
     "runtime" : {
         "ld_logger_bin" : "bin/ldlogger",
