@@ -6,6 +6,7 @@
 
 import os
 import sys
+import traceback
 
 from codechecker_lib import build_action
 from codechecker_lib import logger
@@ -80,6 +81,7 @@ def parse_log(logfilepath):
                 LOG.error('The compile database is empty.')
             else:
                 LOG.error('The compile database is not valid.')
+            print(traceback.format_exc())
             raise ex
 
     LOG.info('Parsing log file done.')
