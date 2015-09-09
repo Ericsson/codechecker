@@ -41,17 +41,17 @@ def is_localhost(address):
     IP-addresses from the system.
     '''
 
-    valid_values = ['localhost', '0.0.0.0','*']
+    valid_values = ['localhost', '0.0.0.0', '*']
 
     try:
         valid_values.append(socket.gethostbyname('localhost'))
-    except Exception as ex:
+    except Exception:
         # failed to get ip address for localhost
         pass
 
     try:
         valid_values.append(socket.gethostbyname(socket.gethostname()))
-    except Exception as ex:
+    except Exception:
         # failed to get ip address for host_name
         pass
 

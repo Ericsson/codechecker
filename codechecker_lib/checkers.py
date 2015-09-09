@@ -9,7 +9,6 @@ from codechecker import globalConfig
 from codechecker import logger
 
 
-# ------------------------------------------------------------------------------
 def get_env_checkers_list(env_name):
     env_set_checkers = util.get_env_var(env_name)
 
@@ -25,8 +24,6 @@ def get_env_checkers_list(env_name):
         return None
 
 
-
-# ------------------------------------------------------------------------------
 def get_enabled_checkers():
     config = globalConfig.GlobalConfig()
     env_checkers = get_env_checkers_list(config.envEnableCheckersName)
@@ -34,7 +31,6 @@ def get_enabled_checkers():
     return env_checkers
 
 
-# ------------------------------------------------------------------------------
 def get_disabled_checkers():
     config = globalConfig.GlobalConfig()
     env_checkers = get_env_checkers_list(config.envDisableCheckersName)

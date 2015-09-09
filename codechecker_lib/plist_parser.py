@@ -15,7 +15,7 @@ from codechecker_lib import logger
 
 LOG = logger.get_new_logger('PLIST_PARSER')
 
-# -----------------------------------------------------------------------------
+
 class GenericEquality(object):
 
     def __eq__(self, other):
@@ -102,7 +102,6 @@ def parse_plist(path):
     plist = plistlib.readPlist(path)
     files = plist['files']
 
-
     bugs = []
     for diag in plist['diagnostics']:
         current = Bug(files[diag['location']['file']],
@@ -142,11 +141,10 @@ def parse_plist(path):
             current.checker_name = plist_helper.get_check_name(current.msg)
             LOG.info('Guessed check name: ' + current.checker_name)
 
-
         current.hash_type = int(diag.get('hash_type', 0))
         if current.hash_type:
             current.hash_value = diag['hash_value']
-        else: # generate some hash anyway, FIXME
+        else:  # generate some hash anyway, FIXME
             LOG.warning("Hash value wasn't found in the plist file. "
                         'Read the user guide!')
             current.hash_value = plist_helper.gen_bug_hash(current)

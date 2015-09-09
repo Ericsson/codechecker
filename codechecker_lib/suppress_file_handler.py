@@ -21,7 +21,7 @@ LOG = logger.get_new_logger('SUPPRESS_FILE_HANDLER')
 COMMENT_SEPARATOR = '||'
 HASH_TYPE_SEPARATOR = '#'
 
-# ---------------------------------------------------------------------------
+
 def get_hash_and_path(suppress_file):
 
     paths, hashes = {}, {}
@@ -36,7 +36,7 @@ def get_hash_and_path(suppress_file):
         with codecs.open(suppress_file, 'r', 'UTF-8') as s_file:
             for line in s_file:
                 if line == '':
-                    #skip empty lines
+                    # skip empty lines
                     continue
                 res = line.split(COMMENT_SEPARATOR)
                 if len(res) == 2:
@@ -87,7 +87,7 @@ def write_to_suppress_file(supp_file, value, hash_type, comment=''):
         LOG.error("Failed to write: %s" % (supp_file))
         return False
 
-# ---------------------------------------------------------------------------
+
 def remove_from_suppress_file(supp_file, value, hash_type):
 
     LOG.debug('Removing ' + value + ' from \n' + supp_file)

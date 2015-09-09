@@ -12,7 +12,7 @@ import hashlib
 import linecache
 import os
 import re
-import sys
+
 
 def gen_bug_hash(bug):
     line_content = linecache.getline(bug.file_path, bug.from_line)
@@ -31,13 +31,13 @@ def levenshtein(a, b):  # http://hetland.org/coding/python/levenshtein.py
     n, m = len(a), len(b)
     if n > m:
         # Make sure n <= m, to use O(min(n,m)) space
-        a,b = b,a
-        n,m = m,n
+        a, b = b, a
+        n, m = m, n
 
     current = range(n+1)
     for i in range(1, m+1):
         previous, current = current, [i]+[0]*n
-        for j in range(1,n+1):
+        for j in range(1, n+1):
             add, delete = previous[j]+1, current[j-1]+1
             change = previous[j-1]
             if a[j-1] != b[i-1]:
@@ -65,7 +65,7 @@ def get_check_name(current_msg):
 
 # this map needs extending
 checker_message_map = \
-{
+    {
     "": "NOT FOUND",
     "Access out-of-bound array element (buffer overflow)": "alpha.security.ArrayBound",
     "Address of stack memory associated with local variable  returned to caller": "core.StackAddressEscape",

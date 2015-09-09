@@ -8,9 +8,6 @@ Main viewer server starts a http server which handles thrift clienta
 and browser requests
 '''
 import os
-import urlparse
-import codecs
-import shutil
 import posixpath
 import urllib
 import errno
@@ -23,11 +20,8 @@ from sqlalchemy.orm import scoped_session
 from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
 from SimpleHTTPServer import SimpleHTTPRequestHandler
 
-from thrift.transport import TSocket
 from thrift.transport import TTransport
-from thrift.server import TServer
 from thrift.protocol import TJSONProtocol
-from thrift.server import THttpServer
 
 from codeCheckerDBAccess import codeCheckerDBAccess
 from codeCheckerDBAccess.ttypes import *
@@ -39,7 +33,6 @@ from codechecker_lib import logger
 LOG = logger.get_new_logger('DB ACCESS')
 
 
-# -----------------------------------------------------------------------------
 class RequestHander(SimpleHTTPRequestHandler):
     '''
     Handle thrift and browser requests
@@ -80,7 +73,7 @@ class RequestHander(SimpleHTTPRequestHandler):
         itrans = TTransport.TFileObjectTransport(self.rfile)
         otrans = TTransport.TFileObjectTransport(self.wfile)
         itrans = TTransport.TBufferedTransport(itrans,
-                                        int(self.headers['Content-Length']))
+                                               int(self.headers['Content-Length']))
         otrans = TTransport.TMemoryBuffer()
 
         iprot = input_protocol_factory.getProtocol(itrans)
@@ -110,17 +103,15 @@ class RequestHander(SimpleHTTPRequestHandler):
         except Exception as exn:
             LOG.error(str(exn))
             self.send_error(404, "Request failed.")
-            #self.send_header("content-type", "application/x-thrift")
-            #self.end_headers()
-            #self.wfile.write('')
+            # self.send_header("content-type", "application/x-thrift")
+            # self.end_headers()
+            # self.wfile.write('')
             return
-
 
     def list_directory(self, path):
         ''' disable directory listing '''
         self.send_error(404, "No permission to list directory")
         return None
-
 
     def translate_path(self, path):
         '''
@@ -138,12 +129,12 @@ class RequestHander(SimpleHTTPRequestHandler):
         for word in words:
             drive, word = os.path.splitdrive(word)
             head, word = os.path.split(word)
-            if word in (os.curdir, os.pardir): continue
+            if word in (os.curdir, os.pardir):
+                continue
             path = os.path.join(path, word)
         return path
 
 
-# -----------------------------------------------------------------------------
 class CCSimpleHttpServer(HTTPServer):
     '''
     Simple http server to handle requests from the clients
@@ -202,9 +193,9 @@ class CCSimpleHttpServer(HTTPServer):
         # LOG.debug('PROCESSING request: '+str(sock_name)+' from: '
         #           +str(client_address))
             self.__request_handlers.apply_async(self.process_request_thread,
-                                            (request, client_address))
+                                                (request, client_address))
 
-# ----------------------------------------------------------------------------
+
 def start_server(package_data, port, db_conn_string, suppress_handler,
                  not_host_only, db_version_info):
     '''
@@ -229,7 +220,7 @@ def start_server(package_data, port, db_conn_string, suppress_handler,
                                      suppress_handler,
                                      db_version_info)
 
-    LOG.info('Waiting for client requests on ['
-             + access_server_host + ':' + str(port) + ']')
+    LOG.info('Waiting for client requests on [' +
+             access_server_host + ':' + str(port) + ']')
     http_server.serve_forever()
     LOG.info('done.')

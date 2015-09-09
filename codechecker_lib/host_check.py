@@ -40,7 +40,6 @@ def check_zlib():
 # -----------------------------------------------------------------------------
 def check_psycopg2():
     try:
-        import psycopg2
         return True
     except Exception as ex:
         LOG.error(str(ex))
