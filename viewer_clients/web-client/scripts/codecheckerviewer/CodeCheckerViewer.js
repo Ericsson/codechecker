@@ -300,14 +300,14 @@ return declare(null, {
     });
 
     try {
-      newOverviewTC.overviewGrid.fillOverviewGrid(newOverviewTC.getStateOfFilters(),
+      /*newOverviewTC.overviewGrid.fillOverviewGrid(newOverviewTC.getStateOfFilters(),
         newOverviewTC.overviewPager.getPagerParams());
 
-      newOverviewTC.overviewPager.disableArrowsAsNeeded();
+      newOverviewTC.overviewPager.disableArrowsAsNeeded();*/
       that.mainTC.addChild(newOverviewTC);
       that.mainTC.selectChild(newOverviewTC);
 
-      newOverviewTC.overviewGrid.render();
+      newOverviewTC.overviewGrid.startup();
     } catch (err) {
       newOverviewTC.destroyRecursive();
       console.log(err);
@@ -336,11 +336,10 @@ return declare(null, {
     });
 
     try {
-      newOverviewTC.overviewGrid.fillOverviewGrid(newOverviewTC.getStateOfFilters());
       that.mainTC.addChild(newOverviewTC);
       that.mainTC.selectChild(newOverviewTC);
 
-      newOverviewTC.overviewGrid.render();
+      newOverviewTC.overviewGrid.startup();
     } catch (err) {
 
       newOverviewTC.destroyRecursive();

@@ -153,23 +153,13 @@ class ThriftRequestHandler():
         try:
             q = session.query(Report,
                               File,
-                              ReportsToBuildActions,
-                              BuildAction,
                               BugPathEvent,
-                              ModuleToReport,
                               SuppressBug) \
                 .filter(Report.id == reportId) \
                 .outerjoin(File,
                            Report.file_id == File.id) \
-                .outerjoin(ReportsToBuildActions,
-                           Report.id == ReportsToBuildActions.report_id) \
-                .outerjoin(BuildAction,
-                           ReportsToBuildActions.build_action_id ==
-                           BuildAction.id) \
                 .outerjoin(BugPathEvent,
                            Report.end_bugevent == BugPathEvent.id) \
-                .outerjoin(ModuleToReport,
-                           Report.id == ModuleToReport.report_id) \
                 .outerjoin(SuppressBug,
                            SuppressBug.hash == Report.bug_id)
 
@@ -179,8 +169,7 @@ class ThriftRequestHandler():
                     shared.ttypes.ErrorCode.DATABASE,
                     "Report " + reportId + " not found!")
 
-            report, source_file, reptoba, buildaction, lbpe, module, \
-                suppress_bug = results[0]
+            report, source_file, lbpe, suppress_bug = results[0]
 
             last_event_pos = \
                 shared.ttypes.BugPathEvent(
@@ -207,7 +196,6 @@ class ThriftRequestHandler():
                     lastBugPosition=last_event_pos,
                     checkerId=report.checker_id,
                     severity=report.severity,
-                    moduleName=module.module,
                     suppressComment=suppress_comment)
         except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
             msg = str(alchemy_ex)

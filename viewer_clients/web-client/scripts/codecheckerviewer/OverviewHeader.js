@@ -13,21 +13,16 @@ return declare(ContentPane, {
 
   // myOverviewTC
 
-
   constructor : function(args) {
     var that = this;
     declare.safeMixin(that, args);
 
-
     that.filters = [];
   },
-
-
 
   postCreate : function() {
     var that = this;
     that.inherited(arguments);
-
 
     that.mainFilter = new Filter({
       myOverviewTC : that.myOverviewTC
@@ -40,20 +35,16 @@ return declare(ContentPane, {
     that.addChild(that.mainFilter);
   },
 
-
-
   getStateOfFilters : function() {
     var that = this;
-
-
     var filterObjArray = [];
 
     for (var i = 0 ; i < that.filters.length ; ++i) {
 
-      var supprState       = that.filters[i].selectSuppr.getValue();
-      var severityState    = that.filters[i].selectSeverity.getValue();
-      var pathState        = that.filters[i].textBoxPath.getValue();
-      var checkerTypeState = that.filters[i].selectCheckerType.getValue();
+      var supprState       = that.filters[i].selectSuppr.get("value");
+      var severityState    = that.filters[i].selectSeverity.get("value");
+      var pathState        = that.filters[i].textBoxPath.get("value");
+      var checkerTypeState = that.filters[i].selectCheckerType.get("value");
 
       if (that.overviewType === 'run') {
         filterObjArray.push({
@@ -63,7 +54,7 @@ return declare(ContentPane, {
           checkerTypeState: checkerTypeState
         });
       } else if (that.overviewType === 'diff') {
-        var resolvState = that.filters[i].selectResolv.getValue();
+        var resolvState = that.filters[i].selectResolv.get("value");
         filterObjArray.push({
           supprState      : supprState,
           resolvState     : resolvState,
@@ -78,12 +69,8 @@ return declare(ContentPane, {
     return filterObjArray;
   },
 
-
-
   addFilter : function() {
     var that = this;
-
-
     var newFilter = new Filter({
       myOverviewTC : that.myOverviewTC
     });
@@ -105,18 +92,13 @@ return declare(ContentPane, {
     that.myOverviewTC.overviewBC.resize();
   },
 
-
-
   removeFilter : function(filter) {
     var that = this;
-
-
     var lastFilter = that.filters.pop();
 
     that.removeChild(lastFilter);
 
     lastFilter = that.filters[that.filters.length - 1];
-
     lastFilter.addPlusButton();
 
     if (lastFilter !== that.mainFilter) { lastFilter.addMinusButton(); }
@@ -125,19 +107,9 @@ return declare(ContentPane, {
     that.myOverviewTC.overviewBC.resize();
   },
 
-
-
   onRemoveOrAdd : function() {
     var that = this;
-
-    if (that.myOverviewTC.overviewType === "run") {
-      that.myOverviewTC.overviewPager.refreshPager();
-    } else if (that.myOverviewTC.overviewType === "diff") {
-      that.myOverviewTC.overviewGrid.refreshGrid();
-    }
+    that.myOverviewTC.overviewGrid.refreshGrid();
   }
-
-
-
 
 });});

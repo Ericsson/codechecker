@@ -99,9 +99,13 @@ return declare(BorderContainer, {
     });
 
     that.bugStMoTr = new BugStMoTr({
+      runId           : runId,
       fileId          : fileId,
       filePath        : checkedFile,
-      reportDataStore : myOverviewTC.overviewGrid.store
+      onLoaded        : function() {
+        that.bugStMoTr.bugTree.set("path", ["root", severity, bugHash,
+          bugHash + "_0"]);
+      }
     });
 
     that.bugStMoTr.bugTree.onClick = function(item) {
@@ -191,10 +195,6 @@ return declare(BorderContainer, {
     if (suppressed === true) {
       editorHeader.suppressButton.setDisabled(true);
     }
-
-
-    that.bugStMoTr.bugTree.set("path", ["root", severity, bugHash]);
-    setTimeout(function(){ that.bugStMoTr.bugTree.set("path", ["root", severity, bugHash, bugHash + "_0"]); }, 0);
 
     editor._setContentAttr(CC_SERVICE.getSourceFileData(fileId, true).fileContent);
     editor.setFileName(that.viewedFile.split("/").pop());

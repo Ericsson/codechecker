@@ -147,12 +147,7 @@ return declare(_WidgetBase, {
 
   pathAndSelectOnChange : function() {
     var that = this;
-
-    if (that.myOverviewTC.overviewType === "run") {
-      that.myOverviewTC.overviewPager.refreshPager();
-    } else if (that.myOverviewTC.overviewType === "diff") {
-      that.myOverviewTC.overviewGrid.refreshGrid();
-    }
+    that.myOverviewTC.overviewGrid.refreshGrid();
   }
 
 
