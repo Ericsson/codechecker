@@ -12,7 +12,7 @@ import datetime
 from collections import defaultdict
 
 import sqlalchemy
-from sqlalchemy import asc, desc, insert, exc
+from sqlalchemy import asc, desc
 from sqlalchemy.sql import or_, and_, func
 
 from db_model.orm_model import *
@@ -59,7 +59,6 @@ def timefunc(function):
         return release_wrapper
 
 
-# -----------------------------------------------------------------------
 def conv(text):
     '''
     Convert * to % got from clients for the database queries
@@ -69,7 +68,6 @@ def conv(text):
     return text.replace('*', '%')
 
 
-# -----------------------------------------------------------------------
 def construct_report_filter(report_filters):
     '''
     construct the report filter for reports and suppressed reports
@@ -112,7 +110,6 @@ def construct_report_filter(report_filters):
     return filter_expression
 
 
-# -----------------------------------------------------------------------
 class ThriftRequestHandler():
     '''
     Connect to database and handle thrift client requests
@@ -136,8 +133,8 @@ class ThriftRequestHandler():
             version_from_db = 'v'+str(version.major)+'.'+str(version.minor)
             if db_version_info.is_compatible(version.major,
                                              version.minor):
-                LOG.error('Version mismatch. Expected database version: '
-                          + str(db_version_info))
+                LOG.error('Version mismatch. Expected database version: ' +
+                          str(db_version_info))
                 LOG.error('Version from the database is: ' + version_from_db)
                 LOG.error('Please update your database.')
                 sys.exit(1)
@@ -146,7 +143,6 @@ class ThriftRequestHandler():
             LOG.debug('Please check your config')
             sys.exit(1)
 
-    # -----------------------------------------------------------------------
     def __queryReport(self, reportId):
         session = self.__session
 
@@ -204,26 +200,25 @@ class ThriftRequestHandler():
                 shared.ttypes.ErrorCode.DATABASE,
                 msg)
 
-    # -----------------------------------------------------------------------
     def __queryResults(self, run_id, limit, offset, sort_types, report_filters):
 
         max_query_limit = constants.MAX_QUERY_SIZE
         if limit > max_query_limit:
-            LOG.debug('Query limit ' + str(limit)
-                      + ' was larger than max query limit '
-                      + str(max_query_limit) + ', setting limit to '
-                      + str(max_query_limit))
+            LOG.debug('Query limit ' + str(limit) +
+                      ' was larger than max query limit ' +
+                      str(max_query_limit) + ', setting limit to ' +
+                      str(max_query_limit))
             limit = max_query_limit
 
         session = self.__session
 
         # get a list of sort_types which will be a nested orderby
         sort_type_map = {}
-        sort_type_map[SortType.FILENAME] =  File.filepath
-        sort_type_map[SortType.CHECKER_NAME] =  Report.checker_id
+        sort_type_map[SortType.FILENAME] = File.filepath
+        sort_type_map[SortType.CHECKER_NAME] = Report.checker_id
         sort_type_map[SortType.SEVERITY] = Report.severity
 
-        #mapping the sqlalchemy functions
+        # mapping the sqlalchemy functions
         order_type_map = {}
         order_type_map[Order.ASC] = asc
         order_type_map[Order.DESC] = desc
@@ -296,7 +291,6 @@ class ThriftRequestHandler():
             LOG.error(msg)
             raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE, msg)
 
-    # -----------------------------------------------------------------------
     @timefunc
     def getRunData(self):
 
@@ -304,14 +298,14 @@ class ThriftRequestHandler():
         results = []
         try:
             # count the reports subquery
-            stmt = session.query(Report.run_id, \
+            stmt = session.query(Report.run_id,
                                  func.count('*').label('report_count')) \
                                  .filter(Report.suppressed == False) \
                                  .group_by(Report.run_id) \
                                  .subquery()
 
             q = session.query(Run, stmt.c.report_count) \
-                              .outerjoin(stmt, Run.id==stmt.c.run_id) \
+                              .outerjoin(stmt, Run.id == stmt.c.run_id) \
                               .order_by(Run.date)
 
             for instance, reportCount in q:
@@ -332,12 +326,10 @@ class ThriftRequestHandler():
             LOG.error(msg)
             raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE, msg)
 
-    # -----------------------------------------------------------------------
     @timefunc
     def getReport(self, reportId):
         return self.__queryReport(reportId)
 
-    # -----------------------------------------------------------------------
     @timefunc
     def getRunResults(self, run_id, limit, offset, sort_types, report_filters):
 
@@ -347,7 +339,6 @@ class ThriftRequestHandler():
                                    sort_types,
                                    report_filters)
 
-    # -----------------------------------------------------------------------
     @timefunc
     def getRunResultCount(self, run_id, report_filters):
 
@@ -378,7 +369,6 @@ class ThriftRequestHandler():
             LOG.error(msg)
             raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE, msg)
 
-    # -----------------------------------------------------------------------
     @timefunc
     def __construct_bug_event_list(self, session, start_bug_event):
 
@@ -386,15 +376,13 @@ class ThriftRequestHandler():
         bug_events = []
         event = session.query(BugPathEvent).get(start_bug_event)
 
-
         file_path = file_path_cache.get(event.file_id)
         if not file_path:
             f = session.query(File).get(event.file_id)
             file_path = f.filepath
             file_path_cache[event.file_id] = file_path
 
-
-        bug_events.append((event,file_path))
+        bug_events.append((event, file_path))
 
         while event.next is not None:
 
@@ -405,15 +393,13 @@ class ThriftRequestHandler():
                 file_path_cache[event.file_id] = file_path
 
             event = session.query(BugPathEvent).get(event.next)
-            bug_events.append((event,file_path))
+            bug_events.append((event, file_path))
 
         return bug_events
 
-
-    # -----------------------------------------------------------------------
     @timefunc
     def __construct_bug_point_list(self, session, start_bug_point):
-        #start_bug_point can be None
+        # start_bug_point can be None
 
         file_path_cache = {}
         bug_points = []
@@ -441,8 +427,6 @@ class ThriftRequestHandler():
 
         return bug_points
 
-
-    # -----------------------------------------------------------------------
     @timefunc
     def getReportDetails(self, reportId):
         """
@@ -489,8 +473,6 @@ class ThriftRequestHandler():
             LOG.error(msg)
             raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE, msg)
 
-
-    # -----------------------------------------------------------------------
     @timefunc
     def suppressBug(self, runIds, reportId, comment):
         session = self.__session
@@ -503,12 +485,11 @@ class ThriftRequestHandler():
                                 .filter(SuppressBug.hash == report_hash) \
                                 .all()
 
-            file_id = report.file_id
             source_file = session.query(File).get(report.file_id)
 
             if suppressed is None:
-                #the bug is not suppressed for any run_id
-                #info('storing to database')
+                # the bug is not suppressed for any run_id
+                # info('storing to database')
 
                 for rId in runIds:
                     suppress_bug = SuppressBug(rId,
@@ -540,7 +521,7 @@ class ThriftRequestHandler():
 
             # bug is suppressed in these runids
             # should be suppressed only once for each runid
-            suppressedRunId = set([ r.run_id for r in suppressed])
+            suppressedRunId = set([r.run_id for r in suppressed])
 
             # in the newly got runids and are not in the already
             # suppressed set
@@ -548,8 +529,8 @@ class ThriftRequestHandler():
             LOG.debug(toSuppressRunIds)
 
             for rId in toSuppressRunIds:
-                LOG.debug('writing hash and runid to the suppressTable : ' + str(rId) \
-                                                                  +' : '+report_hash)
+                LOG.debug('writing hash and runid to the suppressTable : ' + str(rId) +
+                          ' : '+report_hash)
                 suppress_bug = SuppressBug(rId, report_hash, hash_type, comment)
                 session.add(suppress_bug)
 
@@ -576,8 +557,6 @@ class ThriftRequestHandler():
             LOG.error(msg)
             raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.IOERROR, msg)
 
-
-    # -----------------------------------------------------------------------
     @timefunc
     def unSuppressBug(self, runIds, reportId):
         """
@@ -595,8 +574,6 @@ class ThriftRequestHandler():
                             .filter(SuppressBug.hash == report_hash) \
                             .all()
 
-
-            file_id = report.file_id
             source_file = session.query(File).get(report.file_id)
 
             if suppressed is None:
@@ -609,8 +586,9 @@ class ThriftRequestHandler():
             LOG.debug(toUnSuppress)
 
             for bug in toUnSuppress:
-                LOG.debug('removing hash and runid from the suppressTable : ' + str(bug.run_id) \
-                                                                  + ' : ' + report_hash)
+                LOG.debug('removing hash and runid from the suppressTable : ' +
+                          str(bug.run_id) +
+                          ' : ' + report_hash)
                 session.delete(bug)
 
             rep = session.query(Report).filter(and_(Report.bug_id == report_hash, Report.run_id.in_(toUnSuppressRunIds)))
@@ -641,8 +619,6 @@ class ThriftRequestHandler():
             LOG.error(msg)
             raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.IOERROR, msg)
 
-
-    # -----------------------------------------------------------------------
     def getCheckerDoc(self, checkerId):
         """
         Parameters:
@@ -664,8 +640,6 @@ class ThriftRequestHandler():
             LOG.error(msg)
             raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.IOERROR, msg)
 
-
-    # -----------------------------------------------------------------------
     def getCheckerConfigs(self, run_id):
         """
         Parameters:
@@ -690,7 +664,6 @@ class ThriftRequestHandler():
             LOG.error(msg)
             raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE, msg)
 
-    # -----------------------------------------------------------------------
     @timefunc
     def getSkipPaths(self, run_id):
         session = self.__session
@@ -712,7 +685,6 @@ class ThriftRequestHandler():
             LOG.error(msg)
             raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE, msg)
 
-    # -----------------------------------------------------------------------
     @timefunc
     def getBuildActions(self, reportId):
 
@@ -720,8 +692,7 @@ class ThriftRequestHandler():
         try:
             build_actions = session.query(BuildAction) \
                                    .outerjoin(ReportsToBuildActions) \
-                                   .filter(ReportsToBuildActions.report_id
-                                           == reportId) \
+                                   .filter(ReportsToBuildActions.report_id == reportId) \
                                    .all()
 
             return [ba.build_cmd for ba in build_actions]
@@ -731,8 +702,6 @@ class ThriftRequestHandler():
             LOG.error(msg)
             raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE, msg)
 
-
-    # -----------------------------------------------------------------------
     @timefunc
     def getFileId(self, run_id, path):
 
@@ -754,8 +723,6 @@ class ThriftRequestHandler():
             LOG.error(msg)
             raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE, msg)
 
-
-    # -----------------------------------------------------------------------
     @timefunc
     def getSourceFileData(self, fileId, fileContent):
         """
@@ -774,21 +741,18 @@ class ThriftRequestHandler():
             if fileContent:
                 source = zlib.decompress(sourcefile.content)
 
-                return SourceFileData(fileId = sourcefile.id, \
-                                        filePath=sourcefile.filepath, \
-                                        fileContent = source)
+                return SourceFileData(fileId=sourcefile.id,
+                                      filePath=sourcefile.filepath,
+                                      fileContent=source)
             else:
-                return SourceFileData(fileId = sourcefile.id, \
-                                        filePath=sourcefile.filepath)
-
+                return SourceFileData(fileId=sourcefile.id,
+                                      filePath=sourcefile.filepath)
 
         except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
             msg = str(alchemy_ex)
             LOG.error(msg)
             raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE, msg)
 
-
-    # -----------------------------------------------------------------------
     @timefunc
     def getRunResultTypes(self, run_id, report_filters):
 
@@ -821,7 +785,7 @@ class ThriftRequestHandler():
                 results.append(ReportDataTypeCount(res.checker_id, res.severity, count_results[res.checker_id]))
 
             # result count ascending
-            results = sorted(results, key=lambda rep: rep.count, reverse = True)
+            results = sorted(results, key=lambda rep: rep.count, reverse=True)
 
             return results
 
@@ -839,14 +803,14 @@ class ThriftRequestHandler():
         base_line_hashes = session.query(Report.bug_id) \
                                          .filter(Report.run_id == base_run_id) \
                                          .all()
-        #LOG.debug(len(base_line_hashes))
+        # LOG.debug(len(base_line_hashes))
 
         LOG.debug('query all new check hashes')
         # keyed tuple list is returned
         new_check_hashes = session.query(Report.bug_id) \
                                          .filter(Report.run_id == new_run_id) \
                                          .all()
-        #LOG.debug(len(new_check_hashes))
+        # LOG.debug(len(new_check_hashes))
 
         base_line_hashes = set([t[0] for t in base_line_hashes])
         new_check_hashes = set([t[0] for t in new_check_hashes])
@@ -866,10 +830,10 @@ class ThriftRequestHandler():
 
         max_query_limit = constants.MAX_QUERY_SIZE
         if limit > max_query_limit:
-            LOG.debug('Query limit ' + str(limit)
-                      + ' was larger than max query limit '
-                      + str(max_query_limit) + ', setting limit to '
-                      + str(max_query_limit))
+            LOG.debug('Query limit ' + str(limit) +
+                      ' was larger than max query limit ' +
+                      str(max_query_limit) + ', setting limit to ' +
+                      str(max_query_limit))
             limit = max_query_limit
 
         sort_type_map = {}
@@ -877,7 +841,7 @@ class ThriftRequestHandler():
         sort_type_map[SortType.CHECKER_NAME] = Report.checker_id
         sort_type_map[SortType.SEVERITY] = Report.severity
 
-        #mapping the sqlalchemy functions
+        # mapping the sqlalchemy functions
         order_type_map = {}
         order_type_map[Order.ASC] = asc
         order_type_map[Order.DESC] = desc
@@ -900,7 +864,6 @@ class ThriftRequestHandler():
                                 SuppressBug.run_id == run_id)) \
                 .filter(Report.bug_id.in_(diff_hash_list)) \
                 .filter(filter_expression)
-
 
             if sort_types is None:
                 sorttype = File.filepath
@@ -957,7 +920,6 @@ class ThriftRequestHandler():
                       sort_types=None,
                       report_filters=None):
 
-        diff_res = []
         session = self.__session
 
         base_line_hashes, new_check_hashes = \

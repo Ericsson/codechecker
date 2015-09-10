@@ -28,16 +28,14 @@ from codechecker_lib import debug_reporter
 from codechecker_lib import logger
 from codechecker_lib import analyzer_env
 from codechecker_lib import host_check
-from codechecker_lib import database_handler
 from codechecker_lib import generic_package_suppress_handler
 
 LOG = logger.get_new_logger('ARGHANDLER')
 
-#===-----------------------------------------------------------------------===#
+
 def perform_build_command(logfile, command, context):
     """ Build the project and create a log file. """
     LOG.info("Build has started..")
-
 
     try:
         original_env_file = os.environ['CODECHECKER_ORIGINAL_BUILD_ENV']
@@ -81,12 +79,11 @@ def perform_build_command(logfile, command, context):
             sys.exit(1)
 
 
-#===-----------------------------------------------------------------------===#
 def worker_result_handler(results):
     LOG.info("----==== Summary ====----")
-    LOG.info("All/successed build actions: " + str(len(results)) + "/" + str(len(filter(lambda x : x == 0, results))))
+    LOG.info("All/successed build actions: " + str(len(results)) + "/" + str(len(filter(lambda x: x == 0, results))))
 
-#===-----------------------------------------------------------------------===#
+
 def check((static_analyzer, action, context)):
     """ Invoke clang with an action which called by processes. """
     try:
@@ -97,7 +94,7 @@ def check((static_analyzer, action, context)):
     except Exception as e:
         LOG.debug(str(e))
 
-#===-----------------------------------------------------------------------===#
+
 def start_workers(sa, actions, jobs, context):
     # Handle SIGINT to stop this script running
     def signal_handler(*arg, **kwarg):
@@ -119,7 +116,7 @@ def start_workers(sa, actions, jobs, context):
         # then receive the interrupt immediately
 
         # Different analyzer object belongs to for each build action, but the state of these object are same
-        actions = [ (sa, a, context) for a in actions]
+        actions = [(sa, a, context) for a in actions]
 
         pool.map_async(check, actions, 1, callback=worker_result_handler).get(float('inf'))
         pool.close()
@@ -158,7 +155,6 @@ def handle_server(args):
         LOG.error("zlib error")
         sys.exit(1)
 
-
     check_options_validity(args)
     if args.suppress is None:
         LOG.warning('WARNING! No suppress file was given, suppressed results will be only stored in the database.')
@@ -167,7 +163,6 @@ def handle_server(args):
         if not os.path.exists(args.suppress):
             LOG.error('Suppress file '+args.suppress+' not found!')
             sys.exit(1)
-
 
     context = generic_package_context.get_context()
     context.codechecker_workspace = args.workspace
@@ -196,9 +191,9 @@ def handle_server(args):
     client.ConnectionManager.block_until_db_start_proc_free(context)
 
     # start database viewer
-    db_connection_string = 'postgresql://'+args.dbusername+ \
-                                        '@'+args.dbaddress+ \
-                                        ':'+str(args.dbport)+ \
+    db_connection_string = 'postgresql://'+args.dbusername + \
+                                        '@'+args.dbaddress + \
+                                        ':'+str(args.dbport) + \
                                         '/'+args.dbname
 
     suppress_handler = generic_package_suppress_handler.GenericSuppressHandler()
@@ -208,7 +203,6 @@ def handle_server(args):
     package_data = {}
     package_data['www_root'] = context.www_root
     package_data['doc_root'] = context.doc_root
-
 
     checker_md_docs = os.path.join(context.doc_root, 'checker_md_docs')
 
@@ -284,14 +278,12 @@ def handle_check(args):
     context.codechecker_workspace = args.workspace
     context.db_username = args.dbusername
 
-
     check_env = analyzer_env.get_check_env(context.path_env_extra,
                                              context.ld_lib_path_extra)
 
     compiler_bin = context.compiler_bin
     if not host_check.check_clang(compiler_bin, check_env):
         sys.exit(1)
-
 
     #load severity map from config file
     if os.path.exists(context.checkers_severity_map_file):
@@ -311,14 +303,12 @@ def handle_check(args):
             LOG.debug('Logger library directory not found! Libs are requires for logging.')
             sys.exit(1)
 
-
-        log_file = os.path.join(context.codechecker_workspace, \
+        log_file = os.path.join(context.codechecker_workspace,
                                 context.build_log_file_name)
         if os.path.exists(log_file):
             os.remove(log_file)
         open(log_file, 'a').close() # same as linux's touch
         perform_build_command(log_file, args.command, context)
-
 
     try:
         actions = log_parser.parse_log(log_file)
@@ -353,7 +343,7 @@ def handle_check(args):
 
     with client.get_connection() as connection:
         try:
-            context.run_id = connection.add_checker_run(' '.join(sys.argv), \
+            context.run_id = connection.add_checker_run(' '.join(sys.argv),
                                         args.name, package_version, args.update)
         except shared.ttypes.RequestFailed as thrift_ex:
             if 'violates unique constraint "runs_name_key"' not in thrift_ex.message:
@@ -369,9 +359,9 @@ def handle_check(args):
         #static_analyzer.clean = args.clean
         if args.clean:
             #cleaning up previous results
-            LOG.debug("Cleaning previous plist files in "+ \
+            LOG.debug("Cleaning previous plist files in " +
                                 context.codechecker_workspace)
-            plist_files = glob.glob(os.path.join(context.codechecker_workspace,'*.plist'))
+            plist_files = glob.glob(os.path.join(context.codechecker_workspace, '*.plist'))
             for pf in plist_files:
                 os.remove(pf)
 
@@ -399,7 +389,6 @@ def handle_check(args):
 
         if args.skipfile:
             static_analyzer.add_skip(connection, os.path.realpath(args.skipfile))
-
 
     LOG.info("Static analysis is starting..")
     start_time = time.time()

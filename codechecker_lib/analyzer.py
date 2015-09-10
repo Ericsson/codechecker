@@ -18,7 +18,7 @@ from codechecker_lib import analyzer_env
 
 LOG = logger.get_new_logger('ANALYZER')
 
-# -----------------------------------------------------------------------------
+
 class StaticAnalyzer(object):
     ''''''
     def __init__(self, context):
@@ -35,7 +35,7 @@ class StaticAnalyzer(object):
         self._workspace = ''
         self._mode = 'plist-multi-file'
         self._env = analyzer_env.get_check_env(context.path_env_extra,
-                                              context.ld_lib_path_extra)
+                                               context.ld_lib_path_extra)
 
         self._checkers_list = []
 
@@ -189,13 +189,13 @@ class StaticAnalyzer(object):
                 return sign == '-'
         return False
 
-# -----------------------------------------------------------------------------
+
 def get_skiplist(file_name):
     '''Read skip file and return with its content in a list.'''
     with open(file_name, 'r') as skip_file:
         return [line.strip() for line in skip_file if line != '']
 
-# -----------------------------------------------------------------------------
+
 def run(analyzer, action):
     def signal_handler(*args, **kwargs):
         # Clang does not kill its child processes, so I have to

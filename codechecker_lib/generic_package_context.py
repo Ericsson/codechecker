@@ -42,7 +42,6 @@ class Context(context_base.ContextBase):
         for data in checker_config['checkers']:
             self.__checkers.extend(data.items())
 
-
         # get package specific environment variables
         self.set_env(env_vars)
 
@@ -150,12 +149,12 @@ class Context(context_base.ContextBase):
 
     @property
     def pg_data_dir(self):
-        return os.path.join(self.codechecker_workspace, \
+        return os.path.join(self.codechecker_workspace,
                             self.pgsql_data_dir_name)
 
     @property
     def dump_output_dir(self):
-        return os.path.join(self.codechecker_workspace,\
+        return os.path.join(self.codechecker_workspace,
                         self.variables['path_dumps_name'])
 
     @property
@@ -216,8 +215,6 @@ class Context(context_base.ContextBase):
                 return compiler_bin
 
 
-
-# -----------------------------------------------------------------------------
 def get_context():
 
     LOG.debug('Loading package config')
