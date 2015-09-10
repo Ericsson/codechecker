@@ -7,6 +7,7 @@
 
 import errno
 import os
+import re
 import socket
 import sys
 from functools import partial
@@ -111,17 +112,32 @@ class CCViewerHelper(ThriftAPIHelper):
         super(CCViewerHelper, self).__init__(transport,
                                              client, auto_handle_connection)
 
-    def getAllRunResults(self, runId, sortType=None, reportFilters=None):
+    def __getattr__(self, attr):
+        is_getAll = re.match(r'(get)All(.*)$', attr)
+        if is_getAll:
+            func_name = is_getAll.group(1) + is_getAll.group(2)
+            return partial(self._getAll_emu, func_name)
+        else:
+            return partial(self._thrift_client_call, attr)
+
+    def _getAll_emu(self, func_name, *args):
+        # do not call the getAll* functions with keyword arguments,
+        # limit and offset must be the -4. / -3. positional arguments
+        # of the wrapped function
+
+        func2call = partial(self._thrift_client_call, func_name)
         limit = self.max_query_size
         offset = 0
         results = []
 
-        some_results = self.getRunResults(runId, limit, offset, sortType,
-                                          reportFilters)
+        args = list(args)
+        args[-2:-2] = [limit, offset]
+        some_results = func2call(*args)
+
         while some_results:
             results += some_results
             offset += len(some_results)  # == min(limit, real limit)
-            some_results = self.getRunResults(runId, limit, offset, sortType,
-                                              reportFilters)
+            args[-4:-2] = [limit, offset]
+            some_results = func2call(*args)
 
         return results
