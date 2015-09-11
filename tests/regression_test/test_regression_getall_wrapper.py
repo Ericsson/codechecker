@@ -15,7 +15,6 @@ from codeCheckerDBAccess.ttypes import *
 
 from test_helper.thrift_client_to_db import CCViewerHelper
 
-from test_helper.testlog import info
 from test_helper.testlog import debug
 
 
@@ -148,7 +147,9 @@ class RunResults(unittest.TestCase):
         self.assertIsNotNone(run_results)
         self.assertNotEqual(len(run_results), 0)
 
-        filtered_run_results = filter( lambda result: (result.reportId == bug.reportId) and result.suppressed,
+        filtered_run_results = filter(
+            lambda result:
+                (result.reportId == bug.reportId) and result.suppressed,
             run_results)
         self.assertEqual(len(filtered_run_results), 1)
         suppressed_bug = filtered_run_results[0]

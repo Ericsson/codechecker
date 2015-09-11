@@ -9,6 +9,7 @@ import json
 import os
 import sys
 
+
 def set_cc_env():
     cc_root = os.environ['CC_PACKAGE_ROOT']
     layout_file_path = os.path.join(cc_root, 'config', 'package_layout.json')
@@ -20,6 +21,7 @@ def set_cc_env():
         os.path.join(cc_root, package_layout['static']['codechecker_gen'])
 
     sys.path.append(gen_modules)
+
 
 def get_free_port():
     ''' get a free port from the os'''

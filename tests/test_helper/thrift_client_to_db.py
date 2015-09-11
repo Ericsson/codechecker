@@ -5,11 +5,9 @@
 #   License. See LICENSE.TXT for details.
 # -----------------------------------------------------------------------------
 
-import errno
 import os
 import re
 import socket
-import sys
 from functools import partial
 
 from thrift.transport import THttpClient
@@ -18,7 +16,6 @@ from thrift.transport import TTransport
 
 from thrift.protocol import TBinaryProtocol
 from thrift.protocol import TJSONProtocol
-from thrift.protocol import TProtocol
 
 import shared
 
