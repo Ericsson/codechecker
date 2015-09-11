@@ -5,18 +5,23 @@
 #   License. See LICENSE.TXT for details.
 # -----------------------------------------------------------------------------
 
+import json
 import os
 import sys
 
+
 def set_cc_env():
     cc_root = os.environ['CC_PACKAGE_ROOT']
-    sys.path.append(os.path.join(ccRoot, 'lib/python2.7/report-viewer'))
-    sys.path.append(os.path.join(ccRoot, 'lib/python2.7/report-server'))
-    sys.path.append(os.path.join(ccRoot, 'lib/python2.7'))
-    sys.path.append(os.path.join(ccRoot, 'python/lib/python2.7'))
+    layout_file_path = os.path.join(cc_root, 'config', 'package_layout.json')
 
-    os.environ['LD_LIBRARY_PATH'] = os.path.join(ccRoot, 'python/lib/python2.7/lib-dynload') + ':' \
-                                    + os.path.join(ccRoot, 'postgres/lib') + ':' + os.getenv('LD_LIBRARY_PATH', '')
+    with open(layout_file_path) as layout_file:
+        package_layout = json.load(layout_file)
+
+    gen_modules = \
+        os.path.join(cc_root, package_layout['static']['codechecker_gen'])
+
+    sys.path.append(gen_modules)
+
 
 def get_free_port():
     ''' get a free port from the os'''
