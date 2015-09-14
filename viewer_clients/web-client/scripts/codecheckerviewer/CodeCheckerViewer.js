@@ -24,12 +24,13 @@ define([
             , Util, DiffWidget, MenuButton ) {
 return declare(null, {
 
+
   constructor : function() {
     var that = this;
     var initialHash = hash();
 
     that.checkedRunIds = [];
-    that.checkedNames  = [];
+    that.checkedRunNames  = [];
 
     that.initGlobals();
     that.buildLayout();
@@ -52,6 +53,9 @@ return declare(null, {
   },
 
 
+  /**
+   * Initializes the global variables to be used.
+   */
   initGlobals : function() {
     CC_SERVICE = new codeCheckerDBAccess.codeCheckerDBAccessClient(
       new Thrift.Protocol(new Thrift.Transport("CodeCheckerService")));
@@ -59,6 +63,9 @@ return declare(null, {
   },
 
 
+  /**
+   * Builds the layout and the uppermost containers.
+   */
   buildLayout : function() {
     var that = this;
 
@@ -88,6 +95,10 @@ return declare(null, {
   },
 
 
+  /**
+   * Creates the ListOfRuns view which consists of a ListOfRunsGrid and a
+   * DiffWidget and their appropriate encapsulating Containers.
+   */
   buildListOfRuns : function() {
     var that = this;
 
@@ -133,8 +144,8 @@ return declare(null, {
                 if(that.checkedRunIds[i] === that.listOfRunsGrid.getItem(evt.rowIndex).runid[0]) {
                   that.checkedRunIds.splice(i, 1);
                 }
-                if(that.checkedNames[i] === that.listOfRunsGrid.getItem(evt.rowIndex).name[0]) {
-                  that.checkedNames.splice(i, 1);
+                if(that.checkedRunNames[i] === that.listOfRunsGrid.getItem(evt.rowIndex).name[0]) {
+                  that.checkedRunNames.splice(i, 1);
                 }
               }
 
@@ -146,7 +157,7 @@ return declare(null, {
                 that.listOfRunsGrid.update();
 
                 that.checkedRunIds.push(that.listOfRunsGrid.getItem(evt.rowIndex).runid[0]);
-                that.checkedNames.push(that.listOfRunsGrid.getItem(evt.rowIndex).name[0]);
+                that.checkedRunNames.push(that.listOfRunsGrid.getItem(evt.rowIndex).name[0]);
               } else {
                 that.listOfRunsGrid.getItem(evt.rowIndex).diffActual[0] = false;
                 that.listOfRunsGrid.getItem(evt.rowIndex).diffDisplay[0] = false;
@@ -217,6 +228,9 @@ return declare(null, {
   },
 
 
+  /**
+   * Creates and places the MenuButton on the headerPane.
+   */
   buildMenuButton : function() {
     var that = this;
     var menuButton = new MenuButton({
@@ -226,6 +240,13 @@ return declare(null, {
     that.headerPane.addChild(menuButton);
   },
 
+
+  /**
+   * Handling of the change of the browser history/hash happens here. It is
+   * called if necessary after a dojo/hashchange event.
+   *
+   * @param changedHash a browser hash (different than the current hash)
+   */
   handleHashChange : function(changedHash) {
     var that = this;
     if (!changedHash) {
@@ -259,33 +280,46 @@ return declare(null, {
     }
   },
 
-  newRunOverviewTab : function(runId, name) {
+
+  /**
+   * This is the first step in creating a new RunOverview tab.
+   */
+  newRunOverviewTab : function(runId, runName) {
     var hashState = {
       ovType: 'run',
-      ovName: name,
+      ovName: runName,
       ovRunId: runId
     };
 
     hash(ioQuery.objectToQuery(hashState));
   },
 
-  newDiffOverviewTab : function(runId1, runId2, name1, name2) {
+
+  /**
+   * This is the first step in creating a new DiffOverview tab, changes the hash
+   * appropriately.
+   */
+  newDiffOverviewTab : function(runId1, runId2, runName1, runName2) {
     var hashState = {
       ovType: 'diff',
-      diffNames: [name1, name2],
+      diffNames: [runName1, runName2],
       diffRunIds: [runId1, runId2]
     };
 
     hash(ioQuery.objectToQuery(hashState));
   },
 
-  handleNewRunOverviewTab : function(idOfNewOverviewTC, runId, name) {
+
+  /**
+   * Creates a new DiffOverview tab, it may be called after a dojo/hashchange event.
+   */
+  handleNewRunOverviewTab : function(idOfNewOverviewTC, runId, runName) {
     var that = this;
     var newOverviewTC = new OverviewTC({
       id           : idOfNewOverviewTC,
       runId        : runId,
       overviewType : "run",
-      title        : name,
+      title        : runName,
       closable     : true,
       style        : "padding: 5px;",
       onClose      : function() {
@@ -295,15 +329,14 @@ return declare(null, {
         return true;
       },
       onShow : function() {
-        that.newRunOverviewTab(runId, name);
+        that.newRunOverviewTab(runId, runName);
       }
     });
 
     try {
-      /*newOverviewTC.overviewGrid.fillOverviewGrid(newOverviewTC.getStateOfFilters(),
-        newOverviewTC.overviewPager.getPagerParams());
-
-      newOverviewTC.overviewPager.disableArrowsAsNeeded();*/
+      /* newOverviewTC.overviewGrid.fillOverviewGrid(newOverviewTC.getStateOfFilters(),
+           newOverviewTC.overviewPager.getPagerParams());
+         newOverviewTC.overviewPager.disableArrowsAsNeeded(); */
       that.mainTC.addChild(newOverviewTC);
       that.mainTC.selectChild(newOverviewTC);
 
@@ -314,14 +347,18 @@ return declare(null, {
     }
   },
 
-  handleNewDiffOverviewTab : function(idOfNewOverviewTC, runId1, runId2, name1, name2) {
+
+  /**
+   * Creates a new DiffOverview tab, it may be called after a dojo/hashchange event.
+   */
+  handleNewDiffOverviewTab : function(idOfNewOverviewTC, runId1, runId2, runName1, runName2) {
     var that = this;
     var newOverviewTC = new OverviewTC({
       id           : idOfNewOverviewTC,
       runId1       : runId1,
       runId2       : runId2,
       overviewType : "diff",
-      title        : "Diff of " + name1 + " and " + name2,
+      title        : "Diff of " + runName1 + " and " + runName2,
       closable     : true,
       style        : "padding: 5px;",
       onClose      : function() {
@@ -331,7 +368,7 @@ return declare(null, {
         return true;
       },
       onShow : function() {
-        that.newDiffOverviewTab(runId1, runId2, name1, name2);
+        that.newDiffOverviewTab(runId1, runId2, runName1, runName2);
       }
     });
 
@@ -350,6 +387,9 @@ return declare(null, {
   },
 
 
+  /**
+   * Resets the whole ListOfRuns view to the original starting state.
+   */
   reset : function() {
     var that = this;
 
@@ -359,7 +399,7 @@ return declare(null, {
     that.listOfRunsGrid.render();
 
     that.checkedRunIds = [];
-    that.checkedNames  = [];
+    that.checkedRunNames  = [];
 
     that.diffWidget.reset();
   }

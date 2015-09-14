@@ -14,7 +14,15 @@ define([
 ], function ( declare, domConstruct, _WidgetBase, TextBox, Button, Select ) {
 return declare(_WidgetBase, {
 
-  // myOverviewTC
+
+  /**
+   * Construct the new object. The following arguments are required:
+   *   myOverviewTC: The OverviewTC this object belongs to
+   */
+  constructor : function(args) {
+    var that = this;
+    declare.safeMixin(that, args);
+  },
 
 
   buildRendering : function() {
@@ -25,7 +33,9 @@ return declare(_WidgetBase, {
     });
   },
 
-
+  /**
+   * Builds the widget dom.
+   */
   postCreate : function() {
     var that = this;
     that.inherited(arguments);
