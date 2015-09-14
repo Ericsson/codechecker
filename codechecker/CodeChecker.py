@@ -63,8 +63,8 @@ def main():
 
     try:
         parser = argparse.ArgumentParser(
-                    formatter_class=argparse.RawDescriptionHelpFormatter,
-                    description='''Run the codechecker script.\n ''')
+            formatter_class=argparse.RawDescriptionHelpFormatter,
+            description='''Run the codechecker script.\n ''')
 
         subparsers = parser.add_subparsers(help='commands')
 
@@ -124,7 +124,6 @@ def main():
                                   update the results of a previous run.')
         check_parser.set_defaults(func=arg_handler.handle_check)
 
-
         # --------------------------------------
         # log commands
         logging_parser = subparsers.add_parser('log',
@@ -135,7 +134,6 @@ def main():
         logging_parser.add_argument('-b', '--build', type=str, dest="command",
                                     required=True, help='Build command.')
         logging_parser.set_defaults(func=arg_handler.handle_log)
-
 
         # --------------------------------------
         # checkers parser

@@ -4,6 +4,7 @@
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
 
+
 class DBVersionInfo(object):
 
     def __init__(self, major, minor):
