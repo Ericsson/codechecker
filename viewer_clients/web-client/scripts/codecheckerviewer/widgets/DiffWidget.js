@@ -34,7 +34,8 @@ return declare(_WidgetBase, {
       style    : "border: 0px; margin: 0px; padding: 0px; margin-right: 20px;",
       disabled : true,
       onClick  : function() {
-        CCV.newDiffOverviewTab(CCV.checkedRunIds[0], CCV.checkedRunIds[1], CCV.checkedNames[0], CCV.checkedNames[1]);
+        CCV.newDiffOverviewTab(CCV.checkedRunIds[0], CCV.checkedRunIds[1],
+          CCV.checkedRunNames[0], CCV.checkedRunNames[1]);
       }
     });
 
@@ -61,12 +62,12 @@ return declare(_WidgetBase, {
 
 
   setButtonDisabled: function(isDisabled) {
-    this.diffButton.setDisabled(isDisabled);
+    this.diffButton.set('disabled', isDisabled) ;
   },
 
 
   reset: function() {
-    this.diffButton.setDisabled = true;
+    this.diffButton.set('disabled', true);
     this.setDiffLabel("-", "-");
   }
 

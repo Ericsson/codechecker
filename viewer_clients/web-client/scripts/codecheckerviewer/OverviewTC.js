@@ -20,22 +20,34 @@ define([
             , ContentPane, Dialog, OverviewGrid, OverviewHeader, FileViewBC ) {
 return declare(TabContainer, {
 
-  // overviewType ("run" or "diff")
-  // if "run" : runId
-  // if "diff": runId1, runId2
 
-
+   /**
+   * Construct the new object. The following arguments are required:
+   *   overviewType: "run" or "diff"
+   *
+   *   Other parameters depending on overviewType:
+   *     if overviewType is "run":
+   *       runId: the runId of the run
+   *     if overviewType is "diff":
+   *       runId1: the runId of the baseline run
+   *       runId2: the runId of the new run
+   */
   constructor : function(args) {
     var that = this;
     declare.safeMixin(that, args);
   },
 
+
+  /**
+   * Build the layout, add event listeners, build the dom for the widget
+   */
   postCreate : function () {
     var that = this;
     that.inherited(arguments);
 
     that.overviewBC = new BorderContainer({
       id     : that.id + '_overview',
+      style  : "margin: 5px; padding: 0px;",
       onShow : function() {
         that.openFileView(undefined, undefined);
       }
@@ -87,9 +99,7 @@ return declare(TabContainer, {
 
     that.overviewGrid.onRowClick = function (evt) {
       if (evt.cell.field === "checkerId") {
-
-        that.showDocumentation(that.overviewGrid.getItem(evt.rowIndex).checkerId[0]);
-
+        that.showDocumentation(that.overviewGrid.getItem(evt.rowIndex).checkerId);
       } else if (evt.cell.field === "fileWithBugPos") {
         var row = that.overviewGrid.getItem(evt.rowIndex);
         that.openFileView(row.reportId, row.runId);
@@ -109,6 +119,7 @@ return declare(TabContainer, {
     // Restore previous state from cuttent hash (if any).
     that.handleHashChange(hash());
   },
+
 
   /**
    * Handles a hash change.
@@ -176,6 +187,7 @@ return declare(TabContainer, {
     }
   },
 
+
   /**
    * Show the documentation of the given checker.
    *
@@ -189,6 +201,7 @@ return declare(TabContainer, {
 
     checkerDocDialog.show();
   },
+
 
   /**
    * Returns the DOM id string of a tab using the given browser has state
@@ -206,6 +219,7 @@ return declare(TabContainer, {
     return that.id + "_overview";
   },
 
+
   /**
    * Opens a new file view using the browser hash. See handleOpenFileView for
    * implementation.
@@ -220,6 +234,7 @@ return declare(TabContainer, {
     hashState.fvRunId = runId;
     hash(ioQuery.objectToQuery(hashState));
   },
+
 
   /**
    * Handles a request for opening a new file overview.
@@ -250,6 +265,7 @@ return declare(TabContainer, {
     that.addChild(newFileViewBC);
     that.selectChild(newFileViewBC);
   },
+
 
   /**
    * Returns the state of filters (see OverviewHeader::getStateOfFilters).

@@ -12,31 +12,35 @@ define([
   "dijit/Dialog",
   "dijit/form/Button",
   "dijit/form/Textarea",
-  "scripts/codecheckerviewer/BugStMoTr.js",
+  "scripts/codecheckerviewer/BugStoreModelTree.js",
   "scripts/codecheckerviewer/Editor.js",
   "scripts/codecheckerviewer/widgets/EditorHeader.js",
 ], function ( declare, domConstruct, ContentPane, BorderContainer, Dialog
-            , Button, Textarea, BugStMoTr, Editor, EditorHeader ) {
+            , Button, Textarea, BugStoreModelTree, Editor, EditorHeader ) {
 return declare(BorderContainer, {
 
-  // fileId
-  // checkedFile
-  // bugHash
-  // severity
-  // lastBugPosition
-  // reportId
-  // myOverviewTC
-  // currCheckerId
-  // suppressed
-  // runId
-
-
+  /**
+   * Construct the new object. The following arguments are required:
+   *   fileId: the id of the file
+   *   checkedFile: the filename (path) of the file
+   *   bugHash: the hash of the bug
+   *   severity: the severity of the bug
+   *   lastBugPosition: the position of the last step in the bug step chain
+   *   reportId: the id of the report
+   *   myOverviewTC: the id of the OverviewTC to which this FileViewBC belongs
+   *   currCheckerId: the checker id of currently selected bug
+   *   suppressed: whether the bug is suppressed or not
+   *   runId: the runId of the run in which the bug is found
+   */
   constructor : function(args) {
     var that = this;
     declare.safeMixin(that, args);
   },
 
-
+  /**
+   * Creation of the layout of the FileView, creation of its widgets, placement
+   * of event listeners happen here.
+   */
   postCreate : function () {
     var that = this;
     that.inherited(arguments);
@@ -98,17 +102,17 @@ return declare(BorderContainer, {
       style    : "padding: 0px; width: 25%;"
     });
 
-    that.bugStMoTr = new BugStMoTr({
+    that.bugStoreModelTree = new BugStoreModelTree({
       runId           : runId,
       fileId          : fileId,
       filePath        : checkedFile,
       onLoaded        : function() {
-        that.bugStMoTr.bugTree.set("path", ["root", severity, bugHash,
+        that.bugStoreModelTree.bugTree.set("path", ["root", severity, bugHash,
           bugHash + "_0"]);
       }
     });
 
-    that.bugStMoTr.bugTree.onClick = function(item) {
+    that.bugStoreModelTree.bugTree.onClick = function(item) {
       if (item.isLeaf === true) {
 
         if (that.viewedFile !== item.filePath) {
@@ -163,7 +167,7 @@ return declare(BorderContainer, {
 
             myOverviewTC.overviewGrid.refreshGrid();
 
-            that.bugStMoTr.bugStore.remove(that.bugStMoTr.bugTree.selectedItem.parent);
+            that.bugStoreModelTree.bugStore.remove(that.bugStoreModelTree.bugTree.selectedItem.parent);
 
             that.clearSelectionAndBubblesLines(editor);
 
@@ -205,7 +209,7 @@ return declare(BorderContainer, {
     that.jumpToRangeAndDrawBubblesLines(editor, newRange, reportId);
 
 
-    treePane.addChild(that.bugStMoTr.bugTree);
+    treePane.addChild(that.bugStoreModelTree.bugTree);
     editorCP.addChild(editor);
     editorHeaderCP.addChild(editorHeader);
 
@@ -217,7 +221,14 @@ return declare(BorderContainer, {
 
   },
 
-
+  /**
+   * Scrolls to a given range in the Editor widget and draws bug bubbles and
+   * step-lines according to the currently selected bug or bugstep.
+   *
+   * @param editor The appropriate Editor widget
+   * @param range The range we want to scroll to
+   * @param reportId The reportId of the selected bug
+   */
   jumpToRangeAndDrawBubblesLines : function(editor, range, reportId) {
     var that = this;
 
@@ -261,6 +272,11 @@ return declare(BorderContainer, {
     editor.jumpTo(range.from.line, range.from.column);
   },
 
+  /**
+   * Clears the Editor widget of all lines and bubbles.
+   *
+   * @param editor The appropriate Editor widget
+   */
 
   clearSelectionAndBubblesLines : function(editor) {
     var that = this;
@@ -279,7 +295,11 @@ return declare(BorderContainer, {
 
   },
 
-
+  /**
+   * Creates a range from a bug position
+   *
+   * @param bugPosition The bug position
+   */
   createRangeFromBugPos : function(bugPosition) {
     return {
       from : { line : bugPosition.startLine , column : bugPosition.startCol   },
@@ -288,7 +308,12 @@ return declare(BorderContainer, {
 
   },
 
-
+  /**
+   * Creates and adds the special jump-to-other-file bubble in an Editor
+   *
+   * @param points The steps in the executionPath
+   * @param editor The appropriate Editor widget
+   */
   createAndAddFileJumpBubbles : function(points, editor) {
     var that = this;
 
