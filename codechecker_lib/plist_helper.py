@@ -65,7 +65,7 @@ def get_check_name(current_msg):
 
 # this map needs extending
 checker_message_map = \
-    {
+                      {
     "": "NOT FOUND",
     "Access out-of-bound array element (buffer overflow)": "alpha.security.ArrayBound",
     "Address of stack memory associated with local variable  returned to caller": "core.StackAddressEscape",
