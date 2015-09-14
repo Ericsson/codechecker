@@ -334,9 +334,6 @@ return declare(null, {
     });
 
     try {
-      /* newOverviewTC.overviewGrid.fillOverviewGrid(newOverviewTC.getStateOfFilters(),
-           newOverviewTC.overviewPager.getPagerParams());
-         newOverviewTC.overviewPager.disableArrowsAsNeeded(); */
       that.mainTC.addChild(newOverviewTC);
       that.mainTC.selectChild(newOverviewTC);
 

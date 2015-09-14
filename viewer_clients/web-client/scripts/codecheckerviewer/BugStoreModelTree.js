@@ -186,6 +186,7 @@ return declare(null, {
    */
   loadBugStoreData : function() {
     var that = this;
+
     var bugStoreDataTmp = [
       {
         name : "Bugs by priority",
@@ -226,47 +227,24 @@ return declare(null, {
     that._queryReportsForFile(function(reports) {
       var reportsComplete = 0;
 
-      for (var i = 0 , reportsLen = reports.length; i < reportsLen ; ++i) {
-        that._buildExecPathForReport(bugStoreDataTmp, reports[i], function() {
+      reports.forEach(function(report) {
+        that._buildExecPathForReport(bugStoreDataTmp, report, function() {
           ++reportsComplete;
           if (reportsComplete === reports.length) {
             // FIXME: it's slow on large array
-            for (var j = 0 , bugStoreDataTmpLen = bugStoreDataTmp.length ; j < bugStoreDataTmpLen ; ++j) {
-              that.bugStore.put(bugStoreDataTmp[j], { overwrite : true });
-            }
+            bugStoreDataTmp.forEach(function(item) {
+              that.bugStore.put(item, { overwrite : true });
+            });
 
             if (that.onLoaded) {
               that.onLoaded();
             }
           }
         });
-      }
-
-
-
-      // that._queryReportsForFile(function(reports) {
-      //   var reportsComplete = 0;
-
-      //   reports.forEach(function(report) {
-      //     that._buildExecPathForReport(bugStoreDataTmp, report, function() {
-      //       ++reportsComplete;
-      //       if (reportsComplete === reports.length) {
-      //         // FIXME: it's slow on large array
-      //         bugStoreDataTmp.forEach(function(item) {
-      //           item.overwrite = true;
-      //           that.bugStore.put(item, item);
-      //         });
-
-      //         if (that.onLoaded) {
-      //           that.onLoaded();
-      //         }
-      //       }
-      //     });
-      //   });
-      // });
-
-
-
+      });
     });
   }
+
+
+
 });});
