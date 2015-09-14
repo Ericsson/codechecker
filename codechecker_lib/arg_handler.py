@@ -156,6 +156,10 @@ def handle_server(args):
         LOG.error("zlib error")
         sys.exit(1)
 
+    if not host_check.check_psycopg2():
+        LOG.error("psycopg2 error")
+        sys.exit(1)
+
     check_options_validity(args)
     if args.suppress is None:
         LOG.warning('WARNING! No suppress file was given, suppressed results will be only stored in the database.')
@@ -261,6 +265,10 @@ def handle_check(args):
 
     if not host_check.check_zlib():
         LOG.error("zlib error")
+        sys.exit(1)
+
+    if not host_check.check_psycopg2():
+        LOG.error("psycopg2 error")
         sys.exit(1)
 
     args.workspace = os.path.realpath(args.workspace)
