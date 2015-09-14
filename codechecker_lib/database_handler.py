@@ -37,8 +37,8 @@ def is_database_exist(path):
     LOG.debug('Checking for database at ' + path)
 
     return os.path.exists(path) and \
-           os.path.exists(os.path.join(path, 'PG_VERSION')) and \
-           os.path.exists(os.path.join(path, 'base'))
+        os.path.exists(os.path.join(path, 'PG_VERSION')) and \
+        os.path.exists(os.path.join(path, 'base'))
 
 
 # -----------------------------------------------------------------------------

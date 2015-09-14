@@ -32,8 +32,8 @@ def run_cmd(cmd, cwd=None, env=None, silent=False):
     LOG.debug(' '.join(cmd))
     LOG.debug(cwd)
     try:
-        stdout=subprocess.PIPE
-        stderr=subprocess.PIPE
+        stdout = subprocess.PIPE
+        stderr = subprocess.PIPE
         if silent:
             stdout = None
             stderr = None
@@ -62,18 +62,18 @@ def build_ld_logger(ld_logger_path, env, arch=None, clean=True, silent=True):
     LOG.debug(ld_logger_path)
 
     if clean:
-        make_cmd = ['make','-f', 'Makefile.manual', 'clean']
+        make_cmd = ['make', '-f', 'Makefile.manual', 'clean']
         ret = run_cmd(make_cmd, ld_logger_path, env, silent=silent)
         if ret:
             LOG.error('Failed to run: ' + ' '.join(make_cmd))
             return ret
 
     if arch is None:
-        make_cmd = ['make','-f', 'Makefile.manual']
+        make_cmd = ['make', '-f', 'Makefile.manual']
     elif arch == '32':
-        make_cmd = ['make','-f', 'Makefile.manual', 'pack32bit']
+        make_cmd = ['make', '-f', 'Makefile.manual', 'pack32bit']
     elif arch == '64':
-        make_cmd = ['make','-f', 'Makefile.manual', 'pack64bit']
+        make_cmd = ['make', '-f', 'Makefile.manual', 'pack64bit']
 
     ret = run_cmd(make_cmd, ld_logger_path, env, silent=silent)
     if ret:
@@ -460,7 +460,7 @@ def build_package(repository_root, build_package_config, env=None):
     if not os.path.exists(target):
         os.mkdir(target)
     jquery = os.path.join(jsplumb_root, 'external',
-                           'jquery-1.9.0-min.js')
+                          'jquery-1.9.0-min.js')
     shutil.copy(jquery, target)
 
     # config files
@@ -542,8 +542,8 @@ def main():
     description = '''CodeChecker packager script'''
 
     parser = argparse.ArgumentParser(
-                      formatter_class=argparse.RawDescriptionHelpFormatter,
-                      description=description)
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description=description)
 
     parser.add_argument("-l", action="store",
                         dest="package_layout_config",

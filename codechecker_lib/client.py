@@ -31,7 +31,7 @@ def send_plist_content(connection, plist_file, build_action_id, run_id,
                        severity_map, should_skip):
     try:
         files, bugs = plist_parser.parse_plist(plist_file)
-    except Exception as ex:
+    except Exception:
         LOG.info('The generated plist is not valid, so parsing failed.')
         return
 
@@ -61,8 +61,8 @@ def send_plist_content(connection, plist_file, build_action_id, run_id,
         bug_paths = []
         for path in bug.paths():
             bug_paths.append(shared.ttypes.BugPathPos(path.start_pos.line,
-                path.start_pos.col, path.end_pos.line, path.end_pos.col,
-                file_ids[path.start_pos.file_path]))
+                                                      path.start_pos.col, path.end_pos.line, path.end_pos.col,
+                                                      file_ids[path.start_pos.file_path]))
 
         bug_events = []
         for event in bug.events():
