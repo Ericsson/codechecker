@@ -7,7 +7,7 @@
 
 import hashlib
 
-# -----------------------------------------------------------------------------
+
 class BuildAction(object):
     def __init__(self, build_action_id=0):
         self._id = build_action_id

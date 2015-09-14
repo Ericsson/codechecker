@@ -5,7 +5,6 @@
 # -------------------------------------------------------------------------
 
 import os
-import sys
 import traceback
 
 from codechecker_lib import build_action

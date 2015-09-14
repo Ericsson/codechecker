@@ -15,6 +15,8 @@ define([
 
   /**
    * Contains the bug tree (with steps) for a specified file.
+   * Encapsulates the 3 parts of a Dojo Tree: the Store, the Model and the Tree
+   * objects.
    */
 
 return declare(null, {
@@ -46,16 +48,18 @@ return declare(null, {
       }
     }));
 
+    that.bugModel = new ObjectStoreModel({
+      store : that.bugStore,
+      query : { id : "root" },
+      mayHaveChildren: function(item){
+        return (item.isLeaf === false);
+      }
+    });
+
     that.bugTree = new Tree({
       region       : "left",
       splitter     : true,
-      model        : new ObjectStoreModel({
-          store : that.bugStore,
-          query : { id : "root" },
-          mayHaveChildren: function(item){
-            return (item.isLeaf === false);
-          }
-        }),
+      model        : that.bugModel,
       openOnClick  : true,
       showRoot     : false,
       getIconClass : function(item, opened) {
@@ -95,11 +99,12 @@ return declare(null, {
    */
   _queryReportsForFile : function(onComplete) {
     var that = this;
+
     var limit = codeCheckerDBAccess.MAX_QUERY_SIZE;
     var filter = new codeCheckerDBAccess.ReportFilter();
     filter.filepath = that.filePath;
 
-    CC_SERVICE.getRunResults(that.runId, limit, 0,[], [filter],function(result){
+    CC_SERVICE.getRunResults(that.runId, limit, 0, [], [filter], function(result) {
       if (result instanceof RequestFailed) {
         console.error("Failed to load run results for "+ that.filePath, result);
         onComplete([]);
@@ -181,6 +186,7 @@ return declare(null, {
    */
   loadBugStoreData : function() {
     var that = this;
+
     var bugStoreDataTmp = [
       {
         name : "Bugs by priority",
@@ -227,8 +233,7 @@ return declare(null, {
           if (reportsComplete === reports.length) {
             // FIXME: it's slow on large array
             bugStoreDataTmp.forEach(function(item) {
-              item.overwrite = true;
-              that.bugStore.put(item, item);
+              that.bugStore.put(item, { overwrite : true });
             });
 
             if (that.onLoaded) {
@@ -239,4 +244,7 @@ return declare(null, {
       });
     });
   }
+
+
+
 });});

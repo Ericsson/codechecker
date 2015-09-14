@@ -93,11 +93,11 @@ def start_test_client(pkg_root, test_modules, e, err, fail, skipp, viewer_port, 
         e.set()
         test_module_error.set()
         return
-        #sys.exit(1)
+        # sys.exit(1)
 
-    #except Exception as ex:
-    #    LOG.error(str(ex))
-    #    e.set()
+    # except Exception as ex:
+    #     LOG.error(str(ex))
+    #     e.set()
 
 
 def start_test_server(e, server_cmd, checking_env):
@@ -151,7 +151,6 @@ class GenericPackageTester(object):
             LOG.error(vaerr)
             sys.exit(1)
 
-
         os.environ['CC_TEST_PROJECT_INFO'] = \
             json.dumps(self.project_info['clang_' + clang_version])
         self.workspace = tempfile.mkdtemp()
@@ -179,7 +178,7 @@ class GenericPackageTester(object):
         except subprocess.CalledProcessError as perr:
             self.log.error('Failed source codechecker package for testing')
             self.log.error(str(perr))
-            #self.log.error('Failed to run command: ' + ' '.join(command))
+            # self.log.error('Failed to run command: ' + ' '.join(command))
             sys.exit(1)
 
         return pickle.loads(base64.b64decode(penv))
@@ -434,7 +433,7 @@ class GenericPackageTester(object):
 
 def main():
     parser = argparse.ArgumentParser(description='CodeChecker tester script',
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('-p', '--package', required=True, action='store',
                         dest='pkg_root', help='Path of the package to test.')
     parser.add_argument('-v', '--clang_version', default='stable',

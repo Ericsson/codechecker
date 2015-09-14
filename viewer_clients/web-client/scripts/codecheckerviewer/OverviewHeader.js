@@ -11,8 +11,11 @@ define([
 ], function ( declare, ContentPane, Filter ) {
 return declare(ContentPane, {
 
-  // myOverviewTC
 
+  /**
+   * Construct the new object. The following arguments are required:
+   *   myOverviewTC: The OverviewTC this object belongs to
+   */
   constructor : function(args) {
     var that = this;
     declare.safeMixin(that, args);
@@ -20,6 +23,10 @@ return declare(ContentPane, {
     that.filters = [];
   },
 
+
+  /**
+   * Creates the main Filter widget and builds the dom.
+   */
   postCreate : function() {
     var that = this;
     that.inherited(arguments);
@@ -31,10 +38,13 @@ return declare(ContentPane, {
     that.mainFilter.addPlusButton();
 
     that.filters.push(that.mainFilter);
-
     that.addChild(that.mainFilter);
   },
 
+
+  /**
+   * Gets the current state of the filters.
+   */
   getStateOfFilters : function() {
     var that = this;
     var filterObjArray = [];
@@ -69,47 +79,52 @@ return declare(ContentPane, {
     return filterObjArray;
   },
 
+
+  /**
+   * Adds a new filter.
+   */
   addFilter : function() {
     var that = this;
     var newFilter = new Filter({
       myOverviewTC : that.myOverviewTC
     });
 
-    newFilter.addPlusButton();
     newFilter.addMinusButton();
 
-    var lastFilter = that.filters[that.filters.length-1];
-
-    lastFilter.removePlusButton();
-
-    if (lastFilter.minusButton !== undefined) { lastFilter.removeMinusButton(); }
-
     that.filters.push(newFilter);
-
     that.addChild(newFilter);
 
     that.onRemoveOrAdd();
-    that.myOverviewTC.overviewBC.resize();
   },
 
+
+  /**
+   * Removes a filter from the filters array and the dom.
+   *
+   * @param filter The filter to be removed
+   */
   removeFilter : function(filter) {
     var that = this;
-    var lastFilter = that.filters.pop();
 
-    that.removeChild(lastFilter);
+    for (var i = 0 , len = that.filters.length ; i < len ; ++i ) {
+      if (filter === that.filters[i]) {
+        that.filters.splice(i, 1);
+        that.removeChild(filter);
+        that.onRemoveOrAdd();
 
-    lastFilter = that.filters[that.filters.length - 1];
-    lastFilter.addPlusButton();
-
-    if (lastFilter !== that.mainFilter) { lastFilter.addMinusButton(); }
-
-    that.onRemoveOrAdd();
-    that.myOverviewTC.overviewBC.resize();
+        break;
+      }
+    }
   },
 
+
+  /**
+   * Function to be called after adding or removing a filter.
+   */
   onRemoveOrAdd : function() {
     var that = this;
     that.myOverviewTC.overviewGrid.refreshGrid();
+    that.myOverviewTC.overviewBC.resize();
   }
 
 });});

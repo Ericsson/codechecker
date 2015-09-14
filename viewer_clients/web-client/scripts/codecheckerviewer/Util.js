@@ -7,9 +7,17 @@
 define([
   "dojo/_base/declare",
 ], function ( declare ) {
+  /**
+   * This class contains various utility functions. It is instanciated once in
+   * the global namespace as CC_UTIL
+   */
 return declare(null, {
 
 
+
+  /**
+   * Queries the available severity types for checkers
+   */
   getAvailableSeverityLevels : function() {
     var severityLevelTypeOptionsArray = [];
 
@@ -27,6 +35,10 @@ return declare(null, {
   },
 
 
+  /**
+   * Queries the available checkers and selects those which are found in the
+   * appropriate run.
+   */
   getAvailableCheckers : function(overviewTC) {
     var temp = {};
 
@@ -62,6 +74,7 @@ return declare(null, {
     return checkerTypeOptionsArray;
   },
 
+
   /**
    * Converts a Thrift API severity id to human readable string.
    *
@@ -82,6 +95,7 @@ return declare(null, {
     return null;
   },
 
+
   /**
    * Converts a severity string to Thrift API severity id.
    *
@@ -91,6 +105,7 @@ return declare(null, {
   severityFromStringToCode : function(severityString) {
     return Severity[severityString.toUpperCase()];
   },
+
 
   /**
    * Returns overview DOM id for the given browser hash state.

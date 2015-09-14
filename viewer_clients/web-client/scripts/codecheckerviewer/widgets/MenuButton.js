@@ -16,9 +16,11 @@ define([
            , ContentPane, Dialog) {
 return declare(DropDownButton, {
 
-  // mainTC
 
-
+  /**
+   * Construct the new object. The following arguments are required:
+   *   mainTC: the uppermost level TabContainer (containing ListOfRuns, etc.)
+   */
   constructor : function(args) {
     declare.safeMixin(this, args);
 
@@ -35,7 +37,7 @@ return declare(DropDownButton, {
 
     this.menuItemDocumentation = new MenuItem({
       label   : "Documentation",
-      onClick : function(_this) {
+      onClick : function() {
         var win = window.open("/docs/index.html", '_blank');
         win.focus();
       }
@@ -44,9 +46,9 @@ return declare(DropDownButton, {
     this.menuItemCredits = new MenuItem({
       label   : "Credits",
       onClick : function() {
-        var catDialog;
+        var creditsDialog;
 
-        catDialog = new Dialog({
+        creditsDialog = new Dialog({
             title: "Credits",
             content: '<b> <a href="https://github.com/Ericsson/codechecker">codechecker</a> contributors: </b> <br><br>\
                     <b>Daniel Krupp</b>    <a href="https://github.com/dkrupp">@dkrupp</a>       <br>daniel.krupp@ericsson.com<br>\
@@ -60,7 +62,7 @@ return declare(DropDownButton, {
           style   : "width: 350px; height: 300px; text-align: center;"
         });
 
-        catDialog.show();
+        creditsDialog.show();
       }
     });
 

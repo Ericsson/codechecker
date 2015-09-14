@@ -7,7 +7,6 @@
 import sys
 import argparse
 import json
-import operator
 
 import thrift_helper
 
@@ -17,7 +16,6 @@ import codeCheckerDBAccess
 SUPPORTED_VERSION = '4.0'
 
 
-# ------------------------------------------------------------
 def check_API_version(client):
     ''' check if server API is supported by the client'''
     version = client.getAPIVersion()
@@ -29,7 +27,7 @@ def check_API_version(client):
 
     return True
 
-# ------------------------------------------------------------
+
 class CmdLineOutputEncoder(json.JSONEncoder):
 
     def default(self, obj):
@@ -37,12 +35,12 @@ class CmdLineOutputEncoder(json.JSONEncoder):
         d.update(obj.__dict__)
         return d
 
-# ------------------------------------------------------------
+
 def setupClient(host, port, uri):
     ''' setup the thrift client and check API version'''
 
     client = thrift_helper.ThriftClientHelper(host, port, uri)
-    #test if client can work with thrift API getVersion
+    # test if client can work with thrift API getVersion
     if not check_API_version(client):
         print('Backward incompatible change was in the API.')
         print('Please update client. Server version is not supported')
@@ -50,37 +48,37 @@ def setupClient(host, port, uri):
 
     return client
 
-# ------------------------------------------------------------
+
 def print_table(lines, separate_head=True):
-      """Prints a formatted table given a 2 dimensional array"""
-      #Count the column width
+    """Prints a formatted table given a 2 dimensional array"""
+    # Count the column width
 
-      widths = []
-      for line in lines:
-          for i,size in enumerate([len(x) for x in line]):
-              while i >= len(widths):
-                  widths.append(0)
-              if size > widths[i]:
-                  widths[i] = size
+    widths = []
+    for line in lines:
+        for i, size in enumerate([len(x) for x in line]):
+            while i >= len(widths):
+                widths.append(0)
+            if size > widths[i]:
+                widths[i] = size
 
-      #Generate the format string to pad the columns
-      print_string = ""
-      for i,width in enumerate(widths):
-          print_string += "{" + str(i) + ":" + str(width) + "} | "
-      if (len(print_string) == 0):
-          return
-      print_string = print_string[:-3]
+        # Generate the format string to pad the columns
+        print_string = ""
+        for i, width in enumerate(widths):
+            print_string += "{" + str(i) + ":" + str(width) + "} | "
+        if (len(print_string) == 0):
+            return
+        print_string = print_string[:-3]
 
-      #Print the actual data
-      print("-"*(sum(widths)+3*(len(widths)-1)))
-      for i,line in enumerate(lines):
-          print(print_string.format(*line))
-          if (i == 0 and separate_head):
-              print("-"*(sum(widths)+3*(len(widths)-1)))
-      print("-"*(sum(widths)+3*(len(widths)-1)))
-      print ''
+        # Print the actual data
+        print("-"*(sum(widths)+3*(len(widths)-1)))
+        for i, line in enumerate(lines):
+            print(print_string.format(*line))
+            if (i == 0 and separate_head):
+                print("-"*(sum(widths)+3*(len(widths)-1)))
+        print("-"*(sum(widths)+3*(len(widths)-1)))
+        print ''
 
-# ------------------------------------------------------------
+
 def get_run_ids(client):
     ''' returns a map for run names and run_ids '''
 
@@ -93,7 +91,6 @@ def get_run_ids(client):
     return run_data
 
 
-# ------------------------------------------------------------
 def check_run_names(client, check_names):
 
     run_info = get_run_ids(client)
@@ -104,7 +101,7 @@ def check_run_names(client, check_names):
     missing_name = False
     for name in check_names:
         if not run_info.get(name):
-            print('No check name found: ' +name)
+            print('No check name found: ' + name)
             missing_name = True
 
     if missing_name:
@@ -116,7 +113,6 @@ def check_run_names(client, check_names):
     return run_info
 
 
-# ------------------------------------------------------------
 def handle_list_runs(args):
 
     client = setupClient(args.host, args.port, '/')
@@ -125,7 +121,7 @@ def handle_list_runs(args):
     if args.output_format == 'json':
         results = []
         for run in runs:
-            results.append({run.name : run})
+            results.append({run.name: run})
         print CmdLineOutputEncoder().encode(results)
 
     else:
@@ -137,14 +133,13 @@ def handle_list_runs(args):
         print_table(rows)
 
 
-# ------------------------------------------------------------
 def handle_list_results(args):
 
     client = setupClient(args.host, args.port, '/')
 
     run_info = check_run_names(client, [args.name])
 
-    #for name, info in run_info.items()
+    # for name, info in run_info.items()
     run_id, run_date = run_info.get(args.name)
 
     limit = 500
@@ -157,7 +152,6 @@ def handle_list_results(args):
         report_filter = codeCheckerDBAccess.ttypes.ReportFilter(suppressed=False)
 
     filters.append(report_filter)
-
 
     results = client.getRunResults(run_id, limit, offset, None, filters)
 
@@ -189,10 +183,9 @@ def handle_list_results(args):
                 offset += limit
                 results = client.getRunResults(run_id, limit, offset, None, filters)
 
-
         print_table(rows)
 
-# ------------------------------------------------------------
+
 def handle_list_result_types(args):
 
     client = setupClient(args.host, args.port, '/')
@@ -205,15 +198,14 @@ def handle_list_result_types(args):
 
     filters.append(report_filter)
 
-
     if args.all_results:
         run_info = check_run_names(client, None)
         results_collector = []
         for name, run_info in run_info.items():
-            run_id , run_date = run_info
+            run_id, run_date = run_info
             results = client.getRunResultTypes(run_id, filters)
             if args.output_format == 'json':
-                results_collector.append({name : results})
+                results_collector.append({name: results})
             else:
                 print('Check date: '+run_date)
                 print('Check name: '+name)
@@ -265,7 +257,7 @@ def handle_remove_run_results(args):
 
     print('Done.')
 
-# ------------------------------------------------------------
+
 def handle_diff_results(args):
     def printResult(getterFn, baseid, newid, suppr, output_format):
         report_filter = [codeCheckerDBAccess.ttypes.ReportFilter(suppressed=suppr)]
@@ -302,7 +294,7 @@ def handle_diff_results(args):
     elif args.resolved:
         printResult(client.getResolvedResults, baseid, newid, args.suppressed, args.output_format)
 
-# ------------------------------------------------------------
+
 def register_client_command_line(argument_parser):
     ''' should be used to extend the already existing arguments
     extend the argument parser with extra commands'''
@@ -312,37 +304,36 @@ def register_client_command_line(argument_parser):
     # list runs
     listruns_parser = subparsers.add_parser('runs', help='Get the run data.')
     listruns_parser.add_argument('--host', type=str, dest="host", default='localhost',
-                                help='Server host.')
-    listruns_parser.add_argument('-p','--port', type=str, dest="port", default=11444,
-                             required=True, help='Server port.')
+                                 help='Server host.')
+    listruns_parser.add_argument('-p', '--port', type=str, dest="port", default=11444,
+                                 required=True, help='Server port.')
     listruns_parser.add_argument('-o', choices=['plaintext', 'json'], default='plaintext', type=str, dest="output_format", help='Output format.')
     listruns_parser.set_defaults(func=handle_list_runs)
 
-
-    #list results
+    # list results
     listresults_parser = subparsers.add_parser('results', help='List results.')
     listresults_parser.add_argument('--host', type=str, dest="host", default='localhost',
-                                help='Server host.')
-    listresults_parser.add_argument('-p','--port', type=str, dest="port", default=11444,
-                             required=True, help='Server port.')
-    listresults_parser.add_argument('-n','--name', type=str, dest="name", required=True,
-                                help='Check name.')
-    listresults_parser.add_argument('-s','--suppressed', action="store_true", dest="suppressed", help='Suppressed results.')
+                                    help='Server host.')
+    listresults_parser.add_argument('-p', '--port', type=str, dest="port", default=11444,
+                                    required=True, help='Server port.')
+    listresults_parser.add_argument('-n', '--name', type=str, dest="name", required=True,
+                                    help='Check name.')
+    listresults_parser.add_argument('-s', '--suppressed', action="store_true", dest="suppressed", help='Suppressed results.')
     listresults_parser.add_argument('-o', choices=['plaintext', 'json'], default='plaintext', type=str, dest="output_format", help='Output format.')
     listresults_parser.set_defaults(func=handle_list_results)
 
-    #list diffs
+    # list diffs
     diff_parser = subparsers.add_parser('diff', help='Diff two run.')
     diff_parser.add_argument('--host', type=str, dest="host", default='localhost',
                              help='Server host.')
-    diff_parser.add_argument('-p','--port', type=str, dest="port", default=11444,
+    diff_parser.add_argument('-p', '--port', type=str, dest="port", default=11444,
                              required=True, help='Server port.')
-    diff_parser.add_argument('-b','--basename', type=str, dest="basename", required=True,
-                                help='Base name.')
-    diff_parser.add_argument('-n','--newname', type=str, dest="newname", required=True,
-                                help='New name.')
-    diff_parser.add_argument('-s','--suppressed', action="store_true", dest="suppressed", default=False,
-                                required=False, help='Show suppressed bugs.')
+    diff_parser.add_argument('-b', '--basename', type=str, dest="basename", required=True,
+                             help='Base name.')
+    diff_parser.add_argument('-n', '--newname', type=str, dest="newname", required=True,
+                             help='New name.')
+    diff_parser.add_argument('-s', '--suppressed', action="store_true", dest="suppressed", default=False,
+                             required=False, help='Show suppressed bugs.')
     diff_parser.add_argument('-o', choices=['plaintext', 'json'], default='plaintext', type=str, dest="output_format", help='Output format.')
     group = diff_parser.add_mutually_exclusive_group(required=True)
     group.add_argument('--new', action="store_true", dest="new", help="Show new results.")
@@ -350,33 +341,31 @@ def register_client_command_line(argument_parser):
     group.add_argument('--resolved', action="store_true", dest="resolved", help="Show resolved results.")
     diff_parser.set_defaults(func=handle_diff_results)
 
-    #list resulttypes
+    # list resulttypes
     sum_parser = subparsers.add_parser('sum', help='Sum results.')
     sum_parser.add_argument('--host', type=str, dest="host", default='localhost',
-                                help='Server host.')
-    sum_parser.add_argument('-p','--port', type=str, dest="port", default=11444,
-                             required=True, help='Server port.')
+                            help='Server host.')
+    sum_parser.add_argument('-p', '--port', type=str, dest="port", default=11444,
+                            required=True, help='Server port.')
     name_group = sum_parser.add_mutually_exclusive_group(required=True)
-    name_group.add_argument('-n','--name', nargs='+',type=str, dest="names", help='Check name.')
-    name_group.add_argument('-a','--all', action='store_true', dest="all_results", help='All results.')
+    name_group.add_argument('-n', '--name', nargs='+', type=str, dest="names", help='Check name.')
+    name_group.add_argument('-a', '--all', action='store_true', dest="all_results", help='All results.')
 
-    sum_parser.add_argument('-s','--suppressed', action="store_true", dest="suppressed", help='Suppressed results.')
+    sum_parser.add_argument('-s', '--suppressed', action="store_true", dest="suppressed", help='Suppressed results.')
     sum_parser.add_argument('-o', choices=['plaintext', 'json'], default='plaintext', type=str, dest="output_format", help='Output format.')
     sum_parser.set_defaults(func=handle_list_result_types)
 
-
-    #list resulttypes
+    # list resulttypes
     sum_parser = subparsers.add_parser('del', help='Remove run results.')
     sum_parser.add_argument('--host', type=str, dest="host", default='localhost',
-                                help='Server host.')
-    sum_parser.add_argument('-p','--port', type=str, dest="port", default=11444,
-                             required=True, help='Server port.')
-    sum_parser.add_argument('-n','--name', nargs='+', type=str, dest="name", required=True, help='Server port.')
+                            help='Server host.')
+    sum_parser.add_argument('-p', '--port', type=str, dest="port", default=11444,
+                            required=True, help='Server port.')
+    sum_parser.add_argument('-n', '--name', nargs='+', type=str, dest="name", required=True, help='Server port.')
     sum_parser.set_defaults(func=handle_remove_run_results)
 
-# ------------------------------------------------------------
-def main():
 
+def main():
 
     parser = argparse.ArgumentParser(description='Simple command line client for codechecker.')
 
@@ -385,8 +374,5 @@ def main():
     args.func(args)
 
 
-# ------------------------------------------------------------
 if __name__ == "__main__":
     main()
-
-

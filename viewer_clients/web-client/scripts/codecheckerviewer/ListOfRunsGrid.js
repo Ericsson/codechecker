@@ -15,7 +15,6 @@ return declare(DataGrid, {
   constructor : function() {
     var that = this;
 
-
     that.store = new ItemFileWriteStore({
       data: { identifier: "id", items: [] }
     });
@@ -32,9 +31,11 @@ return declare(DataGrid, {
   },
 
 
+  /**
+   * Fills the ListOfRunsGrid with RunData
+   */
   fillGridWithRunData : function() {
     var that = this;
-
 
     var runDataList = CC_SERVICE.getRunData();
 
@@ -59,10 +60,12 @@ return declare(DataGrid, {
 
   },
 
-
+  /**
+   * Gets the number of the ticked in checkboxes of the Diff column in the
+   * ListOfRunsGrid (This should be 0 or 1 or 2)
+   */
   getCheckedNumber : function() {
     var that = this;
-
 
     var accm = 0;
 
@@ -74,9 +77,11 @@ return declare(DataGrid, {
   },
 
 
+  /**
+   * Completely recreates the store to an empty state.
+   */
   recreateStore : function() {
     var that = this;
-
 
     var newStore = new ItemFileWriteStore({
       data: {

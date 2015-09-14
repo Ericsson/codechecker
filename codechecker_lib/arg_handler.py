@@ -63,7 +63,8 @@ def perform_build_command(logfile, command, context):
         while True:
             line = proc.stdout.readline()
             print line,
-            if line == '' and proc.poll() is not None: break
+            if line == '' and proc.poll() is not None:
+                break
 
         return_code = proc.returncode
 
@@ -89,7 +90,7 @@ def check((static_analyzer, action, context)):
     try:
         LOG.info("Processing action %s." % action.id)
         result = analyzer.run(static_analyzer, action)
-        #LOG.info("Action %s is done." % a.id)
+        # LOG.info("Action %s is done." % a.id)
         return result
     except Exception as e:
         LOG.debug(str(e))
@@ -120,13 +121,13 @@ def start_workers(sa, actions, jobs, context):
 
         pool.map_async(check, actions, 1, callback=worker_result_handler).get(float('inf'))
         pool.close()
-    except Exception as e:
+    except Exception:
         pool.terminate()
         raise
     finally:
         pool.join()
 
-#===-----------------------------------------------------------------------===#
+
 def check_options_validity(args):
     # Args must has workspace and dbaddress
     if args.workspace and not util.is_localhost(args.dbaddress):
@@ -137,18 +138,18 @@ def check_options_validity(args):
         LOG.info("Workspace is required when postgreSql server run on localhost.")
         sys.exit(1)
 
-#===-----------------------------------------------------------------------===#
+
 def handle_list_checkers(args):
     context = generic_package_context.get_context()
     static_analyzer = analyzer.StaticAnalyzer(context)
     LOG.info(static_analyzer.get_checker_list())
 
-#===-----------------------------------------------------------------------===#
+
 def setup_connection_manager_db(args):
     client.ConnectionManager.database_host = args.dbaddress
     client.ConnectionManager.database_port = args.dbport
 
-#===-----------------------------------------------------------------------===#
+
 def handle_server(args):
 
     if not host_check.check_zlib():
@@ -175,7 +176,7 @@ def handle_server(args):
     setup_connection_manager_db(args)
 
     check_env = analyzer_env.get_check_env(context.path_env_extra,
-                                             context.ld_lib_path_extra)
+                                           context.ld_lib_path_extra)
 
     client.ConnectionManager.run_env = check_env
 
@@ -196,9 +197,9 @@ def handle_server(args):
 
     # start database viewer
     db_connection_string = 'postgresql://'+args.dbusername + \
-                                        '@'+args.dbaddress + \
-                                        ':'+str(args.dbport) + \
-                                        '/'+args.dbname
+                           '@'+args.dbaddress + \
+                           ':'+str(args.dbport) + \
+                           '/'+args.dbname
 
     suppress_handler = generic_package_suppress_handler.GenericSuppressHandler()
     suppress_handler.suppress_file = args.suppress
@@ -221,14 +222,13 @@ def handle_server(args):
     package_data['checker_md_docs_map'] = checker_md_docs_map
 
     client_db_access_server.start_server(package_data,
-                                  args.view_port,
-                                  db_connection_string,
-                                  suppress_handler,
-                                  args.not_host_only,
-                                  context.db_version_info)
+                                         args.view_port,
+                                         db_connection_string,
+                                         suppress_handler,
+                                         args.not_host_only,
+                                         context.db_version_info)
 
 
-#===-----------------------------------------------------------------------===#
 def handle_log(args):
     """ Log mode. """
     args.logfile = os.path.realpath(args.logfile)
@@ -236,10 +236,10 @@ def handle_log(args):
         os.remove(args.logfile)
 
     context = generic_package_context.get_context()
-    open(args.logfile, 'a').close() # same as linux's touch
+    open(args.logfile, 'a').close()  # same as linux's touch
     perform_build_command(args.logfile, args.command, context)
 
-#===-----------------------------------------------------------------------===#
+
 def handle_debug(args):
     setup_connection_manager_db(args)
 
@@ -248,7 +248,7 @@ def handle_debug(args):
     context.db_username = args.dbusername
 
     check_env = analyzer_env.get_check_env(context.path_env_extra,
-                                             context.ld_lib_path_extra)
+                                           context.ld_lib_path_extra)
 
     client.ConnectionManager.run_env = check_env
 
@@ -259,7 +259,7 @@ def handle_debug(args):
     debug_reporter.debug(context, args.dbusername, args.dbaddress,
                          args.dbport, args.dbname, args.force)
 
-#===-----------------------------------------------------------------------===#
+
 def handle_check(args):
     """ Check mode. """
 
@@ -287,13 +287,13 @@ def handle_check(args):
     context.db_username = args.dbusername
 
     check_env = analyzer_env.get_check_env(context.path_env_extra,
-                                             context.ld_lib_path_extra)
+                                           context.ld_lib_path_extra)
 
     compiler_bin = context.compiler_bin
     if not host_check.check_clang(compiler_bin, check_env):
         sys.exit(1)
 
-    #load severity map from config file
+    # load severity map from config file
     if os.path.exists(context.checkers_severity_map_file):
         with open(context.checkers_severity_map_file, 'r') as sev_conf_file:
             severity_config = sev_conf_file.read()
@@ -315,7 +315,7 @@ def handle_check(args):
                                 context.build_log_file_name)
         if os.path.exists(log_file):
             os.remove(log_file)
-        open(log_file, 'a').close() # same as linux's touch
+        open(log_file, 'a').close()  # same as linux's touch
         perform_build_command(log_file, args.command, context)
 
     try:
@@ -336,8 +336,8 @@ def handle_check(args):
 
     package_version = context.version['major'] + '.' + context.version['minor']
     suppress_file = os.path.join(args.workspace, package_version) \
-                            if not args.suppress \
-                            else os.path.realpath(args.suppress)
+                       if not args.suppress \
+                       else os.path.realpath(args.suppress)
 
     send_suppress = False
     if os.path.exists(suppress_file):
@@ -352,7 +352,7 @@ def handle_check(args):
     with client.get_connection() as connection:
         try:
             context.run_id = connection.add_checker_run(' '.join(sys.argv),
-                                        args.name, package_version, args.update)
+                                                        args.name, package_version, args.update)
         except shared.ttypes.RequestFailed as thrift_ex:
             if 'violates unique constraint "runs_name_key"' not in thrift_ex.message:
                 # not the unique name was the problem
@@ -364,11 +364,11 @@ def handle_check(args):
         if send_suppress:
             client.send_suppress(connection, suppress_file)
 
-        #static_analyzer.clean = args.clean
+        # static_analyzer.clean = args.clean
         if args.clean:
-            #cleaning up previous results
+            # cleaning up previous results
             LOG.debug("Cleaning previous plist files in " +
-                                context.codechecker_workspace)
+                      context.codechecker_workspace)
             plist_files = glob.glob(os.path.join(context.codechecker_workspace, '*.plist'))
             for pf in plist_files:
                 os.remove(pf)
@@ -386,7 +386,7 @@ def handle_check(args):
         # add user defined checkers
         try:
             static_analyzer.checkers = args.ordered_checker_args
-        except AttributeError as aerr:
+        except AttributeError:
             LOG.debug('No checkers were defined in the command line')
 
         if args.configfile:
@@ -411,5 +411,3 @@ def handle_check(args):
 
     LOG.info("Analysis length: " + str(end_time - start_time) + " sec.")
     LOG.info("Analysis has finished.")
-
-

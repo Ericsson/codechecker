@@ -12,8 +12,11 @@ define([
 ], function ( declare, ObjectStore, DataGrid, OverviewStore ) {
 return declare(DataGrid, {
 
-  // myOverviewTC
 
+  /**
+   * Construct the new object. The following arguments are required:
+   *   myOverviewTC: The OverviewTC this object belongs to
+   */
   constructor : function(args) {
     var that = this;
     declare.safeMixin(that, args);
@@ -36,14 +39,15 @@ return declare(DataGrid, {
 
   postCreate : function () {
     var that = this;
+    that.inherited(arguments);
 
     that.query = that._createQuery();
     that.queryOptions = that.query;
-    that.inherited(arguments);
   },
 
+
   /**
-   * Returns whether sorting is allowed of not for the given cell.
+   * Returns whether sorting is allowed or not for the given cell.
    *
    * For parameters see dojox/grid/DataGrid documentation.
    */
@@ -60,6 +64,7 @@ return declare(DataGrid, {
 
     return false;
 	},
+
 
   /**
    * Returns the default sort options.
@@ -82,6 +87,7 @@ return declare(DataGrid, {
       }
     ];
   },
+
 
   /**
    * Creates a new runoverbiew query object using the given filter settings.
@@ -129,6 +135,7 @@ return declare(DataGrid, {
 
     return query;
   },
+
 
   /**
    * Creates a new diff view query object using the given filter settings. This
@@ -190,6 +197,7 @@ return declare(DataGrid, {
     return query;
   },
 
+
   /**
    * Creates a new query (in dojo/data API format) according to the current
    * filters and state.
@@ -210,6 +218,7 @@ return declare(DataGrid, {
     return query;
   },
 
+
   /**
    * Refreshes (reloads) the overview grid using the current filter settings.
    */
@@ -218,6 +227,8 @@ return declare(DataGrid, {
     var query = that._createQuery();
 
     that.setQuery(query, query);
+
+    // that.render();
   }
 
 });});
