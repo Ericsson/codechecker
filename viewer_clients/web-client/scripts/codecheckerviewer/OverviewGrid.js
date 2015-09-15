@@ -21,8 +21,8 @@ return declare(DataGrid, {
     var that = this;
     declare.safeMixin(that, args);
 
-    that.ovStore = new OverviewStore({});
-    that.store = new ObjectStore({objectStore: that.ovStore});
+    that.ovStore   = new OverviewStore({});
+    that.store     = new ObjectStore({objectStore: that.ovStore});
     that.cellWidth = ((100)/5).toString() + "%";
 
     that.structure = [
@@ -41,8 +41,7 @@ return declare(DataGrid, {
     var that = this;
     that.inherited(arguments);
 
-    that.query = that._createQuery();
-    that.queryOptions = that.query;
+    that.refreshGrid();
   },
 
 
@@ -51,7 +50,7 @@ return declare(DataGrid, {
    *
    * For parameters see dojox/grid/DataGrid documentation.
    */
-  canSort: function(inSortInfo) {
+  canSort : function(inSortInfo) {
     var that = this;
     var cell = that.getCell(Math.abs(inSortInfo)-1);
     if (!cell) {
@@ -71,7 +70,7 @@ return declare(DataGrid, {
    *
    * @return the default sort array
    */
-  _getDefaultSortOptions: function() {
+  _getDefaultSortOptions : function() {
     return [
       {
         attribute : "severity",
@@ -90,145 +89,195 @@ return declare(DataGrid, {
 
 
   /**
-   * Creates a new runoverbiew query object using the given filter settings.
+   * Creates a new Run view query object using the given filter settings.
    * This is a helper method for _createQuery.
    *
-   * @param filterObjArray filters (see OverviewTC::getStateOfFilters)
+   * @param runFilters Filters (see OverviewGrid::_createRunApiFilters)
    * @return a new query object.
    */
-  _createRunOverviewQuery: function(filterObjArray) {
+  _createRunOverviewQuery : function(runFilters) {
     var that = this;
     var query = {
-      overviewType  : "run",
-      runId         : that.myOverviewTC.runId,
-      filters       : [],
-      defaultSort   : that._getDefaultSortOptions()
+      overviewType : "run",
+      runId        : that.myOverviewTC.runId,
+      filters      : runFilters,
+      defaultSort  : that._getDefaultSortOptions()
     };
-
-    for (var i = 0 ; i < filterObjArray.length ; ++i) {
-      var filter = new codeCheckerDBAccess.ReportFilter();
-
-      filter.checkerId = filterObjArray[i].checkerTypeState;
-
-      var filepathTmp = filterObjArray[i].pathState;
-      filter.filepath = filepathTmp === "" ? "*" : filepathTmp;
-
-      var severityTmp = filterObjArray[i].severityState;
-      if (severityTmp !== "all") {
-         filter.severity = parseInt(severityTmp);
-      }
-
-      switch (filterObjArray[i].supprState) {
-        case "supp":
-          filter.suppressed = true;
-          break;
-        case "unsupp":
-          filter.suppressed = false;
-          break;
-        case "all":
-          // DO NOTHING
-          break;
-      }
-
-      query.filters.push(filter);
-    }
 
     return query;
   },
 
 
   /**
-   * Creates a new diff view query object using the given filter settings. This
+   * Creates a new Diff view query object using the given filter settings. This
    * is a helper method for _createQuery.
    *
-   * @param filterObjArray filters (see OverviewTC::getStateOfFilters)
+   * @param diffFiltersObj The three Diff filter arrays in an object
+   * (see OverviewGrid::_createDiffApiFilters)
    * @return a new query object.
    */
-  _createDiffOverviewQuery: function(filterObjArray) {
+  _createDiffOverviewQuery : function(diffFiltersObj) {
     var that = this;
+
     var query = {
-      overviewType              : "diff",
-      runId1                    : that.myOverviewTC.runId1,
-      runId2                    : that.myOverviewTC.runId2,
-      newResultsFilters         : [],
-      resolvedResultsFilters    : [],
-      unresolvedResultsFilters  : [],
-      defaultSort               : that._getDefaultSortOptions()
+      overviewType             : "diff",
+      runId1                   : that.myOverviewTC.runId1,
+      runId2                   : that.myOverviewTC.runId2,
+      newResultsFilters        : diffFiltersObj.newResultsFilters,
+      resolvedResultsFilters   : diffFiltersObj.resolvedResultsFilters,
+      unresolvedResultsFilters : diffFiltersObj.unresolvedResultsFilters,
+      defaultSort              : that._getDefaultSortOptions()
     };
 
-    for (var i = 0 ; i < filterObjArray.length ; ++i) {
-      var filter = new codeCheckerDBAccess.ReportFilter();
-
-      filter.checkerId = filterObjArray[i].checkerTypeState;
-
-      var filepathTmp = filterObjArray[i].pathState;
-      filter.filepath = filepathTmp === "" ? "*" : filepathTmp;
-
-      var severityTmp = filterObjArray[i].severityState;
-      if (severityTmp !== "all") {
-         filter.severity = parseInt(severityTmp);
-      }
-
-      switch (filterObjArray[i].supprState) {
-        case "supp":
-          filter.suppressed = true;
-          break;
-        case "unsupp":
-          filter.suppressed = false;
-          break;
-        case "all":
-          // DO NOTHING
-          break;
-      }
-
-      switch (filterObjArray[i].resolvState) {
-        case "newonly":
-          query.newResultsFilters.push(filter);
-          break;
-        case "resolv":
-          query.resolvedResultsFilters.push(filter);
-          break;
-        case "unresolv":
-          query.unresolvedResultsFilters.push(filter);
-          break;
-      }
-    }
-
     return query;
   },
 
 
   /**
-   * Creates a new query (in dojo/data API format) according to the current
-   * filters and state.
+   * Transforms a filter array from a Run view given by the Filter widgets to
+   * the correct Thrift Api format.
    *
-   * @return a new state objects.
+   * @param filterObjArray An array of the filter objects from all the Filter
+   * Widgets.
+   * @return The Thrift API compatible filter array.
    */
-  _createQuery : function() {
+  _createRunApiFilters : function(filterObjArray) {
     var that = this;
 
-    var filterObjArray = that.myOverviewTC.getStateOfFilters();
-    var query;
-    if (that.myOverviewTC.overviewType === "run") {
-      query = that._createRunOverviewQuery(filterObjArray);
-    } else if (that.myOverviewTC.overviewType === "diff") {
-      query = that._createDiffOverviewQuery(filterObjArray);
-    }
+    var filters = [];
 
-    return query;
+    filterObjArray.forEach(function(item) {
+      var filter = new codeCheckerDBAccess.ReportFilter();
+
+      filter.checkerId = item.checkerTypeState;
+
+      filter.filepath = item.pathState === "" ? "*" : item.pathState;
+
+      if (item.severityState !== "all") {
+        filter.severity = parseInt(item.severityState);
+      }
+
+      switch (item.supprState) {
+        case "supp"  : filter.suppressed = true;
+          break;
+        case "unsupp": filter.suppressed = false;
+          break;
+        case "all"   : /* DO NOTHING */
+          break;
+      }
+
+      filters.push(filter);
+    })
+
+    return filters;
   },
 
 
   /**
-   * Refreshes (reloads) the overview grid using the current filter settings.
+   * Transforms a filter array from a Diff view given by the Filter widgets to
+   * the correct Thrift API format.
+   *
+   * @param filterObjArray An array of the filter objects in all the Filter
+   * Widgets
+   * @param The three Thript API compatible Diff filters in an object.
+   */
+  _createDiffApiFilters : function(filterObjArray) {
+    var that = this;
+
+    var newResultsFilters        = [];
+    var resolvedResultsFilters   = [];
+    var unresolvedResultsFilters = [];
+
+    filterObjArray.forEach(function(item) {
+      var filter = new codeCheckerDBAccess.ReportFilter();
+
+      filter.checkerId = item.checkerTypeState;
+
+      filter.filepath = item.pathState === "" ? "*" : item.pathState;
+
+      if (item.severityState !== "all") {
+         filter.severity = parseInt(item.severityState);
+      }
+
+      switch (item.supprState) {
+        case "supp"  : filter.suppressed = true;
+          break;
+        case "unsupp": filter.suppressed = false;
+          break;
+        case "all"   : /*DO NOTHING*/
+          break;
+      }
+
+      switch (item.resolvState) {
+        case "newonly" : newResultsFilters.push(filter);
+          break;
+        case "resolv"  : resolvedResultsFilters.push(filter);
+          break;
+        case "unresolv": unresolvedResultsFilters.push(filter);
+          break;
+      }
+    })
+
+    return {
+      newResultsFilters,
+      resolvedResultsFilters,
+      unresolvedResultsFilters };
+  },
+
+
+  /**
+   * Refreshes the title of the Run Overview to show the correct count of hits
+   * found in the database.
+   *
+   * @param runFilters The current (Thrift Api compatible)filters of the Run.
+   */
+  _refreshRunHitCount : function(runFilters) {
+    var that = this;
+
+    CC_SERVICE.getRunResultCount(
+      that.myOverviewTC.runId,
+      runFilters,
+      function(result) {
+        that.myOverviewTC.overviewBC.set('title', 'Run Overview - hits : <b>' + (result) + '</b>');
+      });
+  },
+
+
+  /**
+   * Refreshes the title of the Diff Overview to show the correct count of hits
+   * found in the database.
+   *
+   * @param diffFiltersObj The current three (Thrift Api compatible)filter
+   * arrays of the Diff in an object.
+   */
+  _refreshDiffHitCount : function(diffFiltersObj) {
+    // Not supported yet.
+  },
+
+
+  /**
+   * Refreshes (reloads) the overview grid by creating a new query
+   * (in dojo/data API format) according to the current filters and state.
+   * It also calls the correct hit count refreshing function.
    */
   refreshGrid : function() {
     var that = this;
-    var query = that._createQuery();
+
+    var query;
+    var filterObjArray = that.myOverviewTC.getStateOfFilters();
+
+    if (that.myOverviewTC.overviewType === "run") {
+      var filters = that._createRunApiFilters(filterObjArray);
+      that._refreshRunHitCount(filters);
+      query = that._createRunOverviewQuery(filters);
+    } else if (that.myOverviewTC.overviewType === "diff") {
+      var filtersArray = that._createDiffApiFilters(filterObjArray);
+      // TODO: Diff hit count refreshing function should be called here.
+      query = that._createDiffOverviewQuery(filtersArray);
+    }
 
     that.setQuery(query, query);
-
-    // that.render();
   }
+
 
 });});

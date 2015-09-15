@@ -157,6 +157,7 @@ return declare(_WidgetBase, {
 
   pathAndSelectOnChange : function() {
     var that = this;
+
     that.myOverviewTC.overviewGrid.refreshGrid();
   }
 
