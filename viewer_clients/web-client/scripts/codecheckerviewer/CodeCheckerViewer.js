@@ -326,6 +326,9 @@ return declare(null, {
         if (that.mainTC.selectedChildWidget === newOverviewTC) {
           that.mainTC.selectChild("bc_listofrunsgrid");
         }
+
+        newOverviewTC.hashchangeHandle.remove();
+
         return true;
       },
       onShow : function() {
@@ -362,6 +365,9 @@ return declare(null, {
         if (that.mainTC.selectedChildWidget === newOverviewTC) {
           that.mainTC.selectChild("bc_listofrunsgrid");
         }
+
+        newOverviewTC.hashchangeHandle.remove();
+
         return true;
       },
       onShow : function() {

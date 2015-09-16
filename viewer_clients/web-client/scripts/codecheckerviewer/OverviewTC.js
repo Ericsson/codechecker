@@ -112,7 +112,7 @@ return declare(TabContainer, {
 
     that.addChild(that.overviewBC);
 
-    topic.subscribe("/dojo/hashchange", function(changedHash) {
+    that.hashchangeHandle = topic.subscribe("/dojo/hashchange", function(changedHash) {
       that.handleHashChange(changedHash);
     });
 
@@ -127,11 +127,12 @@ return declare(TabContainer, {
    * @param {String} changedHash the changed browser hash.
    */
   handleHashChange : function(changedHash) {
+    var that = this;
+
     if (!changedHash) {
       return;
     }
 
-    var that = this;
     var hashState = ioQuery.queryToObject(changedHash);
     var ovId = CC_UTIL.getOverviewIdFromHashState(hashState);
     if (!hashState || ovId != that.id) {
@@ -194,12 +195,14 @@ return declare(TabContainer, {
    * @param checkerId checker id.
    */
   showDocumentation : function(checkerId) {
-    var checkerDocDialog = new Dialog({
-      title   : "Documentation for <b>" + checkerId + "</b>",
-      content : marked(CC_SERVICE.getCheckerDoc(checkerId))
-    });
+    CC_SERVICE.getCheckerDoc(checkerId, function(checkerDoc) {
+      var checkerDocDialog = new Dialog({
+        title   : "Documentation for <b>" + checkerId + "</b>",
+        content : marked(checkerDoc)
+      });
 
-    checkerDocDialog.show();
+      checkerDocDialog.show();
+    });
   },
 
 
@@ -229,6 +232,7 @@ return declare(TabContainer, {
    */
   openFileView : function(reportId, runId) {
     var that = this;
+
     var hashState = ioQuery.queryToObject(hash());
     hashState.fvReportId = reportId;
     hashState.fvRunId = runId;
@@ -272,6 +276,7 @@ return declare(TabContainer, {
    */
   getStateOfFilters : function() {
     var that = this;
+
     return that.overviewHeader.getStateOfFilters();
   }
 

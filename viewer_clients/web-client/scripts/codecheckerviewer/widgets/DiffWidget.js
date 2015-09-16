@@ -21,7 +21,7 @@ return declare(_WidgetBase, {
 
   buildRendering : function() {
     this.domNode = domConstruct.create("div", {
-      class: "diffWidget"
+      class : "diffWidget"
     });
   },
 
@@ -40,11 +40,11 @@ return declare(_WidgetBase, {
     });
 
     this.baseIdLabel = domConstruct.create("span", {
-      style: "font-size: 11pt; margin-right: 20px;"
+      style : "font-size: 11pt; margin-right: 20px;"
     });
 
     this.newIdLabel = domConstruct.create("span", {
-      style: "font-size: 11pt; margin-right: 20px;"
+      style : "font-size: 11pt; margin-right: 20px;"
     });
 
     this.setDiffLabel("-", "-");

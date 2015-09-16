@@ -40,35 +40,37 @@ return declare(null, {
    * appropriate run.
    */
   getAvailableCheckers : function(overviewTC) {
-    var temp = {};
+    var checkerTypeOptionsArray = [ { value: "*", label: "All checkers" , selected: true } ];
 
     if (overviewTC.overviewType === "run") {
 
-      var resultTypes = CC_SERVICE.getRunResultTypes(overviewTC.runId, []);
-
-      for (var i = 0 , len = resultTypes.length ; i < len; ++i) {
-        temp[resultTypes[i].checkerId] = true;
-      }
+      CC_SERVICE.getRunResultTypes(overviewTC.runId, [], function(resultTypes) {
+        resultTypes.forEach(function(item) {
+          checkerTypeOptionsArray.push( { value: item.checkerId + "", label: item.checkerId + "" } );
+        });
+      });
 
     } else if (overviewTC.overviewType === "diff") {
 
-      var resultTypes1 = CC_SERVICE.getRunResultTypes(overviewTC.runId1, []);
-      var resultTypes2 = CC_SERVICE.getRunResultTypes(overviewTC.runId2, []);
+      CC_SERVICE.getRunResultTypes(overviewTC.runId1, [], function(resultTypes1) {
+        CC_SERVICE.getRunResultTypes(overviewTC.runId2, [], function(resultTypes2) {
+          var temp = {};
 
-      for (var i = 0 , len = resultTypes1.length ; i < len; ++i) {
-        temp[resultTypes1[i].checkerId] = true;
-      }
+          resultTypes1.forEach(function(item) {
+            temp[item.checkerId] = true;
+          });
 
-      for (var i = 0 , len = resultTypes2.length ; i < len; ++i) {
-        temp[resultTypes2[i].checkerId] = true;
-      }
+          resultTypes2.forEach(function(item) {
+            temp[item.checkerId] = true;
+          });
 
-    }
+          for (var elem in temp) {
+            checkerTypeOptionsArray.push( { value: elem + "", label: elem + "" } );
+          }
 
-    var checkerTypeOptionsArray = [ { value: "*", label: "All checkers" , selected: true } ];
+        });
+      });
 
-    for (var elem in temp) {
-      checkerTypeOptionsArray.push( { value: elem + "", label: elem + "" } );
     }
 
     return checkerTypeOptionsArray;

@@ -37,27 +37,26 @@ return declare(DataGrid, {
   fillGridWithRunData : function() {
     var that = this;
 
-    var runDataList = CC_SERVICE.getRunData();
+    CC_SERVICE.getRunData(function(runDataList) {
+      runDataList.forEach(function(item) {
+        var currItemDate = "Failed run";
 
-    for (var i = 0, len = runDataList.length ; i < len ; ++i) {
-      var currItemDate = "Failed run";
+        if (-1 !== item.runDate) {
+          currItemDate = item.runDate.split(/[\s\.]+/);
+        }
 
-      if (-1 !== runDataList[i].runDate) {
-        currItemDate = runDataList[i].runDate.split(/[\s\.]+/);
-      }
-
-      that.store.newItem({
-        id           : runDataList[i].runId,
-        runid        : runDataList[i].runId,
-        name         : runDataList[i].name,
-        date         : currItemDate[0] + " --- " + currItemDate[1],
-        numberofbugs : runDataList[i].resultCount,
-        duration     : runDataList[i].duration + " sec",
-        diffDisplay  : false,
-        diffActual   : false
+        that.store.newItem({
+          id           : item.runId,
+          runid        : item.runId,
+          name         : item.name,
+          date         : currItemDate[0] + " --- " + currItemDate[1],
+          numberofbugs : item.resultCount,
+          duration     : item.duration + " sec",
+          diffDisplay  : false,
+          diffActual   : false
+        });
       });
-    }
-
+    });
   },
 
   /**

@@ -139,7 +139,10 @@ define([
       });
 
       element.onclick = function () {
-        that._setContentAttr(CC_SERVICE.getSourceFileData(fileId, true).fileContent);
+        CC_SERVICE.getSourceFileData(fileId, true, function(sourceFileData) {
+          that._setContentAttr(sourceFileData.fileContent);
+        });
+
         that.setFileName(file.split("/").pop());
         that.setPath(file);
         fileViewBC.viewedFile = file;
@@ -178,8 +181,6 @@ define([
         path    : dom.create('span', { class : 'path' }),
         colons  : dom.toDom('<span class="colons"> : </span>')
       };
-
-      //dom.place(this._domElements.filename, this._domElements.header);
 
       this.domNode = this._domElements.editor;
 
@@ -244,8 +245,6 @@ define([
         that._lineWidgets.push(that.codeMirror.addLineWidget(
           bubble.startLine - fln, element));
       });
-
-      //that.createNewDummyBubble("valami1/valam2/valami3.c");
     },
 
 

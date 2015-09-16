@@ -119,13 +119,19 @@ return declare(BorderContainer, {
           that.viewedFile   = item.filePath;
           that.viewedFileId = item.fileId;
 
-          editor._setContentAttr(CC_SERVICE.getSourceFileData(item.fileId, true).fileContent);
+          CC_SERVICE.getSourceFileData(fileId, true, function(sourceFileData) {
+            editor._setContentAttr(sourceFileData.fileContent);
+
+            var newRange = that.createRangeFromBugPos(item.range);
+            that.jumpToRangeAndDrawBubblesLines(editor, newRange, item.reportId);
+          });
+
           editor.setFileName(that.viewedFile.split("/").pop());
           editor.setPath(that.viewedFile);
+        } else {
+          var newRange = that.createRangeFromBugPos(item.range);
+          that.jumpToRangeAndDrawBubblesLines(editor, newRange, item.reportId);
         }
-
-        var newRange = that.createRangeFromBugPos(item.range);
-        that.jumpToRangeAndDrawBubblesLines(editor, newRange, item.reportId);
 
         that.currCheckerId = item.checkerId;
         that.reportId = item.reportId;
@@ -200,13 +206,15 @@ return declare(BorderContainer, {
       editorHeader.suppressButton.setDisabled(true);
     }
 
-    editor._setContentAttr(CC_SERVICE.getSourceFileData(fileId, true).fileContent);
+    CC_SERVICE.getSourceFileData(fileId, true, function(sourceFileData) {
+      editor._setContentAttr(sourceFileData.fileContent);
+
+      var newRange = that.createRangeFromBugPos(lastBugPosition);
+      that.jumpToRangeAndDrawBubblesLines(editor, newRange, reportId);
+    });
+
     editor.setFileName(that.viewedFile.split("/").pop());
     editor.setPath(that.viewedFile);
-
-
-    var newRange = that.createRangeFromBugPos(lastBugPosition);
-    that.jumpToRangeAndDrawBubblesLines(editor, newRange, reportId);
 
 
     treePane.addChild(that.bugStoreModelTree.bugTree);
@@ -218,7 +226,6 @@ return declare(BorderContainer, {
 
     that.addChild(treePane);
     that.addChild(editorBC);
-
   },
 
   /**
@@ -232,12 +239,8 @@ return declare(BorderContainer, {
   jumpToRangeAndDrawBubblesLines : function(editor, range, reportId) {
     var that = this;
 
-
     editor.clearBubbles();
     editor.clearLines();
-
-
-    var reportDetails = CC_SERVICE.getReportDetails(reportId);
 
     var filterFunction = function(obj) {
       if (obj.fileId === that.viewedFileId) {
@@ -247,29 +250,32 @@ return declare(BorderContainer, {
       }
     }
 
-    var allPoints = reportDetails.executionPath;
+    CC_SERVICE.getReportDetails(reportId, function(reportDetails) {
+      var allPoints = reportDetails.executionPath;
 
-    that.createAndAddFileJumpBubbles(allPoints, editor);
+      that.createAndAddFileJumpBubbles(allPoints, editor);
 
-    var points  = allPoints.filter(filterFunction);
-    var bubbles = reportDetails.pathEvents.filter(filterFunction);
+      var points  = allPoints.filter(filterFunction);
+      var bubbles = reportDetails.pathEvents.filter(filterFunction);
 
-    // This is needed because CodeChecker gives different positions.
-    points.forEach(function (point)   { --point.startCol;  });
-    bubbles.forEach(function (bubble) { --bubble.startCol; });
+      // This is needed because CodeChecker gives different positions.
+      points.forEach(function (point)   { --point.startCol;  });
+      bubbles.forEach(function (bubble) { --bubble.startCol; });
 
-    editor.addBubbles(bubbles);
-    editor.addLines(points);
+      editor.addBubbles(bubbles);
+      editor.addLines(points);
 
 
-    var fln = editor.codeMirror.options.firstLineNumber;
-    var newPoint = editor.codeMirror.doc.markText(
-      { line : range.from.line - fln, ch : range.from.column - 1 },
-      { line : range.to.line   - fln, ch : range.to.column - 1   },
-      { className : "codemirrorselection" });
-    editor._lineMarks.push(newPoint);
+      var fln = editor.codeMirror.options.firstLineNumber;
+      var newPoint = editor.codeMirror.doc.markText(
+        { line : range.from.line - fln, ch : range.from.column - 1 },
+        { line : range.to.line   - fln, ch : range.to.column - 1   },
+        { className : "codemirrorselection" });
+      editor._lineMarks.push(newPoint);
 
-    editor.jumpTo(range.from.line, range.from.column);
+      editor.jumpTo(range.from.line, range.from.column);
+    });
+
   },
 
   /**
