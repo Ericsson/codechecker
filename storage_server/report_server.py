@@ -30,7 +30,6 @@ from codechecker_lib import decorators
 
 LOG = logger.get_new_logger('CC SERVER')
 
-# -----------------------------------------------------------------------
 if os.environ.get('CODECHECKER_ALCHEMY_LOG') is not None:
     import logging
 
@@ -38,17 +37,14 @@ if os.environ.get('CODECHECKER_ALCHEMY_LOG') is not None:
     logging.getLogger('sqlalchemy.engine').setLevel(logging.DEBUG)
     logging.getLogger('sqlalchemy.orm').setLevel(logging.DEBUG)
 
-
-# -----------------------------------------------------------------------
 class CheckerReportHandler(object):
     '''
     Class to handle requests from the codechecker script to store run
-    information to the database
+    information to the database.
     '''
+
     def sequenceDeleter(self, table, first_id):
-        '''
-        Delete points of sequnce in a general way
-        '''
+        """Delete points of sequnce in a general way."""
         next_id = first_id
         while next_id:
             item = self.session.query(table).get(next_id)
@@ -56,12 +52,10 @@ class CheckerReportHandler(object):
             next_id = item.next
 
     def deleteBuildAction(self, build_action):
-        '''
-        Garbage collector for incremental build
-        '''
+        """Garbage collector for incremental build."""
         reports = self.session.query(ReportsToBuildActions) \
-                              .filter(ReportsToBuildActions.build_action_id
-                                      == build_action.id)
+                              .filter(ReportsToBuildActions.build_action_id ==
+                                      build_action.id)
 
         # Delete all report which is only in the current build action
         for r in reports:
@@ -212,6 +206,30 @@ class CheckerReportHandler(object):
                   severity):
         '''
         '''
+
+        def is_same_event_path(start_bugevent_id):
+            """Checkes if the given DB stored bug path is the same as the one in
+            bugpath argument
+            """
+
+            point2_id = start_bugevent_id
+            for point1 in events:
+                if point2_id is None:
+                    return False
+
+                point2 = self.session.query(BugPathEvent).get(point2_id)
+                if point1.startLine != point2.line_begin or \
+                   point1.startCol != point2.col_begin or \
+                   point1.endLine != point2.line_end or \
+                   point1.endCol != point2.col_end or \
+                   point1.msg != point2.msg or \
+                   point1.fileId != point2.file_id:
+                    return False
+
+                point2_id = point2.next
+
+            return point2_id is None
+
         # TODO: perfomance issues when executing the following query on large
         #       databaseses
         reports = self.session.query(self.report_ident) \
@@ -221,31 +239,28 @@ class CheckerReportHandler(object):
         assert action is not None
 
         try:
+            # Check for duplicates by bug hash
             if reports.count() != 0:
-                dup_report = reports.filter(self.report_ident.c.run_id ==
-                                            action.run_id) \
-                                    .first()
-
-                if not dup_report:
-                    return self.storeReportInfo(action,
-                                                file_id,
-                                                bug_hash,
-                                                bug_hash_type,
-                                                msg,
-                                                bugpath,
-                                                events,
-                                                checker_id,
-                                                checker_cat,
-                                                bug_type,
-                                                severity)
-                else:
-                    rtp = self.session.query(ReportsToBuildActions) \
-                                      .get((dup_report.report_ident.id, action.id))
-                    if not rtp:
-                        reportToActions = ReportsToBuildActions(
-                            dup_report.report_ident.id, action.id)
-                        self.session.add(reportToActions)
-                return dup_report.report_ident.id
+                possib_dups = reports.filter(self.report_ident.c.run_id ==
+                                             action.run_id)
+                for possib_dup in possib_dups:
+                    # It's a duplicate or a hash clash. Check checker name,
+                    # file id, and position
+                    dup_report_obj = self.session.query(Report).get(
+                        possib_dup.report_ident.id)
+                    if dup_report_obj.checker_id == checker_id and \
+                       dup_report_obj.file_id == file_id and \
+                       is_same_event_path(dup_report_obj.start_bugevent):
+                        # It's a duplicate
+                        rtp = self.session.query(ReportsToBuildActions) \
+                                          .get((dup_report_obj.id,
+                                                action.id))
+                        if not rtp:
+                            reportToActions = ReportsToBuildActions(
+                                dup_report_obj.id, action.id)
+                            self.session.add(reportToActions)
+                            self.session.commit()
+                        return dup_report_obj.id
 
             return self.storeReportInfo(action,
                                         file_id,

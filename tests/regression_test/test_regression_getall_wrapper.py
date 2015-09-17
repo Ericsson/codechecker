@@ -30,7 +30,7 @@ class RunResults(unittest.TestCase):
         self.assertIsNotNone(runs)
         self.assertNotEqual(len(runs), 0)
         # select one random run
-        idx = random.randint(0, len(runs) - 1)
+        idx = 0
         return runs[idx].runId
 
     def setUp(self):
