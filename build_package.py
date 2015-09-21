@@ -15,6 +15,7 @@ import ntpath
 import urlparse
 import tarfile
 import subprocess
+import time
 
 LOG = logging.getLogger('Packager')
 
@@ -468,6 +469,30 @@ def build_package(repository_root, build_package_config, env=None):
     source = os.path.join(repository_root, 'config')
     target = os.path.join(package_root, package_layout['config'])
     copy_tree(source, target)
+
+    version_file = os.path.join(target, 'version.json')
+
+    with open(version_file) as v_file:
+        version_data = v_file.read()
+    version_json_data = json.loads(version_data)
+
+    git_hash = ''
+    try:
+        git_hash = subprocess.check_output(['git', 'rev-parse', 'HEAD'],
+                                           cwd=repository_root)
+        git_hash = git_hash.rstrip()
+    except subprocess.CalledProcessError as cperr:
+        LOG.error('Failed to get last commit hash.')
+        LOG.error(str(cperr))
+
+    version_json_data['git_hash'] = git_hash
+
+    time_now = time.strftime("%Y-%m-%dT%H:%M")
+    version_json_data['package_build_date'] = time_now
+
+    # rewrite version config file with the extended data
+    with open(version_file, 'w') as v_file:
+        v_file.write(json.dumps(version_json_data, sort_keys=True, indent=4))
 
     # codechecker web client
     LOG.debug('Copy web client files')

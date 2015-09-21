@@ -211,6 +211,12 @@ def main():
                                   help='Generate dump for all failed action.')
         debug_parser.set_defaults(func=arg_handler.handle_debug)
 
+        # --------------------------------------
+        # package version info
+        version_parser = subparsers.add_parser('version',
+                                                help='Print package version information.')
+        version_parser.set_defaults(func=arg_handler.handle_version_info)
+
         args = parser.parse_args()
         args.func(args)
 

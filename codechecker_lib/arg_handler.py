@@ -411,3 +411,40 @@ def handle_check(args):
 
     LOG.info("Analysis length: " + str(end_time - start_time) + " sec.")
     LOG.info("Analysis has finished.")
+
+
+def handle_version_info(args):
+    ''' Get and print the version informations from the
+    version config file and thrift API versions'''
+
+    context = generic_package_context.get_context()
+    version_file = context.version_file
+
+    v_data = ''
+    try:
+        with open(version_file) as v_file:
+            v_data = v_file.read()
+    except IOError as ioerr:
+        LOG.error('Failed to read version config file: ' + version_file)
+        LOG.error(ioerr)
+
+    try:
+        version_data = json.loads(v_data)
+        base_version = version_data['version']['major'] + \
+            '.' + version_data['version']['minor']
+        db_schema_version = version_data['db_version']['major'] + \
+            '.'+version_data['db_version']['minor']
+
+        print('Base package version: \t' + base_version).expandtabs(30)
+        print('Package build date: \t' +
+              version_data['package_build_date']).expandtabs(30)
+        print('Git hash: \t' + version_data['git_hash']).expandtabs(30)
+        print('DB schema version: \t' + db_schema_version).expandtabs(30)
+    except ValueError as verr:
+        LOG.error('Failed to decode version information from the config file.')
+        LOG.error(verr)
+
+    # thift api version for the clients
+    from codeCheckerDBAccess import constants
+    print('Thrift client api version: \t' +
+          constants.API_VERSION).expandtabs(30)
