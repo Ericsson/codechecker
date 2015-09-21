@@ -64,8 +64,24 @@ def debug(context, dbusername, dbhost, dbport, dbname, force):
             gdb_result = \
                 crash_handler.get_crash_info(str(action.check_cmd).split())
 
-            LOG.info('Writing gdb result to file.')
+            LOG.info('Writing debug info to file.')
+
             with open(debug_log_file, 'w') as log_file:
+                log_file.write('========================\n')
+                log_file.write('Original build command: \n')
+                log_file.write('========================\n')
+                log_file.write(action.build_cmd + '\n')
+                log_file.write('===============\n')
+                log_file.write('Check command: \n')
+                log_file.write('===============\n')
+                log_file.write(action.check_cmd + '\n')
+                log_file.write('==============\n')
+                log_file.write('Failure text: \n')
+                log_file.write('==============\n')
+                log_file.write(action.failure_txt + '\n')
+                log_file.write('==========\n')
+                log_file.write('GDB info: \n')
+                log_file.write('==========\n')
                 log_file.write(gdb_result)
 
         LOG.info('All new debug files are placed in ' + dumps_dir)
