@@ -487,7 +487,7 @@ def build_package(repository_root, build_package_config, env=None):
         LOG.error('Failed to get last commit hash.')
         LOG.error(str(cperr))
     except OSError as oerr:
-        LOG.error('Failed to run command:' + git_hash_cmd)
+        LOG.error('Failed to run command:' + ' '.join(git_hash_cmd))
         LOG.error(str(oerr))
         sys.exit(1)
 
