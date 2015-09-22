@@ -471,6 +471,7 @@ def build_package(repository_root, build_package_config, env=None):
     copy_tree(source, target)
 
     version_file = os.path.join(target, 'version.json')
+    LOG.debug('Extending version file: ' + version_file)
 
     with open(version_file) as v_file:
         version_data = v_file.read()
@@ -478,12 +479,17 @@ def build_package(repository_root, build_package_config, env=None):
 
     git_hash = ''
     try:
-        git_hash = subprocess.check_output(['git', 'rev-parse', 'HEAD'],
+        git_hash_cmd = ['git', 'rev-parse', 'HEAD']
+        git_hash = subprocess.check_output(git_hash_cmd,
                                            cwd=repository_root)
         git_hash = git_hash.rstrip()
     except subprocess.CalledProcessError as cperr:
         LOG.error('Failed to get last commit hash.')
         LOG.error(str(cperr))
+    except OSError as oerr:
+        LOG.error('Failed to run command:' + git_hash_cmd)
+        LOG.error(str(oerr))
+        sys.exit(1)
 
     version_json_data['git_hash'] = git_hash
 
