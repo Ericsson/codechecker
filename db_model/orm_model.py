@@ -181,7 +181,6 @@ class BugReportPoint(Base):
 
 class Report(Base):
     __tablename__ = 'reports'
-    __table_args__ = (UniqueConstraint('run_id', 'bug_id'), )
 
     id = Column(Integer, Sequence('report_id_seq'), primary_key=True)
     file_id = Column(Integer, ForeignKey('files.id', deferrable = True, initially = "DEFERRED", ondelete='CASCADE'))

@@ -39,7 +39,7 @@ LOG.setLevel(logging.INFO)
 LOG.addHandler(log_handler)
 
 
-def start_test_client(pkg_root, test_modules, e, err, fail, skipp, viewer_port, test_module_error):
+def start_test_client(pkg_root, test_modules, e, err, fail, skipp, viewer_port, server_port, test_module_error):
 
     # set viewer env to find python modules
 
@@ -54,6 +54,7 @@ def start_test_client(pkg_root, test_modules, e, err, fail, skipp, viewer_port, 
 
     # pass viewer port to clients
     os.environ['CC_TEST_VIEWER_PORT'] = str(viewer_port)
+    os.environ['CC_TEST_SERVER_PORT'] = str(server_port)
 
     standard_tests = unittest.TestSuite()
 
@@ -359,6 +360,7 @@ class GenericPackageTester(object):
                 target=self.start_test_client,
                 args=(stop_server, err, fail, skipp,
                       test_config['CC_TEST_VIEWER_PORT'],
+                      test_config['CC_TEST_SERVER_PORT'],
                       test_module_error))
             w1.start()
             # wait for test to finish
