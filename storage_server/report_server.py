@@ -208,8 +208,8 @@ class CheckerReportHandler(object):
         '''
 
         def is_same_event_path(start_bugevent_id):
-            """Checkes if the given DB stored bug path is the same as the one in
-            bugpath argument
+            """Checkes if the given event path is the same as the one in the
+            events argument
             """
 
             point2_id = start_bugevent_id
