@@ -26,7 +26,6 @@ return declare(DataGrid, {
     that.cellWidth = ((100)/5).toString() + "%";
 
     that.structure = [
-      { name: "Index", field: "reportId", styles: "text-align: center;", width: "40px" },
       { name: "File", field: "fileWithBugPos", styles: "text-align: center;", width: that.cellWidth , formatter: function(data) { return data.split('\n').join('<br/>'); } },
       { name: "Message", field: "checkerMsg", styles: "text-align: center;", width: that.cellWidth },
       { name: "Checker name", field: "checkerId", styles: "text-align: center;", width: that.cellWidth },
