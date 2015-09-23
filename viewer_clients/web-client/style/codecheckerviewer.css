@@ -40,7 +40,7 @@ code, kbd, pre, samp, tt, xmp, listing, plaintext {
 }
 
 .overviewGrid {
-  font-family: 'Ubuntu', sans-serif;
+  font-family: sans-serif;
 }
 
 .overviewGrid td:nth-child(1) {
