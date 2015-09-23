@@ -10,7 +10,7 @@ html, body {
   height     : 100%;
   margin     : 0px;
   padding    : 0px;
-  font-family: "Ubuntu", sans-serif;
+  font-family: sans-serif;
   font-size  : 10pt;
 }
 
@@ -39,25 +39,25 @@ code, kbd, pre, samp, tt, xmp, listing, plaintext {
   color: blue;
 }
 
-
 .overviewGrid {
-  font-family: 'Ubuntu', sans-serif;
+  font-family: sans-serif;
 }
 
-
-.overviewGrid td:nth-child(2) {
+.overviewGrid td:nth-child(1) {
   color: blue;
 }
-.overviewGrid td:nth-child(2):hover {
+
+.overviewGrid td:nth-child(1):hover {
   text-decoration: underline;
   cursor: pointer;
   cursor: hand;
 }
 
-.overviewGrid td:nth-child(4) {
+.overviewGrid td:nth-child(3) {
   color: blue;
 }
-.overviewGrid td:nth-child(4):hover {
+
+.overviewGrid td:nth-child(3):hover {
   text-decoration: underline;
   cursor: pointer;
   cursor: hand;
@@ -117,7 +117,6 @@ code, kbd, pre, samp, tt, xmp, listing, plaintext {
   word-wrap: break-word;
 }
 
-
 .editor .header .filename {
   font-family: monospace !important;
   margin-left: 2px;
@@ -129,12 +128,10 @@ code, kbd, pre, samp, tt, xmp, listing, plaintext {
   margin-left : 2px;
 }
 
-
 .filterSpacer {
   margin-left: 2px;
   margin-right: 2px;
 }
-
 
 .plusIcon {
   background-image: url("/images/plus.png");
@@ -152,29 +149,7 @@ code, kbd, pre, samp, tt, xmp, listing, plaintext {
   text-align: center;
 }
 
-.arrowLeftIcon {
-  background-image: url("/images/arrowLeft.png");
-  background-repeat: no-repeat;
-  width: 16px;
-  height: 16px;
-  text-align: center;
-}
-
-.arrowRightIcon {
-  background-image: url("/images/arrowRight.png");
-  background-repeat: no-repeat;
-  width: 16px;
-  height: 16px;
-  text-align: center;
-}
-
-
 .diffWidget {
-  border: 0px;
-  margin: 5px;
-}
-
-.pagerWidget {
   border: 0px;
   margin: 5px;
 }
