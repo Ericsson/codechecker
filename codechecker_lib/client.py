@@ -352,6 +352,7 @@ class ConnectionManager(object):
                                               cls.database_host,
                                               cls.database_port,
                                               context.db_version_info,
+                                              context.migration_root,
                                               is_server_started))
 
         cls._server.daemon = True

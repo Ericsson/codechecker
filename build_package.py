@@ -535,6 +535,12 @@ def build_package(repository_root, build_package_config, env=None):
     target = os.path.join(package_root, package_layout['codechecker_db_model'])
     copy_tree(source, target)
 
+    # codechecker db migrate
+    LOG.debug('Copy codechecker database migration')
+    source = os.path.join(repository_root, 'db_migrate')
+    target = os.path.join(package_root, package_layout['codechecker_db_migrate'])
+    copy_tree(source, target)
+
     # codechecker storage server
     LOG.debug('Copy codechecker storage server')
     source = os.path.join(repository_root, 'storage_server')
