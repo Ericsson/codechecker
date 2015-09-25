@@ -91,9 +91,7 @@ virtualenv -p /usr/bin/python2.7 ~/checker_env
 source ~/checker_env/bin/activate
 
 # install required python modules
-pip install SQLAlchemy
-pip install psycopg2
-pip install thrift
+pip install -r .ci/python_requirements
 
 # create codechecker package
 git clone https://github.com/Ericsson/codechecker.git

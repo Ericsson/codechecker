@@ -16,8 +16,16 @@ from sqlalchemy.ext.declarative import declarative_base
 
 from datetime import *
 
+CC_META = MetaData(naming_convention={
+    "ix": 'ix_%(column_0_label)s',
+    "uq": "uq_%(table_name)s_%(column_0_name)s",
+    "ck": "ck_%(table_name)s_%(constraint_name)s",
+    "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
+    "pk": "pk_%(table_name)s"
+})
+
 # Create base class for ORM classes
-Base = declarative_base()
+Base = declarative_base(metadata=CC_META)
 
 # Start of ORM classes
 
@@ -39,7 +47,7 @@ class Run(Base):
             UniqueConstraint('name'),
             )
 
-    id = Column(Integer, Sequence('run_id_seq'), primary_key=True)
+    id = Column(Integer, autoincrement=True, primary_key=True)
     date = Column(DateTime)
     duration = Column(Integer)  # Seconds, -1 if unfinished
     name = Column(String)
@@ -76,7 +84,7 @@ class Config(Base):
 class File(Base):
     __tablename__ = 'files'
 
-    id = Column(Integer, Sequence('file_id_seq'), primary_key=True)
+    id = Column(Integer, autoincrement=True, primary_key=True)
     run_id = Column(Integer, ForeignKey('runs.id', deferrable = True, initially = "DEFERRED", ondelete='CASCADE'))
     filepath = Column(String)
     content = Column(Binary)
@@ -95,7 +103,7 @@ class File(Base):
 class BuildAction(Base):
     __tablename__ = 'build_actions'
 
-    id = Column(Integer, Sequence('build_action_id_seq'), primary_key=True)
+    id = Column(Integer, autoincrement=True, primary_key=True)
     run_id = Column(Integer, ForeignKey('runs.id', deferrable = True, initially = "DEFERRED", ondelete='CASCADE'))
     build_cmd = Column(String)
     check_cmd = Column(String)
@@ -123,7 +131,7 @@ class BuildAction(Base):
 class BugPathEvent(Base):
     __tablename__ = 'bug_path_events'
 
-    id = Column(Integer, Sequence('bug_path_event_id_seq'), primary_key=True)
+    id = Column(Integer, autoincrement=True, primary_key=True)
     line_begin = Column(Integer)
     col_begin = Column(Integer)
     line_end = Column(Integer)
@@ -156,7 +164,7 @@ class BugPathEvent(Base):
 class BugReportPoint(Base):
     __tablename__ = 'bug_report_points'
 
-    id = Column(Integer, Sequence('report_point_id_seq'), primary_key=True)
+    id = Column(Integer, autoincrement=True, primary_key=True)
     line_begin = Column(Integer)
     col_begin = Column(Integer)
     line_end = Column(Integer)
@@ -182,7 +190,7 @@ class BugReportPoint(Base):
 class Report(Base):
     __tablename__ = 'reports'
 
-    id = Column(Integer, Sequence('report_id_seq'), primary_key=True)
+    id = Column(Integer, autoincrement=True, primary_key=True)
     file_id = Column(Integer, ForeignKey('files.id', deferrable = True, initially = "DEFERRED", ondelete='CASCADE'))
     run_id = Column(Integer, ForeignKey('runs.id', deferrable = True, initially = "DEFERRED", ondelete='CASCADE'), index = True)
     # build_action_id = Column(Integer, ForeignKey('build_actions.id', deferrable = True, initially = "DEFERRED"))
@@ -241,7 +249,7 @@ class SuppressBug(Base):
 class SkipPath(Base):
     __tablename__ = 'skip_path'
 
-    id = Column(Integer, Sequence('skippath_id_seq'), primary_key=True)
+    id = Column(Integer, autoincrement=True, primary_key=True)
     path = Column(String)
     run_id = Column(Integer, ForeignKey('runs.id', deferrable = True, initially = "DEFERRED", ondelete='CASCADE'), primary_key=True)
     comment = Column(Binary)

@@ -14,6 +14,8 @@ import socket
 import errno
 
 import sqlalchemy
+from alembic import command, config
+from alembic.migration import MigrationContext
 
 from thrift.transport import TSocket
 from thrift.transport import TTransport
@@ -473,8 +475,17 @@ def create_db_if_not_exists(uri, db_name):
     LOG.debug('Database already exists: ' + db_name)
     return False
 
+def migrate_database(session, migration_scripts):
+    LOG.debug('Updating schema to HEAD...')
 
-def run_server(dbUsername, port, db_name, dbhost, dbport, db_version_info, callback_event=None):
+    connection = session.connection()
+
+    cfg = config.Config()
+    cfg.set_main_option("script_location", migration_scripts)
+    cfg.attributes["connection"] = connection
+    command.upgrade(cfg, "head")
+
+def run_server(dbUsername, port, db_name, dbhost, dbport, db_version_info, migration_scripts, callback_event=None):
     LOG.debug('Starting codechecker server ...')
 
     uri = 'postgres://' + dbUsername + '@' + dbhost + ':' + str(dbport)
@@ -498,7 +509,7 @@ def run_server(dbUsername, port, db_name, dbhost, dbport, db_version_info, callb
 
         LOG.debug('Creating new database schema')
         start = datetime.now()
-        CreateSchema(engine)
+        migrate_database(session, migration_scripts)
         end = datetime.now()
         diff = end - start
         LOG.debug('Creating new database schema done in ' + str(diff.seconds))
@@ -525,9 +536,6 @@ def run_server(dbUsername, port, db_name, dbhost, dbport, db_version_info, callb
         session.commit()
 
     session.autoflush = False  # autoflush is enabled by default
-
-    # TODO: if schema already exists, check if it is compatible with the
-    # current version of the script
 
     LOG.debug('Starting thrift server')
     try:
