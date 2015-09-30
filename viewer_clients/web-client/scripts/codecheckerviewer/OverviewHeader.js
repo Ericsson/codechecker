@@ -47,6 +47,7 @@ return declare(ContentPane, {
    */
   getStateOfFilters : function() {
     var that = this;
+
     var filterObjArray = [];
 
     for (var i = 0 ; i < that.filters.length ; ++i) {
@@ -85,6 +86,7 @@ return declare(ContentPane, {
    */
   addFilter : function() {
     var that = this;
+
     var newFilter = new Filter({
       myOverviewTC : that.myOverviewTC
     });
@@ -123,6 +125,7 @@ return declare(ContentPane, {
    */
   onRemoveOrAdd : function() {
     var that = this;
+
     that.myOverviewTC.overviewGrid.refreshGrid();
     that.myOverviewTC.overviewBC.resize();
   }

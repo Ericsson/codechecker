@@ -149,9 +149,9 @@ code, kbd, pre, samp, tt, xmp, listing, plaintext {
   text-align: center;
 }
 
-.diffWidget {
+.listOfRunsWidget {
   border: 0px;
-  margin: 5px;
+  margin: 3px;
 }
 
 .editorHeader {

@@ -25,7 +25,8 @@ return declare(DataGrid, {
       { name: "Name", field: "name", styles: "text-align: center;", width: "auto" },
       { name: "Date", field: "date", styles: "text-align: center;", width: "auto" },
       { name: "Number of bugs", field: "numberofbugs", styles: "text-align: center;", width: "auto" },
-      { name: "Duration", field: "duration", styles: "text-align: center;", width: "auto" }
+      { name: "Duration", field: "duration", styles: "text-align: center;", width: "auto" },
+      { name: "Delete", field: "deleteDisplay", styles: "text-align: center;", width: "50px", type: "dojox.grid.cells.Bool", editable: true },
     ];
 
   },
@@ -53,17 +54,19 @@ return declare(DataGrid, {
           numberofbugs : item.resultCount,
           duration     : item.duration + " sec",
           diffDisplay  : false,
-          diffActual   : false
+          diffActual   : false,
+          deleteDisplay: false,
+          deleteActual : false
         });
       });
     });
   },
 
   /**
-   * Gets the number of the ticked in checkboxes of the Diff column in the
+   * Gets the number of the ticked checkboxes of the Diff column in the
    * ListOfRunsGrid (This should be 0 or 1 or 2)
    */
-  getCheckedNumber : function() {
+  getDiffNumber : function() {
     var that = this;
 
     var accm = 0;
