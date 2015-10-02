@@ -17,20 +17,21 @@ define([
   "scripts/codecheckerviewer/ListOfRunsGrid.js",
   "scripts/codecheckerviewer/OverviewTC.js",
   "scripts/codecheckerviewer/Util.js",
-  "scripts/codecheckerviewer/widgets/DiffWidget.js",
+  "scripts/codecheckerviewer/widgets/ListOfRunsWidget.js",
   "scripts/codecheckerviewer/widgets/MenuButton.js",
 ], function ( declare, hash, topic, ioQuery, Dialog, BorderContainer
             , TabContainer, ContentPane, Button, ListOfRunsGrid, OverviewTC
-            , Util, DiffWidget, MenuButton ) {
+            , Util, ListOfRunsWidget, MenuButton ) {
 return declare(null, {
 
 
   constructor : function() {
     var that = this;
+
     var initialHash = hash();
 
-    that.checkedRunIds = [];
-    that.checkedRunNames  = [];
+    that.diffRuns = [];
+    that.deleteRunIds = [];
 
     that.initGlobals();
     that.buildLayout();
@@ -69,7 +70,6 @@ return declare(null, {
   buildLayout : function() {
     var that = this;
 
-
     that.layout = new BorderContainer({
       id    : "layout",
       style : "height: 100%;",
@@ -97,11 +97,10 @@ return declare(null, {
 
   /**
    * Creates the ListOfRuns view which consists of a ListOfRunsGrid and a
-   * DiffWidget and their appropriate encapsulating Containers.
+   * ListOfRunsWidget and their appropriate encapsulating Containers.
    */
   buildListOfRuns : function() {
     var that = this;
-
 
     that.listOfRunsGridCP = new ContentPane({
       region : "center",
@@ -115,7 +114,7 @@ return declare(null, {
       class         : "listOfRunsGrid",
       title         : "List of runs",
       selectionMode : "none",
-      style         : "font-family: 'Ubuntu', sans-serif; padding: 0px; margin: 0px; border: 0px;",
+      style         : "font-family: sans-serif; padding: 0px; margin: 0px; border: 0px;",
       onRowClick    : function(evt) {
 
         switch (evt.cell.field) {
@@ -129,10 +128,40 @@ return declare(null, {
 
             break;
 
+          case "deleteDisplay":
+            var tempDelete = that.listOfRunsGrid.getItem(evt.rowIndex).deleteActual[0];
+
+            if (tempDelete) {
+              that.listOfRunsGrid.getItem(evt.rowIndex).deleteActual[0] = false;
+              that.listOfRunsGrid.getItem(evt.rowIndex).deleteDisplay[0] = false;
+              that.listOfRunsGrid.update();
+
+              for (var i = 0, len = that.deleteRunIds.length ; i < len ; ++i) {
+                if (that.listOfRunsGrid.getItem(evt.rowIndex).runid[0] == that.deleteRunIds[i]) {
+                  that.deleteRunIds.splice(i, 1);
+                  break;
+                }
+              }
+            } else {
+              that.listOfRunsGrid.getItem(evt.rowIndex).deleteActual[0] = true;
+              that.listOfRunsGrid.getItem(evt.rowIndex).deleteDisplay[0] = true;
+              that.listOfRunsGrid.update();
+
+              that.deleteRunIds.push(that.listOfRunsGrid.getItem(evt.rowIndex).runid[0]);
+            }
+
+            if (that.deleteRunIds.length === 0) {
+              that.listOfRunsWidget.setDeleteButtonDisabled(true);
+            } else {
+              that.listOfRunsWidget.setDeleteButtonDisabled(false);
+            }
+
+            break;
+
           case "diffDisplay":
 
             var tempDiff = that.listOfRunsGrid.getItem(evt.rowIndex).diffActual[0];
-            var checkedNumber = that.listOfRunsGrid.getCheckedNumber();
+            var diffNumber = that.listOfRunsGrid.getDiffNumber();
 
             if (tempDiff) {
 
@@ -140,24 +169,25 @@ return declare(null, {
               that.listOfRunsGrid.getItem(evt.rowIndex).diffDisplay[0] = false;
               that.listOfRunsGrid.update();
 
-              for(var i = 0 ; i < checkedNumber ; ++i) {
-                if(that.checkedRunIds[i] === that.listOfRunsGrid.getItem(evt.rowIndex).runid[0]) {
-                  that.checkedRunIds.splice(i, 1);
-                }
-                if(that.checkedRunNames[i] === that.listOfRunsGrid.getItem(evt.rowIndex).name[0]) {
-                  that.checkedRunNames.splice(i, 1);
+              for(var i = 0 ; i < diffNumber ; ++i) {
+                if (that.diffRuns[i].runId === that.listOfRunsGrid.getItem(evt.rowIndex).runid[0]) {
+                  that.diffRuns.splice(i, 1);
+                  break;
                 }
               }
 
             } else {
 
-              if (checkedNumber < 2) {
+              if (diffNumber < 2) {
                 that.listOfRunsGrid.getItem(evt.rowIndex).diffActual[0] = true;
                 that.listOfRunsGrid.getItem(evt.rowIndex).diffDisplay[0] = true;
                 that.listOfRunsGrid.update();
 
-                that.checkedRunIds.push(that.listOfRunsGrid.getItem(evt.rowIndex).runid[0]);
-                that.checkedRunNames.push(that.listOfRunsGrid.getItem(evt.rowIndex).name[0]);
+                that.diffRuns.push({
+                  runId : that.listOfRunsGrid.getItem(evt.rowIndex).runid[0],
+                  runName : that.listOfRunsGrid.getItem(evt.rowIndex).name[0]
+                });
+
               } else {
                 that.listOfRunsGrid.getItem(evt.rowIndex).diffActual[0] = false;
                 that.listOfRunsGrid.getItem(evt.rowIndex).diffDisplay[0] = false;
@@ -166,33 +196,33 @@ return declare(null, {
 
             }
 
-            checkedNumber = that.listOfRunsGrid.getCheckedNumber();
+            diffNumber = that.listOfRunsGrid.getDiffNumber();
 
-            if (checkedNumber === 2) {
-              that.diffWidget.setButtonDisabled(false);
+            if (diffNumber === 2) {
+              that.listOfRunsWidget.setDiffButtonDisabled(false);
             } else {
-              that.diffWidget.setButtonDisabled(true);
+              that.listOfRunsWidget.setDiffButtonDisabled(true);
             }
 
 
-            if (checkedNumber === 0) {
-              that.diffWidget.setDiffLabel("-", "-");
-            } else if (checkedNumber === 1) {
-              that.diffWidget.setDiffLabel(that.checkedRunIds[0], "-");
+            if (diffNumber === 0) {
+              that.listOfRunsWidget.setDiffLabel("-", "-");
+            } else if (diffNumber === 1) {
+              that.listOfRunsWidget.setDiffLabel(that.diffRuns[0].runId, "-");
             } else {
-              that.diffWidget.setDiffLabel(that.checkedRunIds[0], that.checkedRunIds[1]);
+              that.listOfRunsWidget.setDiffLabel(that.diffRuns[0].runId,
+                that.diffRuns[1].runId);
             }
 
             break;
 
         }
 
-
       }
     });
 
 
-    that.diffWidget = new DiffWidget();
+    that.listOfRunsWidget = new ListOfRunsWidget();
 
 
     that.listOfRunsBC = new BorderContainer({
@@ -211,17 +241,17 @@ return declare(null, {
       style  : "margin: 0px; padding: 0px;"
     });
 
-    that.diffWidgetCP = new ContentPane({
+    that.listOfRunsWidgetCP = new ContentPane({
       region : "bottom",
       style  : "margin: 0px; padding: 0px;"
     });
 
 
     that.listOfRunsGridCP.addChild(that.listOfRunsGrid);
-    that.diffWidgetCP.addChild(that.diffWidget);
+    that.listOfRunsWidgetCP.addChild(that.listOfRunsWidget);
 
     that.listOfRunsBC.addChild(that.listOfRunsGridCP);
-    that.listOfRunsBC.addChild(that.diffWidgetCP);
+    that.listOfRunsBC.addChild(that.listOfRunsWidgetCP);
 
     that.mainTC.addChild(that.listOfRunsBC);
 
@@ -233,11 +263,29 @@ return declare(null, {
    */
   buildMenuButton : function() {
     var that = this;
+
     var menuButton = new MenuButton({
       mainTC : that.mainTC,
     });
 
     that.headerPane.addChild(menuButton);
+  },
+
+
+  /**
+   * This function gets called when the Delete button in the ListOfRunsWidget
+   * is pressed
+   */
+  deleteRuns : function() {
+    var that = this;
+
+    CC_SERVICE.removeRunResults(that.deleteRunIds, function(isSuccessful) {
+      if (isSuccessful) {
+        that.reset();
+      } else {
+        console.log("Removal of runs failed.");
+      }
+    });
   },
 
 
@@ -249,6 +297,7 @@ return declare(null, {
    */
   handleHashChange : function(changedHash) {
     var that = this;
+
     if (!changedHash) {
       that.mainTC.selectChild("bc_listofrunsgrid");
     }
@@ -315,6 +364,7 @@ return declare(null, {
    */
   handleNewRunOverviewTab : function(idOfNewOverviewTC, runId, runName) {
     var that = this;
+
     var newOverviewTC = new OverviewTC({
       id           : idOfNewOverviewTC,
       runId        : runId,
@@ -353,6 +403,7 @@ return declare(null, {
    */
   handleNewDiffOverviewTab : function(idOfNewOverviewTC, runId1, runId2, runName1, runName2) {
     var that = this;
+
     var newOverviewTC = new OverviewTC({
       id           : idOfNewOverviewTC,
       runId1       : runId1,
@@ -396,15 +447,14 @@ return declare(null, {
   reset : function() {
     var that = this;
 
-
     that.listOfRunsGrid.recreateStore();
     that.listOfRunsGrid.fillGridWithRunData()
     that.listOfRunsGrid.render();
 
-    that.checkedRunIds = [];
-    that.checkedRunNames  = [];
+    that.diffRuns = [];
+    that.deleteRunIds = [];
 
-    that.diffWidget.reset();
+    that.listOfRunsWidget.reset();
   }
 
 
