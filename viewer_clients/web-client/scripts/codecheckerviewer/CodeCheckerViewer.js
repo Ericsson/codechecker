@@ -28,6 +28,10 @@ return declare(null, {
   constructor : function() {
     var that = this;
 
+    if (!that.checkBrowserCompatibility()) {
+      return;
+    }
+
     var initialHash = hash();
 
     that.diffRuns = [];
@@ -51,6 +55,75 @@ return declare(null, {
     } else {
       that.handleHashChange(initialHash);
     }
+  },
+
+
+  getBrowserInfo : function() {
+    var ua = navigator.userAgent;
+    var tem = [];
+    var M = ua.match(/(opera|chrome|safari|firefox|msie|trident(?=\/))\/?\s*(\d+)/i) || [];
+
+    if (/trident/i.test(M[1])) {
+      tem = /\brv[ :]+(\d+)/g.exec(ua) || [];
+      return { name : 'IE', version : (tem[1]||'') };
+    }
+
+    if (M[1] === 'Chrome') {
+      tem = ua.match(/\bOPR\/(\d+)/);
+
+      if (tem !== null) {
+        return { name : 'Opera', version : tem[1] };
+      }
+    }
+
+    M = M[2] ? [M[1], M[2]] : [navigator.appName, navigator.appVersion, '-?'];
+
+    if ((tem = ua.match(/version\/(\d+)/i)) !== null) {
+      M.splice(1, 1, tem[1]);
+    }
+
+    return {
+      name    : M[0],
+      version : M[1]
+    }
+ },
+
+
+  checkBrowserCompatibility : function() {
+    var that = this;
+
+    // version : "X" means X or better(higher) is needed
+    var supportedBrowsers = {
+      Firefox : { version : "4" },
+      Chrome  : { version : "1" },
+      IE      : { version : "8" },
+      Safari  : { version : "6" },
+      Opera   : { version : "9" },
+    };
+
+    var browser = that.getBrowserInfo();
+    var browserType = browser.name;
+    var browserVersion = browser.version;
+
+    var isBrowserAdequate =
+      parseInt(supportedBrowsers[browserType].version) <= parseInt(browserVersion);
+
+    if (!isBrowserAdequate) {
+      document.body.innerHTML =
+          "<h1 style='text-align: center'>Your browser is not compatible with CodeChecker Viewer!</h1>"
+        + "<p style='margin-left: 20px;'>Please note, that we support the following browsers:</p>"
+        + "<ul style='margin-left: 20px;'>"
+        + "<li>Firefox 4 and up</li>"
+        + "<li>Chrome  Any version</li>"
+        + "<li>IE      8 and up</li>"
+        + "<li>Safari  6 and up</li>"
+        + "<li>Opera   9 and up</li>"
+        + "</ul>";
+
+      return false;
+    }
+
+    return true;
   },
 
 
