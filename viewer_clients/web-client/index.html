@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
   <head>
 
     <title>CodeCheckerViewer</title>
@@ -33,40 +34,131 @@
     <script type="text/javascript" src="scripts/plugins/jsplumb/jquery.jsPlumb-1.7.6-min.js"></script>
 
     <!-- Services -->
-    <script type="text/javascript" src="scripts/codechecker-api/shared_types.js"             ></script>
+    <script type="text/javascript" src="scripts/codechecker-api/shared_types.js"></script>
     <script type="text/javascript" src="scripts/codechecker-api/report-viewer-server_types.js"></script>
-    <script type="text/javascript" src="scripts/codechecker-api/codeCheckerDBAccess.js"      ></script>
+    <script type="text/javascript" src="scripts/codechecker-api/codeCheckerDBAccess.js"></script>
 
-    <script>hljs.initHighlightingOnLoad();</script>
-
-    <!-- Configure Dojo -->
+    <!-- Check browser type and version, and if both are adequate, load CodeChecker Viewer -->
     <script>
-      var dojoConfig = {
-        baseUrl: "",
-        parseOnLoad: true,
-        async: true,
-        packages: [
-          { name: "dojo",  location: "scripts/plugins/dojo/dojo"  },
-          { name: "dijit", location: "scripts/plugins/dojo/dijit" },
-          { name: "dojox", location: "scripts/plugins/dojo/dojox" }
-        ]
+      var getBrowserInfo = function() {
+        var ua = navigator.userAgent;
+        var tem = [];
+        var M = ua.match(/(opera|chrome|safari|firefox|msie|trident(?=\/))\/?\s*(\d+)/i) || [];
+
+        if (/trident/i.test(M[1])) {
+          tem = /\brv[ :]+(\d+)/g.exec(ua) || [];
+          return { name : 'IE', version : (tem[1]||'') };
+        }
+
+        if (M[1] === 'Chrome') {
+          tem = ua.match(/\bOPR\/(\d+)/);
+
+          if (tem !== null) {
+            return { name : 'Opera', version : tem[1] };
+          }
+        }
+
+        M = M[2] ? [M[1], M[2]] : [navigator.appName, navigator.appVersion, '-?'];
+
+        if ((tem = ua.match(/version\/(\d+)/i)) !== null) {
+          M.splice(1, 1, tem[1]);
+        }
+
+        return {
+          name    : M[0],
+          version : M[1]
+        }
       };
-    </script>
 
-    <!-- Load Dojo -->
-    <script type="text/javascript" src="scripts/plugins/dojo/dojo/dojo.js"></script>
+      var isBrowserCompatible = function() {
+        var supportedBrowsers = {
+          Firefox : { version : "4"  },
+          Chrome  : { version : "0"  },
+          MSIE    : { version : "10" }
+        };
 
-    <!-- Start CodeChecker Viewer -->
-    <script type="text/javascript">
-      require([
-        "scripts/codecheckerviewer/CodeCheckerViewer.js",
-        "dojo/domReady!"],
-      function (CodeCheckerViewer, hash, topic) {
-        CCV = new CodeCheckerViewer();
-      });
+        var browser = getBrowserInfo();
+        var browserType = browser.name;
+        var browserVersion = browser.version;
+
+        var browserSupported = supportedBrowsers[browserType] !== undefined;
+
+        if (browserSupported) {
+          var browserVersionAdequate =
+            parseFloat(supportedBrowsers[browserType].version)
+              <= parseFloat(browserVersion);
+
+          if (browserVersionAdequate) {
+            return true;
+          }
+
+          return false;
+        } else {
+          return false;
+        }
+      };
+
+      // Calls the callback after the script in url is loaded
+      var loadScript = function(url, callback) {
+        var head    = document.getElementsByTagName('head')[0];
+        var script  = document.createElement('script');
+        script.type = 'text/javascript';
+        script.src  = url;
+
+        // There are several events for cross browser compatibility
+        script.onreadystatechange = callback;
+        script.onload = callback;
+
+        head.appendChild(script);
+      };
+
+      var browserIsCompatible = isBrowserCompatible();
+
+      if (browserIsCompatible) {
+        hljs.initHighlightingOnLoad();
+
+        // Configure Dojo
+        var dojoConfig = {
+          baseUrl: "",
+          parseOnLoad: true,
+          async: true,
+          packages: [
+            { name: "dojo",  location: "scripts/plugins/dojo/dojo"  },
+            { name: "dijit", location: "scripts/plugins/dojo/dijit" },
+            { name: "dojox", location: "scripts/plugins/dojo/dojox" }
+          ]
+        };
+
+        // Load Dojo and start CodeChecker Viewer
+        loadScript("scripts/plugins/dojo/dojo/dojo.js", function() {
+          require([
+            "scripts/codecheckerviewer/CodeCheckerViewer.js",
+            "dojo/domReady!"],
+          function (CodeCheckerViewer, hash, topic) {
+            CCV = new CodeCheckerViewer();
+          });
+        });
+      }
     </script>
 
   </head>
+
   <body class="claro">
+
+    <script>
+      // Displays an info page about browser compatibility if needed
+      if (!browserIsCompatible) {
+        document.body.innerHTML =
+            "<h2 style='margin-left: 20px;'>Your browser is not compatible with CodeChecker Viewer!</h1>"
+          + "<p style='margin-left: 20px;'>Please note, that we support the following browsers:</p>"
+          + "<ul style='margin-left: 20px;'>"
+          + "<li>Internet Explorer: version 10 and up</li>"
+          + "<li>Firefox: version 4 and up</li>"
+          + "<li>Chrome: Any version</li>"
+          + "</ul>";
+      }
+    </script>
+
   </body>
+
 </html>
