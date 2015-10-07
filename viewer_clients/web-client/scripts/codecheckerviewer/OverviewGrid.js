@@ -218,9 +218,10 @@ return declare(DataGrid, {
     })
 
     return {
-      newResultsFilters,
-      resolvedResultsFilters,
-      unresolvedResultsFilters };
+      newResultsFilters        : newResultsFilters,
+      resolvedResultsFilters   : resolvedResultsFilters,
+      unresolvedResultsFilters : unresolvedResultsFilters
+    };
   },
 
 
