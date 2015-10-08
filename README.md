@@ -6,14 +6,14 @@ CodeChecker is a static analysis infrastructure built on [Clang Static Analyzer]
 
 CodeChecker replaces [scan-build](http://clang-analyzer.llvm.org/scan-build.html) in Clang Static Analyzer in Linux systems.
 
-It provides 
+It provides
  * a new command line tool for analyzing projects
  * dynamic web based defect viewer (instead of static html)
  * a Postgresql based defect storage & management
  * incremental bug reporting (show only new bugs compared to a baseline)
  * suppression of false positives
  * better integration with build systems (through the LD_PRELOAD mechanism)
- * Thrift API based server-client model for storing bugs and viewing results. 
+ * Thrift API based server-client model for storing bugs and viewing results.
  * It is possible to connect multiple bug viewers. Currently a web-based viewer and a command line viewer are provided.
 
 You can find a high level overview about the infrastructure in the presentation
@@ -160,3 +160,4 @@ See user guide for further configuration and check options
 
 [Test documentation](tests/package_test.md)
 
+[Database schema migration](docs/db_schema_guide.md)

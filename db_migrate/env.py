@@ -8,7 +8,16 @@ config = context.config
 
 # add your model's MetaData object here
 # for 'autogenerate' support
-from db_model.orm_model import Base
+try:
+    from db_model.orm_model import Base
+except ImportError:
+    # Assume we are in the source directory
+    import sys
+    import os
+    sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
+        "..")))
+    from db_model.orm_model import Base
+
 target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,
