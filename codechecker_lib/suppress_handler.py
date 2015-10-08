@@ -18,18 +18,21 @@ class SuppressHandler(object):
     __suppressfile = None
 
     @abc.abstractmethod
-    def store_suppress_bug_id(self, source_file_path, bug_id, hash_type, comment):
+    def store_suppress_bug_id(self,
+                              source_file_path,
+                              bug_id,
+                              hash_type,
+                              file_name,
+                              comment):
         """ store the suppress bug_id """
         pass
 
     @abc.abstractmethod
-    def remove_suppress_bug_id(self, source_file_path, bug_id, hash_type):
+    def remove_suppress_bug_id(self,
+                               bug_id,
+                               hash_type,
+                               file_name):
         """ remove the suppress bug_id """
-        pass
-
-    @abc.abstractmethod
-    def store_suppress_path(self, source_file_path, path, comment):
-        """ store the suppress pasth """
         pass
 
     @property

@@ -10,6 +10,7 @@ import zlib
 import os
 import datetime
 from collections import defaultdict
+import ntpath
 
 import sqlalchemy
 from sqlalchemy import asc, desc
@@ -473,151 +474,220 @@ class ThriftRequestHandler():
             LOG.error(msg)
             raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE, msg)
 
-    @timefunc
-    def suppressBug(self, runIds, reportId, comment):
-        session = self.__session
-        try:
-            report = session.query(Report).get(reportId)
-            report_hash = report.bug_id
-            hash_type = report.bug_id_type
+    def __set_report_suppress_flag(self,
+                                   session,
+                                   run_ids,
+                                   bug_id_hash,
+                                   source_file_name,
+                                   suppress_flag):
+        """
+        update the suppress flag for multiple report entries based on the
+        filter
+        """
 
-            suppressed = session.query(SuppressBug) \
-                                .filter(SuppressBug.hash == report_hash) \
-                                .all()
-
-            source_file = session.query(File).get(report.file_id)
-
-            if suppressed is None:
-                # the bug is not suppressed for any run_id
-                # info('storing to database')
-
-                for rId in runIds:
-                    suppress_bug = SuppressBug(rId,
-                                              report_hash,
-                                              hash_type,
-                                              comment)
-                    session.add(suppress_bug)
-
-                rep = session.query(Report) \
-                             .filter(and_(Report.bug_id == report_hash,
-                                          Report.run_id.in_(runIds)))
-                for r in rep:
-                    r.suppressed = True
-
-                ret = self.__suppress_handler \
-                           .store_suppress_bug_id(source_file.filepath,
-                                                 report_hash,
-                                                 hash_type,
-                                                 comment)
-
-                if not ret:
-                    session.rollback()
-                    raise shared.ttypes.RequestFailed(
-                                        shared.ttypes.ErrorCode.IOERROR,
-                                        'Failed to store suppress bug id')
-                else:
-                    session.commit()
-                    return True
-
-            # bug is suppressed in these runids
-            # should be suppressed only once for each runid
-            suppressedRunId = set([r.run_id for r in suppressed])
-
-            # in the newly got runids and are not in the already
-            # suppressed set
-            toSuppressRunIds = set(runIds).difference(suppressedRunId)
-            LOG.debug(toSuppressRunIds)
-
-            for rId in toSuppressRunIds:
-                LOG.debug('writing hash and runid to the suppressTable : ' + str(rId) +
-                          ' : '+report_hash)
-                suppress_bug = SuppressBug(rId, report_hash, hash_type, comment)
-                session.add(suppress_bug)
-
-            rep = session.query(Report).filter(and_(Report.bug_id == report_hash, Report.run_id.in_(toSuppressRunIds)))
-            for r in rep:
-                r.suppressed = True
-
-            LOG.debug(hash_type)
-            ret = self.__suppress_handler.store_suppress_bug_id(source_file.filepath, report_hash, hash_type, comment)
-            if not ret:
-                session.rollback()
-                raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.IOERROR, 'Failed to store suppress bug id')
-            else:
-                session.commit()
+        def check_filename(data):
+            report, file_obj = data
+            source_file_path, f_name = ntpath.split(file_obj.filepath)
+            if f_name == source_file_name:
                 return True
+            else:
+                return False
 
-        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
-            msg = str(alchemy_ex)
-            LOG.error(msg)
-            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE, msg)
+        reports = session.query(Report, File) \
+                     .filter(and_(Report.bug_id == bug_id_hash,
+                                  Report.run_id.in_(run_ids))) \
+                     .outerjoin(File, File.id == Report.file_id) \
+                     .all()
 
-        except Exception as ex:
-            msg = str(ex)
-            LOG.error(msg)
-            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.IOERROR, msg)
+        reports = filter(check_filename, reports)
 
-    @timefunc
-    def unSuppressBug(self, runIds, reportId):
+        for report, file_obj in reports:
+            report.suppressed = suppress_flag
+
+    def __update_suppress_storage_data(self,
+                                       run_ids,
+                                       report,
+                                       suppress,
+                                       comment=u''):
         """
-        Parameters:
-         - runIds
-         - reportId
+        update suppress information in the database and in the suppress file
+        can be used to suppress or unsuppress a report for multiple runs
         """
         session = self.__session
-        try:
-            report = session.query(Report).get(reportId)
-            report_hash = report.bug_id
-            hash_type = report.bug_id_type
 
-            suppressed = session.query(SuppressBug) \
-                            .filter(SuppressBug.hash == report_hash) \
+        report_id = report.id
+        bug_id_hash = report.bug_id
+        hash_type = report.bug_id_type
+
+        source_file = session.query(File).get(report.file_id)
+        source_file_path, source_file_name = ntpath.split(source_file.filepath)
+
+        LOG.debug('Updating suppress data for: ' + str(report_id) + ' bug id ' +
+                  bug_id_hash + ' hash type ' + str(hash_type) +
+                  ' file name ' + source_file_name +
+                  ' suppressing ' + str(suppress))
+
+        # check if it is already suppressed for any run ids
+        suppressed = session.query(SuppressBug) \
+                            .filter(and_(SuppressBug.hash == bug_id_hash,
+                                         SuppressBug.file_name == source_file_name,
+                                         SuppressBug.run_id.in_(run_ids))) \
                             .all()
 
-            source_file = session.query(File).get(report.file_id)
+        if not suppressed and suppress:
+            # the bug is not suppressed for any run_id, suppressing it
+            LOG.debug('Bug is not suppressed in any runs')
+            for rId in run_ids:
+                suppress_bug = SuppressBug(rId,
+                                           bug_id_hash,
+                                           hash_type,
+                                           source_file_name,
+                                           comment)
+                session.add(suppress_bug)
 
-            if suppressed is None:
-                session.commit()
-                return True
+            # update report entries
+            self.__set_report_suppress_flag(session,
+                                            run_ids,
+                                            bug_id_hash,
+                                            source_file_name,
+                                            suppress_flag=suppress)
 
-            # in the got runids and are in the suppressed set
-            toUnSuppress = filter(lambda bug: bug.run_id in runIds, set(suppressed))
-            toUnSuppressRunIds = {bug.run_id for bug in toUnSuppress}
-            LOG.debug(toUnSuppress)
+        elif suppressed and suppress:
+            # already suppressed for some run ids check if other suppression
+            # is needed for other run id
+            suppressed_runids = set([r.run_id for r in suppressed])
+            LOG.debug('Bug is suppressed in these runs:' +
+                      ' '.join(suppressed_runids))
+            suppress_in_these_runs = set(run_ids).difference(suppressed_runids)
+            for run_id in suppress_in_these_runs:
+                suppress_bug = SuppressBug(run_id,
+                                           bug_id_hash,
+                                           hash_type,
+                                           source_file_name,
+                                           comment)
+                session.add(suppress_bug)
+            self.__set_report_suppress_flag(session,
+                                            suppress_in_these_runs,
+                                            bug_id_hash,
+                                            source_file_name,
+                                            suppress_flag=suppress)
 
-            for bug in toUnSuppress:
-                LOG.debug('removing hash and runid from the suppressTable : ' +
-                          str(bug.run_id) +
-                          ' : ' + report_hash)
-                session.delete(bug)
+        elif suppressed and not suppress:
+            # already suppressed for some run ids
+            # remove those entries
+            already_suppressed_runids = \
+                filter(lambda bug: bug.run_id in run_ids, set(suppressed))
 
-            rep = session.query(Report).filter(and_(Report.bug_id == report_hash, Report.run_id.in_(toUnSuppressRunIds)))
-            for r in rep:
-                r.suppressed = False
+            unsupress_in_these_runs =  \
+                {bug.run_id for bug in already_suppressed_runids}
 
-            LOG.debug(hash_type)
+            LOG.debug('Already suppressed, unsuppressing now')
+            suppressed = session.query(SuppressBug) \
+                                .filter(and_(SuppressBug.hash == bug_id_hash,
+                                             SuppressBug.file_name == source_file_name,
+                                             SuppressBug.run_id.in_(unsupress_in_these_runs)))
+            # delete supppress bug entries
+            for sp in suppressed:
+                session.delete(sp)
+
+            # update report entries
+            self.__set_report_suppress_flag(session,
+                                            unsupress_in_these_runs,
+                                            bug_id_hash,
+                                            source_file_name,
+                                            suppress_flag=suppress)
+
+        #elif suppressed is None and not suppress:
+        #    # check only in the file if there is anything that should be
+        #    # removed the database has no entries in the suppressBug table
+
+        ret = True
+        if suppress:
+            # store to suppress file
             ret = self.__suppress_handler \
-                        .remove_suppress_bug_id(source_file.filepath,
-                                               report_hash,
-                                               hash_type)
-            if not ret:
-                session.rollback()
-                raise shared.ttypes.RequestFailed(
-                        shared.ttypes.ErrorCode.IOERROR,
-                        'Failed to remove suppress bug id')
+                      .store_suppress_bug_id(bug_id_hash,
+                                             hash_type,
+                                             source_file_name,
+                                             comment)
+        else:
+            # remove from suppress file
+            ret = self.__suppress_handler \
+                      .remove_suppress_bug_id(bug_id_hash,
+                                              hash_type,
+                                              source_file_name)
+
+        if not ret:
+            session.rollback()
+            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.IOERROR,
+                                              'Failed to store suppress bug id')
+        else:
+            session.commit()
+            return True
+
+    @timefunc
+    def suppressBug(self, run_ids, report_id, comment):
+        """
+        Add suppress bug entry to the SuppressBug table.
+        Set the suppressed flag for the selected report.
+        """
+        session = self.__session
+        try:
+            report = session.query(Report).get(report_id)
+            if report:
+                return self.__update_suppress_storage_data(run_ids,
+                                                           report,
+                                                           True,
+                                                           comment)
             else:
-                session.commit()
-                return True
+                msg = 'Report id ' + str(report_id) + \
+                      ' was not found in the database.'
+                LOG.error(msg)
+                raise shared.ttypes.RequestFailed(
+                    shared.ttypes.ErrorCode.DATABASE, msg)
 
         except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
             msg = str(alchemy_ex)
             LOG.error(msg)
-            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE, msg)
+            raise shared.ttypes.RequestFailed(
+                shared.ttypes.ErrorCode.DATABASE, msg)
 
         except Exception as ex:
             msg = str(ex)
             LOG.error(msg)
-            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.IOERROR, msg)
+            raise shared.ttypes.RequestFailed(
+                shared.ttypes.ErrorCode.IOERROR, msg)
+
+    @timefunc
+    def unSuppressBug(self, run_ids, report_id):
+        """
+        Remove the suppress flag from the reports in multiple runs if given.
+        Cleanup the SuppressBug table to remove suppress entries.
+        """
+        session = self.__session
+        try:
+            report = session.query(Report).get(report_id)
+            if report:
+                return self.__update_suppress_storage_data(run_ids,
+                                                           report,
+                                                           False)
+            else:
+                msg = 'Report id ' + str(report_id) + \
+                      ' was not found in the database.'
+                LOG.error(msg)
+                raise shared.ttypes.RequestFailed(
+                    shared.ttypes.ErrorCode.DATABASE, msg)
+
+        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
+            msg = str(alchemy_ex)
+            LOG.error(msg)
+            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
+                                              msg)
+
+        except Exception as ex:
+            msg = str(ex)
+            LOG.error(msg)
+            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.IOERROR,
+                                              msg)
 
     def getCheckerDoc(self, checkerId):
         """

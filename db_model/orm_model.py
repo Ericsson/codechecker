@@ -236,14 +236,17 @@ class ReportsToBuildActions(Base):
 class SuppressBug(Base):
     __tablename__ = 'suppress_bug'
 
-    hash = Column(String, primary_key=True)
-    run_id = Column(Integer, ForeignKey('runs.id', deferrable = True, initially = "DEFERRED", ondelete='CASCADE'), primary_key=True)
+    id = Column(Integer, autoincrement=True, primary_key=True)
+    hash = Column(String)
+    file_name = Column(String)
+    run_id = Column(Integer, ForeignKey('runs.id', deferrable = True, initially = "DEFERRED", ondelete='CASCADE'))
     type = Column(Integer)
     comment = Column(Binary)
 
-    def __init__(self, run_id, hash, type, comment):
+    def __init__(self, run_id, hash, type, file_name, comment):
         self.hash, self.run_id = hash, run_id
         self.type, self.comment = type, comment
+        self.file_name = file_name
 
 
 class SkipPath(Base):

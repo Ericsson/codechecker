@@ -17,30 +17,24 @@ LOG = logger.get_new_logger('SUPPRESS')
 
 class GenericSuppressHandler(suppress_handler.SuppressHandler):
 
-    def store_suppress_bug_id(self, source_file_path, bug_id, hash_type, comment):
+    def store_suppress_bug_id(self, bug_id, hash_type, file_name, comment):
 
         if self.suppress_file is None:
             return True
 
         ret = suppress_file_handler.write_to_suppress_file(self.suppress_file,
                                                            bug_id, hash_type,
+                                                           file_name,
                                                            comment)
         return ret
 
-    def remove_suppress_bug_id(self, source_file_path, bug_id, hash_type):
+    def remove_suppress_bug_id(self, bug_id, hash_type, file_name):
 
         if self.suppress_file is None:
             return True
 
         ret = suppress_file_handler.remove_from_suppress_file(self.suppress_file,
-                                                              bug_id, hash_type)
-        return ret
-
-    def store_suppress_path(self, source_file_path, path, comment):
-
-        if self.suppress_file is None:
-            return True
-
-        ret = suppress_file_handler.write_to_suppress_file(self.suppress_file,
-                                                           path, comment)
+                                                              bug_id,
+                                                              hash_type,
+                                                              file_name)
         return ret
