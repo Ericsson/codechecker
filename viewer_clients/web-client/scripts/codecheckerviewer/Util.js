@@ -14,6 +14,63 @@ define([
 return declare(null, {
 
 
+  getCheckerTypeAndSeverityCountsForRun : function(runId, callback) {
+    var checkerTypeOptions = [];
+    var severityOptions = [];
+
+    var availableSeverities = {}; // { code : { name , count } , ... }
+
+    for (var key in Severity) {
+      var severityStringLowerCase = key.toLowerCase();
+      var severityString = severityStringLowerCase.charAt(0).toUpperCase()
+                         + severityStringLowerCase.slice(1);
+      var severityCode = Severity[key];
+
+      availableSeverities[severityCode] =
+        { name : severityString , count : 0 };
+    }
+
+    availableSeverities["all"] =
+      { name : "All Severities" , count : 0 };
+
+    CC_SERVICE.getRunResultTypes(runId, [], function(resultTypes) {
+      var allHitCount = 0;
+
+      resultTypes.forEach(function(item) {
+        allHitCount = allHitCount + item.count;
+
+        checkerTypeOptions.push({
+          value: item.checkerId + "",
+          label: item.checkerId + " (" + item.count + ")"
+        });
+
+        availableSeverities[item.severity].count =
+          availableSeverities[item.severity].count + item.count;
+      });
+
+      checkerTypeOptions.unshift({
+        value: "*",
+        label: "All checkers (" + allHitCount + ")",
+        selected: true
+      });
+
+      availableSeverities["all"].count = allHitCount;
+
+      for (var elem in availableSeverities) {
+        severityOptions.unshift({
+          value: elem + "",
+          label: availableSeverities[elem].name + " ("
+            + availableSeverities[elem].count + ")"
+        });
+      }
+
+      callback({
+        checkerTypeOptions : checkerTypeOptions,
+        severityOptions    : severityOptions
+      });
+    });
+  },
+
 
   /**
    * Queries the available severity types for checkers
@@ -29,7 +86,7 @@ return declare(null, {
       severityLevelTypeOptionsArray.unshift( { value: severityCode + "", label: severityString + "" } );
     }
 
-    severityLevelTypeOptionsArray.unshift( { value: "all", label: "All" , selected: true } );
+    severityLevelTypeOptionsArray.unshift( { value: "all", label: "All Severities" , selected: true } );
 
     return severityLevelTypeOptionsArray;
   },

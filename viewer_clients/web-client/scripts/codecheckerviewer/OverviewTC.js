@@ -24,6 +24,8 @@ return declare(TabContainer, {
    /**
    * Construct the new object. The following arguments are required:
    *   overviewType: "run" or "diff"
+   *   filterOptions: object of Select-compatible options array to be used by
+   *     Selects in a Filter, contains: checkerTypeOptions, severityOptions.
    *
    *   Other parameters depending on overviewType:
    *     if overviewType is "run":
@@ -61,6 +63,7 @@ return declare(TabContainer, {
     that.overviewHeader = new OverviewHeader({
       overviewType   : that.overviewType,
       myOverviewTC   : that,
+      filterOptions  : that.filterOptions,
       region         : "top",
       style          : "background-color: white; margin: 0px; padding: 0px;"
     });
