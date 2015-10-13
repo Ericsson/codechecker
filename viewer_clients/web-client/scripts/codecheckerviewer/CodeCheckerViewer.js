@@ -9,19 +9,17 @@ define([
   "dojo/hash",
   "dojo/topic",
   "dojo/io-query",
-  "dijit/Dialog",
   "dijit/layout/BorderContainer",
   "dijit/layout/TabContainer",
   "dijit/layout/ContentPane",
-  "dijit/form/Button",
   "scripts/codecheckerviewer/ListOfRunsGrid.js",
   "scripts/codecheckerviewer/OverviewTC.js",
   "scripts/codecheckerviewer/Util.js",
   "scripts/codecheckerviewer/widgets/ListOfRunsWidget.js",
   "scripts/codecheckerviewer/widgets/MenuButton.js",
-], function ( declare, hash, topic, ioQuery, Dialog, BorderContainer
-            , TabContainer, ContentPane, Button, ListOfRunsGrid, OverviewTC
-            , Util, ListOfRunsWidget, MenuButton ) {
+], function (declare, hash, topic, ioQuery, BorderContainer, TabContainer,
+  ContentPane, ListOfRunsGrid, OverviewTC, Util, ListOfRunsWidget,
+  MenuButton) {
 return declare(null, {
 
 
