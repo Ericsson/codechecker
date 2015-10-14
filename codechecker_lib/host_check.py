@@ -55,7 +55,10 @@ def check_clang(compiler_bin, env):
     '''
     clang_version_cmd = [compiler_bin, '--version']
     try:
-        res = subprocess.call(clang_version_cmd, env=env)
+        res = subprocess.call(clang_version_cmd,
+                              env=env,
+                              stdout=subprocess.PIPE,
+                              stderr=subprocess.PIPE)
         if not res:
             return True
         else:

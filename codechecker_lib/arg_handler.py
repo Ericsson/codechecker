@@ -15,6 +15,8 @@ import pickle
 import signal
 import subprocess
 import multiprocessing
+import tempfile
+import shutil
 
 import shared
 from viewer_server import client_db_access_server
@@ -33,9 +35,10 @@ from codechecker_lib import generic_package_suppress_handler
 LOG = logger.get_new_logger('ARGHANDLER')
 
 
-def perform_build_command(logfile, command, context):
+def perform_build_command(logfile, command, context, silent=False):
     """ Build the project and create a log file. """
-    LOG.info("Build has started..")
+    if not silent:
+        LOG.info("Build has started..")
 
     try:
         original_env_file = os.environ['CODECHECKER_ORIGINAL_BUILD_ENV']
@@ -62,18 +65,20 @@ def perform_build_command(logfile, command, context):
                                 shell=True)
         while True:
             line = proc.stdout.readline()
-            print line,
+            if not silent:
+                print line,
             if line == '' and proc.poll() is not None:
                 break
 
         return_code = proc.returncode
 
-        if return_code == 0:
-            LOG.info("Build finished successfully.")
-            LOG.info("The logfile is: " + logfile)
-        else:
-            LOG.info("Build failed.")
-            sys.exit(1)
+        if not silent:
+            if return_code == 0:
+                LOG.info("Build finished successfully.")
+                LOG.debug("The logfile is: " + logfile)
+            else:
+                LOG.info("Build failed.")
+                sys.exit(1)
     except Exception as ex:
             LOG.error("Calling original build command failed")
             LOG.error(str(ex))
@@ -259,6 +264,36 @@ def handle_debug(args):
     debug_reporter.debug(context, args.dbusername, args.dbaddress,
                          args.dbport, args.dbname, args.force)
 
+def _check_generate_log_file(args, context, silent=False):
+    '''Returns a build command log file for check/quickcheck command.'''
+
+    log_file = ""
+    if args.logfile:
+        log_file = os.path.realpath(args.logfile)
+        if not os.path.exists(args.logfile):
+            LOG.info("Log file does not exists.")
+            sys.exit(1)
+
+    if args.command:
+        # check if logger bin exists
+        if not os.path.isfile(context.path_logger_bin):
+            LOG.debug('Logger binary not found! Required for logging.')
+            sys.exit(1)
+
+        # check if logger lib exists
+        if not os.path.exists(context.path_logger_lib):
+            LOG.debug('Logger library directory not found! Libs are requires' \
+                      'for logging.')
+            sys.exit(1)
+
+        log_file = os.path.join(context.codechecker_workspace,
+                                context.build_log_file_name)
+        if os.path.exists(log_file):
+            os.remove(log_file)
+        open(log_file, 'a').close()  # same as linux's touch
+        perform_build_command(log_file, args.command, context, silent=silent)
+
+    return log_file
 
 def handle_check(args):
     """ Check mode. """
@@ -274,13 +309,6 @@ def handle_check(args):
     args.workspace = os.path.realpath(args.workspace)
     if not os.path.isdir(args.workspace):
         os.mkdir(args.workspace)
-
-    log_file = ""
-    if args.logfile:
-        log_file = os.path.realpath(args.logfile)
-        if not os.path.exists(args.logfile):
-            LOG.info("Log file does not exists.")
-            return
 
     context = generic_package_context.get_context()
     context.codechecker_workspace = args.workspace
@@ -300,24 +328,7 @@ def handle_check(args):
 
         context.severity_map = json.loads(severity_config)
 
-    if args.command:
-        # check if logger bin exists
-        if not os.path.isfile(context.path_logger_bin):
-            LOG.debug('Logger binary not found! Required for logging.')
-            sys.exit(1)
-
-        # check if logger lib exists
-        if not os.path.exists(context.path_logger_lib):
-            LOG.debug('Logger library directory not found! Libs are requires for logging.')
-            sys.exit(1)
-
-        log_file = os.path.join(context.codechecker_workspace,
-                                context.build_log_file_name)
-        if os.path.exists(log_file):
-            os.remove(log_file)
-        open(log_file, 'a').close()  # same as linux's touch
-        perform_build_command(log_file, args.command, context)
-
+    log_file = _check_generate_log_file(args, context)
     try:
         actions = log_parser.parse_log(log_file)
     except Exception as ex:
@@ -412,6 +423,72 @@ def handle_check(args):
     LOG.info("Analysis length: " + str(end_time - start_time) + " sec.")
     LOG.info("Analysis has finished.")
 
+def _do_quickcheck(args):
+    '''
+    Handles the "quickcheck" command.
+
+    For arguments see main function in CodeChecker.py. It also requires an extra
+    property in args object, namely workspace which is a directory path as a
+    string. This function is called from handle_quickcheck.
+    '''
+
+    context = generic_package_context.get_context()
+    context.codechecker_workspace = args.workspace
+
+    check_env = analyzer_env.get_check_env(context.path_env_extra,
+                                           context.ld_lib_path_extra)
+
+    compiler_bin = context.compiler_bin
+    if not host_check.check_clang(compiler_bin, check_env):
+        sys.exit(1)
+
+    # load severity map from config file
+    if os.path.exists(context.checkers_severity_map_file):
+        with open(context.checkers_severity_map_file, 'r') as sev_conf_file:
+            severity_config = sev_conf_file.read()
+
+        context.severity_map = json.loads(severity_config)
+
+    log_file = _check_generate_log_file(args, context, silent=True)
+    try:
+        actions = log_parser.parse_log(log_file)
+    except Exception as ex:
+        LOG.error(ex)
+        sys.exit(1)
+
+    if not actions:
+        LOG.warning('There are no build actions in the log file.')
+        sys.exit(1)
+
+    static_analyzer = analyzer.StaticAnalyzer(context)
+    static_analyzer.workspace = args.workspace
+    static_analyzer.checkers = context.default_checkers
+
+    # add user defined checkers
+    try:
+        static_analyzer.checkers = args.ordered_checker_args
+    except AttributeError:
+        LOG.debug('No checkers were defined in the command line')
+
+    for action in actions:
+        analyzer.run_quick_check(static_analyzer,
+                                 action,
+                                 print_steps=args.print_steps)
+
+def handle_quickcheck(args):
+    '''
+    Handles the "quickcheck" command using _do_quickcheck function.
+
+    It creates a new temporary directory and sets it as workspace directory.
+    After _do_quickcheck call it deletes the temporary directory and its
+    content.
+    '''
+
+    args.workspace = tempfile.mkdtemp(prefix='codechecker-qc')
+    try:
+        _do_quickcheck(args)
+    finally:
+        shutil.rmtree(args.workspace)
 
 def handle_version_info(args):
     ''' Get and print the version informations from the

@@ -1,0 +1,16 @@
+-b "g++ simple1.cpp -o /dev/null" --steps
+--------------------------------------------------------------------------------
+1 defect(s) found while checking simple1.cpp:
+
+simple1.cpp:18:10: Division by zero
+  return 2015 / x;
+         ^
+  Steps:
+    1, simple1.cpp:16:7: Calling 'foo'
+    2, simple1.cpp:3:1: Entered call from 'main'
+    3, simple1.cpp:4:7: Assuming 'y' is <= 0
+    4, simple1.cpp:5:5: Returning zero
+    5, simple1.cpp:16:7: Returning from 'foo'
+    6, simple1.cpp:16:3: The value 0 is assigned to 'x'
+    7, simple1.cpp:18:10: Division by zero
+

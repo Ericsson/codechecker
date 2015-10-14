@@ -93,8 +93,11 @@ class Bug(object):
     def add_to_events(self, new_range):
         self._events.append(new_range)
 
-    def get_last_from_path(self):
+    def get_last_path(self):
         return self._paths[-1] if len(self._paths) > 0 else None
+
+    def get_last_event(self):
+        return self._events[-1] if len(self._events) > 0 else None
 
 
 # -----------------------------------------------------------------------------
@@ -126,7 +129,7 @@ def parse_plist(path):
                     start = make_range(edge.start, files)
                     end = make_range(edge.end, files)
 
-                    if start != current.get_last_from_path():
+                    if start != current.get_last_path():
                         current.add_to_path(start)
 
                     current.add_to_path(end)
