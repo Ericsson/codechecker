@@ -529,9 +529,14 @@ class ThriftRequestHandler():
 
         # check if it is already suppressed for any run ids
         suppressed = session.query(SuppressBug) \
-                            .filter(and_(SuppressBug.hash == bug_id_hash,
+                            .filter(or_( \
+                                    and_(SuppressBug.hash == bug_id_hash,
                                          SuppressBug.file_name == source_file_name,
-                                         SuppressBug.run_id.in_(run_ids))) \
+                                         SuppressBug.run_id.in_(run_ids)),
+                                    and_(SuppressBug.hash == bug_id_hash,
+                                         SuppressBug.file_name == '',
+                                         SuppressBug.run_id.in_(run_ids))
+                                         )) \
                             .all()
 
         if not suppressed and suppress:
