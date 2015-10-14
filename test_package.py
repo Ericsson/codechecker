@@ -198,14 +198,14 @@ class GenericPackageTester(object):
             sys.exit(1)
 
     def _generate_suppress_file(self, suppress_file):
-        # generate suppress file ---------
+        """
+        create a dummy supppress file just to check if the old and the new
+        suppress format can be processed
+        """
         import calendar
         import time
         import hashlib
         import random
-
-        path_content_one = ['home', 'test', 'work', 'util', 'bin', 'usr', 'share']
-        path_content_two = ['bin', 'util', 'work']
 
         hash_version = '1'
         suppress_stuff = []
@@ -217,17 +217,10 @@ class GenericPackageTester(object):
             n = str(t) + str(r)
             suppress_stuff.append(hashlib.md5(n).hexdigest() + '#' + hash_version)
 
-            random.shuffle(path_content_one)
-            suppress_stuff.append('/' + '/'.join(path_content_one))
-            random.shuffle(path_content_two)
-            suppress_stuff.append('/' + '/'.join(path_content_two))
-
-            short_path = random.sample(path_content_one, 5)
-            suppress_stuff.append('/' + '/'.join(short_path))
-
         s_file = open(suppress_file, 'w')
         for k in suppress_stuff:
-            s_file.write(k + '||' + 'idziei éléáálk \n')
+            s_file.write(k + '||' + 'idziei éléáálk ~!@#$#%^&*() \n')
+            s_file.write(k + '||' + 'test_~!@#$%^&*.cpp' + '||' 'idziei éléáálk ~!@#$%^&*(\n')
 
         s_file.close()
 

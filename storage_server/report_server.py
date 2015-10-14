@@ -12,6 +12,7 @@ import os
 import datetime
 import socket
 import errno
+import ntpath
 
 import sqlalchemy
 from alembic import command, config
@@ -307,9 +308,19 @@ class CheckerReportHandler(object):
         path_start = path_ids[0].id if len(path_ids) > 0 else None
 
         suppressed = False
+        source_file = self.session.query(File).get(file_id)
+        source_file_path, source_file_name = ntpath.split(source_file.filepath)
+
         supp = self.session.query(SuppressBug) \
-                           .filter(and_(SuppressBug.run_id == action.run_id,
-                                        SuppressBug.hash == bug_hash)) \
+                           .filter(
+                               or_(and_(SuppressBug.run_id == action.run_id,
+                                        SuppressBug.hash == bug_hash,
+                                        SuppressBug.type == bug_hash_type,
+                                        SuppressBug.file_name == source_file_name),
+                                   and_(SuppressBug.run_id == action.run_id,
+                                        SuppressBug.hash == bug_hash,
+                                        SuppressBug.type == bug_hash_type,
+                                        SuppressBug.file_name == u''))) \
                            .first()
 
         if supp:
@@ -390,23 +401,31 @@ class CheckerReportHandler(object):
         return paths
 
     @decorators.catch_sqlalchemy
-    def addSuppressBug(self, run_id, hashes):
-        ''''''
+    def addSuppressBug(self, run_id, bugs_to_suppress):
+        '''
+        Supppress multiple bugs for a run this can be used usually
+        before the checking to sore the suppress file content
+        '''
         count = self.session.query(SuppressBug) \
                             .filter(SuppressBug.run_id == run_id) \
                             .delete()
-        LOG.debug('SuppressBug: ' + str(count) + ' removed item.')
+        LOG.debug('Cleaning previous suppress entries from the database. '
+                  + str(count) + ' removed items.')
 
         try:
             suppressList = []
-            for h, comment in hashes.items():
-                content = h.split('#')  # 0: hash, 1: type
-                if len(content) == 2:
-                    suppressBug = SuppressBug(run_id,
-                                              content[0],
-                                              content[1],
-                                              comment)
-                    suppressList.append(suppressBug)
+            for bug_to_suppress in bugs_to_suppress:
+                bug_hash = bug_to_suppress.bug_hash
+                bug_hash_type = bug_to_suppress.bug_hash_type
+                file_name = bug_to_suppress.file_name
+                comment = bug_to_suppress.comment
+
+                suppress_bug = SuppressBug(run_id,
+                                           bug_hash,
+                                           bug_hash_type,
+                                           file_name,
+                                           comment)
+                suppressList.append(suppress_bug)
 
             self.session.bulk_save_objects(suppressList)
             self.session.commit()
