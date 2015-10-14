@@ -15,6 +15,8 @@ return declare(ContentPane, {
   /**
    * Construct the new object. The following arguments are required:
    *   myOverviewTC: The OverviewTC this object belongs to
+   *   filterOptions: object of Select-compatible options array to be used by
+   *     Selects in a Filter, contains: checkerTypeOptions, severityOptions.
    */
   constructor : function(args) {
     var that = this;
@@ -32,7 +34,8 @@ return declare(ContentPane, {
     that.inherited(arguments);
 
     that.mainFilter = new Filter({
-      myOverviewTC : that.myOverviewTC
+      myOverviewTC  : that.myOverviewTC,
+      filterOptions : that.copyFilterOptions(that.filterOptions)
     });
 
     that.mainFilter.addPlusButton();
@@ -88,7 +91,8 @@ return declare(ContentPane, {
     var that = this;
 
     var newFilter = new Filter({
-      myOverviewTC : that.myOverviewTC
+      myOverviewTC  : that.myOverviewTC,
+      filterOptions : that.copyFilterOptions(that.filterOptions)
     });
 
     newFilter.addMinusButton();
@@ -117,6 +121,21 @@ return declare(ContentPane, {
         break;
       }
     }
+  },
+
+
+  /**
+   * Deep copies a filterOptions object.
+   */
+  copyFilterOptions : function(filterOptions) {
+    var that = this;
+
+    if (filterOptions !== undefined) {
+      // Ugly but widely accepted, and works in almost every browser.
+      return JSON.parse(JSON.stringify(filterOptions));
+    }
+
+    return undefined;
   },
 
 

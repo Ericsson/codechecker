@@ -17,7 +17,9 @@ return declare(_WidgetBase, {
 
   /**
    * Construct the new object. The following arguments are required:
-   *   myOverviewTC: The OverviewTC this object belongs to
+   *   myOverviewTC: The OverviewTC this object belongs to.
+   *   filterOptions: object of Select-compatible options array to be used by
+   *     Selects in a Filter, contains: checkerTypeOptions, severityOptions.
    */
   constructor : function(args) {
     var that = this;
@@ -50,9 +52,26 @@ return declare(_WidgetBase, {
       }
     });
 
+    if (that.filterOptions === undefined) {
+      that.filterOptions = {};
+      that.filterOptions.severityOptions =
+        CC_UTIL.getAvailableSeverityLevels();
+      that.filterOptions.checkerTypeOptions =
+        CC_UTIL.getAvailableCheckers(that.myOverviewTC);
+    }
+
     that.selectSeverity = new Select({
       forceWidth : true,
-      options    : CC_UTIL.getAvailableSeverityLevels(),
+      options    : that.filterOptions.severityOptions,
+      style      : "margin-right: 5px;",
+      onChange   : function(val) {
+        that.pathAndSelectOnChange();
+      }
+    });
+
+    that.selectCheckerType = new Select({
+      forceWidth : true,
+      options    : that.filterOptions.checkerTypeOptions,
       style      : "margin-right: 5px;",
       onChange   : function(val) {
         that.pathAndSelectOnChange();
@@ -70,15 +89,6 @@ return declare(_WidgetBase, {
         that.pathAndSelectOnChange();
       }
     }, domConstruct.create("div"));
-
-    that.selectCheckerType = new Select({
-      forceWidth : true,
-      options    : CC_UTIL.getAvailableCheckers(that.myOverviewTC),
-      style      : "margin-right: 5px;",
-      onChange   : function(val) {
-        that.pathAndSelectOnChange();
-      }
-    });
 
 
     // Add Resolved select if it is an overview of a Diff

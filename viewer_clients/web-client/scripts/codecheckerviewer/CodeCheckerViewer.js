@@ -9,19 +9,17 @@ define([
   "dojo/hash",
   "dojo/topic",
   "dojo/io-query",
-  "dijit/Dialog",
   "dijit/layout/BorderContainer",
   "dijit/layout/TabContainer",
   "dijit/layout/ContentPane",
-  "dijit/form/Button",
   "scripts/codecheckerviewer/ListOfRunsGrid.js",
   "scripts/codecheckerviewer/OverviewTC.js",
   "scripts/codecheckerviewer/Util.js",
   "scripts/codecheckerviewer/widgets/ListOfRunsWidget.js",
   "scripts/codecheckerviewer/widgets/MenuButton.js",
-], function ( declare, hash, topic, ioQuery, Dialog, BorderContainer
-            , TabContainer, ContentPane, Button, ListOfRunsGrid, OverviewTC
-            , Util, ListOfRunsWidget, MenuButton ) {
+], function (declare, hash, topic, ioQuery, BorderContainer, TabContainer,
+  ContentPane, ListOfRunsGrid, OverviewTC, Util, ListOfRunsWidget,
+  MenuButton) {
 return declare(null, {
 
 
@@ -51,6 +49,14 @@ return declare(null, {
     } else {
       that.handleHashChange(initialHash);
     }
+
+    that.listOfRunsBC.onShow = function() {
+      if (hash() != "") {
+        hash("");
+        that.listOfRunsGrid.render();
+      }
+    };
+
   },
 
 
@@ -227,12 +233,7 @@ return declare(null, {
 
     that.listOfRunsBC = new BorderContainer({
       id     : "bc_listofrunsgrid",
-      title  : that.listOfRunsGrid.title,
-      onShow : function() {
-        if (hash() != "") {
-          hash("");
-        }
-      }
+      title  : that.listOfRunsGrid.title
     });
 
 
@@ -254,7 +255,6 @@ return declare(null, {
     that.listOfRunsBC.addChild(that.listOfRunsWidgetCP);
 
     that.mainTC.addChild(that.listOfRunsBC);
-
   },
 
 
@@ -359,42 +359,45 @@ return declare(null, {
   },
 
 
-  /**
+    /**
    * Creates a new DiffOverview tab, it may be called after a dojo/hashchange event.
    */
   handleNewRunOverviewTab : function(idOfNewOverviewTC, runId, runName) {
     var that = this;
 
-    var newOverviewTC = new OverviewTC({
-      id           : idOfNewOverviewTC,
-      runId        : runId,
-      overviewType : "run",
-      title        : runName,
-      closable     : true,
-      style        : "padding: 5px;",
-      onClose      : function() {
-        if (that.mainTC.selectedChildWidget === newOverviewTC) {
-          that.mainTC.selectChild("bc_listofrunsgrid");
+    CC_UTIL.getCheckerTypeAndSeverityCountsForRun(runId, function(filterOptions) {
+      var newOverviewTC = new OverviewTC({
+        id           : idOfNewOverviewTC,
+        runId        : runId,
+        overviewType : "run",
+        filterOptions: filterOptions,
+        title        : runName,
+        closable     : true,
+        style        : "padding: 5px;",
+        onClose      : function() {
+          if (that.mainTC.selectedChildWidget === newOverviewTC) {
+            that.mainTC.selectChild("bc_listofrunsgrid");
+          }
+
+          newOverviewTC.hashchangeHandle.remove();
+
+          return true;
+        },
+        onShow : function() {
+          that.newRunOverviewTab(runId, runName);
         }
+      });
 
-        newOverviewTC.hashchangeHandle.remove();
+      try {
+        that.mainTC.addChild(newOverviewTC);
+        that.mainTC.selectChild(newOverviewTC);
 
-        return true;
-      },
-      onShow : function() {
-        that.newRunOverviewTab(runId, runName);
+        newOverviewTC.overviewGrid.startup();
+      } catch (err) {
+        newOverviewTC.destroyRecursive();
+        console.log(err);
       }
     });
-
-    try {
-      that.mainTC.addChild(newOverviewTC);
-      that.mainTC.selectChild(newOverviewTC);
-
-      newOverviewTC.overviewGrid.startup();
-    } catch (err) {
-      newOverviewTC.destroyRecursive();
-      console.log(err);
-    }
   },
 
 

@@ -24,6 +24,8 @@ return declare(TabContainer, {
    /**
    * Construct the new object. The following arguments are required:
    *   overviewType: "run" or "diff"
+   *   filterOptions: object of Select-compatible options array to be used by
+   *     Selects in a Filter, contains: checkerTypeOptions, severityOptions.
    *
    *   Other parameters depending on overviewType:
    *     if overviewType is "run":
@@ -45,6 +47,30 @@ return declare(TabContainer, {
     var that = this;
     that.inherited(arguments);
 
+    that.buildOverviewLayout();
+    that.buildOverviewHeader(that.filterOptions);
+    that.buildOverviewGrid();
+
+    that.overviewGridCP.addChild(that.overviewGrid);
+    that.overviewBC.addChild(that.overviewGridCP);
+    that.overviewBC.addChild(that.overviewHeader);
+    that.addChild(that.overviewBC);
+
+    that.hashchangeHandle = topic.subscribe("/dojo/hashchange", function(changedHash) {
+      that.handleHashChange(changedHash);
+    });
+
+    // Restore previous state from cuttent hash (if any).
+    that.handleHashChange(hash());
+  },
+
+
+  /**
+   * Builds the layout for this overview tab.
+   */
+  buildOverviewLayout : function() {
+    var that = this;
+
     that.overviewBC = new BorderContainer({
       id     : that.id + '_overview',
       style  : "margin: 5px; padding: 0px;",
@@ -52,20 +78,36 @@ return declare(TabContainer, {
         that.openFileView(undefined, undefined);
       }
     });
+  },
+
+
+  /**
+   * Builds the OverviewHeader.
+   */
+  buildOverviewHeader : function() {
+    var that = this;
+
+    that.overviewHeader = new OverviewHeader({
+      overviewType  : that.overviewType,
+      myOverviewTC  : that,
+      filterOptions : that.filterOptions,
+      region        : "top",
+      style         : "background-color: white; margin: 0px; padding: 0px;"
+    });
+  },
+
+
+  /**
+   * Builds the OverviewGrid, and its parent ContentPane.
+   */
+  buildOverviewGrid : function() {
+    var that = this;
 
     that.overviewGridCP = new ContentPane({
       region : "center",
       style  : "margin: 0px; padding: 0px;"
     });
 
-    that.overviewHeader = new OverviewHeader({
-      overviewType   : that.overviewType,
-      myOverviewTC   : that,
-      region         : "top",
-      style          : "background-color: white; margin: 0px; padding: 0px;"
-    });
-
-    that.overviewGrid = null;
     if (that.overviewType === "run") {
 
       that.overviewBC.title = "Run Overview";
@@ -105,19 +147,6 @@ return declare(TabContainer, {
         that.openFileView(row.reportId, row.runId);
       }
     };
-
-    that.overviewGridCP.addChild(that.overviewGrid);
-    that.overviewBC.addChild(that.overviewGridCP);
-    that.overviewBC.addChild(that.overviewHeader);
-
-    that.addChild(that.overviewBC);
-
-    that.hashchangeHandle = topic.subscribe("/dojo/hashchange", function(changedHash) {
-      that.handleHashChange(changedHash);
-    });
-
-    // Restore previous state from cuttent hash (if any).
-    that.handleHashChange(hash());
   },
 
 
