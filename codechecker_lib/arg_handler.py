@@ -144,6 +144,22 @@ def handle_list_checkers(args):
     static_analyzer = analyzer.StaticAnalyzer(context)
     LOG.info(static_analyzer.get_checker_list())
 
+    # Print default ENABLED checkers
+    LOG.info("CHECKERS ENABLED BY DEFAULT:")
+    enabledCheckers = filter(lambda x: x[1], context.default_checkers)
+    for checker_name, _ in enabledCheckers:
+        print('  ' + checker_name)
+
+    print('')
+
+    # Print default DISABLED checkers
+    LOG.info("CHECKERS DISABLED BY DEFAULT:")
+    disabledCheckers = filter(lambda x: not x[1], context.default_checkers)
+    for checker_name, _ in disabledCheckers:
+        print('  ' + checker_name)
+
+    print('')
+
 
 def setup_connection_manager_db(args):
     client.ConnectionManager.database_host = args.dbaddress
