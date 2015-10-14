@@ -320,7 +320,7 @@ class CheckerReportHandler(object):
                                    and_(SuppressBug.run_id == action.run_id,
                                         SuppressBug.hash == bug_hash,
                                         SuppressBug.type == bug_hash_type,
-                                        SuppressBug.file_name == ''))) \
+                                        SuppressBug.file_name == u''))) \
                            .first()
 
         if supp:
