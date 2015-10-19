@@ -5,6 +5,8 @@ import time
 import atexit
 import contextlib
 import multiprocessing
+import os
+import codecs
 
 import shared
 from storage_server import report_server
@@ -31,7 +33,7 @@ def send_plist_content(connection, plist_file, build_action_id, run_id,
                        severity_map, should_skip):
     try:
         files, bugs = plist_parser.parse_plist(plist_file)
-    except Exception as ex:
+    except Exception:
         LOG.info('The generated plist is not valid, so parsing failed.')
         return
 
@@ -61,8 +63,8 @@ def send_plist_content(connection, plist_file, build_action_id, run_id,
         bug_paths = []
         for path in bug.paths():
             bug_paths.append(shared.ttypes.BugPathPos(path.start_pos.line,
-                path.start_pos.col, path.end_pos.line, path.end_pos.col,
-                file_ids[path.start_pos.file_path]))
+                                                      path.start_pos.col, path.end_pos.line, path.end_pos.col,
+                                                      file_ids[path.start_pos.file_path]))
 
         bug_events = []
         for event in bug.events():
@@ -95,14 +97,17 @@ def send_plist_content(connection, plist_file, build_action_id, run_id,
 
 # -----------------------------------------------------------------------------
 def send_suppress(connection, file_name):
+    """
+    collect suppress information from the suppress file to be stored
+    in the database
+    """
+    suppress_data = []
+    if os.path.exists(file_name):
+        with codecs.open(file_name, 'r', 'UTF-8') as s_file:
+            suppress_data = suppress_file_handler.get_suppress_data(s_file)
 
-    hashes, paths = suppress_file_handler.get_hash_and_path(file_name)
-
-    if len(hashes) > 0:
-        connection.add_suppress_bug(hashes)
-    if len(paths) > 0:
-        connection.add_skip_paths(paths)
-
+    if len(suppress_data) > 0:
+        connection.add_suppress_bug(suppress_data)
 
 # -----------------------------------------------------------------------------
 def send_config(connection, file_name):
@@ -192,12 +197,22 @@ class Connection(object):
         else:
             self._client.finishCheckerRun(run_id)
 
-    def add_suppress_bug(self, bug_hash):
-        '''bool addSuppressBug(1: i64 run_id, 2: map<string, string> hashes)'''
-        converted = {}
-        for path, comment in bug_hash.items():
-            converted[path] = comment.encode('UTF-8')
-        return self._client.addSuppressBug(ConnectionManager.run_id, converted)
+    def add_suppress_bug(self, suppress_data):
+        """
+        process and send suppress data
+        which should be sent to the report server
+        """
+        bugs_to_suppress = []
+        for checker_hash, checker_hash_type, file_name, comment in suppress_data:
+            comment = comment.encode('UTF-8')
+            suppress_bug = SuppressBugData(checker_hash,
+                                           int(checker_hash_type),
+                                           file_name,
+                                           comment)
+            bugs_to_suppress.append(suppress_bug)
+
+        return self._client.addSuppressBug(ConnectionManager.run_id,
+                                           bugs_to_suppress)
 
     def add_skip_paths(self, paths):
         ''' bool addSkipPath(1: i64 run_id, 2: map<string, string> paths) '''
@@ -352,6 +367,7 @@ class ConnectionManager(object):
                                               cls.database_host,
                                               cls.database_port,
                                               context.db_version_info,
+                                              context.migration_root,
                                               is_server_started))
 
         cls._server.daemon = True

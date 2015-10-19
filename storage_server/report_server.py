@@ -9,22 +9,19 @@ from __future__ import unicode_literals
 
 import sys
 import os
-import signal
-import argparse
-import threading
 import datetime
 import socket
 import errno
+import ntpath
 
 import sqlalchemy
+from alembic import command, config
+from alembic.migration import MigrationContext
 
-from thrift import Thrift
 from thrift.transport import TSocket
 from thrift.transport import TTransport
-from thrift.transport import TZlibTransport
 from thrift.protocol import TBinaryProtocol
 from thrift.server import TServer
-from thrift.server import TProcessPoolServer
 
 from codechecker_gen.DBThriftAPI import CheckerReport
 from codechecker_gen.DBThriftAPI.ttypes import *
@@ -36,7 +33,6 @@ from codechecker_lib import decorators
 
 LOG = logger.get_new_logger('CC SERVER')
 
-# -----------------------------------------------------------------------
 if os.environ.get('CODECHECKER_ALCHEMY_LOG') is not None:
     import logging
 
@@ -44,30 +40,25 @@ if os.environ.get('CODECHECKER_ALCHEMY_LOG') is not None:
     logging.getLogger('sqlalchemy.engine').setLevel(logging.DEBUG)
     logging.getLogger('sqlalchemy.orm').setLevel(logging.DEBUG)
 
-
-# -----------------------------------------------------------------------
 class CheckerReportHandler(object):
     '''
     Class to handle requests from the codechecker script to store run
-    information to the database
+    information to the database.
     '''
+
     def sequenceDeleter(self, table, first_id):
-        '''
-        Delete points of sequnce in a general way
-        '''
+        """Delete points of sequnce in a general way."""
         next_id = first_id
         while next_id:
-          item = self.session.query(table).get(next_id)
-          self.session.delete(item)
-          next_id = item.next
+            item = self.session.query(table).get(next_id)
+            self.session.delete(item)
+            next_id = item.next
 
     def deleteBuildAction(self, build_action):
-        '''
-        Garbage collector for incremental build
-        '''
+        """Garbage collector for incremental build."""
         reports = self.session.query(ReportsToBuildActions) \
-                              .filter(ReportsToBuildActions.build_action_id
-                                      == build_action.id)
+                              .filter(ReportsToBuildActions.build_action_id ==
+                                      build_action.id)
 
         # Delete all report which is only in the current build action
         for r in reports:
@@ -78,14 +69,14 @@ class CheckerReportHandler(object):
                                 and_(ReportsToBuildActions.report_id == rid,
                                      ReportsToBuildActions.build_action_id != build_action.id)).first()
             if not reference:
-              report = self.session.query(Report).get(rid)
-              self.sequenceDeleter(BugPathEvent, report.start_bugevent)
-              self.sequenceDeleter(BugReportPoint, report.start_bugpoint)
-              # The report deletion is not needed because the sqlalchemy does it with relationships
+                report = self.session.query(Report).get(rid)
+                self.sequenceDeleter(BugPathEvent, report.start_bugevent)
+                self.sequenceDeleter(BugReportPoint, report.start_bugpoint)
+                # The report deletion is not needed because the sqlalchemy does it with relationships
 
         # TODO: should I delete the files?
 
-        self.session.delete(build_action) # => delete ReportsToBuildActions
+        self.session.delete(build_action)  # => delete ReportsToBuildActions
         # ReportsToBuildActions items are deleted by sqlalchemy cascade on delete
         self.session.commit()
 
@@ -97,27 +88,33 @@ class CheckerReportHandler(object):
         # runs = self.session.query(Run).filter(Run.name == name)
         # if runs.count() == 0:
         if not update:
-          checkerRun = Run(name, version, command)
-          self.session.add(checkerRun)
-          self.session.commit()
-          return checkerRun.id
+            checkerRun = Run(name, version, command)
+            self.session.add(checkerRun)
+            self.session.commit()
+            return checkerRun.id
         else:
-          run = self.session.query(Run).filter(Run.name == name).first()
-          if not run:
-            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,\
-                    'Update failed: run name ' + name + ' was not found in the database.')
-          LOG.info('\033[91mIncremental checking is in progress. The previous run results for ' + name +' will be overwritten! \033[0m')
-          run.date = datetime.now()
-          run.inc_count += 1
-          self.session.commit()
-          return run.id
+            run = self.session.query(Run).filter(Run.name == name).first()
+            if not run:
+                # create new run to store results
+                checkerRun = Run(name, version, command)
+                self.session.add(checkerRun)
+                self.session.commit()
+                return checkerRun.id
+
+            LOG.info('\033[91mIncremental checking is in progress. The previous run results for '
+                     + name + ' will be overwritten! \033[0m')
+            run.date = datetime.now()
+            run.inc_count += 1
+            self.session.commit()
+            return run.id
 
     @decorators.catch_sqlalchemy
     def finishCheckerRun(self, run_id):
         '''
         '''
         run = self.session.query(Run).get(run_id)
-        if not run: return False
+        if not run:
+            return False
 
         run.mark_finished()
         self.session.commit()
@@ -132,8 +129,8 @@ class CheckerReportHandler(object):
                             .delete()
         LOG.debug('Config: ' + str(count) + ' removed item.')
 
-        configs = [Config( \
-                run_id, info.checker_name, info.attribute, info.value) for \
+        configs = [Config(
+                run_id, info.checker_name, info.attribute, info.value) for
                 info in config_values]
         self.session.bulk_save_objects(configs)
         self.session.commit()
@@ -144,8 +141,8 @@ class CheckerReportHandler(object):
         '''
         '''
         build_action = self.session.query(BuildAction) \
-                                    .filter(and_(BuildAction.run_id == run_id,
-                                                 BuildAction.build_cmd == build_cmd))
+                                   .filter(and_(BuildAction.run_id == run_id,
+                                                BuildAction.build_cmd == build_cmd))
         if build_action.count() != 0:
             self.deleteBuildAction(build_action.first())
 
@@ -182,7 +179,7 @@ class CheckerReportHandler(object):
             needed = True
             f = File(run_id, filepath)
             self.session.add(f)
-            self.session.commit() # need to commit
+            self.session.commit()  # need to commit
         elif f.inc_count < run_inc_count:
             needed = True
             f.inc_count = run_inc_count
@@ -212,6 +209,30 @@ class CheckerReportHandler(object):
                   severity):
         '''
         '''
+
+        def is_same_event_path(start_bugevent_id):
+            """Checkes if the given event path is the same as the one in the
+            events argument
+            """
+
+            point2_id = start_bugevent_id
+            for point1 in events:
+                if point2_id is None:
+                    return False
+
+                point2 = self.session.query(BugPathEvent).get(point2_id)
+                if point1.startLine != point2.line_begin or \
+                   point1.startCol != point2.col_begin or \
+                   point1.endLine != point2.line_end or \
+                   point1.endCol != point2.col_end or \
+                   point1.msg != point2.msg or \
+                   point1.fileId != point2.file_id:
+                    return False
+
+                point2_id = point2.next
+
+            return point2_id is None
+
         # TODO: perfomance issues when executing the following query on large
         #       databaseses
         reports = self.session.query(self.report_ident) \
@@ -221,31 +242,28 @@ class CheckerReportHandler(object):
         assert action is not None
 
         try:
+            # Check for duplicates by bug hash
             if reports.count() != 0:
-                dup_report = reports.filter(self.report_ident.c.run_id ==
-                                            action.run_id) \
-                                    .first()
-
-                if not dup_report:
-                    return self.storeReportInfo(action,
-                                                file_id,
-                                                bug_hash,
-                                                bug_hash_type,
-                                                msg,
-                                                bugpath,
-                                                events,
-                                                checker_id,
-                                                checker_cat,
-                                                bug_type,
-                                                severity)
-                else:
-                    rtp = self.session.query(ReportsToBuildActions) \
-                                      .get((dup_report.report_ident.id, action.id))
-                    if not rtp:
-                       reportToActions = ReportsToBuildActions(
-                           dup_report.report_ident.id, action.id)
-                       self.session.add(reportToActions)
-                return dup_report.report_ident.id
+                possib_dups = reports.filter(self.report_ident.c.run_id ==
+                                             action.run_id)
+                for possib_dup in possib_dups:
+                    # It's a duplicate or a hash clash. Check checker name,
+                    # file id, and position
+                    dup_report_obj = self.session.query(Report).get(
+                        possib_dup.report_ident.id)
+                    if dup_report_obj.checker_id == checker_id and \
+                       dup_report_obj.file_id == file_id and \
+                       is_same_event_path(dup_report_obj.start_bugevent):
+                        # It's a duplicate
+                        rtp = self.session.query(ReportsToBuildActions) \
+                                          .get((dup_report_obj.id,
+                                                action.id))
+                        if not rtp:
+                            reportToActions = ReportsToBuildActions(
+                                dup_report_obj.id, action.id)
+                            self.session.add(reportToActions)
+                            self.session.commit()
+                        return dup_report_obj.id
 
             return self.storeReportInfo(action,
                                         file_id,
@@ -259,7 +277,7 @@ class CheckerReportHandler(object):
                                         bug_type,
                                         severity)
 
-        except sqlalchemy.exc.IntegrityError as ex:
+        except sqlalchemy.exc.IntegrityError:
             self.session.rollback()
 
             reports = self.session.query(Report) \
@@ -267,9 +285,8 @@ class CheckerReportHandler(object):
                                                Report.run_id == action.run_id))
             if reports.count() != 0:
                 return reports.first().id
-            else: raise
-
-
+            else:
+                raise
 
     def storeReportInfo(self,
                         action,
@@ -291,10 +308,20 @@ class CheckerReportHandler(object):
         path_start = path_ids[0].id if len(path_ids) > 0 else None
 
         suppressed = False
-        supp =  self.session.query(SuppressBug) \
-                            .filter(and_(SuppressBug.run_id == action.run_id,
-                                         SuppressBug.hash == bug_hash)) \
-                            .first()
+        source_file = self.session.query(File).get(file_id)
+        source_file_path, source_file_name = ntpath.split(source_file.filepath)
+
+        supp = self.session.query(SuppressBug) \
+                           .filter(
+                               or_(and_(SuppressBug.run_id == action.run_id,
+                                        SuppressBug.hash == bug_hash,
+                                        SuppressBug.type == bug_hash_type,
+                                        SuppressBug.file_name == source_file_name),
+                                   and_(SuppressBug.run_id == action.run_id,
+                                        SuppressBug.hash == bug_hash,
+                                        SuppressBug.type == bug_hash_type,
+                                        SuppressBug.file_name == u''))) \
+                           .first()
 
         if supp:
             suppressed = True
@@ -344,7 +371,7 @@ class CheckerReportHandler(object):
                     events[i].addNext(events[i+1].id)
                     events[i+1].addPrev(events[i].id)
 
-                except IndexError as ierr:
+                except IndexError:
                     # we are at the last event
                     if (len(events) != 1):
                         # set prev only if list was longer than one
@@ -367,30 +394,38 @@ class CheckerReportHandler(object):
         for i in xrange(len(paths)):
             try:
                 paths[i].addNext(paths[i+1].id)
-            except IndexError as iex:
+            except IndexError:
                 # got the the last bug report point
                 pass
 
         return paths
 
     @decorators.catch_sqlalchemy
-    def addSuppressBug(self, run_id, hashes):
-        ''''''
+    def addSuppressBug(self, run_id, bugs_to_suppress):
+        '''
+        Supppress multiple bugs for a run this can be used usually
+        before the checking to sore the suppress file content
+        '''
         count = self.session.query(SuppressBug) \
                             .filter(SuppressBug.run_id == run_id) \
                             .delete()
-        LOG.debug('SuppressBug: ' + str(count) + ' removed item.')
+        LOG.debug('Cleaning previous suppress entries from the database. '
+                  + str(count) + ' removed items.')
 
         try:
             suppressList = []
-            for h, comment in hashes.items():
-                content = h.split('#')  # 0: hash, 1: type
-                if len(content) == 2:
-                    suppressBug = SuppressBug(run_id,
-                                              content[0],
-                                              content[1],
-                                              comment)
-                    suppressList.append(suppressBug)
+            for bug_to_suppress in bugs_to_suppress:
+                bug_hash = bug_to_suppress.bug_hash
+                bug_hash_type = bug_to_suppress.bug_hash_type
+                file_name = bug_to_suppress.file_name
+                comment = bug_to_suppress.comment
+
+                suppress_bug = SuppressBug(run_id,
+                                           bug_hash,
+                                           bug_hash_type,
+                                           file_name,
+                                           comment)
+                suppressList.append(suppress_bug)
 
             self.session.bulk_save_objects(suppressList)
             self.session.commit()
@@ -413,8 +448,8 @@ class CheckerReportHandler(object):
         skipPathList = []
         for path, comment in paths.items():
             skipPath = SkipPath(run_id, path, comment)
-            #self.session.add(skipPath)
-            #self.session.commit()
+            # self.session.add(skipPath)
+            # self.session.commit()
             skipPathList.append(skipPath)
         self.session.bulk_save_objects(skipPathList)
         self.session.commit()
@@ -436,7 +471,7 @@ class CheckerReportHandler(object):
                                                         Report.start_bugevent,
                                                         Report.start_bugpoint)
 
-# -----------------------------------------------------------------------
+
 def create_db_if_not_exists(uri, db_name):
     ''' True -> created, False -> already exists and do nothing. '''
     LOG.debug('Creating new database if not exists')
@@ -459,8 +494,17 @@ def create_db_if_not_exists(uri, db_name):
     LOG.debug('Database already exists: ' + db_name)
     return False
 
-# -----------------------------------------------------------------------
-def run_server(dbUsername, port, db_name, dbhost, dbport, db_version_info, callback_event=None):
+def migrate_database(session, migration_scripts):
+    LOG.debug('Updating schema to HEAD...')
+
+    connection = session.connection()
+
+    cfg = config.Config()
+    cfg.set_main_option("script_location", migration_scripts)
+    cfg.attributes["connection"] = connection
+    command.upgrade(cfg, "head")
+
+def run_server(dbUsername, port, db_name, dbhost, dbport, db_version_info, migration_scripts, callback_event=None):
     LOG.debug('Starting codechecker server ...')
 
     uri = 'postgres://' + dbUsername + '@' + dbhost + ':' + str(dbport)
@@ -484,7 +528,7 @@ def run_server(dbUsername, port, db_name, dbhost, dbport, db_version_info, callb
 
         LOG.debug('Creating new database schema')
         start = datetime.now()
-        CreateSchema(engine)
+        migrate_database(session, migration_scripts)
         end = datetime.now()
         diff = end - start
         LOG.debug('Creating new database schema done in ' + str(diff.seconds))
@@ -510,10 +554,7 @@ def run_server(dbUsername, port, db_name, dbhost, dbport, db_version_info, callb
     finally:
         session.commit()
 
-    session.autoflush = False # autoflush is enabled by default
-
-    # TODO: if schema already exists, check if it is compatible with the
-    # current version of the script
+    session.autoflush = False  # autoflush is enabled by default
 
     LOG.debug('Starting thrift server')
     try:

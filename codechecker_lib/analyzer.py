@@ -11,10 +11,13 @@ import subprocess
 import ntpath
 import re
 import fnmatch
+import math
+import linecache
 
 from codechecker_lib import client
 from codechecker_lib import logger
 from codechecker_lib import analyzer_env
+from codechecker_lib import plist_parser
 
 LOG = logger.get_new_logger('ANALYZER')
 
@@ -195,8 +198,23 @@ def get_skiplist(file_name):
     with open(file_name, 'r') as skip_file:
         return [line.strip() for line in skip_file if line != '']
 
+def _run_action(analyzer, action, on_result):
+    '''
+    Runs clang for all source file in the given action using the given analyzer.
 
-def run(analyzer, action):
+    The last paramater is a callback function (on_result) with a keyword
+    paramater. The following keyword paramater are forwarded:
+        - check_command (str)
+        - report_plist  (str, [path])
+        - source_file   (str, [path])
+        - err_code      (int)
+        - err_message   (str)
+
+    The callback should return an error code (zero means non error). The result
+    of _run_action is the first non-zero return code or 0 if all callback call
+    returned zero.
+    '''
+
     def signal_handler(*args, **kwargs):
         # Clang does not kill its child processes, so I have to
         try:
@@ -231,6 +249,7 @@ def run(analyzer, action):
     current_cmd.append('-x')
     current_cmd.append(action.lang)
 
+    result_code = 0
     for source in action.sources:
         if analyzer.should_skip(source):
             LOG.debug(source + ' is skipped.')
@@ -249,43 +268,122 @@ def run(analyzer, action):
         extender.append(source)
 
         check_cmd = current_cmd + extender
-
         check_cmd_str = ' '.join(check_cmd)
 
-        with client.get_connection() as connection:
+        LOG.debug(' '.join(check_cmd))
+        result = subprocess.Popen(check_cmd,
+                                  bufsize=-1,
+                                  env=analyzer.env,
+                                  preexec_fn=os.setsid,
+                                  stdout=subprocess.PIPE,
+                                  stderr=subprocess.PIPE)
+        (stdout, stderr) = result.communicate()
+        LOG.debug(stdout)
+        LOG.debug(stderr)
 
+        failure = ''
+        source_path, source_file = ntpath.split(source)
+        if result.returncode != 0:
+            failure = stdout + '\n' + stderr
+            msg = 'Checking %s has failed.' % (source_file)
+            LOG.debug(msg + '\n' + check_cmd_str + '\n' + failure)
+            LOG.info(msg)
+
+        tmp_result_code = on_result(check_command=check_cmd_str,
+                                    report_plist=report_plist,
+                                    source_file=source_file,
+                                    err_code=result.returncode,
+                                    err_message=failure)
+        if result_code == 0:
+            result_code = tmp_result_code
+    return result_code
+
+def run(analyzer, action):
+    '''
+    This function implements the "check" feature.
+    '''
+
+    with client.get_connection() as connection:
+        def on_result(**args):
+            check_command = args['check_command']
             action_id = connection.add_build_action(action.original_command,
-                                                    check_cmd_str)
+                                                    check_command)
 
-            LOG.debug(' '.join(check_cmd))
-            result = subprocess.Popen(check_cmd,
-                                      bufsize=-1,
-                                      env=analyzer.env,
-                                      preexec_fn=os.setsid,
-                                      stdout=subprocess.PIPE,
-                                      stderr=subprocess.PIPE)
-            (stdout, stderr) = result.communicate()
-
-            failure = ''
-            source_path, source_file = ntpath.split(source)
-            if result.returncode != 0:
-                failure = stdout + '\n' + stderr
-                msg = 'Checking %s has failed.' % (source_file)
-                LOG.debug(msg + '\n' + check_cmd_str + '\n' + failure)
-
-                LOG.info(msg)
-            else:
-                client.send_plist_content(connection, report_plist, action_id,
+            err_code = args['err_code']
+            if err_code == 0:
+                client.send_plist_content(connection,
+                                          args['report_plist'],
+                                          action_id,
                                           analyzer.run_id,
                                           analyzer.severity_map,
                                           analyzer.should_skip)
-                msg = 'Checking %s is done.' % (source_file)
-                LOG.debug(msg + '\n' + check_cmd_str)
+                msg = 'Checking %s is done.' % (args['source_file'])
+                LOG.debug(msg + '\n' + check_command)
                 LOG.info(msg)
 
-            LOG.debug(stdout)
-            LOG.debug(stderr)
+            connection.finish_build_action(action_id, args['err_message'])
+            return err_code
 
-            connection.finish_build_action(action_id, failure)
+        return _run_action(analyzer, action, on_result)
 
-        return result.returncode
+def run_quick_check(analyzer, action, print_steps=False, output=sys.stdout):
+    '''
+    This function implements the "quickcheck" feature.
+    '''
+
+    def format_location(event):
+        pos = event.start_pos
+        line = linecache.getline(pos.file_path, pos.line)
+        if line == '':
+            return line
+
+        marker_line = line[0:(pos.col-1)]
+        marker_line = ' '  * (len(marker_line) + marker_line.count('\t'))
+        return '%s%s^' % (line.replace('\t', '  '), marker_line)
+
+    def format_bug_event(event):
+        pos = event.start_pos
+        fname = os.path.basename(pos.file_path)
+        return '%s:%d:%d: %s' % (fname, pos.line, pos.col, event.msg)
+
+    def on_result(**args):
+        LOG.debug(args['check_command'])
+
+        source = args['source_file']
+        plist = args['report_plist']
+        if not os.path.isfile(plist):
+            LOG.info('Checking %s failed!' % (source))
+            return
+
+        try:
+            _, bugs = plist_parser.parse_plist(plist)
+        except Exception:
+            LOG.error('The generated plist is not valid!')
+            return
+
+        err_code = args['err_code']
+        if len(bugs) > 0:
+            output.write('%d defect(s) found while checking %s:\n\n' %
+                         (len(bugs), source))
+        else:
+            output.write('No defects found in %s :-)\n' % source)
+            return err_code
+
+        index_format = '    %%%dd, ' % int(math.floor(math.log10(len(bugs)))+1)
+        for bug in bugs:
+            last_event = bug.get_last_event()
+            output.write(format_bug_event(last_event))
+            output.write('\n')
+            output.write(format_location(last_event))
+            output.write('\n')
+            if print_steps:
+                output.write('  Steps:\n')
+                for index, event in enumerate(bug.events()):
+                    output.write(index_format % (index + 1))
+                    output.write(format_bug_event(event))
+                    output.write('\n')
+            output.write('\n')
+
+        return err_code
+
+    return _run_action(analyzer, action, on_result)

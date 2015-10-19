@@ -6,43 +6,107 @@
 
 define([
   "dojo/_base/declare",
+  "dojo/hash",
+  "dojo/topic",
+  "dojo/io-query",
   "dijit/layout/BorderContainer",
   "dijit/layout/TabContainer",
   "dijit/layout/ContentPane",
   "dijit/Dialog",
   "scripts/codecheckerviewer/OverviewGrid.js",
   "scripts/codecheckerviewer/OverviewHeader.js",
-  "scripts/codecheckerviewer/FileViewBC.js",
-  "scripts/codecheckerviewer/widgets/Pager.js",
-], function ( declare, BorderContainer, TabContainer, ContentPane, Dialog
-            , OverviewGrid, OverviewHeader, FileViewBC, Pager ) {
+  "scripts/codecheckerviewer/FileViewBC.js"
+], function ( declare, hash, topic, ioQuery, BorderContainer, TabContainer
+            , ContentPane, Dialog, OverviewGrid, OverviewHeader, FileViewBC ) {
 return declare(TabContainer, {
 
-  // overviewType ("run" or "diff")
-  // if "run" : runId
-  // if "diff": runId1, runId2
 
-
+   /**
+   * Construct the new object. The following arguments are required:
+   *   overviewType: "run" or "diff"
+   *   filterOptions: object of Select-compatible options array to be used by
+   *     Selects in a Filter, contains: checkerTypeOptions, severityOptions.
+   *
+   *   Other parameters depending on overviewType:
+   *     if overviewType is "run":
+   *       runId: the runId of the run
+   *     if overviewType is "diff":
+   *       runId1: the runId of the baseline run
+   *       runId2: the runId of the new run
+   */
   constructor : function(args) {
     var that = this;
     declare.safeMixin(that, args);
   },
 
 
+  /**
+   * Build the layout, add event listeners, build the dom for the widget
+   */
   postCreate : function () {
     var that = this;
     that.inherited(arguments);
 
+    that.buildOverviewLayout();
+    that.buildOverviewHeader(that.filterOptions);
+    that.buildOverviewGrid();
 
-    that.overviewBC = new BorderContainer();
+    that.overviewGridCP.addChild(that.overviewGrid);
+    that.overviewBC.addChild(that.overviewGridCP);
+    that.overviewBC.addChild(that.overviewHeader);
+    that.addChild(that.overviewBC);
+
+    that.hashchangeHandle = topic.subscribe("/dojo/hashchange", function(changedHash) {
+      that.handleHashChange(changedHash);
+    });
+
+    // Restore previous state from cuttent hash (if any).
+    that.handleHashChange(hash());
+  },
+
+
+  /**
+   * Builds the layout for this overview tab.
+   */
+  buildOverviewLayout : function() {
+    var that = this;
+
+    that.overviewBC = new BorderContainer({
+      id     : that.id + '_overview',
+      style  : "margin: 5px; padding: 0px;",
+      onShow : function() {
+        that.openFileView(undefined, undefined);
+      }
+    });
+  },
+
+
+  /**
+   * Builds the OverviewHeader.
+   */
+  buildOverviewHeader : function() {
+    var that = this;
+
+    that.overviewHeader = new OverviewHeader({
+      overviewType  : that.overviewType,
+      myOverviewTC  : that,
+      filterOptions : that.filterOptions,
+      region        : "top",
+      style         : "background-color: white; margin: 0px; padding: 0px;"
+    });
+  },
+
+
+  /**
+   * Builds the OverviewGrid, and its parent ContentPane.
+   */
+  buildOverviewGrid : function() {
+    var that = this;
 
     that.overviewGridCP = new ContentPane({
       region : "center",
       style  : "margin: 0px; padding: 0px;"
     });
-
-
-    that.overviewGrid = null;
 
     if (that.overviewType === "run") {
 
@@ -77,100 +141,172 @@ return declare(TabContainer, {
 
     that.overviewGrid.onRowClick = function (evt) {
       if (evt.cell.field === "checkerId") {
-
-        that.showDocumentation(that.overviewGrid.getItem(evt.rowIndex).checkerId[0]);
-
+        that.showDocumentation(that.overviewGrid.getItem(evt.rowIndex).checkerId);
       } else if (evt.cell.field === "fileWithBugPos") {
-
-        that.openFileView( that.overviewGrid.getItem(evt.rowIndex).fileId[0]
-                         , that.overviewGrid.getItem(evt.rowIndex).checkedFile[0]
-                         , that.overviewGrid.getItem(evt.rowIndex).bugHash[0]
-                         , that.overviewGrid.getItem(evt.rowIndex).severity[0]
-                         , that.overviewGrid.getItem(evt.rowIndex).lastBugPosition[0]
-                         , that.overviewGrid.getItem(evt.rowIndex).reportId[0]
-                         , that.overviewGrid.getItem(evt.rowIndex).checkerId[0]
-                         , that.overviewGrid.getItem(evt.rowIndex).suppressed[0]
-                         , that.overviewGrid.getItem(evt.rowIndex).runId[0]
-                         , that.overviewType
-                         );
-
+        var row = that.overviewGrid.getItem(evt.rowIndex);
+        that.openFileView(row.reportId, row.runId);
       }
     };
-
-
-    that.overviewHeader = new OverviewHeader({
-      overviewType   : that.overviewType,
-      myOverviewTC   : that,
-      region         : "top",
-      style          : "background-color: white; margin: 0px; padding: 0px;"
-    });
-
-
-    if (that.overviewType === "run") {
-      that.overviewPagerCP = new ContentPane({
-        region : "bottom",
-        style  : "margin: 0px; padding: 0px;"
-      });
-
-
-      that.overviewPager = new Pager({
-        myOverviewTC : that,
-        style        : "text-align: right"
-      });
-
-      that.overviewPagerCP.addChild(that.overviewPager);
-      that.overviewBC.addChild(that.overviewPagerCP);
-    }
-
-
-    that.overviewGridCP.addChild(that.overviewGrid);
-    that.overviewBC.addChild(that.overviewGridCP);
-    that.overviewBC.addChild(that.overviewHeader);
-
-    that.addChild(that.overviewBC);
   },
 
 
-  showDocumentation : function(checkerId) {
-    var checkerDocDialog = new Dialog({
-      title   : "Documentation for <b>" + checkerId + "</b>",
-      content : marked(CC_SERVICE.getCheckerDoc(checkerId))
-    });
-
-    checkerDocDialog.show();
-  },
-
-
-  openFileView : function( fileId, checkedFile, bugHash, severity, lastBugPosition
-                        , reportId, currCheckerId, suppressed, runId, overviewType) {
+  /**
+   * Handles a hash change.
+   *
+   * @param {String} changedHash the changed browser hash.
+   */
+  handleHashChange : function(changedHash) {
     var that = this;
 
+    if (!changedHash) {
+      return;
+    }
 
+    var hashState = ioQuery.queryToObject(changedHash);
+    var ovId = CC_UTIL.getOverviewIdFromHashState(hashState);
+    if (!hashState || ovId != that.id) {
+      return;
+    }
+
+    var tabId = that.getFileViewId(hashState);
+    if (undefined !== dijit.byId(tabId)) {
+      that.selectChild(dijit.byId(tabId));
+      return;
+    }
+
+    // Maybe it's in the GRID. Use it as a cache.
+    var rowIndex = 0;
+    var row;
+    while ((row = that.overviewGrid.getItem(rowIndex)))
+    {
+      if (row.reportId == hashState.fvReportId) {
+        break;
+      }
+      rowIndex++;
+    }
+
+    if (row) {
+      var reportData = {
+        checkerId       : row.checkerId,
+        bugHash         : row.bugHash,
+        checkedFile     : row.checkedFile,
+        checkerMsg      : '',
+        reportId        : row.reportId,
+        suppressed      : row.suppressed,
+        fileId          : row.fileId,
+        lastBugPosition : row.lastBugPosition,
+        severity        : row.severity,
+        moduleName      : '',
+        suppressComment : ''
+      }
+
+      that.handleOpenFileView(reportData, parseInt(hashState.fvRunId), tabId);
+    } else {
+      // Need to query
+      CC_SERVICE.getReport(parseInt(hashState.fvReportId), function(reportData){
+        if (typeof reportData === "string") {
+          console.error("getReport failed: " + reportData);
+          return;
+        }
+
+        reportData.severity = CC_UTIL.severityFromCodeToString(
+          reportData.severity);
+        that.handleOpenFileView(reportData, parseInt(hashState.fvRunId), tabId);
+        hash(changedHash);
+      });
+    }
+  },
+
+
+  /**
+   * Show the documentation of the given checker.
+   *
+   * @param checkerId checker id.
+   */
+  showDocumentation : function(checkerId) {
+    CC_SERVICE.getCheckerDoc(checkerId, function(checkerDoc) {
+      var checkerDocDialog = new Dialog({
+        title   : "Documentation for <b>" + checkerId + "</b>",
+        content : marked(checkerDoc)
+      });
+
+      checkerDocDialog.show();
+    });
+  },
+
+
+  /**
+   * Returns the DOM id string of a tab using the given browser has state
+   * object.
+   *
+   * @param hashState hash state
+   */
+  getFileViewId : function(hashState) {
+    var that = this;
+
+    if (hashState.fvReportId && hashState.fvRunId) {
+      return that.id + "_" + hashState.fvReportId + "_" + hashState.fvRunId;
+    }
+
+    return that.id + "_overview";
+  },
+
+
+  /**
+   * Opens a new file view using the browser hash. See handleOpenFileView for
+   * implementation.
+   *
+   * @param reportId a report id
+   * @param runId run id for the report
+   */
+  openFileView : function(reportId, runId) {
+    var that = this;
+
+    var hashState = ioQuery.queryToObject(hash());
+    hashState.fvReportId = reportId;
+    hashState.fvRunId = runId;
+    hash(ioQuery.objectToQuery(hashState));
+  },
+
+
+  /**
+   * Handles a request for opening a new file overview.
+   *
+   * @param reportData a ReportData.
+   * @param runId run id
+   * @param tabId DOM id for the new tab
+   */
+  handleOpenFileView : function(reportData, runId, tabId) {
+    var that = this;
     var newFileViewBC = new FileViewBC({
-      fileId          : fileId,
-      checkedFile     : checkedFile,
-      bugHash         : bugHash,
-      severity        : severity,
-      lastBugPosition : lastBugPosition,
-      reportId        : reportId,
+      id              : tabId,
+      fileId          : reportData.fileId,
+      checkedFile     : reportData.checkedFile,
+      bugHash         : reportData.bugHash,
+      severity        : reportData.severity,
+      lastBugPosition : reportData.lastBugPosition,
+      reportId        : reportData.reportId,
       myOverviewTC    : that,
-      currCheckerId   : currCheckerId,
-      suppressed      : suppressed,
+      currCheckerId   : reportData.checkerId,
+      suppressed      : reportData.suppressed,
       runId           : runId,
-      overviewType    : overviewType
+      onShow          : function() {
+        that.openFileView(reportData.reportId, runId);
+      }
     });
 
     that.addChild(newFileViewBC);
-
     that.selectChild(newFileViewBC);
   },
 
 
+  /**
+   * Returns the state of filters (see OverviewHeader::getStateOfFilters).
+   */
   getStateOfFilters : function() {
     var that = this;
 
     return that.overviewHeader.getStateOfFilters();
   }
-
 
 });});

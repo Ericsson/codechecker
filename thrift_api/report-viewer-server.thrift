@@ -44,10 +44,9 @@ struct ReportData{
   8: shared.BugPathEvent lastBugPosition  // This contains the range and message of the last item in the symbolic
                                           // execution step list.
   9: shared.Severity     severity         // checker severity
-  10: optional string    suppressComment // suppress commment if report is suppressed
+  10: optional string    suppressComment  // suppress commment if report is suppressed
 }
 typedef list<ReportData> ReportDataList
-
 
 //-----------------------------------------------------------------------------
 /**
@@ -128,6 +127,10 @@ service codeCheckerDBAccess {
   // get the run Ids and dates from the database to select one run
   RunDataList getRunData()
                          throws (1: shared.RequestFailed requestError),
+
+  ReportData getReport(
+                       1: i64 reportId)
+                       throws (1: shared.RequestFailed requestError),
 
   // get the results for one runId
   ReportDataList getRunResults(
@@ -232,4 +235,3 @@ service codeCheckerDBAccess {
                         throws (1: shared.RequestFailed requestError),
 
 }
-

@@ -39,7 +39,7 @@ LOG.setLevel(logging.INFO)
 LOG.addHandler(log_handler)
 
 
-def start_test_client(pkg_root, test_modules, e, err, fail, skipp, viewer_port, test_module_error):
+def start_test_client(pkg_root, test_modules, e, err, fail, skipp, viewer_port, server_port, test_module_error):
 
     # set viewer env to find python modules
 
@@ -54,6 +54,7 @@ def start_test_client(pkg_root, test_modules, e, err, fail, skipp, viewer_port, 
 
     # pass viewer port to clients
     os.environ['CC_TEST_VIEWER_PORT'] = str(viewer_port)
+    os.environ['CC_TEST_SERVER_PORT'] = str(server_port)
 
     standard_tests = unittest.TestSuite()
 
@@ -93,11 +94,11 @@ def start_test_client(pkg_root, test_modules, e, err, fail, skipp, viewer_port, 
         e.set()
         test_module_error.set()
         return
-        #sys.exit(1)
+        # sys.exit(1)
 
-    #except Exception as ex:
-    #    LOG.error(str(ex))
-    #    e.set()
+    # except Exception as ex:
+    #     LOG.error(str(ex))
+    #     e.set()
 
 
 def start_test_server(e, server_cmd, checking_env):
@@ -151,7 +152,6 @@ class GenericPackageTester(object):
             LOG.error(vaerr)
             sys.exit(1)
 
-
         os.environ['CC_TEST_PROJECT_INFO'] = \
             json.dumps(self.project_info['clang_' + clang_version])
         self.workspace = tempfile.mkdtemp()
@@ -179,7 +179,7 @@ class GenericPackageTester(object):
         except subprocess.CalledProcessError as perr:
             self.log.error('Failed source codechecker package for testing')
             self.log.error(str(perr))
-            #self.log.error('Failed to run command: ' + ' '.join(command))
+            # self.log.error('Failed to run command: ' + ' '.join(command))
             sys.exit(1)
 
         return pickle.loads(base64.b64decode(penv))
@@ -198,14 +198,14 @@ class GenericPackageTester(object):
             sys.exit(1)
 
     def _generate_suppress_file(self, suppress_file):
-        # generate suppress file ---------
+        """
+        create a dummy supppress file just to check if the old and the new
+        suppress format can be processed
+        """
         import calendar
         import time
         import hashlib
         import random
-
-        path_content_one = ['home', 'test', 'work', 'util', 'bin', 'usr', 'share']
-        path_content_two = ['bin', 'util', 'work']
 
         hash_version = '1'
         suppress_stuff = []
@@ -217,17 +217,10 @@ class GenericPackageTester(object):
             n = str(t) + str(r)
             suppress_stuff.append(hashlib.md5(n).hexdigest() + '#' + hash_version)
 
-            random.shuffle(path_content_one)
-            suppress_stuff.append('/' + '/'.join(path_content_one))
-            random.shuffle(path_content_two)
-            suppress_stuff.append('/' + '/'.join(path_content_two))
-
-            short_path = random.sample(path_content_one, 5)
-            suppress_stuff.append('/' + '/'.join(short_path))
-
         s_file = open(suppress_file, 'w')
         for k in suppress_stuff:
-            s_file.write(k + '||' + 'idziei éléáálk \n')
+            s_file.write(k + '||' + 'idziei éléáálk ~!@#$#%^&*() \n')
+            s_file.write(k + '||' + 'test_~!@#$%^&*.cpp' + '||' 'idziei éléáálk ~!@#$%^&*(\n')
 
         s_file.close()
 
@@ -360,6 +353,7 @@ class GenericPackageTester(object):
                 target=self.start_test_client,
                 args=(stop_server, err, fail, skipp,
                       test_config['CC_TEST_VIEWER_PORT'],
+                      test_config['CC_TEST_SERVER_PORT'],
                       test_module_error))
             w1.start()
             # wait for test to finish
@@ -434,7 +428,7 @@ class GenericPackageTester(object):
 
 def main():
     parser = argparse.ArgumentParser(description='CodeChecker tester script',
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('-p', '--package', required=True, action='store',
                         dest='pkg_root', help='Path of the package to test.')
     parser.add_argument('-v', '--clang_version', default='stable',

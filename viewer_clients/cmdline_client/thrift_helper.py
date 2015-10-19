@@ -101,7 +101,7 @@ class ThriftClientHelper():
 
     #-----------------------------------------------------------------------
     @ThriftClientCall
-    def getNewResults(self,base_run_id, new_run_id, limit, offset, sortType, reportFilters):
+    def getNewResults(self, base_run_id, new_run_id, limit, offset, sortType, reportFilters):
         pass
 
     #-----------------------------------------------------------------------

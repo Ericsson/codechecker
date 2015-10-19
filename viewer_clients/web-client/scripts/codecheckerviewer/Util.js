@@ -7,9 +7,74 @@
 define([
   "dojo/_base/declare",
 ], function ( declare ) {
+  /**
+   * This class contains various utility functions. It is instanciated once in
+   * the global namespace as CC_UTIL
+   */
 return declare(null, {
 
 
+  getCheckerTypeAndSeverityCountsForRun : function(runId, callback) {
+    var checkerTypeOptions = [];
+    var severityOptions = [];
+
+    var availableSeverities = {}; // { code : { name , count } , ... }
+
+    for (var key in Severity) {
+      var severityStringLowerCase = key.toLowerCase();
+      var severityString = severityStringLowerCase.charAt(0).toUpperCase()
+                         + severityStringLowerCase.slice(1);
+      var severityCode = Severity[key];
+
+      availableSeverities[severityCode] =
+        { name : severityString , count : 0 };
+    }
+
+    availableSeverities["all"] =
+      { name : "All Severities" , count : 0 };
+
+    CC_SERVICE.getRunResultTypes(runId, [], function(resultTypes) {
+      var allHitCount = 0;
+
+      resultTypes.forEach(function(item) {
+        allHitCount = allHitCount + item.count;
+
+        checkerTypeOptions.push({
+          value: item.checkerId + "",
+          label: item.checkerId + " (" + item.count + ")"
+        });
+
+        availableSeverities[item.severity].count =
+          availableSeverities[item.severity].count + item.count;
+      });
+
+      checkerTypeOptions.unshift({
+        value: "*",
+        label: "All checkers (" + allHitCount + ")",
+        selected: true
+      });
+
+      availableSeverities["all"].count = allHitCount;
+
+      for (var elem in availableSeverities) {
+        severityOptions.unshift({
+          value: elem + "",
+          label: availableSeverities[elem].name + " ("
+            + availableSeverities[elem].count + ")"
+        });
+      }
+
+      callback({
+        checkerTypeOptions : checkerTypeOptions,
+        severityOptions    : severityOptions
+      });
+    });
+  },
+
+
+  /**
+   * Queries the available severity types for checkers
+   */
   getAvailableSeverityLevels : function() {
     var severityLevelTypeOptionsArray = [];
 
@@ -21,48 +86,60 @@ return declare(null, {
       severityLevelTypeOptionsArray.unshift( { value: severityCode + "", label: severityString + "" } );
     }
 
-    severityLevelTypeOptionsArray.unshift( { value: "all", label: "All" , selected: true } );
+    severityLevelTypeOptionsArray.unshift( { value: "all", label: "All Severities" , selected: true } );
 
     return severityLevelTypeOptionsArray;
   },
 
 
+  /**
+   * Queries the available checkers and selects those which are found in the
+   * appropriate run.
+   */
   getAvailableCheckers : function(overviewTC) {
-    var temp = {};
+    var checkerTypeOptionsArray = [ { value: "*", label: "All checkers" , selected: true } ];
 
     if (overviewTC.overviewType === "run") {
 
-      var resultTypes = CC_SERVICE.getRunResultTypes(overviewTC.runId, []);
-
-      for (var i = 0 , len = resultTypes.length ; i < len; ++i) {
-        temp[resultTypes[i].checkerId] = true;
-      }
+      CC_SERVICE.getRunResultTypes(overviewTC.runId, [], function(resultTypes) {
+        resultTypes.forEach(function(item) {
+          checkerTypeOptionsArray.push( { value: item.checkerId + "", label: item.checkerId + "" } );
+        });
+      });
 
     } else if (overviewTC.overviewType === "diff") {
 
-      var resultTypes1 = CC_SERVICE.getRunResultTypes(overviewTC.runId1, []);
-      var resultTypes2 = CC_SERVICE.getRunResultTypes(overviewTC.runId2, []);
+      CC_SERVICE.getRunResultTypes(overviewTC.runId1, [], function(resultTypes1) {
+        CC_SERVICE.getRunResultTypes(overviewTC.runId2, [], function(resultTypes2) {
+          var temp = {};
 
-      for (var i = 0 , len = resultTypes1.length ; i < len; ++i) {
-        temp[resultTypes1[i].checkerId] = true;
-      }
+          resultTypes1.forEach(function(item) {
+            temp[item.checkerId] = true;
+          });
 
-      for (var i = 0 , len = resultTypes2.length ; i < len; ++i) {
-        temp[resultTypes2[i].checkerId] = true;
-      }
+          resultTypes2.forEach(function(item) {
+            temp[item.checkerId] = true;
+          });
 
-    }
+          for (var elem in temp) {
+            checkerTypeOptionsArray.push( { value: elem + "", label: elem + "" } );
+          }
 
-    var checkerTypeOptionsArray = [ { value: "*", label: "All checkers" , selected: true } ];
+        });
+      });
 
-    for (var elem in temp) {
-      checkerTypeOptionsArray.push( { value: elem + "", label: elem + "" } );
     }
 
     return checkerTypeOptionsArray;
   },
 
 
+  /**
+   * Converts a Thrift API severity id to human readable string.
+   *
+   * @param severityCode Thrift API severity id
+   * @return human readable severity string
+   */
   severityFromCodeToString : function(severityCode) {
     if (severityCode === "all"){
       return "All"
@@ -78,9 +155,32 @@ return declare(null, {
   },
 
 
+  /**
+   * Converts a severity string to Thrift API severity id.
+   *
+   * @param severityString severity as string
+   * @return severity as number (id)
+   */
   severityFromStringToCode : function(severityString) {
     return Severity[severityString.toUpperCase()];
+  },
+
+
+  /**
+   * Returns overview DOM id for the given browser hash state.
+   *
+   * @param hashState browser hash state object
+   * @return DOM id string or undefined
+   */
+  getOverviewIdFromHashState : function(hashState) {
+    if (hashState.ovType == 'run') {
+      return "runoverviewtc_" + hashState.ovRunId;
+    } else if (hashState.ovType == 'diff') {
+      return "diffoverviewtc_" + hashState.diffRunIds[0] + "_" +  hashState.diffRunIds[1];
+    } else if (JSON.stringify(hashState) == "{}") {
+      return "bc_listofrunsgrid";
+    }
+
+    return undefined;
   }
-
-
 });});

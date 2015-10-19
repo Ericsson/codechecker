@@ -5,7 +5,6 @@
 # -------------------------------------------------------------------------
 
 import os
-import sys
 import traceback
 
 from codechecker_lib import build_action
@@ -69,7 +68,7 @@ def parse_compile_commands_json(logfile):
 
 # -----------------------------------------------------------------------------
 def parse_log(logfilepath):
-    LOG.info('Parsing log file: ' + logfilepath)
+    LOG.debug('Parsing log file: ' + logfilepath)
 
     actions = []
 
@@ -84,5 +83,5 @@ def parse_log(logfilepath):
             print(traceback.format_exc())
             raise ex
 
-    LOG.info('Parsing log file done.')
+    LOG.debug('Parsing log file done.')
     return actions

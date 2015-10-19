@@ -15,7 +15,6 @@ return declare(DataGrid, {
   constructor : function() {
     var that = this;
 
-
     that.store = new ItemFileWriteStore({
       data: { identifier: "id", items: [] }
     });
@@ -26,43 +25,49 @@ return declare(DataGrid, {
       { name: "Name", field: "name", styles: "text-align: center;", width: "auto" },
       { name: "Date", field: "date", styles: "text-align: center;", width: "auto" },
       { name: "Number of bugs", field: "numberofbugs", styles: "text-align: center;", width: "auto" },
-      { name: "Duration", field: "duration", styles: "text-align: center;", width: "auto" }
+      { name: "Duration", field: "duration", styles: "text-align: center;", width: "auto" },
+      { name: "Delete", field: "deleteDisplay", styles: "text-align: center;", width: "50px", type: "dojox.grid.cells.Bool", editable: true },
     ];
 
   },
 
 
+  /**
+   * Fills the ListOfRunsGrid with RunData
+   */
   fillGridWithRunData : function() {
     var that = this;
 
+    CC_SERVICE.getRunData(function(runDataList) {
+      runDataList.forEach(function(item) {
+        var currItemDate = "Failed run";
 
-    var runDataList = CC_SERVICE.getRunData();
+        if (-1 !== item.runDate) {
+          currItemDate = item.runDate.split(/[\s\.]+/);
+        }
 
-    for (var i = 0, len = runDataList.length ; i < len ; ++i) {
-      var currItemDate = "Failed run";
-
-      if (-1 !== runDataList[i].runDate) {
-        currItemDate = runDataList[i].runDate.split(/[\s\.]+/);
-      }
-
-      that.store.newItem({
-        id           : runDataList[i].runId,
-        runid        : runDataList[i].runId,
-        name         : runDataList[i].name,
-        date         : currItemDate[0] + " --- " + currItemDate[1],
-        numberofbugs : runDataList[i].resultCount,
-        duration     : runDataList[i].duration + " sec",
-        diffDisplay  : false,
-        diffActual   : false
+        that.store.newItem({
+          id           : item.runId,
+          runid        : item.runId,
+          name         : item.name,
+          date         : currItemDate[0] + " --- " + currItemDate[1],
+          numberofbugs : item.resultCount,
+          duration     : item.duration + " sec",
+          diffDisplay  : false,
+          diffActual   : false,
+          deleteDisplay: false,
+          deleteActual : false
+        });
       });
-    }
-
+    });
   },
 
-
-  getCheckedNumber : function() {
+  /**
+   * Gets the number of the ticked checkboxes of the Diff column in the
+   * ListOfRunsGrid (This should be 0 or 1 or 2)
+   */
+  getDiffNumber : function() {
     var that = this;
-
 
     var accm = 0;
 
@@ -74,9 +79,11 @@ return declare(DataGrid, {
   },
 
 
+  /**
+   * Completely recreates the store to an empty state.
+   */
   recreateStore : function() {
     var that = this;
-
 
     var newStore = new ItemFileWriteStore({
       data: {

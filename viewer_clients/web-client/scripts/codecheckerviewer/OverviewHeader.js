@@ -11,49 +11,54 @@ define([
 ], function ( declare, ContentPane, Filter ) {
 return declare(ContentPane, {
 
-  // myOverviewTC
 
-
+  /**
+   * Construct the new object. The following arguments are required:
+   *   myOverviewTC: The OverviewTC this object belongs to
+   *   filterOptions: object of Select-compatible options array to be used by
+   *     Selects in a Filter, contains: checkerTypeOptions, severityOptions.
+   */
   constructor : function(args) {
     var that = this;
     declare.safeMixin(that, args);
-
 
     that.filters = [];
   },
 
 
-
+  /**
+   * Creates the main Filter widget and builds the dom.
+   */
   postCreate : function() {
     var that = this;
     that.inherited(arguments);
 
-
     that.mainFilter = new Filter({
-      myOverviewTC : that.myOverviewTC
+      myOverviewTC  : that.myOverviewTC,
+      filterOptions : that.copyFilterOptions(that.filterOptions)
     });
 
     that.mainFilter.addPlusButton();
 
     that.filters.push(that.mainFilter);
-
     that.addChild(that.mainFilter);
   },
 
 
-
+  /**
+   * Gets the current state of the filters.
+   */
   getStateOfFilters : function() {
     var that = this;
-
 
     var filterObjArray = [];
 
     for (var i = 0 ; i < that.filters.length ; ++i) {
 
-      var supprState       = that.filters[i].selectSuppr.getValue();
-      var severityState    = that.filters[i].selectSeverity.getValue();
-      var pathState        = that.filters[i].textBoxPath.getValue();
-      var checkerTypeState = that.filters[i].selectCheckerType.getValue();
+      var supprState       = that.filters[i].selectSuppr.get("value");
+      var severityState    = that.filters[i].selectSeverity.get("value");
+      var pathState        = that.filters[i].textBoxPath.get("value");
+      var checkerTypeState = that.filters[i].selectCheckerType.get("value");
 
       if (that.overviewType === 'run') {
         filterObjArray.push({
@@ -63,7 +68,7 @@ return declare(ContentPane, {
           checkerTypeState: checkerTypeState
         });
       } else if (that.overviewType === 'diff') {
-        var resolvState = that.filters[i].selectResolv.getValue();
+        var resolvState = that.filters[i].selectResolv.get("value");
         filterObjArray.push({
           supprState      : supprState,
           resolvState     : resolvState,
@@ -79,65 +84,69 @@ return declare(ContentPane, {
   },
 
 
-
+  /**
+   * Adds a new filter.
+   */
   addFilter : function() {
     var that = this;
 
-
     var newFilter = new Filter({
-      myOverviewTC : that.myOverviewTC
+      myOverviewTC  : that.myOverviewTC,
+      filterOptions : that.copyFilterOptions(that.filterOptions)
     });
 
-    newFilter.addPlusButton();
     newFilter.addMinusButton();
 
-    var lastFilter = that.filters[that.filters.length-1];
-
-    lastFilter.removePlusButton();
-
-    if (lastFilter.minusButton !== undefined) { lastFilter.removeMinusButton(); }
-
     that.filters.push(newFilter);
-
     that.addChild(newFilter);
 
     that.onRemoveOrAdd();
-    that.myOverviewTC.overviewBC.resize();
   },
 
 
-
+  /**
+   * Removes a filter from the filters array and the dom.
+   *
+   * @param filter The filter to be removed
+   */
   removeFilter : function(filter) {
     var that = this;
 
+    for (var i = 0 , len = that.filters.length ; i < len ; ++i ) {
+      if (filter === that.filters[i]) {
+        that.filters.splice(i, 1);
+        that.removeChild(filter);
+        that.onRemoveOrAdd();
 
-    var lastFilter = that.filters.pop();
-
-    that.removeChild(lastFilter);
-
-    lastFilter = that.filters[that.filters.length - 1];
-
-    lastFilter.addPlusButton();
-
-    if (lastFilter !== that.mainFilter) { lastFilter.addMinusButton(); }
-
-    that.onRemoveOrAdd();
-    that.myOverviewTC.overviewBC.resize();
+        break;
+      }
+    }
   },
 
 
+  /**
+   * Deep copies a filterOptions object.
+   */
+  copyFilterOptions : function(filterOptions) {
+    var that = this;
 
+    if (filterOptions !== undefined) {
+      // Ugly but widely accepted, and works in almost every browser.
+      return JSON.parse(JSON.stringify(filterOptions));
+    }
+
+    return undefined;
+  },
+
+
+  /**
+   * Function to be called after adding or removing a filter.
+   */
   onRemoveOrAdd : function() {
     var that = this;
 
-    if (that.myOverviewTC.overviewType === "run") {
-      that.myOverviewTC.overviewPager.refreshPager();
-    } else if (that.myOverviewTC.overviewType === "diff") {
-      that.myOverviewTC.overviewGrid.refreshGrid();
-    }
+    that.myOverviewTC.overviewGrid.refreshGrid();
+    that.myOverviewTC.overviewBC.resize();
   }
-
-
-
 
 });});

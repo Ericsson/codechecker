@@ -93,8 +93,11 @@ class Bug(object):
     def add_to_events(self, new_range):
         self._events.append(new_range)
 
-    def get_last_from_path(self):
+    def get_last_path(self):
         return self._paths[-1] if len(self._paths) > 0 else None
+
+    def get_last_event(self):
+        return self._events[-1] if len(self._events) > 0 else None
 
 
 # -----------------------------------------------------------------------------
@@ -126,7 +129,7 @@ def parse_plist(path):
                     start = make_range(edge.start, files)
                     end = make_range(edge.end, files)
 
-                    if start != current.get_last_from_path():
+                    if start != current.get_last_path():
                         current.add_to_path(start)
 
                     current.add_to_path(end)
@@ -136,16 +139,16 @@ def parse_plist(path):
         current.type = diag['type']
         current.checker_name = diag.get('check_name', 'NOT FOUND')
         if current.checker_name == 'NOT FOUND':
-            LOG.warning("Check name wasn't found in the plist file. "
+            LOG.debug("Check name wasn't found in the plist file. "
                         'Read the user guide!')
             current.checker_name = plist_helper.get_check_name(current.msg)
-            LOG.info('Guessed check name: ' + current.checker_name)
+            LOG.debug('Guessed check name: ' + current.checker_name)
 
         current.hash_type = int(diag.get('hash_type', 0))
         if current.hash_type:
             current.hash_value = diag['hash_value']
         else:  # generate some hash anyway, FIXME
-            LOG.warning("Hash value wasn't found in the plist file. "
+            LOG.debug("Hash value wasn't found in the plist file. "
                         'Read the user guide!')
             current.hash_value = plist_helper.gen_bug_hash(current)
 
