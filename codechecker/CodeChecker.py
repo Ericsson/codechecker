@@ -71,7 +71,7 @@ def main():
         # --------------------------------------
         # check commands
         check_parser = subparsers.add_parser('check',
-                                             help='Run codechecker for a project.')
+                                             help='Run CodeChecker for a project.')
         check_parser.add_argument('-w', '--workspace', type=str,
                                   dest="workspace", required=True,
                                   help='Directory where the codechecker can \
@@ -123,6 +123,29 @@ def main():
                                   help='Incremental parsing, \
                                   update the results of a previous run.')
         check_parser.set_defaults(func=arg_handler.handle_check)
+
+        # --------------------------------------
+        # quickcheck commands
+        qcheck_parser = subparsers.add_parser('quickcheck',
+                                              help='Run CodeChecker for a \
+                                                    project without database.')
+        qcheckgroup = qcheck_parser.add_mutually_exclusive_group(required=True)
+        qcheckgroup.add_argument('-b', '--build', type=str, dest="command",
+                                 required=False, help='Build command.')
+        qcheckgroup.add_argument('-l', '--log', type=str, dest="logfile",
+                                 required=False,
+                                 help='Path to the log file which is created \
+                                       during the build.')
+        qcheck_parser.add_argument('-e', '--enable', default=[],
+                                   action=OrderedCheckersAction,
+                                   help='Enable checker.')
+        qcheck_parser.add_argument('-d', '--disable', default=[],
+                                   action=OrderedCheckersAction,
+                                   help='Disable checker.')
+        qcheck_parser.add_argument('-s', '--steps', action="store_true",
+                                   dest="print_steps", help='Print steps.')
+        qcheck_parser.set_defaults(func=arg_handler.handle_quickcheck)
+
 
         # --------------------------------------
         # log commands
@@ -214,7 +237,7 @@ def main():
         # --------------------------------------
         # package version info
         version_parser = subparsers.add_parser('version',
-                                                help='Print package version information.')
+                                               help='Print package version information.')
         version_parser.set_defaults(func=arg_handler.handle_version_info)
 
         args = parser.parse_args()

@@ -1,0 +1,19 @@
+-b 'g++ multi_error.cpp -o /dev/null' --steps
+-------------------------------------------------------
+2 defect(s) found while checking multi_error.cpp:
+
+multi_error.cpp:2:3: Address of stack memory associated with local variable 'x' returned to caller
+  int x = 42;
+  ^
+  Steps:
+    1, multi_error.cpp:10:12: Calling 'foo'
+    2, multi_error.cpp:1:1: Entered call from 'main'
+    3, multi_error.cpp:3:10: Address of stack memory associated with local variable 'x' returned to caller
+    4, multi_error.cpp:2:3: Address of stack memory associated with local variable 'x' returned to caller
+
+multi_error.cpp:9:7: Value stored to 'y' is never read
+  y = 7;
+      ^
+  Steps:
+    1, multi_error.cpp:9:7: Value stored to 'y' is never read
+
