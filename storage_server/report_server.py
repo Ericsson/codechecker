@@ -140,10 +140,13 @@ class CheckerReportHandler(object):
     def addBuildAction(self, run_id, build_cmd, check_cmd):
         '''
         '''
-        build_action = self.session.query(BuildAction) \
-                                   .filter(and_(BuildAction.run_id == run_id,
-                                                BuildAction.build_cmd == build_cmd))
+        build_action = \
+            self.session.query(BuildAction) \
+                        .filter(and_(BuildAction.run_id == run_id,
+                                     BuildAction.build_cmd == build_cmd,
+                                     BuildAction.check_cmd == check_cmd))
         if build_action.count() != 0:
+            # FIXME: should delete this build action only in update mode
             self.deleteBuildAction(build_action.first())
 
         action = BuildAction(run_id, build_cmd, check_cmd)
