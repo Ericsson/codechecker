@@ -14,6 +14,7 @@
 #include <unistd.h>
 #include <assert.h>
 #include <ctype.h>
+#include <string.h>
 
 static char* makePathAbsRec(const char* path_, char* resolved_)
 {
@@ -59,6 +60,14 @@ static char* makePathAbsRec(const char* path_, char* resolved_)
 char* shellEscapeStr(const char* str_, char* buff_)
 {
   char* out = buff_;
+  int hasSpace = strchr(str_, ' ') != NULL;
+
+  if (hasSpace)
+  {
+    *out++ = '\\';
+    *out++ = '\"';
+  }
+
   while (*str_)
   {
     switch (*str_)
@@ -66,22 +75,23 @@ char* shellEscapeStr(const char* str_, char* buff_)
       case '\\':
       case '\'':
       case '\"':
-      case ' ':
       case '\t':
-        *out = '\\';
-        ++out;
-        *out = *str_;
+        *out++ = '\\';
+        *out++ = *str_++;
         break;
-        
+
       default:
-        *out = *str_;
+        *out++ = *str_++;
         break;
     }
-    
-    ++str_;
-    ++out;
   }
-  
+
+  if (hasSpace)
+  {
+    *out++ = '\\';
+    *out++ = '\"';
+  }
+
   *out = '\0';
   return buff_;
 }
@@ -113,7 +123,7 @@ char* loggerMakePathAbs(const char* path_, char* resolved_, int mustExist_)
     strcat(newPath, path_);
     return makePathAbsRec(newPath, resolved_);
   }
-  
+
   return makePathAbsRec(path_, resolved_);
 }
 
@@ -394,4 +404,3 @@ char* loggerGetFileName(const char* absPath_, int withoutExt_)
 
   return loggerStrDup(fileName);
 }
-

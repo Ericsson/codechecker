@@ -5,6 +5,7 @@
 # -------------------------------------------------------------------------
 
 import re
+import shlex
 
 from codechecker_lib import logger
 
@@ -323,7 +324,7 @@ def parse_options(args):
     '''Requires a full compile command with the compiler, not only arguments.'''
 
     result_map = OptionParserResult()
-    for it in OptionIterator(args.split()[1:]):
+    for it in OptionIterator(shlex.split(args)[1:]):
         arg_check(it, result_map)  # TODO: do sth at False result, actually skip
 
     return result_map

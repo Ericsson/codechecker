@@ -37,9 +37,10 @@ static char* createJsonCommandString(const LoggerVector* args_)
   /* The final size is:
        The overall size of command * 2 for escaping +
        args_->size character for word separator +
+       args_->size * 2 character for word escaping ('"'' chars) separator +
        1 byte character trailing null
   */
-  cmdSize = cmdSize * 2 + args_->size + 1;
+  cmdSize = (cmdSize * 2) + (args_->size * 3) + 1;
   cmd = (char*) malloc(sizeof(char) * cmdSize);
   if (!cmd)
   {
