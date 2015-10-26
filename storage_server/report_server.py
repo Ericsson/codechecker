@@ -209,7 +209,8 @@ class CheckerReportHandler(object):
                   checker_id,
                   checker_cat,
                   bug_type,
-                  severity):
+                  severity,
+                  suppress):
         '''
         '''
 
@@ -278,7 +279,8 @@ class CheckerReportHandler(object):
                                         checker_id,
                                         checker_cat,
                                         bug_type,
-                                        severity)
+                                        severity,
+                                        suppress)
 
         except sqlalchemy.exc.IntegrityError:
             self.session.rollback()
@@ -302,7 +304,8 @@ class CheckerReportHandler(object):
                         checker_id,
                         checker_cat,
                         bug_type,
-                        severity):
+                        severity,
+                        suppressed = False):
         '''
         store report information
         '''
@@ -310,7 +313,6 @@ class CheckerReportHandler(object):
         event_ids = self.storeBugEvents(events)
         path_start = path_ids[0].id if len(path_ids) > 0 else None
 
-        suppressed = False
         source_file = self.session.query(File).get(file_id)
         source_file_path, source_file_name = ntpath.split(source_file.filepath)
 
@@ -409,11 +411,6 @@ class CheckerReportHandler(object):
         Supppress multiple bugs for a run this can be used usually
         before the checking to sore the suppress file content
         '''
-        count = self.session.query(SuppressBug) \
-                            .filter(SuppressBug.run_id == run_id) \
-                            .delete()
-        LOG.debug('Cleaning previous suppress entries from the database. '
-                  + str(count) + ' removed items.')
 
         try:
             suppressList = []
@@ -438,6 +435,39 @@ class CheckerReportHandler(object):
             return False
 
         return True
+
+
+    @decorators.catch_sqlalchemy
+    def cleanSuppressData(self, run_id):
+        '''
+        Clean the suppress bug entries for a run
+        and remove suppressed flags for the suppressed reports.
+        Only the database is modified
+        '''
+
+        try:
+            count = self.session.query(SuppressBug) \
+                                .filter(SuppressBug.run_id == run_id) \
+                                .delete()
+            LOG.debug('Cleaning previous suppress entries from the database. '
+                      + str(count) + ' removed items.')
+
+            reports = self.session.query(Report) \
+                         .filter(and_(Report.run_id == run_id,
+                                      Report.suppressed == True)) \
+                         .all()
+
+            for report in reports:
+                report.suppressed = False
+
+            self.session.commit()
+
+        except Exception as ex:
+            LOG.error(str(ex))
+            return False
+
+        return True
+
 
     @decorators.catch_sqlalchemy
     def addSkipPath(self, run_id, paths):

@@ -388,6 +388,10 @@ def handle_check(args):
                 LOG.info("Name was already used in the database please choose another unique name for checking.")
                 sys.exit(1)
 
+        if args.update:
+            # clean previous suppress information
+            client.clean_suppress(connection, context.run_id)
+
         if send_suppress:
             client.send_suppress(connection, suppress_file)
 

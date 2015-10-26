@@ -42,6 +42,12 @@ service CheckerReport {
                                     )
                                     throws (1: shared.RequestFailed requestError),
 
+                # remove all suppress information from the database
+                bool cleanSuppressData(
+                                    1: i64 run_id,
+                                    )
+                                    throws (1: shared.RequestFailed requestError),
+
                 # the map contains a path and a comment (can be empty)
                 bool addSkipPath(
                                  1: i64 run_id,
@@ -68,7 +74,8 @@ service CheckerReport {
                                8: string checker_id,
                                9: string checker_cat,
                                10: string bug_type,
-                               11: shared.Severity severity)
+                               11: shared.Severity severity,
+                               12: bool suppress)
                                throws (1: shared.RequestFailed requestError),
 
                 bool finishBuildAction(

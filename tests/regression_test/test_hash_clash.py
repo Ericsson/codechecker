@@ -67,7 +67,8 @@ class HashClash(unittest.TestCase):
                                       'test_id',
                                       'test_cat',
                                       'test_type',
-                                      Severity.UNSPECIFIED)
+                                      Severity.UNSPECIFIED,
+                                      False)
 
     @contextmanager
     def _init_new_test(self, name):
