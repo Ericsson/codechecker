@@ -44,6 +44,36 @@ class OrderedCheckersAction(argparse.Action):
             previous_values.append((value, False))
         setattr(namespace, 'ordered_checker_args', previous_values)
 
+# ------------------------------------------------------------------------------
+class DeprecatedOptionAction(argparse.Action):
+    '''
+    Deprecated argument action
+    '''
+    def __init__(self,
+                 option_strings,
+                 dest,
+                 nargs=None,
+                 const=None,
+                 default=None,
+                 type=None,
+                 choices=None,
+                 required=False,
+                 help=None,
+                 metavar=None):
+        super(DeprecatedOptionAction, self).__init__(option_strings,
+                                                     dest,
+                                                     nargs='?',
+                                                     const='deprecated_option',
+                                                     default=None,
+                                                     type=None,
+                                                     choices=None,
+                                                     required=False,
+                                                     help='DEPRECATED argument!',
+                                                     metavar='DEPRECATED')
+
+    def __call__(self, parser, namespace, value=None, option_string=None):
+        LOG.warning("Deprecated command line option in use: '" + option_string + "'")
+
 
 # ------------------------------------------------------------------------------
 def main():
@@ -102,6 +132,7 @@ def main():
         check_parser.add_argument('-d', '--disable', default=[],
                                   action=OrderedCheckersAction,
                                   help='Disable checker.')
+        check_parser.add_argument('-c', '--clean', action=DeprecatedOptionAction)
         check_parser.add_argument('--keep-tmp', action="store_true",
                                   dest="keep_tmp", required=False,
                                   help='Keep temporary report files \
