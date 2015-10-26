@@ -353,13 +353,13 @@ def run_quick_check(analyzer, action, print_steps=False, output=sys.stdout):
         plist = args['report_plist']
         if not os.path.isfile(plist):
             LOG.info('Checking %s failed!' % (source))
-            return
+            return 1
 
         try:
             _, bugs = plist_parser.parse_plist(plist)
         except Exception:
             LOG.error('The generated plist is not valid!')
-            return
+            return 1
 
         err_code = args['err_code']
         if len(bugs) > 0:

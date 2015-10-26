@@ -588,3 +588,4 @@ def run_server(dbUsername, port, db_name, dbhost, dbport, db_version_info, migra
     except Exception as err:
         LOG.error(str(err))
         session.commit()
+        sys.exit(1)
