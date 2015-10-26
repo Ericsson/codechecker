@@ -61,6 +61,10 @@ class SourceSuppressHandler(object):
     suppress_marker = 'codechecker_suppress'
 
     def __init__(self, source_file, bug_line):
+        """
+        source line number indexing starts at 1
+        """
+
         self.__source_file = source_file
         self.__bug_line = bug_line
         self.__suppressed_checkers = []
