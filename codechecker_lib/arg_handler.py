@@ -391,15 +391,6 @@ def handle_check(args):
         if send_suppress:
             client.send_suppress(connection, suppress_file)
 
-        # static_analyzer.clean = args.clean
-        if args.clean:
-            # cleaning up previous results
-            LOG.debug("Cleaning previous plist files in " +
-                      context.codechecker_workspace)
-            plist_files = glob.glob(os.path.join(context.codechecker_workspace, '*.plist'))
-            for pf in plist_files:
-                os.remove(pf)
-
         report_output = os.path.join(context.codechecker_workspace, context.report_output_dir_name)
         if not os.path.exists(report_output):
             os.mkdir(report_output)
@@ -437,6 +428,14 @@ def handle_check(args):
         connection.finish_checker_run()
 
     LOG.info("Analysis length: " + str(end_time - start_time) + " sec.")
+
+    if not args.keep_tmp:
+        LOG.debug("Removing plist files in " +
+                  context.codechecker_workspace)
+        plist_files = glob.glob(os.path.join(report_output, '*.plist'))
+        for pf in plist_files:
+            os.remove(pf)
+
     LOG.info("Analysis has finished.")
 
 def _do_quickcheck(args):

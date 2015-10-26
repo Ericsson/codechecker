@@ -102,9 +102,9 @@ def main():
         check_parser.add_argument('-d', '--disable', default=[],
                                   action=OrderedCheckersAction,
                                   help='Disable checker.')
-        check_parser.add_argument('-c', '--clean', action="store_true",
-                                  dest="clean", required=False,
-                                  help='Delete temporary report files \
+        check_parser.add_argument('--keep-tmp', action="store_true",
+                                  dest="keep_tmp", required=False,
+                                  help='Keep temporary report files \
                                   after sending data to database storage server.')
         check_parser.add_argument('--dbaddress', type=str, dest="dbaddress",
                                   default="localhost", required=False,
