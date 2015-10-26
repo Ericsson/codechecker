@@ -7,6 +7,7 @@ import contextlib
 import multiprocessing
 import os
 import codecs
+import ntpath
 
 import shared
 from storage_server import report_server
@@ -24,6 +25,7 @@ from codechecker_lib import plist_parser
 from codechecker_lib import database_handler
 from codechecker_lib import util
 from codechecker_lib import suppress_file_handler
+from codechecker_lib import suppress_handler
 
 LOG = logger.get_new_logger('CLIENT')
 
@@ -80,6 +82,40 @@ def send_plist_content(connection, plist_file, build_action_id, run_id,
         severity_name = severity_map.get(bug.checker_name, 'UNSPECIFIED')
         severity = shared.ttypes.Severity._NAMES_TO_VALUES[severity_name]
 
+        suppress = False
+
+        source_file = bug.file_path
+        last_bug_event = bug.events()[-1]
+        bug_line = last_bug_event.start_pos.line
+
+        LOG.debug('Checking source for suppress comment')
+        sp_handler = suppress_handler.SourceSuppressHandler(source_file,
+                                                            bug_line)
+        LOG.debug(source_file)
+        LOG.debug(bug_line)
+        LOG.debug(bug.checker_name)
+        # check for suppress comment
+        supp = sp_handler.check_source_suppress()
+        if supp:
+            # something shoud be suppressed
+            suppress_checkers = sp_handler.suppressed_checkers()
+
+            if bug.checker_name in suppress_checkers or \
+               suppress_checkers == ['all']:
+                suppress = True
+
+                file_path, file_name = ntpath.split(source_file)
+
+                # checker_hash, checker_hash_type, file_name, comment
+                to_suppress = (bug_hash,
+                               bug_hash_type,
+                               file_name,
+                               sp_handler.suppress_comment())
+
+                LOG.debug(to_suppress)
+
+                connection.add_suppress_bug([to_suppress])
+
         report_id = connection.add_report(build_action_id,
                                           file_ids[bug.file_path],
                                           bug_hash,
@@ -90,9 +126,18 @@ def send_plist_content(connection, plist_file, build_action_id, run_id,
                                           bug.checker_name,
                                           bug.category,
                                           bug.type,
-                                          severity)
+                                          severity,
+                                          suppress)
 
         report_ids.append(report_id)
+
+
+# -----------------------------------------------------------------------------
+def clean_suppress(connection, run_id):
+    """
+    clean all the suppress information from the database
+    """
+    connection.clean_suppress_data(run_id)
 
 
 # -----------------------------------------------------------------------------
@@ -197,6 +242,12 @@ class Connection(object):
         else:
             self._client.finishCheckerRun(run_id)
 
+    def clean_suppress_data(self, run_id):
+        """
+        clean suppress data
+        """
+        self._client.cleanSuppressData(run_id)
+
     def add_suppress_bug(self, suppress_data):
         """
         process and send suppress data
@@ -241,7 +292,7 @@ class Connection(object):
 
     def add_report(self, build_action_id, file_id, bug_hash, bug_hash_type,
                    checker_message, bugpath, events, checker_id, checker_cat,
-                   bug_type, severity):
+                   bug_type, severity, suppress):
         ''' i64  addReport(1: i64 build_action_id, 2: i64 file_id,
             3: string bug_hash, 4: string checker_message, 5: BugPath bugpath,
             6: BugPathEvents events, 7: string checker_id,
@@ -250,7 +301,7 @@ class Connection(object):
         return self._client.addReport(build_action_id, file_id, bug_hash,
                                        bug_hash_type, checker_message, bugpath,
                                        events, checker_id, checker_cat,
-                                       bug_type, severity)
+                                       bug_type, severity, suppress)
 
     def need_file_content(self, filepath):
         ''' NeedFileResult needFileContent(1: i64 run_id, 2: string filepath)

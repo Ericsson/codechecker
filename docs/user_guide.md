@@ -133,6 +133,41 @@ optional arguments:
   --dbname DBNAME       Name of the database.
 ~~~~~~~~~~~~~~~~~~~~~
 
+### Suppression in the source:
+
+Suppress comments can be used in the source to suppress specific or all checker results found in a source line.
+Suppress comment should be above the line where the bug was found no empty lines are allowed between the line with the bug and the suppress comment.
+Only comment lines staring with "//" are supported
+
+Supported comment formats:
+~~~~~~~~~~~~~~~~~~~~~
+void test() {
+  int x;
+  // codechecker_suppress [deadcode.DeadStores] suppress deadcode
+  x = 1; // warn
+}
+~~~~~~~~~~~~~~~~~~~~~
+
+~~~~~~~~~~~~~~~~~~~~~
+void test() {
+  int x;
+  // codechecker_suppress [all] suppress all checker results
+  x = 1; // warn
+}
+~~~~~~~~~~~~~~~~~~~~~
+
+~~~~~~~~~~~~~~~~~~~~~
+void test() {
+  int x;
+
+  // codechecker_suppress [all] suppress all
+  // checker resuls
+  // with a long
+  // comment
+  x = 1; // warn
+}
+~~~~~~~~~~~~~~~~~~~~~
+
 ### Suppress file:
 ~~~~~~~~~~~~~~~~~~~~~
 -u SUPPRESS

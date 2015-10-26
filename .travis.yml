@@ -35,6 +35,7 @@ script:
     - which thrift
     - thrift --version
 
+    - ./test_unit_test.py
     - ./build_package.py -o ./codechecker_package -v
     - ./test_package.py -p ./codechecker_package/CodeChecker -v stable --dbport 5432 --dbusername postgres
     - ./test_quickcheck.py -p ./codechecker_package/CodeChecker
