@@ -125,7 +125,7 @@ optional arguments:
                         Enable checker.
   -d DISABLE, --disable DISABLE
                         Disable checker.
-  -c, --clean           Delete temporary report files after sending data to
+  --keep-tmp            Keep temporary report files after sending data to
                         database storage server.
   --dbaddress DBADDRESS
                         Postgres database server address.
