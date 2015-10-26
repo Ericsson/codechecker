@@ -75,19 +75,3 @@ def start_database(path, host, port, analyzer_env=None):
                             bufsize=-1, env=analyzer_env,
                             stdout=devnull, stderr=subprocess.STDOUT)
     return proc
-
-
-# -----------------------------------------------------------------------------
-def check_database_state(path, analyzer_env=None):
-
-    path = path.strip()
-    LOG.debug('Checking database state at ' + path)
-    try:
-
-        ret = subprocess.check_output(['pg_ctl', '-D', path, 'status'],
-                                      env=analyzer_env,
-                                      stderr=subprocess.STDOUT)
-        LOG.debug(ret)
-
-    except Exception as cerr:
-        LOG.debug(str(cerr))

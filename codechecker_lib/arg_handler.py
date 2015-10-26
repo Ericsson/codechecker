@@ -80,9 +80,9 @@ def perform_build_command(logfile, command, context, silent=False):
                 LOG.info("Build failed.")
                 sys.exit(1)
     except Exception as ex:
-            LOG.error("Calling original build command failed")
-            LOG.error(str(ex))
-            sys.exit(1)
+        LOG.error("Calling original build command failed")
+        LOG.error(str(ex))
+        sys.exit(1)
 
 
 def worker_result_handler(results):
@@ -533,10 +533,12 @@ def handle_version_info(args):
     except ValueError as verr:
         LOG.error('Failed to decode version information from the config file.')
         LOG.error(verr)
+        sys.exit(1)
 
     except IOError as ioerr:
         LOG.error('Failed to read version config file: ' + version_file)
         LOG.error(ioerr)
+        sys.exit(1)
 
 
     # thift api version for the clients
