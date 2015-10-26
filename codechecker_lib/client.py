@@ -104,17 +104,17 @@ def send_plist_content(connection, plist_file, build_action_id, run_id,
                suppress_checkers == ['all']:
                 suppress = True
 
-            file_path, file_name = ntpath.split(source_file)
+                file_path, file_name = ntpath.split(source_file)
 
-            # checker_hash, checker_hash_type, file_name, comment
-            to_suppress = (bug_hash,
-                           bug_hash_type,
-                           file_name,
-                           sp_handler.suppress_comment())
+                # checker_hash, checker_hash_type, file_name, comment
+                to_suppress = (bug_hash,
+                               bug_hash_type,
+                               file_name,
+                               sp_handler.suppress_comment())
 
-            LOG.debug(to_suppress)
+                LOG.debug(to_suppress)
 
-            connection.add_suppress_bug([to_suppress])
+                connection.add_suppress_bug([to_suppress])
 
         report_id = connection.add_report(build_action_id,
                                           file_ids[bug.file_path],
