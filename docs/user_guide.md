@@ -93,7 +93,6 @@ An already created CMake json compilation database can be used as well.
 CodeChecker check -w ~/codechecker_wp -n myProject -l ~/codechecker_wp/build_log.json
 ~~~~~~~~~~~~~~~~~~~~~
 
-
 ### Advanced Usage
 
 ~~~~~~~~~~~~~~~~~~~~~
@@ -266,8 +265,47 @@ Start the checking as explained previously.
 CodeChecker check -w ~/codechecker_wp -n myProject -b "make -j 4" --dbname myProjectdb --dbaddress 192.168.1.2 --dbport 8764
 ~~~~~~~~~~~~~~~~~~~~~
 
+## 3. Quick check mode:
 
-## 3. checkers mode:
+It's possible to quickly check a small project (set of files) for bugs without
+storing the results into a database. In this case only the build command is
+required and the defect list appears on the console. The defect list doesn't
+shows the bug paths by default but you can turn it on using the --steps command
+line parameter.
+
+Basic usage:
+
+~~~~~~~~~~~~~~~~~~~~~
+CodeChecker quickcheck -b 'make'
+~~~~~~~~~~~~~~~~~~~~~
+
+Enabling bug path:
+
+~~~~~~~~~~~~~~~~~~~~~
+CodeChecker quickcheck -b 'make' --steps
+~~~~~~~~~~~~~~~~~~~~~
+
+Usage:
+
+~~~~~~~~~~~~~~~~~~~~~
+usage: CodeChecker.py quickcheck [-h] (-b COMMAND | -l LOGFILE) [-e ENABLE]
+                                 [-d DISABLE] [-s]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -b COMMAND, --build COMMAND
+                        Build command.
+  -l LOGFILE, --log LOGFILE
+                        Path to the log file which is created during the
+                        build.
+  -e ENABLE, --enable ENABLE
+                        Enable checker.
+  -d DISABLE, --disable DISABLE
+                        Disable checker.
+  -s, --steps           Print steps.
+~~~~~~~~~~~~~~~~~~~~~
+
+## 4. checkers mode:
 
 List all available checkers.
 
@@ -276,7 +314,7 @@ CodeChecker checkers
 ~~~~~~~~~~~~~~~~~~~~~
 
 
-## 4. cmd mode:
+## 5. cmd mode:
 
 A lightweigh command line interface to query the results of an analysis.
 It is a suitable client to integrate with continous integration, schedule maintenance tasks and verifying correct analysis process.
@@ -296,7 +334,7 @@ optional arguments:
   -h, --help            show this help message and exit
 ~~~~~~~~~~~~~~~~~~~~~
 
-## 5. debug mode:
+## 6. debug mode:
 
 In debug mode CodeChecker can generate logs for failed build actions. The logs can be helpful debugging the checkers.
 
@@ -331,7 +369,7 @@ After the server has started open the outputed link to the browser (localhost:11
 ### Run CodeChecker distributed in a cluster
 
 You may want to configure codechecker to do the analysis on separate machines in a distributed way.
-Start the postgres database on a central machine (in this example it is called codechecker.central) on a remotely accessible address and port and then run 
+Start the postgres database on a central machine (in this example it is called codechecker.central) on a remotely accessible address and port and then run
 ```CodeChecker check``` on multiple machines (called host1 and host2), specify the remote dbaddress and dbport and use the same run name.
 
 Create and start an empty database to which the codechecker server can connect.
@@ -354,14 +392,14 @@ postgres -U codechecker -D /path/to/pgsql_data -p 9999 &>pgsql_log &
 
 #### Run CodeChecker on multiple hosts
 
-Then you can run codechecker on multiple hosts but using the same run name (in this example this is called "distributed_run". 
-You will need to use the -–update (incremental mode) to reuse the same run name. In this example it is assumed that 
+Then you can run codechecker on multiple hosts but using the same run name (in this example this is called "distributed_run".
+You will need to use the -–update (incremental mode) to reuse the same run name. In this example it is assumed that
 postgres is listening on codechecker.central port 9999.
 ~~~~~~~~~~~~~~~~~~~~~
 #On host1 we check module1
 CodeChecker check -w /tmp/codechecker_ws -b "cd module_1;make" --dbport 9999 --dbaddress codechecker.central -n distributed_run --update
 
-#On host2 we check module2 
+#On host2 we check module2
 CodeChecker check -w /tmp/codechecker_ws -b "cd module_2;make" --dbport 9999 --dbaddress codechecker.central -n disributed_run --update
 ~~~~~~~~~~~~~~~~~~~~~
 
