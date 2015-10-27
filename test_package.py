@@ -329,6 +329,8 @@ class GenericPackageTester(object):
             server_cmd.append(str(test_config['CC_TEST_VIEWER_PORT']))
             server_cmd.append('-w')
             server_cmd.append(codechecker_workspace)
+            server_cmd.append('--suppress')
+            server_cmd.append(suppress_file)
 
             self.log.info('Starting server.')
             self.log.info(' '.join(server_cmd))

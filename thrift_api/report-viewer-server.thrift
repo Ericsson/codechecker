@@ -17,7 +17,7 @@ namespace js codeCheckerDBAccess
 namespace cpp cc.service.codechecker
 
 //=================================================
-const string API_VERSION = '4.0'
+const string API_VERSION = '4.1'
 const i64 MAX_QUERY_SIZE = 500
 //=================================================
 
@@ -234,4 +234,8 @@ service codeCheckerDBAccess {
   bool removeRunResults(1: list<i64> runIds)
                         throws (1: shared.RequestFailed requestError),
 
+  // get the suppress file path set by the command line
+  // returns empty string if not set
+  string getSuppressFile()
+                        throws (1: shared.RequestFailed requestError),
 }
