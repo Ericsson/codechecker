@@ -1104,3 +1104,13 @@ class ThriftRequestHandler():
             session.commit()
 
         return True
+
+    # -----------------------------------------------------------------------
+    def getSuppressFile(self):
+        """
+        return the suppress file path or empty string if not set
+        """
+        suppress_file = self.__suppress_handler.suppress_file
+        if suppress_file:
+            return suppress_file
+        return ''
