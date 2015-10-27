@@ -26,37 +26,12 @@ return declare(null, {
   constructor : function() {
     var that = this;
 
-    var initialHash = hash();
-
     that.diffRuns = [];
     that.deleteRunIds = [];
 
     that.initGlobals();
-    that.buildLayout();
-    that.buildListOfRuns();
-    that.buildMenuButton();
-    that.layout.startup();
-    that.listOfRunsGrid.fillGridWithRunData();
-    that.listOfRunsGrid.render();
 
-    topic.subscribe("/dojo/hashchange", function(changedHash) {
-      that.handleHashChange(changedHash);
-    });
-
-    // Restore previous state from cuttent hash (if any).
-    if (hash() != initialHash) {
-      hash(initialHash);
-    } else {
-      that.handleHashChange(initialHash);
-    }
-
-    that.listOfRunsBC.onShow = function() {
-      if (hash() != "") {
-        hash("");
-        that.listOfRunsGrid.render();
-      }
-    };
-
+    that.initCCV();
   },
 
 
@@ -67,6 +42,46 @@ return declare(null, {
     CC_SERVICE = new codeCheckerDBAccess.codeCheckerDBAccessClient(
       new Thrift.Protocol(new Thrift.Transport("CodeCheckerService")));
     CC_UTIL    = new Util();
+  },
+
+
+  /**
+   * Initializes the Viewer
+   */
+  initCCV : function() {
+    var that = this;
+
+    CC_SERVICE.getSuppressFile(function(filePath) {
+      that.isSupprFileAvailable = (filePath !== "");
+
+      var initialHash = hash();
+
+      that.buildLayout();
+      that.buildListOfRuns();
+      that.buildMenuButton();
+      that.layout.startup();
+      that.listOfRunsGrid.fillGridWithRunData();
+      that.listOfRunsGrid.render();
+
+      topic.subscribe("/dojo/hashchange", function(changedHash) {
+        that.handleHashChange(changedHash);
+      });
+
+      // Restore previous state from cuttent hash (if any).
+      if (hash() != initialHash) {
+        hash(initialHash);
+      } else {
+        that.handleHashChange(initialHash);
+      }
+
+      that.listOfRunsBC.onShow = function() {
+        if (hash() != "") {
+          hash("");
+          that.listOfRunsGrid.render();
+        }
+      };
+
+    });
   },
 
 

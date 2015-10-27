@@ -138,7 +138,7 @@ return declare(BorderContainer, {
 
         that.set("title", checkedFile.split(/[\/]+/).pop() + " @ Line " + item.range.startLine);
 
-        if (item.suppressed === false) {
+        if (item.suppressed === false && CCV.isSupprFileAvailable) {
           editorHeader.suppressButton.setDisabled(false);
         }
 
