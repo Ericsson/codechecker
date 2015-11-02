@@ -57,6 +57,7 @@ If your clang version does not have these features you will see warning messages
   *  [Clang Static analyzer](http://clang-analyzer.llvm.org/) (latest stable or [trunk](http://clang.llvm.org/get_started.html))
   *  [Postgresql](http://www.postgresql.org/ "PostgreSql") (> 9.3.5)
   *  [Python2](https://www.python.org/) (> 2.7)
+  *  [Alembic](https://pypi.python.org/pypi/alembic) (>=0.8.2)
   *  [SQLAlchemy](http://www.sqlalchemy.org/) (> 1.0.2)
      - [PyPi SQLAlchemy](https://pypi.python.org/pypi/SQLAlchemy) (> 1.0.2)
   *  [psycopg2](http://initd.org/psycopg/ "psycopg2") (> 2.5.4)
