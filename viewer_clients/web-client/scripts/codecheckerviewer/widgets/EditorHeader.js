@@ -24,9 +24,7 @@ return declare(_WidgetBase, {
       style     : "margin : 0px; margin-right : 5px;",
       onMouseEnter : function(event) {
         if (!CCV.isSupprFileAvailable) {
-          var tooltipMessage
-            = "This button is disabled because a suppress "
-            + "file was NOT given for the CodeChecker server.";
+          var tooltipMessage = "Suppress file is not configured.";
           Tooltip.show(tooltipMessage, that.suppressButton.domNode, ['above']);
         }
       },
