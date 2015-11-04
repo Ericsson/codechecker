@@ -9,18 +9,31 @@ define([
   "dojo/dom-construct",
   "dijit/_WidgetBase",
   "dijit/form/Button",
-], function ( declare, domConstruct, _WidgetBase, Button ) {
+  "dijit/Tooltip",
+], function ( declare, domConstruct, _WidgetBase, Button, Tooltip ) {
 return declare(_WidgetBase, {
 
 
   constructor: function() {
-    this.suppressButton = new Button({
+    var that = this;
+
+    that.suppressButton = new Button({
       label     : "Suppress bug",
       showLabel : true,
-      style     : "margin : 0px; margin-right : 5px;"
+      disabled  : !CCV.isSupprFileAvailable,
+      style     : "margin : 0px; margin-right : 5px;",
+      onMouseEnter : function(event) {
+        if (!CCV.isSupprFileAvailable) {
+          var tooltipMessage = "Suppress file is not configured.";
+          Tooltip.show(tooltipMessage, that.suppressButton.domNode, ['above']);
+        }
+      },
+      onMouseLeave : function(event) {
+        Tooltip.hide(that.suppressButton.domNode);
+      }
     });
 
-    this.documentationButton = new Button({
+    that.documentationButton = new Button({
       label     : "Show documentation",
       showLabel : true,
       style     : "margin : 0px;"
