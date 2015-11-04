@@ -237,9 +237,9 @@ class SuppressBug(Base):
     __tablename__ = 'suppress_bug'
 
     id = Column(Integer, autoincrement=True, primary_key=True)
-    hash = Column(String)
+    hash = Column(String, nullable=False)
     file_name = Column(String)
-    run_id = Column(Integer, ForeignKey('runs.id', deferrable = True, initially = "DEFERRED", ondelete='CASCADE'))
+    run_id = Column(Integer, ForeignKey('runs.id', deferrable = True, initially = "DEFERRED", ondelete='CASCADE'), nullable=False)
     type = Column(Integer)
     comment = Column(Binary)
 
