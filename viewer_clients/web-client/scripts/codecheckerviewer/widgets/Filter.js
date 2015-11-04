@@ -43,7 +43,7 @@ return declare(_WidgetBase, {
     that.inherited(arguments);
 
     that.textBoxPath = new TextBox({
-      placeHolder : "Path filter, i.e. *filename.*",
+      placeHolder : "Path filter",
       style       : "width: 200px; margin-right: 5px;",
       onKeyPress  : function(evt) {
         if (evt.keyCode === 13) { // "Enter"

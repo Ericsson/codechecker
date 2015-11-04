@@ -57,7 +57,8 @@ return declare(ContentPane, {
 
       var supprState       = that.filters[i].selectSuppr.get("value");
       var severityState    = that.filters[i].selectSeverity.get("value");
-      var pathState        = that.filters[i].textBoxPath.get("value");
+      var pathState        =
+        "*" + that.filters[i].textBoxPath.get("value") + "*";
       var checkerTypeState = that.filters[i].selectCheckerType.get("value");
 
       if (that.overviewType === 'run') {
