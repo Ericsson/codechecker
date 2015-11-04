@@ -119,8 +119,10 @@ return declare(BorderContainer, {
           that.viewedFile   = item.filePath;
           that.viewedFileId = item.fileId;
 
-          CC_SERVICE.getSourceFileData(fileId, true, function(sourceFileData) {
+          CC_SERVICE.getSourceFileData(that.viewedFileId, true, function(sourceFileData) {
             editor._setContentAttr(sourceFileData.fileContent);
+
+            editor.setBugMarkers(that.runId, that.viewedFile);
 
             var newRange = that.createRangeFromBugPos(item.range);
             that.jumpToRangeAndDrawBubblesLines(editor, newRange, item.reportId);
@@ -138,7 +140,7 @@ return declare(BorderContainer, {
 
         that.set("title", checkedFile.split(/[\/]+/).pop() + " @ Line " + item.range.startLine);
 
-        if (item.suppressed === false) {
+        if (item.suppressed === false && CCV.isSupprFileAvailable) {
           editorHeader.suppressButton.setDisabled(false);
         }
 
@@ -177,6 +179,8 @@ return declare(BorderContainer, {
 
             that.clearSelectionAndBubblesLines(editor);
 
+            editor.setBugMarkers(that.runId, that.viewedFile);
+
             editorHeader.suppressButton.setDisabled(true);
 
           } catch (err) {
@@ -206,7 +210,7 @@ return declare(BorderContainer, {
       editorHeader.suppressButton.setDisabled(true);
     }
 
-    CC_SERVICE.getSourceFileData(fileId, true, function(sourceFileData) {
+    CC_SERVICE.getSourceFileData(that.viewedFileId, true, function(sourceFileData) {
       editor._setContentAttr(sourceFileData.fileContent);
 
       var newRange = that.createRangeFromBugPos(lastBugPosition);
@@ -215,6 +219,7 @@ return declare(BorderContainer, {
 
     editor.setFileName(that.viewedFile.split("/").pop());
     editor.setPath(that.viewedFile);
+    editor.setBugMarkers(that.runId, that.viewedFile);
 
 
     treePane.addChild(that.bugStoreModelTree.bugTree);

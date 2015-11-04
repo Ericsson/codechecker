@@ -164,3 +164,7 @@ code, kbd, pre, samp, tt, xmp, listing, plaintext {
   overflow   : hidden;
   width      : 120px;
 }
+
+.bugInfo {
+  width: 12px;
+}
