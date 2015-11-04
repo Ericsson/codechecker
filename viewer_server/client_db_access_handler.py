@@ -517,14 +517,12 @@ class ThriftRequestHandler():
 
         report_id = report.id
         bug_id_hash = report.bug_id
-        hash_type = report.bug_id_type
 
         source_file = session.query(File).get(report.file_id)
         source_file_path, source_file_name = ntpath.split(source_file.filepath)
 
         LOG.debug('Updating suppress data for: ' + str(report_id) + ' bug id ' +
-                  bug_id_hash + ' hash type ' + str(hash_type) +
-                  ' file name ' + source_file_name +
+                  bug_id_hash + ' file name ' + source_file_name +
                   ' suppressing ' + str(suppress))
 
         # check if it is already suppressed for any run ids
@@ -545,7 +543,6 @@ class ThriftRequestHandler():
             for rId in run_ids:
                 suppress_bug = SuppressBug(rId,
                                            bug_id_hash,
-                                           hash_type,
                                            source_file_name,
                                            comment)
                 session.add(suppress_bug)
@@ -567,7 +564,6 @@ class ThriftRequestHandler():
             for run_id in suppress_in_these_runs:
                 suppress_bug = SuppressBug(run_id,
                                            bug_id_hash,
-                                           hash_type,
                                            source_file_name,
                                            comment)
                 session.add(suppress_bug)
@@ -611,14 +607,12 @@ class ThriftRequestHandler():
             # store to suppress file
             ret = self.__suppress_handler \
                       .store_suppress_bug_id(bug_id_hash,
-                                             hash_type,
                                              source_file_name,
                                              comment)
         else:
             # remove from suppress file
             ret = self.__suppress_handler \
                       .remove_suppress_bug_id(bug_id_hash,
-                                              hash_type,
                                               source_file_name)
 
         if not ret:

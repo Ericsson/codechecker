@@ -68,12 +68,11 @@ class Bug(object):
     '''The bug with all information, it include bugpath too.'''
 
     def __init__(self, file, from_pos, until_pos=None, msg=None, category=None,
-                 type=None, hash_type=0, hash_value=''):
+                 type=None, hash_value=''):
         self.file_path = file
         self.msg = msg
         self._paths = []
         self._events = []
-        self.hash_type = hash_type
         self.hash_value = hash_value
 
         if not until_pos:

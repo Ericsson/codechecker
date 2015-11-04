@@ -195,7 +195,6 @@ class Report(Base):
     run_id = Column(Integer, ForeignKey('runs.id', deferrable = True, initially = "DEFERRED", ondelete='CASCADE'), index = True)
     # build_action_id = Column(Integer, ForeignKey('build_actions.id', deferrable = True, initially = "DEFERRED"))
     bug_id = Column(String, index = True)
-    bug_id_type = Column(Integer)
     checker_id = Column(String)
     checker_cat = Column(String)
     bug_type = Column(String)
@@ -211,10 +210,10 @@ class Report(Base):
 
 
     # Priority/severity etc...
-    def __init__(self, run_id, bug_id, bug_id_type, file_id, checker_message, start_bugpoint, start_bugevent, end_bugevent, checker_id, checker_cat, bug_type, severity, suppressed):
+    def __init__(self, run_id, bug_id, file_id, checker_message, start_bugpoint, start_bugevent, end_bugevent, checker_id, checker_cat, bug_type, severity, suppressed):
         self.run_id = run_id
         self.file_id = file_id
-        self.bug_id, self.bug_id_type, self.checker_message = bug_id, bug_id_type, checker_message
+        self.bug_id, self.checker_message = bug_id, checker_message
         self.start_bugpoint = start_bugpoint
         self.start_bugevent = start_bugevent
         self.end_bugevent = end_bugevent
@@ -240,12 +239,11 @@ class SuppressBug(Base):
     hash = Column(String, nullable=False)
     file_name = Column(String)
     run_id = Column(Integer, ForeignKey('runs.id', deferrable = True, initially = "DEFERRED", ondelete='CASCADE'), nullable=False)
-    type = Column(Integer)
     comment = Column(Binary)
 
-    def __init__(self, run_id, hash, type, file_name, comment):
+    def __init__(self, run_id, hash, file_name, comment):
         self.hash, self.run_id = hash, run_id
-        self.type, self.comment = type, comment
+        self.comment = comment
         self.file_name = file_name
 
 

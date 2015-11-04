@@ -202,7 +202,6 @@ class CheckerReportHandler(object):
                   build_action_id,
                   file_id,
                   bug_hash,
-                  bug_hash_type,
                   msg,
                   bugpath,
                   events,
@@ -272,7 +271,6 @@ class CheckerReportHandler(object):
             return self.storeReportInfo(action,
                                         file_id,
                                         bug_hash,
-                                        bug_hash_type,
                                         msg,
                                         bugpath,
                                         events,
@@ -297,7 +295,6 @@ class CheckerReportHandler(object):
                         action,
                         file_id,
                         bug_hash,
-                        bug_hash_type,
                         msg,
                         bugpath,
                         events,
@@ -320,11 +317,9 @@ class CheckerReportHandler(object):
                            .filter(
                                or_(and_(SuppressBug.run_id == action.run_id,
                                         SuppressBug.hash == bug_hash,
-                                        SuppressBug.type == bug_hash_type,
                                         SuppressBug.file_name == source_file_name),
                                    and_(SuppressBug.run_id == action.run_id,
                                         SuppressBug.hash == bug_hash,
-                                        SuppressBug.type == bug_hash_type,
                                         SuppressBug.file_name == u''))) \
                            .first()
 
@@ -333,7 +328,6 @@ class CheckerReportHandler(object):
 
         report = Report(action.run_id,
                         bug_hash,
-                        bug_hash_type,
                         file_id,
                         msg,
                         path_start,
@@ -416,13 +410,11 @@ class CheckerReportHandler(object):
             suppressList = []
             for bug_to_suppress in bugs_to_suppress:
                 bug_hash = bug_to_suppress.bug_hash
-                bug_hash_type = bug_to_suppress.bug_hash_type
                 file_name = bug_to_suppress.file_name
                 comment = bug_to_suppress.comment
 
                 suppress_bug = SuppressBug(run_id,
                                            bug_hash,
-                                           bug_hash_type,
                                            file_name,
                                            comment)
                 suppressList.append(suppress_bug)
