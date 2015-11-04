@@ -144,17 +144,21 @@ def parse_plist(path):
             current.msg = diag['description']
             current.category = diag['category']
             current.type = diag['type']
-            current.checker_name = diag.get('check_name', 'NOT FOUND')
-            if current.checker_name == 'NOT FOUND':
+
+            try:
+                current.checker_name = diag['check_name']
+            except KeyError as kerr:
                 LOG.debug("Check name wasn't found in the plist file. "
                             'Read the user guide!')
                 current.checker_name = plist_helper.get_check_name(current.msg)
                 LOG.debug('Guessed check name: ' + current.checker_name)
 
-            current.hash_type = int(diag.get('hash_type', 0))
-            if current.hash_type:
-                current.hash_value = diag['hash_value']
-            else:  # generate some hash anyway, FIXME
+            try:
+                current.hash_value = diag['issue_hash_content_of_line_in_context']
+            except KeyError as kerr:
+                # hash was not found
+                # generate some hash for older clang versions
+                LOG.debug(kerr)
                 LOG.debug("Hash value wasn't found in the plist file. "
                             'Read the user guide!')
                 current.hash_value = plist_helper.gen_bug_hash(current)
