@@ -46,13 +46,24 @@ return declare(DataGrid, {
           currItemDate = item.runDate.split(/[\s\.]+/);
         }
 
+        var durHours = Math.floor(item.duration / 3600);
+        var durMins  = Math.floor(item.duration / 60) - durHours * 60;
+        var durSecs  = item.duration - durMins * 60 - durHours * 3600;
+
+        var prettyDurHours = durHours < 10 ? ("0" + durHours) : durHours;
+        var prettyDurMins  = durMins < 10 ? ("0" + durMins) : durMins;
+        var prettyDurSecs  = durSecs < 10 ? ("0" + durSecs) : durSecs;
+
+        var prettyDuration =
+          prettyDurHours + ":" + prettyDurMins + ":" + prettyDurSecs;
+
         that.store.newItem({
           id           : item.runId,
           runid        : item.runId,
           name         : item.name,
           date         : currItemDate[0] + " --- " + currItemDate[1],
           numberofbugs : item.resultCount,
-          duration     : item.duration + " sec",
+          duration     : prettyDuration,
           diffDisplay  : false,
           diffActual   : false,
           deleteDisplay: false,
