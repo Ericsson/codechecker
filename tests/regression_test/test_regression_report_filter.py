@@ -174,3 +174,28 @@ class RunResults(unittest.TestCase):
                     runid, run_result_count, 0, sort_types, simple_filters)
                 self.assertIsNotNone(run_results)
                 self.assertEqual(test_result_count, len(run_results))
+
+
+    # -----------------------------------------------------
+    def test_filter_case_insensitive_file_path(self):
+        ''' Filter by file path case insensitive'''
+
+        runid = self._runid
+        filter_test_data = self._testproject_data['filter_filepath_case_insensitive']
+
+        for level in filter_test_data:
+            for filepath_filter, test_result_count in level.iteritems():
+                info('File path filter ' + filepath_filter +
+                     ' test result count: ' + str(test_result_count))
+
+                sort_types = None
+                simple_filters = []
+                simple_filter = ReportFilter(filepath=filepath_filter)
+                simple_filters.append(simple_filter)
+
+                run_result_count = self._cc_client.getRunResultCount(
+                    runid, simple_filters)
+                run_results = self._cc_client.getRunResults(
+                    runid, run_result_count, 0, sort_types, simple_filters)
+                self.assertIsNotNone(run_results)
+                self.assertEqual(test_result_count, len(run_results))

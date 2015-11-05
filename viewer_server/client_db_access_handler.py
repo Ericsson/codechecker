@@ -88,13 +88,13 @@ def construct_report_filter(report_filters):
     for report_filter in report_filters:
         AND = []
         if report_filter.checkerMsg:
-            AND.append(Report.checker_message.like(
+            AND.append(Report.checker_message.ilike(
                        conv(report_filter.checkerMsg)))
         if report_filter.checkerId:
-            AND.append(Report.checker_id.like(
+            AND.append(Report.checker_id.ilike(
                        conv(report_filter.checkerId)))
         if report_filter.filepath:
-            AND.append(File.filepath.like(
+            AND.append(File.filepath.ilike(
                        conv(report_filter.filepath)))
         if report_filter.severity is not None:
             # severity value can be 0
