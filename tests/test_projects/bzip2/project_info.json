@@ -9,7 +9,8 @@
             { "file": "compress.c", "line": 225, "checker": "deadcode.DeadStores", "hash": "6b5c1c9545cf70d7342d7c8131ca0d7e" }],
         "filter_severity_levels": [{"MEDIUM": 2}, {"LOW": 4}, {"HIGH": 1}, {"STYLE": 0}, {"UNSPECIFIED": 0}, {"CRITICAL": 0}],
         "filter_checker_id": [{"*unix*": 0}, {"core*": 2}, {"*DeadStores": 4}],
-        "filter_filepath": [{"*compress*": 3}]
+        "filter_filepath": [{"*compress*": 3}],
+        "filter_filepath_case_insensitive": [{"*compress*": 3}, {"*coMPRess*": 3}, {"*COMPRESS*": 3}, {"*Compress*": 3}]
     },
     "clang_trunk": {
         "bugs": [
@@ -19,6 +20,7 @@
             { "file": "compress.c", "line": 225, "checker": "deadcode.DeadStores", "hash": "6b5c1c9545cf70d7342d7c8131ca0d7e" }],
         "filter_severity_levels": [{"MEDIUM": 3}, {"LOW": 4}, {"HIGH": 0}, {"STYLE": 0}, {"UNSPECIFIED": 0}, {"CRITICAL": 0}],
         "filter_checker_id": [{"*unix*": 1}, {"core*": 2}, {"*DeadStores": 4}],
-        "filter_filepath": [{"*compress*": 3}]
+        "filter_filepath": [{"*compress*": 3}],
+        "filter_filepath_case_insensitive": [{"*compress*": 3}, {"*coMPRess*": 3}, {"*COMPRESS*": 3}, {"*Compress*": 3}]
     }
 }
