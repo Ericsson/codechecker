@@ -1,11 +1,10 @@
+sudo: required
+dist: trusty
+
 language: python
 
 python:
     - "2.7"
-
-before_install:
-    - travis_retry wget http://people.apache.org/~jfarrell/thrift/0.9.2/contrib/ubuntu/thrift-compiler_0.9.2_amd64.deb -O thrift-compiler.deb
-    - sudo dpkg -i thrift-compiler.deb
 
 install:
     - pip install -r ./.ci/python_requirements
@@ -24,17 +23,11 @@ addons:
             - clang-3.6
             - libc6-dev-i386
             - gcc-multilib
+            - thrift-compiler
 
     postgresql: "9.3"
 
 script:
-    - python --version
-    - clang-3.6 --version
-    - doxygen --version
-    - make --version
-    - which thrift
-    - thrift --version
-
     - ./test_unit_test.py
     - ./build_package.py -o ./codechecker_package -v
     - ./test_package.py -p ./codechecker_package/CodeChecker -v stable --dbport 5432 --dbusername postgres
