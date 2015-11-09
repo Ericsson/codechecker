@@ -27,7 +27,6 @@ class SuppressHandler(object):
     def store_suppress_bug_id(self,
                               source_file_path,
                               bug_id,
-                              hash_type,
                               file_name,
                               comment):
         """ store the suppress bug_id """
@@ -36,7 +35,6 @@ class SuppressHandler(object):
     @abc.abstractmethod
     def remove_suppress_bug_id(self,
                                bug_id,
-                               hash_type,
                                file_name):
         """ remove the suppress bug_id """
         pass

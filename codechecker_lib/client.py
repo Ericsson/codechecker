@@ -75,9 +75,7 @@ def send_plist_content(connection, plist_file, build_action_id, run_id,
                 event.msg, file_ids[event.start_pos.file_path]))
 
         bug_hash = bug.hash_value
-        bug_hash_type = bug.hash_type
         LOG.debug('Bug hash: ' + bug_hash)
-        LOG.debug('Bug hash type: ' + str(bug_hash_type))
 
         severity_name = severity_map.get(bug.checker_name, 'UNSPECIFIED')
         severity = shared.ttypes.Severity._NAMES_TO_VALUES[severity_name]
@@ -106,9 +104,8 @@ def send_plist_content(connection, plist_file, build_action_id, run_id,
 
                 file_path, file_name = ntpath.split(source_file)
 
-                # checker_hash, checker_hash_type, file_name, comment
+                # checker_hash, file_name, comment
                 to_suppress = (bug_hash,
-                               bug_hash_type,
                                file_name,
                                sp_handler.suppress_comment())
 
@@ -119,7 +116,6 @@ def send_plist_content(connection, plist_file, build_action_id, run_id,
         report_id = connection.add_report(build_action_id,
                                           file_ids[bug.file_path],
                                           bug_hash,
-                                          bug_hash_type,
                                           bug.msg,
                                           bug_paths,
                                           bug_events,
@@ -254,10 +250,9 @@ class Connection(object):
         which should be sent to the report server
         """
         bugs_to_suppress = []
-        for checker_hash, checker_hash_type, file_name, comment in suppress_data:
+        for checker_hash, file_name, comment in suppress_data:
             comment = comment.encode('UTF-8')
             suppress_bug = SuppressBugData(checker_hash,
-                                           int(checker_hash_type),
                                            file_name,
                                            comment)
             bugs_to_suppress.append(suppress_bug)
@@ -290,18 +285,14 @@ class Connection(object):
         ''' bool finishBuildAction(1: i64 action_id, 2: string failure) '''
         return self._client.finishBuildAction(action_id, failure)
 
-    def add_report(self, build_action_id, file_id, bug_hash, bug_hash_type,
+    def add_report(self, build_action_id, file_id, bug_hash,
                    checker_message, bugpath, events, checker_id, checker_cat,
                    bug_type, severity, suppress):
-        ''' i64  addReport(1: i64 build_action_id, 2: i64 file_id,
-            3: string bug_hash, 4: string checker_message, 5: BugPath bugpath,
-            6: BugPathEvents events, 7: string checker_id,
-            8: string checker_cat, 9: string bug_type,
-            10: shared.Severity severity) '''
+        '''  '''
         return self._client.addReport(build_action_id, file_id, bug_hash,
-                                       bug_hash_type, checker_message, bugpath,
-                                       events, checker_id, checker_cat,
-                                       bug_type, severity, suppress)
+                                      checker_message, bugpath,
+                                      events, checker_id, checker_cat,
+                                      bug_type, severity, suppress)
 
     def need_file_content(self, filepath):
         ''' NeedFileResult needFileContent(1: i64 run_id, 2: string filepath)

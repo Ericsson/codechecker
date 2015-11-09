@@ -221,6 +221,7 @@ class GenericPackageTester(object):
         for k in suppress_stuff:
             s_file.write(k + '||' + 'idziei éléáálk ~!@#$#%^&*() \n')
             s_file.write(k + '||' + 'test_~!@#$%^&*.cpp' + '||' 'idziei éléáálk ~!@#$%^&*(\n')
+            s_file.write(hashlib.md5(n).hexdigest() + '||' + 'test_~!@#$%^&*.cpp' + '||' 'idziei éléáálk ~!@#$%^&*(\n')
 
         s_file.close()
 

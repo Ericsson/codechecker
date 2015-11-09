@@ -11,6 +11,10 @@
 # this is the new format
 123324353456463442341242342343#1 || filename || bug hash comment
 
+after removing the hash_value_type the generated format is:
+123324353456463442341242342343 || filename || bug hash comment
+
+for backward compatibility the hash_value_type is an optional filed
 '''
 
 import re
@@ -31,10 +35,10 @@ def get_suppress_data(suppress_file):
     processs a file object for suppress information
     """
 
-    old_format_pattern = r"^(?P<bug_hash>[\d\w]{32})\#(?P<bug_hash_type>\d)\s*\|\|\s*(?P<comment>[^\|]*)$"
+    old_format_pattern = r"^(?P<bug_hash>[\d\w]{32})(\#(?P<bug_hash_type>\d))?\s*\|\|\s*(?P<comment>[^\|]*)$"
     old_format = re.compile(old_format_pattern, re.UNICODE)
 
-    new_format_pattern = r"^(?P<bug_hash>[\d\w]{32})\#(?P<bug_hash_type>\d)\s*\|\|\s*(?P<file_name>[^\\\|]+)\s*\|\|\s*(?P<comment>[^\|]*)$"
+    new_format_pattern = r"^(?P<bug_hash>[\d\w]{32})(\#(?P<bug_hash_type>\d))?\s*\|\|\s*(?P<file_name>[^\\\|]+)\s*\|\|\s*(?P<comment>[^\|]*)$"
     new_format = re.compile(new_format_pattern, re.UNICODE)
 
     suppress_data = []
@@ -47,7 +51,6 @@ def get_suppress_data(suppress_file):
             new_format_match = new_format_match.groupdict()
             LOG.debug(new_format_match)
             suppress_data.append((new_format_match['bug_hash'],
-                                  new_format_match['bug_hash_type'],
                                   new_format_match['file_name'],
                                   new_format_match['comment']))
             continue
@@ -58,7 +61,6 @@ def get_suppress_data(suppress_file):
             old_format_match = old_format_match.groupdict()
             LOG.debug(old_format_match)
             suppress_data.append((old_format_match['bug_hash'],
-                                  old_format_match['bug_hash_type'],
                                   u'',  # empty file name
                                   old_format_match['comment']))
             continue
@@ -69,7 +71,7 @@ def get_suppress_data(suppress_file):
     return suppress_data
 
 # ---------------------------------------------------------------------------
-def write_to_suppress_file(suppress_file, value, hash_type, file_name, comment=''):
+def write_to_suppress_file(suppress_file, value, file_name, comment=''):
 
     comment = comment.decode('UTF-8')
 
@@ -79,7 +81,6 @@ def write_to_suppress_file(suppress_file, value, hash_type, file_name, comment='
         with codecs.open(suppress_file, 'r', 'UTF-8') as s_file:
             suppress_data = get_suppress_data(s_file)
 
-    value = value+HASH_TYPE_SEPARATOR+str(hash_type)
     try:
         if not os.stat(suppress_file)[6] == 0:
             # file is not empty
@@ -103,7 +104,7 @@ def write_to_suppress_file(suppress_file, value, hash_type, file_name, comment='
         return False
 
 
-def remove_from_suppress_file(suppress_file, value, hash_type, file_name):
+def remove_from_suppress_file(suppress_file, value, file_name):
     """
     remove suppress information from the suppress file
     old and new format is supported
@@ -116,12 +117,10 @@ def remove_from_suppress_file(suppress_file, value, hash_type, file_name):
         lines = s_file.readlines()
 
         # filter out new format first because it is more specific
-        old_format_pattern = r"^" + value + r"\#" + str(hash_type) + \
-            r"\s*\|\|\s*(?P<comment>[^\|]*)$"
+        old_format_pattern = r"^" + value + r"(\#\d)?\s*\|\|\s*(?P<comment>[^\|]*)$"
         old_format = re.compile(old_format_pattern, re.UNICODE)
 
-        new_format_pattern = r"^" + value + r"\#" + str(hash_type) + \
-            r"\s*\|\|\s*" + file_name + r"\s*\|\|\s*(?P<comment>[^\|]*)$"
+        new_format_pattern = r"^" + value + r"(\#d)?\s*\|\|\s*" + file_name + r"\s*\|\|\s*(?P<comment>[^\|]*)$"
         new_format = re.compile(new_format_pattern, re.UNICODE)
 
         def check_for_match(line):

@@ -60,7 +60,6 @@ class HashClash(unittest.TestCase):
         return self._report.addReport(build_action_id,
                                       file_id,
                                       bug_hash,
-                                      1,
                                       'test',
                                       bug_path,
                                       bug_evt,

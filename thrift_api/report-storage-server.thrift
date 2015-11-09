@@ -15,9 +15,8 @@ struct NeedFileResult {
 
 struct SuppressBugData {
     1: string bug_hash,
-    2: i64 bug_hash_type,
-    3: string file_name,
-    4: string comment
+    2: string file_name,
+    3: string comment
 }
 typedef list<SuppressBugData> SuppressBugList
 
@@ -67,15 +66,14 @@ service CheckerReport {
                                1: i64 build_action_id,
                                2: i64 file_id,
                                3: string bug_hash,
-                               4: i64 bug_hash_type,
-                               5: string checker_message,
-                               6: shared.BugPath bugpath,
-                               7: shared.BugPathEvents events,
-                               8: string checker_id,
-                               9: string checker_cat,
-                               10: string bug_type,
-                               11: shared.Severity severity,
-                               12: bool suppress)
+                               4: string checker_message,
+                               5: shared.BugPath bugpath,
+                               6: shared.BugPathEvents events,
+                               7: string checker_id,
+                               8: string checker_cat,
+                               9: string bug_type,
+                               10: shared.Severity severity,
+                               11: bool suppress)
                                throws (1: shared.RequestFailed requestError),
 
                 bool finishBuildAction(

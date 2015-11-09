@@ -9,6 +9,7 @@
 # Remove them as soon as a proper clang version comes out.
 
 import plistlib
+from xml.parsers.expat import ExpatError
 
 import plist_helper
 from codechecker_lib import logger
@@ -67,12 +68,11 @@ class Bug(object):
     '''The bug with all information, it include bugpath too.'''
 
     def __init__(self, file, from_pos, until_pos=None, msg=None, category=None,
-                 type=None, hash_type=0, hash_value=''):
+                 type=None, hash_value=''):
         self.file_path = file
         self.msg = msg
         self._paths = []
         self._events = []
-        self.hash_type = hash_type
         self.hash_value = hash_value
 
         if not until_pos:
@@ -102,56 +102,70 @@ class Bug(object):
 
 # -----------------------------------------------------------------------------
 def parse_plist(path):
-    plist = plistlib.readPlist(path)
-    files = plist['files']
-
+    """
+    parse the plist file
+    """
     bugs = []
-    for diag in plist['diagnostics']:
-        current = Bug(files[diag['location']['file']],
-                      (diag['location']['line'], diag['location']['col']))
+    files = []
+    try:
+        plist = plistlib.readPlist(path)
 
-        for item in diag['path']:
-            if item['kind'] == 'event':
-                message = item['message']
-                if 'ranges' in item:
-                    for arr in item['ranges']:
-                        source_range = make_range(arr, files)
+        files = plist['files']
+
+        for diag in plist['diagnostics']:
+            current = Bug(files[diag['location']['file']],
+                          (diag['location']['line'], diag['location']['col']))
+
+            for item in diag['path']:
+                if item['kind'] == 'event':
+                    message = item['message']
+                    if 'ranges' in item:
+                        for arr in item['ranges']:
+                            source_range = make_range(arr, files)
+                            source_range.msg = message
+                            current.add_to_events(source_range)
+                    else:
+                        location = make_position(item['location'], files)
+                        source_range = Range(location, location, message)
                         source_range.msg = message
                         current.add_to_events(source_range)
-                else:
-                    location = make_position(item['location'], files)
-                    source_range = Range(location, location, message)
-                    source_range.msg = message
-                    current.add_to_events(source_range)
 
-            elif item['kind'] == 'control':
-                for edge in item['edges']:
-                    start = make_range(edge.start, files)
-                    end = make_range(edge.end, files)
+                elif item['kind'] == 'control':
+                    for edge in item['edges']:
+                        start = make_range(edge.start, files)
+                        end = make_range(edge.end, files)
 
-                    if start != current.get_last_path():
-                        current.add_to_path(start)
+                        if start != current.get_last_path():
+                            current.add_to_path(start)
 
-                    current.add_to_path(end)
+                        current.add_to_path(end)
 
-        current.msg = diag['description']
-        current.category = diag['category']
-        current.type = diag['type']
-        current.checker_name = diag.get('check_name', 'NOT FOUND')
-        if current.checker_name == 'NOT FOUND':
-            LOG.debug("Check name wasn't found in the plist file. "
-                        'Read the user guide!')
-            current.checker_name = plist_helper.get_check_name(current.msg)
-            LOG.debug('Guessed check name: ' + current.checker_name)
+            current.msg = diag['description']
+            current.category = diag['category']
+            current.type = diag['type']
 
-        current.hash_type = int(diag.get('hash_type', 0))
-        if current.hash_type:
-            current.hash_value = diag['hash_value']
-        else:  # generate some hash anyway, FIXME
-            LOG.debug("Hash value wasn't found in the plist file. "
-                        'Read the user guide!')
-            current.hash_value = plist_helper.gen_bug_hash(current)
+            try:
+                current.checker_name = diag['check_name']
+            except KeyError as kerr:
+                LOG.debug("Check name wasn't found in the plist file. "
+                            'Read the user guide!')
+                current.checker_name = plist_helper.get_check_name(current.msg)
+                LOG.debug('Guessed check name: ' + current.checker_name)
 
-        bugs.append(current)
+            try:
+                current.hash_value = diag['issue_hash_content_of_line_in_context']
+            except KeyError as kerr:
+                # hash was not found
+                # generate some hash for older clang versions
+                LOG.debug(kerr)
+                LOG.debug("Hash value wasn't found in the plist file. "
+                            'Read the user guide!')
+                current.hash_value = plist_helper.gen_bug_hash(current)
 
-    return files, bugs
+            bugs.append(current)
+
+    except ExpatError as err:
+        LOG.debug('Failed to process plist file: ' + path)
+        LOG.debug(err)
+    finally:
+        return files, bugs
