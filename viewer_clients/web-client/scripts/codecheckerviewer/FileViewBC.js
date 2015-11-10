@@ -120,16 +120,20 @@ return declare(BorderContainer, {
           that.viewedFileId = item.fileId;
 
           CC_SERVICE.getSourceFileData(that.viewedFileId, true, function(sourceFileData) {
-            editor._setContentAttr(sourceFileData.fileContent);
+            if (sourceFileData instanceof RequestFailed) {
+              console.error("Failed to file contents for " + fileName + " , " +
+                sourceFileData);
+            } else {
+              editor._setContentAttr(sourceFileData.fileContent);
+              editor.setBugMarkers(that.runId, that.viewedFile);
+              editor.setFileName(that.viewedFile.split("/").pop());
+              editor.setPath(that.viewedFile);
 
-            editor.setBugMarkers(that.runId, that.viewedFile);
-
-            var newRange = that.createRangeFromBugPos(item.range);
-            that.jumpToRangeAndDrawBubblesLines(editor, newRange, item.reportId);
+              var newRange = that.createRangeFromBugPos(item.range);
+              that.jumpToRangeAndDrawBubblesLines(editor, newRange, item.reportId);
+            }
           });
 
-          editor.setFileName(that.viewedFile.split("/").pop());
-          editor.setPath(that.viewedFile);
         } else {
           var newRange = that.createRangeFromBugPos(item.range);
           that.jumpToRangeAndDrawBubblesLines(editor, newRange, item.reportId);
@@ -211,15 +215,19 @@ return declare(BorderContainer, {
     }
 
     CC_SERVICE.getSourceFileData(that.viewedFileId, true, function(sourceFileData) {
-      editor._setContentAttr(sourceFileData.fileContent);
+      if (sourceFileData instanceof RequestFailed) {
+        console.error("Failed to file contents for " + fileName + " , " +
+          sourceFileData);
+      } else {
+        editor._setContentAttr(sourceFileData.fileContent);
+        editor.setFileName(that.viewedFile.split("/").pop());
+        editor.setPath(that.viewedFile);
+        editor.setBugMarkers(that.runId, that.viewedFile);
 
-      var newRange = that.createRangeFromBugPos(lastBugPosition);
-      that.jumpToRangeAndDrawBubblesLines(editor, newRange, reportId);
+        var newRange = that.createRangeFromBugPos(lastBugPosition);
+        that.jumpToRangeAndDrawBubblesLines(editor, newRange, reportId);
+      }
     });
-
-    editor.setFileName(that.viewedFile.split("/").pop());
-    editor.setPath(that.viewedFile);
-    editor.setBugMarkers(that.runId, that.viewedFile);
 
 
     treePane.addChild(that.bugStoreModelTree.bugTree);

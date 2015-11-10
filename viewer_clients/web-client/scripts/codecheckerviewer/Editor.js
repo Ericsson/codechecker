@@ -594,7 +594,7 @@ define([
 
       that.codeMirror.clearGutter("bugInfo");
 
-      that._queryBugs(500, 0, runId, fileName, []);
+      that._queryBugs(codeCheckerDBAccess.MAX_QUERY_SIZE, 0, runId, fileName, []);
     },
 
     /**
@@ -620,13 +620,18 @@ define([
         null,
         [filter],
         function(reportDataList) {
-          var newReportDataList = accReportDataList.concat(reportDataList);
-
-          if (reportDataList.length === count) {
-            that._queryBugs(count, start + count, runId, fileName,
-              newReportDataList);
+          if (reportDataList instanceof RequestFailed) {
+            console.error("Failed to query bugs for " + fileName + " , " +
+              reportDataList);
           } else {
-            that._insertBugMarkers(newReportDataList);
+            var newReportDataList = accReportDataList.concat(reportDataList);
+
+            if (reportDataList.length === count) {
+              that._queryBugs(count, start + count, runId, fileName,
+                newReportDataList);
+            } else {
+              that._insertBugMarkers(newReportDataList);
+            }
           }
         }
       );
