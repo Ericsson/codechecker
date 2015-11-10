@@ -11,8 +11,9 @@ define([
   "dojo/dom-style",
   "dojo/on",
   "dojo/query",
-  "dijit/_WidgetBase"
-], function ( declare, window, dom, style, on, query, _WidgetBase ) {
+  "dijit/_WidgetBase",
+  "dijit/Tooltip",
+], function ( declare, window, dom, style, on, query, _WidgetBase, Tooltip ) {
 
 
   function refresh(editor) {
@@ -200,7 +201,7 @@ define([
         readOnly        : this.readOnly,
         mode            : this.mode,
         foldGutter      : true,
-        gutters         : ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
+        gutters         : ["CodeMirror-linenumbers", "CodeMirror-foldgutter", "bugInfo"],
       });
 
       this.codeMirror.setSize("100%", "100%");
@@ -214,7 +215,6 @@ define([
         = this.codeMirror.getOption("lineNumberFormatter");
 
       refresh(this);
-
     },
 
 
@@ -579,6 +579,126 @@ define([
         line   : pos.line + this.codeMirror.options.firstLineNumber,
         column : pos.ch + 1
       };
+    },
+
+
+    /**
+     * Clears the bugInfo gutter first, then fills it with the proper
+     * bugMarkers.
+     *
+     * @param runId The runId of the run the file is in.
+     * @param fileName The name(path) of the file.
+     */
+    setBugMarkers : function (runId, fileName) {
+      var that = this;
+
+      that.codeMirror.clearGutter("bugInfo");
+
+      that._queryBugs(codeCheckerDBAccess.MAX_QUERY_SIZE, 0, runId, fileName, []);
+    },
+
+    /**
+     * Recursively queries the bugs for a file in a run.
+     *
+     * @param count How many bug to query in a thrift api call
+     * @param start Index of the first bug.
+     * @param runId Id of the run.
+     * @param fileName Name(path) of the file
+     * @param accReportDataList Accumulator list for ReportData, used in
+     *                          recursion.
+     */
+    _queryBugs : function (count, start, runId, fileName, accReportDataList) {
+      var that = this;
+
+      var filter = new codeCheckerDBAccess.ReportFilter();
+      filter.filepath = fileName;
+
+      CC_SERVICE.getRunResults(
+        runId,
+        count,
+        start,
+        null,
+        [filter],
+        function(reportDataList) {
+          if (reportDataList instanceof RequestFailed) {
+            console.error("Failed to query bugs for " + fileName + " , " +
+              reportDataList);
+          } else {
+            var newReportDataList = accReportDataList.concat(reportDataList);
+
+            if (reportDataList.length === count) {
+              that._queryBugs(count, start + count, runId, fileName,
+                newReportDataList);
+            } else {
+              that._insertBugMarkers(newReportDataList);
+            }
+          }
+        }
+      );
+    },
+
+    /**
+     * Inserts bugMarkers to the bugInfo gutter.
+     *
+     * @param reportDataList The list of bugs to make bugMarkers for.
+     */
+    _insertBugMarkers : function (reportDataList) {
+      var that = this;
+
+      reportDataList.forEach(function(elem) {
+        var currCMLine =
+          that.codeMirror.lineInfo(elem.lastBugPosition.startLine - 1);
+
+        if (!currCMLine.gutterMarkers || !currCMLine.gutterMarkers.bugInfo) {
+          that._placeBugMarker(elem.lastBugPosition.startLine - 1,
+            elem.checkerMsg);
+        } else {
+          currCMLine.gutterMarkers.bugInfo.tooltipMessage +=
+            "<br>" + elem.checkerMsg;
+        }
+      });
+    },
+
+    /**
+     * Places a bugMarker to a given line with a given message in the bugInfo
+     * gutter.
+     *
+     * @param line The line the bugMarker to be placed in.
+     * @param checkerMsg The message to be displayed in the bugMarker tooltip.
+     */
+    _placeBugMarker : function (line, checkerMsg) {
+      var that = this;
+
+      that.codeMirror.setGutterMarker(
+        line,
+        "bugInfo",
+        that._makeBugMarker(checkerMsg)
+      );
+    },
+
+
+    /**
+     * Creates a bugMarker DOM element.
+     *
+     * @param checkerMsg The tooltip message for the element to be had.
+     */
+    _makeBugMarker : function (checkerMsg) {
+      var that = this;
+
+      var marker = document.createElement("div");
+
+      marker.innerHTML = "<img src='images/bug.bmp' border=0 />";
+      marker.tooltipMessage = checkerMsg;
+
+      on(marker, "mouseenter", function() {
+        Tooltip.show(marker.tooltipMessage, marker, ['above']);
+      });
+
+      on(marker, "mouseleave", function() {
+        Tooltip.hide(marker);
+      });
+
+      return marker;
     },
 
 
