@@ -11,6 +11,7 @@ import os
 import datetime
 from collections import defaultdict
 import ntpath
+import codecs
 
 import sqlalchemy
 from sqlalchemy import asc, desc
@@ -809,6 +810,8 @@ class ThriftRequestHandler():
 
             if fileContent:
                 source = zlib.decompress(sourcefile.content)
+
+                source = codecs.decode(source, 'utf-8', 'replace')
 
                 return SourceFileData(fileId=sourcefile.id,
                                       filePath=sourcefile.filepath,
