@@ -388,13 +388,14 @@ class ThriftRequestHandler():
 
         while event.next is not None:
 
+            event = session.query(BugPathEvent).get(event.next)
+
             file_path = file_path_cache.get(event.file_id)
             if not file_path:
                 f = session.query(File).get(event.file_id)
                 file_path = f.filepath
                 file_path_cache[event.file_id] = file_path
 
-            event = session.query(BugPathEvent).get(event.next)
             bug_events.append((event, file_path))
 
         return bug_events
@@ -418,13 +419,14 @@ class ThriftRequestHandler():
             bug_points.append((bug_point, file_path))
             while bug_point.next is not None:
 
+                bug_point = session.query(BugReportPoint).get(bug_point.next)
+
                 file_path = file_path_cache.get(bug_point.file_id)
                 if not file_path:
                     f = session.query(File).get(bug_point.file_id)
                     file_path = f.filepath
                     file_path_cache[bug_point.file_id] = file_path
 
-                bug_point = session.query(BugReportPoint).get(bug_point.next)
                 bug_points.append((bug_point, file_path))
 
         return bug_points
