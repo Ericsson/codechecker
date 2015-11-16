@@ -16,6 +16,7 @@ import codecs
 import sqlalchemy
 from sqlalchemy import asc, desc
 from sqlalchemy.sql import or_, and_, func
+from sqlalchemy.sql.expression import literal_column
 
 from db_model.orm_model import *
 
@@ -301,7 +302,7 @@ class ThriftRequestHandler():
         try:
             # count the reports subquery
             stmt = session.query(Report.run_id,
-                                 func.count('*').label('report_count')) \
+                                 func.count(literal_column('*')).label('report_count')) \
                                  .filter(Report.suppressed == False) \
                                  .group_by(Report.run_id) \
                                  .subquery()

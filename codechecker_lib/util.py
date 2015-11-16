@@ -17,6 +17,7 @@ import socket
 import shutil
 
 from codechecker_lib import logger
+from codechecker_lib import host_check
 
 # WARNING! LOG should be only used in this module
 LOG = logger.get_new_logger('UTIL')
@@ -170,3 +171,14 @@ def remove_dir(path):
         LOG.warning('Failed to remove directory %s' % (path))
 
     shutil.rmtree(path, onerror=error_handler)
+
+
+# -------------------------------------------------------------------------
+def create_postgresql_connection_string(user, host, port, database=None):
+    driver = host_check.get_postgresql_driver_name()
+    uri = 'postgresql+{0}://{1}@{2}:{3}/'.format(driver, user, host, port)
+
+    if database is not None:
+        return os.path.join(uri, database)
+    else:
+        return uri
