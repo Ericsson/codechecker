@@ -6,6 +6,7 @@
 
 import errno
 import subprocess
+import os
 
 from codechecker_lib import logger
 
@@ -36,15 +37,31 @@ def check_zlib():
         LOG.error('Zlib copression error', zlib.Z_BEST_COMPRESSION)
         return False
 
-
 # -----------------------------------------------------------------------------
-def check_psycopg2():
+def get_postgresql_driver_name():
     try:
-        import psycopg2  # NOQA
-        return True
+        driver = os.getenv('CODECHECKER_DB_DRIVER')
+        if driver:
+            return driver
+
+        try:
+            import psycopg2  # NOQA
+            return "psycopg2"
+        except Exception:
+            import pg8000  # NOQA
+            return "pg8000"
     except Exception as ex:
         LOG.error(str(ex))
-        LOG.error('Failed to import psycopg2 module.')
+        LOG.error('Failed to import psycopg2 or pg8000 module.')
+        raise
+
+
+# -----------------------------------------------------------------------------
+def check_postgresql_driver():
+    try:
+        get_postgresql_driver_name()
+        return True
+    except Exception as ex:
         return False
 
 

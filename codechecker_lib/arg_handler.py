@@ -177,8 +177,8 @@ def handle_server(args):
         LOG.error("zlib error")
         sys.exit(1)
 
-    if not host_check.check_psycopg2():
-        LOG.error("psycopg2 error")
+    if not host_check.check_postgresql_driver():
+        LOG.error("postgresql driver error")
         sys.exit(1)
 
     check_options_validity(args)
@@ -217,10 +217,8 @@ def handle_server(args):
     client.ConnectionManager.block_until_db_start_proc_free(context)
 
     # start database viewer
-    db_connection_string = 'postgresql://'+args.dbusername + \
-                           '@'+args.dbaddress + \
-                           ':'+str(args.dbport) + \
-                           '/'+args.dbname
+    db_connection_string = util.create_postgresql_connection_string(
+        args.dbusername, args.dbaddress, args.dbport, args.dbname)
 
     suppress_handler = generic_package_suppress_handler.GenericSuppressHandler()
     suppress_handler.suppress_file = args.suppress
@@ -318,8 +316,8 @@ def handle_check(args):
         LOG.error("zlib error")
         sys.exit(1)
 
-    if not host_check.check_psycopg2():
-        LOG.error("psycopg2 error")
+    if not host_check.check_postgresql_driver():
+        LOG.error("postgresql driver error")
         sys.exit(1)
 
     args.workspace = os.path.realpath(args.workspace)
