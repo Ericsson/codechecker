@@ -306,7 +306,11 @@ return declare(TabContainer, {
   getStateOfFilters : function() {
     var that = this;
 
-    return that.overviewHeader.getStateOfFilters();
+    if (that.overviewType === "run") {
+      return that.overviewHeader.getStateOfFiltersOfRun();
+    } else if (that.overviewType === "diff") {
+      return that.overviewHeader.getStateOfFiltersOfDiff();
+    }
   }
 
 });});

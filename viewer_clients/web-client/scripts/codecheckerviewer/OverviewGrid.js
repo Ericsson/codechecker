@@ -148,20 +148,29 @@ return declare(DataGrid, {
     filterObjArray.forEach(function(item) {
       var filter = new codeCheckerDBAccess.ReportFilter();
 
-      filter.checkerId = item.checkerTypeState;
-
       filter.filepath = item.pathState === "" ? "*" : item.pathState;
 
-      if (item.severityState !== "all") {
-        filter.severity = parseInt(item.severityState);
+      switch (item.supprState) {
+        case "supp":
+          filter.suppressed = true;
+          break;
+        case "unsupp":
+          filter.suppressed = false;
+          break;
+        case "all": // Do nothing
+          break;
       }
 
-      switch (item.supprState) {
-        case "supp"  : filter.suppressed = true;
+      var itemCheckerInfo = item.checkerInfoState.split("##");
+
+      switch (itemCheckerInfo[0]) {
+        case "severity":
+          filter.severity = parseInt(itemCheckerInfo[1]);
           break;
-        case "unsupp": filter.suppressed = false;
+        case "checker":
+          filter.checkerId = itemCheckerInfo[1];
           break;
-        case "all"   : /* DO NOTHING */
+        case "all": // Do nothing
           break;
       }
 
@@ -238,7 +247,7 @@ return declare(DataGrid, {
       that.myOverviewTC.runId,
       runFilters,
       function(result) {
-        that.myOverviewTC.overviewBC.set('title', 'Run Overview - hits : <b>' + (result) + '</b>');
+        that.myOverviewTC.overviewBC.set('title', 'Run Overview - hits : ' + result);
       });
   },
 

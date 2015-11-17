@@ -14,64 +14,6 @@ define([
 return declare(null, {
 
 
-  getCheckerTypeAndSeverityCountsForRun : function(runId, callback) {
-    var checkerTypeOptions = [];
-    var severityOptions = [];
-
-    var availableSeverities = {}; // { code : { name , count } , ... }
-
-    for (var key in Severity) {
-      var severityStringLowerCase = key.toLowerCase();
-      var severityString = severityStringLowerCase.charAt(0).toUpperCase()
-                         + severityStringLowerCase.slice(1);
-      var severityCode = Severity[key];
-
-      availableSeverities[severityCode] =
-        { name : severityString , count : 0 };
-    }
-
-    availableSeverities["all"] =
-      { name : "All Severities" , count : 0 };
-
-    CC_SERVICE.getRunResultTypes(runId, [], function(resultTypes) {
-      var allHitCount = 0;
-
-      resultTypes.forEach(function(item) {
-        allHitCount = allHitCount + item.count;
-
-        checkerTypeOptions.push({
-          value: item.checkerId + "",
-          label: item.checkerId + " (" + item.count + ")"
-        });
-
-        availableSeverities[item.severity].count =
-          availableSeverities[item.severity].count + item.count;
-      });
-
-      checkerTypeOptions.unshift({
-        value: "*",
-        label: "All checkers (" + allHitCount + ")",
-        selected: true
-      });
-
-      availableSeverities["all"].count = allHitCount;
-
-      for (var elem in availableSeverities) {
-        severityOptions.unshift({
-          value: elem + "",
-          label: availableSeverities[elem].name + " ("
-            + availableSeverities[elem].count + ")"
-        });
-      }
-
-      callback({
-        checkerTypeOptions : checkerTypeOptions,
-        severityOptions    : severityOptions
-      });
-    });
-  },
-
-
   /**
    * Queries the available severity types for checkers
    */
@@ -96,41 +38,135 @@ return declare(null, {
    * Queries the available checkers and selects those which are found in the
    * appropriate run.
    */
-  getAvailableCheckers : function(overviewTC) {
+  getAvailableCheckersForDiff : function(runId1, runId2, callback) {
     var checkerTypeOptionsArray = [ { value: "*", label: "All checkers" , selected: true } ];
 
-    if (overviewTC.overviewType === "run") {
+    CC_SERVICE.getRunResultTypes(runId1, [], function(resultTypes1) {
+      CC_SERVICE.getRunResultTypes(runId2, [], function(resultTypes2) {
+        var temp = {};
 
-      CC_SERVICE.getRunResultTypes(overviewTC.runId, [], function(resultTypes) {
-        resultTypes.forEach(function(item) {
-          checkerTypeOptionsArray.push( { value: item.checkerId + "", label: item.checkerId + "" } );
+        resultTypes1.forEach(function(item) {
+          temp[item.checkerId] = true;
         });
-      });
 
-    } else if (overviewTC.overviewType === "diff") {
-
-      CC_SERVICE.getRunResultTypes(overviewTC.runId1, [], function(resultTypes1) {
-        CC_SERVICE.getRunResultTypes(overviewTC.runId2, [], function(resultTypes2) {
-          var temp = {};
-
-          resultTypes1.forEach(function(item) {
-            temp[item.checkerId] = true;
-          });
-
-          resultTypes2.forEach(function(item) {
-            temp[item.checkerId] = true;
-          });
-
-          for (var elem in temp) {
-            checkerTypeOptionsArray.push( { value: elem + "", label: elem + "" } );
-          }
-
+        resultTypes2.forEach(function(item) {
+          temp[item.checkerId] = true;
         });
-      });
 
+        for (var elem in temp) {
+          checkerTypeOptionsArray.push( { value: elem + "", label: elem + "" } );
+        }
+
+        callback(checkerTypeOptionsArray);
+      });
+    });
+
+  },
+
+
+  /**
+   * Queries and formats the result types available for a Run. After these, it
+   * executes the callback function with the formatted results as the parameter.
+   */
+  getCheckerInfoRun : function (runId, filePath, suppressed, callback) {
+    var that = this;
+
+    var filter = new codeCheckerDBAccess.ReportFilter();
+    filter.filepath = filePath;
+    filter.suppressed = suppressed;
+
+    CC_SERVICE.getRunResultTypes(runId, [filter], function (reportDataTypeCountList) {
+      callback(that.parseReportDataTypeCounts(reportDataTypeCountList));
+    });
+  },
+
+
+  /**
+   * Formats the result of the getRunResultTypes API query to a processable
+   * format.
+   * The output format is:
+   *   {
+   *     ALL      : { name : "All" , count : 20 , checkers : {} }
+   *     CRITICAL : { name : "Critical" , count : 10 , checkers : { core.something : 5 , unix.checker : 5 } }
+   *     HIGH     : ...
+   *     ....     : ...
+   *   }
+   */
+  parseReportDataTypeCounts : function (reportDataTypeCountList) {
+    var that = this;
+
+    var checkerInfo = {};
+
+    for (var key in Severity) {
+      var severityStringLowerCase = key.toLowerCase();
+      var severityString = severityStringLowerCase.charAt(0).toUpperCase()
+                         + severityStringLowerCase.slice(1);
+
+      checkerInfo[Severity[key]] =
+        { name : severityString , count : 0 , checkers : {} };
     }
 
-    return checkerTypeOptionsArray;
+    reportDataTypeCountList.forEach(function (e,i) {
+      checkerInfo[e.severity].count += e.count;
+      checkerInfo[e.severity].checkers[e.checkerId] = e.count;
+    });
+
+    var checkerInfoOrderedKeys = Object.keys(checkerInfo).sort(function(a, b) {
+      return parseInt(b) - parseInt(a);
+    });
+
+    var newCheckerInfo = { "ALL" : { "name" : "All" , "count" : 0 , "checkers" : {} } };
+
+    checkerInfoOrderedKeys.forEach(function (e,i) {
+      newCheckerInfo[that.severityValueToKey(e)] = checkerInfo[e];
+      newCheckerInfo["ALL"].count += checkerInfo[e].count
+    });
+
+    return newCheckerInfo;
+  },
+
+
+  /**
+   * Normalizes a formatted reportDataTypeCountList, after which it has the ability
+   * to be used in a Dojo Select widget.
+   */
+  normalizeCheckerInfo : function (checkerInfo) {
+    var selectOptions = [];
+
+    for (var key in checkerInfo) {
+      var e = checkerInfo[key];
+
+      if (key === "ALL") {
+        selectOptions.push({
+          "label" : e.name + " (" + e.count + ")" ,
+          "value" : "all"
+        });
+      } else if (e.count > 0) {
+        selectOptions.push({
+          "label" : e.name + " (" + e.count + ")" ,
+          "value" : "severity##" + Severity[key]
+        });
+
+        for (var checkerKey in e.checkers) {
+          selectOptions.push({
+            "label" : "&nbsp;&nbsp;&nbsp;&nbsp;" + checkerKey + " (" + e.checkers[checkerKey] + ")" ,
+            "value" : "checker##" + checkerKey
+          });
+        }
+      }
+    }
+
+    return selectOptions;
+  },
+
+
+  /**
+   * Gets the enum key for a severity code.
+   */
+  severityValueToKey : function (value) {
+    for (var key in Severity) {
+      if (Severity[key] == value) { return key; }
+    }
   },
 
 

@@ -35,12 +35,27 @@ return declare(_WidgetBase, {
     });
   },
 
+
   /**
    * Builds the widget dom.
    */
   postCreate : function() {
     var that = this;
     that.inherited(arguments);
+
+    if (that.myOverviewTC.overviewType === "run") {
+      that.initIfRun();
+    } else if (that.myOverviewTC.overviewType === "diff") {
+      that.initIfDiff();
+    }
+  },
+
+
+  /**
+   * Initializes the widgets that both Runs and Diffs share.
+   */
+  initShared : function () {
+    var that = this;
 
     that.textBoxPath = new TextBox({
       placeHolder : "Path filter",
@@ -52,13 +67,50 @@ return declare(_WidgetBase, {
       }
     });
 
-    if (that.filterOptions === undefined) {
-      that.filterOptions = {};
-      that.filterOptions.severityOptions =
-        CC_UTIL.getAvailableSeverityLevels();
-      that.filterOptions.checkerTypeOptions =
-        CC_UTIL.getAvailableCheckers(that.myOverviewTC);
-    }
+    that.selectSuppr = new Select({
+      forceWidth : true,
+      options    : [
+        { label : "Unsuppressed", value : "unsupp", selected: true },
+        { label : "Suppressed"  , value : "supp"                   }
+      ],
+      style      : "margin-right: 5px;",
+      onChange   : function(val) {
+        that.pathAndSelectOnChange();
+      }
+    });
+  },
+
+
+  /**
+   * Initializes the shared and Run-specific widgets for a Run.
+   */
+  initIfRun : function () {
+    var that = this;
+
+    that.initShared();
+
+    that.selectCheckerInfo = new Select({
+      forceWidth : true,
+      options    : that.filterOptions.checkerInfoOptions,
+      style      : "margin-right: 5px;",
+      onChange   : function(val) {
+        that.pathAndSelectOnChange();
+      }
+    });
+
+    domConstruct.place(that.textBoxPath.domNode, that.domNode);
+    domConstruct.place(that.selectSuppr.domNode, that.domNode);
+    domConstruct.place(that.selectCheckerInfo.domNode, that.domNode);
+  },
+
+
+  /**
+   * Initializes the shared and Diff-specific widgets for a Diff.
+   */
+  initIfDiff : function () {
+    var that = this;
+
+    that.initShared();
 
     that.selectSeverity = new Select({
       forceWidth : true,
@@ -78,46 +130,25 @@ return declare(_WidgetBase, {
       }
     });
 
-    that.selectSuppr = new Select({
+    that.selectResolv = new Select({
       forceWidth : true,
       options    : [
-        { label : "Unsuppressed", value : "unsupp", selected: true },
-        { label : "Suppressed"  , value : "supp"                   }
+        { label : "New only"  , value : "newonly" },
+        { label : "Resolved"  , value : "resolv" },
+        { label : "Unresolved", value : "unresolv", selected: true }
       ],
       style      : "margin-right: 5px;",
       onChange   : function(val) {
         that.pathAndSelectOnChange();
       }
-    }, domConstruct.create("div"));
-
-
-    // Add Resolved select if it is an overview of a Diff
-    if (that.myOverviewTC.overviewType === "diff") {
-
-      that.selectResolv = new Select({
-        forceWidth : true,
-        options    : [
-          { label : "New only"  , value : "newonly" },
-          { label : "Resolved"  , value : "resolv" },
-          { label : "Unresolved", value : "unresolv", selected: true }
-        ],
-        style      : "margin-right: 5px;",
-        onChange   : function(val) {
-          that.pathAndSelectOnChange();
-        }
-      });
-
-    }
+    });
 
 
     domConstruct.place(that.textBoxPath.domNode, that.domNode);
     domConstruct.place(that.selectSeverity.domNode, that.domNode);
     domConstruct.place(that.selectSuppr.domNode, that.domNode);
     domConstruct.place(that.selectCheckerType.domNode, that.domNode);
-
-    if (that.myOverviewTC.overviewType === "diff") {
-      domConstruct.place(that.selectResolv.domNode, that.domNode);
-    }
+    domConstruct.place(that.selectResolv.domNode, that.domNode);
   },
 
 

@@ -46,39 +46,51 @@ return declare(ContentPane, {
 
 
   /**
-   * Gets the current state of the filters.
+   * Generates an array which consists of the contents of the filters in a Run.
    */
-  getStateOfFilters : function() {
+  getStateOfFiltersOfRun : function () {
     var that = this;
 
     var filterObjArray = [];
 
     for (var i = 0 ; i < that.filters.length ; ++i) {
+      var pathState = "*" + that.filters[i].textBoxPath.get("value") + "*";
+      var supprState = that.filters[i].selectSuppr.get("value");
+      var checkerInfoState = that.filters[i].selectCheckerInfo.get("value");
 
-      var supprState       = that.filters[i].selectSuppr.get("value");
-      var severityState    = that.filters[i].selectSeverity.get("value");
-      var pathState        =
-        "*" + that.filters[i].textBoxPath.get("value") + "*";
+      filterObjArray.push({
+        pathState       : pathState,
+        supprState      : supprState,
+        checkerInfoState: checkerInfoState,
+      });
+    }
+
+    return filterObjArray;
+  },
+
+
+  /**
+   * Generates an array which consists of the contents of the filters in a Diff.
+   */
+  getStateOfFiltersOfDiff : function () {
+    var that = this;
+
+    var filterObjArray = [];
+
+    for (var i = 0 ; i < that.filters.length ; ++i) {
+      var pathState = "*" + that.filters[i].textBoxPath.get("value") + "*";
+      var severityState = that.filters[i].selectSeverity.get("value");
+      var supprState = that.filters[i].selectSuppr.get("value");
       var checkerTypeState = that.filters[i].selectCheckerType.get("value");
+      var resolvState = that.filters[i].selectResolv.get("value");
 
-      if (that.overviewType === 'run') {
-        filterObjArray.push({
-          supprState      : supprState,
-          severityState   : severityState,
-          pathState       : pathState,
-          checkerTypeState: checkerTypeState
-        });
-      } else if (that.overviewType === 'diff') {
-        var resolvState = that.filters[i].selectResolv.get("value");
-        filterObjArray.push({
-          supprState      : supprState,
-          resolvState     : resolvState,
-          severityState   : severityState,
-          pathState       : pathState,
-          checkerTypeState: checkerTypeState
-        })
-      }
-
+      filterObjArray.push({
+        pathState       : pathState,
+        severityState   : severityState,
+        supprState      : supprState,
+        checkerTypeState: checkerTypeState,
+        resolvState     : resolvState,
+      })
     }
 
     return filterObjArray;
