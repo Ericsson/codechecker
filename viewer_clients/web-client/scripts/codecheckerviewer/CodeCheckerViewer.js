@@ -381,7 +381,6 @@ return declare(null, {
     var that = this;
 
     CC_UTIL.getCheckerInfoRun(runId, "*", false, function (result) {
-
       var filterOptions = {};
       filterOptions.checkerInfoOptions = CC_UTIL.normalizeCheckerInfo(result);
 

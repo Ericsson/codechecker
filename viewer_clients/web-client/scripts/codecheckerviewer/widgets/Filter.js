@@ -199,7 +199,8 @@ return declare(_WidgetBase, {
   /**
    * Refreshes the Grid according to the current filters.
    * If called in a Run Overview, and called by NOT a checkerInfo Select, then
-   * refreshes the checkerInfo Select of the particular filter.
+   * refreshes the checkerInfo Select of the particular filter. In this case,
+   * the function is asyncronous.
    */
   pathAndSelectOnChange : function(refreshCheckerOptions) {
     var that = this;

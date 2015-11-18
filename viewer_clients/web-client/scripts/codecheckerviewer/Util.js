@@ -36,7 +36,9 @@ return declare(null, {
 
   /**
    * Queries the available checkers and selects those which are found in the
-   * appropriate run.
+   * appropriate run. After these, it executes the callback function with the
+   * resulting checkerTypeOptionsArray as the parameter.
+   * The function is asyncronous.
    */
   getAvailableCheckersForDiff : function(runId1, runId2, callback) {
     var checkerTypeOptionsArray = [ { value: "*", label: "All checkers" , selected: true } ];
@@ -73,6 +75,7 @@ return declare(null, {
   /**
    * Queries and formats the result types available for a Run. After these, it
    * executes the callback function with the formatted results as the parameter.
+   * The function is asyncronous.
    */
   getCheckerInfoRun : function (runId, filePath, suppressed, callback) {
     var that = this;
