@@ -11,7 +11,7 @@ from __future__ import unicode_literals
 
 from sqlalchemy import *
 from sqlalchemy.orm import *
-
+from sqlalchemy.sql.expression import true
 from sqlalchemy.ext.declarative import declarative_base
 
 from datetime import *
@@ -54,6 +54,7 @@ class Run(Base):
     version = Column(String)
     command = Column(String)
     inc_count = Column(Integer)
+    can_delete = Column(Boolean, nullable=False, server_default=true(), default=True)
 
     # Relationships (One to Many)
     configlist = relationship('Config', cascade="all, delete-orphan")

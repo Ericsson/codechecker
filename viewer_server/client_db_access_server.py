@@ -80,7 +80,7 @@ class RequestHander(SimpleHTTPRequestHandler):
         oprot = output_protocol_factory.getProtocol(otrans)
 
         try:
-            session = self.sc_session
+            session = self.sc_session()
             acc_handler = ThriftRequestHandler(session,
                                                checker_md_docs,
                                                checker_md_docs_map,

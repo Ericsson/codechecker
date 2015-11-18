@@ -6,6 +6,7 @@
 
 define([
   "dojo/_base/declare",
+  "dojo/_base/array",
   "dojo/hash",
   "dojo/topic",
   "dojo/io-query",
@@ -17,7 +18,7 @@ define([
   "scripts/codecheckerviewer/Util.js",
   "scripts/codecheckerviewer/widgets/ListOfRunsWidget.js",
   "scripts/codecheckerviewer/widgets/MenuButton.js",
-], function (declare, hash, topic, ioQuery, BorderContainer, TabContainer,
+], function (declare, darray, hash, topic, ioQuery, BorderContainer, TabContainer,
   ContentPane, ListOfRunsGrid, OverviewTC, Util, ListOfRunsWidget,
   MenuButton) {
 return declare(null, {
@@ -145,7 +146,9 @@ return declare(null, {
             var tempRunId = that.listOfRunsGrid.getItem(evt.rowIndex).runid[0];
             var tempName = that.listOfRunsGrid.getItem(evt.rowIndex).name[0];
 
-            that.newRunOverviewTab(tempRunId, tempName);
+            if (enabled) {
+              that.newRunOverviewTab(tempRunId, tempName);
+            }
 
             break;
 
@@ -294,12 +297,25 @@ return declare(null, {
   deleteRuns : function() {
     var that = this;
 
-    CC_SERVICE.removeRunResults(that.deleteRunIds, function(isSuccessful) {
-      if (isSuccessful) {
-        that.reset();
-      } else {
-        console.log("Removal of runs failed.");
+    // Remove selected rows
+    that.listOfRunsGrid.store.fetch({
+      onComplete: function(runs) {
+        runs.forEach(function(run) {
+          if (darray.indexOf(that.deleteRunIds, run.runid[0]) >= 0) {
+            that.listOfRunsGrid.store.deleteItem(run);
+          }
+        })
       }
+    });
+
+    that.listOfRunsWidget.setDeleteButtonDisabled(true);
+
+    CC_SERVICE.removeRunResults(that.deleteRunIds, function(isSuccessful) {
+      if (isSuccessful instanceof RequestFailed || !isSuccessful) {
+        console.error("Failed to delete runs!", isSuccessful);
+      }
+
+      that.reset();
     });
   },
 
