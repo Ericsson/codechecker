@@ -60,8 +60,9 @@ If your clang version does not have these features you will see warning messages
   *  [Alembic](https://pypi.python.org/pypi/alembic) (>=0.8.2)
   *  [SQLAlchemy](http://www.sqlalchemy.org/) (> 1.0.2)
      - [PyPi SQLAlchemy](https://pypi.python.org/pypi/SQLAlchemy) (> 1.0.2)
-  *  [psycopg2](http://initd.org/psycopg/ "psycopg2") (> 2.5.4)
+  *  [psycopg2](http://initd.org/psycopg/ "psycopg2") (> 2.5.4) or [pg8000](https://github.com/mfenniak/pg8000 "pg8000") (>= 1.10.0)
      - [PyPi psycopg2](https://pypi.python.org/pypi/psycopg2/2.6.1) __requires lbpq!__
+     - [PyPi pg8000](https://pypi.python.org/pypi/pg8000)
   * Thrift python modules
      +  [PyPi thrift](https://pypi.python.org/pypi/thrift/0.9.2)(> 0.9.2 )
 

@@ -30,6 +30,7 @@ from db_model.orm_model import *
 
 from codechecker_lib import logger
 from codechecker_lib import decorators
+from codechecker_lib import util
 
 LOG = logger.get_new_logger('CC SERVER')
 
@@ -509,8 +510,10 @@ def create_db_if_not_exists(uri, db_name):
     text = "SELECT 1 FROM pg_database WHERE datname='%s'" % db_name
     if not bool(engine.execute(text).scalar()):
         conn = engine.connect()
-        conn.execute('commit')
-        conn.execute('create database "%s"' % db_name)
+        # From sqlalchemy documentation:
+        # The psycopg2 and pg8000 dialects also offer the special level AUTOCOMMIT.
+        conn = conn.execution_options(isolation_level="AUTOCOMMIT")
+        conn.execute('CREATE DATABASE "%s"' % db_name)
         conn.close()
 
         LOG.debug('Database created: ' + db_name)
@@ -532,7 +535,7 @@ def migrate_database(session, migration_scripts):
 def run_server(dbUsername, port, db_name, dbhost, dbport, db_version_info, migration_scripts, callback_event=None):
     LOG.debug('Starting codechecker server ...')
 
-    uri = 'postgres://' + dbUsername + '@' + dbhost + ':' + str(dbport)
+    uri = util.create_postgresql_connection_string(dbUsername, dbhost, dbport)
 
     try:
 

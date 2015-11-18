@@ -14,6 +14,7 @@ from db_model.orm_model import *
 from codechecker_lib import analyzer_env
 from codechecker_lib import logger
 from codechecker_lib import analyzer_crash_handler
+from codechecker_lib import util
 
 LOG = logger.get_new_logger('DEBUG_REPORTER')
 
@@ -26,8 +27,9 @@ def get_dump_file_name(run_id, action_id):
 # -----------------------------------------------------------------------------
 def debug(context, dbusername, dbhost, dbport, dbname, force):
     try:
-        connection_string = 'postgres://' + dbusername + '@' + dbhost + ':' + \
-                            str(dbport) + '/' + dbname
+        connection_string = util.create_postgresql_connection_string(
+            dbusername, dbhost, dbport, dbname)
+
         engine = sqlalchemy.create_engine(connection_string)
         print(connection_string)
         session = sqlalchemy.orm.scoped_session(
