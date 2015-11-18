@@ -162,7 +162,7 @@ code, kbd, pre, samp, tt, xmp, listing, plaintext {
 .dijitSelectLabel {
   text-align : left;
   overflow   : hidden;
-  width      : 160px;
+  width      : 200px;
 }
 
 .bugInfo {

@@ -151,14 +151,8 @@ return declare(DataGrid, {
       filter.filepath = item.pathState === "" ? "*" : item.pathState;
 
       switch (item.supprState) {
-        case "supp":
-          filter.suppressed = true;
-          break;
-        case "unsupp":
-          filter.suppressed = false;
-          break;
-        case "all": // Do nothing
-          break;
+        case "supp"  : filter.suppressed = true; break;
+        case "unsupp": filter.suppressed = false; break;
       }
 
       var itemCheckerInfo = item.checkerInfoState.split("##");
@@ -208,21 +202,14 @@ return declare(DataGrid, {
       }
 
       switch (item.supprState) {
-        case "supp"  : filter.suppressed = true;
-          break;
-        case "unsupp": filter.suppressed = false;
-          break;
-        case "all"   : /*DO NOTHING*/
-          break;
+        case "supp"  : filter.suppressed = true; break;
+        case "unsupp": filter.suppressed = false; break;
       }
 
       switch (item.resolvState) {
-        case "newonly" : newResultsFilters.push(filter);
-          break;
-        case "resolv"  : resolvedResultsFilters.push(filter);
-          break;
-        case "unresolv": unresolvedResultsFilters.push(filter);
-          break;
+        case "newonly" : newResultsFilters.push(filter); break;
+        case "resolv"  : resolvedResultsFilters.push(filter); break;
+        case "unresolv": unresolvedResultsFilters.push(filter); break;
       }
     })
 

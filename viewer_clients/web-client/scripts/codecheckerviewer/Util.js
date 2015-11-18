@@ -43,6 +43,12 @@ return declare(null, {
 
     CC_SERVICE.getRunResultTypes(runId1, [], function(resultTypes1) {
       CC_SERVICE.getRunResultTypes(runId2, [], function(resultTypes2) {
+        if (resultTypes1 instanceof RequestFailed ||
+            resultTypes2 instanceof RequestFailed) {
+          console.error("Thrift API call 'getRunResultTypes' failed.");
+          return;
+        }
+
         var temp = {};
 
         resultTypes1.forEach(function(item) {
@@ -75,19 +81,28 @@ return declare(null, {
     filter.filepath = filePath;
     filter.suppressed = suppressed;
 
-    CC_SERVICE.getRunResultTypes(runId, [filter], function (reportDataTypeCountList) {
-      callback(that.parseReportDataTypeCounts(reportDataTypeCountList));
-    });
+    CC_SERVICE.getRunResultTypes(
+      runId,
+      [filter],
+      function (reportDataTypeCountList) {
+        if (reportDataTypeCountList instanceof RequestFailed) {
+          console.error("Thrift API call 'getRunResultTypes' failed.");
+          return;
+        }
+
+        callback(that.parseReportDataTypeCounts(reportDataTypeCountList));
+      }
+    );
   },
 
 
   /**
-   * Formats the result of the getRunResultTypes API query to a processable
+   * Transforms the result of a getRunResultTypes API query to a processable
    * format.
    * The output format is:
    *   {
-   *     ALL      : { name : "All" , count : 20 , checkers : {} }
-   *     CRITICAL : { name : "Critical" , count : 10 , checkers : { core.something : 5 , unix.checker : 5 } }
+   *     ALL      : { name : "All" , count : 20 , checkers : {} },
+   *     CRITICAL : { name : "Critical" , count : 10 , checkers : { core.something : 5 , unix.checker : 5 } },
    *     HIGH     : ...
    *     ....     : ...
    *   }
@@ -127,8 +142,8 @@ return declare(null, {
 
 
   /**
-   * Normalizes a formatted reportDataTypeCountList, after which it has the ability
-   * to be used in a Dojo Select widget.
+   * Normalizes a formatted reportDataTypeCountList, after which it can be
+   * used in a Dojo Select widget.
    */
   normalizeCheckerInfo : function (checkerInfo) {
     var selectOptions = [];

@@ -44,9 +44,9 @@ return declare(_WidgetBase, {
     that.inherited(arguments);
 
     if (that.myOverviewTC.overviewType === "run") {
-      that.initIfRun();
+      that.initRun();
     } else if (that.myOverviewTC.overviewType === "diff") {
-      that.initIfDiff();
+      that.initDiff();
     }
   },
 
@@ -62,7 +62,7 @@ return declare(_WidgetBase, {
       style       : "width: 200px; margin-right: 5px;",
       onKeyPress  : function(evt) {
         if (evt.keyCode === 13) { // "Enter"
-          that.pathAndSelectOnChange();
+          that.pathAndSelectOnChange(true);
         }
       }
     });
@@ -75,7 +75,7 @@ return declare(_WidgetBase, {
       ],
       style      : "margin-right: 5px;",
       onChange   : function(val) {
-        that.pathAndSelectOnChange();
+        that.pathAndSelectOnChange(true);
       }
     });
   },
@@ -84,7 +84,7 @@ return declare(_WidgetBase, {
   /**
    * Initializes the shared and Run-specific widgets for a Run.
    */
-  initIfRun : function () {
+  initRun : function () {
     var that = this;
 
     that.initShared();
@@ -94,7 +94,7 @@ return declare(_WidgetBase, {
       options    : that.filterOptions.checkerInfoOptions,
       style      : "margin-right: 5px;",
       onChange   : function(val) {
-        that.pathAndSelectOnChange();
+        that.pathAndSelectOnChange(false);
       }
     });
 
@@ -107,7 +107,7 @@ return declare(_WidgetBase, {
   /**
    * Initializes the shared and Diff-specific widgets for a Diff.
    */
-  initIfDiff : function () {
+  initDiff : function () {
     var that = this;
 
     that.initShared();
@@ -196,10 +196,36 @@ return declare(_WidgetBase, {
   },
 
 
-  pathAndSelectOnChange : function() {
+  /**
+   * Refreshes the Grid according to the current filters.
+   * If called in a Run Overview, and called by NOT a checkerInfo Select, then
+   * refreshes the checkerInfo Select of the particular filter.
+   */
+  pathAndSelectOnChange : function(refreshCheckerOptions) {
     var that = this;
 
-    that.myOverviewTC.overviewGrid.refreshGrid();
+    if (that.myOverviewTC.overviewType === "run" && refreshCheckerOptions === true) {
+      var filePath = "*" + that.textBoxPath.get("value") + "*";
+      var suppressed = that.selectSuppr.get("value") === "supp" ? true : false;
+
+      CC_UTIL.getCheckerInfoRun(
+        that.myOverviewTC.runId,
+        filePath,
+        suppressed,
+        function (checkerInfo) {
+          var newCheckerInfoOptions = CC_UTIL.normalizeCheckerInfo(checkerInfo);
+
+          that.filterOptions.checkerInfoOptions = newCheckerInfoOptions;
+          that.selectCheckerInfo.set("options", newCheckerInfoOptions);
+
+          that.selectCheckerInfo.reset();
+
+          that.myOverviewTC.overviewGrid.refreshGrid();
+        }
+      );
+    } else {
+      that.myOverviewTC.overviewGrid.refreshGrid();
+    }
   }
 
 

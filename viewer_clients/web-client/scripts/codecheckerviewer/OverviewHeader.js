@@ -59,9 +59,9 @@ return declare(ContentPane, {
       var checkerInfoState = that.filters[i].selectCheckerInfo.get("value");
 
       filterObjArray.push({
-        pathState       : pathState,
-        supprState      : supprState,
-        checkerInfoState: checkerInfoState,
+        pathState        : pathState,
+        supprState       : supprState,
+        checkerInfoState : checkerInfoState,
       });
     }
 
@@ -85,11 +85,11 @@ return declare(ContentPane, {
       var resolvState = that.filters[i].selectResolv.get("value");
 
       filterObjArray.push({
-        pathState       : pathState,
-        severityState   : severityState,
-        supprState      : supprState,
-        checkerTypeState: checkerTypeState,
-        resolvState     : resolvState,
+        pathState        : pathState,
+        severityState    : severityState,
+        supprState       : supprState,
+        checkerTypeState : checkerTypeState,
+        resolvState      : resolvState,
       })
     }
 
