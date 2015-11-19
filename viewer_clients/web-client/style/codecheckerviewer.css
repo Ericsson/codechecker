@@ -160,9 +160,9 @@ code, kbd, pre, samp, tt, xmp, listing, plaintext {
 }
 
 .dijitSelectLabel {
-  text-align : center;
+  text-align : left;
   overflow   : hidden;
-  width      : 120px;
+  width      : 200px;
 }
 
 .bugInfo {

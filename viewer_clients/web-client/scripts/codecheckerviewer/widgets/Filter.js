@@ -35,6 +35,7 @@ return declare(_WidgetBase, {
     });
   },
 
+
   /**
    * Builds the widget dom.
    */
@@ -42,23 +43,74 @@ return declare(_WidgetBase, {
     var that = this;
     that.inherited(arguments);
 
+    if (that.myOverviewTC.overviewType === "run") {
+      that.initRun();
+    } else if (that.myOverviewTC.overviewType === "diff") {
+      that.initDiff();
+    }
+  },
+
+
+  /**
+   * Initializes the widgets that both Runs and Diffs share.
+   */
+  initShared : function () {
+    var that = this;
+
     that.textBoxPath = new TextBox({
       placeHolder : "Path filter",
       style       : "width: 200px; margin-right: 5px;",
       onKeyPress  : function(evt) {
         if (evt.keyCode === 13) { // "Enter"
-          that.pathAndSelectOnChange();
+          that.pathAndSelectOnChange(true);
         }
       }
     });
 
-    if (that.filterOptions === undefined) {
-      that.filterOptions = {};
-      that.filterOptions.severityOptions =
-        CC_UTIL.getAvailableSeverityLevels();
-      that.filterOptions.checkerTypeOptions =
-        CC_UTIL.getAvailableCheckers(that.myOverviewTC);
-    }
+    that.selectSuppr = new Select({
+      forceWidth : true,
+      options    : [
+        { label : "Unsuppressed", value : "unsupp", selected: true },
+        { label : "Suppressed"  , value : "supp"                   }
+      ],
+      style      : "margin-right: 5px;",
+      onChange   : function(val) {
+        that.pathAndSelectOnChange(true);
+      }
+    });
+  },
+
+
+  /**
+   * Initializes the shared and Run-specific widgets for a Run.
+   */
+  initRun : function () {
+    var that = this;
+
+    that.initShared();
+
+    that.selectCheckerInfo = new Select({
+      forceWidth : true,
+      options    : that.filterOptions.checkerInfoOptions,
+      style      : "margin-right: 5px;",
+      onChange   : function(val) {
+        that.pathAndSelectOnChange(false);
+      }
+    });
+
+    domConstruct.place(that.textBoxPath.domNode, that.domNode);
+    domConstruct.place(that.selectSuppr.domNode, that.domNode);
+    domConstruct.place(that.selectCheckerInfo.domNode, that.domNode);
+  },
+
+
+  /**
+   * Initializes the shared and Diff-specific widgets for a Diff.
+   */
+  initDiff : function () {
+    var that = this;
+
+    that.initShared();
 
     that.selectSeverity = new Select({
       forceWidth : true,
@@ -78,46 +130,25 @@ return declare(_WidgetBase, {
       }
     });
 
-    that.selectSuppr = new Select({
+    that.selectResolv = new Select({
       forceWidth : true,
       options    : [
-        { label : "Unsuppressed", value : "unsupp", selected: true },
-        { label : "Suppressed"  , value : "supp"                   }
+        { label : "New only"  , value : "newonly" },
+        { label : "Resolved"  , value : "resolv" },
+        { label : "Unresolved", value : "unresolv", selected: true }
       ],
       style      : "margin-right: 5px;",
       onChange   : function(val) {
         that.pathAndSelectOnChange();
       }
-    }, domConstruct.create("div"));
-
-
-    // Add Resolved select if it is an overview of a Diff
-    if (that.myOverviewTC.overviewType === "diff") {
-
-      that.selectResolv = new Select({
-        forceWidth : true,
-        options    : [
-          { label : "New only"  , value : "newonly" },
-          { label : "Resolved"  , value : "resolv" },
-          { label : "Unresolved", value : "unresolv", selected: true }
-        ],
-        style      : "margin-right: 5px;",
-        onChange   : function(val) {
-          that.pathAndSelectOnChange();
-        }
-      });
-
-    }
+    });
 
 
     domConstruct.place(that.textBoxPath.domNode, that.domNode);
     domConstruct.place(that.selectSeverity.domNode, that.domNode);
     domConstruct.place(that.selectSuppr.domNode, that.domNode);
     domConstruct.place(that.selectCheckerType.domNode, that.domNode);
-
-    if (that.myOverviewTC.overviewType === "diff") {
-      domConstruct.place(that.selectResolv.domNode, that.domNode);
-    }
+    domConstruct.place(that.selectResolv.domNode, that.domNode);
   },
 
 
@@ -165,10 +196,37 @@ return declare(_WidgetBase, {
   },
 
 
-  pathAndSelectOnChange : function() {
+  /**
+   * Refreshes the Grid according to the current filters.
+   * If called in a Run Overview, and called by NOT a checkerInfo Select, then
+   * refreshes the checkerInfo Select of the particular filter. In this case,
+   * the function is asyncronous.
+   */
+  pathAndSelectOnChange : function(refreshCheckerOptions) {
     var that = this;
 
-    that.myOverviewTC.overviewGrid.refreshGrid();
+    if (that.myOverviewTC.overviewType === "run" && refreshCheckerOptions === true) {
+      var filePath = "*" + that.textBoxPath.get("value") + "*";
+      var suppressed = that.selectSuppr.get("value") === "supp" ? true : false;
+
+      CC_UTIL.getCheckerInfoRun(
+        that.myOverviewTC.runId,
+        filePath,
+        suppressed,
+        function (checkerInfo) {
+          var newCheckerInfoOptions = CC_UTIL.normalizeCheckerInfo(checkerInfo);
+
+          that.filterOptions.checkerInfoOptions = newCheckerInfoOptions;
+          that.selectCheckerInfo.set("options", newCheckerInfoOptions);
+
+          that.selectCheckerInfo.reset();
+
+          that.myOverviewTC.overviewGrid.refreshGrid();
+        }
+      );
+    } else {
+      that.myOverviewTC.overviewGrid.refreshGrid();
+    }
   }
 
 
