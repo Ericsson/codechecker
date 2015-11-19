@@ -40,6 +40,11 @@ return declare(DataGrid, {
 
     CC_SERVICE.getRunData(function(runDataList) {
       runDataList.forEach(function(item) {
+        if (item.can_delete === undefined || item.can_delete === false) {
+          // This item is under removal
+          return;
+        }
+
         var currItemDate = "Failed run";
 
         if (-1 !== item.runDate) {
@@ -105,6 +110,5 @@ return declare(DataGrid, {
 
     that.setStore(newStore);
   }
-
 
 });});

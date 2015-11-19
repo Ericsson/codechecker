@@ -17,18 +17,20 @@ namespace js codeCheckerDBAccess
 namespace cpp cc.service.codechecker
 
 //=================================================
-const string API_VERSION = '4.1'
+const string API_VERSION = '4.2'
 const i64 MAX_QUERY_SIZE = 500
 //=================================================
 
 //-----------------------------------------------------------------------------
 struct RunData{
-  1: i64    runId,        // unique id of the run
-  2: string runDate,      // date of the run
-  3: string name,         // human readable name of the run
-  4: i64    duration,     // duration of the run; -1 if not finished
-  5: i64    resultCount   // number of results in the run
-  6: string runCmd        // the used check command
+  1: i64            runId,        // unique id of the run
+  2: string         runDate,      // date of the run
+  3: string         name,         // human readable name of the run
+  4: i64            duration,     // duration of the run; -1 if not finished
+  5: i64            resultCount,  // number of results in the run
+  6: string         runCmd,       // the used check command
+  7: optional bool  can_delete    // true if codeCheckerDBAccess::removeRunResults()
+                                  // is allowed on this run (see issue 151)
 }
 typedef list<RunData> RunDataList
 

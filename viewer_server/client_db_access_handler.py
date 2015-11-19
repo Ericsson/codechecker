@@ -1094,13 +1094,22 @@ class ThriftRequestHandler():
 
         session = self.__session
 
+        runs_to_delete = []
         for run_id in run_ids:
             LOG.debug('run ids to delete')
             LOG.debug(run_id)
 
             run_to_delete = session.query(Run).get(run_id)
-            session.delete(run_to_delete)
+            if not run_to_delete.can_delete:
+                LOG.debug("Can't delete " + str(run_id))
+                continue
 
+            run_to_delete.can_delete = False
+            session.commit()
+            runs_to_delete.append(run_to_delete)
+
+        for run_to_delete in runs_to_delete:
+            session.delete(run_to_delete)
             session.commit()
 
         return True
