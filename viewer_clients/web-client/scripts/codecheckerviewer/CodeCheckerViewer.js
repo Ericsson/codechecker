@@ -146,9 +146,7 @@ return declare(null, {
             var tempRunId = that.listOfRunsGrid.getItem(evt.rowIndex).runid[0];
             var tempName = that.listOfRunsGrid.getItem(evt.rowIndex).name[0];
 
-            if (enabled) {
-              that.newRunOverviewTab(tempRunId, tempName);
-            }
+            that.newRunOverviewTab(tempRunId, tempName);
 
             break;
 
