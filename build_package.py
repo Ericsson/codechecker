@@ -97,7 +97,7 @@ def generate_thrift_files(thrift_files_dir, env, silent=True):
     rvs_thrift = os.path.join(thrift_files_dir, 'report-viewer-server.thrift')
     rvs_thrift = 'report-viewer-server.thrift'
     rvs_cmd = ['thrift', '-r', '-I', '.',
-               '--gen', 'py', '--gen', 'js', rvs_thrift]
+               '--gen', 'py', '--gen', 'js:jquery', rvs_thrift]
     ret = run_cmd(rvs_cmd, thrift_files_dir, env, silent=silent)
     if ret:
         LOG.error('Failed to generate viewer server files')
