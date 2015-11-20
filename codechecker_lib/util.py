@@ -17,10 +17,6 @@ import socket
 import shutil
 
 from codechecker_lib import logger
-from codechecker_lib import host_check
-from codechecker_lib import pgpass
-
-from sqlalchemy.engine.url import URL
 
 # WARNING! LOG should be only used in this module
 LOG = logger.get_new_logger('UTIL')
@@ -174,15 +170,3 @@ def remove_dir(path):
         LOG.warning('Failed to remove directory %s' % (path))
 
     shutil.rmtree(path, onerror=error_handler)
-
-
-# -------------------------------------------------------------------------
-def create_postgresql_connection_string(user, host, port, database, password=None):
-    port = str(port)
-    driver = host_check.get_postgresql_driver_name()
-    if driver == 'pg8000' and not password:
-      path = os.environ.get('PGPASSFILE')
-      if path:
-        password = pgpass.get_password_from_file(path, host, port, database, user)
-
-    return str(URL('postgresql+' + driver, user, password, host, port, database))

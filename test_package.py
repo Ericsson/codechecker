@@ -127,7 +127,9 @@ class GenericPackageTester(object):
                  test_proj_path,
                  test_project_config,
                  test_modules,
-                 clang_version, log):
+                 clang_version,
+                 log,
+                 cmd_args):
 
         self.pkg_root = pkg_root
         self.log = log
@@ -135,6 +137,8 @@ class GenericPackageTester(object):
         self.database = database
         self.start_test_client = \
             partial(start_test_client, pkg_root, test_modules)
+        self.use_sqlite = cmd_args.sqlite
+
         try:
             if test_project_config is None:
                 with open(os.path.join(test_proj_path, 'project_info.json')) as inf_file:
@@ -244,53 +248,22 @@ class GenericPackageTester(object):
         self.env['CODECHECKER_VERBOSE'] = 'debug'
         # self.env['CODECHECKER_ALCHEMY_LOG'] = '2'
 
-        def first_check(suppress_file):
+        def run_check(suppress_file):
 
             check_cmd = []
             check_cmd.append('CodeChecker')
             check_cmd.append('check')
-            check_cmd.append('--dbaddress')
-            check_cmd.append(db['dbaddress'])
-            check_cmd.append('--dbport')
-            check_cmd.append(str(db['dbport']))
-            check_cmd.append('--dbname')
-            check_cmd.append(db['dbname'])
-            check_cmd.append('--dbusername')
-            check_cmd.append(db['dbusername'])
-            check_cmd.append('-w')
-            check_cmd.append(codechecker_workspace)
-            check_cmd.append('--suppress')
-            check_cmd.append(suppress_file)
-            unique_id = uuid.uuid4().hex
-            check_cmd.append('-n')
-            check_cmd.append(self.project_info['name'] + '_' + unique_id)
-            check_cmd.append('-b')
-            check_cmd.append(test_project_build_cmd)
-
-            self.log.info(' '.join(check_cmd))
-
-            try:
-                subprocess.check_call(check_cmd, cwd=test_project_path,
-                                      env=self.env)
-                self.log.info('Checking the test project is done.')
-            except subprocess.CalledProcessError as perr:
-                self.log.error(str(perr))
-                self.log.error('Failed to run command: ' + ' '.join(check_cmd))
-                raise perr
-
-        def second_check(suppress_file):
-
-            check_cmd = []
-            check_cmd.append('CodeChecker')
-            check_cmd.append('check')
-            check_cmd.append('--dbaddress')
-            check_cmd.append(db['dbaddress'])
-            check_cmd.append('--dbport')
-            check_cmd.append(str(db['dbport']))
-            check_cmd.append('--dbname')
-            check_cmd.append(db['dbname'])
-            check_cmd.append('--dbusername')
-            check_cmd.append(db['dbusername'])
+            if self.use_sqlite:
+                check_cmd.append('--sqlite')
+            else:
+                check_cmd.append('--dbaddress')
+                check_cmd.append(db['dbaddress'])
+                check_cmd.append('--dbport')
+                check_cmd.append(str(db['dbport']))
+                check_cmd.append('--dbname')
+                check_cmd.append(db['dbname'])
+                check_cmd.append('--dbusername')
+                check_cmd.append(db['dbusername'])
             check_cmd.append('-w')
             check_cmd.append(codechecker_workspace)
             check_cmd.append('--suppress')
@@ -318,14 +291,17 @@ class GenericPackageTester(object):
             server_cmd.append('server')
             server_cmd.append('--check-port')
             server_cmd.append(str(test_config['CC_TEST_SERVER_PORT']))
-            server_cmd.append('--dbaddress')
-            server_cmd.append(db['dbaddress'])
-            server_cmd.append('--dbport')
-            server_cmd.append(str(db['dbport']))
-            server_cmd.append('--dbname')
-            server_cmd.append(db['dbname'])
-            server_cmd.append('--dbusername')
-            server_cmd.append(db['dbusername'])
+            if self.use_sqlite:
+                server_cmd.append('--sqlite')
+            else:
+                server_cmd.append('--dbaddress')
+                server_cmd.append(db['dbaddress'])
+                server_cmd.append('--dbport')
+                server_cmd.append(str(db['dbport']))
+                server_cmd.append('--dbname')
+                server_cmd.append(db['dbname'])
+                server_cmd.append('--dbusername')
+                server_cmd.append(db['dbusername'])
             server_cmd.append('--view-port')
             server_cmd.append(str(test_config['CC_TEST_VIEWER_PORT']))
             server_cmd.append('-w')
@@ -375,14 +351,14 @@ class GenericPackageTester(object):
         self.log.info('Cleaning test project')
         # fist check
         self._clean_test_project(test_project_path, test_project_clean_cmd)
-        first_check(suppress_file)
+        run_check(suppress_file)
         time.sleep(5)
         stop_server = multiprocessing.Event()
         test_module_error = multiprocessing.Event()
 
         # second check
         self._clean_test_project(test_project_path, test_project_clean_cmd)
-        second_check(suppress_file)
+        run_check(suppress_file)
 
         time.sleep(5)
         stop_server = multiprocessing.Event()
@@ -447,6 +423,9 @@ def main():
                         action='store', dest='test_project_config',
                         help='Test project config. By default tries to use from the test_project.')
 
+    parser.add_argument('--sqlite', dest="sqlite",
+                        action='store_true', required=False,
+                        help='Use sqlite database.')
     parser.add_argument('--dbaddress', type=str, dest="dbaddress",
                         default='localhost',
                         help='Postgres database server address.')
@@ -472,7 +451,9 @@ def main():
                                           args.test_project,
                                           args.test_project_config,
                                           args.test_modules,
-                                          args.clang_version, LOG)
+                                          args.clang_version,
+                                          LOG,
+                                          args)
     LOG.info('Running tests')
     package_tester.run_test()
 

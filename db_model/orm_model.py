@@ -14,12 +14,13 @@ from sqlalchemy.orm import *
 from sqlalchemy.sql.expression import true
 from sqlalchemy.ext.declarative import declarative_base
 
-from datetime import *
+from datetime import datetime
+from math import ceil
 
 CC_META = MetaData(naming_convention={
     "ix": 'ix_%(column_0_label)s',
     "uq": "uq_%(table_name)s_%(column_0_name)s",
-    "ck": "ck_%(table_name)s_%(constraint_name)s",
+    "ck": "ck_%(table_name)s_%(column_0_name)s",
     "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
     "pk": "pk_%(table_name)s"
 })
@@ -67,7 +68,7 @@ class Run(Base):
         self.inc_count = 0
 
     def mark_finished(self):
-        self.duration = (datetime.now() - self.date).total_seconds()
+        self.duration = ceil((datetime.now() - self.date).total_seconds())
 
 
 class Config(Base):

@@ -181,7 +181,7 @@ def send_config(connection, file_name):
 def get_connection():
     ''' Automatic Connection handler via ContextManager idiom.
         You can use this in with statement.'''
-    connection = Connection()
+    connection = ConnectionManager.instance.create_connection()
 
     try:
         yield connection
@@ -197,13 +197,13 @@ class Connection(object):
         Information what this use come from ConnectionManager class.
         So, you should set it up before create a connection.'''
 
-    def __init__(self):
+    def __init__(self, host, port):
         ''' Establish the connection beetwen client and server. '''
+
         tries_count = 0
         while True:
             try:
-                self._transport = TSocket.TSocket(ConnectionManager.host,
-                                                   ConnectionManager.port)
+                self._transport = TSocket.TSocket(host, port)
                 self._transport = TTransport.TBufferedTransport(self._transport)
                 self._protocol = TBinaryProtocol.TBinaryProtocol(self._transport)
                 self._client = CheckerReport.Client(self._protocol)
@@ -272,10 +272,6 @@ class Connection(object):
         ''' bool addConfigInfo(1: i64 run_id, 2: list<ConfigValue> values) '''
         return self._client.addConfigInfo(ConnectionManager.run_id, config_list)
 
-    # def add_skip_path(self, path):
-    #    ''' bool addSkipPath(1: i64 run_id, 2: list<string> paths) '''
-    #    return self._client.addSkipPath(ConnectionManager.run_id, path)
-
     def add_build_action(self, build_cmd, check_cmd):
         ''' i64  addBuildAction(1: i64 run_id, 2: string build_cmd) '''
         return self._client.addBuildAction(ConnectionManager.run_id,
@@ -306,164 +302,58 @@ class Connection(object):
 
 # -----------------------------------------------------------------------------
 class ConnectionManager(object):
-    ''' ContextManager class for handling connections.
-        Store common information for about connection.
-        Start and stop the server.'''
-    host = 'localhost'
-    port = None
-    database_host = 'localhost'
-    database_port = 8764
+    '''
+    ContextManager class for handling connections.
+    Store common information for about connection.
+    Start and stop the server.
+    '''
+
     run_id = None
-    _database = None
-    _server = None
-    run_env = None
 
-    # -------------------------------------------------------------------------
-    @classmethod
-    def start_postgres(cls, context, init_db=True):
-        '''
-        init_db : Initialize database locally if possible
-        '''
+    def __init__(self, database_server, host, port):
+        self.database_server = database_server
+        self.host = host
+        self.port = port
+        ConnectionManager.instance = self
 
-        dbusername = context.db_username
+    def create_connection(self):
+        return Connection(self.host, self.port)
 
-        LOG.info('Checking for database')
-        if not database_handler.is_database_running(cls.database_host,
-                                                    cls.database_port,
-                                                    dbusername, cls.run_env):
-            LOG.info('Database is not running yet')
-            # On remote host we cannot initialize a new database
-            if not util.is_localhost(cls.database_host):
-                sys.exit(1)
-
-            db_path = context.database_path
-            if init_db:
-                if not database_handler.is_database_exist(db_path) and \
-                   not database_handler.initialize_database(db_path, dbusername,
-                                                            cls.run_env):
-                    # The database does not exist and cannot create
-                    LOG.error('Database is missing and the initialization '
-                              'of a new failed!')
-                    LOG.error('Please check your configuration!')
-                    sys.exit(1)
-            else:
-                if not database_handler.is_database_exist(db_path):
-                    # The database does not exists
-                    LOG.error('Database is missing!')
-                    LOG.error('Please check your configuration!')
-                    sys.exit(1)
-
-            LOG.info('Starting database')
-            cls._database = database_handler.start_database(db_path,
-                                                            cls.database_host,
-                                                            cls.database_port,
-                                                            cls.run_env)
-            atexit.register(cls._database.terminate)
-
-    # -------------------------------------------------------------------------
-    @classmethod
-    def block_until_db_starts(cls, context):
-        ''' Wait for database to start if the database was
-        started by this client and polling is possible. '''
-
-        tries_count = 0
-
-        while not database_handler.is_database_running(cls.database_host,
-                cls.database_port, context.db_username, cls.run_env) and \
-                tries_count < 5:
-            tries_count += 1
-            time.sleep(3)
-
-        if tries_count >= 5 or not cls._database.poll():
-            # last chance to start
-            if cls._database.returncode is None:
-                # it is possible that the database starts really slow
-                time.sleep(20)
-                if not database_handler.is_database_running(cls.host,
-                        cls.database_port, context.db_username, cls.run_env):
-
-                    LOG.error('Failed to start database.')
-                    sys.exit(1)
-
-        else:
-            LOG.error('Failed to start database server.')
-            LOG.error('Database server exit code: '+str(cls._server.returncode))
-            sys.exit(1)
-
-    # -------------------------------------------------------------------------
-    # Server related methods
-    @classmethod
-    def start_server(cls, dbname, context, wait_for_start=True):
-
-        cls.start_postgres(context)
-
-        if wait_for_start:
-            cls.block_until_db_start_proc_free(context)
+    def start_report_server(self, db_version_info):
 
         is_server_started = multiprocessing.Event()
+        server = multiprocessing.Process(target=report_server.run_server,
+                                         args=(
+                                         self.port,
+                                         self.database_server.get_connection_string(),
+                                         db_version_info,
+                                         is_server_started))
 
-        cls._server = multiprocessing.Process(target=report_server.run_server,
-                                              args=(
-                                              context.db_username,
-                                              cls.port, dbname,
-                                              cls.database_host,
-                                              cls.database_port,
-                                              context.db_version_info,
-                                              context.migration_root,
-                                              is_server_started))
+        server.daemon = True
+        server.start()
 
-        cls._server.daemon = True
-        cls._server.start()
+        # Wait a bit
+        counter = 0
+        while not is_server_started.is_set() and counter < 4:
+            LOG.debug('Waiting for checker server to start.')
+            time.sleep(3)
+            counter += 1
 
-        if wait_for_start:
-            # Wait a bit
-            counter = 0
-            while not is_server_started.is_set() and counter < 4:
-                LOG.debug('Waiting for checker server to start.')
-                time.sleep(3)
-                counter += 1
-
-            if counter >= 4 or not cls._server.is_alive():
-                # last chance to start
-                if cls._server.exitcode is None:
-                    # it is possible that the database starts really slow
-                    time.sleep(5)
-                    if not is_server_started.is_set():
-                        LOG.error('Failed to start checker server.')
-                        sys.exit(1)
-                else:
+        if counter >= 4 or not server.is_alive():
+            # last chance to start
+            if server.exitcode is None:
+                # it is possible that the database starts really slow
+                time.sleep(5)
+                if not is_server_started.is_set():
                     LOG.error('Failed to start checker server.')
-                    LOG.error('Checker server exit code: ' +
-                              str(cls._server.exitcode))
                     sys.exit(1)
-
-        atexit.register(cls._server.terminate)
-        LOG.debug('Checker server start sequence done.')
-
-    # -------------------------------------------------------------------------
-    @classmethod
-    def stop_server(cls):
-        # if ConnectionManager._database:
-            # ConnectionManager._database.terminate()
-
-        if ConnectionManager._server:
-            ConnectionManager._server.terminate()
-
-    # -------------------------------------------------------------------------
-    @classmethod
-    def block_until_db_start_proc_free(cls, context):
-        ''' Wait for database if the database process was stared
-        with a different client. No polling is possible.'''
-
-        tries_count = 0
-        max_try = 20
-        timeout = 5
-        while not database_handler.is_database_running(cls.database_host,
-                cls.database_port, context.db_username, cls.run_env) and \
-                tries_count < max_try:
-            tries_count += 1
-            time.sleep(timeout)
-
-            if tries_count >= max_try:
-                LOG.error('Failed to start database.')
+            else:
+                LOG.error('Failed to start checker server.')
+                LOG.error('Checker server exit code: ' +
+                          str(server.exitcode))
                 sys.exit(1)
+
+        atexit.register(server.terminate)
+        self.server = server
+
+        LOG.debug('Checker server start sequence done.')
