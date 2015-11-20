@@ -31,7 +31,6 @@ def debug(context, dbusername, dbhost, dbport, dbname, force):
             dbusername, dbhost, dbport, dbname)
 
         engine = sqlalchemy.create_engine(connection_string)
-        print(connection_string)
         session = sqlalchemy.orm.scoped_session(
                     sqlalchemy.orm.sessionmaker(bind=engine))
 

@@ -498,13 +498,11 @@ class CheckerReportHandler(object):
                                                         Report.start_bugpoint)
 
 
-def create_db_if_not_exists(uri, db_name):
+def create_db_if_not_exists(dbusername, dbhost, dbport, db_name):
     ''' True -> created, False -> already exists and do nothing. '''
     LOG.debug('Creating new database if not exists')
 
-    db_uri = os.path.join(uri, 'postgres')
-    LOG.debug(db_uri)
-
+    db_uri = util.create_postgresql_connection_string(dbusername, dbhost, dbport, 'postgres')
     engine = sqlalchemy.create_engine(db_uri, client_encoding='utf8')
 
     text = "SELECT 1 FROM pg_database WHERE datname='%s'" % db_name
@@ -535,21 +533,17 @@ def migrate_database(session, migration_scripts):
 def run_server(dbUsername, port, db_name, dbhost, dbport, db_version_info, migration_scripts, callback_event=None):
     LOG.debug('Starting codechecker server ...')
 
-    uri = util.create_postgresql_connection_string(dbUsername, dbhost, dbport)
-
     try:
 
-        ret = create_db_if_not_exists(uri, db_name)
+        ret = create_db_if_not_exists(dbUsername, dbhost, dbport, db_name)
         LOG.debug('Database exists: ' + str(ret))
     except sqlalchemy.exc.SQLAlchemyError as alch_err:
         LOG.error(str(alch_err))
         sys.exit(1)
 
     try:
-        db_uri = os.path.join(uri, db_name)
+        db_uri = util.create_postgresql_connection_string(dbUsername, dbhost, dbport, db_name)
         engine = sqlalchemy.create_engine(db_uri, strategy='threadlocal')
-
-        LOG.debug('DB Engine: '+str(engine))
 
         LOG.debug('Creating new database session')
         session = CreateSession(engine)

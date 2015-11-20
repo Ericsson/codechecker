@@ -202,7 +202,6 @@ def start_server(package_data, port, db_conn_string, suppress_handler,
     start http server to handle web client and thrift requests
     '''
     LOG.debug('Starting the codechecker DB access server')
-    LOG.debug('Connection string:' + db_conn_string)
 
     if not_host_only:
         access_server_host = ''
