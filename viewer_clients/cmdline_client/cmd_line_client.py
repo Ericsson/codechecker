@@ -61,22 +61,22 @@ def print_table(lines, separate_head=True):
             if size > widths[i]:
                 widths[i] = size
 
-        # Generate the format string to pad the columns
-        print_string = ""
-        for i, width in enumerate(widths):
-            print_string += "{" + str(i) + ":" + str(width) + "} | "
-        if (len(print_string) == 0):
-            return
-        print_string = print_string[:-3]
+    # Generate the format string to pad the columns
+    print_string = ""
+    for i, width in enumerate(widths):
+        print_string += "{" + str(i) + ":" + str(width) + "} | "
+    if (len(print_string) == 0):
+        return
+    print_string = print_string[:-3]
 
-        # Print the actual data
-        print("-"*(sum(widths)+3*(len(widths)-1)))
-        for i, line in enumerate(lines):
-            print(print_string.format(*line))
-            if (i == 0 and separate_head):
-                print("-"*(sum(widths)+3*(len(widths)-1)))
-        print("-"*(sum(widths)+3*(len(widths)-1)))
-        print ''
+    # Print the actual data
+    print("-"*(sum(widths)+3*(len(widths)-1)))
+    for i, line in enumerate(lines):
+        print(print_string.format(*line))
+        if (i == 0 and separate_head):
+            print("-"*(sum(widths)+3*(len(widths)-1)))
+    print("-"*(sum(widths)+3*(len(widths)-1)))
+    print ''
 
 
 def get_run_ids(client):
