@@ -44,26 +44,8 @@ return declare(null, {
     var resultTypes1 = null;
     var resultTypes2 = null;
 
-    CC_SERVICE.getRunResultTypes(runId1, [], function (resultTypes) {
-      if (resultTypes instanceof RequestFailed) {
-        console.error("Thrift API call 'getRunResultTypes' failed.");
-      } else {
-        resultTypes1 = resultTypes;
-      }
-    });
-
-    CC_SERVICE.getRunResultTypes(runId2, [], function (resultTypes) {
-      if (resultTypes instanceof RequestFailed) {
-        console.error("Thrift API call 'getRunResultTypes' failed.");
-      } else {
-        resultTypes2 = resultTypes;
-      }
-    });
-
-    var processResults = function () {
-      if (resultTypes1 === null || resultTypes2 === null) {
-        setTimeout(processResults, 10);
-      } else {
+    var finishedQueries = function () {
+      if (resultTypes1 !== null && resultTypes2 !== null) {
         var temp = {};
 
         resultTypes1.forEach(function (item) {
@@ -82,9 +64,25 @@ return declare(null, {
 
         callback(checkerTypeOptionsArray);
       }
-    };
+    }
 
-    processResults();
+    CC_SERVICE.getRunResultTypes(runId1, [], function (resultTypes) {
+      if (resultTypes instanceof RequestFailed) {
+        console.error("Thrift API call 'getRunResultTypes' failed.");
+      } else {
+        resultTypes1 = resultTypes;
+        finishedQueries();
+      }
+    });
+
+    CC_SERVICE.getRunResultTypes(runId2, [], function (resultTypes) {
+      if (resultTypes instanceof RequestFailed) {
+        console.error("Thrift API call 'getRunResultTypes' failed.");
+      } else {
+        resultTypes2 = resultTypes;
+        finishedQueries();
+      }
+        });
   },
 
 
