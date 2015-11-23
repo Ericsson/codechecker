@@ -41,34 +41,48 @@ return declare(null, {
    * The function is asyncronous.
    */
   getAvailableCheckersForDiff : function(runId1, runId2, callback) {
-    var checkerTypeOptionsArray = [ { value: "*", label: "All checkers" , selected: true } ];
+    var resultTypes1 = null;
+    var resultTypes2 = null;
 
-    CC_SERVICE.getRunResultTypes(runId1, [], function(resultTypes1) {
-      CC_SERVICE.getRunResultTypes(runId2, [], function(resultTypes2) {
-        if (resultTypes1 instanceof RequestFailed ||
-            resultTypes2 instanceof RequestFailed) {
-          console.error("Thrift API call 'getRunResultTypes' failed.");
-          return;
-        }
-
+    var finishedQueries = function () {
+      if (resultTypes1 !== null && resultTypes2 !== null) {
         var temp = {};
 
-        resultTypes1.forEach(function(item) {
+        resultTypes1.forEach(function (item) {
           temp[item.checkerId] = true;
         });
 
-        resultTypes2.forEach(function(item) {
+        resultTypes2.forEach(function (item) {
           temp[item.checkerId] = true;
         });
+
+        var checkerTypeOptionsArray = [ { value: "*", label: "All checkers" , selected: true } ];
 
         for (var elem in temp) {
           checkerTypeOptionsArray.push( { value: elem + "", label: elem + "" } );
         }
 
         callback(checkerTypeOptionsArray);
-      });
+      }
+    }
+
+    CC_SERVICE.getRunResultTypes(runId1, [], function (resultTypes) {
+      if (resultTypes instanceof RequestFailed) {
+        console.error("Thrift API call 'getRunResultTypes' failed.");
+      } else {
+        resultTypes1 = resultTypes;
+        finishedQueries();
+      }
     });
 
+    CC_SERVICE.getRunResultTypes(runId2, [], function (resultTypes) {
+      if (resultTypes instanceof RequestFailed) {
+        console.error("Thrift API call 'getRunResultTypes' failed.");
+      } else {
+        resultTypes2 = resultTypes;
+        finishedQueries();
+      }
+        });
   },
 
 
