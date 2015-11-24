@@ -379,7 +379,7 @@ def handle_check(args):
             context.run_id = connection.add_checker_run(' '.join(sys.argv),
                                                         args.name, package_version, args.update)
         except shared.ttypes.RequestFailed as thrift_ex:
-            if 'violates unique constraint "runs_name_key"' not in thrift_ex.message:
+            if 'violates unique constraint "uq_runs_name"' not in thrift_ex.message:
                 # not the unique name was the problem
                 raise
             else:
