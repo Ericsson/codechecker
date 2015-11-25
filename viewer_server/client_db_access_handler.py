@@ -1178,33 +1178,37 @@ class ThriftRequestHandler():
                                 self.__get_hashes_for_diff(session,
                                                            base_run_id,
                                                            new_run_id)
+        run_id = None
         diff_hashes = []
+
         if diff_type == DiffType.NEW:
             diff_hashes = list(new_check_hashes.difference(base_line_hashes))
             if not diff_hashes:
                 return 0
-            return self.__queryDiffResultsCount(session,
-                                                diff_hashes,
-                                                new_run_id,
-                                                report_filters)
+            run_id = new_run_id
 
         elif diff_type == DiffType.RESOLVED:
             diff_hashes = list(base_line_hashes.difference(new_check_hashes))
             if not diff_hashes:
                 return 0
-            return self.__queryDiffResultsCount(session,
-                                                diff_hashes,
-                                                base_run_id,
-                                                report_filters)
+            run_id = base_run_id
 
         elif diff_type == DiffType.UNRESOLVED:
             diff_hashes = list(base_line_hashes.intersection(new_check_hashes))
             if not diff_hashes:
                 return 0
-            return self.__queryDiffResultsCount(session,
-                                                diff_hashes,
-                                                new_run_id,
-                                                report_filters)
+            run_id = new_run_id
+
+        else:
+            msg = 'Unsupported diff type: ' + str(diff_type)
+            LOG.error(msg)
+            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
+                                              msg)
+
+        return self.__queryDiffResultsCount(session,
+                                            diff_hashes,
+                                            run_id,
+                                            report_filters)
 
     # -----------------------------------------------------------------------
     def __queryDiffResultTypes(self,
@@ -1270,30 +1274,34 @@ class ThriftRequestHandler():
                                                            base_run_id,
                                                            new_run_id)
 
+        run_id = None
         diff_hashes = []
+
         if diff_type == DiffType.NEW:
             diff_hashes = list(new_check_hashes.difference(base_line_hashes))
             if not diff_hashes:
                 return diff_hashes
-            return self.__queryDiffResultTypes(session,
-                                               diff_hashes,
-                                               new_run_id,
-                                               report_filters)
+            run_id = new_run_id
 
         elif diff_type == DiffType.RESOLVED:
             diff_hashes = list(base_line_hashes.difference(new_check_hashes))
             if not diff_hashes:
                 return diff_hashes
-            return self.__queryDiffResultTypes(session,
-                                               diff_hashes,
-                                               base_run_id,
-                                               report_filters)
+            run_id = base_run_id
 
         elif diff_type == DiffType.UNRESOLVED:
             diff_hashes = list(base_line_hashes.intersection(new_check_hashes))
             if not diff_hashes:
                 return diff_hashes
-            return self.__queryDiffResultTypes(session,
-                                               diff_hashes,
-                                               new_run_id,
-                                               report_filters)
+            run_id = new_run_id
+
+        else:
+            msg = 'Unsupported diff type: ' + str(diff_type)
+            LOG.error(msg)
+            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
+                                              msg)
+
+        return self.__queryDiffResultTypes(session,
+                                           diff_hashes,
+                                           run_id,
+                                           report_filters)
