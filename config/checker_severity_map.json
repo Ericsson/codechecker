@@ -14,7 +14,7 @@
   "unix.MismatchedDeallocator":                     "MEDIUM",
   "unix.cstring.BadSizeArg":                        "MEDIUM",
   "unix.cstring.NullArg":                           "MEDIUM",
-  "core.CallAndMessage":                            "MEDIUM",
+  "core.CallAndMessage":                            "HIGH",
   "core.DivideZero":                                "HIGH",
   "core.DynamicTypePropagation":                    "MEDIUM",
   "core.NonNullParamChecker":                       "MEDIUM",
