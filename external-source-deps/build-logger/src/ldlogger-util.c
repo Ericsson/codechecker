@@ -73,7 +73,6 @@ char* shellEscapeStr(const char* str_, char* buff_)
     switch (*str_)
     {
       case '\\':
-      case '\'':
       case '\"':
       case '\t':
         *out++ = '\\';
