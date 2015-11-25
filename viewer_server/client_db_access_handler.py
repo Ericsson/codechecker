@@ -842,6 +842,9 @@ class ThriftRequestHandler():
                            Report.file_id == File.id) \
                 .outerjoin(BugPathEvent,
                            Report.end_bugevent == BugPathEvent.id) \
+                .outerjoin(SuppressBug,
+                           and_(SuppressBug.hash == Report.bug_id,
+                                SuppressBug.run_id == run_id)) \
                 .order_by(Report.checker_id) \
                 .filter(filter_expression) \
                 .all()
