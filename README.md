@@ -9,7 +9,7 @@ CodeChecker replaces [scan-build](http://clang-analyzer.llvm.org/scan-build.html
 It provides
  * a new command line tool for analyzing projects
  * dynamic web based defect viewer (instead of static html)
- * a Postgresql based defect storage & management
+ * a PostgreSQL/SQLite based defect storage & management
  * incremental bug reporting (show only new bugs compared to a baseline)
  * suppression of false positives
  * better integration with build systems (through the LD_PRELOAD mechanism)
@@ -55,12 +55,12 @@ If your clang version does not have these features you will see warning messages
 
 ### Runtime requirements
   *  [Clang Static analyzer](http://clang-analyzer.llvm.org/) (latest stable or [trunk](http://clang.llvm.org/get_started.html))
-  *  [Postgresql](http://www.postgresql.org/ "PostgreSql") (> 9.3.5)
+  *  [PostgreSQL](http://www.postgresql.org/ "PostgreSQL") (> 9.3.5) (optional)
   *  [Python2](https://www.python.org/) (> 2.7)
   *  [Alembic](https://pypi.python.org/pypi/alembic) (>=0.8.2)
   *  [SQLAlchemy](http://www.sqlalchemy.org/) (> 1.0.2)
      - [PyPi SQLAlchemy](https://pypi.python.org/pypi/SQLAlchemy) (> 1.0.2)
-  *  [psycopg2](http://initd.org/psycopg/ "psycopg2") (> 2.5.4) or [pg8000](https://github.com/mfenniak/pg8000 "pg8000") (>= 1.10.0)
+  *  [psycopg2](http://initd.org/psycopg/ "psycopg2") (> 2.5.4) or [pg8000](https://github.com/mfenniak/pg8000 "pg8000") (>= 1.10.0) (optional)
      - [PyPi psycopg2](https://pypi.python.org/pypi/psycopg2/2.6.1) __requires lbpq!__
      - [PyPi pg8000](https://pypi.python.org/pypi/pg8000)
   * Thrift python modules
