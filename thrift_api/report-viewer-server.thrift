@@ -17,7 +17,7 @@ namespace js codeCheckerDBAccess
 namespace cpp cc.service.codechecker
 
 //=================================================
-const string API_VERSION = '4.2'
+const string API_VERSION = '4.3'
 const i64 MAX_QUERY_SIZE = 500
 //=================================================
 
@@ -122,6 +122,14 @@ struct SkipPathData{
   2: string  comment
 }
 typedef list<SkipPathData> SkipPathDataList
+
+//-----------------------------------------------------------------------------
+// diff result types
+enum DiffType {
+  NEW,
+  RESOLVED,
+  UNRESOLVED
+}
 
 //-----------------------------------------------------------------------------
 service codeCheckerDBAccess {
@@ -240,4 +248,19 @@ service codeCheckerDBAccess {
   // returns empty string if not set
   string getSuppressFile()
                         throws (1: shared.RequestFailed requestError),
+
+  // count the diff results
+  i64 getDiffResultCount(1: i64 base_run_id,
+                         2: i64 new_run_id,
+                         3: DiffType diff_type,
+                         4: ReportFilterList reportFilters)
+                         throws (1: shared.RequestFailed requestError),
+
+  // count all the diff results for each checker
+  ReportDataTypeCountList getDiffResultTypes(1: i64 base_run_id,
+                                             2: i64 new_run_id,
+                                             3: DiffType diff_type,
+                                             4: ReportFilterList reportFilters)
+                                             throws (1: shared.RequestFailed requestError)
+
 }

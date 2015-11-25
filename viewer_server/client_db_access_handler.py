@@ -1126,3 +1126,185 @@ class ThriftRequestHandler():
         if suppress_file:
             return suppress_file
         return ''
+
+    # -----------------------------------------------------------------------
+    def __queryDiffResultsCount(self,
+                                session,
+                                diff_hash_list,
+                                run_id,
+                                report_filters=None):
+        """
+        count results for a hash list with filters
+        """
+
+        filter_expression = construct_report_filter(report_filters)
+
+        try:
+            report_count = session.query(Report) \
+                .filter(Report.run_id == run_id) \
+                .outerjoin(File,
+                           and_(Report.file_id == File.id,
+                                File.run_id == run_id)) \
+                .outerjoin(BugPathEvent,
+                           Report.end_bugevent == BugPathEvent.id) \
+                .outerjoin(SuppressBug,
+                           and_(SuppressBug.hash == Report.bug_id,
+                                SuppressBug.run_id == run_id)) \
+                .filter(Report.bug_id.in_(diff_hash_list)) \
+                .filter(filter_expression) \
+                .count()
+
+            if report_count is None:
+                report_count = 0
+
+            return report_count
+
+        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
+            msg = str(alchemy_ex)
+            LOG.error(msg)
+            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
+                                              msg)
+
+    # -----------------------------------------------------------------------
+    @timefunc
+    def getDiffResultCount(self,
+                           base_run_id,
+                           new_run_id,
+                           diff_type,
+                           report_filters):
+        """
+        count the diff results
+        """
+
+        session = self.__session
+        base_line_hashes, new_check_hashes = \
+                                self.__get_hashes_for_diff(session,
+                                                           base_run_id,
+                                                           new_run_id)
+        run_id = None
+        diff_hashes = []
+
+        if diff_type == DiffType.NEW:
+            diff_hashes = list(new_check_hashes.difference(base_line_hashes))
+            if not diff_hashes:
+                return 0
+            run_id = new_run_id
+
+        elif diff_type == DiffType.RESOLVED:
+            diff_hashes = list(base_line_hashes.difference(new_check_hashes))
+            if not diff_hashes:
+                return 0
+            run_id = base_run_id
+
+        elif diff_type == DiffType.UNRESOLVED:
+            diff_hashes = list(base_line_hashes.intersection(new_check_hashes))
+            if not diff_hashes:
+                return 0
+            run_id = new_run_id
+
+        else:
+            msg = 'Unsupported diff type: ' + str(diff_type)
+            LOG.error(msg)
+            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
+                                              msg)
+
+        return self.__queryDiffResultsCount(session,
+                                            diff_hashes,
+                                            run_id,
+                                            report_filters)
+
+    # -----------------------------------------------------------------------
+    def __queryDiffResultTypes(self,
+                               session,
+                               diff_hash_list,
+                               run_id,
+                               report_filters):
+        """
+        query and count results for a hash list with filters
+        """
+        try:
+            filter_expression = construct_report_filter(report_filters)
+
+            q = session.query(Report) \
+                .filter(Report.run_id == run_id) \
+                .outerjoin(File,
+                           Report.file_id == File.id) \
+                .outerjoin(BugPathEvent,
+                           Report.end_bugevent == BugPathEvent.id) \
+                .outerjoin(SuppressBug,
+                           and_(SuppressBug.hash == Report.bug_id,
+                                SuppressBug.run_id == run_id)) \
+                .order_by(Report.checker_id) \
+                .filter(Report.bug_id.in_(diff_hash_list)) \
+                .filter(filter_expression) \
+                .all()
+
+            count_results = defaultdict(int)
+            result_reports = defaultdict()
+
+            # count and filter out the results for the same checker_id
+            for r in q:
+                count_results[r.checker_id] += 1
+                result_reports[r.checker_id] = r
+
+            results = []
+            for checker_id, res in result_reports.items():
+                results.append(ReportDataTypeCount(res.checker_id,
+                                                   res.severity,
+                                                   count_results[res.checker_id]))
+
+            # result count ascending
+            results = sorted(results, key=lambda rep: rep.count, reverse=True)
+            return results
+
+        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
+            msg = str(alchemy_ex)
+            LOG.error(msg)
+            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
+                                              msg)
+
+    # -----------------------------------------------------------------------
+    @timefunc
+    def getDiffResultTypes(self,
+                           base_run_id,
+                           new_run_id,
+                           diff_type,
+                           report_filters):
+
+        session = self.__session
+        base_line_hashes, new_check_hashes = \
+                                self.__get_hashes_for_diff(session,
+                                                           base_run_id,
+                                                           new_run_id)
+
+        run_id = None
+        diff_hashes = []
+
+        if diff_type == DiffType.NEW:
+            diff_hashes = list(new_check_hashes.difference(base_line_hashes))
+            if not diff_hashes:
+                return diff_hashes
+            run_id = new_run_id
+
+        elif diff_type == DiffType.RESOLVED:
+            diff_hashes = list(base_line_hashes.difference(new_check_hashes))
+            if not diff_hashes:
+                return diff_hashes
+            run_id = base_run_id
+
+        elif diff_type == DiffType.UNRESOLVED:
+            diff_hashes = list(base_line_hashes.intersection(new_check_hashes))
+            if not diff_hashes:
+                return diff_hashes
+            run_id = new_run_id
+
+        else:
+            msg = 'Unsupported diff type: ' + str(diff_type)
+            LOG.error(msg)
+            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
+                                              msg)
+
+        return self.__queryDiffResultTypes(session,
+                                           diff_hashes,
+                                           run_id,
+                                           report_filters)
