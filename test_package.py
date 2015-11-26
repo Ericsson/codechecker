@@ -367,7 +367,7 @@ class GenericPackageTester(object):
         self.log.info('Cleaning checker workspace')
 
         # generate suppress file
-        suppress_file = '/tmp/test_suppress_file'
+        suppress_file_fd, suppress_file = tempfile.mkstemp()
         self._generate_suppress_file(suppress_file)
 
         # end ------------------
@@ -389,6 +389,7 @@ class GenericPackageTester(object):
 
         err, fail, skipp = start_server()
         # delete suppress file
+        os.close(suppress_file_fd)
         os.remove(suppress_file)
         if test_module_error.is_set():
             LOG.error('Test module error')
