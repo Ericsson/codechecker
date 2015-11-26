@@ -189,7 +189,10 @@ def handle_server(args):
     check_env = analyzer_env.get_check_env(context.path_env_extra,
                                            context.ld_lib_path_extra)
 
-    sql_server = SQLServer.from_cmdline_args(args, context, check_env)
+    sql_server = SQLServer.from_cmdline_args(args,
+                                             context.codechecker_workspace,
+                                             context.migration_root,
+                                             check_env)
     conn_mgr = client.ConnectionManager(sql_server, args.check_address, args.check_port)
     if args.check_port:
         LOG.debug('Starting codechecker server and database server.')
@@ -248,7 +251,10 @@ def handle_debug(args):
     check_env = analyzer_env.get_check_env(context.path_env_extra,
                                            context.ld_lib_path_extra)
 
-    sql_server = SQLServer.from_cmdline_args(args, context, check_env)
+    sql_server = SQLServer.from_cmdline_args(args,
+                                             context.codechecker_workspace,
+                                             context.migration_root,
+                                             check_env)
     sql_server.start(wait_for_start=True, init=False)
 
     debug_reporter.debug(context, sql_server.get_connection_string(), args.force)
@@ -324,7 +330,10 @@ def handle_check(args):
         LOG.warning('There are no build actions in the log file.')
         sys.exit(1)
 
-    sql_server = SQLServer.from_cmdline_args(args, context, check_env)
+    sql_server = SQLServer.from_cmdline_args(args,
+                                             context.codechecker_workspace,
+                                             context.migration_root,
+                                             check_env)
     conn_mgr = client.ConnectionManager(sql_server, 'localhost', util.get_free_port())
 
     if args.jobs <= 0:

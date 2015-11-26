@@ -15,6 +15,7 @@ import sys
 import glob
 import socket
 import shutil
+import subprocess
 
 from codechecker_lib import logger
 
@@ -170,3 +171,20 @@ def remove_dir(path):
         LOG.warning('Failed to remove directory %s' % (path))
 
     shutil.rmtree(path, onerror=error_handler)
+
+
+def call_command(command, env=None):
+    ''' Call an external command and return with (output, return_code).'''
+
+    try:
+        LOG.debug('Run ' + ' '.join(command))
+        out = subprocess.check_output(command,
+                                      bufsize=-1,
+                                      env=env,
+                                      stderr=subprocess.STDOUT)
+        LOG.debug(out)
+        return out, 0
+    except subprocess.CalledProcessError as ex:
+        LOG.error('Running command "' + ' '.join(command) + '" Failed')
+        LOG.error(str(ex))
+        return ex.output, ex.returncode

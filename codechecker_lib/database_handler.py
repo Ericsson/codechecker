@@ -136,14 +136,15 @@ class SQLServer(object):
 
 
     @classmethod
-    def from_cmdline_args(cls, args, context, env=None):
+    def from_cmdline_args(cls, args, workspace, migration_root, env=None):
         '''
         Normally only this method is called form outside of this module in
         order to instance the proper server implementation.
 
         Parameters:
             args: the command line arguments from CodeChecker.py
-            context: a Context object
+            workspace: path to the CodeChecker workspace directory
+            migration_root: path to the database migration scripts
             env: a run environment dictionary.
         '''
 
@@ -153,10 +154,11 @@ class SQLServer(object):
 
         if args.sqlite:
             LOG.debug("Using SQLiteDatabase")
-            return SQLiteDatabase(context, run_env=env)
+            return SQLiteDatabase(workspace, migration_root, run_env=env)
         else:
             LOG.debug("Using PostgreSQLServer")
-            return PostgreSQLServer(context,
+            return PostgreSQLServer(workspace,
+                                    migration_root,
                                     args.dbaddress,
                                     args.dbport,
                                     args.dbusername,
@@ -168,10 +170,10 @@ class PostgreSQLServer(SQLServer):
     Handler for PostgreSQL.
     '''
 
-    def __init__(self, context, host, port, user, database, password = None, run_env=None):
-        super(PostgreSQLServer, self).__init__(context.migration_root)
+    def __init__(self, workspace, migration_root, host, port, user, database, password = None, run_env=None):
+        super(PostgreSQLServer, self).__init__(migration_root)
 
-        self.path = os.path.join(context.codechecker_workspace, 'pgsql_data')
+        self.path = os.path.join(workspace, 'pgsql_data')
         self.host = host
         self.port = port
         self.user = user
@@ -180,24 +182,6 @@ class PostgreSQLServer(SQLServer):
         self.run_env = run_env
 
         self.proc = None
-
-    def _call_command(self, command):
-        ''' Call an external command and return with (output, return_code).'''
-
-        try:
-            proc = subprocess.Popen(command,
-                                    bufsize=-1,
-                                    env=self.run_env,
-                                    stdout=subprocess.PIPE,
-                                    stderr=subprocess.STDOUT)
-
-            stdout = proc.communicate()[0]
-            LOG.debug(stdout)
-            return stdout, proc.returncode
-        except OSError as oex:
-            LOG.error('Running command "' + ' '.join(command) + '" Failed')
-            LOG.error(str(oex))
-            return '', 1
 
 
     def _is_database_data_exist(self):
@@ -212,15 +196,21 @@ class PostgreSQLServer(SQLServer):
 
     def _initialize_database_data(self):
         '''Initialize a PostgreSQL instance with initdb. '''
+
         LOG.debug('Initializing database at ' + self.path)
 
         init_db = ['initdb', '-U', self.user, '-D', self.path, '-E SQL_ASCII']
 
-        err, code = self._call_command(init_db)
+        err, code = util.call_command(init_db, self.run_env)
         # logger -> print error
         return code == 0
 
+
     def _get_connection_string(self, database):
+        '''
+        Helper method for getting the connection string for the given database.
+        '''
+
         port = str(self.port)
         driver = host_check.get_postgresql_driver_name()
         password = self.password
@@ -293,7 +283,7 @@ class PostgreSQLServer(SQLServer):
         LOG.debug('Checking if database is running at ' + self.host + ':' + str(self.port))
 
         check_db = ['psql', '-U', self.user, '-l', '-p', str(self.port), '-h', self.host]
-        err, code = self._call_command(check_db,)
+        err, code = util.call_command(check_db, self.run_env)
         return code == 0
 
 
@@ -357,10 +347,10 @@ class SQLiteDatabase(SQLServer):
     Handler for SQLite.
     '''
 
-    def __init__(self, context, run_env=None):
-        super(SQLiteDatabase, self).__init__(context.migration_root)
+    def __init__(self, workspace, migration_root, run_env=None):
+        super(SQLiteDatabase, self).__init__(migration_root)
 
-        self.dbpath = os.path.join(context.codechecker_workspace, 'codechecker.sqlite')
+        self.dbpath = os.path.join(workspace, 'codechecker.sqlite')
         self.run_env = run_env
 
 
