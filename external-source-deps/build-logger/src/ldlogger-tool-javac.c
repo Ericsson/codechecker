@@ -270,7 +270,7 @@ int loggerJavacParserCollectActions(
   ParserData data;
   size_t i;
 
-  assert(prog_ == prog_); /* supress unused variable */
+  assert(prog_ == prog_); /* suppress unused variable */
 
   data.hasSourcePath = 0;
   data.state = Normal;

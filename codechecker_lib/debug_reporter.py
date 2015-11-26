@@ -25,11 +25,8 @@ def get_dump_file_name(run_id, action_id):
 
 
 # -----------------------------------------------------------------------------
-def debug(context, dbusername, dbhost, dbport, dbname, force):
+def debug(context, connection_string, force):
     try:
-        connection_string = util.create_postgresql_connection_string(
-            dbusername, dbhost, dbport, dbname)
-
         engine = sqlalchemy.create_engine(connection_string)
         session = sqlalchemy.orm.scoped_session(
                     sqlalchemy.orm.sessionmaker(bind=engine))

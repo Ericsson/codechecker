@@ -102,9 +102,9 @@ def construct_report_filter(report_filters):
             # severity value can be 0
             AND.append(Report.severity == report_filter.severity)
         if report_filter.suppressed:
-            AND.append(Report.suppressed == 'True')
+            AND.append(Report.suppressed == True)
         else:
-            AND.append(Report.suppressed == 'False')
+            AND.append(Report.suppressed == False)
 
         OR.append(and_(*AND))
 
@@ -583,21 +583,21 @@ class ThriftRequestHandler():
             already_suppressed_runids = \
                 filter(lambda bug: bug.run_id in run_ids, set(suppressed))
 
-            unsupress_in_these_runs =  \
+            unsuppress_in_these_runs =  \
                 {bug.run_id for bug in already_suppressed_runids}
 
             LOG.debug('Already suppressed, unsuppressing now')
             suppressed = session.query(SuppressBug) \
                                 .filter(and_(SuppressBug.hash == bug_id_hash,
                                              SuppressBug.file_name == source_file_name,
-                                             SuppressBug.run_id.in_(unsupress_in_these_runs)))
+                                             SuppressBug.run_id.in_(unsuppress_in_these_runs)))
             # delete supppress bug entries
             for sp in suppressed:
                 session.delete(sp)
 
             # update report entries
             self.__set_report_suppress_flag(session,
-                                            unsupress_in_these_runs,
+                                            unsuppress_in_these_runs,
                                             bug_id_hash,
                                             source_file_name,
                                             suppress_flag=suppress)

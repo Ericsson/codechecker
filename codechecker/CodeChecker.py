@@ -75,6 +75,25 @@ class DeprecatedOptionAction(argparse.Action):
         LOG.warning("Deprecated command line option in use: '" + option_string + "'")
 
 
+def add_database_arguments(parser):
+    '''Helper method for adding database arguments to an argument parser.'''
+
+    parser.add_argument('--sqlite', dest="sqlite",
+                        action='store_true', required=False,
+                        help='Use sqlite database.')
+    parser.add_argument('--dbport', type=int, dest="dbport",
+                        default=8764, required=False,
+                        help='Postgres server port.')
+    parser.add_argument('--dbaddress', type=str, dest="dbaddress",
+                        default="localhost", required=False,
+                        help='Postgres database server address')
+    parser.add_argument('--dbname', type=str, dest="dbname",
+                        default="codechecker", required=False,
+                        help='Name of the database.')
+    parser.add_argument('--dbusername', type=str, dest="dbusername",
+                        default='codechecker', required=False,
+                        help='Database user name.')
+
 # ------------------------------------------------------------------------------
 def main():
     '''
@@ -137,22 +156,11 @@ def main():
                                   dest="keep_tmp", required=False,
                                   help='Keep temporary report files \
                                   after sending data to database storage server.')
-        check_parser.add_argument('--dbaddress', type=str, dest="dbaddress",
-                                  default="localhost", required=False,
-                                  help='Postgres database server address.')
-        check_parser.add_argument('--dbport', type=int, dest="dbport",
-                                  default=8764, required=False,
-                                  help='Postgres database server port.')
-        check_parser.add_argument('--dbname', type=str, dest="dbname",
-                                  default="codechecker", required=False,
-                                  help='Name of the database.')
-        check_parser.add_argument('--dbusername', type=str, dest="dbusername",
-                                  default='codechecker', required=False,
-                                  help='Database user name.')
         check_parser.add_argument('--update', action="store_true",
                                   dest="update", default=False, required=False,
                                   help='Incremental parsing, \
                                   update the results of a previous run.')
+        add_database_arguments(check_parser)
         check_parser.set_defaults(func=arg_handler.handle_check)
 
         # --------------------------------------
@@ -204,18 +212,6 @@ def main():
                                    help='Directory where the codechecker \
                                    stored analysis related data \
                                    (automatically created posgtreSql database).')
-        server_parser.add_argument('--dbport', type=int, dest="dbport",
-                                   default=8764, required=False,
-                                   help='Postgres server port.')
-        server_parser.add_argument('--dbaddress', type=str, dest="dbaddress",
-                                   default="localhost", required=False,
-                                   help='Postgres database server address')
-        server_parser.add_argument('--dbname', type=str, dest="dbname",
-                                   default="codechecker", required=False,
-                                   help='Name of the database.')
-        server_parser.add_argument('--dbusername', type=str, dest="dbusername",
-                                   default='codechecker', required=False,
-                                   help='Database user name.')
         server_parser.add_argument('-v', '--view-port', type=int, dest="view_port",
                                    default=11444, required=False,
                                    help='Port used for viewing.')
@@ -231,6 +227,7 @@ def main():
         server_parser.add_argument('--check-address', type=str,
                                    dest="check_address", default="localhost",
                                    required=False, help='Server address.')
+        add_database_arguments(server_parser)
         server_parser.set_defaults(func=arg_handler.handle_server)
 
         # --------------------------------------
@@ -248,21 +245,10 @@ def main():
                                   dest="workspace", required=False,
                                   help='Directory where the codechecker stores \
                                   analysis related data.')
-        debug_parser.add_argument('--dbport', type=int, dest="dbport",
-                                  default=8764, required=False,
-                                  help='Postgres server port.')
-        debug_parser.add_argument('--dbaddress', type=str, dest="dbaddress",
-                                  default="localhost", required=False,
-                                  help='Postgres database server address')
-        debug_parser.add_argument('--dbname', type=str, dest="dbname",
-                                  default="codechecker", required=False,
-                                  help='Name of the database.')
-        debug_parser.add_argument('--dbusername', type=str, dest="dbusername",
-                                  default='codechecker', required=False,
-                                  help='Database user name.')
         debug_parser.add_argument('-f', '--force', action="store_true",
                                   dest="force", required=False, default=False,
                                   help='Generate dump for all failed action.')
+        add_database_arguments(debug_parser)
         debug_parser.set_defaults(func=arg_handler.handle_debug)
 
         # --------------------------------------

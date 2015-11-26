@@ -15,8 +15,6 @@ import errno
 import ntpath
 
 import sqlalchemy
-from alembic import command, config
-from alembic.migration import MigrationContext
 
 from thrift.transport import TSocket
 from thrift.transport import TTransport
@@ -498,62 +496,14 @@ class CheckerReportHandler(object):
                                                         Report.start_bugpoint)
 
 
-def create_db_if_not_exists(dbusername, dbhost, dbport, db_name):
-    ''' True -> created, False -> already exists and do nothing. '''
-    LOG.debug('Creating new database if not exists')
-
-    db_uri = util.create_postgresql_connection_string(dbusername, dbhost, dbport, 'postgres')
-    engine = sqlalchemy.create_engine(db_uri, client_encoding='utf8')
-
-    text = "SELECT 1 FROM pg_database WHERE datname='%s'" % db_name
-    if not bool(engine.execute(text).scalar()):
-        conn = engine.connect()
-        # From sqlalchemy documentation:
-        # The psycopg2 and pg8000 dialects also offer the special level AUTOCOMMIT.
-        conn = conn.execution_options(isolation_level="AUTOCOMMIT")
-        conn.execute('CREATE DATABASE "%s"' % db_name)
-        conn.close()
-
-        LOG.debug('Database created: ' + db_name)
-        return True
-
-    LOG.debug('Database already exists: ' + db_name)
-    return False
-
-def migrate_database(session, migration_scripts):
-    LOG.debug('Updating schema to HEAD...')
-
-    connection = session.connection()
-
-    cfg = config.Config()
-    cfg.set_main_option("script_location", migration_scripts)
-    cfg.attributes["connection"] = connection
-    command.upgrade(cfg, "head")
-
-def run_server(dbUsername, port, db_name, dbhost, dbport, db_version_info, migration_scripts, callback_event=None):
+def run_server(port, db_uri, db_version_info, callback_event=None):
     LOG.debug('Starting codechecker server ...')
 
     try:
-
-        ret = create_db_if_not_exists(dbUsername, dbhost, dbport, db_name)
-        LOG.debug('Database exists: ' + str(ret))
-    except sqlalchemy.exc.SQLAlchemyError as alch_err:
-        LOG.error(str(alch_err))
-        sys.exit(1)
-
-    try:
-        db_uri = util.create_postgresql_connection_string(dbUsername, dbhost, dbport, db_name)
         engine = sqlalchemy.create_engine(db_uri, strategy='threadlocal')
 
         LOG.debug('Creating new database session')
         session = CreateSession(engine)
-
-        LOG.debug('Creating new database schema')
-        start = datetime.now()
-        migrate_database(session, migration_scripts)
-        end = datetime.now()
-        diff = end - start
-        LOG.debug('Creating new database schema done in ' + str(diff.seconds))
 
         version = session.query(DBVersion).first()
         if version is None:
@@ -573,8 +523,6 @@ def run_server(dbUsername, port, db_name, dbhost, dbport, db_version_info, migra
     except sqlalchemy.exc.SQLAlchemyError as alch_err:
         LOG.error(str(alch_err))
         sys.exit(1)
-    finally:
-        session.commit()
 
     session.autoflush = False  # autoflush is enabled by default
 

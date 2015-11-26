@@ -31,6 +31,7 @@ from codechecker_lib import logger
 from codechecker_lib import analyzer_env
 from codechecker_lib import host_check
 from codechecker_lib import generic_package_suppress_handler
+from codechecker_lib.database_handler import SQLServer
 
 LOG = logger.get_new_logger('ARGHANDLER')
 
@@ -136,11 +137,11 @@ def start_workers(sa, actions, jobs, context):
 def check_options_validity(args):
     # Args must has workspace and dbaddress
     if args.workspace and not util.is_localhost(args.dbaddress):
-        LOG.info("Workspace is not required when postgreSql server run on remote host.")
+        LOG.info("Workspace is not required when database server run on remote host.")
         sys.exit(1)
 
     if not args.workspace and util.is_localhost(args.dbaddress):
-        LOG.info("Workspace is required when postgreSql server run on localhost.")
+        LOG.info("Workspace is required when database server run on localhost.")
         sys.exit(1)
 
 
@@ -166,19 +167,10 @@ def handle_list_checkers(args):
     print('')
 
 
-def setup_connection_manager_db(args):
-    client.ConnectionManager.database_host = args.dbaddress
-    client.ConnectionManager.database_port = args.dbport
-
-
 def handle_server(args):
 
     if not host_check.check_zlib():
         LOG.error("zlib error")
-        sys.exit(1)
-
-    if not host_check.check_postgresql_driver():
-        LOG.error("postgresql driver error")
         sys.exit(1)
 
     check_options_validity(args)
@@ -194,32 +186,24 @@ def handle_server(args):
     context.codechecker_workspace = args.workspace
     context.db_username = args.dbusername
 
-    setup_connection_manager_db(args)
-
     check_env = analyzer_env.get_check_env(context.path_env_extra,
                                            context.ld_lib_path_extra)
 
-    client.ConnectionManager.run_env = check_env
-
+    sql_server = SQLServer.from_cmdline_args(args,
+                                             context.codechecker_workspace,
+                                             context.migration_root,
+                                             check_env)
+    conn_mgr = client.ConnectionManager(sql_server, args.check_address, args.check_port)
     if args.check_port:
-
-        LOG.debug('Starting codechecker server and postgres.')
-        client.ConnectionManager.host = args.check_address
-        client.ConnectionManager.port = args.check_port
-        client.ConnectionManager.run_env = check_env
-
-        # starts posgres
-        client.ConnectionManager.start_server(args.dbname, context)
+        LOG.debug('Starting codechecker server and database server.')
+        sql_server.start(wait_for_start=True, init=True)
+        conn_mgr.start_report_server(context.db_version_info)
     else:
-        LOG.debug('Starting postgres.')
-        client.ConnectionManager.start_postgres(context, init_db=False)
-
-    client.ConnectionManager.block_until_db_start_proc_free(context)
+        LOG.debug('Starting database.')
+        sql_server.start(wait_for_start=True, init=False)
 
     # start database viewer
-    db_connection_string = util.create_postgresql_connection_string(
-        args.dbusername, args.dbaddress, args.dbport, args.dbname)
-
+    db_connection_string = sql_server.get_connection_string()
     suppress_handler = generic_package_suppress_handler.GenericSuppressHandler()
     suppress_handler.suppress_file = args.suppress
     LOG.debug('Using suppress file: ' + str(suppress_handler.suppress_file))
@@ -260,8 +244,6 @@ def handle_log(args):
 
 
 def handle_debug(args):
-    setup_connection_manager_db(args)
-
     context = generic_package_context.get_context()
     context.codechecker_workspace = args.workspace
     context.db_username = args.dbusername
@@ -269,14 +251,13 @@ def handle_debug(args):
     check_env = analyzer_env.get_check_env(context.path_env_extra,
                                            context.ld_lib_path_extra)
 
-    client.ConnectionManager.run_env = check_env
+    sql_server = SQLServer.from_cmdline_args(args,
+                                             context.codechecker_workspace,
+                                             context.migration_root,
+                                             check_env)
+    sql_server.start(wait_for_start=True, init=False)
 
-    client.ConnectionManager.start_postgres(context)
-
-    client.ConnectionManager.block_until_db_start_proc_free(context)
-
-    debug_reporter.debug(context, args.dbusername, args.dbaddress,
-                         args.dbport, args.dbname, args.force)
+    debug_reporter.debug(context, sql_server.get_connection_string(), args.force)
 
 def _check_generate_log_file(args, context, silent=False):
     '''Returns a build command log file for check/quickcheck command.'''
@@ -316,10 +297,6 @@ def handle_check(args):
         LOG.error("zlib error")
         sys.exit(1)
 
-    if not host_check.check_postgresql_driver():
-        LOG.error("postgresql driver error")
-        sys.exit(1)
-
     args.workspace = os.path.realpath(args.workspace)
     if not os.path.isdir(args.workspace):
         os.mkdir(args.workspace)
@@ -353,8 +330,11 @@ def handle_check(args):
         LOG.warning('There are no build actions in the log file.')
         sys.exit(1)
 
-    setup_connection_manager_db(args)
-    client.ConnectionManager.port = util.get_free_port()
+    sql_server = SQLServer.from_cmdline_args(args,
+                                             context.codechecker_workspace,
+                                             context.migration_root,
+                                             check_env)
+    conn_mgr = client.ConnectionManager(sql_server, 'localhost', util.get_free_port())
 
     if args.jobs <= 0:
         args.jobs = 1
@@ -368,9 +348,8 @@ def handle_check(args):
     if os.path.exists(suppress_file):
         send_suppress = True
 
-    client.ConnectionManager.run_env = check_env
-
-    client.ConnectionManager.start_server(args.dbname, context)
+    sql_server.start(wait_for_start=True, init=True)
+    conn_mgr.start_report_server(context.db_version_info)
 
     LOG.debug("Checker server started.")
 

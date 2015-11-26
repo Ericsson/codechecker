@@ -159,7 +159,7 @@ class CCSimpleHttpServer(HTTPServer):
         self.suppress_handler = suppress_handler
         self.db_version_info = db_version_info
         self.__engine = sqlalchemy.create_engine(db_conn_string,
-                                                 client_encoding='utf8',
+                                                 encoding='utf8',
                                                  poolclass=sqlalchemy.pool.NullPool)
 
         Session = scoped_session(sessionmaker())

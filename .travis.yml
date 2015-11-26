@@ -34,4 +34,6 @@ script:
     - ./test_package.py -p ./codechecker_package/CodeChecker -v stable --dbport 5432 --dbusername postgres
     - export CODECHECKER_DB_DRIVER=pg8000
     - ./test_package.py -p ./codechecker_package/CodeChecker -v stable --dbport 5432 --dbusername postgres
+    - unset CODECHECKER_DB_DRIVER
+    - ./test_package.py -p ./codechecker_package/CodeChecker -v stable --sqlite
     - ./test_quickcheck.py -p ./codechecker_package/CodeChecker

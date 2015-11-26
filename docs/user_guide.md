@@ -3,7 +3,7 @@
 ##CodeChecker usage
 
 First of all, you have to setup the environment for CodeChecker.
-Codechecker server uses PostgreSQL database to store the results which is also packed into the package.
+Codechecker server uses PostgreSQL database (by default) to store the results which is also packed into the package.
 
 ~~~~~~~~~~~~~~~~~~~~~
 cd $CODECHECKER_PACKAGE_ROOT/init
@@ -40,7 +40,7 @@ optional arguments:
 ##Default configuration:
 
 Used ports:
-* 8764  - PostgreSql
+* 8764  - PostgreSQL
 * 11444 - CodeChecker result viewer
 
 ## 1. log mode:
@@ -96,14 +96,13 @@ CodeChecker check -w ~/codechecker_wp -n myProject -l ~/codechecker_wp/build_log
 ### Advanced Usage
 
 ~~~~~~~~~~~~~~~~~~~~~
-CodeChecker check --help
 usage: CodeChecker.py check [-h] -w WORKSPACE -n NAME
                             (-b COMMAND | -l LOGFILE) [-j JOBS]
                             [-f CONFIGFILE] [-s SKIPFILE] [-u SUPPRESS]
-                            [-e ENABLE] [-d DISABLE] [-c]
-                            [--dbaddress DBADDRESS] [--dbport DBPORT]
+                            [-e ENABLE] [-d DISABLE] [-c [DEPRECATED]]
+                            [--keep-tmp] [--update] [--sqlite]
+                            [--dbport DBPORT] [--dbaddress DBADDRESS]
                             [--dbname DBNAME] [--dbusername DBUSERNAME]
-                            [--update]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -127,13 +126,34 @@ optional arguments:
                         Enable checker.
   -d DISABLE, --disable DISABLE
                         Disable checker.
+  -c [DEPRECATED], --clean [DEPRECATED]
+                        DEPRECATED argument!
   --keep-tmp            Keep temporary report files after sending data to
                         database storage server.
+  --update              Incremental parsing, update the results of a previous
+                        run.
+  --sqlite              Use sqlite database.
+  --dbport DBPORT       Postgres server port.
   --dbaddress DBADDRESS
-                        Postgres database server address.
-  --dbport DBPORT       Postgres database server port.
+                        Postgres database server address
   --dbname DBNAME       Name of the database.
+  --dbusername DBUSERNAME
+                        Database user name.
 ~~~~~~~~~~~~~~~~~~~~~
+
+### Using SQLite for database:
+
+CodeChecker can also use SQLite for storing the results. In this case the
+SQLite database will be created in the workspace directory.
+
+In order to use SQLite instead of PostgreSQL, use the ```--sqlite``` command
+line argument for ```CodeChecker server``` and ```CodeChecker check```
+commands. In this case ```--dbport```, ```--dbaddress```, ```--dbname```, and
+```--dbusername``` command line arguments are ignored.
+
+#### Note:
+Schema migration is not supported with SQLite. This means if you upgrade your
+CodeChecker to a newer version, you might need to re-check your project.
 
 ### Suppression in the source:
 

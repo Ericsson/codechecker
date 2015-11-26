@@ -66,6 +66,20 @@ def check_postgresql_driver():
 
 
 # -----------------------------------------------------------------------------
+def check_sql_driver(check_sqlite):
+    if check_sqlite:
+        # pysqlite driver (which is the same as sqlite3 module) is
+        # included with the Python distribution
+        return True
+    else:
+        try:
+            get_postgresql_driver_name()
+            return True
+        except Exception as ex:
+            return False
+
+
+# -----------------------------------------------------------------------------
 def check_clang(compiler_bin, env):
     '''
     simple check if clang is available
