@@ -28,7 +28,7 @@
   "core.uninitialized.Assign":                      "MEDIUM",
   "core.uninitialized.Branch":                      "MEDIUM",
   "core.uninitialized.CapturedBlockVariable":       "MEDIUM",
-  "core.uninitialized.UndefReturn":                 "MEDIUM",
+  "core.uninitialized.UndefReturn":                 "HIGH",
   "cplusplus.NewDelete":                            "HIGH",
   "cplusplus.NewDeleteLeaks":                       "HIGH",
   "deadcode.DeadStores":                            "LOW"
