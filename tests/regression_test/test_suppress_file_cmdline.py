@@ -37,7 +37,10 @@ class RunResults(unittest.TestCase):
 
     # -----------------------------------------------------
     def test_suppress_file_set_in_cmd(self):
-        # test server is started without a temporary
-        # suppress file
-        self.assertEquals(self._cc_client.getSuppressFile(),
-                          '/tmp/test_suppress_file')
+        """
+        server is started with a suppress file
+        check if the api returns a non empty string
+        tempfile is used for suppress file so name will change for each run
+        """
+        self.assertNotEquals(self._cc_client.getSuppressFile(),
+                             '')
