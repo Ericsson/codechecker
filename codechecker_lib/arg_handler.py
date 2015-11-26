@@ -200,7 +200,7 @@ def handle_server(args):
         conn_mgr.start_report_server(context.db_version_info)
     else:
         LOG.debug('Starting database.')
-        sql_server.start(wait_for_start=True, init=False)
+        sql_server.start(wait_for_start=True, init=True)
 
     # start database viewer
     db_connection_string = sql_server.get_connection_string()
