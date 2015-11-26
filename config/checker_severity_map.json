@@ -17,7 +17,7 @@
   "core.CallAndMessage":                            "HIGH",
   "core.DivideZero":                                "HIGH",
   "core.DynamicTypePropagation":                    "MEDIUM",
-  "core.NonNullParamChecker":                       "MEDIUM",
+  "core.NonNullParamChecker":                       "HIGH",
   "core.NullDereference":                           "HIGH",
   "core.StackAddressEscape":                        "HIGH",
   "core.UndefinedBinaryOperatorResult":             "MEDIUM",
