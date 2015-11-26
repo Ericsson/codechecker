@@ -206,8 +206,8 @@ class Report(Base):
     checker_message = Column(String)
     start_bugpoint = Column(Integer, ForeignKey('bug_report_points.id', deferrable = True, initially = "DEFERRED", ondelete='CASCADE'))
 
-    start_bugevent = Column(Integer, ForeignKey('bug_path_events.id', deferrable = True, initially = "DEFERRED", ondelete='CASCADE'))
-    end_bugevent = Column(Integer, ForeignKey('bug_path_events.id', deferrable = True, initially = "DEFERRED", ondelete='CASCADE'))
+    start_bugevent = Column(Integer, ForeignKey('bug_path_events.id', deferrable = True, initially = "DEFERRED", ondelete='CASCADE'), index = True)
+    end_bugevent = Column(Integer, ForeignKey('bug_path_events.id', deferrable = True, initially = "DEFERRED", ondelete='CASCADE'), index = True)
     suppressed = Column(Boolean)
 
 
