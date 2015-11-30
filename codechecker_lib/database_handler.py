@@ -135,8 +135,8 @@ class SQLServer(object):
         pass
 
 
-    @classmethod
-    def from_cmdline_args(cls, args, workspace, migration_root, env=None):
+    @staticmethod
+    def from_cmdline_args(args, workspace, migration_root, env=None):
         '''
         Normally only this method is called form outside of this module in
         order to instance the proper server implementation.
