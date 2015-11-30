@@ -324,7 +324,7 @@ int loggerJavacParserCollectActions(
     }
 
     loggerVectorAddFrom(&action->arguments, &data.commonArgs,
-      (LoggerDupFuc) &loggerStrDup);
+      NULL, (LoggerDupFuc) &loggerStrDup);
     loggerVectorAdd(&action->arguments, loggerStrDup(src));
     loggerVectorAdd(&action->sources, loggerStrDup(src));
 

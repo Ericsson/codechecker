@@ -184,14 +184,28 @@ void loggerVectorClear(LoggerVector* vec_)
 int loggerVectorAddFrom(
   LoggerVector* vec_,
   const LoggerVector* source_,
+  const size_t* position_,
   LoggerDupFuc dup_)
 {
   size_t i;
-  size_t reqCap = vec_->size + source_->size;
+  size_t reqCap;
+  size_t insPos;
 
   assert(vec_ && "vec_ must be not NULL");
   assert(source_ && "source_ must be not NULL");
   assert(dup_ && "dup_ must be not NULL");
+  assert((!position_ || *position_ <= vec_->size) && "position_ is out of range!");
+
+  reqCap = vec_->size + source_->size;
+
+  if (position_)
+  {
+    insPos = *position_;
+  }
+  else
+  {
+    insPos = vec_->size;
+  }
 
   if (vec_->capacity < reqCap)
   {
@@ -205,9 +219,19 @@ int loggerVectorAddFrom(
     vec_->capacity = reqCap;
   }
 
+  if (insPos < vec_->size)
+  {
+    /* Move items to the end of the vector */
+    for (i = vec_->size - 1; i >= insPos; --i)
+    {
+      vec_->data[i + source_->size] = vec_->data[i];
+      vec_->data[i] = NULL;
+    }
+  }
+
   for (i = 0; i < source_->size; ++i)
   {
-    vec_->data[i + vec_->size] = dup_(source_->data[i]);
+    vec_->data[i + insPos] = dup_(source_->data[i]);
   }
 
   vec_->size += source_->size;
