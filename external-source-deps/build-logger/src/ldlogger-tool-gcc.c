@@ -214,18 +214,44 @@ int loggerGccParserCollectActions(
   LoggerVector* actions_)
 {
   size_t i;
+  /* Position of the last include path + 1 */
+  size_t lastIncPos = 1;
   GccArgsState state = Normal;
   LoggerAction* action = loggerActionNew(toolName_);
 
   loggerVectorAdd(&action->arguments, loggerStrDup(toolName_));
-  if (!getenv("CC_LOGGER_NO_DEF_DIRS"))
-  {
-    getDefaultArguments(prog_, &action->arguments);
-  }
 
   for (i = 1; argv_[i]; ++i)
   {
     state = processArgument(state, argv_[i], action);
+    if (argv_[i][0] == '-' && argv_[i][1] == 'I')
+    {
+      if (argv_[i][2])
+      {
+        /* -I with path argument */
+        lastIncPos = action->arguments.size;
+      }
+      else
+      {
+        /* The path should be the next argument */
+        lastIncPos = action->arguments.size + 1;
+      }
+    }
+  }
+
+  if (!getenv("CC_LOGGER_NO_DEF_DIRS"))
+  {
+    LoggerVector defIncludes;
+    loggerVectorInit(&defIncludes);
+
+    getDefaultArguments(prog_, &defIncludes);
+    if (defIncludes.size)
+    {
+      loggerVectorAddFrom(&action->arguments, &defIncludes,
+        &lastIncPos, (LoggerDupFuc) &loggerStrDup);
+    }
+
+    loggerVectorClear(&defIncludes);
   }
 
   /*
