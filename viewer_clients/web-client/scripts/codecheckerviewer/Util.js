@@ -113,6 +113,39 @@ return declare(null, {
   },
 
 
+  getCheckerInfoDiff : function (baseRunId, newRunId, filePath, suppressed, resolvedState, callback) {
+    var that = this;
+
+    var filter = new codeCheckerDBAccess.ReportFilter();
+    filter.filepath = filePath;
+    filter.suppressed = suppressed;
+
+    var diffEnum = null;
+
+    switch resolvedState {
+      case "unresolv": diffType = UNRESOLVED;
+      case "resolv":   diffType = RESOLVED;
+      case "newonly":  diffType = NEW;
+    }
+
+    CC_SERVICE.getDiffResultTypes(
+      baseRunId,
+      newRunId,
+      diffType,
+      [filter],
+      function (reportDataTypeCountList) {
+        if (reportDataTypeCountList instanceof RequestFailed) {
+          console.error("Thrift API call 'getRunResultTypes' failed.");
+          return;
+        }
+
+        callback(that.parseReportDataTypeCounts(reportDataTypeCountList));
+      }
+    );
+  },
+
+
+
   /**
    * Transforms the result of a getRunResultTypes API query to a processable
    * format.
