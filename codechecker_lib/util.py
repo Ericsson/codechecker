@@ -185,6 +185,6 @@ def call_command(command, env=None):
         LOG.debug(out)
         return out, 0
     except subprocess.CalledProcessError as ex:
-        LOG.error('Running command "' + ' '.join(command) + '" Failed')
-        LOG.error(str(ex))
+        LOG.debug('Running command "' + ' '.join(command) + '" Failed')
+        LOG.debug(str(ex))
         return ex.output, ex.returncode
