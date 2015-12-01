@@ -134,7 +134,9 @@ UNKNOWN_OPTIONS_MAP_REGEX = {
     '^-mmultiple$': 0,
     '^-mupdate$': 0,
     '^-m(no-)?string$': 0,
-    '^-m(no-)?sdata$': 0
+    '^-m(no-)?sdata.*$': 0,
+    '^-mfix-cortex-m3-ldrd$': 0,
+    '^-mthumb-interwork$': 0
 }
 
 # -----------------------------------------------------------------------------
@@ -291,7 +293,7 @@ def arg_check(it, result):
     def append_replacement_to_list(table, target_list, regex=False):
         '''Append replacement items from table to to result[att_name] list.'''
         def wrapped(value):
-            def append_replement(items):
+            def append_replacement(items):
                 for item in items:
                     target_list.append(item)
                 it.next()
@@ -299,10 +301,10 @@ def arg_check(it, result):
             if regex:
                 for pattern in table:
                     if regex_match(value, pattern):
-                        append_replement(table[pattern])
+                        append_replacement(table[pattern])
                         return True
             elif value in table:
-                append_replement(table[value])
+                append_replacement(table[value])
                 return True
             return False
         return wrapped
