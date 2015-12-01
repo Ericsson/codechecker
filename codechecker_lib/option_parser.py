@@ -73,7 +73,7 @@ COMPILE_OPTION_MAP_REGEX = {
     '^-f.*': 0,
     '-m.*': 0,
     '^-Wno-.*': 0,
-    '^-m(32|64)$': 0,
+    '^-m(32|64)$': 0
 }
 
 COMPILE_OPTION_MAP_MERGED = [
@@ -123,6 +123,19 @@ UNIQUE_OPTIONS = {
     '-isysroot': 1
 }
 
+REPLACE_OPTIONS_MAP = {
+    '-mips32'       : [ '-target', 'mips', '-mips32' ],
+    '-mips64'       : [ '-target', 'mips64', '-mips64' ],
+    '-mpowerpc'     : [ '-target', 'powerpc' ],
+    '-mpowerpc64'   : [ '-target', 'powerpc64' ]
+}
+
+UNKNOWN_OPTIONS_MAP_REGEX = {
+    '^-mmultiple$': 0,
+    '^-mupdate$': 0,
+    '^-m(no-)?string$': 0,
+    '^-m(no-)?sdata$': 0
+}
 
 # -----------------------------------------------------------------------------
 class ActionType(object):
@@ -247,7 +260,7 @@ def arg_check(it, result):
 
     def append_merged_to_list(table, target_list):
         ''' Append one or two item to the list.
-                1: if there is no space beetwen two option.
+                1: if there is no space between two option.
                 2: otherwise.
         '''
         def wrapped(value):
@@ -275,6 +288,25 @@ def arg_check(it, result):
             return False
         return wrapped
 
+    def append_replacement_to_list(table, target_list, regex=False):
+        '''Append replacement items from table to to result[att_name] list.'''
+        def wrapped(value):
+            def append_replement(items):
+                for item in items:
+                    target_list.append(item)
+                it.next()
+
+            if regex:
+                for pattern in table:
+                    if regex_match(value, pattern):
+                        append_replement(table[pattern])
+                        return True
+            elif value in table:
+                append_replement(table[value])
+                return True
+            return False
+        return wrapped
+
     def set_attr(arg, attr_name, attr_value=None, regex=None):
         '''Set an attr value. If no value given then read next from iterator.'''
         def wrapped(value):
@@ -288,18 +320,28 @@ def arg_check(it, result):
             return False
         return wrapped
 
-    def skip(table):
+    def skip(table, regex=False):
         '''Skip n item in iterator.'''
         def wrapped(value):
-            if value in table:
-                for x in xrange(0, table[value]):
+            def skip_n(size):
+                for x in xrange(0, size):
                     it.next()
+
+            if regex:
+                for pattern in table:
+                    if regex_match(value, pattern):
+                        table[pattern]
+                        return True
+            elif value in table:
+                skip_n(table[value])
                 return True
             return False
         return wrapped
 
     # Defines handler functions for tables and single options
     arg_collection = [
+        append_replacement_to_list(REPLACE_OPTIONS_MAP, result.compile_opts),
+        skip(UNKNOWN_OPTIONS_MAP_REGEX, True),
         append_to_list(COMPILE_OPTION_MAP, result.compile_opts),
         append_to_list(COMPILER_LINKER_OPTION_MAP, result.compile_opts),
         append_to_list(COMPILE_OPTION_MAP_REGEX, result.compile_opts, True),
