@@ -15,78 +15,6 @@ return declare(null, {
 
 
   /**
-   * Queries the available severity types for checkers
-   */
-  getAvailableSeverityLevels : function() {
-    var severityLevelTypeOptionsArray = [];
-
-    for (var key in Severity){
-      var severityStringLowerCase = key.toLowerCase();
-      var severityString = severityStringLowerCase.charAt(0).toUpperCase() + severityStringLowerCase.slice(1);
-      var severityCode   = Severity[key];
-
-      severityLevelTypeOptionsArray.unshift( { value: severityCode + "", label: severityString + "" } );
-    }
-
-    severityLevelTypeOptionsArray.unshift( { value: "all", label: "All Severities" , selected: true } );
-
-    return severityLevelTypeOptionsArray;
-  },
-
-
-  /**
-   * Queries the available checkers and selects those which are found in the
-   * appropriate run. After these, it executes the callback function with the
-   * resulting checkerTypeOptionsArray as the parameter.
-   * The function is asyncronous.
-   */
-  getAvailableCheckersForDiff : function(runId1, runId2, callback) {
-    var resultTypes1 = null;
-    var resultTypes2 = null;
-
-    var finishedQueries = function () {
-      if (resultTypes1 !== null && resultTypes2 !== null) {
-        var temp = {};
-
-        resultTypes1.forEach(function (item) {
-          temp[item.checkerId] = true;
-        });
-
-        resultTypes2.forEach(function (item) {
-          temp[item.checkerId] = true;
-        });
-
-        var checkerTypeOptionsArray = [ { value: "*", label: "All checkers" , selected: true } ];
-
-        for (var elem in temp) {
-          checkerTypeOptionsArray.push( { value: elem + "", label: elem + "" } );
-        }
-
-        callback(checkerTypeOptionsArray);
-      }
-    }
-
-    CC_SERVICE.getRunResultTypes(runId1, [], function (resultTypes) {
-      if (resultTypes instanceof RequestFailed) {
-        console.error("Thrift API call 'getRunResultTypes' failed.");
-      } else {
-        resultTypes1 = resultTypes;
-        finishedQueries();
-      }
-    });
-
-    CC_SERVICE.getRunResultTypes(runId2, [], function (resultTypes) {
-      if (resultTypes instanceof RequestFailed) {
-        console.error("Thrift API call 'getRunResultTypes' failed.");
-      } else {
-        resultTypes2 = resultTypes;
-        finishedQueries();
-      }
-        });
-  },
-
-
-  /**
    * Queries and formats the result types available for a Run. After these, it
    * executes the callback function with the formatted results as the parameter.
    * The function is asyncronous.
@@ -113,6 +41,11 @@ return declare(null, {
   },
 
 
+  /**
+   * Queries and formats the result types available for a Diff. After these, it
+   * executes the callback function with the formatted results as the parameter.
+   * The function is asyncronous.
+   */
   getCheckerInfoDiff : function (baseRunId, newRunId, filePath, suppressed, resolvedState, callback) {
     var that = this;
 
@@ -120,12 +53,12 @@ return declare(null, {
     filter.filepath = filePath;
     filter.suppressed = suppressed;
 
-    var diffEnum = null;
+    var diffType = null;
 
-    switch resolvedState {
-      case "unresolv": diffType = UNRESOLVED;
-      case "resolv":   diffType = RESOLVED;
-      case "newonly":  diffType = NEW;
+    switch (resolvedState) {
+      case "newonly" : diffType = codeCheckerDBAccess.DiffType.NEW; break;
+      case "resolv"  : diffType = codeCheckerDBAccess.DiffType.RESOLVED; break;
+      case "unresolv": diffType = codeCheckerDBAccess.DiffType.UNRESOLVED; break;
     }
 
     CC_SERVICE.getDiffResultTypes(
@@ -135,7 +68,7 @@ return declare(null, {
       [filter],
       function (reportDataTypeCountList) {
         if (reportDataTypeCountList instanceof RequestFailed) {
-          console.error("Thrift API call 'getRunResultTypes' failed.");
+          console.error("Thrift API call 'getDiffResultTypes' failed.");
           return;
         }
 
@@ -143,7 +76,6 @@ return declare(null, {
       }
     );
   },
-
 
 
   /**
@@ -184,7 +116,7 @@ return declare(null, {
 
     checkerInfoOrderedKeys.forEach(function (e,i) {
       newCheckerInfo[that.severityValueToKey(e)] = checkerInfo[e];
-      newCheckerInfo["ALL"].count += checkerInfo[e].count
+      newCheckerInfo["ALL"].count += checkerInfo[e].count;
     });
 
     return newCheckerInfo;
@@ -243,7 +175,7 @@ return declare(null, {
    */
   severityFromCodeToString : function(severityCode) {
     if (severityCode === "all"){
-      return "All"
+      return "All";
     }
 
     for (var key in Severity) {

@@ -394,43 +394,47 @@ return declare(null, {
   handleNewRunOverviewTab : function(idOfNewOverviewTC, runId, runName) {
     var that = this;
 
-    CC_UTIL.getCheckerInfoRun(runId, "*", false, function (result) {
-      var filterOptions = {};
-      filterOptions.checkerInfoOptions = CC_UTIL.normalizeCheckerInfo(result);
+    CC_UTIL.getCheckerInfoRun(
+      runId,
+      "*",
+      false,
+      function (result) {
+        var filterOptions = {};
+        filterOptions.checkerInfoOptions = CC_UTIL.normalizeCheckerInfo(result);
 
-      var newOverviewTC = new OverviewTC({
-        id           : idOfNewOverviewTC,
-        runId        : runId,
-        overviewType : "run",
-        filterOptions: filterOptions,
-        title        : runName,
-        closable     : true,
-        style        : "padding: 5px;",
-        onClose      : function() {
-          if (that.mainTC.selectedChildWidget === newOverviewTC) {
-            that.mainTC.selectChild("bc_listofrunsgrid");
+        var newOverviewTC = new OverviewTC({
+          id           : idOfNewOverviewTC,
+          runId        : runId,
+          overviewType : "run",
+          filterOptions: filterOptions,
+          title        : runName,
+          closable     : true,
+          style        : "padding: 5px;",
+          onClose      : function() {
+            if (that.mainTC.selectedChildWidget === newOverviewTC) {
+              that.mainTC.selectChild("bc_listofrunsgrid");
+            }
+
+            newOverviewTC.hashchangeHandle.remove();
+
+            return true;
+          },
+          onShow : function() {
+            that.newRunOverviewTab(runId, runName);
           }
+        });
 
-          newOverviewTC.hashchangeHandle.remove();
+        try {
+          that.mainTC.addChild(newOverviewTC);
+          that.mainTC.selectChild(newOverviewTC);
 
-          return true;
-        },
-        onShow : function() {
-          that.newRunOverviewTab(runId, runName);
+          newOverviewTC.overviewGrid.startup();
+        } catch (err) {
+          newOverviewTC.destroyRecursive();
+          console.log(err);
         }
-      });
-
-      try {
-        that.mainTC.addChild(newOverviewTC);
-        that.mainTC.selectChild(newOverviewTC);
-
-        newOverviewTC.overviewGrid.startup();
-      } catch (err) {
-        newOverviewTC.destroyRecursive();
-        console.log(err);
       }
-
-    });
+    );
   },
 
 
@@ -440,46 +444,50 @@ return declare(null, {
   handleNewDiffOverviewTab : function(idOfNewOverviewTC, runId1, runId2, runName1, runName2) {
     var that = this;
 
-    CC_UTIL.getAvailableCheckersForDiff(runId1, runId2, function (checkerTypeOptionsArray) {
-      var filterOptions = {};
-      filterOptions.severityOptions = CC_UTIL.getAvailableSeverityLevels();
-      filterOptions.checkerTypeOptions = checkerTypeOptionsArray;
+    CC_UTIL.getCheckerInfoDiff(
+      runId1,
+      runId2,
+      "*",
+      false,
+      "newonly",
+      function (result) {
+        var filterOptions = {};
+        filterOptions.checkerInfoOptions = CC_UTIL.normalizeCheckerInfo(result);
 
-      var newOverviewTC = new OverviewTC({
-        id           : idOfNewOverviewTC,
-        runId1       : runId1,
-        runId2       : runId2,
-        overviewType : "diff",
-        filterOptions: filterOptions,
-        title        : "Diff of " + runName1 + " and " + runName2,
-        closable     : true,
-        style        : "padding: 5px;",
-        onClose      : function() {
-          if (that.mainTC.selectedChildWidget === newOverviewTC) {
-            that.mainTC.selectChild("bc_listofrunsgrid");
+        var newOverviewTC = new OverviewTC({
+          id            : idOfNewOverviewTC,
+          runId1        : runId1,
+          runId2        : runId2,
+          overviewType  : "diff",
+          filterOptions : filterOptions,
+          title         : "Diff of " + runName1 + " and " + runName2,
+          closable      : true,
+          style         : "padding: 5px;",
+          onClose       : function () {
+            if (that.mainTC.selectedChildWidget === newOverviewTC) {
+              that.mainTC.selectChild("bc_listofrunsgrid");
+            }
+
+            newOverviewTC.hashchangeHandle.remove();
+
+            return true;
+          },
+          onShow : function () {
+            that.newDiffOverviewTab(runId1, runId2, runName1, runName2);
           }
+        });
 
-          newOverviewTC.hashchangeHandle.remove();
+        try {
+          that.mainTC.addChild(newOverviewTC);
+          that.mainTC.selectChild(newOverviewTC);
 
-          return true;
-        },
-        onShow : function() {
-          that.newDiffOverviewTab(runId1, runId2, runName1, runName2);
+          newOverviewTC.overviewGrid.startup();
+        } catch (err) {
+          newOverviewTC.destroyRecursive();
+          console.log(err);
         }
-      });
-
-      try {
-        that.mainTC.addChild(newOverviewTC);
-        that.mainTC.selectChild(newOverviewTC);
-
-        newOverviewTC.overviewGrid.startup();
-      } catch (err) {
-
-        newOverviewTC.destroyRecursive();
-        console.log(err);
-
       }
-    });
+    );
   },
 
 
