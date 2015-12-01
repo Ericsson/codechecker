@@ -23,7 +23,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), 'tests'))
 from test_helper.testlog import LOG
 from quickcheck_test.test import QuickCheckTest
 
-class QuckCheckTester(object):
+class QuickCheckTester(object):
     '''Tester helper class.'''
 
     def _get_check_env(self):
@@ -77,7 +77,7 @@ def main():
     args.pkg_root = os.path.realpath(args.pkg_root)
     args.test_directory = os.path.realpath(args.test_directory)
 
-    tester = QuckCheckTester(args)
+    tester = QuickCheckTester(args)
     tester.run()
 
 if __name__ == '__main__':
