@@ -364,18 +364,7 @@ return declare(null, {
       return [];
     }
 
-    var total = results.then(function(items) {
-      var totalItems = options.start + items.length;
-      if (items.length === options.count) {
-        // FIXME: we don't know how many items will match. We should change the
-        // API in order to return a correct value, but until then we will lie a
-        // somewhat bigger number.
-        totalItems += codeCheckerDBAccess.MAX_QUERY_SIZE;
-      }
-
-      return totalItems;
-    });
-    results.total = total;
+    results.total = options.total;
 
     return QueryResults(results);
   },
