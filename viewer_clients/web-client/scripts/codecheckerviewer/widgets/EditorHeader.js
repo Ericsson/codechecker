@@ -10,11 +10,11 @@ define([
   "dijit/_WidgetBase",
   "dijit/form/Button",
   "dijit/Tooltip",
-], function ( declare, domConstruct, _WidgetBase, Button, Tooltip ) {
+], function (declare, domConstruct, _WidgetBase, Button, Tooltip) {
 return declare(_WidgetBase, {
 
 
-  constructor: function() {
+  constructor: function () {
     var that = this;
 
     that.suppressButton = new Button({
@@ -22,13 +22,13 @@ return declare(_WidgetBase, {
       showLabel : true,
       disabled  : !CCV.isSupprFileAvailable,
       style     : "margin : 0px; margin-right : 5px;",
-      onMouseEnter : function(event) {
+      onMouseEnter : function (event) {
         if (!CCV.isSupprFileAvailable) {
           var tooltipMessage = "Suppress file is not configured.";
           Tooltip.show(tooltipMessage, that.suppressButton.domNode, ['above']);
         }
       },
-      onMouseLeave : function(event) {
+      onMouseLeave : function (event) {
         Tooltip.hide(that.suppressButton.domNode);
       }
     });
@@ -41,14 +41,14 @@ return declare(_WidgetBase, {
   },
 
 
-  buildRendering : function() {
+  buildRendering : function () {
     this.domNode = domConstruct.create("div", {
       class: "editorHeader"
     });
   },
 
 
-  postCreate : function() {
+  postCreate : function () {
     this.inherited(arguments);
 
     domConstruct.place(this.suppressButton.domNode, this.domNode);

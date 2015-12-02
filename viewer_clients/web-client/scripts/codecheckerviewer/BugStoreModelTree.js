@@ -11,7 +11,7 @@ define([
   "dijit/tree/ObjectStoreModel",
   "dijit/Tree",
   "dijit/Tooltip"
-], function ( declare, Memory, Observable, ObjectStoreModel, Tree, Tooltip ) {
+], function (declare, Memory, Observable, ObjectStoreModel, Tree, Tooltip) {
 
   /**
    * Contains the bug tree (with steps) for a specified file.
@@ -21,13 +21,14 @@ define([
 
 return declare(null, {
 
+
   /**
    * Construct a new object. The following arguments are required:
    *   runId: a run id
    *   fileId: the file's id
    *   filePath: the files's path
    */
-  constructor : function(args) {
+  constructor : function (args) {
     var that = this;
     declare.safeMixin(that, args);
 
@@ -43,7 +44,7 @@ return declare(null, {
           isLeaf : true
         }
       ],
-      getChildren : function(node) {
+      getChildren : function (node) {
         return this.query({ parent: node.id });
       }
     }));
@@ -51,7 +52,7 @@ return declare(null, {
     that.bugModel = new ObjectStoreModel({
       store : that.bugStore,
       query : { id : "root" },
-      mayHaveChildren: function(item){
+      mayHaveChildren: function (item){
         return (item.isLeaf === false);
       }
     });
@@ -62,7 +63,7 @@ return declare(null, {
       model        : that.bugModel,
       openOnClick  : true,
       showRoot     : false,
-      getIconClass : function(item, opened) {
+      getIconClass : function (item, opened) {
         if (item.isLeaf === false) {
           if (opened) {
             return "dijitFolderOpened";
@@ -73,12 +74,12 @@ return declare(null, {
           return "dijitLeaf";
         }
       },
-      _onNodeMouseEnter : function(node, evt) {
+      _onNodeMouseEnter : function (node, evt) {
         if (node.item.isLeaf === true) {
           Tooltip.show(node.item.name, node.domNode, ['above']);
         }
       },
-      _onNodeMouseLeave : function(node, evt) {
+      _onNodeMouseLeave : function (node, evt) {
         if (node.item.isLeaf === true) {
           Tooltip.hide(node.domNode);
         }
@@ -87,6 +88,7 @@ return declare(null, {
 
     that.loadBugStoreData();
   },
+
 
   /**
    * Queries run results for the file. The given onComplete callback function
@@ -97,14 +99,14 @@ return declare(null, {
    *
    * @param onComplete a callback function for the results.
    */
-  _queryReportsForFile : function(onComplete) {
+  _queryReportsForFile : function (onComplete) {
     var that = this;
 
     var limit = codeCheckerDBAccess.MAX_QUERY_SIZE;
     var filter = new codeCheckerDBAccess.ReportFilter();
     filter.filepath = that.filePath;
 
-    CC_SERVICE.getRunResults(that.runId, limit, 0, [], [filter], function(result) {
+    CC_SERVICE.getRunResults(that.runId, limit, 0, [], [filter], function (result) {
       if (result instanceof RequestFailed) {
         console.error("Failed to load run results for "+ that.filePath, result);
         onComplete([]);
@@ -113,6 +115,7 @@ return declare(null, {
       }
     });
   },
+
 
   /**
    * Builds the execution path for the given report and adds it to the bug
@@ -124,7 +127,7 @@ return declare(null, {
    * @param report a ReportData
    * @param onComplete a callback function
    */
-  _buildExecPathForReport : function(bugStore, report, onComplete) {
+  _buildExecPathForReport : function (bugStore, report, onComplete) {
     var that = this;
 
     bugStore.push({
@@ -153,14 +156,14 @@ return declare(null, {
       isLeaf     : true
     });
 
-    CC_SERVICE.getReportDetails(report.reportId, function(details) {
+    CC_SERVICE.getReportDetails(report.reportId, function (details) {
       if (details instanceof RequestFailed) {
         console.error("Failed to load report details!", details);
         onComplete();
         return;
       }
 
-      details.executionPath.forEach(function(step, index) {
+      details.executionPath.forEach(function (step, index) {
         bugStore.push({
           name       : "Step " + (index + 1) + " : " +
             step.filePath.split("/").pop() + " : Line " +
@@ -181,10 +184,11 @@ return declare(null, {
     });
   },
 
+
   /**
    * Start (async) loading the bug tree.
    */
-  loadBugStoreData : function() {
+  loadBugStoreData : function () {
     var that = this;
 
     var bugStoreDataTmp = [
@@ -224,15 +228,15 @@ return declare(null, {
       }
     ];
 
-    that._queryReportsForFile(function(reports) {
+    that._queryReportsForFile(function (reports) {
       var reportsComplete = 0;
 
-      reports.forEach(function(report) {
-        that._buildExecPathForReport(bugStoreDataTmp, report, function() {
+      reports.forEach(function (report) {
+        that._buildExecPathForReport(bugStoreDataTmp, report, function () {
           ++reportsComplete;
           if (reportsComplete === reports.length) {
             // FIXME: it's slow on large array
-            bugStoreDataTmp.forEach(function(item) {
+            bugStoreDataTmp.forEach(function (item) {
               that.bugStore.put(item, { overwrite : true });
             });
 

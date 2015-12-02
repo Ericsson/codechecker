@@ -10,7 +10,7 @@ define([
   "dojo/Deferred",
   "dojox/grid/DataGrid",
   "scripts/codecheckerviewer/OverviewStore.js",
-], function ( declare, ObjectStore, Deferred, DataGrid, OverviewStore ) {
+], function (declare, ObjectStore, Deferred, DataGrid, OverviewStore) {
 return declare(DataGrid, {
 
 
@@ -18,7 +18,7 @@ return declare(DataGrid, {
    * Construct the new object. The following arguments are required:
    *   myOverviewTC: The OverviewTC this object belongs to
    */
-  constructor : function(args) {
+  constructor : function (args) {
     var that = this;
     declare.safeMixin(that, args);
 
@@ -27,15 +27,16 @@ return declare(DataGrid, {
     that.cellWidth = ((100)/5).toString() + "%";
 
     that.structure = [
-      { name: "File", field: "fileWithBugPos", styles: "text-align: center;", width: that.cellWidth , formatter: function(data) { return data.split('\n').join('<br/>'); } },
-      { name: "Message", field: "checkerMsg", styles: "text-align: center;", width: that.cellWidth },
-      { name: "Checker name", field: "checkerId", styles: "text-align: center;", width: that.cellWidth },
-      { name: "Severity", field: "severity", styles: "text-align: center;", width: that.cellWidth },
-      { name: "Suppress Comment", field: "suppressComment", styles: "text-align: center;", width: that.cellWidth },
+      { name : "File", field : "fileWithBugPos", styles : "text-align: center;", width : that.cellWidth , formatter : function (data) { return data.split('\n').join('<br/>'); } },
+      { name : "Message", field : "checkerMsg", styles : "text-align: center;", width : that.cellWidth },
+      { name : "Checker name", field : "checkerId", styles : "text-align: center;", width : that.cellWidth },
+      { name : "Severity", field : "severity", styles : "text-align: center;", width : that.cellWidth },
+      { name : "Suppress Comment", field : "suppressComment", styles : "text-align: center;", width : that.cellWidth },
     ];
 
     marked.setOptions({ highlight: function (code) { return hljs.highlightAuto(code).value; } });
   },
+
 
   postCreate : function () {
     var that = this;
@@ -50,7 +51,7 @@ return declare(DataGrid, {
    *
    * For parameters see dojox/grid/DataGrid documentation.
    */
-  canSort : function(inSortInfo) {
+  canSort : function (inSortInfo) {
     var that = this;
     var cell = that.getCell(Math.abs(inSortInfo)-1);
     if (!cell) {
@@ -70,7 +71,7 @@ return declare(DataGrid, {
    *
    * @return the default sort array
    */
-  _getDefaultSortOptions : function() {
+  _getDefaultSortOptions : function () {
     return [
       {
         attribute : "severity",
@@ -96,7 +97,7 @@ return declare(DataGrid, {
    * @param count The hit count a query with the gives filters produces.
    * @return a new query object.
    */
-  _createRunOverviewQuery : function(runFilters, count) {
+  _createRunOverviewQuery : function (runFilters, count) {
     var that = this;
     var query = {
       overviewType : "run",
@@ -119,7 +120,7 @@ return declare(DataGrid, {
    * @param count The hit count a query with the gives filters produces.
    * @return a new query object.
    */
-  _createDiffOverviewQuery : function(diffFiltersObj, count) {
+  _createDiffOverviewQuery : function (diffFiltersObj, count) {
     var that = this;
 
     var query = {
@@ -145,12 +146,12 @@ return declare(DataGrid, {
    * Widgets.
    * @return The Thrift API compatible filter array.
    */
-  _createRunApiFilters : function(filterObjArray) {
+  _createRunApiFilters : function (filterObjArray) {
     var that = this;
 
     var filters = [];
 
-    filterObjArray.forEach(function(item) {
+    filterObjArray.forEach(function (item) {
       var filter = new codeCheckerDBAccess.ReportFilter();
 
       filter.filepath = item.pathState === "" ? "*" : item.pathState;
@@ -188,7 +189,7 @@ return declare(DataGrid, {
    * Widgets
    * @param The three Thript API compatible Diff filters in an object.
    */
-  _createDiffApiFilters : function(filterObjArray) {
+  _createDiffApiFilters : function (filterObjArray) {
     var that = this;
 
     var newResultsFilters        = [];
@@ -231,7 +232,7 @@ return declare(DataGrid, {
    * Refreshes the title of the Run Overview to show the correct count of hits
    * found in the database.
    */
-  _refreshRunHitCount : function(count) {
+  _refreshRunHitCount : function (count) {
     var that = this;
 
     that.myOverviewTC.overviewBC.set('title', 'Run Overview - hits : ' + count);
@@ -254,7 +255,7 @@ return declare(DataGrid, {
    * (in dojo/data API format) according to the current filters and state.
    * It also calls the correct hit count refreshing function.
    */
-  refreshGrid : function() {
+  refreshGrid : function () {
     var that = this;
 
     var query;

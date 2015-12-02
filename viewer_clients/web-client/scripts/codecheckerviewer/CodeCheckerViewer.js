@@ -76,7 +76,7 @@ return declare(null, {
       }
 
       that.listOfRunsBC.onShow = function() {
-        if (hash() != "") {
+        if (hash() !== "") {
           hash("");
           that.listOfRunsGrid.render();
         }
@@ -191,9 +191,9 @@ return declare(null, {
               that.listOfRunsGrid.getItem(evt.rowIndex).diffDisplay[0] = false;
               that.listOfRunsGrid.update();
 
-              for(var i = 0 ; i < diffNumber ; ++i) {
-                if (that.diffRuns[i].runId === that.listOfRunsGrid.getItem(evt.rowIndex).runid[0]) {
-                  that.diffRuns.splice(i, 1);
+              for (var j = 0 ; j < diffNumber ; ++j) {
+                if (that.diffRuns[j].runId === that.listOfRunsGrid.getItem(evt.rowIndex).runid[0]) {
+                  that.diffRuns.splice(j, 1);
                   break;
                 }
               }
@@ -302,7 +302,7 @@ return declare(null, {
           if (darray.indexOf(that.deleteRunIds, run.runid[0]) >= 0) {
             that.listOfRunsGrid.store.deleteItem(run);
           }
-        })
+        });
       }
     });
 
@@ -498,7 +498,7 @@ return declare(null, {
     var that = this;
 
     that.listOfRunsGrid.recreateStore();
-    that.listOfRunsGrid.fillGridWithRunData()
+    that.listOfRunsGrid.fillGridWithRunData();
     that.listOfRunsGrid.render();
 
     that.diffRuns = [];
