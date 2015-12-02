@@ -13,9 +13,16 @@ import linecache
 import os
 import re
 
+from codechecker_lib import logger
+
+LOG = logger.get_new_logger('PLIST_HELPER')
+
 
 def gen_bug_hash(bug):
     line_content = linecache.getline(bug.file_path, bug.from_line)
+    if line_content == '' and not os.path.isfile(bug.file_path):
+        LOG.debug('%s does not exists!' % bug.file_path)
+
     file_name = os.path.basename(bug.file_path)
     l = [file_name, bug.checker_name, bug.msg, line_content,
          str(bug.from_col), str(bug.until_col)]
