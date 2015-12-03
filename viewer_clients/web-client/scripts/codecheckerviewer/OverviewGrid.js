@@ -7,9 +7,10 @@
 define([
   "dojo/_base/declare",
   "dojo/data/ObjectStore",
+  "dojo/Deferred",
   "dojox/grid/DataGrid",
   "scripts/codecheckerviewer/OverviewStore.js",
-], function ( declare, ObjectStore, DataGrid, OverviewStore ) {
+], function ( declare, ObjectStore, Deferred, DataGrid, OverviewStore ) {
 return declare(DataGrid, {
 
 
@@ -92,15 +93,17 @@ return declare(DataGrid, {
    * This is a helper method for _createQuery.
    *
    * @param runFilters Filters (see OverviewGrid::_createRunApiFilters)
+   * @param count The hit count a query with the gives filters produces.
    * @return a new query object.
    */
-  _createRunOverviewQuery : function(runFilters) {
+  _createRunOverviewQuery : function(runFilters, count) {
     var that = this;
     var query = {
       overviewType : "run",
       runId        : that.myOverviewTC.runId,
       filters      : runFilters,
-      defaultSort  : that._getDefaultSortOptions()
+      defaultSort  : that._getDefaultSortOptions(),
+      total        : count,
     };
 
     return query;
@@ -113,9 +116,10 @@ return declare(DataGrid, {
    *
    * @param diffFiltersObj The three Diff filter arrays in an object
    * (see OverviewGrid::_createDiffApiFilters)
+   * @param count The hit count a query with the gives filters produces.
    * @return a new query object.
    */
-  _createDiffOverviewQuery : function(diffFiltersObj) {
+  _createDiffOverviewQuery : function(diffFiltersObj, count) {
     var that = this;
 
     var query = {
@@ -125,7 +129,8 @@ return declare(DataGrid, {
       newResultsFilters        : diffFiltersObj.newResultsFilters,
       resolvedResultsFilters   : diffFiltersObj.resolvedResultsFilters,
       unresolvedResultsFilters : diffFiltersObj.unresolvedResultsFilters,
-      defaultSort              : that._getDefaultSortOptions()
+      defaultSort              : that._getDefaultSortOptions(),
+      total                    : count,
     };
 
     return query;
@@ -225,103 +230,22 @@ return declare(DataGrid, {
   /**
    * Refreshes the title of the Run Overview to show the correct count of hits
    * found in the database.
-   *
-   * @param runFilters The current (Thrift Api compatible) filters of the Run.
    */
-  _refreshRunHitCount : function(runFilters) {
+  _refreshRunHitCount : function(count) {
     var that = this;
 
-    CC_SERVICE.getRunResultCount(
-      that.myOverviewTC.runId,
-      runFilters,
-      function(result) {
-        if (result instanceof RequestFailed) {
-          console.log("Thrift API call 'getRunResultCount' failed!");
-        } else {
-          that.myOverviewTC.overviewBC.set('title', 'Run Overview - hits : ' + result);
-        }
-      }
-    );
+    that.myOverviewTC.overviewBC.set('title', 'Run Overview - hits : ' + count);
   },
 
 
   /**
    * Refreshes the title of the Diff Overview to show the correct count of hits
    * found in the database.
-   *
-   * @param diffFiltersObj The current three (Thrift Api compatible) filter
-   * arrays of the Diff in an object.
    */
-  _refreshDiffHitCount : function (diffFiltersObj) {
+  _refreshDiffHitCount : function (count) {
     var that = this;
 
-    var newCount        = null;
-    var resolvedCount   = null;
-    var unresolvedCount = null;
-
-    var finishedCountQueries = function () {
-      if (newCount !== null && resolvedCount !== null && unresolvedCount !== null) {
-        var allCount = newCount + resolvedCount + unresolvedCount;
-        that.myOverviewTC.overviewBC.set('title', 'Diff Overview - hits : ' + allCount);
-      }
-    };
-
-    if (diffFiltersObj.newResultsFilters.length > 0) {
-      CC_SERVICE.getDiffResultCount(
-        that.myOverviewTC.runId1,
-        that.myOverviewTC.runId2,
-        codeCheckerDBAccess.DiffType.NEW,
-        diffFiltersObj.newResultsFilters,
-        function(result) {
-          if (result instanceof RequestFailed) {
-            console.log("Thrift API call 'getDiffResultCount' failed!");
-          } else {
-            newCount = result;
-            finishedCountQueries();
-          }
-        }
-      );
-    } else {
-      newCount = 0;
-    }
-
-    if (diffFiltersObj.resolvedResultsFilters.length > 0) {
-      CC_SERVICE.getDiffResultCount(
-        that.myOverviewTC.runId1,
-        that.myOverviewTC.runId2,
-        codeCheckerDBAccess.DiffType.RESOLVED,
-        diffFiltersObj.resolvedResultsFilters,
-        function(result) {
-          if (result instanceof RequestFailed) {
-            console.log("Thrift API call 'getDiffResultCount' failed!");
-          } else {
-            resolvedCount = result;
-            finishedCountQueries();
-          }
-        }
-      );
-    } else {
-      resolvedCount = 0;
-    }
-
-    if (diffFiltersObj.unresolvedResultsFilters.length > 0) {
-      CC_SERVICE.getDiffResultCount(
-        that.myOverviewTC.runId1,
-        that.myOverviewTC.runId2,
-        codeCheckerDBAccess.DiffType.UNRESOLVED,
-        diffFiltersObj.unresolvedResultsFilters,
-        function(result) {
-          if (result instanceof RequestFailed) {
-            console.log("Thrift API call 'getDiffResultCount' failed!");
-          } else {
-            unresolvedCount = result;
-            finishedCountQueries();
-          }
-        }
-      );
-    } else {
-      unresolvedCount = 0;
-    }
+    that.myOverviewTC.overviewBC.set('title', 'Diff Overview - hits : ' + count);
   },
 
 
@@ -334,20 +258,165 @@ return declare(DataGrid, {
     var that = this;
 
     var query;
+    var countDef = new Deferred();
     var filterObjArray = that.myOverviewTC.getStateOfFilters();
 
     if (that.myOverviewTC.overviewType === "run") {
+
       var filters = that._createRunApiFilters(filterObjArray);
-      that._refreshRunHitCount(filters);
-      query = that._createRunOverviewQuery(filters);
+
+      that.getCount(
+        that.myOverviewTC.overviewType,
+        [that.myOverviewTC.runId],
+        { filters : filters },
+        function (count) {
+          if (count instanceof RequestFailed) {
+            countDef.reject("Failed to get hit count for Run");
+          } else {
+            countDef.resolve(count);
+            that._refreshRunHitCount(count);
+          }
+        }
+      );
+
+      query = that._createRunOverviewQuery(filters, countDef);
+
     } else if (that.myOverviewTC.overviewType === "diff") {
+
       var filtersObj = that._createDiffApiFilters(filterObjArray);
-      that._refreshDiffHitCount(filtersObj);
-      query = that._createDiffOverviewQuery(filtersObj);
+
+      that.getCount(
+        that.myOverviewTC.overviewType,
+        [that.myOverviewTC.runId1, that.myOverviewTC.runId2],
+        filtersObj,
+        function (count) {
+          if (count instanceof RequestFailed) {
+            countDef.reject("Failed to get hit count for Diff");
+          } else {
+            countDef.resolve(count);
+            that._refreshDiffHitCount(count);
+          }
+        }
+      );
+
+      query = that._createDiffOverviewQuery(filtersObj, countDef);
+
     }
 
     that.setQuery(query, query);
-  }
+  },
+
+
+  /**
+   * Gets the hit count for a Run or a Diff.
+   *
+   * @param overviewType Type of the Overview.
+   * @param runIds An array consisting of one (Run) or two (Diff) runIds.
+   * @param filterObj An object containing one (Run) or three (Diff) filter arrays.
+   * @param callback Callback function to call after the query/queries finish.
+   *
+   */
+  getCount : function (overviewType, runIds, filterObj, callback) {
+
+    if (overviewType === "run") {
+
+      CC_SERVICE.getRunResultCount(
+        runIds[0],
+        filterObj.filters,
+        function (count) {
+          if (count instanceof RequestFailed) {
+            console.log("Thrift API call 'getRunResultCount' failed!");
+          }
+
+          callback(count);
+        }
+      );
+
+    } else if (overviewType === "diff") {
+
+      var newCount           = null;
+      var resolvedCount      = null;
+      var unresolvedCount    = null;
+      var finishedQueryCount = 0;
+
+      var finishedCountQueries = function (error) {
+        if (newCount !== null && resolvedCount !== null && unresolvedCount !== null) {
+          callback(newCount + resolvedCount + unresolvedCount);
+        } else if (finishedQueryCount === 3) {
+          callback(error);
+        }
+      };
+
+      if (filterObj.newResultsFilters.length > 0) {
+        CC_SERVICE.getDiffResultCount(
+          runIds[0],
+          runIds[1],
+          codeCheckerDBAccess.DiffType.NEW,
+          filterObj.newResultsFilters,
+          function (count) {
+            if (count instanceof RequestFailed) {
+              error = true;
+              console.log("Thrift API call 'getDiffResultCount' failed!");
+            } else {
+              newCount = count;
+            }
+
+            finishedQueryCount += 1;
+            finishedCountQueries(count);
+          }
+        );
+      } else {
+        newCount = 0;
+        finishedQueryCount += 1;
+      }
+
+      if (filterObj.resolvedResultsFilters.length > 0) {
+        CC_SERVICE.getDiffResultCount(
+          runIds[0],
+          runIds[1],
+          codeCheckerDBAccess.DiffType.RESOLVED,
+          filterObj.resolvedResultsFilters,
+          function (count) {
+            if (count instanceof RequestFailed) {
+              error = true;
+              console.log("Thrift API call 'getDiffResultCount' failed!");
+            } else {
+              resolvedCount = count;
+            }
+
+            finishedQueryCount += 1;
+            finishedCountQueries(count);
+          }
+        );
+      } else {
+        resolvedCount = 0;
+        finishedQueryCount += 1;
+      }
+
+      if (filterObj.unresolvedResultsFilters.length > 0) {
+        CC_SERVICE.getDiffResultCount(
+          runIds[0],
+          runIds[1],
+          codeCheckerDBAccess.DiffType.UNRESOLVED,
+          filterObj.unresolvedResultsFilters,
+          function (count) {
+            if (count instanceof RequestFailed) {
+              console.log("Thrift API call 'getDiffResultCount' failed!");
+            } else {
+              unresolvedCount = count;
+            }
+
+            finishedQueryCount += 1;
+            finishedCountQueries(count);
+          }
+        );
+      } else {
+        unresolvedCount = 0;
+        finishedQueryCount += 1;
+      }
+
+    }
+  },
 
 
 });});
