@@ -136,7 +136,14 @@ UNKNOWN_OPTIONS_MAP_REGEX = {
     '^-m(no-)?string$': 0,
     '^-m(no-)?sdata.*$': 0,
     '^-mfix-cortex-m3-ldrd$': 0,
-    '^-mthumb-interwork$': 0
+    '^-mthumb-interwork$': 0,
+    '^-fno-var-tracking-assignments': 0,
+    '^-fconserve-stack': 0,
+    '^-fno-delete-null-pointer-checks': 0,
+    '^-ffixed-r2': 0,
+    '^-fno-var-tracking-assignments': 0,
+    '^-fconserve-stack': 0,
+    '^-m(no-)?spe.*': 0
 }
 
 # -----------------------------------------------------------------------------
