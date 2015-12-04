@@ -15,8 +15,8 @@ define([
   "scripts/codecheckerviewer/BugStoreModelTree.js",
   "scripts/codecheckerviewer/Editor.js",
   "scripts/codecheckerviewer/widgets/EditorHeader.js",
-], function ( declare, domConstruct, ContentPane, BorderContainer, Dialog
-            , Button, Textarea, BugStoreModelTree, Editor, EditorHeader ) {
+], function (declare, domConstruct, ContentPane, BorderContainer, Dialog,
+  Button, Textarea, BugStoreModelTree, Editor, EditorHeader) {
 return declare(BorderContainer, {
 
   /**
@@ -32,7 +32,7 @@ return declare(BorderContainer, {
    *   suppressed: whether the bug is suppressed or not
    *   runId: the runId of the run in which the bug is found
    */
-  constructor : function(args) {
+  constructor : function (args) {
     var that = this;
     declare.safeMixin(that, args);
   },
@@ -63,7 +63,7 @@ return declare(BorderContainer, {
     that.title         = checkedFile.split(/[\/]+/).pop() + " @ Line " + lastBugPosition.startLine;
     that.liveSplitters = false;
     that.closable      = true;
-    that.onClose       = function() {
+    that.onClose       = function () {
       if (myOverviewTC.selectedChildWidget === that) {
         myOverviewTC.selectChild(myOverviewTC.overviewBC.id);
       }
@@ -106,20 +106,20 @@ return declare(BorderContainer, {
       runId           : runId,
       fileId          : fileId,
       filePath        : checkedFile,
-      onLoaded        : function() {
+      onLoaded        : function () {
         that.bugStoreModelTree.bugTree.set("path", ["root", severity, bugHash,
           bugHash + "_0"]);
       }
     });
 
-    that.bugStoreModelTree.bugTree.onClick = function(item) {
+    that.bugStoreModelTree.bugTree.onClick = function (item) {
       if (item.isLeaf === true) {
 
         if (that.viewedFile !== item.filePath) {
           that.viewedFile   = item.filePath;
           that.viewedFileId = item.fileId;
 
-          CC_SERVICE.getSourceFileData(that.viewedFileId, true, function(sourceFileData) {
+          CC_SERVICE.getSourceFileData(that.viewedFileId, true, function (sourceFileData) {
             if (sourceFileData instanceof RequestFailed) {
               console.error("Failed to file contents for " + fileName + " , " +
                 sourceFileData);
@@ -152,12 +152,12 @@ return declare(BorderContainer, {
     };
 
 
-    editorHeader.documentationButton.onClick = function() {
+    editorHeader.documentationButton.onClick = function () {
       myOverviewTC.showDocumentation(that.currCheckerId);
     };
 
 
-    editorHeader.suppressButton.onClick = function() {
+    editorHeader.suppressButton.onClick = function () {
       var suppressDialog = new Dialog({
         title : "Comment for the suppress",
         style : "text-align: center;"
@@ -169,7 +169,7 @@ return declare(BorderContainer, {
 
       var sendSuppressButton = new Button({
         label   : "Suppress",
-        onClick : function() {
+        onClick : function () {
           try {
 
             sendSuppressButton.setDisabled(true);
@@ -214,7 +214,7 @@ return declare(BorderContainer, {
       editorHeader.suppressButton.setDisabled(true);
     }
 
-    CC_SERVICE.getSourceFileData(that.viewedFileId, true, function(sourceFileData) {
+    CC_SERVICE.getSourceFileData(that.viewedFileId, true, function (sourceFileData) {
       if (sourceFileData instanceof RequestFailed) {
         console.error("Failed to file contents for " + fileName + " , " +
           sourceFileData);
@@ -249,21 +249,21 @@ return declare(BorderContainer, {
    * @param range The range we want to scroll to
    * @param reportId The reportId of the selected bug
    */
-  jumpToRangeAndDrawBubblesLines : function(editor, range, reportId) {
+  jumpToRangeAndDrawBubblesLines : function (editor, range, reportId) {
     var that = this;
 
     editor.clearBubbles();
     editor.clearLines();
 
-    var filterFunction = function(obj) {
+    var filterFunction = function (obj) {
       if (obj.fileId === that.viewedFileId) {
         return true;
       } else {
         return false;
       }
-    }
+    };
 
-    CC_SERVICE.getReportDetails(reportId, function(reportDetails) {
+    CC_SERVICE.getReportDetails(reportId, function (reportDetails) {
       var allPoints = reportDetails.executionPath;
 
       that.createAndAddFileJumpBubbles(allPoints, editor);
@@ -297,7 +297,7 @@ return declare(BorderContainer, {
    * @param editor The appropriate Editor widget
    */
 
-  clearSelectionAndBubblesLines : function(editor) {
+  clearSelectionAndBubblesLines : function (editor) {
     var that = this;
 
 
@@ -319,11 +319,11 @@ return declare(BorderContainer, {
    *
    * @param bugPosition The bug position
    */
-  createRangeFromBugPos : function(bugPosition) {
+  createRangeFromBugPos : function (bugPosition) {
     return {
       from : { line : bugPosition.startLine , column : bugPosition.startCol   },
       to   : { line : bugPosition.endLine   , column : bugPosition.endCol + 1 }
-    }
+    };
 
   },
 
@@ -333,7 +333,7 @@ return declare(BorderContainer, {
    * @param points The steps in the executionPath
    * @param editor The appropriate Editor widget
    */
-  createAndAddFileJumpBubbles : function(points, editor) {
+  createAndAddFileJumpBubbles : function (points, editor) {
     var that = this;
 
 
@@ -364,12 +364,12 @@ return declare(BorderContainer, {
 
     }
 
-    for (var i = 0 ; i < bubbleInfoArray.length ; ++i) {
+    for (var j = 0 ; j < bubbleInfoArray.length ; ++j) {
       editor.addNewOtherFileBubble(
-        bubbleInfoArray[i].filePath,
-        bubbleInfoArray[i].fileId,
-        bubbleInfoArray[i].line,
-        bubbleInfoArray[i].fileViewBC
+        bubbleInfoArray[j].filePath,
+        bubbleInfoArray[j].fileId,
+        bubbleInfoArray[j].line,
+        bubbleInfoArray[j].fileViewBC
       );
     }
   }

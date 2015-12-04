@@ -8,7 +8,7 @@ define([
   "dojo/_base/declare",
   "dijit/layout/ContentPane",
   "scripts/codecheckerviewer/widgets/Filter.js",
-], function ( declare, ContentPane, Filter ) {
+], function (declare, ContentPane, Filter) {
 return declare(ContentPane, {
 
 
@@ -18,7 +18,7 @@ return declare(ContentPane, {
    *   filterOptions: object of Select-compatible options array to be used by
    *     Selects in a Filter, contains: checkerTypeOptions, severityOptions.
    */
-  constructor : function(args) {
+  constructor : function (args) {
     var that = this;
     declare.safeMixin(that, args);
 
@@ -29,7 +29,7 @@ return declare(ContentPane, {
   /**
    * Creates the main Filter widget and builds the dom.
    */
-  postCreate : function() {
+  postCreate : function () {
     var that = this;
     that.inherited(arguments);
 
@@ -98,7 +98,7 @@ return declare(ContentPane, {
   /**
    * Adds a new filter.
    */
-  addFilter : function() {
+  addFilter : function () {
     var that = this;
 
     var newFilter = new Filter({
@@ -120,7 +120,7 @@ return declare(ContentPane, {
    *
    * @param filter The filter to be removed
    */
-  removeFilter : function(filter) {
+  removeFilter : function (filter) {
     var that = this;
 
     for (var i = 0 , len = that.filters.length ; i < len ; ++i ) {
@@ -138,7 +138,7 @@ return declare(ContentPane, {
   /**
    * Deep copies a filterOptions object.
    */
-  copyFilterOptions : function(filterOptions) {
+  copyFilterOptions : function (filterOptions) {
     var that = this;
 
     if (filterOptions !== undefined) {
@@ -153,7 +153,7 @@ return declare(ContentPane, {
   /**
    * Function to be called after adding or removing a filter.
    */
-  onRemoveOrAdd : function() {
+  onRemoveOrAdd : function () {
     var that = this;
 
     that.myOverviewTC.overviewGrid.refreshGrid();
