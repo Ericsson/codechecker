@@ -88,7 +88,7 @@ def perform_build_command(logfile, command, context, silent=False):
 
 def worker_result_handler(results):
     LOG.info("----==== Summary ====----")
-    LOG.info("All/successed build actions: " + str(len(results)) + "/" + str(len(filter(lambda x: x == 0, results))))
+    LOG.info("All/successful build actions: " + str(len(results)) + "/" + str(len(filter(lambda x: x == 0, results))))
 
 
 def check((static_analyzer, action, context)):
