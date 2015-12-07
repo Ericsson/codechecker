@@ -374,6 +374,9 @@ def arg_check(it, result):
 def parse_options(args):
     '''Requires a full compile command with the compiler, not only arguments.'''
 
+    # keep " characters
+    args = args.replace('"', '\\"')
+
     result_map = OptionParserResult()
     for it in OptionIterator(shlex.split(args)[1:]):
         arg_check(it, result_map)  # TODO: do sth at False result, actually skip
