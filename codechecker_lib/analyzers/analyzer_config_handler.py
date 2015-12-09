@@ -13,8 +13,6 @@ from abc import ABCMeta, abstractmethod
 from codechecker_lib import logger
 
 from codechecker_lib.analyzers import analyzer_types
-from codechecker_lib.analyzers import config_handler_clangsa
-from codechecker_lib.analyzers import config_handler_clang_tidy
 
 LOG = logger.get_new_logger('ANALYZER_CONFIG_HANDLER')
 
