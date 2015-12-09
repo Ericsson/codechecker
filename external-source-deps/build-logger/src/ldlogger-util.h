@@ -107,12 +107,14 @@ void loggerVectorClear(LoggerVector* vec_);
  *
  * @param vec_ a vector.
  * @param source_ source vector.
+ * @param position_ position where the new elements are inserted (optional)
  * @param dup_ a function to duplicate items.
  * @return zero on error, non-zero on success.
  */
 int loggerVectorAddFrom(
   LoggerVector* vec_,
   const LoggerVector* source_,
+  const size_t* position_,
   LoggerDupFuc dup_);
 
 /**

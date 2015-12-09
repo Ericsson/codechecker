@@ -78,6 +78,15 @@ return declare(_WidgetBase, {
         that.pathAndSelectOnChange(true);
       }
     });
+
+    that.selectCheckerInfo = new Select({
+      forceWidth : true,
+      options    : that.filterOptions.checkerInfoOptions,
+      style      : "margin-right: 5px;",
+      onChange   : function(val) {
+        that.pathAndSelectOnChange(false);
+      }
+    });
   },
 
 
@@ -88,15 +97,6 @@ return declare(_WidgetBase, {
     var that = this;
 
     that.initShared();
-
-    that.selectCheckerInfo = new Select({
-      forceWidth : true,
-      options    : that.filterOptions.checkerInfoOptions,
-      style      : "margin-right: 5px;",
-      onChange   : function(val) {
-        that.pathAndSelectOnChange(false);
-      }
-    });
 
     domConstruct.place(that.textBoxPath.domNode, that.domNode);
     domConstruct.place(that.selectSuppr.domNode, that.domNode);
@@ -112,43 +112,23 @@ return declare(_WidgetBase, {
 
     that.initShared();
 
-    that.selectSeverity = new Select({
-      forceWidth : true,
-      options    : that.filterOptions.severityOptions,
-      style      : "margin-right: 5px;",
-      onChange   : function(val) {
-        that.pathAndSelectOnChange();
-      }
-    });
-
-    that.selectCheckerType = new Select({
-      forceWidth : true,
-      options    : that.filterOptions.checkerTypeOptions,
-      style      : "margin-right: 5px;",
-      onChange   : function(val) {
-        that.pathAndSelectOnChange();
-      }
-    });
-
     that.selectResolv = new Select({
       forceWidth : true,
       options    : [
-        { label : "New only"  , value : "newonly" },
+        { label : "New only"  , value : "newonly", selected: true },
         { label : "Resolved"  , value : "resolv" },
-        { label : "Unresolved", value : "unresolv", selected: true }
+        { label : "Unresolved", value : "unresolv" }
       ],
       style      : "margin-right: 5px;",
       onChange   : function(val) {
-        that.pathAndSelectOnChange();
+        that.pathAndSelectOnChange(true);
       }
     });
 
-
     domConstruct.place(that.textBoxPath.domNode, that.domNode);
-    domConstruct.place(that.selectSeverity.domNode, that.domNode);
     domConstruct.place(that.selectSuppr.domNode, that.domNode);
-    domConstruct.place(that.selectCheckerType.domNode, that.domNode);
     domConstruct.place(that.selectResolv.domNode, that.domNode);
+    domConstruct.place(that.selectCheckerInfo.domNode, that.domNode);
   },
 
 
@@ -205,25 +185,47 @@ return declare(_WidgetBase, {
   pathAndSelectOnChange : function(refreshCheckerOptions) {
     var that = this;
 
-    if (that.myOverviewTC.overviewType === "run" && refreshCheckerOptions === true) {
+    if (refreshCheckerOptions === true) {
       var filePath = "*" + that.textBoxPath.get("value") + "*";
       var suppressed = that.selectSuppr.get("value") === "supp" ? true : false;
 
-      CC_UTIL.getCheckerInfoRun(
-        that.myOverviewTC.runId,
-        filePath,
-        suppressed,
-        function (checkerInfo) {
-          var newCheckerInfoOptions = CC_UTIL.normalizeCheckerInfo(checkerInfo);
+      if (that.myOverviewTC.overviewType === "run") {
+        CC_UTIL.getCheckerInfoRun(
+          that.myOverviewTC.runId,
+          filePath,
+          suppressed,
+          function (checkerInfo) {
+            var newCheckerInfoOptions = CC_UTIL.normalizeCheckerInfo(checkerInfo);
 
-          that.filterOptions.checkerInfoOptions = newCheckerInfoOptions;
-          that.selectCheckerInfo.set("options", newCheckerInfoOptions);
+            that.filterOptions.checkerInfoOptions = newCheckerInfoOptions;
+            that.selectCheckerInfo.set("options", newCheckerInfoOptions);
 
-          that.selectCheckerInfo.reset();
+            that.selectCheckerInfo.reset();
 
-          that.myOverviewTC.overviewGrid.refreshGrid();
-        }
-      );
+            that.myOverviewTC.overviewGrid.refreshGrid();
+          }
+        );
+      } else if (that.myOverviewTC.overviewType === "diff") {
+        var resolvState = that.selectResolv.get("value");
+
+        CC_UTIL.getCheckerInfoDiff(
+          that.myOverviewTC.runId1,
+          that.myOverviewTC.runId2,
+          filePath,
+          suppressed,
+          resolvState,
+          function (checkerInfo) {
+            var newCheckerInfoOptions = CC_UTIL.normalizeCheckerInfo(checkerInfo);
+
+            that.filterOptions.checkerInfoOptions = newCheckerInfoOptions;
+            that.selectCheckerInfo.set("options", newCheckerInfoOptions);
+
+            that.selectCheckerInfo.reset();
+
+            that.myOverviewTC.overviewGrid.refreshGrid();
+          }
+        );
+      }
     } else {
       that.myOverviewTC.overviewGrid.refreshGrid();
     }

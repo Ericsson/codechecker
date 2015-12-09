@@ -169,7 +169,7 @@ return declare(DataGrid, {
       }
 
       filters.push(filter);
-    })
+    });
 
     return filters;
   },
@@ -190,20 +190,21 @@ return declare(DataGrid, {
     var resolvedResultsFilters   = [];
     var unresolvedResultsFilters = [];
 
-    filterObjArray.forEach(function(item) {
+    filterObjArray.forEach(function (item) {
       var filter = new codeCheckerDBAccess.ReportFilter();
 
-      filter.checkerId = item.checkerTypeState;
-
       filter.filepath = item.pathState === "" ? "*" : item.pathState;
-
-      if (item.severityState !== "all") {
-         filter.severity = parseInt(item.severityState);
-      }
 
       switch (item.supprState) {
         case "supp"  : filter.suppressed = true; break;
         case "unsupp": filter.suppressed = false; break;
+      }
+
+      var itemCheckerInfo = item.checkerInfoState.split("##");
+      switch (itemCheckerInfo[0]) {
+        case "severity": filter.severity = parseInt(itemCheckerInfo[1]); break;
+        case "checker" : filter.checkerId = itemCheckerInfo[1]; break;
+        case "all"     : /* Do nothing */ break;
       }
 
       switch (item.resolvState) {
@@ -211,12 +212,12 @@ return declare(DataGrid, {
         case "resolv"  : resolvedResultsFilters.push(filter); break;
         case "unresolv": unresolvedResultsFilters.push(filter); break;
       }
-    })
+    });
 
     return {
       newResultsFilters        : newResultsFilters,
       resolvedResultsFilters   : resolvedResultsFilters,
-      unresolvedResultsFilters : unresolvedResultsFilters
+      unresolvedResultsFilters : unresolvedResultsFilters,
     };
   },
 
@@ -225,7 +226,7 @@ return declare(DataGrid, {
    * Refreshes the title of the Run Overview to show the correct count of hits
    * found in the database.
    *
-   * @param runFilters The current (Thrift Api compatible)filters of the Run.
+   * @param runFilters The current (Thrift Api compatible) filters of the Run.
    */
   _refreshRunHitCount : function(runFilters) {
     var that = this;
@@ -234,8 +235,13 @@ return declare(DataGrid, {
       that.myOverviewTC.runId,
       runFilters,
       function(result) {
-        that.myOverviewTC.overviewBC.set('title', 'Run Overview - hits : ' + result);
-      });
+        if (result instanceof RequestFailed) {
+          console.log("Thrift API call 'getRunResultCount' failed!");
+        } else {
+          that.myOverviewTC.overviewBC.set('title', 'Run Overview - hits : ' + result);
+        }
+      }
+    );
   },
 
 
@@ -243,11 +249,79 @@ return declare(DataGrid, {
    * Refreshes the title of the Diff Overview to show the correct count of hits
    * found in the database.
    *
-   * @param diffFiltersObj The current three (Thrift Api compatible)filter
+   * @param diffFiltersObj The current three (Thrift Api compatible) filter
    * arrays of the Diff in an object.
    */
-  _refreshDiffHitCount : function(diffFiltersObj) {
-    // Not supported yet.
+  _refreshDiffHitCount : function (diffFiltersObj) {
+    var that = this;
+
+    var newCount        = null;
+    var resolvedCount   = null;
+    var unresolvedCount = null;
+
+    var finishedCountQueries = function () {
+      if (newCount !== null && resolvedCount !== null && unresolvedCount !== null) {
+        var allCount = newCount + resolvedCount + unresolvedCount;
+        that.myOverviewTC.overviewBC.set('title', 'Diff Overview - hits : ' + allCount);
+      }
+    };
+
+    if (diffFiltersObj.newResultsFilters.length > 0) {
+      CC_SERVICE.getDiffResultCount(
+        that.myOverviewTC.runId1,
+        that.myOverviewTC.runId2,
+        codeCheckerDBAccess.DiffType.NEW,
+        diffFiltersObj.newResultsFilters,
+        function(result) {
+          if (result instanceof RequestFailed) {
+            console.log("Thrift API call 'getDiffResultCount' failed!");
+          } else {
+            newCount = result;
+            finishedCountQueries();
+          }
+        }
+      );
+    } else {
+      newCount = 0;
+    }
+
+    if (diffFiltersObj.resolvedResultsFilters.length > 0) {
+      CC_SERVICE.getDiffResultCount(
+        that.myOverviewTC.runId1,
+        that.myOverviewTC.runId2,
+        codeCheckerDBAccess.DiffType.RESOLVED,
+        diffFiltersObj.resolvedResultsFilters,
+        function(result) {
+          if (result instanceof RequestFailed) {
+            console.log("Thrift API call 'getDiffResultCount' failed!");
+          } else {
+            resolvedCount = result;
+            finishedCountQueries();
+          }
+        }
+      );
+    } else {
+      resolvedCount = 0;
+    }
+
+    if (diffFiltersObj.unresolvedResultsFilters.length > 0) {
+      CC_SERVICE.getDiffResultCount(
+        that.myOverviewTC.runId1,
+        that.myOverviewTC.runId2,
+        codeCheckerDBAccess.DiffType.UNRESOLVED,
+        diffFiltersObj.unresolvedResultsFilters,
+        function(result) {
+          if (result instanceof RequestFailed) {
+            console.log("Thrift API call 'getDiffResultCount' failed!");
+          } else {
+            unresolvedCount = result;
+            finishedCountQueries();
+          }
+        }
+      );
+    } else {
+      unresolvedCount = 0;
+    }
   },
 
 
@@ -267,9 +341,9 @@ return declare(DataGrid, {
       that._refreshRunHitCount(filters);
       query = that._createRunOverviewQuery(filters);
     } else if (that.myOverviewTC.overviewType === "diff") {
-      var filtersArray = that._createDiffApiFilters(filterObjArray);
-      // TODO: Diff hit count refreshing function should be called here.
-      query = that._createDiffOverviewQuery(filtersArray);
+      var filtersObj = that._createDiffApiFilters(filterObjArray);
+      that._refreshDiffHitCount(filtersObj);
+      query = that._createDiffOverviewQuery(filtersObj);
     }
 
     that.setQuery(query, query);

@@ -79,18 +79,16 @@ return declare(ContentPane, {
 
     for (var i = 0 ; i < that.filters.length ; ++i) {
       var pathState = "*" + that.filters[i].textBoxPath.get("value") + "*";
-      var severityState = that.filters[i].selectSeverity.get("value");
       var supprState = that.filters[i].selectSuppr.get("value");
-      var checkerTypeState = that.filters[i].selectCheckerType.get("value");
       var resolvState = that.filters[i].selectResolv.get("value");
+      var checkerInfoState = that.filters[i].selectCheckerInfo.get("value");
 
       filterObjArray.push({
         pathState        : pathState,
-        severityState    : severityState,
         supprState       : supprState,
-        checkerTypeState : checkerTypeState,
+        checkerInfoState : checkerInfoState,
         resolvState      : resolvState,
-      })
+      });
     }
 
     return filterObjArray;
