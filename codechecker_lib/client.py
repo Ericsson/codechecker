@@ -1,3 +1,9 @@
+# -------------------------------------------------------------------------
+#                     The CodeChecker Infrastructure
+#   This file is distributed under the University of Illinois Open Source
+#   License. See LICENSE.TXT for details.
+# -------------------------------------------------------------------------
+
 import re
 import sys
 import zlib
@@ -53,8 +59,14 @@ def send_suppress(run_id, connection, file_name):
         connection.add_suppress_bug(run_id, suppress_data)
 
 # -----------------------------------------------------------------------------
-def send_config(connection, file_name):
-    ''' Send the config file content to the server. '''
+def store_config_to_db(run_id, connection, configs):
+    configuration_list = []
+    for checker_name, key, key_value in configs:
+        configuration_list.append(shared.ttypes.ConfigValue(checker_name,
+                                                            key,
+                                                            key_value))
+    # store clangSA config to the database
+    connection.add_config_info(run_id, configs)
 
 # -----------------------------------------------------------------------------
 @contextlib.contextmanager

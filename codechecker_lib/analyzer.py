@@ -13,52 +13,12 @@ import shared
 
 from codechecker_lib import client
 from codechecker_lib import logger
-from codechecker_lib import analyzer_env
-from codechecker_lib import host_check
 from codechecker_lib import analysis_manager
 from codechecker_lib import skiplist_handler
 
 from codechecker_lib.analyzers import analyzer_types
 
 LOG = logger.get_new_logger('ANALYZER')
-
-
-def check_supported_analyzers(analyzers, context):
-    """
-    check if the selected analyzers are supported
-    """
-
-    check_env = analyzer_env.get_check_env(context.path_env_extra,
-                                           context.ld_lib_path_extra)
-
-    analyzer_binaries = context.analyzer_binaries
-
-    enabled_analyzers = []
-
-    if not analyzers:
-        # no analyzer is set clang static analyzer will be the default
-        enabled_analyzers.append(analyzer_types.CLANG_SA)
-        name = analyzer_types.get_analyzer_type_name(analyzer_types.CLANG_SA)
-        # check if clangSA can run
-        analyzer_bin = analyzer_binaries.get(name)
-        if not host_check.check_clang(analyzer_bin, check_env):
-            LOG.error('Failed to start analyzer: ' + name + ' !')
-            sys.exit(1)
-    else:
-        for analyzer_name in analyzers:
-            if analyzer_name not in analyzer_types.analyzer_type_name_map.keys():
-                LOG.error('Unsupported analyzer ' + analyzer_name +' !')
-                sys.exit(1)
-            else:
-                # get the compiler binary to check if it can run
-                analyzer_type = analyzer_types.analyzer_type_name_map.get(analyzer_name)
-                analyzer_bin = analyzer_binaries.get(analyzer_name)
-                if not host_check.check_clang(analyzer_bin, check_env):
-                    LOG.error('Failed to get version for analyzer ' + analyzer_name +' !')
-                    sys.exit(1)
-                enabled_analyzers.append(analyzer_type)
-
-    return enabled_analyzers
 
 
 def run_check(args, actions, context):
@@ -73,8 +33,8 @@ def run_check(args, actions, context):
         args.jobs = 1
 
     LOG.debug("Checking supported analyzers.")
-    enabled_analyzers = check_supported_analyzers(args.analyzers,
-                                                  context)
+    enabled_analyzers = analyzer_types.check_supported_analyzers(args.analyzers,
+                                                                 context)
 
     # load severity map from config file
     LOG.debug("Loading checker severity map.")
@@ -118,7 +78,7 @@ def run_check(args, actions, context):
         if os.path.exists(suppress_file):
             client.send_suppress(context.run_id, connection, suppress_file)
 
-        analyzer_config_map = analysis_manager.get_config_handler(args,
+        analyzer_config_map = analyzer_types.get_config_handler(args,
                                                                   context,
                                                                   enabled_analyzers,
                                                                   connection)
@@ -157,14 +117,14 @@ def run_quick_check(args,
 
     enabled_analyzers = []
 
-    enabled_analyzers = check_supported_analyzers(args.analyzers,
-                                                  context)
+    enabled_analyzers = analyzer_types.check_supported_analyzers(args.analyzers,
+                                                                 context)
 
     actions = analysis_manager.prepare_actions(actions, enabled_analyzers)
 
     analyzer_config_map = {}
 
-    analyzer_config_map = analysis_manager.get_config_handler(args,
+    analyzer_config_map = analyzer_types.get_config_handler(args,
                                                               context,
                                                               enabled_analyzers)
 

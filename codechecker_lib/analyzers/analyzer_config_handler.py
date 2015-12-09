@@ -12,8 +12,6 @@ from abc import ABCMeta, abstractmethod
 
 from codechecker_lib import logger
 
-from codechecker_lib.analyzers import analyzer_types
-
 LOG = logger.get_new_logger('ANALYZER_CONFIG_HANDLER')
 
 class AnalyzerConfigHandler(object):
@@ -243,38 +241,3 @@ class ClangTidyConfigHandler(AnalyzerConfigHandler):
         (checker_name, key, key_value) list
         """
         pass
-
-
-def construct_config_handler(args, context, analyzer_type, config_data):
-    """
-    construct analyzer configuration handler
-    """
-    if analyzer_type == analyzer_types.CLANG_SA:
-        # construct the config handler for clang static analyzer
-
-        config_handler = ClangSAConfigHandler(config_data)
-
-        config_handler.analyzer_plugins_dir = context.checker_plugin
-
-        analyzer_name = analyzer_types.get_analyzer_type_name(analyzer_types.CLANG_SA)
-
-        config_handler.analyzer_binary = context.analyzer_binaries.get(analyzer_name)
-
-        config_handler.compiler_resource_dirs = context.compiler_resource_dirs
-
-        config_handler.compiler_sysroot = context.compiler_sysroot
-        config_handler.system_includes = context.extra_system_includes
-        config_handler.includes = context.extra_includes
-
-        return config_handler
-
-    elif analyzer_type == analyzer_types.CLANG_TIDY:
-        # construct the config handler for clang tidy
-
-        config_handler = ClangTidyConfigHandler(config_data)
-        config_handler.analyzer_binary = context.clang_tidy_bin
-
-        return config_handler
-    else:
-        LOG.debug('Not supported Analyzer type')
-        return None

@@ -17,52 +17,12 @@ import shared
 
 from codechecker_lib import logger
 from codechecker_lib import analyzer_env
-from codechecker_lib import result_handler
 
 from codechecker_lib.database_handler import SQLServer
 
 from codechecker_lib.analyzers import analyzer_types
-from codechecker_lib.analyzers import analyzer_config_handler
-from codechecker_lib.analyzers import analyzer_clangsa
-from codechecker_lib.analyzers import analyzer_clang_tidy
 
 LOG = logger.get_new_logger('ANALISYS MANAGER')
-
-
-def construct_analyzer(buildaction,
-                       analyzer_config_map):
-    """
-    construct an analyzer
-    """
-    try:
-
-        analyzer_type = buildaction.analyzer_type
-
-        if analyzer_type == analyzer_types.CLANG_SA:
-            LOG.debug('Constructing clangSA analyzer')
-
-            # get the proper config handler for this analyzer
-            config_handler = analyzer_config_map.get(analyzer_type)
-
-            analyzer = analyzer_clangsa.ClangSA(config_handler,
-                                                buildaction)
-
-            return analyzer
-
-        elif analyzer_type == analyzer_types.CLANG_TIDY:
-            LOG.debug("Constructing clang-tidy analyzer")
-
-            config_handler = analyzer_config_map.get(analyzer_type)
-
-            # TODO create clang tidy analyzer
-
-            return None
-        else:
-            LOG.error('Not supported analyzer type')
-            return None
-
-    except Exception as ex:
-        LOG.debug(ex)
 
 
 def prepare_actions(actions, enabled_analyzers):
@@ -77,105 +37,6 @@ def prepare_actions(actions, enabled_analyzers):
             action.analyzer_type = ea
             res.append(action)
     return res
-
-
-def store_config_to_db(run_id, connection, configs):
-    configuration_list = []
-    for checker_name, key, key_value in configs:
-        configuration_list.append(shared.ttypes.ConfigValue(checker_name,
-                                                            key,
-                                                            key_value))
-    # store clangSA config to the database
-    connection.add_config_info(run_id, configs)
-
-
-def get_config_handler(args, context, enabled_analyzers, connection=None):
-    """
-    construct multiple config handlers and if there is a connection
-    store configs into the database
-
-    handle config from command line or from config file if no command line
-    config is given
-
-    supported command line config format is in JSON tidy supports YAML also but
-    no standard lib for yaml parsing is available in python
-
-    """
-
-    run_id = context.run_id
-    analyzer_config_map = {}
-
-    for ea in enabled_analyzers:
-        if ea == analyzer_types.CLANG_SA:
-            config = ''
-            if args.clangsa_config:
-                # json format from command line
-                if os.isfile(args.clangsa_config):
-                    with open(args.clangsa_config) as conf:
-                        config = conf.read()
-                else:
-                    config = args.clangsa_config
-            else:
-                # json format from config file from the package
-                pass
-
-            config_handler = analyzer_config_handler.construct_config_handler(args,
-                                                                              context,
-                                                                              ea,
-                                                                              config)
-            # extend analyzer config with
-            # read clangsa checkers from the config file
-            for data in context.default_checkers_config['clangsa_checkers']:
-                config_handler.add_checks(data.items())
-
-            # add user defined checkers in the command line
-            try:
-                config_handler.add_checks(args.ordered_checker_args)
-            except AttributeError:
-                LOG.debug('No checkers were defined in the command line for clangSA')
-
-            LOG.debug(config_handler.checks())
-
-            configs = config_handler.get_configs()
-            if connection:
-                store_config_to_db(run_id, connection, configs)
-            analyzer_config_map[ea] = config_handler
-
-        elif ea == analyzer_types.CLANG_TIDY:
-            config = ''
-            if args.clang_tidy_config:
-                # json format from command line
-                if os.isfile(args.clang_tidy_config):
-                    with open(args.clang_tidy_config) as conf:
-                        config = conf.read()
-                else:
-                    config = args.clang_tidy_config
-
-                config_handler = analyzer_config_handler.construct_config_handler(args,
-                                                                                  context,
-                                                                                  ea,
-                                                                                  config)
-            else:
-                # TODO read default config for clang tidy
-                pass
-
-            # extend analyzer config with
-            # read clang-tidy checkers from the config file
-            for data in context.default_checkers_config['clang_tidy_checkers']:
-                config_handler.add_checks(data.items())
-
-            # add user defined checkers in the command line
-            try:
-                config_handler.add_checks(args.tidy_checks)
-            except AttributeError:
-                LOG.debug('No checkers were defined in the command line for clang tidy')
-
-            configs = config_handler.get_configs()
-            if connection:
-                store_config_to_db(run_id, connection, configs)
-            analyzer_config_map[ea] = config_handler
-
-    return analyzer_config_map
 
 
 def worker_result_handler(results):
@@ -217,7 +78,7 @@ def check(check_data):
                                                       context.ld_lib_path_extra)
             run_id = context.run_id
 
-            rh = result_handler.construct_result_handler(args,
+            rh = analyzer_types.construct_result_handler(args,
                                                          action,
                                                          run_id,
                                                          report_output_dir,
@@ -228,8 +89,8 @@ def check(check_data):
             #LOG.info('Analysing ' + source_file_name)
 
             # create a source analyzer
-            source_analyzer = construct_analyzer(action,
-                                                 analyzer_config_map)
+            source_analyzer = analyzer_types.construct_analyzer(action,
+                                                                analyzer_config_map)
 
             # source is the currently analyzed source file
             # there can be more in one buildaction
