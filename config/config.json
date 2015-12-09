@@ -21,7 +21,7 @@
       "path_dumps_name" : "dumps"
   },
   "checker_config": {
-      "checkers" : [
+      "clangsa_checkers" : [
           {"core" : true },
           {"unix" : true },
           {"deadcode" : true },

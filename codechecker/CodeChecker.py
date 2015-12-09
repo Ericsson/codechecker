@@ -94,6 +94,29 @@ def add_database_arguments(parser):
                         default='codechecker', required=False,
                         help='Database user name.')
 
+
+def add_analyzer_arguments(parser):
+    """
+    analyzer related arguments
+    """
+    parser.add_argument('--keep-tmp', action="store_true",
+                        dest="keep_tmp", required=False,
+                        help='Keep temporary report files \
+                        generated during the analysis.')
+    parser.add_argument('--analyzers', nargs='+',
+                        dest="analyzers", required=False,
+                        help='Select which analyzer should run \
+                        currently supported analyzers [clangSA, clang-tidy]')
+    parser.add_argument('--clangSA-config', dest="clangsa_config",
+                        default=False, required=False,
+                        help='Analyzer config in json format or config file')
+    parser.add_argument('--clang-tidy-config', dest="tidy_config",
+                        default=False, required=False,
+                        help='Analyzer config in json format or config file')
+    parser.add_argument('--clang-tidy-checks', dest="tidy_checks",
+                        default=False, required=False,
+                        help='Clang tidy checkers list')
+
 # ------------------------------------------------------------------------------
 def main():
     '''
@@ -141,8 +164,6 @@ def main():
                                   default=1, required=False, help='Number of jobs.')
         check_parser.add_argument('-f', '--config', type=str, dest="configfile",
                                   required=False, help='Config file for the checkers.')
-        check_parser.add_argument('-s', '--skip', type=str, dest="skipfile",
-                                  required=False, help='Path to skip file.')
         check_parser.add_argument('-u', '--suppress', type=str, dest="suppress",
                                   required=False, help='Path to suppress file.')
         check_parser.add_argument('-e', '--enable', default=[],
@@ -152,14 +173,13 @@ def main():
                                   action=OrderedCheckersAction,
                                   help='Disable checker.')
         check_parser.add_argument('-c', '--clean', action=DeprecatedOptionAction)
-        check_parser.add_argument('--keep-tmp', action="store_true",
-                                  dest="keep_tmp", required=False,
-                                  help='Keep temporary report files \
-                                  after sending data to database storage server.')
         check_parser.add_argument('--update', action="store_true",
                                   dest="update", default=False, required=False,
                                   help='Incremental parsing, \
                                   update the results of a previous run.')
+        check_parser.add_argument('-s', '--skip', type=str, dest="skipfile",
+                                  required=False, help='Path to skip file.')
+        add_analyzer_arguments(check_parser)
         add_database_arguments(check_parser)
         check_parser.set_defaults(func=arg_handler.handle_check)
 
@@ -183,6 +203,7 @@ def main():
                                    help='Disable checker.')
         qcheck_parser.add_argument('-s', '--steps', action="store_true",
                                    dest="print_steps", help='Print steps.')
+        add_analyzer_arguments(qcheck_parser)
         qcheck_parser.set_defaults(func=arg_handler.handle_quickcheck)
 
 

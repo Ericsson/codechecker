@@ -32,15 +32,11 @@ class Context(context_base.ContextBase):
 
         env_vars = cfg_dict['environment_variables']
         variables = cfg_dict['package_variables']
-        checker_config = cfg_dict['checker_config']
+        self.__checker_config = cfg_dict['checker_config']
 
         # Base class constructor gets the common environment variables
         super(Context, self).__init__()
         super(Context, self).load_data(env_vars, pckg_layout, variables)
-
-        self.__checkers = []
-        for data in checker_config['checkers']:
-            self.__checkers.extend(data.items())
 
         # get package specific environment variables
         self.set_env(env_vars)
@@ -86,8 +82,8 @@ class Context(context_base.ContextBase):
         return package_version, db_version
 
     @property
-    def default_checkers(self):
-        return self.__checkers
+    def default_checkers_config(self):
+        return self.__checker_config
 
     @property
     def version(self):
@@ -199,21 +195,29 @@ class Context(context_base.ContextBase):
                     ld_paths.append(os.path.join(self.__package_root, path))
             return ld_paths
 
-    @property
-    def compiler_bin(self):
-        compiler_bin = self.pckg_layout.get('compiler_bin')
-        if not compiler_bin:
-            return 'clang'
-        elif os.path.isabs(compiler_bin):
-            return compiler_bin
-        else:
-            # check if it is a package relative path
-            relpath = os.path.dirname(compiler_bin)
-            if relpath:
-                return os.path.join(self.__package_root, compiler_bin)
-            else:
-                return compiler_bin
 
+    @property
+    def analyzer_binaries(self):
+        analyzers = {}
+
+        compiler_binaries = self.pckg_layout.get('analyzers')
+        if not compiler_binaries:
+            # set default analyzers assume they are in the PATH
+            # will be checked later
+            analyzers['clangSA'] = 'clang'
+            analyzers['clang-tidy'] = 'clang-tidy'
+        else:
+            for name, value in compiler_binaries.iteritems():
+                if os.path.isabs(value):
+                    # check if it is an absolute path
+                    analyzers[name] = value
+                else:
+                    # check if it is a package relative path
+                    relpath = os.path.dirname(value)
+                    if relpath:
+                        analyzers[name] =  os.path.join(self.__package_root, value)
+
+        return analyzers
 
 def get_context():
 
