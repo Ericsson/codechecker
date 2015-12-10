@@ -7,6 +7,7 @@
 import os
 import re
 import json
+import StringIO
 
 from abc import ABCMeta, abstractmethod
 
@@ -100,6 +101,13 @@ class AnalyzerConfigHandler(object):
         """
         pass
 
+    @abstractmethod
+    def checks_str(self):
+        """
+        return the checkers formatted for printing
+        """
+        pass
+
     @property
     def compiler_sysroot(self):
         """
@@ -190,6 +198,31 @@ class ClangSAConfigHandler(AnalyzerConfigHandler):
         """
         return self.__checks
 
+    def checks_str(self):
+        """
+        return the checkers formatted for printing
+        """
+        output = StringIO.StringIO()
+        output.write('Default checkers set for Clang Static Analyzer:\n')
+        output.write('-----------------------------------------------\n')
+        output.write('Enabled:\n')
+        # enabled checkers
+        enabled_checkers = filter(lambda x: x[1], self.__checks)
+        for checker_name, _ in enabled_checkers:
+            output.write('  ' + checker_name + '\n')
+
+        output.write('')
+
+        # disabled checkers
+        output.write('Disabled:\n')
+        disabled_checkers = filter(lambda x: not x[1], self.__checks)
+        for checker_name, _ in disabled_checkers:
+            output.write('  ' + checker_name + '\n')
+
+        res = output.getvalue()
+        output.close()
+        return res
+
     def get_configs(self):
         """
         return a lis of tuples
@@ -217,23 +250,36 @@ class ClangTidyConfigHandler(AnalyzerConfigHandler):
 
     def __init__(self, config_data):
         super(ClangTidyConfigHandler, self).__init__(config_data)
-        self.__checks = ''
+        # disable by default enabled checks in clang tidy
+        self.__checks = '-*'
 
     def set_checks(self, checks):
         """
         simple string
         """
-        pass
+        self.__checks = checks
 
     def add_checks(self, checks):
         """
         """
-        pass
+        self.__checks = self.__checks+','+checks
 
     def checks(self):
         """
         """
-        pass
+        return self.__checks
+
+    def checks_str(self):
+        """
+        return the checkers formatted for printing
+        """
+        output = StringIO.StringIO()
+        output.write('Default checkers set for Clang Tidy:\n')
+        output.write('------------------------------------\n')
+        output.write(self.__checks)
+        res = output.getvalue()
+        output.close()
+        return res
 
     def get_configs(self):
         """

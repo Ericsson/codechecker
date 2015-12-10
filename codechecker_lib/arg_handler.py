@@ -28,6 +28,8 @@ from codechecker_lib.database_handler import SQLServer
 
 from codechecker_lib import build_manager
 
+from codechecker_lib.analyzers import analyzer_types
+
 LOG = logger.get_new_logger('ARG_HANDLER')
 
 
@@ -38,10 +40,45 @@ def handle_list_checkers(args):
     in the config
     """
     context = generic_package_context.get_context()
+    enabled_analyzers = args.analyzers
+    analyzer_environment = analyzer_env.get_check_env(context.path_env_extra,
+                                              context.ld_lib_path_extra)
 
-    # TODO for each analyzer types create analyzer object and get checkers list
-    pass
+    if not enabled_analyzers:
+        # noting set list checkers for all supported analyzers
+        enabled_analyzers = analyzer_types.analyzer_type_name_map.keys()
 
+    enabled_analyzer_types = []
+    for ea in enabled_analyzers:
+        if ea not in analyzer_types.analyzer_type_name_map.keys():
+            LOG.info('Not supported analyzer ' + str(ea))
+            sys.exit(1)
+        else:
+            enabled_analyzer_types.append(analyzer_types.analyzer_type_name_map.get(ea))
+
+    analyzer_config_map = analyzer_types.get_config_handler(args,
+                                                            context,
+                                                            enabled_analyzer_types)
+
+    for ea in enabled_analyzers:
+        analyzer_type = analyzer_types.analyzer_type_name_map.get(ea)
+        # get the config
+        config_handler = analyzer_config_map.get(analyzer_type)
+        source_analyzer = analyzer_types.construct_analyzer_type(analyzer_type,
+                                                                 config_handler,
+                                                                 None)
+
+        print(source_analyzer.get_analyzer_checkers(analyzer_environment))
+
+    # print the default enabled or disabled checkers in the
+    # config
+    LOG.info('By default enabled and disabled checkers are:')
+    for ea in enabled_analyzers:
+        # get the config
+        analyzer_type = analyzer_types.analyzer_type_name_map.get(ea)
+        config_handler = analyzer_config_map.get(analyzer_type)
+        checks = config_handler.checks_str()
+        print(checks)
 
 def handle_server(args):
     """

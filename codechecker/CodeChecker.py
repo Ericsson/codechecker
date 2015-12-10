@@ -222,6 +222,10 @@ def main():
         # checkers parser
         checkers_parser = subparsers.add_parser('checkers',
                                                 help='List avalaible checkers.')
+        checkers_parser.add_argument('--analyzers', nargs='+',
+                            dest="analyzers", required=False,
+                            help='Select which analyzer should run \
+                            currently supported analyzers [clangSA, clang-tidy]')
         checkers_parser.set_defaults(func=arg_handler.handle_list_checkers)
 
         # --------------------------------------

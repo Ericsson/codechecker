@@ -32,6 +32,7 @@
           {"security.insecureAPI.mktemp" : true },
           {"security.insecureAPI.mkstemp" : true },
           {"security.insecureAPI.vfork" : true }
-      ]
+      ],
+      "clang_tidy_checkers" : "misc-static-assert,-google-readability-namespace-comments"
   }
 }

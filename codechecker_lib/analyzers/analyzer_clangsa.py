@@ -4,7 +4,9 @@
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
 
+import shlex
 import subprocess
+import StringIO
 
 from codechecker_lib import logger
 
@@ -17,12 +19,12 @@ class ClangSA(analyzer_base.SourceAnalyzer):
     constructs clang static analyzer commmands
     """
 
-    def get_analyzer_checkers(self):
+    def get_analyzer_checkers(self, env):
         """
         return the list of the supported checkers
         """
         config = self.config_handler
-        analyzer_binary = config.analyzer_bin
+        analyzer_binary = config.analyzer_binary
 
         command = [analyzer_binary, "-cc1"]
         for plugin in config.analyzer_plugins:
@@ -30,15 +32,21 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             command.append(plugin)
         command.append("-analyzer-checker-help")
 
-        result = subprocess.Popen(command,
-                                  bufsize=-1,
-                                  env=self._env,
-                                  stdout=subprocess.PIPE,
-                                  stderr=subprocess.PIPE)
-        (stdout, stderr) = result.communicate()
+        try:
+            command = shlex.split(' '.join(command))
+            result = subprocess.check_output(command,
+                                             env=env)
+        except subprocess.CalledProcessError as cperr:
+            LOG.error(cperr)
+            return ''
 
-        return stdout
-
+        output = StringIO.StringIO()
+        output.write('Checkers available in Clang Static Analyzer\n')
+        output.write('-------------------------------------------\n')
+        output.write(result)
+        res = output.getvalue()
+        output.close()
+        return res
 
     def construct_analyzer_cmd(self, res_handler):
         """
