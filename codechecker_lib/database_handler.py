@@ -158,7 +158,7 @@ class SQLServer(object):
         '''
 
         if not host_check.check_sql_driver(args.sqlite):
-            LOG.error("SQL driver error")
+            LOG.error("The selected SQL driver is not available.")
             sys.exit(1)
 
         if args.sqlite:
