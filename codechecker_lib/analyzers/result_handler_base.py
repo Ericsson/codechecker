@@ -188,7 +188,10 @@ class ResultHandler(object):
         analyzed_file = self.analyzed_source_file
         _, analyzed_file_name = ntpath.split(analyzed_file)
 
-        out_file_name = str(self.buildaction.id) + '_' + analyzed_file_name + '.out'
+        out_file_name = str(self.buildaction.id) + '_' + \
+                         str(self.buildaction.analyzer_type) \
+                        + '_' + analyzed_file_name + '.out'
+
         out_file = os.path.join(self.__workspace, out_file_name)
         self.add_result_file(analyzed_file_name, out_file)
 
@@ -216,3 +219,4 @@ class ResultHandler(object):
         """
         handle the results
         """
+        pass
