@@ -29,6 +29,7 @@ from db_model.orm_model import *
 from codechecker_lib import logger
 from codechecker_lib import decorators
 from codechecker_lib import util
+from codechecker_lib import database_handler
 
 LOG = logger.get_new_logger('CC SERVER')
 
@@ -500,7 +501,7 @@ def run_server(port, db_uri, db_version_info, callback_event=None):
     LOG.debug('Starting codechecker server ...')
 
     try:
-        engine = sqlalchemy.create_engine(db_uri, strategy='threadlocal')
+        engine = database_handler.SQLServer.create_engine(db_uri)
 
         LOG.debug('Creating new database session')
         session = CreateSession(engine)
