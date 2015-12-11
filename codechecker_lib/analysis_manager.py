@@ -12,6 +12,7 @@ import signal
 import multiprocessing
 import ntpath
 import traceback
+import copy
 
 import shared
 
@@ -30,12 +31,13 @@ def prepare_actions(actions, enabled_analyzers):
     set the analyzer type for each buildaction
     muliply actions if multiple source analyzers are used
     """
-    LOG.debug('Preparing build actions ...')
     res = []
+
     for ea in enabled_analyzers:
         for action in actions:
-            action.analyzer_type = ea
-            res.append(action)
+            new_action = copy.deepcopy(action)
+            new_action.analyzer_type = ea
+            res.append(new_action)
     return res
 
 
