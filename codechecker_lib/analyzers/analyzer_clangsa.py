@@ -107,7 +107,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
 
             if config.compiler_sysroot:
                 analyzer_cmd.append('--sysroot')
-                analyzer_cmd.append(self._context.compiler_sysroot)
+                analyzer_cmd.append(config.compiler_sysroot)
 
             for path in config.system_includes:
                 analyzer_cmd.append('-isystem')
