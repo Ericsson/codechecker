@@ -7,6 +7,7 @@
 """
 supported analyzer types
 """
+import os
 
 from codechecker_lib import logger
 from codechecker_lib import analyzer_env
@@ -162,6 +163,10 @@ def construct_clang_tidy_config_handler(args, context, config_data):
     config_handler = analyzer_config_handler.ClangTidyConfigHandler(config_data)
     analyzer_name = get_analyzer_type_name(CLANG_TIDY)
     config_handler.analyzer_binary = context.analyzer_binaries.get(analyzer_name)
+    config_handler.compiler_resource_dirs = context.compiler_resource_dirs
+    config_handler.compiler_sysroot = context.compiler_sysroot
+    config_handler.system_includes = context.extra_system_includes
+    config_handler.includes = context.extra_includes
 
     return config_handler
 
@@ -239,7 +244,7 @@ def get_config_handler(args, context, enabled_analyzers, connection=None):
 
     if connection:
         for _, config_handler in analyzer_config_map.iteritems():
-            config_handler.get_configs()
+            configs = config_handler.get_configs()
             client.store_config_to_db(run_id, connection, configs)
 
     return analyzer_config_map
@@ -268,8 +273,13 @@ def construct_result_handler(args,
             return csa_res_handler
 
         elif buildaction.analyzer_type == CLANG_TIDY:
-            # TODO clang tidy db store result handler
-            return None
+            ct_res_handler = result_handler_clang_tidy.CTDBResHandler(buildaction,
+                                                                       report_output,
+                                                                       run_id)
+
+            ct_res_handler.severity_map = severity_map
+            ct_res_handler.skiplist_handler = skiplist_handler
+            return ct_res_handler
 
         else:
             LOG.error('Not supported analyzer type')
@@ -282,10 +292,12 @@ def construct_result_handler(args,
             return csa_res_handler
 
         elif buildaction.analyzer_type == CLANG_TIDY:
-            # TODO create non database tidy result handlers
-            return None
+            ct_res_handler = result_handler_clang_tidy.CTQCResHandler(buildaction,
+                                                                       report_output)
+
+            ct_res_handler.severity_map = severity_map
+            ct_res_handler.skiplist_handler = skiplist_handler
+            return ct_res_handler
         else:
             LOG.error('Not supported analyzer type')
             return None
-
-

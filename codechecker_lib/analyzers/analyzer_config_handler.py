@@ -262,7 +262,8 @@ class ClangTidyConfigHandler(AnalyzerConfigHandler):
     def add_checks(self, checks):
         """
         """
-        self.__checks = self.__checks+','+checks
+        if checks != '':
+            self.__checks = self.__checks + ',' + checks
 
     def checks(self):
         """
@@ -286,4 +287,5 @@ class ClangTidyConfigHandler(AnalyzerConfigHandler):
         return a lis of tuples
         (checker_name, key, key_value) list
         """
-        pass
+        #TODO implement
+        return ''

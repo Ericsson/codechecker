@@ -50,7 +50,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
         # only clang tidy checkers are listed
         for line in result.split('\n'):
             line = line.strip()
-            if line.startswith('clang-analyzer-') or line =='':
+            if line.startswith('clang-analyzer-') or line == '':
                 continue
             else:
                 output.write(line + '\n')
@@ -63,5 +63,55 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
     def construct_analyzer_cmd(self, res_handler):
         """
         """
-        return ''
+        try:
+            config = self.config_handler
 
+            analyzer_bin = config.analyzer_binary
+            # raw config data in text
+            config_data = config.config_data
+
+            analyzer_cmd = []
+            analyzer_cmd.append(analyzer_bin)
+
+            analyzer_cmd.append("-checks='" + config.checks() + "'")
+
+            if config_data != '':
+                analyzer_cmd.append("-config=" + config_data)
+
+            analyzer_cmd.append(self.source_file)
+
+            analyzer_cmd.append("--")
+
+            extra_arguments_before = []
+            if len(config.compiler_resource_dirs) > 0:
+                for inc_dir in config.compiler_resource_dirs:
+                    extra_arguments_before.append('-resource-dir')
+                    extra_arguments_before.append(inc_dir)
+                    extra_arguments_before.append('-isystem')
+                    extra_arguments_before.append(inc_dir)
+
+            if config.compiler_sysroot:
+                extra_arguments_before.append('--sysroot')
+                extra_arguments_before.append(config.compiler_sysroot)
+
+            for path in config.system_includes:
+                extra_arguments_before.append('-isystem')
+                extra_arguments_before.append(path)
+
+            for path in config.includes:
+                extra_arguments_before.append('-I')
+                extra_arguments_before.append(path)
+
+            # Set lang
+            extra_arguments_before.append('-x')
+            extra_arguments_before.append(self.buildaction.lang)
+
+            analyzer_cmd.append(' '.join(extra_arguments_before))
+
+            analyzer_cmd.extend(self.buildaction.analyzer_options)
+
+            return analyzer_cmd
+
+        except Exception as ex:
+            LOG.error(ex)
+            return []
