@@ -108,13 +108,13 @@ def add_analyzer_arguments(parser):
                         help='Select which analyzer should run \
                         currently supported analyzers [clangSA, clang-tidy]')
     parser.add_argument('--clangSA-config', dest="clangsa_config",
-                        default=False, required=False,
+                        default='', required=False,
                         help='Analyzer config in json format or config file')
     parser.add_argument('--clang-tidy-config', dest="tidy_config",
-                        default=False, required=False,
+                        default='', required=False,
                         help='Analyzer config in json format or config file')
     parser.add_argument('--clang-tidy-checks', dest="tidy_checks",
-                        default=False, required=False,
+                        default='', required=False,
                         help='Clang tidy checkers list')
 
 # ------------------------------------------------------------------------------
