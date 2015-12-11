@@ -72,7 +72,7 @@ class SQLServer(object):
 
         try:
             db_uri = self.get_connection_string()
-            engine = sqlalchemy.create_engine(db_uri, strategy='threadlocal')
+            engine = SQLServer.create_engine(db_uri)
 
             LOG.debug('Creating new database schema')
             if use_migration:
@@ -134,6 +134,15 @@ class SQLServer(object):
         '''
         pass
 
+
+    @staticmethod
+    def create_engine(connection_string):
+        '''
+        Creates a new SQLAlchemy engine.
+        '''
+        return sqlalchemy.create_engine(connection_string,
+                                        encoding='utf8',
+                                        strategy='threadlocal')
 
     @staticmethod
     def from_cmdline_args(args, workspace, migration_root, env=None):
@@ -257,7 +266,7 @@ class PostgreSQLServer(SQLServer):
             LOG.debug('Creating new database if not exists')
 
             db_uri = self._get_connection_string('postgres')
-            engine = sqlalchemy.create_engine(db_uri)
+            engine = SQLServer.create_engine(db_uri)
             text = "SELECT 1 FROM pg_database WHERE datname='%s'" % self.database
             if not bool(engine.execute(text).scalar()):
                 conn = engine.connect()
