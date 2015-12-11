@@ -521,6 +521,8 @@ def run_server(port, db_uri, db_version_info, callback_event=None):
             LOG.error('Please update your database.')
             sys.exit(1)
 
+        del version
+
     except sqlalchemy.exc.SQLAlchemyError as alch_err:
         LOG.error(str(alch_err))
         sys.exit(1)
@@ -548,6 +550,7 @@ def run_server(port, db_uri, db_version_info, callback_event=None):
             callback_event.set()
         LOG.debug('Starting to serve')
         server.serve()
+        session.commit()
     except socket.error as sockerr:
         LOG.error(str(sockerr))
         if sockerr.errno == errno.EADDRINUSE:
