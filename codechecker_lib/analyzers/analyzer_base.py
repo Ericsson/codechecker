@@ -6,6 +6,7 @@
 
 import os
 import sys
+import shlex
 import signal
 import subprocess
 
@@ -84,7 +85,7 @@ class SourceAnalyzer(object):
         LOG.debug(' '.join(analyzer_cmd))
 
         res_handler.analyzer_cmd = analyzer_cmd
-
+        analyzer_cmd = shlex.split(' '.join(analyzer_cmd))
         try:
             proc = subprocess.Popen(analyzer_cmd,
                                     bufsize=-1,
