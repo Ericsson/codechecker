@@ -264,18 +264,20 @@ def construct_result_handler(args,
     if store_to_db:
         # create a result handler which stores the results into a database
         if buildaction.analyzer_type == CLANG_SA:
-            csa_res_handler = result_handler_clangsa.DBResHandler(buildaction,
-                                                                  report_output,
-                                                                  run_id)
+            csa_res_handler = result_handler_clangsa.ClangSAPlistToDB(
+                buildaction,
+                report_output,
+                run_id)
 
             csa_res_handler.severity_map = severity_map
             csa_res_handler.skiplist_handler = skiplist_handler
             return csa_res_handler
 
         elif buildaction.analyzer_type == CLANG_TIDY:
-            ct_res_handler = result_handler_clang_tidy.CTDBResHandler(buildaction,
-                                                                       report_output,
-                                                                       run_id)
+            ct_res_handler = result_handler_clang_tidy.ClangTidyPlistToDB(
+                buildaction,
+                report_output,
+                run_id)
 
             ct_res_handler.severity_map = severity_map
             ct_res_handler.skiplist_handler = skiplist_handler
@@ -286,14 +288,17 @@ def construct_result_handler(args,
             return None
     else:
         if buildaction.analyzer_type == CLANG_SA:
-            csa_res_handler = result_handler_clangsa.QCResHandler(buildaction,
-                                                                  report_output)
+            csa_res_handler = result_handler_clangsa.ClangSAPlistToStdout(
+                buildaction,
+                report_output)
+
             csa_res_handler.print_steps = args.print_steps
             return csa_res_handler
 
         elif buildaction.analyzer_type == CLANG_TIDY:
-            ct_res_handler = result_handler_clang_tidy.CTQCResHandler(buildaction,
-                                                                       report_output)
+            ct_res_handler = result_handler_clang_tidy.ClangTidyPlistToStdout(
+                buildaction,
+                report_output)
 
             ct_res_handler.severity_map = severity_map
             ct_res_handler.skiplist_handler = skiplist_handler

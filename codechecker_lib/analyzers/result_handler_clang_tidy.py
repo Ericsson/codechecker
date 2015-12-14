@@ -4,53 +4,54 @@
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
 
-import ntpath
-
-import shared
-
 from codechecker_lib import logger
 from codechecker_lib import tidy_output_converter
 
-from codechecker_lib.analyzers import result_handler_store_db
-from codechecker_lib.analyzers import result_handler_printout
-
-from codechecker_lib.analyzers import result_handler_base
+from codechecker_lib.analyzers.result_handler_plist_to_db import PlistToDB
+from codechecker_lib.analyzers.result_handler_plist_to_stdout import PlistToStdout
 
 LOG = logger.get_new_logger('CLANG_TIDY_RESULT_HANDLER')
 
 
-class CTDBResHandler(result_handler_store_db.ResultHandlerStoreToDB):
+def __generate_plist_from_tidy_result(output_file, tidy_stdout):
     """
-    Clang tidy results database handler
+    Generate a plist file from the clang tidy analyzer results
+    """
+
+    parser = tidy_output_converter.OutputParser()
+
+    messages = parser.parse_messages(tidy_stdout)
+
+    plist_converter = tidy_output_converter.PListConverter()
+    plist_converter.add_messages(messages)
+
+    plist_converter.write_to_file(output_file)
+
+
+class ClangTidyPlistToDB(PlistToDB):
+    """
+    Store clang tidy plist results to a database
     """
 
     def postprocess_result(self):
         """
-
+        Generate plist file which can be parsed and processed for
+        results which can be stored into the database
         """
-        parser = tidy_output_converter.OutputParser()
-
-        messages = parser.parse_messages(self.analyzer_stdout.splitlines())
-
-        plist_converter = tidy_output_converter.PListConverter()
-        plist_converter.add_messages(messages)
-
-        plist = self.get_analyzer_result_file()
-        plist_converter.write_to_file(plist)
+        __generate_plist_from_tidy_result(self.get_analyzer_result_file,
+                                          self.analyzer_stdout.splitlines())
 
 
-class CTQCResHandler(result_handler_printout.ResultHandlerPrintOut):
+class ClangTidyPlistToStdout(PlistToStdout):
     """
-
+    Print the clang tidy results to the standatd output
     """
 
     def postprocess_result(self, result):
-        parser = tidy_output_converter.OutputParser()
+        """
+        For the same output format with the clang static analyzer the
+        Clang tidy results are postprocessed into a plist file
+        """
 
-        messages = parser.parse_messages(self.analyzer_stdout.splitlines())
-
-        plist_converter = tidy_output_converter.PListConverter()
-        plist_converter.add_messages(messages)
-
-        plist = self.get_analyzer_result_file()
-        plist_converter.write_to_file(plist)
+        __generate_plist_from_tidy_result(self.get_analyzer_result_file,
+                                          self.analyzer_stdout.splitlines())

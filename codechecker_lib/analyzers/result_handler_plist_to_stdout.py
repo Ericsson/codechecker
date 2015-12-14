@@ -15,30 +15,36 @@ from abc import ABCMeta
 from codechecker_lib import logger
 from codechecker_lib import plist_parser
 
-from codechecker_lib.analyzers import result_handler_base
+from codechecker_lib.analyzers.result_handler_base import ResultHandler
 
-LOG = logger.get_new_logger('RESULT HANDLER DB')
+LOG = logger.get_new_logger('PLIST TO STDOUT')
 
-class ResultHandlerPrintOut(result_handler_base.ResultHandler):
+
+class PlistToStdout(ResultHandler):
     """
-
+    Result handler for processing a plist file with the
+    analysis results and print them to the standard output.
     """
 
     __metaclass__ = ABCMeta
-    # handle the output stdout, or plist or both for an analyzer
 
     def __init__(self, buildaction, workspace):
-        super(ResultHandlerPrintOut, self).__init__(buildaction, workspace)
-        self.__workspace = workspace
-        self.__action_id = None
+        super(PlistToStdout, self).__init__(buildaction, workspace)
         self.__print_steps = False
+        self.__output = sys.stdout
 
     @property
     def print_steps(self):
+        """
+        Print the multiple steps for a bug if there is any
+        """
         return self.__print_steps
 
     @print_steps.setter
     def print_steps(self, value):
+        """
+        Print the multiple steps for a bug if there is any
+        """
         self.__print_steps = value
 
     def __format_location(self, event):
@@ -56,26 +62,11 @@ class ResultHandlerPrintOut(result_handler_base.ResultHandler):
         fname = os.path.basename(pos.file_path)
         return '%s:%d:%d: %s' % (fname, pos.line, pos.col, event.msg)
 
-    def postprocess_result(self):
-        """
-        no postprocessing required
-        """
-        pass
-
     def handle_results(self):
 
-        # checked source file set by the analyzer
-
-        LOG.debug('Handling quick check results')
         source = self.analyzed_source_file
-        head, source_file_name = ntpath.split(source)
+        _, source_file_name = ntpath.split(source)
         plist = self.get_analyzer_result_file()
-
-        output = sys.stdout
-
-        if not os.path.isfile(plist):
-            LOG.info('Checking %s failed!' % (source_file_name))
-            return 1
 
         try:
             _, bugs = plist_parser.parse_plist(plist)
@@ -87,24 +78,24 @@ class ResultHandlerPrintOut(result_handler_base.ResultHandler):
         err_code = self.analyzer_returncode
 
         if len(bugs) > 0:
-            output.write('%d defect(s) found while checking %s:\n\n' %
+            self.__output.write('%d defect(s) found while checking %s:\n\n' %
                          (len(bugs), source_file_name))
         else:
-            output.write('No defects found in %s :-)\n' % source_file_name)
+            self.__output.write('No defects found in %s :-)\n' % source_file_name)
             return err_code
 
         index_format = '    %%%dd, ' % int(math.floor(math.log10(len(bugs)))+1)
 
         for bug in bugs:
             last_event = bug.get_last_event()
-            output.write(self.__format_bug_event(last_event))
-            output.write('\n')
-            output.write(self.__format_location(last_event))
-            output.write('\n')
+            self.__output.write(self.__format_bug_event(last_event))
+            self.__output.write('\n')
+            self.__output.write(self.__format_location(last_event))
+            self.__output.write('\n')
             if self.__print_steps:
-                output.write('  Steps:\n')
+                self.__output.write('  Steps:\n')
                 for index, event in enumerate(bug.events()):
-                    output.write(index_format % (index + 1))
-                    output.write(self.__format_bug_event(event))
-                    output.write('\n')
-            output.write('\n')
+                    self.__output.write(index_format % (index + 1))
+                    self.__output.write(self.__format_bug_event(event))
+                    self.__output.write('\n')
+            self.__output.write('\n')

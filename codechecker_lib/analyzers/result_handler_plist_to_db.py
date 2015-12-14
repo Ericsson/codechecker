@@ -7,30 +7,30 @@
 import zlib
 import ntpath
 
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta
 
 from codechecker_lib import client
 from codechecker_lib import logger
 from codechecker_lib import plist_parser
 from codechecker_lib import suppress_handler
 
-from codechecker_lib.analyzers import result_handler_base
+from codechecker_lib.analyzers.result_handler_base import ResultHandler
 
 import shared
 
-LOG = logger.get_new_logger('RESULT HANDLER DB')
+LOG = logger.get_new_logger('PLIST TO DB')
 
-class ResultHandlerStoreToDB(result_handler_base.ResultHandler):
+
+class PlistToDB(ResultHandler):
     """
-
+    Result handler for processing a plist file with the
+    analysis results and stores them to the database.
     """
 
     __metaclass__ = ABCMeta
-    # handle the output stdout, or plist or both for an analyzer
 
     def __init__(self, buildaction, workspace, run_id):
-        super(ResultHandlerStoreToDB, self).__init__(buildaction, workspace)
-        self.__workspace = workspace
+        super(PlistToDB, self).__init__(buildaction, workspace)
         self.__run_id = run_id
 
     def handle_results(self):
@@ -45,8 +45,6 @@ class ResultHandlerStoreToDB(result_handler_base.ResultHandler):
         """
 
         with client.get_connection() as connection:
-
-            LOG.debug('Handling results for clangSA, storing to the database')
 
             LOG.debug('Storing original build and analyzer command to the database')
             analisys_id = connection.add_build_action(self.__run_id,
@@ -82,12 +80,13 @@ class ResultHandlerStoreToDB(result_handler_base.ResultHandler):
                     if file_descriptor.needed:
                         with open(file_name, 'r') as source_file:
                             file_content = source_file.read()
-                        compressed_file = zlib.compress(file_content, zlib.Z_BEST_COMPRESSION)
+                        compressed_file = zlib.compress(file_content,
+                                                        zlib.Z_BEST_COMPRESSION)
                         # TODO: we may not use the file content in the end
                         # depending on skippaths
                         LOG.debug('storing file content to the database')
                         connection.add_file_content(file_descriptor.fileId,
-                                                           compressed_file)
+                                                    compressed_file)
 
                 # skipping bugs in header files handled here
                 report_ids = []
@@ -96,7 +95,8 @@ class ResultHandlerStoreToDB(result_handler_base.ResultHandler):
 
                     # skip list handler can be None if no config file is set
                     if self.skiplist_handler:
-                        if events and self.skiplist_handler.should_skip(events[-1].start_pos.file_path):
+                        if events and self.skiplist_handler.should_skip(
+                                events[-1].start_pos.file_path):
                             # Issue #20: this bug is in a file which should be skipped
                             LOG.debug(bug.hash_value + ' is skipped (in ' +
                                       events[-1].start_pos.file_path + ")")
@@ -114,13 +114,18 @@ class ResultHandlerStoreToDB(result_handler_base.ResultHandler):
 
                     bug_events = []
                     for event in bug.events():
-                        bug_events.append(shared.ttypes.BugPathEvent(event.start_pos.line,
-                            event.start_pos.col, event.end_pos.line, event.end_pos.col,
-                            event.msg, file_ids[event.start_pos.file_path]))
+                        bug_events.append(shared.ttypes.BugPathEvent(
+                            event.start_pos.line,
+                            event.start_pos.col,
+                            event.end_pos.line,
+                            event.end_pos.col,
+                            event.msg,
+                            file_ids[event.start_pos.file_path]))
 
                     bug_hash = bug.hash_value
 
-                    severity_name = self.severity_map.get(bug.checker_name, 'UNSPECIFIED')
+                    severity_name = self.severity_map.get(bug.checker_name,
+                                                          'UNSPECIFIED')
                     severity = shared.ttypes.Severity._NAMES_TO_VALUES[severity_name]
 
                     suppress = False
