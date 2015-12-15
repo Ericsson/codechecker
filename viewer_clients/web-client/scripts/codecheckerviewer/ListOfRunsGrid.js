@@ -39,43 +39,55 @@ return declare(DataGrid, {
     var that = this;
 
     CC_SERVICE.getRunData(function (runDataList) {
-      runDataList.forEach(function (item) {
-        if (item.can_delete === undefined || item.can_delete === false) {
-          // This item is under removal
-          return;
-        }
 
-        var currItemDate = "Failed run";
+      if (runDataList instanceof RequestFailed) {
 
-        if (-1 !== item.runDate) {
-          currItemDate = item.runDate.split(/[\s\.]+/);
-        }
+        console.log("Thrift API call 'getRunData' failed!");
 
-        var durHours = Math.floor(item.duration / 3600);
-        var durMins  = Math.floor(item.duration / 60) - durHours * 60;
-        var durSecs  = item.duration - durMins * 60 - durHours * 3600;
+      } else {
 
-        var prettyDurHours = durHours < 10 ? ("0" + durHours) : durHours;
-        var prettyDurMins  = durMins < 10 ? ("0" + durMins) : durMins;
-        var prettyDurSecs  = durSecs < 10 ? ("0" + durSecs) : durSecs;
+        runDataList.forEach(function (item) {
+          if (item.can_delete === undefined || item.can_delete === false) {
+            // This item is under removal
+            return;
+          }
 
-        var prettyDuration =
-          prettyDurHours + ":" + prettyDurMins + ":" + prettyDurSecs;
+          var prettyDuration = null;
+          if (-1 === item.duration) {
+            prettyDuration = "--------";
+          } else {
+            var durHours = Math.floor(item.duration / 3600);
+            var durMins  = Math.floor(item.duration / 60) - durHours * 60;
+            var durSecs  = item.duration - durMins * 60 - durHours * 3600;
 
-        that.store.newItem({
-          id            : item.runId,
-          runid         : item.runId,
-          name          : item.name,
-          date          : currItemDate[0] + " --- " + currItemDate[1],
-          numberofbugs  : item.resultCount,
-          duration      : prettyDuration,
-          diffDisplay   : false,
-          diffActual    : false,
-          deleteDisplay : false,
-          deleteActual  : false
+            var prettyDurHours = durHours < 10 ? ("0" + durHours) : durHours;
+            var prettyDurMins  = durMins < 10 ? ("0" + durMins) : durMins;
+            var prettyDurSecs  = durSecs < 10 ? ("0" + durSecs) : durSecs;
+
+            prettyDuration = prettyDurHours + ":" + prettyDurMins + ":" +
+              prettyDurSecs;
+          }
+
+          var currItemDate = item.runDate.split(/[\s\.]+/);
+
+          that.store.newItem({
+            id            : item.runId,
+            runid         : item.runId,
+            name          : item.name,
+            date          : currItemDate[0] + " --- " + currItemDate[1],
+            numberofbugs  : item.resultCount,
+            duration      : prettyDuration,
+            diffDisplay   : false,
+            diffActual    : false,
+            deleteDisplay : false,
+            deleteActual  : false
+          });
         });
-      });
+
+      }
+
     });
+
   },
 
   /**
