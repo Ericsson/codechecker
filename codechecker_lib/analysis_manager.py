@@ -12,44 +12,44 @@ import signal
 import multiprocessing
 import ntpath
 import traceback
-import copy
+from collections import defaultdict
 
 import shared
 
 from codechecker_lib import logger
 from codechecker_lib import analyzer_env
 
-from codechecker_lib.database_handler import SQLServer
-
 from codechecker_lib.analyzers import analyzer_types
 
 LOG = logger.get_new_logger('ANALISYS MANAGER')
-
-
-def prepare_actions(actions, enabled_analyzers):
-    """
-    set the analyzer type for each buildaction
-    muliply actions if multiple source analyzers are used
-    """
-    res = []
-
-    for ea in enabled_analyzers:
-        for action in actions:
-            new_action = copy.deepcopy(action)
-            new_action.analyzer_type = ea
-            res.append(new_action)
-    return res
 
 
 def worker_result_handler(results):
     """
     print the analisys summary
     """
-    LOG.info("----==== Summary ====----")
-    LOG.info("All/successed build actions: " +
-             str(len(results)) + "/" +
-             str(len(filter(lambda x: x == 0, results))))
 
+    successful_analysis = defaultdict(int)
+    failed_analisys = defaultdict(int)
+
+    for res, analyzer_type in results:
+        if res == 0:
+            successful_analysis[analyzer_type] += 1
+        else:
+            failed_analisys[analyzer_type] += 1
+
+    LOG.info("----==== Summary ====----")
+    LOG.info('Analyzed build actions: ' + str(len(results)))
+    if successful_analysis:
+        LOG.info('Successfull')
+        for analyzer_type, res in successful_analysis.iteritems():
+            LOG.info(analyzer_type + ': ' + str(res))
+
+    if failed_analisys:
+        LOG.info("Failed")
+        for analyzer_type, res in failed_analisys.iteritems():
+            LOG.info(analyzer_type + ': ' + str(res))
+    LOG.info("----=================----")
 
 def check(check_data):
     """
@@ -122,7 +122,7 @@ def check(check_data):
             if not keep_tmp:
                 rh.clean_results()
 
-        return return_codes
+        return (return_codes, action.analyzer_type)
 
     except Exception as e:
         LOG.debug(str(e))
