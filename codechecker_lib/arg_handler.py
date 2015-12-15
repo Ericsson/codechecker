@@ -196,11 +196,11 @@ def handle_server(args):
     conn_mgr = client.ConnectionManager(sql_server, args.check_address, args.check_port)
     if args.check_port:
         LOG.debug('Starting codechecker server and database server.')
-        sql_server.start(wait_for_start=True, init=True)
+        sql_server.start(context.db_version_info, wait_for_start=True, init=True)
         conn_mgr.start_report_server(context.db_version_info)
     else:
         LOG.debug('Starting database.')
-        sql_server.start(wait_for_start=True, init=True)
+        sql_server.start(context.db_version_info, wait_for_start=True, init=True)
 
     # start database viewer
     db_connection_string = sql_server.get_connection_string()
@@ -255,7 +255,7 @@ def handle_debug(args):
                                              context.codechecker_workspace,
                                              context.migration_root,
                                              check_env)
-    sql_server.start(wait_for_start=True, init=False)
+    sql_server.start(context.db_version_info, wait_for_start=True, init=False)
 
     debug_reporter.debug(context, sql_server.get_connection_string(), args.force)
 
@@ -316,19 +316,7 @@ def handle_check(args):
     if os.path.exists(context.checkers_severity_map_file):
         with open(context.checkers_severity_map_file, 'r') as sev_conf_file:
             severity_config = sev_conf_file.read()
-
         context.severity_map = json.loads(severity_config)
-
-    log_file = _check_generate_log_file(args, context)
-    try:
-        actions = log_parser.parse_log(log_file)
-    except Exception as ex:
-        LOG.error(ex)
-        sys.exit(1)
-
-    if not actions:
-        LOG.warning('There are no build actions in the log file.')
-        sys.exit(1)
 
     sql_server = SQLServer.from_cmdline_args(args,
                                              context.codechecker_workspace,
@@ -348,23 +336,37 @@ def handle_check(args):
     if os.path.exists(suppress_file):
         send_suppress = True
 
-    sql_server.start(wait_for_start=True, init=True)
+    sql_server.start(context.db_version_info, wait_for_start=True, init=True)
     conn_mgr.start_report_server(context.db_version_info)
 
     LOG.debug("Checker server started.")
 
     with client.get_connection() as connection:
         try:
+            # Add checker run before running build command
             context.run_id = connection.add_checker_run(' '.join(sys.argv),
                                                         args.name, package_version, args.update)
         except shared.ttypes.RequestFailed as thrift_ex:
-            if 'violates unique constraint "uq_runs_name"' not in thrift_ex.message:
+            if 'violates unique constraint "uq_runs_name"' not in thrift_ex.message and \
+               'UNIQUE constraint failed: runs.name' not in thrift_ex.message:
                 # not the unique name was the problem
                 raise
             else:
                 LOG.info("Name was already used in the database please choose another unique name for checking.")
                 sys.exit(1)
 
+    log_file = _check_generate_log_file(args, context)
+    try:
+        actions = log_parser.parse_log(log_file)
+    except Exception as ex:
+        LOG.error(ex)
+        sys.exit(1)
+
+    if not actions:
+        LOG.warning('There are no build actions in the log file.')
+        sys.exit(1)
+
+    with client.get_connection() as connection:
         if args.update:
             # clean previous suppress information
             client.clean_suppress(connection, context.run_id)
