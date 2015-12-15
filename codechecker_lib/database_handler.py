@@ -405,16 +405,17 @@ class PostgreSQLServer(SQLServer):
                                          stdout=devnull,
                                          stderr=subprocess.STDOUT)
 
+        add_version = False
         if init:
             self._wait_or_die()
             self._create_database()
-            version_exists = self.check_db_version(db_version_info)
+            add_version = not self.check_db_version(db_version_info)
             self._create_or_update_schema()
         elif wait_for_start:
             self._wait_or_die()
-            version_exists = self.check_db_version(db_version_info)
+            add_version = not self.check_db_version(db_version_info)
 
-        if not version_exists:
+        if add_version:
             self._add_version(db_version_info)
 
         atexit.register(self.stop)
@@ -446,6 +447,8 @@ class SQLiteDatabase(SQLServer):
     def start(self, db_version_info, wait_for_start=True, init=False):
         if init:
             self._create_or_update_schema(use_migration=False)
+            if not self.check_db_version(db_version_info):
+                self._add_version(db_version_info)
 
         if not os.path.exists(self.dbpath):
             # The database does not exists
