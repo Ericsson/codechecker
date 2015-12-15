@@ -206,7 +206,7 @@ define([
         readOnly        : this.readOnly,
         mode            : this.mode,
         foldGutter      : true,
-        gutters         : ["CodeMirror-linenumbers", "CodeMirror-foldgutter", "bugInfo"],
+        gutters         : ["CodeMirror-linenumbers", "bugInfo"],
       });
 
       this.codeMirror.setSize("100%", "100%");
