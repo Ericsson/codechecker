@@ -129,23 +129,7 @@ class ThriftRequestHandler():
         self.__checker_md_docs = checker_md_docs
         self.__checker_doc_map = checker_md_docs_map
         self.__suppress_handler = suppress_handler
-
         self.__session = session
-
-        version = self.__session.query(DBVersion).first()
-        if version:
-            version_from_db = 'v'+str(version.major)+'.'+str(version.minor)
-            if db_version_info.is_compatible(version.major,
-                                             version.minor):
-                LOG.error('Version mismatch. Expected database version: ' +
-                          str(db_version_info))
-                LOG.error('Version from the database is: ' + version_from_db)
-                LOG.error('Please update your database.')
-                sys.exit(1)
-        else:
-            LOG.debug('No version information found in the database.')
-            LOG.debug('Please check your config')
-            sys.exit(1)
 
     def __queryReport(self, reportId):
         session = self.__session

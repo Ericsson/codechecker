@@ -196,11 +196,11 @@ def handle_server(args):
     conn_mgr = client.ConnectionManager(sql_server, args.check_address, args.check_port)
     if args.check_port:
         LOG.debug('Starting codechecker server and database server.')
-        sql_server.start(wait_for_start=True, init=True)
+        sql_server.start(context.db_version_info, wait_for_start=True, init=True)
         conn_mgr.start_report_server(context.db_version_info)
     else:
         LOG.debug('Starting database.')
-        sql_server.start(wait_for_start=True, init=True)
+        sql_server.start(context.db_version_info, wait_for_start=True, init=True)
 
     # start database viewer
     db_connection_string = sql_server.get_connection_string()
@@ -255,7 +255,7 @@ def handle_debug(args):
                                              context.codechecker_workspace,
                                              context.migration_root,
                                              check_env)
-    sql_server.start(wait_for_start=True, init=False)
+    sql_server.start(context.db_version_info, wait_for_start=True, init=False)
 
     debug_reporter.debug(context, sql_server.get_connection_string(), args.force)
 
@@ -348,7 +348,7 @@ def handle_check(args):
     if os.path.exists(suppress_file):
         send_suppress = True
 
-    sql_server.start(wait_for_start=True, init=True)
+    sql_server.start(context.db_version_info, wait_for_start=True, init=True)
     conn_mgr.start_report_server(context.db_version_info)
 
     LOG.debug("Checker server started.")
