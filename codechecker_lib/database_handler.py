@@ -446,8 +446,9 @@ class SQLiteDatabase(SQLServer):
 
     def start(self, db_version_info, wait_for_start=True, init=False):
         if init:
+            add_version = not self.check_db_version(db_version_info)
             self._create_or_update_schema(use_migration=False)
-            if not self.check_db_version(db_version_info):
+            if add_version:
                 self._add_version(db_version_info)
 
         if not os.path.exists(self.dbpath):
