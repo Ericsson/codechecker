@@ -135,6 +135,7 @@ return declare(null, {
       id            : "listofrunsgrid",
       class         : "listOfRunsGrid",
       title         : "List of runs",
+      selectable    : true,
       selectionMode : "none",
       style         : "font-family: sans-serif; padding: 0px; margin: 0px; border: 0px;",
       onRowClick    : function(evt) {

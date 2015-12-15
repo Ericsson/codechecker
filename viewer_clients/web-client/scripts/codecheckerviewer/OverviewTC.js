@@ -118,6 +118,7 @@ return declare(TabContainer, {
         region        : "center",
         id            : "runoverviewgrid_" + that.runId,
         class         : "overviewGrid",
+        selectable    : true,
         selectionMode : "none",
         style         : "border: 0px; margin: 0px; padding: 0px;"
       });
@@ -133,6 +134,7 @@ return declare(TabContainer, {
         region        : "center",
         id            : "diffoverviewgrid_" + that.runId1 + "_" + that.runId2,
         class         : "overviewGrid",
+        selectable    : true,
         selectionMode : "none",
         style         : "border: 0px; margin: 0px; padding: 0px;"
       });
