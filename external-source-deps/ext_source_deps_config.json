@@ -10,10 +10,10 @@
     {
         "name" : "codemirror",
         "directory" : "external-source-deps/codemirror",
-        "version" : "5.3.0",
+        "version" : "5.3.1",
         "description" : "codemirror",
         "homepage" : "https://codemirror.net/",
-        "repository" : { "type" : "git", "git_tag" :"5.3.0", "url" : "https://github.com/codemirror/CodeMirror.git" }
+        "repository" : { "type" : "git", "git_tag" :"5.3.1", "url" : "https://github.com/bobszi/CodeMirror.git" }
     },
     {
         "name" : "jsplumb",
