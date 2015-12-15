@@ -57,8 +57,8 @@ class PlistToDB(ResultHandler):
 
             if self.analyzer_returncode == 0:
 
-                LOG.info('Analysing ' + source_file_name +
-                         ' with ClangSA was successful.')
+                LOG.info(self.buildaction.analyzer_type + ' analyzed ' +
+                         source_file_name + ' successfully.')
 
                 plist_file = self.get_analyzer_result_file()
 

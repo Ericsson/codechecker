@@ -8,6 +8,7 @@
 supported analyzer types
 """
 import os
+import sys
 
 from codechecker_lib import logger
 from codechecker_lib import analyzer_env
@@ -15,28 +16,20 @@ from codechecker_lib import host_check
 from codechecker_lib import client
 
 from codechecker_lib.analyzers import analyzer_clangsa
-from codechecker_lib.analyzers import analyzer_clang_tidy
+from codechecker_lib.analyzers import config_handler_clangsa
 from codechecker_lib.analyzers import result_handler_clangsa
+
+from codechecker_lib.analyzers import analyzer_clang_tidy
 from codechecker_lib.analyzers import result_handler_clang_tidy
-from codechecker_lib.analyzers import analyzer_config_handler
+from codechecker_lib.analyzers import config_handler_clang_tidy
 
 LOG = logger.get_new_logger('ANALYZER TYPES')
 
 
-CLANG_SA = 1
-CLANG_TIDY = 2
+CLANG_SA = 'ClangSA'
+CLANG_TIDY = 'Clang-tidy'
 
-analyzer_type_name_map = {'clangSA': CLANG_SA,
-                          'clang-tidy': CLANG_TIDY}
-
-
-def get_analyzer_type_name(type_value):
-    """
-    return the name for the analyzer type
-    """
-    for name, t_val in analyzer_type_name_map.iteritems():
-        if t_val == type_value:
-            return name
+supported_analyzers = {CLANG_SA, CLANG_TIDY}
 
 
 def check_supported_analyzers(analyzers, context):
@@ -49,12 +42,12 @@ def check_supported_analyzers(analyzers, context):
 
     analyzer_binaries = context.analyzer_binaries
 
-    enabled_analyzers = []
+    enabled_analyzers = set()
 
     if not analyzers:
         # no analyzer is set clang static analyzer will be the default
-        enabled_analyzers.append(CLANG_SA)
-        name = get_analyzer_type_name(CLANG_SA)
+        enabled_analyzers.add(CLANG_SA)
+        name = CLANG_SA
         # check if clangSA can run
         analyzer_bin = analyzer_binaries.get(name)
         if not host_check.check_clang(analyzer_bin, check_env):
@@ -62,17 +55,17 @@ def check_supported_analyzers(analyzers, context):
             sys.exit(1)
     else:
         for analyzer_name in analyzers:
-            if analyzer_name not in analyzer_type_name_map.keys():
-                LOG.error('Unsupported analyzer ' + analyzer_name +' !')
+            if analyzer_name not in supported_analyzers:
+                LOG.error('Unsupported analyzer ' + analyzer_name + ' !')
                 sys.exit(1)
             else:
                 # get the compiler binary to check if it can run
-                analyzer_type = analyzer_type_name_map.get(analyzer_name)
                 analyzer_bin = analyzer_binaries.get(analyzer_name)
                 if not host_check.check_clang(analyzer_bin, check_env):
-                    LOG.error('Failed to get version for analyzer ' + analyzer_name +' !')
+                    LOG.error('Failed to get version for analyzer '
+                              + analyzer_name + ' !')
                     sys.exit(1)
-                enabled_analyzers.append(analyzer_type)
+                enabled_analyzers.add(analyzer_name)
 
     return enabled_analyzers
 
@@ -122,12 +115,13 @@ def construct_analyzer(buildaction,
         LOG.debug(ex)
         return None
 
-def get_cmdline_config(cmdline_data):
+
+def __get_cmdline_config(cmdline_data):
     """
     if it is a file read the content if not handle as json config
     """
     config = ''
-    if os.isfile(cmdline_data):
+    if os.path.isfile(cmdline_data):
         with open(cmdline_data) as conf:
             config = conf.read()
     else:
@@ -136,42 +130,80 @@ def get_cmdline_config(cmdline_data):
     return config
 
 
-
-
-def construct_clangsa_config_handler(args, context, config_data):
+def __build_clangsa_config_handler(args, context):
     """
-    construct the config handler for clang static analyzer
+    Build the config handler for clang static analyzer
+    Handle config options from the command line and config files
     """
 
-    config_handler = analyzer_config_handler.ClangSAConfigHandler(config_data)
+    config = ''
+    try:
+        config = __get_cmdline_config(args.clangsa_config)
+    except AttributeError as aerr:
+        LOG.debug('No commmand line argument was set')
+
+    config_handler = config_handler_clangsa.ClangSAConfigHandler(config)
     config_handler.analyzer_plugins_dir = context.checker_plugin
-    analyzer_name = get_analyzer_type_name(CLANG_SA)
+    analyzer_name = CLANG_SA
     config_handler.analyzer_binary = context.analyzer_binaries.get(analyzer_name)
     config_handler.compiler_resource_dirs = context.compiler_resource_dirs
     config_handler.compiler_sysroot = context.compiler_sysroot
     config_handler.system_includes = context.extra_system_includes
     config_handler.includes = context.extra_includes
 
+    # read clangsa checkers from the config file
+    clang_sa_checkers = context.default_checkers_config.get('clangsa_checkers')
+
+    if clang_sa_checkers:
+        for data in clang_sa_checkers:
+            config_handler.add_checks(data.items())
+
+    # add user defined checkers form the command line
+    try:
+        config_handler.add_checks(args.ordered_checker_args)
+    except AttributeError:
+        LOG.debug('No checkers were defined in the command line for clangSA')
+
+    LOG.debug(config_handler.checks())
+
     return config_handler
 
 
-def construct_clang_tidy_config_handler(args, context, config_data):
+def __build_clang_tidy_config_handler(args, context):
     """
-    construct the config handler for clang tidy static analyzer
+    Build the config handler for clang tidy analyzer
+    Handle config options from the command line and config files
     """
 
-    config_handler = analyzer_config_handler.ClangTidyConfigHandler(config_data)
-    analyzer_name = get_analyzer_type_name(CLANG_TIDY)
+    config = ''
+    try:
+        config = __get_cmdline_config(args.clang_tidy_config)
+    except AttributeError as aerr:
+        LOG.debug('No commmand line argument was set')
+
+    config_handler = config_handler_clang_tidy.ClangTidyConfigHandler(config)
+    analyzer_name = CLANG_TIDY
     config_handler.analyzer_binary = context.analyzer_binaries.get(analyzer_name)
     config_handler.compiler_resource_dirs = context.compiler_resource_dirs
     config_handler.compiler_sysroot = context.compiler_sysroot
     config_handler.system_includes = context.extra_system_includes
     config_handler.includes = context.extra_includes
 
+    # extend analyzer config with
+    # read clang-tidy checkers from the config file
+    clang_tidy_checkers = context.default_checkers_config.get('clang_tidy_checkers')
+    config_handler.add_checks(clang_tidy_checkers)
+
+    # add user defined checkers in the command line
+    try:
+        config_handler.add_checks(args.tidy_checks)
+    except AttributeError:
+        LOG.debug('No checkers were defined in the command line for clang tidy')
+
     return config_handler
 
 
-def get_config_handler(args, context, enabled_analyzers, connection=None):
+def build_config_handlers(args, context, enabled_analyzers, connection=None):
     """
     construct multiple config handlers and if there is a connection
     store configs into the database
@@ -189,55 +221,11 @@ def get_config_handler(args, context, enabled_analyzers, connection=None):
 
     for ea in enabled_analyzers:
         if ea == CLANG_SA:
-            config = ''
-            try:
-                config = get_cmdline_config(args.clangsa_config)
-            except AttributeError as aerr:
-                LOG.debug('No commmand line argument was set')
-
-            config_handler = construct_clangsa_config_handler(args,
-                                                              context,
-                                                              config)
-
-            # read clangsa checkers from the config file
-            clang_sa_checkers = context.default_checkers_config.get('clangsa_checkers')
-
-            if clang_sa_checkers:
-                for data in clang_sa_checkers:
-                    config_handler.add_checks(data.items())
-
-            # add user defined checkers form the command line
-            try:
-                config_handler.add_checks(args.ordered_checker_args)
-            except AttributeError:
-                LOG.debug('No checkers were defined in the command line for clangSA')
-
-            LOG.debug(config_handler.checks())
-
+            config_handler = __build_clangsa_config_handler(args, context)
             analyzer_config_map[ea] = config_handler
 
         elif ea == CLANG_TIDY:
-            config = ''
-            try:
-                config = get_cmdline_config(args.clang_tidy_config)
-            except AttributeError as aerr:
-                LOG.debug('No commmand line argument was set')
-
-            config_handler = construct_clang_tidy_config_handler(args,
-                                                                 context,
-                                                                 config)
-
-            # extend analyzer config with
-            # read clang-tidy checkers from the config file
-            clang_tidy_checkers = context.default_checkers_config.get('clang_tidy_checkers')
-            config_handler.add_checks(clang_tidy_checkers)
-
-            # add user defined checkers in the command line
-            try:
-                config_handler.add_checks(args.tidy_checks)
-            except AttributeError:
-                LOG.debug('No checkers were defined in the command line for clang tidy')
-
+            config_handler = __build_clang_tidy_config_handler(args, context)
             analyzer_config_map[ea] = config_handler
         else:
             LOG.debug('Not supported analyzer type. No configuration handler will be created')

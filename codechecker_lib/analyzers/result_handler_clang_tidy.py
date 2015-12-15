@@ -13,11 +13,10 @@ from codechecker_lib.analyzers.result_handler_plist_to_stdout import PlistToStdo
 LOG = logger.get_new_logger('CLANG_TIDY_RESULT_HANDLER')
 
 
-def __generate_plist_from_tidy_result(output_file, tidy_stdout):
+def generate_plist_from_tidy_result(output_file, tidy_stdout):
     """
     Generate a plist file from the clang tidy analyzer results
     """
-
     parser = tidy_output_converter.OutputParser()
 
     messages = parser.parse_messages(tidy_stdout)
@@ -38,8 +37,9 @@ class ClangTidyPlistToDB(PlistToDB):
         Generate plist file which can be parsed and processed for
         results which can be stored into the database
         """
-        __generate_plist_from_tidy_result(self.get_analyzer_result_file,
-                                          self.analyzer_stdout.splitlines())
+        output_file = self.get_analyzer_result_file()
+        tidy_stdout = self.analyzer_stdout.splitlines()
+        generate_plist_from_tidy_result(output_file, tidy_stdout)
 
 
 class ClangTidyPlistToStdout(PlistToStdout):
@@ -53,5 +53,6 @@ class ClangTidyPlistToStdout(PlistToStdout):
         Clang tidy results are postprocessed into a plist file
         """
 
-        __generate_plist_from_tidy_result(self.get_analyzer_result_file,
-                                          self.analyzer_stdout.splitlines())
+        output_file = self.get_analyzer_result_file()
+        tidy_stdout = self.analyzer_stdout.splitlines()
+        generate_plist_from_tidy_result(output_file, tidy_stdout)

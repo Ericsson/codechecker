@@ -46,25 +46,24 @@ def handle_list_checkers(args):
 
     if not enabled_analyzers:
         # noting set list checkers for all supported analyzers
-        enabled_analyzers = analyzer_types.analyzer_type_name_map.keys()
+        enabled_analyzers = list(analyzer_types.supported_analyzers)
 
-    enabled_analyzer_types = []
+    enabled_analyzer_types = set()
     for ea in enabled_analyzers:
-        if ea not in analyzer_types.analyzer_type_name_map.keys():
+        if ea not in analyzer_types.supported_analyzers:
             LOG.info('Not supported analyzer ' + str(ea))
             sys.exit(1)
         else:
-            enabled_analyzer_types.append(analyzer_types.analyzer_type_name_map.get(ea))
+            enabled_analyzer_types.add(ea)
 
-    analyzer_config_map = analyzer_types.get_config_handler(args,
+    analyzer_config_map = analyzer_types.build_config_handlers(args,
                                                             context,
                                                             enabled_analyzer_types)
 
     for ea in enabled_analyzers:
-        analyzer_type = analyzer_types.analyzer_type_name_map.get(ea)
         # get the config
-        config_handler = analyzer_config_map.get(analyzer_type)
-        source_analyzer = analyzer_types.construct_analyzer_type(analyzer_type,
+        config_handler = analyzer_config_map.get(ea)
+        source_analyzer = analyzer_types.construct_analyzer_type(ea,
                                                                  config_handler,
                                                                  None)
 
@@ -75,8 +74,7 @@ def handle_list_checkers(args):
     LOG.info('By default enabled and disabled checkers are:')
     for ea in enabled_analyzers:
         # get the config
-        analyzer_type = analyzer_types.analyzer_type_name_map.get(ea)
-        config_handler = analyzer_config_map.get(analyzer_type)
+        config_handler = analyzer_config_map.get(ea)
         checks = config_handler.checks_str()
         print(checks)
 
@@ -244,6 +242,9 @@ def handle_check(args):
         LOG.info("Analysis has finished.")
     except Exception as ex:
         LOG.error(ex)
+        import traceback
+        print(traceback.format_exc())
+
 
 def _do_quickcheck(args):
     '''
