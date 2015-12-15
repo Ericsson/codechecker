@@ -170,35 +170,42 @@ return declare(BorderContainer, {
       var sendSuppressButton = new Button({
         label   : "Suppress",
         onClick : function () {
-          try {
 
-            sendSuppressButton.setDisabled(true);
-            CC_SERVICE.suppressBug([runId], that.reportId, suppressTextarea.getValue());
+          sendSuppressButton.setDisabled(true);
 
-            CCV.reset();
+          CC_SERVICE.suppressBug(
+            [runId],
+            that.reportId,
+            suppressTextarea.getValue(),
+            function (result) {
+              if (result instanceof RequestFailed) {
+                console.log("Thrift API call 'suppressBug' failed!");
 
-            myOverviewTC.overviewGrid.refreshGrid();
+                var errorDialog = new Dialog({
+                  title   : "Error",
+                  content : "Failed to suppress bug."
+                });
 
-            that.bugStoreModelTree.bugStore.remove(that.bugStoreModelTree.bugTree.selectedItem.parent);
+                suppressDialog.hide();
 
-            that.clearSelectionAndBubblesLines(editor);
+                errorDialog.show();
+              } else {
+                editorHeader.suppressButton.setDisabled(true);
 
-            editor.setBugMarkers(that.runId, that.viewedFile);
+                CCV.reset();
 
-            editorHeader.suppressButton.setDisabled(true);
+                myOverviewTC.overviewGrid.refreshGrid();
 
-          } catch (err) {
-            console.log(err);
+                that.bugStoreModelTree.bugStore.remove(that.bugStoreModelTree.bugTree.selectedItem.parent);
 
-            var errorDialog = new Dialog({
-              title   : "Error",
-              content : "Failed to suppress bug."
-            });
+                that.clearSelectionAndBubblesLines(editor);
 
-            errorDialog.show();
-          }
+                editor.setBugMarkers(that.runId, that.viewedFile);
 
-          suppressDialog.hide();
+                suppressDialog.hide();
+              }
+            }
+          );
 
         }
       });
