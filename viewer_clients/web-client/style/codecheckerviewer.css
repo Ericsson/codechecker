@@ -112,7 +112,7 @@ code, kbd, pre, samp, tt, xmp, listing, plaintext {
 .editor .header {
   font-family: monospace !important;
   padding: 3px;
-  border-bottom: 1px solid gray;
+  border-bottom: 1px solid LightGray;
   background-color: white;
   word-wrap: break-word;
 }
@@ -167,4 +167,17 @@ code, kbd, pre, samp, tt, xmp, listing, plaintext {
 
 .bugInfo {
   width: 12px;
+}
+
+.jumpSpan {
+  padding: 1px;
+  padding-bottom: 2px;
+  padding-top: 0px;
+  border: 1px solid gray;
+  cursor: pointer;
+  -webkit-user-select: none; /* webkit (safari, chrome) browsers */
+  -moz-user-select: none;    /* mozilla browsers */
+  -khtml-user-select: none;  /* webkit (konqueror) browsers */
+  -ms-user-select: none;     /* IE10+ */
+  -o-user-select: none;
 }

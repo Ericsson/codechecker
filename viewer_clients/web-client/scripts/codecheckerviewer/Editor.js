@@ -17,8 +17,13 @@ define([
 
 
   function refresh(editor) {
+    if (editor.displaySearch) {
+      query('.CodeMirror-vscrollbar').style('top', '22px');
+      style.set(editor.codeMirror.getWrapperElement(), 'paddingTop', '20px');
+    }
+
     var headerHeight = style.get(editor._domElements.header, "height");
-    var newHeight = style.get(editor.editorCP.srcNodeRef, "height") - headerHeight - 7;
+    var newHeight = style.get(editor.editorCP.srcNodeRef, "height") - headerHeight - 7 - 20;
 
     style.set(editor.srcNodeRef, "height", newHeight + "px");
 
@@ -710,7 +715,7 @@ define([
     resizable       : false,
     draggable       : false,
     closable        : false,
-    displaySearch   : false,
+    displaySearch   : true,
 
     onClose           : function () {},
     onClick           : function () {},
