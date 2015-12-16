@@ -204,8 +204,10 @@ class Context(context_base.ContextBase):
         if not compiler_binaries:
             # set default analyzers assume they are in the PATH
             # will be checked later
-            analyzers['clangSA'] = 'clang'
-            analyzers['clang-tidy'] = 'clang-tidy'
+            # key naming in the dict should be the same as in
+            # the supported analyzers list
+            analyzers['ClangSA'] = 'clang'
+            analyzers['Clang-tidy'] = 'clang-tidy'
         else:
             for name, value in compiler_binaries.iteritems():
                 if os.path.isabs(value):
