@@ -188,6 +188,35 @@ class ThriftRequestHandler():
                 shared.ttypes.ErrorCode.DATABASE,
                 msg)
 
+
+    def __sortResultsQuery(self, query, sort_types=None):
+        '''
+        Helper method for __queryDiffResults and __queryResults to apply sorting.
+        '''
+
+        # get a list of sort_types which will be a nested ORDER BY
+        sort_type_map = {}
+        sort_type_map[SortType.FILENAME] = [File.filepath, BugPathEvent.line_begin]
+        sort_type_map[SortType.CHECKER_NAME] = [Report.checker_id]
+        sort_type_map[SortType.SEVERITY] = [Report.severity]
+
+        # mapping the SQLAlchemy functions
+        order_type_map = {}
+        order_type_map[Order.ASC] = asc
+        order_type_map[Order.DESC] = desc
+
+        if sort_types is None:
+            sort_types = [SortMode(SortType.FILENAME, Order.ASC)]
+
+        for sort in sort_types:
+            sorttypes = sort_type_map.get(sort.type)
+            for sorttype in sorttypes:
+                order_type = order_type_map.get(sort.ord)
+                query = query.order_by(order_type(sorttype))
+
+        return query
+
+
     def __queryResults(self, run_id, limit, offset, sort_types, report_filters):
 
         max_query_limit = constants.MAX_QUERY_SIZE
@@ -199,18 +228,6 @@ class ThriftRequestHandler():
             limit = max_query_limit
 
         session = self.__session
-
-        # get a list of sort_types which will be a nested orderby
-        sort_type_map = {}
-        sort_type_map[SortType.FILENAME] = File.filepath
-        sort_type_map[SortType.CHECKER_NAME] = Report.checker_id
-        sort_type_map[SortType.SEVERITY] = Report.severity
-
-        # mapping the sqlalchemy functions
-        order_type_map = {}
-        order_type_map[Order.ASC] = asc
-        order_type_map[Order.DESC] = desc
-
         filter_expression = construct_report_filter(report_filters)
 
         try:
@@ -230,18 +247,9 @@ class ThriftRequestHandler():
                                 SuppressBug.run_id == run_id)) \
                 .filter(filter_expression)
 
-            if sort_types is None:
-                sorttype = File.filepath
-                order_type = asc
-                q = q.order_by(order_type(sorttype))
-            else:
-                for sort in sort_types:
-                    sorttype = sort_type_map.get(sort.type)
-                    order_type = order_type_map.get(sort.ord)
-                    q = q.order_by(order_type(sorttype))
+            q = self.__sortResultsQuery(q, sort_types)
 
             results = []
-
             for report, source_file, lbpe, suppress_bug in \
                     q.limit(limit).offset(offset):
 
@@ -880,6 +888,7 @@ class ThriftRequestHandler():
 
         return base_line_hashes, new_check_hashes
 
+
     # -----------------------------------------------------------------------
     @timefunc
     def __queryDiffResults(self,
@@ -898,16 +907,6 @@ class ThriftRequestHandler():
                       str(max_query_limit) + ', setting limit to ' +
                       str(max_query_limit))
             limit = max_query_limit
-
-        sort_type_map = {}
-        sort_type_map[SortType.FILENAME] = File.filepath
-        sort_type_map[SortType.CHECKER_NAME] = Report.checker_id
-        sort_type_map[SortType.SEVERITY] = Report.severity
-
-        # mapping the sqlalchemy functions
-        order_type_map = {}
-        order_type_map[Order.ASC] = asc
-        order_type_map[Order.DESC] = desc
 
         filter_expression = construct_report_filter(report_filters)
 
@@ -928,18 +927,9 @@ class ThriftRequestHandler():
                 .filter(Report.bug_id.in_(diff_hash_list)) \
                 .filter(filter_expression)
 
-            if sort_types is None:
-                sorttype = File.filepath
-                order_type = asc
-                q = q.order_by(order_type(sorttype))
-            else:
-                for sort in sort_types:
-                    sorttype = sort_type_map.get(sort.type)
-                    order_type = order_type_map.get(sort.ord)
-                    q = q.order_by(order_type(sorttype))
+            q = self.__sortResultsQuery(q, sort_types)
 
             results = []
-
             for report, source_file, lbpe, suppress_bug \
                                             in q.limit(limit).offset(offset):
 
