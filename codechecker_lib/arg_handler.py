@@ -355,17 +355,18 @@ def handle_check(args):
                 LOG.info("Name was already used in the database please choose another unique name for checking.")
                 sys.exit(1)
 
-        log_file = _check_generate_log_file(args, context)
-        try:
-            actions = log_parser.parse_log(log_file)
-        except Exception as ex:
-            LOG.error(ex)
-            sys.exit(1)
+    log_file = _check_generate_log_file(args, context)
+    try:
+        actions = log_parser.parse_log(log_file)
+    except Exception as ex:
+        LOG.error(ex)
+        sys.exit(1)
 
-        if not actions:
-            LOG.warning('There are no build actions in the log file.')
-            sys.exit(1)
+    if not actions:
+        LOG.warning('There are no build actions in the log file.')
+        sys.exit(1)
 
+    with client.get_connection() as connection:
         if args.update:
             # clean previous suppress information
             client.clean_suppress(connection, context.run_id)
