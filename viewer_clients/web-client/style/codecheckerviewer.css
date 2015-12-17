@@ -20,13 +20,8 @@ code, kbd, pre, samp, tt, xmp, listing, plaintext {
 }
 
 .headerPane {
-  height : 32px;
-  width  : 100%;
-  padding: 0px;
-  margin : 0px;
-  background-image   : url(/images/ccvLogoMiddle.png);
-  background-position: center center;
-  background-repeat  : no-repeat;
+  width : 100%;
+  height: 48px;
 }
 
 .listOfRunsGrid td:nth-child(3):hover {

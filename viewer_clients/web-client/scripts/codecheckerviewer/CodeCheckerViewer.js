@@ -7,6 +7,7 @@
 define([
   "dojo/_base/declare",
   "dojo/_base/array",
+  "dojo/dom-construct",
   "dojo/hash",
   "dojo/topic",
   "dojo/io-query",
@@ -18,7 +19,7 @@ define([
   "scripts/codecheckerviewer/Util.js",
   "scripts/codecheckerviewer/widgets/ListOfRunsWidget.js",
   "scripts/codecheckerviewer/widgets/MenuButton.js",
-], function (declare, darray, hash, topic, ioQuery, BorderContainer, TabContainer,
+], function (declare, darray, domConstruct, hash, topic, ioQuery, BorderContainer, TabContainer,
   ContentPane, ListOfRunsGrid, OverviewTC, Util, ListOfRunsWidget,
   MenuButton) {
 return declare(null, {
@@ -59,7 +60,7 @@ return declare(null, {
 
       that.buildLayout();
       that.buildListOfRuns();
-      that.buildMenuButton();
+      that.buildHeader();
       that.layout.startup();
       that.listOfRunsGrid.fillGridWithRunData();
       that.listOfRunsGrid.render();
@@ -97,10 +98,10 @@ return declare(null, {
       style : "height: 100%;",
     });
 
-    that.headerPane = new ContentPane({
+    that.headerPane = new BorderContainer({
       id     : "headerpane",
       region : "top",
-      class  : "headerPane"
+      class  : "headerPane",
     });
 
     that.mainTC = new TabContainer({
@@ -108,7 +109,6 @@ return declare(null, {
       region : "center",
       style  : "padding:0px;"
     });
-
 
     that.layout.addChild(that.headerPane);
     that.layout.addChild(that.mainTC);
@@ -278,14 +278,32 @@ return declare(null, {
   /**
    * Creates and places the MenuButton on the headerPane.
    */
-  buildMenuButton : function() {
+  buildHeader : function() {
     var that = this;
+
+    var logoCP = new ContentPane({
+      region : "left",
+      style  : "background-color: #007ea7; width: 100%; border:0px;"
+    });
+
+    var logo = domConstruct.create("div", {
+      innerHTML : "CodeChecker",
+      style     : "font-family: Consolas, 'Courier New', monospace; font-size: 20pt; color: white;"
+    }, logoCP.domNode);
+
+    var menuCP = new ContentPane({
+      region : "right",
+      style  : "border:0px; background-color: #007ea7;"
+    });
 
     var menuButton = new MenuButton({
       mainTC : that.mainTC,
     });
 
-    that.headerPane.addChild(menuButton);
+    that.headerPane.addChild(logoCP);
+
+    menuCP.addChild(menuButton);
+    that.headerPane.addChild(menuCP);
   },
 
 
