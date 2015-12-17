@@ -33,6 +33,6 @@
           {"security.insecureAPI.mkstemp" : true },
           {"security.insecureAPI.vfork" : true }
       ],
-      "clang_tidy_checkers" : "cert-fio38-c,google-global-names-in-headers,google-runtime-memset,misc-inaccurate-erase,misc-non-copyable-objects,misc-sizeof-container,misc-swapped-arguments,misc-unused-raii"
+      "clang_tidy_checkers" : "clang-diagnostic-*,cert-fio38-c,google-global-names-in-headers,google-runtime-memset,misc-inaccurate-erase,misc-non-copyable-objects,misc-sizeof-container,misc-swapped-arguments,misc-unused-raii"
   }
 }
