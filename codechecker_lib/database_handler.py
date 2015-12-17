@@ -23,7 +23,7 @@ from codechecker_lib import host_check
 from db_model.orm_model import *
 
 import sqlalchemy
-from sqlalchemy.engine.url import URL
+from sqlalchemy.engine.url import URL, make_url
 from sqlalchemy.sql.elements import quoted_name
 
 from alembic import command, config
@@ -90,6 +90,7 @@ class SQLServer(object):
             else:
                 CC_META.create_all(engine)
 
+            engine.dispose()
             LOG.debug('Update/create database schema done')
             return True
 
@@ -141,9 +142,15 @@ class SQLServer(object):
         '''
         Creates a new SQLAlchemy engine.
         '''
-        return sqlalchemy.create_engine(connection_string,
-                                        encoding='utf8',
-                                        strategy='threadlocal')
+
+        if make_url(connection_string).drivername == 'sqlite+pysqlite':
+            # FIXME: workaround for locking errors
+            return sqlalchemy.create_engine(connection_string,
+                                            encoding='utf8',
+                                            connect_args={'timeout': 600})
+        else:
+            return sqlalchemy.create_engine(connection_string,
+                                            encoding='utf8')
 
     @staticmethod
     def from_cmdline_args(args, workspace, migration_root, env=None):
