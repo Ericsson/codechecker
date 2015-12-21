@@ -179,8 +179,7 @@ return declare(TabContainer, {
     // Maybe it's in the GRID. Use it as a cache.
     var rowIndex = 0;
     var row;
-    while ((row = that.overviewGrid.getItem(rowIndex)))
-    {
+    while (row = that.overviewGrid.getItem(rowIndex)) {
       if (row.reportId == hashState.fvReportId) {
         break;
       }

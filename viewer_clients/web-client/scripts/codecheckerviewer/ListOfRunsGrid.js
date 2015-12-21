@@ -99,9 +99,11 @@ return declare(DataGrid, {
 
     var accm = 0;
 
-    for (var i = 0 ; i < that.store._arrayOfAllItems.length ; ++i) {
-      if (that.getItem(i).diffActual[0] === true) { ++accm; }
-    }
+    that.store._arrayOfAllItems.forEach(function (e, i) {
+      if (that.getItem(i).diffActual[0] === true) {
+        ++accm;
+      }
+    });
 
     return accm;
   },
