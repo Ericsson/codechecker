@@ -271,22 +271,26 @@ return declare(BorderContainer, {
     };
 
     CC_SERVICE.getReportDetails(reportId, function (reportDetails) {
-      var allPoints = reportDetails.executionPath;
+      if (reportDetails instanceof RequestFailed) {
+        console.log("Thrift API call 'getReportDetails' failed!");
+      } else {
+        var allPoints = reportDetails.executionPath;
 
-      that.createAndAddFileJumpBubbles(allPoints, editor);
+        that.createAndAddFileJumpBubbles(allPoints, editor);
 
-      var points  = allPoints.filter(filterFunction);
-      var bubbles = reportDetails.pathEvents.filter(filterFunction);
+        var points  = allPoints.filter(filterFunction);
+        var bubbles = reportDetails.pathEvents.filter(filterFunction);
 
-      // This is needed because CodeChecker gives different positions.
-      points.forEach(function (point)   { --point.startCol;  });
-      bubbles.forEach(function (bubble) { --bubble.startCol; });
+        // This is needed because CodeChecker gives different positions.
+        points.forEach(function (point)   { --point.startCol;  });
+        bubbles.forEach(function (bubble) { --bubble.startCol; });
 
-      editor.addBubbles(bubbles);
-      editor.addLines(points);
-
+        editor.addBubbles(bubbles);
+        editor.addLines(points);
+      }
 
       var fln = editor.codeMirror.options.firstLineNumber;
+
       var newPoint = editor.codeMirror.doc.markText(
         { line : range.from.line - fln, ch : range.from.column - 1 },
         { line : range.to.line   - fln, ch : range.to.column - 1   },
@@ -306,7 +310,6 @@ return declare(BorderContainer, {
 
   clearSelectionAndBubblesLines : function (editor) {
     var that = this;
-
 
     var noRange = that.createRangeFromBugPos({
       startLine : 0,
@@ -343,20 +346,18 @@ return declare(BorderContainer, {
   createAndAddFileJumpBubbles : function (points, editor) {
     var that = this;
 
-
     var bubbleInfoArray = [];
     var lastStartLine = null;
     var swtch = false;
 
     for (var i = 0 ; i < points.length ; ++i) {
-
       var areFilesTheSame = points[i].fileId === that.viewedFileId;
 
       if (swtch && !areFilesTheSame) {
         bubbleInfoArray.push({
           filePath   : points[i].filePath,
           fileId     : points[i].fileId,
-          line       : lastStartLine-1,
+          line       : lastStartLine - 1,
           fileViewBC : that
         });
 
@@ -368,17 +369,16 @@ return declare(BorderContainer, {
         --i;
         swtch = true;
       }
-
     }
 
-    for (var j = 0 ; j < bubbleInfoArray.length ; ++j) {
+    bubbleInfoArray.forEach(function (e, i) {
       editor.addNewOtherFileBubble(
-        bubbleInfoArray[j].filePath,
-        bubbleInfoArray[j].fileId,
-        bubbleInfoArray[j].line,
-        bubbleInfoArray[j].fileViewBC
+        e.filePath,
+        e.fileId,
+        e.line,
+        e.fileViewBC
       );
-    }
+    });
   }
 
 

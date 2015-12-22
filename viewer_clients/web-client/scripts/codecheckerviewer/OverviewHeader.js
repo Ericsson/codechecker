@@ -53,17 +53,17 @@ return declare(ContentPane, {
 
     var filterObjArray = [];
 
-    for (var i = 0 ; i < that.filters.length ; ++i) {
-      var pathState = "*" + that.filters[i].textBoxPath.get("value") + "*";
-      var supprState = that.filters[i].selectSuppr.get("value");
-      var checkerInfoState = that.filters[i].selectCheckerInfo.get("value");
+    that.filters.forEach(function (e, i) {
+      var pathState        = "*" + e.textBoxPath.get("value") + "*";
+      var supprState       = e.selectSuppr.get("value");
+      var checkerInfoState = e.selectCheckerInfo.get("value");
 
       filterObjArray.push({
         pathState        : pathState,
         supprState       : supprState,
         checkerInfoState : checkerInfoState,
       });
-    }
+    });
 
     return filterObjArray;
   },
@@ -77,11 +77,11 @@ return declare(ContentPane, {
 
     var filterObjArray = [];
 
-    for (var i = 0 ; i < that.filters.length ; ++i) {
-      var pathState = "*" + that.filters[i].textBoxPath.get("value") + "*";
-      var supprState = that.filters[i].selectSuppr.get("value");
-      var resolvState = that.filters[i].selectResolv.get("value");
-      var checkerInfoState = that.filters[i].selectCheckerInfo.get("value");
+    that.filters.forEach(function (e, i) {
+      var pathState        = "*" + e.textBoxPath.get("value") + "*";
+      var supprState       = e.selectSuppr.get("value");
+      var resolvState      = e.selectResolv.get("value");
+      var checkerInfoState = e.selectCheckerInfo.get("value");
 
       filterObjArray.push({
         pathState        : pathState,
@@ -89,7 +89,7 @@ return declare(ContentPane, {
         checkerInfoState : checkerInfoState,
         resolvState      : resolvState,
       });
-    }
+    });
 
     return filterObjArray;
   },

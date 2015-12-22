@@ -25,7 +25,7 @@ define([
 return declare(null, {
 
 
-  constructor : function() {
+  constructor : function () {
     var that = this;
 
     that.diffRuns = [];
@@ -40,7 +40,7 @@ return declare(null, {
   /**
    * Initializes the global variables to be used.
    */
-  initGlobals : function() {
+  initGlobals : function () {
     CC_SERVICE = new codeCheckerDBAccess.codeCheckerDBAccessClient(
       new Thrift.Protocol(new Thrift.Transport("CodeCheckerService")));
     CC_UTIL    = new Util();
@@ -50,11 +50,15 @@ return declare(null, {
   /**
    * Initializes the Viewer
    */
-  initCCV : function() {
+  initCCV : function () {
     var that = this;
 
-    CC_SERVICE.getSuppressFile(function(filePath) {
-      that.isSupprFileAvailable = (filePath !== "");
+    CC_SERVICE.getSuppressFile(function (filePath) {
+      if (filePath instanceof RequestFailed) {
+        that.isSupprFileAvailable = false;
+      } else {
+        that.isSupprFileAvailable = (filePath !== "");
+      }
 
       var initialHash = hash();
 
@@ -65,7 +69,7 @@ return declare(null, {
       that.listOfRunsGrid.fillGridWithRunData();
       that.listOfRunsGrid.render();
 
-      topic.subscribe("/dojo/hashchange", function(changedHash) {
+      topic.subscribe("/dojo/hashchange", function (changedHash) {
         that.handleHashChange(changedHash);
       });
 
@@ -76,7 +80,7 @@ return declare(null, {
         that.handleHashChange(initialHash);
       }
 
-      that.listOfRunsBC.onShow = function() {
+      that.listOfRunsBC.onShow = function () {
         if (hash() !== "") {
           hash("");
           that.listOfRunsGrid.render();
@@ -90,7 +94,7 @@ return declare(null, {
   /**
    * Builds the layout and the uppermost containers.
    */
-  buildLayout : function() {
+  buildLayout : function () {
     var that = this;
 
     that.layout = new BorderContainer({
@@ -121,7 +125,7 @@ return declare(null, {
    * Creates the ListOfRuns view which consists of a ListOfRunsGrid and a
    * ListOfRunsWidget and their appropriate encapsulating Containers.
    */
-  buildListOfRuns : function() {
+  buildListOfRuns : function () {
     var that = this;
 
     that.listOfRunsGridCP = new ContentPane({
@@ -138,7 +142,7 @@ return declare(null, {
       selectable    : true,
       selectionMode : "none",
       style         : "font-family: sans-serif; padding: 0px; margin: 0px; border: 0px;",
-      onRowClick    : function(evt) {
+      onRowClick    : function (evt) {
 
         switch (evt.cell.field) {
 
@@ -278,7 +282,7 @@ return declare(null, {
   /**
    * Creates and places the MenuButton on the headerPane.
    */
-  buildHeader : function() {
+  buildHeader : function () {
     var that = this;
 
     var logoCP = new ContentPane({
@@ -311,13 +315,13 @@ return declare(null, {
    * This function gets called when the Delete button in the ListOfRunsWidget
    * is pressed
    */
-  deleteRuns : function() {
+  deleteRuns : function () {
     var that = this;
 
     // Remove selected rows
     that.listOfRunsGrid.store.fetch({
-      onComplete: function(runs) {
-        runs.forEach(function(run) {
+      onComplete: function (runs) {
+        runs.forEach(function (run) {
           if (darray.indexOf(that.deleteRunIds, run.runid[0]) >= 0) {
             that.listOfRunsGrid.store.deleteItem(run);
           }
@@ -327,7 +331,7 @@ return declare(null, {
 
     that.listOfRunsWidget.setDeleteButtonDisabled(true);
 
-    CC_SERVICE.removeRunResults(that.deleteRunIds, function(isSuccessful) {
+    CC_SERVICE.removeRunResults(that.deleteRunIds, function (isSuccessful) {
       if (isSuccessful instanceof RequestFailed || !isSuccessful) {
         console.error("Failed to delete runs!", isSuccessful);
       }
@@ -343,7 +347,7 @@ return declare(null, {
    *
    * @param changedHash a browser hash (different than the current hash)
    */
-  handleHashChange : function(changedHash) {
+  handleHashChange : function (changedHash) {
     var that = this;
 
     if (!changedHash) {
@@ -381,7 +385,7 @@ return declare(null, {
   /**
    * This is the first step in creating a new RunOverview tab.
    */
-  newRunOverviewTab : function(runId, runName) {
+  newRunOverviewTab : function (runId, runName) {
     var hashState = {
       ovType: 'run',
       ovName: runName,
@@ -396,7 +400,7 @@ return declare(null, {
    * This is the first step in creating a new DiffOverview tab, changes the hash
    * appropriately.
    */
-  newDiffOverviewTab : function(runId1, runId2, runName1, runName2) {
+  newDiffOverviewTab : function (runId1, runId2, runName1, runName2) {
     var hashState = {
       ovType: 'diff',
       diffNames: [runName1, runName2],
@@ -410,7 +414,7 @@ return declare(null, {
     /**
    * Creates a new DiffOverview tab, it may be called after a dojo/hashchange event.
    */
-  handleNewRunOverviewTab : function(idOfNewOverviewTC, runId, runName) {
+  handleNewRunOverviewTab : function (idOfNewOverviewTC, runId, runName) {
     var that = this;
 
     CC_UTIL.getCheckerInfoRun(
@@ -429,7 +433,7 @@ return declare(null, {
           title        : runName,
           closable     : true,
           style        : "padding: 5px;",
-          onClose      : function() {
+          onClose      : function () {
             if (that.mainTC.selectedChildWidget === newOverviewTC) {
               that.mainTC.selectChild("bc_listofrunsgrid");
             }
@@ -438,7 +442,7 @@ return declare(null, {
 
             return true;
           },
-          onShow : function() {
+          onShow : function () {
             that.newRunOverviewTab(runId, runName);
           }
         });
@@ -460,7 +464,7 @@ return declare(null, {
   /**
    * Creates a new DiffOverview tab, it may be called after a dojo/hashchange event.
    */
-  handleNewDiffOverviewTab : function(idOfNewOverviewTC, runId1, runId2, runName1, runName2) {
+  handleNewDiffOverviewTab : function (idOfNewOverviewTC, runId1, runId2, runName1, runName2) {
     var that = this;
 
     CC_UTIL.getCheckerInfoDiff(
@@ -513,7 +517,7 @@ return declare(null, {
   /**
    * Resets the whole ListOfRuns view to the original starting state.
    */
-  reset : function() {
+  reset : function () {
     var that = this;
 
     that.listOfRunsGrid.recreateStore();
