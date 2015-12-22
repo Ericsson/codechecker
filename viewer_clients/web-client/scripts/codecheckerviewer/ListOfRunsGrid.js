@@ -20,7 +20,7 @@ return declare(DataGrid, {
     });
 
     that.structure = [
-      { name : "Diff", field : "diffDisplay", styles : "text-align: center;", width : "25px", type : "dojox.grid.cells.Bool", editable : true },
+      { name : "Diff", field : "diffDisplay", styles : "text-align: center;", width : "40px", type : "dojox.grid.cells.Bool", editable : true },
       { name : "Run Id", field : "runid", styles : "text-align: center;", width : "50px" },
       { name : "Name", field : "name", styles : "text-align: center;", width : "auto" },
       { name : "Date", field : "date", styles : "text-align: center;", width : "auto" },
