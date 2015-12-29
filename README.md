@@ -123,6 +123,9 @@ source ~/codechecker_package/CodeChecker/init/init.sh
 # check project using the default postgresql database port and the newly created db user
 CodeChecker check --dbusername test_user --dbport 5432 -n test_project_check -w ~/checker_workspace -b "cd my_test_project && make clean && make"
 
+# To run an incremental build
+CodeChecker check --update --dbusername test_user --dbport 5432 -n test_project_check -w ~/checker_workspace -b "cd my_test_project && make clean && make"
+
 ~~~~~~
 
 ### Start the viewer Web server
