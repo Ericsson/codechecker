@@ -2,7 +2,7 @@
 [![Build Status](https://travis-ci.org/Ericsson/codechecker.svg?branch=master)](https://travis-ci.org/Ericsson/codechecker)
 -----
 # Introduction
-CodeChecker is a static analysis infrastructure built on [Clang Static Analyzer](http://clang-analyzer.llvm.org/).  
+CodeChecker is a static analysis infrastructure built on [Clang Static Analyzer](http://clang-analyzer.llvm.org/).
 
 CodeChecker replaces [scan-build](http://clang-analyzer.llvm.org/scan-build.html) in Clang Static Analyzer in Linux systems.
 
@@ -19,7 +19,7 @@ It provides
 You can find a high level overview about the infrastructure in the presentation
 at the [2015 Euro LLVM](http://llvm.org/devmtg/2015-04/) Conference:
 
-__Industrial Experiences with the Clang Static Analysis Toolset  
+__Industrial Experiences with the Clang Static Analysis Toolset
 _Daniel Krupp, Gyorgy Orban, Gabor Horvath and Bence Babati___ ([ Slides](http://llvm.org/devmtg/2015-04/slides/Clang_static_analysis_toolset_final.pdf))
 
 ## Important Limitations
@@ -32,18 +32,18 @@ If your clang version does not have these features you will see warning messages
 
 ## Linux
 ### Packaging requirements
-  *  [Git](https://git-scm.com/) (> 1.9.1)  
-  *  [Thrift compiler](https://thrift.apache.org/) (> 0.9.2)  
+  *  [Git](https://git-scm.com/) (> 1.9.1)
+  *  [Thrift compiler](https://thrift.apache.org/) (> 0.9.2)
 
         required to generate python and javascript files
-  *  [Doxygen](http://www.stack.nl/~dimitri/doxygen/) (> 1.8)  
+  *  [Doxygen](http://www.stack.nl/~dimitri/doxygen/) (> 1.8)
 
-     markdown support is required  
+     markdown support is required
   *  Build-logger
 
      ld-logger is used to create a build log from the build commands.
      It is possible to build package without ld-logger.
-     In that case no automatic compilation logging is available.  
+     In that case no automatic compilation logging is available.
      There should be already an existing file containing the compilation commands (in `cmake` with the 'CMAKE_EXPORT_COMPILE_COMMANDS' option) to run the static analyzer.
      To build ld-logger 32 and 64 bit versions `gcc multilib` and `make`
      is required
@@ -122,6 +122,9 @@ source ~/codechecker_package/CodeChecker/init/init.sh
 
 # check project using the default postgresql database port and the newly created db user
 CodeChecker check --dbusername test_user --dbport 5432 -n test_project_check -w ~/checker_workspace -b "cd my_test_project && make clean && make"
+
+# To run an incremental build
+CodeChecker check --update --dbusername test_user --dbport 5432 -n test_project_check -w ~/checker_workspace -b "cd my_test_project && make clean && make"
 
 ~~~~~~
 
