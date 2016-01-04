@@ -143,7 +143,10 @@ UNKNOWN_OPTIONS_MAP_REGEX = {
     '^-ffixed-r2': 0,
     '^-fno-var-tracking-assignments': 0,
     '^-fconserve-stack': 0,
-    '^-m(no-)?spe.*': 0
+    '^-m(no-)?spe.*': 0,
+    '^-maccumulate-outgoing-args': 0,
+    '^-fno-toplevel-reorder': 0,
+    '^-fcall-saved-.*': 0
 }
 
 # -----------------------------------------------------------------------------
