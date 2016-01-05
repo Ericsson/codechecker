@@ -165,7 +165,11 @@ def copy_tree(src, dst):
 
 # -------------------------------------------------------------------
 def handle_external_file(dep, clean, env, verbose):
-    ''' download and extract tar.gz files from the given url'''
+    '''
+    download (and if needed, extract) files from the given url
+    currently supports handling of files with the following extensions:
+      .tar.gz, .js, .css
+    '''
 
     source_package = dep['source_package']
     directory = dep['directory']
@@ -193,6 +197,8 @@ def handle_external_file(dep, clean, env, verbose):
         file_name = os.path.join(directory, file_name)
         with tarfile.open(file_name) as tar:
             tar.extractall(directory)
+    elif file_name.endswith('.js') or file_name.endswith('.css'):
+        pass # DO NOTHING
     else:
         LOG.error('Unsupported file type')
 
@@ -424,11 +430,17 @@ def build_package(repository_root, build_package_config, env=None):
     copy_tree(codemirror_root, target)
 
     # highlightjs
-    source = os.path.join(repository_root, 'external-source-deps',
-                          'highlightjs')
-    target = os.path.join(package_root,
-                          package_layout['web_client_highlightjs'])
-    copy_tree(source, target)
+    highlightjs_dep = external_dependencies['highlightjs']
+    highlightjs_root = os.path.join(repository_root, highlightjs_dep.get('directory'))
+    target = os.path.join(package_root, package_layout['web_client_highlightjs'])
+    copy_tree(highlightjs_root, target)
+
+    # highlightjs_css
+    highlightjs_css_dep = external_dependencies['highlightjs_css']
+    highlightjs_css_root = os.path.join(repository_root, highlightjs_css_dep.get('directory'))
+    target = os.path.join(package_root, package_layout['web_client_highlightjs'])
+    target = os.path.join(target, 'css')
+    copy_tree(highlightjs_css_root, target)
 
     # dojo
     dojo_dep = external_dependencies['dojotoolkit']

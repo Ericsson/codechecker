@@ -36,8 +36,23 @@
         "directory" : "external-source-deps/dojotoolkit",
         "version" : "1.10.4",
         "description" : "dojo",
-        "homepage" : "http://dojotoolkit.org",
-        "source_package" : { "download_cmd" : "wget" , "url" : "http://download.dojotoolkit.org/release-1.10.4/dojo-release-1.10.4.tar.gz"}
+        "homepage" : "http://dojotoolkit.org/",
+        "source_package" : { "download_cmd" : "wget" , "url" : "http://download.dojotoolkit.org/release-1.10.4/dojo-release-1.10.4.tar.gz" }
+    },
+    {
+        "name" : "highlightjs",
+        "directory" : "external-source-deps/highlightjs",
+        "version" : "9.0.0",
+        "description" : "highlightjs",
+        "homepage" : "https://highlightjs.org/",
+        "source_package" : { "download_cmd" : "wget" , "url" : "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.0.0/highlight.min.js" }
+    },
+    {
+        "name" : "highlightjs_css",
+        "directory" : "external-source-deps/highlightjs/css",
+        "version" : "9.0.0",
+        "description" : "highlightjs_css",
+        "homepage" : "https://highlightjs.org/",
+        "source_package" : { "download_cmd" : "wget" , "url" : "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.0.0/styles/xcode.min.css" }
     }
-
 ]
