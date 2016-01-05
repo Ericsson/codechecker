@@ -120,8 +120,10 @@ class CheckerReportHandler(object):
         return True
 
     @decorators.catch_sqlalchemy
-    def addConfigInfo(self, run_id, config_values):
+    def replaceConfigInfo(self, run_id, config_values):
         '''
+        removes all the previously stored config informations
+        and stores the new values
         '''
         count = self.session.query(Config) \
                             .filter(Config.run_id == run_id) \

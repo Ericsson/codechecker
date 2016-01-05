@@ -30,7 +30,7 @@ service CheckerReport {
                                    4: bool update)
                                    throws (1: shared.RequestFailed requestError),
 
-                bool addConfigInfo(
+                bool replaceConfigInfo(
                                    1: i64 run_id,
                                    2: shared.CheckerConfigList values)
                                    throws (1: shared.RequestFailed requestError),

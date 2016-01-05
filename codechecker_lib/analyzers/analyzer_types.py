@@ -235,9 +235,12 @@ def build_config_handlers(args, context, enabled_analyzers, connection=None):
             LOG.debug('Not supported analyzer type. No configuration handler will be created')
 
     if connection:
+        # collect all configuration options and store them together
+        configs = []
         for _, config_handler in analyzer_config_map.iteritems():
-            configs = config_handler.get_configs()
-            client.store_config_to_db(run_id, connection, configs)
+            configs.extend(config_handler.get_checker_configs())
+
+        client.replace_config_in_db(run_id, connection, configs)
 
     return analyzer_config_map
 
