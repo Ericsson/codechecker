@@ -170,6 +170,10 @@ def handle_external_file(dep, clean, env, verbose):
     currently supports handling of files with the following extensions:
       .tar.gz, .js, .css
     '''
+    supported_exts = {
+        'compressed': ['.tar.gz'],
+        'uncompressed': ['.js', '.css']
+    }
 
     source_package = dep['source_package']
     directory = dep['directory']
@@ -193,12 +197,19 @@ def handle_external_file(dep, clean, env, verbose):
     url_data = urlparse.urlparse(file_url)
     head, file_name = ntpath.split(url_data.path)
 
-    if file_name.endswith('.tar.gz'):
-        file_name = os.path.join(directory, file_name)
-        with tarfile.open(file_name) as tar:
-            tar.extractall(directory)
-    elif file_name.endswith('.js') or file_name.endswith('.css'):
-        pass # DO NOTHING
+    head, file_ext = os.path.splitext(file_name)
+    if file_ext == '.gz' and head.endswith('.tar'):
+        file_ext = '.tar.gz'
+
+    if file_ext in supported_exts['compressed']:
+        if file_ext == '.tar.gz':
+            file_name = os.path.join(directory, file_name)
+            with tarfile.open(file_name) as tar:
+                tar.extractall(directory)
+        else:
+            LOG.error('Unsupported file type')
+    elif file_ext in supported_exts['uncompressed']:
+        pass
     else:
         LOG.error('Unsupported file type')
 
