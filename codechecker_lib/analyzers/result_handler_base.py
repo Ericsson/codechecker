@@ -204,7 +204,12 @@ class ResultHandler(object):
         for analyzed_file, result_file in self.__result_files.iteritems():
             LOG.debug('Removing result file: ' + result_file + '\n'
                       'For analyzed file ' + analyzed_file)
-            os.remove(result_file)
+            try:
+                os.remove(result_file)
+            except OSError as oserr:
+                # there might be no result file if analysis failed
+                LOG.debug(oserr)
+                pass
 
     @abstractmethod
     def postprocess_result(self):
