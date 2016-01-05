@@ -82,7 +82,7 @@ class SourceAnalyzer(object):
         # construct the analyzer cmd
         analyzer_cmd = self.construct_analyzer_cmd(res_handler)
 
-        LOG.debug(' '.join(analyzer_cmd))
+        LOG.debug('\n' + ' '.join(analyzer_cmd))
 
         res_handler.analyzer_cmd = analyzer_cmd
         analyzer_cmd = shlex.split(' '.join(analyzer_cmd))
