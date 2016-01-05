@@ -57,8 +57,8 @@ def handle_list_checkers(args):
             enabled_analyzer_types.add(ea)
 
     analyzer_config_map = analyzer_types.build_config_handlers(args,
-                                                            context,
-                                                            enabled_analyzer_types)
+                                                               context,
+                                                               enabled_analyzer_types)
 
     for ea in enabled_analyzers:
         # get the config
