@@ -39,16 +39,16 @@ def worker_result_handler(results):
             failed_analisys[analyzer_type] += 1
 
     LOG.info("----==== Summary ====----")
-    LOG.info('Analyzed build actions: ' + str(len(results)))
+    LOG.info('Total analyzed compilation commands: ' + str(len(results)))
     if successful_analysis:
-        LOG.info('Successfull')
+        LOG.info('Successfully analyzed')
         for analyzer_type, res in successful_analysis.iteritems():
-            LOG.info(analyzer_type + ': ' + str(res))
+            LOG.info('  ' + analyzer_type + ': ' + str(res))
 
     if failed_analisys:
-        LOG.info("Failed")
+        LOG.info("Failed to analyze")
         for analyzer_type, res in failed_analisys.iteritems():
-            LOG.info(analyzer_type + ': ' + str(res))
+            LOG.info('  ' + analyzer_type + ': ' + str(res))
     LOG.info("----=================----")
 
 def check(check_data):
