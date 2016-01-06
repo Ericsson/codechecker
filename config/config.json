@@ -33,6 +33,16 @@
           {"security.insecureAPI.mkstemp" : true },
           {"security.insecureAPI.vfork" : true }
       ],
-      "clang_tidy_checkers" : "clang-diagnostic-*,cert-fio38-c,google-global-names-in-headers,google-runtime-memset,misc-inaccurate-erase,misc-non-copyable-objects,misc-sizeof-container,misc-swapped-arguments,misc-unused-raii"
+      "clang_tidy_checkers" : [
+          {"clang-diagnostic-*" : true },
+          {"cert-fio38-c" : true },
+          {"google-global-names-in-headers" : true },
+          {"google-runtime-memset" : true },
+          {"misc-inaccurate-erase" : true },
+          {"misc-non-copyable-objects" : true },
+          {"misc-sizeof-container" : true },
+          {"misc-swapped-arguments" : true },
+          {"misc-unused-raii" : true }
+      ]
   }
 }

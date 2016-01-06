@@ -29,6 +29,9 @@ class AnalyzerConfigHandler(object):
         self.__includes = []
         self.__analyzer_extra_arguments = ''
 
+        # list of (checker_name, True/False) tuples where order matters!
+        self.__checks = []
+
     @property
     def analyzer_plugins_dir(self):
         """
@@ -69,26 +72,31 @@ class AnalyzerConfigHandler(object):
         """
         pass
 
-    @abstractmethod
     def set_checks(self, value):
         """
         set/overwrite the checkers
         """
-        pass
+        self.__checks = value
 
-    @abstractmethod
+    def add_check(self, checks):
+        """
+        add additional checkers
+        tuple of (checker_name, True\False)
+        """
+        self.__checks.append(checks)
+
     def add_checks(self, checks):
         """
         add additional checkers
+        list of tuples of (checker_name, True\False)
         """
-        pass
+        self.__checks.extend(checks)
 
-    @abstractmethod
     def checks(self):
         """
         return the checkers
         """
-        pass
+        return self.__checks
 
     @abstractmethod
     def checks_str(self):

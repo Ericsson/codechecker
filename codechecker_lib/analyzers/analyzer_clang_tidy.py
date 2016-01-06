@@ -71,7 +71,14 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
             analyzer_cmd = []
             analyzer_cmd.append(analyzer_bin)
 
-            analyzer_cmd.append("-checks='" + config.checks() + "'")
+            checkers_cmdline = ''
+            for checker_name, enabled in config.checks():
+                if enabled:
+                    checkers_cmdline += ',' + checker_name
+                else:
+                    checkers_cmdline += ',-' + checker_name
+
+            analyzer_cmd.append("-checks='" + checkers_cmdline.lstrip(',') + "'")
 
             LOG.debug(config.analyzer_extra_arguments)
             analyzer_cmd.append(config.analyzer_extra_arguments)

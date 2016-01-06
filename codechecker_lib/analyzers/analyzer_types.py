@@ -8,6 +8,7 @@
 supported analyzer types
 """
 import os
+import re
 import sys
 
 from codechecker_lib import logger
@@ -30,6 +31,42 @@ CLANG_SA = 'ClangSA'
 CLANG_TIDY = 'Clang-tidy'
 
 supported_analyzers = {CLANG_SA, CLANG_TIDY}
+
+def is_sa_checker_name(checker_name):
+    """
+    match for Clang Static analyzer names like
+
+    unix
+    unix.Malloc
+    security.insecureAPI
+    security.insecureAPI.gets
+    """
+    # no '-' is alowed in the checker name
+    sa_checker_name = r'^[^-]+$'
+    ptn = re.compile(sa_checker_name)
+
+    if ptn.match(checker_name):
+        return True
+    return False
+
+def is_tidy_checker_name(checker_name):
+    """
+    match for Clang Tidy analyzer names like
+
+    -*
+    modernize-*
+    clang-diagnostic-*
+    cert-fio38-c
+    google-global-names-in-headers
+    """
+    # must contain at least one '-'
+    tidy_checker_name = r'^(?=.*[\-]).+$'
+
+    ptn = re.compile(tidy_checker_name)
+
+    if ptn.match(checker_name):
+        return True
+    return False
 
 
 def check_supported_analyzers(analyzers, context):
@@ -152,7 +189,7 @@ def __build_clangsa_config_handler(args, context):
 
     # add user defined checkers form the command line
     try:
-        config_handler.add_checks(args.ordered_checker_args)
+        config_handler.add_checks(args.clang_sa_ordered_checker_args)
     except AttributeError:
         LOG.debug('No checkers were defined in the command line for clangSA')
 
@@ -187,13 +224,16 @@ def __build_clang_tidy_config_handler(args, context):
     # extend analyzer config with
     # read clang-tidy checkers from the config file
     clang_tidy_checkers = context.default_checkers_config.get('clang_tidy_checkers')
-    config_handler.add_checks(clang_tidy_checkers)
 
-    # add user defined checkers in the command line
+    if clang_tidy_checkers:
+        for data in clang_tidy_checkers:
+            config_handler.add_checks(data.items())
+
+    # add user defined checkers form the command line
     try:
-        config_handler.add_checks(args.tidy_checks)
+        config_handler.add_checks(args.clang_tidy_ordered_checker_args)
     except AttributeError:
-        LOG.debug('No checkers were defined in the command line for clang tidy')
+        LOG.debug('No checkers were defined in the command line for Clang tidy')
 
     return config_handler
 

@@ -21,22 +21,7 @@ class ClangSAConfigHandler(config_handler.AnalyzerConfigHandler):
 
     def __init__(self):
         super(ClangSAConfigHandler, self).__init__()
-
-        # list of (True/False, checker_name) tuples where order matters!
-        self.__checks = []
         self.__checker_configs = []
-
-    def set_checks(self, checks):
-        self.__checks = checks
-
-    def add_checks(self, checks):
-        self.__checks.extend(checks)
-
-    def checks(self):
-        """
-        list of (True/False, checker_name) tuples where order matters!
-        """
-        return self.__checks
 
     def checks_str(self):
         """
@@ -47,7 +32,7 @@ class ClangSAConfigHandler(config_handler.AnalyzerConfigHandler):
         output.write('-----------------------------------------------\n')
         output.write('Enabled:\n')
         # enabled checkers
-        enabled_checkers = filter(lambda x: x[1], self.__checks)
+        enabled_checkers = filter(lambda x: x[1], self.checks())
         for checker_name, _ in enabled_checkers:
             output.write('  ' + checker_name + '\n')
 
@@ -55,7 +40,7 @@ class ClangSAConfigHandler(config_handler.AnalyzerConfigHandler):
 
         # disabled checkers
         output.write('Disabled:\n')
-        disabled_checkers = filter(lambda x: not x[1], self.__checks)
+        disabled_checkers = filter(lambda x: not x[1], self.checks())
         for checker_name, _ in disabled_checkers:
             output.write('  ' + checker_name + '\n')
 

@@ -30,6 +30,9 @@ class OrderedCheckersAction(argparse.Action):
     '''
     Action to store enabled and disabled checkers
     and keep ordering from command line
+
+    Create separate lists based on the checker names for
+    each analyzer
     '''
     def __init__(self, option_strings, dest, nargs=None, **kwargs):
         if nargs is not None:
@@ -37,14 +40,28 @@ class OrderedCheckersAction(argparse.Action):
         super(OrderedCheckersAction, self).__init__(option_strings, dest, **kwargs)
 
     def __call__(self, parser, namespace, value, option_string=None):
-        if 'ordered_checker_args' not in namespace:
-            setattr(namespace, 'ordered_checker_args', [])
-        previous_values = namespace.ordered_checker_args
-        if self.dest == 'enable':
-            previous_values.append((value, True))
+        if 'clang_sa_ordered_checkers' not in namespace:
+            setattr(namespace, 'clang_sa_ordered_checkers', [])
+        sa_ordered_checkers = namespace.clang_sa_ordered_checkers
+
+        if 'clang_tidy_ordered_checkers' not in namespace:
+            setattr(namespace, 'clang_tidy_ordered_checkers', [])
+        tidy_ordered_checkers = namespace.clang_tidy_ordered_checkers
+
+        if self.dest == 'enable' and analyzer_types.is_sa_checker_name(value):
+            sa_ordered_checkers.append((value, True))
+        elif self.dest == 'enable' and analyzer_types.is_tidy_checker_name(value):
+            tidy_ordered_checkers.append((value, True))
+        elif self.dest == 'disable' and analyzer_types.is_sa_checker_name(value):
+            sa_ordered_checkers.append((value, False))
+        elif self.dest == 'disable' and analyzer_types.is_tidy_checker_name(value):
+            tidy_ordered_checkers.append((value, False))
         else:
-            previous_values.append((value, False))
-        setattr(namespace, 'ordered_checker_args', previous_values)
+            LOG.debug('Failed to match checker name skipping: ' + value)
+
+        setattr(namespace, 'clang_sa_ordered_checkers', sa_ordered_checkers)
+        setattr(namespace, 'clang_tidy_ordered_checkers', tidy_ordered_checkers)
+
 
 # ------------------------------------------------------------------------------
 class DeprecatedOptionAction(argparse.Action):
@@ -126,10 +143,6 @@ File with arguments which will be forwarded directly to the Clang static analyze
                         required=False, default='',
                         help='''\
 File with arguments which will be forwarded directly to the Clang tidy analyzer without modifiaction''')
-
-    parser.add_argument('--clang-tidy-checks', dest="tidy_checks",
-                        default='', required=False,
-                        help='Clang tidy checkers list')
 
 # ------------------------------------------------------------------------------
 def main():
