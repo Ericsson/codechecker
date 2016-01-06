@@ -59,14 +59,14 @@ def send_suppress(run_id, connection, file_name):
         connection.add_suppress_bug(run_id, suppress_data)
 
 # -----------------------------------------------------------------------------
-def store_config_to_db(run_id, connection, configs):
+def replace_config_in_db(run_id, connection, configs):
     configuration_list = []
     for checker_name, key, key_value in configs:
         configuration_list.append(shared.ttypes.ConfigValue(checker_name,
                                                             key,
-                                                            key_value))
-    # store clangSA config to the database
-    connection.add_config_info(run_id, configs)
+                                                            str(key_value)))
+    # store checker configs to the database
+    connection.replace_config_info(run_id, configuration_list)
 
 # -----------------------------------------------------------------------------
 @contextlib.contextmanager
@@ -155,9 +155,9 @@ class Connection(object):
             converted[path] = comment.encode('UTF-8')
         return self._client.addSkipPath(run_id, converted)
 
-    def add_config_info(self, run_id, config_list):
-        ''' bool addConfigInfo(1: i64 run_id, 2: list<ConfigValue> values) '''
-        return self._client.addConfigInfo(run_id, config_list)
+    def replace_config_info(self, run_id, config_list):
+        ''' bool replaceConfigInfo(1: i64 run_id, 2: list<ConfigValue> values) '''
+        return self._client.replaceConfigInfo(run_id, config_list)
 
     def add_build_action(self, run_id, build_cmd, check_cmd):
         ''' i64  addBuildAction(1: i64 run_id, 2: string build_cmd) '''
