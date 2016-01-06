@@ -189,7 +189,7 @@ def __build_clangsa_config_handler(args, context):
 
     # add user defined checkers form the command line
     try:
-        config_handler.add_checks(args.clang_sa_ordered_checker_args)
+        config_handler.add_checks(args.clang_sa_ordered_checkers)
     except AttributeError:
         LOG.debug('No checkers were defined in the command line for clangSA')
 
@@ -231,7 +231,7 @@ def __build_clang_tidy_config_handler(args, context):
 
     # add user defined checkers form the command line
     try:
-        config_handler.add_checks(args.clang_tidy_ordered_checker_args)
+        config_handler.add_checks(args.clang_tidy_ordered_checkers)
     except AttributeError:
         LOG.debug('No checkers were defined in the command line for Clang tidy')
 
