@@ -7,19 +7,24 @@
 import re
 import StringIO
 
+from codechecker_lib import logger
+
 from codechecker_lib.analyzers import config_handler
 
+LOG = logger.get_new_logger('CLANGSA CONFIG HANDLER')
 
 class ClangSAConfigHandler(config_handler.AnalyzerConfigHandler):
     """
     Configuration handler for the clang static analyzer
+
     """
 
-    def __init__(self, config_data):
-        super(ClangSAConfigHandler, self).__init__(config_data)
+    def __init__(self):
+        super(ClangSAConfigHandler, self).__init__()
 
         # list of (True/False, checker_name) tuples where order matters!
         self.__checks = []
+        self.__checker_configs = []
 
     def set_checks(self, checks):
         self.__checks = checks
@@ -58,22 +63,37 @@ class ClangSAConfigHandler(config_handler.AnalyzerConfigHandler):
         output.close()
         return res
 
-    def get_configs(self):
+    def add_checker_config(self, config):
         """
-        return a lis of tuples
+        add a (checker_name, key, value) tuple to the list
         """
-        configs = []
-        checker_name = ''
+        self.__checker_configs.append(config)
 
-        for line in self.config_data.split('\n'):
-            result = re.match('^\[(.*)\]$', line)
-            if result:
-                checker_name = result.group(1)
-            else:
-                result = re.match('^(.*)=(.*)$', line)
-                if result:
-                    key = result.group(1)
-                    key_value = result.group(2)
-                    configs.append((checker_name, key, key_value))
+    def get_checker_configs(self):
+        """
+        Process raw config data (from the command line)
+        Filter out checker related configuration values
+        like unix:Optimistic=true in the command line:
+        '-Xanalyzer -analyzer-config -Xanalyzer unix:Optimistic=true'
 
-        return configs
+        return a list of (checker_name, key, value) tuples
+        """
+
+        checker_config_pattern = r'(?P<checker_name>([^: ]+))\:(?P<checker_attr>([^:=]+))\=(?P<attr_value>([^:\. ]+))'
+
+        raw_config = self.analyzer_extra_arguments
+        LOG.debug(raw_config)
+
+        checker_configs = re.finditer(checker_config_pattern, raw_config)
+
+        if checker_configs:
+            for cfg in checker_configs:
+                checker_name = cfg.group('checker_name')
+                checker_attr = cfg.group('checker_attr')
+                attr_value = cfg.group('attr_value')
+                self.__checker_configs.append((checker_name,
+                                               checker_attr,
+                                               attr_value))
+        LOG.debug(self.__checker_configs)
+
+        return self.__checker_configs

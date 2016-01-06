@@ -120,33 +120,13 @@ def construct_analyzer(buildaction,
         return None
 
 
-def __get_cmdline_config(cmdline_data):
-    """
-    if it is a file read the content if not handle as json config
-    """
-    config = ''
-    if os.path.isfile(cmdline_data):
-        with open(cmdline_data) as conf:
-            config = conf.read()
-    else:
-        config = cmdline_data
-
-    return config
-
-
 def __build_clangsa_config_handler(args, context):
     """
     Build the config handler for clang static analyzer
     Handle config options from the command line and config files
     """
 
-    config = ''
-    try:
-        config = __get_cmdline_config(args.clangsa_config)
-    except AttributeError as aerr:
-        LOG.debug('No commmand line argument was set')
-
-    config_handler = config_handler_clangsa.ClangSAConfigHandler(config)
+    config_handler = config_handler_clangsa.ClangSAConfigHandler()
     config_handler.analyzer_plugins_dir = context.checker_plugin
     analyzer_name = CLANG_SA
     config_handler.analyzer_binary = context.analyzer_binaries.get(analyzer_name)
@@ -154,8 +134,13 @@ def __build_clangsa_config_handler(args, context):
     config_handler.compiler_sysroot = context.compiler_sysroot
     config_handler.system_includes = context.extra_system_includes
     config_handler.includes = context.extra_includes
+    try:
+        with open(args.clangsa_args_cfg_file, 'rb') as sa_cfg:
+            config_handler.analyzer_extra_arguments = sa_cfg.read().strip()
+    except IOError as ioerr:
+        LOG.debug(ioerr)
 
-    # read clangsa checkers from the config file
+    # read clangsa checkers from the package config file
     clang_sa_checkers = context.default_checkers_config.get('clangsa_checkers')
 
     if clang_sa_checkers:
@@ -179,19 +164,19 @@ def __build_clang_tidy_config_handler(args, context):
     Handle config options from the command line and config files
     """
 
-    config = ''
-    try:
-        config = __get_cmdline_config(args.clang_tidy_config)
-    except AttributeError as aerr:
-        LOG.debug('No commmand line argument was set')
-
-    config_handler = config_handler_clang_tidy.ClangTidyConfigHandler(config)
+    config_handler = config_handler_clang_tidy.ClangTidyConfigHandler()
     analyzer_name = CLANG_TIDY
     config_handler.analyzer_binary = context.analyzer_binaries.get(analyzer_name)
     config_handler.compiler_resource_dirs = context.compiler_resource_dirs
     config_handler.compiler_sysroot = context.compiler_sysroot
     config_handler.system_includes = context.extra_system_includes
     config_handler.includes = context.extra_includes
+
+    try:
+        with open(args.tidy_args_cfg_file, 'rb') as tidy_cfg:
+            config_handler.analyzer_extra_arguments = tidy_cfg.read().strip()
+    except IOError as ioerr:
+        LOG.debug(ioerr)
 
     # extend analyzer config with
     # read clang-tidy checkers from the config file

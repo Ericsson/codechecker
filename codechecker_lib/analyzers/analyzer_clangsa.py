@@ -66,9 +66,6 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             analyzer_bin = config.analyzer_binary
             analyzer_plugins = config.analyzer_plugins
 
-            # raw config data in text
-            config_data = config.config_data
-
             analyzer_cmd = []
 
             analyzer_cmd.append(analyzer_bin)
@@ -93,12 +90,6 @@ class ClangSA(analyzer_base.SourceAnalyzer):
                 analyzer_cmd.append("-load")
                 analyzer_cmd.append("-Xclang")
                 analyzer_cmd.append(plugin)
-
-            if config.analyzer_plugins:
-                analyzer_cmd.append('-Xclang')
-                analyzer_cmd.append('-plugin')
-                analyzer_cmd.append('-Xclang')
-                analyzer_cmd.append('checkercfg')
 
             analyzer_cmd.append('-Xclang')
             analyzer_cmd.append('-analyzer-opt-analyze-headers')
@@ -133,6 +124,8 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             # Set lang
             analyzer_cmd.append('-x')
             analyzer_cmd.append(self.buildaction.lang)
+
+            analyzer_cmd.append(config.analyzer_extra_arguments)
 
             analyzer_cmd.extend(self.buildaction.analyzer_options)
 

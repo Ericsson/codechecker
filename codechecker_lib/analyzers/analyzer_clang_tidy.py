@@ -67,16 +67,14 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
             config = self.config_handler
 
             analyzer_bin = config.analyzer_binary
-            # raw config data in text
-            config_data = config.config_data
 
             analyzer_cmd = []
             analyzer_cmd.append(analyzer_bin)
 
             analyzer_cmd.append("-checks='" + config.checks() + "'")
 
-            if config_data != '':
-                analyzer_cmd.append("-config=" + config_data)
+            LOG.debug(config.analyzer_extra_arguments)
+            analyzer_cmd.append(config.analyzer_extra_arguments)
 
             analyzer_cmd.append(self.source_file)
 

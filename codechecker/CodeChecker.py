@@ -117,17 +117,15 @@ Keep temporary report files generated during the analysis.''')
                         help='''\
 Select which analyzer should run currently supported analyzers ''' + analyzers)
 
-    parser.add_argument('--clangSA-config', dest="clangsa_config",
-                        default='', required=False,
+    parser.add_argument('--clangSA-args', dest="clangsa_args_cfg_file",
+                        required=False, default='',
                         help='''\
-Configuration options forwarded directly to the analyzer without modification''')
+File with arguments which will be forwarded directly to the Clang static analyzer without modifiaction''')
 
-    parser.add_argument('--clang-tidy-config', dest="tidy_config",
-                        default='', required=False,
+    parser.add_argument('--clang-tidy-args', dest="tidy_args_cfg_file",
+                        required=False, default='',
                         help='''\
-Configuration options forwarded directly to the analyzer without modification
--config=~/clang_tidy_config.json
-        -config='{ExtraArgs: ["-Wshadow","-Wno-unused-variable"], ExtraArgsBefore: ["-Wno-shadow","-Wfloat-conversion","-Wunused-variable"], CheckOptions: [{key: "readability-simplify-boolean-expr.ChainedConditionalReturn", value: 1}]}''')
+File with arguments which will be forwarded directly to the Clang tidy analyzer without modifiaction''')
 
     parser.add_argument('--clang-tidy-checks', dest="tidy_checks",
                         default='', required=False,

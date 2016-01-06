@@ -154,7 +154,6 @@ def run_quick_check(args,
                       analyzer_config_map,
                       None,
                       args.workspace,
-                      False,
-                      args.keep_tmp)
+                      False)
 
         analysis_manager.check(check_data)

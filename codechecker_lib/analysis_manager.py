@@ -59,7 +59,7 @@ def check(check_data):
     skiplist handler is None if no skip file was configured
     """
     args, action, context, analyzer_config_map, skp_handler, \
-        report_output_dir, use_db, keep_tmp = check_data
+        report_output_dir, use_db = check_data
 
     try:
         # if one analysis fails the check fails
@@ -113,13 +113,14 @@ def check(check_data):
                 rh.handle_results()
             else:
                 # analisys failed
+                LOG.error('Analyzing ' + source_file_name + ' failed.')
                 if rh.analyzer_stdout != '':
-                    LOG.error('\n' + rh.analyzer_stdout)
+                    LOG.error(rh.analyzer_stdout)
                 if rh.analyzer_stderr != '':
-                    LOG.error('\n' + rh.analyzer_stderr)
+                    LOG.error(rh.analyzer_stderr)
                 return_codes = rh.analyzer_returncode
 
-            if not keep_tmp:
+            if not args.keep_tmp:
                 rh.clean_results()
 
         return (return_codes, action.analyzer_type)
@@ -127,7 +128,7 @@ def check(check_data):
     except Exception as e:
         LOG.debug(str(e))
         traceback.print_exc(file=sys.stdout)
-        return 1
+        return (1, action.analyzer_type)
 
 def start_workers(args, actions, context, analyzer_config_map, skp_handler):
     """
@@ -170,8 +171,7 @@ def start_workers(args, actions, context, analyzer_config_map, skp_handler):
                              analyzer_config_map,
                              skp_handler,
                              report_output,
-                             True,
-                             args.keep_tmp) for build_action in actions]
+                             True ) for build_action in actions]
 
         pool.map_async(check,
                        analyzed_actions,

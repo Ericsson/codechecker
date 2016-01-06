@@ -19,34 +19,34 @@ class AnalyzerConfigHandler(object):
     """
     __metaclass__ = ABCMeta
 
-    def __init__(self, config_data):
+    def __init__(self):
 
-        self.__config_data = config_data
         self.__analyzer_binary = None
         self.__analyzer_plugins_dir = None
         self.__compiler_sysroot = None
         self.__compiler_resource_dirs = []
         self.__sys_inc = []
         self.__includes = []
+        self.__analyzer_extra_arguments = ''
 
     @property
     def analyzer_plugins_dir(self):
         """
-        set the directory where shared objects with checkers should be loaded
+        get directory from where shared objects with checkers should be loaded
         """
         return self.__analyzer_plugins_dir
 
     @analyzer_plugins_dir.setter
     def analyzer_plugins_dir(self, value):
         """
-        set the directory where shared objects with checkers should be loaded
+        set the directory where shared objects with checkers can be found
         """
         self.__analyzer_plugins_dir = value
 
     @property
     def analyzer_plugins(self):
         """
-        set the directory where shared objects with checkers should be loaded
+        full path of the analyzer plugins
         """
         plugin_dir = self.__analyzer_plugins_dir
         analyzer_plugins = [os.path.join(plugin_dir, f)
@@ -62,18 +62,10 @@ class AnalyzerConfigHandler(object):
     def analyzer_binary(self, value):
         self.__analyzer_binary = value
 
-    @property
-    def config_data(self):
-        """
-        return the raw config data
-        """
-        return self.__config_data
-
     @abstractmethod
-    def get_configs(self):
+    def get_checker_configs(self):
         """
         return a lis of (checker_name, key, key_valye) tuples
-        which can be stored to the database
         """
         pass
 
@@ -170,3 +162,17 @@ class AnalyzerConfigHandler(object):
         add additional include paths
         """
         self.__includes.append(inc)
+
+    @property
+    def analyzer_extra_arguments(self):
+        """
+        extra arguments fowarded to the analyzer without modification
+        """
+        return self.__analyzer_extra_arguments
+
+    @analyzer_extra_arguments.setter
+    def analyzer_extra_arguments(self, value):
+        """
+        extra arguments fowarded to the analyzer without modification
+        """
+        self.__analyzer_extra_arguments = value
