@@ -139,6 +139,9 @@ def __build_clangsa_config_handler(args, context):
             config_handler.analyzer_extra_arguments = sa_cfg.read().strip()
     except IOError as ioerr:
         LOG.debug(ioerr)
+    except AttributeError as aerr:
+        # no clangsa arguments file was given in the command line
+        LOG.debug(aerr)
 
     # read clangsa checkers from the package config file
     clang_sa_checkers = context.default_checkers_config.get('clangsa_checkers')
@@ -177,6 +180,9 @@ def __build_clang_tidy_config_handler(args, context):
             config_handler.analyzer_extra_arguments = tidy_cfg.read().strip()
     except IOError as ioerr:
         LOG.debug(ioerr)
+    except AttributeError as aerr:
+        # no clang tidy arguments file was given in the command line
+        LOG.debug(aerr)
 
     # extend analyzer config with
     # read clang-tidy checkers from the config file
