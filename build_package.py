@@ -16,6 +16,7 @@ import urlparse
 import tarfile
 import subprocess
 import time
+import shlex
 
 LOG = logging.getLogger('Packager')
 
@@ -186,7 +187,7 @@ def handle_external_file(dep, clean, env, verbose):
 
     os.makedirs(directory)
     download_cmd = []
-    download_cmd.append(source_package['download_cmd'])
+    download_cmd.extend(shlex.split(source_package['download_cmd']))
     file_url = source_package['url']
     download_cmd.append(file_url)
     LOG.info('Downloading ...')
