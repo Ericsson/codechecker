@@ -136,7 +136,17 @@ UNKNOWN_OPTIONS_MAP_REGEX = {
     '^-m(no-)?string$': 0,
     '^-m(no-)?sdata.*$': 0,
     '^-mfix-cortex-m3-ldrd$': 0,
-    '^-mthumb-interwork$': 0
+    '^-mthumb-interwork$': 0,
+    '^-fno-var-tracking-assignments': 0,
+    '^-fconserve-stack': 0,
+    '^-fno-delete-null-pointer-checks': 0,
+    '^-ffixed-r2': 0,
+    '^-fno-var-tracking-assignments': 0,
+    '^-fconserve-stack': 0,
+    '^-m(no-)?spe.*': 0,
+    '^-maccumulate-outgoing-args': 0,
+    '^-fno-toplevel-reorder': 0,
+    '^-fcall-saved-.*': 0
 }
 
 # -----------------------------------------------------------------------------
@@ -366,6 +376,9 @@ def arg_check(it, result):
 # -----------------------------------------------------------------------------
 def parse_options(args):
     '''Requires a full compile command with the compiler, not only arguments.'''
+
+    # keep " characters
+    args = args.replace('"', '\\"')
 
     result_map = OptionParserResult()
     for it in OptionIterator(shlex.split(args)[1:]):

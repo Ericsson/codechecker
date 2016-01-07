@@ -23,7 +23,8 @@ from codechecker_lib import host_check
 from db_model.orm_model import *
 
 import sqlalchemy
-from sqlalchemy.engine.url import URL
+from sqlalchemy.engine.url import URL, make_url
+from sqlalchemy.sql.elements import quoted_name
 
 from alembic import command, config
 from alembic.migration import MigrationContext
@@ -72,9 +73,9 @@ class SQLServer(object):
 
         try:
             db_uri = self.get_connection_string()
-            engine = sqlalchemy.create_engine(db_uri, strategy='threadlocal')
+            engine = SQLServer.create_engine(db_uri)
 
-            LOG.debug('Creating new database schema')
+            LOG.debug('Update/create database schema')
             if use_migration:
                 LOG.debug('Creating new database session')
                 session = CreateSession(engine)
@@ -89,7 +90,8 @@ class SQLServer(object):
             else:
                 CC_META.create_all(engine)
 
-            LOG.debug('Creating new database schema done')
+            engine.dispose()
+            LOG.debug('Update/create database schema done')
             return True
 
         except sqlalchemy.exc.SQLAlchemyError as alch_err:
@@ -98,7 +100,7 @@ class SQLServer(object):
 
 
     @abstractmethod
-    def start(self, wait_for_start=True, init=False):
+    def start(self, db_version_info, wait_for_start=True, init=False):
         '''
         Starts the database server and initializes the database server.
 
@@ -136,6 +138,21 @@ class SQLServer(object):
 
 
     @staticmethod
+    def create_engine(connection_string):
+        '''
+        Creates a new SQLAlchemy engine.
+        '''
+
+        if make_url(connection_string).drivername == 'sqlite+pysqlite':
+            # FIXME: workaround for locking errors
+            return sqlalchemy.create_engine(connection_string,
+                                            encoding='utf8',
+                                            connect_args={'timeout': 600})
+        else:
+            return sqlalchemy.create_engine(connection_string,
+                                            encoding='utf8')
+
+    @staticmethod
     def from_cmdline_args(args, workspace, migration_root, env=None):
         '''
         Normally only this method is called form outside of this module in
@@ -149,7 +166,7 @@ class SQLServer(object):
         '''
 
         if not host_check.check_sql_driver(args.sqlite):
-            LOG.error("SQL driver error")
+            LOG.error("The selected SQL driver is not available.")
             sys.exit(1)
 
         if args.sqlite:
@@ -164,6 +181,78 @@ class SQLServer(object):
                                     args.dbusername,
                                     args.dbname,
                                     run_env=env)
+
+
+    def check_db_version(self, db_version_info, session=None):
+        '''
+        Checks the database version and prints an error message on database
+        version mismatch.
+
+        - On mismatching or on missing version a sys.exit(1) is called.
+        - On missing DBVersion table, it returns False
+        - On compatible DB version, it returns True
+
+        Parameters:
+            db_version_info (db_version.DBVersionInfo): required database
+                version.
+            session: an open database session or None. If session is None, a
+                new session is created.
+        '''
+
+        try:
+            dispose_engine = False
+            if session is None:
+                engine = SQLServer.create_engine(self.get_connection_string())
+                dispose_engine = True
+                session = CreateSession(engine)
+            else:
+                engine = session.get_bind()
+
+            if not engine.has_table(quoted_name(DBVersion.__tablename__, True)):
+                LOG.debug("Missing DBVersion table!")
+                return False
+
+            version = session.query(DBVersion).first()
+            if version is None:
+                # Version is not populated yet
+                LOG.error('No version information found in the database.')
+                sys.exit(1)
+            elif not db_version_info.is_compatible(version.major, version.minor):
+                LOG.error('Version mismatch. Expected database version: ' +
+                          str(db_version_info))
+                version_from_db = 'v'+str(version.major)+'.'+str(version.minor)
+                LOG.error('Version from the database is: ' + version_from_db)
+                LOG.error('Please update your database.')
+                sys.exit(1)
+
+            LOG.debug("Database version is compatible.")
+            return True
+        finally:
+            session.commit()
+            if dispose_engine:
+                engine.dispose()
+
+
+    def _add_version(self, db_version_info, session=None):
+        '''
+        Fills the DBVersion table.
+        '''
+
+        engine = None
+        if session is None:
+            engine = SQLServer.create_engine(self.get_connection_string())
+            session = CreateSession(engine)
+
+        expected = db_version_info.get_expected_version()
+        LOG.debug('Adding DB version: ' + str(expected))
+
+        session.add(DBVersion(expected[0], expected[1]))
+        session.commit()
+
+        if engine:
+            engine.dispose()
+
+        LOG.debug('Adding DB version done!')
 
 class PostgreSQLServer(SQLServer):
     '''
@@ -257,7 +346,7 @@ class PostgreSQLServer(SQLServer):
             LOG.debug('Creating new database if not exists')
 
             db_uri = self._get_connection_string('postgres')
-            engine = sqlalchemy.create_engine(db_uri)
+            engine = SQLServer.create_engine(db_uri)
             text = "SELECT 1 FROM pg_database WHERE datname='%s'" % self.database
             if not bool(engine.execute(text).scalar()):
                 conn = engine.connect()
@@ -287,12 +376,13 @@ class PostgreSQLServer(SQLServer):
         return code == 0
 
 
-    def start(self, wait_for_start=True, init=False):
+    def start(self, db_version_info, wait_for_start=True, init=False):
         '''
         Start a PostgreSQL instance with given path, host and port.
         Return with process instance
         '''
 
+        LOG.debug('Starting/connecting to database')
         if not self._is_running():
             if not util.is_localhost(self.host):
                 LOG.info('Database is not running yet')
@@ -322,14 +412,21 @@ class PostgreSQLServer(SQLServer):
                                          stdout=devnull,
                                          stderr=subprocess.STDOUT)
 
+        add_version = False
         if init:
             self._wait_or_die()
             self._create_database()
+            add_version = not self.check_db_version(db_version_info)
             self._create_or_update_schema()
         elif wait_for_start:
             self._wait_or_die()
+            add_version = not self.check_db_version(db_version_info)
+
+        if add_version:
+            self._add_version(db_version_info)
 
         atexit.register(self.stop)
+        LOG.debug('Done')
 
 
     def stop(self):
@@ -354,9 +451,12 @@ class SQLiteDatabase(SQLServer):
         self.run_env = run_env
 
 
-    def start(self, wait_for_start=True, init=False):
+    def start(self, db_version_info, wait_for_start=True, init=False):
         if init:
+            add_version = not self.check_db_version(db_version_info)
             self._create_or_update_schema(use_migration=False)
+            if add_version:
+                self._add_version(db_version_info)
 
         if not os.path.exists(self.dbpath):
             # The database does not exists

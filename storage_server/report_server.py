@@ -29,6 +29,7 @@ from db_model.orm_model import *
 from codechecker_lib import logger
 from codechecker_lib import decorators
 from codechecker_lib import util
+from codechecker_lib import database_handler
 
 LOG = logger.get_new_logger('CC SERVER')
 
@@ -502,25 +503,10 @@ def run_server(port, db_uri, db_version_info, callback_event=None):
     LOG.debug('Starting codechecker server ...')
 
     try:
-        engine = sqlalchemy.create_engine(db_uri, strategy='threadlocal')
+        engine = database_handler.SQLServer.create_engine(db_uri)
 
         LOG.debug('Creating new database session')
         session = CreateSession(engine)
-
-        version = session.query(DBVersion).first()
-        if version is None:
-            # Version is not populated yet
-            expected = db_version_info.get_expected_version()
-            session.add(DBVersion(expected[0], expected[1]))
-            session.commit()
-        elif db_version_info.is_compatible(version.major,
-                                           version.minor):
-            LOG.error('Version mismatch. Expected database version: ' +
-                      str(db_version_info))
-            version_from_db = 'v'+str(version.major)+'.'+str(version.minor)
-            LOG.error('Version from the database is: ' + version_from_db)
-            LOG.error('Please update your database.')
-            sys.exit(1)
 
     except sqlalchemy.exc.SQLAlchemyError as alch_err:
         LOG.error(str(alch_err))
@@ -549,6 +535,7 @@ def run_server(port, db_uri, db_version_info, callback_event=None):
             callback_event.set()
         LOG.debug('Starting to serve')
         server.serve()
+        session.commit()
     except socket.error as sockerr:
         LOG.error(str(sockerr))
         if sockerr.errno == errno.EADDRINUSE:

@@ -10,7 +10,7 @@ define([
   "dojo/Deferred",
   "dojo/store/util/QueryResults",
   "dojo/promise/all"
-], function ( kernel, declare, Deferred, QueryResults, promiseAll ) {
+], function (kernel, declare, Deferred, QueryResults, promiseAll) {
   /**
    * A store implementation for OverviewGrid. It implements dojo/api/Store. You
    * should wrap it using an ObjectStore (or something else) to be able to use
@@ -36,21 +36,24 @@ define([
    */
 return declare(null, {
 
+
    /**
     * Maps sort ids to codeCheckerDBAccess Thrift API sort types.
     */
-  _attributeToSortType: {
-    fileWithBugPos: codeCheckerDBAccess.SortType["FILENAME"],
-    checkerId: codeCheckerDBAccess.SortType["CHECKER_NAME"],
-    severity: codeCheckerDBAccess.SortType["SEVERITY"]
+  _attributeToSortType : {
+    fileWithBugPos : codeCheckerDBAccess.SortType.FILENAME,
+    checkerId      : codeCheckerDBAccess.SortType.CHECKER_NAME,
+    severity       : codeCheckerDBAccess.SortType.SEVERITY
   },
+
 
   /**
    * Simple constructor. No parameters.
    */
-  constructor: function(options) {
+  constructor : function (options) {
     declare.safeMixin(this, options);
   },
+
 
   /**
    * Converts Dojo Store API sort array to codeCheckerDBAccess sort array for
@@ -59,15 +62,14 @@ return declare(null, {
    * @param sorts Dojo Store API sort array
    * @return codeCheckerDBAccess sort array
    */
-  _convertSorts : function(sorts) {
+  _convertSorts : function (sorts) {
     var that = this;
-    result = []
+    result = [];
 
-    sorts.forEach(function(item) {
+    sorts.forEach(function (item) {
       var sortMode = new codeCheckerDBAccess.SortMode();
-      sortMode.ord  = item.descending ?
-        codeCheckerDBAccess.Order["DESC"] :
-        codeCheckerDBAccess.Order["ASC"];
+      sortMode.ord = item.descending ?
+        codeCheckerDBAccess.Order.DESC : codeCheckerDBAccess.Order.ASC;
       sortMode.type = that._attributeToSortType[item.attribute];
       if (sortMode.type === undefined) {
         console.error("Unknown sort attribute: ", item.attribute);
@@ -80,6 +82,7 @@ return declare(null, {
     return result;
   },
 
+
   /**
    * Queries run results using the provided filters (query.filters) and sorts.
    *
@@ -88,7 +91,7 @@ return declare(null, {
    * @param sorts sort array in codeCheckerDBAccess format (see _convertSorts)
    * @return a Deferred to a result array
    */
-  _queryRun: function(query, options, sorts) {
+  _queryRun : function (query, options, sorts) {
     var that     = this;
     var deferred = new Deferred();
 
@@ -98,7 +101,7 @@ return declare(null, {
       options.start,
       sorts,
       query.filters,
-      function(reportDataList) {
+      function (reportDataList) {
         if (reportDataList instanceof RequestFailed) {
           deferred.reject("Failed to get reports: " + reportDataList.message);
         } else {
@@ -110,6 +113,7 @@ return declare(null, {
     return deferred;
   },
 
+
   /**
    * Queries new results for a diff view (helper method for _queryDiff).
    *
@@ -118,7 +122,7 @@ return declare(null, {
    * @param sorts sort array in codeCheckerDBAccess format (see _convertSorts)
    * @return a Deferred to a result array
    */
-  _queryDiffNewResults: function(query, options, sorts) {
+  _queryDiffNewResults : function (query, options, sorts) {
     var that     = this;
     var deferred = new Deferred();
 
@@ -145,6 +149,7 @@ return declare(null, {
     return deferred;
   },
 
+
   /**
    * Queries new results for a diff view (helper method for _queryDiff).
    *
@@ -153,7 +158,7 @@ return declare(null, {
    * @param sorts sort array in codeCheckerDBAccess format (see _convertSorts)
    * @return a Deferred to a result array
    */
-  _queryDiffResolvedResults: function(query, options, sorts) {
+  _queryDiffResolvedResults : function (query, options, sorts) {
     var that     = this;
     var deferred = new Deferred();
 
@@ -180,6 +185,7 @@ return declare(null, {
     return deferred;
   },
 
+
   /**
    * Queries new results for a diff view (helper method for _queryDiff).
    *
@@ -188,7 +194,7 @@ return declare(null, {
    * @param sorts sort array in codeCheckerDBAccess format (see _convertSorts)
    * @return a Deferred to a result array
    */
-  _queryDiffUnresolvedResults: function(query, options, sorts) {
+  _queryDiffUnresolvedResults : function (query, options, sorts) {
     var that     = this;
     var deferred = new Deferred();
 
@@ -215,6 +221,7 @@ return declare(null, {
     return deferred;
   },
 
+
   /**
    * Queries run results for a diff view using _queryDiffNewResults,
    * _queryDiffResolvedResults, and _queryDiffUnresolvedResults.
@@ -224,7 +231,7 @@ return declare(null, {
    * @param sorts sort array in codeCheckerDBAccess format (see _convertSorts)
    * @return a Deferred to a result array
    */
-  _queryDiff: function(query, options, sorts) {
+  _queryDiff : function (query, options, sorts) {
     var that          = this;
     var deferred      = new Deferred();
     var resultList    = [];
@@ -234,16 +241,17 @@ return declare(null, {
       that._queryDiffResolvedResults(query, options, sorts),
       that._queryDiffUnresolvedResults(query, options, sorts)
     ]).then(
-      function(reportDataLists) {
+      function (reportDataLists) {
         deferred.resolve(reportDataLists[0].concat(reportDataLists[1]).
           concat(reportDataLists[2]));
       },
-      function(error) {
+      function (error) {
         deferred.reject(error);
       });
 
     return deferred;
   },
+
 
   /**
    * Calls _formatItem on all elements in the given report array and returns a
@@ -253,16 +261,17 @@ return declare(null, {
    * @param runId run id for reports
    * @return a new array with DataGrid friendly items.
    */
-  _formatItems: function(reportDataList, runId) {
+  _formatItems : function (reportDataList, runId) {
     var that = this;
 
     var endResult = [];
-    reportDataList.forEach(function(reportData) {
+    reportDataList.forEach(function (reportData) {
       endResult.push(that._formatItem(reportData, runId));
     });
 
     return endResult;
   },
+
 
   /**
    * Converts a ReportData to a DataGrid friendly item. Adds fileWithBugPos and
@@ -272,7 +281,7 @@ return declare(null, {
    * @param runId run id for the report
    * @return the same reportData but with the new/updated fields.
    */
-  _formatItem: function(reportData, runId) {
+  _formatItem : function (reportData, runId) {
     reportData.severity = CC_UTIL.severityFromCodeToString(reportData.severity);
     reportData.fileWithBugPos = reportData.checkedFile + "\n@ Line " +
       reportData.lastBugPosition.startLine;
@@ -285,22 +294,25 @@ return declare(null, {
     return reportData;
   },
 
+
   /**
    * Return whether the given attribute is usable for sorting or not.
    *
    * @param attribute an attribute string
    * @return return true if the attribute can be in the sort array, false if not
    */
-  canSortByAttribute: function(attribute) {
+  canSortByAttribute : function (attribute) {
     return this._attributeToSortType[attribute] !== undefined;
   },
+
 
   /**
    * See dojo/api/Store.
    */
-  getIdentity: function(reportData) {
+  getIdentity : function (reportData) {
     return reportData.reportId;
   },
+
 
   /**
    * Queries a ReportData by report id. Currently this method is not called by
@@ -309,10 +321,10 @@ return declare(null, {
    * @param id a report id
    * @return a Deferred to a ReportData
    */
-  get: function(id) {
+  get : function (id) {
     var deferred = new Deferred();
 
-    CC_SERVICE.getReport(parseInt(id), function(reportData){
+    CC_SERVICE.getReport(parseInt(id), function (reportData){
       if (typeof reportData === "string") {
         deferred.reject("Failed to get report " + id + ": " + reportData);
       } else {
@@ -323,6 +335,7 @@ return declare(null, {
     return deferred;
   },
 
+
   /**
    * The main entry point: runs a query.
    *
@@ -330,18 +343,18 @@ return declare(null, {
    * @param options an object in query options format (see above)
    * @return a QueryResults
    */
-  query: function(query, options) {
+  query : function (query, options) {
     var that = this;
 
-    options = options || {}
+    options = options || {};
     options.start = options.start || 0;
     options.count = options.count || codeCheckerDBAccess.MAX_QUERY_SIZE;
     options.sort  = options.sort  || [];
 
     if (options.defaultSort) {
       // merge default sort options
-      options.defaultSort.forEach(function(item) {
-        var overridden = options.sort.filter(function(sortItem) {
+      options.defaultSort.forEach(function (item) {
+        var overridden = options.sort.filter(function (sortItem) {
           return sortItem.attribute === item.attribute;
         });
 
@@ -364,43 +377,40 @@ return declare(null, {
       return [];
     }
 
-    var total = results.then(function(items) {
-      var totalItems = options.start + items.length;
-      if (items.length === options.count) {
-        // FIXME: we don't know how many items will match. We should change the
-        // API in order to return a correct value, but until then we will lie a
-        // somewhat bigger number.
-        totalItems += codeCheckerDBAccess.MAX_QUERY_SIZE;
-      }
-
-      return totalItems;
-    });
-    results.total = total;
+    results.total = options.total;
 
     return QueryResults(results);
   },
 
-  put: function(object, directives) {
+
+  put : function (object, directives) {
     // not supported
   },
 
-  add: function(object, directives) {
+
+  add : function (object, directives) {
     // not supported
   },
 
-  remove: function(id) {
+
+  remove : function (id) {
     // not supported
   },
 
-  transaction: function() {
+
+  transaction : function () {
     // not supported
   },
 
-  getChildren: function(parent, options) {
+
+  getChildren : function (parent, options) {
     // not supported
   },
 
-  getMetadata: function(object) {
+
+  getMetadata : function (object) {
     // not supported
   }
+
+
 });});

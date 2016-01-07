@@ -8,11 +8,11 @@ define([
   "dojo/_base/declare",
   "dojo/data/ItemFileWriteStore",
   "dojox/grid/DataGrid",
-], function ( declare, ItemFileWriteStore, DataGrid ) {
+], function (declare, ItemFileWriteStore, DataGrid) {
 return declare(DataGrid, {
 
 
-  constructor : function() {
+  constructor : function () {
     var that = this;
 
     that.store = new ItemFileWriteStore({
@@ -20,13 +20,13 @@ return declare(DataGrid, {
     });
 
     that.structure = [
-      { name: "Diff", field: "diffDisplay", styles: "text-align: center;", width: "25px", type: "dojox.grid.cells.Bool", editable: true },
-      { name: "Run Id", field: "runid", styles: "text-align: center;", width: "50px" },
-      { name: "Name", field: "name", styles: "text-align: center;", width: "auto" },
-      { name: "Date", field: "date", styles: "text-align: center;", width: "auto" },
-      { name: "Number of bugs", field: "numberofbugs", styles: "text-align: center;", width: "auto" },
-      { name: "Duration", field: "duration", styles: "text-align: center;", width: "auto" },
-      { name: "Delete", field: "deleteDisplay", styles: "text-align: center;", width: "50px", type: "dojox.grid.cells.Bool", editable: true },
+      { name : "Diff", field : "diffDisplay", styles : "text-align: center;", width : "40px", type : "dojox.grid.cells.Bool", editable : true },
+      { name : "Run Id", field : "runid", styles : "text-align: center;", width : "50px" },
+      { name : "Name", field : "name", styles : "text-align: center;", width : "auto" },
+      { name : "Date", field : "date", styles : "text-align: center;", width : "auto" },
+      { name : "Number of bugs", field : "numberofbugs", styles : "text-align: center;", width : "auto" },
+      { name : "Duration", field : "duration", styles : "text-align: center;", width : "auto" },
+      { name : "Delete", field : "deleteDisplay", styles : "text-align: center;", width : "50px", type : "dojox.grid.cells.Bool", editable : true },
     ];
 
   },
@@ -35,61 +35,75 @@ return declare(DataGrid, {
   /**
    * Fills the ListOfRunsGrid with RunData
    */
-  fillGridWithRunData : function() {
+  fillGridWithRunData : function () {
     var that = this;
 
-    CC_SERVICE.getRunData(function(runDataList) {
-      runDataList.forEach(function(item) {
-        if (item.can_delete === undefined || item.can_delete === false) {
-          // This item is under removal
-          return;
-        }
+    CC_SERVICE.getRunData(function (runDataList) {
 
-        var currItemDate = "Failed run";
+      if (runDataList instanceof RequestFailed) {
 
-        if (-1 !== item.runDate) {
-          currItemDate = item.runDate.split(/[\s\.]+/);
-        }
+        console.log("Thrift API call 'getRunData' failed!");
 
-        var durHours = Math.floor(item.duration / 3600);
-        var durMins  = Math.floor(item.duration / 60) - durHours * 60;
-        var durSecs  = item.duration - durMins * 60 - durHours * 3600;
+      } else {
 
-        var prettyDurHours = durHours < 10 ? ("0" + durHours) : durHours;
-        var prettyDurMins  = durMins < 10 ? ("0" + durMins) : durMins;
-        var prettyDurSecs  = durSecs < 10 ? ("0" + durSecs) : durSecs;
+        runDataList.forEach(function (item) {
+          if (item.can_delete === undefined || item.can_delete === false) {
+            // This item is under removal
+            return;
+          }
 
-        var prettyDuration =
-          prettyDurHours + ":" + prettyDurMins + ":" + prettyDurSecs;
+          var prettyDuration = null;
+          if (-1 === item.duration) {
+            prettyDuration = "--------";
+          } else {
+            var durHours = Math.floor(item.duration / 3600);
+            var durMins  = Math.floor(item.duration / 60) - durHours * 60;
+            var durSecs  = item.duration - durMins * 60 - durHours * 3600;
 
-        that.store.newItem({
-          id           : item.runId,
-          runid        : item.runId,
-          name         : item.name,
-          date         : currItemDate[0] + " --- " + currItemDate[1],
-          numberofbugs : item.resultCount,
-          duration     : prettyDuration,
-          diffDisplay  : false,
-          diffActual   : false,
-          deleteDisplay: false,
-          deleteActual : false
+            var prettyDurHours = durHours < 10 ? ("0" + durHours) : durHours;
+            var prettyDurMins  = durMins < 10 ? ("0" + durMins) : durMins;
+            var prettyDurSecs  = durSecs < 10 ? ("0" + durSecs) : durSecs;
+
+            prettyDuration = prettyDurHours + ":" + prettyDurMins + ":" +
+              prettyDurSecs;
+          }
+
+          var currItemDate = item.runDate.split(/[\s\.]+/);
+
+          that.store.newItem({
+            id            : item.runId,
+            runid         : item.runId,
+            name          : item.name,
+            date          : currItemDate[0] + " --- " + currItemDate[1],
+            numberofbugs  : item.resultCount,
+            duration      : prettyDuration,
+            diffDisplay   : false,
+            diffActual    : false,
+            deleteDisplay : false,
+            deleteActual  : false
+          });
         });
-      });
+
+      }
+
     });
+
   },
 
   /**
    * Gets the number of the ticked checkboxes of the Diff column in the
    * ListOfRunsGrid (This should be 0 or 1 or 2)
    */
-  getDiffNumber : function() {
+  getDiffNumber : function () {
     var that = this;
 
     var accm = 0;
 
-    for (var i = 0 ; i < that.store._arrayOfAllItems.length ; ++i) {
-      if (that.getItem(i).diffActual[0] === true) { ++accm; }
-    }
+    that.store._arrayOfAllItems.forEach(function (e, i) {
+      if (that.getItem(i).diffActual[0] === true) {
+        ++accm;
+      }
+    });
 
     return accm;
   },
@@ -98,13 +112,13 @@ return declare(DataGrid, {
   /**
    * Completely recreates the store to an empty state.
    */
-  recreateStore : function() {
+  recreateStore : function () {
     var that = this;
 
     var newStore = new ItemFileWriteStore({
-      data: {
-        identifier: "id",
-        items: []
+      data : {
+        identifier : "id",
+        items      : []
       }
     });
 

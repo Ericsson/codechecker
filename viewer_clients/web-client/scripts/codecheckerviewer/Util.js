@@ -6,11 +6,13 @@
 
 define([
   "dojo/_base/declare",
-], function ( declare ) {
+], function (declare) {
+
   /**
    * This class contains various utility functions. It is instanciated once in
    * the global namespace as CC_UTIL
    */
+
 return declare(null, {
 
 
@@ -96,8 +98,8 @@ return declare(null, {
 
     for (var key in Severity) {
       var severityStringLowerCase = key.toLowerCase();
-      var severityString = severityStringLowerCase.charAt(0).toUpperCase()
-                         + severityStringLowerCase.slice(1);
+      var severityString = severityStringLowerCase.charAt(0).toUpperCase() +
+        severityStringLowerCase.slice(1);
 
       checkerInfo[Severity[key]] =
         { name : severityString , count : 0 , checkers : {} };
@@ -108,7 +110,7 @@ return declare(null, {
       checkerInfo[e.severity].checkers[e.checkerId] = e.count;
     });
 
-    var checkerInfoOrderedKeys = Object.keys(checkerInfo).sort(function(a, b) {
+    var checkerInfoOrderedKeys = Object.keys(checkerInfo).sort(function (a, b) {
       return parseInt(b) - parseInt(a);
     });
 
@@ -116,7 +118,7 @@ return declare(null, {
 
     checkerInfoOrderedKeys.forEach(function (e,i) {
       newCheckerInfo[that.severityValueToKey(e)] = checkerInfo[e];
-      newCheckerInfo["ALL"].count += checkerInfo[e].count;
+      newCheckerInfo.ALL.count += checkerInfo[e].count;
     });
 
     return newCheckerInfo;
@@ -173,7 +175,7 @@ return declare(null, {
    * @param severityCode Thrift API severity id
    * @return human readable severity string
    */
-  severityFromCodeToString : function(severityCode) {
+  severityFromCodeToString : function (severityCode) {
     if (severityCode === "all"){
       return "All";
     }
@@ -194,7 +196,7 @@ return declare(null, {
    * @param severityString severity as string
    * @return severity as number (id)
    */
-  severityFromStringToCode : function(severityString) {
+  severityFromStringToCode : function (severityString) {
     return Severity[severityString.toUpperCase()];
   },
 
@@ -205,7 +207,7 @@ return declare(null, {
    * @param hashState browser hash state object
    * @return DOM id string or undefined
    */
-  getOverviewIdFromHashState : function(hashState) {
+  getOverviewIdFromHashState : function (hashState) {
     if (hashState.ovType == 'run') {
       return "runoverviewtc_" + hashState.ovRunId;
     } else if (hashState.ovType == 'diff') {

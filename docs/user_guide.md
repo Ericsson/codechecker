@@ -344,9 +344,10 @@ The commands always need a viewer port of an already running CodeChecker server 
 usage: CodeChecker.py cmd [-h] {runs,results,sum,del} ...
 
 positional arguments:
-  {runs,results,sum,del}
+  {runs,results,diff,sum,del}
     runs                Get the run data.
     results             List results.
+    diff                Diff two run.
     sum                 Sum results.
     del                 Remove run results.
 

@@ -15,6 +15,7 @@ from codechecker_lib import analyzer_env
 from codechecker_lib import logger
 from codechecker_lib import analyzer_crash_handler
 from codechecker_lib import util
+from codechecker_lib import database_handler
 
 LOG = logger.get_new_logger('DEBUG_REPORTER')
 
@@ -27,7 +28,7 @@ def get_dump_file_name(run_id, action_id):
 # -----------------------------------------------------------------------------
 def debug(context, connection_string, force):
     try:
-        engine = sqlalchemy.create_engine(connection_string)
+        engine = database_handler.SQLServer.create_engine(connection_string)
         session = sqlalchemy.orm.scoped_session(
                     sqlalchemy.orm.sessionmaker(bind=engine))
 

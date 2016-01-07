@@ -10,16 +10,16 @@ define([
   "dojo/dom-attr",
   "dijit/_WidgetBase",
   "dijit/form/Button",
-], function ( declare, domConstruct, domAttr, _WidgetBase, Button ) {
+], function (declare, domConstruct, domAttr, _WidgetBase, Button) {
 return declare(_WidgetBase, {
 
 
-  constructor : function() {
+  constructor : function () {
     var that = this;
   },
 
 
-  buildRendering : function() {
+  buildRendering : function () {
     var that = this;
 
     that.domNode = domConstruct.create("div", {
@@ -28,7 +28,7 @@ return declare(_WidgetBase, {
   },
 
 
-  postCreate : function() {
+  postCreate : function () {
     var that = this;
     that.inherited(arguments);
 
@@ -58,14 +58,14 @@ return declare(_WidgetBase, {
   },
 
 
-  buildDiffPart : function() {
+  buildDiffPart : function () {
     var that = this;
 
     that.diffButton = new Button({
       label    : "Diff",
       style    : "border: 0px; margin: 0px; padding: 0px; margin-right: 20px;",
       disabled : true,
-      onClick  : function() {
+      onClick  : function () {
         CCV.newDiffOverviewTab(CCV.diffRuns[0].runId, CCV.diffRuns[1].runId,
           CCV.diffRuns[0].runName, CCV.diffRuns[1].runName);
       }
@@ -89,14 +89,14 @@ return declare(_WidgetBase, {
   },
 
 
-  buildDeletePart : function() {
+  buildDeletePart : function () {
     var that = this;
 
     that.deleteButton = new Button({
       label    : "Delete",
       style    : "border: 0px; margin: 0px; padding: 0px;",
       disabled : true,
-      onClick  : function() {
+      onClick  : function () {
         CCV.deleteRuns();
       }
     });
@@ -107,7 +107,7 @@ return declare(_WidgetBase, {
   },
 
 
-  setDiffLabel : function(baseID, newID) {
+  setDiffLabel : function (baseID, newID) {
     var that = this;
 
     domAttr.set(that.baseIdLabel, "innerHTML", "Baseline: <b> " + baseID + " </b>");
@@ -115,21 +115,21 @@ return declare(_WidgetBase, {
   },
 
 
-  setDiffButtonDisabled: function(isDisabled) {
+  setDiffButtonDisabled: function (isDisabled) {
     var that = this;
 
     that.diffButton.set('disabled', isDisabled);
   },
 
 
-  setDeleteButtonDisabled : function(isDisabled) {
+  setDeleteButtonDisabled : function (isDisabled) {
     var that = this;
 
     that.deleteButton.set('disabled', isDisabled);
   },
 
 
-  reset: function() {
+  reset: function () {
     var that = this;
 
     that.diffButton.set('disabled', true);

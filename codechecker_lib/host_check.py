@@ -68,8 +68,13 @@ def check_postgresql_driver():
 # -----------------------------------------------------------------------------
 def check_sql_driver(check_sqlite):
     if check_sqlite:
-        # pysqlite driver (which is the same as sqlite3 module) is
-        # included with the Python distribution
+        try:
+            try:
+                import pysqlite2
+            except Exception as ex:
+                import sqlite3
+        except Exception as ex:
+            return False
         return True
     else:
         try:

@@ -13,12 +13,17 @@ define([
   "dojo/query",
   "dijit/_WidgetBase",
   "dijit/Tooltip",
-], function ( declare, window, dom, style, on, query, _WidgetBase, Tooltip ) {
+], function (declare, window, dom, style, on, query, _WidgetBase, Tooltip) {
 
 
   function refresh(editor) {
+    if (editor.displaySearch) {
+      query('.CodeMirror-vscrollbar').style('top', '22px');
+      style.set(editor.codeMirror.getWrapperElement(), 'paddingTop', '20px');
+    }
+
     var headerHeight = style.get(editor._domElements.header, "height");
-    var newHeight = style.get(editor.editorCP.srcNodeRef, "height") - headerHeight - 7;
+    var newHeight = style.get(editor.editorCP.srcNodeRef, "height") - headerHeight - 7 - 20;
 
     style.set(editor.srcNodeRef, "height", newHeight + "px");
 
@@ -140,7 +145,7 @@ define([
       });
 
       element.onclick = function () {
-        CC_SERVICE.getSourceFileData(fileId, true, function(sourceFileData) {
+        CC_SERVICE.getSourceFileData(fileId, true, function (sourceFileData) {
           that._setContentAttr(sourceFileData.fileContent);
         });
 
@@ -201,7 +206,7 @@ define([
         readOnly        : this.readOnly,
         mode            : this.mode,
         foldGutter      : true,
-        gutters         : ["CodeMirror-linenumbers", "CodeMirror-foldgutter", "bugInfo"],
+        gutters         : ["CodeMirror-linenumbers", "bugInfo"],
       });
 
       this.codeMirror.setSize("100%", "100%");
@@ -211,8 +216,8 @@ define([
       });
 
       // Save default line number formatter so we can reset
-      this._cmDefaultLineNumberFormatter
-        = this.codeMirror.getOption("lineNumberFormatter");
+      this._cmDefaultLineNumberFormatter =
+        this.codeMirror.getOption("lineNumberFormatter");
 
       refresh(this);
     },
@@ -570,14 +575,14 @@ define([
      * property.
      */
     lineColByPosition : function (pos) {
-      var pos = this.codeMirror.coordsChar({
+      var newPos = this.codeMirror.coordsChar({
         left : pos.x,
         top  : pos.y
       });
 
       return {
-        line   : pos.line + this.codeMirror.options.firstLineNumber,
-        column : pos.ch + 1
+        line   : newPos.line + this.codeMirror.options.firstLineNumber,
+        column : newPos.ch + 1
       };
     },
 
@@ -619,7 +624,7 @@ define([
         start,
         null,
         [filter],
-        function(reportDataList) {
+        function (reportDataList) {
           if (reportDataList instanceof RequestFailed) {
             console.error("Failed to query bugs for " + fileName + " , " +
               reportDataList);
@@ -645,7 +650,7 @@ define([
     _insertBugMarkers : function (reportDataList) {
       var that = this;
 
-      reportDataList.forEach(function(elem) {
+      reportDataList.forEach(function (elem) {
         var currCMLine =
           that.codeMirror.lineInfo(elem.lastBugPosition.startLine - 1);
 
@@ -690,11 +695,11 @@ define([
       marker.innerHTML = "<img src='images/bug.bmp' border=0 />";
       marker.tooltipMessage = checkerMsg;
 
-      on(marker, "mouseenter", function() {
+      on(marker, "mouseenter", function () {
         Tooltip.show(marker.tooltipMessage, marker, ['above']);
       });
 
-      on(marker, "mouseleave", function() {
+      on(marker, "mouseleave", function () {
         Tooltip.hide(marker);
       });
 
@@ -710,7 +715,7 @@ define([
     resizable       : false,
     draggable       : false,
     closable        : false,
-    displaySearch   : false,
+    displaySearch   : true,
 
     onClose           : function () {},
     onClick           : function () {},

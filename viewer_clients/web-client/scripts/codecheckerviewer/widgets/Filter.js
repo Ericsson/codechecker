@@ -11,7 +11,7 @@ define([
   "dijit/form/TextBox",
   "dijit/form/Button",
   "dijit/form/Select",
-], function ( declare, domConstruct, _WidgetBase, TextBox, Button, Select ) {
+], function (declare, domConstruct, _WidgetBase, TextBox, Button, Select) {
 return declare(_WidgetBase, {
 
 
@@ -21,17 +21,17 @@ return declare(_WidgetBase, {
    *   filterOptions: object of Select-compatible options array to be used by
    *     Selects in a Filter, contains: checkerTypeOptions, severityOptions.
    */
-  constructor : function(args) {
+  constructor : function (args) {
     var that = this;
     declare.safeMixin(that, args);
   },
 
 
-  buildRendering : function() {
+  buildRendering : function () {
     var that = this;
 
     that.domNode = domConstruct.create("div", {
-      style: "border: 0px; margin: 5px;"
+      style : "border: 0px; margin: 5px;"
     });
   },
 
@@ -39,7 +39,7 @@ return declare(_WidgetBase, {
   /**
    * Builds the widget dom.
    */
-  postCreate : function() {
+  postCreate : function () {
     var that = this;
     that.inherited(arguments);
 
@@ -60,7 +60,7 @@ return declare(_WidgetBase, {
     that.textBoxPath = new TextBox({
       placeHolder : "Path filter",
       style       : "width: 200px; margin-right: 5px;",
-      onKeyPress  : function(evt) {
+      onKeyPress  : function (evt) {
         if (evt.keyCode === 13) { // "Enter"
           that.pathAndSelectOnChange(true);
         }
@@ -74,7 +74,7 @@ return declare(_WidgetBase, {
         { label : "Suppressed"  , value : "supp"                   }
       ],
       style      : "margin-right: 5px;",
-      onChange   : function(val) {
+      onChange   : function (val) {
         that.pathAndSelectOnChange(true);
       }
     });
@@ -83,7 +83,7 @@ return declare(_WidgetBase, {
       forceWidth : true,
       options    : that.filterOptions.checkerInfoOptions,
       style      : "margin-right: 5px;",
-      onChange   : function(val) {
+      onChange   : function (val) {
         that.pathAndSelectOnChange(false);
       }
     });
@@ -120,7 +120,7 @@ return declare(_WidgetBase, {
         { label : "Unresolved", value : "unresolv" }
       ],
       style      : "margin-right: 5px;",
-      onChange   : function(val) {
+      onChange   : function (val) {
         that.pathAndSelectOnChange(true);
       }
     });
@@ -132,13 +132,13 @@ return declare(_WidgetBase, {
   },
 
 
-  addPlusButton : function() {
+  addPlusButton : function () {
     var that = this;
 
     that.plusButton = new Button({
       iconClass : "plusIcon",
       showLabel : false,
-      onClick   : function() {
+      onClick   : function () {
         that.myOverviewTC.overviewHeader.addFilter();
       }
     });
@@ -147,13 +147,13 @@ return declare(_WidgetBase, {
   },
 
 
-  addMinusButton : function() {
+  addMinusButton : function () {
     var that = this;
 
     that.minusButton = new Button({
       iconClass : "minusIcon",
       showLabel : false,
-      onClick   : function() {
+      onClick   : function () {
         that.myOverviewTC.overviewHeader.removeFilter(that);
       }
     });
@@ -162,14 +162,14 @@ return declare(_WidgetBase, {
   },
 
 
-  removePlusButton : function() {
+  removePlusButton : function () {
     var that = this;
 
     that.domNode.removeChild(that.plusButton.domNode);
   },
 
 
-  removeMinusButton : function() {
+  removeMinusButton : function () {
     var that = this;
 
     that.domNode.removeChild(that.minusButton.domNode);
@@ -182,7 +182,7 @@ return declare(_WidgetBase, {
    * refreshes the checkerInfo Select of the particular filter. In this case,
    * the function is asyncronous.
    */
-  pathAndSelectOnChange : function(refreshCheckerOptions) {
+  pathAndSelectOnChange : function (refreshCheckerOptions) {
     var that = this;
 
     if (refreshCheckerOptions === true) {

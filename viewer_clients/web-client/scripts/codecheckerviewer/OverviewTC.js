@@ -15,9 +15,9 @@ define([
   "dijit/Dialog",
   "scripts/codecheckerviewer/OverviewGrid.js",
   "scripts/codecheckerviewer/OverviewHeader.js",
-  "scripts/codecheckerviewer/FileViewBC.js"
-], function ( declare, hash, topic, ioQuery, BorderContainer, TabContainer
-            , ContentPane, Dialog, OverviewGrid, OverviewHeader, FileViewBC ) {
+  "scripts/codecheckerviewer/FileViewBC.js",
+], function (declare, hash, topic, ioQuery, BorderContainer, TabContainer,
+  ContentPane, Dialog, OverviewGrid, OverviewHeader, FileViewBC) {
 return declare(TabContainer, {
 
 
@@ -34,7 +34,7 @@ return declare(TabContainer, {
    *       runId1: the runId of the baseline run
    *       runId2: the runId of the new run
    */
-  constructor : function(args) {
+  constructor : function (args) {
     var that = this;
     declare.safeMixin(that, args);
   },
@@ -56,7 +56,7 @@ return declare(TabContainer, {
     that.overviewBC.addChild(that.overviewHeader);
     that.addChild(that.overviewBC);
 
-    that.hashchangeHandle = topic.subscribe("/dojo/hashchange", function(changedHash) {
+    that.hashchangeHandle = topic.subscribe("/dojo/hashchange", function (changedHash) {
       that.handleHashChange(changedHash);
     });
 
@@ -68,13 +68,13 @@ return declare(TabContainer, {
   /**
    * Builds the layout for this overview tab.
    */
-  buildOverviewLayout : function() {
+  buildOverviewLayout : function () {
     var that = this;
 
     that.overviewBC = new BorderContainer({
       id     : that.id + '_overview',
       style  : "margin: 5px; padding: 0px;",
-      onShow : function() {
+      onShow : function () {
         that.openFileView(undefined, undefined);
       }
     });
@@ -84,7 +84,7 @@ return declare(TabContainer, {
   /**
    * Builds the OverviewHeader.
    */
-  buildOverviewHeader : function() {
+  buildOverviewHeader : function () {
     var that = this;
 
     that.overviewHeader = new OverviewHeader({
@@ -100,7 +100,7 @@ return declare(TabContainer, {
   /**
    * Builds the OverviewGrid, and its parent ContentPane.
    */
-  buildOverviewGrid : function() {
+  buildOverviewGrid : function () {
     var that = this;
 
     that.overviewGridCP = new ContentPane({
@@ -118,6 +118,7 @@ return declare(TabContainer, {
         region        : "center",
         id            : "runoverviewgrid_" + that.runId,
         class         : "overviewGrid",
+        selectable    : true,
         selectionMode : "none",
         style         : "border: 0px; margin: 0px; padding: 0px;"
       });
@@ -133,6 +134,7 @@ return declare(TabContainer, {
         region        : "center",
         id            : "diffoverviewgrid_" + that.runId1 + "_" + that.runId2,
         class         : "overviewGrid",
+        selectable    : true,
         selectionMode : "none",
         style         : "border: 0px; margin: 0px; padding: 0px;"
       });
@@ -155,7 +157,7 @@ return declare(TabContainer, {
    *
    * @param {String} changedHash the changed browser hash.
    */
-  handleHashChange : function(changedHash) {
+  handleHashChange : function (changedHash) {
     var that = this;
 
     if (!changedHash) {
@@ -177,8 +179,7 @@ return declare(TabContainer, {
     // Maybe it's in the GRID. Use it as a cache.
     var rowIndex = 0;
     var row;
-    while ((row = that.overviewGrid.getItem(rowIndex)))
-    {
+    while (row = that.overviewGrid.getItem(rowIndex)) {
       if (row.reportId == hashState.fvReportId) {
         break;
       }
@@ -198,12 +199,12 @@ return declare(TabContainer, {
         severity        : row.severity,
         moduleName      : '',
         suppressComment : ''
-      }
+      };
 
       that.handleOpenFileView(reportData, parseInt(hashState.fvRunId), tabId);
     } else {
       // Need to query
-      CC_SERVICE.getReport(parseInt(hashState.fvReportId), function(reportData){
+      CC_SERVICE.getReport(parseInt(hashState.fvReportId), function (reportData){
         if (typeof reportData === "string") {
           console.error("getReport failed: " + reportData);
           return;
@@ -223,8 +224,8 @@ return declare(TabContainer, {
    *
    * @param checkerId checker id.
    */
-  showDocumentation : function(checkerId) {
-    CC_SERVICE.getCheckerDoc(checkerId, function(checkerDoc) {
+  showDocumentation : function (checkerId) {
+    CC_SERVICE.getCheckerDoc(checkerId, function (checkerDoc) {
       var checkerDocDialog = new Dialog({
         title   : "Documentation for <b>" + checkerId + "</b>",
         content : marked(checkerDoc)
@@ -241,7 +242,7 @@ return declare(TabContainer, {
    *
    * @param hashState hash state
    */
-  getFileViewId : function(hashState) {
+  getFileViewId : function (hashState) {
     var that = this;
 
     if (hashState.fvReportId && hashState.fvRunId) {
@@ -259,7 +260,7 @@ return declare(TabContainer, {
    * @param reportId a report id
    * @param runId run id for the report
    */
-  openFileView : function(reportId, runId) {
+  openFileView : function (reportId, runId) {
     var that = this;
 
     var hashState = ioQuery.queryToObject(hash());
@@ -276,7 +277,7 @@ return declare(TabContainer, {
    * @param runId run id
    * @param tabId DOM id for the new tab
    */
-  handleOpenFileView : function(reportData, runId, tabId) {
+  handleOpenFileView : function (reportData, runId, tabId) {
     var that = this;
     var newFileViewBC = new FileViewBC({
       id              : tabId,
@@ -290,7 +291,7 @@ return declare(TabContainer, {
       currCheckerId   : reportData.checkerId,
       suppressed      : reportData.suppressed,
       runId           : runId,
-      onShow          : function() {
+      onShow          : function () {
         that.openFileView(reportData.reportId, runId);
       }
     });
@@ -303,7 +304,7 @@ return declare(TabContainer, {
   /**
    * Returns the state of filters (see OverviewHeader::getStateOfFilters).
    */
-  getStateOfFilters : function() {
+  getStateOfFilters : function () {
     var that = this;
 
     if (that.overviewType === "run") {

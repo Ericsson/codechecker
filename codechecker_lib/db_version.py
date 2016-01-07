@@ -12,7 +12,7 @@ class DBVersionInfo(object):
         self.minor = int(minor)
 
     def is_compatible(self, major, minor):
-        return major != self.major
+        return major == self.major
 
     def get_expected_version(self):
         return (self.major, self.minor)

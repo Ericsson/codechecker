@@ -15,8 +15,8 @@ define([
   "scripts/codecheckerviewer/BugStoreModelTree.js",
   "scripts/codecheckerviewer/Editor.js",
   "scripts/codecheckerviewer/widgets/EditorHeader.js",
-], function ( declare, domConstruct, ContentPane, BorderContainer, Dialog
-            , Button, Textarea, BugStoreModelTree, Editor, EditorHeader ) {
+], function (declare, domConstruct, ContentPane, BorderContainer, Dialog,
+  Button, Textarea, BugStoreModelTree, Editor, EditorHeader) {
 return declare(BorderContainer, {
 
   /**
@@ -32,7 +32,7 @@ return declare(BorderContainer, {
    *   suppressed: whether the bug is suppressed or not
    *   runId: the runId of the run in which the bug is found
    */
-  constructor : function(args) {
+  constructor : function (args) {
     var that = this;
     declare.safeMixin(that, args);
   },
@@ -63,7 +63,7 @@ return declare(BorderContainer, {
     that.title         = checkedFile.split(/[\/]+/).pop() + " @ Line " + lastBugPosition.startLine;
     that.liveSplitters = false;
     that.closable      = true;
-    that.onClose       = function() {
+    that.onClose       = function () {
       if (myOverviewTC.selectedChildWidget === that) {
         myOverviewTC.selectChild(myOverviewTC.overviewBC.id);
       }
@@ -106,20 +106,20 @@ return declare(BorderContainer, {
       runId           : runId,
       fileId          : fileId,
       filePath        : checkedFile,
-      onLoaded        : function() {
+      onLoaded        : function () {
         that.bugStoreModelTree.bugTree.set("path", ["root", severity, bugHash,
           bugHash + "_0"]);
       }
     });
 
-    that.bugStoreModelTree.bugTree.onClick = function(item) {
+    that.bugStoreModelTree.bugTree.onClick = function (item) {
       if (item.isLeaf === true) {
 
         if (that.viewedFile !== item.filePath) {
           that.viewedFile   = item.filePath;
           that.viewedFileId = item.fileId;
 
-          CC_SERVICE.getSourceFileData(that.viewedFileId, true, function(sourceFileData) {
+          CC_SERVICE.getSourceFileData(that.viewedFileId, true, function (sourceFileData) {
             if (sourceFileData instanceof RequestFailed) {
               console.error("Failed to file contents for " + fileName + " , " +
                 sourceFileData);
@@ -152,12 +152,12 @@ return declare(BorderContainer, {
     };
 
 
-    editorHeader.documentationButton.onClick = function() {
+    editorHeader.documentationButton.onClick = function () {
       myOverviewTC.showDocumentation(that.currCheckerId);
     };
 
 
-    editorHeader.suppressButton.onClick = function() {
+    editorHeader.suppressButton.onClick = function () {
       var suppressDialog = new Dialog({
         title : "Comment for the suppress",
         style : "text-align: center;"
@@ -169,36 +169,43 @@ return declare(BorderContainer, {
 
       var sendSuppressButton = new Button({
         label   : "Suppress",
-        onClick : function() {
-          try {
+        onClick : function () {
 
-            sendSuppressButton.setDisabled(true);
-            CC_SERVICE.suppressBug([runId], that.reportId, suppressTextarea.getValue());
+          sendSuppressButton.setDisabled(true);
 
-            CCV.reset();
+          CC_SERVICE.suppressBug(
+            [runId],
+            that.reportId,
+            suppressTextarea.getValue(),
+            function (result) {
+              if (result instanceof RequestFailed) {
+                console.log("Thrift API call 'suppressBug' failed!");
 
-            myOverviewTC.overviewGrid.refreshGrid();
+                var errorDialog = new Dialog({
+                  title   : "Error",
+                  content : "Failed to suppress bug."
+                });
 
-            that.bugStoreModelTree.bugStore.remove(that.bugStoreModelTree.bugTree.selectedItem.parent);
+                suppressDialog.hide();
 
-            that.clearSelectionAndBubblesLines(editor);
+                errorDialog.show();
+              } else {
+                editorHeader.suppressButton.setDisabled(true);
 
-            editor.setBugMarkers(that.runId, that.viewedFile);
+                CCV.reset();
 
-            editorHeader.suppressButton.setDisabled(true);
+                myOverviewTC.overviewGrid.refreshGrid();
 
-          } catch (err) {
-            console.log(err);
+                that.bugStoreModelTree.bugStore.remove(that.bugStoreModelTree.bugTree.selectedItem.parent);
 
-            var errorDialog = new Dialog({
-              title   : "Error",
-              content : "Failed to suppress bug."
-            });
+                that.clearSelectionAndBubblesLines(editor);
 
-            errorDialog.show();
-          }
+                editor.setBugMarkers(that.runId, that.viewedFile);
 
-          suppressDialog.hide();
+                suppressDialog.hide();
+              }
+            }
+          );
 
         }
       });
@@ -214,7 +221,7 @@ return declare(BorderContainer, {
       editorHeader.suppressButton.setDisabled(true);
     }
 
-    CC_SERVICE.getSourceFileData(that.viewedFileId, true, function(sourceFileData) {
+    CC_SERVICE.getSourceFileData(that.viewedFileId, true, function (sourceFileData) {
       if (sourceFileData instanceof RequestFailed) {
         console.error("Failed to file contents for " + fileName + " , " +
           sourceFileData);
@@ -249,37 +256,41 @@ return declare(BorderContainer, {
    * @param range The range we want to scroll to
    * @param reportId The reportId of the selected bug
    */
-  jumpToRangeAndDrawBubblesLines : function(editor, range, reportId) {
+  jumpToRangeAndDrawBubblesLines : function (editor, range, reportId) {
     var that = this;
 
     editor.clearBubbles();
     editor.clearLines();
 
-    var filterFunction = function(obj) {
+    var filterFunction = function (obj) {
       if (obj.fileId === that.viewedFileId) {
         return true;
       } else {
         return false;
       }
-    }
+    };
 
-    CC_SERVICE.getReportDetails(reportId, function(reportDetails) {
-      var allPoints = reportDetails.executionPath;
+    CC_SERVICE.getReportDetails(reportId, function (reportDetails) {
+      if (reportDetails instanceof RequestFailed) {
+        console.log("Thrift API call 'getReportDetails' failed!");
+      } else {
+        var allPoints = reportDetails.executionPath;
 
-      that.createAndAddFileJumpBubbles(allPoints, editor);
+        that.createAndAddFileJumpBubbles(allPoints, editor);
 
-      var points  = allPoints.filter(filterFunction);
-      var bubbles = reportDetails.pathEvents.filter(filterFunction);
+        var points  = allPoints.filter(filterFunction);
+        var bubbles = reportDetails.pathEvents.filter(filterFunction);
 
-      // This is needed because CodeChecker gives different positions.
-      points.forEach(function (point)   { --point.startCol;  });
-      bubbles.forEach(function (bubble) { --bubble.startCol; });
+        // This is needed because CodeChecker gives different positions.
+        points.forEach(function (point)   { --point.startCol;  });
+        bubbles.forEach(function (bubble) { --bubble.startCol; });
 
-      editor.addBubbles(bubbles);
-      editor.addLines(points);
-
+        editor.addBubbles(bubbles);
+        editor.addLines(points);
+      }
 
       var fln = editor.codeMirror.options.firstLineNumber;
+
       var newPoint = editor.codeMirror.doc.markText(
         { line : range.from.line - fln, ch : range.from.column - 1 },
         { line : range.to.line   - fln, ch : range.to.column - 1   },
@@ -297,9 +308,8 @@ return declare(BorderContainer, {
    * @param editor The appropriate Editor widget
    */
 
-  clearSelectionAndBubblesLines : function(editor) {
+  clearSelectionAndBubblesLines : function (editor) {
     var that = this;
-
 
     var noRange = that.createRangeFromBugPos({
       startLine : 0,
@@ -319,11 +329,11 @@ return declare(BorderContainer, {
    *
    * @param bugPosition The bug position
    */
-  createRangeFromBugPos : function(bugPosition) {
+  createRangeFromBugPos : function (bugPosition) {
     return {
       from : { line : bugPosition.startLine , column : bugPosition.startCol   },
       to   : { line : bugPosition.endLine   , column : bugPosition.endCol + 1 }
-    }
+    };
 
   },
 
@@ -333,23 +343,21 @@ return declare(BorderContainer, {
    * @param points The steps in the executionPath
    * @param editor The appropriate Editor widget
    */
-  createAndAddFileJumpBubbles : function(points, editor) {
+  createAndAddFileJumpBubbles : function (points, editor) {
     var that = this;
-
 
     var bubbleInfoArray = [];
     var lastStartLine = null;
     var swtch = false;
 
     for (var i = 0 ; i < points.length ; ++i) {
-
       var areFilesTheSame = points[i].fileId === that.viewedFileId;
 
       if (swtch && !areFilesTheSame) {
         bubbleInfoArray.push({
           filePath   : points[i].filePath,
           fileId     : points[i].fileId,
-          line       : lastStartLine-1,
+          line       : lastStartLine - 1,
           fileViewBC : that
         });
 
@@ -361,17 +369,16 @@ return declare(BorderContainer, {
         --i;
         swtch = true;
       }
-
     }
 
-    for (var i = 0 ; i < bubbleInfoArray.length ; ++i) {
+    bubbleInfoArray.forEach(function (e, i) {
       editor.addNewOtherFileBubble(
-        bubbleInfoArray[i].filePath,
-        bubbleInfoArray[i].fileId,
-        bubbleInfoArray[i].line,
-        bubbleInfoArray[i].fileViewBC
+        e.filePath,
+        e.fileId,
+        e.line,
+        e.fileViewBC
       );
-    }
+    });
   }
 
 

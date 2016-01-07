@@ -10,7 +10,7 @@
     <!-- CSS -->
     <link type="text/css" rel="stylesheet" href="scripts/plugins/dojo/dijit/themes/claro/claro.css"/>
     <link type="text/css" rel="stylesheet" href="scripts/plugins/dojo/dojox/grid/resources/claroGrid.css"/>
-    <link type="text/css" rel="stylesheet" href="scripts/plugins/highlightjs/styles/xcode.css"/>
+    <link type="text/css" rel="stylesheet" href="scripts/plugins/highlightjs/css/xcode.min.css"/>
     <link type="text/css" rel="stylesheet" href="scripts/plugins/codemirror/lib/codemirror.css"/>
     <link type="text/css" rel="stylesheet" href="scripts/plugins/codemirror/addon/dialog/dialog.css"/>
     <link type="text/css" rel="stylesheet" href="scripts/plugins/codemirror/addon/fold/foldgutter.css"/>
@@ -19,7 +19,7 @@
     <!-- Third party libraries -->
     <script type="text/javascript" src="scripts/plugins/thrift/thrift.js"></script>
     <script type="text/javascript" src="scripts/plugins/marked/marked.min.js"></script>
-    <script type="text/javascript" src="scripts/plugins/highlightjs/highlight.pack.js"></script>
+    <script type="text/javascript" src="scripts/plugins/highlightjs/highlight.min.js"></script>
     <script type="text/javascript" src="scripts/plugins/codemirror/lib/codemirror.js"></script>
     <script type="text/javascript" src="scripts/plugins/codemirror/mode/clike/clike.js"></script>
     <script type="text/javascript" src="scripts/plugins/codemirror/addon/dialog/dialog.js"></script>
@@ -54,7 +54,8 @@
 
     <!-- Check browser type and version, and if both are adequate, load CodeChecker Viewer -->
     <script>
-      var getBrowserInfo = function() {
+
+      var getBrowserInfo = function () {
         var ua = navigator.userAgent;
         var tem = [];
         var M = ua.match(/(opera|chrome|safari|firefox|msie|trident(?=\/))\/?\s*(\d+)/i) || [];
@@ -85,10 +86,9 @@
         };
       };
 
-      var isBrowserCompatible = function() {
-        var supportedBrowsers = {
+      var isBrowserCompatible = function () {
+        var minimalVersionNumbers = {
           Firefox : { version : "4" },
-          Chrome  : { version : "0" },
           MSIE    : { version : "9" }
         };
 
@@ -96,25 +96,25 @@
         var browserType = browser.name;
         var browserVersion = browser.version;
 
-        var browserSupported = supportedBrowsers[browserType] !== undefined;
+        var mayNotBeSupported = minimalVersionNumbers[browserType] !== undefined;
 
-        if (browserSupported) {
+        if (mayNotBeSupported) {
           var browserVersionAdequate =
-            parseFloat(supportedBrowsers[browserType].version)
+            parseFloat(minimalVersionNumbers[browserType].version)
               <= parseFloat(browserVersion);
 
           if (browserVersionAdequate) {
             return true;
+          } else {
+            return false;
           }
-
-          return false;
-        } else {
-          return false;
         }
+
+        return true;
       };
 
       // Calls the callback after the script in url is loaded
-      var loadScript = function(url, callback) {
+      var loadScript = function (url, callback) {
         var head    = document.getElementsByTagName('head')[0];
         var script  = document.createElement('script');
         script.type = 'text/javascript';
@@ -135,11 +135,16 @@
 
       var browserIsCompatible = isBrowserCompatible();
 
-      if (browserIsCompatible) {
+      var startCodeCheckerViewer = function () {
+
+        if (document.body !== null) {
+          document.body.innerHTML = null;
+        }
+
         hljs.initHighlightingOnLoad();
 
         // Load Dojo and start CodeChecker Viewer
-        loadScript("scripts/plugins/dojo/dojo/dojo.js", function() {
+        loadScript("scripts/plugins/dojo/dojo/dojo.js", function () {
           require([
             "scripts/codecheckerviewer/CodeCheckerViewer.js",
             "dojo/domReady!"],
@@ -147,7 +152,12 @@
             CCV = new CodeCheckerViewer();
           });
         });
+      };
+
+      if (browserIsCompatible) {
+        startCodeCheckerViewer();
       }
+
     </script>
 
   </head>
@@ -159,12 +169,12 @@
       if (!browserIsCompatible) {
         document.body.innerHTML =
             "<h2 style='margin-left: 20px;'>Your browser is not compatible with CodeChecker Viewer!</h1>"
-          + "<p style='margin-left: 20px;'>Please note, that we support the following browsers:</p>"
+          + "<p style='margin-left: 20px;'>The version required for the following browsers are:</p>"
           + "<ul style='margin-left: 20px;'>"
-          + "<li>Internet Explorer: version 9 or better</li>"
-          + "<li>Firefox: version 4 or better</li>"
-          + "<li>Chrome: Any version</li>"
-          + "</ul>";
+          + "<li>Internet Explorer : version 9 or better</li>"
+          + "<li>Firefox : version 4 or better</li>"
+          + "</ul>"
+          + "<p style='margin-left: 20px; margin-top: 40px;'><button onclick='startCodeCheckerViewer()'>I understand, I still want to continue</button></p>";
       }
     </script>
 

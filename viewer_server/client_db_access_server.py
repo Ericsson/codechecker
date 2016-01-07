@@ -29,6 +29,7 @@ from codeCheckerDBAccess.ttypes import *
 from client_db_access_handler import ThriftRequestHandler
 
 from codechecker_lib import logger
+from codechecker_lib import database_handler
 
 LOG = logger.get_new_logger('DB ACCESS')
 
@@ -158,9 +159,7 @@ class CCSimpleHttpServer(HTTPServer):
         self.checker_md_docs_map = pckg_data['checker_md_docs_map']
         self.suppress_handler = suppress_handler
         self.db_version_info = db_version_info
-        self.__engine = sqlalchemy.create_engine(db_conn_string,
-                                                 encoding='utf8',
-                                                 poolclass=sqlalchemy.pool.NullPool)
+        self.__engine =database_handler.SQLServer.create_engine(db_conn_string)
 
         Session = scoped_session(sessionmaker())
         Session.configure(bind=self.__engine)
