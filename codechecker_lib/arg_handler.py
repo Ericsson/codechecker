@@ -229,7 +229,7 @@ def handle_check(args):
 
         conn_mgr = client.ConnectionManager(sql_server, 'localhost', util.get_free_port())
 
-        sql_server.start(wait_for_start=True, init=True)
+        sql_server.start(context.db_version_info, wait_for_start=True, init=True)
 
         conn_mgr.start_report_server(context.db_version_info)
 
