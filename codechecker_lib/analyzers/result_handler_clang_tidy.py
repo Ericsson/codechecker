@@ -47,7 +47,7 @@ class ClangTidyPlistToStdout(PlistToStdout):
     Print the clang tidy results to the standatd output
     """
 
-    def postprocess_result(self, result):
+    def postprocess_result(self):
         """
         For the same output format with the clang static analyzer the
         Clang tidy results are postprocessed into a plist file
