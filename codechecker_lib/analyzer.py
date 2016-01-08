@@ -70,9 +70,11 @@ def run_check(args, actions, context):
 
     package_version = context.version['major'] + '.' + context.version['minor']
 
-    suppress_file = os.path.join(args.workspace, package_version) \
-                       if not args.suppress \
-                       else os.path.realpath(args.suppress)
+    suppress_file = ''
+    try:
+        suppress_file = os.path.realpath(args.suppress)
+    except AttributeError:
+        LOG.debug('Suppress file was not set in the command line')
 
     with client.get_connection() as connection:
         try:
@@ -104,10 +106,14 @@ def run_check(args, actions, context):
 
     # Create one skip list handler shared between the analysis manager workers
     skip_handler = None
-    if args.skipfile:
-        LOG.debug("Creating skiplist handler.")
-        skip_handler = skiplist_handler.SkipListHandler(args.skipfile)
-        connection.add_skip_paths(context.run_id, skip_handler.get_skiplist())
+    try:
+        if args.skipfile:
+            LOG.debug("Creating skiplist handler.")
+            skip_handler = skiplist_handler.SkipListHandler(args.skipfile)
+            connection.add_skip_paths(context.run_id,
+                                      skip_handler.get_skiplist())
+    except AttributeError:
+        LOG.debug('Skip file was not set in the command line')
 
     LOG.info("Static analysis is starting ...")
     start_time = time.time()

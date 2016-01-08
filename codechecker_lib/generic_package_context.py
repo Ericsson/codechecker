@@ -136,10 +136,6 @@ class Context(context_base.ContextBase):
         return self.pckg_layout['ld_logger_lib_name']
 
     @property
-    def build_log_file_name(self):
-        return self.variables['build_log_file_name']
-
-    @property
     def dumps_dir_name(self):
         return self.variables['path_dumps_name']
 

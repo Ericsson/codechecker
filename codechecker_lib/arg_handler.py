@@ -125,9 +125,14 @@ def handle_server(args):
 
     # start database viewer
     db_connection_string = sql_server.get_connection_string()
+
     suppress_handler = generic_package_suppress_handler.GenericSuppressHandler()
-    suppress_handler.suppress_file = args.suppress
-    LOG.debug('Using suppress file: ' + str(suppress_handler.suppress_file))
+    try:
+        suppress_handler.suppress_file = args.suppress
+        LOG.debug('Using suppress file: ' + str(suppress_handler.suppress_file))
+    except AttributeError as aerr:
+        # suppress file was not set
+        LOG.debug(aerr)
 
     package_data = {}
     package_data['www_root'] = context.www_root
@@ -208,7 +213,17 @@ def handle_check(args):
         context.codechecker_workspace = args.workspace
         context.db_username = args.dbusername
 
-        log_file = build_manager.check_generate_log_file(args, context)
+        log_file = build_manager.check_log_file(args)
+
+        if not log_file:
+            log_file = build_manager.generate_log_file(args,
+                                                       context,
+                                                       silent=True)
+        if not log_file:
+            LOG.error("Failed to generate compilation command file: " +
+                      log_file)
+            sys.ecit(1)
+
         try:
             actions = log_parser.parse_log(log_file)
         except Exception as ex:
@@ -240,6 +255,9 @@ def handle_check(args):
                            context)
 
         LOG.info("Analysis has finished.")
+        LOG.info("To view results run:\nCodeChecker server -w " +
+                 args.workspace)
+
     except Exception as ex:
         LOG.error(ex)
         import traceback
@@ -265,9 +283,16 @@ def _do_quickcheck(args):
 
         context.severity_map = json.loads(severity_config)
 
-    log_file = build_manager.check_generate_log_file(args,
-                                                     context,
-                                                     silent=True)
+    log_file = build_manager.check_log_file(args)
+
+    if not log_file:
+        log_file = build_manager.generate_log_file(args,
+                                                   context,
+                                                   silent=True)
+    if not log_file:
+        LOG.error("Failed to generate compilation command file: " + log_file)
+        sys.exit(1)
+
     try:
         actions = log_parser.parse_log(log_file)
     except Exception as ex:

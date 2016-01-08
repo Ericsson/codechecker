@@ -16,7 +16,6 @@
   "package_variables": {
       "default_db_username" : "codechecker",
       "pgsql_data_dir_name" : "pgsql_data",
-      "build_log_file_name" : "build.log",
       "report_output_dir_name" : "reports",
       "path_dumps_name" : "dumps"
   },

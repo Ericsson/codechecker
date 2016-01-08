@@ -69,38 +69,71 @@ def perform_build_command(logfile, command, context, silent=False):
         sys.exit(1)
 
 
-def check_generate_log_file(args, context, silent=False):
+def default_compilation_db(workspace_path):
+    """
+    default compilation commands database file in the workspace
+    """
+    compilation_commands = os.path.join(workspace_path,
+                                        'compilation_commands.json')
+    return compilation_commands
+
+
+def check_log_file(args):
+    """
+    check if the compilation command file was set in the command line
+    if not check if it is in the workspace directory
+    """
+    log_file = None
+    try:
+        if args.log_file:
+            log_file = os.path.realpath(log_file)
+        else:
+            # log file could be in the workspace directory
+            log_file = default_compilation_db(args.workspace)
+        if not os.path.exists(log_file):
+            LOG.debug("Compilation database file does not exists.")
+            return None
+    except AttributeError:
+        # args.log_file was not set
+        LOG.debug("Compilation database file was not set in the command line.")
+    finally:
+        return log_file
+
+
+def generate_log_file(args, context, silent=False):
     """
     Returns a build command log file for check/quickcheck command.
     """
 
-    log_file = ""
-    if args.logfile:
-        log_file = os.path.realpath(args.logfile)
-        if not os.path.exists(args.logfile):
-            LOG.info("Log file does not exists.")
-            sys.exit(1)
+    log_file = None
+    try:
+        if args.command:
+            # check if logger bin exists
+            if not os.path.isfile(context.path_logger_bin):
+                LOG.debug('Logger binary not found! Required for logging.')
+                sys.exit(1)
 
-    if args.command:
-        # check if logger bin exists
-        if not os.path.isfile(context.path_logger_bin):
-            LOG.debug('Logger binary not found! Required for logging.')
-            sys.exit(1)
+            # check if logger lib exists
+            if not os.path.exists(context.path_logger_lib):
+                LOG.debug('Logger library directory not found! Libs are requires' \
+                          'for logging.')
+                sys.exit(1)
 
-        # check if logger lib exists
-        if not os.path.exists(context.path_logger_lib):
-            LOG.debug('Logger library directory not found! Libs are requires' \
-                      'for logging.')
-            sys.exit(1)
+            log_file = default_compilation_db(args.workspace)
+            if os.path.exists(log_file):
+                LOG.debug("Removing previous compilation command file: " +
+                          log_file)
+                os.remove(log_file)
 
-        log_file = os.path.join(context.codechecker_workspace,
-                                context.build_log_file_name)
-        if os.path.exists(log_file):
-            os.remove(log_file)
-        open(log_file, 'a').close()  # same as linux's touch
-        perform_build_command(log_file,
-                              args.command,
-                              context,
-                              silent=silent)
+            open(log_file, 'a').close()  # same as linux's touch
+
+            perform_build_command(log_file,
+                                  args.command,
+                                  context,
+                                  silent=silent)
+
+    except AttributeError as aerr:
+        LOG.error(aerr)
+        sys.exit(1)
 
     return log_file
