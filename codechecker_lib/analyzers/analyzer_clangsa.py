@@ -4,6 +4,7 @@
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
 
+import re
 import shlex
 import subprocess
 import StringIO
@@ -19,34 +20,58 @@ class ClangSA(analyzer_base.SourceAnalyzer):
     constructs clang static analyzer commmands
     """
 
-    def get_analyzer_checkers(self, env):
+    def __parse_checkers(self, clangsa_output):
+        """
+        parse clang static analyzer checkers
+        store them to checkers
+        """
+
+        # checker name and description in one line
+        pattern = re.compile(r'^\s\s(?P<checker_name>\S*)\s*(?P<description>.*)')
+
+        checker_name = None
+        for line in clangsa_output.splitlines():
+            if re.match(r'^CHECKERS:', line) or line == '':
+                continue
+            elif checker_name and not re.match(r'^\s\s\S', line):
+                # collect description for the checker name
+                self.checkers.append((checker_name, line.strip()))
+                checker_name = None
+            elif re.match(r'^\s\s\S+$', line.rstrip()):
+                # only checker name is in the line
+                checker_name = line.strip()
+            else:
+                # checker name and description is in one line
+                match = pattern.match(line.rstrip())
+                if match:
+                    current = match.groupdict()
+                    self.checkers.append((current['checker_name'],
+                                          current['description']))
+
+    def get_analyzer_checkers(self, config_handler, env):
         """
         return the list of the supported checkers
         """
-        config = self.config_handler
-        analyzer_binary = config.analyzer_binary
+        if not self.checkers:
+            analyzer_binary = config_handler.analyzer_binary
 
-        command = [analyzer_binary, "-cc1"]
-        for plugin in config.analyzer_plugins:
-            command.append("-load")
-            command.append(plugin)
-        command.append("-analyzer-checker-help")
+            command = [analyzer_binary, "-cc1"]
+            for plugin in config_handler.analyzer_plugins:
+                command.append("-load")
+                command.append(plugin)
+            command.append("-analyzer-checker-help")
 
-        try:
-            command = shlex.split(' '.join(command))
-            result = subprocess.check_output(command,
-                                             env=env)
-        except subprocess.CalledProcessError as cperr:
-            LOG.error(cperr)
-            return ''
+            try:
+                command = shlex.split(' '.join(command))
+                result = subprocess.check_output(command,
+                                                 env=env)
+            except subprocess.CalledProcessError as cperr:
+                LOG.error(cperr)
+                return {}
 
-        output = StringIO.StringIO()
-        output.write('Checkers available in Clang Static Analyzer\n')
-        output.write('-------------------------------------------\n')
-        output.write(result)
-        res = output.getvalue()
-        output.close()
-        return res
+            self.__parse_checkers(result)
+
+        return self.checkers
 
     def construct_analyzer_cmd(self, res_handler):
         """
@@ -111,7 +136,9 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             analyzer_cmd.append('-o')
             analyzer_cmd.append(analyzer_output_file)
 
-            for checker_name, enabled in config.checks():
+            # config handler stores which checkers are enabled or disabled
+            for checker_name, value in config.checks().iteritems():
+                enabled, description = value
                 if enabled:
                     analyzer_cmd.append('-Xclang')
                     analyzer_cmd.append('-analyzer-checker=' + checker_name)

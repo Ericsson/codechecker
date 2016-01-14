@@ -156,6 +156,33 @@ def construct_analyzer(buildaction,
         LOG.debug(ex)
         return None
 
+def initialize_checkers(config_handler,
+                        checkers,
+                        default_checkers=None,
+                        cmdline_checkers=None):
+
+    # by default disable all checkers
+    for checker_name, description in checkers:
+        config_handler.add_checker(checker_name, False, description)
+
+    # set default enabled or disabled checkers
+    if default_checkers:
+        for checker in default_checkers:
+            for checker_name, enabled in checker.items():
+                if enabled:
+                    config_handler.enable_checker(checker_name)
+                else:
+                    config_handler.disable_checker(checker_name)
+
+    # set user defined enabled or disabled checkers from the
+    # command line
+    if cmdline_checkers:
+        for checker_name, enabled in cmdline_checkers:
+            if enabled:
+                config_handler.enable_checker(checker_name)
+            else:
+                config_handler.disable_checker(checker_name)
+
 
 def __build_clangsa_config_handler(args, context):
     """
@@ -165,8 +192,7 @@ def __build_clangsa_config_handler(args, context):
 
     config_handler = config_handler_clangsa.ClangSAConfigHandler()
     config_handler.analyzer_plugins_dir = context.checker_plugin
-    analyzer_name = CLANG_SA
-    config_handler.analyzer_binary = context.analyzer_binaries.get(analyzer_name)
+    config_handler.analyzer_binary = context.analyzer_binaries.get(CLANG_SA)
     config_handler.compiler_resource_dirs = context.compiler_resource_dirs
     config_handler.compiler_sysroot = context.compiler_sysroot
     config_handler.system_includes = context.extra_system_includes
@@ -180,23 +206,29 @@ def __build_clangsa_config_handler(args, context):
         # no clangsa arguments file was given in the command line
         LOG.debug(aerr)
 
-    # read clangsa checkers from the package config file
-    clang_sa_checkers = context.default_checkers_config.get('clangsa_checkers')
+    analyzer = construct_analyzer_type(CLANG_SA, config_handler, None)
 
-    if clang_sa_checkers:
-        for data in clang_sa_checkers:
-            config_handler.add_checks(data.items())
+    check_env = analyzer_env.get_check_env(context.path_env_extra,
+                                           context.ld_lib_path_extra)
 
-    # add user defined checkers form the command line
+    checkers = analyzer.get_analyzer_checkers(config_handler, check_env)
+
+    # read clang-tidy checkers from the config file
+    clang_sa_checkers = context.default_checkers_config.get(CLANG_SA +
+                                                            '_checkers')
     try:
-        config_handler.add_checks(args.clang_sa_ordered_checkers)
+        cmdline_checkers = args.clang_sa_ordered_checkers
     except AttributeError:
-        LOG.debug('No checkers were defined in the command line for clangSA')
+        LOG.debug('No checkers were defined in the command line for' +
+                  CLANG_SA)
+        cmdline_checkers = None
 
-    LOG.debug(config_handler.checks())
+    initialize_checkers(config_handler,
+                        checkers,
+                        clang_sa_checkers,
+                        cmdline_checkers)
 
     return config_handler
-
 
 def __build_clang_tidy_config_handler(args, context):
     """
@@ -205,8 +237,7 @@ def __build_clang_tidy_config_handler(args, context):
     """
 
     config_handler = config_handler_clang_tidy.ClangTidyConfigHandler()
-    analyzer_name = CLANG_TIDY
-    config_handler.analyzer_binary = context.analyzer_binaries.get(analyzer_name)
+    config_handler.analyzer_binary = context.analyzer_binaries.get(CLANG_TIDY)
     config_handler.compiler_resource_dirs = context.compiler_resource_dirs
     config_handler.compiler_sysroot = context.compiler_sysroot
     config_handler.system_includes = context.extra_system_includes
@@ -221,19 +252,27 @@ def __build_clang_tidy_config_handler(args, context):
         # no clang tidy arguments file was given in the command line
         LOG.debug(aerr)
 
-    # extend analyzer config with
+    analyzer = construct_analyzer_type(CLANG_TIDY, config_handler, None)
+    check_env = analyzer_env.get_check_env(context.path_env_extra,
+                                           context.ld_lib_path_extra)
+
+    checkers = analyzer.get_analyzer_checkers(config_handler, check_env)
+
     # read clang-tidy checkers from the config file
-    clang_tidy_checkers = context.default_checkers_config.get('clang_tidy_checkers')
-
-    if clang_tidy_checkers:
-        for data in clang_tidy_checkers:
-            config_handler.add_checks(data.items())
-
-    # add user defined checkers form the command line
+    clang_tidy_checkers = context.default_checkers_config.get(CLANG_TIDY +
+                                                              '_checkers')
     try:
-        config_handler.add_checks(args.clang_tidy_ordered_checkers)
+        cmdline_checkers = args.clang_tidy_ordered_checkers
     except AttributeError:
-        LOG.debug('No checkers were defined in the command line for Clang tidy')
+        LOG.debug('No checkers were defined in the command line for ' +
+                  CLANG_TIDY)
+        cmdline_checkers = None
+
+    initialize_checkers(config_handler,
+                        checkers,
+                        clang_tidy_checkers,
+                        cmdline_checkers)
+
 
     return config_handler
 

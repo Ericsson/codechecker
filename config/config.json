@@ -20,11 +20,11 @@
       "path_dumps_name" : "dumps"
   },
   "checker_config": {
-      "clangsa_checkers" : [
-          {"core" : true },
-          {"unix" : true },
-          {"deadcode" : true },
-          {"cplusplus" : true },
+      "ClangSA_checkers" : [
+          {"core*" : true },
+          {"unix*" : true },
+          {"deadcode*" : true },
+          {"cplusplus*" : true },
           {"security.insecureAPI.UncheckedReturn" : true },
           {"security.insecureAPI.getpw" : true },
           {"security.insecureAPI.gets" : true },
@@ -32,7 +32,7 @@
           {"security.insecureAPI.mkstemp" : true },
           {"security.insecureAPI.vfork" : true }
       ],
-      "clang_tidy_checkers" : [
+      "Clang-tidy_checkers" : [
           {"clang-diagnostic-*" : true },
           {"cert-fio38-c" : true },
           {"google-global-names-in-headers" : true },

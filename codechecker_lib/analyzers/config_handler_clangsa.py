@@ -23,31 +23,6 @@ class ClangSAConfigHandler(config_handler.AnalyzerConfigHandler):
         super(ClangSAConfigHandler, self).__init__()
         self.__checker_configs = []
 
-    def checks_str(self):
-        """
-        return the checkers formatted for printing
-        """
-        output = StringIO.StringIO()
-        output.write('Default checkers set for Clang Static Analyzer:\n')
-        output.write('-----------------------------------------------\n')
-        output.write('Enabled:\n')
-        # enabled checkers
-        enabled_checkers = filter(lambda x: x[1], self.checks())
-        for checker_name, _ in enabled_checkers:
-            output.write('  ' + checker_name + '\n')
-
-        output.write('')
-
-        # disabled checkers
-        output.write('Disabled:\n')
-        disabled_checkers = filter(lambda x: not x[1], self.checks())
-        for checker_name, _ in disabled_checkers:
-            output.write('  ' + checker_name + '\n')
-
-        res = output.getvalue()
-        output.close()
-        return res
-
     def add_checker_config(self, config):
         """
         add a (checker_name, key, value) tuple to the list

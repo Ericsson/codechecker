@@ -6,6 +6,7 @@
 '''
 '''
 
+import re
 import subprocess
 import StringIO
 import shlex
@@ -22,43 +23,47 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
     constructs the clang tidy analyzer commands
     """
 
-    def get_analyzer_checkers(self, env):
+    def __parse_checkers(self, tidy_output):
+        """
+        parse clang tidy checkers list
+        skip clang static analyzer checkers
+        store them to checkers
+        """
+        for line in tidy_output.splitlines():
+            line = line.strip()
+            if re.match(r'^Enabled checks:', line) or line == '':
+                continue
+            elif line.startswith('clang-analyzer-'):
+                continue
+            else:
+                match = re.match(r'^\S+$', line)
+                if match:
+                    self.checkers.append((match.group(0), ''))
+
+    def get_analyzer_checkers(self, config_handler, env):
         """
         return the list of the supported checkers
         """
-        config = self.config_handler
-        analyzer_binary = config.analyzer_binary
+        if not self.checkers:
+            analyzer_binary = config_handler.analyzer_binary
 
-        command = [analyzer_binary]
-        command.append("-list-checks")
-        command.append("-checks='*'")
-        command.append("-")
-        command.append("--")
+            command = [analyzer_binary]
+            command.append("-list-checks")
+            command.append("-checks='*'")
+            command.append("-")
+            command.append("--")
 
-        try:
-            command = shlex.split(' '.join(command))
-            result = subprocess.check_output(command,
-                                             env=env)
-        except subprocess.CalledProcessError as cperr:
-            LOG.error(cperr)
-            return ''
+            try:
+                command = shlex.split(' '.join(command))
+                result = subprocess.check_output(command,
+                                                 env=env)
+            except subprocess.CalledProcessError as cperr:
+                LOG.error(cperr)
+                return {}
 
-        output = StringIO.StringIO()
-        output.write('Checkers available in Clang Tidy Analyzer\n')
-        output.write('-----------------------------------------\n')
-        # filter out clang static analyzer checkers
-        # only clang tidy checkers are listed
-        for line in result.split('\n'):
-            line = line.strip()
-            if line.startswith('clang-analyzer-') or line == '':
-                continue
-            else:
-                output.write(line + '\n')
+            self.__parse_checkers(result)
 
-        res = output.getvalue()
-        output.close()
-        return res
-
+        return self.checkers
 
     def construct_analyzer_cmd(self, res_handler):
         """
@@ -71,8 +76,12 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
             analyzer_cmd = []
             analyzer_cmd.append(analyzer_bin)
 
-            checkers_cmdline = ''
-            for checker_name, enabled in config.checks():
+            # disable all checkers by default
+            checkers_cmdline = '-*'
+
+            # config handler stores which checkers are enabled or disabled
+            for checker_name, value in config.checks().iteritems():
+                enabled, _ = value
                 if enabled:
                     checkers_cmdline += ',' + checker_name
                 else:

@@ -23,10 +23,16 @@ class SourceAnalyzer(object):
     """
     __metaclass__ = ABCMeta
 
+
     def __init__(self, config_handler, buildaction):
         self.__config_handler = config_handler
         self.__buildaction = buildaction
         self.__source_file = ''
+        self.__checkers = []
+
+    @property
+    def checkers(self):
+        return self.__checkers
 
     @property
     def buildaction(self):
@@ -51,7 +57,7 @@ class SourceAnalyzer(object):
         self.__source_file = file_path
 
     @abstractmethod
-    def construct_analyzer_cmd(self):
+    def construct_analyzer_cmd(self, result_handler):
         """
         construct the analyzer command
         """
@@ -107,7 +113,7 @@ class SourceAnalyzer(object):
             return res_handler
 
     @abstractmethod
-    def get_analyzer_checkers(self):
+    def get_analyzer_checkers(self, config_handler, env):
         """
         return the checkers available in the analyzer
         """

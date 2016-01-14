@@ -24,34 +24,6 @@ class ClangTidyConfigHandler(config_handler.AnalyzerConfigHandler):
     def __init__(self):
         super(ClangTidyConfigHandler, self).__init__()
 
-        # disable by default enabled checks in clang tidy
-        self.add_check(('*', False))
-
-    def checks_str(self):
-        """
-        return the checkers formatted for printing
-        """
-        output = StringIO.StringIO()
-        output.write('Default checkers set for Clang Tidy Analyzer:\n')
-        output.write('-----------------------------------------------\n')
-        output.write('Enabled:\n')
-        # enabled checkers
-        enabled_checkers = filter(lambda x: x[1], self.checks())
-        for checker_name, _ in enabled_checkers:
-            output.write('  ' + checker_name + '\n')
-
-        output.write('')
-
-        # disabled checkers
-        output.write('Disabled:\n')
-        disabled_checkers = filter(lambda x: not x[1], self.checks())
-        for checker_name, _ in disabled_checkers:
-            output.write('  ' + checker_name + '\n')
-
-        res = output.getvalue()
-        output.close()
-        return res
-
     def get_checker_configs(self):
         """
         process the raw extra analyzer arguments and get the configuration

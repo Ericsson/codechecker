@@ -5,6 +5,7 @@
 # -------------------------------------------------------------------------
 
 import os
+import collections
 
 from abc import ABCMeta, abstractmethod
 
@@ -29,8 +30,11 @@ class AnalyzerConfigHandler(object):
         self.__includes = []
         self.__analyzer_extra_arguments = ''
 
-        # list of (checker_name, True/False) tuples where order matters!
-        self.__checks = []
+        # the key is the checker name, the value is a tuple
+        # False if disabled (should be by default)
+        # True if checker is enabled
+        # (False/True, 'checker_description')
+        self.__available_checkers = collections.OrderedDict()
 
     @property
     def analyzer_plugins_dir(self):
@@ -72,38 +76,48 @@ class AnalyzerConfigHandler(object):
         """
         pass
 
-    def set_checks(self, value):
+    def add_checker(self, checker_name, enabled, description):
         """
-        set/overwrite the checkers
-        """
-        self.__checks = value
-
-    def add_check(self, checks):
-        """
-        add additional checkers
+        add additional checker
         tuple of (checker_name, True\False)
         """
-        self.__checks.append(checks)
+        self.__available_checkers[checker_name] = (enabled, description)
 
-    def add_checks(self, checks):
+    def enable_checker(self, checker_name, description=None):
         """
-        add additional checkers
-        list of tuples of (checker_name, True\False)
+        enable checker, keep description if already set
         """
-        self.__checks.extend(checks)
+        import re
+        if checker_name.endswith('*'):
+            checker_name = checker_name.replace('*', '.')
+            checker_name += '+'
+        ptn_str = r'^' + checker_name
+        ptn = re.compile(ptn_str)
+        for ch_name, values in self.__available_checkers.iteritems():
+            if ptn.match(ch_name):
+                _, description = values
+                self.__available_checkers[ch_name] = (True, description)
+
+    def disable_checker(self, checker_name, description=None):
+        """
+        disable checker, keep description if already set
+        """
+        import re
+        if checker_name.endswith('*'):
+            checker_name = checker_name.replace('*', '.')
+            checker_name += '+'
+        ptn_str = r'^' + checker_name
+        ptn = re.compile(ptn_str)
+        for ch_name, values in self.__available_checkers.iteritems():
+            if ptn.match(ch_name):
+                _, description = values
+                self.__available_checkers[ch_name] = (False, description)
 
     def checks(self):
         """
         return the checkers
         """
-        return self.__checks
-
-    @abstractmethod
-    def checks_str(self):
-        """
-        return the checkers formatted for printing
-        """
-        pass
+        return self.__available_checkers
 
     @property
     def compiler_sysroot(self):

@@ -67,16 +67,20 @@ def handle_list_checkers(args):
                                                                  config_handler,
                                                                  None)
 
-        print(source_analyzer.get_analyzer_checkers(analyzer_environment))
+        checkers = source_analyzer.get_analyzer_checkers(config_handler,
+                                                         analyzer_environment)
 
-    # print the default enabled or disabled checkers in the
-    # config
-    LOG.info('By default enabled and disabled checkers are:')
-    for ea in enabled_analyzers:
-        # get the config
-        config_handler = analyzer_config_map.get(ea)
-        checks = config_handler.checks_str()
-        print(checks)
+        default_checker_cfg = context.default_checkers_config.get(ea+'_checkers')
+
+        analyzer_types.initialize_checkers(config_handler,
+                                           checkers,
+                                           default_checker_cfg)
+        for checker_name, value in config_handler.checks().iteritems():
+            enabled, description = value
+            if enabled:
+                print(' + {0:50} {1}'.format(checker_name, description))
+            else:
+                print(' - {0:50} {1}'.format(checker_name, description))
 
 def handle_server(args):
     """
