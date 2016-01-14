@@ -27,8 +27,8 @@ from codechecker_lib.analyzers import config_handler_clang_tidy
 LOG = logger.get_new_logger('ANALYZER TYPES')
 
 
-CLANG_SA = 'ClangSA'
-CLANG_TIDY = 'Clang-tidy'
+CLANG_SA = 'clangsa'
+CLANG_TIDY = 'clang-tidy'
 
 supported_analyzers = {CLANG_SA, CLANG_TIDY}
 

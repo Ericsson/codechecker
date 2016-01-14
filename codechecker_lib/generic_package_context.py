@@ -12,6 +12,8 @@ from codechecker_lib import context_base
 from codechecker_lib import logger
 from codechecker_lib import db_version
 
+from codechecker_lib.analyzers import analyzer_types
+
 LOG = logger.get_new_logger('CONTEXT')
 
 
@@ -202,8 +204,8 @@ class Context(context_base.ContextBase):
             # will be checked later
             # key naming in the dict should be the same as in
             # the supported analyzers list
-            analyzers['ClangSA'] = 'clang'
-            analyzers['Clang-tidy'] = 'clang-tidy'
+            analyzers[analyzer_types.CLANG_SA] = 'clang'
+            analyzers[analyzer_types.CLANG_TIDY] = 'clang-tidy'
         else:
             for name, value in compiler_binaries.iteritems():
                 if os.path.isabs(value):

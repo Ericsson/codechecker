@@ -141,15 +141,15 @@ Keep temporary report files generated during the analysis.''')
 
     parser.add_argument('--analyzers', nargs='+',
                         dest="analyzers", required=False,
-                        default=["ClangSA"],
+                        default=[analyzer_types.CLANG_SA],
                         help="""Select which analyzer should be enabled.\nCurrently supported analyzers are: """ + analyzers + """\ne.g. '--analyzers """ + analyzers +"'")
 
-    parser.add_argument('--clangSA-args', dest="clangsa_args_cfg_file",
+    parser.add_argument('--saargs', dest="clangsa_args_cfg_file",
                         required=False, default=argparse.SUPPRESS,
                         help='''\
 File with arguments which will be forwarded directly to the Clang static analyzer without modifiaction''')
 
-    parser.add_argument('--clang-tidy-args', dest="tidy_args_cfg_file",
+    parser.add_argument('--tidyargs', dest="tidy_args_cfg_file",
                         required=False, default=argparse.SUPPRESS,
                         help='''\
 File with arguments which will be forwarded directly to the Clang tidy analyzer without modifiaction''')

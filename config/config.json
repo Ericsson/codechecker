@@ -20,7 +20,7 @@
       "path_dumps_name" : "dumps"
   },
   "checker_config": {
-      "ClangSA_checkers" : [
+      "clangsa_checkers" : [
           {"core*" : true },
           {"unix*" : true },
           {"deadcode*" : true },
@@ -32,7 +32,7 @@
           {"security.insecureAPI.mkstemp" : true },
           {"security.insecureAPI.vfork" : true }
       ],
-      "Clang-tidy_checkers" : [
+      "clang-tidy_checkers" : [
           {"clang-diagnostic-*" : true },
           {"cert-fio38-c" : true },
           {"google-global-names-in-headers" : true },
