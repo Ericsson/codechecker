@@ -30,7 +30,7 @@ def default_workspace():
     """
     default workspace in the users home directory
     """
-    workspace = os.path.join(os.path.expanduser("~"), 'codechecker_workspace')
+    workspace = os.path.join(os.path.expanduser("~"), '.codechecker')
     return workspace
 
 # ------------------------------------------------------------------------------
