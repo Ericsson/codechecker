@@ -85,16 +85,17 @@ def check_log_file(args):
     """
     log_file = None
     try:
-        if args.log_file:
-            log_file = os.path.realpath(log_file)
+        if args.logfile:
+            log_file = os.path.realpath(args.logfile)
         else:
             # log file could be in the workspace directory
             log_file = default_compilation_db(args.workspace)
         if not os.path.exists(log_file):
             LOG.debug("Compilation database file does not exists.")
             return None
-    except AttributeError:
+    except AttributeError as ex:
         # args.log_file was not set
+        LOG.debug(ex)
         LOG.debug("Compilation database file was not set in the command line.")
     finally:
         return log_file
