@@ -146,7 +146,8 @@ UNKNOWN_OPTIONS_MAP_REGEX = {
     '^-m(no-)?spe.*': 0,
     '^-maccumulate-outgoing-args': 0,
     '^-fno-toplevel-reorder': 0,
-    '^-fcall-saved-.*': 0
+    '^-fcall-saved-.*': 0,
+    '^-fno-strength-reduce': 0
 }
 
 # -----------------------------------------------------------------------------
