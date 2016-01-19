@@ -38,6 +38,7 @@ class ClangTidyPlistToDB(PlistToDB):
         results which can be stored into the database
         """
         output_file = self.get_analyzer_result_file()
+        LOG.debug(self.analyzer_stdout)
         tidy_stdout = self.analyzer_stdout.splitlines()
         generate_plist_from_tidy_result(output_file, tidy_stdout)
 
