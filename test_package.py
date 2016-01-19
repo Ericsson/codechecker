@@ -245,7 +245,7 @@ class GenericPackageTester(object):
         test_project_build_cmd = self.project_info['build_cmd']
 
         codechecker_workspace = self.workspace
-        self.env['CODECHECKER_VERBOSE'] = 'debug'
+        #self.env['CODECHECKER_VERBOSE'] = 'debug'
         # self.env['CODECHECKER_ALCHEMY_LOG'] = '2'
 
         def run_check(suppress_file):
