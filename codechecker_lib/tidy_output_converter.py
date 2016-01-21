@@ -242,6 +242,18 @@ class PListConverter(object):
                 # New file
                 fmap[message.path] = len(self.plist['files'])
                 self.plist['files'].append(message.path)
+
+            # collect file paths from the message notes
+            for nt in message.notes:
+                try:
+                    # This file is already in the plist
+                    idx = self.plist['files'].index(nt.path)
+                    fmap[nt.path] = idx
+                except ValueError:
+                    # New file
+                    fmap[nt.path] = len(self.plist['files'])
+                    self.plist['files'].append(nt.path)
+
         return fmap
 
 
@@ -291,6 +303,8 @@ class PListConverter(object):
 
     @staticmethod
     def _create_location(note, fmap):
+        print('create_location_note')
+        print(fmap)
         return {
             'line' : note.line,
             'col'  : note.column,
