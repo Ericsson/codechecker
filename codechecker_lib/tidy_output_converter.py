@@ -303,8 +303,6 @@ class PListConverter(object):
 
     @staticmethod
     def _create_location(note, fmap):
-        print('create_location_note')
-        print(fmap)
         return {
             'line' : note.line,
             'col'  : note.column,
