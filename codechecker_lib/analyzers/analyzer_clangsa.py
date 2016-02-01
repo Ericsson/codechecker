@@ -110,7 +110,12 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             # turn off clang hardcoded checkers list
             analyzer_cmd.append('--analyzer-no-default-checks')
 
+
             for plugin in config.analyzer_plugins:
+                analyzer_cmd.append("-Xclang")
+                analyzer_cmd.append("-plugin")
+                analyzer_cmd.append("-Xclang")
+                analyzer_cmd.append("checkercfg")
                 analyzer_cmd.append("-Xclang")
                 analyzer_cmd.append("-load")
                 analyzer_cmd.append("-Xclang")
