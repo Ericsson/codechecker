@@ -217,7 +217,7 @@ def __build_clangsa_config_handler(args, context):
     clang_sa_checkers = context.default_checkers_config.get(CLANG_SA +
                                                             '_checkers')
     try:
-        cmdline_checkers = args.clang_sa_ordered_checkers
+        cmdline_checkers = args.ordered_checkers
     except AttributeError:
         LOG.debug('No checkers were defined in the command line for' +
                   CLANG_SA)
@@ -262,7 +262,7 @@ def __build_clang_tidy_config_handler(args, context):
     clang_tidy_checkers = context.default_checkers_config.get(CLANG_TIDY +
                                                               '_checkers')
     try:
-        cmdline_checkers = args.clang_tidy_ordered_checkers
+        cmdline_checkers = args.ordered_checkers
     except AttributeError:
         LOG.debug('No checkers were defined in the command line for ' +
                   CLANG_TIDY)

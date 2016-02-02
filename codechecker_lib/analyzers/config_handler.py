@@ -87,14 +87,8 @@ class AnalyzerConfigHandler(object):
         """
         enable checker, keep description if already set
         """
-        import re
-        if checker_name.endswith('*'):
-            checker_name = checker_name.replace('*', '.')
-            checker_name += '+'
-        ptn_str = r'^' + checker_name
-        ptn = re.compile(ptn_str)
         for ch_name, values in self.__available_checkers.iteritems():
-            if ptn.match(ch_name):
+            if ch_name.startswith(checker_name):
                 _, description = values
                 self.__available_checkers[ch_name] = (True, description)
 
@@ -102,14 +96,8 @@ class AnalyzerConfigHandler(object):
         """
         disable checker, keep description if already set
         """
-        import re
-        if checker_name.endswith('*'):
-            checker_name = checker_name.replace('*', '.')
-            checker_name += '+'
-        ptn_str = r'^' + checker_name
-        ptn = re.compile(ptn_str)
         for ch_name, values in self.__available_checkers.iteritems():
-            if ptn.match(ch_name):
+            if ch_name.startswith(checker_name):
                 _, description = values
                 self.__available_checkers[ch_name] = (False, description)
 

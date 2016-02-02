@@ -48,27 +48,16 @@ class OrderedCheckersAction(argparse.Action):
         super(OrderedCheckersAction, self).__init__(option_strings, dest, **kwargs)
 
     def __call__(self, parser, namespace, value, option_string=None):
-        if 'clang_sa_ordered_checkers' not in namespace:
-            setattr(namespace, 'clang_sa_ordered_checkers', [])
-        sa_ordered_checkers = namespace.clang_sa_ordered_checkers
 
-        if 'clang_tidy_ordered_checkers' not in namespace:
-            setattr(namespace, 'clang_tidy_ordered_checkers', [])
-        tidy_ordered_checkers = namespace.clang_tidy_ordered_checkers
-
-        if self.dest == 'enable' and analyzer_types.is_sa_checker_name(value):
-            sa_ordered_checkers.append((value, True))
-        elif self.dest == 'enable' and analyzer_types.is_tidy_checker_name(value):
-            tidy_ordered_checkers.append((value, True))
-        elif self.dest == 'disable' and analyzer_types.is_sa_checker_name(value):
-            sa_ordered_checkers.append((value, False))
-        elif self.dest == 'disable' and analyzer_types.is_tidy_checker_name(value):
-            tidy_ordered_checkers.append((value, False))
+        if 'ordered_checkers' not in namespace:
+            setattr(namespace, 'ordered_checkers', [])
+        ordered_checkers = namespace.ordered_checkers
+        if self.dest == 'enable':
+            ordered_checkers.append((value, True))
         else:
-            LOG.debug('Failed to match checker name skipping: ' + value)
+            ordered_checkers.append((value, False))
 
-        setattr(namespace, 'clang_sa_ordered_checkers', sa_ordered_checkers)
-        setattr(namespace, 'clang_tidy_ordered_checkers', tidy_ordered_checkers)
+        setattr(namespace, 'ordered_checkers', ordered_checkers)
 
 
 # ------------------------------------------------------------------------------
