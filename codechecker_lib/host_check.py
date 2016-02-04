@@ -66,8 +66,14 @@ def check_postgresql_driver():
 
 
 # -----------------------------------------------------------------------------
-def check_sql_driver(check_sqlite):
-    if check_sqlite:
+def check_sql_driver(check_postgresql):
+    if check_postgresql:
+        try:
+            get_postgresql_driver_name()
+            return True
+        except Exception as ex:
+            return False
+    else:
         try:
             try:
                 import pysqlite2
@@ -76,13 +82,6 @@ def check_sql_driver(check_sqlite):
         except Exception as ex:
             return False
         return True
-    else:
-        try:
-            get_postgresql_driver_name()
-            return True
-        except Exception as ex:
-            return False
-
 
 # -----------------------------------------------------------------------------
 def check_clang(compiler_bin, env):
