@@ -100,7 +100,7 @@ usage: CodeChecker.py check [-h] -w WORKSPACE -n NAME
                             (-b COMMAND | -l LOGFILE) [-j JOBS]
                             [-f CONFIGFILE] [-s SKIPFILE] [-u SUPPRESS]
                             [-e ENABLE] [-d DISABLE] [-c [DEPRECATED]]
-                            [--keep-tmp] [--update] [--sqlite]
+                            [--keep-tmp] [--update] [--postgresql]
                             [--dbport DBPORT] [--dbaddress DBADDRESS]
                             [--dbname DBNAME] [--dbusername DBUSERNAME]
 
@@ -132,7 +132,7 @@ optional arguments:
                         database storage server.
   --update              Incremental parsing, update the results of a previous
                         run.
-  --sqlite              Use sqlite database.
+  --postgresql          Use PostgreSQL database.
   --dbport DBPORT       Postgres server port.
   --dbaddress DBADDRESS
                         Postgres database server address
@@ -146,9 +146,10 @@ optional arguments:
 CodeChecker can also use SQLite for storing the results. In this case the
 SQLite database will be created in the workspace directory.
 
-In order to use SQLite instead of PostgreSQL, use the ```--sqlite``` command
+In order to use PostgreSQL instead of SQLite, use the ```--postgresql``` command
 line argument for ```CodeChecker server``` and ```CodeChecker check```
-commands. In this case ```--dbport```, ```--dbaddress```, ```--dbname```, and
+commands. If ```--postgresql``` is not given then SQLite is used by default in
+which case ```--dbport```, ```--dbaddress```, ```--dbname```, and
 ```--dbusername``` command line arguments are ignored.
 
 #### Note:
