@@ -58,8 +58,8 @@ class Run(Base):
     can_delete = Column(Boolean, nullable=False, server_default=true(), default=True)
 
     # Relationships (One to Many)
-    configlist = relationship('Config', cascade="all, delete-orphan")
-    buildactionlist = relationship('BuildAction', cascade="all, delete-orphan")
+    configlist = relationship('Config', cascade="all, delete-orphan", passive_deletes=True)
+    buildactionlist = relationship('BuildAction', cascade="all, delete-orphan", passive_deletes=True)
 
     def __init__(self, name, version, command):
         self.date, self.name, self.version, self.command = \
