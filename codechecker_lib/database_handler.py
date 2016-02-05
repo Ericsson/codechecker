@@ -25,6 +25,8 @@ from db_model.orm_model import *
 import sqlalchemy
 from sqlalchemy.engine.url import URL, make_url
 from sqlalchemy.sql.elements import quoted_name
+from sqlalchemy.engine import Engine
+from sqlalchemy import event
 
 from alembic import command, config
 from alembic.migration import MigrationContext
@@ -443,13 +445,18 @@ class SQLiteDatabase(SQLServer):
     '''
     Handler for SQLite.
     '''
-
     def __init__(self, workspace, migration_root, run_env=None):
         super(SQLiteDatabase, self).__init__(migration_root)
 
         self.dbpath = os.path.join(workspace, 'codechecker.sqlite')
         self.run_env = run_env
+    
+        def _set_sqlite_pragma(dbapi_connection, connection_record):
+            cursor = dbapi_connection.cursor()
+            cursor.execute("PRAGMA foreign_keys=ON")
+            cursor.close()
 
+        event.listen(Engine, 'connect', _set_sqlite_pragma)
 
     def start(self, db_version_info, wait_for_start=True, init=False):
         if init:
