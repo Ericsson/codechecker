@@ -99,7 +99,7 @@ def check_clang(compiler_bin, env):
         if not res:
             return True
         else:
-            LOG.error('Failed to run: "' + ' '.join(clang_version_cmd) + '"')
+            LOG.debug('Failed to run: "' + ' '.join(clang_version_cmd) + '"')
             return False
 
     except OSError as oerr:

@@ -130,7 +130,7 @@ Keep temporary report files generated during the analysis.''')
 
     parser.add_argument('--analyzers', nargs='+',
                         dest="analyzers", required=False,
-                        default=[analyzer_types.CLANG_SA],
+                        default=[analyzer_types.CLANG_SA, analyzer_types.CLANG_TIDY],
                         help="""Select which analyzer should be enabled.\nCurrently supported analyzers are: """ + analyzers + """\ne.g. '--analyzers """ + analyzers +"'")
 
     parser.add_argument('--saargs', dest="clangsa_args_cfg_file",

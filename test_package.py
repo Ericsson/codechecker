@@ -273,6 +273,8 @@ class GenericPackageTester(object):
             check_cmd.append(self.project_info['name'] + '_' + unique_id)
             check_cmd.append('-b')
             check_cmd.append(test_project_build_cmd)
+            check_cmd.append('--analyzers')
+            check_cmd.append('clangsa')
 
             self.log.info(' '.join(check_cmd))
 

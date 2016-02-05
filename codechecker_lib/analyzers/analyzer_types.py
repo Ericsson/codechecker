@@ -81,31 +81,22 @@ def check_supported_analyzers(analyzers, context):
 
     enabled_analyzers = set()
 
-    if not analyzers:
-        # no analyzer is set clang static analyzer will be the default
-        enabled_analyzers.add(CLANG_SA)
-        name = CLANG_SA
-        # check if clangSA can run
-        analyzer_bin = analyzer_binaries.get(name)
-        if not analyzer_bin:
-            LOG.error('Failed to detect analyzer binary ' + name)
-        if not host_check.check_clang(analyzer_bin, check_env):
-            LOG.error('Failed to start analyzer: ' + name + ' !')
+    for analyzer_name in analyzers:
+        if analyzer_name not in supported_analyzers:
+            LOG.error('Unsupported analyzer ' + analyzer_name + ' !')
             sys.exit(1)
-    else:
-        for analyzer_name in analyzers:
-            if analyzer_name not in supported_analyzers:
-                LOG.error('Unsupported analyzer ' + analyzer_name + ' !')
-                sys.exit(1)
-            else:
-                # get the compiler binary to check if it can run
-                analyzer_bin = analyzer_binaries.get(analyzer_name)
-                if not analyzer_bin:
-                    LOG.error('Failed to detect analyzer binary ' + analyzer_name)
-                if not host_check.check_clang(analyzer_bin, check_env):
-                    LOG.error('Failed to get version for analyzer '
-                              + analyzer_name + ' !')
-                    sys.exit(1)
+        else:
+            # get the compiler binary to check if it can run
+            available_analyzer = True
+            analyzer_bin = analyzer_binaries.get(analyzer_name)
+            if not analyzer_bin:
+                LOG.debug('Failed to detect analyzer binary ' + analyzer_name)
+                available_analyzer = False
+            if not host_check.check_clang(analyzer_bin, check_env):
+                LOG.warning('Failed to run analyzer '
+                          + analyzer_name + ' !')
+                available_analyzer = False
+            if available_analyzer:
                 enabled_analyzers.add(analyzer_name)
 
     return enabled_analyzers
