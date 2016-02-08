@@ -3,7 +3,7 @@
 ##CodeChecker usage
 
 First of all, you have to setup the environment for CodeChecker.
-Codechecker server uses PostgreSQL database (by default) to store the results which is also packed into the package.
+Codechecker server uses SQLite database (by default) to store the results which is also packed into the package.
 
 ~~~~~~~~~~~~~~~~~~~~~
 cd $CODECHECKER_PACKAGE_ROOT/init
