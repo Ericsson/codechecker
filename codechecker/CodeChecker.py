@@ -223,11 +223,16 @@ Number of jobs. Start multiple processes for faster analisys''')
         check_parser.add_argument('-c', '--clean',
                                   default=argparse.SUPPRESS,
                                   action=DeprecatedOptionAction)
-        check_parser.add_argument('--update', action="store_true",
+        check_parser.add_argument('--update', action=DeprecatedOptionAction,
                                   dest="update", default=False, required=False,
                                   help='''\
 Incremental parsing, update the results of a previous run.
 Only the files changed since the last build will be reanalyzed. Depends on the build system.''')
+
+        check_parser.add_argument('--force', action="store_true",
+                                  dest="force", default=False, required=False,
+                                  help='''\
+Delete analisys results form the database if a run with the given name already exists''')
         check_parser.add_argument('-s', '--skip', type=str, dest="skipfile",
                                   default=argparse.SUPPRESS,
                                   required=False, help='Path to skip file.')

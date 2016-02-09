@@ -81,7 +81,7 @@ def run_check(args, actions, context):
             context.run_id = connection.add_checker_run(' '.join(sys.argv),
                                                         args.name,
                                                         package_version,
-                                                        args.update)
+                                                        args.force)
 
         except shared.ttypes.RequestFailed as thrift_ex:
             violation_msg = 'violates unique constraint "uq_runs_name"'

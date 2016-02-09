@@ -115,10 +115,8 @@ class Connection(object):
         ''' Close connection. '''
         self._transport.close()
 
-    def add_checker_run(self, command, name, version, update):
-        ''' i64  addCheckerRun(1: string command, 2: string name,
-                               3: string version) '''
-        run_id = self._client.addCheckerRun(command, name, version, update)
+    def add_checker_run(self, command, name, version, force):
+        run_id = self._client.addCheckerRun(command, name, version, force)
         return run_id
 
     def finish_checker_run(self, run_id):
