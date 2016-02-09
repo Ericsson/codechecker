@@ -9,7 +9,7 @@ done
 DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
 
-export CC_LOGGER_GCC_LIKE="gcc:g++:clang"
+export CC_LOGGER_GCC_LIKE="gcc:g++:clang:clang++:cc:c++"
 export CC_LOGGER_JAVAC_LIKE=""
 export CC_PACKAGE_ROOT=$(dirname $DIR)
 unset  CODECHECKER_ALCHEMY_LOG
