@@ -20,7 +20,7 @@ class GenericSuppressHandler(suppress_handler.SuppressHandler):
     def store_suppress_bug_id(self, bug_id, file_name, comment):
 
         if self.suppress_file is None:
-            return True
+            return False
 
         ret = suppress_file_handler.write_to_suppress_file(self.suppress_file,
                                                            bug_id,
@@ -31,7 +31,7 @@ class GenericSuppressHandler(suppress_handler.SuppressHandler):
     def remove_suppress_bug_id(self, bug_id, file_name):
 
         if self.suppress_file is None:
-            return True
+            return False
 
         ret = suppress_file_handler.remove_from_suppress_file(self.suppress_file,
                                                               bug_id,

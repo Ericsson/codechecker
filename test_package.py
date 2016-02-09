@@ -245,7 +245,7 @@ class GenericPackageTester(object):
         test_project_build_cmd = self.project_info['build_cmd']
 
         codechecker_workspace = self.workspace
-        self.env['CODECHECKER_VERBOSE'] = 'debug'
+        #self.env['CODECHECKER_VERBOSE'] = 'debug'
         # self.env['CODECHECKER_ALCHEMY_LOG'] = '2'
 
         def run_check(suppress_file):
@@ -273,6 +273,8 @@ class GenericPackageTester(object):
             check_cmd.append(self.project_info['name'] + '_' + unique_id)
             check_cmd.append('-b')
             check_cmd.append(test_project_build_cmd)
+            check_cmd.append('--analyzers')
+            check_cmd.append('clangsa')
 
             self.log.info(' '.join(check_cmd))
 

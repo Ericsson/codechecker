@@ -23,6 +23,7 @@ from thrift.server import TServer
 
 from codechecker_gen.DBThriftAPI import CheckerReport
 from codechecker_gen.DBThriftAPI.ttypes import *
+import shared
 
 from db_model.orm_model import *
 
@@ -81,32 +82,45 @@ class CheckerReportHandler(object):
         self.session.commit()
 
     @decorators.catch_sqlalchemy
-    def addCheckerRun(self, command, name, version, update):
+    def addCheckerRun(self, command, name, version, force):
         '''
+        store checker run related data to the database
+        by default updates the results if name was already found
+        using the force flag removes existing analysis results for a run
         '''
-        # TODO: command, version
-        # runs = self.session.query(Run).filter(Run.name == name)
-        # if runs.count() == 0:
-        if not update:
-            checkerRun = Run(name, version, command)
-            self.session.add(checkerRun)
-            self.session.commit()
-            return checkerRun.id
-        else:
-            run = self.session.query(Run).filter(Run.name == name).first()
-            if not run:
-                # create new run to store results
-                checkerRun = Run(name, version, command)
-                self.session.add(checkerRun)
-                self.session.commit()
-                return checkerRun.id
+        run = self.session.query(Run).filter(Run.name == name).first()
+        if run and force:
+            # clean already collected results
+            if not run.can_delete:
+                # deletion is already in progress
+                msg = "Can't delete " + str(run.id)
+                LOG.debug(msg)
+                raise shared.ttypes.RequestFailed(
+                    shared.ttypes.ErrorCode.DATABASE,
+                    msg)
 
-            LOG.info('\033[91mIncremental checking is in progress. The previous run results for '
-                     + name + ' will be overwritten! \033[0m')
+            LOG.info('Removing previous analisys results ...')
+            self.session.delete(run)
+            self.session.commit()
+
+            checker_run = Run(name, version, command)
+            self.session.add(checker_run)
+            self.session.commit()
+            return checker_run.id
+
+        elif run:
+            # there is already a run, update the results
             run.date = datetime.now()
+            # increment update counter
             run.inc_count += 1
             self.session.commit()
             return run.id
+        else:
+            # there is no run create new
+            checker_run = Run(name, version, command)
+            self.session.add(checker_run)
+            self.session.commit()
+            return checker_run.id
 
     @decorators.catch_sqlalchemy
     def finishCheckerRun(self, run_id):
@@ -121,8 +135,10 @@ class CheckerReportHandler(object):
         return True
 
     @decorators.catch_sqlalchemy
-    def addConfigInfo(self, run_id, config_values):
+    def replaceConfigInfo(self, run_id, config_values):
         '''
+        removes all the previously stored config informations
+        and stores the new values
         '''
         count = self.session.query(Config) \
                             .filter(Config.run_id == run_id) \

@@ -50,6 +50,8 @@ def debug(context, connection_string, force):
         if not os.path.exists(dumps_dir):
             os.mkdir(dumps_dir)
 
+        LOG.info('Generating gdb dump files to : ' + dumps_dir)
+
         for action in actions:
             LOG.info('Processing action ' + str(action.id) + '.')
             debug_log_file = \

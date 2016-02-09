@@ -23,14 +23,17 @@ typedef list<SuppressBugData> SuppressBugList
 // The order of the functions inditaces the order that must be maintained when
 // calling into the server.
 service CheckerReport {
+                // store checker run related data to the database
+                // by default updates the results if name was already found
+                // using the force flag removes existing analysis results for a run
                 i64  addCheckerRun(
                                    1: string command,
                                    2: string name,
                                    3: string version,
-                                   4: bool update)
+                                   4: bool force)
                                    throws (1: shared.RequestFailed requestError),
 
-                bool addConfigInfo(
+                bool replaceConfigInfo(
                                    1: i64 run_id,
                                    2: shared.CheckerConfigList values)
                                    throws (1: shared.RequestFailed requestError),

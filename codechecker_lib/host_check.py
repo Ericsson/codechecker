@@ -90,6 +90,7 @@ def check_clang(compiler_bin, env):
     simple check if clang is available
     '''
     clang_version_cmd = [compiler_bin, '--version']
+    LOG.debug(' '.join(clang_version_cmd))
     try:
         res = subprocess.call(clang_version_cmd,
                               env=env,
@@ -98,7 +99,7 @@ def check_clang(compiler_bin, env):
         if not res:
             return True
         else:
-            LOG.error('Failed to run: "' + ' '.join(clang_version_cmd) + '"')
+            LOG.debug('Failed to run: "' + ' '.join(clang_version_cmd) + '"')
             return False
 
     except OSError as oerr:

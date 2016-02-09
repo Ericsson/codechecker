@@ -77,11 +77,10 @@ def write_to_suppress_file(suppress_file, value, file_name, comment=''):
 
     LOG.debug('Processing suppress file: '+suppress_file)
 
-    if os.path.exists(suppress_file):
+    try:
         with codecs.open(suppress_file, 'r', 'UTF-8') as s_file:
             suppress_data = get_suppress_data(s_file)
 
-    try:
         if not os.stat(suppress_file)[6] == 0:
             # file is not empty
 

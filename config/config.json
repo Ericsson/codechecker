@@ -16,12 +16,11 @@
   "package_variables": {
       "default_db_username" : "codechecker",
       "pgsql_data_dir_name" : "pgsql_data",
-      "build_log_file_name" : "build.log",
       "report_output_dir_name" : "reports",
       "path_dumps_name" : "dumps"
   },
   "checker_config": {
-      "checkers" : [
+      "clangsa_checkers" : [
           {"core" : true },
           {"unix" : true },
           {"deadcode" : true },
@@ -32,6 +31,17 @@
           {"security.insecureAPI.mktemp" : true },
           {"security.insecureAPI.mkstemp" : true },
           {"security.insecureAPI.vfork" : true }
+      ],
+      "clang-tidy_checkers" : [
+          {"clang-diagnostic-" : true },
+          {"cert-fio38-c" : true },
+          {"google-global-names-in-headers" : true },
+          {"google-runtime-memset" : true },
+          {"misc-inaccurate-erase" : true },
+          {"misc-non-copyable-objects" : true },
+          {"misc-sizeof-container" : true },
+          {"misc-swapped-arguments" : true },
+          {"misc-unused-raii" : true }
       ]
   }
 }
