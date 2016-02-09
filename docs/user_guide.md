@@ -110,7 +110,7 @@ optional arguments:
   -h, --help            show this help message and exit
   -w WORKSPACE, --workspace WORKSPACE
                         Directory where the codechecker can store analysis
-                        related data. (default: /home/etibbru/.codechecker)
+                        related data. (default: /home/<user_home>/.codechecker)
   -n NAME, --name NAME  Name of the analysis.
   -b COMMAND, --build COMMAND
                         Build command which is used to build the project
@@ -168,9 +168,11 @@ optional arguments:
 
 CodeChecker is able to handle several analyzer tools. Currently CodeChecker
 supports Clang Static Analyzer and Clang Tidy. ```CodeChecker checkers```
-command lists all checkers from each analyzers. These can be switched in and off
-by ```-e``` and ```-d``` flags. Forthermore ```--analyzers``` specifies which
-analyzer tool should be used (both by default).
+command lists all checkers from each analyzers. These can be switched on and off
+by ```-e``` and ```-d``` flags. Furthermore ```--analyzers``` specifies which
+analyzer tool should be used (both by default). The tools are completely
+independent, so either can be omitted if not present as these are provided by
+different binaries.
 
 ### Using SQLite for database:
 
