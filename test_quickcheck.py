@@ -30,15 +30,14 @@ class QuickCheckTester(object):
         '''source the package to get the environment used to run the checker'''
 
         env = os.environ
-        init_file = os.path.join(self.pkg_root, 'init', 'init.sh')
 
-        command = ['bash', '-c', 'source %s > /dev/null && '
-                                 '%s -c "import base64,os,pickle,sys;'
+        command = ['bash', '-c', '%s -c "import base64,os,pickle,sys;'
                                  'sys.stdout.write(base64.b64encode('
                                  'pickle.dumps(os.environ.copy(),protocol=2)).'
                                  'decode(\'ascii\'))"' % \
-                                 (init_file, sys.executable)]
+                                 (sys.executable)]
         try:
+            env['PATH'] = os.path.join(self.pkg_root, 'bin') + ':' + env['PATH']
             penv = subprocess.check_output(command, env=env)
         except subprocess.CalledProcessError as perr:
             self.log.error('Failed source codechecker package for testing')
