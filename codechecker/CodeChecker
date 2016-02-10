@@ -72,6 +72,10 @@ def main():
             pickle.dump(original_env, env_save)
 
         checker_env['CODECHECKER_ORIGINAL_BUILD_ENV'] = original_env_file
+
+        bin_dir = os.path.dirname(os.path.realpath(__file__))
+        checker_env['CC_PACKAGE_ROOT'] = \
+            os.path.realpath(os.path.join(bin_dir, os.pardir))
     except Exception as ex:
         print('Saving original build environment failed')
         print(ex)
