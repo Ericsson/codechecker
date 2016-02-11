@@ -73,6 +73,9 @@ Tested on Ubuntu LTS 14.04.2
 # get ubuntu packages
 sudo apt-get install clang-3.6 libpq-dev postgresql postgresql-client-common postgresql-common doxygen build-essential thrift-compiler python-virtualenv python-dev gcc-multilib git
 
+# Note: The following PostgreSQL specific steps are only needed when PostgreSQL
+# is used for checking. By default CodeChecker uses SQLite.
+
 # setup database for a test_user
 sudo -i -u postgres
 # add a test user with "test_pwd" password
@@ -122,7 +125,10 @@ mkdir ~/checker_workspace
 # source codechecker
 source ~/codechecker_package/CodeChecker/init/init.sh
 
-# check project using the postgresql database port and the newly created db user
+# check the project using SQLite
+CodeChecker check -n test_project_check -w ~/checker_workspace -b "cd my_test_project && make clean && make"
+
+# alternatively check project using the postgresql database port and the newly created db user
 # When using sqlite, the database settings are unnecessary
 CodeChecker check --dbusername test_user --postgresql --dbport 5432 -n test_project_check -w ~/checker_workspace -b "cd my_test_project && make clean && make"
 
