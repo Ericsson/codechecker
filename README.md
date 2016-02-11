@@ -119,8 +119,8 @@ source ~/checker_env/bin/activate
 # directory to store temporary files during the static analysis
 mkdir ~/checker_workspace
 
-# source codechecker
-source ~/codechecker_package/CodeChecker/init/init.sh
+# add bin directory to PATH. This step can be skipped if you always give the path of CodeChecker command.
+export PATH=~/codechecker_package/CodeChecker/bin:$PATH
 
 # check project using the default postgresql database port and the newly created db user
 CodeChecker check --dbusername test_user --dbport 5432 -n test_project_check -w ~/checker_workspace -b "cd my_test_project && make clean && make"
