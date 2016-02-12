@@ -77,24 +77,13 @@ def run_check(args, actions, context):
         LOG.debug('Suppress file was not set in the command line')
 
     with client.get_connection() as connection:
-        try:
-            context.run_id = connection.add_checker_run(' '.join(sys.argv),
-                                                        args.name,
-                                                        package_version,
-                                                        args.force)
+        context.run_id = connection.add_checker_run(' '.join(sys.argv),
+                                                    args.name,
+                                                    package_version,
+                                                    args.force)
 
-        except shared.ttypes.RequestFailed as thrift_ex:
-            violation_msg = 'violates unique constraint "uq_runs_name"'
-            if violation_msg not in thrift_ex.message:
-                # not the unique name was the problem
-                raise
-            else:
-                LOG.info("Name was already used in the database please choose another unique name for checking.")
-                sys.exit(1)
-
-        if args.update:
-            # clean previous suppress information
-            client.clean_suppress(connection, context.run_id)
+        # clean previous suppress information
+        client.clean_suppress(connection, context.run_id)
 
         if os.path.exists(suppress_file):
             client.send_suppress(context.run_id, connection, suppress_file)
