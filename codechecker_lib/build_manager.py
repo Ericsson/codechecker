@@ -39,6 +39,10 @@ def perform_build_command(logfile, command, context, silent=False):
     return_code = 0
     # Run user's commands in shell
     log_env = analyzer_env.get_log_env(logfile, context, original_env)
+
+    if 'CC_LOGGER_GCC_LIKE' not in log_env:
+      log_env['CC_LOGGER_GCC_LIKE'] = 'gcc:g++:clang:clang++:cc:c++'
+
     LOG.debug(log_env)
     try:
         proc = subprocess.Popen(command,
