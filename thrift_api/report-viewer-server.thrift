@@ -174,10 +174,6 @@ service codeCheckerDBAccess {
                 2: string path)
                 throws (1: shared.RequestFailed requestError),
 
-  // get the list of checkers which found a bug in a sourcefile with the bug count
-  map<string, i64> getCheckersListForFile(1: i64 fileId)
-                                          throws (1: shared.RequestFailed requestError),
-
   // suppress the bug
   bool suppressBug(1: list<i64> runIds,
                    2: i64 reportId,
