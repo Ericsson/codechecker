@@ -39,7 +39,7 @@ class SkipListHandler(object):
                 LOG.warning("Skipping malformed skipfile pattern: " + line)
                 continue
             rexpr = re.compile(fnmatch.translate(line[1:].strip() + '*'))
-            self.__skip.append((line[0], rexpr))
+            self.__skip.append((line, rexpr))
 
     def should_skip(self, source):
         """
@@ -47,18 +47,19 @@ class SkipListHandler(object):
         Should the analyzer skip the given source file?
         """
 
-        for sign, rexpr in self.__skip:
+        for line, rexpr in self.__skip:
             if rexpr.match(source):
+                sign = line[0]
                 return sign == '-'
         return False
 
-    def get_skiplist(self, file_name):
+    def get_skiplist(self):
         """
         Read skip file and return with its content in a list.
         """
 
         skiplist_with_comment = {}
-        for line in self.__skip:
+        for line, rexpr in self.__skip:
             skiplist_with_comment[line] = ''
 
         return skiplist_with_comment
