@@ -137,7 +137,7 @@ class GenericPackageTester(object):
         self.database = database
         self.start_test_client = \
             partial(start_test_client, pkg_root, test_modules)
-        self.use_sqlite = cmd_args.sqlite
+        self.use_postgresql = cmd_args.postgresql
 
         try:
             if test_project_config is None:
@@ -253,9 +253,8 @@ class GenericPackageTester(object):
             check_cmd = []
             check_cmd.append('CodeChecker')
             check_cmd.append('check')
-            if self.use_sqlite:
-                check_cmd.append('--sqlite')
-            else:
+            if self.use_postgresql:
+                check_cmd.append('--postgresql')
                 check_cmd.append('--dbaddress')
                 check_cmd.append(db['dbaddress'])
                 check_cmd.append('--dbport')
@@ -291,9 +290,8 @@ class GenericPackageTester(object):
             server_cmd.append('server')
             server_cmd.append('--check-port')
             server_cmd.append(str(test_config['CC_TEST_SERVER_PORT']))
-            if self.use_sqlite:
-                server_cmd.append('--sqlite')
-            else:
+            if self.use_postgresql:
+                server_cmd.append('--postgresql')
                 server_cmd.append('--dbaddress')
                 server_cmd.append(db['dbaddress'])
                 server_cmd.append('--dbport')
@@ -424,9 +422,9 @@ def main():
                         action='store', dest='test_project_config',
                         help='Test project config. By default tries to use from the test_project.')
 
-    parser.add_argument('--sqlite', dest="sqlite",
-                        action='store_true', required=False,
-                        help='Use sqlite database.')
+    parser.add_argument('--postgresql', dest="postgresql",
+                        action='store_true', default=False,
+                        help='Use PostgreSQL database.')
     parser.add_argument('--dbaddress', type=str, dest="dbaddress",
                         default='localhost',
                         help='Postgres database server address.')

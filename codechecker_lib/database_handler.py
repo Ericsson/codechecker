@@ -167,14 +167,11 @@ class SQLServer(object):
             env: a run environment dictionary.
         '''
 
-        if not host_check.check_sql_driver(args.sqlite):
+        if not host_check.check_sql_driver(args.postgresql):
             LOG.error("The selected SQL driver is not available.")
             sys.exit(1)
 
-        if args.sqlite:
-            LOG.debug("Using SQLiteDatabase")
-            return SQLiteDatabase(workspace, migration_root, run_env=env)
-        else:
+        if args.postgresql:
             LOG.debug("Using PostgreSQLServer")
             return PostgreSQLServer(workspace,
                                     migration_root,
@@ -183,6 +180,9 @@ class SQLServer(object):
                                     args.dbusername,
                                     args.dbname,
                                     run_env=env)
+        else:
+            LOG.debug("Using SQLiteDatabase")
+            return SQLiteDatabase(workspace, migration_root, run_env=env)
 
 
     def check_db_version(self, db_version_info, session=None):
