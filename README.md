@@ -71,7 +71,7 @@ Tested on Ubuntu LTS 14.04.2
 ~~~~~~{.sh}
 
 # get ubuntu packages
-sudo apt-get install clang-3.6 libpq-dev postgresql postgresql-client-common postgresql-common doxygen build-essential thrift-compiler python-virtualenv python-dev gcc-multilib git
+sudo apt-get install clang-3.6 libpq-dev postgresql postgresql-client-common postgresql-common doxygen build-essential thrift-compiler python-virtualenv python-dev gcc-multilib git wget
 
 # setup database for a test_user
 sudo -i -u postgres
@@ -92,12 +92,13 @@ virtualenv -p /usr/bin/python2.7 ~/checker_env
 # activate virtualenv
 source ~/checker_env/bin/activate
 
-# install required python modules
-pip install -r .ci/python_requirements
 
-# create codechecker package
+# get source code
 git clone https://github.com/Ericsson/codechecker.git
 cd codechecker
+# install required python modules
+pip install -r .ci/python_requirements
+# create codechecker package
 ./build_package.py -o ~/codechecker_package
 cd ..
 ~~~~~~
