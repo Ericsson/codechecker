@@ -1,28 +1,26 @@
 #CodeChecker command line examples
-###1.	Check the project, overwrite any earlier results and view results from command line
+###1.	Quickly check some files and print results in command line
 ```
 CodeChecker quickcheck -b make
-  
-#runs check and shows the result on command line
 ```
 ###2.	Check a project, update earlier results  and view results from a browser
-Runs make, logs build, run analyzers and store the results
+Runs make, logs build, run analyzers and store the results in sqlite db.
 ```
 CodeChecker check -b make
 ```
   
-  Start webserver, which listens on default port localhost:8001 
-  results can be viewed in a browser
+Start webserver, which listens on default port localhost:8001 
+results can be viewed in a browser
 ```
 CodeChecker server
 ```
   
-  The developer may also suppress false positives
-  At the end, the project is rechecked 
+The developer may also suppress false positives
+At the end, the project can be rechecked.
 ```
 CodeChecker check make
 ```
-###3. Same as use case 2., but the developer would like to enable alpha checkers from clang-sa, and llvm checkers from clang-tidy
+###3. Same as use case 2., but the developer would like to enable alpha checkers and llvm checkers
 ```
 CodeChecker check –e alpha -e llvm -b make
 ```
@@ -61,44 +59,30 @@ CodeChecker check -n myproject_v1 –postgresql -b make
 CodeChecker check -n myproject_v2 –postgresql -b make
 
 #runs analysis, assumes that postgres is available on the default 5432 TCP port, 
-#codechecker db user exists and codechecker can be created
-#stores results in postgres in a db called codechecker under name myproject_v1,myproject_v2
+#codechecker db user exists and codechecker db can be created
 #please note that this use case is also supported with SQLITE db
 ```
 
-###8.	Start the webserver and view the diff between the two results in the web browser
+Start the webserver and view the diff between the two results in the web browser
 ```
 CodeChecker server –postgresql
 
-#assumes that postgres is available on the default 5432 TCP port, 
-#codechecker db user exists and codechecker db is used
-
 firefox localhost:8001
-
-#webserver listens on port 8001 and user can see the diff of the runs in a browser
 ```
-###9.	Start the webserver and view the diff between the two results in command line
+Start the webserver and view the diff between the two results in command line
 ```
 CodeChecker cmd diff –b myproject_v1 –n myproject_v2 –p 8001 -new
 
-#assumes that the server is started on port 8001 (as specificed in step 5) 
+#assumes that the server is started on port 8001
 #then shows the new bugs in myproject_v2 compared to baseline myproject_v1
 
 CodeChecker cmd diff –b myproject_v1 –n myproject_v2 –p 8001 -unresolved
 
-#assumes that the server is started on port 8001 (as specificed in step 5) 
+#assumes that the server is started on port 8001
 #then shows the unresolved bugs in myproject_v2 compared to baseline myproject_v1
 
 CodeChecker cmd diff –b myproject_v1 –n myproject_v2 –p 8001 -resolved
 
-#assumes that the server is started on port 8001 (as specificed in step 5)
+#assumes that the server is started on port 8001
 #then shows the resolved bugs in myproject_v2 compared to baseline myproject_v1
-```
-###10.	Start the webserver with a suppress file
-```
-CodeChecker server –u suppress.file -postgresql
-
-#web server is listening on port 8001; False positives can be suppressed in the
-#Web interface and the bug hash of the suppressed bugs are stored in the suppress.file
-#suppress.file can be stored in the version control
 ```
