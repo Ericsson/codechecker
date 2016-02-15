@@ -3,7 +3,7 @@
 ##CodeChecker usage
 
 First of all, you have to setup the environment for CodeChecker.
-Codechecker server uses PostgreSQL database (by default) to store the results which is also packed into the package.
+Codechecker server uses SQLite database (by default) to store the results which is also packed into the package.
 
 ~~~~~~~~~~~~~~~~~~~~~
 cd $CODECHECKER_PACKAGE_ROOT/init
@@ -105,7 +105,6 @@ usage: CodeChecker check [-h] [-w WORKSPACE] -n NAME (-b COMMAND | -l LOGFILE)
                          [--tidyargs TIDY_ARGS_CFG_FILE] [--sqlite]
                          [--dbport DBPORT] [--dbaddress DBADDRESS]
                          [--dbname DBNAME] [--dbusername DBUSERNAME]
-
 optional arguments:
   -h, --help            show this help message and exit
   -w WORKSPACE, --workspace WORKSPACE
@@ -179,9 +178,10 @@ different binaries.
 CodeChecker can also use SQLite for storing the results. In this case the
 SQLite database will be created in the workspace directory.
 
-In order to use SQLite instead of PostgreSQL, use the ```--sqlite``` command
+In order to use PostgreSQL instead of SQLite, use the ```--postgresql``` command
 line argument for ```CodeChecker server``` and ```CodeChecker check```
-commands. In this case ```--dbport```, ```--dbaddress```, ```--dbname```, and
+commands. If ```--postgresql``` is not given then SQLite is used by default in
+which case ```--dbport```, ```--dbaddress```, ```--dbname```, and
 ```--dbusername``` command line arguments are ignored.
 
 #### Note:

@@ -94,9 +94,10 @@ class DeprecatedOptionAction(argparse.Action):
 def add_database_arguments(parser):
     '''Helper method for adding database arguments to an argument parser.'''
 
-    parser.add_argument('--sqlite', dest="sqlite",
+    parser.add_argument('--sqlite', action=DeprecatedOptionAction)
+    parser.add_argument('--postgresql', dest="postgresql",
                         action='store_true', required=False,
-                        help='Use sqlite database.')
+                        help='Use PostgreSQL database.')
     parser.add_argument('--dbport', type=int, dest="dbport",
                         default=8764, required=False,
                         help='Postgres server port.')

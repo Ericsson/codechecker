@@ -71,7 +71,10 @@ Tested on Ubuntu LTS 14.04.2
 ~~~~~~{.sh}
 
 # get ubuntu packages
-sudo apt-get install clang-3.6 libpq-dev postgresql postgresql-client-common postgresql-common doxygen build-essential thrift-compiler python-virtualenv python-dev gcc-multilib git
+sudo apt-get install clang-3.6 libpq-dev postgresql postgresql-client-common postgresql-common doxygen build-essential thrift-compiler python-virtualenv python-dev gcc-multilib git wget
+
+# Note: The following PostgreSQL specific steps are only needed when PostgreSQL
+# is used for checking. By default CodeChecker uses SQLite.
 
 # setup database for a test_user
 sudo -i -u postgres
@@ -92,12 +95,13 @@ virtualenv -p /usr/bin/python2.7 ~/checker_env
 # activate virtualenv
 source ~/checker_env/bin/activate
 
-# install required python modules
-pip install -r .ci/python_requirements
 
-# create codechecker package
+# get source code
 git clone https://github.com/Ericsson/codechecker.git
 cd codechecker
+# install required python modules
+pip install -r .ci/python_requirements
+# create codechecker package
 ./build_package.py -o ~/codechecker_package
 cd ..
 ~~~~~~
@@ -109,9 +113,11 @@ cd ..
 # check if clang is available
 which clang
 
-# if 'clang' command is not available the package can be configured to use another clang binary for checking like 'clang-3.6'
-# edit the 'CodeChecker/config/package_layout.json' config file "runtime" section in the generated package and
-# extend it with a new config option '"compiler_bin" : "clang-3.6",'
+# if 'clang' command is not available the package can be configured to use
+# another clang binary for checking like 'clang-3.6'
+# edit the 'CodeChecker/config/package_layout.json' config file "runtime"
+# section in the generated package and extend it with a new config option
+# '"compiler_bin" : "clang-3.6",'
 
 # activate virtualenv
 source ~/checker_env/bin/activate
@@ -122,8 +128,14 @@ mkdir ~/checker_workspace
 # add bin directory to PATH. This step can be skipped if you always give the path of CodeChecker command.
 export PATH=~/codechecker_package/CodeChecker/bin:$PATH
 
-# check project using the default postgresql database port and the newly created db user
-CodeChecker check --dbusername test_user --dbport 5432 -n test_project_check -w ~/checker_workspace -b "cd my_test_project && make clean && make"
+# check the project using SQLite. The database is placed in the working
+# directory which can be provided by -w flag (~/.codechecker by default).
+CodeChecker check -n test_project_check -b "cd my_test_project && make clean && make"
+
+# alternatively check project using the postgresql database port and the newly
+# created db user
+# When using sqlite, the database settings are unnecessary
+CodeChecker check --dbusername test_user --postgresql --dbport 5432 -n test_project_check -b "cd my_test_project && make clean && make"
 
 ~~~~~~
 

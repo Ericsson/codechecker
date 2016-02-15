@@ -25,6 +25,8 @@ from db_model.orm_model import *
 import sqlalchemy
 from sqlalchemy.engine.url import URL, make_url
 from sqlalchemy.sql.elements import quoted_name
+from sqlalchemy.engine import Engine
+from sqlalchemy import event
 
 from alembic import command, config
 from alembic.migration import MigrationContext
@@ -165,14 +167,11 @@ class SQLServer(object):
             env: a run environment dictionary.
         '''
 
-        if not host_check.check_sql_driver(args.sqlite):
+        if not host_check.check_sql_driver(args.postgresql):
             LOG.error("The selected SQL driver is not available.")
             sys.exit(1)
 
-        if args.sqlite:
-            LOG.debug("Using SQLiteDatabase")
-            return SQLiteDatabase(workspace, migration_root, run_env=env)
-        else:
+        if args.postgresql:
             LOG.debug("Using PostgreSQLServer")
             return PostgreSQLServer(workspace,
                                     migration_root,
@@ -181,6 +180,9 @@ class SQLServer(object):
                                     args.dbusername,
                                     args.dbname,
                                     run_env=env)
+        else:
+            LOG.debug("Using SQLiteDatabase")
+            return SQLiteDatabase(workspace, migration_root, run_env=env)
 
 
     def check_db_version(self, db_version_info, session=None):
@@ -443,13 +445,18 @@ class SQLiteDatabase(SQLServer):
     '''
     Handler for SQLite.
     '''
-
     def __init__(self, workspace, migration_root, run_env=None):
         super(SQLiteDatabase, self).__init__(migration_root)
 
         self.dbpath = os.path.join(workspace, 'codechecker.sqlite')
         self.run_env = run_env
+    
+        def _set_sqlite_pragma(dbapi_connection, connection_record):
+            cursor = dbapi_connection.cursor()
+            cursor.execute("PRAGMA foreign_keys=ON")
+            cursor.close()
 
+        event.listen(Engine, 'connect', _set_sqlite_pragma)
 
     def start(self, db_version_info, wait_for_start=True, init=False):
         if init:
