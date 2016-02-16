@@ -57,12 +57,12 @@ export PATH=~/codechecker_package/CodeChecker/bin:$PATH
 
 Check a test project.
 ~~~~~~{.sh}
-CodeChecker check --dbusername test_user --postgresql --dbport 5432 -n test_project_check -b "cd my_test_project && make clean && make"
+CodeChecker check --dbusername test_user --postgresql -n test_project_check -b "cd my_test_project && make clean && make"
 ~~~~~~
 
 Start web server to view the results.
 ~~~~~~{.sh}
-CodeChecker server --dbusername test_user --postgresql --dbport 5432 -w ~/checker_workspace -v 8080
+CodeChecker server --dbusername test_user --postgresql
 ~~~~~~
 
 View the results with firefox.
