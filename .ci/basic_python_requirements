@@ -1,0 +1,2 @@
+alembic>=0.8.2
+thrift>=0.9.1

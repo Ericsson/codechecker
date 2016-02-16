@@ -99,7 +99,7 @@ def add_database_arguments(parser):
                         action='store_true', required=False,
                         help='Use PostgreSQL database.')
     parser.add_argument('--dbport', type=int, dest="dbport",
-                        default=8764, required=False,
+                        default=5432, required=False,
                         help='Postgres server port.')
     parser.add_argument('--dbaddress', type=str, dest="dbaddress",
                         default="localhost", required=False,
@@ -176,8 +176,8 @@ CodeChecker check -w ~/workspace -b "cd ~/myproject && make" -n myproject
 Start the viewer to see the results:
 CodeChecker server -w ~/workspace
 
-See the results in a web browser: localhost:11444
-See results in  the command line: CodeChecker cmd results -p 11444 -n myproject
+See the results in a web browser: localhost:8001
+See results in  the command line: CodeChecker cmd results -p 8001 -n myproject
 
 To analyze a small project quickcheck feature can be used.
 The results will be printed only to the standard output. (No database will be used)
@@ -296,7 +296,7 @@ stored into a compilation command json file (no analisys is done during the buil
                                    default=default_workspace(),
                                    help=workspace_help_msg)
         server_parser.add_argument('-v', '--view-port', type=int, dest="view_port",
-                                   default=11444, required=False,
+                                   default=8001, required=False,
                                    help='Port used for viewing.')
         server_parser.add_argument('-u', '--suppress', type=str, dest="suppress",
                                    required=False, help='Path to suppress file.')
