@@ -5,14 +5,6 @@
 First of all, you have to setup the environment for CodeChecker.
 Codechecker server uses SQLite database (by default) to store the results which is also packed into the package.
 
-~~~~~~~~~~~~~~~~~~~~~
-cd $CODECHECKER_PACKAGE_ROOT/init
-source init.sh
-~~~~~~~~~~~~~~~~~~~~~
-
-After sourcing the init script the 'CodeChecker --help' command should be available.
-
-
 The next step is to start the CodeChecker main script.
 The main script can be started with different options.
 
@@ -40,8 +32,8 @@ optional arguments:
 ##Default configuration:
 
 Used ports:
-* 8764  - PostgreSQL
-* 11444 - CodeChecker result viewer
+* 5432  - PostgreSQL
+* 8001 - CodeChecker result viewer
 
 ## 1. log mode:
 
@@ -156,8 +148,10 @@ optional arguments:
   --tidyargs TIDY_ARGS_CFG_FILE
                         File with arguments which will be forwarded directly
                         to the Clang tidy analyzer without modifiaction
-  --sqlite              Use sqlite database. (default: False)
-  --dbport DBPORT       Postgres server port. (default: 8764)
+  --sqlite [DEPRECATED]
+                        DEPRECATED argument! (default: None)
+  --postgresql          Use PostgreSQL database. (default: False)
+  --dbport DBPORT       Postgres server port. (default: 5432)
   --dbaddress DBADDRESS
                         Postgres database server address (default: localhost)
   --dbname DBNAME       Name of the database. (default: codechecker)
@@ -288,17 +282,17 @@ In this case the database handler and the database can be started manually by ru
 The workspace needs to be provided for both the server and the check commands.
 
 ~~~~~~~~~~~~~~~~~~~~~
-CodeChecker server -w ~/codechecker_wp --dbname myProjectdb --dbport 8764 --dbaddress localhost --view-port 11443
+CodeChecker server -w ~/codechecker_wp --dbname myProjectdb --dbport 5432 --dbaddress localhost --view-port 8001
 ~~~~~~~~~~~~~~~~~~~~~
 
 The checking process can be started separately on the same machine
 ~~~~~~~~~~~~~~~~~~~~~
-CodeChecker check  -w ~/codechecker_wp -n myProject -b "make -j 4" --dbname myProjectdb --dbaddress localhost --dbport 8764
+CodeChecker check  -w ~/codechecker_wp -n myProject -b "make -j 4" --dbname myProjectdb --dbaddress localhost --dbport 5432
 ~~~~~~~~~~~~~~~~~~~~~
 
 or on a different machine
 ~~~~~~~~~~~~~~~~~~~~~
-CodeChecker check  -w ~/codechecker_wp -n myProject -b "make -j 4" --dbname myProjectdb --dbaddress 192.168.1.1 --dbport 8764
+CodeChecker check  -w ~/codechecker_wp -n myProject -b "make -j 4" --dbname myProjectdb --dbaddress 192.168.1.1 --dbport 5432
 ~~~~~~~~~~~~~~~~~~~~~
 
 
@@ -308,14 +302,14 @@ It is possible that the codechecker server and the PostgreSQL database that cont
 
 In this case the codechecker server can be started using the following command:
 ~~~~~~~~~~~~~~~~~~~~~
-CodeChecker server --dbname myProjectdb --dbport 8764 --dbaddress 192.168.1.2 --view-port 11443
+CodeChecker server --dbname myProjectdb --dbport 5432 --dbaddress 192.168.1.2 --view-port 8001
 ~~~~~~~~~~~~~~~~~~~~~
 Start codechecker server locally which connects to a remote database (which is started separately). Workspace is not required in this case.
 
 
 Start the checking as explained previously.
 ~~~~~~~~~~~~~~~~~~~~~
-CodeChecker check -w ~/codechecker_wp -n myProject -b "make -j 4" --dbname myProjectdb --dbaddress 192.168.1.2 --dbport 8764
+CodeChecker check -w ~/codechecker_wp -n myProject -b "make -j 4" --dbname myProjectdb --dbaddress 192.168.1.2 --dbport 5432
 ~~~~~~~~~~~~~~~~~~~~~
 
 ## 3. Quick check mode:
@@ -399,7 +393,7 @@ In debug mode CodeChecker can generate logs for failed build actions. The logs c
 Checking with some extra checkers disabled and enabled
 
 ~~~~~~~~~~~~~~~~~~~~~
-CodeChecker check -w ~/Develop/workspace -j 4 -b "cd ~/Libraries/myproject && make clean && make -j4" -s ~/Develop/skip.list -u ~/Develop/suppress.txt -e unix.Malloc -d core.uninitialized.Branch  -n MyLittleProject -c --dbport 9999 --dbname cctestdb
+CodeChecker check -w ~/Develop/workspace -j 4 -b "cd ~/Libraries/myproject && make clean && make -j4" -s ~/Develop/skip.list -u ~/Develop/suppress.txt -e unix.Malloc -d core.uninitialized.Branch  -n MyLittleProject -c --dbport 5432 --dbname cctestdb
 ~~~~~~~~~~~~~~~~~~~~~
 
 ### View results
@@ -407,17 +401,17 @@ CodeChecker check -w ~/Develop/workspace -j 4 -b "cd ~/Libraries/myproject && ma
 To view the results CodeChecker sever needs to be started.
 
 ~~~~~~~~~~~~~~~~~~~~~
-CodeChecker server -w ~/codes/package/checker_ws/ --dbport 8764 --dbaddress localhost --view-port 11443
+CodeChecker server -w ~/codes/package/checker_ws/ --dbport 5432 --dbaddress localhost
 ~~~~~~~~~~~~~~~~~~~~~
 
-After the server has started open the outputed link to the browser (localhost:11443 in this example).
+After the server has started open the outputed link to the browser (localhost:8001 in this example).
 
 ~~~~~~~~~~~~~~~~~~~~~
 [11318] - WARNING! No suppress file was given, suppressed results will be only stored in the database.
 [11318] - Checking for database
 [11318] - Database is not running yet
 [11318] - Starting database
-[11318] - Waiting for client requests on [localhost:11443]
+[11318] - Waiting for client requests on [localhost:8001]
 ~~~~~~~~~~~~~~~~~~~~~
 
 ### Run CodeChecker distributed in a cluster
@@ -440,21 +434,20 @@ Do the following steps:
 
 mkdir -p /path/to/pgsql_data
 initdb -U codechecker -D /path/to/pgsql_data -E "SQL_ASCII"
-# Start PostgreSQL server on port 8764
-postgres -U codechecker -D /path/to/pgsql_data -p 9999 &>pgsql_log &
+# Start PostgreSQL server on port 5432
+postgres -U codechecker -D /path/to/pgsql_data -p 5432 &>pgsql_log &
 ~~~~~~~~~~~~~~~~~~~~~
 
 #### Run CodeChecker on multiple hosts
 
 Then you can run codechecker on multiple hosts but using the same run name (in this example this is called "distributed_run".
-You will need to use the -–update (incremental mode) to reuse the same run name. In this example it is assumed that
 postgres is listening on codechecker.central port 9999.
 ~~~~~~~~~~~~~~~~~~~~~
 #On host1 we check module1
-CodeChecker check -w /tmp/codechecker_ws -b "cd module_1;make" --dbport 9999 --dbaddress codechecker.central -n distributed_run --update
+CodeChecker check -w /tmp/codechecker_ws -b "cd module_1;make" --dbport 5432 --dbaddress codechecker.central -n distributed_run
 
 #On host2 we check module2
-CodeChecker check -w /tmp/codechecker_ws -b "cd module_2;make" --dbport 9999 --dbaddress codechecker.central -n disributed_run --update
+CodeChecker check -w /tmp/codechecker_ws -b "cd module_2;make" --dbport 5432 --dbaddress codechecker.central -n disributed_run
 ~~~~~~~~~~~~~~~~~~~~~
 
 
