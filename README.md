@@ -34,35 +34,7 @@ If your clang version does not have these features you will see in debug log the
   * `Hash value wasn't found in the plist file.` --> update for a newer clang version; otherwise CodeChecker generates a simple hash based on the filename and the line content, this method is applied for Clang Tidy results too, because Clang Tidy does not support bug identifier hash generation currently
 
 ## Linux
-### Packaging requirements
-  *  [Git](https://git-scm.com/) (> 1.9.1)  
-  *  [Thrift compiler](https://thrift.apache.org/) (> 0.9.2) required to generate python and javascript files
-  *  [Doxygen](http://www.stack.nl/~dimitri/doxygen/) (> 1.8) to generate documentation
-  *  Build-logger
-
-     ld-logger is used to create a build log from the build commands.
-     It is possible to build package without ld-logger.
-     In that case no automatic compilation logging is available.  
-     There should be already an existing file containing the compilation commands (in `cmake` with the 'CMAKE_EXPORT_COMPILE_COMMANDS' option) to run the static analyzer.
-     To build ld-logger 32 and 64 bit versions `gcc multilib` and `make`
-     is required
-
-  * Other external dependencies are automatically downloaded and
-    copied to the necessary directories in the package.
-    Additional runtime requirements are described in the next external source
-    dependencies section.
-
-### Runtime requirements
-#### Basic
-  *  [Clang Static analyzer](http://clang-analyzer.llvm.org/) (latest stable or [trunk](http://clang.llvm.org/get_started.html))
-  *  [Clang Tidy](http://clang.llvm.org/extra/clang-tidy/) (available in the clang tools extra repository [trunk](http://clang.llvm.org/get_started.html))
-  *  [Python2](https://www.python.org/) (> 2.7)
-  *  [Alembic](https://pypi.python.org/pypi/alembic) (>=0.8.2)
-  *  [SQLAlchemy](http://www.sqlalchemy.org/) (> 1.0.2)
-     - [PyPi SQLAlchemy](https://pypi.python.org/pypi/SQLAlchemy) (> 1.0.2)
-  * Thrift python modules
-     -  [PyPi thrift](https://pypi.python.org/pypi/thrift/0.9.2)(> 0.9.2 )
-
+For a more detailed dependency list see [Requirements](docs/deps.md)
 ### Basic dependecy install & setup
 Tested on Ubuntu LTS 14.04.2
 ~~~~~~{.sh}
@@ -150,6 +122,8 @@ See user guide for further configuration and check options.
 [Checker documentation](docs/checker_docs.md)
 
 [Architecture overview](docs/architecture.md)
+
+[Requirements](docs/deps.md)
 
 [Package layout](docs/package_layout.md)
 
