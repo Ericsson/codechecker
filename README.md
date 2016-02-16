@@ -40,6 +40,7 @@ Tested on Ubuntu LTS 14.04.2
 ~~~~~~{.sh}
 
 # get ubuntu packages
+# clang-3.6 can be replaced by any later versions of clang
 sudo apt-get install clang-3.6 doxygen build-essential thrift-compiler python-virtualenv gcc-multilib git wget
 
 # create new python virtualenv
