@@ -1,7 +1,7 @@
 
 ## PostgreSQL
 
-## Extra runtime requirements for PostgresSQL database support
+## Extra runtime requirements for PostgreSQL database support
   *  [PostgreSQL](http://www.postgresql.org/ "PostgreSQL") (> 9.3.5) (optional)
   *  [psycopg2](http://initd.org/psycopg/ "psycopg2") (> 2.5.4) or [pg8000](https://github.com/mfenniak/pg8000 "pg8000") (>= 1.10.0) at least one database connector is required for postgreSQL database support (both are supported)
      - [PyPi psycopg2](https://pypi.python.org/pypi/psycopg2/2.6.1) __requires lbpq!__
