@@ -28,6 +28,6 @@ Javascript dependencies are automatically downloaded based on the ext_source_dep
   * [Highlightjs](https://highlightjs.org/) (BSD) - required for highlighting the source code
 
 #### PostgreSQL
-For the additional PostgreSQL dependecies see the [PostgreSQL setup](docs/postgresql_setup.md) documentation.
+For the additional PostgreSQL dependecies see the [PostgreSQL setup](postgresql_setup.md) documentation.
 
 \include ext_source_deps_config.json
