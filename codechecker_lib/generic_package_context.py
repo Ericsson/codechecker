@@ -211,11 +211,11 @@ class Context(context_base.ContextBase):
                 if os.path.isabs(value):
                     # check if it is an absolute path
                     analyzers[name] = value
-                else:
+                elif os.path.dirname(value):
                     # check if it is a package relative path
-                    relpath = os.path.dirname(value)
-                    if relpath:
-                        analyzers[name] =  os.path.join(self.__package_root, value)
+                    analyzers[name] =  os.path.join(self.__package_root, value)
+                else:
+                    analyzers[name] = value
 
         return analyzers
 
