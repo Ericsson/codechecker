@@ -12,6 +12,7 @@ class BuildAction(object):
     def __init__(self, build_action_id=0):
         self._id = build_action_id
         self._analyzer_options = []
+        self.analyzer_type = -1
         self._original_command = ''
         self._directory = ''
         self._output = ''
@@ -23,12 +24,30 @@ class BuildAction(object):
 
     def __str__(self):
         # for debugging
-        return ('Id: {0} ,\nOriginal command: {1},\nAnalyzer options: {2},\n'
-                'Directory: {3},\nOutput: {4},\nLang: {5},\nTarget: {6},\n'
-                'Source count {7},\nSources: {8}').\
-                    format(self._id, self._original_command, self._analyzer_options,
+        return ('Id: {0} ,\nOriginal command: {1},\n'
+                'Analyzer type: {2},\n Analyzer options: {3},\n'
+                'Directory: {4},\nOutput: {5},\nLang: {6},\nTarget: {7},\n'
+                'Source count {8},\nSources: {9}').\
+                    format(self._id, self._original_command,
+                           self._analyzer_type, self._analyzer_options,
                            self._directory, self._output, self._lang, self._target,
                            self._source_count, self._sources)
+
+    @property
+    def analyzer_type(self):
+        """
+        stores which type of analyzer should be run in this
+        buildaction
+        """
+        return self._analyzer_type
+
+    @analyzer_type.setter
+    def analyzer_type(self, value):
+        """
+        stores which type of analyzer should be run in this
+        buildaction
+        """
+        self._analyzer_type = value
 
     @property
     def id(self):
@@ -121,6 +140,7 @@ class BuildAction(object):
         '''
         hash_content = []
         hash_content.extend(self.analyzer_options)
+        hash_content.append(str(self.analyzer_type))
         hash_content.append(self.output)
         hash_content.append(self.target)
         hash_content.extend(self.sources)

@@ -170,15 +170,13 @@ class GenericPackageTester(object):
     def _get_check_env(self, env=os.environ):
         '''source the package to get the environment used to run the checker'''
 
-        init_file = os.path.join(self.pkg_root, 'init', 'init.sh')
-
-        command = ['bash', '-c', 'source %s > /dev/null && '
-                                 '%s -c "import base64,os,pickle,sys;'
+        command = ['bash', '-c', '%s -c "import base64,os,pickle,sys;'
                                  'sys.stdout.write(base64.b64encode('
                                  'pickle.dumps(os.environ.copy(),protocol=2)).'
                                  'decode(\'ascii\'))"' %
-                                 (init_file, sys.executable)]
+                                 (sys.executable)]
         try:
+            env['PATH'] = os.path.join(self.pkg_root, 'bin') + ':' + env['PATH']
             penv = subprocess.check_output(command, env=env)
         except subprocess.CalledProcessError as perr:
             self.log.error('Failed source codechecker package for testing')
@@ -245,7 +243,7 @@ class GenericPackageTester(object):
         test_project_build_cmd = self.project_info['build_cmd']
 
         codechecker_workspace = self.workspace
-        self.env['CODECHECKER_VERBOSE'] = 'debug'
+        #self.env['CODECHECKER_VERBOSE'] = 'debug'
         # self.env['CODECHECKER_ALCHEMY_LOG'] = '2'
 
         def run_check(suppress_file):
@@ -272,6 +270,8 @@ class GenericPackageTester(object):
             check_cmd.append(self.project_info['name'] + '_' + unique_id)
             check_cmd.append('-b')
             check_cmd.append(test_project_build_cmd)
+            check_cmd.append('--analyzers')
+            check_cmd.append('clangsa')
 
             self.log.info(' '.join(check_cmd))
 

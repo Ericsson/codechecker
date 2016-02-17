@@ -88,6 +88,26 @@ static GccArgsState processArgument(
   {
     state_ = InOutputArg;
   }
+  else if (arg_[0] == '-' && ((arg_[1] == 'W' && (arg_[2] == 'l' || arg_[2] == 'p')) || arg_[1] == 'M'))
+  {
+    /* This is a -Wl linker option
+     *  -Wl,-Map,output.map
+     *  or a -Wp prepocessor option
+     *  -Wp,option
+     *  also matches for options like -Wpedantic
+     *  handled here to skip for matching source files in
+     *  these arguments
+     */
+    strcpy(argToAdd, arg_);
+  }
+  else if (arg_[0] == '-' && arg_[1] == 'D')
+  {
+    /*  Match for macro definition -D
+     *  handled here to skip for matching source files in
+     *  these arguments
+     */
+    strcpy(argToAdd, arg_);
+  }
   else if (arg_[0] == '-' && (arg_[1] == 'I' || arg_[1] == 'L') && arg_[2])
   {
     /* This is a -I or -L option with a path */

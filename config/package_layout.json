@@ -28,6 +28,10 @@
         "cmdline_client": "cc_lib/python2.7/cmdline_client"
     },
     "runtime" : {
+     "analyzers" : {
+       "clangsa" : "clang",
+       "clang-tidy" : "clang-tidy"
+       },
         "ld_logger_bin" : "bin/ldlogger",
         "ld_logger_lib_name" : "ldlogger.so",
         "ld_logger_lib_path" : "ld_logger/lib",

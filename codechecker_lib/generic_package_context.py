@@ -12,6 +12,8 @@ from codechecker_lib import context_base
 from codechecker_lib import logger
 from codechecker_lib import db_version
 
+from codechecker_lib.analyzers import analyzer_types
+
 LOG = logger.get_new_logger('CONTEXT')
 
 
@@ -32,15 +34,11 @@ class Context(context_base.ContextBase):
 
         env_vars = cfg_dict['environment_variables']
         variables = cfg_dict['package_variables']
-        checker_config = cfg_dict['checker_config']
+        self.__checker_config = cfg_dict['checker_config']
 
         # Base class constructor gets the common environment variables
         super(Context, self).__init__()
         super(Context, self).load_data(env_vars, pckg_layout, variables)
-
-        self.__checkers = []
-        for data in checker_config['checkers']:
-            self.__checkers.extend(data.items())
 
         # get package specific environment variables
         self.set_env(env_vars)
@@ -86,8 +84,8 @@ class Context(context_base.ContextBase):
         return package_version, db_version
 
     @property
-    def default_checkers(self):
-        return self.__checkers
+    def default_checkers_config(self):
+        return self.__checker_config
 
     @property
     def version(self):
@@ -138,10 +136,6 @@ class Context(context_base.ContextBase):
     @property
     def logger_lib_name(self):
         return self.pckg_layout['ld_logger_lib_name']
-
-    @property
-    def build_log_file_name(self):
-        return self.variables['build_log_file_name']
 
     @property
     def dumps_dir_name(self):
@@ -199,21 +193,31 @@ class Context(context_base.ContextBase):
                     ld_paths.append(os.path.join(self.__package_root, path))
             return ld_paths
 
-    @property
-    def compiler_bin(self):
-        compiler_bin = self.pckg_layout.get('compiler_bin')
-        if not compiler_bin:
-            return 'clang'
-        elif os.path.isabs(compiler_bin):
-            return compiler_bin
-        else:
-            # check if it is a package relative path
-            relpath = os.path.dirname(compiler_bin)
-            if relpath:
-                return os.path.join(self.__package_root, compiler_bin)
-            else:
-                return compiler_bin
 
+    @property
+    def analyzer_binaries(self):
+        analyzers = {}
+
+        compiler_binaries = self.pckg_layout.get('analyzers')
+        if not compiler_binaries:
+            # set default analyzers assume they are in the PATH
+            # will be checked later
+            # key naming in the dict should be the same as in
+            # the supported analyzers list
+            analyzers[analyzer_types.CLANG_SA] = 'clang'
+            analyzers[analyzer_types.CLANG_TIDY] = 'clang-tidy'
+        else:
+            for name, value in compiler_binaries.iteritems():
+                if os.path.isabs(value):
+                    # check if it is an absolute path
+                    analyzers[name] = value
+                elif os.path.dirname(value):
+                    # check if it is a package relative path
+                    analyzers[name] =  os.path.join(self.__package_root, value)
+                else:
+                    analyzers[name] = value
+
+        return analyzers
 
 def get_context():
 

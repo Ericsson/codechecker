@@ -100,11 +100,6 @@ class ContextBase(object):
                             self.pckg_layout['gdb_config_file'])
 
     @property
-    def checkers_config_file(self):
-        return os.path.join(self._package_root,
-                            self.pckg_layout['checkers_config_file'])
-
-    @property
     def checkers_severity_map_file(self):
         return os.path.join(self._package_root,
                             self.pckg_layout['checkers_severity_map_file'])

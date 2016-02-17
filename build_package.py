@@ -541,12 +541,6 @@ def build_package(repository_root, build_package_config, env=None):
     target = os.path.join(package_root, package_layout['bin'])
     shutil.copy2(source, target)
 
-    # codechecker init scripts
-    LOG.debug('Copy init files')
-    source = os.path.join(repository_root, 'init')
-    target = os.path.join(package_root, package_layout['init'])
-    copy_tree(source, target)
-
     # codechecker modules
     LOG.debug('Copy codechecker modules')
     source = os.path.join(repository_root, 'codechecker_lib')

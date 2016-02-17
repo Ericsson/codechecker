@@ -20,7 +20,7 @@
         "directory" : "external-source-deps/jsplumb",
         "version" : "1.7.6",
         "description" : "jsplumb",
-        "homepage" : "https://codemirror.net/",
+        "homepage" : "https://jsplumbtoolkit.com/",
         "repository" : { "type" : "git", "git_tag" :"1.7.6", "url" : "https://github.com/sporritt/jsPlumb.git" }
     },
     {
@@ -28,7 +28,7 @@
         "directory" : "external-source-deps/marked",
         "version" : "0.3.3",
         "description" : "marked",
-        "homepage" : "https://codemirror.net/",
+        "homepage" : "https://github.com/chjj/marked",
         "repository" : { "type" : "git", "git_tag" :"v0.3.3", "url" : "https://github.com/chjj/marked.git" }
     },
     {

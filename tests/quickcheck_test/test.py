@@ -44,7 +44,7 @@ class QuickCheckTest(object):
 
         filename = os.path.basename(path)
         options, correct_output = _read_output_file(path)
-        command = 'CodeChecker quickcheck ' + options
+        command = 'CodeChecker quickcheck --analyzers clangsa ' + options
 
         self.log.info("Executing %s test" % filename)
         output = subprocess.check_output(['bash', '-c', command],

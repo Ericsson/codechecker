@@ -254,11 +254,12 @@ class SkipPath(Base):
 
     id = Column(Integer, autoincrement=True, primary_key=True)
     path = Column(String)
-    run_id = Column(Integer, ForeignKey('runs.id', deferrable = True, initially = "DEFERRED", ondelete='CASCADE'), primary_key=True)
+    run_id = Column(Integer, ForeignKey('runs.id', deferrable = True, initially = "DEFERRED", ondelete='CASCADE'), nullable=False)
     comment = Column(Binary)
 
     def __init__(self, run_id, path, comment):
-        self.path, self.run_id = path, run_id
+        self.path = path
+        self.run_id = run_id
         self.comment = comment
 
 # End of ORM classes
