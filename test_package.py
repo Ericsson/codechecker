@@ -227,6 +227,24 @@ class GenericPackageTester(object):
 
         s_file.close()
 
+    def _generate_skip_list_file(self, skip_list_file):
+        """
+        create a dummy skip list file just to check if it can be loaded
+        skip files without any results from checking
+        """
+        skip_list_content = []
+        skip_list_content.append("-*randtable.c")
+        skip_list_content.append("-*blocksort.c")
+        skip_list_content.append("-*huffman.c")
+        skip_list_content.append("-*decompress.c")
+        skip_list_content.append("-*crctable.c")
+
+        s_file = open(skip_list_file, 'w')
+        for k in skip_list_content:
+            s_file.write(k+'\n')
+
+        s_file.close()
+
     # ---------------------------------------------------------------------
     def run_test(self):
 
@@ -246,7 +264,7 @@ class GenericPackageTester(object):
         #self.env['CODECHECKER_VERBOSE'] = 'debug'
         # self.env['CODECHECKER_ALCHEMY_LOG'] = '2'
 
-        def run_check(suppress_file):
+        def run_check(suppress_file, skip_list_file):
 
             check_cmd = []
             check_cmd.append('CodeChecker')
@@ -265,6 +283,8 @@ class GenericPackageTester(object):
             check_cmd.append(codechecker_workspace)
             check_cmd.append('--suppress')
             check_cmd.append(suppress_file)
+            check_cmd.append('--skip')
+            check_cmd.append(skip_list_file)
             unique_id = uuid.uuid4().hex
             check_cmd.append('-n')
             check_cmd.append(self.project_info['name'] + '_' + unique_id)
@@ -344,19 +364,22 @@ class GenericPackageTester(object):
         suppress_file_fd, suppress_file = tempfile.mkstemp()
         self._generate_suppress_file(suppress_file)
 
+        skip_list_file_fd, skip_list_file = tempfile.mkstemp()
+        self._generate_skip_list_file(skip_list_file)
+
         # end ------------------
 
         self.log.info('Cleaning test project')
         # fist check
         self._clean_test_project(test_project_path, test_project_clean_cmd)
-        run_check(suppress_file)
+        run_check(suppress_file, skip_list_file)
         time.sleep(5)
         stop_server = multiprocessing.Event()
         test_module_error = multiprocessing.Event()
 
         # second check
         self._clean_test_project(test_project_path, test_project_clean_cmd)
-        run_check(suppress_file)
+        run_check(suppress_file, skip_list_file)
 
         time.sleep(5)
         stop_server = multiprocessing.Event()
