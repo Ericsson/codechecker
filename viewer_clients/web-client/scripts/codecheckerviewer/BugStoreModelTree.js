@@ -163,7 +163,7 @@ return declare(null, {
         return;
       }
 
-      details.executionPath.forEach(function (step, index) {
+      details.pathEvents.forEach(function (step, index) {
         bugStore.push({
           name       : "Step " + (index + 1) + " : " +
             step.filePath.split("/").pop() + " : Line " +
