@@ -1,3 +1,5 @@
 -b "g++ nofail.cpp -o /dev/null"
 --------------------------------------------------------------------------------
+[INFO] - Starting build ...
+[INFO] - Build finished successfully.
 No defects found in nofail.cpp :-)

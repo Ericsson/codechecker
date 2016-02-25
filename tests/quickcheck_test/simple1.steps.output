@@ -1,5 +1,7 @@
 -b "g++ simple1.cpp -o /dev/null" --steps
 --------------------------------------------------------------------------------
+[INFO] - Starting build ...
+[INFO] - Build finished successfully.
 1 defect(s) found while checking simple1.cpp:
 
 simple1.cpp:18:10: Division by zero
