@@ -174,6 +174,7 @@ class PlistToDB(ResultHandler):
                     report_ids.append(report_id)
             else:
                 LOG.info('Analysing ' + source_file_name +
-                         ' with clangSA failed.')
+                         ' with ' + self.buildaction.analyzer_type +
+                         ' failed.')
 
             connection.finish_build_action(analisys_id, self.analyzer_stderr)
