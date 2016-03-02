@@ -68,7 +68,7 @@ def parse_compile_commands_json(logfile):
 
 # -----------------------------------------------------------------------------
 def parse_log(logfilepath):
-    LOG.debug('Parsing log file: ' + logfilepath)
+    LOG.debug_analyzer('Parsing log file: ' + logfilepath)
 
     actions = []
 
@@ -80,7 +80,7 @@ def parse_log(logfilepath):
                 LOG.error('The compile database is empty.')
             else:
                 LOG.error('The compile database is not valid.')
-            LOG.debug(traceback.format_exc())
+            LOG.debug_analyzer(traceback.format_exc())
 
-    LOG.debug('Parsing log file done.')
+    LOG.debug_analyzer('Parsing log file done.')
     return actions

@@ -90,7 +90,7 @@ def check_supported_analyzers(analyzers, context):
             available_analyzer = True
             analyzer_bin = analyzer_binaries.get(analyzer_name)
             if not analyzer_bin:
-                LOG.debug('Failed to detect analyzer binary ' + analyzer_name)
+                LOG.debug_analyzer('Failed to detect analyzer binary ' + analyzer_name)
                 available_analyzer = False
             if not host_check.check_clang(analyzer_bin, check_env):
                 LOG.warning('Failed to run analyzer '
@@ -108,7 +108,7 @@ def construct_analyzer_type(analyzer_type, config_handler, buildaction):
     """
 
     if analyzer_type == CLANG_SA:
-        LOG.debug('Constructing clangSA analyzer')
+        LOG.debug_analyzer('Constructing clangSA analyzer')
 
         analyzer = analyzer_clangsa.ClangSA(config_handler,
                                             buildaction)
@@ -116,7 +116,7 @@ def construct_analyzer_type(analyzer_type, config_handler, buildaction):
         return analyzer
 
     elif analyzer_type == CLANG_TIDY:
-        LOG.debug("Constructing clang-tidy analyzer")
+        LOG.debug_analyzer("Constructing clang-tidy analyzer")
 
         analyzer = analyzer_clang_tidy.ClangTidy(config_handler,
                                                  buildaction)
@@ -133,7 +133,7 @@ def construct_analyzer(buildaction,
     construct an analyzer
     """
     try:
-        LOG.debug('Constructing analyzer')
+        LOG.debug_analyzer('Constructing analyzer')
         analyzer_type = buildaction.analyzer_type
         # get the proper config handler for this analyzer type
         config_handler = analyzer_config_map.get(analyzer_type)
@@ -144,7 +144,7 @@ def construct_analyzer(buildaction,
         return analyzer
 
     except Exception as ex:
-        LOG.debug(ex)
+        LOG.debug_analyzer(ex)
         return None
 
 def initialize_checkers(config_handler,
@@ -192,10 +192,10 @@ def __build_clangsa_config_handler(args, context):
         with open(args.clangsa_args_cfg_file, 'rb') as sa_cfg:
             config_handler.analyzer_extra_arguments = sa_cfg.read().strip()
     except IOError as ioerr:
-        LOG.debug(ioerr)
+        LOG.debug_analyzer(ioerr)
     except AttributeError as aerr:
         # no clangsa arguments file was given in the command line
-        LOG.debug(aerr)
+        LOG.debug_analyzer(aerr)
 
     analyzer = construct_analyzer_type(CLANG_SA, config_handler, None)
 
@@ -210,7 +210,7 @@ def __build_clangsa_config_handler(args, context):
     try:
         cmdline_checkers = args.ordered_checkers
     except AttributeError:
-        LOG.debug('No checkers were defined in the command line for' +
+        LOG.debug_analyzer('No checkers were defined in the command line for' +
                   CLANG_SA)
         cmdline_checkers = None
 
@@ -238,10 +238,10 @@ def __build_clang_tidy_config_handler(args, context):
         with open(args.tidy_args_cfg_file, 'rb') as tidy_cfg:
             config_handler.analyzer_extra_arguments = tidy_cfg.read().strip()
     except IOError as ioerr:
-        LOG.debug(ioerr)
+        LOG.debug_analyzer(ioerr)
     except AttributeError as aerr:
         # no clang tidy arguments file was given in the command line
-        LOG.debug(aerr)
+        LOG.debug_analyzer(aerr)
 
     analyzer = construct_analyzer_type(CLANG_TIDY, config_handler, None)
     check_env = analyzer_env.get_check_env(context.path_env_extra,
@@ -255,7 +255,7 @@ def __build_clang_tidy_config_handler(args, context):
     try:
         cmdline_checkers = args.ordered_checkers
     except AttributeError:
-        LOG.debug('No checkers were defined in the command line for ' +
+        LOG.debug_analyzer('No checkers were defined in the command line for ' +
                   CLANG_TIDY)
         cmdline_checkers = None
 
@@ -293,7 +293,7 @@ def build_config_handlers(args, context, enabled_analyzers, connection=None):
             config_handler = __build_clang_tidy_config_handler(args, context)
             analyzer_config_map[ea] = config_handler
         else:
-            LOG.debug('Not supported analyzer type. No configuration handler will be created')
+            LOG.debug_analyzer('Not supported analyzer type. No configuration handler will be created')
 
     if connection:
         # collect all configuration options and store them together

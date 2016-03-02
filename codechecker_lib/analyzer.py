@@ -51,13 +51,13 @@ def run_check(args, actions, context):
     if args.jobs <= 0:
         args.jobs = 1
 
-    LOG.debug("Checking supported analyzers.")
+    LOG.debug_analyzer("Checking supported analyzers.")
     enabled_analyzers = analyzer_types.check_supported_analyzers(
         args.analyzers,
         context)
 
     # load severity map from config file
-    LOG.debug("Loading checker severity map.")
+    LOG.debug_analyzer("Loading checker severity map.")
     if os.path.exists(context.checkers_severity_map_file):
         with open(context.checkers_severity_map_file, 'r') as sev_conf_file:
             severity_config = sev_conf_file.read()
@@ -74,17 +74,17 @@ def run_check(args, actions, context):
     try:
         suppress_file = os.path.realpath(args.suppress)
     except AttributeError:
-        LOG.debug('Suppress file was not set in the command line')
+        LOG.debug_analyzer('Suppress file was not set in the command line')
 
 
     # Create one skip list handler shared between the analysis manager workers
     skip_handler = None
     try:
         if args.skipfile:
-            LOG.debug("Creating skiplist handler.")
+            LOG.debug_analyzer("Creating skiplist handler.")
             skip_handler = skiplist_handler.SkipListHandler(args.skipfile)
     except AttributeError:
-        LOG.debug('Skip file was not set in the command line')
+        LOG.debug_analyzer('Skip file was not set in the command line')
 
 
     with client.get_connection() as connection:
