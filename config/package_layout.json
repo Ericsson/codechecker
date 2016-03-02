@@ -1,6 +1,5 @@
 {
     "static" : {
-        "init": "init",
         "bin": "bin",
         "cc_bin": "cc_bin",
         "lib": "lib",
