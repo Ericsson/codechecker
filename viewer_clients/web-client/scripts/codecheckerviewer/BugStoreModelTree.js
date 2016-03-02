@@ -9,9 +9,9 @@ define([
   "dojo/store/Memory",
   "dojo/store/Observable",
   "dijit/tree/ObjectStoreModel",
-  "dijit/Tree",
-  "dijit/Tooltip"
-], function (declare, Memory, Observable, ObjectStoreModel, Tree, Tooltip) {
+  "dijit/Tooltip",
+  "scripts/codecheckerviewer/BugTree.js",
+], function (declare, Memory, Observable, ObjectStoreModel, Tooltip, BugTree) {
 
   /**
    * Contains the bug tree (with steps) for a specified file.
@@ -57,7 +57,7 @@ return declare(null, {
       }
     });
 
-    that.bugTree = new Tree({
+    that.bugTree = new BugTree({
       region       : "left",
       splitter     : true,
       model        : that.bugModel,
@@ -71,7 +71,7 @@ return declare(null, {
             return "dijitFolderClosed";
           }
         } else {
-          return "dijitLeaf";
+          return "";
         }
       },
       _onNodeMouseEnter : function (node, evt) {
@@ -127,7 +127,7 @@ return declare(null, {
    * @param report a ReportData
    * @param onComplete a callback function
    */
-  _buildExecPathForReport : function (bugStore, report, onComplete) {
+  _buildPathEventsForReport : function (bugStore, report, onComplete) {
     var that = this;
 
     bugStore.push({
@@ -143,8 +143,7 @@ return declare(null, {
     });
 
     bugStore.push({
-      name       : "Line " + report.lastBugPosition.startLine + " : " +
-        report.checkerMsg,
+      name       : "<b><u>Result</u> : " + report.checkerMsg + "</b>",
       id         : report.bugHash + "_0",
       parent     : report.bugHash,
       range      : report.lastBugPosition,
@@ -163,11 +162,9 @@ return declare(null, {
         return;
       }
 
-      details.executionPath.forEach(function (step, index) {
+      details.pathEvents.forEach(function (step, index) {
         bugStore.push({
-          name       : "Step " + (index + 1) + " : " +
-            step.filePath.split("/").pop() + " : Line " +
-            step.startLine,
+          name       : "Line " + step.startLine + " : " + step.msg,
           id         : report.bugHash + "_" + (index + 1),
           parent     : report.bugHash,
           range      : step,
@@ -232,7 +229,7 @@ return declare(null, {
       var reportsComplete = 0;
 
       reports.forEach(function (report) {
-        that._buildExecPathForReport(bugStoreDataTmp, report, function () {
+        that._buildPathEventsForReport(bugStoreDataTmp, report, function () {
           ++reportsComplete;
           if (reportsComplete === reports.length) {
             // FIXME: it's slow on large array
