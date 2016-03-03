@@ -26,7 +26,7 @@ def perform_build_command(logfile, command, context, silent=False):
 
     try:
         original_env_file = os.environ['CODECHECKER_ORIGINAL_BUILD_ENV']
-        LOG.debug('Loading original build env from: ' + original_env_file)
+        LOG.debug_analyzer('Loading original build env from: ' + original_env_file)
 
         with open(original_env_file, 'rb') as env_file:
             original_env = pickle.load(env_file)
@@ -43,7 +43,7 @@ def perform_build_command(logfile, command, context, silent=False):
     if 'CC_LOGGER_GCC_LIKE' not in log_env:
       log_env['CC_LOGGER_GCC_LIKE'] = 'gcc:g++:clang:clang++:cc:c++'
 
-    LOG.debug(log_env)
+    LOG.debug_analyzer(log_env)
     try:
         proc = subprocess.Popen(command,
                                 bufsize=-1,
@@ -63,7 +63,7 @@ def perform_build_command(logfile, command, context, silent=False):
         if not silent:
             if return_code == 0:
                 LOG.info("Build finished successfully.")
-                LOG.debug("The logfile is: " + logfile)
+                LOG.debug_analyzer("The logfile is: " + logfile)
             else:
                 LOG.info("Build failed.")
                 sys.exit(1)
@@ -95,12 +95,12 @@ def check_log_file(args):
             # log file could be in the workspace directory
             log_file = default_compilation_db(args.workspace)
         if not os.path.exists(log_file):
-            LOG.debug("Compilation database file does not exists.")
+            LOG.debug_analyzer("Compilation database file does not exists.")
             return None
     except AttributeError as ex:
         # args.log_file was not set
-        LOG.debug(ex)
-        LOG.debug("Compilation database file was not set in the command line.")
+        LOG.debug_analyzer(ex)
+        LOG.debug_analyzer("Compilation database file was not set in the command line.")
     finally:
         return log_file
 
@@ -115,18 +115,18 @@ def generate_log_file(args, context, silent=False):
         if args.command:
             # check if logger bin exists
             if not os.path.isfile(context.path_logger_bin):
-                LOG.debug('Logger binary not found! Required for logging.')
+                LOG.debug_analyzer('Logger binary not found! Required for logging.')
                 sys.exit(1)
 
             # check if logger lib exists
             if not os.path.exists(context.path_logger_lib):
-                LOG.debug('Logger library directory not found! Libs are requires' \
+                LOG.debug_analyzer('Logger library directory not found! Libs are requires' \
                           'for logging.')
                 sys.exit(1)
 
             log_file = default_compilation_db(args.workspace)
             if os.path.exists(log_file):
-                LOG.debug("Removing previous compilation command file: " +
+                LOG.debug_analyzer("Removing previous compilation command file: " +
                           log_file)
                 os.remove(log_file)
 

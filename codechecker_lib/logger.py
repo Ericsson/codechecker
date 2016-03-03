@@ -28,6 +28,19 @@ class BColors(object):
     FAIL = '\033[91m'
     ENDC = '\033[0m'
 
+# ------------------------------------------------------------------------------
+logging.DEBUG_ANALYZER = 15
+logging.addLevelName(logging.DEBUG_ANALYZER, 'DEBUG_ANALYZER')
+
+class CCLogger(logging.Logger):
+    def __init__(self, name, level=NOTSET):
+        return super(CCLogger, self).__init__(name, level)
+
+    def debug_analyzer(self, msg, *args, **kwargs):
+        if self.isEnabledFor(logging.DEBUG_ANALYZER):
+            self._log(logging.DEBUG_ANALYZER, msg, args, **kwargs)
+
+logging.setLoggerClass(CCLogger)
 
 # ------------------------------------------------------------------------------
 def get_log_level():
@@ -37,20 +50,19 @@ def get_log_level():
     if level:
         if level == 'debug':
             return logging.DEBUG
+        elif level == 'debug_analyzer':
+            return logging.DEBUG_ANALYZER
 
     return logging.INFO
-
 
 # ------------------------------------------------------------------------------
 def get_new_logger(logger_name, out_stream=sys.stdout):
     '''
     '''
-
     loglevel = get_log_level()
     logger = logging.getLogger('[' + logger_name + ']')
     stdout_handler = logging.StreamHandler(stream=out_stream)
 
-    #
     if not getattr(logger, 'handlers'):
         if loglevel == logging.DEBUG:
                 # FIXME create a new handler to write all log messages into a file
@@ -60,6 +72,12 @@ def get_new_logger(logger_name, out_stream=sys.stdout):
             stdout_handler.setLevel(logging.DEBUG)
             format_str = '[%(process)d] <%(thread)d> - %(filename)s:%(lineno)d %(funcName)s() - %(message)s'
             msg_formatter = logging.Formatter(format_str)
+            stdout_handler.setFormatter(msg_formatter)
+            logger.addHandler(stdout_handler)
+        elif loglevel == logging.DEBUG_ANALYZER:
+            logger.setLevel(logging.DEBUG_ANALYZER)
+            stdout_handler.setLevel(logging.DEBUG_ANALYZER)
+            msg_formatter = logging.Formatter('[%(levelname)s] - %(message)s')
             stdout_handler.setFormatter(msg_formatter)
             logger.addHandler(stdout_handler)
         else:
