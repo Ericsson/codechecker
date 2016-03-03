@@ -77,25 +77,35 @@ class PlistToStdout(ResultHandler):
 
         err_code = self.analyzer_returncode
 
-        if len(bugs) > 0:
-            self.__output.write('%d defect(s) found while checking %s:\n\n' %
-                         (len(bugs), source_file_name))
+        if err_code == 0:
+
+            if len(bugs) > 0:
+                self.__output.write('%s found %d defect(s) while analyzing %s \n\n' %
+                                    (self.buildaction.analyzer_type, len(bugs),
+                                     source_file_name))
+            else:
+                self.__output.write('%s found no defects while analyzing %s \n' %
+                                    (self.buildaction.analyzer_type,
+                                     source_file_name))
+                return err_code
+
+            index_format = '    %%%dd, ' % int(math.floor(math.log10(len(bugs)))+1)
+
+            for bug in bugs:
+                last_event = bug.get_last_event()
+                self.__output.write(self.__format_bug_event(last_event))
+                self.__output.write('\n')
+                self.__output.write(self.__format_location(last_event))
+                self.__output.write('\n')
+                if self.__print_steps:
+                    self.__output.write('  Steps:\n')
+                    for index, event in enumerate(bug.events()):
+                        self.__output.write(index_format % (index + 1))
+                        self.__output.write(self.__format_bug_event(event))
+                        self.__output.write('\n')
+                self.__output.write('\n')
         else:
-            self.__output.write('No defects found in %s :-)\n' % source_file_name)
+            self.__output.write('Analyzing %s with %s failed.\n' %
+                                (source_file_name,
+                                 self.buildaction.analyzer_type))
             return err_code
-
-        index_format = '    %%%dd, ' % int(math.floor(math.log10(len(bugs)))+1)
-
-        for bug in bugs:
-            last_event = bug.get_last_event()
-            self.__output.write(self.__format_bug_event(last_event))
-            self.__output.write('\n')
-            self.__output.write(self.__format_location(last_event))
-            self.__output.write('\n')
-            if self.__print_steps:
-                self.__output.write('  Steps:\n')
-                for index, event in enumerate(bug.events()):
-                    self.__output.write(index_format % (index + 1))
-                    self.__output.write(self.__format_bug_event(event))
-                    self.__output.write('\n')
-            self.__output.write('\n')
