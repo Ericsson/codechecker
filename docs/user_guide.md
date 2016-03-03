@@ -471,6 +471,7 @@ Turn on CodeChecker debug level logging
 ~~~~~~~~~~~~~~~~~~~~~
 export CODECHECKER_VERBOSE=debug
 ~~~~~~~~~~~~~~~~~~~~~
+If debug logging is enabled and PostgreSQL database is used, PostgreSQL logs are written to postgresql.log in the workspace directory.
 
 Turn on SQL_ALCHEMY debug level logging
 ~~~~~~~~~~~~~~~~~~~~~

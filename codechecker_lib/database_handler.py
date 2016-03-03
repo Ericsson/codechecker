@@ -271,6 +271,7 @@ class PostgreSQLServer(SQLServer):
         self.database = database
         self.password = password
         self.run_env = run_env
+        self.workspace = workspace
 
         self.proc = None
 
@@ -405,13 +406,16 @@ class PostgreSQLServer(SQLServer):
 
             LOG.info('Starting database')
             LOG.debug('Starting database at ' + self.host + ':' + str(self.port) + ' ' + self.path)
-            devnull = open(os.devnull, 'wb')
+
+            db_logfile = os.path.join(self.workspace, 'postgresql.log') \
+                if logger.get_log_level() == logger.DEBUG else os.devnull
+            self._db_log = open(db_logfile, 'wb')
 
             start_db = ['postgres', '-i', '-D', self.path, '-p', str(self.port), '-h', self.host]
             self.proc = subprocess.Popen(start_db,
                                          bufsize=-1,
                                          env=self.run_env,
-                                         stdout=devnull,
+                                         stdout=self._db_log,
                                          stderr=subprocess.STDOUT)
 
         add_version = False
@@ -435,6 +439,7 @@ class PostgreSQLServer(SQLServer):
         if self.proc:
             LOG.debug('Terminating database')
             self.proc.terminate()
+            self._db_log.close()
 
 
     def get_connection_string(self):
