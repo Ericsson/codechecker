@@ -1,6 +1,6 @@
 -b 'g++ multi_error.cpp -o /dev/null' -d core.StackAddressEscape -e deadcode.DeadStores
 -----------------------------------------------
-1 defect(s) found while checking multi_error.cpp:
+clangsa found 1 defect(s) while analyzing multi_error.cpp 
 
 multi_error.cpp:9:7: Value stored to 'y' is never read
   y = 7;

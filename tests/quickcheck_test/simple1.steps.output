@@ -1,6 +1,6 @@
 -b "g++ simple1.cpp -o /dev/null" --steps
 --------------------------------------------------------------------------------
-1 defect(s) found while checking simple1.cpp:
+clangsa found 1 defect(s) while analyzing simple1.cpp 
 
 simple1.cpp:18:10: Division by zero
   return 2015 / x;
