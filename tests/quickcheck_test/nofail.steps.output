@@ -2,4 +2,4 @@
 --------------------------------------------------------------------------------
 [INFO] - Starting build ...
 [INFO] - Build finished successfully.
-No defects found in nofail.cpp :-)
+clangsa found no defects while analyzing nofail.cpp 

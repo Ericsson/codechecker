@@ -6,7 +6,7 @@ multi_error.cpp:2:7: warning: address of local variable ‘x’ returned [-Wretu
    int x = 42;
        ^
 [INFO] - Build finished successfully.
-1 defect(s) found while checking multi_error.cpp:
+clangsa found 1 defect(s) while analyzing multi_error.cpp 
 
 multi_error.cpp:2:3: Address of stack memory associated with local variable 'x' returned to caller
   int x = 42;

@@ -462,10 +462,16 @@ http://www.postgresql.org/docs/current/static/libpq-pgpass.html
 
 Environment variables can be used to turn on CodeChecker debug mode.
 
+Turn on analysis related logging
+~~~~~~~~~~~~~~~~~~~~~
+export CODECHECKER_VERBOSE=debug_analyzer
+~~~~~~~~~~~~~~~~~~~~~
+
 Turn on CodeChecker debug level logging
 ~~~~~~~~~~~~~~~~~~~~~
 export CODECHECKER_VERBOSE=debug
 ~~~~~~~~~~~~~~~~~~~~~
+If debug logging is enabled and PostgreSQL database is used, PostgreSQL logs are written to postgresql.log in the workspace directory.
 
 Turn on SQL_ALCHEMY debug level logging
 ~~~~~~~~~~~~~~~~~~~~~

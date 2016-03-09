@@ -72,7 +72,7 @@ def check(check_data):
             _, source_file_name = ntpath.split(source)
 
             if skp_handler and skp_handler.should_skip(source):
-                LOG.debug(source_file_name + ' is skipped')
+                LOG.debug_analyzer(source_file_name + ' is skipped')
                 continue
 
             # construct analyzer env
@@ -98,7 +98,7 @@ def check(check_data):
             # there can be more in one buildaction
             source_analyzer.source_file = source
 
-            # fills up the result handler with the analyzer information 
+            # fills up the result handler with the analyzer information
             source_analyzer.analyze(rh, analyzer_environment)
 
             analyzer_stderr = ''
@@ -106,9 +106,9 @@ def check(check_data):
                 # analysis was successful
                 # processing results
                 if rh.analyzer_stdout != '':
-                    LOG.debug('\n' + rh.analyzer_stdout)
+                    LOG.debug_analyzer('\n' + rh.analyzer_stdout)
                 if rh.analyzer_stderr != '':
-                    LOG.debug('\n' + rh.analyzer_stderr)
+                    LOG.debug_analyzer('\n' + rh.analyzer_stderr)
                 rh.postprocess_result()
                 rh.handle_results()
             else:
@@ -126,7 +126,7 @@ def check(check_data):
         return (return_codes, action.analyzer_type)
 
     except Exception as e:
-        LOG.debug(str(e))
+        LOG.debug_analyzer(str(e))
         traceback.print_exc(file=sys.stdout)
         return (1, action.analyzer_type)
 
