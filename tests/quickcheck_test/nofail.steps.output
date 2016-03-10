@@ -1,3 +1,5 @@
 -b "g++ nofail.cpp -o /dev/null" --steps
 --------------------------------------------------------------------------------
+[INFO] - Starting build ...
+[INFO] - Build finished successfully.
 clangsa found no defects while analyzing nofail.cpp 

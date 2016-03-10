@@ -1,5 +1,7 @@
 -b "g++ simple1.cpp -o /dev/null" --steps
 --------------------------------------------------------------------------------
+[INFO] - Starting build ...
+[INFO] - Build finished successfully.
 clangsa found 1 defect(s) while analyzing simple1.cpp 
 
 simple1.cpp:18:10: Division by zero

@@ -1,5 +1,11 @@
 -b 'g++ multi_error.cpp -o /dev/null' -e core.StackAddressEscape -d deadcode.DeadStores
 -----------------------------------------------
+[INFO] - Starting build ...
+multi_error.cpp: In function ‘int* foo()’:
+multi_error.cpp:2:7: warning: address of local variable ‘x’ returned [-Wreturn-local-addr]
+   int x = 42;
+       ^
+[INFO] - Build finished successfully.
 clangsa found 1 defect(s) while analyzing multi_error.cpp 
 
 multi_error.cpp:2:3: Address of stack memory associated with local variable 'x' returned to caller
