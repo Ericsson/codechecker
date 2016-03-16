@@ -23,6 +23,7 @@ import glob
 import os
 import sys
 import subprocess
+import codecs
 
 def _read_output_file(path):
     '''
@@ -30,7 +31,7 @@ def _read_output_file(path):
     lines as a single string.
     '''
 
-    with open(path, 'r') as ofile:
+    with codecs.open(path, 'r', 'UTF-8') as ofile:
         lines = ofile.readlines()
         return (lines[0].strip(), ''.join(lines[2:]))
 
@@ -51,6 +52,8 @@ class QuickCheckTest(object):
                                          stderr=subprocess.STDOUT,
                                          env=self.env,
                                          cwd=self.test_dir)
+        output = output.decode('UTF-8')
+
         if output != correct_output:
             self.log.info('%s test failed!' % filename)
             self.log.error('COMMAND: %s' % command)
