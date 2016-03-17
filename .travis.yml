@@ -38,5 +38,5 @@ script:
     - ./test_package.py -p $TEST_CODECHECKER_DIR -v $TEST_CLANG_VERSION --postgresql --dbport $TEST_DBPORT --dbusername $TEST_DBUSERNAME
     - unset CODECHECKER_DB_DRIVER
     - ./test_package.py -p $TEST_CODECHECKER_DIR -v $TEST_CLANG_VERSION
-    - nosetests tests/quickcheck_test/test_quickcheck.py
+    - nosetests -s tests/quickcheck_test/test_quickcheck.py
 

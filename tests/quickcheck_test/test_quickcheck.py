@@ -41,7 +41,7 @@ class QuickCheckTestCase(unittest.TestCase):
         output = subprocess.check_output(
             ['bash', '-c', command], env=self.env, cwd=self.test_dir)
 
-        # print options
+        print path
         # print correct_output
 
         self.assertEqual(output, correct_output)
