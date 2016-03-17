@@ -25,12 +25,13 @@ class QuickCheckTestCase(unittest.TestCase):
         cls.env['PATH'] = \
             os.path.join(cls.package_dir, 'bin') + ':' + cls.env['PATH']
 
-        cls.test_dir = os.path.dirname(__file__)
+        cls.test_dir = os.path.join(
+            os.path.dirname(__file__), 'quickcheck_test_files')
 
-        os.chdir(os.path.dirname(__file__))
+        os.chdir(cls.test_dir)
 
     def __check_one_file(self, path):
-        """Test quickcheck output on ".output" file."""
+        """Test quickcheck output on a ".output" file."""
         with open(path, 'r') as ofile:
             lines = ofile.readlines()
 
