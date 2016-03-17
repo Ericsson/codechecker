@@ -9,7 +9,7 @@ define([
   "dojo/data/ObjectStore",
   "dojo/Deferred",
   "dojox/grid/DataGrid",
-  "scripts/codecheckerviewer/OverviewStore.js",
+  "ccvscripts/OverviewStore",
 ], function (declare, ObjectStore, Deferred, DataGrid, OverviewStore) {
 return declare(DataGrid, {
 

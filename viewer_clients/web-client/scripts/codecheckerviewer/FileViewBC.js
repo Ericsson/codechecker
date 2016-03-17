@@ -12,9 +12,9 @@ define([
   "dijit/Dialog",
   "dijit/form/Button",
   "dijit/form/Textarea",
-  "scripts/codecheckerviewer/BugStoreModelTree.js",
-  "scripts/codecheckerviewer/Editor.js",
-  "scripts/codecheckerviewer/widgets/EditorHeader.js",
+  "ccvscripts/BugStoreModelTree",
+  "ccvscripts/Editor",
+  "ccvscripts/widgets/EditorHeader",
 ], function (declare, domConstruct, ContentPane, BorderContainer, Dialog,
   Button, Textarea, BugStoreModelTree, Editor, EditorHeader) {
 return declare(BorderContainer, {

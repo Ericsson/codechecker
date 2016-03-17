@@ -13,9 +13,9 @@ define([
   "dijit/layout/TabContainer",
   "dijit/layout/ContentPane",
   "dijit/Dialog",
-  "scripts/codecheckerviewer/OverviewGrid.js",
-  "scripts/codecheckerviewer/OverviewHeader.js",
-  "scripts/codecheckerviewer/FileViewBC.js",
+  "ccvscripts/OverviewGrid",
+  "ccvscripts/OverviewHeader",
+  "ccvscripts/FileViewBC",
 ], function (declare, hash, topic, ioQuery, BorderContainer, TabContainer,
   ContentPane, Dialog, OverviewGrid, OverviewHeader, FileViewBC) {
 return declare(TabContainer, {
