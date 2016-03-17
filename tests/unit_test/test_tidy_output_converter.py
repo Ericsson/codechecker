@@ -14,7 +14,7 @@ import unittest
 import copy
 import StringIO
 
-import codechecker_lib.tidy_output_converter as t_o_c
+import codechecker_lib.tidy_output_converter as tidy_out_conv
 
 
 def setup_module():
@@ -23,17 +23,17 @@ def setup_module():
 
     # tidy1.out Message/Note representation
     tidy1_repr = [
-        t_o_c.Message(
+        tidy_out_conv.Message(
             os.path.abspath('files/test.cpp'),
             8, 12,
             'Division by zero',
             'clang-analyzer-core.DivideZero',
             None,
-            [t_o_c.Note(
+            [tidy_out_conv.Note(
                 os.path.abspath('files/test.cpp'),
                 8, 12,
                 'Division by zero')]),
-        t_o_c.Message(
+        tidy_out_conv.Message(
             os.path.abspath('files/test.cpp'),
             8, 12,
             'remainder by zero is undefined',
@@ -42,32 +42,32 @@ def setup_module():
 
     # tidy2.out Message/Note representation
     tidy2_repr = [
-        t_o_c.Message(
+        tidy_out_conv.Message(
             os.path.abspath('files/test2.cpp'),
             5, 7,
             "unused variable 'y'",
             'clang-diagnostic-unused-variable'),
-        t_o_c.Message(
+        tidy_out_conv.Message(
             os.path.abspath('files/test2.cpp'),
             13, 12,
             'Division by zero',
             'clang-analyzer-core.DivideZero',
             None,
             [
-                t_o_c.Note(
+                tidy_out_conv.Note(
                     os.path.abspath('files/test2.cpp'),
                     9, 7,
                     "Left side of '||' is false"),
-                t_o_c.Note(
+                tidy_out_conv.Note(
                     os.path.abspath('files/test2.cpp'),
                     9, 3,
                     'Taking false branch'),
-                t_o_c.Note(
+                tidy_out_conv.Note(
                     os.path.abspath('files/test2.cpp'),
                     13, 12,
                     'Division by zero')
             ]),
-        t_o_c.Message(
+        tidy_out_conv.Message(
             os.path.abspath('files/test2.cpp'),
             13, 12,
             'remainder by zero is undefined',
@@ -76,43 +76,43 @@ def setup_module():
 
     # tidy3.out Message/Note representation
     tidy3_repr = [
-        t_o_c.Message(
+        tidy_out_conv.Message(
             os.path.abspath('files/test3.cpp'),
             4, 12,
             'use nullptr',
             'modernize-use-nullptr',
-            [t_o_c.Note(
+            [tidy_out_conv.Note(
                 os.path.abspath('files/test3.cpp'),
                 4, 12,
                 'nullptr')]),
-        t_o_c.Message(
+        tidy_out_conv.Message(
             os.path.abspath('files/test3.hh'),
             6, 6,
             "Dereference of null pointer (loaded from variable 'x')",
             'clang-analyzer-core.NullDereference',
             None,
             [
-                t_o_c.Note(
+                tidy_out_conv.Note(
                     os.path.abspath('files/test3.cpp'),
                     4, 3,
                     "'x' initialized to a null pointer value"),
-                t_o_c.Note(
+                tidy_out_conv.Note(
                     os.path.abspath('files/test3.cpp'),
                     6, 11,
                     "Assuming 'argc' is > 3"),
-                t_o_c.Note(
+                tidy_out_conv.Note(
                     os.path.abspath('files/test3.cpp'),
                     6, 3,
                     'Taking true branch'),
-                t_o_c.Note(
+                tidy_out_conv.Note(
                     os.path.abspath('files/test3.cpp'),
                     7, 9,
                     "Passing null pointer value via 1st parameter 'x'"),
-                t_o_c.Note(
+                tidy_out_conv.Note(
                     os.path.abspath('files/test3.cpp'),
                     7, 5,
                     "Calling 'bar'"),
-                t_o_c.Note(
+                tidy_out_conv.Note(
                     os.path.abspath('files/test3.hh'),
                     6, 6,
                     "Dereference of null pointer (loaded from variable 'x')")
@@ -135,7 +135,7 @@ class TidyOutputParserTestCase(unittest.TestCase):
 
     def setUp(self):
         """Setup the OutputParser."""
-        self.parser = t_o_c.OutputParser()
+        self.parser = tidy_out_conv.OutputParser()
 
     def test_absolute_path(self):
         """Test for absolute paths in Messages."""
@@ -185,17 +185,17 @@ class TidyPListConverterTestCase(unittest.TestCase):
 
     def setUp(self):
         """Setup the PListConverter."""
-        self.conv = t_o_c.PListConverter()
+        self.plist_conv = tidy_out_conv.PListConverter()
 
     def test_empty(self):
         """Test for empty Messages."""
-        orig_plist = copy.deepcopy(self.conv.plist)
+        orig_plist = copy.deepcopy(self.plist_conv.plist)
 
-        self.conv.add_messages([])
-        self.assertDictEqual(orig_plist, self.conv.plist)
+        self.plist_conv.add_messages([])
+        self.assertDictEqual(orig_plist, self.plist_conv.plist)
 
         output = StringIO.StringIO()
-        self.conv.write(output)
+        self.plist_conv.write(output)
 
         with open('empty.plist') as pfile:
             exp = pfile.read()
@@ -205,13 +205,13 @@ class TidyPListConverterTestCase(unittest.TestCase):
 
     def test_tidy1(self):
         """Test for the tidy1.plist file."""
-        self.conv.add_messages(self.tidy1_repr)
+        self.plist_conv.add_messages(self.tidy1_repr)
 
         # use relative path for this test
-        self.conv.plist['files'][0] = 'files/test.cpp'
+        self.plist_conv.plist['files'][0] = 'files/test.cpp'
 
         output = StringIO.StringIO()
-        self.conv.write(output)
+        self.plist_conv.write(output)
 
         with open('tidy1.plist') as pfile:
             exp = pfile.read()
@@ -221,13 +221,13 @@ class TidyPListConverterTestCase(unittest.TestCase):
 
     def test_tidy2(self):
         """Test for the tidy2.plist file."""
-        self.conv.add_messages(self.tidy2_repr)
+        self.plist_conv.add_messages(self.tidy2_repr)
 
         # use relative path for this test
-        self.conv.plist['files'][0] = 'files/test2.cpp'
+        self.plist_conv.plist['files'][0] = 'files/test2.cpp'
 
         output = StringIO.StringIO()
-        self.conv.write(output)
+        self.plist_conv.write(output)
 
         with open('tidy2.plist') as pfile:
             exp = pfile.read()
@@ -237,14 +237,14 @@ class TidyPListConverterTestCase(unittest.TestCase):
 
     def test_tidy3(self):
         """Test for the tidy3.plist file."""
-        self.conv.add_messages(self.tidy3_repr)
+        self.plist_conv.add_messages(self.tidy3_repr)
 
         # use relative path for this test
-        self.conv.plist['files'][0] = 'files/test3.cpp'
-        self.conv.plist['files'][1] = 'files/test3.hh'
+        self.plist_conv.plist['files'][0] = 'files/test3.cpp'
+        self.plist_conv.plist['files'][1] = 'files/test3.hh'
 
         output = StringIO.StringIO()
-        self.conv.write(output)
+        self.plist_conv.write(output)
 
         with open('tidy3.plist') as pfile:
             exp = pfile.read()
