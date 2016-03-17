@@ -4,7 +4,7 @@
 #   License. See LICENSE.TXT for details.
 # -----------------------------------------------------------------------------
 
-"""Doc."""
+"""This module tests the CodeChecker quickcheck feature."""
 
 import glob
 import os
@@ -13,14 +13,15 @@ import unittest
 
 
 class QuickCheckTestCase(unittest.TestCase):
-    """DOC."""
+    """This class tests the CodeChecker quickcheck feature."""
 
     @classmethod
     def setup_class(cls):
-        """DOC."""
+        """Setup the class."""
         cls.package_dir = \
             os.path.realpath(os.environ.get('TEST_CODECHECKER_DIR'))
 
+        # Put CodeChecker/bin to PATH so CodeChecker command becomes available.
         cls.env = os.environ
         cls.env['PATH'] = \
             os.path.join(cls.package_dir, 'bin') + ':' + cls.env['PATH']
@@ -28,6 +29,7 @@ class QuickCheckTestCase(unittest.TestCase):
         cls.test_dir = os.path.join(
             os.path.dirname(__file__), 'quickcheck_test_files')
 
+        # Change working dir to testfile dir so CodeChecker can be run easily.
         os.chdir(cls.test_dir)
 
     def __check_one_file(self, path):
@@ -41,9 +43,6 @@ class QuickCheckTestCase(unittest.TestCase):
 
         output = subprocess.check_output(
             ['bash', '-c', command], env=self.env, cwd=self.test_dir)
-
-        print path
-        # print correct_output
 
         self.assertEqual(output, correct_output)
 

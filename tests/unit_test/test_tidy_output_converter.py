@@ -19,7 +19,7 @@ import codechecker_lib.tidy_output_converter as t_o_c
 
 def setup_module():
     """Setup the test tidy reprs for the test classes in the module."""
-    os.chdir(os.path.join(os.path.dirname(__file__), 'tidy_output_files'))
+    os.chdir(os.path.join(os.path.dirname(__file__), 'tidy_output_test_files'))
 
     # tidy1.out Message/Note representation
     tidy1_repr = [
