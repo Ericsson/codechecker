@@ -8,6 +8,7 @@ python:
 
 install:
     - pip install -r ./.ci/python_requirements
+    - pip install nose  
 
 addons:
     apt:
@@ -28,7 +29,7 @@ addons:
     postgresql: "9.3"
 
 script:
-    - ./test_unit_test.py
+    - nosetests tests/unit_test/
     - ./build_package.py -o ./codechecker_package -v
     - export CODECHECKER_DB_DRIVER=psycopg2
     - ./test_package.py -p ./codechecker_package/CodeChecker -v stable --postgresql --dbport 5432 --dbusername postgres
@@ -37,3 +38,4 @@ script:
     - unset CODECHECKER_DB_DRIVER
     - ./test_package.py -p ./codechecker_package/CodeChecker -v stable
     - ./test_quickcheck.py -p ./codechecker_package/CodeChecker
+
