@@ -7,7 +7,7 @@
 define([
   "dojo/_base/declare",
   "dijit/layout/ContentPane",
-  "scripts/codecheckerviewer/widgets/Filter.js",
+  "ccvscripts/widgets/Filter",
 ], function (declare, ContentPane, Filter) {
 return declare(ContentPane, {
 

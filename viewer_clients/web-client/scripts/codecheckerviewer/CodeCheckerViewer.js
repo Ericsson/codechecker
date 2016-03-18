@@ -14,14 +14,14 @@ define([
   "dijit/layout/BorderContainer",
   "dijit/layout/TabContainer",
   "dijit/layout/ContentPane",
-  "scripts/codecheckerviewer/ListOfRunsGrid.js",
-  "scripts/codecheckerviewer/OverviewTC.js",
-  "scripts/codecheckerviewer/Util.js",
-  "scripts/codecheckerviewer/widgets/ListOfRunsWidget.js",
-  "scripts/codecheckerviewer/widgets/MenuButton.js",
-], function (declare, darray, domConstruct, hash, topic, ioQuery, BorderContainer, TabContainer,
-  ContentPane, ListOfRunsGrid, OverviewTC, Util, ListOfRunsWidget,
-  MenuButton) {
+  "ccvscripts/ListOfRunsGrid",
+  "ccvscripts/OverviewTC",
+  "ccvscripts/Util",
+  "ccvscripts/widgets/ListOfRunsWidget",
+  "ccvscripts/widgets/MenuButton",
+], function (declare, darray, domConstruct, hash, topic, ioQuery,
+  BorderContainer, TabContainer, ContentPane, ListOfRunsGrid, OverviewTC, Util,
+  ListOfRunsWidget, MenuButton) {
 return declare(null, {
 
 

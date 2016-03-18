@@ -10,8 +10,9 @@ define([
   "dojo/store/Observable",
   "dijit/tree/ObjectStoreModel",
   "dijit/Tooltip",
-  "scripts/codecheckerviewer/HtmlTree.js",
-], function (declare, Memory, Observable, ObjectStoreModel, Tooltip, HtmlTree) {
+  "ccvscripts/HtmlTree",
+], function (declare, Memory, Observable, ObjectStoreModel, Tooltip,
+  HtmlTree) {
 
   /**
    * Contains the bug tree (with steps) for a specified file.
