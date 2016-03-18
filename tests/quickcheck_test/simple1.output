@@ -1,4 +1,4 @@
--b "g++ simple1.cpp -o /dev/null"
+-b "g++ -w simple1.cpp -o /dev/null"
 --------------------------------------------------------------------------------
 [INFO] - Starting build ...
 [INFO] - Build finished successfully.
