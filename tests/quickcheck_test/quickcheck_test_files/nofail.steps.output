@@ -1,4 +1,4 @@
--b "g++ nofail.cpp -o /dev/null" --steps
+-b "g++ -w nofail.cpp -o /dev/null" --steps
 --------------------------------------------------------------------------------
 [INFO] - Starting build ...
 [INFO] - Build finished successfully.

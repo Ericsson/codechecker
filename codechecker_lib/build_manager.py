@@ -54,7 +54,7 @@ def perform_build_command(logfile, command, context, silent=False):
         while True:
             line = proc.stdout.readline()
             if not silent:
-                print line,
+                sys.stdout.write(line)
             if line == '' and proc.poll() is not None:
                 break
 
