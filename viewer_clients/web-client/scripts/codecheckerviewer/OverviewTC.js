@@ -226,6 +226,16 @@ return declare(TabContainer, {
    */
   showDocumentation : function (checkerId) {
     CC_SERVICE.getCheckerDoc(checkerId, function (checkerDoc) {
+
+      if (checkerDoc.startsWith("No documentation for checker")) {
+        var ClangSADocLink =
+          "<a target='_blank' href='http://clang-analyzer.llvm.org/available_checks.html'>Clang Static Analyzer checkers</a>";
+        var ClangTidyDocLink =
+          "<a target='_blank' href='http://clang.llvm.org/extra/clang-tidy/checks/list.html'>Clang Tidy checkers</a>";
+
+        checkerDoc = ClangSADocLink + "<br><br>" + ClangTidyDocLink;
+      }
+
       var checkerDocDialog = new Dialog({
         title   : "Documentation for <b>" + checkerId + "</b>",
         content : marked(checkerDoc)
