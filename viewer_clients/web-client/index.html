@@ -47,13 +47,22 @@
         packages: [
           { name: "dojo",  location: "scripts/plugins/dojo/dojo"  },
           { name: "dijit", location: "scripts/plugins/dojo/dijit" },
-          { name: "dojox", location: "scripts/plugins/dojo/dojox" }
+          { name: "dojox", location: "scripts/plugins/dojo/dojox" },
+          { name: "ccvscripts", location: "scripts/codecheckerviewer" }
         ]
       };
     </script>
 
     <!-- Check browser type and version, and if both are adequate, load CodeChecker Viewer -->
     <script>
+
+      // polyfill missing startsWith from IE
+      if (!String.prototype.startsWith) {
+        String.prototype.startsWith = function(searchString, position){
+          position = position || 0;
+          return this.substr(position, searchString.length) === searchString;
+        };
+      }
 
       var getBrowserInfo = function () {
         var ua = navigator.userAgent;
