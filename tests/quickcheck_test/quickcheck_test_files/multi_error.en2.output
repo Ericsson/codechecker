@@ -1,8 +1,8 @@
--b 'g++ -w multi_error.cpp -o /dev/null' -d core.StackAddressEscape -e deadcode.DeadStores
+CodeChecker quickcheck --analyzers clangsa -b 'g++ -w multi_error.cpp -o /dev/null' -d core.StackAddressEscape -e deadcode.DeadStores
 -----------------------------------------------
 [INFO] - Starting build ...
 [INFO] - Build finished successfully.
-clangsa found 1 defect(s) while analyzing multi_error.cpp 
+clangsa found 1 defect(s) while analyzing multi_error.cpp
 
 multi_error.cpp:9:7: Value stored to 'y' is never read
   y = 7;

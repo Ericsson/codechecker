@@ -1,8 +1,8 @@
--b 'g++ -w multi_error.cpp -o /dev/null'
+CodeChecker quickcheck --analyzers clangsa -b 'g++ -w multi_error.cpp -o /dev/null'
 -----------------------------------------------
 [INFO] - Starting build ...
 [INFO] - Build finished successfully.
-clangsa found 2 defect(s) while analyzing multi_error.cpp 
+clangsa found 2 defect(s) while analyzing multi_error.cpp
 
 multi_error.cpp:2:3: Address of stack memory associated with local variable 'x' returned to caller
   int x = 42;

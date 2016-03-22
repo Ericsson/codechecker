@@ -39,15 +39,12 @@ class QuickCheckTestCase(unittest.TestCase):
         corresponding test file.
         The second line is to be omitted.
         From the third line onward, the file contains the output of the
-        "Codechecker quickcheck" parametrized with the build command found in
-        the first line.
+        build command found in the first line.
         """
         with open(path, 'r') as ofile:
             lines = ofile.readlines()
 
-        options, correct_output = (lines[0].strip(), ''.join(lines[2:]))
-
-        command = 'CodeChecker quickcheck --analyzers clangsa ' + options
+        command, correct_output = (lines[0].strip(), ''.join(lines[2:]))
 
         output = subprocess.check_output(
             ['bash', '-c', command], env=self.env, cwd=self.test_dir)
