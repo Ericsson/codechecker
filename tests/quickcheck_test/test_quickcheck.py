@@ -22,7 +22,7 @@ class QuickCheckTestCase(unittest.TestCase):
             os.path.realpath(os.environ.get('TEST_CODECHECKER_DIR'))
 
         # Put CodeChecker/bin to PATH so CodeChecker command becomes available.
-        cls.env = os.environ
+        cls.env = os.environ.copy()
         cls.env['PATH'] = \
             os.path.join(cls.package_dir, 'bin') + ':' + cls.env['PATH']
 
@@ -33,7 +33,15 @@ class QuickCheckTestCase(unittest.TestCase):
         os.chdir(cls.test_dir)
 
     def __check_one_file(self, path):
-        """Test quickcheck output on a ".output" file."""
+        """Test quickcheck output on a ".output" file.
+
+        The first line of the '.output' file contains the build command of the
+        corresponding test file.
+        The second line is to be omitted.
+        From the third line onward, the file contains the output of the
+        "Codechecker quickcheck" parametrized with the build command found in
+        the first line.
+        """
         with open(path, 'r') as ofile:
             lines = ofile.readlines()
 
@@ -48,5 +56,5 @@ class QuickCheckTestCase(unittest.TestCase):
 
     def test_quickcheck_files(self):
         """Iterate over the test directory and run all tests in it."""
-        for ofile in glob.glob(self.test_dir + os.sep + '*.output'):
+        for ofile in glob.glob(os.path.join(self.test_dir, '*.output')):
             self.__check_one_file(ofile)
