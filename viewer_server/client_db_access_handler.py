@@ -691,7 +691,14 @@ class ThriftRequestHandler():
          - checkerId
         """
 
-        text = "No documentation for checker: "+checkerId
+        text = "No documentation found for checker: " + checkerId + \
+            "\n\nPlease refer to the documentation at the "
+        if "." in checkerId:
+            text += "[ClangSA](http://clang-analyzer.llvm.org/available_checks.html)"
+        elif "-" in checkerId:
+            text += "[ClangTidy](http://clang.llvm.org/extra/clang-tidy/checks/list.html)"
+        text += " homepage."
+
         try:
             md_file = self.__checker_doc_map.get(checkerId)
             if md_file:
