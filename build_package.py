@@ -588,7 +588,7 @@ def build_package(repository_root, build_package_config, env=None):
 # -------------------------------------------------------------------
 def main():
     '''Main script'''
-    repository_root = os.getcwd()
+    repository_root = os.path.dirname(__file__)
 
     default_package_layout = os.path.join(repository_root,
                                           "config",
