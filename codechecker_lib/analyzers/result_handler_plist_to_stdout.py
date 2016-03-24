@@ -80,11 +80,11 @@ class PlistToStdout(ResultHandler):
         if err_code == 0:
 
             if len(bugs) > 0:
-                self.__output.write('%s found %d defect(s) while analyzing %s \n\n' %
+                self.__output.write('%s found %d defect(s) while analyzing %s\n\n' %
                                     (self.buildaction.analyzer_type, len(bugs),
                                      source_file_name))
             else:
-                self.__output.write('%s found no defects while analyzing %s \n' %
+                self.__output.write('%s found no defects while analyzing %s\n' %
                                     (self.buildaction.analyzer_type,
                                      source_file_name))
                 return err_code

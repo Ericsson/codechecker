@@ -1,8 +1,8 @@
--b "g++ -w simple2.cpp -o /dev/null"
+CodeChecker quickcheck --analyzers clangsa -b "g++ -w simple2.cpp -o /dev/null"
 --------------------------------------------------------------------------------
 [INFO] - Starting build ...
 [INFO] - Build finished successfully.
-clangsa found 1 defect(s) while analyzing simple2.cpp 
+clangsa found 1 defect(s) while analyzing simple2.cpp
 
 simple2.cpp:17:9: Division by zero
   return 2015 / x;

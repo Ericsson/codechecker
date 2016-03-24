@@ -1,5 +1,5 @@
--b "g++ -w nofail.cpp -o /dev/null" --steps
+CodeChecker quickcheck --analyzers clangsa -b "g++ -w nofail.cpp -o /dev/null" --steps
 --------------------------------------------------------------------------------
 [INFO] - Starting build ...
 [INFO] - Build finished successfully.
-clangsa found no defects while analyzing nofail.cpp 
+clangsa found no defects while analyzing nofail.cpp

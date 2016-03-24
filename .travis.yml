@@ -8,7 +8,7 @@ python:
 
 install:
     - pip install -r ./.ci/python_requirements
-    - pip install nose  
+    - pip install nose
 
 addons:
     apt:
@@ -29,13 +29,14 @@ addons:
     postgresql: "9.3"
 
 script:
+    - . test_env_setup.sh
     - nosetests tests/unit_test/
-    - ./build_package.py -o ./codechecker_package -v
+    - ./build_package.py -o $TEST_CODECHECKER_PACKAGE_DIR -v
     - export CODECHECKER_DB_DRIVER=psycopg2
-    - ./test_package.py -p ./codechecker_package/CodeChecker -v stable --postgresql --dbport 5432 --dbusername postgres
+    - ./test_package.py -p $TEST_CODECHECKER_DIR -v $TEST_CLANG_VERSION --postgresql --dbport $TEST_DBPORT --dbusername $TEST_DBUSERNAME
     - export CODECHECKER_DB_DRIVER=pg8000
-    - ./test_package.py -p ./codechecker_package/CodeChecker -v stable --postgresql --dbport 5432 --dbusername postgres
+    - ./test_package.py -p $TEST_CODECHECKER_DIR -v $TEST_CLANG_VERSION --postgresql --dbport $TEST_DBPORT --dbusername $TEST_DBUSERNAME
     - unset CODECHECKER_DB_DRIVER
-    - ./test_package.py -p ./codechecker_package/CodeChecker -v stable
-    - ./test_quickcheck.py -p ./codechecker_package/CodeChecker
+    - ./test_package.py -p $TEST_CODECHECKER_DIR -v $TEST_CLANG_VERSION
+    - nosetests tests/quickcheck_test/
 
