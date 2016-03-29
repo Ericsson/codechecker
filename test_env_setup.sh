@@ -7,4 +7,4 @@ export TEST_DBPORT="5432"
 export TEST_DBUSERNAME="postgres"
 
 # TEMPORARY SETUP, WILL BE OBSOLETE AFTER NOSETESTS MIGRATION FINISH.
-export PYTHONPATH="${PYTHONPATH}:$(pwd)/tests/test_helper"
+export PYTHONPATH="${PYTHONPATH}:$(pwd)/tests/"
