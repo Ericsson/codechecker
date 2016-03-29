@@ -6,11 +6,11 @@ import time
 import zlib
 from uuid import uuid4
 
-import test_helper
-test_helper.setCCEnv()
+import test_utils
+test_utils.setCCEnv()
 
 from shared.ttypes import *
-from test_helper.thrift_client_to_db import CCReportHelper, CCViewerHelper
+from test_utils.thrift_client_to_db import CCReportHelper, CCViewerHelper
 
  #--- constants -------------------------------------------------------------
 runNumber = 10

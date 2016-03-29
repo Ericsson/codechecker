@@ -26,7 +26,7 @@ import time
 import unittest
 import uuid
 
-from test_helper import get_free_port
+from test_utils import get_free_port
 
 LOG = logging.getLogger('Package Tester')
 
