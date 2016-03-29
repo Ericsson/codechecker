@@ -6,8 +6,6 @@ import time
 import zlib
 from uuid import uuid4
 
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-
 import test_helper
 test_helper.setCCEnv()
 

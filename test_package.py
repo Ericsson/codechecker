@@ -26,8 +26,6 @@ import time
 import unittest
 import uuid
 
-tests_root = os.path.join(os.path.dirname(__file__), 'tests')
-sys.path.append(tests_root)
 from test_helper import get_free_port
 
 LOG = logging.getLogger('Package Tester')
@@ -435,10 +433,10 @@ def main():
     parser.add_argument('-v', '--clang_version', default='stable',
                         action='store', choices={'stable', 'trunk'},
                         dest='clang_version', help='Version of the used clang.')
-    parser.add_argument('-t', '--test_modules', default='tests/regression_test',
+    parser.add_argument('-t', '--test_modules', default='tests/functional/regression_test',
                         action='store', dest='test_modules',
                         help='The directory containing the test files.')
-    parser.add_argument('--project', default='tests/test_projects/bzip2',
+    parser.add_argument('--project', default='tests/functional/src/bzip2',
                         action='store', dest='test_project',
                         help='Project to run the test checks on.')
     parser.add_argument('--project-config',
