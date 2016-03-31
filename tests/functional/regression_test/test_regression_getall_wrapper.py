@@ -13,9 +13,9 @@ import unittest
 
 from codeCheckerDBAccess.ttypes import *
 
-from test_helper.thrift_client_to_db import CCViewerHelper
+from test_utils.thrift_client_to_db import CCViewerHelper
 
-from test_helper.testlog import debug
+from test_utils.testlog import debug
 
 
 class RunResults(unittest.TestCase):

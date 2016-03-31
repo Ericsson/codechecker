@@ -20,7 +20,7 @@ test_package.py --help
 The tests are based on python unittest so each test file should contain a class inheriting from _unittest.TestCase_.
 The test cases are given the port of the viewer server and the project info by environment variables (CC_TEST_VIEWER_PORT, CC_TEST_PROJECT_INFO).
 
-The _test_helper.thrift_client_to_db_ module contains _CCViewerHelper_ which is a wrapper for the thrift viewer api.
+The _test_utils.thrift_client_to_db_ module contains _CCViewerHelper_ which is a wrapper for the thrift viewer api.
 
 
 # Test projects

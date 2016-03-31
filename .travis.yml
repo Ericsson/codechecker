@@ -30,7 +30,7 @@ addons:
 
 script:
     - . test_env_setup.sh
-    - nosetests tests/unit_test/
+    - nosetests tests/unit/
     - ./build_package.py -o $TEST_CODECHECKER_PACKAGE_DIR -v
     - export CODECHECKER_DB_DRIVER=psycopg2
     - ./test_package.py -p $TEST_CODECHECKER_DIR -v $TEST_CLANG_VERSION --postgresql --dbport $TEST_DBPORT --dbusername $TEST_DBUSERNAME
@@ -38,5 +38,5 @@ script:
     - ./test_package.py -p $TEST_CODECHECKER_DIR -v $TEST_CLANG_VERSION --postgresql --dbport $TEST_DBPORT --dbusername $TEST_DBUSERNAME
     - unset CODECHECKER_DB_DRIVER
     - ./test_package.py -p $TEST_CODECHECKER_DIR -v $TEST_CLANG_VERSION
-    - nosetests tests/quickcheck_test/
+    - nosetests tests/functional/quickcheck_test/
 
