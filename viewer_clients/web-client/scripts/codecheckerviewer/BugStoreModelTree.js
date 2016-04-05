@@ -134,7 +134,7 @@ return declare(null, {
     bugStore.push({
       name       : "Line " + report.lastBugPosition.startLine + " : " +
         report.checkerId,
-      id         : report.bugHash,
+      id         : report.reportId,
       parent     : CC_UTIL.severityFromCodeToString(report.severity),
       range      : report.lastBugPosition,
       reportId   : report.reportId,
@@ -145,8 +145,8 @@ return declare(null, {
 
     bugStore.push({
       name       : "<b><u>Result</u> : " + report.checkerMsg + "</b>",
-      id         : report.bugHash + "_0",
-      parent     : report.bugHash,
+      id         : report.reportId + "_0",
+      parent     : report.reportId,
       range      : report.lastBugPosition,
       filePath   : that.filePath,
       fileId     : report.fileId,
@@ -166,8 +166,8 @@ return declare(null, {
       details.pathEvents.forEach(function (step, index) {
         bugStore.push({
           name       : "Line " + step.startLine + " : " + step.msg,
-          id         : report.bugHash + "_" + (index + 1),
-          parent     : report.bugHash,
+          id         : report.reportId + "_" + (index + 1),
+          parent     : report.reportId,
           range      : step,
           filePath   : step.filePath,
           fileId     : step.fileId,

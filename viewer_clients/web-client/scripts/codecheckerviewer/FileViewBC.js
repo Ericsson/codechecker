@@ -107,8 +107,8 @@ return declare(BorderContainer, {
       fileId          : fileId,
       filePath        : checkedFile,
       onLoaded        : function () {
-        that.bugStoreModelTree.bugTree.set("path", ["root", severity, bugHash,
-          bugHash + "_0"]);
+        that.bugStoreModelTree.bugTree.set("path",
+          ["root", severity, reportId + '', reportId + "_0"]);
       }
     });
 
