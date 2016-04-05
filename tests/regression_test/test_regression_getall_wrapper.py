@@ -84,6 +84,7 @@ class RunResults(unittest.TestCase):
                          (run_res.checkerId == bug['checker']) and \
                          (run_res.bugHash == bug['hash'])
             found_all &= found
+
         self.assertTrue(found_all)
 
         for run_res in run_results:
@@ -222,6 +223,8 @@ class RunResults(unittest.TestCase):
             bug2 = run_results[i + 1]
             self.assertTrue(bug1.checkedFile <= bug2.checkedFile)
             self.assertTrue((bug1.checkedFile != bug2.checkedFile) or
+                            (bug1.lastBugPosition.startLine <=
+                                bug2.lastBugPosition.startLine) or
                             (bug1.checkerId <= bug2.checkerId))
 
         for run_res in run_results:

@@ -97,7 +97,7 @@ class RunResults(unittest.TestCase):
                                                    new_run_id,
                                                    DiffType.UNRESOLVED,
                                                    [])
-        self.assertEqual(diff_res, 7)
+        self.assertEqual(diff_res, 23)
 
     # -----------------------------------------------------
     def test_get_diff_res_count_unresolved_filter(self):
@@ -115,9 +115,9 @@ class RunResults(unittest.TestCase):
         new_run_id = runs[1].runId
 
         # severity levels used for filtering
-        severity_test_data = self._testproject_data['filter_severity_levels']
+        filter_severity_levels = self._testproject_data['filter_severity_levels']
 
-        for level in severity_test_data:
+        for level in filter_severity_levels:
             for severity_level, test_result_count in level.iteritems():
                 simple_filters = []
                 sev = get_severity_level(severity_level)
@@ -186,9 +186,9 @@ class RunResults(unittest.TestCase):
                                                       DiffType.UNRESOLVED,
                                                       [])
 
-        severity_test_data = self._testproject_data['diff_res_types_filter']
+        diff_res_types_filter = self._testproject_data['diff_res_types_filter']
 
-        for level in severity_test_data:
+        for level in diff_res_types_filter:
             for checker_name, test_result_count in level.iteritems():
                 diff_res = self._cc_client.getDiffResultTypes(base_run_id,
                                                               new_run_id,
@@ -215,9 +215,9 @@ class RunResults(unittest.TestCase):
         base_run_id = runs[0].runId
         new_run_id = runs[1].runId
 
-        severity_test_data = self._testproject_data['diff_res_types_filter']
+        diff_res_types_filter = self._testproject_data['diff_res_types_filter']
 
-        for level in severity_test_data:
+        for level in diff_res_types_filter:
             for checker_name, test_result_count in level.iteritems():
                 simple_filters = []
                 simple_filter = ReportFilter(checkerId=checker_name)

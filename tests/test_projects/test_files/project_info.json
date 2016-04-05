@@ -1,0 +1,36 @@
+{
+    "name": "test_files",
+    "clean_cmd": "cd src && rm -f *.o",
+    "build_cmd": "cd src && g++ -w -c *.cpp",
+    "clang_stable": {
+        "bugs": [
+            { "file": "call_and_message.cpp", "line": 19, "checker": "core.CallAndMessage", "hash": "2a5c0406484f3d9606e654dadf8e6016" },
+            { "file": "call_and_message.cpp", "line": 24, "checker": "core.CallAndMessage", "hash": "6f657ff44d4f0b2fdca42f072de4a264" },
+            { "file": "call_and_message.cpp", "line": 30, "checker": "core.CallAndMessage", "hash": "bf85af0a265ab9086421d64bb55d9228" },
+            { "file": "call_and_message.cpp", "line": 40, "checker": "core.CallAndMessage", "hash": "a383251ea8a9cdaf7a8df9b397fc3b4b" },
+            { "file": "call_and_message.cpp", "line": 45, "checker": "core.CallAndMessage", "hash": "c1bffec3676079329ea3cdc85b60e6fd" },
+            { "file": "divide_zero.cpp", "line": 12, "checker": "core.DivideZero", "hash": "1eb0eb7ada82980be3afceb231f6f45e" },
+            { "file": "divide_zero.cpp", "line": 17, "checker": "core.DivideZero", "hash": "259419c821fb6484fbdfd9715aa65be2" },
+            { "file": "divide_zero.cpp", "line": 12, "checker": "deadcode.DeadStores", "hash": "6d58afa230c9417e9f3c2bb703e34427" },
+            { "file": "divide_zero.cpp", "line": 17, "checker": "deadcode.DeadStores", "hash": "881ba338c9dc9e2eb762eb9d6eb65092" },
+            { "file": "null_dereference.cpp", "line": 14, "checker": "core.NullDereference", "hash": "8e69593654907cc2f8d742e70bb25a8c" },
+            { "file": "null_dereference.cpp", "line": 19, "checker": "core.NullDereference", "hash": "196bbf2866915f612ce7f275c6f39ec4" },
+            { "file": "null_dereference.cpp", "line": 29, "checker": "core.NullDereference", "hash": "a5f7b66e90b3256a0141d0eefd9a0dec" },
+            { "file": "null_dereference.cpp", "line": 14, "checker": "deadcode.DeadStores", "hash": "0cbe239bac6ce2a83b5c44a06ba04e25" },
+            { "file": "null_dereference.cpp", "line": 29, "checker": "deadcode.DeadStores", "hash": "8a03fdbcd1149e19cc543e3f780fc757" },
+            { "file": "stack_address_escape.cpp", "line": 13, "checker": "core.StackAddressEscape", "hash": "ffa1fd154de39189ffdcb5a405c33c38" },
+            { "file": "stack_address_escape.cpp", "line": 18, "checker": "core.StackAddressEscape", "hash": "e5b303e9bd997a37a29095d93a1b6b01" },
+            { "file": "stack_address_escape.cpp", "line": 23, "checker": "core.StackAddressEscape", "hash": "1fdbe701c909add8cb434d39612de516" },
+            { "file": "new_delete.cpp", "line": 15, "checker": "cplusplus.NewDelete", "hash": "28663a0b815edec31cc20bf9693f3d80" },
+            { "file": "new_delete.cpp", "line": 26, "checker": "cplusplus.NewDelete", "hash": "651aaf3f6db84f476243a1c3fd1eec48" },
+            { "file": "new_delete.cpp", "line": 37, "checker": "cplusplus.NewDelete", "hash": "e869d001db9cf98d560bb646c5a2dada" },
+            { "file": "new_delete.cpp", "line": 42, "checker": "cplusplus.NewDelete", "hash": "e5f8ba4cf625855a477305e784748684" },
+            { "file": "new_delete.cpp", "line": 47, "checker": "cplusplus.NewDelete", "hash": "a62f729a70d3836b2b2e0d3eeb659199" },
+            { "file": "new_delete.cpp", "line": 31, "checker": "unix.Malloc", "hash": "92c8b85d5e6b7290ada134b7014bc41e" }],
+        "filter_severity_levels": [{"MEDIUM": 1}, {"LOW": 4}, {"HIGH": 18}, {"STYLE": 0}, {"UNSPECIFIED": 0}, {"CRITICAL": 0}],
+        "filter_checker_id": [{"*unix*": 1}, {"core*": 13}, {"*DeadStores": 4}],
+        "filter_filepath": [{"*null*": 5}],
+        "filter_filepath_case_insensitive": [{"*null*": 5}, {"*nULl*": 5}, {"*NULL*": 5}, {"*Null*": 5}],
+        "diff_res_types_filter": [{"deadcode.DeadStores": 4}, {"core.CallAndMessage": 5}, {"cplusplus.NewDelete": 5}, {"unix.Malloc": 1}]
+    }
+}

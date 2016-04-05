@@ -438,7 +438,7 @@ def main():
     parser.add_argument('-t', '--test_modules', default='tests/regression_test',
                         action='store', dest='test_modules',
                         help='The directory containing the test files.')
-    parser.add_argument('--project', default='tests/test_projects/bzip2',
+    parser.add_argument('--project', default='tests/test_projects/test_files',
                         action='store', dest='test_project',
                         help='Project to run the test checks on.')
     parser.add_argument('--project-config',

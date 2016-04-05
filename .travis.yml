@@ -21,7 +21,7 @@ addons:
         packages:
             - doxygen
             - libpq-dev
-            - clang-3.6
+            - clang-3.7
             - libc6-dev-i386
             - gcc-multilib
             - thrift-compiler
@@ -29,6 +29,7 @@ addons:
     postgresql: "9.3"
 
 script:
+    - ./change_clang_version.py
     - . test_env_setup.sh
     - nosetests tests/unit_test/
     - ./build_package.py -o $TEST_CODECHECKER_PACKAGE_DIR -v
