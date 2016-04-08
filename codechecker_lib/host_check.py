@@ -62,6 +62,7 @@ def check_postgresql_driver():
         get_postgresql_driver_name()
         return True
     except Exception as ex:
+        LOG.debug(ex)
         return False
 
 
@@ -80,6 +81,7 @@ def check_sql_driver(check_postgresql):
             except Exception as ex:
                 import sqlite3
         except Exception as ex:
+            LOG.debug(ex)
             return False
         return True
 

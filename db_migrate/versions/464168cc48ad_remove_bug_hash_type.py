@@ -15,7 +15,6 @@ depends_on = None
 import sys
 
 from alembic import op
-import sqlalchemy as sa
 
 
 def upgrade():

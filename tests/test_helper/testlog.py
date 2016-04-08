@@ -5,7 +5,6 @@
 #   License. See LICENSE.TXT for details.
 # -----------------------------------------------------------------------------
 
-import sys
 import logging
 
 LOG = logging.getLogger('Package Tester')

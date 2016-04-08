@@ -7,18 +7,17 @@
 
 import json
 import os
-import random
 import sys
 import traceback
 import unittest
 
-from codeCheckerDBAccess.ttypes import *
+from codeCheckerDBAccess.ttypes import ReportFilter
+
 import shared
 
 from test_helper.thrift_client_to_db import CCViewerHelper
 
 from test_helper.testlog import info
-from test_helper.testlog import debug
 
 
 def assert_decorate(function_to_run_test):

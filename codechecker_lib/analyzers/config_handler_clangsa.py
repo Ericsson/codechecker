@@ -5,7 +5,6 @@
 # -------------------------------------------------------------------------
 
 import re
-import StringIO
 
 from codechecker_lib import logger
 

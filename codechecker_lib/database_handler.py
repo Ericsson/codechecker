@@ -20,7 +20,9 @@ from codechecker_lib import logger
 from codechecker_lib import pgpass
 from codechecker_lib import host_check
 
-from db_model.orm_model import *
+from db_model.orm_model import CC_META
+from db_model.orm_model import DBVersion
+from db_model.orm_model import CreateSession
 
 import sqlalchemy
 from sqlalchemy.engine.url import URL, make_url
@@ -29,7 +31,6 @@ from sqlalchemy.engine import Engine
 from sqlalchemy import event
 
 from alembic import command, config
-from alembic.migration import MigrationContext
 
 LOG = logger.get_new_logger('DB_HANDLER')
 

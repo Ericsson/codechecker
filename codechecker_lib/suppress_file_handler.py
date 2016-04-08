@@ -19,7 +19,6 @@ for backward compatibility the hash_value_type is an optional filed
 
 import re
 import os
-import string
 import codecs
 from codechecker_lib import logger
 

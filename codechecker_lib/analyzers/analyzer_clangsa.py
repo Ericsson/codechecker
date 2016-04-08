@@ -7,7 +7,6 @@
 import re
 import shlex
 import subprocess
-import StringIO
 
 from codechecker_lib import logger
 
@@ -89,7 +88,6 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             config = self.config_handler
 
             analyzer_bin = config.analyzer_binary
-            analyzer_plugins = config.analyzer_plugins
 
             analyzer_cmd = []
 

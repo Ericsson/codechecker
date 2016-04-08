@@ -7,7 +7,6 @@
 """
 supported analyzer types
 """
-import os
 import re
 import sys
 
