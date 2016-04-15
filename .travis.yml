@@ -30,14 +30,27 @@ addons:
 
 script:
     - ./change_clang_version.py
-    - . test_env_setup.sh
-    - nosetests tests/unit_test/
-    - ./build_package.py -o $TEST_CODECHECKER_PACKAGE_DIR -v
-    - export CODECHECKER_DB_DRIVER=psycopg2
-    - ./test_package.py -p $TEST_CODECHECKER_DIR -v $TEST_CLANG_VERSION --postgresql --dbport $TEST_DBPORT --dbusername $TEST_DBUSERNAME
-    - export CODECHECKER_DB_DRIVER=pg8000
-    - ./test_package.py -p $TEST_CODECHECKER_DIR -v $TEST_CLANG_VERSION --postgresql --dbport $TEST_DBPORT --dbusername $TEST_DBUSERNAME
-    - unset CODECHECKER_DB_DRIVER
-    - ./test_package.py -p $TEST_CODECHECKER_DIR -v $TEST_CLANG_VERSION
-    - nosetests tests/quickcheck_test/
 
+    - . tests/test_env_setup.sh
+
+    - ./build_package.py -o $TEST_CODECHECKER_PACKAGE_DIR -v
+
+    - nosetests tests/test_packages/unit/
+
+    - nosetests tests/test_packages/functional/quickcheck_test/
+
+    - export TEST_USE_POSTGRESQL=true
+    - export CODECHECKER_DB_DRIVER=psycopg2
+    - nosetests tests/test_packages/functional/package_test/
+
+    - export TEST_USE_POSTGRESQL=true
+    - export CODECHECKER_DB_DRIVER=pg8000
+    - nosetests tests/test_packages/functional/package_test/
+
+    - export TEST_USE_POSTGRESQL=true
+    - unset CODECHECKER_DB_DRIVER
+    - nosetests tests/test_packages/functional/package_test/
+
+    - export TEST_USE_POSTGRESQL=false
+    - unset CODECHECKER_DB_DRIVER
+    - nosetests tests/test_packages/functional/package_test/

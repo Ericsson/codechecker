@@ -7,16 +7,14 @@
 
 import json
 import os
-import random
 import re
 import unittest
 
 from codeCheckerDBAccess.ttypes import *
 
-from test_helper.thrift_client_to_db import CCViewerHelper
+from test_utils.thrift_client_to_db import CCViewerHelper
 
-from test_helper.testlog import info
-from test_helper.testlog import debug
+from test_utils.testlog import debug
 
 
 class RunResults(unittest.TestCase):
@@ -52,8 +50,7 @@ class RunResults(unittest.TestCase):
         run_result_count = self._cc_client.getRunResultCount(runid, [])
         self.assertTrue(run_result_count)
 
-        run_results = self._cc_client.getRunResults(runid, run_result_count,
-                                                    0, [], [])
+        run_results = self._cc_client.getAllRunResults(runid, [], [])
         self.assertIsNotNone(run_results)
         self.assertEqual(run_result_count, len(run_results))
 
@@ -73,8 +70,7 @@ class RunResults(unittest.TestCase):
         run_result_count = self._cc_client.getRunResultCount(runid, [])
         self.assertTrue(run_result_count)
 
-        run_results = self._cc_client.getRunResults(runid, run_result_count,
-                                                    0, [], [])
+        run_results = self._cc_client.getAllRunResults(runid, [], [])
         self.assertIsNotNone(run_results)
         self.assertEqual(run_result_count, len(run_results))
 
@@ -87,6 +83,7 @@ class RunResults(unittest.TestCase):
                          (run_res.checkerId == bug['checker']) and \
                          (run_res.bugHash == bug['hash'])
             found_all &= found
+
         self.assertTrue(found_all)
 
         for run_res in run_results:
@@ -106,8 +103,7 @@ class RunResults(unittest.TestCase):
                                                              simple_filters)
         self.assertTrue(run_result_count)
 
-        run_results = self._cc_client.getRunResults(runid, run_result_count,
-                                                    0, [], simple_filters)
+        run_results = self._cc_client.getAllRunResults(runid, [], simple_filters)
         self.assertIsNotNone(run_results)
         self.assertEqual(run_result_count, len(run_results))
 
@@ -136,8 +132,7 @@ class RunResults(unittest.TestCase):
         debug('Get all run results from the db for runid: ' + str(runid))
 
         simple_filters = [ReportFilter(suppressed=False)]
-        run_results = self._cc_client.getRunResults(runid, 50, 0, [],
-                                                    simple_filters)
+        run_results = self._cc_client.getAllRunResults(runid, [], simple_filters)
         self.assertIsNotNone(run_results)
         self.assertNotEqual(len(run_results), 0)
 
@@ -148,8 +143,7 @@ class RunResults(unittest.TestCase):
         debug('Bug suppressed successfully')
 
         simple_filters = [ReportFilter(suppressed=True)]
-        run_results = self._cc_client.getRunResults(runid, 50, 0, [],
-                                                    simple_filters)
+        run_results = self._cc_client.getAllRunResults(runid, [], simple_filters)
         self.assertIsNotNone(run_results)
         self.assertNotEqual(len(run_results), 0)
 
@@ -166,8 +160,7 @@ class RunResults(unittest.TestCase):
         debug('Bug unsuppressed successfully')
 
         simple_filters = [ReportFilter(suppressed=False)]
-        run_results = self._cc_client.getRunResults(runid, 50, 0, [],
-                                                    simple_filters)
+        run_results = self._cc_client.getAllRunResults(runid, [], simple_filters)
         self.assertIsNotNone(run_results)
         self.assertNotEqual(len(run_results), 0)
 
@@ -190,8 +183,7 @@ class RunResults(unittest.TestCase):
         run_result_count = self._cc_client.getRunResultCount(runid, [])
         self.assertTrue(run_result_count)
 
-        run_results = self._cc_client.getRunResults(runid, run_result_count,
-                                                    0, sort_types, [])
+        run_results = self._cc_client.getAllRunResults(runid, sort_types, [])
         self.assertIsNotNone(run_results)
         self.assertEqual(run_result_count, len(run_results))
 
@@ -221,8 +213,7 @@ class RunResults(unittest.TestCase):
         run_result_count = self._cc_client.getRunResultCount(runid, [])
         self.assertTrue(run_result_count)
 
-        run_results = self._cc_client.getRunResults(runid, run_result_count, 0,
-                                                    sort_types, [])
+        run_results = self._cc_client.getAllRunResults(runid, sort_types, [])
         self.assertIsNotNone(run_results)
         self.assertEqual(run_result_count, len(run_results))
 

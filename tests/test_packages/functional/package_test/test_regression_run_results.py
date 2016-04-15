@@ -7,15 +7,12 @@
 
 import json
 import os
-import random
 import re
 import unittest
 
 from codeCheckerDBAccess.ttypes import *
 
-from test_helper.thrift_client_to_db import CCViewerHelper
-
-from test_helper.testlog import debug
+from test_utils.thrift_client_to_db import CCViewerHelper
 
 
 class RunResults(unittest.TestCase):
@@ -46,32 +43,24 @@ class RunResults(unittest.TestCase):
     # -----------------------------------------------------
     def test_get_run_results_no_filter(self):
         runid = self._runid
-        debug('Get all run results from the db for runid: ' + str(runid))
 
         run_result_count = self._cc_client.getRunResultCount(runid, [])
         self.assertTrue(run_result_count)
 
-        run_results = self._cc_client.getAllRunResults(runid, [], [])
+        run_results = self._cc_client.getRunResults(runid, run_result_count,
+                                                    0, [], [])
         self.assertIsNotNone(run_results)
         self.assertEqual(run_result_count, len(run_results))
-
-        for run_res in run_results:
-            debug('{0:15s}  {1}'.format(run_res.checkedFile, run_res.checkerId))
-            debug('{0:15d}  {1}'.format(run_res.reportId, run_res.suppressed))
-            debug(run_res.lastBugPosition)
-            debug('-------------------------------------------------')
-        debug('got ' + str(len(run_results)) + ' reports')
-        debug('Done.\n')
 
     # -----------------------------------------------------
     def test_get_run_results_checker_id_and_file_path(self):
         runid = self._runid
-        debug('Get all run results from the db for runid: ' + str(runid))
 
         run_result_count = self._cc_client.getRunResultCount(runid, [])
         self.assertTrue(run_result_count)
 
-        run_results = self._cc_client.getAllRunResults(runid, [], [])
+        run_results = self._cc_client.getRunResults(runid, run_result_count,
+                                                    0, [], [])
         self.assertIsNotNone(run_results)
         self.assertEqual(run_result_count, len(run_results))
 
@@ -84,16 +73,7 @@ class RunResults(unittest.TestCase):
                          (run_res.checkerId == bug['checker']) and \
                          (run_res.bugHash == bug['hash'])
             found_all &= found
-
         self.assertTrue(found_all)
-
-        for run_res in run_results:
-            debug('{0:15s}  {1}'.format(run_res.checkedFile, run_res.checkerId))
-            debug('reportId: {0} suppressed: {1}'.format(run_res.reportId,
-                                                         run_res.suppressed))
-            debug(run_res.lastBugPosition)
-            debug('-------------------------------------------------')
-        debug('got ' + str(len(run_results)) + ' reports')
 
     # -----------------------------------------------------
     def test_get_source_file_content(self):  # also for testing Unicode support
@@ -104,14 +84,13 @@ class RunResults(unittest.TestCase):
                                                              simple_filters)
         self.assertTrue(run_result_count)
 
-        run_results = self._cc_client.getAllRunResults(runid, [], simple_filters)
+        run_results = self._cc_client.getRunResults(runid, run_result_count,
+                                                    0, [], simple_filters)
         self.assertIsNotNone(run_results)
         self.assertEqual(run_result_count, len(run_results))
 
         for run_res in run_results:
             self.assertTrue(re.match(r'.*\.c(pp)?$', run_res.checkedFile))
-
-            debug('Getting the content of ' + run_res.checkedFile)
 
             file_data = self._cc_client.getSourceFileData(run_res.fileId, True)
             self.assertIsNotNone(file_data)
@@ -124,16 +103,14 @@ class RunResults(unittest.TestCase):
 
             self.assertEqual(file_content1, file_content2)
 
-        debug('got ' + str(len(run_results)) + ' files')
-
     # -----------------------------------------------------
     def test_zzzzz_get_run_results_checker_msg_filter_suppressed(self):
         # this function must be run for last
         runid = self._runid
-        debug('Get all run results from the db for runid: ' + str(runid))
 
         simple_filters = [ReportFilter(suppressed=False)]
-        run_results = self._cc_client.getAllRunResults(runid, [], simple_filters)
+        run_results = self._cc_client.getRunResults(runid, 50, 0, [],
+                                                    simple_filters)
         self.assertIsNotNone(run_results)
         self.assertNotEqual(len(run_results), 0)
 
@@ -141,10 +118,10 @@ class RunResults(unittest.TestCase):
         bug = run_results[0]
         success = self._cc_client.suppressBug([runid], bug.reportId, suppress_msg)
         self.assertTrue(success)
-        debug('Bug suppressed successfully')
 
         simple_filters = [ReportFilter(suppressed=True)]
-        run_results = self._cc_client.getAllRunResults(runid, [], simple_filters)
+        run_results = self._cc_client.getRunResults(runid, 50, 0, [],
+                                                    simple_filters)
         self.assertIsNotNone(run_results)
         self.assertNotEqual(len(run_results), 0)
 
@@ -158,10 +135,10 @@ class RunResults(unittest.TestCase):
 
         success = self._cc_client.unSuppressBug([runid], suppressed_bug.reportId)
         self.assertTrue(success)
-        debug('Bug unsuppressed successfully')
 
         simple_filters = [ReportFilter(suppressed=False)]
-        run_results = self._cc_client.getAllRunResults(runid, [], simple_filters)
+        run_results = self._cc_client.getRunResults(runid, 50, 0, [],
+                                                    simple_filters)
         self.assertIsNotNone(run_results)
         self.assertNotEqual(len(run_results), 0)
 
@@ -171,12 +148,9 @@ class RunResults(unittest.TestCase):
             run_results)
         self.assertEqual(len(filtered_run_results), 1)
 
-        debug('Done.\n')
-
     # -----------------------------------------------------
     def test_get_run_results_severity_sort(self):
         runid = self._runid
-        debug('Get all run results from the db for runid: ' + str(runid))
         sort_mode1 = SortMode(SortType.SEVERITY, Order.ASC)
         sort_mode2 = SortMode(SortType.FILENAME, Order.ASC)
         sort_types = [sort_mode1, sort_mode2]
@@ -184,7 +158,8 @@ class RunResults(unittest.TestCase):
         run_result_count = self._cc_client.getRunResultCount(runid, [])
         self.assertTrue(run_result_count)
 
-        run_results = self._cc_client.getAllRunResults(runid, sort_types, [])
+        run_results = self._cc_client.getRunResults(runid, run_result_count,
+                                                    0, sort_types, [])
         self.assertIsNotNone(run_results)
         self.assertEqual(run_result_count, len(run_results))
 
@@ -195,18 +170,9 @@ class RunResults(unittest.TestCase):
             self.assertTrue((bug1.severity != bug2.severity) or
                             (bug1.checkedFile <= bug2.checkedFile))
 
-        for run_res in run_results:
-            debug('{0:15s}  {1}'.format(run_res.checkedFile, run_res.checkerId))
-            debug('{0:15d}  {1}'.format(run_res.reportId, run_res.suppressed))
-            debug(run_res.lastBugPosition)
-            debug('-------------------------------------------------')
-        debug('got ' + str(len(run_results)) + ' reports')
-        debug('Done.\n')
-
     # -----------------------------------------------------
     def test_get_run_results_sorted2(self):
         runid = self._runid
-        debug('Get all run results from the db for runid: ' + str(runid))
         sortMode1 = SortMode(SortType.FILENAME, Order.ASC)
         sortMode2 = SortMode(SortType.CHECKER_NAME, Order.ASC)
         sort_types = [sortMode1, sortMode2]
@@ -214,7 +180,8 @@ class RunResults(unittest.TestCase):
         run_result_count = self._cc_client.getRunResultCount(runid, [])
         self.assertTrue(run_result_count)
 
-        run_results = self._cc_client.getAllRunResults(runid, sort_types, [])
+        run_results = self._cc_client.getRunResults(runid, run_result_count, 0,
+                                                    sort_types, [])
         self.assertIsNotNone(run_results)
         self.assertEqual(run_result_count, len(run_results))
 
@@ -227,10 +194,3 @@ class RunResults(unittest.TestCase):
                                 bug2.lastBugPosition.startLine) or
                             (bug1.checkerId <= bug2.checkerId))
 
-        for run_res in run_results:
-            debug('{0:15s}  {1}'.format(run_res.checkedFile, run_res.checkerId))
-            debug('{0:15d}  {1}'.format(run_res.reportId, run_res.suppressed))
-            debug(run_res.lastBugPosition)
-            debug('-------------------------------------------------')
-        debug('got ' + str(len(run_results)) + ' reports')
-        debug('Done.\n')

@@ -11,7 +11,7 @@ import string
 from uuid import uuid4
 from contextlib import contextmanager
 from shared.ttypes import BugPathPos, BugPathEvent, Severity
-from test_helper.thrift_client_to_db import CCReportHelper
+from test_utils.thrift_client_to_db import CCReportHelper
 
 
 def _generate_content(cols, lines):
@@ -23,6 +23,7 @@ def _generate_content(cols, lines):
             content += random.choice(string.letters)
         content += '\n'
     return content
+
 
 class HashClash(unittest.TestCase):
     """Unit test for testing hash clash handling."""

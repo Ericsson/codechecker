@@ -7,16 +7,9 @@
 
 import json
 import os
-import random
-import re
 import unittest
 
-from codeCheckerDBAccess.ttypes import *
-
-from test_helper.thrift_client_to_db import CCViewerHelper
-
-from test_helper.testlog import info
-from test_helper.testlog import debug
+from test_utils.thrift_client_to_db import CCViewerHelper
 
 
 class RunResults(unittest.TestCase):
