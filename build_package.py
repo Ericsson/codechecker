@@ -330,9 +330,6 @@ def build_package(repository_root, build_package_config, env=None):
 
     output_dir = build_package_config['output_dir']
 
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
-
     package_root = os.path.join(output_dir, 'CodeChecker')
     package_layout['root'] = package_root
 

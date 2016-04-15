@@ -78,7 +78,7 @@ class SourceSuppressTestCase(unittest.TestCase):
             sp_handler.suppress_comment(), 'some really long comment')
 
     def test_one_liner_some_checkers(self):
-        """Doc."""
+        """There is suppress comment above the bug line."""
         sp_handler = SourceSuppressHandler(self.__tmp_srcfile_1, 43)
         res = sp_handler.check_source_suppress()
         self.assertTrue(res)
@@ -88,7 +88,7 @@ class SourceSuppressTestCase(unittest.TestCase):
             sp_handler.suppress_comment(), 'some really really long comment')
 
     def test_multi_liner_some_checkers(self):
-        """Doc."""
+        """There is suppress comment above the bug line."""
         sp_handler = SourceSuppressHandler(self.__tmp_srcfile_1, 50)
         res = sp_handler.check_source_suppress()
         self.assertFalse(res)

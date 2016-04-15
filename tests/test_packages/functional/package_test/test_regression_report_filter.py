@@ -6,6 +6,7 @@
 # -----------------------------------------------------------------------------
 
 import json
+import logging
 import os
 import sys
 import traceback
@@ -22,6 +23,7 @@ def assert_decorate(function_to_run_test):
     def func_wrapper(*args, **kwargs):
         try:
             result = function_to_run_test(*args, **kwargs)
+            logging.debug('PASSED')
             return result
 
         except AssertionError:
@@ -29,6 +31,12 @@ def assert_decorate(function_to_run_test):
             traceback.print_tb(tb)  # Fixed format
             tb_info = traceback.extract_tb(tb)
             filename, line, func, text = tb_info[-1]
+
+            logging.debug('Test failed with arguments')
+            logging.debug(func)
+            logging.debug(args)
+            logging.debug(kwargs)
+            logging.debug('An error occurred on line {} in statement {}'.format(line, text))
 
     return func_wrapper
 
@@ -103,6 +111,8 @@ class RunResults(unittest.TestCase):
 
         for level in severity_test_data:
             for severity_level, test_result_count in level.iteritems():
+                logging.debug('Severity level filter ' + severity_level +
+                     ' test result count: ' + str(test_result_count))
                 sort_types = None
                 simple_filters = []
                 sev = get_severity_level(severity_level)
@@ -125,6 +135,8 @@ class RunResults(unittest.TestCase):
 
         for level in severity_test_data:
             for checker_id_filter, test_result_count in level.iteritems():
+                logging.debug('Checker id filter ' + checker_id_filter +
+                     ' test result count: ' + str(test_result_count))
                 sort_types = None
                 simple_filters = []
                 simple_filter = ReportFilter(checkerId=checker_id_filter)
@@ -146,6 +158,9 @@ class RunResults(unittest.TestCase):
 
         for level in severity_test_data:
             for filepath_filter, test_result_count in level.iteritems():
+                logging.debug('File path filter ' + filepath_filter +
+                     ' test result count: ' + str(test_result_count))
+
                 sort_types = None
                 simple_filters = []
                 simple_filter = ReportFilter(filepath=filepath_filter)
@@ -168,6 +183,9 @@ class RunResults(unittest.TestCase):
 
         for level in filter_test_data:
             for filepath_filter, test_result_count in level.iteritems():
+                logging.debug('File path filter ' + filepath_filter +
+                     ' test result count: ' + str(test_result_count))
+
                 sort_types = None
                 simple_filters = []
                 simple_filter = ReportFilter(filepath=filepath_filter)
