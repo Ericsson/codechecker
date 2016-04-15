@@ -12,8 +12,6 @@ import json
 import time
 import copy
 
-import shared
-
 from codechecker_lib import client
 from codechecker_lib import logger
 from codechecker_lib import analysis_manager

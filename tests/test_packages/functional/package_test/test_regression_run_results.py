@@ -10,7 +10,11 @@ import os
 import re
 import unittest
 
-from codeCheckerDBAccess.ttypes import *
+#from codeCheckerDBAccess.ttypes import *
+from codeCheckerDBAccess.ttypes import ReportFilter
+from codeCheckerDBAccess.ttypes import SortMode
+from codeCheckerDBAccess.ttypes import SortType
+from codeCheckerDBAccess.ttypes import Order
 
 from test_utils.thrift_client_to_db import CCViewerHelper
 

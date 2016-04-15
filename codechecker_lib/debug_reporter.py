@@ -8,13 +8,14 @@ import os
 import sys
 
 import sqlalchemy
+from sqlalchemy.sql import and_
 
-from db_model.orm_model import *
+from db_model.orm_model import BuildAction
+from db_model.orm_model import Run
 
 from codechecker_lib import analyzer_env
 from codechecker_lib import logger
 from codechecker_lib import analyzer_crash_handler
-from codechecker_lib import util
 from codechecker_lib import database_handler
 
 LOG = logger.get_new_logger('DEBUG_REPORTER')

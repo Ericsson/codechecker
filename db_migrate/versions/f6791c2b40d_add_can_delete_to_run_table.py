@@ -12,6 +12,8 @@ down_revision = '464168cc48ad'
 branch_labels = None
 depends_on = None
 
+import sys
+
 from alembic import op
 import sqlalchemy as sa
 

@@ -11,9 +11,9 @@ import os
 import posixpath
 import urllib
 import errno
+import socket
 from multiprocessing.pool import ThreadPool
 
-import sqlalchemy
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import scoped_session
 
@@ -24,7 +24,6 @@ from thrift.transport import TTransport
 from thrift.protocol import TJSONProtocol
 
 from codeCheckerDBAccess import codeCheckerDBAccess
-from codeCheckerDBAccess.ttypes import *
 
 from client_db_access_handler import ThriftRequestHandler
 

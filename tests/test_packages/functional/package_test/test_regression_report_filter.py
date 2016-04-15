@@ -11,7 +11,8 @@ import sys
 import traceback
 import unittest
 
-from codeCheckerDBAccess.ttypes import *
+from codeCheckerDBAccess.ttypes import ReportFilter
+
 import shared
 
 from test_utils.thrift_client_to_db import CCViewerHelper

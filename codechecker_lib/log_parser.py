@@ -80,7 +80,8 @@ def parse_log(logfilepath):
                 LOG.error('The compile database is empty.')
             else:
                 LOG.error('The compile database is not valid.')
-            LOG.debug_analyzer(traceback.format_exc())
+            LOG.debug(traceback.format_exc())
+            LOG.debug(ex)
 
     LOG.debug_analyzer('Parsing log file done.')
     return actions

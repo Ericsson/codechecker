@@ -104,14 +104,6 @@ class Context(context_base.ContextBase):
         return self.env_vars['cc_logger_bin']
 
     @property
-    def env_var_cc_logger_file(self):
-        return self.env_vars['cc_logger_file']
-
-    @property
-    def env_var_cc_logger_compiles(self):
-        return self.env_vars['cc_logger_compiles']
-
-    @property
     def env_var_ld_preload(self):
         return self.env_vars['ld_preload']
 

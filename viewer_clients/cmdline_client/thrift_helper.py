@@ -6,18 +6,11 @@
 
 import os
 import sys
-import datetime
-import errno
+#import datetime
 import socket
-import errno
 
-from thrift.transport import TTransport
-from thrift.transport import TSocket
 from thrift.transport import THttpClient
-from thrift.protocol import TBinaryProtocol
 from thrift.protocol import TJSONProtocol
-
-from thrift.protocol import TProtocol
 
 from codeCheckerDBAccess import codeCheckerDBAccess
 import shared
@@ -36,7 +29,7 @@ class ThriftClientHelper():
         funcName = function.__name__
         def wrapper(self, *args, **kwargs):
             #print('['+host+':'+str(port)+'] >>>>> ['+funcName+']')
-            before = datetime.datetime.now()
+            #before = datetime.datetime.now()
             self.transport.open()
             func = getattr(self.client,funcName)
             try:
@@ -59,9 +52,9 @@ class ThriftClientHelper():
                 sys.exit(1)
 
 
-            after = datetime.datetime.now()
-            timediff = after - before
-            diff = timediff.microseconds/1000
+            #after = datetime.datetime.now()
+            #timediff = after - before
+            #diff = timediff.microseconds/1000
             #print('['+str(diff)+'ms] <<<<< ['+host+':'+str(port)+']')
             #print res
             self.transport.close()
