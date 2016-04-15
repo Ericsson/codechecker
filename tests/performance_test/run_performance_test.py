@@ -1,8 +1,6 @@
 import datetime
 import os
-import shutil
 import sys
-import time
 import zlib
 from uuid import uuid4
 
@@ -11,7 +9,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import test_helper
 test_helper.setCCEnv()
 
-from shared.ttypes import *
+from shared.ttypes import BugPathPos
+from shared.ttypes import BugPathEvent
 from test_helper.thrift_client_to_db import CCReportHelper, CCViewerHelper
 
  #--- constants -------------------------------------------------------------
@@ -119,7 +118,7 @@ def main():
             getTimeList.append(time)
 
             before = datetime.datetime.now()
-            reportData = ccViewer.getReportDetails(res[-1].reportId)
+            ccViewer.getReportDetails(res[-1].reportId)
             after = datetime.datetime.now()
             time = (after - before).total_seconds()
             getTimeList.append(time)

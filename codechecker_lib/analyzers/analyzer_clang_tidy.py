@@ -8,7 +8,6 @@
 
 import re
 import subprocess
-import StringIO
 import shlex
 
 from codechecker_lib import logger

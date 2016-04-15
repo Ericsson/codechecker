@@ -8,7 +8,6 @@ import re
 import json
 import shlex
 import argparse
-import StringIO
 
 from codechecker_lib.analyzers import config_handler
 

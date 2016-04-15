@@ -7,16 +7,14 @@
 
 import json
 import os
-import random
-import re
 import unittest
 
-from codeCheckerDBAccess.ttypes import *
+from codeCheckerDBAccess.ttypes import ReportFilter
+from codeCheckerDBAccess.ttypes import DiffType
 
 from test_helper.thrift_client_to_db import CCViewerHelper
 
-from test_helper.testlog import debug
-from test_helper.testlog import info
+import shared
 
 def get_severity_level(name):
     """
@@ -53,7 +51,6 @@ class RunResults(unittest.TestCase):
         base_run_id = runs[0].runId
         new_run_id = runs[1].runId
 
-        diff_type_new = DiffType.NEW
         diff_res = self._cc_client.getDiffResultCount(base_run_id,
                                                    new_run_id,
                                                    DiffType.NEW,
@@ -92,7 +89,6 @@ class RunResults(unittest.TestCase):
         base_run_id = runs[0].runId
         new_run_id = runs[1].runId
 
-        diff_type_unresolved = DiffType.UNRESOLVED
         diff_res = self._cc_client.getDiffResultCount(base_run_id,
                                                    new_run_id,
                                                    DiffType.UNRESOLVED,

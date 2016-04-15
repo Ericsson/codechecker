@@ -7,15 +7,17 @@
 
 import json
 import os
-import random
 import re
 import unittest
 
-from codeCheckerDBAccess.ttypes import *
+#from codeCheckerDBAccess.ttypes import *
+from codeCheckerDBAccess.ttypes import ReportFilter
+from codeCheckerDBAccess.ttypes import SortMode
+from codeCheckerDBAccess.ttypes import SortType
+from codeCheckerDBAccess.ttypes import Order
 
 from test_helper.thrift_client_to_db import CCViewerHelper
 
-from test_helper.testlog import info
 from test_helper.testlog import debug
 
 

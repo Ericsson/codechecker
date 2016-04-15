@@ -4,22 +4,19 @@
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
 
-import re
 import sys
-import zlib
 import time
 import atexit
 import contextlib
 import multiprocessing
 import os
 import codecs
-import ntpath
 
 import shared
 from storage_server import report_server
 
 from DBThriftAPI import CheckerReport
-from DBThriftAPI.ttypes import *
+from DBThriftAPI.ttypes import SuppressBugData
 
 from thrift import Thrift
 from thrift.transport import TSocket
@@ -27,11 +24,7 @@ from thrift.transport import TTransport
 from thrift.protocol import TBinaryProtocol
 
 from codechecker_lib import logger
-from codechecker_lib import plist_parser
-from codechecker_lib import database_handler
-from codechecker_lib import util
 from codechecker_lib import suppress_file_handler
-from codechecker_lib import suppress_handler
 
 LOG = logger.get_new_logger('CLIENT')
 

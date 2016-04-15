@@ -29,7 +29,6 @@ from db_model.orm_model import *
 
 from codechecker_lib import logger
 from codechecker_lib import decorators
-from codechecker_lib import util
 from codechecker_lib import database_handler
 
 LOG = logger.get_new_logger('CC SERVER')

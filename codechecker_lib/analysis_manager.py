@@ -14,8 +14,6 @@ import ntpath
 import traceback
 from collections import defaultdict
 
-import shared
-
 from codechecker_lib import logger
 from codechecker_lib import analyzer_env
 
@@ -101,7 +99,6 @@ def check(check_data):
             # fills up the result handler with the analyzer information
             source_analyzer.analyze(rh, analyzer_environment)
 
-            analyzer_stderr = ''
             if rh.analyzer_returncode == 0:
                 # analysis was successful
                 # processing results
