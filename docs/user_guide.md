@@ -403,6 +403,8 @@ optional arguments:
 
 List all available checkers.
 
+The ```+``` (or ```-```) sign before a name of a checker shows whether the checker is enabled (or disabled) by default.
+
 ~~~~~~~~~~~~~~~~~~~~~
 CodeChecker checkers
 ~~~~~~~~~~~~~~~~~~~~~
