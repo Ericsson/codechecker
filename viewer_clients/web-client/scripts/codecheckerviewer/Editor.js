@@ -134,7 +134,7 @@ define([
       this.codeMirror.refresh();
     },
 
-    addNewOtherFileBubble: function (file, fileId, line, fileViewBC) {
+    addNewOtherFileBubble: function (file, fileId, line, otherLine, fileViewBC) {
       var that = this;
 
 
@@ -153,6 +153,14 @@ define([
         that.setPath(file);
         fileViewBC.viewedFile = file;
         fileViewBC.viewedFileId = fileId;
+
+        fileViewBC.jumpToRangeAndDrawBubblesLines(
+          that,
+          {
+            from : { line : otherLine, column : 0 },
+            to   : { line : otherLine, column : 0 }
+          },
+          fileViewBC.reportId);
       };
 
       that._lineWidgets.push(that.codeMirror.addLineWidget(line, element));

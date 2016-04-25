@@ -358,6 +358,7 @@ return declare(BorderContainer, {
           filePath   : points[i].filePath,
           fileId     : points[i].fileId,
           line       : lastStartLine - 1,
+          otherLine  : points[i].startLine,
           fileViewBC : that
         });
 
@@ -376,6 +377,7 @@ return declare(BorderContainer, {
         e.filePath,
         e.fileId,
         e.line,
+        e.otherLine,
         e.fileViewBC
       );
     });
