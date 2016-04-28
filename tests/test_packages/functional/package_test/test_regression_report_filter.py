@@ -6,6 +6,7 @@
 # -----------------------------------------------------------------------------
 
 import json
+import logging
 import os
 import sys
 import traceback
@@ -15,16 +16,14 @@ from codeCheckerDBAccess.ttypes import ReportFilter
 
 import shared
 
-from test_helper.thrift_client_to_db import CCViewerHelper
-
-from test_helper.testlog import info
+from test_utils.thrift_client_to_db import CCViewerHelper
 
 
 def assert_decorate(function_to_run_test):
     def func_wrapper(*args, **kwargs):
         try:
             result = function_to_run_test(*args, **kwargs)
-            info('PASSED')
+            logging.debug('PASSED')
             return result
 
         except AssertionError:
@@ -33,11 +32,11 @@ def assert_decorate(function_to_run_test):
             tb_info = traceback.extract_tb(tb)
             filename, line, func, text = tb_info[-1]
 
-            info('Test failed with arguments')
-            info(func)
-            info(args)
-            info(kwargs)
-            info('An error occurred on line {} in statement {}'.format(line, text))
+            logging.debug('Test failed with arguments')
+            logging.debug(func)
+            logging.debug(args)
+            logging.debug(kwargs)
+            logging.debug('An error occurred on line {} in statement {}'.format(line, text))
 
     return func_wrapper
 
@@ -112,7 +111,7 @@ class RunResults(unittest.TestCase):
 
         for level in severity_test_data:
             for severity_level, test_result_count in level.iteritems():
-                info('Severity level filter ' + severity_level +
+                logging.debug('Severity level filter ' + severity_level +
                      ' test result count: ' + str(test_result_count))
                 sort_types = None
                 simple_filters = []
@@ -136,7 +135,7 @@ class RunResults(unittest.TestCase):
 
         for level in severity_test_data:
             for checker_id_filter, test_result_count in level.iteritems():
-                info('Checker id filter ' + checker_id_filter +
+                logging.debug('Checker id filter ' + checker_id_filter +
                      ' test result count: ' + str(test_result_count))
                 sort_types = None
                 simple_filters = []
@@ -159,7 +158,7 @@ class RunResults(unittest.TestCase):
 
         for level in severity_test_data:
             for filepath_filter, test_result_count in level.iteritems():
-                info('File path filter ' + filepath_filter +
+                logging.debug('File path filter ' + filepath_filter +
                      ' test result count: ' + str(test_result_count))
 
                 sort_types = None
@@ -184,7 +183,7 @@ class RunResults(unittest.TestCase):
 
         for level in filter_test_data:
             for filepath_filter, test_result_count in level.iteritems():
-                info('File path filter ' + filepath_filter +
+                logging.debug('File path filter ' + filepath_filter +
                      ' test result count: ' + str(test_result_count))
 
                 sort_types = None

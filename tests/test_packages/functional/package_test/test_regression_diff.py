@@ -12,7 +12,7 @@ import unittest
 from codeCheckerDBAccess.ttypes import ReportFilter
 from codeCheckerDBAccess.ttypes import DiffType
 
-from test_helper.thrift_client_to_db import CCViewerHelper
+from test_utils.thrift_client_to_db import CCViewerHelper
 
 import shared
 

@@ -9,9 +9,7 @@ import json
 import os
 import unittest
 
-#from codeCheckerDBAccess.ttypes import *
-
-from test_helper.thrift_client_to_db import CCViewerHelper
+from test_utils.thrift_client_to_db import CCViewerHelper
 
 
 class RunResults(unittest.TestCase):

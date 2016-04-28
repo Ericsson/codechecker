@@ -25,4 +25,5 @@ tests/test_projects/test_files/src/divide_zero.o
 tests/test_projects/test_files/src/new_delete.o
 tests/test_projects/test_files/src/null_dereference.o
 tests/test_projects/test_files/src/stack_address_escape.o
+tests/test_projects/test_files/src/file_to_be_skipped.o
 
