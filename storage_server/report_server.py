@@ -356,20 +356,18 @@ class CheckerReportHandler(object):
         '''
         '''
         try:
-            # TODO: perfomance issues when executing the following query on large
-            #       databaseses
-            reports = self.session.query(self.report_ident) \
-                                  .filter(Report.bug_id == bug_hash)
-
             action = self.session.query(BuildAction).get(build_action_id)
             assert action is not None
 
+            # TODO: perfomance issues when executing the following query on large
+            #       databaseses?
+            reports = self.session.query(self.report_ident) \
+                            .filter(and_(Report.bug_id == bug_hash,
+                                self.report_ident.c.run_id == action.run_id))
             try:
                 # Check for duplicates by bug hash
                 if reports.count() != 0:
-                    possib_dups = reports.filter(self.report_ident.c.run_id ==
-                                                 action.run_id)
-                    for possib_dup in possib_dups:
+                    for possib_dup in reports:
                         # It's a duplicate or a hash clash. Check checker name,
                         # file id, and position
                         dup_report_obj = self.session.query(Report).get(
