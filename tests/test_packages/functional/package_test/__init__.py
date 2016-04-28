@@ -59,10 +59,9 @@ def setup_package():
     if use_postgresql:
         pg_db_config['dbaddress'] = 'localhost'
         pg_db_config['dbname'] = 'testDb'
+        pg_db_config['dbport'] = os.environ.get('TEST_DBPORT', get_free_port())
         if os.environ.get('TEST_DBUSERNAME', False):
             pg_db_config['dbusername'] = os.environ['TEST_DBUSERNAME']
-        if os.environ.get('TEST_DBPORT', False):
-            pg_db_config['dbport'] = os.environ['TEST_DBPORT']
 
     project_info = \
         json.load(open(os.path.realpath(env['TEST_TEST_PROJECT_CONFIG'])))
