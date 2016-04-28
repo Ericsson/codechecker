@@ -196,7 +196,19 @@ return declare(BorderContainer, {
 
                 myOverviewTC.overviewGrid.refreshGrid();
 
-                that.bugStoreModelTree.bugStore.remove(that.bugStoreModelTree.bugTree.selectedItem.parent);
+                var bugTree = that.bugStoreModelTree.bugTree;
+                var item = bugTree.selectedItem;
+                var parentNode
+                  = bugTree.getNodesByItem(bugTree.selectedItem)[0].getParent();
+
+                function setGray(label) {
+                  return '<span style="color: gray">' + label + '</span>';
+                }
+
+                parentNode.set('label', setGray(parentNode.get('label')));
+                parentNode.getChildren().forEach(function (node) {
+                  node.set('label', setGray(node.get('label')));
+                });
 
                 that.clearSelectionAndBubblesLines(editor);
 

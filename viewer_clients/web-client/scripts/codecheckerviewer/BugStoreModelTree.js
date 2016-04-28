@@ -104,10 +104,17 @@ return declare(null, {
     var that = this;
 
     var limit = codeCheckerDBAccess.MAX_QUERY_SIZE;
-    var filter = new codeCheckerDBAccess.ReportFilter();
-    filter.filepath = that.filePath;
 
-    CC_SERVICE.getRunResults(that.runId, limit, 0, [], [filter], function (result) {
+    var filter_sup = new codeCheckerDBAccess.ReportFilter();
+    filter_sup.filepath = that.filePath;
+    filter_sup.suppressed = true;
+
+    var filter_unsup = new codeCheckerDBAccess.ReportFilter();
+    filter_unsup.filepath = that.filePath;
+    filter_unsup.suppressed = false;
+
+    CC_SERVICE.getRunResults(that.runId, limit, 0, [], [filter_sup, filter_unsup],
+    function (result) {
       if (result instanceof RequestFailed) {
         console.error("Failed to load run results for "+ that.filePath, result);
         onComplete([]);
@@ -129,9 +136,20 @@ return declare(null, {
    * @param onComplete a callback function
    */
   _buildPathEventsForReport : function (bugStore, report, onComplete) {
+    function setSuppressedStyle(item, appendText) {
+      if (item.suppressed)
+        item.name
+          = '<span style="color: gray">'
+          + item.name
+          + (appendText ? ' (suppressed)' : '')
+          + '</span>';
+
+      return item;
+    }
+
     var that = this;
 
-    bugStore.push({
+    bugStore.push(setSuppressedStyle({
       name       : "Line " + report.lastBugPosition.startLine + " : " +
         report.checkerId,
       id         : report.reportId,
@@ -141,9 +159,9 @@ return declare(null, {
       checkerId  : report.checkerId,
       suppressed : report.suppressed,
       isLeaf     : false
-    });
+    }, true));
 
-    bugStore.push({
+    bugStore.push(setSuppressedStyle({
       name       : "<b><u>Result</u> : " + report.checkerMsg + "</b>",
       id         : report.reportId + "_0",
       parent     : report.reportId,
@@ -154,7 +172,7 @@ return declare(null, {
       checkerId  : report.checkerId,
       suppressed : report.suppressed,
       isLeaf     : true
-    });
+    }, true));
 
     CC_SERVICE.getReportDetails(report.reportId, function (details) {
       if (details instanceof RequestFailed) {
@@ -164,7 +182,7 @@ return declare(null, {
       }
 
       details.pathEvents.forEach(function (step, index) {
-        bugStore.push({
+        bugStore.push(setSuppressedStyle({
           name       : "Line " + step.startLine + " : " + step.msg,
           id         : report.reportId + "_" + (index + 1),
           parent     : report.reportId,
@@ -175,7 +193,7 @@ return declare(null, {
           checkerId  : report.checkerId,
           suppressed : report.suppressed,
           isLeaf     : true
-        });
+        }));
       });
 
       onComplete();
