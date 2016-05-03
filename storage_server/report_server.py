@@ -57,7 +57,7 @@ class CheckerReportHandler(object):
             else:
                 break
 
-    def __delete_file_content(self, run_id, report):
+    def __del_source_file_for_report(self, run_id, report_id, report_file_id):
         '''
         delete the stored file if there are no report references to it
         in the database
@@ -66,44 +66,53 @@ class CheckerReportHandler(object):
         report_reference_to_file = self.session.query(Report) \
                         .filter(
                             and_(Report.run_id == run_id,
-                                 Report.file_id == report.file_id,
-                                 Report.id != report.id)).first()
+                                 Report.file_id == report_file_id,
+                                 Report.id != report_id)).first()
         if not report_reference_to_file:
             # there is no other reference to the file
             # can be deleted
             self.session.query(File).filter(and_(File.run_id == run_id,
-                                                 File.id == report.file_id)).delete()
+                                                 File.id == report_file_id))\
+                                    .delete()
 
-    def __deleteBuildAction(self, build_action, run_id):
-        """Garbage collector for build in update mode."""
+    def __del_buildaction_results(self, build_action_id, run_id):
+        """
+        Delete the buildaction and related analysis results from the database
+
+        Report entry will be deleted by ReportsToBuildActions cascade delete
+        """
+
         try:
-            LOG.debug('Deleting build action: ' +str(build_action.id))
             rep_to_ba = self.session.query(ReportsToBuildActions) \
                                   .filter(ReportsToBuildActions.build_action_id ==
-                                          build_action.id)
+                                          build_action_id)
 
-            if rep_to_ba:
-                self.session.query(BuildAction).filter(and_(BuildAction.run_id == run_id,
-                                                            BuildAction.id == build_action.id)).delete()
+            reports_to_delete = [ r.report_id for r in rep_to_ba ]
 
-                reports_to_be_deleted = [ r.report_id for r in rep_to_ba ]
-                for report_id in reports_to_be_deleted:
-                    other_reference = self.session.query(ReportsToBuildActions) \
-                                    .filter(
-                                        and_(ReportsToBuildActions.report_id == report_id,
-                                             ReportsToBuildActions.build_action_id != build_action.id)).first()
+            self.session.query(BuildAction).filter(and_(BuildAction.run_id == run_id,
+                                                        BuildAction.id == build_action_id))\
+                                           .delete()
 
-                    if not other_reference:
-                        # there is no other reference, can be deleted
-                        report = self.session.query(Report).get(report_id)
-                        self.__sequence_deleter(BugPathEvent, report.start_bugevent)
-                        self.__sequence_deleter(BugReportPoint, report.start_bugpoint)
-                        self.__delete_file_content(run_id, report)
-                        self.session.delete(report)
+            for report_id in reports_to_delete:
+                # check if there is another reference to this report from
+                # other buildactions
+                other_reference = self.session.query(ReportsToBuildActions) \
+                                .filter(
+                                    and_(ReportsToBuildActions.report_id == report_id,
+                                         ReportsToBuildActions.build_action_id != build_action_id))\
+                                .first()
 
-                self.session.query(ReportsToBuildActions).filter(ReportsToBuildActions.build_action_id == build_action.id).delete()
+                if not other_reference:
+                    # there is no other reference, data related to the report
+                    # can be deleted
+                    report = self.session.query(Report).get(report_id)
+                    self.__sequence_deleter(BugPathEvent, report.start_bugevent)
+                    self.__sequence_deleter(BugReportPoint, report.start_bugpoint)
+                    self.__del_source_file_for_report(run_id, report.id, report.file_id)
 
-                self.session.commit()
+            self.session.query(ReportsToBuildActions).filter(
+                ReportsToBuildActions.build_action_id == build_action_id).delete()
+
 
         except Exception as ex:
             raise shared.ttypes.RequestFailed(
@@ -187,15 +196,19 @@ class CheckerReportHandler(object):
         '''
 
         try:
-            build_action = \
+            build_actions = \
                 self.session.query(BuildAction) \
                             .filter(and_(BuildAction.run_id == run_id,
                                          BuildAction.build_cmd == build_cmd,
-                                         BuildAction.check_cmd == check_cmd))
+                                         BuildAction.check_cmd == check_cmd))\
+                            .all()
 
-            if build_action.count() != 0:
-                # FIXME: should delete this build action only in update mode
-                self.__deleteBuildAction(build_action.first(), run_id)
+            if build_actions:
+                # delete the already stored buildaction and analysis results
+                for build_action in build_actions:
+                    self.__del_buildaction_results(build_action.id, run_id)
+
+                self.session.commit()
 
         except Exception as ex:
             LOG.error(ex)
