@@ -1,6 +1,8 @@
-CodeChecker quickcheck --analyzers clangsa -b 'g++ -w multi_error.cpp -o /dev/null' --steps
+CodeChecker quickcheck --analyzers clangsa -b "make multi_error" --steps
 -------------------------------------------------------
 [INFO] - Starting build ...
+[INFO] - with intercept ...
+g++ -w multi_error.cpp -o /dev/null
 [INFO] - Build finished successfully.
 clangsa found 2 defect(s) while analyzing multi_error.cpp
 

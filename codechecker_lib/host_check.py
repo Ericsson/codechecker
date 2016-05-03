@@ -108,3 +108,29 @@ def check_clang(compiler_bin, env):
             LOG.error(oerr)
             LOG.error('Failed to run: ' + ' '.join(clang_version_cmd) + '"')
             return False
+
+# -----------------------------------------------------------------------------
+def check_intercept(env):
+    '''
+    simple check if intercept (scan-build-py) is available
+    '''
+    intercept_cmd = ['intercept-build']
+    LOG.debug_analyzer(' '.join(intercept_cmd))
+    try:
+        res = subprocess.call(intercept_cmd,
+                              env=env,
+                              stdout=subprocess.PIPE,
+                              stderr=subprocess.PIPE)
+
+        if not res:
+            return True
+        else:
+            LOG.debug_analyzer('Failed to run: "' + ' '.join(intercept_cmd) + '"')
+            return False
+
+    except OSError as oerr:
+        if oerr[0] == errno.ENOENT:
+            LOG.error(oerr)
+            LOG.error('Failed to run: ' + ' '.join(intercept_cmd) + '"')
+            return False
+

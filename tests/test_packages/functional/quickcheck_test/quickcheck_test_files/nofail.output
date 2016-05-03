@@ -1,5 +1,7 @@
-CodeChecker quickcheck --analyzers clangsa -b "g++ -w nofail.cpp -o /dev/null"
+CodeChecker quickcheck --analyzers clangsa -b "make nofail"
 --------------------------------------------------------------------------------
 [INFO] - Starting build ...
+[INFO] - with intercept ...
+g++ -w nofail.cpp -o /dev/null
 [INFO] - Build finished successfully.
 clangsa found no defects while analyzing nofail.cpp

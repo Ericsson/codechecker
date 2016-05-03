@@ -37,7 +37,7 @@
         "version" : "1.10.4",
         "description" : "dojo",
         "homepage" : "http://dojotoolkit.org/",
-        "source_package" : { "download_cmd" : "wget" , "url" : "http://download.dojotoolkit.org/release-1.10.4/dojo-release-1.10.4.tar.gz" }
+        "source_package" : { "download_cmd" : "curl" , "url" : "http://download.dojotoolkit.org/release-1.10.4/dojo-release-1.10.4.tar.gz" , "option" : "-o" , "name" : "dojo-release-1.10.4.tar.gz" }
     },
     {
         "name" : "highlightjs",
@@ -45,7 +45,7 @@
         "version" : "9.0.0",
         "description" : "highlightjs",
         "homepage" : "https://highlightjs.org/",
-        "source_package" : { "download_cmd" : "wget" , "url" : "http://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.0.0/highlight.min.js" }
+        "source_package" : { "download_cmd" : "curl" , "url" : "http://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.0.0/highlight.min.js" , "option" : "-o" , "name" : "highlight.min.js" }
     },
     {
         "name" : "highlightjs_css",
@@ -53,6 +53,6 @@
         "version" : "9.0.0",
         "description" : "highlightjs_css",
         "homepage" : "https://highlightjs.org/",
-        "source_package" : { "download_cmd" : "wget" , "url" : "http://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.0.0/styles/xcode.min.css" }
+        "source_package" : { "download_cmd" : "curl" , "url" : "http://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.0.0/styles/xcode.min.css" , "option" : "-o" , "name" : "xcode.min.css" }
     }
 ]

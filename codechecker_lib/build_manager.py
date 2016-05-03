@@ -10,9 +10,17 @@ import os
 import sys
 import pickle
 import subprocess
+import shutil
+import platform
+import os.path
+
+import json
 
 from codechecker_lib import logger
 from codechecker_lib import analyzer_env
+from codechecker_lib import host_check
+
+from distutils.spawn import find_executable
 
 LOG = logger.get_new_logger('BUILD MANAGER')
 
@@ -37,11 +45,25 @@ def perform_build_command(logfile, command, context, silent=False):
         original_env = os.environ.copy()
 
     return_code = 0
-    # Run user's commands in shell
-    log_env = analyzer_env.get_log_env(logfile, context, original_env)
 
-    if 'CC_LOGGER_GCC_LIKE' not in log_env:
-      log_env['CC_LOGGER_GCC_LIKE'] = 'gcc:g++:clang:clang++:cc:c++'
+    # Run user's commands with intercept
+    if host_check.check_intercept(original_env):
+        LOG.info("with intercept ...")
+        final_command = command
+        if platform.system() == 'Linux':
+            command = "intercept-build " + final_command
+        elif platform.system() == 'Darwin':
+            command = "intercept-build " + final_command
+        log_env = original_env
+        LOG.debug_analyzer(command)
+
+    # Run user's commands in shell
+    else:
+        if platform.system() == 'Linux':
+            LOG.info("with ld logger ...")
+            log_env = analyzer_env.get_log_env(logfile, context, original_env)
+            if 'CC_LOGGER_GCC_LIKE' not in log_env:
+                log_env['CC_LOGGER_GCC_LIKE'] = 'gcc:g++:clang:clang++:cc:c++'
 
     LOG.debug_analyzer(log_env)
     try:
@@ -59,6 +81,15 @@ def perform_build_command(logfile, command, context, silent=False):
                 break
 
         return_code = proc.returncode
+
+        command_json_path = os.path.join(os.getcwd(), 'compile_commands.json')
+        LOG.debug_analyzer(command_json_path)
+        shutil.copyfile(command_json_path, logfile)
+        with open("compile_commands.json") as json_file:
+            json_data = json.load(json_file)
+            LOG.debug_analyzer(json_data)
+
+        os.remove(command_json_path)
 
         if not silent:
             if return_code == 0:
@@ -113,16 +144,21 @@ def generate_log_file(args, context, silent=False):
     log_file = None
     try:
         if args.command:
-            # check if logger bin exists
-            if not os.path.isfile(context.path_logger_bin):
-                LOG.debug_analyzer('Logger binary not found! Required for logging.')
-                sys.exit(1)
+            
+            intercept_build_executable = find_executable('intercept-build')
+    
+            if intercept_build_executable == None:
+                if platform.system() == 'Linux':
+                    # check if logger bin exists
+                    if not os.path.isfile(context.path_logger_bin):
+                        LOG.debug_analyzer('Logger binary not found! Required for logging.')
+                        sys.exit(1)
 
-            # check if logger lib exists
-            if not os.path.exists(context.path_logger_lib):
-                LOG.debug_analyzer('Logger library directory not found! Libs are requires' \
-                          'for logging.')
-                sys.exit(1)
+                    # check if logger lib exists
+                    if not os.path.exists(context.path_logger_lib):
+                        LOG.debug_analyzer('Logger library directory not found! Libs are requires' \
+                                  'for logging.')
+                        sys.exit(1)
 
             log_file = default_compilation_db(args.workspace)
             if os.path.exists(log_file):
