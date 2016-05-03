@@ -258,8 +258,16 @@ def handle_check(args):
                            context)
 
         LOG.info("Analysis has finished.")
+
+        db_data = ""
+        if args.postgresql:
+            db_data += " --postgresql" \
+                    +  " --dbname " + args.dbname \
+                    +  " --dbport " + str(args.dbport) \
+                    +  " --dbusername " + args.dbusername
+
         LOG.info("To view results run:\nCodeChecker server -w " +
-                 args.workspace)
+                 args.workspace + db_data)
 
     except Exception as ex:
         LOG.error(ex)
