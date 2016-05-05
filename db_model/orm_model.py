@@ -4,7 +4,7 @@
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
 '''
-orm model
+ORM model.
 '''
 from __future__ import print_function
 from __future__ import unicode_literals
@@ -50,14 +50,14 @@ class Run(Base):
 
     id = Column(Integer, autoincrement=True, primary_key=True)
     date = Column(DateTime)
-    duration = Column(Integer)  # Seconds, -1 if unfinished
+    duration = Column(Integer)  # Seconds, -1 if unfinished.
     name = Column(String)
     version = Column(String)
     command = Column(String)
     inc_count = Column(Integer)
     can_delete = Column(Boolean, nullable=False, server_default=true(), default=True)
 
-    # Relationships (One to Many)
+    # Relationships (One to Many).
     configlist = relationship('Config', cascade="all, delete-orphan", passive_deletes=True)
     buildactionlist = relationship('BuildAction', cascade="all, delete-orphan", passive_deletes=True)
 
@@ -92,8 +92,6 @@ class File(Base):
     content = Column(Binary)
     inc_count = Column(Integer)
 
-    # TODO: constraint: (filepath, run_id) is unique
-
     def __init__(self, run_id, filepath):
         self.run_id, self.filepath = run_id, filepath
         self.inc_count = 0
@@ -109,15 +107,12 @@ class BuildAction(Base):
     run_id = Column(Integer, ForeignKey('runs.id', deferrable = True, initially = "DEFERRED", ondelete='CASCADE'))
     build_cmd = Column(String)
     check_cmd = Column(String)
-    # No failure if the text is empty
+    # No failure if the text is empty.
     failure_txt = Column(String)
     date = Column(DateTime)
 
-    # Seconds, -1 if unfinished
+    # Seconds, -1 if unfinished.
     duration = Column(Integer)
-
-    # Relationships (One to Many)
-    # plistlist = relationship('Plist')
 
     def __init__(self, run_id, build_cmd, check_cmd):
         self.run_id, self.build_cmd, self.check_cmd, self.failure_txt = \
@@ -173,8 +168,8 @@ class BugReportPoint(Base):
     col_end = Column(Integer)
     file_id = Column(Integer, ForeignKey('files.id', deferrable = True, initially = "DEFERRED", ondelete='CASCADE'), index = True)
 
-    # TODO: Add check, the value must be an existing id or null
-    # be careful when inserting
+    # TODO: Add check, the value must be an existing id or null.
+    # Be careful when inserting.
     next = Column(Integer)
 
     def __init__(self, line_begin, col_begin, line_end, col_end, file_id):
@@ -195,7 +190,6 @@ class Report(Base):
     id = Column(Integer, autoincrement=True, primary_key=True)
     file_id = Column(Integer, ForeignKey('files.id', deferrable = True, initially = "DEFERRED", ondelete='CASCADE'))
     run_id = Column(Integer, ForeignKey('runs.id', deferrable = True, initially = "DEFERRED", ondelete='CASCADE'), index = True)
-    # build_action_id = Column(Integer, ForeignKey('build_actions.id', deferrable = True, initially = "DEFERRED"))
     bug_id = Column(String, index = True)
     checker_id = Column(String)
     checker_cat = Column(String)
@@ -262,7 +256,7 @@ class SkipPath(Base):
         self.run_id = run_id
         self.comment = comment
 
-# End of ORM classes
+# End of ORM classes.
 
 
 def CreateSchema(engine):
