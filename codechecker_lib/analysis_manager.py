@@ -29,15 +29,19 @@ def worker_result_handler(results):
 
     successful_analysis = defaultdict(int)
     failed_analisys = defaultdict(int)
+    skipped_num = 0
 
-    for res, analyzer_type in results:
-        if res == 0:
-            successful_analysis[analyzer_type] += 1
+    for res, skipped, analyzer_type in results:
+        if skipped:
+            skipped_num += 1
         else:
-            failed_analisys[analyzer_type] += 1
+            if res == 0:
+                successful_analysis[analyzer_type] += 1
+            else:
+                failed_analisys[analyzer_type] += 1
 
     LOG.info("----==== Summary ====----")
-    LOG.info('Total analyzed compilation commands: ' + str(len(results)))
+    LOG.info('Total compilation commands: ' + str(len(results)))
     if successful_analysis:
         LOG.info('Successfully analyzed')
         for analyzer_type, res in successful_analysis.iteritems():
@@ -47,6 +51,9 @@ def worker_result_handler(results):
         LOG.info("Failed to analyze")
         for analyzer_type, res in failed_analisys.iteritems():
             LOG.info('  ' + analyzer_type + ': ' + str(res))
+
+    if skipped_num:
+        LOG.info('Skipped compilation commands: ' + str(skipped_num))
     LOG.info("----=================----")
 
 def check(check_data):
@@ -62,6 +69,7 @@ def check(check_data):
     try:
         # if one analysis fails the check fails
         return_codes = 0
+        skipped = False
         for source in action.sources:
 
             # if there is no skiplist handler there was no skip list file
@@ -71,6 +79,7 @@ def check(check_data):
 
             if skp_handler and skp_handler.should_skip(source):
                 LOG.debug_analyzer(source_file_name + ' is skipped')
+                skipped = True
                 continue
 
             # construct analyzer env
@@ -120,7 +129,7 @@ def check(check_data):
             if not args.keep_tmp:
                 rh.clean_results()
 
-        return (return_codes, action.analyzer_type)
+        return (return_codes, skipped, action.analyzer_type)
 
     except Exception as e:
         LOG.debug_analyzer(str(e))
