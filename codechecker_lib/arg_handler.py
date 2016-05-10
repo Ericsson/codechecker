@@ -98,6 +98,8 @@ def handle_server(args):
     if not args.workspace and util.is_localhost(args.dbaddress):
         LOG.info("Workspace is required when database server run on localhost.")
         sys.exit(1)
+    elif args.workspace and not os.path.exists(args.workspace):
+        os.makedirs(args.workspace)
 
     if args.suppress is None:
         LOG.warning('WARNING! No suppress file was given, suppressed results will be only stored in the database.')
