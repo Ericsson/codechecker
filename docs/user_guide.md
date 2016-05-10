@@ -204,7 +204,7 @@ after (```-extra-arg=<string>```) the original compilation options.
 
 Config file example:
 ```
--extra-arg-before='-I~/include/for/analysis' -extra-arg='-DDEBUG'
+-extra-arg-before='-I~/include/for/analysis' -extra-arg-before='-I~/other/include/for/analysis/' -extra-arg='-DDEBUG'
 ```
 
 ### Using SQLite for database:
