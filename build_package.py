@@ -365,13 +365,13 @@ def build_package(repository_root, build_package_config, env=None):
     # create package folder layout
     create_folder_layout(output_dir, package_layout)
 
-    # check scan-build-py (intercept) && symlink
+    # check scan-build-py (intercept)
     LOG.info('Checking source: llvm scan-build-py (intercept)')
 
     intercept_build_executable = find_executable('intercept-build')
     
     if intercept_build_executable != None:
-        LOG.info('Available.')
+        LOG.info('Available')
     else:
         LOG.error('Not exists, build ld logger in Linux only')
         # build ld logger because intercept is not available
