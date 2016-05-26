@@ -189,3 +189,10 @@ def call_command(command, env=None):
         LOG.debug(str(ex.returncode))
         LOG.debug(ex.output)
         return ex.output, ex.returncode
+
+def get_default_workspace():
+    """
+    default workspace in the users home directory
+    """
+    workspace = os.path.join(os.path.expanduser("~"), '.codechecker')
+    return workspace
