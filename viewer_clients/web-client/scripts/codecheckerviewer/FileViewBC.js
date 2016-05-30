@@ -112,6 +112,23 @@ return declare(BorderContainer, {
       }
     });
 
+    function loadFile(viewedFileId) {
+      CC_SERVICE.getSourceFileData(viewedFileId, true, function (sourceFileData) {
+        if (sourceFileData instanceof RequestFailed) {
+          console.error("Failed to file contents for " + fileName + " , " +
+            sourceFileData);
+        } else {
+          editor.setFileName(that.viewedFile.split("/").pop());
+          editor.setPath(that.viewedFile);
+          editor._setContentAttr(sourceFileData.fileContent || 'File not stored');
+          editor.setBugMarkers(that.runId, that.viewedFile);
+
+          var newRange = that.createRangeFromBugPos(lastBugPosition);
+          that.jumpToRangeAndDrawBubblesLines(editor, newRange, reportId);
+        }
+      });
+    }
+
     that.bugStoreModelTree.bugTree.onClick = function (item) {
       if (item.isLeaf === true) {
 
@@ -119,21 +136,7 @@ return declare(BorderContainer, {
           that.viewedFile   = item.filePath;
           that.viewedFileId = item.fileId;
 
-          CC_SERVICE.getSourceFileData(that.viewedFileId, true, function (sourceFileData) {
-            if (sourceFileData instanceof RequestFailed) {
-              console.error("Failed to file contents for " + fileName + " , " +
-                sourceFileData);
-            } else {
-              editor._setContentAttr(sourceFileData.fileContent);
-              editor.setBugMarkers(that.runId, that.viewedFile);
-              editor.setFileName(that.viewedFile.split("/").pop());
-              editor.setPath(that.viewedFile);
-
-              var newRange = that.createRangeFromBugPos(item.range);
-              that.jumpToRangeAndDrawBubblesLines(editor, newRange, item.reportId);
-            }
-          });
-
+          loadFile(that.viewedFileId);
         } else {
           var newRange = that.createRangeFromBugPos(item.range);
           that.jumpToRangeAndDrawBubblesLines(editor, newRange, item.reportId);
@@ -233,21 +236,7 @@ return declare(BorderContainer, {
       editorHeader.suppressButton.setDisabled(true);
     }
 
-    CC_SERVICE.getSourceFileData(that.viewedFileId, true, function (sourceFileData) {
-      if (sourceFileData instanceof RequestFailed) {
-        console.error("Failed to file contents for " + fileName + " , " +
-          sourceFileData);
-      } else {
-        editor._setContentAttr(sourceFileData.fileContent);
-        editor.setFileName(that.viewedFile.split("/").pop());
-        editor.setPath(that.viewedFile);
-        editor.setBugMarkers(that.runId, that.viewedFile);
-
-        var newRange = that.createRangeFromBugPos(lastBugPosition);
-        that.jumpToRangeAndDrawBubblesLines(editor, newRange, reportId);
-      }
-    });
-
+    loadFile(that.viewedFileId);
 
     treePane.addChild(that.bugStoreModelTree.bugTree);
     editorCP.addChild(editor);

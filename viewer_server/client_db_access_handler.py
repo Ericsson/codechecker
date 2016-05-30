@@ -810,7 +810,7 @@ class ThriftRequestHandler():
             if sourcefile is None:
                 return SourceFileData()
 
-            if fileContent:
+            if fileContent and sourcefile.content:
                 source = zlib.decompress(sourcefile.content)
 
                 source = codecs.decode(source, 'utf-8', 'replace')
