@@ -1,4 +1,5 @@
-// Ez a tesztajl a https://github.com/llvm-mirror/clang/blob/master/test/Analysis/DeallocUseAfterFreeErrors.m -rol szarmazik.
+// This testfile is a copy from clang's github repository
+// https://github.com/llvm-mirror/clang/blob/master/test/Analysis/DeallocUseAfterFreeErrors.m
 
 // RUN: %clang_cc1 -analyze -analyzer-checker=core,osx.cocoa.SuperDealloc,debug.ExprInspection -analyzer-output=text -verify %s
 // CodeChecker check -n Obj -b "make" --analyzers clangsa -e osx.cocoa.SuperDealloc // makefile: all: clang -c DeallocUseAfterFreeErrors.m -o DeallocUseAfterFreeErrors

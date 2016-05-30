@@ -115,7 +115,6 @@ def check_intercept(env):
     simple check if intercept (scan-build-py) is available
     '''
     intercept_cmd = ['intercept-build']
-    LOG.debug_analyzer(' '.join(intercept_cmd))
     try:
         res = subprocess.call(intercept_cmd,
                               env=env,

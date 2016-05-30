@@ -1,4 +1,3 @@
-
 [![Build Status](https://travis-ci.org/tmsblgh/codechecker-osx-migration.svg?branch=master)](https://travis-ci.org/tmsblgh/codechecker-osx-migration)
 -----
 # Introduction
@@ -32,6 +31,33 @@ If your clang version does not have these features you will see in debug log the
 
   * `Check name wasn't found in the plist file.` --> use clang = 3.7 or trunk@r228624; otherwise CodeChecker makes a guess based on the report message
   * `Hash value wasn't found in the plist file.` --> update for a newer clang version; otherwise CodeChecker generates a simple hash based on the filename and the line content, this method is applied for Clang Tidy results too, because Clang Tidy does not support bug identifier hash generation currently
+
+## Linux
+For a more detailed dependency list see [Requirements](docs/deps.md)
+### Basic dependecy install & setup
+Tested on Ubuntu LTS 14.04.2
+~~~~~~{.sh}
+
+# get ubuntu packages
+# clang-3.6 can be replaced by any later versions of clang
+sudo apt-get install clang-3.6 doxygen build-essential thrift-compiler python-virtualenv gcc-multilib git wget
+
+# create new python virtualenv
+virtualenv -p /usr/bin/python2.7 ~/checker_env
+# activate virtualenv
+source ~/checker_env/bin/activate
+
+# get source code
+git clone https://github.com/Ericsson/codechecker.git
+cd codechecker
+
+# install required basic python modules
+pip install -r .ci/basic_python_requirements
+
+# create codechecker package
+./build_package.py -o ~/codechecker_package
+cd ..
+~~~~~~
 
 ## OS X
 
@@ -89,67 +115,14 @@ This step can be skipped if you always give the path of CodeChecker command.
 ~~~~~~{.sh}
 export PATH=~/codechecker_package/CodeChecker/bin:$PATH
 ~~~~~~
-
-#### Add package bin directory to PATH.
-This is need for clang
+Clang
 ~~~~~~{.sh}
 export PATH=~/{user path}/build/bin:$PATH
 ~~~~~~
-This is need for scan-build-py (intercept-build)
+Scan-build-py (intercept-build)
 ~~~~~~{.sh}
 export PATH=~/{user path}/llvm/tools/clang/tools/scan-build-py/bin:$PATH
 ~~~~~~
-
-#### Check the project
-Check the project using SQLite. The database is placed in the working
-directory which can be provided by -w flag (~/.codechecker by default).
-~~~~~~{.sh}
-CodeChecker check -n test_project_check -b "cd my_test_project && make clean && make"
-~~~~~~
-
-#### Start web server to view the results
-~~~~~~{.sh}
-CodeChecker server
-~~~~~~
-
-#### View the results with firefox
-~~~~~~{.sh}
-firefox http://localhost:8001
-~~~~~~
-
-If all goes well you can check analysis results in your web browser:
-
-![CodeChecker Viewer](https://raw.githubusercontent.com/Ericsson/codechecker/master/docs/images/viewer.png)
-
-See user guide for further configuration and check options.
-
-## Linux
-For a more detailed dependency list see [Requirements](docs/deps.md)
-### Basic dependecy install & setup
-Tested on Ubuntu LTS 14.04.2
-~~~~~~{.sh}
-
-# get ubuntu packages
-# clang-3.6 can be replaced by any later versions of clang
-sudo apt-get install clang-3.6 doxygen build-essential thrift-compiler python-virtualenv gcc-multilib git wget
-
-# create new python virtualenv
-virtualenv -p /usr/bin/python2.7 ~/checker_env
-# activate virtualenv
-source ~/checker_env/bin/activate
-
-# get source code
-git clone https://github.com/Ericsson/codechecker.git
-cd codechecker
-
-# install required basic python modules
-pip install -r .ci/basic_python_requirements
-
-# create codechecker package
-./build_package.py -o ~/codechecker_package
-cd ..
-~~~~~~
-
 
 ### Check a test project
 #### Check if clang or clang tidy is available

@@ -1,6 +1,6 @@
 {
     "name": "test_files",
-    "clean_cmd": "rm -f *.o",
+    "clean_cmd": "make clean",
     "build_cmd": "make",
     "clang_stable": {
         "bugs": [
