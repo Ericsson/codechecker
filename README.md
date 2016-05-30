@@ -62,7 +62,7 @@ cd ..
 ## OS X
 
 ### Basic dependecy install & setup
-Tested on OS X El Capitan 10.11.4
+Tested on OS X El Capitan 10.11.5 & macOS Sierra 10.12 Beta
 ~~~~~~{.sh}
 
 # on El Capitan System Integrity Protection (SIP) need to turn off

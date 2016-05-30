@@ -61,6 +61,9 @@ def perform_build_command(logfile, command, context, silent=False):
             log_env = analyzer_env.get_log_env(logfile, context, original_env)
             if 'CC_LOGGER_GCC_LIKE' not in log_env:
                 log_env['CC_LOGGER_GCC_LIKE'] = 'gcc:g++:clang:clang++:cc:c++'
+        else:
+            LOG.error("Intercept-build is required to run CodeChecker in OS X.")
+            sys.exit(1)
 
     LOG.debug_analyzer(log_env)
     try:
