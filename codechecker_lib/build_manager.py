@@ -51,8 +51,6 @@ def perform_build_command(logfile, command, context, silent=False):
         LOG.debug_analyzer("with intercept ...")
         final_command = command
         command = "intercept-build " + final_command
-        if platform.system() == 'Darwin':
-            LOG.info("Maybe you have to type your password")
         log_env = original_env
         LOG.debug_analyzer(command)
 

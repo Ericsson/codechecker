@@ -54,11 +54,9 @@ addons:
     postgresql: "9.3"
 
 script:
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then ./change_clang_version_for_osx.py;                    fi
-    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then ./change_clang_version.py;                          fi
+    - ./change_clang_version.py
 
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then . tests/test_env_setup_osx.sh;                        fi
-    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then . tests/test_env_setup_linux.sh;                    fi
+    - source tests/test_env_setup.sh
 
     - ./build_package.py -o $TEST_CODECHECKER_PACKAGE_DIR -v
 

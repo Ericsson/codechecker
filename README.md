@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/tmsblgh/codechecker-osx-migration.svg?branch=master)](https://travis-ci.org/tmsblgh/codechecker-osx-migration)
+[![Build Status](https://travis-ci.org/Ericsson/codechecker.svg?branch=master)](https://travis-ci.org/Ericsson/codechecker)
 -----
 # Introduction
 CodeChecker is a static analysis infrastructure built on [Clang Static Analyzer](http://clang-analyzer.llvm.org/).  
@@ -110,20 +110,6 @@ available in the PATH
   },
 ```
 
-#### Add package bin directory to PATH.
-This step can be skipped if you always give the path of CodeChecker command.
-~~~~~~{.sh}
-export PATH=~/codechecker_package/CodeChecker/bin:$PATH
-~~~~~~
-Clang
-~~~~~~{.sh}
-export PATH=~/{user path}/build/bin:$PATH
-~~~~~~
-Scan-build-py (intercept-build)
-~~~~~~{.sh}
-export PATH=~/{user path}/llvm/tools/clang/tools/scan-build-py/bin:$PATH
-~~~~~~
-
 ### Check a test project
 #### Check if clang or clang tidy is available
 ~~~~~~{.sh}
@@ -150,6 +136,14 @@ source ~/checker_env/bin/activate
 This step can be skipped if you always give the path of CodeChecker command.
 ~~~~~~{.sh}
 export PATH=~/codechecker_package/CodeChecker/bin:$PATH
+~~~~~~
+Scan-build-py (intercept-build)
+~~~~~~{.sh}
+export PATH=~/{user path}/llvm/tools/clang/tools/scan-build-py/bin:$PATH
+~~~~~~
+Clang
+~~~~~~{.sh}
+export PATH=~/{user path}/build/bin:$PATH
 ~~~~~~
 
 #### Check the project
