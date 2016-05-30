@@ -1,19 +1,11 @@
-#!/usr/bin/env bash
+#sd!/usr/bin/env bash
 
-if [[ "$OSTYPE" == "linux-gnu" ]]; then
-    export TEST_TESTS_DIR=$(readlink -f "$(dirname "$BASH_SOURCE")")
-    echo linux-gnu
-elif [[ "$OSTYPE" == "darwin"* ]]; then
+if [[ "$OSTYPE" == "darwin"* ]]; then
     export TEST_TESTS_DIR=$(greadlink -f "$(dirname "$BASH_SOURCE")")
-    echo darwin
-fi
-
-if [[ "$OSTYPE" == "linux-gnu" ]]; then
-    export TEST_CODECHECKER_PACKAGE_DIR=`mktemp -d`
-    echo linux-gnu
-elif [[ "$OSTYPE" == "darwin"* ]]; then
     export TEST_CODECHECKER_PACKAGE_DIR=`mktemp -d -t 'mytmpdir'`
-    echo darwin
+else
+    export TEST_TESTS_DIR=$(readlink -f "$(dirname "$BASH_SOURCE")")
+    export TEST_CODECHECKER_PACKAGE_DIR=`mktemp -d`
 fi
 
 export TEST_CODECHECKER_DIR="$TEST_CODECHECKER_PACKAGE_DIR/CodeChecker"
