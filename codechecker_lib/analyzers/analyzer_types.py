@@ -7,6 +7,7 @@
 """
 supported analyzer types
 """
+import os
 import re
 import sys
 
@@ -173,6 +174,14 @@ def initialize_checkers(config_handler,
             else:
                 config_handler.disable_checker(checker_name)
 
+def __replace_env_var(cfg_file):
+    def replacer(matchobj):
+        env_var = matchobj.group(1)
+        if matchobj.group(1) not in os.environ:
+            LOG.error(env_var + ' environment variable not set in ' + cfg_file)
+            return ''
+        return os.environ[env_var]
+    return replacer
 
 def __build_clangsa_config_handler(args, context):
     """
@@ -189,7 +198,10 @@ def __build_clangsa_config_handler(args, context):
     config_handler.includes = context.extra_includes
     try:
         with open(args.clangsa_args_cfg_file, 'rb') as sa_cfg:
-            config_handler.analyzer_extra_arguments = sa_cfg.read().strip()
+            config_handler.analyzer_extra_arguments = \
+                re.sub('\$\((.*?)\)',
+                    __replace_env_var(args.clangsa_args_cfg_file),
+                    sa_cfg.read().strip())
     except IOError as ioerr:
         LOG.debug_analyzer(ioerr)
     except AttributeError as aerr:
@@ -235,7 +247,8 @@ def __build_clang_tidy_config_handler(args, context):
 
     try:
         with open(args.tidy_args_cfg_file, 'rb') as tidy_cfg:
-            config_handler.analyzer_extra_arguments = tidy_cfg.read().strip()
+            config_handler.analyzer_extra_arguments = \
+                re.sub('\$\((.*?)\)', __replace_env_var, tidy_cfg.read().strip())
     except IOError as ioerr:
         LOG.debug_analyzer(ioerr)
     except AttributeError as aerr:
