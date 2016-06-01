@@ -634,7 +634,8 @@ def main():
                         dest="compress", default=False,
                         help="Compress package to tar.gz")
 
-    parser.add_argument("-v", action="store_true", dest="verbose_log")
+    parser.add_argument("-v", action="store_true", dest="verbose_log",
+                        help='Set log level to higher verbosity.')
 
     args = vars(parser.parse_args())
 
