@@ -14,6 +14,7 @@ import subprocess
 import sys
 import time
 import uuid
+import shutil
 
 # sys.path modification needed so nosetests can load the test_utils package
 sys.path.append(os.path.abspath(os.environ['TEST_TESTS_DIR']))
@@ -43,8 +44,10 @@ def setup_package():
 
     tmp_dir = os.path.abspath(os.environ['TEST_CODECHECKER_PACKAGE_DIR'])
     workspace = os.path.join(tmp_dir, 'workspace')
-    if not os.path.exists(workspace):
-        os.makedirs(workspace)
+    if os.path.exists(workspace):
+        print("Removing previous workspace")
+        shutil.rmtree(workspace)
+    os.makedirs(workspace)
 
     test_project_path = os.path.join(
         os.path.abspath(os.environ['TEST_TESTS_DIR']),
