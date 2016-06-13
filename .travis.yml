@@ -6,6 +6,11 @@ language: python
 python:
     - "2.7"
 
+before_install:
+    - sudo add-apt-repository ppa:adrozdoff/llvm-backport -y
+    - sudo apt-get update -q
+    - sudo apt-get install clang-3.7 -y
+
 install:
     - pip install -r ./.ci/python_requirements
     - pip install nose
@@ -14,14 +19,12 @@ addons:
     apt:
         sources:
             - ubuntu-toolchain-r-test
-            - llvm-toolchain-precise-3.5
-            - llvm-toolchain-precise-3.6
-            - llvm-toolchain-precise-3.7
-            - llvm-toolchain-precise
+            #- llvm-toolchain-precise-3.7
+            #- llvm-toolchain-precise
         packages:
             - doxygen
             - libpq-dev
-            - clang-3.7
+            # - clang-3.7
             - libc6-dev-i386
             - gcc-multilib
             - thrift-compiler

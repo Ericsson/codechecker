@@ -20,13 +20,13 @@ return declare(DataGrid, {
     });
 
     that.structure = [
-      { name : "Diff", field : "diffDisplay", styles : "text-align: center;", width : "40px", type : "dojox.grid.cells.Bool", editable : true },
-      { name : "Run Id", field : "runid", styles : "text-align: center;", width : "50px" },
-      { name : "Name", field : "name", styles : "text-align: center;", width : "auto" },
-      { name : "Date", field : "date", styles : "text-align: center;", width : "auto" },
-      { name : "Number of bugs", field : "numberofbugs", styles : "text-align: center;", width : "auto" },
-      { name : "Duration", field : "duration", styles : "text-align: center;", width : "auto" },
-      { name : "Delete", field : "deleteDisplay", styles : "text-align: center;", width : "50px", type : "dojox.grid.cells.Bool", editable : true },
+      { name : "Diff", field : "diffDisplay", styles : "text-align: center;", type : "dojox.grid.cells.Bool", editable : true },
+      { name : "Run Id", field : "runid", styles : "text-align: center;" },
+      { name : "Name", field : "name", styles : "text-align: left;", width : "100%" },
+      { name : "Date", field : "date", styles : "text-align: center;", width : "30%" },
+      { name : "Number of bugs", field : "numberofbugs", styles : "text-align: center;", width : "20%" },
+      { name : "Duration", field : "duration", styles : "text-align: center;" },
+      { name : "Delete", field : "deleteDisplay", styles : "text-align: center;", type : "dojox.grid.cells.Bool", editable : true },
     ];
 
   },
