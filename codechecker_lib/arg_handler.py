@@ -11,9 +11,11 @@ import sys
 import json
 import tempfile
 import shutil
+import multiprocessing
 
 from viewer_server import client_db_access_server
 
+from codechecker_lib import build_action
 from codechecker_lib import client
 from codechecker_lib import generic_package_context
 from codechecker_lib import analyzer
@@ -227,7 +229,7 @@ def handle_check(args):
         if not log_file:
             LOG.error("Failed to generate compilation command file: " +
                       log_file)
-            sys.ecit(1)
+            sys.exit(1)
 
         try:
             actions = log_parser.parse_log(log_file)
@@ -333,6 +335,70 @@ def handle_quickcheck(args):
     finally:
         shutil.rmtree(args.workspace)
 
+
+def consume_plist(item):
+    plist, args, context = item
+    LOG.info('Consuming ' + plist)
+
+    action = build_action.BuildAction()
+    action.analyzer_type = analyzer_types.CLANG_SA
+    action.original_command = 'Imported from PList directly'
+
+    rh = analyzer_types.construct_result_handler(args,
+                                                 action,
+                                                 context.run_id,
+                                                 args.directory,
+                                                 {},
+                                                 None,
+                                                 not args.stdout)
+    
+    rh.handle_plist(os.path.join(args.directory, plist))
+
+def handle_plist(args):
+
+    context = generic_package_context.get_context()
+    context.codechecker_workspace = args.workspace
+    context.db_username = args.dbusername
+
+    if not args.stdout:
+        args.workspace = os.path.realpath(args.workspace)
+        if not os.path.isdir(args.workspace):
+            os.mkdir(args.workspace)
+    
+        check_env = analyzer_env.get_check_env(context.path_env_extra,
+                                               context.ld_lib_path_extra)
+    
+        sql_server = SQLServer.from_cmdline_args(args,
+                                                 context.codechecker_workspace,
+                                                 context.migration_root,
+                                                 check_env)
+    
+        conn_mgr = client.ConnectionManager(sql_server,
+                                            'localhost',
+                                            util.get_free_port())
+    
+        sql_server.start(context.db_version_info, wait_for_start=True, init=True)
+    
+        conn_mgr.start_report_server(context.db_version_info)
+    
+        with client.get_connection() as connection:
+            package_version = context.version['major'] + '.' + context.version['minor']
+            context.run_id = connection.add_checker_run(' '.join(sys.argv),
+                                                        args.name,
+                                                        package_version,
+                                                        args.force)
+
+    pool = multiprocessing.Pool(args.jobs)
+
+    try:
+        items = [(plist, args, context) for plist in os.listdir(args.directory)]
+        pool.map_async(consume_plist, items, 1).get(float('inf'))
+        pool.close()
+    except Exception:
+        pool.terminate()
+        raise
+    finally:
+        pool.join()
 
 def handle_version_info(args):
     ''' Get and print the version informations from the
