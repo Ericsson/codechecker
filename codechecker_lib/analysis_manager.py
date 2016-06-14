@@ -12,6 +12,7 @@ import signal
 import multiprocessing
 import ntpath
 import traceback
+import shutil
 from collections import defaultdict
 
 from codechecker_lib import logger
@@ -155,7 +156,7 @@ def start_workers(args, actions, context, analyzer_config_map, skp_handler):
     # analyzer to store analyzer results or temporary files
     # each analyzer instance does its own cleanup
     report_output = os.path.join(context.codechecker_workspace,
-                                 context.report_output_dir_name)
+                                 args.name + '_reports')
 
     if not os.path.exists(report_output):
         os.mkdir(report_output)
@@ -190,3 +191,6 @@ def start_workers(args, actions, context, analyzer_config_map, skp_handler):
         raise
     finally:
         pool.join()
+        if not args.keep_tmp:
+            LOG.debug('Removing temporary directory: ' + report_output)
+            shutil.rmtree(report_output)

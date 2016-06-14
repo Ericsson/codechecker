@@ -187,10 +187,6 @@ class ContextBase(object):
         self._run_id = value
 
     @property
-    def report_output_dir_name(self):
-        return self.variables['report_output_dir_name']
-
-    @property
     def severity_map(self):
         return self._severity_map
 

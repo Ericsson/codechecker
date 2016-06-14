@@ -5,6 +5,7 @@
 # -------------------------------------------------------------------------
 
 import os
+import uuid
 import ntpath
 
 from abc import ABCMeta, abstractmethod
@@ -181,16 +182,16 @@ class ResultHandler(object):
     def get_analyzer_result_file(self):
         """
         file where the analyzer should put the analyzer result
-        extra_info should make the result file uniqe
         each result handler should collect the provided analyzer_result files
         for later cleanup
         """
         analyzed_file = self.analyzed_source_file
         _, analyzed_file_name = ntpath.split(analyzed_file)
 
-        out_file_name = str(self.buildaction.id) + '_' + \
-                         str(self.buildaction.analyzer_type) \
-                        + '_' + analyzed_file_name + '.out'
+        uid = str(uuid.uuid1()).split('-')[0]
+
+        out_file_name = str(self.buildaction.analyzer_type) + \
+            '_' + analyzed_file_name + '_' + uid + '.out'
 
         out_file = os.path.join(self.__workspace, out_file_name)
         self.add_result_file(analyzed_file_name, out_file)
