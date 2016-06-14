@@ -59,7 +59,7 @@ def run_codechecker(original_env, checker_env):
     procPool.append(proc.pid)
 
     proc.wait()
-
+    sys.exit(proc.returncode)
 
 def main():
 
