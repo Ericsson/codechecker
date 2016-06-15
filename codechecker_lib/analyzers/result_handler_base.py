@@ -54,7 +54,7 @@ class ResultHandler(object):
         self.__analyzer_returncode = 1
         self.__buildaction = action
 
-        self.__result_files = {}
+        self.__res_file = None
 
     @property
     def buildaction(self):
@@ -82,12 +82,6 @@ class ResultHandler(object):
         return the analyzer result files
         """
         return self.__result_files
-
-    def add_result_file(self, source_file_name,  result_file):
-        """
-        result file which should be cleaned
-        """
-        self.__result_files[source_file_name] = result_file
 
     @property
     def skiplist_handler(self):
@@ -181,36 +175,35 @@ class ResultHandler(object):
 
     def get_analyzer_result_file(self):
         """
-        file where the analyzer should put the analyzer result
-        each result handler should collect the provided analyzer_result files
-        for later cleanup
+        generate a result filename where the analyzer should put the analyzer result
+        result file should be removed by the result handler if not required anymore
         """
-        analyzed_file = self.analyzed_source_file
-        _, analyzed_file_name = ntpath.split(analyzed_file)
+        if not self.__res_file:
+            analyzed_file = self.analyzed_source_file
+            _, analyzed_file_name = ntpath.split(analyzed_file)
 
-        uid = str(uuid.uuid1()).split('-')[0]
+            uid = str(uuid.uuid1()).split('-')[0]
 
-        out_file_name = str(self.buildaction.analyzer_type) + \
-            '_' + analyzed_file_name + '_' + uid + '.out'
+            out_file_name = str(self.buildaction.analyzer_type) + \
+                '_' + analyzed_file_name + '_' + uid + '.plist'
 
-        out_file = os.path.join(self.__workspace, out_file_name)
-        self.add_result_file(analyzed_file_name, out_file)
+            out_file = os.path.join(self.__workspace, out_file_name)
+            self.__res_file = out_file
 
-        return out_file
+        return self.__res_file
 
     def clean_results(self):
         """
         should be called after the postprocessing and result handling is done
         """
-        for analyzed_file, result_file in self.__result_files.iteritems():
-            LOG.debug('Removing result file: ' + result_file + '\n'
-                      'For analyzed file ' + analyzed_file)
+        if self.__res_file:
             try:
-                os.remove(result_file)
+                os.remove(self.__res_file)
             except OSError as oserr:
                 # there might be no result file if analysis failed
                 LOG.debug(oserr)
                 pass
+
 
     @abstractmethod
     def postprocess_result(self):
