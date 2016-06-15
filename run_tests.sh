@@ -14,5 +14,5 @@ nosetests tests/test_packages/
 
 # cleanup the environment variables and temporary
 # directories
-./clean_tests.sh
+./tests/clean_tests.sh
 
