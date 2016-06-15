@@ -14,6 +14,8 @@ import subprocess
 import sys
 import time
 import uuid
+import shlex
+import shutil
 
 # sys.path modification needed so nosetests can load the test_utils package
 sys.path.append(os.path.abspath(os.environ['TEST_TESTS_DIR']))
@@ -43,8 +45,10 @@ def setup_package():
 
     tmp_dir = os.path.abspath(os.environ['TEST_CODECHECKER_PACKAGE_DIR'])
     workspace = os.path.join(tmp_dir, 'workspace')
-    if not os.path.exists(workspace):
-        os.makedirs(workspace)
+    if os.path.exists(workspace):
+        print("Removing previous workspace")
+        shutil.rmtree(workspace)
+    os.makedirs(workspace)
 
     test_project_path = os.path.join(
         os.path.abspath(os.environ['TEST_TESTS_DIR']),
@@ -100,15 +104,17 @@ def setup_package():
     }
 
     # first check
+    print("Running first analysis")
+
     _clean_project(test_project_path, test_project_clean_cmd, env)
     test_project_1_name = project_info['name'] + '_' + uuid.uuid4().hex
 
     _run_check(shared_test_params, skip_list_file, test_project_build_cmd,
                test_project_1_name, test_project_path)
 
-    time.sleep(5)
-
     # second check
+    print("Running second analysis")
+
     _clean_project(test_project_path, test_project_clean_cmd, env)
 
     test_project_2_name = project_info['name'] + '_' + uuid.uuid4().hex
@@ -116,9 +122,8 @@ def setup_package():
     _run_check(shared_test_params, skip_list_file, test_project_build_cmd,
                test_project_2_name, test_project_path)
 
-    time.sleep(5)
-
     # start the CodeChecker server
+    print("Starting server to get results")
     _start_server(shared_test_params, test_config)
 
 
@@ -145,7 +150,10 @@ def _clean_project(test_project_path, clean_cmd, env):
     command = ['bash', '-c', clean_cmd]
 
     try:
-        subprocess.check_call(command, cwd=test_project_path, env=env)
+        print(command)
+        subprocess.check_call(command,
+                              cwd=test_project_path,
+                              env=env)
     except subprocess.CalledProcessError as perr:
         raise perr
 
@@ -155,6 +163,8 @@ def _generate_suppress_file(suppress_file):
     Create a dummy supppress file just to check if the old and the new
     suppress format can be processed.
     """
+    print("Generating suppress file: " + suppress_file)
+
     import calendar
     import hashlib
     import random
@@ -173,10 +183,10 @@ def _generate_suppress_file(suppress_file):
         s_file.write(k + '||' + 'idziei éléáálk ~!@#$#%^&*() \n')
         s_file.write(
             k + '||' + 'test_~!@#$%^&*.cpp' +
-            '||' 'idziei éléáálk ~!@#$%^&*(\n')
+            '||' +  'idziei éléáálk ~!@#$%^&*(\n')
         s_file.write(
             hashlib.md5(suppress_line).hexdigest() + '||' +
-            'test_~!@#$%^&*.cpp' + '||' 'idziei éléáálk ~!@#$%^&*(\n')
+            'test_~!@#$%^&*.cpp' + '||' + 'idziei éléáálk ~!@#$%^&*(\n')
 
     s_file.close()
 
@@ -215,7 +225,7 @@ def _run_check(shared_test_params, skip_list_file, test_project_build_cmd,
     check_cmd.append('-n')
     check_cmd.append(test_project_name)
     check_cmd.append('-b')
-    check_cmd.append(test_project_build_cmd)
+    check_cmd.append("'"+test_project_build_cmd+"'")
     check_cmd.append('--analyzers')
     check_cmd.append('clangsa')
     if shared_test_params['use_postgresql']:
@@ -224,10 +234,14 @@ def _run_check(shared_test_params, skip_list_file, test_project_build_cmd,
             shared_test_params['pg_db_config'])
 
     try:
+        print(' '.join(check_cmd))
         subprocess.check_call(
-            check_cmd,
+            shlex.split(' '.join(check_cmd)),
             cwd=test_project_path,
             env=shared_test_params['env'])
+
+        print("Analyzing test project done.")
+
     except subprocess.CalledProcessError as perr:
         raise perr
 
@@ -244,7 +258,6 @@ def _start_server(shared_test_params, test_config):
         # If proc is still running, stop it.
         if proc.poll() is None:
             proc.terminate()
-    # -------------------------------------------------------------------------
 
     server_cmd = []
     server_cmd.append('CodeChecker')
@@ -262,6 +275,7 @@ def _start_server(shared_test_params, test_config):
         server_cmd += _pg_db_config_to_cmdline_params(
             shared_test_params['pg_db_config'])
 
+    print(' '.join(server_cmd))
     server_proc = multiprocessing.Process(
         name='server',
         target=start_server_proc,

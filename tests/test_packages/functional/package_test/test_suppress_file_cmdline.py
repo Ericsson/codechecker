@@ -35,5 +35,4 @@ class RunResults(unittest.TestCase):
         check if the api returns a non empty string
         tempfile is used for suppress file so name will change for each run
         """
-        self.assertNotEquals(self._cc_client.getSuppressFile(),
-                             '')
+        self.assertNotEquals(self._cc_client.getSuppressFile(), '')

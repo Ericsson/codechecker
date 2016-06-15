@@ -33,7 +33,10 @@ class HashClash(unittest.TestCase):
     def _create_run(self, name):
         """Creates a new run using an unique id."""
 
-        return self._report.addCheckerRun(name, name + str(uuid4()), 'v', False)
+        return self._report.addCheckerRun(name,
+                                          name + str(uuid4()),
+                                          'v',
+                                          False)
 
     def _create_file(self, run_id, name, cols=10, lines=10):
         """Creates a new file with random content."""
