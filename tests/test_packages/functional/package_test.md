@@ -1,15 +1,10 @@
 # How to run the tests
-~~~~~~{.sh}
-test_package.py -p /path/to/the/package/ --clang {stable, trunk}
-~~~~~~
-In this case 'stable' means the latest stable clang release.
-Specifying the correct clang version is essential since different versions of clang SA may produce different reports.
 
-For other options see:
+Make sure you install all the package building dependencies before running the tests.
+Additionally nosetest test framework is required.
 ~~~~~~{.sh}
-test_package.py --help
+./run_tests.sh
 ~~~~~~
-
 
 # What happens during the test
  * The chosen test project is built, logged and checked twice. For this step the ld-logger must be present in the package.
