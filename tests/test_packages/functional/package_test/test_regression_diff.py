@@ -8,11 +8,13 @@
 import json
 import os
 import unittest
+import logging
 
 from codeCheckerDBAccess.ttypes import ReportFilter
 from codeCheckerDBAccess.ttypes import DiffType
 
 from test_utils.thrift_client_to_db import CCViewerHelper
+from test_utils.debug_printer import print_run_results
 
 import shared
 
@@ -35,7 +37,6 @@ class RunResults(unittest.TestCase):
         uri = '/'
         self._testproject_data = json.loads(os.environ['CC_TEST_PROJECT_INFO'])
         self.assertIsNotNone(self._testproject_data)
-
         self._cc_client = CCViewerHelper(host, port, uri)
 
     # -----------------------------------------------------
@@ -89,18 +90,34 @@ class RunResults(unittest.TestCase):
         base_run_id = runs[0].runId
         new_run_id = runs[1].runId
 
+        base_count = self._cc_client.getRunResultCount(base_run_id, [])
+        logging.debug("Base run id: %d", base_run_id)
+        logging.debug("Base count: %d", base_count)
+
+        base_run_res = self._cc_client.getAllRunResults(base_run_id, [], [])
+
+        print_run_results(base_run_res)
+
+        new_count = self._cc_client.getRunResultCount(new_run_id, [])
+        logging.debug("New run id: %d", new_run_id)
+        logging.debug("New count: %d", new_count)
+
+        new_run_res = self._cc_client.getAllRunResults(new_run_id, [], [])
+
+        print_run_results(new_run_res)
+
         diff_res = self._cc_client.getDiffResultCount(base_run_id,
-                                                   new_run_id,
-                                                   DiffType.UNRESOLVED,
-                                                   [])
+                                                      new_run_id,
+                                                      DiffType.UNRESOLVED,
+                                                      [])
         self.assertEqual(diff_res, 23)
 
     # -----------------------------------------------------
     def test_get_diff_res_count_unresolved_filter(self):
         """
         This test asumes nothing has been resolved between the two checker runs
-        The the same severity levels and numbers are used as in a simple filter test
-        for only one run from the project config
+        The the same severity levels and numbers are used as in a
+        simple filter test for only one run from the project config
         """
         runs = self._cc_client.getRunData()
         self.assertIsNotNone(runs)
@@ -121,7 +138,8 @@ class RunResults(unittest.TestCase):
                 simple_filters.append(simple_filter)
 
                 diff_result_count = self._cc_client.getDiffResultCount(
-                    base_run_id, new_run_id, DiffType.UNRESOLVED, simple_filters)
+                    base_run_id, new_run_id, DiffType.UNRESOLVED,
+                    simple_filters)
 
                 self.assertEqual(test_result_count, diff_result_count)
 
@@ -190,7 +208,7 @@ class RunResults(unittest.TestCase):
                                                               new_run_id,
                                                               DiffType.UNRESOLVED,
                                                               [])
-                res = [ r for r in diff_res if r.checkerId == checker_name ]
+                res = [r for r in diff_res if r.checkerId == checker_name]
 
                 # there should be only one result for each checker name
                 self.assertEqual(len(res), 1)

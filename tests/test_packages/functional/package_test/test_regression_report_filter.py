@@ -19,29 +19,8 @@ import shared
 from test_utils.thrift_client_to_db import CCViewerHelper
 
 
-def assert_decorate(function_to_run_test):
-    def func_wrapper(*args, **kwargs):
-        try:
-            result = function_to_run_test(*args, **kwargs)
-            logging.debug('PASSED')
-            return result
-
-        except AssertionError:
-            _, _, tb = sys.exc_info()
-            traceback.print_tb(tb)  # Fixed format
-            tb_info = traceback.extract_tb(tb)
-            filename, line, func, text = tb_info[-1]
-
-            logging.debug('Test failed with arguments')
-            logging.debug(func)
-            logging.debug(args)
-            logging.debug(kwargs)
-            logging.debug('An error occurred on line {} in statement {}'.format(line, text))
-
-    return func_wrapper
-
-
 def get_severity_level(name):
+    """ Convert serverity name to value. """
     return shared.ttypes.Severity._NAMES_TO_VALUES[name]
 
 
@@ -70,7 +49,6 @@ class RunResults(unittest.TestCase):
         self._cc_client = CCViewerHelper(host, port, uri)
         self._runid = self._select_one_runid()
 
-    # -----------------------------------------------------
     def test_filter_none(self):
         ''' Filter value is None should return all results'''
         runid = self._runid
@@ -86,7 +64,6 @@ class RunResults(unittest.TestCase):
         self.assertIsNotNone(run_results)
         self.assertEqual(run_result_count, len(run_results))
 
-    # -----------------------------------------------------
     def test_filter_empty(self):
         ''' Filter value is empty list should return all results'''
         runid = self._runid
@@ -102,7 +79,6 @@ class RunResults(unittest.TestCase):
         self.assertIsNotNone(run_results)
         self.assertEqual(run_result_count, len(run_results))
 
-    # -----------------------------------------------------
     def test_filter_severity(self):
         ''' Filter by severity levels'''
         runid = self._runid
@@ -112,7 +88,7 @@ class RunResults(unittest.TestCase):
         for level in severity_test_data:
             for severity_level, test_result_count in level.iteritems():
                 logging.debug('Severity level filter ' + severity_level +
-                     ' test result count: ' + str(test_result_count))
+                              ' test result count: ' + str(test_result_count))
                 sort_types = None
                 simple_filters = []
                 sev = get_severity_level(severity_level)
@@ -126,7 +102,6 @@ class RunResults(unittest.TestCase):
                 self.assertIsNotNone(run_results)
                 self.assertEqual(test_result_count, len(run_results))
 
-    # -----------------------------------------------------
     def test_filter_checker_id(self):
         ''' Filter by checker id'''
         runid = self._runid
@@ -136,7 +111,7 @@ class RunResults(unittest.TestCase):
         for level in severity_test_data:
             for checker_id_filter, test_result_count in level.iteritems():
                 logging.debug('Checker id filter ' + checker_id_filter +
-                     ' test result count: ' + str(test_result_count))
+                              ' test result count: ' + str(test_result_count))
                 sort_types = None
                 simple_filters = []
                 simple_filter = ReportFilter(checkerId=checker_id_filter)
@@ -149,7 +124,6 @@ class RunResults(unittest.TestCase):
                 self.assertIsNotNone(run_results)
                 self.assertEqual(test_result_count, len(run_results))
 
-    # -----------------------------------------------------
     def test_filter_file_path(self):
         ''' Filter by checker id'''
         runid = self._runid
@@ -173,8 +147,6 @@ class RunResults(unittest.TestCase):
                 self.assertIsNotNone(run_results)
                 self.assertEqual(test_result_count, len(run_results))
 
-
-    # -----------------------------------------------------
     def test_filter_case_insensitive_file_path(self):
         ''' Filter by file path case insensitive'''
 

@@ -18,6 +18,7 @@ import shared
 from codechecker_lib import logger
 from codechecker_lib import arg_handler
 from codechecker_lib.analyzers import analyzer_types
+from codechecker_lib import util
 
 from cmdline_client import cmd_line_client
 
@@ -26,14 +27,6 @@ LOG = logger.get_new_logger('MAIN')
 analyzers = ' '.join(list(analyzer_types.supported_analyzers))
 
 
-def default_workspace():
-    """
-    default workspace in the users home directory
-    """
-    workspace = os.path.join(os.path.expanduser("~"), '.codechecker')
-    return workspace
-
-# ------------------------------------------------------------------------------
 class OrderedCheckersAction(argparse.Action):
     '''
     Action to store enabled and disabled checkers
@@ -101,6 +94,7 @@ def add_database_arguments(parser):
     parser.add_argument('--dbport', type=int, dest="dbport",
                         default=5432, required=False,
                         help='Postgres server port.')
+    # WARNING dbaddress default value influences workspace creation (SQLite)
     parser.add_argument('--dbaddress', type=str, dest="dbaddress",
                         default="localhost", required=False,
                         help='Postgres database server address')
@@ -198,7 +192,7 @@ CodeChecker quickcheck -w ~/workspace -b "cd ~/myproject && make"
                                              help='''\
 Run the supported source code analyzers on a project''')
         check_parser.add_argument('-w', '--workspace', type=str,
-                                  default=default_workspace(),
+                                  default=util.get_default_workspace(),
                                   dest="workspace",
                                   help=workspace_help_msg)
         check_parser.add_argument('-n', '--name', type=str,
@@ -293,7 +287,7 @@ stored into a compilation command json file (no analisys is done during the buil
                                               help='Start the codechecker web server.')
         server_parser.add_argument('-w', '--workspace', type=str,
                                    dest="workspace",
-                                   default=default_workspace(),
+                                   default=util.get_default_workspace(),
                                    help=workspace_help_msg)
         server_parser.add_argument('-v', '--view-port', type=int, dest="view_port",
                                    default=8001, required=False,
@@ -326,7 +320,7 @@ stored into a compilation command json file (no analisys is done during the buil
                                              help="""Generate gdb debug dump files for all the failed compilation commands in the last analyzer run.\nRequires a database with the failed compilation commands""")
         debug_parser.add_argument('-w', '--workspace', type=str,
                                   dest="workspace",
-                                  default=default_workspace(),
+                                  default=util.get_default_workspace(),
                                   help=workspace_help_msg)
         debug_parser.add_argument('-f', '--force', action="store_true",
                                   dest="force", required=False, default=False,

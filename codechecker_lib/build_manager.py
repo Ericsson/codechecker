@@ -66,7 +66,7 @@ def perform_build_command(logfile, command, context, silent=False):
                 LOG.debug_analyzer("The logfile is: " + logfile)
             else:
                 LOG.info("Build failed.")
-                sys.exit(1)
+                sys.exit(return_code)
     except Exception as ex:
         LOG.error("Calling original build command failed")
         LOG.error(str(ex))

@@ -52,4 +52,4 @@ script:
     - export CODECHECKER_DB_DRIVER=pg8000
     - nosetests tests/test_packages/functional/package_test/
 
-    - ./clean_tests.sh
+    - ./tests/clean_tests.sh

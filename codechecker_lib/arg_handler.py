@@ -86,20 +86,24 @@ def handle_server(args):
     """
     starts the report viewer server
     """
-
     if not host_check.check_zlib():
         LOG.error("zlib error")
         sys.exit(1)
 
-    if args.workspace and not util.is_localhost(args.dbaddress):
-        LOG.info("Workspace is not required when database server run on remote host.")
-        sys.exit(1)
+    try:
+        workspace = args.workspace
+    except AttributeError:
+        # if no workspace value was set for some reason
+        # in args set the default value
+        workspace = util.get_default_workspace()
 
-    if not args.workspace and util.is_localhost(args.dbaddress):
-        LOG.info("Workspace is required when database server run on localhost.")
-        sys.exit(1)
-    elif args.workspace and not os.path.exists(args.workspace):
-        os.makedirs(args.workspace)
+    # WARNING
+    # in case of SQLite args.dbaddress default value is used
+    # for which the is_localhost should return true
+
+    local_db = util.is_localhost(args.dbaddress)
+    if local_db and not os.path.exists(workspace):
+        os.makedirs(workspace)
 
     if args.suppress is None:
         LOG.warning('WARNING! No suppress file was given, suppressed results will be only stored in the database.')
@@ -110,7 +114,7 @@ def handle_server(args):
             sys.exit(1)
 
     context = generic_package_context.get_context()
-    context.codechecker_workspace = args.workspace
+    context.codechecker_workspace = workspace
     context.db_username = args.dbusername
 
     check_env = analyzer_env.get_check_env(context.path_env_extra,
@@ -186,7 +190,15 @@ def handle_debug(args):
     failed for some reason
     """
     context = generic_package_context.get_context()
-    context.codechecker_workspace = args.workspace
+
+    try:
+        workspace = args.workspace
+    except AttributeError:
+        # if no workspace value was set for some reason
+        # in args set the default value
+        workspace = util.get_default_workspace()
+
+    context.codechecker_workspace = workspace
     context.db_username = args.dbusername
 
     check_env = analyzer_env.get_check_env(context.path_env_extra,
@@ -207,16 +219,24 @@ def handle_check(args):
     Based on the log runs the analysis
     """
     try:
+
         if not host_check.check_zlib():
             LOG.error("zlib error")
             sys.exit(1)
 
-        args.workspace = os.path.realpath(args.workspace)
-        if not os.path.isdir(args.workspace):
-            os.mkdir(args.workspace)
+        try:
+            workspace = args.workspace
+        except AttributeError:
+            # if no workspace value was set for some reason
+            # in args set the default value
+            workspace = util.get_default_workspace()
+
+        workspace = os.path.realpath(workspace)
+        if not os.path.isdir(workspace):
+            os.mkdir(workspace)
 
         context = generic_package_context.get_context()
-        context.codechecker_workspace = args.workspace
+        context.codechecker_workspace = workspace
         context.db_username = args.dbusername
 
         log_file = build_manager.check_log_file(args)
@@ -269,7 +289,7 @@ def handle_check(args):
                     +  " --dbusername " + args.dbusername
 
         LOG.info("To view results run:\nCodeChecker server -w " +
-                 args.workspace + db_data)
+                 workspace + db_data)
 
     except Exception as ex:
         LOG.error(ex)
@@ -287,7 +307,15 @@ def _do_quickcheck(args):
     '''
 
     context = generic_package_context.get_context()
-    context.codechecker_workspace = args.workspace
+
+    try:
+        workspace = args.workspace
+    except AttributeError:
+        # if no workspace value was set for some reason
+        # in args set the default value
+        workspace = util.get_default_workspace()
+
+    context.codechecker_workspace = workspace
 
     # load severity map from config file
     if os.path.exists(context.checkers_severity_map_file):
