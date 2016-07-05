@@ -62,7 +62,9 @@ service CheckerReport {
                 i64  addBuildAction(
                                     1: i64 run_id,
                                     2: string build_cmd,
-                                    3: string check_cmd)
+                                    3: string check_cmd,
+                                    4: string analyzer_type,
+                                    5: string analyzed_source_file)
                                     throws (1: shared.RequestFailed requestError),
 
                 i64  addReport(
