@@ -67,10 +67,14 @@ class CheckerReportHandler(object):
                             and_(Report.run_id == run_id,
                                  Report.file_id == report_file_id,
                                  Report.id != report_id))
-        if report_reference_to_file.count() == 0:
+        rep_ref_count = report_reference_to_file.count()
+        if rep_ref_count == 0:
+            LOG.debug("No other references to the source file \n id: " +
+                      str(report_file_id) + " can be deleted.")
             # There are no other references to the file, it can be deleted.
             self.session.query(File).filter(File.id == report_file_id)\
                                     .delete()
+        return rep_ref_count
 
     def __del_buildaction_results(self, build_action_id, run_id):
         """
@@ -78,6 +82,8 @@ class CheckerReportHandler(object):
 
         Report entry will be deleted by ReportsToBuildActions cascade delete.
         """
+        LOG.debug("Cleaning old buildactions")
+
         try:
             rep_to_ba = self.session.query(ReportsToBuildActions) \
                               .filter(ReportsToBuildActions.build_action_id ==
@@ -85,8 +91,8 @@ class CheckerReportHandler(object):
 
             reports_to_delete = [r.report_id for r in rep_to_ba]
 
-            self.session.query(BuildAction).filter(BuildAction.id == build_action_id)\
-                                           .delete()
+            LOG.debug("Trying to delete reports belonging to the buildaction:")
+            LOG.debug(reports_to_delete)
 
             for report_id in reports_to_delete:
                 # Check if there is another reference to this report from
@@ -96,13 +102,31 @@ class CheckerReportHandler(object):
                                     and_(ReportsToBuildActions.report_id == report_id,
                                          ReportsToBuildActions.build_action_id != build_action_id))
 
+                LOG.debug("Checking report id:" + str(report_id))
+
+                LOG.debug("Report id " + str(report_id) +
+                          " reference count: " +
+                          str(other_reference.count()))
+
                 if other_reference.count() == 0:
                     # There is no other reference, data related to the report
                     # can be deleted.
                     report = self.session.query(Report).get(report_id)
+
+                    LOG.debug("Removing bug path events")
                     self.__sequence_deleter(BugPathEvent, report.start_bugevent)
+                    LOG.debug("Removing bug report points")
                     self.__sequence_deleter(BugReportPoint, report.start_bugpoint)
-                    self.__del_source_file_for_report(run_id, report.id, report.file_id)
+
+                    if self.__del_source_file_for_report(run_id, report.id, report.file_id):
+                        LOG.debug("Stored source file needs to be kept, there is reference to it from another report.")
+                        # report needs to be deleted if there is no reference the
+                        # file cascade delete will remove it
+                        # else manual cleanup is needed
+                        self.session.delete(report)
+
+            self.session.query(BuildAction).filter(BuildAction.id == build_action_id)\
+                                           .delete()
 
             self.session.query(ReportsToBuildActions).filter(
                 ReportsToBuildActions.build_action_id == build_action_id).delete()
@@ -184,30 +208,49 @@ class CheckerReportHandler(object):
         return True
 
     @decorators.catch_sqlalchemy
-    def addBuildAction(self, run_id, build_cmd, check_cmd):
+    def addBuildAction(self,
+                       run_id,
+                       build_cmd,
+                       check_cmd,
+                       analyzer_type,
+                       analyzed_source_file):
         '''
         '''
         try:
+
             build_actions = \
                 self.session.query(BuildAction) \
-                            .filter(and_(BuildAction.run_id == run_id,
-                                         BuildAction.build_cmd == build_cmd,
-                                         BuildAction.check_cmd == check_cmd))\
-                            .all()
+                    .filter(and_(BuildAction.run_id == run_id,
+                                BuildAction.build_cmd == build_cmd,
+                                or_(
+                                 and_(BuildAction.analyzer_type == analyzer_type,
+                                    BuildAction.analyzed_source_file == analyzed_source_file),
+                                 and_(BuildAction.analyzer_type == "",
+                                    BuildAction.analyzed_source_file == "")
+                               )))\
+            .all()
+
 
             if build_actions:
                 # Delete the already stored buildaction and analysis results.
                 for build_action in build_actions:
+
                     self.__del_buildaction_results(build_action.id, run_id)
 
                 self.session.commit()
 
+            action = BuildAction(run_id,
+                                 build_cmd,
+                                 check_cmd,
+                                 analyzer_type,
+                                 analyzed_source_file)
+            self.session.add(action)
+            self.session.commit()
+
         except Exception as ex:
             LOG.error(ex)
+            raise
 
-        action = BuildAction(run_id, build_cmd, check_cmd)
-        self.session.add(action)
-        self.session.commit()
         return action.id
 
     @decorators.catch_sqlalchemy

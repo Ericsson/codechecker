@@ -150,9 +150,16 @@ class Connection(object):
         ''' bool replaceConfigInfo(1: i64 run_id, 2: list<ConfigValue> values) '''
         return self._client.replaceConfigInfo(run_id, config_list)
 
-    def add_build_action(self, run_id, build_cmd, check_cmd):
-        ''' i64  addBuildAction(1: i64 run_id, 2: string build_cmd) '''
-        return self._client.addBuildAction(run_id, build_cmd, check_cmd)
+    def add_build_action(self, run_id, build_cmd, check_cmd, analyzer_type,
+                         analyzed_source_file):
+        ''' i64  addBuildAction(1: i64 run_id, 2: string build_cmd,
+        3: string check_cmd, 4: string analyzer_type, 5: string analyzed_source_file)
+        '''
+        return self._client.addBuildAction(run_id,
+                                           build_cmd,
+                                           check_cmd,
+                                           analyzer_type,
+                                           analyzed_source_file)
 
     def finish_build_action(self, action_id, failure):
         ''' bool finishBuildAction(1: i64 action_id, 2: string failure) '''

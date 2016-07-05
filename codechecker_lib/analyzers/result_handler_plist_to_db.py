@@ -47,13 +47,17 @@ class PlistToDB(ResultHandler):
         with client.get_connection() as connection:
 
             LOG.debug('Storing original build and analyzer command to the database')
+
+            _, source_file_name = ntpath.split(self.analyzed_source_file)
+
             analisys_id = connection.add_build_action(self.__run_id,
                                                       self.buildaction.original_command,
-                                                      ' '.join(self.analyzer_cmd))
+                                                      ' '.join(self.analyzer_cmd),
+                                                      self.buildaction.analyzer_type,
+                                                      source_file_name)
 
             # store buildaction and analyzer command to the database
 
-            _, source_file_name = ntpath.split(self.analyzed_source_file)
 
             if self.analyzer_returncode == 0:
 

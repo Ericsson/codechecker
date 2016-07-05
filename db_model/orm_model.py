@@ -106,6 +106,8 @@ class BuildAction(Base):
     id = Column(Integer, autoincrement=True, primary_key=True)
     run_id = Column(Integer, ForeignKey('runs.id', deferrable = True, initially = "DEFERRED", ondelete='CASCADE'))
     build_cmd = Column(String)
+    analyzer_type = Column(String, nullable=False)
+    analyzed_source_file = Column(String, nullable=False)
     check_cmd = Column(String)
     # No failure if the text is empty.
     failure_txt = Column(String)
@@ -114,10 +116,12 @@ class BuildAction(Base):
     # Seconds, -1 if unfinished.
     duration = Column(Integer)
 
-    def __init__(self, run_id, build_cmd, check_cmd):
+    def __init__(self, run_id, build_cmd, check_cmd, analyzer_type, analyzed_source_file):
         self.run_id, self.build_cmd, self.check_cmd, self.failure_txt = \
             run_id, build_cmd, check_cmd, ''
         self.date = datetime.now()
+        self.analyzer_type = analyzer_type
+        self.analyzed_source_file = analyzed_source_file
         self.duration = -1
 
     def mark_finished(self, failure_txt):
@@ -204,6 +208,12 @@ class Report(Base):
     end_bugevent = Column(Integer, ForeignKey('bug_path_events.id', deferrable = True, initially = "DEFERRED", ondelete='CASCADE'), index = True)
     suppressed = Column(Boolean)
 
+    # Cascade delete might remove rows SQLAlchemy warns about this
+    # to remove warnings about already deleted items set this to False.
+    __mapper_args__ = {
+        'confirm_deleted_rows' : False
+    }
+
 
     # Priority/severity etc...
     def __init__(self, run_id, bug_id, file_id, checker_message, start_bugpoint, start_bugevent, end_bugevent, checker_id, checker_cat, bug_type, severity, suppressed):
@@ -225,7 +235,8 @@ class ReportsToBuildActions(Base):
         Integer, ForeignKey('build_actions.id', deferrable = True, initially = "DEFERRED", ondelete='CASCADE'), primary_key=True)
 
     def __init__(self, report_id, build_action_id):
-        self.report_id, self.build_action_id = report_id, build_action_id
+        self.report_id = report_id
+        self.build_action_id = build_action_id
 
 
 class SuppressBug(Base):
