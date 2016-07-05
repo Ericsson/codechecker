@@ -171,8 +171,14 @@ different binaries.
 
 #### Forward compiler options
 
-These options can modify the compilation actions logged by the build logger or created by
-cmake (exporting compile commands).
+These options can modify the compilation actions logged by the build logger or
+created by cmake (exporting compile commands). The extra compiler options can be
+given in config files which are provided by the flags described below.
+
+The config files can contain placeholders in `$(ENV_VAR)` format. If the
+`ENV_VAR` environment variable is set then the placeholder is replaced to its
+value. Otherwise an error message is logged saying that the variable is not set,
+and in this case an empty string is inserted in the place of the placeholder.
 
 ##### Clang Static Analyzer
 
@@ -186,8 +192,9 @@ Where the extra_compile_flags file contains additional compilation options.
 
 Config file example:
 ```
--I~/include/for/analysis -DDEBUG
+-I~/include/for/analysis -I$(MY_LIB)/include -DDEBUG
 ```
+where `MY_LIB` is the path of a library code.
 
 ##### Clang-tidy
 
@@ -204,8 +211,9 @@ after (```-extra-arg=<string>```) the original compilation options.
 
 Config file example:
 ```
--extra-arg-before='-I~/include/for/analysis' -extra-arg-before='-I~/other/include/for/analysis/' -extra-arg='-DDEBUG'
+-extra-arg-before='-I~/include/for/analysis' -extra-arg-before='-I~/other/include/for/analysis/' -extra-arg-before='-I$(MY_LIB)/include' -extra-arg='-DDEBUG'
 ```
+where `MY_LIB` is the path of a library code.
 
 ### Using SQLite for database:
 
