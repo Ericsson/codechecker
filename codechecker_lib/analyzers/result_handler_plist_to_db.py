@@ -45,6 +45,7 @@ class PlistToDB(ResultHandler):
             # sometimes the file doesn't exist, e.g. when the input of the
             # analysis is pure plist files
             if not os.path.isfile(file_name):
+                LOG.debug(file_name + ' not found, and will not be stored')
                 continue
 
             if file_descriptor.needed:
