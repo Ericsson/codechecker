@@ -35,6 +35,24 @@ sys.path.append(os.path.join(
 __STOP_SERVER = multiprocessing.Event()
 
 
+def _wait_for_postgres_shutdown(workspace):
+    """
+    Wait for PostgreSQL to shut down
+    check if postmaster.pid file exists if yes postgres is still running
+    """
+    max_wait_time = 60
+
+    postmaster_pid_file = os.path.join(workspace,
+                                       'pgsql_data',
+                                       'postmaster.pid')
+
+    while os.path.isfile(postmaster_pid_file):
+        time.sleep(1)
+        max_wait_time -= 1
+        if max_wait_time == 0:
+            break
+
+
 def setup_package():
     """Setup the environment for the tests. Check the test project twice,
     then start the server."""
@@ -112,6 +130,8 @@ def setup_package():
     _run_check(shared_test_params, skip_list_file, test_project_build_cmd,
                test_project_1_name, test_project_path)
 
+    _wait_for_postgres_shutdown(shared_test_params['workspace'])
+
     # second check
     print("Running second analysis")
 
@@ -121,6 +141,8 @@ def setup_package():
 
     _run_check(shared_test_params, skip_list_file, test_project_build_cmd,
                test_project_2_name, test_project_path)
+
+    _wait_for_postgres_shutdown(shared_test_params['workspace'])
 
     # start the CodeChecker server
     print("Starting server to get results")
