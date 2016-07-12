@@ -481,6 +481,10 @@ class ThriftRequestHandler():
         filter
         """
 
+        if not run_ids:
+            # there are no run ids where the report should be suppressed
+            return
+
         def check_filename(data):
             report, file_obj = data
             source_file_path, f_name = ntpath.split(file_obj.filepath)
@@ -555,7 +559,7 @@ class ThriftRequestHandler():
             # is needed for other run id
             suppressed_runids = set([r.run_id for r in suppressed])
             LOG.debug('Bug is suppressed in these runs:' +
-                      ' '.join(suppressed_runids))
+                      ' '.join([str(r) for r in suppressed_runids]))
             suppress_in_these_runs = set(run_ids).difference(suppressed_runids)
             for run_id in suppress_in_these_runs:
                 suppress_bug = SuppressBug(run_id,
