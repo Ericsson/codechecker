@@ -1,178 +1,125 @@
-/*
-* -------------------------------------------------------------------------
-*                     The CodeChecker Infrastructure
-*   This file is distributed under the University of Illinois Open Source
-*   License. See LICENSE.TXT for details.
-* -------------------------------------------------------------------------
-*/
+/*** Main stuff ***/
 
 html, body {
-  height     : 100%;
-  margin     : 0px;
-  padding    : 0px;
+  height: 100%;
+  margin: 0px;
+  padding: 0px;
   font-family: sans-serif;
-  font-size  : 10pt;
+  font-size: 10pt;
 }
 
-code, kbd, pre, samp, tt, xmp, listing, plaintext {
-  font-family     : monospace !important;
-  background-color: #e7e7e7;
+#mainLayout {
+  height: 100%;
 }
 
-.headerPane {
-  width : 100%;
-  height: 48px;
+#headerPane {
+  height: 33px;
+  background-color: #007ea7;
 }
 
-.listOfRunsGrid td:nth-child(3):hover {
-  text-decoration: underline;
-  cursor: pointer;
-  cursor: hand;
+#logo {
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 20pt;
+  color: white;
 }
 
-.listOfRunsGrid td:nth-child(3) {
+.credits {
+  width: 350px;
+  text-align: center;
+}
+
+.mainMenuButton {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+}
+
+/*** Run diff selector ***/
+
+.diffDisplay {
+  font-size: 11pt;
+  display: inline-block;
+  margin-left: 20px;
+}
+
+.diffDisplay span {
+  font-weight: bold;
+  font-family: monospace;
+}
+
+.deleteButton {
+  float: right;
+}
+
+/*** Grid ***/
+
+.link {
   color: blue;
 }
 
-.overviewGrid {
-  font-family: sans-serif;
-}
-
-.overviewGrid td:nth-child(1) {
-  color: blue;
-}
-
-.overviewGrid td:nth-child(1):hover {
+.link:hover {
   text-decoration: underline;
   cursor: pointer;
-  cursor: hand;
 }
 
-.overviewGrid td:nth-child(3) {
-  color: blue;
+.compact {
+  text-align: left;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  direction: rtl;
 }
 
-.overviewGrid td:nth-child(3):hover {
-  text-decoration: underline;
-  cursor: pointer;
-  cursor: hand;
+/*** Filter fields ***/
+
+.filterText {
+  margin-right: 5px;
 }
+
+.filterSelect {
+  margin-right: 5px;
+}
+
+.plusIcon {
+  background-image: url(/images/plus.png);
+  background-repeat: no-repeat;
+  width: 16px;
+  height: 16px;
+  text-align: center;
+  display: inline-block;
+}
+
+.minusIcon {
+  background-image: url(/images/minus.png);
+  background-repeat: no-repeat;
+  width: 16px;
+  height: 16px;
+  text-align: center;
+}
+
+/*** Editor ***/
 
 .checkerstep {
-  border: 0px solid #aaa;
   background-color: #eeb;
-}
-
-.codemirrorselection {
-  background-color: #00ffff;
 }
 
 .checkMsg {
   background-color: #eeb;
   border: 1px solid #aaa;
   display: inline-block;
-  padding: 1px;
-  padding-left: 6px;
-  padding-right: 6px;
+  padding: 1px 6px;
   margin: 1px;
   -webkit-border-radius: 5px;
   -moz-border-radius: 5px;
   border-radius: 5px;
-}
-
-.otherFileMsg {
-  background-color: #00ff00;
-  border: 1px solid #aaa;
-  display: inline-block;
-  padding: 1px;
-  padding-left: 6px;
-  padding-right: 6px;
-  margin: 1px;
-  -webkit-border-radius: 5px;
-  -moz-border-radius: 5px;
-  border-radius: 5px;
-  text-align: center;
-}
-
-.otherFileMsg:hover {
-  text-decoration: underline;
-  cursor: pointer;
-  cursor: hand;
-}
-
-.editor {
-  font-family: monospace !important;
-}
-
-.editor .header {
-  font-family: monospace !important;
-  padding: 3px;
-  border-bottom: 1px solid LightGray;
-  background-color: white;
-  word-wrap: break-word;
-}
-
-.editor .header .filename {
-  font-family: monospace !important;
-  margin-left: 2px;
-  font-weight: bold;
-}
-
-.editor .header .colons {
-  font-family: monospace !important;
-  margin-left : 2px;
-}
-
-.filterSpacer {
-  margin-left: 2px;
-  margin-right: 2px;
-}
-
-.plusIcon {
-  background-image: url("/images/plus.png");
-  background-repeat: no-repeat;
-  width: 16px;
-  height: 16px;
-  text-align: center;
-}
-
-.minusIcon {
-  background-image: url("/images/minus.png");
-  background-repeat: no-repeat;
-  width: 16px;
-  height: 16px;
-  text-align: center;
-}
-
-.listOfRunsWidget {
-  border: 0px;
-  margin: 3px;
 }
 
 .editorHeader {
-  border: 0px;
-  margin: 5px;
+  padding: 4px;
+  border-bottom: 1px solid lightgrey;
+  font-family: monospace;
 }
 
-.dijitSelectLabel {
-  text-align : left;
-  overflow   : hidden;
-  width      : 200px;
-}
-
-.bugInfo {
-  width: 12px;
-}
-
-.jumpSpan {
-  padding: 1px;
-  padding-bottom: 2px;
-  padding-top: 0px;
-  border: 1px solid gray;
-  cursor: pointer;
-  -webkit-user-select: none; /* webkit (safari, chrome) browsers */
-  -moz-user-select: none;    /* mozilla browsers */
-  -khtml-user-select: none;  /* webkit (konqueror) browsers */
-  -ms-user-select: none;     /* IE10+ */
-  -o-user-select: none;
+.buildActionInfo dt {
+  font-weight: bold;
 }
