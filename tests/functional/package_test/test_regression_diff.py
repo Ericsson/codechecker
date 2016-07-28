@@ -6,13 +6,17 @@
 # -----------------------------------------------------------------------------
 
 import json
-import logging
 import os
 import unittest
+import logging
 
 import shared
+
 from codeCheckerDBAccess.ttypes import DiffType
 from codeCheckerDBAccess.ttypes import ReportFilter
+
+from test_utils.thrift_client_to_db import CCViewerHelper
+from test_utils.thrift_client_to_db import get_all_run_results
 from test_utils.debug_printer import print_run_results
 from test_utils.thrift_client_to_db import CCViewerHelper
 
@@ -93,7 +97,7 @@ class RunResults(unittest.TestCase):
         logging.debug("Base run id: %d", base_run_id)
         logging.debug("Base count: %d", base_count)
 
-        base_run_res = self._cc_client.getAllRunResults(base_run_id, [], [])
+        base_run_res = get_all_run_results(self._cc_client, base_run_id)
 
         print_run_results(base_run_res)
 
@@ -101,7 +105,7 @@ class RunResults(unittest.TestCase):
         logging.debug("New run id: %d", new_run_id)
         logging.debug("New count: %d", new_count)
 
-        new_run_res = self._cc_client.getAllRunResults(new_run_id, [], [])
+        new_run_res = get_all_run_results(self._cc_client, new_run_id)
 
         print_run_results(new_run_res)
 
@@ -114,7 +118,7 @@ class RunResults(unittest.TestCase):
     # -----------------------------------------------------
     def test_get_diff_res_count_unresolved_filter(self):
         """
-        This test assumes nothing has been resolved between the two checker
+        This test asumes nothing has been resolved between the two checker
         runs. The the same severity levels and numbers are used as in a
         simple filter test for only one run from the project config.
         """
@@ -184,7 +188,8 @@ class RunResults(unittest.TestCase):
     # -----------------------------------------------------
     def test_get_diff_res_types_unresolved(self):
         """
-        Test diff result types for unresolved results with no filter on the api.
+        Test diff result types for unresolved results with no filter
+        on the api.
         """
         runs = self._cc_client.getRunData()
         self.assertIsNotNone(runs)
@@ -238,7 +243,7 @@ class RunResults(unittest.TestCase):
                                                        DiffType.UNRESOLVED,
                                                        simple_filters)
 
-                # There should be only one for each checker name,
+                # There should be only one for each checker name.
                 self.assertEqual(len(diff_res), 1)
                 self.assertEqual(test_result_count, diff_res[0].count)
                 self.assertEqual(checker_name, diff_res[0].checkerId)

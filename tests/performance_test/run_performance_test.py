@@ -26,6 +26,7 @@ from shared.ttypes import BugPathPos
 from shared.ttypes import BugPathEvent
 from shared.ttypes import Severity
 from test_utils.thrift_client_to_db import CCReportHelper, CCViewerHelper
+from test_utils.thrift_client_to_db import get_all_run_results
 
 
 logging.basicConfig(format='[%(process)s] %(message)s', level=logging.INFO)
@@ -231,31 +232,6 @@ def store_reports(run_id, file_content, test_conf):
                                              'bug_type',
                                              Severity.STYLE,
                                              False)
-
-
-def get_all_run_results(client, run_id):
-    """
-    Get all the results for a run.
-    Query limit limits the number of results can be got from the
-    server in one API call.
-    """
-
-    offset = 0
-    query_limit = client.max_query_size
-    results = []
-    while True:
-        partial_res = client.getRunResults(run_id,
-                                           query_limit,
-                                           offset,
-                                           [],
-                                           [])
-
-        offset += len(partial_res)
-        if len(partial_res) == 0:
-            break
-        results.extend(partial_res)
-
-    return results
 
 
 def measure(test_conf,

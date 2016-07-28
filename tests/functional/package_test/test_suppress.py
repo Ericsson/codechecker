@@ -10,8 +10,10 @@ import os
 import unittest
 
 from codeCheckerDBAccess.ttypes import ReportFilter
-from test_utils.thrift_client_to_db import CCViewerHelper
 
+from test_utils.debug_printer import print_run_results
+from test_utils.thrift_client_to_db import CCViewerHelper
+from test_utils.thrift_client_to_db import get_all_run_results
 
 class Suppress(unittest.TestCase):
     """
@@ -54,7 +56,7 @@ class Suppress(unittest.TestCase):
         logging.debug('Get all run results from the db for runid: ' +
                       str(runid))
 
-        run_results = self._cc_client.getAllRunResults(runid, [], [])
+        run_results = get_all_run_results(self._cc_client, runid)
         self.assertIsNotNone(run_results)
         self.assertNotEqual(len(run_results), 0)
 
@@ -75,10 +77,9 @@ class Suppress(unittest.TestCase):
         logging.debug('Same bug suppressed successfully for the second time')
 
         simple_filters = [ReportFilter(suppressed=True)]
-        run_results_suppressed = self._cc_client\
-                                     .getAllRunResults(runid,
-                                                       [],
-                                                       simple_filters)
+        run_results_suppressed = get_all_run_results(self._cc_client,
+                                                     runid,
+                                                     filters=simple_filters)
 
         self.assertIsNotNone(run_results_suppressed)
         self.assertEqual(len(run_results_suppressed), 1)
@@ -96,9 +97,9 @@ class Suppress(unittest.TestCase):
         logging.debug('Bug unsuppressed successfully')
 
         simple_filters = [ReportFilter(suppressed=False)]
-        run_results_unsuppressed = self._cc_client\
-                                       .getAllRunResults(runid,
-                                                         [],
-                                                         simple_filters)
+        run_results_unsuppressed = get_all_run_results(self._cc_client,
+                                                       runid,
+                                                       filters=simple_filters)
+
         self.assertIsNotNone(run_results_unsuppressed)
         self.assertEqual(len(run_results), len(run_results_unsuppressed))
