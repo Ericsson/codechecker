@@ -28,6 +28,9 @@ from codechecker_lib import decorators
 from codechecker_lib import logger
 from db_model.orm_model import *
 
+from codechecker_lib.profiler import timeit
+from codechecker_lib.profiler import profileit
+
 LOG = logger.get_new_logger('CC SERVER')
 
 if os.environ.get('CODECHECKER_ALCHEMY_LOG') is not None:
@@ -140,6 +143,7 @@ class CheckerReportHandler(object):
                 str(ex))
 
     @decorators.catch_sqlalchemy
+    @timeit
     def addCheckerRun(self, command, name, version, force):
         """
         Store checker run related data to the database.
@@ -181,6 +185,7 @@ class CheckerReportHandler(object):
             return checker_run.id
 
     @decorators.catch_sqlalchemy
+    @timeit
     def finishCheckerRun(self, run_id):
         """
         """
@@ -193,6 +198,7 @@ class CheckerReportHandler(object):
         return True
 
     @decorators.catch_sqlalchemy
+    @timeit
     def replaceConfigInfo(self, run_id, config_values):
         """
         Removes all the previously stored config informations
@@ -211,6 +217,7 @@ class CheckerReportHandler(object):
         return True
 
     @decorators.catch_sqlalchemy
+    @timeit
     def addBuildAction(self,
                        run_id,
                        build_cmd,
@@ -256,6 +263,7 @@ class CheckerReportHandler(object):
         return action.id
 
     @decorators.catch_sqlalchemy
+    @timeit
     def finishBuildAction(self, action_id, failure):
         """
         """
@@ -269,6 +277,7 @@ class CheckerReportHandler(object):
         return True
 
     @decorators.catch_sqlalchemy
+    @timeit
     def needFileContent(self, run_id, filepath):
         """
         """
@@ -295,6 +304,7 @@ class CheckerReportHandler(object):
         return NeedFileResult(needed, f.id)
 
     @decorators.catch_sqlalchemy
+    @timeit
     def addFileContent(self, id, content):
         """
         """
@@ -388,6 +398,7 @@ class CheckerReportHandler(object):
                 str(ex))
 
     @decorators.catch_sqlalchemy
+    @timeit
     def addReport(self,
                   build_action_id,
                   file_id,
@@ -503,6 +514,7 @@ class CheckerReportHandler(object):
         return paths
 
     @decorators.catch_sqlalchemy
+    @timeit
     def addSuppressBug(self, run_id, bugs_to_suppress):
         """
         Supppress multiple bugs for a run. This can be used before storing
@@ -528,6 +540,7 @@ class CheckerReportHandler(object):
         return True
 
     @decorators.catch_sqlalchemy
+    @timeit
     def cleanSuppressData(self, run_id):
         """
         Clean the suppress bug entries for a run
@@ -559,6 +572,7 @@ class CheckerReportHandler(object):
         return True
 
     @decorators.catch_sqlalchemy
+    @timeit
     def addSkipPath(self, run_id, paths):
         """
         """
@@ -576,6 +590,7 @@ class CheckerReportHandler(object):
         return True
 
     @decorators.catch_sqlalchemy
+    @timeit
     def stopServer(self):
         """
         """
