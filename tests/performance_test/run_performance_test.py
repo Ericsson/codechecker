@@ -49,7 +49,8 @@ class Timer():
 
     def __exit__(self, type, value, traceback):
         after = datetime.datetime.now()
-        self.measure_data[self.measure_id] = (after - self.before).total_seconds()
+        self.measure_data[self.measure_id] = \
+            (after - self.before).total_seconds()
 
 
 def parse_arguments():
@@ -76,7 +77,8 @@ def parse_arguments():
 
     parser.add_argument('--keep', action='store_true',
                         dest='keep',
-                        help='Keep the stored results in the database, do not delete them.')
+                        help='Keep the stored results in the database,'
+                             ' do not delete them.')
 
     parser.add_argument('-v', action='store_true',
                         dest='verbose',
@@ -199,17 +201,17 @@ def store_reports(run_id, file_content, test_conf):
 
             store_server.finishBuildAction(ba_id, '')
             for bug_count in range(bug_per_file):
-                bug_pathes = []
+                bug_paths = []
                 bug_events = []
                 for bug_element_count in range(bug_length):
                     line = bug_count * bug_length + bug_element_count + 1
 
-                    bug_pathes.append(BugPathPos(line,  # start line
-                                                 1,  # start col
-                                                 line,  # end line
-                                                 10,  # end col
-                                                 file_id)  # file id
-                                      )
+                    bug_paths.append(BugPathPos(line,  # start line
+                                                1,  # start col
+                                                line,  # end line
+                                                10,  # end col
+                                                file_id)  # file id
+                                     )
 
                     bug_events.append(BugPathEvent(line,  # start line
                                                    1,  # start col
@@ -219,19 +221,20 @@ def store_reports(run_id, file_content, test_conf):
                                                    file_id)  # file id
                                       )
 
-                r_id= store_server.addReport(ba_id,
-                                             file_id,
-                                             'hash_' + str(run_id) +
-                                             '_' + str(file_count) + '_'
-                                             + str(bug_count),
-                                             'checker_message',
-                                             bug_pathes,
-                                             bug_events,
-                                             'checker_name',
-                                             'checker_cat',
-                                             'bug_type',
-                                             Severity.STYLE,
-                                             False)
+                bug_hash = 'hash_' + str(run_id) + '_' + str(file_count) + \
+                    '_' + str(bug_count)
+
+                r_id = store_server.addReport(ba_id,
+                                              file_id,
+                                              bug_hash,
+                                              'checker_message',
+                                              bug_paths,
+                                              bug_events,
+                                              'checker_name',
+                                              'checker_cat',
+                                              'bug_type',
+                                              Severity.STYLE,
+                                              False)
 
 
 def measure(test_conf,
@@ -408,7 +411,7 @@ def main():
         log.info("There are no measurements results")
         sys.exit(0)
 
-    file_name = measure_id + '.cvs'
+    file_name = measure_id + '.csv'
 
     if not os.path.exists(args.output):
         os.makedirs(args.output)

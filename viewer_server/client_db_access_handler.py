@@ -12,9 +12,10 @@ import codecs
 import datetime
 import ntpath
 import os
-import shared
 import sqlalchemy
 import zlib
+
+import shared
 
 from codeCheckerDBAccess import constants
 from codeCheckerDBAccess.ttypes import *

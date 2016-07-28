@@ -15,16 +15,16 @@ LOG = logger.get_new_logger('PROFILER')
 
 
 def timeit(function):
-    '''
+    """
     Decorator to measure function call time.
-    '''
+    """
 
     func_name = function.__name__
 
     def debug_wrapper(*args, **kwargs):
-        '''
+        """
         Log measured time.
-        '''
+        """
         before = datetime.now()
         res = function(*args, **kwargs)
         after = datetime.now()
@@ -34,9 +34,9 @@ def timeit(function):
         return res
 
     def release_wrapper(*args, **kwargs):
-        '''
+        """
         No logging and measuring.
-        '''
+        """
         res = function(*args, **kwargs)
         return res
 

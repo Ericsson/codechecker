@@ -29,16 +29,16 @@ Each process will generate, store and measure the configured number of runs and 
 A test configuration cloud look like this:  
 ```
 {
-"number_of_runs" : 1,
-"file_line_size" : 100,
-"number_of_files" : 100,
-"bug_per_file" : 8,
-"bug_length" : 5,
-"clean_after_fill" : true,
-"wait_for_store" : true,
-"host" : "localhost",
-"check_port" : 10001,
-"view_port" : 10002
+  "number_of_runs" : 1,
+  "file_line_size" : 100,
+  "number_of_files" : 100,
+  "bug_per_file" : 8,
+  "bug_length" : 5,
+  "clean_after_fill" : true,
+  "wait_for_store" : true,
+  "host" : "localhost",
+  "check_port" : 10001,
+  "view_port" : 10002
 }
 ```
 
