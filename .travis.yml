@@ -35,16 +35,16 @@ script:
 
     - export TEST_USE_POSTGRESQL=false
     - unset CODECHECKER_DB_DRIVER
-    - nosetests tests/test_packages/
+    - nosetests tests
 
     - export TEST_USE_POSTGRESQL=true
     - export TEST_DBUSERNAME="postgres"
     - export TEST_DBPORT="5432"
 
     - export CODECHECKER_DB_DRIVER=psycopg2
-    - nosetests tests/test_packages/functional/package_test/
+    - nosetests tests/functional/package_test/
 
     - export CODECHECKER_DB_DRIVER=pg8000
-    - nosetests tests/test_packages/functional/package_test/
+    - nosetests tests/functional/package_test/
 
     - ./tests/clean_tests.sh
