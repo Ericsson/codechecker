@@ -21,7 +21,7 @@
 
 #include "ldlogger-hooks.h"
 
-#define CC_LOGGER_MAX_ARGS 2048
+#define CC_LOGGER_MAX_ARGS 4096
 
 #define CC_LOGGER_CALL_EXEC(funName_, arglist, ...) \
   tryLog(__VA_ARGS__); \
