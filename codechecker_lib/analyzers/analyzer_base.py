@@ -91,18 +91,11 @@ class SourceAnalyzer(object):
         LOG.debug('\n' + ' '.join(analyzer_cmd))
 
         res_handler.analyzer_cmd = analyzer_cmd
-        analyzer_cmd = shlex.split(' '.join(analyzer_cmd))
+        analyzer_cmd = ' '.join(analyzer_cmd)
         try:
-            proc = subprocess.Popen(analyzer_cmd,
-                                    bufsize=-1,
-                                    env=env,
-                                    preexec_fn=os.setsid,
-                                    stdout=subprocess.PIPE,
-                                    stderr=subprocess.PIPE)
-
-            (stdout, stderr) = proc.communicate()
-
-            res_handler.analyzer_returncode = proc.returncode
+            ret_code, stdout, stderr = SourceAnalyzer.run_proc(analyzer_cmd,
+                                                               env)
+            res_handler.analyzer_returncode = ret_code
             res_handler.analyzer_stdout = stdout
             res_handler.analyzer_stderr = stderr
             return res_handler
@@ -118,3 +111,22 @@ class SourceAnalyzer(object):
         return the checkers available in the analyzer
         """
         pass
+
+    @staticmethod
+    def run_proc(command, env=None, cwd=None):
+        """
+        Just run the given command and return the returncode
+        and the stdout and stderr outputs of the process.
+        """
+
+        cmd = shlex.split(command, posix=False)
+        proc = subprocess.Popen(cmd,
+                                bufsize=-1,
+                                env=env,
+                                preexec_fn=os.setsid,
+                                cwd=cwd,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE)
+
+        (stdout, stderr) = proc.communicate()
+        return proc.returncode, stdout, stderr
