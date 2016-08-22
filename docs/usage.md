@@ -22,7 +22,7 @@ CodeChecker check make
 ```
 ###3. Same as use case 2., but the developer would like to enable alpha checkers and llvm checkers
 ```
-CodeChecker check –e alpha -e llvm -b make
+CodeChecker check -e alpha -e llvm -b make
 ```
 ###4.	Same as use case 2., but the developer stores suppressed false positives in a text file that is checked in into version control
 ```
