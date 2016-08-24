@@ -67,10 +67,10 @@ def check(check_data):
     args, action, context, analyzer_config_map, skp_handler, \
         report_output_dir, use_db = check_data
 
+    skipped = False
     try:
         # if one analysis fails the check fails
         return_codes = 0
-        skipped = False
         for source in action.sources:
 
             # if there is no skiplist handler there was no skip list file
@@ -135,7 +135,7 @@ def check(check_data):
     except Exception as e:
         LOG.debug_analyzer(str(e))
         traceback.print_exc(file=sys.stdout)
-        return (1, action.analyzer_type)
+        return (1, skipped, action.analyzer_type)
 
 def start_workers(args, actions, context, analyzer_config_map, skp_handler):
     """
