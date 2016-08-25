@@ -10,7 +10,7 @@ which clang || (echo "[ERROR] clang required to run functional tests" && exit 1)
 ./build_package.py -o $TEST_CODECHECKER_PACKAGE_DIR -v || exit 1
 
 # run all the tests
-nosetests tests/test_packages/
+nosetests tests
 
 # cleanup the environment variables and temporary
 # directories

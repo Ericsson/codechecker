@@ -33,13 +33,13 @@ build_package.py -o $TEST_CODECHECKER_PACKAGE_DIR -v
 export TEST_USE_POSTGRESQL=false
 
 # run all the tests
-nosetests tests/test_packages/
+nosetests tests
 
 # run only the unittests
-nosetests tests/test_packages/unit
+nosetests tests/unit
 
 # run only the functional tests
-nosetests tests/test_packages/functional
+nosetests tests/functional
 
 # remove the temporary directories and unset the environment variables
 # set by sourcing the test_env_setup.sh script

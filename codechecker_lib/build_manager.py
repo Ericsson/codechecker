@@ -7,14 +7,37 @@
 build and log related stuff
 """
 import os
-import sys
 import pickle
 import subprocess
+import sys
 
 from codechecker_lib import logger
 from codechecker_lib import analyzer_env
 
 LOG = logger.get_new_logger('BUILD MANAGER')
+
+
+def execute_buildcmd(command, silent=False, env=None, cwd=None):
+    """
+    Execute the the build command and continously write
+    the output from the process to the standard output.
+    """
+    proc = subprocess.Popen(command,
+                            bufsize=-1,
+                            env=env,
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.STDOUT,
+                            cwd=cwd,
+                            shell=True)
+
+    while True:
+        line = proc.stdout.readline()
+        if not silent:
+            sys.stdout.write(line)
+        if line == '' and proc.poll() is not None:
+            break
+
+    return proc.returncode
 
 
 def perform_build_command(logfile, command, context, silent=False):
@@ -45,28 +68,16 @@ def perform_build_command(logfile, command, context, silent=False):
 
     LOG.debug_analyzer(log_env)
     try:
-        proc = subprocess.Popen(command,
-                                bufsize=-1,
-                                env=log_env,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.STDOUT,
-                                shell=True)
-        while True:
-            line = proc.stdout.readline()
-            if not silent:
-                sys.stdout.write(line)
-            if line == '' and proc.poll() is not None:
-                break
-
-        return_code = proc.returncode
+        ret_code = execute_buildcmd(command, silent, log_env)
 
         if not silent:
-            if return_code == 0:
+            if ret_code == 0:
                 LOG.info("Build finished successfully.")
                 LOG.debug_analyzer("The logfile is: " + logfile)
             else:
                 LOG.info("Build failed.")
-                sys.exit(return_code)
+                sys.exit(ret_code)
+
     except Exception as ex:
         LOG.error("Calling original build command failed")
         LOG.error(str(ex))
