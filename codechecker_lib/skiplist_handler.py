@@ -32,7 +32,7 @@ class SkipListHandler(object):
         skip_file_content = []
 
         with open(skip_file, 'r') as skip_file:
-            skip_file_content = [line.strip() for line in skip_file if line != '']
+            skip_file_content = [line.strip() for line in skip_file if line.strip() != '']
 
         for line in skip_file_content:
             if len(line) < 2 or line[0] not in ['-', '+']:
