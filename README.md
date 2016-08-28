@@ -132,6 +132,6 @@ See user guide for further configuration and check options.
 
 [External source dependencies](docs/deps.md)
 
-[Test documentation](tests/package_test.md)
+[Test documentation](tests/functional/package_test.md)
 
 [Database schema migration](docs/db_schema_guide.md)
