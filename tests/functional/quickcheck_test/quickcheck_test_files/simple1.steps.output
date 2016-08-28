@@ -1,6 +1,7 @@
-CodeChecker quickcheck --analyzers clangsa -b "g++ -w simple1.cpp -o /dev/null" --steps
+CodeChecker quickcheck --analyzers clangsa -b "make simple1" --steps
 --------------------------------------------------------------------------------
 [INFO] - Starting build ...
+g++ -w simple1.cpp -o /dev/null
 [INFO] - Build finished successfully.
 clangsa found 1 defect(s) while analyzing simple1.cpp
 
