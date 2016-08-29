@@ -25,6 +25,10 @@ class ResultHandler(object):
     the result handler can handle multiple results if there
     are more than one analyzed source file in one buildaction
 
+    handle_results() handles the results of a static analysis tool processed on
+    a build action. Alternatively one can also handle results given by plist
+    files for which handle_plist() can be used.
+
     For each build action
     - postprocess_result and handle_results can be called multiple times
       for the source files in one buildaction they will be analyzed separately
@@ -210,6 +214,13 @@ class ResultHandler(object):
         """
         postprocess result if needed
         should be called after the analisys finished
+        """
+        pass
+
+    @abstractmethod
+    def handle_plist(self, plist):
+        """
+        handle the results directly from the given plist file
         """
         pass
 
