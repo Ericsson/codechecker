@@ -146,9 +146,14 @@ class PlistToDB(ResultHandler):
 
     def handle_plist(self, plist):
         with client.get_connection() as connection:
+            # TODO: When the analyzer name can be read from PList, then it
+            # should be passed too.
+            # TODO: File name should be read from the PList and passed.
             analisys_id = connection.add_build_action(self.__run_id,
                                                       plist,
-                                                      'Build action from plist')
+                                                      'Build action from plist',
+                                                      '',
+                                                      '')
 
             try:
                 files, bugs = plist_parser.parse_plist(plist)
