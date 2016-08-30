@@ -1,4 +1,3 @@
-
 [![Build Status](https://travis-ci.org/Ericsson/codechecker.svg?branch=master)](https://travis-ci.org/Ericsson/codechecker)
 -----
 # Introduction
@@ -60,6 +59,56 @@ pip install -r .ci/basic_python_requirements
 cd ..
 ~~~~~~
 
+## OS X
+
+### Basic dependecy install & setup
+Tested on OS X El Capitan 10.11.5 & macOS Sierra 10.12 Beta
+~~~~~~{.sh}
+
+# on El Capitan System Integrity Protection (SIP) need to turn off
+- Click the  (Apple) menu.
+- Select Restart...
+- Hold down command-R to boot into the Recovery System.
+- Click the Utilities menu and select Terminal.
+- Type csrutil disable and press return.
+- Close the Terminal app.
+- Click the  (Apple) menu and select Restart....
+
+# check out and build clang with extra tools
+How to: http://clang.llvm.org/get_started.html
+
+# get dependencies
+brew update
+brew install doxygen thrift gcc git
+
+# get source code
+git clone https://github.com/tmsblgh/codechecker-osx-migration.git
+cd codechecker
+
+# install required basic python modules
+pip install -r .ci/basic_python_requirements
+
+# create codechecker package
+./build_package.py -o ~/codechecker_package
+cd ..
+~~~~~~
+
+### Check a test project
+#### Check if clang or clang tidy is available
+~~~~~~{.sh}
+which clang
+which clang-tidy
+~~~~~~
+If 'clang' or 'clang-tidy' commands are not available the package can be configured to use another/newer clang binary for the analisys.  
+Edit the 'CodeChecker/config/package_layout.json' config files "runtime/analyzers"
+section in the generated package and modify the analyzers section to the analyzers
+available in the PATH
+```
+"analyzers" : {
+  "clangsa" : "clang",
+  "clang-tidy" : "clang-tidy"
+  },
+```
 
 ### Check a test project
 #### Check if clang or clang tidy is available
@@ -87,6 +136,14 @@ source ~/checker_env/bin/activate
 This step can be skipped if you always give the path of CodeChecker command.
 ~~~~~~{.sh}
 export PATH=~/codechecker_package/CodeChecker/bin:$PATH
+~~~~~~
+Scan-build-py (intercept-build)
+~~~~~~{.sh}
+export PATH=~/{user path}/llvm/tools/clang/tools/scan-build-py/bin:$PATH
+~~~~~~
+Clang
+~~~~~~{.sh}
+export PATH=~/{user path}/build/bin:$PATH
 ~~~~~~
 
 #### Check the project

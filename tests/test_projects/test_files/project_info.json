@@ -1,7 +1,7 @@
 {
     "name": "test_files",
-    "clean_cmd": "cd src && rm -f *.o",
-    "build_cmd": "cd src && g++ -w -c *.cpp",
+    "clean_cmd": "make clean",
+    "build_cmd": "make",
     "clang_stable": {
         "bugs": [
             { "file": "call_and_message.cpp", "line": 19, "checker": "core.CallAndMessage", "hash": "2a5c0406484f3d9606e654dadf8e6016" },

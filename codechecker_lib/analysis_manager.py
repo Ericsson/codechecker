@@ -71,6 +71,7 @@ def check(check_data):
     try:
         # if one analysis fails the check fails
         return_codes = 0
+        skipped = False
         for source in action.sources:
 
             # if there is no skiplist handler there was no skip list file

@@ -1,3 +1,4 @@
+.DS_Store
 
 *.py[cod]
 
@@ -20,10 +21,10 @@ thrift_api/gen-js/
 thrift_api/gen-py/
 
 # test_files build files
-tests/test_projects/test_files/src/call_and_message.o
-tests/test_projects/test_files/src/divide_zero.o
-tests/test_projects/test_files/src/new_delete.o
-tests/test_projects/test_files/src/null_dereference.o
-tests/test_projects/test_files/src/stack_address_escape.o
-tests/test_projects/test_files/src/file_to_be_skipped.o
+tests/test_projects/test_files/call_and_message.o
+tests/test_projects/test_files/divide_zero.o
+tests/test_projects/test_files/new_delete.o
+tests/test_projects/test_files/null_dereference.o
+tests/test_projects/test_files/stack_address_escape.o
+tests/test_projects/test_files/file_to_be_skipped.o
 
