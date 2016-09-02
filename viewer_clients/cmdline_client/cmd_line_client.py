@@ -13,7 +13,7 @@ import thrift_helper
 import shared
 import codeCheckerDBAccess
 
-SUPPORTED_VERSION = '4.0'
+SUPPORTED_VERSION = '5.0'
 
 
 def check_API_version(client):

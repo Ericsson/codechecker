@@ -771,7 +771,15 @@ class ThriftRequestHandler():
                                    .filter(ReportsToBuildActions.report_id == reportId) \
                                    .all()
 
-            return [ba.build_cmd for ba in build_actions]
+            return [BuildActionData(id=ba.id,
+                                    runId=ba.run_id,
+                                    buildCmd=ba.build_cmd,
+                                    analyzerType=ba.analyzer_type,
+                                    file=ba.analyzed_source_file,
+                                    checkCmd=ba.check_cmd,
+                                    failure=ba.failure_txt,
+                                    date=str(ba.date),
+                                    duration=ba.duration) for ba in build_actions]
 
         except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
             msg = str(alchemy_ex)
