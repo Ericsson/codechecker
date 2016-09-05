@@ -51,7 +51,7 @@ Each Analyzer client:
   - constructs the analysis command
   - runs an analyzer
   - postprocesses analysis results if required
-  - sends the analisys results trough Thift binary protocol to the Report storage server
+  - sends the analysis results trough Thift binary protocol to the Report storage server
 
 In quickcheck mode the results are only printed to the standard output. Nothing is stored into a database.
 

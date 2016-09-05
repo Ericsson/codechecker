@@ -99,7 +99,7 @@ cd ..
 which clang
 which clang-tidy
 ~~~~~~
-If 'clang' or 'clang-tidy' commands are not available the package can be configured to use another/newer clang binary for the analisys.  
+If 'clang' or 'clang-tidy' commands are not available the package can be configured to use another/newer clang binary for the analysis.  
 Edit the 'CodeChecker/config/package_layout.json' config files "runtime/analyzers"
 section in the generated package and modify the analyzers section to the analyzers
 available in the PATH
@@ -116,7 +116,7 @@ available in the PATH
 which clang
 which clang-tidy
 ~~~~~~
-If 'clang' or 'clang-tidy' commands are not available the package can be configured to use another/newer clang binary for the analisys.  
+If 'clang' or 'clang-tidy' commands are not available the package can be configured to use another/newer clang binary for the analysis.  
 Edit the 'CodeChecker/config/package_layout.json' config files "runtime/analyzers"
 section in the generated package and modify the analyzers section to the analyzers
 available in the PATH

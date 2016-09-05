@@ -306,7 +306,7 @@ def register_client_command_line(argument_parser):
     listruns_parser.add_argument('--host', type=str, dest="host", default='localhost',
                                  help='Server host.')
     listruns_parser.add_argument('-p', '--port', type=str, dest="port", default=11444,
-                                 required=True, help='Server port.')
+                                 required=True, help='HTTP Server port.')
     listruns_parser.add_argument('-o', choices=['plaintext', 'json'], default='plaintext', type=str, dest="output_format", help='Output format.')
     listruns_parser.set_defaults(func=handle_list_runs)
 
@@ -315,7 +315,7 @@ def register_client_command_line(argument_parser):
     listresults_parser.add_argument('--host', type=str, dest="host", default='localhost',
                                     help='Server host.')
     listresults_parser.add_argument('-p', '--port', type=str, dest="port", default=11444,
-                                    required=True, help='Server port.')
+                                    required=True, help='HTTP Server port.')
     listresults_parser.add_argument('-n', '--name', type=str, dest="name", required=True,
                                     help='Check name.')
     listresults_parser.add_argument('-s', '--suppressed', action="store_true", dest="suppressed", help='Suppressed results.')
@@ -327,7 +327,7 @@ def register_client_command_line(argument_parser):
     diff_parser.add_argument('--host', type=str, dest="host", default='localhost',
                              help='Server host.')
     diff_parser.add_argument('-p', '--port', type=str, dest="port", default=11444,
-                             required=True, help='Server port.')
+                             required=True, help='HTTP Server port.')
     diff_parser.add_argument('-b', '--basename', type=str, dest="basename", required=True,
                              help='Base name.')
     diff_parser.add_argument('-n', '--newname', type=str, dest="newname", required=True,
@@ -346,7 +346,7 @@ def register_client_command_line(argument_parser):
     sum_parser.add_argument('--host', type=str, dest="host", default='localhost',
                             help='Server host.')
     sum_parser.add_argument('-p', '--port', type=str, dest="port", default=11444,
-                            required=True, help='Server port.')
+                            required=True, help='HTTP Server port.')
     name_group = sum_parser.add_mutually_exclusive_group(required=True)
     name_group.add_argument('-n', '--name', nargs='+', type=str, dest="names", help='Check name.')
     name_group.add_argument('-a', '--all', action='store_true', dest="all_results", help='All results.')
@@ -360,7 +360,7 @@ def register_client_command_line(argument_parser):
     sum_parser.add_argument('--host', type=str, dest="host", default='localhost',
                             help='Server host.')
     sum_parser.add_argument('-p', '--port', type=str, dest="port", default=11444,
-                            required=True, help='Server port.')
+                            required=True, help='HTTP Server port.')
     sum_parser.add_argument('-n', '--name', nargs='+', type=str, dest="name", required=True, help='Server port.')
     sum_parser.set_defaults(func=handle_remove_run_results)
 
