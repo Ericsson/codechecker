@@ -431,8 +431,8 @@ positional arguments:
   {runs,results,diff,sum,del}
     runs                Get the run data.
     results             List results.
-    diff                Diff two run.
-    sum                 Sum results.
+    diff                Diff two runs.
+    sum                 Summarize the results of the run.
     del                 Remove run results.
 
 optional arguments:
