@@ -11,5 +11,5 @@ Static part is used to create the main package skeleton (directory structure) wh
 External checker libraries can be used in the package. The shared object files should be in the plugin directory and will be automatically loaded at runtime.
 
 ## Runtime section
-The runtime part contains informations which will be used only at runtime
+The runtime part contains information which will be used only at runtime
 to find files during the checking process.

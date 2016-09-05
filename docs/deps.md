@@ -1,6 +1,6 @@
 
 ### Packaging requirements
-  *  [Git](https://git-scm.com/) (> 1.9.1)  
+  *  [Git](https://git-scm.com/) (> 1.9.1)
   *  [Thrift compiler](https://thrift.apache.org/) (> 0.9.2) required to generate python and javascript files
   *  [Doxygen](http://www.stack.nl/~dimitri/doxygen/) (> 1.8) to generate documentation
   *  Build logging
@@ -28,6 +28,6 @@ Javascript dependencies are automatically downloaded based on the ext_source_dep
   * [Highlightjs](https://highlightjs.org/) (BSD) - required for highlighting the source code
 
 #### PostgreSQL
-For the additional PostgreSQL dependecies see the [PostgreSQL setup](postgresql_setup.md) documentation.
+For the additional PostgreSQL dependencies see the [PostgreSQL setup](postgresql_setup.md) documentation.
 
 \include ext_source_deps_config.json
