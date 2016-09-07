@@ -75,8 +75,10 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
             analyzer_cmd = []
             analyzer_cmd.append(analyzer_bin)
 
-            # disable all checkers by default
-            checkers_cmdline = '-*'
+            # Disable all checkers by default.
+            # The latest clang-tidy (3.9) release enables clang static analyzer
+            # checkers by default. They must be disabled explicitly.
+            checkers_cmdline = '-*,clang-analyzer-*'
 
             # config handler stores which checkers are enabled or disabled
             for checker_name, value in config.checks().iteritems():
