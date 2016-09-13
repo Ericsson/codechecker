@@ -11,6 +11,7 @@ import socket
 
 from thrift.transport import THttpClient
 from thrift.protocol import TJSONProtocol
+from thrift.protocol.TProtocol import TProtocolException
 
 from codeCheckerDBAccess import codeCheckerDBAccess
 import shared
@@ -19,7 +20,9 @@ import shared
 class ThriftClientHelper():
 
     def __init__(self, host, port, uri):
-        self.transport = THttpClient.THttpClient(host, port, uri)
+        self.__host = host
+        self.__port = port
+        self.transport = THttpClient.THttpClient(self.__host, self.__port, uri)
         self.protocol = TJSONProtocol.TJSONProtocol(self.transport)
         self.client = codeCheckerDBAccess.Client(self.protocol)
 
@@ -44,7 +47,10 @@ class ThriftClientHelper():
                     print(str(reqfailure))
 
                 sys.exit(1)
-
+            except TProtocolException:
+                print("Connection failed to {0}:{1}"
+                        .format(self.__host, self.__port))
+                sys.exit(1)
             except socket.error as serr:
                 errCause = os.strerror(serr.errno)
                 print(errCause)
