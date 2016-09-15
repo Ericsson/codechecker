@@ -74,6 +74,7 @@ class RunResults(unittest.TestCase):
         self.assertEqual(run_result_count, len(run_results))
 
         found_all = True
+        not_found = []
         for bug in self._testproject_data['bugs']:
             found = False
             for run_res in run_results:
@@ -82,8 +83,13 @@ class RunResults(unittest.TestCase):
                          (run_res.checkerId == bug['checker']) and \
                          (run_res.bugHash == bug['hash'])
             found_all &= found
-
+            if not found:
+                not_found.append(bug)
         print_run_results(run_results)
+
+        print('Not found bugs:')
+        for bug in not_found:
+            print(bug)
 
         self.assertTrue(found_all)
 
