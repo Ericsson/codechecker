@@ -1,192 +1,107 @@
 <!DOCTYPE html>
 <html>
+<head>
+  <title>CodeChecker Viewer</title>
 
-  <head>
+  <meta charset="UTF-8">
 
-    <title>CodeChecker Viewer</title>
+  <!-- CSS -->
 
-    <meta charset="UTF-8">
+  <link type="text/css" rel="stylesheet" href="scripts/plugins/dojo/dijit/themes/claro/claro.css" />
+  <link type="text/css" rel="stylesheet" href="scripts/plugins/dojo/dojox/grid/resources/claroGrid.css"/>
+  <link type="text/css" rel="stylesheet" href="scripts/plugins/codemirror/lib/codemirror.css"/>
+  <link type="text/css" rel="stylesheet" href="scripts/plugins/codemirror/addon/dialog/dialog.css"/>
+  <link type="text/css" rel="stylesheet" href="scripts/plugins/codemirror/addon/fold/foldgutter.css"/>
+  <link type="text/css" rel="stylesheet" href="style/codecheckerviewer.css" />
 
-    <!-- CSS -->
-    <link type="text/css" rel="stylesheet" href="scripts/plugins/dojo/dijit/themes/claro/claro.css"/>
-    <link type="text/css" rel="stylesheet" href="scripts/plugins/dojo/dojox/grid/resources/claroGrid.css"/>
-    <link type="text/css" rel="stylesheet" href="scripts/plugins/highlightjs/css/xcode.min.css"/>
-    <link type="text/css" rel="stylesheet" href="scripts/plugins/codemirror/lib/codemirror.css"/>
-    <link type="text/css" rel="stylesheet" href="scripts/plugins/codemirror/addon/dialog/dialog.css"/>
-    <link type="text/css" rel="stylesheet" href="scripts/plugins/codemirror/addon/fold/foldgutter.css"/>
-    <link type="text/css" rel="stylesheet" href="style/codecheckerviewer.css"/>
+  <!-- Third party libraries -->
 
-    <!-- Third party libraries -->
-    <script type="text/javascript" src="scripts/plugins/thrift/thrift.js"></script>
-    <script type="text/javascript" src="scripts/plugins/marked/marked.min.js"></script>
-    <script type="text/javascript" src="scripts/plugins/highlightjs/highlight.min.js"></script>
-    <script type="text/javascript" src="scripts/plugins/codemirror/lib/codemirror.js"></script>
-    <script type="text/javascript" src="scripts/plugins/codemirror/mode/clike/clike.js"></script>
-    <script type="text/javascript" src="scripts/plugins/codemirror/addon/dialog/dialog.js"></script>
-    <script type="text/javascript" src="scripts/plugins/codemirror/addon/search/search.js"></script>
-    <script type="text/javascript" src="scripts/plugins/codemirror/addon/search/searchcursor.js"></script>
-    <script type="text/javascript" src="scripts/plugins/codemirror/addon/edit/matchbrackets.js"></script>
-    <script type="text/javascript" src="scripts/plugins/codemirror/addon/fold/foldcode.js"></script>
-    <script type="text/javascript" src="scripts/plugins/codemirror/addon/fold/foldgutter.js"></script>
-    <script type="text/javascript" src="scripts/plugins/codemirror/addon/fold/brace-fold.js"></script>
-    <script type="text/javascript" src="scripts/plugins/codemirror/addon/fold/xml-fold.js"></script>
-    <script type="text/javascript" src="scripts/plugins/jsplumb/external/jquery-1.9.0-min.js"></script>
-    <script type="text/javascript" src="scripts/plugins/jsplumb/jquery.jsPlumb-1.7.6-min.js"></script>
+  <script type="text/javascript" src="scripts/plugins/jsplumb/external/jquery-1.9.0-min.js"></script>
+  <script type="text/javascript" src="scripts/plugins/jsplumb/jquery.jsPlumb-1.7.6-min.js"></script>
+  <script type="text/javascript" src="scripts/plugins/thrift/thrift.js"></script>
+  <script type="text/javascript" src="scripts/plugins/marked/marked.min.js"></script>
+  <script type="text/javascript" src="scripts/plugins/codemirror/lib/codemirror.js"></script>
+  <script type="text/javascript" src="scripts/plugins/codemirror/mode/clike/clike.js"></script>
+  <script type="text/javascript" src="scripts/plugins/codemirror/addon/dialog/dialog.js"></script>
+  <script type="text/javascript" src="scripts/plugins/codemirror/addon/search/search.js"></script>
+  <script type="text/javascript" src="scripts/plugins/codemirror/addon/search/searchcursor.js"></script>
+  <script type="text/javascript" src="scripts/plugins/codemirror/addon/edit/matchbrackets.js"></script>
+  <script type="text/javascript" src="scripts/plugins/codemirror/addon/fold/foldcode.js"></script>
+  <script type="text/javascript" src="scripts/plugins/codemirror/addon/fold/foldgutter.js"></script>
+  <script type="text/javascript" src="scripts/plugins/codemirror/addon/fold/brace-fold.js"></script>
+  <script type="text/javascript" src="scripts/plugins/codemirror/addon/fold/xml-fold.js"></script>
 
-    <!-- Services -->
-    <script type="text/javascript" src="scripts/codechecker-api/shared_types.js"></script>
-    <script type="text/javascript" src="scripts/codechecker-api/report_viewer_server_types.js"></script>
-    <script type="text/javascript" src="scripts/codechecker-api/codeCheckerDBAccess.js"></script>
+  <!-- Services -->
 
-    <!-- Configure Dojo -->
-    <script>
-      var dojoConfig = {
-        baseUrl: "",
-        parseOnLoad: true,
-        async: true,
-        packages: [
-          { name: "dojo",  location: "scripts/plugins/dojo/dojo"  },
-          { name: "dijit", location: "scripts/plugins/dojo/dijit" },
-          { name: "dojox", location: "scripts/plugins/dojo/dojox" },
-          { name: "ccvscripts", location: "scripts/codecheckerviewer" }
-        ]
-      };
-    </script>
+  <script type="text/javascript" src="scripts/codechecker-api/shared_types.js"></script>
+  <script type="text/javascript" src="scripts/codechecker-api/report_viewer_server_types.js"></script>
+  <script type="text/javascript" src="scripts/codechecker-api/codeCheckerDBAccess.js"></script>
 
-    <!-- Check browser type and version, and if both are adequate, load CodeChecker Viewer -->
-    <script>
+  <!-- Configure Dojo -->
 
-      // polyfill missing startsWith from IE
-      if (!String.prototype.startsWith) {
-        String.prototype.startsWith = function(searchString, position){
-          position = position || 0;
-          return this.substr(position, searchString.length) === searchString;
-        };
+  <script>
+    var dojoConfig = {
+      baseUrl : '',
+      async : true,
+      packages : [
+        { name : 'dojo',  location : 'scripts/plugins/dojo/dojo'  },
+        { name : 'dijit', location : 'scripts/plugins/dojo/dijit' },
+        { name : 'dojox', location : 'scripts/plugins/dojo/dojox' },
+        { name : 'codechecker', location : 'scripts/codecheckerviewer' }
+      ]
+    };
+  </script>
+
+  <script type="text/javascript" src="scripts/plugins/dojo/dojo/dojo.js"></script>
+</head>
+<body class="claro">
+  <script>
+    // http://stackoverflow.com/questions/5916900/how-can-you-detect-the-version-of-a-browser
+    var browserVersion = (function(){
+      var ua = navigator.userAgent, tem, 
+        M = ua.match(/(opera|chrome|safari|firefox|msie|trident(?=\/))\/?\s*(\d+)/i) || [];
+
+      if (/trident/i.test(M[1])) {
+        tem = /\brv[ :]+(\d+)/g.exec(ua) || [];
+        return 'IE ' + (tem[1] || '');
       }
 
-      var getBrowserInfo = function () {
-        var ua = navigator.userAgent;
-        var tem = [];
-        var M = ua.match(/(opera|chrome|safari|firefox|msie|trident(?=\/))\/?\s*(\d+)/i) || [];
-
-        if (/trident/i.test(M[1])) {
-          tem = /\brv[ :]+(\d+)/g.exec(ua) || [];
-
-          return { name : 'MSIE', version : (tem[1]||'') };
-        }
-
-        if (M[1] === 'Chrome') {
-          tem = ua.match(/\bOPR\/(\d+)/);
-
-          if (tem !== null) {
-            return { name : 'Opera', version : tem[1] };
-          }
-        }
-
-        M = M[2] ? [M[1], M[2]] : [navigator.appName, navigator.appVersion, '-?'];
-
-        if ((tem = ua.match(/version\/(\d+)/i)) !== null) {
-          M.splice(1, 1, tem[1]);
-        }
-
-        return {
-          name    : M[0],
-          version : M[1]
-        };
-      };
-
-      var isBrowserCompatible = function () {
-        var minimalVersionNumbers = {
-          Firefox : { version : "4" },
-          MSIE    : { version : "9" }
-        };
-
-        var browser = getBrowserInfo();
-        var browserType = browser.name;
-        var browserVersion = browser.version;
-
-        var mayNotBeSupported = minimalVersionNumbers[browserType] !== undefined;
-
-        if (mayNotBeSupported) {
-          var browserVersionAdequate =
-            parseFloat(minimalVersionNumbers[browserType].version)
-              <= parseFloat(browserVersion);
-
-          if (browserVersionAdequate) {
-            return true;
-          } else {
-            return false;
-          }
-        }
-
-        return true;
-      };
-
-      // Calls the callback after the script in url is loaded
-      var loadScript = function (url, callback) {
-        var head    = document.getElementsByTagName('head')[0];
-        var script  = document.createElement('script');
-        script.type = 'text/javascript';
-        script.src  = url;
-
-        if (getBrowserInfo().name === "MSIE") {
-          if (script.addEventListener) {
-            script.addEventListener("load", callback, false);
-          } else if (script.readyState) {
-            script.onreadystatechange = callback;
-          }
-        } else {
-          script.onload = callback;
-        }
-
-        head.appendChild(script);
-      };
-
-      var browserIsCompatible = isBrowserCompatible();
-
-      var startCodeCheckerViewer = function () {
-
-        if (document.body !== null) {
-          document.body.innerHTML = null;
-        }
-
-        hljs.initHighlightingOnLoad();
-
-        // Load Dojo and start CodeChecker Viewer
-        loadScript("scripts/plugins/dojo/dojo/dojo.js", function () {
-          require([
-            "scripts/codecheckerviewer/CodeCheckerViewer.js",
-            "dojo/domReady!"],
-          function (CodeCheckerViewer, hash, topic) {
-            CCV = new CodeCheckerViewer();
-          });
-        });
-      };
-
-      if (browserIsCompatible) {
-        startCodeCheckerViewer();
+      if (M[1] === 'Chrome') {
+        tem = ua.match(/\b(OPR|Edge)\/(\d+)/);
+        if (tem != null) return tem.slice(1).join(' ').replace('OPR', 'Opera');
       }
 
-    </script>
+      M = M[2] ? [M[1], M[2]] : [navigator.appName, navigator.appVersion, '-?'];
+      if ((tem = ua.match(/version\/(\d+)/i)) != null) M.splice(1, 1, tem[1]);
+        return M.join(' ');
+    })();
 
-  </head>
+    var pos = browserVersion.indexOf(' ');
+    var browser = browserVersion.substr(0, pos);
+    var version = parseInt(browserVersion.substr(pos + 1));
 
-  <body class="claro">
+    var browserCompatible
+      = browser === 'Firefox'
+      ? version >= 4
+      : browser === 'IE'
+      ? version >= 9
+      : true;
 
-    <script>
-      // Displays an info page about browser compatibility if needed
-      if (!browserIsCompatible) {
-        document.body.innerHTML =
-            "<h2 style='margin-left: 20px;'>Your browser is not compatible with CodeChecker Viewer!</h1>"
-          + "<p style='margin-left: 20px;'>The version required for the following browsers are:</p>"
-          + "<ul style='margin-left: 20px;'>"
-          + "<li>Internet Explorer : version 9 or better</li>"
-          + "<li>Firefox : version 4 or better</li>"
-          + "</ul>"
-          + "<p style='margin-left: 20px; margin-top: 40px;'><button onclick='startCodeCheckerViewer()'>I understand, I still want to continue</button></p>";
-      }
-    </script>
-
-  </body>
-
+    if (browserCompatible) {
+      require([
+        'codechecker/codecheckerviewer'],
+      function (codecheckerviewer) {
+        codecheckerviewer();
+      });
+    } else {
+      document.body.innerHTML =
+        '<h2 style="margin-left: 20px;">Your browser is not compatible with CodeChecker Viewer!</h2> \
+         <p style="margin-left: 20px;">The version required for the following browsers are:</p> \
+         <ul style="margin-left: 20px;"> \
+         <li>Internet Explorer: version 9 or newer</li> \
+         <li>Firefox: version 4 or newer</li> \
+         </ul>';
+    }
+  </script>
+</body>
 </html>

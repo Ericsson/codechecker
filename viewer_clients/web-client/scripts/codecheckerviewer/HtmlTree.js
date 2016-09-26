@@ -6,11 +6,10 @@
 
 define([
   'dojo/_base/declare',
-  'dijit/Tree',
-], function (declare, Tree) {
-
+  'dijit/Tree'],
+function (declare, Tree) {
   var HtmlTreeNode = declare(Tree._TreeNode, {
-    _setLabelAttr : { node : "labelNode", type : "innerHTML" }
+    _setLabelAttr : { node : 'labelNode', type : 'innerHTML' }
   });
 
   return declare(Tree, {
