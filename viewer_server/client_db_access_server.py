@@ -5,8 +5,9 @@
 # -------------------------------------------------------------------------
 """
 Main viewer server starts a http server which handles thrift client
-and browser requests.
+and browser requests
 """
+import base64
 import errno
 import os
 import posixpath
@@ -24,27 +25,43 @@ except ImportError:
     from http.server import HTTPServer, BaseHTTPRequestHandler, \
         SimpleHTTPRequestHandler
 
+from thrift import Thrift
+from thrift.Thrift import TException
 from thrift.transport import TTransport
 from thrift.protocol import TJSONProtocol
 
+import shared
+
+
 from codeCheckerDBAccess import codeCheckerDBAccess
+from codeCheckerDBAccess import constants
+from codeCheckerDBAccess.ttypes import *
+from Authentication import codeCheckerAuthentication
+from Authentication import constants
+from Authentication.ttypes import *
 
 from client_db_access_handler import ThriftRequestHandler
+from client_auth_handler import ThriftAuthHandler
 
 from codechecker_lib import logger
 from codechecker_lib import database_handler
+from codechecker_lib import session_manager
+
+import base64
 
 LOG = logger.get_new_logger('DB ACCESS')
 
 
-class RequestHander(SimpleHTTPRequestHandler):
+class RequestHandler(SimpleHTTPRequestHandler):
     """
     Handle thrift and browser requests
     Simply modified and extended version of SimpleHTTPRequestHandler
     """
 
-    def __init__(self, request, client_address, server):
+    cookie_name = "_ccAccessPrivileged"
+    cookie_str = "YEP!"
 
+    def __init__(self, request, client_address, server):
         self.sc_session = server.sc_session
 
         self.db_version_info = server.db_version_info
@@ -57,6 +74,77 @@ class RequestHander(SimpleHTTPRequestHandler):
     def log_message(self, msg_format, *args):
         """ Silenting http server. """
         return
+
+    def check_auth_in_request(self):
+        """
+        Wrapper to handle authentication needs from both GET and POST requests.
+        """
+
+        if not session_manager.sessionManager().isEnabled():
+            return True
+
+        success = False
+
+        # Authentication can happen in two possible ways:
+        #
+        # The user either presents a valid session cookie -- in this case, checking if
+        # the session for the given cookie is valid
+
+        # TODO: Logs here?
+        for k in self.headers.getheaders("Cookie"):
+            print "Begin iter."
+            split = k.split("; ")
+            for cookie in split:
+                print cookie
+                values = cookie.split("=")
+                if len(values) == 2 and values[0] == session_manager.session_cookie_name:
+
+                    if session_manager.validate_session_token(values[1]):
+                        # The session cookie contains valid data.
+                        print "Cookie is valid."
+                        success = values[1]
+                    else:
+                        print "Cookie is not valid."
+
+        if not success:
+            # Session cookie was invalid (or not found...)
+            # Attempt to see if the browser has sent us an authentication request
+            authHeader = self.headers.getheader("Authorization")
+            if authHeader is not None and authHeader.startswith("Basic "):
+                # TODO: Log
+                print "Receieved HTTP Authorization header..."
+                authString = base64.decodestring(self.headers.getheader("Authorization").replace("Basic ", ""))
+
+                if session_manager.validate_auth_request(authString):
+                    # TODO: Log
+                    print "Authorization successful, starting new session..."
+                    return session_manager.create_session()
+
+        # Else, access is still not granted.
+        if not success:
+            # TODO: Log
+            print "Credentials invalid... refusing session."
+            return None
+
+        return success
+
+    def do_GET(self):
+        authToken = self.check_auth_in_request()
+        if authToken:
+            self.send_response(200)
+            if authToken != True:
+                self.send_header("Set-Cookie", session_manager.session_cookie_name + "=" + authToken + "; Path=/")
+            SimpleHTTPRequestHandler.do_GET(self)
+        else:
+            print "Failed authentication."
+            errormsg = """Access requires valid credentials."""
+            self.send_response(401)
+            self.send_header("WWW-Authenticate", 'Basic realm="test"')
+            self.send_header("Content-type", "text/plain")
+            self.send_header("Content-length", str(len(errormsg)))
+            self.send_header('Connection', 'close')
+            self.end_headers()
+            self.wfile.write(errormsg)
 
     def do_POST(self):
         """ Handling thrift messages. """
@@ -75,6 +163,7 @@ class RequestHander(SimpleHTTPRequestHandler):
         output_protocol_factory = protocol_factory
 
         itrans = TTransport.TFileObjectTransport(self.rfile)
+        otrans = TTransport.TFileObjectTransport(self.wfile)
         itrans = TTransport.TBufferedTransport(itrans,
                                                int(self.headers[
                                                        'Content-Length']))
@@ -83,6 +172,21 @@ class RequestHander(SimpleHTTPRequestHandler):
         iprot = input_protocol_factory.getProtocol(itrans)
         oprot = output_protocol_factory.getProtocol(otrans)
 
+        sess_token = self.check_auth_in_request()
+        if self.path != '/Authentication' and not sess_token:
+            # Bail out if the user is not authenticated...
+            # This response has the possibility of melting down Thrift clients,
+            # but the user is expected to properly authenticate first
+            print "Failed authentication!"
+            errormsg = """Access requires valid credentials."""
+            self.send_response(401)
+            self.send_header("Content-type", "text/plain")
+            self.send_header("Content-length", str(len(errormsg)))
+            self.end_headers()
+
+            return
+
+        # Authentication is handled, we may now respond to the user.
         try:
             session = self.sc_session()
             acc_handler = ThriftRequestHandler(session,
@@ -91,7 +195,19 @@ class RequestHander(SimpleHTTPRequestHandler):
                                                suppress_handler,
                                                self.db_version_info)
 
-            processor = codeCheckerDBAccess.Processor(acc_handler)
+            if self.path == '/Authentication':
+                # Authentication requests must be routed to a different handler
+                auth_handler = ThriftAuthHandler(sess_token)
+                processor = codeCheckerAuthentication.Processor(auth_handler)
+            else:
+                acc_handler = ThriftRequestHandler(session,
+                                                   checker_md_docs,
+                                                   checker_md_docs_map,
+                                                   suppress_handler,
+                                                   self.db_version_info)
+
+                processor = codeCheckerDBAccess.Processor(acc_handler)
+
             processor.process(iprot, oprot)
             result = otrans.getvalue()
 
@@ -118,7 +234,6 @@ class RequestHander(SimpleHTTPRequestHandler):
         """
         Modified version from SimpleHTTPRequestHandler.
         Path is set to www_root.
-
         """
         # Abandon query parameters.
         path = path.split('?', 1)[0]
@@ -209,7 +324,7 @@ def start_server(package_data, port, db_conn_string, suppress_handler,
     server_addr = (access_server_host, port)
 
     http_server = CCSimpleHttpServer(server_addr,
-                                     RequestHander,
+                                     RequestHandler,
                                      db_conn_string,
                                      package_data,
                                      suppress_handler,

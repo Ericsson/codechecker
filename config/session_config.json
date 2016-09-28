@@ -1,0 +1,11 @@
+{
+  "authentication": {
+      "enabled": false
+  },
+  "credentials": {
+      "localhost:6251" : "cc:valid"
+  },
+  "tokens": {
+      "localhost:6251" : "dummy_token"
+  }
+}

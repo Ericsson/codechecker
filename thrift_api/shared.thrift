@@ -49,7 +49,8 @@ enum Severity{
 enum ErrorCode{
   DATABASE,
   IOERROR,
-  GENERAL
+  GENERAL,
+  PRIVILEGE
 }
 
 //-----------------------------------------------------------------------------
