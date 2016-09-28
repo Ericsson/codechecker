@@ -370,12 +370,15 @@ def build_package(repository_root, build_package_config, env=None):
 
     intercept_build_executable = find_executable('intercept-build')
     
-    if intercept_build_executable != None:
+    if intercept_build_executable is not None:
         LOG.info('Available')
     else:
-        LOG.error('Not exists, build ld logger in Linux only')
+        if platform.system() == 'Darwin':
+            LOG.error('Not exists, scan-build-py (intercept) is mandatory on OS X!')
+            sys.exit(1)
         # build ld logger because intercept is not available
         if platform.system() == 'Linux':
+            LOG.warning('Not exists, build ld logger')
             ld_logger_path = build_package_config['ld_logger_path']
             if ld_logger_path:
                 ld_logger_build = os.path.join(ld_logger_path, 'build')
