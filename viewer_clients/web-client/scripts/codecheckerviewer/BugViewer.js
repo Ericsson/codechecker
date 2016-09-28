@@ -261,7 +261,13 @@ function (declare, dom, style, on, query, Memory, Observable, topic,
         if (line < from || line >= to)
           return;
 
-        spans[line] = query('.checkerstep', cmLines[line - from]);
+        spans[line] = [];
+        query('.checkerstep', cmLines[line - from]).forEach(function (step) {
+          var count
+            = (step.getAttribute('class').match(/checkerstep/g) || []).length;
+          for (var i = 0; i < count; ++i)
+            spans[line].push(step);
+        });
 
         if (markers[line])
           markers[line].push(textMarker);
