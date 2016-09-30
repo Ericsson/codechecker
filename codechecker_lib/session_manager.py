@@ -10,6 +10,7 @@ with a particular CodeChecker server.
 
 import os
 import uuid
+import json
 
 from codechecker_lib import logger
 
@@ -90,19 +91,31 @@ class sessionManager_Client:
             scfg_dict["tokens"] = {}
 
         self.__save = scfg_dict
+        self.__autologin = scfg_dict["authentication"].get("client_autologin") if "client_autologin" in scfg_dict["authentication"] else True
         print self
 
-    def getToken(self, host):
-        return self.__save["tokens"].get(host)
+    def is_autologin_enabled(self):
+        return self.__autologin
 
-    def getAuthString(self, host):
-        return self.__save["credentials"].get(host)
+    def getToken(self, host, port):
+        return self.__save["tokens"].get(host + ":" + port)
 
-    def saveToken(self, host, token, destroy = False):
+    def getAuthString(self, host, port):
+        ret = self.__save["credentials"].get(host + ":" + port)
+        if not ret:
+            ret = self.__save["credentials"].get(host)
+            if not ret:
+                ret = self.__save["credentials"].get("*:" + port)
+                if not ret:
+                    ret = self.__save["credentials"].get("*")
+
+        return ret
+
+    def saveToken(self, host, port, token, destroy = False):
         if not destroy:
-            self.__save["tokens"][host] = token
+            self.__save["tokens"][host + ":" + port] = token
         else:
-            del self.__save["tokens"][host]
+            del self.__save["tokens"][host + ":" + port]
 
         session_cfg_file = os.path.join(os.environ['CC_PACKAGE_ROOT'], "config", "session_config.json")
         with open(session_cfg_file, 'w') as scfg:

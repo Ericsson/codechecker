@@ -39,7 +39,7 @@ class CmdLineOutputEncoder(json.JSONEncoder):
 
 def handle_auth_requests(args):
     session = session_manager.sessionManager_Client()
-    auth_client = authentication_helper.ThriftAuthHelper(args.host, args.port, '/Authentication', session.getToken(args.host + ":" + args.port))
+    auth_client = authentication_helper.ThriftAuthHelper(args.host, args.port, '/Authentication', session.getToken(args.host, args.port))
 
     handshake = auth_client.getAuthParameters()
     if not handshake.requiresAuthentication:
@@ -47,9 +47,13 @@ def handle_auth_requests(args):
         return
 
     if args.logout:
+        if args.username or args.password:
+            print('ERROR! Do not supply username and password with `--logout` command.')
+            sys.exit(1)
+
         logout_done = auth_client.destroySession()
         if logout_done:
-            session.saveToken(args.host + ":" + args.port, None, True)
+            session.saveToken(args.host, args.port, None, True)
             print('Successfully deauthenticated from server.')
 
         return
@@ -60,18 +64,23 @@ def handle_auth_requests(args):
     if 'Username:Password' in str(methods):
         if not args.username or not args.password:
             # Try to use a previously saved credential from configuration file
-            savedAuth = session.getAuthString(args.host + ":" + args.port)
+            savedAuth = session.getAuthString(args.host, args.port)
 
             if savedAuth:
+                print('Logging in using preconfigured credentials.')
                 args.username = savedAuth.split(":")[0]
                 args.password = savedAuth.split(":")[1]
             else:
                 print('Can not authenticate with username and password if it is not specified...')
                 sys.exit(1)
 
-        session_token = auth_client.performLogin("Username:Password", args.username + ":" + args.password)
-        session.saveToken(args.host + ":" + args.port, session_token)
-        print("Server reported successful authentication!")
+        try:
+            session_token = auth_client.performLogin("Username:Password", args.username + ":" + args.password)
+            session.saveToken(args.host, args.port, session_token)
+            print("Server reported successful authentication!")
+        except shared.ttypes.RequestFailed as reqfail:
+            print(reqfail.message)
+            sys.exit(1)
 
 
 def __check_authentication(client):
@@ -84,19 +93,36 @@ def __check_authentication(client):
         return False
 
 def setupClient(host, port, uri):
-    """ Setup the thrift client and check API version. """
-
-    client = thrift_helper.ThriftClientHelper(host, port, uri, None)
+    ''' setup the thrift client and check API version and authentication needs'''
+    manager = session_manager.sessionManager_Client()
+    session_token = manager.getToken(host, port)
 
     # Before actually communicating with the server, we need to check authentication first
-    auth_client = authentication_helper.ThriftAuthHelper(host, port, uri + 'Authentication', None)
+    auth_client = authentication_helper.ThriftAuthHelper(host, port, uri + 'Authentication', session_token)
     auth_response = auth_client.getAuthParameters()
     if auth_response.requiresAuthentication and not auth_response.sessionStillActive:
-        print('Access denied.')
-        print('Please log in onto the server using `CodeChecker cmd login`')
-        sys.exit(1)
+        print_err = False
 
-    # Test if client can work with thrift API getVersion.
+        if manager.is_autologin_enabled():
+            auto_auth_string = manager.getAuthString(host, port)
+            if auto_auth_string:
+                # Try to automatically log in with a saved credential if it exists for the server
+                try:
+                    session_token = auth_client.performLogin("Username:Password", auto_auth_string)
+                    manager.saveToken(host, port, session_token)
+                    print("Authenticated using pre-configured credentials...")
+                except shared.ttypes.RequestFailed:
+                    print_err = True
+        else:
+            print_err = True
+
+        if print_err:
+            print('Access denied. This server requires authentication.')
+            print('Please log in onto the server using `CodeChecker cmd login`')
+            sys.exit(1)
+
+    client = thrift_helper.ThriftClientHelper(host, port, uri, session_token)
+    # test if client can work with thrift API getVersion
     if not check_API_version(client):
         print('Backward incompatible change was in the API.')
         print('Please update client. Server version is not supported')

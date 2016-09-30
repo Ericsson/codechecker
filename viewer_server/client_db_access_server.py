@@ -90,7 +90,8 @@ class RequestHandler(SimpleHTTPRequestHandler):
         # The user either presents a valid session cookie -- in this case, checking if
         # the session for the given cookie is valid
 
-        # TODO: Logs here?
+        client_host, client_port = self.client_address
+
         for k in self.headers.getheaders("Cookie"):
             print "Begin iter."
             split = k.split("; ")
@@ -101,29 +102,23 @@ class RequestHandler(SimpleHTTPRequestHandler):
 
                     if session_manager.validate_session_token(values[1]):
                         # The session cookie contains valid data.
-                        print "Cookie is valid."
                         success = values[1]
-                    else:
-                        print "Cookie is not valid."
 
         if not success:
             # Session cookie was invalid (or not found...)
             # Attempt to see if the browser has sent us an authentication request
             authHeader = self.headers.getheader("Authorization")
             if authHeader is not None and authHeader.startswith("Basic "):
-                # TODO: Log
-                print "Receieved HTTP Authorization header..."
+                LOG.info("Client from " + client_host + ":" + str(client_port) + " attempted authorization.")
                 authString = base64.decodestring(self.headers.getheader("Authorization").replace("Basic ", ""))
 
                 if session_manager.validate_auth_request(authString):
-                    # TODO: Log
-                    print "Authorization successful, starting new session..."
+                    LOG.info("Client from " + client_host + ":" + str(client_port) + " successfully logged in")
                     return session_manager.create_session()
 
         # Else, access is still not granted.
         if not success:
-            # TODO: Log
-            print "Credentials invalid... refusing session."
+            LOG.debug(client_host + ":" + str(client_port) + " Invalid access, credentials not found - session refused.")
             return None
 
         return success
@@ -177,7 +172,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
             # Bail out if the user is not authenticated...
             # This response has the possibility of melting down Thrift clients,
             # but the user is expected to properly authenticate first
-            print "Failed authentication!"
+            LOG.debug(client_host + ":" + str(client_port) + " Invalid access, credentials not found - session refused.")
             errormsg = """Access requires valid credentials."""
             self.send_response(401)
             self.send_header("Content-type", "text/plain")

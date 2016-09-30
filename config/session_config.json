@@ -1,11 +1,15 @@
 {
   "authentication": {
-      "enabled": false
+    "client_autologin" : true,
+    "enabled" : true
   },
   "credentials": {
-      "localhost:6251" : "cc:valid"
+    "*" : "global:admin",
+    "*:6251" : "super:secret",
+    "localhost" : "cc:bad",
+    "localhost:6252" : "cc:invalid"
   },
   "tokens": {
-      "localhost:6251" : "dummy_token"
+    "localhost:6251" : "dummy_token"
   }
 }

@@ -52,8 +52,7 @@ class ThriftAuthHelper():
                     print('Database error on server')
                     print(str(reqfailure.message))
                 if reqfailure.error_code == shared.ttypes.ErrorCode.PRIVILEGE:
-                    print('Unauthorized access')
-                    print(str(reqfailure.message))
+                    raise reqfailure
                 else:
                     print('Other error')
                     print(str(reqfailure))

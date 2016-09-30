@@ -9,3 +9,7 @@ See [report_viewer_server.thrift](https://raw.githubusercontent.com/Ericsson/cod
 ## Report storage server API
 The report storage server API is used internally in the package during runtime to store the results to the database.
 See [report_storage_server.thrift](https://raw.githubusercontent.com/Ericsson/codechecker/master/thrift_api/report_storage_server.thrift).
+
+## Authentication system API
+The authentication layer is used for supporting privileged-access only access.
+See [authentication.thrift](https://raw.githubusercontent.com/Ericsson/codechecker/master/thrift_api/authentication.thrift)
