@@ -21,7 +21,7 @@ import shared
 
 class ThriftClientHelper():
 
-    def __init__(self, host, port, uri, session_token = None):
+    def __init__(self, host, port, uri, session_token=None):
         self.__host = host
         self.__port = port
         self.transport = THttpClient.THttpClient(self.__host, self.__port, uri)

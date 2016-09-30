@@ -176,8 +176,8 @@ class sessionManager:
             return False
 
     def create_or_get_session(self, client, auth_string):
-        '''Create a new session for the given client and auth-string, if
-        it is valid. If an existing session is found, return that instead.'''
+        """Create a new session for the given client and auth-string, if
+        it is valid. If an existing session is found, return that instead."""
         if not self.__auth_config["enabled"]:
             return None
 

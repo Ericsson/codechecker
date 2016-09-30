@@ -15,8 +15,8 @@ import socket
 import urllib
 from multiprocessing.pool import ThreadPool
 
-from sqlalchemy.orm import scoped_session
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import scoped_session
 
 try:
     from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler

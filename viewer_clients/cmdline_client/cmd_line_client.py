@@ -65,7 +65,6 @@ def handle_auth_requests(args):
         return
 
     methods = auth_client.getAcceptedAuthMethods()
-
     # Attempt username-password auth first
     if 'Username:Password' in str(methods):
         if not args.username or not args.password:
