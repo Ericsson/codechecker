@@ -2,7 +2,8 @@ CodeChecker authentication subsytem
 ===================================
  
 CodeChecker also supports only allowing a privileged set of users to access the results stored on a server.
-Authentication configuration is stored in the `config/session_config.json` file, both for the client and the serverside.
+Authentication configuration is stored in the `config/session_config.json` file for the server and a template in `config/session_client.json` for the client.
+The user's own configuration is copied by the client &ndash; at first launch &ndash; to `~/.codechecker_passwords.json`.
  
 ## Serverside configuration
  
@@ -14,6 +15,26 @@ The `authentication` section of the config file controls how authentication is h
     The name to show for web-browser viewers' pop-up login window via *HTTP Authenticate*
  * `realm_error`  
     The error message shown in the browser when the user fails to authenticate
+
+Every authentication method is its own JSON object in this section. Every authentication method has its
+own `enabled` key which dictates whether it is used at live authentication or not.
+
+Users are authenticated if **any** authentication method successfully authenticates them.
+
+### *Dictionary* authentication
+
+The `authentication.method_dictionary` contains a plaintext username-password configuration for authentication.
+
+```json
+"method_dictionary": {
+  "enabled" : true,
+  "auths" : [
+      "global:admin", "test:test"
+  ]
+}
+```
+
+----
 
 ## Clientside configuration
 
@@ -53,7 +74,7 @@ Privileged session expire after a set amount of time. To log out manually, issue
 
 To alleviate the need for supplying authentication in the command-line every time a server is connected to, users can pre-configure their credentials to be used in authentication.
 
-To do so, open `config/session_config.json`. The `credentials` section is used by the client to read pre-saved authentication data in `username:password` format.
+To do so, open `~/.codechecker_passwords.json`. The `credentials` section is used by the client to read pre-saved authentication data in `username:password` format.
 
 ```json
   "credentials": {
@@ -76,3 +97,7 @@ Credentials are matched for any particular server at login in the following orde
 If authentication is required by the server and the user hasn't logged in but there are saved credentials for the server, `CodeChecker cmd` will automatically try to log in.
 
 This behaviour can be disabled by setting `client_autologin` to `false`.
+
+#### Currently active tokens
+
+The configuration file's `tokens` section contains the user's currently active sessions' tokens. This is not meant to be edited by hand, the client manages this section.

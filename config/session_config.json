@@ -1,17 +1,14 @@
 {
   "authentication": {
-    "client_autologin" : true,
     "enabled" : true,
     "realm_name" : "CodeChecker Privileged server",
-    "realm_error": "Access requires valid credentials."
-  },
-  "credentials": {
-    "*" : "global:admin",
-    "*:6251" : "super:secret",
-    "localhost" : "cc:bad",
-    "localhost:6252" : "cc:invalid"
-  },
-  "tokens": {
-    "localhost:6251" : "dummy_token"
+    "realm_error": "Access requires valid credentials.",
+
+    "method_dictionary": {
+      "enabled" : false,
+      "auths" : [
+        "global:admin", "test:test"
+      ]
+    }
   }
 }

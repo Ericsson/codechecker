@@ -9,6 +9,7 @@ with a particular CodeChecker server.
 '''
 
 import os
+import shutil
 import uuid
 import json
 import hashlib
@@ -65,6 +66,12 @@ class sessionManager:
         self.__auth_config = scfg_dict["authentication"]
         print self
 
+        # If no methods are configured as enabled, disable authentication
+        if scfg_dict["authentication"].get("enabled")\
+           and ("method_dictionary" in self.__auth_config and not self.__auth_config["method_dictionary"].get("enabled")):
+            LOG.warning("Authentication is enabled but no valid authentication backends are configured... Falling back to no authentication.")
+            self.__auth_config["enabled"] = False
+
     def isEnabled(self):
         return self.__auth_config.get("enabled")
 
@@ -74,7 +81,14 @@ class sessionManager:
     def __handle_validation(self, auth_string):
         '''Validate an oncoming authorization request against some authority controller'''
         # TODO: This
-        return True
+
+        return self.__try_auth_dictionary(auth_string)
+
+    def __try_auth_dictionary(self, auth_string):
+        if "method_dictionary" in self.__auth_config and self.__auth_config["method_dictionary"].get("enabled"):
+            return auth_string in self.__auth_config.get("method_dictionary").get("auths")
+
+        return False
 
     def create_or_get_session(self, client, auth_string):
         '''Create a new session for the given client and auth-string, if it is valid.
@@ -124,7 +138,14 @@ class sessionManager_Client:
     def __init__(self):
         LOG.debug('Loading session config')
 
-        session_cfg_file = os.path.join(os.environ['CC_PACKAGE_ROOT'], "config", "session_config.json")
+        # Check for user's configuration to exist
+        if not os.path.exists(os.path.join(os.path.expanduser("~"), ".codechecker_passwords.json")):
+            print('CodeChecker authentication client\'s example configuration file created at ' +
+                os.path.join(os.path.expanduser("~"), ".codechecker_passwords.json"))
+            shutil.copyfile(os.path.join(os.environ['CC_PACKAGE_ROOT'], "config", "session_client.json"),
+                            os.path.join(os.path.expanduser("~"), ".codechecker_passwords.json"))
+
+        session_cfg_file = os.path.join(os.path.expanduser("~"), ".codechecker_passwords.json")
         LOG.debug(session_cfg_file)
         with open(session_cfg_file, 'r') as scfg:
             scfg_dict = json.loads(scfg.read())
@@ -135,8 +156,7 @@ class sessionManager_Client:
             scfg_dict["tokens"] = {}
 
         self.__save = scfg_dict
-        self.__autologin = scfg_dict["authentication"].get("client_autologin") if "client_autologin" in scfg_dict["authentication"] else True
-        print self
+        self.__autologin = scfg_dict.get("client_autologin") if "client_autologin" in scfg_dict else True
 
     def is_autologin_enabled(self):
         return self.__autologin
@@ -161,6 +181,6 @@ class sessionManager_Client:
         else:
             del self.__save["tokens"][host + ":" + port]
 
-        session_cfg_file = os.path.join(os.environ['CC_PACKAGE_ROOT'], "config", "session_config.json")
+        session_cfg_file = os.path.join(os.path.expanduser("~"), ".codechecker_passwords.json")
         with open(session_cfg_file, 'w') as scfg:
             json.dump(self.__save, scfg, indent = 2, sort_keys = True)
