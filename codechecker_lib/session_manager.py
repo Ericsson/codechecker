@@ -11,6 +11,8 @@ with a particular CodeChecker server.
 import os
 import uuid
 import json
+import hashlib
+import time
 
 from codechecker_lib import logger
 
@@ -21,22 +23,32 @@ session_cookie_name = "__ccPrivilegedAccessToken"
 
 # ----------- SERVER -----------
 
+class _Session():
+    # Create an initial salt from system environment for use with the session permanent persistency routine
+    __initial_salt = hashlib.sha256(session_cookie_name + "__" + str(time.time()) + "__" + os.urandom(16)).hexdigest()
+
+    @staticmethod
+    def calc_persistency_hash(client_addr, auth_string):
+        '''Calculates a more secure persistency hash for the session. This persistency hash is intended to be used
+        for the "session recycle" feature to prevent NAT endpoints from accidentally getting each other's session.'''
+        return hashlib.sha256(auth_string + "@" + client_addr + ":" + _Session.__initial_salt).hexdigest()
+
+    def __init__(self, client_addr, token, phash):
+        self.client = client_addr
+        self.token = token
+        self.persistent_hash = phash
+
+
+
+    def still_valid(self):
+        # TODO: This.
+        return True
+
+    def revalidate(self):
+        # TODO: This
+        return self.still_valid()
+
 class sessionManager:
-
-    class __Session():
-        def __init__(self, client_addr, token):
-            self.client = client_addr
-            self.token = token
-
-
-        def still_valid(self):
-            # TODO: This.
-            return True
-
-        def revalidate(self):
-            # TODO: This
-            return self.still_valid()
-
     __valid_sessions = []
 
     def __init__(self):
@@ -68,14 +80,19 @@ class sessionManager:
         '''Create a new session for the given client and auth-string, if it is valid.
         If an existing session is found, return that instead.'''
         if self.__handle_validation(auth_string):
-            session_already = next((s for s in sessionManager.__valid_sessions if s.client == client and s.still_valid()), None)
+            session_already = next((s for s in sessionManager.__valid_sessions if s.client == client
+                                                                               and s.still_valid()
+                                                                               and s.persistent_hash ==
+                                                                                     _Session.calc_persistency_hash(client, auth_string)
+                              ), None)
+
             if session_already:
                 session_already.revalidate()
                 session = session_already
             else:
                 # TODO: More secure way for token generation?
                 token = uuid.UUID(bytes=os.urandom(16)).__str__()
-                session = sessionManager.__Session(client, token)
+                session = _Session(client, token, _Session.calc_persistency_hash(client, auth_string))
                 sessionManager.__valid_sessions.append(session)
 
             return session.token
