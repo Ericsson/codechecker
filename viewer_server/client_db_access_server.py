@@ -31,8 +31,6 @@ from thrift.transport import TTransport
 from thrift.protocol import TJSONProtocol
 
 import shared
-
-
 from codeCheckerDBAccess import codeCheckerDBAccess
 from codeCheckerDBAccess import constants
 from codeCheckerDBAccess.ttypes import *
@@ -47,8 +45,6 @@ from codechecker_lib import logger
 from codechecker_lib import database_handler
 from codechecker_lib import session_manager
 
-import base64
-
 LOG = logger.get_new_logger('DB ACCESS')
 
 
@@ -58,13 +54,11 @@ class RequestHandler(SimpleHTTPRequestHandler):
     Simply modified and extended version of SimpleHTTPRequestHandler
     """
 
-    cookie_name = "_ccAccessPrivileged"
-    cookie_str = "YEP!"
-
     def __init__(self, request, client_address, server):
         self.sc_session = server.sc_session
 
         self.db_version_info = server.db_version_info
+        self.manager = server.manager
 
         BaseHTTPRequestHandler.__init__(self,
                                         request,
@@ -80,7 +74,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
         Wrapper to handle authentication needs from both GET and POST requests.
         """
 
-        if not session_manager.sessionManager().isEnabled():
+        if not self.manager.isEnabled():
             return True
 
         success = False
@@ -98,9 +92,8 @@ class RequestHandler(SimpleHTTPRequestHandler):
             for cookie in split:
                 print cookie
                 values = cookie.split("=")
-                if len(values) == 2 and values[0] == session_manager.session_cookie_name:
-
-                    if session_manager.validate_session_token(values[1]):
+                if len(values) == 2 and values[0] == self.manager.getRealm()["cookie"]:
+                    if self.manager.is_valid(client_host, values[1]):
                         # The session cookie contains valid data.
                         success = values[1]
 
@@ -112,9 +105,10 @@ class RequestHandler(SimpleHTTPRequestHandler):
                 LOG.info("Client from " + client_host + ":" + str(client_port) + " attempted authorization.")
                 authString = base64.decodestring(self.headers.getheader("Authorization").replace("Basic ", ""))
 
-                if session_manager.validate_auth_request(authString):
+                token = self.manager.create_or_get_session(client_host, authString)
+                if token:
                     LOG.info("Client from " + client_host + ":" + str(client_port) + " successfully logged in")
-                    return session_manager.create_session()
+                    return token
 
         # Else, access is still not granted.
         if not success:
@@ -128,18 +122,18 @@ class RequestHandler(SimpleHTTPRequestHandler):
         if authToken:
             self.send_response(200)
             if authToken != True:
-                self.send_header("Set-Cookie", session_manager.session_cookie_name + "=" + authToken + "; Path=/")
+                self.send_header("Set-Cookie", self.manager.getRealm()["cookie"] + "=" + authToken + "; Path=/")
             SimpleHTTPRequestHandler.do_GET(self)
         else:
             print "Failed authentication."
             errormsg = """Access requires valid credentials."""
             self.send_response(401)
-            self.send_header("WWW-Authenticate", 'Basic realm="test"')
+            self.send_header("WWW-Authenticate", 'Basic realm="' + self.manager.getRealm()["realm"] + '"')
             self.send_header("Content-type", "text/plain")
-            self.send_header("Content-length", str(len(errormsg)))
+            self.send_header("Content-length", str(len(self.manager.getRealm()["error"])))
             self.send_header('Connection', 'close')
             self.end_headers()
-            self.wfile.write(errormsg)
+            self.wfile.write(self.manager.getRealm()["error"])
 
     def do_POST(self):
         """ Handling thrift messages. """
@@ -192,7 +186,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
 
             if self.path == '/Authentication':
                 # Authentication requests must be routed to a different handler
-                auth_handler = ThriftAuthHandler(sess_token)
+                auth_handler = ThriftAuthHandler(self.manager, client_host, sess_token)
                 processor = codeCheckerAuthentication.Processor(auth_handler)
             else:
                 acc_handler = ThriftRequestHandler(session,
@@ -259,7 +253,8 @@ class CCSimpleHttpServer(HTTPServer):
                  db_conn_string,
                  pckg_data,
                  suppress_handler,
-                 db_version_info):
+                 db_version_info,
+                 manager):
 
         LOG.debug('Initializing HTTP server')
 
@@ -274,6 +269,7 @@ class CCSimpleHttpServer(HTTPServer):
         Session = scoped_session(sessionmaker())
         Session.configure(bind=self.__engine)
         self.sc_session = Session
+        self.manager = manager
 
         self.__request_handlers = ThreadPool(processes=10)
 
@@ -323,7 +319,8 @@ def start_server(package_data, port, db_conn_string, suppress_handler,
                                      db_conn_string,
                                      package_data,
                                      suppress_handler,
-                                     db_version_info)
+                                     db_version_info,
+                                     session_manager.sessionManager())
 
     LOG.info('Waiting for client requests on [' +
              access_server_host + ':' + str(port) + ']')

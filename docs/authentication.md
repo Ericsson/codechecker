@@ -1,12 +1,19 @@
 CodeChecker authentication subsytem
 ===================================
-
+ 
 CodeChecker also supports only allowing a privileged set of users to access the results stored on a server.
 Authentication configuration is stored in the `config/session_config.json` file, both for the client and the serverside.
-
+ 
 ## Serverside configuration
+ 
+The `authentication` section of the config file controls how authentication is handled.
 
-> TBD
+ * `enabled`  
+    setting this to `false` disables privileged access
+ * `realm_name`  
+    The name to show for web-browser viewers' pop-up login window via *HTTP Authenticate*
+ * `realm_error`  
+    The error message shown in the browser when the user fails to authenticate
 
 ## Clientside configuration
 

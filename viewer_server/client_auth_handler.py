@@ -71,13 +71,14 @@ class ThriftAuthHandler():
     Handle Thrift authentication requests
     '''
 
-    def __init__(self, session_token = None):
+    def __init__(self, manager, client_host, session_token = None):
+        self.__manager = manager
+        self.__client_host = client_host
         self.__session_token = session_token
 
     @timefunc
     def getAuthParameters(self):
-        sessions = session_manager.sessionManager()
-        return HandshakeInformation(sessions.isEnabled(), session_manager.validate_session_token(self.__session_token))
+        return HandshakeInformation(self.__manager.isEnabled(), self.__manager.is_valid(self.__client_host, self.__session_token))
 
     @timefunc
     def getAcceptedAuthMethods(self):
@@ -88,8 +89,8 @@ class ThriftAuthHandler():
     @timefunc
     def performLogin(self, auth_method, auth_string):
         if auth_method == "Username:Password":
-            if session_manager.validate_auth_request(auth_string):
-                authToken = session_manager.create_session()
+            authToken = self.__manager.create_or_get_session(self.__client_host, auth_string)
+            if authToken:
                 return authToken
             else:
                 raise shared.ttypes.RequestFailed(
@@ -102,6 +103,4 @@ class ThriftAuthHandler():
 
     @timefunc
     def destroySession(self):
-        # TODO: Only let users to validate/invalidate their own tokens... :D
-        session_manager.sessionManager.invalidate(self.__session_token)
-        return True
+        return self.__manager.invalidate(self.__client_host, self.__session_token)

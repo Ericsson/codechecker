@@ -22,24 +22,22 @@ session_cookie_name = "__ccPrivilegedAccessToken"
 # ----------- SERVER -----------
 
 class sessionManager:
-    valid_sessions = []
 
-    @staticmethod
-    def validate(sessToken):
-        sessionManager.valid_sessions.append(sessToken)
+    class __Session():
+        def __init__(self, client_addr, token):
+            self.client = client_addr
+            self.token = token
 
-    @staticmethod
-    def invalidate(sessToken):
-        if sessToken in sessionManager.valid_sessions:
-            sessionManager.valid_sessions.remove(sessToken)
 
-    @staticmethod
-    def isValid(sessToken):
-        if not sessionManager().isEnabled():
-            # If authentication is disabled, any kind of session token is valid.
+        def still_valid(self):
+            # TODO: This.
             return True
 
-        return sessToken in sessionManager.valid_sessions
+        def revalidate(self):
+            # TODO: This
+            return self.still_valid()
+
+    __valid_sessions = []
 
     def __init__(self):
         LOG.debug('Loading session config')
@@ -58,22 +56,51 @@ class sessionManager:
     def isEnabled(self):
         return self.__auth_config.get("enabled")
 
+    def getRealm(self):
+        return { "realm": self.__auth_config.get("realm_name"), "error": self.__auth_config.get("realm_error"), "cookie": session_cookie_name }
 
+    def __handle_validation(self, auth_string):
+        '''Validate an oncoming authorization request against some authority controller'''
+        # TODO: This
+        return True
 
-def validate_session_token(token):
-    '''Validates a given token (cookie) against the known list of privileged sessions'''
-    return sessionManager.isValid(token)
+    def create_or_get_session(self, client, auth_string):
+        '''Create a new session for the given client and auth-string, if it is valid.
+        If an existing session is found, return that instead.'''
+        if self.__handle_validation(auth_string):
+            session_already = next((s for s in sessionManager.__valid_sessions if s.client == client and s.still_valid()), None)
+            if session_already:
+                session_already.revalidate()
+                session = session_already
+            else:
+                # TODO: More secure way for token generation?
+                token = uuid.UUID(bytes=os.urandom(16)).__str__()
+                session = sessionManager.__Session(client, token)
+                sessionManager.__valid_sessions.append(session)
 
-def validate_auth_request(authString):
-    '''Validate an oncoming authorization request against some authority controller'''
-    return authString == "cc:valid"
+            return session.token
+        else:
+            return None
 
-def create_session():
-    # TODO: More secure way for token generation?
-    token = uuid.UUID(bytes = os.urandom(16)).__str__()
-    sessionManager.validate(token)
+    def is_valid(self, client, token):
+        '''Validates a given token (cookie) against the known list of privileged sessions'''
+        if not self.isEnabled():
+            return True
+        else:
+            return any(_sess.client == client
+                         and _sess.token == token
+                         and _sess.still_valid()
+                       for _sess in sessionManager.__valid_sessions)
 
-    return token
+    def invalidate(self, client, token):
+        '''Remove a user's previous session from the store'''
+        for session in sessionManager.__valid_sessions[:]:
+            if session.client == client and session.token == token:
+                sessionManager.__valid_sessions.remove(session)
+                return True
+
+        return False
+
 
 # ----------- CLIENT -----------
 class sessionManager_Client:

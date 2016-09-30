@@ -1,7 +1,9 @@
 {
   "authentication": {
     "client_autologin" : true,
-    "enabled" : true
+    "enabled" : true,
+    "realm_name" : "CodeChecker Privileged server",
+    "realm_error": "Access requires valid credentials."
   },
   "credentials": {
     "*" : "global:admin",
