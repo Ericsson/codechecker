@@ -92,8 +92,9 @@ class RequestHandler(SimpleHTTPRequestHandler):
             for cookie in split:
                 print cookie
                 values = cookie.split("=")
-                if len(values) == 2 and values[0] == self.manager.getRealm()["cookie"]:
-                    if self.manager.is_valid(client_host, values[1]):
+                if len(values) == 2 and \
+                        values[0] == session_manager.SESSION_COOKIE_NAME:
+                    if self.manager.is_valid(client_host, values[1], True):
                         # The session cookie contains valid data.
                         success = values[1]
 
@@ -102,17 +103,24 @@ class RequestHandler(SimpleHTTPRequestHandler):
             # Attempt to see if the browser has sent us an authentication request
             authHeader = self.headers.getheader("Authorization")
             if authHeader is not None and authHeader.startswith("Basic "):
-                LOG.info("Client from " + client_host + ":" + str(client_port) + " attempted authorization.")
-                authString = base64.decodestring(self.headers.getheader("Authorization").replace("Basic ", ""))
+                LOG.info("Client from " + client_host + ":" +
+                         str(client_port) + " attempted authorization.")
+                authString = base64.decodestring(
+                    self.headers.getheader("Authorization").
+                    replace("Basic ", ""))
 
-                token = self.manager.create_or_get_session(client_host, authString)
+                token = self.manager.create_or_get_session(client_host,
+                                                           authString)
                 if token:
-                    LOG.info("Client from " + client_host + ":" + str(client_port) + " successfully logged in")
+                    LOG.info("Client from " + client_host + ":" +
+                             str(client_port) + " successfully logged in")
                     return token
 
         # Else, access is still not granted.
         if not success:
-            LOG.debug(client_host + ":" + str(client_port) + " Invalid access, credentials not found - session refused.")
+            LOG.debug(client_host + ":" + str(client_port) +
+                      " Invalid access, credentials not found " +
+                      "- session refused.")
             return None
 
         return success
@@ -121,16 +129,18 @@ class RequestHandler(SimpleHTTPRequestHandler):
         authToken = self.check_auth_in_request()
         if authToken:
             self.send_response(200)
-            if authToken != True:
-                self.send_header("Set-Cookie", self.manager.getRealm()["cookie"] + "=" + authToken + "; Path=/")
+            if authToken:
+                self.send_header("Set-Cookie",
+                                 session_manager.SESSION_COOKIE_NAME + "=" +
+                                 authToken + "; Path=/")
             SimpleHTTPRequestHandler.do_GET(self)
         else:
-            print "Failed authentication."
-            errormsg = """Access requires valid credentials."""
             self.send_response(401)
-            self.send_header("WWW-Authenticate", 'Basic realm="' + self.manager.getRealm()["realm"] + '"')
+            self.send_header("WWW-Authenticate", 'Basic realm="' +
+                             self.manager.getRealm()["realm"] + '"')
             self.send_header("Content-type", "text/plain")
-            self.send_header("Content-length", str(len(self.manager.getRealm()["error"])))
+            self.send_header("Content-length", str(len(
+                self.manager.getRealm()["error"])))
             self.send_header('Connection', 'close')
             self.end_headers()
             self.wfile.write(self.manager.getRealm()["error"])
@@ -166,11 +176,13 @@ class RequestHandler(SimpleHTTPRequestHandler):
             # Bail out if the user is not authenticated...
             # This response has the possibility of melting down Thrift clients,
             # but the user is expected to properly authenticate first
-            LOG.debug(client_host + ":" + str(client_port) + " Invalid access, credentials not found - session refused.")
-            errormsg = """Access requires valid credentials."""
+
+            LOG.debug(client_host + ":" + str(client_port) +
+                      " Invalid access, credentials not found " +
+                      "- session refused.")
             self.send_response(401)
             self.send_header("Content-type", "text/plain")
-            self.send_header("Content-length", str(len(errormsg)))
+            self.send_header("Content-length", str(0))
             self.end_headers()
 
             return
@@ -186,7 +198,9 @@ class RequestHandler(SimpleHTTPRequestHandler):
 
             if self.path == '/Authentication':
                 # Authentication requests must be routed to a different handler
-                auth_handler = ThriftAuthHandler(self.manager, client_host, sess_token)
+                auth_handler = ThriftAuthHandler(self.manager,
+                                                 client_host,
+                                                 sess_token)
                 processor = codeCheckerAuthentication.Processor(auth_handler)
             else:
                 acc_handler = ThriftRequestHandler(session,
@@ -264,7 +278,8 @@ class CCSimpleHttpServer(HTTPServer):
         self.checker_md_docs_map = pckg_data['checker_md_docs_map']
         self.suppress_handler = suppress_handler
         self.db_version_info = db_version_info
-        self.__engine = database_handler.SQLServer.create_engine(db_conn_string)
+        self.__engine = database_handler.SQLServer.create_engine(
+            db_conn_string)
 
         Session = scoped_session(sessionmaker())
         Session.configure(bind=self.__engine)

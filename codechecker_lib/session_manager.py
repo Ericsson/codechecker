@@ -14,48 +14,87 @@ import uuid
 import json
 import hashlib
 import time
+import ldap
+import ldap.sasl
+from datetime import datetime
 
 from codechecker_lib import logger
 
 LOG = logger.get_new_logger("SESSION MANAGER")
+SESSION_COOKIE_NAME = "__ccPrivilegedAccessToken"
+session_lifetimes = {}
 
-session_cookie_name = "__ccPrivilegedAccessToken"
 
-
+# ------------------------------
 # ----------- SERVER -----------
-
 class _Session():
-    # Create an initial salt from system environment for use with the session permanent persistency routine
-    __initial_salt = hashlib.sha256(session_cookie_name + "__" + str(time.time()) + "__" + os.urandom(16)).hexdigest()
+    # Create an initial salt from system environment for use with the session
+    # permanent persistency routine
+    __initial_salt = hashlib.sha256(SESSION_COOKIE_NAME + "__" +
+                                    str(time.time()) + "__" +
+                                    os.urandom(16)).hexdigest()
 
     @staticmethod
     def calc_persistency_hash(client_addr, auth_string):
-        '''Calculates a more secure persistency hash for the session. This persistency hash is intended to be used
-        for the "session recycle" feature to prevent NAT endpoints from accidentally getting each other's session.'''
-        return hashlib.sha256(auth_string + "@" + client_addr + ":" + _Session.__initial_salt).hexdigest()
+        '''Calculates a more secure persistency hash for the session. This
+        persistency hash is intended to be used for the "session recycle"
+        feature to prevent NAT endpoints from accidentally getting each
+        other's session.'''
+        return hashlib.sha256(auth_string + "@" + client_addr + ":" +
+                              _Session.__initial_salt).hexdigest()
 
     def __init__(self, client_addr, token, phash):
         self.client = client_addr
         self.token = token
         self.persistent_hash = phash
+        self.last_access = datetime.now()
 
+    def still_valid(self, do_revalidate=False):
+        """Returns if the session is still valid, and optionally revalidates
+        it. A session is valid in its soft-lifetime."""
+        if (datetime.now() - self.last_access).total_seconds() <= \
+                session_lifetimes["soft"] \
+                and (datetime.now() - self.last_access).total_seconds() <= \
+                session_lifetimes["hard"]:
+            # If the session is still valid within the "reuse enabled" (soft)
+            # past and the check comes from a real user access, we revalidate
+            # the session by extending its lifetime --- the user retains their
+            # data.
+            if do_revalidate:
+                self.revalidate()
 
+            # The session is still valid if it has been used in the past
+            # (length of "past" is up to server host)
+            return True
 
-    def still_valid(self):
-        # TODO: This.
-        return True
+        # If the session is older than the "soft" limit,
+        # the user needs to authenticate again.
+        return False
+
+    def still_reusable(self):
+        """Returns whether the session is still reusable, ie. within its
+        hard lifetime: while a session is reusable, a valid authentication
+        from the session's user will return the user to the session."""
+        return (datetime.now() - self.last_access).total_seconds() <= \
+            session_lifetimes["hard"]
 
     def revalidate(self):
-        # TODO: This
-        return self.still_valid()
+        if self.still_reusable():
+            # A session is only revalidated if it has yet to exceed its
+            # "hard" lifetime. After a session hasn't been used for this
+            # timeframe, it can NOT be resurrected at all --- the user needs
+            # to log in into a brand-new session
+            self.last_access = datetime.now()
 
 class sessionManager:
     __valid_sessions = []
+    __logins_since_prune = 0
 
     def __init__(self):
         LOG.debug('Loading session config')
 
-        session_cfg_file = os.path.join(os.environ['CC_PACKAGE_ROOT'], "config", "session_config.json")
+        session_cfg_file = os.path.join(os.environ['CC_PACKAGE_ROOT'],
+                                        "config", "session_config.json")
         LOG.debug(session_cfg_file)
         with open(session_cfg_file, 'r') as scfg:
             scfg_dict = json.loads(scfg.read())
@@ -64,63 +103,123 @@ class sessionManager:
             scfg_dict["authentication"] = {'enabled': False}
 
         self.__auth_config = scfg_dict["authentication"]
-        print self
 
         # If no methods are configured as enabled, disable authentication
-        if scfg_dict["authentication"].get("enabled")\
-           and ("method_dictionary" in self.__auth_config and not self.__auth_config["method_dictionary"].get("enabled")):
-            LOG.warning("Authentication is enabled but no valid authentication backends are configured... Falling back to no authentication.")
+        if scfg_dict["authentication"].get("enabled") \
+           and ("method_dictionary" in self.__auth_config and not
+                self.__auth_config["method_dictionary"].get("enabled")) \
+           and ("method_ldap" in self.__auth_config and not
+                self.__auth_config["method_ldap"].get("enabled")):
+            LOG.warning("Authentication is enabled but no valid authentication"
+                        " backends are configured... Falling back to"
+                        " no authentication.")
             self.__auth_config["enabled"] = False
+
+        session_lifetimes["soft"] = self.__auth_config.get("soft_expire")\
+            or 60
+        session_lifetimes["hard"] = self.__auth_config.get("session_lifetime")\
+            or 300
 
     def isEnabled(self):
         return self.__auth_config.get("enabled")
 
     def getRealm(self):
-        return { "realm": self.__auth_config.get("realm_name"), "error": self.__auth_config.get("realm_error"), "cookie": session_cookie_name }
+        return {
+            "realm": self.__auth_config.get("realm_name"),
+            "error": self.__auth_config.get("realm_error")
+        }
 
     def __handle_validation(self, auth_string):
-        '''Validate an oncoming authorization request against some authority controller'''
-        # TODO: This
-
-        return self.__try_auth_dictionary(auth_string)
+        '''Validate an oncoming authorization request
+        against some authority controller'''
+        return self.__try_auth_dictionary(auth_string) \
+            or self.__try_auth_ldap(auth_string)
 
     def __try_auth_dictionary(self, auth_string):
-        if "method_dictionary" in self.__auth_config and self.__auth_config["method_dictionary"].get("enabled"):
-            return auth_string in self.__auth_config.get("method_dictionary").get("auths")
+        if "method_dictionary" in self.__auth_config and \
+                self.__auth_config["method_dictionary"].get("enabled"):
+            return auth_string in \
+                self.__auth_config.get("method_dictionary").get("auths")
 
         return False
 
+    def __try_auth_ldap(self, auth_string):
+        if "method_ldap" in self.__auth_config and \
+           self.__auth_config["method_ldap"].get("enabled"):
+            username, pw = auth_string.split(":")
+            for server in self.__auth_config["method_ldap"].get("authorities"):
+                l = ldap.initialize(server["connection_url"])
+
+                for query in server["queries"]:
+                    try:
+                        l.simple_bind_s(query.replace("$USN$", username), pw)
+                        return True
+                    except ldap.LDAPError as e:
+                        toPrint = ''
+                        if e.message:
+                            if 'info' in e.message:
+                                toPrint = toPrint + e.message['info']
+                            if 'info' in e.message and 'desc' in e.message:
+                                toPrint = toPrint + "; "
+                            if 'desc' in e.message:
+                                toPrint = toPrint + e.message['desc']
+                        else:
+                            toPrint = e.__repr__()
+
+                        LOG.info("LDAP authentication error against " +
+                                 server["connection_url"] + " with DN: " +
+                                 query.replace("$USN$", username) + "\n" +
+                                 "Error was: " + toPrint)
+                    finally:
+                        l.unbind()
+
+            return False
+
     def create_or_get_session(self, client, auth_string):
-        '''Create a new session for the given client and auth-string, if it is valid.
-        If an existing session is found, return that instead.'''
+        '''Create a new session for the given client and auth-string, if
+        it is valid. If an existing session is found, return that instead.'''
+        if not self.__auth_config["enabled"]:
+            return None
+
+        self.__logins_since_prune += 1
+        if self.__logins_since_prune >= \
+           self.__auth_config["logins_until_cleanup"]:
+            self.__cleanup_sessions()
+
         if self.__handle_validation(auth_string):
-            session_already = next((s for s in sessionManager.__valid_sessions if s.client == client
-                                                                               and s.still_valid()
-                                                                               and s.persistent_hash ==
-                                                                                     _Session.calc_persistency_hash(client, auth_string)
-                              ), None)
+            session_already = next(
+                (s for s
+                 in sessionManager.__valid_sessions if s.client == client
+                 and s.still_reusable()
+                 and s.persistent_hash ==
+                 _Session.calc_persistency_hash(client, auth_string)),
+                None)
 
             if session_already:
                 session_already.revalidate()
                 session = session_already
             else:
-                # TODO: More secure way for token generation?
-                token = uuid.UUID(bytes=os.urandom(16)).__str__()
-                session = _Session(client, token, _Session.calc_persistency_hash(client, auth_string))
+                # TODO: Use a more secure way for token generation?
+                token = uuid.UUID(bytes=os.urandom(16)).__str__().replace("-",
+                                                                          "")
+                session = _Session(client, token,
+                                   _Session.calc_persistency_hash(client,
+                                                                  auth_string))
                 sessionManager.__valid_sessions.append(session)
 
             return session.token
         else:
             return None
 
-    def is_valid(self, client, token):
-        '''Validates a given token (cookie) against the known list of privileged sessions'''
+    def is_valid(self, client, token, access=False):
+        '''Validates a given token (cookie) against
+        the known list of privileged sessions'''
         if not self.isEnabled():
             return True
         else:
             return any(_sess.client == client
-                         and _sess.token == token
-                         and _sess.still_valid()
+                       and _sess.token == token
+                       and _sess.still_valid(access)
                        for _sess in sessionManager.__valid_sessions)
 
     def invalidate(self, client, token):
@@ -132,20 +231,29 @@ class sessionManager:
 
         return False
 
+    def __cleanup_sessions(self):
+        for session in sessionManager.__valid_sessions[:]:
+            if not session.still_reusable():
+                sessionManager.__valid_sessions.remove(session)
+        self.__logins_since_prune = 0
 
+
+# ------------------------------
 # ----------- CLIENT -----------
 class sessionManager_Client:
     def __init__(self):
         LOG.debug('Loading session config')
 
         # Check for user's configuration to exist
-        if not os.path.exists(os.path.join(os.path.expanduser("~"), ".codechecker_passwords.json")):
-            print('CodeChecker authentication client\'s example configuration file created at ' +
-                os.path.join(os.path.expanduser("~"), ".codechecker_passwords.json"))
-            shutil.copyfile(os.path.join(os.environ['CC_PACKAGE_ROOT'], "config", "session_client.json"),
-                            os.path.join(os.path.expanduser("~"), ".codechecker_passwords.json"))
+        session_cfg_file = os.path.join(os.path.expanduser("~"),
+                                        ".codechecker_passwords.json")
+        if not os.path.exists(session_cfg_file):
+            print("CodeChecker authentication client's example configuration "
+                  "file created at " + session_cfg_file)
+            shutil.copyfile(os.path.join(os.environ['CC_PACKAGE_ROOT'],
+                                         "config", "session_client.json"),
+                            session_cfg_file)
 
-        session_cfg_file = os.path.join(os.path.expanduser("~"), ".codechecker_passwords.json")
         LOG.debug(session_cfg_file)
         with open(session_cfg_file, 'r') as scfg:
             scfg_dict = json.loads(scfg.read())
@@ -156,7 +264,8 @@ class sessionManager_Client:
             scfg_dict["tokens"] = {}
 
         self.__save = scfg_dict
-        self.__autologin = scfg_dict.get("client_autologin") if "client_autologin" in scfg_dict else True
+        self.__autologin = scfg_dict.get("client_autologin") \
+            if "client_autologin" in scfg_dict else True
 
     def is_autologin_enabled(self):
         return self.__autologin
@@ -175,12 +284,13 @@ class sessionManager_Client:
 
         return ret
 
-    def saveToken(self, host, port, token, destroy = False):
+    def saveToken(self, host, port, token, destroy=False):
         if not destroy:
             self.__save["tokens"][host + ":" + port] = token
         else:
             del self.__save["tokens"][host + ":" + port]
 
-        session_cfg_file = os.path.join(os.path.expanduser("~"), ".codechecker_passwords.json")
+        session_cfg_file = os.path.join(os.path.expanduser("~"),
+                                        ".codechecker_passwords.json")
         with open(session_cfg_file, 'w') as scfg:
-            json.dump(self.__save, scfg, indent = 2, sort_keys = True)
+            json.dump(self.__save, scfg, indent=2, sort_keys=True)

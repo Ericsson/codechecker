@@ -39,7 +39,12 @@ class CmdLineOutputEncoder(json.JSONEncoder):
 
 def handle_auth_requests(args):
     session = session_manager.sessionManager_Client()
-    auth_client = authentication_helper.ThriftAuthHelper(args.host, args.port, '/Authentication', session.getToken(args.host, args.port))
+    auth_client = authentication_helper.ThriftAuthHelper(args.host,
+                                                         args.port,
+                                                         '/Authentication',
+                                                         session.getToken(
+                                                             args.host,
+                                                             args.port))
 
     handshake = auth_client.getAuthParameters()
     if not handshake.requiresAuthentication:
@@ -48,7 +53,8 @@ def handle_auth_requests(args):
 
     if args.logout:
         if args.username or args.password:
-            print('ERROR! Do not supply username and password with `--logout` command.')
+            print('ERROR! Do not supply username and password '
+                  'with `--logout` command.')
             sys.exit(1)
 
         logout_done = auth_client.destroySession()
@@ -71,11 +77,14 @@ def handle_auth_requests(args):
                 args.username = savedAuth.split(":")[0]
                 args.password = savedAuth.split(":")[1]
             else:
-                print('Can not authenticate with username and password if it is not specified...')
+                print('Can not authenticate with username'
+                      'and password if it is not specified...')
                 sys.exit(1)
 
         try:
-            session_token = auth_client.performLogin("Username:Password", args.username + ":" + args.password)
+            session_token = auth_client.performLogin("Username:Password",
+                                                     args.username + ":" +
+                                                     args.password)
             session.saveToken(args.host, args.port, session_token)
             print("Server reported successful authentication!")
         except shared.ttypes.RequestFailed as reqfail:
@@ -84,7 +93,8 @@ def handle_auth_requests(args):
 
 
 def __check_authentication(client):
-    '''communicate with the authentication server to handle authentication requests'''
+    """Communicate with the authentication server
+    to handle authentication requests."""
     result = client.getAuthParameters()
 
     if result.sessionStillActive:
@@ -93,22 +103,32 @@ def __check_authentication(client):
         return False
 
 def setupClient(host, port, uri):
-    ''' setup the thrift client and check API version and authentication needs'''
+    ''' setup the thrift client and check
+    API version and authentication needs'''
     manager = session_manager.sessionManager_Client()
     session_token = manager.getToken(host, port)
 
-    # Before actually communicating with the server, we need to check authentication first
-    auth_client = authentication_helper.ThriftAuthHelper(host, port, uri + 'Authentication', session_token)
+    # Before actually communicating with the server,
+    # we need to check authentication first
+    auth_client = authentication_helper.ThriftAuthHelper(host,
+                                                         port,
+                                                         uri +
+                                                         'Authentication',
+                                                         session_token)
     auth_response = auth_client.getAuthParameters()
-    if auth_response.requiresAuthentication and not auth_response.sessionStillActive:
+    if auth_response.requiresAuthentication and \
+            not auth_response.sessionStillActive:
         print_err = False
 
         if manager.is_autologin_enabled():
             auto_auth_string = manager.getAuthString(host, port)
             if auto_auth_string:
-                # Try to automatically log in with a saved credential if it exists for the server
+                # Try to automatically log in with a saved credential
+                # if it exists for the server
                 try:
-                    session_token = auth_client.performLogin("Username:Password", auto_auth_string)
+                    session_token = auth_client.performLogin(
+                        "Username:Password",
+                        auto_auth_string)
                     manager.saveToken(host, port, session_token)
                     print("Authenticated using pre-configured credentials...")
                 except shared.ttypes.RequestFailed:
@@ -118,7 +138,8 @@ def setupClient(host, port, uri):
 
         if print_err:
             print('Access denied. This server requires authentication.')
-            print('Please log in onto the server using `CodeChecker cmd login`')
+            print('Please log in onto the server '
+                  'using `CodeChecker cmd login`')
             sys.exit(1)
 
     client = thrift_helper.ThriftClientHelper(host, port, uri, session_token)

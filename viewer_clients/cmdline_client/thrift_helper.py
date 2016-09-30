@@ -29,7 +29,8 @@ class ThriftClientHelper():
         self.client = codeCheckerDBAccess.Client(self.protocol)
 
         if session_token:
-            headers = {'Cookie': session_manager.session_cookie_name + "=" + session_token}
+            headers = {'Cookie': session_manager.SESSION_COOKIE_NAME +
+                       "=" + session_token}
             self.transport.setCustomHeaders(headers)
 
 # ------------------------------------------------------------

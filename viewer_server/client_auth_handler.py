@@ -78,7 +78,7 @@ class ThriftAuthHandler():
 
     @timefunc
     def getAuthParameters(self):
-        return HandshakeInformation(self.__manager.isEnabled(), self.__manager.is_valid(self.__client_host, self.__session_token))
+        return HandshakeInformation(self.__manager.isEnabled(), self.__manager.is_valid(self.__client_host, self.__session_token, True))
 
     @timefunc
     def getAcceptedAuthMethods(self):

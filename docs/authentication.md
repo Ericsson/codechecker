@@ -15,6 +15,15 @@ The `authentication` section of the config file controls how authentication is h
     The name to show for web-browser viewers' pop-up login window via *HTTP Authenticate*
  * `realm_error`  
     The error message shown in the browser when the user fails to authenticate
+ * `logins_until_cleanup`  
+    After this many login attempts made towards the server, it will perform an automatic cleanup of old, expired sessions.
+ * `soft_expire`  
+    (in seconds) When a user is authenticated, a session is created for them and this session identifies the user's access.
+    This configuration variable sets how long the session considered "valid" before the user is needed
+    to reauthenticate again &mdash; if this time expires, the session will be *hibernated*: the next access will be denied,
+    but if the user presents a valid login, they will get their session reused.
+ * `session_lifetime`  
+    (in seconds) The lifetime of the session sets that after this many seconds since last session access the session is permanently invalidated.
 
 Every authentication method is its own JSON object in this section. Every authentication method has its
 own `enabled` key which dictates whether it is used at live authentication or not.
@@ -23,16 +32,22 @@ Users are authenticated if **any** authentication method successfully authentica
 
 ### *Dictionary* authentication
 
-The `authentication.method_dictionary` contains a plaintext username-password configuration for authentication.
+The `authentication.method_dictionary` contains a plaintext `username:password` credentials for authentication.
+If the user's login matches any of the credentials listed, the user will be authenticated.
 
 ```json
 "method_dictionary": {
   "enabled" : true,
   "auths" : [
-      "global:admin", "test:test"
+      "global:admin",
+      "test:test"
   ]
 }
 ```
+
+### `LDAP` authentication
+
+> TBD
 
 ----
 
