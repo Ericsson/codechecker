@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-which nosetests || (echo "[ERROR] nosetests framework is needen to run the tests" && exit 1)
+which nosetests || (echo "[ERROR] nosetests framework is needed to run the tests" && exit 1)
 which clang || (echo "[ERROR] clang required to run functional tests" && exit 1)
 
 # setup environment variables, temporary directories

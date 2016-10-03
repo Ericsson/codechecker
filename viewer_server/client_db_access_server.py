@@ -129,7 +129,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
         authToken = self.check_auth_in_request()
         if authToken:
             self.send_response(200)
-            if authToken:
+            if isinstance(authToken, str):
                 self.send_header("Set-Cookie",
                                  session_manager.SESSION_COOKIE_NAME + "=" +
                                  authToken + "; Path=/")

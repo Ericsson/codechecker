@@ -95,8 +95,10 @@ class CCReportHelper(ThriftAPIHelper):
 
 class CCViewerHelper(ThriftAPIHelper):
 
-    def __init__(self, host, port, uri, auto_handle_connection=True):
+    def __init__(self, host, port, uri, auto_handle_connection=True,
+                 session_token=None):
         # import only if necessary; some tests may not add this to PYTHONPATH
+        from codechecker_lib import session_manager
         from codeCheckerDBAccess import codeCheckerDBAccess
         from codeCheckerDBAccess.constants import MAX_QUERY_SIZE
 
@@ -104,6 +106,10 @@ class CCViewerHelper(ThriftAPIHelper):
         transport = THttpClient.THttpClient(host, port, uri)
         protocol = TJSONProtocol.TJSONProtocol(transport)
         client = codeCheckerDBAccess.Client(protocol)
+        if session_token:
+            headers = {'Cookie': session_manager.SESSION_COOKIE_NAME +
+                       "=" + session_token}
+            transport.setCustomHeaders(headers)
         super(CCViewerHelper, self).__init__(transport,
                                              client, auto_handle_connection)
 
@@ -136,3 +142,25 @@ class CCViewerHelper(ThriftAPIHelper):
             some_results = func2call(*args)
 
         return results
+
+class CCAuthHelper(ThriftAPIHelper):
+
+    def __init__(self, host, port, uri, auto_handle_connection=True,
+                 session_token=None):
+        # import only if necessary; some tests may not add this to PYTHONPATH
+        from codechecker_lib import session_manager
+        from Authentication import codeCheckerAuthentication
+        from Authentication.ttypes import HandshakeInformation
+
+        transport = THttpClient.THttpClient(host, port, uri)
+        protocol = TJSONProtocol.TJSONProtocol(transport)
+        client = codeCheckerAuthentication.Client(protocol)
+        if session_token:
+            headers = {'Cookie': session_manager.SESSION_COOKIE_NAME +
+                       "=" + session_token}
+            transport.setCustomHeaders(headers)
+        super(CCAuthHelper, self).__init__(transport,
+                                           client, auto_handle_connection)
+
+    def __getattr__(self, attr):
+        return partial(self._thrift_client_call, attr)

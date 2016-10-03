@@ -1,6 +1,6 @@
 {
   "authentication": {
-    "enabled" : true,
+    "enabled" : false,
     "realm_name" : "CodeChecker Privileged server",
     "realm_error" : "Access requires valid credentials.",
     "soft_expire" : 60,

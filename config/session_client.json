@@ -2,12 +2,9 @@
   "client_autologin" : true,
   "credentials": {
     "*" : "global:admin",
-    "*:6251" : "cc:valid",
-    "127.0.0.1" : "cc:bad",
-    "localhost" : "global:admin",
-    "localhost:6252" : "cc:invalid"
+    "localhost:14444" : "test:test"
   },
   "tokens": {
-    "localhost:6251" : "dummy_token"
+    "localhost:14444" : "dummy_token"
   }
 }
