@@ -209,7 +209,7 @@ function (declare, Deferred, ObjectStore, Store, QueryResults, topic,
       switch (evt.cell.field) {
         case 'checkedFile':
           item.runId = this.runData.runId;
-          topic.publish('openFile', item);
+          topic.publish('openFile', item, this);
           break;
 
         case 'checkerId':
@@ -225,12 +225,34 @@ function (declare, Deferred, ObjectStore, Store, QueryResults, topic,
     },
 
     refreshGrid : function (reportFilters, difftype) {
+      this._difftype = difftype || 'new';
+
       this.setQuery({
         baseline : this.baseline,
         newcheck : this.newcheck,
         reportFilters : reportFilters,
         difftype : difftype
       });
+    },
+
+    onRowClick : function (evt) {
+      var item = this.getItem(evt.rowIndex);
+
+      this._lastSelectedRow = evt.rowIndex;
+
+      switch (evt.cell.field) {
+        case 'checkedFile':
+          item.runId
+            = this.difftype === 'new'
+            ? this.newcheck.runId
+            : this.baseline.runId;
+          topic.publish('openFile', item, this);
+          break;
+
+        case 'checkerId':
+          topic.publish('showDocumentation', item.checkerId);
+          break;
+      }
     }
   });
 
@@ -260,6 +282,7 @@ function (declare, Deferred, ObjectStore, Store, QueryResults, topic,
         grid.refreshGrid(
           filterHelper.filterGroupToReportFilters(filterGroup),
           allValues[0].difftype);
+        that._difftype = allValues[0].difftype;
       };
       filterGroup.onAddFilter = function () { content.resize(); };
       filterGroup.onRemoveFilter = function () { content.resize(); };
@@ -287,8 +310,9 @@ function (declare, Deferred, ObjectStore, Store, QueryResults, topic,
 
       //--- Events ---//
 
-      this._openFileTopic = topic.subscribe('openFile', function (reportData) {
-        if (reportData.runId && reportData.runId !== that.runData.runId)
+      this._openFileTopic = topic.subscribe('openFile',
+      function (reportData, sender) {
+        if (sender && sender !== grid)
           return;
 
         if (!(reportData instanceof CC_OBJECTS.ReportData))
