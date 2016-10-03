@@ -17,6 +17,8 @@ import uuid
 import shlex
 import shutil
 
+from subprocess import CalledProcessError
+
 # sys.path modification needed so nosetests can load the test_utils package
 sys.path.append(os.path.abspath(os.environ['TEST_TESTS_DIR']))
 from test_utils import get_free_port
@@ -124,25 +126,42 @@ def setup_package():
     # first check
     print("Running first analysis")
 
-    _clean_project(test_project_path, test_project_clean_cmd, env)
+    ret = _clean_project(test_project_path,
+                         test_project_clean_cmd,
+                         env)
+    if ret:
+        sys.exit(ret)
+
     test_project_1_name = project_info['name'] + '_' + uuid.uuid4().hex
 
-    _run_check(shared_test_params, skip_list_file, test_project_build_cmd,
-               test_project_1_name, test_project_path)
-
+    ret = _run_check(shared_test_params,
+                     skip_list_file,
+                     test_project_build_cmd,
+                     test_project_1_name,
+                     test_project_path)
     _wait_for_postgres_shutdown(shared_test_params['workspace'])
+    if ret:
+        sys.exit(1)
 
     # second check
     print("Running second analysis")
 
-    _clean_project(test_project_path, test_project_clean_cmd, env)
+    ret = _clean_project(test_project_path,
+                         test_project_clean_cmd,
+                         env)
+    if ret:
+        sys.exit(ret)
 
     test_project_2_name = project_info['name'] + '_' + uuid.uuid4().hex
 
-    _run_check(shared_test_params, skip_list_file, test_project_build_cmd,
-               test_project_2_name, test_project_path)
-
+    ret = _run_check(shared_test_params,
+                     skip_list_file,
+                     test_project_build_cmd,
+                     test_project_2_name,
+                     test_project_path)
     _wait_for_postgres_shutdown(shared_test_params['workspace'])
+    if ret:
+        sys.exit(1)
 
     # start the CodeChecker server
     print("Starting server to get results")
@@ -176,8 +195,10 @@ def _clean_project(test_project_path, clean_cmd, env):
         subprocess.check_call(command,
                               cwd=test_project_path,
                               env=env)
-    except subprocess.CalledProcessError as perr:
-        raise perr
+        return 0
+    except subprocess.CalledProcessError as cerr:
+        print("Failed to call:\n" + ' '.join(cerr.cmd))
+        return cerr.returncode
 
 
 def _generate_suppress_file(suppress_file):
@@ -263,9 +284,11 @@ def _run_check(shared_test_params, skip_list_file, test_project_build_cmd,
             env=shared_test_params['env'])
 
         print("Analyzing test project done.")
+        return 0
 
-    except subprocess.CalledProcessError as perr:
-        raise perr
+    except CalledProcessError as cerr:
+        print("Failed to call:\n" + ' '.join(cerr.cmd))
+        return cerr.returncode
 
 
 def _start_server(shared_test_params, test_config):
