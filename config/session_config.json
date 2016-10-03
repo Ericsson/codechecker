@@ -13,7 +13,15 @@
       ]
     },
     "method_ldap": {
-      "enabled" : false
+      "enabled" : false,
+      "authorities": [
+        {
+          "connection_url": "ldap://ldap.example.org",
+          "queries": [
+            "uid=$USN$,ou=admins,o=mycompany"
+          ]
+        }
+      ]
     }
   }
 }

@@ -28,7 +28,7 @@ The `authentication` section of the config file controls how authentication is h
 Every authentication method is its own JSON object in this section. Every authentication method has its
 own `enabled` key which dictates whether it is used at live authentication or not.
 
-Users are authenticated if **any** authentication method successfully authenticates them.
+Users are authenticated if **any** authentication method successfully authenticates them. If both methods are enabled, *dictionary* authentication takes precedence.
 
 ### *Dictionary* authentication
 
@@ -45,9 +45,36 @@ If the user's login matches any of the credentials listed, the user will be auth
 }
 ```
 
-### `LDAP` authentication
+### *LDAP* authentication
 
-> TBD
+CodeChecker also supports *LDAP*-based authentication. The `authentication.method_ldap` section contains the configuration for LDAP authentication:
+the server can be configured to connect to as much LDAP-servers as the administrator wants. Each LDAP server is identified by a `connection_url` and a list of `queries`
+to attempt to log in the username given.
+
+Servers are connected to and queries are executed in the order they appear in the configuration file.
+Because of this, it is not advised to list too many servers as it can elongenate the authentication process.
+
+The special `$USN$` token in the query is replaced to the *username* at login.
+
+```json
+"method_ldap": {
+  "enabled" : true,
+  "authorities": [
+    {
+      "connection_url": "ldap://ldap.example.org",
+      "queries": [
+        "uid=$USN$,ou=admins,o=mycompany"
+      ]
+    },
+    {
+      "connection_url" : "ldaps://secure.internal.example.org:636",
+      "queries": [
+        "uid=$USN$,ou=owners,ou=secure,o=company"
+      ]
+    }
+  ]
+}
+```
 
 ----
 
