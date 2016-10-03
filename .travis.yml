@@ -11,7 +11,7 @@ matrix:
       dist: trusty
       python: "2.7"
     - os: osx
-      osx_image: xcode6.4
+      osx_image: xcode8
       sudo: false
       language: generic
 
@@ -20,10 +20,10 @@ before_install:
     - chmod a+x ~/llvm/tools/scan-build-py/bin/intercept-build;
     - export PATH=~/llvm/tools/scan-build-py/bin:$PATH;
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update;                        fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install python;                fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install thrift;                fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install doxygen;               fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install coreutils;             fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew reinstall postgresql;          fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then curl http://llvm.org/releases/3.7.0/clang+llvm-3.7.0-x86_64-apple-darwin.tar.xz -o clang+llvm-3.7.0-x86_64-apple-darwin.tar.xz; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then tar xf clang+llvm-3.7.0-x86_64-apple-darwin.tar.xz -C ~/; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PATH=~/clang+llvm-3.7.0-x86_64-apple-darwin/bin/:$PATH; fi
@@ -33,7 +33,9 @@ install:
     - pip install nose
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PG_DATA=$(brew --prefix)/var/postgres; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pg_ctl -w start -l postgres.log --pgdata ${PG_DATA}; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then createuser -s postgres && psql -c 'create database travis_ci_test;' -U postgres && cat postgres.log; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then createuser -s postgres; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then psql -c 'create database travis_ci_test;' -U postgres; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then cat postgres.log; fi
 
 addons:
     apt:
