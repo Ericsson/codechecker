@@ -95,26 +95,10 @@ cd ..
 
 ### Check a test project
 #### Check if clang or clang tidy is available
+The installed clang binary names should be ```clang``` or ```clang-3.6``` which depends on your Linux distribution.
 ~~~~~~{.sh}
-which clang
-which clang-tidy
-~~~~~~
-If 'clang' or 'clang-tidy' commands are not available the package can be configured to use another/newer clang binary for the analysis.  
-Edit the 'CodeChecker/config/package_layout.json' config files "runtime/analyzers"
-section in the generated package and modify the analyzers section to the analyzers
-available in the PATH
-```
-"analyzers" : {
-  "clangsa" : "clang",
-  "clang-tidy" : "clang-tidy"
-  },
-```
-
-### Check a test project
-#### Check if clang or clang tidy is available
-~~~~~~{.sh}
-which clang
-which clang-tidy
+which clang-3.6
+which clang-tidy-3.6
 ~~~~~~
 If 'clang' or 'clang-tidy' commands are not available the package can be configured to use another/newer clang binary for the analysis.  
 Edit the 'CodeChecker/config/package_layout.json' config files "runtime/analyzers"
