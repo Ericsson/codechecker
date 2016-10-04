@@ -141,6 +141,10 @@ function (declare, domConstruct, ItemFileWriteStore, topic, Dialog, Button,
       var that = this;
 
       CC_SERVICE.getRunData(function (runDataList) {
+        runDataList.sort(function (lhs, rhs) {
+          return new Date(rhs.runDate) - new Date(lhs.runDate);
+        });
+
         that.onLoaded(runDataList);
 
         runDataList.forEach(function (item) {
