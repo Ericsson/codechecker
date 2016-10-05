@@ -9,16 +9,26 @@ with a particular CodeChecker server.
 '''
 
 import os
+import fcntl
 import shutil
 import uuid
 import json
 import hashlib
 import time
+import getpass
+import tempfile
 import ldap
 import ldap.sasl
 from datetime import datetime
 
 from codechecker_lib import logger
+
+unsupported_methods = []
+
+try:
+    import ldap
+except ImportError:
+    unsupported_methods.append("ldap")
 
 LOG = logger.get_new_logger("SESSION MANAGER")
 SESSION_COOKIE_NAME = "__ccPrivilegedAccessToken"
@@ -28,8 +38,10 @@ session_lifetimes = {}
 # ------------------------------
 # ----------- SERVER -----------
 class _Session():
+    """A session for an authenticated, privileged client connection."""
+
     # Create an initial salt from system environment for use with the session
-    # permanent persistency routine
+    # permanent persistency routine.
     __initial_salt = hashlib.sha256(SESSION_COOKIE_NAME + "__" +
                                     str(time.time()) + "__" +
                                     os.urandom(16)).hexdigest()
@@ -83,37 +95,61 @@ class _Session():
             # A session is only revalidated if it has yet to exceed its
             # "hard" lifetime. After a session hasn't been used for this
             # timeframe, it can NOT be resurrected at all --- the user needs
-            # to log in into a brand-new session
+            # to log in into a brand-new session.
             self.last_access = datetime.now()
 
-class sessionManager:
+class SessionManager:
+    CodeChecker_Workspace = None
+
     __valid_sessions = []
     __logins_since_prune = 0
 
     def __init__(self):
         LOG.debug('Loading session config')
 
-        session_cfg_file = os.path.join(os.environ['CC_PACKAGE_ROOT'],
-                                        "config", "session_config.json")
-        LOG.debug(session_cfg_file)
-        with open(session_cfg_file, 'r') as scfg:
-            scfg_dict = json.loads(scfg.read())
+        # Check whether workspace's configuration exists.
+        session_cfg_file = os.path.join(SessionManager.CodeChecker_Workspace,
+                                        "session_config.json")
+        if not os.path.exists(session_cfg_file):
+            LOG.warning("CodeChecker server's authentication example "
+                        "configuration file created at " + session_cfg_file)
+            shutil.copyfile(os.path.join(os.environ['CC_PACKAGE_ROOT'],
+                                         "config", "session_config.json"),
+                            session_cfg_file)
 
-        if not scfg_dict["authentication"]:
-            scfg_dict["authentication"] = {'enabled': False}
+        LOG.debug(session_cfg_file)
+
+        scfg_dict = {'authentication': {'enabled': False}}
+        with open(session_cfg_file, 'r') as scfg:
+            scfg_dict.update(json.loads(scfg.read()))
 
         self.__auth_config = scfg_dict["authentication"]
 
-        # If no methods are configured as enabled, disable authentication
-        if scfg_dict["authentication"].get("enabled") \
-           and ("method_dictionary" in self.__auth_config and not
-                self.__auth_config["method_dictionary"].get("enabled")) \
-           and ("method_ldap" in self.__auth_config and not
-                self.__auth_config["method_ldap"].get("enabled")):
-            LOG.warning("Authentication is enabled but no valid authentication"
-                        " backends are configured... Falling back to"
-                        " no authentication.")
-            self.__auth_config["enabled"] = False
+        # If no methods are configured as enabled, disable authentication.
+        if scfg_dict["authentication"].get("enabled"):
+            found_auth_method = False
+
+            if "method_dictionary" in self.__auth_config and \
+                    self.__auth_config["method_dictionary"].get("enabled"):
+                found_auth_method = True
+
+            if "method_ldap" in self.__auth_config and \
+                    self.__auth_config["method_ldap"].get("enabled"):
+
+                if "ldap" not in unsupported_methods:
+                    found_auth_method = True
+                else:
+                    LOG.warning("LDAP authentication was enabled but "
+                                "prerequisites are NOT installed on the system"
+                                "... Disabling LDAP authentication")
+                    self.__auth_config["method_ldap"]["enabled"] = False
+
+            #
+            if not found_auth_method:
+                LOG.warning("Authentication is enabled but no valid "
+                            "authentication backends are configured... "
+                            "Falling back to no authentication.")
+                self.__auth_config["enabled"] = False
 
         session_lifetimes["soft"] = self.__auth_config.get("soft_expire")\
             or 60
@@ -130,22 +166,23 @@ class sessionManager:
         }
 
     def __handle_validation(self, auth_string):
-        '''Validate an oncoming authorization request
-        against some authority controller'''
+        """Validate an oncoming authorization request
+        against some authority controller."""
         return self.__try_auth_dictionary(auth_string) \
             or self.__try_auth_ldap(auth_string)
 
-    def __try_auth_dictionary(self, auth_string):
-        if "method_dictionary" in self.__auth_config and \
-                self.__auth_config["method_dictionary"].get("enabled"):
-            return auth_string in \
-                self.__auth_config.get("method_dictionary").get("auths")
+    def __is_method_enabled(self, method):
+        return method not in unsupported_methods and \
+            "method_" + method in self.__auth_config and \
+            self.__auth_config["method_" + method].get("enabled")
 
-        return False
+    def __try_auth_dictionary(self, auth_string):
+        return self.__is_method_enabled("dictionary") and \
+            auth_string in \
+            self.__auth_config.get("method_dictionary").get("auths")
 
     def __try_auth_ldap(self, auth_string):
-        if "method_ldap" in self.__auth_config and \
-           self.__auth_config["method_ldap"].get("enabled"):
+        if self.__is_method_enabled("ldap"):
             username, pw = auth_string.split(":")
             for server in self.__auth_config["method_ldap"].get("authorities"):
                 l = ldap.initialize(server["connection_url"])
@@ -189,7 +226,7 @@ class sessionManager:
         if self.__handle_validation(auth_string):
             session_already = next(
                 (s for s
-                 in sessionManager.__valid_sessions if s.client == client
+                 in SessionManager.__valid_sessions if s.client == client
                  and s.still_reusable()
                  and s.persistent_hash ==
                  _Session.calc_persistency_hash(client, auth_string)),
@@ -205,51 +242,51 @@ class sessionManager:
                 session = _Session(client, token,
                                    _Session.calc_persistency_hash(client,
                                                                   auth_string))
-                sessionManager.__valid_sessions.append(session)
+                SessionManager.__valid_sessions.append(session)
 
             return session.token
         else:
             return None
 
     def is_valid(self, client, token, access=False):
-        '''Validates a given token (cookie) against
-        the known list of privileged sessions'''
+        """Validates a given token (cookie) against
+        the known list of privileged sessions."""
         if not self.isEnabled():
             return True
         else:
             return any(_sess.client == client
                        and _sess.token == token
                        and _sess.still_valid(access)
-                       for _sess in sessionManager.__valid_sessions)
+                       for _sess in SessionManager.__valid_sessions)
 
     def invalidate(self, client, token):
-        '''Remove a user's previous session from the store'''
-        for session in sessionManager.__valid_sessions[:]:
+        '''Remove a user's previous session from the store.'''
+        for session in SessionManager.__valid_sessions[:]:
             if session.client == client and session.token == token:
-                sessionManager.__valid_sessions.remove(session)
+                SessionManager.__valid_sessions.remove(session)
                 return True
 
         return False
 
     def __cleanup_sessions(self):
-        for session in sessionManager.__valid_sessions[:]:
-            if not session.still_reusable():
-                sessionManager.__valid_sessions.remove(session)
+        SessionManager.__valid_sessions = [s for s
+                                           in SessionManager.__valid_sessions
+                                           if s.still_reusable()]
         self.__logins_since_prune = 0
 
 
 # ------------------------------
 # ----------- CLIENT -----------
-class sessionManager_Client:
+class SessionManager_Client:
     def __init__(self):
         LOG.debug('Loading session config')
 
-        # Check for user's configuration to exist
+        # Check whether user's configuration exists.
         session_cfg_file = os.path.join(os.path.expanduser("~"),
                                         ".codechecker_passwords.json")
         if not os.path.exists(session_cfg_file):
-            print("CodeChecker authentication client's example configuration "
-                  "file created at " + session_cfg_file)
+            LOG.info("CodeChecker authentication client's example "
+                     "configuration file created at " + session_cfg_file)
             shutil.copyfile(os.path.join(os.environ['CC_PACKAGE_ROOT'],
                                          "config", "session_client.json"),
                             session_cfg_file)
@@ -260,37 +297,50 @@ class sessionManager_Client:
 
         if not scfg_dict["credentials"]:
             scfg_dict["credentials"] = {}
-        if not scfg_dict["tokens"]:
-            scfg_dict["tokens"] = {}
 
         self.__save = scfg_dict
         self.__autologin = scfg_dict.get("client_autologin") \
             if "client_autologin" in scfg_dict else True
 
+        # Check and load token storage for user
+        self.token_file = os.path.join(tempfile.gettempdir(), ".codechecker_" +
+                                       getpass.getuser() + ".session.json")
+        LOG.debug(self.token_file)
+        if os.path.exists(self.token_file):
+            with open(self.token_file, 'r') as f:
+                input = json.loads(f.read())
+                self.__tokens = input.get("tokens")
+        else:
+            with open(self.token_file, 'w') as f:
+                json.dump({'tokens': {}}, f)
+
+            self.__tokens = {}
+
     def is_autologin_enabled(self):
         return self.__autologin
 
     def getToken(self, host, port):
-        return self.__save["tokens"].get(host + ":" + port)
+        return self.__tokens.get(host + ":" + port)
 
     def getAuthString(self, host, port):
         ret = self.__save["credentials"].get(host + ":" + port)
         if not ret:
             ret = self.__save["credentials"].get(host)
-            if not ret:
-                ret = self.__save["credentials"].get("*:" + port)
-                if not ret:
-                    ret = self.__save["credentials"].get("*")
+        if not ret:
+            ret = self.__save["credentials"].get("*:" + port)
+        if not ret:
+            ret = self.__save["credentials"].get("*")
 
         return ret
 
     def saveToken(self, host, port, token, destroy=False):
-        if not destroy:
-            self.__save["tokens"][host + ":" + port] = token
+        if destroy:
+            del self.__tokens[host + ":" + port]
         else:
-            del self.__save["tokens"][host + ":" + port]
+            self.__tokens[host + ":" + port] = token
 
-        session_cfg_file = os.path.join(os.path.expanduser("~"),
-                                        ".codechecker_passwords.json")
-        with open(session_cfg_file, 'w') as scfg:
-            json.dump(self.__save, scfg, indent=2, sort_keys=True)
+        with open(self.token_file, 'w') as scfg:
+            fcntl.lockf(scfg, fcntl.LOCK_EX)
+            json.dump({'tokens': self.__tokens}, scfg,
+                      indent=2, sort_keys=True)
+            fcntl.lockf(scfg, fcntl.LOCK_UN)

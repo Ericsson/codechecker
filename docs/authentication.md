@@ -1,11 +1,16 @@
 CodeChecker authentication subsytem
 ===================================
- 
+
+# Please be advised, that currently, login credentials travel on an unencrypted channel!
+
 CodeChecker also supports only allowing a privileged set of users to access the results stored on a server.
-Authentication configuration is stored in the `config/session_config.json` file for the server and a template in `config/session_client.json` for the client.
-The user's own configuration is copied by the client &ndash; at first launch &ndash; to `~/.codechecker_passwords.json`.
+
+> **NOTICE!** Some authentication subsystems require additional packages to be installed before they can be used.
  
 ## Serverside configuration
+
+The server's configuration is stored in the server's *workspace* folder, in `session_config.json`.
+This file is created, at the first start of the server, using the package's installed `config/session_config.json` as a template.
  
 The `authentication` section of the config file controls how authentication is handled.
 
@@ -46,6 +51,24 @@ If the user's login matches any of the credentials listed, the user will be auth
 ```
 
 ### *LDAP* authentication
+
+#### Prerequisites
+
+Using the *LDAP* authentication requires some additional packages to be installed on the system.
+
+~~~~~~{.sh}
+
+# get additional system libraries
+sudo apt-get install libldap2-dev libsasl2-dev libssl-dev
+
+# the python virtual environment must be sourced!
+source ~/checker_env/bin/activate
+
+# install required basic python modules
+pip install python-ldap
+~~~~~~
+
+#### Settings
 
 CodeChecker also supports *LDAP*-based authentication. The `authentication.method_ldap` section contains the configuration for LDAP authentication:
 the server can be configured to connect to as much LDAP-servers as the administrator wants. Each LDAP server is identified by a `connection_url` and a list of `queries`
@@ -89,6 +112,9 @@ For browser authentication to work, cookies must be enabled!
 ### Command-line client
 
 The `CodeChecker cmd` client needs to be authenticated for a server before any data communication could take place.
+
+The client's configuration file is expected to be at `~/.codechecker_passwords.json`, which is created at the first command executed
+by using the package's `config/session_client.json` as an example.
 
 ~~~~~~~~~~~~~~~~~~~~~
 usage: CodeChecker cmd login [-h] [--host HOST] -p PORT [-u USERNAME]
@@ -142,4 +168,4 @@ This behaviour can be disabled by setting `client_autologin` to `false`.
 
 #### Currently active tokens
 
-The configuration file's `tokens` section contains the user's currently active sessions' tokens. This is not meant to be edited by hand, the client manages this section.
+The user's currently active sessions' token are stored in the `/tmp/.codechecker_USERNAME.session.json` (where `/tmp` is the environment's *temp* folder) file.

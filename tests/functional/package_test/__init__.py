@@ -174,25 +174,29 @@ def setup_package():
     _start_server(shared_test_params, test_config, False)
 
     #
-    # Create a dummy authentication-enabled configuration and an auth-enabled server
+    # Create a dummy authentication-enabled configuration and an auth-enabled server.
+    #
+    # Running the tests only work if the initial value (in package
+    # session_config.json) is FALSE for authentication.enabled.
+    os.remove(os.path.join(shared_test_params['workspace'], "session_config.json"))
     session_cfg_file = os.path.join(pkg_root, "config", "session_config.json")
-    with open(session_cfg_file, 'r') as scfg:
+    with open(session_cfg_file, 'r+') as scfg:
         __scfg_original = scfg.read()
+        scfg.seek(0)
+        scfg_dict = json.loads(__scfg_original)
 
-    scfg_dict = json.loads(__scfg_original)
+        scfg_dict["authentication"]["enabled"] = True
+        scfg_dict["authentication"]["method_dictionary"]["enabled"] = True
+        scfg_dict["authentication"]["method_dictionary"]["auths"] = ["cc:test"]
 
-
-    scfg_dict["authentication"]["enabled"] = True
-    scfg_dict["authentication"]["method_dictionary"]["enabled"] = True
-    scfg_dict["authentication"]["method_dictionary"]["auths"] = ["cc:test"]
-
-    with open(session_cfg_file, 'w') as scfg:
         json.dump(scfg_dict, scfg, indent=2, sort_keys=True)
+        scfg.truncate()
 
     print("Starting server to test authentication")
     _start_server(shared_test_params, test_config, True)
 
     # Need to save the original configuration back so multiple tests can work after each other
+    os.remove(os.path.join(shared_test_params['workspace'], "session_config.json"))
     with open(session_cfg_file, 'w') as scfg:
         scfg.writelines(__scfg_original)
 

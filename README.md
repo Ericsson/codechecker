@@ -40,7 +40,7 @@ Tested on Ubuntu LTS 14.04.2
 
 # get ubuntu packages
 # clang-3.6 can be replaced by any later versions of clang
-sudo apt-get install clang-3.6 doxygen build-essential thrift-compiler python-virtualenv gcc-multilib git wget libldap2-dev libsasl2-dev libssl-dev
+sudo apt-get install clang-3.6 doxygen build-essential thrift-compiler python-virtualenv gcc-multilib git wget
 
 # create new python virtualenv
 virtualenv -p /usr/bin/python2.7 ~/checker_env
