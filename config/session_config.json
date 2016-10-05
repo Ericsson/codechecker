@@ -22,6 +22,15 @@
           ]
         }
       ]
+    },
+    "method_pam": {
+      "enabled" : false,
+      "users": [
+        "root", "myname"
+      ],
+      "groups": [
+        "adm", "cc-users"
+      ]
     }
   }
 }

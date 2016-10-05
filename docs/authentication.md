@@ -33,7 +33,9 @@ The `authentication` section of the config file controls how authentication is h
 Every authentication method is its own JSON object in this section. Every authentication method has its
 own `enabled` key which dictates whether it is used at live authentication or not.
 
-Users are authenticated if **any** authentication method successfully authenticates them. If both methods are enabled, *dictionary* authentication takes precedence.
+Users are authenticated if **any** authentication method successfully authenticates them.
+Authentications are attempted in the order they are described here: *dicitonary* takes precedence,
+*pam* is a secondary and *ldap* is a tertiary backend, if enabled.
 
 ### *Dictionary* authentication
 
@@ -46,6 +48,46 @@ If the user's login matches any of the credentials listed, the user will be auth
   "auths" : [
       "global:admin",
       "test:test"
+  ]
+}
+```
+
+### *PAM* authentication
+
+#### Prerequisites
+
+Using the *PAM* authentication requires some additional packages to be installed on the system.
+
+~~~~~~{.sh}
+
+# the python virtual environment must be sourced!
+source ~/checker_env/bin/activate
+
+# install required python modules
+pip install python-pam
+~~~~~~
+
+#### Settings
+
+To access the server via PAM authentication, the user must provide valid username and password which is accepted by PAM.
+
+```json
+"method_pam": {
+  "enabled" : true
+}
+```
+
+The module can be configured to allow specific users or users belonging to specific groups only.
+In the example below, `root` and `myname` can access the server, and **everyone** who belongs to the `adm` or `cc-users` group can access the server.
+
+```json
+"method_pam": {
+  "enabled" : true,
+  "users": [
+    "root", "myname"
+  ],
+  "groups": [
+    "adm", "cc-users"
   ]
 }
 ```
@@ -64,7 +106,7 @@ sudo apt-get install libldap2-dev libsasl2-dev libssl-dev
 # the python virtual environment must be sourced!
 source ~/checker_env/bin/activate
 
-# install required basic python modules
+# install required python modules
 pip install python-ldap
 ~~~~~~
 

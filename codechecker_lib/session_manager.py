@@ -31,6 +31,13 @@ try:
 except ImportError:
     unsupported_methods.append("ldap")
 
+try:
+    import pam
+    import grp
+    import pwd
+except ImportError:
+    unsupported_methods.append("pam")
+
 LOG = logger.get_new_logger("SESSION MANAGER")
 SESSION_COOKIE_NAME = "__ccPrivilegedAccessToken"
 session_lifetimes = {}
@@ -136,7 +143,6 @@ class SessionManager:
 
             if "method_ldap" in self.__auth_config and \
                     self.__auth_config["method_ldap"].get("enabled"):
-
                 if "ldap" not in unsupported_methods:
                     found_auth_method = True
                 else:
@@ -144,6 +150,16 @@ class SessionManager:
                                 "prerequisites are NOT installed on the system"
                                 "... Disabling LDAP authentication")
                     self.__auth_config["method_ldap"]["enabled"] = False
+
+            if "method_pam" in self.__auth_config and \
+                    self.__auth_config["method_pam"].get("enabled"):
+                if "pam" not in unsupported_methods:
+                    found_auth_method = True
+                else:
+                    LOG.warning("PAM authentication was enabled but "
+                                "prerequisites are NOT installed on the system"
+                                "... Disabling PAM authentication")
+                    self.__auth_config["method_pam"]["enabled"] = False
 
             #
             if not found_auth_method:
@@ -170,6 +186,7 @@ class SessionManager:
         """Validate an oncoming authorization request
         against some authority controller."""
         return self.__try_auth_dictionary(auth_string) \
+            or self.__try_auth_pam(auth_string) \
             or self.__try_auth_ldap(auth_string)
 
     def __is_method_enabled(self, method):
@@ -181,6 +198,37 @@ class SessionManager:
         return self.__is_method_enabled("dictionary") and \
             auth_string in \
             self.__auth_config.get("method_dictionary").get("auths")
+
+    def __try_auth_pam(self, auth_string):
+        if self.__is_method_enabled("pam"):
+            username, pw = auth_string.split(":")
+            auth = pam.pam()
+
+            if auth.authenticate(username, pw):
+                allowed_users = self.__auth_config["method_pam"].get("users") \
+                    or []
+                allowed_group = self.__auth_config["method_pam"].get("groups")\
+                    or []
+
+                if len(allowed_users) == 0 and len(allowed_group) == 0:
+                    # If no filters are set, only authentication is needed.
+                    return True
+                else:
+                    if username in allowed_users:
+                        # The user is allowed by username.
+                        return True
+
+                    # Otherwise, check group memeberships. If any of the user's
+                    # groups are an allowed groupl, the user is allowed
+                    groups = [g.gr_name for g in grp.getgrall()
+                              if username in g.gr_mem]
+                    gid = pwd.getpwnam(username).pw_gid
+                    groups.append(grp.getgrgid(gid).gr_name)
+
+                    return not set(groups).isdisjoint(
+                        set(self.__auth_config["method_pam"].get("groups")))
+
+        return False
 
     def __try_auth_ldap(self, auth_string):
         if self.__is_method_enabled("ldap"):
@@ -211,7 +259,7 @@ class SessionManager:
                     finally:
                         l.unbind()
 
-            return False
+        return False
 
     def create_or_get_session(self, client, auth_string):
         """Create a new session for the given client and auth-string, if
