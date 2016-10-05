@@ -143,6 +143,7 @@ UNKNOWN_OPTIONS_MAP_REGEX = {
     '^-findirect-inlining': 0,
     '^-finline-limit.*': 0,
     '^-fipa-sra': 0,
+    '^-fno-aggressive-loop-optimizations': 0,
     '^-fno-delete-null-pointer-checks': 0,
     '^-fno-strength-reduce': 0,
     '^-fno-toplevel-reorder': 0,
