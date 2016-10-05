@@ -9,6 +9,7 @@ with a particular CodeChecker server.
 '''
 
 import os
+import stat
 import fcntl
 import shutil
 import uuid
@@ -290,6 +291,7 @@ class SessionManager_Client:
             shutil.copyfile(os.path.join(os.environ['CC_PACKAGE_ROOT'],
                                          "config", "session_client.json"),
                             session_cfg_file)
+            os.chmod(session_cfg_file, stat.S_IRUSR | stat.S_IWUSR)
 
         LOG.debug(session_cfg_file)
         with open(session_cfg_file, 'r') as scfg:
@@ -310,9 +312,20 @@ class SessionManager_Client:
             with open(self.token_file, 'r') as f:
                 input = json.loads(f.read())
                 self.__tokens = input.get("tokens")
+
+            mode = os.stat(self.token_file)[stat.ST_MODE]
+            if mode & stat.S_IRGRP \
+                    or mode & stat.S_IWGRP \
+                    or mode & stat.S_IROTH \
+                    or mode & stat.S_IWOTH:
+                LOG.warning("Credential file at '" + session_cfg_file + "' is "
+                            "readable by users other than you! This poses a "
+                            "risk of others getting your passwords!\n"
+                            "Please `chmod 0600 " + session_cfg_file + "`")
         else:
             with open(self.token_file, 'w') as f:
                 json.dump({'tokens': {}}, f)
+            os.chmod(self.token_file, stat.S_IRUSR | stat.S_IWUSR)
 
             self.__tokens = {}
 

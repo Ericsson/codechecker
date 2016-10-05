@@ -116,6 +116,9 @@ The `CodeChecker cmd` client needs to be authenticated for a server before any d
 The client's configuration file is expected to be at `~/.codechecker_passwords.json`, which is created at the first command executed
 by using the package's `config/session_client.json` as an example.
 
+> Please make sure, as a security precaution, that **only you** are allowed to access this file.
+> Executing `chmod 0600 ~/.codechecker_passwords.json` will limit access to your user only.
+
 ~~~~~~~~~~~~~~~~~~~~~
 usage: CodeChecker cmd login [-h] [--host HOST] -p PORT [-u USERNAME]
                              [-pw PASSWORD] [-d]
@@ -168,4 +171,4 @@ This behaviour can be disabled by setting `client_autologin` to `false`.
 
 #### Currently active tokens
 
-The user's currently active sessions' token are stored in the `/tmp/.codechecker_USERNAME.session.json` (where `/tmp` is the environment's *temp* folder) file.
+The configuration file's `tokens` section contains the user's currently active sessions' tokens. This is not meant to be edited by hand, the client manages this section.
