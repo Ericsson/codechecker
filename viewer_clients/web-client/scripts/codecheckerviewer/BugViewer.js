@@ -46,7 +46,6 @@ function (declare, dom, style, on, query, Memory, Observable, topic,
   function getFullHeight(element) {
     var computedStyle = style.getComputedStyle(element);
 
-
     var height = parseInt(computedStyle.height);
     var paddingTop = parseInt(computedStyle.paddingTop);
     var paddingBottom = parseInt(computedStyle.paddingBottom);
@@ -376,6 +375,11 @@ function (declare, dom, style, on, query, Memory, Observable, topic,
         [filter_sup, filter_unsup],
         function (result) {
           result.forEach(function (report) { that._addReport(report); });
+
+          that.bugStore.query({ parent : 'root' }).forEach(function (severity) {
+            if (that.bugStore.query({ parent : severity.id }).length === 0)
+              that.bugStore.remove(severity.id);
+          });
         });
     },
 
