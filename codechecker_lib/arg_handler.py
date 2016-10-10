@@ -245,7 +245,8 @@ def handle_check(args):
 
         if not log_file:
             log_file = build_manager.generate_log_file(args,
-                                                       context)
+                                                       context,
+                                                       args.quiet_build)
         if not log_file:
             LOG.error("Failed to generate compilation command file: " +
                       log_file)
@@ -330,7 +331,8 @@ def _do_quickcheck(args):
 
     if not log_file:
         log_file = build_manager.generate_log_file(args,
-                                                   context)
+                                                   context,
+                                                   args.quiet_build)
     if not log_file:
         LOG.error("Failed to generate compilation command file: " + log_file)
         sys.exit(1)

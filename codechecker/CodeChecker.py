@@ -234,6 +234,11 @@ Delete analysis results form the database if a run with the given name already e
         check_parser.add_argument('-s', '--skip', type=str, dest="skipfile",
                                   default=argparse.SUPPRESS,
                                   required=False, help='Path to skip file.')
+        check_parser.add_argument('--quiet-build',
+                                  action='store_true',
+                                  default=False,
+                                  required=False,
+                                  help='Do not print out the output of the original build')
         add_analyzer_arguments(check_parser)
         add_database_arguments(check_parser)
         check_parser.set_defaults(func=arg_handler.handle_check)
@@ -254,6 +259,11 @@ Run CodeChecker for a project without database.''')
                                  help=log_argument_help_msg)
         qcheck_parser.add_argument('-s', '--steps', action="store_true",
                                    dest="print_steps", help='Print steps.')
+        qcheck_parser.add_argument('--quiet-build',
+                                   action='store_true',
+                                   default=False,
+                                   required=False,
+                                   help='Do not print out the output of the original build')
         add_analyzer_arguments(qcheck_parser)
         qcheck_parser.set_defaults(func=arg_handler.handle_quickcheck)
 

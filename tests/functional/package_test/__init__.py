@@ -271,6 +271,7 @@ def _run_check(shared_test_params, skip_list_file, test_project_build_cmd,
     check_cmd.append("'"+test_project_build_cmd+"'")
     check_cmd.append('--analyzers')
     check_cmd.append('clangsa')
+    check_cmd.append('--quiet-build')
     if shared_test_params['use_postgresql']:
         check_cmd.append('--postgresql')
         check_cmd += _pg_db_config_to_cmdline_params(

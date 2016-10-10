@@ -49,8 +49,7 @@ def perform_build_command(logfile, command, context, silent=False):
     """
     Build the project and create a log file.
     """
-    if not silent:
-        LOG.info("Starting build ...")
+    LOG.info("Starting build ...")
 
     try:
         original_env_file = os.environ['CODECHECKER_ORIGINAL_BUILD_ENV']
@@ -93,13 +92,12 @@ def perform_build_command(logfile, command, context, silent=False):
     try:
         ret_code = execute_buildcmd(command, silent, log_env)
 
-        if not silent:
-            if ret_code == 0:
-                LOG.info("Build finished successfully.")
-                LOG.debug_analyzer("The logfile is: " + logfile)
-            else:
-                LOG.info("Build failed.")
-                sys.exit(ret_code)
+        if ret_code == 0:
+            LOG.info("Build finished successfully.")
+            LOG.debug_analyzer("The logfile is: " + logfile)
+        else:
+            LOG.info("Build failed.")
+            sys.exit(ret_code)
 
     except Exception as ex:
         LOG.error("Calling original build command failed")

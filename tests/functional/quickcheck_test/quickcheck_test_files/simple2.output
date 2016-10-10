@@ -1,7 +1,6 @@
-CodeChecker quickcheck --analyzers clangsa -b "make simple2"
+CodeChecker quickcheck --analyzers clangsa -b "make simple2" --quiet-build
 --------------------------------------------------------------------------------
 [INFO] - Starting build ...
-g++ -w simple2.cpp -o /dev/null
 [INFO] - Build finished successfully.
 clangsa found 1 defect(s) while analyzing simple2.cpp
 
