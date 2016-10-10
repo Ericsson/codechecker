@@ -54,14 +54,16 @@ def perform_build_command(logfile, command, context, silent=False):
 
     try:
         original_env_file = os.environ['CODECHECKER_ORIGINAL_BUILD_ENV']
-        LOG.debug_analyzer('Loading original build env from: ' + original_env_file)
+        LOG.debug_analyzer('Loading original build env from: ' +
+                           original_env_file)
 
         with open(original_env_file, 'rb') as env_file:
             original_env = pickle.load(env_file)
 
     except Exception as ex:
         LOG.warning(str(ex))
-        LOG.warning('Failed to get saved original_env using a current copy for logging')
+        LOG.warning('Failed to get saved original_env'
+                    'using a current copy for logging')
         original_env = os.environ.copy()
 
     return_code = 0
@@ -70,7 +72,7 @@ def perform_build_command(logfile, command, context, silent=False):
     if host_check.check_intercept(original_env):
         LOG.debug_analyzer("with intercept ...")
         final_command = command
-        command = "intercept-build " + "--cdb "+ logfile + " " + final_command
+        command = "intercept-build " + "--cdb " + logfile + " " + final_command
         log_env = original_env
         LOG.debug_analyzer(command)
 
@@ -83,7 +85,8 @@ def perform_build_command(logfile, command, context, silent=False):
             if 'CC_LOGGER_GCC_LIKE' not in log_env:
                 log_env['CC_LOGGER_GCC_LIKE'] = 'gcc:g++:clang:clang++:cc:c++'
         else:
-            LOG.error("Intercept-build is required to run CodeChecker in OS X.")
+            LOG.error("Intercept-build is required"
+                      " to run CodeChecker in OS X.")
             sys.exit(1)
 
     LOG.debug_analyzer(log_env)
@@ -131,7 +134,8 @@ def check_log_file(args):
     except AttributeError as ex:
         # args.log_file was not set
         LOG.debug_analyzer(ex)
-        LOG.debug_analyzer("Compilation database file was not set in the command line.")
+        LOG.debug_analyzer("Compilation database file was not set"
+                           " in the command line.")
     finally:
         return log_file
 
@@ -144,26 +148,27 @@ def generate_log_file(args, context, silent=False):
     log_file = None
     try:
         if args.command:
-            
+
             intercept_build_executable = find_executable('intercept-build')
-    
-            if intercept_build_executable == None:
+
+            if intercept_build_executable is None:
                 if platform.system() == 'Linux':
                     # check if logger bin exists
                     if not os.path.isfile(context.path_logger_bin):
-                        LOG.error('Logger binary not found! Required for logging.')
+                        LOG.error('Logger binary not found!'
+                                  'Required for logging.')
                         sys.exit(1)
 
                     # check if logger lib exists
                     if not os.path.exists(context.path_logger_lib):
-                        LOG.error('Logger library directory not found! Libs are requires' \
-                                  'for logging.')
+                        LOG.error('Logger library directory not found!'
+                                  'Libs are required for logging.')
                         sys.exit(1)
 
             log_file = default_compilation_db(args.workspace)
             if os.path.exists(log_file):
-                LOG.debug_analyzer("Removing previous compilation command file: " +
-                          log_file)
+                LOG.debug_analyzer("Removing previous"
+                                   "compilation command file: " + log_file)
                 os.remove(log_file)
 
             open(log_file, 'a').close()  # same as linux's touch
