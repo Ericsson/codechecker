@@ -1,10 +1,10 @@
 all:
-	g++ -c call_and_message.cpp
-	g++ -c divide_zero.cpp
-	g++ -c new_delete.cpp
-	g++ -c null_dereference.cpp
-	g++ -c stack_address_escape.cpp
-	g++ -c file_to_be_skipped.cpp
+	$(CXX) -c call_and_message.cpp
+	$(CXX) -c divide_zero.cpp
+	$(CXX) -c new_delete.cpp
+	$(CXX) -c null_dereference.cpp
+	$(CXX) -c stack_address_escape.cpp
+	$(CXX) -c file_to_be_skipped.cpp
 clean:
 	rm -f call_and_message.o
 	rm -f divide_zero.o
