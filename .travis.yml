@@ -11,16 +11,16 @@ matrix:
       dist: trusty
       python: "2.7"
     - os: osx
-      osx_image: xcode6.4
+      osx_image: xcode8
       sudo: false
       language: generic
 
 before_install:
     - git clone https://github.com/llvm-mirror/clang.git ~/llvm\
-    - chmod a+x ~/llvm/tools/scan-build-py/bin/intercept-build;
-    - export PATH=~/llvm/tools/scan-build-py/bin:$PATH;
+    - chmod a+x ~/llvm/tools/scan-build-py/bin/intercept-build
+    - export PATH=~/llvm/tools/scan-build-py/bin:$PATH
+    - export PYTHONPATH=~/llvm/tools/scan-build-py/
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update;                        fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install python;                fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install thrift;                fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install doxygen;               fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install coreutils;             fi
@@ -32,8 +32,12 @@ install:
     - pip install -r ./.ci/python_requirements
     - pip install nose
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PG_DATA=$(brew --prefix)/var/postgres; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pg_ctl -w start -l postgres.log --pgdata ${PG_DATA}; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then createuser -s postgres && psql -c 'create database travis_ci_test;' -U postgres && cat postgres.log; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pg_ctl -w start -l postgres.log --pgdata ${PG_DATA}; cat postgres.log; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then cat postgres.log; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then createuser -s postgres; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then psql -c 'create database travis_ci_test;' -U postgres; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then cat postgres.log; fi
+
 
 addons:
     apt:

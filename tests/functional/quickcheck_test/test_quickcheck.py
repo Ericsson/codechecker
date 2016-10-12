@@ -11,6 +11,7 @@ import os
 import subprocess
 import unittest
 
+from subprocess import CalledProcessError
 
 class QuickCheckTestCase(unittest.TestCase):
     """This class tests the CodeChecker quickcheck feature."""
@@ -46,12 +47,18 @@ class QuickCheckTestCase(unittest.TestCase):
 
         command, correct_output = (lines[0].strip(), ''.join(lines[2:]))
 
-        output = subprocess.check_output(
-            ['bash', '-c', command], env=self.env, cwd=self.test_dir)
+        try:
+            output = subprocess.check_output(
+                ['bash', '-c', command], env=self.env, cwd=self.test_dir)
 
-        self.assertEqual(output, correct_output)
+            self.assertEqual(output, correct_output)
+            return 0
+        except CalledProcessError as cerr:
+            print("Failed to run: " + ' '.join(cerr.cmd))
+            print(cerr.output)
+            return cerr.returncode
 
     def test_quickcheck_files(self):
         """Iterate over the test directory and run all tests in it."""
         for ofile in glob.glob(os.path.join(self.test_dir, '*.output')):
-            self.__check_one_file(ofile)
+            self.assertEqual(self.__check_one_file(ofile), 0)
