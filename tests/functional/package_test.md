@@ -1,7 +1,15 @@
 # How to run the tests
 
+Additionally the [nose](https://nose.readthedocs.io/en/latest/) test framework is required to run the tests.
+~~~~~~{.sh}
+# activate the already created virtualenv
+source ~/checker_env/bin/activate
+
+# install the nose test framework
+pip install nose
+~~~~~~
+
 Make sure you install all the package building dependencies before running the tests.
-Additionally nosetest test framework is required.
 ~~~~~~{.sh}
 ./run_tests.sh
 ~~~~~~
