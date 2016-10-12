@@ -7,6 +7,7 @@
 '''
 
 import os
+import re
 import sys
 import signal
 import multiprocessing
@@ -153,12 +154,14 @@ def start_workers(args, actions, context, analyzer_config_map, skp_handler):
 
     signal.signal(signal.SIGINT, signal_handler)
 
+    # Remove characters which could cause directory creation problems.
+    no_spec_char_name = re.sub(r'[^\w\-_\. ]', '_', args.name)
+    report_output = os.path.join(context.codechecker_workspace,
+                                 no_spec_char_name + '_reports')
+
     # create report output dir this will be used by the result handlers for each
     # analyzer to store analyzer results or temporary files
     # each analyzer instance does its own cleanup
-    report_output = os.path.join(context.codechecker_workspace,
-                                 args.name + '_reports')
-
     if not os.path.exists(report_output):
         os.mkdir(report_output)
 
