@@ -33,10 +33,10 @@ def debug(context, connection_string, force):
         session = sqlalchemy.orm.scoped_session(
                     sqlalchemy.orm.sessionmaker(bind=engine))
 
-        # Get latest run id
+        # Get latest run id.
         last_run = session.query(Run).order_by(Run.id.desc()).first()
 
-        # Get all failed actions
+        # Get all failed actions.
         actions = session.query(BuildAction).filter(and_(
                     BuildAction.run_id == last_run.id,
                     sqlalchemy.sql.func.length(BuildAction.failure_txt) != 0))

@@ -1,3 +1,3 @@
 sqlalchemy==1.0.9
 alembic==0.8.2
-thrift==0.9.1
+thrift==0.9.3

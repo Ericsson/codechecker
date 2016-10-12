@@ -12,10 +12,10 @@ from codechecker_lib.analyzers import config_handler
 
 LOG = logger.get_new_logger('CLANGSA CONFIG HANDLER')
 
+
 class ClangSAConfigHandler(config_handler.AnalyzerConfigHandler):
     """
-    Configuration handler for the clang static analyzer
-
+    Configuration handler for the clang static analyzer.
     """
 
     def __init__(self):
@@ -24,18 +24,18 @@ class ClangSAConfigHandler(config_handler.AnalyzerConfigHandler):
 
     def add_checker_config(self, config):
         """
-        add a (checker_name, key, value) tuple to the list
+        Add a (checker_name, key, value) tuple to the list.
         """
         self.__checker_configs.append(config)
 
     def get_checker_configs(self):
         """
-        Process raw config data (from the command line)
+        Process raw config data (from the command line).
         Filter out checker related configuration values
         like unix:Optimistic=true in the command line:
         '-Xanalyzer -analyzer-config -Xanalyzer unix:Optimistic=true'
 
-        return a list of (checker_name, key, value) tuples
+        Return a list of (checker_name, key, value) tuples.
         """
 
         checker_config_pattern = r'(?P<checker_name>([^: ]+))\:(?P<checker_attr>([^:=]+))\=(?P<attr_value>([^:\. ]+))'

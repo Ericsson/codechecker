@@ -3,9 +3,9 @@
 #   This file is distributed under the University of Illinois Open Source
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
-'''
+"""
 Database server handling.
-'''
+"""
 
 import os
 import subprocess
@@ -34,8 +34,9 @@ from alembic import command, config
 
 LOG = logger.get_new_logger('DB_HANDLER')
 
+
 class SQLServer(object):
-    '''
+    """
     Abstract base class for database server handling. An SQLServer instance is
     responsible for the initialization, starting, and stopping the database
     server, and also for connection string management.
@@ -47,22 +48,20 @@ class SQLServer(object):
         2, Add/modify some command line options in CodeChecker.py
         3, Modify SQLServer.from_cmdline_args() in order to create an
            instance of the new server type if needed
-    '''
+    """
 
     __metaclass__ = ABCMeta
 
-
     def __init__(self, migration_root):
-        '''
+        """
         Sets self.migration_root. migration_root should be the path to the
         alembic migration scripts.
-        '''
+        """
 
         self.migration_root = migration_root
 
-
     def _create_or_update_schema(self, use_migration=True):
-        '''
+        """
         Creates or updates the database schema. The database server should be
         started before this method is called.
 
@@ -72,7 +71,7 @@ class SQLServer(object):
         meta data is used for schema creation.
 
         On error sys.exit(1) is called.
-        '''
+        """
 
         try:
             db_uri = self.get_connection_string()
@@ -101,10 +100,9 @@ class SQLServer(object):
             LOG.error(str(alch_err))
             sys.exit(1)
 
-
     @abstractmethod
     def start(self, db_version_info, wait_for_start=True, init=False):
-        '''
+        """
         Starts the database server and initializes the database server.
 
         On wait_for_start == True, this method returns when the server is up
@@ -115,36 +113,33 @@ class SQLServer(object):
         if needed.
 
         On error sys.exit(1) should be called.
-        '''
+        """
         pass
-
 
     @abstractmethod
     def stop(self):
-        '''
+        """
         Terminates the database server.
 
         On error sys.exit(1) should be called.
-        '''
+        """
         pass
-
 
     @abstractmethod
     def get_connection_string(self):
-        '''
+        """
         Returns the connection string for SQLAlchemy.
 
         DO NOT LOG THE CONNECTION STRING BECAUSE IT MAY CONTAIN THE PASSWORD
         FOR THE DATABASE!
-        '''
+        """
         pass
-
 
     @staticmethod
     def create_engine(connection_string):
-        '''
+        """
         Creates a new SQLAlchemy engine.
-        '''
+        """
 
         if make_url(connection_string).drivername == 'sqlite+pysqlite':
             # FIXME: workaround for locking errors
@@ -157,7 +152,7 @@ class SQLServer(object):
 
     @staticmethod
     def from_cmdline_args(args, workspace, migration_root, env=None):
-        '''
+        """
         Normally only this method is called form outside of this module in
         order to instance the proper server implementation.
 
@@ -166,7 +161,7 @@ class SQLServer(object):
             workspace: path to the CodeChecker workspace directory
             migration_root: path to the database migration scripts
             env: a run environment dictionary.
-        '''
+        """
 
         if not host_check.check_sql_driver(args.postgresql):
             LOG.error("The selected SQL driver is not available.")
@@ -185,9 +180,8 @@ class SQLServer(object):
             LOG.debug("Using SQLiteDatabase")
             return SQLiteDatabase(workspace, migration_root, run_env=env)
 
-
     def check_db_version(self, db_version_info, session=None):
-        '''
+        """
         Checks the database version and prints an error message on database
         version mismatch.
 
@@ -200,7 +194,7 @@ class SQLServer(object):
                 version.
             session: an open database session or None. If session is None, a
                 new session is created.
-        '''
+        """
 
         try:
             dispose_engine = False
@@ -220,10 +214,12 @@ class SQLServer(object):
                 # Version is not populated yet
                 LOG.error('No version information found in the database.')
                 sys.exit(1)
-            elif not db_version_info.is_compatible(version.major, version.minor):
+            elif not db_version_info.is_compatible(version.major,
+                                                   version.minor):
                 LOG.error('Version mismatch. Expected database version: ' +
                           str(db_version_info))
-                version_from_db = 'v'+str(version.major)+'.'+str(version.minor)
+                version_from_db = 'v' + str(version.major) + '.' + str(
+                    version.minor)
                 LOG.error('Version from the database is: ' + version_from_db)
                 LOG.error('Please update your database.')
                 sys.exit(1)
@@ -235,11 +231,10 @@ class SQLServer(object):
             if dispose_engine:
                 engine.dispose()
 
-
     def _add_version(self, db_version_info, session=None):
-        '''
+        """
         Fills the DBVersion table.
-        '''
+        """
 
         engine = None
         if session is None:
@@ -257,12 +252,14 @@ class SQLServer(object):
 
         LOG.debug('Adding DB version done!')
 
-class PostgreSQLServer(SQLServer):
-    '''
-    Handler for PostgreSQL.
-    '''
 
-    def __init__(self, workspace, migration_root, host, port, user, database, password = None, run_env=None):
+class PostgreSQLServer(SQLServer):
+    """
+    Handler for PostgreSQL.
+    """
+
+    def __init__(self, workspace, migration_root, host, port, user, database,
+                 password=None, run_env=None):
         super(PostgreSQLServer, self).__init__(migration_root)
 
         self.path = os.path.join(workspace, 'pgsql_data')
@@ -276,19 +273,17 @@ class PostgreSQLServer(SQLServer):
 
         self.proc = None
 
-
     def _is_database_data_exist(self):
-        '''Check the PostgreSQL instance existence in a given path.'''
+        """Check the PostgreSQL instance existence in a given path."""
 
         LOG.debug('Checking for database at ' + self.path)
 
         return os.path.exists(self.path) and \
-            os.path.exists(os.path.join(self.path, 'PG_VERSION')) and \
-            os.path.exists(os.path.join(self.path, 'base'))
-
+               os.path.exists(os.path.join(self.path, 'PG_VERSION')) and \
+               os.path.exists(os.path.join(self.path, 'base'))
 
     def _initialize_database_data(self):
-        '''Initialize a PostgreSQL instance with initdb. '''
+        """Initialize a PostgreSQL instance with initdb. """
 
         LOG.debug('Initializing database at ' + self.path)
 
@@ -298,11 +293,10 @@ class PostgreSQLServer(SQLServer):
         # logger -> print error
         return code == 0
 
-
     def _get_connection_string(self, database):
-        '''
+        """
         Helper method for getting the connection string for the given database.
-        '''
+        """
 
         port = str(self.port)
         driver = host_check.get_postgresql_driver_name()
@@ -325,12 +319,11 @@ class PostgreSQLServer(SQLServer):
                        database=database,
                        query=extra_args))
 
-
     def _wait_or_die(self):
-        '''
+        """
         Wait for database if the database process was stared
         with a different client. No polling is possible.
-        '''
+        """
 
         LOG.debug('Waiting for PostgreSQL')
         tries_count = 0
@@ -344,7 +337,6 @@ class PostgreSQLServer(SQLServer):
                 LOG.error('Failed to start database.')
                 sys.exit(1)
 
-
     def _create_database(self):
         try:
             LOG.debug('Creating new database if not exists')
@@ -355,7 +347,8 @@ class PostgreSQLServer(SQLServer):
             if not bool(engine.execute(text).scalar()):
                 conn = engine.connect()
                 # From sqlalchemy documentation:
-                # The psycopg2 and pg8000 dialects also offer the special level AUTOCOMMIT.
+                # The psycopg2 and pg8000 dialects also offer the special level
+                # AUTOCOMMIT.
                 conn = conn.execution_options(isolation_level="AUTOCOMMIT")
                 conn.execute('CREATE DATABASE "%s"' % self.database)
                 conn.close()
@@ -369,22 +362,22 @@ class PostgreSQLServer(SQLServer):
             LOG.error(str(alch_err))
             sys.exit(1)
 
-
     def _is_running(self):
-        '''Is there PostgreSQL instance running on a given host and port.'''
+        """Is there PostgreSQL instance running on a given host and port."""
 
-        LOG.debug('Checking if database is running at ' + self.host + ':' + str(self.port))
+        LOG.debug('Checking if database is running at ' + self.host + ':' + str(
+            self.port))
 
-        check_db = ['psql', '-U', self.user, '-l', '-p', str(self.port), '-h', self.host]
+        check_db = ['psql', '-U', self.user, '-l', '-p', str(self.port), '-h',
+                    self.host]
         err, code = util.call_command(check_db, self.run_env)
         return code == 0
 
-
     def start(self, db_version_info, wait_for_start=True, init=False):
-        '''
+        """
         Start a PostgreSQL instance with given path, host and port.
-        Return with process instance
-        '''
+        Return with process instance.
+        """
 
         LOG.debug('Starting/connecting to database')
         if not self._is_running():
@@ -394,25 +387,27 @@ class PostgreSQLServer(SQLServer):
 
             if not self._is_database_data_exist():
                 if not init:
-                    # The database does not exists
+                    # The database does not exists.
                     LOG.error('Database data is missing!')
                     LOG.error('Please check your configuration!')
                     sys.exit(1)
                 elif not self._initialize_database_data():
-                    # The database does not exist and cannot create
+                    # The database does not exist and cannot create.
                     LOG.error('Database data is missing and the initialization '
                               'of a new failed!')
                     LOG.error('Please check your configuration!')
                     sys.exit(1)
 
             LOG.info('Starting database')
-            LOG.debug('Starting database at ' + self.host + ':' + str(self.port) + ' ' + self.path)
+            LOG.debug('Starting database at ' + self.host + ':' + str(
+                self.port) + ' ' + self.path)
 
             db_logfile = os.path.join(self.workspace, 'postgresql.log') \
                 if logger.get_log_level() == logger.DEBUG else os.devnull
             self._db_log = open(db_logfile, 'wb')
 
-            start_db = ['postgres', '-i', '-D', self.path, '-p', str(self.port), '-h', self.host]
+            start_db = ['postgres', '-i', '-D', self.path, '-p', str(self.port),
+                        '-h', self.host]
             self.proc = subprocess.Popen(start_db,
                                          bufsize=-1,
                                          env=self.run_env,
@@ -435,28 +430,27 @@ class PostgreSQLServer(SQLServer):
         atexit.register(self.stop)
         LOG.debug('Done')
 
-
     def stop(self):
         if self.proc:
             LOG.debug('Terminating database')
             self.proc.terminate()
             self._db_log.close()
 
-
     def get_connection_string(self):
         return self._get_connection_string(self.database)
 
 
 class SQLiteDatabase(SQLServer):
-    '''
+    """
     Handler for SQLite.
-    '''
+    """
+
     def __init__(self, workspace, migration_root, run_env=None):
         super(SQLiteDatabase, self).__init__(migration_root)
 
         self.dbpath = os.path.join(workspace, 'codechecker.sqlite')
         self.run_env = run_env
-    
+
         def _set_sqlite_pragma(dbapi_connection, connection_record):
             cursor = dbapi_connection.cursor()
             cursor.execute("PRAGMA foreign_keys=ON")
@@ -476,10 +470,8 @@ class SQLiteDatabase(SQLServer):
             LOG.error('Database (%s) is missing!' % self.dbpath)
             sys.exit(1)
 
-
     def stop(self):
         pass
-
 
     def get_connection_string(self):
         return str(URL('sqlite+pysqlite', None, None, None, None, self.dbpath))

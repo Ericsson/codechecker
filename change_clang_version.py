@@ -3,8 +3,6 @@
 import json
 import platform
 
-data = None
-
 with open('config/package_layout.json') as f:
     data = json.load(f)
 

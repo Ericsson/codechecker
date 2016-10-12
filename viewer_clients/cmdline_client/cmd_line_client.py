@@ -18,7 +18,7 @@ SUPPORTED_VERSION = '5.0'
 
 
 def check_API_version(client):
-    ''' check if server API is supported by the client'''
+    """ Check if server API is supported by the client. """
     version = client.getAPIVersion()
     supp_major_version = SUPPORTED_VERSION.split('.')[0]
     api_major_version = version.split('.')[0]
@@ -38,10 +38,10 @@ class CmdLineOutputEncoder(json.JSONEncoder):
 
 
 def setupClient(host, port, uri):
-    ''' setup the thrift client and check API version'''
+    """ Setup the thrift client and check API version. """
 
     client = thrift_helper.ThriftClientHelper(host, port, uri)
-    # test if client can work with thrift API getVersion
+    # Test if client can work with thrift API getVersion.
     if not check_API_version(client):
         print('Backward incompatible change was in the API.')
         print('Please update client. Server version is not supported')
@@ -51,8 +51,8 @@ def setupClient(host, port, uri):
 
 
 def print_table(lines, separate_head=True):
-    """Prints a formatted table given a 2 dimensional array"""
-    # Count the column width
+    """Prints a formatted table given a 2 dimensional array."""
+    # Count the column width.
 
     widths = []
     for line in lines:
@@ -62,26 +62,26 @@ def print_table(lines, separate_head=True):
             if size > widths[i]:
                 widths[i] = size
 
-    # Generate the format string to pad the columns
+    # Generate the format string to pad the columns.
     print_string = ""
     for i, width in enumerate(widths):
         print_string += "{" + str(i) + ":" + str(width) + "} | "
-    if (len(print_string) == 0):
+    if len(print_string) == 0:
         return
     print_string = print_string[:-3]
 
-    # Print the actual data
+    # Print the actual data.
     print("-"*(sum(widths)+3*(len(widths)-1)))
     for i, line in enumerate(lines):
         print(print_string.format(*line))
-        if (i == 0 and separate_head):
+        if i == 0 and separate_head:
             print("-"*(sum(widths)+3*(len(widths)-1)))
     print("-"*(sum(widths)+3*(len(widths)-1)))
-    print ''
+    print('')
 
 
 def get_run_ids(client):
-    ''' returns a map for run names and run_ids '''
+    """ Returns a map for run names and run_ids. """
 
     runs = client.getRunData()
 
@@ -126,8 +126,7 @@ def handle_list_runs(args):
         print CmdLineOutputEncoder().encode(results)
 
     else: # plaintext, csv
-        rows = []
-        rows.append(('Name', 'ResultCount', 'RunDate'))
+        rows = [('Name', 'ResultCount', 'RunDate')]
         for run in runs:
             rows.append((run.name, str(run.resultCount), run.runDate))
 
@@ -144,7 +143,6 @@ def handle_list_results(args):
 
     run_info = check_run_names(client, [args.name])
 
-    # for name, info in run_info.items()
     run_id, run_date = run_info.get(args.name)
 
     limit = 500
@@ -243,8 +241,7 @@ def handle_list_result_types(args):
             else: # plaintext, csv
                 print('Check date: '+run_date)
                 print('Check name: '+name)
-                rows = []
-                rows.append(('Checker', 'Severity', 'Count'))
+                rows = [('Checker', 'Severity', 'Count')]
                 for res in results:
                     sev = shared.ttypes.Severity._VALUES_TO_NAMES[res.severity]
                     rows.append((res.checkerId, sev, str(res.count)))
@@ -317,12 +314,12 @@ def handle_diff_results(args):
 
 
 def register_client_command_line(argument_parser):
-    ''' should be used to extend the already existing arguments
-    extend the argument parser with extra commands'''
+    """ Should be used to extend the already existing arguments
+    extend the argument parser with extra commands."""
 
     subparsers = argument_parser.add_subparsers()
 
-    # list runs
+    # List runs.
     listruns_parser = subparsers.add_parser('runs', help='Get the run data.')
     listruns_parser.add_argument('--host', type=str, dest="host", default='localhost',
                                  help='Server host.')
@@ -331,7 +328,7 @@ def register_client_command_line(argument_parser):
     listruns_parser.add_argument('-o', choices=['plaintext', 'json', 'csv'], default='plaintext', type=str, dest="output_format", help='Output format.')
     listruns_parser.set_defaults(func=handle_list_runs)
 
-    # list results
+    # List results.
     listresults_parser = subparsers.add_parser('results', help='List results.')
     listresults_parser.add_argument('--host', type=str, dest="host", default='localhost',
                                     help='Server host.')
@@ -343,7 +340,7 @@ def register_client_command_line(argument_parser):
     listresults_parser.add_argument('-o', choices=['plaintext', 'json', 'csv'], default='plaintext', type=str, dest="output_format", help='Output format.')
     listresults_parser.set_defaults(func=handle_list_results)
 
-    # list diffs
+    # List diffs.
     diff_parser = subparsers.add_parser('diff', help='Diff two run.')
     diff_parser.add_argument('--host', type=str, dest="host", default='localhost',
                              help='Server host.')
@@ -362,7 +359,7 @@ def register_client_command_line(argument_parser):
     group.add_argument('--resolved', action="store_true", dest="resolved", help="Show resolved results.")
     diff_parser.set_defaults(func=handle_diff_results)
 
-    # list resulttypes
+    # List resulttypes.
     sum_parser = subparsers.add_parser('sum', help='Sum results.')
     sum_parser.add_argument('--host', type=str, dest="host", default='localhost',
                             help='Server host.')
@@ -376,7 +373,7 @@ def register_client_command_line(argument_parser):
     sum_parser.add_argument('-o', choices=['plaintext', 'json', 'csv'], default='plaintext', type=str, dest="output_format", help='Output format.')
     sum_parser.set_defaults(func=handle_list_result_types)
 
-    # list resulttypes
+    # List resulttypes.
     sum_parser = subparsers.add_parser('del', help='Remove run results.')
     sum_parser.add_argument('--host', type=str, dest="host", default='localhost',
                             help='Server host.')

@@ -21,10 +21,11 @@ from codechecker_lib.analyzers import analyzer_types
 
 LOG = logger.get_new_logger('ANALYZER')
 
+
 def prepare_actions(actions, enabled_analyzers):
     """
-    set the analyzer type for each buildaction
-    muliply actions if multiple source analyzers are set
+    Set the analyzer type for each buildaction.
+    Multiple actions if multiple source analyzers are set.
     """
     res = []
 
@@ -38,12 +39,12 @@ def prepare_actions(actions, enabled_analyzers):
 
 def run_check(args, actions, context):
     """
-    prepare:
+    Prepare:
     - analyzer config handlers
     - skiplist handling
     - analyzer severity levels
 
-    stores analysis related data to the database and starts the analysis
+    Stores analysis related data to the database and starts the analysis.
     """
 
     if args.jobs <= 0:
@@ -54,7 +55,7 @@ def run_check(args, actions, context):
         args.analyzers,
         context)
 
-    # load severity map from config file
+    # Load severity map from config file.
     LOG.debug_analyzer("Loading checker severity map.")
     if os.path.exists(context.checkers_severity_map_file):
         with open(context.checkers_severity_map_file, 'r') as sev_conf_file:
@@ -64,8 +65,6 @@ def run_check(args, actions, context):
 
     actions = prepare_actions(actions, enabled_analyzers)
 
-    analyzer_config_map = {}
-
     package_version = context.version['major'] + '.' + context.version['minor']
 
     suppress_file = ''
@@ -74,8 +73,7 @@ def run_check(args, actions, context):
     except AttributeError:
         LOG.debug_analyzer('Suppress file was not set in the command line')
 
-
-    # Create one skip list handler shared between the analysis manager workers
+    # Create one skip list handler shared between the analysis manager workers.
     skip_handler = None
     try:
         if args.skipfile:
@@ -84,14 +82,13 @@ def run_check(args, actions, context):
     except AttributeError:
         LOG.debug_analyzer('Skip file was not set in the command line')
 
-
     with client.get_connection() as connection:
         context.run_id = connection.add_checker_run(' '.join(sys.argv),
                                                     args.name,
                                                     package_version,
                                                     args.force)
 
-        # clean previous suppress information
+        # Clean previous suppress information.
         client.clean_suppress(connection, context.run_id)
 
         if os.path.exists(suppress_file):
@@ -125,23 +122,20 @@ def run_check(args, actions, context):
 def run_quick_check(args,
                     context,
                     actions):
-    '''
+    """
     This function implements the "quickcheck" feature.
-    No result is stored to a database
-    '''
-
-    enabled_analyzers = set()
+    No result is stored to a database.
+    """
 
     enabled_analyzers = analyzer_types.check_supported_analyzers(args.analyzers,
                                                                  context)
 
     actions = prepare_actions(actions, enabled_analyzers)
 
-    analyzer_config_map = {}
-
-    analyzer_config_map = analyzer_types.build_config_handlers(args,
-                                                               context,
-                                                               enabled_analyzers)
+    analyzer_config_map = \
+        analyzer_types.build_config_handlers(args,
+                                             context,
+                                             enabled_analyzers)
 
     for action in actions:
         check_data = (args,

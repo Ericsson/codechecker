@@ -19,7 +19,7 @@ LOG = logger.get_new_logger('CONTEXT')
 
 # -----------------------------------------------------------------------------
 class Context(context_base.ContextBase):
-    ''' generic package specific context'''
+    """ Generic package specific context. """
 
     __instance = None
 
@@ -36,28 +36,29 @@ class Context(context_base.ContextBase):
         variables = cfg_dict['package_variables']
         self.__checker_config = cfg_dict['checker_config']
 
-        # Base class constructor gets the common environment variables
+        # Base class constructor gets the common environment variables.
         super(Context, self).__init__()
         super(Context, self).load_data(env_vars, pckg_layout, variables)
 
-        # get package specific environment variables
+        # Get package specific environment variables.
         self.set_env(env_vars)
 
         self.__package_root = package_root
 
         version, database_version = self.__get_version(self.version_file)
         self.__package_version = version
-        self.__db_version_info = db_version.DBVersionInfo(database_version['major'],
-                                                   database_version['minor'])
+        self.__db_version_info = db_version.DBVersionInfo(
+            database_version['major'],
+            database_version['minor'])
         Context.__instance = self
 
     def set_env(self, env_vars):
-        '''
-        get the environment variables
-        '''
+        """
+        Get the environment variables.
+        """
         super(Context, self).set_env(env_vars)
 
-        # get generic package specific environment variables
+        # Get generic package specific environment variables.
         self.logger_bin = os.environ.get(env_vars['cc_logger_bin'])
         self.logger_file = os.environ.get(env_vars['cc_logger_file'])
         self.logger_compilers = os.environ.get(env_vars['cc_logger_compiles'])
@@ -65,9 +66,9 @@ class Context(context_base.ContextBase):
         self.ld_lib_path = env_vars['env_ld_lib_path']
 
     def __get_version(self, version_file):
-        '''
-        get the package version fron the verison config file
-        '''
+        """
+        Get the package version from the version config file.
+        """
         try:
             with open(version_file, 'r') as vfile:
                 vfile_data = json.loads(vfile.read())
@@ -76,7 +77,7 @@ class Context(context_base.ContextBase):
             db_version = vfile_data['db_version']
 
         except ValueError as verr:
-            # db_version is required to know if the db schema is compatible
+            # db_version is required to know if the db schema is compatible.
             LOG.error('Failed to get version info from the version file')
             LOG.error(verr)
             sys.exit(1)
@@ -97,7 +98,8 @@ class Context(context_base.ContextBase):
 
     @property
     def version_file(self):
-        return os.path.join(self.__package_root, self.pckg_layout['version_file'])
+        return os.path.join(self.__package_root,
+                            self.pckg_layout['version_file'])
 
     @property
     def env_var_cc_logger_bin(self):
@@ -141,7 +143,7 @@ class Context(context_base.ContextBase):
     @property
     def dump_output_dir(self):
         return os.path.join(self.codechecker_workspace,
-                        self.variables['path_dumps_name'])
+                            self.variables['path_dumps_name'])
 
     @property
     def compiler_resource_dirs(self):
@@ -185,34 +187,33 @@ class Context(context_base.ContextBase):
                     ld_paths.append(os.path.join(self.__package_root, path))
             return ld_paths
 
-
     @property
     def analyzer_binaries(self):
         analyzers = {}
 
         compiler_binaries = self.pckg_layout.get('analyzers')
         if not compiler_binaries:
-            # set default analyzers assume they are in the PATH
-            # will be checked later
-            # key naming in the dict should be the same as in
-            # the supported analyzers list
+            # Set default analyzers assume they are in the PATH
+            # will be checked later.
+            # Key naming in the dict should be the same as in
+            # the supported analyzers list.
             analyzers[analyzer_types.CLANG_SA] = 'clang'
             analyzers[analyzer_types.CLANG_TIDY] = 'clang-tidy'
         else:
             for name, value in compiler_binaries.iteritems():
                 if os.path.isabs(value):
-                    # check if it is an absolute path
+                    # Check if it is an absolute path.
                     analyzers[name] = value
                 elif os.path.dirname(value):
-                    # check if it is a package relative path
-                    analyzers[name] =  os.path.join(self.__package_root, value)
+                    # Check if it is a package relative path.
+                    analyzers[name] = os.path.join(self.__package_root, value)
                 else:
                     analyzers[name] = value
 
         return analyzers
 
-def get_context():
 
+def get_context():
     LOG.debug('Loading package config')
 
     package_root = os.environ['CC_PACKAGE_ROOT']
@@ -226,12 +227,13 @@ def get_context():
 
     LOG.debug('Loading layout config')
 
-    layout_cfg_file = os.path.join(package_root, "config", "package_layout.json")
+    layout_cfg_file = os.path.join(package_root, "config",
+                                   "package_layout.json")
     LOG.debug(layout_cfg_file)
     with open(layout_cfg_file, 'r') as lcfg:
         lcfg_dict = json.loads(lcfg.read())
 
-    # merge static and runtime layout
+    # Merge static and runtime layout.
     layout_config = lcfg_dict['static'].copy()
     layout_config.update(lcfg_dict['runtime'])
 

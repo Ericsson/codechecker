@@ -20,7 +20,6 @@ class SkipListHandler(object):
     -/do/not/check/this.file
     +/dir/check.this.file
     -/dir/*
-
     """
 
     def __init__(self, skip_file):
@@ -28,8 +27,6 @@ class SkipListHandler(object):
         read up the skip file
         """
         self.__skip = []
-
-        skip_file_content = []
 
         with open(skip_file, 'r') as skip_file:
             skip_file_content = [line.strip() for line in skip_file if line.strip() != '']
@@ -43,7 +40,7 @@ class SkipListHandler(object):
 
     def should_skip(self, source):
         """
-        check if the given source sourld be skipped
+        Check if the given source should be skipped.
         Should the analyzer skip the given source file?
         """
 

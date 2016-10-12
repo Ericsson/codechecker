@@ -16,8 +16,8 @@ def timeit(method):
         result = method(*args, **kw)
         timer_end = time.time()
 
-        print '%r (%r, %r) %2.2f sec' % (method.__name__, args, kw,
-                                         timer_end - timer_begin)
+        print('%r (%r, %r) %2.2f sec' % (method.__name__, args, kw,
+                                         timer_end - timer_begin))
         return result
 
     return timed

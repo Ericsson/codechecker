@@ -3,7 +3,7 @@
 #   This file is distributed under the University of Illinois Open Source
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
-''''''
+""""""
 
 import hashlib
 
@@ -23,29 +23,27 @@ class BuildAction(object):
         self._skip = True
 
     def __str__(self):
-        # for debugging
+        # For debugging.
         return ('Id: {0} ,\nOriginal command: {1},\n'
                 'Analyzer type: {2},\n Analyzer options: {3},\n'
                 'Directory: {4},\nOutput: {5},\nLang: {6},\nTarget: {7},\n'
-                'Source count {8},\nSources: {9}').\
-                    format(self._id, self._original_command,
-                           self._analyzer_type, self._analyzer_options,
-                           self._directory, self._output, self._lang, self._target,
-                           self._source_count, self._sources)
+                'Source count {8},\nSources: {9}'). \
+            format(self._id, self._original_command,
+                   self._analyzer_type, self._analyzer_options,
+                   self._directory, self._output, self._lang, self._target,
+                   self._source_count, self._sources)
 
     @property
     def analyzer_type(self):
         """
-        stores which type of analyzer should be run in this
-        buildaction
+        Stores which type of analyzer should be run in this buildaction.
         """
         return self._analyzer_type
 
     @analyzer_type.setter
     def analyzer_type(self, value):
         """
-        stores which type of analyzer should be run in this
-        buildaction
+        Stores which type of analyzer should be run in this buildaction.
         """
         self._analyzer_type = value
 
@@ -59,7 +57,9 @@ class BuildAction(object):
 
     @analyzer_options.setter
     def analyzer_options(self, value):
-        '''A filtered compile arguments which will be forwarded to the analyzer.'''
+        """
+        A filtered compile arguments which will be forwarded to the analyzer.
+        """
         self._analyzer_options = value
 
     @property
@@ -133,11 +133,11 @@ class BuildAction(object):
 
     @property
     def cmp_key(self):
-        '''
+        """
         If the compilation database contains the same compilation action
         multiple times it should be checked only once.
         Use this key to compare compilation commands for the analysis.
-        '''
+        """
         hash_content = []
         hash_content.extend(self.analyzer_options)
         hash_content.append(str(self.analyzer_type))

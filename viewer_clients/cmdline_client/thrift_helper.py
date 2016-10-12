@@ -6,7 +6,6 @@
 
 import os
 import sys
-#import datetime
 import socket
 
 from thrift.transport import THttpClient
@@ -17,8 +16,7 @@ from codeCheckerDBAccess import codeCheckerDBAccess
 import shared
 
 
-class ThriftClientHelper():
-
+class ThriftClientHelper:
     def __init__(self, host, port, uri):
         self.__host = host
         self.__port = port
@@ -26,15 +24,13 @@ class ThriftClientHelper():
         self.protocol = TJSONProtocol.TJSONProtocol(self.transport)
         self.client = codeCheckerDBAccess.Client(self.protocol)
 
-# ------------------------------------------------------------
+    # ------------------------------------------------------------
     def ThriftClientCall(function):
-        #print type(function)
         funcName = function.__name__
+
         def wrapper(self, *args, **kwargs):
-            #print('['+host+':'+str(port)+'] >>>>> ['+funcName+']')
-            #before = datetime.datetime.now()
             self.transport.open()
-            func = getattr(self.client,funcName)
+            func = getattr(self.client, funcName)
             try:
                 res = func(*args, **kwargs)
 
@@ -49,7 +45,7 @@ class ThriftClientHelper():
                 sys.exit(1)
             except TProtocolException:
                 print("Connection failed to {0}:{1}"
-                        .format(self.__host, self.__port))
+                      .format(self.__host, self.__port))
                 sys.exit(1)
             except socket.error as serr:
                 errCause = os.strerror(serr.errno)
@@ -57,12 +53,6 @@ class ThriftClientHelper():
                 print(str(serr))
                 sys.exit(1)
 
-
-            #after = datetime.datetime.now()
-            #timediff = after - before
-            #diff = timediff.microseconds/1000
-            #print('['+str(diff)+'ms] <<<<< ['+host+':'+str(port)+']')
-            #print res
             self.transport.close()
             return res
 
@@ -75,7 +65,8 @@ class ThriftClientHelper():
 
     # ------------------------------------------------------------
     @ThriftClientCall
-    def getRunResults(self, runId, resultBegin, resultEnd, sortType, reportFilters):
+    def getRunResults(self, runId, resultBegin, resultEnd, sortType,
+                      reportFilters):
         pass
 
     # ------------------------------------------------------------
@@ -83,33 +74,35 @@ class ThriftClientHelper():
     def getRunResultCount(self, runId, reportFilters):
         pass
 
-    #-----------------------------------------------------------------------
+    # -----------------------------------------------------------------------
     @ThriftClientCall
     def getRunResultTypes(self, runId, reportFilters):
         pass
 
-    #-----------------------------------------------------------------------
+    # -----------------------------------------------------------------------
     @ThriftClientCall
     def getAPIVersion(self):
         pass
 
-    #-----------------------------------------------------------------------
+    # -----------------------------------------------------------------------
     @ThriftClientCall
     def removeRunResults(self, run_ids):
         pass
 
-    #-----------------------------------------------------------------------
+    # -----------------------------------------------------------------------
     @ThriftClientCall
-    def getNewResults(self, base_run_id, new_run_id, limit, offset, sortType, reportFilters):
+    def getNewResults(self, base_run_id, new_run_id, limit, offset, sortType,
+                      reportFilters):
         pass
 
-    #-----------------------------------------------------------------------
+    # -----------------------------------------------------------------------
     @ThriftClientCall
-    def getUnresolvedResults(self, base_run_id, new_run_id, limit, offset, sortType, reportFilters):
+    def getUnresolvedResults(self, base_run_id, new_run_id, limit, offset,
+                             sortType, reportFilters):
         pass
 
-    #-----------------------------------------------------------------------
+    # -----------------------------------------------------------------------
     @ThriftClientCall
-    def getResolvedResults(self, base_run_id, new_run_id, limit, offset, sortType, reportFilters):
+    def getResolvedResults(self, base_run_id, new_run_id, limit, offset,
+                           sortType, reportFilters):
         pass
-

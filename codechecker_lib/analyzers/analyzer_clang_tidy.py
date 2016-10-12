@@ -3,8 +3,8 @@
 #   This file is distributed under the University of Illinois Open Source
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
-'''
-'''
+"""
+"""
 
 import re
 import subprocess
@@ -19,14 +19,14 @@ LOG = logger.get_new_logger('CLANG TIDY')
 
 class ClangTidy(analyzer_base.SourceAnalyzer):
     """
-    constructs the clang tidy analyzer commands
+    Constructs the clang tidy analyzer commands.
     """
 
     def __parse_checkers(self, tidy_output):
         """
-        parse clang tidy checkers list
-        skip clang static analyzer checkers
-        store them to checkers
+        Parse clang tidy checkers list.
+        Skip clang static analyzer checkers.
+        Store them to checkers.
         """
         for line in tidy_output.splitlines():
             line = line.strip()
@@ -41,16 +41,13 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
 
     def get_analyzer_checkers(self, config_handler, env):
         """
-        return the list of the supported checkers
+        Return the list of the supported checkers.
         """
         if not self.checkers:
             analyzer_binary = config_handler.analyzer_binary
 
-            command = [analyzer_binary]
-            command.append("-list-checks")
-            command.append("-checks='*'")
-            command.append("-")
-            command.append("--")
+            command = [analyzer_binary, "-list-checks", "-checks='*'", "-",
+                       "--"]
 
             try:
                 command = shlex.split(' '.join(command))
@@ -72,16 +69,15 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
 
             analyzer_bin = config.analyzer_binary
 
-            analyzer_cmd = []
-            analyzer_cmd.append(analyzer_bin)
+            analyzer_cmd = [analyzer_bin]
 
             # Disable all checkers by default.
             # The latest clang-tidy (3.9) release enables clang static analyzer
             # checkers by default. They must be disabled explicitly.
             checkers_cmdline = '-*,-clang-analyzer-*'
 
-            # config handler stores which checkers are enabled or disabled
-            for checker_name, value in config.checks().iteritems():
+            # Config handler stores which checkers are enabled or disabled.
+            for checker_name, value in config.checks().items():
                 enabled, _ = value
                 if enabled:
                     checkers_cmdline += ',' + checker_name
@@ -117,7 +113,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
                 extra_arguments_before.append('-I')
                 extra_arguments_before.append(path)
 
-            # Set lang
+            # Set lang.
             extra_arguments_before.append('-x')
             extra_arguments_before.append(self.buildaction.lang)
 

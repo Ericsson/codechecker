@@ -8,14 +8,15 @@ from codechecker_lib import logger
 from codechecker_lib import tidy_output_converter
 
 from codechecker_lib.analyzers.result_handler_plist_to_db import PlistToDB
-from codechecker_lib.analyzers.result_handler_plist_to_stdout import PlistToStdout
+from codechecker_lib.analyzers.result_handler_plist_to_stdout import \
+    PlistToStdout
 
 LOG = logger.get_new_logger('CLANG_TIDY_RESULT_HANDLER')
 
 
 def generate_plist_from_tidy_result(output_file, tidy_stdout):
     """
-    Generate a plist file from the clang tidy analyzer results
+    Generate a plist file from the clang tidy analyzer results.
     """
     parser = tidy_output_converter.OutputParser()
 
@@ -29,13 +30,13 @@ def generate_plist_from_tidy_result(output_file, tidy_stdout):
 
 class ClangTidyPlistToDB(PlistToDB):
     """
-    Store clang tidy plist results to a database
+    Store clang tidy plist results to a database.
     """
 
     def postprocess_result(self):
         """
         Generate plist file which can be parsed and processed for
-        results which can be stored into the database
+        results which can be stored into the database.
         """
         output_file = self.get_analyzer_result_file()
         LOG.debug_analyzer(self.analyzer_stdout)
@@ -45,13 +46,13 @@ class ClangTidyPlistToDB(PlistToDB):
 
 class ClangTidyPlistToStdout(PlistToStdout):
     """
-    Print the clang tidy results to the standatd output
+    Print the clang tidy results to the standard output.
     """
 
     def postprocess_result(self):
         """
-        For the same output format with the clang static analyzer the
-        Clang tidy results are postprocessed into a plist file
+        Clang-tidy results are post processed to have the same format as the
+        clang static analyzer result files.
         """
 
         output_file = self.get_analyzer_result_file()

@@ -3,19 +3,19 @@
 #   This file is distributed under the University of Illinois Open Source
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
-''' suppress file format
+""" Suppress file format.
 
-# this is the old format
+# This is the old format.
 123324353456463442341242342343#1 || bug hash comment
 
-# this is the new format
+# This is the new format.
 123324353456463442341242342343#1 || filename || bug hash comment
 
-after removing the hash_value_type the generated format is:
+After removing the hash_value_type the generated format is:
 123324353456463442341242342343 || filename || bug hash comment
 
-for backward compatibility the hash_value_type is an optional filed
-'''
+For backward compatibility the hash_value_type is an optional filed.
+"""
 
 import re
 import os
@@ -24,14 +24,13 @@ from codechecker_lib import logger
 
 LOG = logger.get_new_logger('SUPPRESS_FILE_HANDLER')
 
-
 COMMENT_SEPARATOR = '||'
 HASH_TYPE_SEPARATOR = '#'
 
 
 def get_suppress_data(suppress_file):
     """
-    processs a file object for suppress information
+    Process a file object for suppress information.
     """
 
     old_format_pattern = r"^(?P<bug_hash>[\d\w]{32})(\#(?P<bug_hash_type>\d))?\s*\|\|\s*(?P<comment>[^\|]*)$"
@@ -69,43 +68,45 @@ def get_suppress_data(suppress_file):
 
     return suppress_data
 
+
 # ---------------------------------------------------------------------------
 def write_to_suppress_file(suppress_file, value, file_name, comment=''):
-
     comment = comment.decode('UTF-8')
 
-    LOG.debug('Processing suppress file: '+suppress_file)
+    LOG.debug('Processing suppress file: ' + suppress_file)
 
     try:
         with codecs.open(suppress_file, 'r', 'UTF-8') as s_file:
             suppress_data = get_suppress_data(s_file)
 
         if not os.stat(suppress_file)[6] == 0:
-            # file is not empty
+            # File is not empty.
 
-            res = filter(lambda x: (x[0] == value and x[1] == file_name) or (x[0] == value and x[1] == ''), suppress_data)
+            res = filter(lambda x: (x[0] == value and x[1] == file_name) or (
+            x[0] == value and x[1] == ''), suppress_data)
 
             if res:
-                LOG.debug("Already found in\n %s" % (suppress_file))
+                LOG.debug("Already found in\n %s" % suppress_file)
                 return True
 
         s_file = codecs.open(suppress_file, 'a', 'UTF-8')
 
-        s_file.write(value+COMMENT_SEPARATOR+file_name+COMMENT_SEPARATOR+comment+'\n')
+        s_file.write(
+            value + COMMENT_SEPARATOR + file_name + COMMENT_SEPARATOR + comment + '\n')
         s_file.close()
 
         return True
 
     except Exception as ex:
         LOG.error(str(ex))
-        LOG.error("Failed to write: %s" % (suppress_file))
+        LOG.error("Failed to write: %s" % suppress_file)
         return False
 
 
 def remove_from_suppress_file(suppress_file, value, file_name):
     """
-    remove suppress information from the suppress file
-    old and new format is supported
+    Remove suppress information from the suppress file.
+    Old and new format is supported.
     """
 
     LOG.debug('Removing ' + value + ' from \n' + suppress_file)
@@ -114,7 +115,7 @@ def remove_from_suppress_file(suppress_file, value, file_name):
         s_file = codecs.open(suppress_file, 'r+', 'UTF-8')
         lines = s_file.readlines()
 
-        # filter out new format first because it is more specific
+        # Filter out new format first because it is more specific.
         old_format_pattern = r"^" + value + r"(\#\d)?\s*\|\|\s*(?P<comment>[^\|]*)$"
         old_format = re.compile(old_format_pattern, re.UNICODE)
 
@@ -123,7 +124,7 @@ def remove_from_suppress_file(suppress_file, value, file_name):
 
         def check_for_match(line):
             """
-            check if the line matches the new or old format
+            Check if the line matches the new or old format.
             """
             line = line.strip()
             if re.match(new_format, line.strip()):
@@ -133,7 +134,7 @@ def remove_from_suppress_file(suppress_file, value, file_name):
             else:
                 return True
 
-        # filter out lines which should be removed
+        # Filter out lines which should be removed.
         lines = filter(lambda line: check_for_match(line), lines)
 
         s_file.seek(0)
@@ -145,5 +146,5 @@ def remove_from_suppress_file(suppress_file, value, file_name):
 
     except Exception as ex:
         LOG.error(str(ex))
-        LOG.error("Failed to write: %s" % (suppress_file))
+        LOG.error("Failed to write: %s" % suppress_file)
         return False
