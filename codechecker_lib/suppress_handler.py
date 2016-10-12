@@ -25,7 +25,6 @@ class SuppressHandler(object):
 
     @abc.abstractmethod
     def store_suppress_bug_id(self,
-                              source_file_path,
                               bug_id,
                               file_name,
                               comment):

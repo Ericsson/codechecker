@@ -16,8 +16,7 @@ LOG = logger.get_new_logger('SUPPRESS')
 
 
 class GenericSuppressHandler(suppress_handler.SuppressHandler):
-    def store_suppress_bug_id(self, source_file_path, bug_id, file_name,
-                              comment):
+    def store_suppress_bug_id(self, bug_id, file_name, comment):
 
         if self.suppress_file is None:
             return False
