@@ -6,6 +6,7 @@
 
 import sys
 import argparse
+import csv
 import json
 
 import thrift_helper
@@ -124,13 +125,17 @@ def handle_list_runs(args):
             results.append({run.name: run})
         print CmdLineOutputEncoder().encode(results)
 
-    else:
+    else: # plaintext, csv
         rows = []
         rows.append(('Name', 'ResultCount', 'RunDate'))
         for run in runs:
             rows.append((run.name, str(run.resultCount), run.runDate))
 
-        print_table(rows)
+        if args.output_format == 'csv':
+            writer = csv.writer(sys.stdout)
+            writer.writerows(rows)
+        else:
+            print_table(rows)
 
 
 def handle_list_results(args):
@@ -157,7 +162,7 @@ def handle_list_results(args):
 
     if args.output_format == 'json':
         print CmdLineOutputEncoder().encode(results)
-    else:
+    else: # plaintext, csv
         rows = []
         if args.suppressed:
             rows.append(('File', 'Checker', 'Severity', 'Msg', 'Suppress comment'))
@@ -183,7 +188,11 @@ def handle_list_results(args):
                 offset += limit
                 results = client.getRunResults(run_id, limit, offset, None, filters)
 
-        print_table(rows)
+        if args.output_format == 'csv':
+            writer = csv.writer(sys.stdout)
+            writer.writerows(rows)
+        else:
+            print_table(rows)
 
 
 def handle_list_result_types(args):
@@ -206,7 +215,7 @@ def handle_list_result_types(args):
             results = client.getRunResultTypes(run_id, filters)
             if args.output_format == 'json':
                 results_collector.append({name: results})
-            else:
+            else: # plaintext, csv
                 print('Check date: '+run_date)
                 print('Check name: '+name)
                 rows = []
@@ -215,7 +224,11 @@ def handle_list_result_types(args):
                     sev = shared.ttypes.Severity._VALUES_TO_NAMES[res.severity]
                     rows.append((res.checkerId, sev, str(res.count)))
 
-                print_table(rows)
+                if args.output_format == 'csv':
+                    writer = csv.writer(sys.stdout)
+                    writer.writerows(rows)
+                else:
+                    print_table(rows)
 
         if args.output_format == 'json':
             print CmdLineOutputEncoder().encode(results_collector)
@@ -227,7 +240,7 @@ def handle_list_result_types(args):
             results = client.getRunResultTypes(run_id, filters)
             if args.output_format == 'json':
                 print CmdLineOutputEncoder().encode(results)
-            else:
+            else: # plaintext, csv
                 print('Check date: '+run_date)
                 print('Check name: '+name)
                 rows = []
@@ -236,7 +249,11 @@ def handle_list_result_types(args):
                     sev = shared.ttypes.Severity._VALUES_TO_NAMES[res.severity]
                     rows.append((res.checkerId, sev, str(res.count)))
 
-                print_table(rows)
+                if args.output_format == 'csv':
+                    writer = csv.writer(sys.stdout)
+                    writer.writerows(rows)
+                else:
+                    print_table(rows)
 
 
 # ------------------------------------------------------------
@@ -268,7 +285,7 @@ def handle_diff_results(args):
 
         if output_format == 'json':
             print CmdLineOutputEncoder().encode(results)
-        else:
+        else: # plaintext, csv
             while results:
                 for res in results:
                     bug_line = res.lastBugPosition.startLine
@@ -279,7 +296,11 @@ def handle_diff_results(args):
                 offset += limit
                 results = getterFn(baseid, newid, limit, offset, sort_type, report_filter)
 
-            print_table(rows)
+            if output_format == 'csv':
+                writer = csv.writer(sys.stdout)
+                writer.writerows(rows)
+            else:
+                print_table(rows)
 
     client = setupClient(args.host, args.port, '/')
     run_info = check_run_names(client, [args.basename, args.newname])
@@ -307,7 +328,7 @@ def register_client_command_line(argument_parser):
                                  help='Server host.')
     listruns_parser.add_argument('-p', '--port', type=str, dest="port", default=11444,
                                  required=True, help='HTTP Server port.')
-    listruns_parser.add_argument('-o', choices=['plaintext', 'json'], default='plaintext', type=str, dest="output_format", help='Output format.')
+    listruns_parser.add_argument('-o', choices=['plaintext', 'json', 'csv'], default='plaintext', type=str, dest="output_format", help='Output format.')
     listruns_parser.set_defaults(func=handle_list_runs)
 
     # list results
@@ -319,7 +340,7 @@ def register_client_command_line(argument_parser):
     listresults_parser.add_argument('-n', '--name', type=str, dest="name", required=True,
                                     help='Check name.')
     listresults_parser.add_argument('-s', '--suppressed', action="store_true", dest="suppressed", help='Suppressed results.')
-    listresults_parser.add_argument('-o', choices=['plaintext', 'json'], default='plaintext', type=str, dest="output_format", help='Output format.')
+    listresults_parser.add_argument('-o', choices=['plaintext', 'json', 'csv'], default='plaintext', type=str, dest="output_format", help='Output format.')
     listresults_parser.set_defaults(func=handle_list_results)
 
     # list diffs
@@ -334,7 +355,7 @@ def register_client_command_line(argument_parser):
                              help='New name.')
     diff_parser.add_argument('-s', '--suppressed', action="store_true", dest="suppressed", default=False,
                              required=False, help='Show suppressed bugs.')
-    diff_parser.add_argument('-o', choices=['plaintext', 'json'], default='plaintext', type=str, dest="output_format", help='Output format.')
+    diff_parser.add_argument('-o', choices=['plaintext', 'json', 'csv'], default='plaintext', type=str, dest="output_format", help='Output format.')
     group = diff_parser.add_mutually_exclusive_group(required=True)
     group.add_argument('--new', action="store_true", dest="new", help="Show new results.")
     group.add_argument('--unresolved', action="store_true", dest="unresolved", help="Show unresolved results.")
@@ -352,7 +373,7 @@ def register_client_command_line(argument_parser):
     name_group.add_argument('-a', '--all', action='store_true', dest="all_results", help='All results.')
 
     sum_parser.add_argument('-s', '--suppressed', action="store_true", dest="suppressed", help='Suppressed results.')
-    sum_parser.add_argument('-o', choices=['plaintext', 'json'], default='plaintext', type=str, dest="output_format", help='Output format.')
+    sum_parser.add_argument('-o', choices=['plaintext', 'json', 'csv'], default='plaintext', type=str, dest="output_format", help='Output format.')
     sum_parser.set_defaults(func=handle_list_result_types)
 
     # list resulttypes
