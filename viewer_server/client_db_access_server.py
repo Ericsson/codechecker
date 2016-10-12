@@ -17,8 +17,12 @@ from multiprocessing.pool import ThreadPool
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import scoped_session
 
-from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
-from SimpleHTTPServer import SimpleHTTPRequestHandler
+try:
+    from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
+    from SimpleHTTPServer import SimpleHTTPRequestHandler
+except ImportError:
+    from http.server import HTTPServer, BaseHTTPRequestHandler, \
+        SimpleHTTPRequestHandler
 
 from thrift.transport import TTransport
 from thrift.protocol import TJSONProtocol

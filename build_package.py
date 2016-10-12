@@ -529,15 +529,14 @@ def build_package(repository_root, build_package_config, env=None):
     LOG.debug('Extending version file: ' + version_file)
 
     with open(version_file) as v_file:
-        version_data = v_file.read()
-    version_json_data = json.loads(version_data)
+        version_json_data = json.load(v_file)
 
     git_hash = ''
     try:
         git_hash_cmd = ['git', 'rev-parse', 'HEAD']
         git_hash = subprocess.check_output(git_hash_cmd,
                                            cwd=repository_root)
-        git_hash = git_hash.rstrip()
+        git_hash = str(git_hash.rstrip())
     except subprocess.CalledProcessError as cperr:
         LOG.error('Failed to get last commit hash.')
         LOG.error(str(cperr))

@@ -11,7 +11,7 @@
 import plistlib
 from xml.parsers.expat import ExpatError
 
-import plist_helper
+from . import plist_helper
 from codechecker_lib import logger
 
 LOG = logger.get_new_logger('PLIST_PARSER')
