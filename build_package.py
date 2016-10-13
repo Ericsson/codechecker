@@ -166,9 +166,8 @@ def copy_tree(src, dst):
         if os.path.isdir(source):
             copy_tree(source, destination)
         else:
-            if not os.path.exists(destination) or \
-                                    os.stat(src).st_mtime - os.stat(
-                                dst).st_mtime > 1:
+            delta = os.stat(src).st_mtime - os.stat(dst).st_mtime
+            if not os.path.exists(destination) or delta > 0:
                 shutil.copy2(source, destination)
 
 
