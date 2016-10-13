@@ -11,7 +11,7 @@ import sys
 
 import codeCheckerDBAccess
 import shared
-import thrift_helper
+from . import thrift_helper
 
 SUPPORTED_VERSION = '5.0'
 
@@ -29,7 +29,6 @@ def check_API_version(client):
 
 
 class CmdLineOutputEncoder(json.JSONEncoder):
-
     def default(self, obj):
         d = {}
         d.update(obj.__dict__)
@@ -70,12 +69,12 @@ def print_table(lines, separate_head=True):
     print_string = print_string[:-3]
 
     # Print the actual data.
-    print("-"*(sum(widths)+3*(len(widths)-1)))
+    print("-" * (sum(widths) + 3 * (len(widths) - 1)))
     for i, line in enumerate(lines):
         print(print_string.format(*line))
         if i == 0 and separate_head:
-            print("-"*(sum(widths)+3*(len(widths)-1)))
-    print("-"*(sum(widths)+3*(len(widths)-1)))
+            print("-" * (sum(widths) + 3 * (len(widths) - 1)))
+    print("-" * (sum(widths) + 3 * (len(widths) - 1)))
     print('')
 
 
@@ -92,7 +91,6 @@ def get_run_ids(client):
 
 
 def check_run_names(client, check_names):
-
     run_info = get_run_ids(client)
 
     if not check_names:
@@ -114,7 +112,6 @@ def check_run_names(client, check_names):
 
 
 def handle_list_runs(args):
-
     client = setupClient(args.host, args.port, '/')
     runs = client.getRunData()
 
@@ -122,9 +119,9 @@ def handle_list_runs(args):
         results = []
         for run in runs:
             results.append({run.name: run})
-        print CmdLineOutputEncoder().encode(results)
+        print(CmdLineOutputEncoder().encode(results))
 
-    else: # plaintext, csv
+    else:  # plaintext, csv
         rows = [('Name', 'ResultCount', 'RunDate')]
         for run in runs:
             rows.append((run.name, str(run.resultCount), run.runDate))
@@ -137,7 +134,6 @@ def handle_list_runs(args):
 
 
 def handle_list_results(args):
-
     client = setupClient(args.host, args.port, '/')
 
     run_info = check_run_names(client, [args.name])
@@ -151,27 +147,31 @@ def handle_list_results(args):
     if args.suppressed:
         report_filter = codeCheckerDBAccess.ttypes.ReportFilter(suppressed=True)
     else:
-        report_filter = codeCheckerDBAccess.ttypes.ReportFilter(suppressed=False)
+        report_filter = codeCheckerDBAccess.ttypes.ReportFilter(
+            suppressed=False)
 
     filters.append(report_filter)
 
     results = client.getRunResults(run_id, limit, offset, None, filters)
 
     if args.output_format == 'json':
-        print CmdLineOutputEncoder().encode(results)
-    else: # plaintext, csv
+        print(CmdLineOutputEncoder().encode(results))
+    else:  # plaintext, csv
         rows = []
         if args.suppressed:
-            rows.append(('File', 'Checker', 'Severity', 'Msg', 'Suppress comment'))
+            rows.append(
+                ('File', 'Checker', 'Severity', 'Msg', 'Suppress comment'))
             while results:
                 for res in results:
                     bug_line = res.lastBugPosition.startLine
-                    checked_file = res.checkedFile+' @ '+str(bug_line)
+                    checked_file = res.checkedFile + ' @ ' + str(bug_line)
                     sev = shared.ttypes.Severity._VALUES_TO_NAMES[res.severity]
-                    rows.append((checked_file, res.checkerId, sev, res.checkerMsg, res.suppressComment))
+                    rows.append((checked_file, res.checkerId, sev,
+                                 res.checkerMsg, res.suppressComment))
 
                 offset += limit
-                results = client.getRunResults(run_id, limit, offset, None, filters)
+                results = client.getRunResults(run_id, limit, offset, None,
+                                               filters)
 
         else:
             rows.append(('File', 'Checker', 'Severity', 'Msg'))
@@ -179,11 +179,13 @@ def handle_list_results(args):
                 for res in results:
                     bug_line = res.lastBugPosition.startLine
                     sev = shared.ttypes.Severity._VALUES_TO_NAMES[res.severity]
-                    checked_file = res.checkedFile+' @ '+str(bug_line)
-                    rows.append((checked_file, res.checkerId, sev, res.checkerMsg))
+                    checked_file = res.checkedFile + ' @ ' + str(bug_line)
+                    rows.append(
+                        (checked_file, res.checkerId, sev, res.checkerMsg))
 
                 offset += limit
-                results = client.getRunResults(run_id, limit, offset, None, filters)
+                results = client.getRunResults(run_id, limit, offset, None,
+                                               filters)
 
         if args.output_format == 'csv':
             writer = csv.writer(sys.stdout)
@@ -193,14 +195,14 @@ def handle_list_results(args):
 
 
 def handle_list_result_types(args):
-
     client = setupClient(args.host, args.port, '/')
 
     filters = []
     if args.suppressed:
         report_filter = codeCheckerDBAccess.ttypes.ReportFilter(suppressed=True)
     else:
-        report_filter = codeCheckerDBAccess.ttypes.ReportFilter(suppressed=False)
+        report_filter = codeCheckerDBAccess.ttypes.ReportFilter(
+            suppressed=False)
 
     filters.append(report_filter)
 
@@ -212,9 +214,9 @@ def handle_list_result_types(args):
             results = client.getRunResultTypes(run_id, filters)
             if args.output_format == 'json':
                 results_collector.append({name: results})
-            else: # plaintext, csv
-                print('Check date: '+run_date)
-                print('Check name: '+name)
+            else:  # plaintext, csv
+                print('Check date: ' + run_date)
+                print('Check name: ' + name)
                 rows = []
                 rows.append(('Checker', 'Severity', 'Count'))
                 for res in results:
@@ -228,7 +230,7 @@ def handle_list_result_types(args):
                     print_table(rows)
 
         if args.output_format == 'json':
-            print CmdLineOutputEncoder().encode(results_collector)
+            print(CmdLineOutputEncoder().encode(results_collector))
     else:
         run_info = check_run_names(client, args.names)
         for name in args.names:
@@ -236,10 +238,10 @@ def handle_list_result_types(args):
 
             results = client.getRunResultTypes(run_id, filters)
             if args.output_format == 'json':
-                print CmdLineOutputEncoder().encode(results)
-            else: # plaintext, csv
-                print('Check date: '+run_date)
-                print('Check name: '+name)
+                print(CmdLineOutputEncoder().encode(results))
+            else:  # plaintext, csv
+                print('Check date: ' + run_date)
+                print('Check name: ' + name)
                 rows = [('Checker', 'Severity', 'Count')]
                 for res in results:
                     sev = shared.ttypes.Severity._VALUES_TO_NAMES[res.severity]
@@ -254,7 +256,6 @@ def handle_list_result_types(args):
 
 # ------------------------------------------------------------
 def handle_remove_run_results(args):
-
     client = setupClient(args.host, args.port, '/')
 
     run_info = check_run_names(client, args.name)
@@ -273,24 +274,28 @@ def handle_remove_run_results(args):
 
 def handle_diff_results(args):
     def printResult(getterFn, baseid, newid, suppr, output_format):
-        report_filter = [codeCheckerDBAccess.ttypes.ReportFilter(suppressed=suppr)]
+        report_filter = [
+            codeCheckerDBAccess.ttypes.ReportFilter(suppressed=suppr)]
         rows, sort_type, limit, offset = [], None, 500, 0
 
         rows.append(('File', 'Checker', 'Severity', 'Msg'))
-        results = getterFn(baseid, newid, limit, offset, sort_type, report_filter)
+        results = getterFn(baseid, newid, limit, offset, sort_type,
+                           report_filter)
 
         if output_format == 'json':
-            print CmdLineOutputEncoder().encode(results)
-        else: # plaintext, csv
+            print(CmdLineOutputEncoder().encode(results))
+        else:  # plaintext, csv
             while results:
                 for res in results:
                     bug_line = res.lastBugPosition.startLine
                     sev = shared.ttypes.Severity._VALUES_TO_NAMES[res.severity]
-                    checked_file = res.checkedFile+' @ '+str(bug_line)
-                    rows.append((checked_file, res.checkerId, sev, res.checkerMsg))
+                    checked_file = res.checkedFile + ' @ ' + str(bug_line)
+                    rows.append(
+                        (checked_file, res.checkerId, sev, res.checkerMsg))
 
                 offset += limit
-                results = getterFn(baseid, newid, limit, offset, sort_type, report_filter)
+                results = getterFn(baseid, newid, limit, offset, sort_type,
+                                   report_filter)
 
             if output_format == 'csv':
                 writer = csv.writer(sys.stdout)
@@ -305,11 +310,14 @@ def handle_diff_results(args):
     newid = run_info[args.newname][0]
 
     if args.new:
-        printResult(client.getNewResults, baseid, newid, args.suppressed, args.output_format)
+        printResult(client.getNewResults, baseid, newid, args.suppressed,
+                    args.output_format)
     elif args.unresolved:
-        printResult(client.getUnresolvedResults, baseid, newid, args.suppressed, args.output_format)
+        printResult(client.getUnresolvedResults, baseid, newid, args.suppressed,
+                    args.output_format)
     elif args.resolved:
-        printResult(client.getResolvedResults, baseid, newid, args.suppressed, args.output_format)
+        printResult(client.getResolvedResults, baseid, newid, args.suppressed,
+                    args.output_format)
 
 
 def register_client_command_line(argument_parser):
@@ -320,71 +328,102 @@ def register_client_command_line(argument_parser):
 
     # List runs.
     listruns_parser = subparsers.add_parser('runs', help='Get the run data.')
-    listruns_parser.add_argument('--host', type=str, dest="host", default='localhost',
+    listruns_parser.add_argument('--host', type=str, dest="host",
+                                 default='localhost',
                                  help='Server host.')
-    listruns_parser.add_argument('-p', '--port', type=str, dest="port", default=11444,
+    listruns_parser.add_argument('-p', '--port', type=str, dest="port",
+                                 default=11444,
                                  required=True, help='HTTP Server port.')
-    listruns_parser.add_argument('-o', choices=['plaintext', 'json', 'csv'], default='plaintext', type=str, dest="output_format", help='Output format.')
+    listruns_parser.add_argument('-o', choices=['plaintext', 'json', 'csv'],
+                                 default='plaintext', type=str,
+                                 dest="output_format", help='Output format.')
     listruns_parser.set_defaults(func=handle_list_runs)
 
     # List results.
     listresults_parser = subparsers.add_parser('results', help='List results.')
-    listresults_parser.add_argument('--host', type=str, dest="host", default='localhost',
+    listresults_parser.add_argument('--host', type=str, dest="host",
+                                    default='localhost',
                                     help='Server host.')
-    listresults_parser.add_argument('-p', '--port', type=str, dest="port", default=11444,
+    listresults_parser.add_argument('-p', '--port', type=str, dest="port",
+                                    default=11444,
                                     required=True, help='HTTP Server port.')
-    listresults_parser.add_argument('-n', '--name', type=str, dest="name", required=True,
+    listresults_parser.add_argument('-n', '--name', type=str, dest="name",
+                                    required=True,
                                     help='Check name.')
-    listresults_parser.add_argument('-s', '--suppressed', action="store_true", dest="suppressed", help='Suppressed results.')
-    listresults_parser.add_argument('-o', choices=['plaintext', 'json', 'csv'], default='plaintext', type=str, dest="output_format", help='Output format.')
+    listresults_parser.add_argument('-s', '--suppressed', action="store_true",
+                                    dest="suppressed",
+                                    help='Suppressed results.')
+    listresults_parser.add_argument('-o', choices=['plaintext', 'json', 'csv'],
+                                    default='plaintext', type=str,
+                                    dest="output_format", help='Output format.')
     listresults_parser.set_defaults(func=handle_list_results)
 
     # List diffs.
     diff_parser = subparsers.add_parser('diff', help='Diff two run.')
-    diff_parser.add_argument('--host', type=str, dest="host", default='localhost',
+    diff_parser.add_argument('--host', type=str, dest="host",
+                             default='localhost',
                              help='Server host.')
-    diff_parser.add_argument('-p', '--port', type=str, dest="port", default=11444,
+    diff_parser.add_argument('-p', '--port', type=str, dest="port",
+                             default=11444,
                              required=True, help='HTTP Server port.')
-    diff_parser.add_argument('-b', '--basename', type=str, dest="basename", required=True,
+    diff_parser.add_argument('-b', '--basename', type=str, dest="basename",
+                             required=True,
                              help='Base name.')
-    diff_parser.add_argument('-n', '--newname', type=str, dest="newname", required=True,
+    diff_parser.add_argument('-n', '--newname', type=str, dest="newname",
+                             required=True,
                              help='New name.')
-    diff_parser.add_argument('-s', '--suppressed', action="store_true", dest="suppressed", default=False,
+    diff_parser.add_argument('-s', '--suppressed', action="store_true",
+                             dest="suppressed", default=False,
                              required=False, help='Show suppressed bugs.')
-    diff_parser.add_argument('-o', choices=['plaintext', 'json', 'csv'], default='plaintext', type=str, dest="output_format", help='Output format.')
+    diff_parser.add_argument('-o', choices=['plaintext', 'json', 'csv'],
+                             default='plaintext', type=str,
+                             dest="output_format", help='Output format.')
     group = diff_parser.add_mutually_exclusive_group(required=True)
-    group.add_argument('--new', action="store_true", dest="new", help="Show new results.")
-    group.add_argument('--unresolved', action="store_true", dest="unresolved", help="Show unresolved results.")
-    group.add_argument('--resolved', action="store_true", dest="resolved", help="Show resolved results.")
+    group.add_argument('--new', action="store_true", dest="new",
+                       help="Show new results.")
+    group.add_argument('--unresolved', action="store_true", dest="unresolved",
+                       help="Show unresolved results.")
+    group.add_argument('--resolved', action="store_true", dest="resolved",
+                       help="Show resolved results.")
     diff_parser.set_defaults(func=handle_diff_results)
 
     # List resulttypes.
     sum_parser = subparsers.add_parser('sum', help='Sum results.')
-    sum_parser.add_argument('--host', type=str, dest="host", default='localhost',
+    sum_parser.add_argument('--host', type=str, dest="host",
+                            default='localhost',
                             help='Server host.')
-    sum_parser.add_argument('-p', '--port', type=str, dest="port", default=11444,
+    sum_parser.add_argument('-p', '--port', type=str, dest="port",
+                            default=11444,
                             required=True, help='HTTP Server port.')
     name_group = sum_parser.add_mutually_exclusive_group(required=True)
-    name_group.add_argument('-n', '--name', nargs='+', type=str, dest="names", help='Check name.')
-    name_group.add_argument('-a', '--all', action='store_true', dest="all_results", help='All results.')
+    name_group.add_argument('-n', '--name', nargs='+', type=str, dest="names",
+                            help='Check name.')
+    name_group.add_argument('-a', '--all', action='store_true',
+                            dest="all_results", help='All results.')
 
-    sum_parser.add_argument('-s', '--suppressed', action="store_true", dest="suppressed", help='Suppressed results.')
-    sum_parser.add_argument('-o', choices=['plaintext', 'json', 'csv'], default='plaintext', type=str, dest="output_format", help='Output format.')
+    sum_parser.add_argument('-s', '--suppressed', action="store_true",
+                            dest="suppressed", help='Suppressed results.')
+    sum_parser.add_argument('-o', choices=['plaintext', 'json', 'csv'],
+                            default='plaintext', type=str, dest="output_format",
+                            help='Output format.')
     sum_parser.set_defaults(func=handle_list_result_types)
 
     # List resulttypes.
     sum_parser = subparsers.add_parser('del', help='Remove run results.')
-    sum_parser.add_argument('--host', type=str, dest="host", default='localhost',
+    sum_parser.add_argument('--host', type=str, dest="host",
+                            default='localhost',
                             help='Server host.')
-    sum_parser.add_argument('-p', '--port', type=str, dest="port", default=11444,
+    sum_parser.add_argument('-p', '--port', type=str, dest="port",
+                            default=11444,
                             required=True, help='HTTP Server port.')
-    sum_parser.add_argument('-n', '--name', nargs='+', type=str, dest="name", required=True, help='Server port.')
+    sum_parser.add_argument('-n', '--name', nargs='+', type=str, dest="name",
+                            required=True, help='Server port.')
     sum_parser.set_defaults(func=handle_remove_run_results)
 
 
 def main():
-
-    parser = argparse.ArgumentParser(description='Simple command line client for codechecker.')
+    parser = argparse.ArgumentParser(
+        description='Simple command line client for CodeChecker.')
 
     register_client_command_line(parser)
     args = parser.parse_args()

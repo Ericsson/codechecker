@@ -14,7 +14,10 @@ import tempfile
 import unittest
 from contextlib import closing
 
-import StringIO
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import BytesIO as StringIO
 
 from codechecker_lib import build_manager
 from codechecker_lib import log_parser
@@ -78,7 +81,7 @@ class BuildCmdTestNose(unittest.TestCase):
         to return the compilation actions.
         """
         comp_cmd_json = self.__get_cmp_json(compile_cmd)
-        with closing(StringIO.StringIO()) as text:
+        with closing(StringIO()) as text:
             text.write(comp_cmd_json)
             return log_parser.parse_compile_commands_json(text)
 
