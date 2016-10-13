@@ -24,7 +24,7 @@ def set_cc_env():
 
 
 def get_free_port():
-    ''' get a free port from the os'''
+    """ Get a free port from the os. """
 
     import socket
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

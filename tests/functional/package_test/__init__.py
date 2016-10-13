@@ -6,6 +6,7 @@
 # -----------------------------------------------------------------------------
 
 """Setup for the package tests."""
+from test_utils import get_free_port
 
 import json
 import multiprocessing
@@ -19,9 +20,8 @@ import shutil
 
 from subprocess import CalledProcessError
 
-# sys.path modification needed so nosetests can load the test_utils package
+# sys.path modification needed so nosetests can load the test_utils package.
 sys.path.append(os.path.abspath(os.environ['TEST_TESTS_DIR']))
-from test_utils import get_free_port
 
 # Because of the nature of the python-env loading of nosetests, we need to
 # add the codechecker_gen package to the pythonpath here, so it is available
@@ -33,14 +33,14 @@ with open(__LAYOUT_FILE_PATH) as layout_file:
 sys.path.append(os.path.join(
     __PKG_ROOT, __PACKAGE_LAYOUT['static']['codechecker_gen']))
 
-# stopping event for CodeChecker server
+# Stopping event for CodeChecker server.
 __STOP_SERVER = multiprocessing.Event()
 
 
 def _wait_for_postgres_shutdown(workspace):
     """
-    Wait for PostgreSQL to shut down
-    check if postmaster.pid file exists if yes postgres is still running
+    Wait for PostgreSQL to shut down.
+    Check if postmaster.pid file exists if yes postgres is still running.
     """
     max_wait_time = 60
 
@@ -123,7 +123,7 @@ def setup_package():
         'pg_db_config': pg_db_config
     }
 
-    # first check
+    # First check.
     print("Running first analysis")
 
     ret = _clean_project(test_project_path,
@@ -143,7 +143,7 @@ def setup_package():
     if ret:
         sys.exit(1)
 
-    # second check
+    # Second check.
     print("Running second analysis")
 
     ret = _clean_project(test_project_path,
@@ -163,7 +163,7 @@ def setup_package():
     if ret:
         sys.exit(1)
 
-    # start the CodeChecker server
+    # Start the CodeChecker server.
     print("Starting server to get results")
     _start_server(shared_test_params, test_config)
 
@@ -176,10 +176,10 @@ def teardown_package():
 
 
 def _pg_db_config_to_cmdline_params(pg_db_config):
-    """Format postgres config dict to CodeChecker cmdline parameters"""
+    """Format postgres config dict to CodeChecker cmdline parameters."""
     params = []
 
-    for key, value in pg_db_config.iteritems():
+    for key, value in pg_db_config.items():
         params.append('--' + key)
         params.append(str(value))
 
@@ -203,7 +203,7 @@ def _clean_project(test_project_path, clean_cmd, env):
 
 def _generate_suppress_file(suppress_file):
     """
-    Create a dummy supppress file just to check if the old and the new
+    Create a dummy suppress file just to check if the old and the new
     suppress format can be processed.
     """
     print("Generating suppress file: " + suppress_file)
@@ -226,7 +226,7 @@ def _generate_suppress_file(suppress_file):
         s_file.write(k + '||' + 'idziei éléáálk ~!@#$#%^&*() \n')
         s_file.write(
             k + '||' + 'test_~!@#$%^&*.cpp' +
-            '||' +  'idziei éléáálk ~!@#$%^&*(\n')
+            '||' + 'idziei éléáálk ~!@#$%^&*(\n')
         s_file.write(
             hashlib.md5(suppress_line).hexdigest() + '||' +
             'test_~!@#$%^&*.cpp' + '||' + 'idziei éléáálk ~!@#$%^&*(\n')
@@ -239,12 +239,8 @@ def _generate_skip_list_file(skip_list_file):
     Create a dummy skip list file just to check if it can be loaded.
     Skip files without any results from checking.
     """
-    skip_list_content = []
-    skip_list_content.append("-*randtable.c")
-    skip_list_content.append("-*blocksort.c")
-    skip_list_content.append("-*huffman.c")
-    skip_list_content.append("-*decompress.c")
-    skip_list_content.append("-*crctable.c")
+    skip_list_content = ["-*randtable.c", "-*blocksort.c", "-*huffman.c",
+                         "-*decompress.c", "-*crctable.c"]
 
     s_file = open(skip_list_file, 'w')
     for k in skip_list_content:
@@ -256,22 +252,11 @@ def _generate_skip_list_file(skip_list_file):
 def _run_check(shared_test_params, skip_list_file, test_project_build_cmd,
                test_project_name, test_project_path):
     """Check a test project."""
-    check_cmd = []
-    check_cmd.append('CodeChecker')
-    check_cmd.append('check')
-    check_cmd.append('-w')
-    check_cmd.append(shared_test_params['workspace'])
-    check_cmd.append('--suppress')
-    check_cmd.append(shared_test_params['suppress_file'])
-    check_cmd.append('--skip')
-    check_cmd.append(skip_list_file)
-    check_cmd.append('-n')
-    check_cmd.append(test_project_name)
-    check_cmd.append('-b')
-    check_cmd.append("'"+test_project_build_cmd+"'")
-    check_cmd.append('--analyzers')
-    check_cmd.append('clangsa')
-    check_cmd.append('--quiet-build')
+    check_cmd = ['CodeChecker', 'check', '-w', shared_test_params['workspace'],
+                 '--suppress', shared_test_params['suppress_file'], '--skip',
+                 skip_list_file, '-n', test_project_name, '-b',
+                 "'" + test_project_build_cmd + "'", '--analyzers', 'clangsa',
+                 '--quiet-build']
     if shared_test_params['use_postgresql']:
         check_cmd.append('--postgresql')
         check_cmd += _pg_db_config_to_cmdline_params(
@@ -305,17 +290,11 @@ def _start_server(shared_test_params, test_config):
         if proc.poll() is None:
             proc.terminate()
 
-    server_cmd = []
-    server_cmd.append('CodeChecker')
-    server_cmd.append('server')
-    server_cmd.append('--check-port')
-    server_cmd.append(str(test_config['CC_TEST_SERVER_PORT']))
-    server_cmd.append('--view-port')
-    server_cmd.append(str(test_config['CC_TEST_VIEWER_PORT']))
-    server_cmd.append('-w')
-    server_cmd.append(shared_test_params['workspace'])
-    server_cmd.append('--suppress')
-    server_cmd.append(shared_test_params['suppress_file'])
+    server_cmd = ['CodeChecker', 'server', '--check-port',
+                  str(test_config['CC_TEST_SERVER_PORT']), '--view-port',
+                  str(test_config['CC_TEST_VIEWER_PORT']), '-w',
+                  shared_test_params['workspace'], '--suppress',
+                  shared_test_params['suppress_file']]
     if shared_test_params['use_postgresql']:
         server_cmd.append('--postgresql')
         server_cmd += _pg_db_config_to_cmdline_params(
@@ -329,5 +308,5 @@ def _start_server(shared_test_params, test_config):
 
     server_proc.start()
 
-    # wait for server to start and connect to database
+    # Wait for server to start and connect to database.
     time.sleep(10)

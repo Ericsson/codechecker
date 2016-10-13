@@ -19,8 +19,8 @@ from codeCheckerDBAccess.ttypes import SortMode
 from test_utils.thrift_client_to_db import CCViewerHelper
 from test_utils.debug_printer import print_run_results
 
-class RunResults(unittest.TestCase):
 
+class RunResults(unittest.TestCase):
     _ccClient = None
 
     # selected runid for running the tests
@@ -47,7 +47,8 @@ class RunResults(unittest.TestCase):
     def test_get_run_results_no_filter(self):
         """ Get all the run results without any filtering. """
         runid = self._runid
-        logging.debug('Get all run results from the db for runid: ' + str(runid))
+        logging.debug(
+            'Get all run results from the db for runid: ' + str(runid))
 
         run_result_count = self._cc_client.getRunResultCount(runid, [])
         self.assertTrue(run_result_count)
@@ -93,7 +94,7 @@ class RunResults(unittest.TestCase):
 
         self.assertTrue(found_all)
 
-    def test_get_source_file_content(self):  
+    def test_get_source_file_content(self):
         """ Test getting the source file content stored to the database.
             Test unicode support the stored file can be decoded properly compare
             results form the database to the original file. """
@@ -160,7 +161,7 @@ class RunResults(unittest.TestCase):
 
         filtered_run_results = filter(
             lambda result:
-                (result.reportId == bug.reportId) and result.suppressed,
+            (result.reportId == bug.reportId) and result.suppressed,
             run_results)
         self.assertEqual(len(filtered_run_results), 1)
         suppressed_bug = filtered_run_results[0]
@@ -215,7 +216,8 @@ class RunResults(unittest.TestCase):
     def test_get_run_results_sorted2(self):
         """ Get the run results and sort them by filename and checkername ASC. """
         runid = self._runid
-        logging.debug('Get all run results from the db for runid: ' + str(runid))
+        logging.debug(
+            'Get all run results from the db for runid: ' + str(runid))
         sortMode1 = SortMode(SortType.FILENAME, Order.ASC)
         sortMode2 = SortMode(SortType.CHECKER_NAME, Order.ASC)
         sort_types = [sortMode1, sortMode2]
@@ -236,5 +238,5 @@ class RunResults(unittest.TestCase):
             self.assertTrue(bug1.checkedFile <= bug2.checkedFile)
             self.assertTrue((bug1.checkedFile != bug2.checkedFile) or
                             (bug1.lastBugPosition.startLine <=
-                                bug2.lastBugPosition.startLine) or
+                             bug2.lastBugPosition.startLine) or
                             (bug1.checkerId <= bug2.checkerId))

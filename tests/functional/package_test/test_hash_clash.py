@@ -15,7 +15,6 @@ from shared.ttypes import BugPathPos, BugPathEvent, Severity
 
 from test_utils.thrift_client_to_db import CCReportHelper
 
-from nose.tools import nottest
 
 def _generate_content(cols, lines):
     """Generates a random file content string."""
@@ -55,9 +54,11 @@ class HashClash(unittest.TestCase):
     def _create_build_action(self, run_id, name, analyzer_type, source_file):
         """Creates a new build action."""
 
-        return self._report.addBuildAction(run_id, name, name, analyzer_type, source_file)
+        return self._report.addBuildAction(run_id, name, name, analyzer_type,
+                                           source_file)
 
-    def _create_simple_report(self, file_id, build_action_id, bug_hash, position):
+    def _create_simple_report(self, file_id, build_action_id, bug_hash,
+                              position):
         """Creates a new report with one bug path position and event."""
 
         bug_path = [BugPathPos(position[0][0], position[0][1],
@@ -94,7 +95,8 @@ class HashClash(unittest.TestCase):
         # analyzer type needs to match with the supported analyzer types
         # clangsa is used for testing
         analyzer_type = 'clangsa'
-        build_action_id = self._create_build_action(run_id, name, analyzer_type, source_file)
+        build_action_id = self._create_build_action(run_id, name, analyzer_type,
+                                                    source_file)
         yield (run_id, file_id, build_action_id, source_file)
         self._report.finishBuildAction(build_action_id, 'OK')
         self._report.finishCheckerRun(run_id)
@@ -114,7 +116,7 @@ class HashClash(unittest.TestCase):
         """
 
         with self._init_new_test('test1') as ids1, \
-             self._init_new_test('test2') as ids2:
+                self._init_new_test('test2') as ids2:
             _, file_id1, build_action_id1, source_file1 = ids1
             run_id2, file_id2, build_action_id2, source_file2 = ids2
             rep_id1 = self._create_simple_report(file_id1,

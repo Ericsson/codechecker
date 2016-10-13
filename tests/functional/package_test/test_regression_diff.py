@@ -18,14 +18,15 @@ from test_utils.debug_printer import print_run_results
 
 import shared
 
+
 def get_severity_level(name):
     """
     convert severity level from the name to value
     """
     return shared.ttypes.Severity._NAMES_TO_VALUES[name]
 
-class RunResults(unittest.TestCase):
 
+class RunResults(unittest.TestCase):
     _ccClient = None
 
     # selected runid for running the tests
@@ -53,9 +54,9 @@ class RunResults(unittest.TestCase):
         new_run_id = runs[1].runId
 
         diff_res = self._cc_client.getDiffResultCount(base_run_id,
-                                                   new_run_id,
-                                                   DiffType.NEW,
-                                                   [])
+                                                      new_run_id,
+                                                      DiffType.NEW,
+                                                      [])
         self.assertEqual(diff_res, 0)
 
     # -----------------------------------------------------
@@ -72,9 +73,9 @@ class RunResults(unittest.TestCase):
         new_run_id = runs[1].runId
 
         diff_res = self._cc_client.getDiffResultCount(base_run_id,
-                                                   new_run_id,
-                                                   DiffType.RESOLVED,
-                                                   [])
+                                                      new_run_id,
+                                                      DiffType.RESOLVED,
+                                                      [])
         self.assertEqual(diff_res, 0)
 
     # -----------------------------------------------------
@@ -128,10 +129,11 @@ class RunResults(unittest.TestCase):
         new_run_id = runs[1].runId
 
         # severity levels used for filtering
-        filter_severity_levels = self._testproject_data['filter_severity_levels']
+        filter_severity_levels = self._testproject_data[
+            'filter_severity_levels']
 
         for level in filter_severity_levels:
-            for severity_level, test_result_count in level.iteritems():
+            for severity_level, test_result_count in level.items():
                 simple_filters = []
                 sev = get_severity_level(severity_level)
                 simple_filter = ReportFilter(severity=sev)
@@ -195,19 +197,15 @@ class RunResults(unittest.TestCase):
         base_run_id = runs[0].runId
         new_run_id = runs[1].runId
 
-        diff_res = self._cc_client.getDiffResultTypes(base_run_id,
-                                                      new_run_id,
-                                                      DiffType.UNRESOLVED,
-                                                      [])
-
         diff_res_types_filter = self._testproject_data['diff_res_types_filter']
 
         for level in diff_res_types_filter:
-            for checker_name, test_result_count in level.iteritems():
-                diff_res = self._cc_client.getDiffResultTypes(base_run_id,
-                                                              new_run_id,
-                                                              DiffType.UNRESOLVED,
-                                                              [])
+            for checker_name, test_result_count in level.items():
+                diff_res = \
+                    self._cc_client.getDiffResultTypes(base_run_id,
+                                                       new_run_id,
+                                                       DiffType.UNRESOLVED,
+                                                       [])
                 res = [r for r in diff_res if r.checkerId == checker_name]
 
                 # there should be only one result for each checker name
@@ -232,7 +230,7 @@ class RunResults(unittest.TestCase):
         diff_res_types_filter = self._testproject_data['diff_res_types_filter']
 
         for level in diff_res_types_filter:
-            for checker_name, test_result_count in level.iteritems():
+            for checker_name, test_result_count in level.items():
                 simple_filters = []
                 simple_filter = ReportFilter(checkerId=checker_name)
                 simple_filters.append(simple_filter)

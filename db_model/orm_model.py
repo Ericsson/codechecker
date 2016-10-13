@@ -158,9 +158,9 @@ class BugPathEvent(Base):
     prev = Column(Integer)
 
     def __init__(self, line_begin, col_begin, line_end, col_end, msg, file_id):
-        self.line_begin, self.col_begin, self.line_end, self.col_end, self.msg = \
-            line_begin, col_begin, line_end, col_end, msg
-        self.file_id = file_id
+        self.line_begin, self.col_begin, self.line_end, self.col_end = \
+            line_begin, col_begin, line_end, col_end
+        self.file_id, self.msg = file_id, msg
 
     def addPrev(self, prev):
         self.prev = prev
@@ -253,8 +253,8 @@ class Report(Base):
         self.start_bugevent = start_bugevent
         self.end_bugevent = end_bugevent
         self.severity = severity
-        self.checker_id, self.checker_cat, self.bug_type = checker_id, checker_cat, bug_type
-        self.suppressed = suppressed
+        self.checker_id, self.checker_cat = checker_id, checker_cat
+        self.suppressed, self.bug_type = suppressed, bug_type
 
 
 class ReportsToBuildActions(Base):

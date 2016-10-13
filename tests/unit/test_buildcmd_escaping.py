@@ -10,13 +10,14 @@
 import json
 import os
 import shutil
-import StringIO
 import tempfile
 import unittest
 from contextlib import closing
 
-from codechecker_lib import log_parser
+import StringIO
+
 from codechecker_lib import build_manager
+from codechecker_lib import log_parser
 from codechecker_lib.analyzers import analyzer_base
 
 

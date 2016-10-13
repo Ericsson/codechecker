@@ -19,7 +19,6 @@
   "nullability.NullReturnedFromNonnull":                  "HIGH",
   "nullability.NullableDereferenced":                     "MEDIUM",
   "nullability.NullablePassedToNonnull":                  "MEDIUM",
-  "nullability.NullablePassedToNonnull":                  "MEDIUM",
   "core.CallAndMessage":                                  "HIGH",
   "core.DivideZero":                                      "HIGH",
   "core.DynamicTypePropagation":                          "MEDIUM",
