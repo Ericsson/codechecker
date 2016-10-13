@@ -10,10 +10,8 @@ import logging
 import os
 import unittest
 
-from codeCheckerDBAccess.ttypes import ReportFilter
-
 import shared
-
+from codeCheckerDBAccess.ttypes import ReportFilter
 from test_utils.thrift_client_to_db import CCViewerHelper
 
 

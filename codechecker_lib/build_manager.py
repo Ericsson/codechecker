@@ -8,15 +8,14 @@ Build and log related functionality.
 """
 import os
 import pickle
+import platform
 import subprocess
 import sys
-import platform
+from distutils.spawn import find_executable
 
-from codechecker_lib import logger
 from codechecker_lib import analyzer_env
 from codechecker_lib import host_check
-
-from distutils.spawn import find_executable
+from codechecker_lib import logger
 
 LOG = logger.get_new_logger('BUILD MANAGER')
 

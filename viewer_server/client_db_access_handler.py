@@ -6,25 +6,20 @@
 """
 Handle thrift requests.
 """
-import zlib
-import os
-import datetime
-from collections import defaultdict
-import ntpath
 import codecs
-
-import sqlalchemy
-from sqlalchemy import asc, desc
-from sqlalchemy.sql import or_, and_, func
-from sqlalchemy.sql.expression import literal_column
-
-from db_model.orm_model import *
+import datetime
+import ntpath
+import os
+import zlib
+from collections import defaultdict
 
 import shared
+import sqlalchemy
 from codeCheckerDBAccess import constants
 from codeCheckerDBAccess.ttypes import *
 
 from codechecker_lib import logger
+from db_model.orm_model import *
 
 LOG = logger.get_new_logger('ACCESS HANDLER')
 

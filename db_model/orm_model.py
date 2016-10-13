@@ -9,13 +9,13 @@ ORM model.
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from sqlalchemy import *
-from sqlalchemy.orm import *
-from sqlalchemy.sql.expression import true
-from sqlalchemy.ext.declarative import declarative_base
-
 from datetime import datetime
 from math import ceil
+
+from sqlalchemy import *
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import *
+from sqlalchemy.sql.expression import true
 
 CC_META = MetaData(naming_convention={
     "ix": 'ix_%(column_0_label)s',

@@ -10,14 +10,12 @@ import re
 import socket
 from functools import partial
 
+import shared
+from thrift.protocol import TBinaryProtocol
+from thrift.protocol import TJSONProtocol
 from thrift.transport import THttpClient
 from thrift.transport import TSocket
 from thrift.transport import TTransport
-
-from thrift.protocol import TBinaryProtocol
-from thrift.protocol import TJSONProtocol
-
-import shared
 
 
 class ThriftAPIHelper(object):

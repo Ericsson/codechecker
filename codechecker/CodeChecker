@@ -11,14 +11,14 @@ Used to run the logging in the same env.
 """
 from __future__ import print_function
 
+import ntpath
 import os
-import sys
+import pickle
+import shutil
 import signal
 import subprocess
-import pickle
-import ntpath
+import sys
 import tempfile
-import shutil
 
 procPool = []
 

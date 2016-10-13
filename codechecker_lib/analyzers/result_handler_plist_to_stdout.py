@@ -4,17 +4,15 @@
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
 
-import os
-import sys
+import linecache
 import math
 import ntpath
-import linecache
-
+import os
+import sys
 from abc import ABCMeta
 
 from codechecker_lib import logger
 from codechecker_lib import plist_parser
-
 from codechecker_lib.analyzers.result_handler_base import ResultHandler
 
 LOG = logger.get_new_logger('PLIST TO STDOUT')

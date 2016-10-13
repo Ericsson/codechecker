@@ -4,10 +4,9 @@
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
 
+import ntpath
 import os
 import uuid
-import ntpath
-
 from abc import ABCMeta, abstractmethod
 
 from codechecker_lib import logger

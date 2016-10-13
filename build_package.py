@@ -4,14 +4,14 @@ CodeChecker packager script creates a package based on the given layout config.
 """
 from __future__ import print_function
 
+import argparse
+import errno
+import json
+import logging
+import ntpath
 import os
 import shutil
-import argparse
-import logging
-import errno
 import sys
-import json
-import ntpath
 
 try:
     import urlparse

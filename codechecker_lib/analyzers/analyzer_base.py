@@ -5,11 +5,10 @@
 # -------------------------------------------------------------------------
 
 import os
-import sys
 import shlex
 import signal
 import subprocess
-
+import sys
 from abc import ABCMeta, abstractmethod
 
 from codechecker_lib import logger

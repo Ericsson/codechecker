@@ -4,15 +4,14 @@
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
 
-import sys
 import argparse
 import csv
 import json
+import sys
 
-import thrift_helper
-
-import shared
 import codeCheckerDBAccess
+import shared
+import thrift_helper
 
 SUPPORTED_VERSION = '5.0'
 

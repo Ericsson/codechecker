@@ -8,14 +8,14 @@ Util module.
 """
 
 import datetime
-import os
+import glob
 import hashlib
 import ntpath
-import sys
-import glob
-import socket
+import os
 import shutil
+import socket
 import subprocess
+import sys
 
 from codechecker_lib import logger
 

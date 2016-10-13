@@ -7,30 +7,27 @@
 Database server handling.
 """
 
+import atexit
 import os
 import subprocess
-import atexit
-import time
 import sys
-
+import time
 from abc import ABCMeta, abstractmethod
 
-from codechecker_lib import util
-from codechecker_lib import logger
-from codechecker_lib import pgpass
-from codechecker_lib import host_check
-
-from db_model.orm_model import CC_META
-from db_model.orm_model import DBVersion
-from db_model.orm_model import CreateSession
-
 import sqlalchemy
+from alembic import command, config
+from sqlalchemy import event
+from sqlalchemy.engine import Engine
 from sqlalchemy.engine.url import URL, make_url
 from sqlalchemy.sql.elements import quoted_name
-from sqlalchemy.engine import Engine
-from sqlalchemy import event
 
-from alembic import command, config
+from codechecker_lib import host_check
+from codechecker_lib import logger
+from codechecker_lib import pgpass
+from codechecker_lib import util
+from db_model.orm_model import CC_META
+from db_model.orm_model import CreateSession
+from db_model.orm_model import DBVersion
 
 LOG = logger.get_new_logger('DB_HANDLER')
 

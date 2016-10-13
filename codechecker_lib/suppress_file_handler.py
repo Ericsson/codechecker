@@ -17,9 +17,10 @@ After removing the hash_value_type the generated format is:
 For backward compatibility the hash_value_type is an optional filed.
 """
 
-import re
-import os
 import codecs
+import os
+import re
+
 from codechecker_lib import logger
 
 LOG = logger.get_new_logger('SUPPRESS_FILE_HANDLER')

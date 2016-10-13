@@ -5,15 +5,14 @@
 # -------------------------------------------------------------------------
 
 import os
-import sys
 import socket
+import sys
 
-from thrift.transport import THttpClient
+import shared
+from codeCheckerDBAccess import codeCheckerDBAccess
 from thrift.protocol import TJSONProtocol
 from thrift.protocol.TProtocol import TProtocolException
-
-from codeCheckerDBAccess import codeCheckerDBAccess
-import shared
+from thrift.transport import THttpClient
 
 
 class ThriftClientHelper:

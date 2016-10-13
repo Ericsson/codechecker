@@ -9,19 +9,18 @@ Main CodeChecker script.
 """
 from __future__ import print_function
 
-import os
-import sys
-import signal
 import argparse
+import os
+import signal
+import sys
 
 import shared
-
-from codechecker_lib import logger
-from codechecker_lib import arg_handler
-from codechecker_lib.analyzers import analyzer_types
-from codechecker_lib import util
-
 from cmdline_client import cmd_line_client
+
+from codechecker_lib import arg_handler
+from codechecker_lib import logger
+from codechecker_lib import util
+from codechecker_lib.analyzers import analyzer_types
 
 LOG = logger.get_new_logger('MAIN')
 

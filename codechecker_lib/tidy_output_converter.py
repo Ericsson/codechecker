@@ -8,10 +8,10 @@ This module is responsible for parsing clang-tidy output and generating plist
 for the plist_parser module.
 """
 
-import re
-import os
 import copy
+import os
 import plistlib
+import re
 
 from codechecker_lib import logger
 

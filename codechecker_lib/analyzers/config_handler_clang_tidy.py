@@ -4,14 +4,13 @@
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
 
-import re
-import json
-import shlex
 import argparse
-
-from codechecker_lib.analyzers import config_handler
+import json
+import re
+import shlex
 
 from codechecker_lib import logger
+from codechecker_lib.analyzers import config_handler
 
 LOG = logger.get_new_logger('CLANG TIDY CONFIG')
 

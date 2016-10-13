@@ -4,27 +4,25 @@
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
 
-import sys
-import time
 import atexit
+import codecs
 import contextlib
 import multiprocessing
 import os
-import codecs
+import sys
+import time
 
 import shared
-from storage_server import report_server
-
 from DBThriftAPI import CheckerReport
 from DBThriftAPI.ttypes import SuppressBugData
-
 from thrift import Thrift
+from thrift.protocol import TBinaryProtocol
 from thrift.transport import TSocket
 from thrift.transport import TTransport
-from thrift.protocol import TBinaryProtocol
 
 from codechecker_lib import logger
 from codechecker_lib import suppress_file_handler
+from storage_server import report_server
 
 LOG = logger.get_new_logger('CLIENT')
 

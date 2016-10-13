@@ -11,13 +11,12 @@ import os
 import re
 import unittest
 
-from codeCheckerDBAccess.ttypes import SortType
 from codeCheckerDBAccess.ttypes import Order
 from codeCheckerDBAccess.ttypes import ReportFilter
 from codeCheckerDBAccess.ttypes import SortMode
-
-from test_utils.thrift_client_to_db import CCViewerHelper
+from codeCheckerDBAccess.ttypes import SortType
 from test_utils.debug_printer import print_run_results
+from test_utils.thrift_client_to_db import CCViewerHelper
 
 
 class RunResults(unittest.TestCase):

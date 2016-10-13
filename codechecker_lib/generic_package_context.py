@@ -4,14 +4,13 @@
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
 
+import json
 import os
 import sys
-import json
 
 from codechecker_lib import context_base
-from codechecker_lib import logger
 from codechecker_lib import db_version
-
+from codechecker_lib import logger
 from codechecker_lib.analyzers import analyzer_types
 
 LOG = logger.get_new_logger('CONTEXT')

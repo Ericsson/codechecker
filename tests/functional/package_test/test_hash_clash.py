@@ -4,15 +4,14 @@
 Tests hash clash handling.
 """
 
-import unittest
 import os
 import random
 import string
-from uuid import uuid4
+import unittest
 from contextlib import contextmanager
+from uuid import uuid4
 
 from shared.ttypes import BugPathPos, BugPathEvent, Severity
-
 from test_utils.thrift_client_to_db import CCReportHelper
 
 

@@ -6,17 +6,16 @@
 """
 Prepare and start different analisys types
 """
+import copy
+import json
 import os
 import sys
-import json
 import time
-import copy
 
+from codechecker_lib import analysis_manager
 from codechecker_lib import client
 from codechecker_lib import logger
-from codechecker_lib import analysis_manager
 from codechecker_lib import skiplist_handler
-
 from codechecker_lib.analyzers import analyzer_types
 
 LOG = logger.get_new_logger('ANALYZER')

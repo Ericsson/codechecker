@@ -6,31 +6,28 @@
 """
 Handle command line arguments.
 """
-import os
-import sys
 import json
-import tempfile
-import shutil
 import multiprocessing
+import os
+import shutil
+import sys
+import tempfile
 
-from viewer_server import client_db_access_server
-
-from codechecker_lib import build_action
-from codechecker_lib import client
-from codechecker_lib import generic_package_context
 from codechecker_lib import analyzer
-from codechecker_lib import log_parser
-from codechecker_lib import util
-from codechecker_lib import debug_reporter
-from codechecker_lib import logger
 from codechecker_lib import analyzer_env
-from codechecker_lib import host_check
-from codechecker_lib import generic_package_suppress_handler
-from codechecker_lib.database_handler import SQLServer
-
+from codechecker_lib import build_action
 from codechecker_lib import build_manager
-
+from codechecker_lib import client
+from codechecker_lib import debug_reporter
+from codechecker_lib import generic_package_context
+from codechecker_lib import generic_package_suppress_handler
+from codechecker_lib import host_check
+from codechecker_lib import log_parser
+from codechecker_lib import logger
+from codechecker_lib import util
 from codechecker_lib.analyzers import analyzer_types
+from codechecker_lib.database_handler import SQLServer
+from viewer_server import client_db_access_server
 
 LOG = logger.get_new_logger('ARG_HANDLER')
 

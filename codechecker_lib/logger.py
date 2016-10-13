@@ -6,9 +6,9 @@
 """
 """
 
+import logging
 import os
 import sys
-import logging
 
 # The logging leaves can be accesses without
 # importing the logging module in other modules.

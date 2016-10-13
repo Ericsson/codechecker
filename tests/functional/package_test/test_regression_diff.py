@@ -6,17 +6,15 @@
 # -----------------------------------------------------------------------------
 
 import json
+import logging
 import os
 import unittest
-import logging
-
-from codeCheckerDBAccess.ttypes import ReportFilter
-from codeCheckerDBAccess.ttypes import DiffType
-
-from test_utils.thrift_client_to_db import CCViewerHelper
-from test_utils.debug_printer import print_run_results
 
 import shared
+from codeCheckerDBAccess.ttypes import DiffType
+from codeCheckerDBAccess.ttypes import ReportFilter
+from test_utils.debug_printer import print_run_results
+from test_utils.thrift_client_to_db import CCViewerHelper
 
 
 def get_severity_level(name):

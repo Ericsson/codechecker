@@ -6,19 +6,18 @@
 """
 """
 
-import os
-import re
-import sys
-import signal
 import multiprocessing
 import ntpath
-import traceback
+import os
+import re
 import shutil
+import signal
+import sys
+import traceback
 from collections import defaultdict
 
-from codechecker_lib import logger
 from codechecker_lib import analyzer_env
-
+from codechecker_lib import logger
 from codechecker_lib.analyzers import analyzer_types
 
 LOG = logger.get_new_logger('ANALYSIS MANAGER')

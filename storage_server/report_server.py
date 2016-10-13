@@ -7,29 +7,26 @@
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import sys
-import os
 import datetime
-import socket
 import errno
 import ntpath
+import os
+import socket
+import sys
 
+import shared
 import sqlalchemy
-
-from thrift.transport import TSocket
-from thrift.transport import TTransport
-from thrift.protocol import TBinaryProtocol
-from thrift.server import TServer
-
 from codechecker_gen.DBThriftAPI import CheckerReport
 from codechecker_gen.DBThriftAPI.ttypes import *
-import shared
+from thrift.protocol import TBinaryProtocol
+from thrift.server import TServer
+from thrift.transport import TSocket
+from thrift.transport import TTransport
 
-from db_model.orm_model import *
-
-from codechecker_lib import logger
-from codechecker_lib import decorators
 from codechecker_lib import database_handler
+from codechecker_lib import decorators
+from codechecker_lib import logger
+from db_model.orm_model import *
 
 LOG = logger.get_new_logger('CC SERVER')
 

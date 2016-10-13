@@ -6,19 +6,18 @@
 # -----------------------------------------------------------------------------
 
 """Setup for the package tests."""
-from test_utils import get_free_port
-
 import json
 import multiprocessing
 import os
+import shlex
+import shutil
 import subprocess
 import sys
 import time
 import uuid
-import shlex
-import shutil
-
 from subprocess import CalledProcessError
+
+from test_utils import get_free_port
 
 # sys.path modification needed so nosetests can load the test_utils package.
 sys.path.append(os.path.abspath(os.environ['TEST_TESTS_DIR']))

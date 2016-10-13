@@ -7,7 +7,6 @@
 import re
 
 from codechecker_lib import logger
-
 from codechecker_lib.analyzers import config_handler
 
 LOG = logger.get_new_logger('CLANGSA CONFIG HANDLER')

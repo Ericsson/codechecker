@@ -5,10 +5,10 @@
 # -------------------------------------------------------------------------
 """Module to handle analyzer crash."""
 
-import subprocess
 import shlex
-import tempfile
 import signal
+import subprocess
+import tempfile
 
 from codechecker_lib import logger
 

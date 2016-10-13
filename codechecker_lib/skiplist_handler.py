@@ -6,8 +6,9 @@
 """
 """
 
-import re
 import fnmatch
+import re
+
 from codechecker_lib import logger
 
 LOG = logger.get_new_logger('SKIPLIST_HANDLER')

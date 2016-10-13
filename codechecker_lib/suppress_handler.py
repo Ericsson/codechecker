@@ -7,9 +7,9 @@
 Suppress handling.
 """
 
-import re
 import abc
 import linecache
+import re
 
 from codechecker_lib import logger
 

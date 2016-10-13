@@ -7,15 +7,15 @@
 Main viewer server starts a http server which handles thrift client
 and browser requests.
 """
+import errno
 import os
 import posixpath
-import urllib
-import errno
 import socket
+import urllib
 from multiprocessing.pool import ThreadPool
 
-from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import scoped_session
+from sqlalchemy.orm import sessionmaker
 
 try:
     from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler

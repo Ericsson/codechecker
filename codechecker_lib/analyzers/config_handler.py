@@ -4,9 +4,8 @@
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
 
-import os
 import collections
-
+import os
 from abc import ABCMeta, abstractmethod
 
 from codechecker_lib import logger

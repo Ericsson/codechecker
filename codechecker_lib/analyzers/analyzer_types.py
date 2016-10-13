@@ -11,18 +11,16 @@ import os
 import re
 import sys
 
-from codechecker_lib import logger
 from codechecker_lib import analyzer_env
-from codechecker_lib import host_check
 from codechecker_lib import client
-
-from codechecker_lib.analyzers import analyzer_clangsa
-from codechecker_lib.analyzers import config_handler_clangsa
-from codechecker_lib.analyzers import result_handler_clangsa
-
+from codechecker_lib import host_check
+from codechecker_lib import logger
 from codechecker_lib.analyzers import analyzer_clang_tidy
-from codechecker_lib.analyzers import result_handler_clang_tidy
+from codechecker_lib.analyzers import analyzer_clangsa
 from codechecker_lib.analyzers import config_handler_clang_tidy
+from codechecker_lib.analyzers import config_handler_clangsa
+from codechecker_lib.analyzers import result_handler_clang_tidy
+from codechecker_lib.analyzers import result_handler_clangsa
 
 LOG = logger.get_new_logger('ANALYZER TYPES')
 

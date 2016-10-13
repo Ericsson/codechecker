@@ -5,8 +5,8 @@
 # -------------------------------------------------------------------------
 
 import errno
-import subprocess
 import os
+import subprocess
 
 from codechecker_lib import logger
 

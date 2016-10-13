@@ -9,9 +9,10 @@ This module tests the correctness of the OutputParser and PListConverter, which
 used in sequence transform a Clang Tidy output file to a plist file.
 """
 
+import copy
 import os
 import unittest
-import copy
+
 import StringIO
 
 import codechecker_lib.tidy_output_converter as tidy_out_conv
