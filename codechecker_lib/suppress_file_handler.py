@@ -83,8 +83,9 @@ def write_to_suppress_file(suppress_file, value, file_name, comment=''):
         if not os.stat(suppress_file)[6] == 0:
             # File is not empty.
 
-            res = filter(lambda x: (x[0] == value and x[1] == file_name) or (
-            x[0] == value and x[1] == ''), suppress_data)
+            res = filter(lambda x: (x[0] == value and x[1] == file_name) or
+                                   (x[0] == value and x[1] == ''),
+                         suppress_data)
 
             if res:
                 LOG.debug("Already found in\n %s" % suppress_file)
@@ -92,8 +93,8 @@ def write_to_suppress_file(suppress_file, value, file_name, comment=''):
 
         s_file = codecs.open(suppress_file, 'a', 'UTF-8')
 
-        s_file.write(
-            value + COMMENT_SEPARATOR + file_name + COMMENT_SEPARATOR + comment + '\n')
+        s_file.write(value + COMMENT_SEPARATOR + file_name + COMMENT_SEPARATOR +
+                     comment + '\n')
         s_file.close()
 
         return True

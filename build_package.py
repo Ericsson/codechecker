@@ -373,8 +373,8 @@ def build_package(repository_root, build_package_config, env=None):
         LOG.info('Available')
     else:
         if platform.system() == 'Darwin':
-            LOG.error(
-                'Not exists, scan-build-py (intercept) is mandatory on OS X!')
+            LOG.error('Not exists, scan-build-py (intercept) '
+                      'is mandatory on OS X!')
             sys.exit(1)
         # Build ld logger because intercept is not available.
         if platform.system() == 'Linux':

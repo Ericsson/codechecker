@@ -119,8 +119,9 @@ class CheckerReportHandler(object):
 
                     if self.__del_source_file_for_report(run_id, report.id,
                                                          report.file_id):
-                        LOG.debug(
-                            "Stored source file needs to be kept, there is reference to it from another report.")
+                        LOG.debug("Stored source file needs to be kept, "
+                                  "there is reference to it from another "
+                                  "report.")
                         # Report needs to be deleted if there is no reference
                         # the file cascade delete will remove it else manual
                         # cleanup is needed.
@@ -354,13 +355,11 @@ class CheckerReportHandler(object):
                 source_file.filepath)
 
             # Old suppress format did not contain file name.
-            suppressed = self.session.query(SuppressBug) \
-                             .filter(
+            suppressed = self.session.query(SuppressBug).filter(
                 and_(SuppressBug.run_id == action.run_id,
                      SuppressBug.hash == bug_hash,
                      or_(SuppressBug.file_name == source_file_name,
-                         SuppressBug.file_name == u''))) \
-                             .count() > 0
+                         SuppressBug.file_name == u''))).count() > 0
 
             report = Report(action.run_id,
                             bug_hash,

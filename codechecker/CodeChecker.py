@@ -15,8 +15,8 @@ import signal
 import sys
 
 import shared
-from cmdline_client import cmd_line_client
 
+from cmdline_client import cmd_line_client
 from codechecker_lib import arg_handler
 from codechecker_lib import logger
 from codechecker_lib import util
@@ -85,8 +85,8 @@ class DeprecatedOptionAction(argparse.Action):
                      metavar='DEPRECATED')
 
     def __call__(self, parser, namespace, value=None, option_string=None):
-        LOG.warning(
-            "Deprecated command line option in use: '" + option_string + "'")
+        LOG.warning("Deprecated command line option in use: '" +
+                    option_string + "'")
 
 
 def add_database_arguments(parser):

@@ -83,8 +83,8 @@ def get_password_from_file(passfile_path, hostname, port, database, username):
     http://www.postgresql.org/docs/current/static/libpq-pgpass.html
     """
 
-    if len(hostname) == 0 or len(port) == 0 or len(database) == 0 or len(
-            username) == 0:
+    if len(hostname) == 0 or len(port) == 0 or len(database) == 0 or \
+       len(username) == 0:
         return None
 
     with open(passfile_path, 'r') as passfile:

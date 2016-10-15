@@ -82,20 +82,19 @@ def check_supported_analyzers(analyzers, context):
         if analyzer_name not in supported_analyzers:
             LOG.error('Unsupported analyzer ' + analyzer_name + ' !')
             sys.exit(1)
-        else:
-            # Get the compiler binary to check if it can run.
-            available_analyzer = True
-            analyzer_bin = analyzer_binaries.get(analyzer_name)
-            if not analyzer_bin:
-                LOG.debug_analyzer(
-                    'Failed to detect analyzer binary ' + analyzer_name)
-                available_analyzer = False
-            if not host_check.check_clang(analyzer_bin, check_env):
-                LOG.warning('Failed to run analyzer '
-                            + analyzer_name + ' !')
-                available_analyzer = False
-            if available_analyzer:
-                enabled_analyzers.add(analyzer_name)
+
+        # Get the compiler binary to check if it can run.
+        available_analyzer = True
+        analyzer_bin = analyzer_binaries.get(analyzer_name)
+        if not analyzer_bin:
+            LOG.debug_analyzer('Failed to detect analyzer binary ' +
+                               analyzer_name)
+            available_analyzer = False
+        if not host_check.check_clang(analyzer_bin, check_env):
+            LOG.warning('Failed to run analyzer ' + analyzer_name + ' !')
+            available_analyzer = False
+        if available_analyzer:
+            enabled_analyzers.add(analyzer_name)
 
     return enabled_analyzers
 
@@ -305,11 +304,11 @@ def build_config_handlers(args, context, enabled_analyzers, connection=None):
             config_handler = __build_clang_tidy_config_handler(args, context)
             analyzer_config_map[ea] = config_handler
         else:
-            LOG.debug_analyzer(
-                'Not supported analyzer type. No configuration handler will be created')
+            LOG.debug_analyzer('Not supported analyzer type. '
+                               'No configuration handler will be created')
 
     if connection:
-        # collect all configuration options and store them together
+        # Collect all configuration options and store them together.
         configs = []
         for _, config_handler in analyzer_config_map.items():
             configs.extend(config_handler.get_checker_configs())

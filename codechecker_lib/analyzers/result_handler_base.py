@@ -55,7 +55,6 @@ class ResultHandler(object):
         self.__analyzed_source_file = None
         self.__analyzer_returncode = 1
         self.__buildaction = action
-        self.__result_files = []
 
         self.__res_file = None
 
@@ -78,13 +77,6 @@ class ResultHandler(object):
         Set the analyzer cmd.
         """
         self.__analyzer_cmd = cmd
-
-    @property
-    def result_files(self):
-        """
-        Return the analyzer result files.
-        """
-        return self.__result_files
 
     @property
     def skiplist_handler(self):

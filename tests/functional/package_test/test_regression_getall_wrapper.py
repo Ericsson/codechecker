@@ -46,8 +46,8 @@ class RunResults(unittest.TestCase):
     def test_get_run_results_no_filter(self):
         """ Get all the run results without any filtering. """
         runid = self._runid
-        logging.debug(
-            'Get all run results from the db for runid: ' + str(runid))
+        logging.debug('Get all run results from the db for runid: ' +
+                      str(runid))
 
         run_result_count = self._cc_client.getRunResultCount(runid, [])
         self.assertTrue(run_result_count)
@@ -213,10 +213,11 @@ class RunResults(unittest.TestCase):
         self.assertEqual(run_result_count, len(run_results))
 
     def test_get_run_results_sorted2(self):
-        """ Get the run results and sort them by filename and checkername ASC. """
+        """ Get the run results and sort them by file name and
+            checker name ASC. """
         runid = self._runid
-        logging.debug(
-            'Get all run results from the db for runid: ' + str(runid))
+        logging.debug('Get all run results from the db for runid: ' +
+                      str(runid))
         sortMode1 = SortMode(SortType.FILENAME, Order.ASC)
         sortMode2 = SortMode(SortType.CHECKER_NAME, Order.ASC)
         sort_types = [sortMode1, sortMode2]

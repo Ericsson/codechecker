@@ -36,7 +36,6 @@ class AnalyzerCrashHandler(object):
 
         gdb_cmd = ['gdb', '--batch',
                    '--command=' + self._context.gdb_config_file, '--args']
-        # Add gdb script path is in the DT under the config folder.
         gdb_cmd.extend(build_cmd)
 
         tmp_stdout = tempfile.TemporaryFile()

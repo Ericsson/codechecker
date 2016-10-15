@@ -120,7 +120,7 @@ def check(check_data):
                 rh.postprocess_result()
                 rh.handle_results()
             else:
-                # Analyses failed.
+                # Analysis failed.
                 LOG.error('Analyzing ' + source_file_name + ' failed.')
                 if rh.analyzer_stdout != '':
                     LOG.error(rh.analyzer_stdout)

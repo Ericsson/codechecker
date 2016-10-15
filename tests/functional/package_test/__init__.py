@@ -251,10 +251,13 @@ def _generate_skip_list_file(skip_list_file):
 def _run_check(shared_test_params, skip_list_file, test_project_build_cmd,
                test_project_name, test_project_path):
     """Check a test project."""
-    check_cmd = ['CodeChecker', 'check', '-w', shared_test_params['workspace'],
-                 '--suppress', shared_test_params['suppress_file'], '--skip',
-                 skip_list_file, '-n', test_project_name, '-b',
-                 "'" + test_project_build_cmd + "'", '--analyzers', 'clangsa',
+    check_cmd = ['CodeChecker', 'check',
+                 '-w', shared_test_params['workspace'],
+                 '--suppress', shared_test_params['suppress_file'],
+                 '--skip', skip_list_file,
+                 '-n', test_project_name,
+                 '-b', "'" + test_project_build_cmd + "'",
+                 '--analyzers', 'clangsa',
                  '--quiet-build']
     if shared_test_params['use_postgresql']:
         check_cmd.append('--postgresql')
@@ -289,11 +292,11 @@ def _start_server(shared_test_params, test_config):
         if proc.poll() is None:
             proc.terminate()
 
-    server_cmd = ['CodeChecker', 'server', '--check-port',
-                  str(test_config['CC_TEST_SERVER_PORT']), '--view-port',
-                  str(test_config['CC_TEST_VIEWER_PORT']), '-w',
-                  shared_test_params['workspace'], '--suppress',
-                  shared_test_params['suppress_file']]
+    server_cmd = ['CodeChecker', 'server',
+                  '--check-port', str(test_config['CC_TEST_SERVER_PORT']),
+                  '--view-port', str(test_config['CC_TEST_VIEWER_PORT']),
+                  '-w', shared_test_params['workspace'],
+                  '--suppress', shared_test_params['suppress_file']]
     if shared_test_params['use_postgresql']:
         server_cmd.append('--postgresql')
         server_cmd += _pg_db_config_to_cmdline_params(

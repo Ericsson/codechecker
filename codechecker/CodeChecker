@@ -26,8 +26,6 @@ procPool = []
 def run_codechecker(checker_env):
     """
     Run the CodeChecker.
-        * original_env - will be saved for later usage by the build action
-                         logger.
         * checker_env - CodeChecker will be run in the checker env.
     """
 

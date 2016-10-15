@@ -94,13 +94,13 @@ def check_clang(compiler_bin, env):
                               stderr=subprocess.PIPE)
         if not res:
             return True
-        else:
-            LOG.debug_analyzer(
-                'Failed to run: "' + ' '.join(clang_version_cmd) + '"')
-            return False
+
+        LOG.debug_analyzer('Failed to run: "' + ' '.join(clang_version_cmd) +
+                           '"')
+        return False
 
     except OSError as oerr:
-        if oerr[0] == errno.ENOENT:
+        if oerr.errno == errno.ENOENT:
             LOG.error(oerr)
             LOG.error('Failed to run: ' + ' '.join(clang_version_cmd) + '"')
             return False

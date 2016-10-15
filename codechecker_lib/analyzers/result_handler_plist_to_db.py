@@ -180,8 +180,8 @@ class PlistToDB(ResultHandler):
 
         with client.get_connection() as connection:
 
-            LOG.debug(
-                'Storing original build and analyzer command to the database')
+            LOG.debug('Storing original build and analyzer command '
+                      'to the database')
 
             _, source_file_name = ntpath.split(self.analyzed_source_file)
 

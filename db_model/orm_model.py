@@ -248,13 +248,16 @@ class Report(Base):
                  bug_type, severity, suppressed):
         self.run_id = run_id
         self.file_id = file_id
-        self.bug_id, self.checker_message = bug_id, checker_message
+        self.bug_id = bug_id
+        self.checker_message = checker_message
         self.start_bugpoint = start_bugpoint
         self.start_bugevent = start_bugevent
         self.end_bugevent = end_bugevent
         self.severity = severity
-        self.checker_id, self.checker_cat = checker_id, checker_cat
-        self.suppressed, self.bug_type = suppressed, bug_type
+        self.checker_id = checker_id
+        self.checker_cat = checker_cat
+        self.suppressed = suppressed
+        self.bug_type = bug_type
 
 
 class ReportsToBuildActions(Base):

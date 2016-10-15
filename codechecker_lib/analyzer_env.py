@@ -63,8 +63,8 @@ def get_check_env(path_env_extra, ld_lib_path_extra):
             'Extending LD_LIBRARY_PATH environment variable with: ' + extra_lib)
         try:
             original_ld_library_path = new_env['LD_LIBRARY_PATH']
-            new_env[
-                'LD_LIBRARY_PATH'] = extra_lib + ':' + original_ld_library_path
+            new_env['LD_LIBRARY_PATH'] = \
+                extra_lib + ':' + original_ld_library_path
         except:
             new_env['LD_LIBRARY_PATH'] = extra_lib
 
