@@ -84,10 +84,10 @@ class RunResults(unittest.TestCase):
         for bug in self._testproject_data['bugs']:
             found = False
             for run_res in run_results:
-                found |= (run_res.checkedFile.endswith(bug['file'])) and \
-                         (run_res.lastBugPosition.startLine == bug['line']) and \
-                         (run_res.checkerId == bug['checker']) and \
-                         (run_res.bugHash == bug['hash'])
+                found |= ((run_res.checkedFile.endswith(bug['file'])) and
+                          (run_res.lastBugPosition.startLine == bug['line']) and
+                          (run_res.checkerId == bug['checker']) and
+                          (run_res.bugHash == bug['hash']))
             found_all &= found
             if not found:
                 not_found.append(bug)

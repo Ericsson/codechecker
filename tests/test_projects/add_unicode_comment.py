@@ -29,8 +29,8 @@ commentPattern = re.compile(
 
 def parseArgs():
     global args
-    parser = argparse.ArgumentParser(description= \
-                                         'This script appends a C block comment containing special Unicode characters to the end of the source files.')
+    parser = argparse.ArgumentParser(description=
+                                     'This script appends a C block comment containing special Unicode characters to the end of the source files.')
 
     parser.add_argument('--remove', '-r', action='store_true', dest='remove',
                         help='Remove the comments from the files.')
