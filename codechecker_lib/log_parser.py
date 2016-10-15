@@ -50,7 +50,6 @@ def parse_compile_commands_json(logfile):
         action.directory = entry['directory']
 
         action.sources = sourcefile
-        action.lang = lang
 
         # Filter out duplicate compilation commands.
         unique_key = action.cmp_key
