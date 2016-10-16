@@ -8,34 +8,29 @@
 import json
 import logging
 import os
-import sys
-import traceback
 import unittest
 
-from codeCheckerDBAccess.ttypes import ReportFilter
-
 import shared
-
+from codeCheckerDBAccess.ttypes import ReportFilter
 from test_utils.thrift_client_to_db import CCViewerHelper
 
 
 def get_severity_level(name):
-    """ Convert serverity name to value. """
+    """ Convert severity name to value. """
     return shared.ttypes.Severity._NAMES_TO_VALUES[name]
 
 
 class RunResults(unittest.TestCase):
-
     _ccClient = None
 
-    # selected runid for running the tests
+    # Selected runid for running the tests.
     _runid = None
 
     def _select_one_runid(self):
         runs = self._cc_client.getRunData()
         self.assertIsNotNone(runs)
         self.assertNotEqual(len(runs), 0)
-        # select one random run
+        # Select one random run.
         idx = 0
         return runs[idx].runId
 
@@ -50,7 +45,7 @@ class RunResults(unittest.TestCase):
         self._runid = self._select_one_runid()
 
     def test_filter_none(self):
-        ''' Filter value is None should return all results'''
+        """ Filter value is None should return all results."""
         runid = self._runid
         sort_types = None
         simple_filters = None
@@ -65,7 +60,7 @@ class RunResults(unittest.TestCase):
         self.assertEqual(run_result_count, len(run_results))
 
     def test_filter_empty(self):
-        ''' Filter value is empty list should return all results'''
+        """ Filter value is empty list should return all results."""
         runid = self._runid
         sort_types = None
         simple_filters = []
@@ -80,13 +75,13 @@ class RunResults(unittest.TestCase):
         self.assertEqual(run_result_count, len(run_results))
 
     def test_filter_severity(self):
-        ''' Filter by severity levels'''
+        """ Filter by severity levels."""
         runid = self._runid
 
         severity_test_data = self._testproject_data['filter_severity_levels']
 
         for level in severity_test_data:
-            for severity_level, test_result_count in level.iteritems():
+            for severity_level, test_result_count in level.items():
                 logging.debug('Severity level filter ' + severity_level +
                               ' test result count: ' + str(test_result_count))
                 sort_types = None
@@ -103,13 +98,13 @@ class RunResults(unittest.TestCase):
                 self.assertEqual(test_result_count, len(run_results))
 
     def test_filter_checker_id(self):
-        ''' Filter by checker id'''
+        """ Filter by checker id. """
         runid = self._runid
 
         severity_test_data = self._testproject_data['filter_checker_id']
 
         for level in severity_test_data:
-            for checker_id_filter, test_result_count in level.iteritems():
+            for checker_id_filter, test_result_count in level.items():
                 logging.debug('Checker id filter ' + checker_id_filter +
                               ' test result count: ' + str(test_result_count))
                 sort_types = None
@@ -125,15 +120,15 @@ class RunResults(unittest.TestCase):
                 self.assertEqual(test_result_count, len(run_results))
 
     def test_filter_file_path(self):
-        ''' Filter by checker id'''
+        """ Filter by checker id. """
         runid = self._runid
 
         severity_test_data = self._testproject_data['filter_filepath']
 
         for level in severity_test_data:
-            for filepath_filter, test_result_count in level.iteritems():
+            for filepath_filter, test_result_count in level.items():
                 logging.debug('File path filter ' + filepath_filter +
-                     ' test result count: ' + str(test_result_count))
+                              ' test result count: ' + str(test_result_count))
 
                 sort_types = None
                 simple_filters = []
@@ -148,15 +143,16 @@ class RunResults(unittest.TestCase):
                 self.assertEqual(test_result_count, len(run_results))
 
     def test_filter_case_insensitive_file_path(self):
-        ''' Filter by file path case insensitive'''
+        """ Filter by file path case insensitive."""
 
         runid = self._runid
-        filter_test_data = self._testproject_data['filter_filepath_case_insensitive']
+        filter_test_data = self._testproject_data[
+            'filter_filepath_case_insensitive']
 
         for level in filter_test_data:
-            for filepath_filter, test_result_count in level.iteritems():
+            for filepath_filter, test_result_count in level.items():
                 logging.debug('File path filter ' + filepath_filter +
-                     ' test result count: ' + str(test_result_count))
+                              ' test result count: ' + str(test_result_count))
 
                 sort_types = None
                 simple_filters = []

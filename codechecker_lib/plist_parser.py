@@ -3,7 +3,7 @@
 #   This file is distributed under the University of Illinois Open Source
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
-''''''
+""""""
 
 # FIXME: This file contains some workarounds.
 # Remove them as soon as a proper clang version comes out.
@@ -11,8 +11,8 @@
 import plistlib
 from xml.parsers.expat import ExpatError
 
-import plist_helper
 from codechecker_lib import logger
+from . import plist_helper
 
 LOG = logger.get_new_logger('PLIST_PARSER')
 
@@ -30,7 +30,7 @@ class GenericEquality(object):
 # -----------------------------------------------------------------------------
 class Position(GenericEquality):
 
-    '''Represent a postion.'''
+    """Represent a postion."""
 
     def __init__(self, x, y, f):
         self.line = x
@@ -41,7 +41,7 @@ class Position(GenericEquality):
 # -----------------------------------------------------------------------------
 class Range(GenericEquality):
 
-    '''Represent a location in the bug path.'''
+    """Represent a location in the bug path."""
 
     def __init__(self, start_pos, end_pos, msg=''):
         self.start_pos = start_pos
@@ -65,7 +65,7 @@ def make_range(array, files):
 # -----------------------------------------------------------------------------
 class Bug(object):
 
-    '''The bug with all information, it include bugpath too.'''
+    """The bug with all information, it include bugpath too."""
 
     def __init__(self, file, from_pos, until_pos=None, msg=None, category=None,
                  type=None, hash_value=''):
@@ -103,7 +103,7 @@ class Bug(object):
 # -----------------------------------------------------------------------------
 def parse_plist(path):
     """
-    parse the plist file
+    Parse the plist file.
     """
     bugs = []
     files = []
@@ -155,8 +155,8 @@ def parse_plist(path):
             try:
                 current.hash_value = diag['issue_hash_content_of_line_in_context']
             except KeyError as kerr:
-                # hash was not found
-                # generate some hash for older clang versions
+                # Hash was not found.
+                # Generate some hash for older clang versions.
                 LOG.debug(kerr)
                 LOG.debug("Hash value wasn't found in the plist file. "
                             'Read the user guide!')

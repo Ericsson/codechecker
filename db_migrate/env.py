@@ -2,25 +2,27 @@ from __future__ import with_statement
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
-# this is the Alembic Config object, which provides
+# This is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
 
-# add your model's MetaData object here
-# for 'autogenerate' support
+# Add your model's MetaData object here
+# for 'autogenerate' support.
 try:
     from db_model.orm_model import Base
 except ImportError:
     # Assume we are in the source directory
     import sys
     import os
+
     sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
-        "..")))
+                                                 "..")))
     from db_model.orm_model import Base
 
 target_metadata = Base.metadata
 
-# other values from the config, defined by the needs of env.py,
+
+# Other values from the config, defined by the needs of env.py,
 # can be acquired:
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
@@ -35,7 +37,6 @@ def run_migrations_offline():
 
     Calls to context.execute() here emit the given string to the
     script output.
-
     """
     url = config.get_main_option("sqlalchemy.url")
     context.configure(
@@ -50,7 +51,6 @@ def run_migrations_online():
 
     In this scenario we need to create an Engine
     and associate a connection with the context.
-
     """
     connectable = config.attributes.get('connection', None)
     if connectable is None:
@@ -67,6 +67,7 @@ def run_migrations_online():
 
         with context.begin_transaction():
             context.run_migrations()
+
 
 if context.is_offline_mode():
     run_migrations_offline()

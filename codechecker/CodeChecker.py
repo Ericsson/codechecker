@@ -4,23 +4,23 @@
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
 
-'''
-main codechecker script
+"""
+Main CodeChecker script.
+"""
+from __future__ import print_function
 
-'''
-import os
-import sys
-import signal
 import argparse
+import os
+import signal
+import sys
 
 import shared
 
-from codechecker_lib import logger
-from codechecker_lib import arg_handler
-from codechecker_lib.analyzers import analyzer_types
-from codechecker_lib import util
-
 from cmdline_client import cmd_line_client
+from codechecker_lib import arg_handler
+from codechecker_lib import logger
+from codechecker_lib import util
+from codechecker_lib.analyzers import analyzer_types
 
 LOG = logger.get_new_logger('MAIN')
 
@@ -28,17 +28,19 @@ analyzers = ' '.join(list(analyzer_types.supported_analyzers))
 
 
 class OrderedCheckersAction(argparse.Action):
-    '''
+    """
     Action to store enabled and disabled checkers
-    and keep ordering from command line
+    and keep ordering from command line.
 
     Create separate lists based on the checker names for
-    each analyzer
-    '''
+    each analyzer.
+    """
+
     def __init__(self, option_strings, dest, nargs=None, **kwargs):
         if nargs is not None:
             raise ValueError("nargs not allowed")
-        super(OrderedCheckersAction, self).__init__(option_strings, dest, **kwargs)
+        super(OrderedCheckersAction, self).__init__(option_strings, dest,
+                                                    **kwargs)
 
     def __call__(self, parser, namespace, value, option_string=None):
 
@@ -56,8 +58,9 @@ class OrderedCheckersAction(argparse.Action):
 # ------------------------------------------------------------------------------
 class DeprecatedOptionAction(argparse.Action):
     '''
-    Deprecated argument action
+    Deprecated argument action.
     '''
+
     def __init__(self,
                  option_strings,
                  dest,
@@ -69,23 +72,25 @@ class DeprecatedOptionAction(argparse.Action):
                  required=False,
                  help=None,
                  metavar=None):
-        super(DeprecatedOptionAction, self).__init__(option_strings,
-                                                     dest,
-                                                     nargs='?',
-                                                     const='deprecated_option',
-                                                     default=None,
-                                                     type=None,
-                                                     choices=None,
-                                                     required=False,
-                                                     help='DEPRECATED argument!',
-                                                     metavar='DEPRECATED')
+        super(DeprecatedOptionAction, self). \
+            __init__(option_strings,
+                     dest,
+                     nargs='?',
+                     const='deprecated_option',
+                     default=None,
+                     type=None,
+                     choices=None,
+                     required=False,
+                     help="DEPRECATED argument!",
+                     metavar='DEPRECATED')
 
     def __call__(self, parser, namespace, value=None, option_string=None):
-        LOG.warning("Deprecated command line option in use: '" + option_string + "'")
+        LOG.warning("Deprecated command line option in use: '" +
+                    option_string + "'")
 
 
 def add_database_arguments(parser):
-    '''Helper method for adding database arguments to an argument parser.'''
+    """ Helper method for adding database arguments to an argument parser. """
 
     parser.add_argument('--sqlite', action=DeprecatedOptionAction)
     parser.add_argument('--postgresql', dest="postgresql",
@@ -94,7 +99,7 @@ def add_database_arguments(parser):
     parser.add_argument('--dbport', type=int, dest="dbport",
                         default=5432, required=False,
                         help='Postgres server port.')
-    # WARNING dbaddress default value influences workspace creation (SQLite)
+    # WARNING dbaddress default value influences workspace creation (SQLite).
     parser.add_argument('--dbaddress', type=str, dest="dbaddress",
                         default="localhost", required=False,
                         help='Postgres database server address')
@@ -108,16 +113,16 @@ def add_database_arguments(parser):
 
 def add_analyzer_arguments(parser):
     """
-    analyzer related arguments
+    Analyzer related arguments.
     """
     parser.add_argument('-e', '--enable',
-                              default=argparse.SUPPRESS,
-                              action=OrderedCheckersAction,
-                              help='Enable checker.')
+                        default=argparse.SUPPRESS,
+                        action=OrderedCheckersAction,
+                        help='Enable checker.')
     parser.add_argument('-d', '--disable',
-                              default=argparse.SUPPRESS,
-                              action=OrderedCheckersAction,
-                              help='Disable checker.')
+                        default=argparse.SUPPRESS,
+                        action=OrderedCheckersAction,
+                        help='Disable checker.')
     parser.add_argument('--keep-tmp', action="store_true",
                         dest="keep_tmp", required=False,
                         help='''\
@@ -125,30 +130,32 @@ Keep temporary report files generated during the analysis.''')
 
     parser.add_argument('--analyzers', nargs='+',
                         dest="analyzers", required=False,
-                        default=[analyzer_types.CLANG_SA, analyzer_types.CLANG_TIDY],
-                        help="""Select which analyzer should be enabled.\nCurrently supported analyzers are: """ + analyzers + """\ne.g. '--analyzers """ + analyzers +"'")
+                        default=[analyzer_types.CLANG_SA,
+                                 analyzer_types.CLANG_TIDY],
+                        help="""Select which analyzer should be enabled.\nCurrently supported analyzers are: """ + analyzers + """\ne.g. '--analyzers """ + analyzers + "'")
 
     parser.add_argument('--saargs', dest="clangsa_args_cfg_file",
                         required=False, default=argparse.SUPPRESS,
                         help='''\
-File with arguments which will be forwarded directly to the Clang static analyzer without modifiaction''')
+File with arguments which will be forwarded directly to the Clang static analyzer without modification''')
 
     parser.add_argument('--tidyargs', dest="tidy_args_cfg_file",
                         required=False, default=argparse.SUPPRESS,
                         help='''\
-File with arguments which will be forwarded directly to the Clang tidy analyzer without modifiaction''')
+File with arguments which will be forwarded directly to the Clang tidy analyzer without modification''')
+
 
 # ------------------------------------------------------------------------------
 def main():
-    '''
-    codechecker main command line
-    '''
+    """
+    CodeChecker main command line.
+    """
 
     def signal_handler(sig, frame):
-        '''
-        Without this handler the postgreSql
-        server does not terminated at signal
-        '''
+        """
+        Without this handler the PostgreSQL
+        server does not terminated at signal.
+        """
         sys.exit(1)
 
     signal.signal(signal.SIGINT, signal_handler)
@@ -187,7 +194,7 @@ CodeChecker quickcheck -w ~/workspace -b "cd ~/myproject && make"
 
         jobs_help_msg = """Number of jobs. Start multiple processes for faster analysis""";
 
-        log_argument_help_msg="""Path to the log file which is created during the build. \nIf there is an already generated log file with the compilation commands\ngenerated by 'CodeChecker log' or 'cmake -DCMAKE_EXPORT_COMPILE_COMMANDS' \nCodechecker check can use it for the analysis in that case running the original build will \nbe left out from the analysis process (no log is needed)."""
+        log_argument_help_msg = """Path to the log file which is created during the build. \nIf there is an already generated log file with the compilation commands\ngenerated by 'CodeChecker log' or 'cmake -DCMAKE_EXPORT_COMPILE_COMMANDS' \nCodechecker check can use it for the analysis in that case running the original build will \nbe left out from the analysis process (no log is needed)."""
 
         # --------------------------------------
         # check commands
@@ -217,7 +224,8 @@ Build command which is used to build the project''')
                                   help=jobs_help_msg)
         check_parser.add_argument('-u', '--suppress', type=str, dest="suppress",
                                   default=argparse.SUPPRESS,
-                                  required=False, help="""Path to suppress file. \nSuppress file can be used to suppress analysis results during the analysis.\nIt is based on the bug identifier generated by the compiler which is experimental.\nDo not depend too much on this file because identifier or file format can be changed.\nFor other in source suppress features see the user guide.""")
+                                  required=False,
+                                  help="""Path to suppress file. \nSuppress file can be used to suppress analysis results during the analysis.\nIt is based on the bug identifier generated by the compiler which is experimental.\nDo not depend too much on this file because identifier or file format can be changed.\nFor other in source suppress features see the user guide.""")
         check_parser.add_argument('-c', '--clean',
                                   default=argparse.SUPPRESS,
                                   action=DeprecatedOptionAction)
@@ -244,7 +252,7 @@ Delete analysis results form the database if a run with the given name already e
         check_parser.set_defaults(func=arg_handler.handle_check)
 
         # --------------------------------------
-        # quickcheck commands
+        # QuickCheck commands.
         qcheck_parser = subparsers.add_parser('quickcheck',
                                               formatter_class=argparse.ArgumentDefaultsHelpFormatter,
                                               help='''\
@@ -267,11 +275,10 @@ Run CodeChecker for a project without database.''')
         add_analyzer_arguments(qcheck_parser)
         qcheck_parser.set_defaults(func=arg_handler.handle_quickcheck)
 
-
         # --------------------------------------
-        # log commands
+        # Log commands.
         logging_parser = subparsers.add_parser('log',
-                                              formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+                                               formatter_class=argparse.ArgumentDefaultsHelpFormatter,
                                                help='''\
 Runs the given build command. During the build the compilation commands are collected and
 stored into a compilation command json file (no analysis is done during the build).''')
@@ -284,29 +291,32 @@ stored into a compilation command json file (no analysis is done during the buil
         logging_parser.set_defaults(func=arg_handler.handle_log)
 
         # --------------------------------------
-        # checkers parser
+        # Checkers parser.
         checkers_parser = subparsers.add_parser('checkers',
                                                 formatter_class=argparse.ArgumentDefaultsHelpFormatter,
                                                 help="""List the available checkers for the supported analyzers and show their default status (+ for being enabled, - for being disabled by default).""")
         checkers_parser.add_argument('--analyzers', nargs='+',
-                            dest="analyzers", required=False,
-                            help="""Select which analyzer checkers should be listed.\nCurrently supported analyzers:\n""" + analyzers)
+                                     dest="analyzers", required=False,
+                                     help="""Select which analyzer checkers should be listed.\nCurrently supported analyzers:\n""" + analyzers)
         checkers_parser.set_defaults(func=arg_handler.handle_list_checkers)
 
         # --------------------------------------
-        # server
+        # Server.
         server_parser = subparsers.add_parser('server',
-                                             formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+                                              formatter_class=argparse.ArgumentDefaultsHelpFormatter,
                                               help='Start the codechecker web server.')
         server_parser.add_argument('-w', '--workspace', type=str,
                                    dest="workspace",
                                    default=util.get_default_workspace(),
                                    help=workspace_help_msg)
-        server_parser.add_argument('-v', '--view-port', type=int, dest="view_port",
+        server_parser.add_argument('-v', '--view-port', type=int,
+                                   dest="view_port",
                                    default=8001, required=False,
                                    help='Port used for viewing.')
-        server_parser.add_argument('-u', '--suppress', type=str, dest="suppress",
-                                   required=False, help='Path to suppress file.')
+        server_parser.add_argument('-u', '--suppress', type=str,
+                                   dest="suppress",
+                                   required=False,
+                                   help='Path to suppress file.')
         server_parser.add_argument('--not-host-only', action="store_true",
                                    dest="not_host_only",
                                    help='Viewing the results is possible not \
@@ -321,13 +331,13 @@ stored into a compilation command json file (no analysis is done during the buil
         server_parser.set_defaults(func=arg_handler.handle_server)
 
         # --------------------------------------
-        # cmd_line
+        # Cmd_line.
         cmd_line_parser = subparsers.add_parser('cmd',
                                                 help='Command line client')
         cmd_line_client.register_client_command_line(cmd_line_parser)
 
         # --------------------------------------
-        # debug parser
+        # Debug parser.
         debug_parser = subparsers.add_parser('debug',
                                              formatter_class=argparse.ArgumentDefaultsHelpFormatter,
                                              help="""Generate gdb debug dump files for all the failed compilation commands in the last analyzer run.\nRequires a database with the failed compilation commands""")
@@ -342,7 +352,7 @@ stored into a compilation command json file (no analysis is done during the buil
         debug_parser.set_defaults(func=arg_handler.handle_debug)
 
         # --------------------------------------
-        # plist parser
+        # Plist parser.
         plist_parser = subparsers.add_parser('plist',
                                              formatter_class=argparse.ArgumentDefaultsHelpFormatter,
                                              help='Parse plist files in the given directory.')
@@ -362,7 +372,8 @@ stored into a compilation command json file (no analysis is done during the buil
                                   help=jobs_help_msg)
         plist_parser.add_argument('-s', '--steps', action="store_true",
                                   dest="print_steps", help='Print steps.')
-        plist_parser.add_argument('--stdout', action="store_true", dest="stdout",
+        plist_parser.add_argument('--stdout', action="store_true",
+                                  dest="stdout",
                                   required=False, default=False,
                                   help="Print results to stdout instead of database.")
         plist_parser.add_argument('--force', action="store_true",
@@ -373,7 +384,7 @@ Delete analysis results form the database if a run with the given name already e
         plist_parser.set_defaults(func=arg_handler.handle_plist)
 
         # --------------------------------------
-        # package version info
+        # Package version info.
         version_parser = subparsers.add_parser('version',
                                                help='Print package version information.')
         version_parser.set_defaults(func=arg_handler.handle_version_info)
@@ -383,7 +394,7 @@ Delete analysis results form the database if a run with the given name already e
 
     except KeyboardInterrupt as kb_err:
         LOG.info(str(kb_err))
-        LOG.info("Interupted by user...")
+        LOG.info("Interrupted by user...")
         sys.exit(1)
 
     except shared.ttypes.RequestFailed as thrift_ex:
@@ -393,7 +404,7 @@ Delete analysis results form the database if a run with the given name already e
         sys.exit(1)
 
     # Handle all exception, but print stacktrace. It is needed for atexit.
-    # atexit does not work correctly when an unhandled exception occured.
+    # atexit does not work correctly when an unhandled exception occurred.
     # So in this case, the servers left running when the script exited.
     except Exception:
         import traceback

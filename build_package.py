@@ -1,18 +1,22 @@
 #!/usr/bin/env python
-'''
-CodeChecker packager script
-creates a package based on the given layout config
-'''
+"""
+CodeChecker packager script creates a package based on the given layout config.
+"""
+from __future__ import print_function
 
+import argparse
+import errno
+import json
+import logging
+import ntpath
 import os
 import shutil
-import argparse
-import logging
-import errno
 import sys
-import json
-import ntpath
-import urlparse
+
+try:
+    import urlparse
+except ImportError:
+    import urllib.parse as urlparse
 import tarfile
 import subprocess
 import time
@@ -32,7 +36,7 @@ LOG.addHandler(log_handler)
 
 # -------------------------------------------------------------------
 def run_cmd(cmd, cwd=None, env=None, silent=False):
-    ''' Run a command '''
+    """ Run a command. """
 
     LOG.debug(' '.join(cmd))
     LOG.debug(cwd)
@@ -42,7 +46,8 @@ def run_cmd(cmd, cwd=None, env=None, silent=False):
         if silent:
             stdout = None
             stderr = None
-        proc = subprocess.Popen(cmd, cwd=cwd, stdout=stdout, stderr=stderr, env=env)
+        proc = subprocess.Popen(cmd, cwd=cwd, stdout=stdout, stderr=stderr,
+                                env=env)
         proc.wait()
         ret = proc.returncode
         LOG.debug(ret)
@@ -61,7 +66,7 @@ def run_cmd(cmd, cwd=None, env=None, silent=False):
 
 # -------------------------------------------------------------------
 def build_ld_logger(ld_logger_path, env, arch=None, clean=True, silent=True):
-    ''' build ld logger '''
+    """ Build ld logger. """
 
     LOG.info('Building ld logger ...')
     LOG.debug(ld_logger_path)
@@ -88,7 +93,7 @@ def build_ld_logger(ld_logger_path, env, arch=None, clean=True, silent=True):
 
 # -------------------------------------------------------------------
 def generate_thrift_files(thrift_files_dir, env, silent=True):
-    ''' generate python and javascript files from thrift IDL '''
+    """ Generate python and javascript files from thrift IDL. """
 
     LOG.info('Generating thrift files ...')
     rss_thrift = 'report_storage_server.thrift'
@@ -98,7 +103,6 @@ def generate_thrift_files(thrift_files_dir, env, silent=True):
         LOG.error('Failed to generate storage server files')
         return ret
 
-    rvs_thrift = os.path.join(thrift_files_dir, 'report_viewer_server.thrift')
     rvs_thrift = 'report_viewer_server.thrift'
     rvs_cmd = ['thrift', '-r', '-I', '.',
                '--gen', 'py', '--gen', 'js:jquery', rvs_thrift]
@@ -110,7 +114,7 @@ def generate_thrift_files(thrift_files_dir, env, silent=True):
 
 # -------------------------------------------------------------------
 def generate_documentation(doc_root, env, silent=True):
-    ''' generate user guide and other documentation '''
+    """ Generate user guide and other documentation. """
 
     LOG.info('Generating documentation ...')
     doc_gen_cmd = ['doxygen', 'Doxyfile.in']
@@ -124,7 +128,7 @@ def generate_documentation(doc_root, env, silent=True):
 
 # -------------------------------------------------------------------
 def create_folder_layout(path, layout):
-    ''' create package directory layout '''
+    """ Create package directory layout. """
 
     package_root = layout['root']
     if os.path.exists(path):
@@ -143,16 +147,16 @@ def create_folder_layout(path, layout):
             try:
                 directory = os.path.join(package_root, folder)
                 os.makedirs(directory)
-            except OSError as oerr:
-                if oerr.errno != errno.EEXIST:
+            except OSError as os_err:
+                if os_err.errno != errno.EEXIST:
                     LOG.warning(directory)
-                    LOG.warning(oerr.strerror)
+                    LOG.warning(os_err.strerror)
                     sys.exit()
 
 
 # -------------------------------------------------------------------
 def copy_tree(src, dst):
-    ''' copy file tree '''
+    """ Copy file tree. """
 
     if not os.path.exists(dst):
         os.makedirs(dst)
@@ -162,18 +166,18 @@ def copy_tree(src, dst):
         if os.path.isdir(source):
             copy_tree(source, destination)
         else:
-            if not os.path.exists(destination) or \
-                    os.stat(src).st_mtime - os.stat(dst).st_mtime > 1:
+            delta = os.stat(src).st_mtime - os.stat(dst).st_mtime
+            if not os.path.exists(destination) or delta > 0:
                 shutil.copy2(source, destination)
 
 
 # -------------------------------------------------------------------
 def handle_external_file(dep, clean, env, verbose):
-    '''
-    download (and if needed, extract) files from the given url
-    currently supports handling of files with the following extensions:
+    """
+    Download (and if needed, extract) files from the given url.
+    Currently supports handling of files with the following extensions:
       .tar.gz, .js, .css
-    '''
+    """
     supported_exts = {
         'compressed': ['.tar.gz'],
         'uncompressed': ['.js', '.css']
@@ -228,7 +232,7 @@ def handle_external_file(dep, clean, env, verbose):
 
 # -------------------------------------------------------------------
 def handle_external_repository(dep, clean, env, verbose):
-    ''' downlad external repository '''
+    """ Download external repository. """
     repository = dep['repository']
     if repository['type'] == 'git':
         directory = dep['directory']
@@ -239,12 +243,7 @@ def handle_external_repository(dep, clean, env, verbose):
             if os.path.exists(directory):
                 return
 
-        git_cmd = []
-        git_cmd.append('git')
-        git_cmd.append('clone')
-        git_cmd.append('--depth')
-        git_cmd.append('1')
-        git_cmd.append('--single-branch')
+        git_cmd = ['git', 'clone', '--depth', '1', '--single-branch']
 
         git_tag = repository.get('git_tag')
         if git_tag:
@@ -253,9 +252,9 @@ def handle_external_repository(dep, clean, env, verbose):
         git_cmd.append(repository.get('url'))
         git_cmd.append(directory)
 
-        dirname, tail = ntpath.split(directory)
+        dir_name, tail = ntpath.split(directory)
         LOG.info('Downloading ...')
-        if run_cmd(git_cmd, dirname, env=env, silent=verbose):
+        if run_cmd(git_cmd, dir_name, env=env, silent=verbose):
             LOG.error('Failed to get dependency')
             sys.exit(1)
     else:
@@ -264,7 +263,7 @@ def handle_external_repository(dep, clean, env, verbose):
 
 # -------------------------------------------------------------------
 def handle_ext_source_dep(dep, clean, env, verbose):
-    ''' handle external project dependecies'''
+    """ Handle external project dependencies."""
 
     LOG.info('Checking source: ' + dep['name'])
 
@@ -283,7 +282,7 @@ def handle_ext_source_dep(dep, clean, env, verbose):
 
 # -------------------------------------------------------------------
 def compress_to_tar(source_folder, target_folder, compress):
-    ''' compress folder to tar.gz file '''
+    """ Compress folder to tar.gz file. """
 
     source = source_folder.rstrip('//')
     target = target_folder.rstrip('//')
@@ -302,7 +301,7 @@ def compress_to_tar(source_folder, target_folder, compress):
         for f in files:
             cfile = os.path.join(root, f)
             rename = cfile.replace(head, '')
-            LOG.debug('Compressing: %s' % (rename))
+            LOG.debug('Compressing: %s' % rename)
             t.add(cfile, arcname=rename)
     t.close()
     return True
@@ -310,7 +309,7 @@ def compress_to_tar(source_folder, target_folder, compress):
 
 # -------------------------------------------------------------------
 def get_ext_package_data(deps, dep_name):
-    ''' search for a dependecy in the list'''
+    """ Search for a dependency in the list. """
     for dep in deps:
         if dep['name'] == dep_name:
             return dep
@@ -318,7 +317,7 @@ def get_ext_package_data(deps, dep_name):
 
 # -------------------------------------------------------------------
 def build_package(repository_root, build_package_config, env=None):
-    ''' package can be integrated easier to build systems if required'''
+    """ Package can be integrated easier to build systems if required. """
 
     verbose = build_package_config.get('verbose_log')
     if verbose:
@@ -331,7 +330,8 @@ def build_package(repository_root, build_package_config, env=None):
     for val in build_package_config.items():
         LOG.debug(val)
 
-    with open(build_package_config['package_layout_config'], 'r') as pckg_layout_cfg:
+    with open(build_package_config['package_layout_config'],
+              'r') as pckg_layout_cfg:
         package_layout_content = pckg_layout_cfg.read()
     LOG.debug(package_layout_content)
     layout = json.loads(package_layout_content)
@@ -344,11 +344,10 @@ def build_package(repository_root, build_package_config, env=None):
     package_root = os.path.join(output_dir, 'CodeChecker')
     package_layout['root'] = package_root
 
-    # get external dependecies
+    # Get external dependencies.
     ext_deps_dir = os.path.join(repository_root, 'external-source-deps')
     ext_deps_config = os.path.join(ext_deps_dir, 'ext_source_deps_config.json')
     LOG.debug(ext_deps_config)
-    ext_deps = ''
     with open(ext_deps_config, 'r') as ext_cfg:
         ext_dep_cfg = ext_cfg.read()
         ext_deps = json.loads(ext_dep_cfg)
@@ -360,23 +359,24 @@ def build_package(repository_root, build_package_config, env=None):
 
     external_dependencies = {dep['name']: dep for dep in ext_deps}
 
-    LOG.info('Getting external dependecies done.')
+    LOG.info('Getting external dependencies done.')
 
-    # create package folder layout
+    # Create package folder layout.
     create_folder_layout(output_dir, package_layout)
 
-    # check scan-build-py (intercept)
+    # Check scan-build-py (intercept).
     LOG.info('Checking source: llvm scan-build-py (intercept)')
 
     intercept_build_executable = find_executable('intercept-build')
-    
+
     if intercept_build_executable is not None:
         LOG.info('Available')
     else:
         if platform.system() == 'Darwin':
-            LOG.error('Not exists, scan-build-py (intercept) is mandatory on OS X!')
+            LOG.error('Not exists, scan-build-py (intercept) '
+                      'is mandatory on OS X!')
             sys.exit(1)
-        # build ld logger because intercept is not available
+        # Build ld logger because intercept is not available.
         if platform.system() == 'Linux':
             LOG.warning('Not exists, build ld logger')
             ld_logger_path = build_package_config['ld_logger_path']
@@ -389,7 +389,7 @@ def build_package(repository_root, build_package_config, env=None):
 
                 arch = None
                 if ld_logger32 == ld_logger64:
-                    # build both versions
+                    # Build both versions.
                     pass
                 elif ld_logger32:
                     arch = '32'
@@ -400,28 +400,28 @@ def build_package(repository_root, build_package_config, env=None):
                     LOG.error('Failed to build ld logger')
                     sys.exit()
 
-                # copy ld logger files
+                # Copy ld logger files.
                 target = os.path.join(package_root, package_layout['ld_logger'])
 
                 copy_tree(ld_logger_build, target)
 
                 curr_dir = os.getcwd()
                 os.chdir(os.path.join(package_root, package_layout['bin']))
-                logger_symlink = os.path.join('../', package_layout['ld_logger'],
+                logger_symlink = os.path.join('../',
+                                              package_layout['ld_logger'],
                                               'bin', 'ldlogger')
                 os.symlink(logger_symlink, 'ldlogger')
                 os.chdir(curr_dir)
 
             else:
                 LOG.info('Skipping ld logger from package')
-    
 
-    # generate gen files with thrift
+    # Generate gen files with thrift.
     thrift_files_dir = os.path.join(repository_root, 'thrift_api')
     generated_py_files = os.path.join(thrift_files_dir, 'gen-py')
     generated_js_files = os.path.join(thrift_files_dir, 'gen-js')
 
-    # cleanup already generated files
+    # Cleanup already generated files.
     if os.path.exists(generated_py_files):
         shutil.rmtree(generated_py_files)
     if os.path.exists(generated_js_files):
@@ -434,14 +434,14 @@ def build_package(repository_root, build_package_config, env=None):
     target = os.path.join(package_root, package_layout['web_client'])
     copy_tree(generated_js_files, target)
 
-    # cmd_line client
+    # The cmd_line client.
     cmdline_client_files = os.path.join(repository_root,
                                         'viewer_clients',
                                         'cmdline_client')
     target = os.path.join(package_root, package_layout['cmdline_client'])
     copy_tree(cmdline_client_files, target)
 
-    # generate documentation
+    # Generate documentation.
     generate_documentation(repository_root, env, verbose)
 
     source = os.path.join(repository_root, 'gen-docs', 'html')
@@ -452,14 +452,14 @@ def build_package(repository_root, build_package_config, env=None):
     target = os.path.join(package_root, package_layout['checker_md_docs'])
     copy_tree(source, target)
 
-    # thift js
+    # Thift js.
     thrift_dep = external_dependencies['thrift']
     thrift_root = os.path.join(repository_root, thrift_dep.get('directory'))
     thift_js_files = os.path.join(thrift_root, 'lib', 'js', 'src')
     target = os.path.join(package_root, package_layout['js_thrift'])
     copy_tree(thift_js_files, target)
 
-    # codemirror
+    # CodeMirror.
     codemirror_dep = external_dependencies['codemirror']
     codemirror_root = os.path.join(repository_root,
                                    codemirror_dep.get('directory'))
@@ -467,20 +467,24 @@ def build_package(repository_root, build_package_config, env=None):
                           package_layout['web_client_codemirror'])
     copy_tree(codemirror_root, target)
 
-    # highlightjs
+    # HighlightJs.
     highlightjs_dep = external_dependencies['highlightjs']
-    highlightjs_root = os.path.join(repository_root, highlightjs_dep.get('directory'))
-    target = os.path.join(package_root, package_layout['web_client_highlightjs'])
+    highlightjs_root = os.path.join(repository_root,
+                                    highlightjs_dep.get('directory'))
+    target = os.path.join(package_root,
+                          package_layout['web_client_highlightjs'])
     copy_tree(highlightjs_root, target)
 
-    # highlightjs_css
+    # HighlightJs_css.
     highlightjs_css_dep = external_dependencies['highlightjs_css']
-    highlightjs_css_root = os.path.join(repository_root, highlightjs_css_dep.get('directory'))
-    target = os.path.join(package_root, package_layout['web_client_highlightjs'])
+    highlightjs_css_root = os.path.join(repository_root,
+                                        highlightjs_css_dep.get('directory'))
+    target = os.path.join(package_root,
+                          package_layout['web_client_highlightjs'])
     target = os.path.join(target, 'css')
     copy_tree(highlightjs_css_root, target)
 
-    # dojo
+    # Dojo.
     dojo_dep = external_dependencies['dojotoolkit']
     file_url = dojo_dep['source_package']['url']
     url_data = urlparse.urlparse(file_url)
@@ -492,13 +496,13 @@ def build_package(repository_root, build_package_config, env=None):
     target = os.path.join(package_root, package_layout['web_client_dojo'])
     copy_tree(dojo_root, target)
 
-    # marked
+    # Marked.
     marked_dep = external_dependencies['marked']
     marked_root = os.path.join(repository_root, marked_dep.get('directory'))
     target = os.path.join(package_root, package_layout['web_client_marked'])
     shutil.copy(os.path.join(marked_root, 'marked.min.js'), target)
 
-    # jsplumb
+    # JsPlumb.
     jsplumb_dep = external_dependencies['jsplumb']
     jsplumb_root = os.path.join(repository_root, jsplumb_dep.get('directory'))
     target = os.path.join(package_root, package_layout['web_client_jsplumb'])
@@ -506,7 +510,7 @@ def build_package(repository_root, build_package_config, env=None):
                            'jquery.jsPlumb-1.7.6-min.js')
     shutil.copy(jsplumb, target)
 
-    # add jquery for jsplumb
+    # Add jQuery for JsPlumb.
     target = os.path.join(target, 'external')
     if not os.path.exists(target):
         os.mkdir(target)
@@ -524,15 +528,14 @@ def build_package(repository_root, build_package_config, env=None):
     LOG.debug('Extending version file: ' + version_file)
 
     with open(version_file) as v_file:
-        version_data = v_file.read()
-    version_json_data = json.loads(version_data)
+        version_json_data = json.load(v_file)
 
     git_hash = ''
     try:
         git_hash_cmd = ['git', 'rev-parse', 'HEAD']
         git_hash = subprocess.check_output(git_hash_cmd,
                                            cwd=repository_root)
-        git_hash = git_hash.rstrip()
+        git_hash = str(git_hash.rstrip())
     except subprocess.CalledProcessError as cperr:
         LOG.error('Failed to get last commit hash.')
         LOG.error(str(cperr))
@@ -546,18 +549,18 @@ def build_package(repository_root, build_package_config, env=None):
     time_now = time.strftime("%Y-%m-%dT%H:%M")
     version_json_data['package_build_date'] = time_now
 
-    # rewrite version config file with the extended data
+    # Rewrite version config file with the extended data.
     with open(version_file, 'w') as v_file:
         v_file.write(json.dumps(version_json_data, sort_keys=True, indent=4))
 
-    # codechecker web client
+    # CodeChecker web client.
     LOG.debug('Copy web client files')
     source = os.path.join(repository_root, 'viewer_clients',
                           'web-client')
     target = os.path.join(package_root, package_layout['www'])
     copy_tree(source, target)
 
-    # codechecker main scripts
+    # CodeChecker main scripts.
     LOG.debug('Copy main codechecker files')
     source = os.path.join(repository_root, 'codechecker', 'CodeChecker.py')
     target = os.path.join(package_root, package_layout['cc_bin'])
@@ -567,39 +570,40 @@ def build_package(repository_root, build_package_config, env=None):
     target = os.path.join(package_root, package_layout['bin'])
     shutil.copy2(source, target)
 
-    # codechecker modules
+    # CodeChecker modules.
     LOG.debug('Copy codechecker modules')
     source = os.path.join(repository_root, 'codechecker_lib')
     target = os.path.join(package_root, package_layout['codechecker_lib'])
     copy_tree(source, target)
 
-    # codechecker db model
+    # CodeChecker db model.
     LOG.debug('Copy codechecker database model')
     source = os.path.join(repository_root, 'db_model')
     target = os.path.join(package_root, package_layout['codechecker_db_model'])
     copy_tree(source, target)
 
-    # codechecker db migrate
+    # CodeChecker db migrate.
     LOG.debug('Copy codechecker database migration')
     source = os.path.join(repository_root, 'db_migrate')
-    target = os.path.join(package_root, package_layout['codechecker_db_migrate'])
+    target = os.path.join(package_root,
+                          package_layout['codechecker_db_migrate'])
     copy_tree(source, target)
 
-    # codechecker storage server
+    # CodeChecker storage server.
     LOG.debug('Copy codechecker storage server')
     source = os.path.join(repository_root, 'storage_server')
     target = os.path.join(package_root,
                           package_layout['storage_server_modules'])
     copy_tree(source, target)
 
-    # codechecker viewer server
+    # CodeChecker viewer server.
     LOG.debug('Copy codechecker viewer server')
     source = os.path.join(repository_root, 'viewer_server')
     target = os.path.join(package_root,
                           package_layout['viewer_server_modules'])
     copy_tree(source, target)
 
-    # license
+    # License.
     license_file = os.path.join(repository_root, 'LICENSE.TXT')
     target = os.path.join(package_root)
     shutil.copy(license_file, target)
@@ -613,7 +617,7 @@ def build_package(repository_root, build_package_config, env=None):
 
 # -------------------------------------------------------------------
 def main():
-    '''Main script'''
+    """ Main script. """
     repository_root = os.path.dirname(os.path.realpath(__file__))
 
     default_package_layout = os.path.join(repository_root,
@@ -635,7 +639,7 @@ def main():
     parser.add_argument("--clean",
                         action="store_true",
                         dest='clean',
-                        help='Clean external dependecies')
+                        help='Clean external dependencies')
 
     default_logger_dir = os.path.join(repository_root,
                                       'external-source-deps',

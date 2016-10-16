@@ -3,7 +3,7 @@
 #   This file is distributed under the University of Illinois Open Source
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
-''''''
+""""""
 
 import os
 
@@ -14,11 +14,11 @@ LOG = logger.get_new_logger('ENV')
 
 # ------------------------------------------------------------------------------
 def get_log_env(logfile, context, original_env):
-    '''
+    """
     Environment for logging. With the ld logger.
-    Keep the original environment unmodified as possible
-    Only environment variables required for logging are changed
-    '''
+    Keep the original environment unmodified as possible.
+    Only environment variables required for logging are changed.
+    """
     new_env = original_env
 
     new_env[context.env_var_cc_logger_bin] = context.path_logger_bin
@@ -27,12 +27,12 @@ def get_log_env(logfile, context, original_env):
 
     try:
         original_ld_library_path = new_env['LD_LIBRARY_PATH']
-        new_env['LD_LIBRARY_PATH'] = context.path_logger_lib + \
-                                     ':' + original_ld_library_path
+        new_env['LD_LIBRARY_PATH'] = context.path_logger_lib + ':' + \
+                                     original_ld_library_path
     except:
         new_env['LD_LIBRARY_PATH'] = context.path_logger_lib
 
-    # set ld logger logfile
+    # Set ld logger logfile.
     new_env[context.env_var_cc_logger_file] = logfile
 
     return new_env
@@ -40,16 +40,17 @@ def get_log_env(logfile, context, original_env):
 
 # -----------------------------------------------------------------------------
 def get_check_env(path_env_extra, ld_lib_path_extra):
-    '''
+    """
     Extending the checker environment.
     Check environment is extended to find tools if they ar not on
-    the default places
-    '''
+    the default places.
+    """
     new_env = os.environ.copy()
 
     if len(path_env_extra) > 0:
         extra_path = ':'.join(path_env_extra)
-        LOG.debug_analyzer('Extending PATH environment variable with: ' + extra_path)
+        LOG.debug_analyzer(
+            'Extending PATH environment variable with: ' + extra_path)
 
         try:
             new_env['PATH'] = extra_path + ':' + new_env['PATH']
@@ -58,10 +59,12 @@ def get_check_env(path_env_extra, ld_lib_path_extra):
 
     if len(ld_lib_path_extra) > 0:
         extra_lib = ':'.join(ld_lib_path_extra)
-        LOG.debug_analyzer('Extending LD_LIBRARY_PATH environment variable with: ' + extra_lib)
+        LOG.debug_analyzer(
+            'Extending LD_LIBRARY_PATH environment variable with: ' + extra_lib)
         try:
             original_ld_library_path = new_env['LD_LIBRARY_PATH']
-            new_env['LD_LIBRARY_PATH'] = extra_lib + ':' + original_ld_library_path
+            new_env['LD_LIBRARY_PATH'] = \
+                extra_lib + ':' + original_ld_library_path
         except:
             new_env['LD_LIBRARY_PATH'] = extra_lib
 

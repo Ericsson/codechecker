@@ -10,9 +10,7 @@ import os
 import unittest
 
 from codeCheckerDBAccess.ttypes import ReportFilter
-
 from test_utils.thrift_client_to_db import CCViewerHelper
-from test_utils.debug_printer import print_run_results
 
 
 class Suppress(unittest.TestCase):

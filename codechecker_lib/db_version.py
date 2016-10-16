@@ -15,7 +15,7 @@ class DBVersionInfo(object):
         return major == self.major
 
     def get_expected_version(self):
-        return (self.major, self.minor)
+        return self.major, self.minor
 
     def __str__(self):
         return 'v'+str(self.major)+'.'+str(self.minor)

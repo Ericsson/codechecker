@@ -5,43 +5,40 @@
 # -------------------------------------------------------------------------
 
 """
-supported analyzer types
+Supported analyzer types.
 """
 import os
 import re
 import sys
 
-from codechecker_lib import logger
 from codechecker_lib import analyzer_env
-from codechecker_lib import host_check
 from codechecker_lib import client
-
+from codechecker_lib import host_check
+from codechecker_lib import logger
+from codechecker_lib.analyzers import analyzer_clang_tidy
 from codechecker_lib.analyzers import analyzer_clangsa
+from codechecker_lib.analyzers import config_handler_clang_tidy
 from codechecker_lib.analyzers import config_handler_clangsa
+from codechecker_lib.analyzers import result_handler_clang_tidy
 from codechecker_lib.analyzers import result_handler_clangsa
 
-from codechecker_lib.analyzers import analyzer_clang_tidy
-from codechecker_lib.analyzers import result_handler_clang_tidy
-from codechecker_lib.analyzers import config_handler_clang_tidy
-
 LOG = logger.get_new_logger('ANALYZER TYPES')
-
 
 CLANG_SA = 'clangsa'
 CLANG_TIDY = 'clang-tidy'
 
 supported_analyzers = {CLANG_SA, CLANG_TIDY}
 
+
 def is_sa_checker_name(checker_name):
     """
-    match for Clang Static analyzer names like
-
-    unix
-    unix.Malloc
-    security.insecureAPI
-    security.insecureAPI.gets
+    Match for Clang Static analyzer names like:
+    - unix
+    - unix.Malloc
+    - security.insecureAPI
+    - security.insecureAPI.gets
     """
-    # no '-' is alowed in the checker name
+    # No '-' is allowed in the checker name.
     sa_checker_name = r'^[^-]+$'
     ptn = re.compile(sa_checker_name)
 
@@ -49,17 +46,17 @@ def is_sa_checker_name(checker_name):
         return True
     return False
 
+
 def is_tidy_checker_name(checker_name):
     """
-    match for Clang Tidy analyzer names like
-
-    -*
-    modernize-*
-    clang-diagnostic-*
-    cert-fio38-c
-    google-global-names-in-headers
+    Match for Clang Tidy analyzer names like:
+        -*
+        modernize-*
+        clang-diagnostic-*
+        cert-fio38-c
+        google-global-names-in-headers
     """
-    # must contain at least one '-'
+    # Must contain at least one '-'.
     tidy_checker_name = r'^(?=.*[\-]).+$'
 
     ptn = re.compile(tidy_checker_name)
@@ -71,7 +68,7 @@ def is_tidy_checker_name(checker_name):
 
 def check_supported_analyzers(analyzers, context):
     """
-    check if the selected analyzers are supported
+    Check if the selected analyzers are supported.
     """
 
     check_env = analyzer_env.get_check_env(context.path_env_extra,
@@ -85,26 +82,26 @@ def check_supported_analyzers(analyzers, context):
         if analyzer_name not in supported_analyzers:
             LOG.error('Unsupported analyzer ' + analyzer_name + ' !')
             sys.exit(1)
-        else:
-            # get the compiler binary to check if it can run
-            available_analyzer = True
-            analyzer_bin = analyzer_binaries.get(analyzer_name)
-            if not analyzer_bin:
-                LOG.debug_analyzer('Failed to detect analyzer binary ' + analyzer_name)
-                available_analyzer = False
-            if not host_check.check_clang(analyzer_bin, check_env):
-                LOG.warning('Failed to run analyzer '
-                          + analyzer_name + ' !')
-                available_analyzer = False
-            if available_analyzer:
-                enabled_analyzers.add(analyzer_name)
+
+        # Get the compiler binary to check if it can run.
+        available_analyzer = True
+        analyzer_bin = analyzer_binaries.get(analyzer_name)
+        if not analyzer_bin:
+            LOG.debug_analyzer('Failed to detect analyzer binary ' +
+                               analyzer_name)
+            available_analyzer = False
+        if not host_check.check_clang(analyzer_bin, check_env):
+            LOG.warning('Failed to run analyzer ' + analyzer_name + ' !')
+            available_analyzer = False
+        if available_analyzer:
+            enabled_analyzers.add(analyzer_name)
 
     return enabled_analyzers
 
 
 def construct_analyzer_type(analyzer_type, config_handler, buildaction):
     """
-    construct a specific analyzer based on the type
+    Construct a specific analyzer based on the type.
     """
 
     if analyzer_type == CLANG_SA:
@@ -130,12 +127,12 @@ def construct_analyzer_type(analyzer_type, config_handler, buildaction):
 def construct_analyzer(buildaction,
                        analyzer_config_map):
     """
-    construct an analyzer
+    Construct an analyzer.
     """
     try:
         LOG.debug_analyzer('Constructing analyzer')
         analyzer_type = buildaction.analyzer_type
-        # get the proper config handler for this analyzer type
+        # Get the proper config handler for this analyzer type.
         config_handler = analyzer_config_map.get(analyzer_type)
 
         analyzer = construct_analyzer_type(analyzer_type,
@@ -147,16 +144,16 @@ def construct_analyzer(buildaction,
         LOG.debug_analyzer(ex)
         return None
 
+
 def initialize_checkers(config_handler,
                         checkers,
                         default_checkers=None,
                         cmdline_checkers=None):
-
-    # by default disable all checkers
+    # By default disable all checkers.
     for checker_name, description in checkers:
         config_handler.add_checker(checker_name, False, description)
 
-    # set default enabled or disabled checkers
+    # Set default enabled or disabled checkers.
     if default_checkers:
         for checker in default_checkers:
             for checker_name, enabled in checker.items():
@@ -165,14 +162,14 @@ def initialize_checkers(config_handler,
                 else:
                     config_handler.disable_checker(checker_name)
 
-    # set user defined enabled or disabled checkers from the
-    # command line
+    # Set user defined enabled or disabled checkers from the command line.
     if cmdline_checkers:
         for checker_name, enabled in cmdline_checkers:
             if enabled:
                 config_handler.enable_checker(checker_name)
             else:
                 config_handler.disable_checker(checker_name)
+
 
 def __replace_env_var(cfg_file):
     def replacer(matchobj):
@@ -181,12 +178,14 @@ def __replace_env_var(cfg_file):
             LOG.error(env_var + ' environment variable not set in ' + cfg_file)
             return ''
         return os.environ[env_var]
+
     return replacer
+
 
 def __build_clangsa_config_handler(args, context):
     """
-    Build the config handler for clang static analyzer
-    Handle config options from the command line and config files
+    Build the config handler for clang static analyzer.
+    Handle config options from the command line and config files.
     """
 
     config_handler = config_handler_clangsa.ClangSAConfigHandler()
@@ -200,12 +199,12 @@ def __build_clangsa_config_handler(args, context):
         with open(args.clangsa_args_cfg_file, 'rb') as sa_cfg:
             config_handler.analyzer_extra_arguments = \
                 re.sub('\$\((.*?)\)',
-                    __replace_env_var(args.clangsa_args_cfg_file),
-                    sa_cfg.read().strip())
+                       __replace_env_var(args.clangsa_args_cfg_file),
+                       sa_cfg.read().strip())
     except IOError as ioerr:
         LOG.debug_analyzer(ioerr)
     except AttributeError as aerr:
-        # no clangsa arguments file was given in the command line
+        # No clangsa arguments file was given in the command line.
         LOG.debug_analyzer(aerr)
 
     analyzer = construct_analyzer_type(CLANG_SA, config_handler, None)
@@ -215,14 +214,14 @@ def __build_clangsa_config_handler(args, context):
 
     checkers = analyzer.get_analyzer_checkers(config_handler, check_env)
 
-    # read clang-tidy checkers from the config file
+    # Read clang-tidy checkers from the config file.
     clang_sa_checkers = context.default_checkers_config.get(CLANG_SA +
                                                             '_checkers')
     try:
         cmdline_checkers = args.ordered_checkers
     except AttributeError:
         LOG.debug_analyzer('No checkers were defined in the command line for' +
-                  CLANG_SA)
+                           CLANG_SA)
         cmdline_checkers = None
 
     initialize_checkers(config_handler,
@@ -232,10 +231,11 @@ def __build_clangsa_config_handler(args, context):
 
     return config_handler
 
+
 def __build_clang_tidy_config_handler(args, context):
     """
-    Build the config handler for clang tidy analyzer
-    Handle config options from the command line and config files
+    Build the config handler for clang tidy analyzer.
+    Handle config options from the command line and config files.
     """
 
     config_handler = config_handler_clang_tidy.ClangTidyConfigHandler()
@@ -248,11 +248,12 @@ def __build_clang_tidy_config_handler(args, context):
     try:
         with open(args.tidy_args_cfg_file, 'rb') as tidy_cfg:
             config_handler.analyzer_extra_arguments = \
-                re.sub('\$\((.*?)\)', __replace_env_var, tidy_cfg.read().strip())
+                re.sub('\$\((.*?)\)', __replace_env_var,
+                       tidy_cfg.read().strip())
     except IOError as ioerr:
         LOG.debug_analyzer(ioerr)
     except AttributeError as aerr:
-        # no clang tidy arguments file was given in the command line
+        # No clang tidy arguments file was given in the command line.
         LOG.debug_analyzer(aerr)
 
     analyzer = construct_analyzer_type(CLANG_TIDY, config_handler, None)
@@ -261,14 +262,14 @@ def __build_clang_tidy_config_handler(args, context):
 
     checkers = analyzer.get_analyzer_checkers(config_handler, check_env)
 
-    # read clang-tidy checkers from the config file
+    # Read clang-tidy checkers from the config file.
     clang_tidy_checkers = context.default_checkers_config.get(CLANG_TIDY +
                                                               '_checkers')
     try:
         cmdline_checkers = args.ordered_checkers
     except AttributeError:
         LOG.debug_analyzer('No checkers were defined in the command line for ' +
-                  CLANG_TIDY)
+                           CLANG_TIDY)
         cmdline_checkers = None
 
     initialize_checkers(config_handler,
@@ -276,21 +277,19 @@ def __build_clang_tidy_config_handler(args, context):
                         clang_tidy_checkers,
                         cmdline_checkers)
 
-
     return config_handler
 
 
 def build_config_handlers(args, context, enabled_analyzers, connection=None):
     """
-    construct multiple config handlers and if there is a connection
-    store configs into the database
+    Construct multiple config handlers and if there is a connection.
+    Store configs into the database.
 
-    handle config from command line or from config file if no command line
-    config is given
+    Handle config from command line or from config file if no command line
+    config is given.
 
-    supported command line config format is in JSON tidy supports YAML also but
-    no standard lib for yaml parsing is available in python
-
+    Supported command line config format is in JSON tidy supports YAML also but
+    no standard lib for yaml parsing is available in python.
     """
 
     run_id = context.run_id
@@ -305,12 +304,13 @@ def build_config_handlers(args, context, enabled_analyzers, connection=None):
             config_handler = __build_clang_tidy_config_handler(args, context)
             analyzer_config_map[ea] = config_handler
         else:
-            LOG.debug_analyzer('Not supported analyzer type. No configuration handler will be created')
+            LOG.debug_analyzer('Not supported analyzer type. '
+                               'No configuration handler will be created')
 
     if connection:
-        # collect all configuration options and store them together
+        # Collect all configuration options and store them together.
         configs = []
-        for _, config_handler in analyzer_config_map.iteritems():
+        for _, config_handler in analyzer_config_map.items():
             configs.extend(config_handler.get_checker_configs())
 
         client.replace_config_in_db(run_id, connection, configs)
@@ -326,11 +326,11 @@ def construct_result_handler(args,
                              skiplist_handler,
                              store_to_db=False):
     """
-    construct a result handler
+    Construct a result handler.
     """
 
     if store_to_db:
-        # create a result handler which stores the results into a database
+        # Create a result handler which stores the results into a database.
         if buildaction.analyzer_type == CLANG_SA:
             csa_res_handler = result_handler_clangsa.ClangSAPlistToDB(
                 buildaction,

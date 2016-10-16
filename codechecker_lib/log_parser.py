@@ -46,13 +46,13 @@ def parse_compile_commands_json(logfile):
            results.action == option_parser.ActionType.LINK:
             action.skip = False
 
-        # TODO: check arch
+        # TODO: check arch.
         action.directory = entry['directory']
 
         action.sources = sourcefile
         action.lang = lang
 
-        # filter out duplicate compilation commands
+        # Filter out duplicate compilation commands.
         unique_key = action.cmp_key
         if filtered_build_actions.get(unique_key) is None:
             filtered_build_actions[unique_key] = action
@@ -60,7 +60,7 @@ def parse_compile_commands_json(logfile):
         del action
         counter += 1
 
-    for ba_hash, ba in filtered_build_actions.iteritems():
+    for ba_hash, ba in filtered_build_actions.items():
         actions.append(ba)
 
     return actions

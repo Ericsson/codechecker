@@ -11,16 +11,15 @@ import os
 import re
 import unittest
 
+from codeCheckerDBAccess.ttypes import Order
 from codeCheckerDBAccess.ttypes import ReportFilter
 from codeCheckerDBAccess.ttypes import SortMode
 from codeCheckerDBAccess.ttypes import SortType
-from codeCheckerDBAccess.ttypes import Order
-
-from test_utils.thrift_client_to_db import CCViewerHelper
 from test_utils.debug_printer import print_run_results
+from test_utils.thrift_client_to_db import CCViewerHelper
+
 
 class RunResults(unittest.TestCase):
-
     _ccClient = None
 
     # selected runid for running the tests
@@ -62,7 +61,6 @@ class RunResults(unittest.TestCase):
 
         self.assertEqual(run_result_count, len(run_results))
 
-
     def test_get_run_results_checker_id_and_file_path(self):
         """ Get all the run results and compare with the results
             in the project config. """
@@ -86,10 +84,10 @@ class RunResults(unittest.TestCase):
         for bug in self._testproject_data['bugs']:
             found = False
             for run_res in run_results:
-                found |= (run_res.checkedFile.endswith(bug['file'])) and \
-                         (run_res.lastBugPosition.startLine == bug['line']) and \
-                         (run_res.checkerId == bug['checker']) and \
-                         (run_res.bugHash == bug['hash'])
+                found |= ((run_res.checkedFile.endswith(bug['file'])) and
+                          (run_res.lastBugPosition.startLine == bug['line']) and
+                          (run_res.checkerId == bug['checker']) and
+                          (run_res.bugHash == bug['hash']))
             found_all &= found
             if not found:
                 not_found.append(bug)
@@ -165,7 +163,7 @@ class RunResults(unittest.TestCase):
 
         filtered_run_results = filter(
             lambda result:
-                (result.reportId == bug.reportId) and result.suppressed,
+            (result.reportId == bug.reportId) and result.suppressed,
             run_results)
         self.assertEqual(len(filtered_run_results), 1)
         suppressed_bug = filtered_run_results[0]
@@ -184,7 +182,7 @@ class RunResults(unittest.TestCase):
 
         filtered_run_results = filter(
             lambda result:
-                (result.reportId == bug.reportId) and not result.suppressed,
+            (result.reportId == bug.reportId) and not result.suppressed,
             run_results)
         self.assertEqual(len(filtered_run_results), 1)
 
@@ -243,5 +241,5 @@ class RunResults(unittest.TestCase):
             self.assertTrue(bug1.checkedFile <= bug2.checkedFile)
             self.assertTrue((bug1.checkedFile != bug2.checkedFile) or
                             (bug1.lastBugPosition.startLine <=
-                                bug2.lastBugPosition.startLine) or
+                             bug2.lastBugPosition.startLine) or
                             (bug1.checkerId <= bug2.checkerId))

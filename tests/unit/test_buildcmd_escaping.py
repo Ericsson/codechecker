@@ -10,13 +10,17 @@
 import json
 import os
 import shutil
-import StringIO
 import tempfile
 import unittest
 from contextlib import closing
 
-from codechecker_lib import log_parser
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import BytesIO as StringIO
+
 from codechecker_lib import build_manager
+from codechecker_lib import log_parser
 from codechecker_lib.analyzers import analyzer_base
 
 
@@ -62,14 +66,13 @@ class BuildCmdTestNose(unittest.TestCase):
         """
         Generate a compile command json file.
         """
-        compile_cmds = []
 
         compile_cmd = {}
         compile_cmd["directory"] = self.tmp_dir
         compile_cmd["command"] = buildcmd + " -c " + self.src_file_path
         compile_cmd["file"] = self.src_file_path
 
-        compile_cmds.append(compile_cmd)
+        compile_cmds = [compile_cmd]
         return json.dumps(compile_cmds)
 
     def __get_comp_actions(self, compile_cmd):
@@ -78,7 +81,7 @@ class BuildCmdTestNose(unittest.TestCase):
         to return the compilation actions.
         """
         comp_cmd_json = self.__get_cmp_json(compile_cmd)
-        with closing(StringIO.StringIO()) as text:
+        with closing(StringIO()) as text:
             text.write(comp_cmd_json)
             return log_parser.parse_compile_commands_json(text)
 

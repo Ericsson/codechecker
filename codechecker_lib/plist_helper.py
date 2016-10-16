@@ -3,10 +3,10 @@
 #   This file is distributed under the University of Illinois Open Source
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
-''' This file contains some workaround for codechecker
+""" This file contains some workaround for CodeChecker
 to work with older clang versions. It is for demonstration purposes only.
 The names, hashes will change after switching to a newer clang version.
-'''
+"""
 
 import hashlib
 import linecache
@@ -34,10 +34,10 @@ def gen_bug_hash(bug):
 
 
 def levenshtein(a, b):  # http://hetland.org/coding/python/levenshtein.py
-    "Calculates the Levenshtein distance between a and b."
+    """"Calculates the Levenshtein distance between a and b."""
     n, m = len(a), len(b)
     if n > m:
-        # Make sure n <= m, to use O(min(n,m)) space
+        # Make sure n <= m, to use O(min(n,m)) space.
         a, b = b, a
         n, m = m, n
 
@@ -55,7 +55,7 @@ def levenshtein(a, b):  # http://hetland.org/coding/python/levenshtein.py
 
 
 def get_check_name(current_msg):
-    # clean message from variable and class name
+    # Clean message from variable and class name.
     clean_msg = re.sub(r"'.*?'", '', current_msg)
 
     closest_msg = ''
@@ -70,7 +70,7 @@ def get_check_name(current_msg):
     return checker_message_map[closest_msg]
 
 
-# this map needs extending
+# This map needs extending.
 checker_message_map = \
                       {
     "": "NOT FOUND",

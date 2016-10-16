@@ -4,27 +4,25 @@
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
 
-import sys
-import time
 import atexit
+import codecs
 import contextlib
 import multiprocessing
 import os
-import codecs
+import sys
+import time
 
 import shared
-from storage_server import report_server
-
 from DBThriftAPI import CheckerReport
 from DBThriftAPI.ttypes import SuppressBugData
-
 from thrift import Thrift
+from thrift.protocol import TBinaryProtocol
 from thrift.transport import TSocket
 from thrift.transport import TTransport
-from thrift.protocol import TBinaryProtocol
 
 from codechecker_lib import logger
 from codechecker_lib import suppress_file_handler
+from storage_server import report_server
 
 LOG = logger.get_new_logger('CLIENT')
 
@@ -32,7 +30,7 @@ LOG = logger.get_new_logger('CLIENT')
 # -----------------------------------------------------------------------------
 def clean_suppress(connection, run_id):
     """
-    clean all the suppress information from the database
+    Clean all the suppress information from the database.
     """
     connection.clean_suppress_data(run_id)
 
@@ -40,8 +38,8 @@ def clean_suppress(connection, run_id):
 # -----------------------------------------------------------------------------
 def send_suppress(run_id, connection, file_name):
     """
-    collect suppress information from the suppress file to be stored
-    in the database
+    Collect suppress information from the suppress file to be stored
+    in the database.
     """
     suppress_data = []
     if os.path.exists(file_name):
@@ -51,6 +49,7 @@ def send_suppress(run_id, connection, file_name):
     if len(suppress_data) > 0:
         connection.add_suppress_bug(run_id, suppress_data)
 
+
 # -----------------------------------------------------------------------------
 def replace_config_in_db(run_id, connection, configs):
     configuration_list = []
@@ -58,14 +57,15 @@ def replace_config_in_db(run_id, connection, configs):
         configuration_list.append(shared.ttypes.ConfigValue(checker_name,
                                                             key,
                                                             str(key_value)))
-    # store checker configs to the database
+    # Store checker configs to the database.
     connection.replace_config_info(run_id, configuration_list)
+
 
 # -----------------------------------------------------------------------------
 @contextlib.contextmanager
 def get_connection():
-    ''' Automatic Connection handler via ContextManager idiom.
-        You can use this in with statement.'''
+    """ Automatic Connection handler via ContextManager idiom.
+        You can use this in with statement."""
     connection = ConnectionManager.instance.create_connection()
 
     try:
@@ -76,20 +76,21 @@ def get_connection():
 
 # -----------------------------------------------------------------------------
 class Connection(object):
-    ''' Represent a connection to the server.
-        In contstructor establish the connection and
+    """ Represent a connection to the server.
+        In constructor establish the connection and
         you have to call close_connection function to close it.
-        So, you should set it up before create a connection.'''
+        So, you should set it up before create a connection."""
 
     def __init__(self, host, port):
-        ''' Establish the connection beetwen client and server. '''
+        """ Establish the connection between client and server. """
 
         tries_count = 0
         while True:
             try:
                 self._transport = TSocket.TSocket(host, port)
                 self._transport = TTransport.TBufferedTransport(self._transport)
-                self._protocol = TBinaryProtocol.TBinaryProtocol(self._transport)
+                self._protocol = TBinaryProtocol.TBinaryProtocol(
+                    self._transport)
                 self._client = CheckerReport.Client(self._protocol)
                 self._transport.open()
                 break
@@ -98,14 +99,14 @@ class Connection(object):
                 if tries_count > 3:
                     LOG.error('The client cannot establish the connection '
                               'with the server!')
-                    LOG.error('%s' % (thrift_exc.message))
+                    LOG.error('%s' % thrift_exc.message)
                     sys.exit(2)
                 else:
                     tries_count += 1
                     time.sleep(1)
 
     def close_connection(self):
-        ''' Close connection. '''
+        """ Close connection. """
         self._transport.close()
 
     def add_checker_run(self, command, name, version, force):
@@ -113,19 +114,19 @@ class Connection(object):
         return run_id
 
     def finish_checker_run(self, run_id):
-        ''' bool finishCheckerRun(1: i64 run_id) '''
+        """ bool finishCheckerRun(1: i64 run_id) """
         self._client.finishCheckerRun(run_id)
 
     def clean_suppress_data(self, run_id):
         """
-        clean suppress data
+        Clean suppress data.
         """
         self._client.cleanSuppressData(run_id)
 
     def add_suppress_bug(self, run_id, suppress_data):
         """
-        process and send suppress data
-        which should be sent to the report server
+        Process and send suppress data
+        which should be sent to the report server.
         """
         bugs_to_suppress = []
         for checker_hash, file_name, comment in suppress_data:
@@ -139,7 +140,7 @@ class Connection(object):
                                            bugs_to_suppress)
 
     def add_skip_paths(self, run_id, paths):
-        ''' bool addSkipPath(1: i64 run_id, 2: map<string, string> paths) '''
+        """ bool addSkipPath(1: i64 run_id, 2: map<string, string> paths) """
         # convert before sending through thrift
         converted = {}
         for path, comment in paths.items():
@@ -152,9 +153,9 @@ class Connection(object):
 
     def add_build_action(self, run_id, build_cmd, check_cmd, analyzer_type,
                          analyzed_source_file):
-        ''' i64  addBuildAction(1: i64 run_id, 2: string build_cmd,
+        """ i64  addBuildAction(1: i64 run_id, 2: string build_cmd,
         3: string check_cmd, 4: string analyzer_type, 5: string analyzed_source_file)
-        '''
+        """
         return self._client.addBuildAction(run_id,
                                            build_cmd,
                                            check_cmd,
@@ -162,35 +163,35 @@ class Connection(object):
                                            analyzed_source_file)
 
     def finish_build_action(self, action_id, failure):
-        ''' bool finishBuildAction(1: i64 action_id, 2: string failure) '''
+        """ bool finishBuildAction(1: i64 action_id, 2: string failure) """
         return self._client.finishBuildAction(action_id, failure)
 
     def add_report(self, build_action_id, file_id, bug_hash,
                    checker_message, bugpath, events, checker_id, checker_cat,
                    bug_type, severity, suppress):
-        '''  '''
+        """  """
         return self._client.addReport(build_action_id, file_id, bug_hash,
                                       checker_message, bugpath,
                                       events, checker_id, checker_cat,
                                       bug_type, severity, suppress)
 
     def need_file_content(self, run_id, filepath):
-        ''' NeedFileResult needFileContent(1: i64 run_id, 2: string filepath)
-        '''
+        """ NeedFileResult needFileContent(1: i64 run_id, 2: string filepath)
+        """
         return self._client.needFileContent(run_id, filepath)
 
     def add_file_content(self, file_id, file_content):
-        ''' bool addFileContent(1: i64 file_id, 2: binary file_content) '''
+        """ bool addFileContent(1: i64 file_id, 2: binary file_content) """
         return self._client.addFileContent(file_id, file_content)
 
 
 # -----------------------------------------------------------------------------
 class ConnectionManager(object):
-    '''
+    """
     ContextManager class for handling connections.
     Store common information for about connection.
     Start and stop the server.
-    '''
+    """
 
     run_id = None
 
@@ -208,15 +209,15 @@ class ConnectionManager(object):
         is_server_started = multiprocessing.Event()
         server = multiprocessing.Process(target=report_server.run_server,
                                          args=(
-                                         self.port,
-                                         self.database_server.get_connection_string(),
-                                         db_version_info,
-                                         is_server_started))
+                                             self.port,
+                                             self.database_server.get_connection_string(),
+                                             db_version_info,
+                                             is_server_started))
 
         server.daemon = True
         server.start()
 
-        # Wait a bit
+        # Wait a bit.
         counter = 0
         while not is_server_started.is_set() and counter < 4:
             LOG.debug('Waiting for checker server to start.')
@@ -224,9 +225,9 @@ class ConnectionManager(object):
             counter += 1
 
         if counter >= 4 or not server.is_alive():
-            # last chance to start
+            # Last chance to start.
             if server.exitcode is None:
-                # it is possible that the database starts really slow
+                # It is possible that the database starts really slow.
                 time.sleep(5)
                 if not is_server_started.is_set():
                     LOG.error('Failed to start checker server.')

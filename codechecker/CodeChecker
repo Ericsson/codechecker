@@ -4,29 +4,30 @@
 #   This file is distributed under the University of Illinois Open Source
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
-'''
-    used to kickstart codechecker
-    save original environment without modifications
-    used to run the logging in the same env
-'''
+"""
+Used to kickstart CodeChecker.
+Save original environment without modifications.
+Used to run the logging in the same env.
+"""
+from __future__ import print_function
 
+import ntpath
 import os
-import sys
+import pickle
+import shutil
 import signal
 import subprocess
-import pickle
-import ntpath
+import sys
 import tempfile
-import shutil
 
 procPool = []
 
-def run_codechecker(original_env, checker_env):
-    '''
-    run the codechecker
-    original_env - will be saved for later usage by the build action logger
-    checker_env - codechecker will be run in the checker env
-    '''
+
+def run_codechecker(checker_env):
+    """
+    Run the CodeChecker.
+        * checker_env - CodeChecker will be run in the checker env.
+    """
 
     package_bin = os.path.dirname(os.path.realpath(__file__))
     package_root, bin_dir = ntpath.split(package_bin)
@@ -50,9 +51,7 @@ def run_codechecker(original_env, checker_env):
                                     'cc_bin',
                                     'CodeChecker.py')
 
-    checker_cmd = []
-    checker_cmd.append(python)
-    checker_cmd.append(codechecker_main)
+    checker_cmd = [python, codechecker_main]
     checker_cmd.extend(sys.argv[1:])
 
     proc = subprocess.Popen(checker_cmd, env=checker_env)
@@ -61,8 +60,8 @@ def run_codechecker(original_env, checker_env):
     proc.wait()
     sys.exit(proc.returncode)
 
-def main():
 
+def main():
     original_env = os.environ.copy()
     checker_env = original_env
 
@@ -80,11 +79,10 @@ def main():
         print(ex)
 
     def signal_term_handler(sig, frame):
-        pid = os.getpid()
         for p in procPool:
             os.kill(p, signal.SIGINT)
 
-        # remove temporary directory
+        # Remove temporary directory.
         try:
             shutil.rmtree(tmp_dir)
         except Exception as ex:
@@ -97,9 +95,10 @@ def main():
     signal.signal(signal.SIGTERM, signal_term_handler)
     signal.signal(signal.SIGINT, signal_term_handler)
 
-    run_codechecker(original_env, checker_env)
+    run_codechecker(checker_env)
 
     shutil.rmtree(tmp_dir)
+
 
 if __name__ == "__main__":
     main()

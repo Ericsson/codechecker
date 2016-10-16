@@ -9,10 +9,14 @@ This module tests the correctness of the OutputParser and PListConverter, which
 used in sequence transform a Clang Tidy output file to a plist file.
 """
 
+import copy
 import os
 import unittest
-import copy
-import StringIO
+
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import BytesIO as StringIO
 
 import codechecker_lib.tidy_output_converter as tidy_out_conv
 
@@ -194,7 +198,7 @@ class TidyPListConverterTestCase(unittest.TestCase):
         self.plist_conv.add_messages([])
         self.assertDictEqual(orig_plist, self.plist_conv.plist)
 
-        output = StringIO.StringIO()
+        output = StringIO()
         self.plist_conv.write(output)
 
         with open('empty.plist') as pfile:
@@ -210,7 +214,7 @@ class TidyPListConverterTestCase(unittest.TestCase):
         # use relative path for this test
         self.plist_conv.plist['files'][0] = 'files/test.cpp'
 
-        output = StringIO.StringIO()
+        output = StringIO()
         self.plist_conv.write(output)
 
         with open('tidy1.plist') as pfile:
@@ -226,7 +230,7 @@ class TidyPListConverterTestCase(unittest.TestCase):
         # use relative path for this test
         self.plist_conv.plist['files'][0] = 'files/test2.cpp'
 
-        output = StringIO.StringIO()
+        output = StringIO()
         self.plist_conv.write(output)
 
         with open('tidy2.plist') as pfile:
@@ -243,7 +247,7 @@ class TidyPListConverterTestCase(unittest.TestCase):
         self.plist_conv.plist['files'][0] = 'files/test3.cpp'
         self.plist_conv.plist['files'][1] = 'files/test3.hh'
 
-        output = StringIO.StringIO()
+        output = StringIO()
         self.plist_conv.write(output)
 
         with open('tidy3.plist') as pfile:

@@ -4,27 +4,25 @@
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
 """
-build and log related stuff
+Build and log related functionality.
 """
 import os
 import pickle
+import platform
 import subprocess
 import sys
-import shutil
-import platform
+from distutils.spawn import find_executable
 
-from codechecker_lib import logger
 from codechecker_lib import analyzer_env
 from codechecker_lib import host_check
-
-from distutils.spawn import find_executable
+from codechecker_lib import logger
 
 LOG = logger.get_new_logger('BUILD MANAGER')
 
 
 def execute_buildcmd(command, silent=False, env=None, cwd=None):
     """
-    Execute the the build command and continously write
+    Execute the the build command and continuously write
     the output from the process to the standard output.
     """
     proc = subprocess.Popen(command,
@@ -65,9 +63,7 @@ def perform_build_command(logfile, command, context, silent=False):
                     'using a current copy for logging')
         original_env = os.environ.copy()
 
-    return_code = 0
-
-    # Run user's commands with intercept
+    # Run user's commands with intercept.
     if host_check.check_intercept(original_env):
         LOG.debug_analyzer("with intercept ...")
         final_command = command
@@ -75,9 +71,9 @@ def perform_build_command(logfile, command, context, silent=False):
         log_env = original_env
         LOG.debug_analyzer(command)
 
-    # Run user's commands in shell
+    # Run user's commands in shell.
     else:
-        # TODO better platform detection
+        # TODO: better platform detection.
         if platform.system() == 'Linux':
             LOG.debug_analyzer("with ld logger ...")
             log_env = analyzer_env.get_log_env(logfile, context, original_env)
@@ -107,7 +103,7 @@ def perform_build_command(logfile, command, context, silent=False):
 
 def default_compilation_db(workspace_path):
     """
-    default compilation commands database file in the workspace
+    Default compilation commands database file in the workspace.
     """
     compilation_commands = os.path.join(workspace_path,
                                         'compilation_commands.json')
@@ -116,21 +112,21 @@ def default_compilation_db(workspace_path):
 
 def check_log_file(args):
     """
-    check if the compilation command file was set in the command line
-    if not check if it is in the workspace directory
+    Check if the compilation command file was set in the command line
+    if not check if it is in the workspace directory.
     """
     log_file = None
     try:
         if args.logfile:
             log_file = os.path.realpath(args.logfile)
         else:
-            # log file could be in the workspace directory
+            # Log file could be in the workspace directory.
             log_file = default_compilation_db(args.workspace)
         if not os.path.exists(log_file):
             LOG.debug_analyzer("Compilation database file does not exists.")
             return None
     except AttributeError as ex:
-        # args.log_file was not set
+        # args.log_file was not set.
         LOG.debug_analyzer(ex)
         LOG.debug_analyzer("Compilation database file was not set"
                            " in the command line.")
@@ -151,13 +147,13 @@ def generate_log_file(args, context, silent=False):
 
             if intercept_build_executable is None:
                 if platform.system() == 'Linux':
-                    # check if logger bin exists
+                    # Check if logger bin exists.
                     if not os.path.isfile(context.path_logger_bin):
                         LOG.error('Logger binary not found!'
                                   'Required for logging.')
                         sys.exit(1)
 
-                    # check if logger lib exists
+                    # Check if logger lib exists.
                     if not os.path.exists(context.path_logger_lib):
                         LOG.error('Logger library directory not found!'
                                   'Libs are required for logging.')
@@ -169,7 +165,7 @@ def generate_log_file(args, context, silent=False):
                                    "compilation command file: " + log_file)
                 os.remove(log_file)
 
-            open(log_file, 'a').close()  # same as linux's touch
+            open(log_file, 'a').close()  # Same as linux's touch.
 
             perform_build_command(log_file,
                                   args.command,

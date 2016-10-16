@@ -14,27 +14,32 @@ commentBegin = '/* Unicode comment\n'
 commentEnd = '\nUnicode comment */'
 
 comment = \
-r"""Hungarian special characters:
+    r"""Hungarian special characters:
 áÁ éÉ íÍ óÓ öÖ őŐ úÚ üÜ űŰ
 
 Other special characters:
 äÄ åÅ àÀ âÂ æÆ çÇ èÈ êÊ ëË îÎ ïÏ ôÔ œŒ ß ùÙ ûÛ ÿŸ"""
 
-# somebody might have written into the line directly after the comment, if so do not remove '\n'
-commentPattern = re.compile(r'\n' + re.escape(commentBegin) + r'.*?' + re.escape(commentEnd) + r'(\n(?=\n|$))?', re.DOTALL)
+# Somebody might have written into the line directly after the comment,
+# if so do not remove '\n'
+commentPattern = re.compile(
+    r'\n' + re.escape(commentBegin) + r'.*?' + re.escape(
+        commentEnd) + r'(\n(?=\n|$))?', re.DOTALL)
+
 
 def parseArgs():
     global args
-    parser = argparse.ArgumentParser(description = \
-        'This script appends a C block comment containing special Unicode characters to the end of the source files.')
+    parser = argparse.ArgumentParser(description=
+                                     'This script appends a C block comment containing special Unicode characters to the end of the source files.')
 
     parser.add_argument('--remove', '-r', action='store_true', dest='remove',
-        help='Remove the comments from the files.')
+                        help='Remove the comments from the files.')
 
     parser.add_argument(dest='paths', nargs='*',
-        help='The paths of the source files or the directories containing the source files. Directories are explored recursively.')
+                        help='The paths of the source files or the directories containing the source files. Directories are explored recursively.')
 
     args = parser.parse_args()
+
 
 def addCommentToFile(filePath):
     if args.remove:
@@ -53,6 +58,7 @@ def addCommentToFile(filePath):
         file.truncate()
         file.write(text)
 
+
 def addCommentToDirectory(dirPath):
     for root, subFolders, files in os.walk(dirPath):
         for fileName in files:
@@ -60,6 +66,7 @@ def addCommentToDirectory(dirPath):
                 continue
             filePath = os.path.join(root, fileName)
             addCommentToFile(filePath)
+
 
 def main():
     parseArgs()
@@ -75,6 +82,7 @@ def main():
     else:
         workingDir = os.getcwd()
         addCommentToDirectory(workingDir)
+
 
 if __name__ == '__main__':
     main()

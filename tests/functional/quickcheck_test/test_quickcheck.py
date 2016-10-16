@@ -13,6 +13,7 @@ import unittest
 
 from subprocess import CalledProcessError
 
+
 class QuickCheckTestCase(unittest.TestCase):
     """This class tests the CodeChecker quickcheck feature."""
 

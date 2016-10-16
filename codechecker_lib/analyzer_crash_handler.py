@@ -3,12 +3,12 @@
 #   This file is distributed under the University of Illinois Open Source
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
-'''Module to handle analyzer crash.'''
+"""Module to handle analyzer crash."""
 
-import subprocess
 import shlex
-import tempfile
 import signal
+import subprocess
+import tempfile
 
 from codechecker_lib import logger
 
@@ -22,9 +22,10 @@ class AnalyzerCrashHandler(object):
 
     # --------------------------------------------------------------------------
     def get_crash_info(self, build_cmd):
-        ''' Get the crash info by running the build command
+        """
+        Get the crash info by running the build command
         with gdb again if there was some crash.
-        '''
+        """
         def signal_handler(*args, **kwargs):
             try:
                 result.terminate()
@@ -33,19 +34,16 @@ class AnalyzerCrashHandler(object):
 
         signal.signal(signal.SIGINT, signal_handler)
 
-        gdb_cmd = []
-        gdb_cmd.append('gdb')
-        gdb_cmd.append('--batch')
-        # add gdb script path is in the DT unter the config folder
-        gdb_cmd.append('--command=' + self._context.gdb_config_file)
-        gdb_cmd.append('--args')
+        gdb_cmd = ['gdb', '--batch',
+                   '--command=' + self._context.gdb_config_file, '--args']
         gdb_cmd.extend(build_cmd)
 
         tmp_stdout = tempfile.TemporaryFile()
         tmp_stderr = tempfile.TemporaryFile()
         result = ""
 
-        # gdb uses python3, so it is crashed when any python2 module in PYTHONPATH
+        # Gdb uses python3, so it is crashed when any python2 module in
+        # PYTHONPATH.
         # bug: https://bugs.launchpad.net/ubuntu/+source/apport/+bug/1398033
         self._analyzer_env['PYTHONPATH'] = ''
 
@@ -72,5 +70,3 @@ class AnalyzerCrashHandler(object):
             tmp_stderr.close()
 
         return result
-
-    # --------------------------------------------------------------------------

@@ -4,34 +4,34 @@
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
 
-import re
-import json
-import shlex
 import argparse
-
-from codechecker_lib.analyzers import config_handler
+import json
+import re
+import shlex
 
 from codechecker_lib import logger
+from codechecker_lib.analyzers import config_handler
 
 LOG = logger.get_new_logger('CLANG TIDY CONFIG')
 
+
 class ClangTidyConfigHandler(config_handler.AnalyzerConfigHandler):
-    '''
-    Configuration handler for Clang-tidy analyzer
-    '''
+    """
+    Configuration handler for Clang-tidy analyzer.
+    """
 
     def __init__(self):
         super(ClangTidyConfigHandler, self).__init__()
 
     def get_checker_configs(self):
         """
-        process the raw extra analyzer arguments and get the configuration
-        data ('-config=' argument for Clang tidy) for the checkers
+        Process the raw extra analyzer arguments and get the configuration
+        data ('-config=' argument for Clang tidy) for the checkers.
 
         Clang tidy accepts YAML or JSON formatted config, right now
-        parsing only the JSON format is supported
+        parsing only the JSON format is supported.
 
-        return a lis of tuples
+        Return a list of tuples
         (checker_name, key, key_value) list
 
         {
@@ -63,16 +63,16 @@ class ClangTidyConfigHandler(config_handler.AnalyzerConfigHandler):
 
         res = []
 
-        # match for clang static analyzer names and attributes
+        # Match for clang static analyzer names and attributes.
         clang_sa_checker_rex = r'^clang-analyzer-(?P<checker_name>([^:]+))\:(?P<checker_attribute>([^:]+))$'
 
-        # match for clang tidy analyzer names and attributes
+        # Match for clang tidy analyzer names and attributes.
         clang_tidy_checker_rex = r'^(?P<checker_name>([^.]+))\.(?P<checker_attribute>([^.]+))$'
 
         clangsa_pattern = re.compile(clang_sa_checker_rex)
         tidy_pattern = re.compile(clang_tidy_checker_rex)
 
-        # get config from the extra arguments if there is any
+        # Get config from the extra arguments if there is any.
         try:
             tidy_config_parser = argparse.ArgumentParser()
             tidy_config_parser.add_argument('-config',

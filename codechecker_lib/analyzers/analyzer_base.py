@@ -5,11 +5,10 @@
 # -------------------------------------------------------------------------
 
 import os
-import sys
 import shlex
 import signal
 import subprocess
-
+import sys
 from abc import ABCMeta, abstractmethod
 
 from codechecker_lib import logger
@@ -19,14 +18,13 @@ LOG = logger.get_new_logger('ANALYZER_BASE')
 
 class SourceAnalyzer(object):
     """
-    base class for different source analyzers
+    Base class for different source analyzers.
     """
     __metaclass__ = ABCMeta
 
-
     def __init__(self, config_handler, buildaction):
         self.__config_handler = config_handler
-        self.__buildaction = buildaction
+        self.__build_action = buildaction
         self.__source_file = ''
         self.__checkers = []
 
@@ -36,7 +34,7 @@ class SourceAnalyzer(object):
 
     @property
     def buildaction(self):
-        return self.__buildaction
+        return self.__build_action
 
     @property
     def config_handler(self):
@@ -45,47 +43,37 @@ class SourceAnalyzer(object):
     @property
     def source_file(self):
         """
-        the currently analyzed source file
+        The currently analyzed source file.
         """
         return self.__source_file
 
     @source_file.setter
     def source_file(self, file_path):
         """
-        the currently analyzed source file
+        The currently analyzed source file.
         """
         self.__source_file = file_path
 
     @abstractmethod
     def construct_analyzer_cmd(self, result_handler):
         """
-        construct the analyzer command
+        Construct the analyzer command.
         """
         pass
 
     def analyze(self, res_handler, env=None):
         """
-        run the analyzer
+        Run the analyzer.
         """
         LOG.debug('Running analyzer ...')
 
-        def signal_handler(*args, **kwargs):
-            # Clang does not kill its child processes, so I have to
-            try:
-                g_pid = proc.pid
-                os.killpg(g_pid, signal.SIGTERM)
-            finally:
-                sys.exit(os.EX_OK)
-
-        signal.signal(signal.SIGINT, signal_handler)
-
         # NOTICE!
-        # the currently analyzed source file needs to be set beforer the
-        # analyzer command is constructed
-        # the analyzer output file is based on the currently analyzed source
+        # The currently analyzed source file needs to be set before the
+        # analyzer command is constructed.
+        # The analyzer output file is based on the currently analyzed source.
         res_handler.analyzed_source_file = self.source_file
 
-        # construct the analyzer cmd
+        # Construct the analyzer cmd.
         analyzer_cmd = self.construct_analyzer_cmd(res_handler)
 
         LOG.debug('\n' + ' '.join(analyzer_cmd))
@@ -108,18 +96,28 @@ class SourceAnalyzer(object):
     @abstractmethod
     def get_analyzer_checkers(self, config_handler, env):
         """
-        return the checkers available in the analyzer
+        Return the checkers available in the analyzer.
         """
         pass
 
     @staticmethod
     def run_proc(command, env=None, cwd=None):
         """
-        Just run the given command and return the returncode
+        Just run the given command and return the return code
         and the stdout and stderr outputs of the process.
         """
 
+        def signal_handler(*args, **kwargs):
+            # Clang does not kill its child processes, so I have to.
+            try:
+                g_pid = proc.pid
+                os.killpg(g_pid, signal.SIGTERM)
+            finally:
+                sys.exit(os.EX_OK)
+
+        signal.signal(signal.SIGINT, signal_handler)
         cmd = shlex.split(command, posix=False)
+
         proc = subprocess.Popen(cmd,
                                 bufsize=-1,
                                 env=env,

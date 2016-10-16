@@ -4,17 +4,15 @@
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
 
-import os
-import sys
+import linecache
 import math
 import ntpath
-import linecache
-
+import os
+import sys
 from abc import ABCMeta
 
 from codechecker_lib import logger
 from codechecker_lib import plist_parser
-
 from codechecker_lib.analyzers.result_handler_base import ResultHandler
 
 LOG = logger.get_new_logger('PLIST TO STDOUT')
@@ -36,14 +34,14 @@ class PlistToStdout(ResultHandler):
     @property
     def print_steps(self):
         """
-        Print the multiple steps for a bug if there is any
+        Print the multiple steps for a bug if there is any.
         """
         return self.__print_steps
 
     @print_steps.setter
     def print_steps(self, value):
         """
-        Print the multiple steps for a bug if there is any
+        Print the multiple steps for a bug if there is any.
         """
         self.__print_steps = value
 
@@ -53,8 +51,8 @@ class PlistToStdout(ResultHandler):
         if line == '':
             return line
 
-        marker_line = line[0:(pos.col-1)]
-        marker_line = ' '  * (len(marker_line) + marker_line.count('\t'))
+        marker_line = line[0:(pos.col - 1)]
+        marker_line = ' ' * (len(marker_line) + marker_line.count('\t'))
         return '%s%s^' % (line.replace('\t', '  '), marker_line)
 
     def __format_bug_event(self, event):
@@ -64,7 +62,8 @@ class PlistToStdout(ResultHandler):
 
     def __print_bugs(self, bugs):
 
-        index_format = '    %%%dd, ' % int(math.floor(math.log10(len(bugs)))+1)
+        index_format = '    %%%dd, ' % int(
+            math.floor(math.log10(len(bugs))) + 1)
 
         for bug in bugs:
             last_event = bug.get_last_event()
@@ -89,7 +88,8 @@ class PlistToStdout(ResultHandler):
             return 1
 
         if len(bugs) > 0:
-            self.__output.write("%s contains %d defect(s)\n\n" % (plist, len(bugs)))
+            self.__output.write(
+                "%s contains %d defect(s)\n\n" % (plist, len(bugs)))
             self.__print_bugs(bugs)
         else:
             self.__output.write("%s doesn't contain any defects\n" % plist)
@@ -112,9 +112,10 @@ class PlistToStdout(ResultHandler):
         if err_code == 0:
 
             if len(bugs) > 0:
-                self.__output.write('%s found %d defect(s) while analyzing %s\n\n' %
-                                    (self.buildaction.analyzer_type, len(bugs),
-                                     source_file_name))
+                self.__output.write(
+                    '%s found %d defect(s) while analyzing %s\n\n' %
+                    (self.buildaction.analyzer_type, len(bugs),
+                     source_file_name))
                 self.__print_bugs(bugs)
             else:
                 self.__output.write('%s found no defects while analyzing %s\n' %
