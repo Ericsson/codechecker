@@ -58,6 +58,17 @@ def worker_result_handler(results):
     LOG.info("----=================----")
 
 
+# Progress reporting.
+progress_checked_num = None
+progress_actions = None
+
+
+def init_worker(x, y):
+    global progress_checked_num, progress_actions
+    progress_checked_num = x
+    progress_actions = y
+
+
 def check(check_data):
     """
     Invoke clang with an action which called by processes.
@@ -119,9 +130,14 @@ def check(check_data):
                     LOG.debug_analyzer('\n' + rh.analyzer_stderr)
                 rh.postprocess_result()
                 rh.handle_results()
+
+                LOG.info("[%d/%d] %s analyzed %s successfully." %
+                         (progress_checked_num.value, progress_actions.value,
+                          action.analyzer_type, source_file_name))
             else:
                 # Analysis failed.
-                LOG.error('Analyzing ' + source_file_name + ' failed.')
+                LOG.error('Analyzing ' + source_file_name + ' with ' +
+                          action.analyzer_type + ' failed.')
                 if rh.analyzer_stdout != '':
                     LOG.error(rh.analyzer_stdout)
                 if rh.analyzer_stderr != '':
@@ -131,6 +147,8 @@ def check(check_data):
             if not args.keep_tmp:
                 rh.clean_results()
 
+        progress_checked_num.value += 1
+
         return return_codes, skipped, action.analyzer_type
 
     except Exception as e:
@@ -139,7 +157,8 @@ def check(check_data):
         return 1, skipped, action.analyzer_type
 
 
-def start_workers(args, actions, context, analyzer_config_map, skp_handler):
+def start_workers(args, actions, context, analyzer_config_map, skp_handler,
+                  use_db=True):
     """
     Start the workers in the process pool
     for every buildaction there is worker which makes the analysis.
@@ -155,7 +174,7 @@ def start_workers(args, actions, context, analyzer_config_map, skp_handler):
     signal.signal(signal.SIGINT, signal_handler)
 
     # Remove characters which could cause directory creation problems.
-    no_spec_char_name = re.sub(r'[^\w\-_\. ]', '_', args.name)
+    no_spec_char_name = re.sub(r'[^\w\-_. ]', '_', args.name)
     report_output = os.path.join(context.codechecker_workspace,
                                  no_spec_char_name + '_reports')
 
@@ -166,7 +185,10 @@ def start_workers(args, actions, context, analyzer_config_map, skp_handler):
         os.mkdir(report_output)
 
     # Start checking parallel.
-    pool = multiprocessing.Pool(args.jobs)
+    checked_var = multiprocessing.Value('i', 1)
+    actions_num = multiprocessing.Value('i', len(actions))
+    pool = multiprocessing.Pool(args.jobs, initializer=init_worker,
+                                initargs=(checked_var, actions_num))
 
     try:
         # Workaround, equivalent of map.
@@ -181,7 +203,7 @@ def start_workers(args, actions, context, analyzer_config_map, skp_handler):
                              analyzer_config_map,
                              skp_handler,
                              report_output,
-                             True) for build_action in actions]
+                             use_db) for build_action in actions]
 
         pool.map_async(check,
                        analyzed_actions,

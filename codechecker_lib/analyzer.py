@@ -93,10 +93,11 @@ def run_check(args, actions, context):
         if os.path.exists(suppress_file):
             client.send_suppress(context.run_id, connection, suppress_file)
 
-        analyzer_config_map = analyzer_types.build_config_handlers(args,
-                                                                   context,
-                                                                   enabled_analyzers,
-                                                                   connection)
+        analyzer_config_map = \
+            analyzer_types.build_config_handlers(args,
+                                                 context,
+                                                 enabled_analyzers,
+                                                 connection)
         if skip_handler:
             connection.add_skip_paths(context.run_id,
                                       skip_handler.get_skiplist())
@@ -136,13 +137,5 @@ def run_quick_check(args,
                                              context,
                                              enabled_analyzers)
 
-    for action in actions:
-        check_data = (args,
-                      action,
-                      context,
-                      analyzer_config_map,
-                      None,
-                      args.workspace,
-                      False)
-
-        analysis_manager.check(check_data)
+    analysis_manager.start_workers(args, actions, context, analyzer_config_map,
+                                   None, False)

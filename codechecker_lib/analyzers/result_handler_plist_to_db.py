@@ -195,26 +195,19 @@ class PlistToDB(ResultHandler):
 
             # Store buildaction and analyzer command to the database.
 
-            if self.analyzer_returncode == 0:
+            assert self.analyzer_returncode == 0
 
-                LOG.info(self.buildaction.analyzer_type + ' analyzed ' +
-                         source_file_name + ' successfully.')
+            plist_file = self.get_analyzer_result_file()
 
-                plist_file = self.get_analyzer_result_file()
+            try:
+                files, bugs = plist_parser.parse_plist(plist_file)
+            except Exception as ex:
+                LOG.debug(str(ex))
+                msg = 'Parsing the generated result file failed'
+                LOG.error(msg + ' ' + plist_file)
+                connection.finish_build_action(analysis_id, msg)
+                return 1
 
-                try:
-                    files, bugs = plist_parser.parse_plist(plist_file)
-                except Exception as ex:
-                    LOG.debug(str(ex))
-                    msg = 'Parsing the generated result file failed'
-                    LOG.error(msg + ' ' + plist_file)
-                    connection.finish_build_action(analysis_id, msg)
-                    return 1
-
-                self.__store_bugs(files, bugs, connection, analysis_id)
-            else:
-                LOG.info('Analysing ' + source_file_name +
-                         ' with ' + self.buildaction.analyzer_type +
-                         ' failed.')
+            self.__store_bugs(files, bugs, connection, analysis_id)
 
             connection.finish_build_action(analysis_id, self.analyzer_stderr)

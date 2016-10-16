@@ -19,3 +19,9 @@ multi_error.cpp:9:7: Value stored to 'y' is never read
   Steps:
     1, multi_error.cpp:9:7: Value stored to 'y' is never read
 
+[INFO] - [1/1] clangsa analyzed multi_error.cpp successfully.
+[INFO] - ----==== Summary ====----
+[INFO] - Total compilation commands: 1
+[INFO] - Successfully analyzed
+[INFO] -   clangsa: 1
+[INFO] - ----=================----

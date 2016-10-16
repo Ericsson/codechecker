@@ -324,6 +324,8 @@ def _do_quickcheck(args):
         workspace = util.get_default_workspace()
 
     context.codechecker_workspace = workspace
+    args.jobs = 1
+    args.name = "quickcheck"
 
     # Load severity map from config file.
     if os.path.exists(context.checkers_severity_map_file):
