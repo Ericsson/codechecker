@@ -15,6 +15,7 @@ import time
 from abc import ABCMeta, abstractmethod
 
 import sqlalchemy
+from alembic.util import CommandError
 from alembic import command, config
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
@@ -95,6 +96,11 @@ class SQLServer(object):
 
         except sqlalchemy.exc.SQLAlchemyError as alch_err:
             LOG.error(str(alch_err))
+            sys.exit(1)
+        except CommandError as cerr:
+            LOG.error("Database schema and CodeChecker is incompatible."
+                      "Please update CodeChecker.")
+            LOG.debug(str(cerr))
             sys.exit(1)
 
     @abstractmethod
