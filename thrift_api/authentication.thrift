@@ -10,7 +10,7 @@ namespace py Authentication
 
 struct HandshakeInformation {
   1: bool requiresAuthentication,       // true if the server has a privileged zone --- the state of having a valid access is not considered here
-  2: bool sessionStillActive,
+  2: bool sessionStillActive,           // whether the session in which the HandshakeInformation is returned is a valid one
 }
 
 service codeCheckerAuthentication {

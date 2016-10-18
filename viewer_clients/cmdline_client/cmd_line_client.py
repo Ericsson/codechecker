@@ -38,7 +38,7 @@ class CmdLineOutputEncoder(json.JSONEncoder):
         return d
 
 def handle_auth_requests(args):
-    session = session_manager.sessionManager_Client()
+    session = session_manager.SessionManager_Client()
     auth_client = authentication_helper.ThriftAuthHelper(args.host,
                                                          args.port,
                                                          '/Authentication',
@@ -104,7 +104,7 @@ def __check_authentication(client):
 def setupClient(host, port, uri):
     ''' setup the thrift client and check
     API version and authentication needs'''
-    manager = session_manager.sessionManager_Client()
+    manager = session_manager.SessionManager_Client()
     session_token = manager.getToken(host, port)
 
     # Before actually communicating with the server,

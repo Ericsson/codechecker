@@ -24,6 +24,7 @@ from codechecker_lib import generic_package_suppress_handler
 from codechecker_lib import host_check
 from codechecker_lib import log_parser
 from codechecker_lib import logger
+from codechecker_lib import session_manager
 from codechecker_lib import util
 from codechecker_lib.analyzers import analyzer_types
 from codechecker_lib.database_handler import SQLServer

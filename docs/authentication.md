@@ -5,7 +5,7 @@ CodeChecker authentication subsytem
 
 CodeChecker also supports only allowing a privileged set of users to access the results stored on a server.
 
-> **NOTICE!** Some authentication subsystems require additional packages to be installed before they can be used.
+> **NOTICE!** Some authentication subsystems require additional packages to be installed before they can be used. See below.
  
 ## Serverside configuration
 
@@ -52,22 +52,24 @@ If the user's login matches any of the credentials listed, the user will be auth
 }
 ```
 
-### *PAM* authentication
+### External authentication methods
 
-#### Prerequisites
+External authentication methods connect to a privilege manager to authenticate users against.
 
-Using the *PAM* authentication requires some additional packages to be installed on the system.
+Using external authentication methods - such as *PAM* or *LDAP* - require additional packages and libraries to be installed on the system.
 
 ~~~~~~{.sh}
+# get additional system libraries
+sudo apt-get install libldap2-dev libsasl2-dev libssl-dev
 
 # the python virtual environment must be sourced!
 source ~/checker_env/bin/activate
 
 # install required python modules
-pip install python-pam
+pip install -r .ci/auth_requirements
 ~~~~~~
 
-#### Settings
+#### *PAM* authentication
 
 To access the server via PAM authentication, the user must provide valid username and password which is accepted by PAM.
 
@@ -92,25 +94,7 @@ In the example below, `root` and `myname` can access the server, and **everyone*
 }
 ```
 
-### *LDAP* authentication
-
-#### Prerequisites
-
-Using the *LDAP* authentication requires some additional packages to be installed on the system.
-
-~~~~~~{.sh}
-
-# get additional system libraries
-sudo apt-get install libldap2-dev libsasl2-dev libssl-dev
-
-# the python virtual environment must be sourced!
-source ~/checker_env/bin/activate
-
-# install required python modules
-pip install python-ldap
-~~~~~~
-
-#### Settings
+#### *LDAP* authentication
 
 CodeChecker also supports *LDAP*-based authentication. The `authentication.method_ldap` section contains the configuration for LDAP authentication:
 the server can be configured to connect to as much LDAP-servers as the administrator wants. Each LDAP server is identified by a `connection_url` and a list of `queries`
@@ -213,4 +197,4 @@ This behaviour can be disabled by setting `client_autologin` to `false`.
 
 #### Currently active tokens
 
-The configuration file's `tokens` section contains the user's currently active sessions' tokens. This is not meant to be edited by hand, the client manages this section.
+The user's currently active sessions' token are stored in the `/tmp/.codechecker_USERNAME.session.json` (where `/tmp` is the environment's *temp* folder) file.

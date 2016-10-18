@@ -3,23 +3,22 @@
 #   This file is distributed under the University of Illinois Open Source
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
-'''
+"""
 Handles the allocation and destruction of privileged sessions associated
 with a particular CodeChecker server.
-'''
+"""
 
-import os
-import stat
-import fcntl
-import shutil
-import uuid
-import json
-import hashlib
-import time
 import getpass
+import hashlib
+import json
+import os
+import portalocker
+import stat
+import shutil
+import time
 import tempfile
-import ldap
-import ldap.sasl
+import uuid
+
 from datetime import datetime
 
 from codechecker_lib import logger
@@ -56,10 +55,10 @@ class _Session():
 
     @staticmethod
     def calc_persistency_hash(client_addr, auth_string):
-        '''Calculates a more secure persistency hash for the session. This
+        """Calculates a more secure persistency hash for the session. This
         persistency hash is intended to be used for the "session recycle"
         feature to prevent NAT endpoints from accidentally getting each
-        other's session.'''
+        other's session."""
         return hashlib.sha256(auth_string + "@" + client_addr + ":" +
                               _Session.__initial_salt).hexdigest()
 
@@ -309,7 +308,7 @@ class SessionManager:
                        for _sess in SessionManager.__valid_sessions)
 
     def invalidate(self, client, token):
-        '''Remove a user's previous session from the store.'''
+        """Remove a user's previous session from the store."""
         for session in SessionManager.__valid_sessions[:]:
             if session.client == client and session.token == token:
                 SessionManager.__valid_sessions.remove(session)
@@ -401,7 +400,7 @@ class SessionManager_Client:
             self.__tokens[host + ":" + port] = token
 
         with open(self.token_file, 'w') as scfg:
-            fcntl.lockf(scfg, fcntl.LOCK_EX)
+            portalocker.lock(scfg, portalocker.LOCK_EX)
             json.dump({'tokens': self.__tokens}, scfg,
                       indent=2, sort_keys=True)
-            fcntl.lockf(scfg, fcntl.LOCK_UN)
+            portalocker.unlock(scfg)

@@ -87,10 +87,8 @@ class RequestHandler(SimpleHTTPRequestHandler):
         client_host, client_port = self.client_address
 
         for k in self.headers.getheaders("Cookie"):
-            print "Begin iter."
             split = k.split("; ")
             for cookie in split:
-                print cookie
                 values = cookie.split("=")
                 if len(values) == 2 and \
                         values[0] == session_manager.SESSION_COOKIE_NAME:
@@ -175,7 +173,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
         if self.path != '/Authentication' and not sess_token:
             # Bail out if the user is not authenticated...
             # This response has the possibility of melting down Thrift clients,
-            # but the user is expected to properly authenticate first
+            # but the user is expected to properly authenticate first.
 
             LOG.debug(client_host + ":" + str(client_port) +
                       " Invalid access, credentials not found " +
@@ -197,7 +195,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
                                                self.db_version_info)
 
             if self.path == '/Authentication':
-                # Authentication requests must be routed to a different handler
+                # Authentication requests must be routed to a different handler.
                 auth_handler = ThriftAuthHandler(self.manager,
                                                  client_host,
                                                  sess_token)
@@ -335,7 +333,7 @@ def start_server(package_data, port, db_conn_string, suppress_handler,
                                      package_data,
                                      suppress_handler,
                                      db_version_info,
-                                     session_manager.sessionManager())
+                                     session_manager.SessionManager())
 
     LOG.info('Waiting for client requests on [' +
              access_server_host + ':' + str(port) + ']')
