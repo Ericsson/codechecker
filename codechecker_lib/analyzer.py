@@ -48,7 +48,7 @@ def __print_analyzer_version(context, analyzer_config_map):
 
     # get the analyzer binaries from the config_map which
     # contains only the checked and available analyzers
-    for analyzer_name, analyzer_cfg in analyzer_config_map.iteritems():
+    for analyzer_name, analyzer_cfg in analyzer_config_map.items():
         LOG.info("Using analyzer:")
         analyzer_bin = analyzer_cfg.analyzer_binary
         print(analyzer_bin)
@@ -58,6 +58,15 @@ def __print_analyzer_version(context, analyzer_config_map):
         except OSError as oerr:
             LOG.warning("Failed to get analyzer version: " + ' '.join(version))
             LOG.warning(oerr.strerror)
+
+
+def _get_skip_handler(args):
+    try:
+        if args.skipfile:
+            LOG.debug_analyzer("Creating skiplist handler.")
+            return skiplist_handler.SkipListHandler(args.skipfile)
+    except AttributeError:
+        LOG.debug_analyzer('Skip file was not set in the command line')
 
 
 def run_check(args, actions, context):
@@ -97,13 +106,7 @@ def run_check(args, actions, context):
         LOG.debug_analyzer('Suppress file was not set in the command line')
 
     # Create one skip list handler shared between the analysis manager workers.
-    skip_handler = None
-    try:
-        if args.skipfile:
-            LOG.debug_analyzer("Creating skiplist handler.")
-            skip_handler = skiplist_handler.SkipListHandler(args.skipfile)
-    except AttributeError:
-        LOG.debug_analyzer('Skip file was not set in the command line')
+    skip_handler = _get_skip_handler(args)
 
     with client.get_connection() as connection:
         context.run_id = connection.add_checker_run(' '.join(sys.argv),
@@ -168,9 +171,5 @@ def run_quick_check(args,
 
     LOG.info("Static analysis is starting ...")
 
-    analysis_manager.start_workers(args,
-                                   actions,
-                                   context,
-                                   analyzer_config_map,
-                                   None,
-                                   False)
+    analysis_manager.start_workers(args, actions, context, analyzer_config_map,
+                                   _get_skip_handler(args), False)

@@ -1,0 +1,16 @@
+CodeChecker quickcheck --analyzers clangsa -b "make multi_error_suppress" --quiet-build
+-----------------------------------------------
+[INFO] - Starting build ...
+[INFO] - Build finished successfully.
+multi_error_suppress.cpp:2:3: Address of stack memory associated with local variable 'x' returned to caller
+  int x = 42;
+  ^
+
+clangsa found 1 defect(s) while analyzing multi_error_suppress.cpp
+
+[INFO] - [1/1] clangsa analyzed multi_error_suppress.cpp successfully.
+[INFO] - ----==== Summary ====----
+[INFO] - Total compilation commands: 1
+[INFO] - Successfully analyzed
+[INFO] -   clangsa: 1
+[INFO] - ----=================----

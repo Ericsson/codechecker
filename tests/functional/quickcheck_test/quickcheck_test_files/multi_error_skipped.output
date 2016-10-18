@@ -1,0 +1,8 @@
+CodeChecker quickcheck --analyzers clangsa -b "make multi_error" --quiet-build --skip skiplist.txt
+-----------------------------------------------
+[INFO] - Starting build ...
+[INFO] - Build finished successfully.
+[INFO] - ----==== Summary ====----
+[INFO] - Total compilation commands: 1
+[INFO] - Skipped compilation commands: 1
+[INFO] - ----=================----
