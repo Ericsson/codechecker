@@ -123,3 +123,7 @@ html, body {
 .buildActionInfo dt {
   font-weight: bold;
 }
+
+.currentMark {
+  background-color: #cdf;
+}
