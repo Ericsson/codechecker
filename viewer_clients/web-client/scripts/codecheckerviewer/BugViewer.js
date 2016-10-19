@@ -123,6 +123,7 @@ function (declare, dom, style, on, query, Memory, Observable, topic,
 
       that.addBubbles(bubbles);
       that.addLines(points);
+      that.addOtherFileBubbles(reportDetails.executionPath);
     },
 
     addBubbles : function (bubbles) {
@@ -140,6 +141,32 @@ function (declare, dom, style, on, query, Memory, Observable, topic,
         that._lineWidgets.push(that.codeMirror.addLineWidget(
           bubble.startLine - 1, element));
       });
+    },
+
+    addOtherFileBubbles : function (path) {
+      var that = this;
+
+      for (var i = 1; i < path.length; ++i) {
+        if (path[i].fileId !== this.sourceFileData.fileId &&
+            path[i].fileId !== path[i - 1].fileId) {
+          var element = dom.create('div', {
+            class : 'otherFileMsg',
+            innerHTML : 'bugpath in:<br>' + path[i].filePath.split('/').pop(),
+            onclick : (function (i) {
+              return function () {
+                that.set(
+                  'sourceFileData',
+                  CC_SERVICE.getSourceFileData(path[i].fileId, true));
+                that.drawBugPath();
+                that.jumpTo(path[i].startLine, path[i].startCol);
+              };
+            })(i)
+          });
+
+          this._lineWidgets.push(this.codeMirror.addLineWidget(
+            path[i - 1].startLine - 1, element));
+        }
+      }
     },
 
     clearBubbles : function () {

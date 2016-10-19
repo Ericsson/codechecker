@@ -127,3 +127,23 @@ html, body {
 .currentMark {
   background-color: #cdf;
 }
+
+.otherFileMsg {
+  background-color: #007ea7;
+  color: white;
+  border: 1px solid #aaa;
+  display: inline-block;
+  padding: 1px 6px;
+  margin: 1px;
+  margin-left: 200px;
+  -webkit-border-radius: 5px;
+  -moz-border-radius: 5px;
+  border-radius: 5px;
+  border-radius: 5px;
+  text-align: center;
+}
+
+.otherFileMsg:hover {
+  text-decoration: underline;
+  cursor: pointer;
+}
