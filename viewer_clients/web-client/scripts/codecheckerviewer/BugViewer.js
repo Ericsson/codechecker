@@ -191,6 +191,16 @@ function (declare, dom, style, on, query, Memory, Observable, topic,
       }, 0);
     },
 
+    highlightBugPathEvent : function (bugPathEvent) {
+      if (this._currentLineMark)
+        this._currentLineMark.clear();
+
+      this._currentLineMark = this.codeMirror.doc.markText(
+        { line : bugPathEvent.startLine - 1, ch : bugPathEvent.startCol - 1 },
+        { line : bugPathEvent.endLine - 1,   ch : bugPathEvent.endCol       },
+        { className : 'currentMark' });
+    },
+
     _setContentAttr : function (content) {
       this.codeMirror.doc.setValue(content);
       this._refresh();
@@ -411,6 +421,9 @@ function (declare, dom, style, on, query, Memory, Observable, topic,
 
       this.editor.drawBugPath();
       this.editor.jumpTo(line, column);
+
+      if (item.bugPathEvent)
+        this.editor.highlightBugPathEvent(item.bugPathEvent);
     },
 
     _onNodeMouseEnter : function (node) {
