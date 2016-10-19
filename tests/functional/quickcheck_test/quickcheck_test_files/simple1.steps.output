@@ -16,3 +16,9 @@ simple1.cpp:18:10: Division by zero
     6, simple1.cpp:16:3: The value 0 is assigned to 'x'
     7, simple1.cpp:18:10: Division by zero
 
+[INFO] - [1/1] clangsa analyzed simple1.cpp successfully.
+[INFO] - ----==== Summary ====----
+[INFO] - Total compilation commands: 1
+[INFO] - Successfully analyzed
+[INFO] -   clangsa: 1
+[INFO] - ----=================----

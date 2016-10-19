@@ -8,3 +8,9 @@ simple2.cpp:17:9: Division by zero
   return 2015 / x;
          ^
 
+[INFO] - [1/1] clangsa analyzed simple2.cpp successfully.
+[INFO] - ----==== Summary ====----
+[INFO] - Total compilation commands: 1
+[INFO] - Successfully analyzed
+[INFO] -   clangsa: 1
+[INFO] - ----=================----
