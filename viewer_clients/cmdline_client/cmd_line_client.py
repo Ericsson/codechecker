@@ -110,6 +110,25 @@ def check_run_names(client, check_names):
 
     return run_info
 
+def add_filter_conditions(report_filter, filter_str):
+    """This function fills some attributes of the given report filter based on
+    the filter string which is provided in the command line. The filter string
+    has to contain three parts divided by colons: the severity, checker id and
+    the file path respectively. The file path can contain joker characters, and
+    the checker id doesn't have to be complete (e.g. unix)."""
+
+    if filter_str.count(':') != 2:
+        print('Filter string has to contain two colons (e.g. ":unix:*.cpp").')
+        sys.exit(1)
+
+    severity, checker, path = map(lambda x: x.strip(), filter_str.split(':'))
+
+    if severity:
+        report_filter.severity = shared.ttypes.Severity._NAMES_TO_VALUES[severity.upper()]
+    if checker:
+        report_filter.checkerId = '*' + checker + '*'
+    if path:
+        report_filter.filepath = path
 
 def handle_list_runs(args):
     client = setupClient(args.host, args.port, '/')
@@ -150,6 +169,7 @@ def handle_list_results(args):
         report_filter = codeCheckerDBAccess.ttypes.ReportFilter(
             suppressed=False)
 
+    add_filter_conditions(report_filter, args.filter)
     filters.append(report_filter)
 
     results = client.getRunResults(run_id, limit, offset, None, filters)
@@ -204,6 +224,7 @@ def handle_list_result_types(args):
         report_filter = codeCheckerDBAccess.ttypes.ReportFilter(
             suppressed=False)
 
+    add_filter_conditions(report_filter, args.filter)
     filters.append(report_filter)
 
     if args.all_results:
@@ -276,6 +297,7 @@ def handle_diff_results(args):
     def printResult(getterFn, baseid, newid, suppr, output_format):
         report_filter = [
             codeCheckerDBAccess.ttypes.ReportFilter(suppressed=suppr)]
+        add_filter_conditions(report_filter[0], args.filter)
         rows, sort_type, limit, offset = [], None, 500, 0
 
         rows.append(('File', 'Checker', 'Severity', 'Msg'))
@@ -353,6 +375,10 @@ def register_client_command_line(argument_parser):
     listresults_parser.add_argument('-s', '--suppressed', action="store_true",
                                     dest="suppressed",
                                     help='Suppressed results.')
+    listresults_parser.add_argument('--filter', dest='filter', type=str,
+                                    default='::', help='Filter string in the '\
+                                    'following format: '\
+                                    '<severity>:<checker_name>:<file_path>')
     listresults_parser.add_argument('-o', choices=['plaintext', 'json', 'csv'],
                                     default='plaintext', type=str,
                                     dest="output_format", help='Output format.')
@@ -378,6 +404,10 @@ def register_client_command_line(argument_parser):
     diff_parser.add_argument('-o', choices=['plaintext', 'json', 'csv'],
                              default='plaintext', type=str,
                              dest="output_format", help='Output format.')
+    diff_parser.add_argument('--filter', dest='filter', type=str,
+                             default='::', help='Filter string in the '\
+                             'following format: '\
+                             '<severity>:<checker_name>:<file_path>')
     group = diff_parser.add_mutually_exclusive_group(required=True)
     group.add_argument('--new', action="store_true", dest="new",
                        help="Show new results.")
@@ -403,6 +433,10 @@ def register_client_command_line(argument_parser):
 
     sum_parser.add_argument('-s', '--suppressed', action="store_true",
                             dest="suppressed", help='Suppressed results.')
+    sum_parser.add_argument('--filter', dest='filter', type=str,
+                            default='::', help='Filter string in the '\
+                            'following format: '\
+                            '<severity>:<checker_name>:<source_file_path>')
     sum_parser.add_argument('-o', choices=['plaintext', 'json', 'csv'],
                             default='plaintext', type=str, dest="output_format",
                             help='Output format.')
