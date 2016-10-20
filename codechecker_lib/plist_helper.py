@@ -72,42 +72,106 @@ def get_check_name(current_msg):
 
 # This map needs extending.
 checker_message_map = \
-                      {
-    "": "NOT FOUND",
-    "Access out-of-bound array element (buffer overflow)": "alpha.security.ArrayBound",
-    "Address of stack memory associated with local variable  returned to caller": "core.StackAddressEscape",
-    "Argument to  is uninitialized": "core.CallAndMessage",
-    "Argument to free() is the address of the global variable , which is not memory allocated by malloc()": "alpha.unix.MallocWithAnnotations",
-    "Argument to free() is the address of the local variable , which is not memory allocated by malloc()": "alpha.unix.MallocWithAnnotations",
-    "Assigned value is garbage or undefined": "core.uninitialized.Assign",
-    "Attempt to free released memory": "alpha.unix.MallocWithAnnotations",
-    "Branch condition evaluates to a garbage value": "core.uninitialized.Branch",
-    "Call to function  is extremely insecure as it can always result in a buffer overflow": "security.insecureAPI.gets",
-    "Call to function  is insecure as it always creates or uses insecure temporary file.  Use  instead": "security.insecureAPI.mktemp",
-    "Call to function  is insecure as it does not provide bounding of the memory buffer. Replace unbounded copy functions with analogous functions that support length arguments such as . CWE-119": "security.insecureAPI.strcpy",
-    "Cast a region whose size is not a multiple of the destination type size": "alpha.core.CastSize",
-    "Dereference of null pointer (loaded from variable )": "core.NullDereference",
-    "Dereference of undefined pointer value": "core.NullDereference",
-    "Division by zero": "core.DivideZero",
-    "Function call argument is a pointer to uninitialized value": "core.CallAndMessage",
-    "Function call argument is an uninitialized value": "core.CallAndMessage",
-    "identical expressions on both sides of logical operator": "alpha.core.IdenticalExpr",
-    "Memory allocated by  should be deallocated by , not ": "unix.MismatchedDeallocator",
-    "Memory allocated by  should be deallocated by , not free()": "unix.MismatchedDeallocator",
-    "No call of chdir(\"/\") immediately after chroot": "alpha.unix.Chroot",
-    "Opened File never closed. Potential Resource leak": "alpha.unix.Stream",
-    "Potential leak of memory pointed to by ": "alpha.unix.MallocWithAnnotations",
-    "Potential leak of memory pointed to by ": "cplusplus.NewDelete",
-    "Potential memory leak": "cplusplus.NewDelete",
-    "Result of  is converted to a pointer of type , which is incompatible with sizeof operand type ": "unix.MallocSizeof",
-    "Size argument is greater than the length of the destination buffer": "alpha.unix.cstring.OutOfBounds",
-    "The code calls sizeof() on a pointer type. This can produce an unexpected result": "alpha.core.SizeofPtr",
-    "the computation of the size of the memory allocation may overflow": "alpha.security.MallocOverflow",
-    "The left operand of  is a garbage value": "core.UndefinedBinaryOperatorResult",
-    "The right operand of  is a garbage value": "core.UndefinedBinaryOperatorResult",
-    "This statement is never executed": "alpha.deadcode.UnreachableCode",
-    "Undefined or garbage value returned to caller": "core.uninitialized.UndefReturn",
-    "Use of memory after it is freed": "alpha.unix.MallocWithAnnotations",
-    "Value stored to  during its initialization is never read": "deadcode.DeadStores",
-    "Value stored to  is never read": "deadcode.DeadStores"
-}
+    {
+        "": "NOT FOUND",
+
+        "Access out-of-bound array element (buffer overflow)":
+
+        "alpha.security.ArrayBound",
+
+        "Address of stack memory associated with local variable  returned to "
+        "caller": "core.StackAddressEscape",
+
+        "Argument to  is uninitialized": "core.CallAndMessage",
+
+        "Argument to free() is the address of the global variable , which is "
+        "not memory allocated by malloc()": "alpha.unix.MallocWithAnnotations",
+
+        "Argument to free() is the address of the local variable , which is "
+        "not memory allocated by malloc()": "alpha.unix.MallocWithAnnotations",
+
+        "Assigned value is garbage or undefined": "core.uninitialized.Assign",
+
+        "Attempt to free released memory": "alpha.unix.MallocWithAnnotations",
+
+        "Branch condition evaluates to a garbage value":
+        "core.uninitialized.Branch",
+
+        "Call to function  is extremely insecure as it can always result in a "
+        "buffer overflow": "security.insecureAPI.gets",
+
+        "Call to function  is insecure as it always creates or uses insecure "
+        "temporary file.  Use  instead": "security.insecureAPI.mktemp",
+
+        "Call to function  is insecure as it does not provide bounding of the "
+        "memory buffer. Replace unbounded copy functions with analogous "
+        "functions that support length arguments such as . CWE-119":
+        "security.insecureAPI.strcpy",
+
+        "Cast a region whose size is not a multiple of the destination "
+        "type size": "alpha.core.CastSize",
+
+        "Dereference of null pointer (loaded from variable )":
+        "core.NullDereference",
+
+        "Dereference of undefined pointer value": "core.NullDereference",
+
+        "Division by zero": "core.DivideZero",
+
+        "Function call argument is a pointer to uninitialized value":
+        "core.CallAndMessage",
+
+        "Function call argument is an uninitialized value":
+        "core.CallAndMessage",
+
+        "identical expressions on both sides of logical operator":
+        "alpha.core.IdenticalExpr",
+
+        "Memory allocated by  should be deallocated by , not ":
+        "unix.MismatchedDeallocator",
+
+        "Memory allocated by  should be deallocated by , not free()":
+        "unix.MismatchedDeallocator",
+
+        "No call of chdir(\"/\") immediately after chroot":
+        "alpha.unix.Chroot",
+
+        "Opened File never closed. Potential Resource leak":
+        "alpha.unix.Stream",
+
+        "Potential leak of memory pointed to by ":
+        "alpha.unix.MallocWithAnnotations",
+
+        "Potential leak of memory pointed to by ": "cplusplus.NewDelete",
+
+        "Potential memory leak": "cplusplus.NewDelete",
+
+        "Result of  is converted to a pointer of type , which is incompatible "
+        "with sizeof operand type ": "unix.MallocSizeof",
+
+        "Size argument is greater than the length of the destination buffer":
+        "alpha.unix.cstring.OutOfBounds",
+
+        "The code calls sizeof() on a pointer type. This can produce an "
+        "unexpected result": "alpha.core.SizeofPtr",
+
+        "the computation of the size of the memory allocation may overflow":
+        "alpha.security.MallocOverflow",
+
+        "The left operand of  is a garbage value":
+        "core.UndefinedBinaryOperatorResult",
+
+        "The right operand of  is a garbage value":
+        "core.UndefinedBinaryOperatorResult",
+
+        "This statement is never executed": "alpha.deadcode.UnreachableCode",
+        "Undefined or garbage value returned to caller":
+
+        "core.uninitialized.UndefReturn",
+        "Use of memory after it is freed": "alpha.unix.MallocWithAnnotations",
+
+        "Value stored to  during its initialization is never read":
+        "deadcode.DeadStores",
+
+        "Value stored to  is never read": "deadcode.DeadStores"
+    }

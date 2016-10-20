@@ -99,7 +99,7 @@ def check_supported_analyzers(analyzers, context):
     return enabled_analyzers
 
 
-def construct_analyzer_type(analyzer_type, config_handler, buildaction):
+def build_analyzer_type(analyzer_type, config_handler, buildaction):
     """
     Construct a specific analyzer based on the type.
     """
@@ -135,9 +135,9 @@ def construct_analyzer(buildaction,
         # Get the proper config handler for this analyzer type.
         config_handler = analyzer_config_map.get(analyzer_type)
 
-        analyzer = construct_analyzer_type(analyzer_type,
-                                           config_handler,
-                                           buildaction)
+        analyzer = build_analyzer_type(analyzer_type,
+                                       config_handler,
+                                       buildaction)
         return analyzer
 
     except Exception as ex:
@@ -207,7 +207,7 @@ def __build_clangsa_config_handler(args, context):
         # No clangsa arguments file was given in the command line.
         LOG.debug_analyzer(aerr)
 
-    analyzer = construct_analyzer_type(CLANG_SA, config_handler, None)
+    analyzer = build_analyzer_type(CLANG_SA, config_handler, None)
 
     check_env = analyzer_env.get_check_env(context.path_env_extra,
                                            context.ld_lib_path_extra)
@@ -256,7 +256,7 @@ def __build_clang_tidy_config_handler(args, context):
         # No clang tidy arguments file was given in the command line.
         LOG.debug_analyzer(aerr)
 
-    analyzer = construct_analyzer_type(CLANG_TIDY, config_handler, None)
+    analyzer = build_analyzer_type(CLANG_TIDY, config_handler, None)
     check_env = analyzer_env.get_check_env(context.path_env_extra,
                                            context.ld_lib_path_extra)
 
@@ -268,8 +268,8 @@ def __build_clang_tidy_config_handler(args, context):
     try:
         cmdline_checkers = args.ordered_checkers
     except AttributeError:
-        LOG.debug_analyzer('No checkers were defined in the command line for ' +
-                           CLANG_TIDY)
+        LOG.debug_analyzer('No checkers were defined in '
+                           'the command line for ' + CLANG_TIDY)
         cmdline_checkers = None
 
     initialize_checkers(config_handler,

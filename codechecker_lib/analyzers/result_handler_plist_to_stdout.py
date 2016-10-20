@@ -118,7 +118,8 @@ class PlistToStdout(ResultHandler):
                      source_file_name))
                 self.__print_bugs(bugs)
             else:
-                self.__output.write('%s found no defects while analyzing %s\n' %
+                self.__output.write('%s found no defects '
+                                    'while analyzing %s\n' %
                                     (self.buildaction.analyzer_type,
                                      source_file_name))
                 return err_code

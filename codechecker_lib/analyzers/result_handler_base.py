@@ -199,7 +199,6 @@ class ResultHandler(object):
                 LOG.debug(oserr)
                 pass
 
-
     @abstractmethod
     def postprocess_result(self):
         """
