@@ -30,7 +30,7 @@ before_install:
 
 install:
     - pip install -r ./.ci/python_requirements
-    - pip install nose
+    - pip install nose pep8
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PG_DATA=$(brew --prefix)/var/postgres; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pg_ctl -w start -l postgres.log --pgdata ${PG_DATA}; cat postgres.log; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then cat postgres.log; fi
@@ -56,6 +56,8 @@ addons:
     postgresql: "9.3"
 
 script:
+    - pep8 codechecker
+
     - ./change_clang_version.py
 
     - source tests/test_env_setup.sh
