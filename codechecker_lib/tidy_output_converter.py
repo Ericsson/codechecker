@@ -31,9 +31,9 @@ class Note(object):
 
     def __eq__(self, other):
         return self.path == other.path and \
-               self.line == other.line and \
-               self.column == other.column and \
-               self.message == other.message
+            self.line == other.line and \
+            self.column == other.column and \
+            self.message == other.message
 
     def __str__(self):
         return 'path=%s, line=%d, column=%s, message=%s' % \
@@ -54,9 +54,9 @@ class Message(Note):
 
     def __eq__(self, other):
         return super(Message, self).__eq__(other) and \
-               self.checker == other.checker and \
-               self.fixits == other.fixits and \
-               self.notes == other.notes
+            self.checker == other.checker and \
+            self.fixits == other.fixits and \
+            self.notes == other.notes
 
     def __str__(self):
         return '%s, checker=%s, fixits=%s, notes=%s' % \
@@ -180,7 +180,7 @@ class OutputParser(object):
         """Parses fixit messages."""
 
         while OutputParser.message_line_re.match(line) is None and \
-                        OutputParser.note_line_re.match(line) is None:
+                OutputParser.note_line_re.match(line) is None:
             message_text = line.strip()
             if message_text == '':
                 continue
@@ -282,7 +282,8 @@ class PListConverter(object):
         diag['location'] = PListConverter._create_location(message, fmap)
         diag['check_name'] = message.checker
         diag['description'] = message.message
-        diag['category'] = PListConverter._get_checker_category(message.checker)
+        diag['category'] = PListConverter._get_checker_category(
+            message.checker)
         diag['type'] = 'clang-tidy'
         diag['path'] = [PListConverter._create_event_from_note(message, fmap)]
 

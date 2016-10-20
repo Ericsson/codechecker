@@ -4,50 +4,15 @@
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
 """
-Suppress handling.
+Suppress comment handling in the C/C++ source files.
 """
 
-import abc
 import linecache
 import re
 
 from codechecker_lib import logger
 
 LOG = logger.get_new_logger('SUPPRESS HANDLER')
-
-
-class SuppressHandler(object):
-    """ Suppress handler base class. """
-
-    __metaclass__ = abc.ABCMeta
-
-    __suppressfile = None
-
-    @abc.abstractmethod
-    def store_suppress_bug_id(self,
-                              bug_id,
-                              file_name,
-                              comment):
-        """ Store the suppress bug_id. """
-        pass
-
-    @abc.abstractmethod
-    def remove_suppress_bug_id(self,
-                               bug_id,
-                               file_name):
-        """ Remove the suppress bug_id. """
-        pass
-
-    @property
-    def suppress_file(self):
-        """" File on the filesystem where the suppress
-        data will be written. """
-        return self.__suppressfile
-
-    @suppress_file.setter
-    def suppress_file(self, value):
-        """ Set the suppress file. """
-        self.__suppressfile = value
 
 
 class SourceSuppressHandler(object):
@@ -94,7 +59,8 @@ class SourceSuppressHandler(object):
         formatted = ' '.join(nocomment.split())
 
         # Check for codechecker suppress comment.
-        pattern = r'^\s*codechecker_suppress\s*\[\s*(?P<checkers>(.*))\s*\]\s*(?P<comment>.*)$'
+        pattern = r'^\s*codechecker_suppress\s*' \
+            '\[\s*(?P<checkers>(.*))\s*\]\s*(?P<comment>.*)$'
 
         ptn = re.compile(pattern)
 
@@ -105,11 +71,13 @@ class SourceSuppressHandler(object):
             if checkers == "all":
                 self.__suppressed_checkers.append('all')
             else:
-                suppress_checker_list = re.findall(r"[^,\s]+", checkers.strip())
+                suppress_checker_list = re.findall(r"[^,\s]+",
+                                                   checkers.strip())
                 self.__suppressed_checkers.extend(suppress_checker_list)
             comment = res.group('comment')
             if comment == '':
-                self.__suppress_comment = "WARNING! suppress comment is missing"
+                self.__suppress_comment = "WARNING! suppress " \
+                    "comment is missing"
             else:
                 self.__suppress_comment = res.group('comment')
             return True

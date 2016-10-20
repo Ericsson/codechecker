@@ -113,7 +113,7 @@ class PlistToDB(ResultHandler):
                 suppress_checkers = sp_handler.suppressed_checkers()
 
                 if bug.checker_name in suppress_checkers or \
-                                suppress_checkers == ['all']:
+                        suppress_checkers == ['all']:
                     suppress = True
 
                     file_path, file_name = ntpath.split(source_file)
@@ -148,9 +148,10 @@ class PlistToDB(ResultHandler):
             # TODO: When the analyzer name can be read from PList, then it
             # should be passed too.
             # TODO: File name should be read from the PList and passed.
+            check_cmd = 'Build action from plist'
             analysis_id = connection.add_build_action(self.__run_id,
                                                       plist,
-                                                      'Build action from plist',
+                                                      check_cmd,
                                                       '',
                                                       '')
 

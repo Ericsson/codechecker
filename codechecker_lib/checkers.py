@@ -13,7 +13,8 @@ def get_env_checkers_list(env_name):
     env_set_checkers = util.get_env_var(env_name)
 
     LOG = logger.get_new_logger("CHECKERS")
-    LOG.debug_analyzer('Getting checkers list from environment variable %s' % (env_name))
+    LOG.debug_analyzer('Getting checkers list from environment variable %s' %
+                       (env_name))
 
     if env_set_checkers:
         checkers_list = env_set_checkers.split(':')

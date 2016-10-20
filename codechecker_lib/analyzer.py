@@ -127,8 +127,8 @@ def run_quick_check(args,
     No result is stored to a database.
     """
 
-    enabled_analyzers = analyzer_types.check_supported_analyzers(args.analyzers,
-                                                                 context)
+    enabled_analyzers = analyzer_types.check_supported_analyzers(
+        args.analyzers, context)
 
     actions = prepare_actions(actions, enabled_analyzers)
 

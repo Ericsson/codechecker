@@ -19,8 +19,8 @@ from codechecker_lib import build_action
 from codechecker_lib import build_manager
 from codechecker_lib import client
 from codechecker_lib import debug_reporter
-from codechecker_lib import generic_package_context
-from codechecker_lib import generic_package_suppress_handler
+from codechecker_lib import pckg_context
+from codechecker_lib import suppress_file_handler
 from codechecker_lib import host_check
 from codechecker_lib import log_parser
 from codechecker_lib import logger
@@ -37,10 +37,11 @@ def handle_list_checkers(args):
     List the supported checkers by the analyzers.
     List the default enabled and disabled checkers in the config.
     """
-    context = generic_package_context.get_context()
+    context = pckg_context.get_context()
     enabled_analyzers = args.analyzers
+    extra_ld_lib_path = context.ld_lib_path_extra
     analyzer_environment = analyzer_env.get_check_env(context.path_env_extra,
-                                                      context.ld_lib_path_extra)
+                                                      extra_ld_lib_path)
 
     if not enabled_analyzers:
         # Noting set list checkers for all supported analyzers.
@@ -62,9 +63,10 @@ def handle_list_checkers(args):
     for ea in enabled_analyzers:
         # Get the config.
         config_handler = analyzer_config_map.get(ea)
-        source_analyzer = analyzer_types.construct_analyzer_type(ea,
-                                                                 config_handler,
-                                                                 None)
+
+        source_analyzer = analyzer_types.build_analyzer_type(ea,
+                                                             config_handler,
+                                                             None)
 
         checkers = source_analyzer.get_analyzer_checkers(config_handler,
                                                          analyzer_environment)
@@ -116,7 +118,7 @@ def handle_server(args):
             LOG.error('Suppress file ' + args.suppress + ' not found!')
             sys.exit(1)
 
-    context = generic_package_context.get_context()
+    context = pckg_context.get_context()
     context.codechecker_workspace = workspace
     context.db_username = args.dbusername
 
@@ -142,10 +144,10 @@ def handle_server(args):
     # Start database viewer.
     db_connection_string = sql_server.get_connection_string()
 
-    suppress_handler = generic_package_suppress_handler.GenericSuppressHandler()
+    suppress_fh = suppress_file_handler.SuppressFileHandler(args.suppress)
     try:
-        suppress_handler.suppress_file = args.suppress
-        LOG.debug('Using suppress file: ' + str(suppress_handler.suppress_file))
+        LOG.debug('Using suppress file: ' +
+                  str(suppress_fh.suppress_file))
     except AttributeError as aerr:
         # Suppress file was not set.
         LOG.debug(aerr)
@@ -167,7 +169,7 @@ def handle_server(args):
     client_db_access_server.start_server(package_data,
                                          args.view_port,
                                          db_connection_string,
-                                         suppress_handler,
+                                         suppress_fh,
                                          args.not_host_only,
                                          context.db_version_info)
 
@@ -181,7 +183,7 @@ def handle_log(args):
     if os.path.exists(args.logfile):
         os.remove(args.logfile)
 
-    context = generic_package_context.get_context()
+    context = pckg_context.get_context()
     open(args.logfile, 'a').close()  # Same as linux's touch.
     build_manager.perform_build_command(args.logfile,
                                         args.command,
@@ -193,7 +195,7 @@ def handle_debug(args):
     Runs a debug command on the buildactions where the analysis
     failed for some reason.
     """
-    context = generic_package_context.get_context()
+    context = pckg_context.get_context()
 
     try:
         workspace = args.workspace
@@ -240,7 +242,7 @@ def handle_check(args):
         if not os.path.isdir(workspace):
             os.mkdir(workspace)
 
-        context = generic_package_context.get_context()
+        context = pckg_context.get_context()
         context.codechecker_workspace = workspace
         context.db_username = args.dbusername
 
@@ -309,12 +311,12 @@ def _do_quickcheck(args):
     """
     Handles the "quickcheck" command.
 
-    For arguments see main function in CodeChecker.py. It also requires an extra
-    property in args object, namely workspace which is a directory path as a
-    string. This function is called from handle_quickcheck.
+    For arguments see main function in CodeChecker.py. It also requires an
+    extra property in args object, namely workspace which is a directory
+    path as a string. This function is called from handle_quickcheck.
     """
 
-    context = generic_package_context.get_context()
+    context = pckg_context.get_context()
 
     try:
         workspace = args.workspace
@@ -393,7 +395,7 @@ def consume_plist(item):
 
 
 def handle_plist(args):
-    context = generic_package_context.get_context()
+    context = pckg_context.get_context()
     context.codechecker_workspace = args.workspace
     context.db_username = args.dbusername
 
@@ -430,7 +432,8 @@ def handle_plist(args):
     pool = multiprocessing.Pool(args.jobs)
 
     try:
-        items = [(plist, args, context) for plist in os.listdir(args.directory)]
+        items = [(plist, args, context) for plist
+                 in os.listdir(args.directory)]
         pool.map_async(consume_plist, items, 1).get(float('inf'))
         pool.close()
     except Exception:
@@ -446,7 +449,7 @@ def handle_version_info(args):
     version config file and thrift API versions.
     """
 
-    context = generic_package_context.get_context()
+    context = pckg_context.get_context()
     version_file = context.version_file
 
     try:
@@ -455,9 +458,9 @@ def handle_version_info(args):
 
         version_data = json.loads(v_data)
         base_version = version_data['version']['major'] + \
-                       '.' + version_data['version']['minor']
+            '.' + version_data['version']['minor']
         db_schema_version = version_data['db_version']['major'] + \
-                            '.' + version_data['db_version']['minor']
+            '.' + version_data['db_version']['minor']
 
         print('Base package version: \t' + base_version).expandtabs(30)
         print('Package build date: \t' +

@@ -202,7 +202,8 @@ class SQLServer(object):
             else:
                 engine = session.get_bind()
 
-            if not engine.has_table(quoted_name(DBVersion.__tablename__, True)):
+            if not engine.has_table(
+                    quoted_name(DBVersion.__tablename__, True)):
                 LOG.debug("Missing DBVersion table!")
                 return False
 
@@ -276,8 +277,8 @@ class PostgreSQLServer(SQLServer):
         LOG.debug('Checking for database at ' + self.path)
 
         return os.path.exists(self.path) and \
-               os.path.exists(os.path.join(self.path, 'PG_VERSION')) and \
-               os.path.exists(os.path.join(self.path, 'base'))
+            os.path.exists(os.path.join(self.path, 'PG_VERSION')) and \
+            os.path.exists(os.path.join(self.path, 'base'))
 
     def _initialize_database_data(self):
         """Initialize a PostgreSQL instance with initdb. """
@@ -340,7 +341,8 @@ class PostgreSQLServer(SQLServer):
 
             db_uri = self._get_connection_string('postgres')
             engine = SQLServer.create_engine(db_uri)
-            text = "SELECT 1 FROM pg_database WHERE datname='%s'" % self.database
+            text = "SELECT 1 FROM pg_database WHERE datname='%s'" %  \
+                self.database
             if not bool(engine.execute(text).scalar()):
                 conn = engine.connect()
                 # From sqlalchemy documentation:
@@ -362,8 +364,8 @@ class PostgreSQLServer(SQLServer):
     def _is_running(self):
         """Is there PostgreSQL instance running on a given host and port."""
 
-        LOG.debug('Checking if database is running at ' + self.host + ':' + str(
-            self.port))
+        LOG.debug('Checking if database is running at ' +
+                  self.host + ':' + str(self.port))
 
         check_db = ['psql', '-U', self.user, '-l', '-p', str(self.port), '-h',
                     self.host]
@@ -390,8 +392,8 @@ class PostgreSQLServer(SQLServer):
                     sys.exit(1)
                 elif not self._initialize_database_data():
                     # The database does not exist and cannot create.
-                    LOG.error('Database data is missing and the initialization '
-                              'of a new failed!')
+                    LOG.error('Database data is missing and the '
+                              'initialization of a new failed!')
                     LOG.error('Please check your configuration!')
                     sys.exit(1)
 
@@ -403,7 +405,9 @@ class PostgreSQLServer(SQLServer):
                 if logger.get_log_level() == logger.DEBUG else os.devnull
             self._db_log = open(db_logfile, 'wb')
 
-            start_db = ['postgres', '-i', '-D', self.path, '-p', str(self.port),
+            start_db = ['postgres', '-i',
+                        '-D', self.path,
+                        '-p', str(self.port),
                         '-h', self.host]
             self.proc = subprocess.Popen(start_db,
                                          bufsize=-1,

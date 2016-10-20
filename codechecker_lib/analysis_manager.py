@@ -77,7 +77,7 @@ def check(check_data):
     skiplist handler is None if no skip file was configured
     """
     args, action, context, analyzer_config_map, skp_handler, \
-    report_output_dir, use_db = check_data
+        report_output_dir, use_db = check_data
 
     skipped = False
     try:

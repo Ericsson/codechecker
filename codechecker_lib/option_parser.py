@@ -52,9 +52,9 @@ LOG = logger.get_new_logger('OPTION PARSER')
 #     def get_add_rules(self):
 #         return []
 
-# ---------------------------------------------------------------------------- #
+# ----------------------------------------------------------------------------
 #  Lookup tables. From ScanBuild: clang-analyzer.llvm.org/scan-build.html
-# ---------------------------------------------------------------------------- #
+# ----------------------------------------------------------------------------
 
 COMPILE_OPTION_MAP = {
     '-nostdinc': 0,
@@ -348,7 +348,9 @@ def arg_check(it, result):
         return wrapped
 
     def set_attr(arg, attr_name, attr_value=None, regex=None):
-        """Set an attr value. If no value given then read next from iterator."""
+        """
+        Set an attr value. If no value given then read next from iterator.
+        """
 
         def wrapped(value):
             if (regex and regex_match(value, arg)) or value == arg:
@@ -406,14 +408,16 @@ def arg_check(it, result):
 
 # -----------------------------------------------------------------------------
 def parse_options(args):
-    """Requires a full compile command with the compiler, not only arguments."""
+    """
+    Requires a full compile command with the compiler, not only arguments.
+    """
 
     # Keep " characters.
     args = args.replace('"', '\\"')
 
     result_map = OptionParserResult()
     for it in OptionIterator(shlex.split(args)[1:]):
-        arg_check(it, result_map) # TODO: do sth at False result, actually skip.
+        arg_check(it, result_map)  # TODO: do sth at False result, skip it
 
     return result_map
 

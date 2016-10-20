@@ -37,7 +37,8 @@ class ClangSAConfigHandler(config_handler.AnalyzerConfigHandler):
         Return a list of (checker_name, key, value) tuples.
         """
 
-        checker_config_pattern = r'(?P<checker_name>([^: ]+))\:(?P<checker_attr>([^:=]+))\=(?P<attr_value>([^:\. ]+))'
+        checker_config_pattern = r'(?P<checker_name>([^: ]+))\:' \
+            '(?P<checker_attr>([^:=]+))\=(?P<attr_value>([^:\. ]+))'
 
         raw_config = self.analyzer_extra_arguments
         LOG.debug_analyzer(raw_config)

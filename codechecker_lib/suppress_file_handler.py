@@ -17,11 +17,13 @@ After removing the hash_value_type the generated format is:
 For backward compatibility the hash_value_type is an optional filed.
 """
 
+import abc
 import codecs
 import os
 import re
 
 from codechecker_lib import logger
+from codechecker_lib import suppress_handler
 
 LOG = logger.get_new_logger('SUPPRESS_FILE_HANDLER')
 
@@ -29,124 +31,199 @@ COMMENT_SEPARATOR = '||'
 HASH_TYPE_SEPARATOR = '#'
 
 
-def get_suppress_data(suppress_file):
-    """
-    Process a file object for suppress information.
-    """
+class SuppressHandler(object):
+    """ Suppress handler base class. """
 
-    old_format_pattern = r"^(?P<bug_hash>[\d\w]{32})(\#(?P<bug_hash_type>\d))?\s*\|\|\s*(?P<comment>[^\|]*)$"
+    __metaclass__ = abc.ABCMeta
+
+    @abc.abstractmethod
+    def store_suppress_bug_id(self,
+                              bug_id,
+                              file_name,
+                              comment):
+        """ Store the suppress bug_id. """
+        pass
+
+    @abc.abstractmethod
+    def remove_suppress_bug_id(self,
+                               bug_id,
+                               file_name):
+        """ Remove the suppress bug_id. """
+        pass
+
+
+class SuppressFileHandler(SuppressHandler):
+
+    old_format_pattern = r"^(?P<bug_hash>[\d\w]{32})" \
+        r"(\#(?P<bug_hash_type>\d))?\s*\|\|\s*(?P<comment>[^\|]*)$"
     old_format = re.compile(old_format_pattern, re.UNICODE)
 
-    new_format_pattern = r"^(?P<bug_hash>[\d\w]{32})(\#(?P<bug_hash_type>\d))?\s*\|\|\s*(?P<file_name>[^\\\|]+)\s*\|\|\s*(?P<comment>[^\|]*)$"
+    new_format_pattern = r"^(?P<bug_hash>[\d\w]{32})"\
+        r"(\#(?P<bug_hash_type>\d))?\s*\|\|\s*(?P<file_name>[^\\\|]+)" \
+        r"\s*\|\|\s*(?P<comment>[^\|]*)$"
     new_format = re.compile(new_format_pattern, re.UNICODE)
 
-    suppress_data = []
+    __suppress_file = None
 
-    for line in suppress_file:
+    def __init__(self, suppress_file=None):
+        self.__suppress_file = suppress_file
+        super(SuppressFileHandler, self).__init__()
 
-        new_format_match = re.match(new_format, line.strip())
-        if new_format_match:
-            LOG.debug('Match for new suppress entry format:')
-            new_format_match = new_format_match.groupdict()
-            LOG.debug(new_format_match)
-            suppress_data.append((new_format_match['bug_hash'],
-                                  new_format_match['file_name'],
-                                  new_format_match['comment']))
-            continue
+    def store_suppress_bug_id(self, bug_id, file_name, comment):
 
-        old_format_match = re.match(old_format, line.strip())
-        if old_format_match:
-            LOG.debug('Match for old suppress entry format:')
-            old_format_match = old_format_match.groupdict()
-            LOG.debug(old_format_match)
-            suppress_data.append((old_format_match['bug_hash'],
-                                  u'',  # empty file name
-                                  old_format_match['comment']))
-            continue
+        if self.__suppress_file is None:
+            return False
 
-        if line.strip() != '':
-            LOG.warning('Malformed suppress line: ' + line)
+        ret = self.__write_to_suppress_file(self.__suppress_file,
+                                            bug_id,
+                                            file_name,
+                                            comment)
+        return ret
 
-    return suppress_data
+    def remove_suppress_bug_id(self, bug_id, file_name):
 
+        if self.suppress_file is None:
+            return False
 
-# ---------------------------------------------------------------------------
-def write_to_suppress_file(suppress_file, value, file_name, comment=''):
-    comment = comment.decode('UTF-8')
+        ret = self.__remove_from_suppress_file(
+            self.__suppress_file,
+            bug_id,
+            file_name)
+        return ret
 
-    LOG.debug('Processing suppress file: ' + suppress_file)
+    @property
+    def suppress_file(self):
+        """" File on the filesystem where the suppress
+        data will be written. """
+        return self.__suppress_file
 
-    try:
-        with codecs.open(suppress_file, 'r', 'UTF-8') as s_file:
-            suppress_data = get_suppress_data(s_file)
+    @suppress_file.setter
+    def suppress_file(self, value):
+        """ Set the suppress file. """
+        self.__suppress_file = value
 
-        if not os.stat(suppress_file)[6] == 0:
-            # File is not empty.
+    @staticmethod
+    def get_suppress_data_from_file(suppress_file):
+        if os.path.exists(suppress_file):
+            with codecs.open(suppress_file, 'r', 'UTF-8') as s_file:
+                return SuppressFileHandler.get_suppress_data(s_file)
+        else:
+            return []
 
-            res = filter(lambda x: (x[0] == value and x[1] == file_name) or
-                                   (x[0] == value and x[1] == ''),
-                         suppress_data)
+    @classmethod
+    def get_suppress_data(cls, suppress_file):
+        """
+        Process a file object for suppress information.
+        """
 
-            if res:
-                LOG.debug("Already found in\n %s" % suppress_file)
-                return True
+        suppress_data = []
 
-        s_file = codecs.open(suppress_file, 'a', 'UTF-8')
+        for line in suppress_file:
 
-        s_file.write(value + COMMENT_SEPARATOR + file_name + COMMENT_SEPARATOR +
-                     comment + '\n')
-        s_file.close()
+            new_format_match = re.match(cls.new_format, line.strip())
+            if new_format_match:
+                LOG.debug('Match for new suppress entry format:')
+                new_format_match = new_format_match.groupdict()
+                LOG.debug(new_format_match)
+                suppress_data.append((new_format_match['bug_hash'],
+                                      new_format_match['file_name'],
+                                      new_format_match['comment']))
+                continue
 
-        return True
+            old_format_match = re.match(cls.old_format, line.strip())
+            if old_format_match:
+                LOG.debug('Match for old suppress entry format:')
+                old_format_match = old_format_match.groupdict()
+                LOG.debug(old_format_match)
+                suppress_data.append((old_format_match['bug_hash'],
+                                      u'',  # empty file name
+                                      old_format_match['comment']))
+                continue
 
-    except Exception as ex:
-        LOG.error(str(ex))
-        LOG.error("Failed to write: %s" % suppress_file)
-        return False
+            if line.strip() != '':
+                LOG.warning('Malformed suppress line: ' + line)
 
+        return suppress_data
 
-def remove_from_suppress_file(suppress_file, value, file_name):
-    """
-    Remove suppress information from the suppress file.
-    Old and new format is supported.
-    """
+    def __write_to_suppress_file(self, suppress_file, value, file_name,
+                                 comment=''):
 
-    LOG.debug('Removing ' + value + ' from \n' + suppress_file)
+        LOG.debug('Processing suppress file: ' + suppress_file)
 
-    try:
-        s_file = codecs.open(suppress_file, 'r+', 'UTF-8')
-        lines = s_file.readlines()
+        try:
+            suppress_data = \
+                SuppressFileHandler.get_suppress_data_from_file(suppress_file)
 
-        # Filter out new format first because it is more specific.
-        old_format_pattern = r"^" + value + r"(\#\d)?\s*\|\|\s*(?P<comment>[^\|]*)$"
-        old_format = re.compile(old_format_pattern, re.UNICODE)
+            if not os.stat(suppress_file)[6] == 0:
+                # File is not empty.
 
-        new_format_pattern = r"^" + value + r"(\#d)?\s*\|\|\s*" + file_name + r"\s*\|\|\s*(?P<comment>[^\|]*)$"
-        new_format = re.compile(new_format_pattern, re.UNICODE)
+                res = filter(lambda x: (x[0] == value and x[1] == file_name) or
+                                       (x[0] == value and x[1] == ''),
+                             suppress_data)
+
+                if res:
+                    LOG.debug("Already found in\n %s" % suppress_file)
+                    return True
+
+            comment = comment.decode('UTF-8')
+
+            with codecs.open(suppress_file, 'a', 'UTF-8') as s_file:
+                s_file.write(value + COMMENT_SEPARATOR +
+                             file_name + COMMENT_SEPARATOR +
+                             comment + '\n')
+
+            return True
+
+        except Exception as ex:
+            LOG.error(str(ex))
+            LOG.error("Failed to write: %s" % suppress_file)
+            return False
+
+    def __remove_from_suppress_file(self, suppress_file, value, file_name):
+        """
+        Remove suppress information from the suppress file.
+        Old and new format is supported.
+        """
+
+        LOG.debug('Removing ' + value + ' from \n' + suppress_file)
+
+        # remove patterns
+        old_format_remove_pattern = r"^" + value + \
+            r"(\#\d)?\s*\|\|\s*(?P<comment>[^\|]*)$"
+        old_format_remove = re.compile(old_format_remove_pattern, re.UNICODE)
+
+        new_format_remove_pattern = r"^" + value + r"(\#d)?\s*\|\|\s*" + \
+            file_name + r"\s*\|\|\s*(?P<comment>[^\|]*)$"
+        new_format_remove = re.compile(new_format_remove_pattern, re.UNICODE)
 
         def check_for_match(line):
             """
             Check if the line matches the new or old format.
+            Match for new format first because it is more specific.
             """
             line = line.strip()
-            if re.match(new_format, line.strip()):
+            if re.match(new_format_remove, line.strip()):
                 return False
-            if re.match(old_format, line.strip()):
+            if re.match(old_format_remove, line.strip()):
                 return False
             else:
                 return True
 
-        # Filter out lines which should be removed.
-        lines = filter(lambda line: check_for_match(line), lines)
+        try:
+            with codecs.open(suppress_file, 'r+', 'UTF-8') as s_file:
 
-        s_file.seek(0)
-        s_file.truncate()
-        s_file.writelines(lines)
-        s_file.close()
+                lines = s_file.readlines()
 
-        return True
+                # Filter out lines which should be removed.
+                lines = filter(lambda line: check_for_match(line), lines)
 
-    except Exception as ex:
-        LOG.error(str(ex))
-        LOG.error("Failed to write: %s" % suppress_file)
-        return False
+                s_file.seek(0)
+                s_file.truncate()
+                s_file.writelines(lines)
+
+            return True
+
+        except Exception as ex:
+            LOG.error(str(ex))
+            LOG.error("Failed to write: %s" % suppress_file)
+            return False

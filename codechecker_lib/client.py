@@ -41,10 +41,8 @@ def send_suppress(run_id, connection, file_name):
     Collect suppress information from the suppress file to be stored
     in the database.
     """
-    suppress_data = []
-    if os.path.exists(file_name):
-        with codecs.open(file_name, 'r', 'UTF-8') as s_file:
-            suppress_data = suppress_file_handler.get_suppress_data(s_file)
+    suppress_data = suppress_file_handler.SuppressFileHandler. \
+        get_suppress_data_from_file(file_name)
 
     if len(suppress_data) > 0:
         connection.add_suppress_bug(run_id, suppress_data)
@@ -88,7 +86,8 @@ class Connection(object):
         while True:
             try:
                 self._transport = TSocket.TSocket(host, port)
-                self._transport = TTransport.TBufferedTransport(self._transport)
+                self._transport = TTransport.TBufferedTransport(
+                    self._transport)
                 self._protocol = TBinaryProtocol.TBinaryProtocol(
                     self._transport)
                 self._client = CheckerReport.Client(self._protocol)
@@ -148,13 +147,18 @@ class Connection(object):
         return self._client.addSkipPath(run_id, converted)
 
     def replace_config_info(self, run_id, config_list):
-        ''' bool replaceConfigInfo(1: i64 run_id, 2: list<ConfigValue> values) '''
+        """
+        bool replaceConfigInfo(1: i64 run_id, 2: list<ConfigValue> values)
+        """
         return self._client.replaceConfigInfo(run_id, config_list)
 
     def add_build_action(self, run_id, build_cmd, check_cmd, analyzer_type,
                          analyzed_source_file):
-        """ i64  addBuildAction(1: i64 run_id, 2: string build_cmd,
-        3: string check_cmd, 4: string analyzer_type, 5: string analyzed_source_file)
+        """ i64  addBuildAction(1: i64 run_id,
+                                2: string build_cmd,
+                                3: string check_cmd,
+                                4: string analyzer_type,
+                                5: string analyzed_source_file)
         """
         return self._client.addBuildAction(run_id,
                                            build_cmd,
@@ -207,10 +211,11 @@ class ConnectionManager(object):
     def start_report_server(self, db_version_info):
 
         is_server_started = multiprocessing.Event()
+        conn_str = self.database_server.get_connection_string()
         server = multiprocessing.Process(target=report_server.run_server,
                                          args=(
                                              self.port,
-                                             self.database_server.get_connection_string(),
+                                             conn_str,
                                              db_version_info,
                                              is_server_started))
 
