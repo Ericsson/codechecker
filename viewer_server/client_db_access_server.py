@@ -5,8 +5,9 @@
 # -------------------------------------------------------------------------
 """
 Main viewer server starts a http server which handles thrift client
-and browser requests.
+and browser requests
 """
+import base64
 import errno
 import os
 import posixpath
@@ -14,8 +15,8 @@ import socket
 import urllib
 from multiprocessing.pool import ThreadPool
 
-from sqlalchemy.orm import scoped_session
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import scoped_session
 
 try:
     from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
@@ -24,30 +25,40 @@ except ImportError:
     from http.server import HTTPServer, BaseHTTPRequestHandler, \
         SimpleHTTPRequestHandler
 
+from thrift import Thrift
+from thrift.Thrift import TException
 from thrift.transport import TTransport
 from thrift.protocol import TJSONProtocol
 
+import shared
 from codeCheckerDBAccess import codeCheckerDBAccess
+from codeCheckerDBAccess import constants
+from codeCheckerDBAccess.ttypes import *
+from Authentication import codeCheckerAuthentication
+from Authentication import constants
+from Authentication.ttypes import *
 
 from client_db_access_handler import ThriftRequestHandler
+from client_auth_handler import ThriftAuthHandler
 
 from codechecker_lib import logger
 from codechecker_lib import database_handler
+from codechecker_lib import session_manager
 
 LOG = logger.get_new_logger('DB ACCESS')
 
 
-class RequestHander(SimpleHTTPRequestHandler):
+class RequestHandler(SimpleHTTPRequestHandler):
     """
     Handle thrift and browser requests
     Simply modified and extended version of SimpleHTTPRequestHandler
     """
 
     def __init__(self, request, client_address, server):
-
         self.sc_session = server.sc_session
 
         self.db_version_info = server.db_version_info
+        self.manager = server.manager
 
         BaseHTTPRequestHandler.__init__(self,
                                         request,
@@ -57,6 +68,80 @@ class RequestHander(SimpleHTTPRequestHandler):
     def log_message(self, msg_format, *args):
         """ Silenting http server. """
         return
+
+    def check_auth_in_request(self):
+        """
+        Wrapper to handle authentication needs from both GET and POST requests.
+        """
+
+        if not self.manager.isEnabled():
+            return True
+
+        success = False
+
+        # Authentication can happen in two possible ways:
+        #
+        # The user either presents a valid session cookie -- in this case, checking if
+        # the session for the given cookie is valid
+
+        client_host, client_port = self.client_address
+
+        for k in self.headers.getheaders("Cookie"):
+            split = k.split("; ")
+            for cookie in split:
+                values = cookie.split("=")
+                if len(values) == 2 and \
+                        values[0] == session_manager.SESSION_COOKIE_NAME:
+                    if self.manager.is_valid(client_host, values[1], True):
+                        # The session cookie contains valid data.
+                        success = values[1]
+
+        if not success:
+            # Session cookie was invalid (or not found...)
+            # Attempt to see if the browser has sent us an authentication request
+            authHeader = self.headers.getheader("Authorization")
+            if authHeader is not None and authHeader.startswith("Basic "):
+                LOG.info("Client from " + client_host + ":" +
+                         str(client_port) + " attempted authorization.")
+                authString = base64.decodestring(
+                    self.headers.getheader("Authorization").
+                    replace("Basic ", ""))
+
+                token = self.manager.create_or_get_session(client_host,
+                                                           authString)
+                if token:
+                    LOG.info("Client from " + client_host + ":" +
+                             str(client_port) + " successfully logged in")
+                    return token
+
+        # Else, access is still not granted.
+        if not success:
+            LOG.debug(client_host + ":" + str(client_port) +
+                      " Invalid access, credentials not found " +
+                      "- session refused.")
+            return None
+
+        return success
+
+    def do_GET(self):
+        authToken = self.check_auth_in_request()
+        if authToken:
+            self.send_response(200)
+            if isinstance(authToken, str):
+                self.send_header("Set-Cookie",
+                                 session_manager.SESSION_COOKIE_NAME + "=" +
+                                 authToken + "; Path=/")
+            SimpleHTTPRequestHandler.do_GET(self)
+        else:
+            self.send_response(401)
+            self.send_header("WWW-Authenticate", 'Basic realm="' +
+                             self.manager.getRealm()["realm"] + '"')
+            self.send_header("Content-type", "text/plain")
+            self.send_header("Content-length", str(len(
+                self.manager.getRealm()["error"])))
+            self.send_header('Connection', 'close')
+            self.end_headers()
+            self.wfile.write(self.manager.getRealm()["error"])
 
     def do_POST(self):
         """ Handling thrift messages. """
@@ -75,6 +160,7 @@ class RequestHander(SimpleHTTPRequestHandler):
         output_protocol_factory = protocol_factory
 
         itrans = TTransport.TFileObjectTransport(self.rfile)
+        otrans = TTransport.TFileObjectTransport(self.wfile)
         itrans = TTransport.TBufferedTransport(itrans,
                                                int(self.headers[
                                                        'Content-Length']))
@@ -83,6 +169,23 @@ class RequestHander(SimpleHTTPRequestHandler):
         iprot = input_protocol_factory.getProtocol(itrans)
         oprot = output_protocol_factory.getProtocol(otrans)
 
+        sess_token = self.check_auth_in_request()
+        if self.path != '/Authentication' and not sess_token:
+            # Bail out if the user is not authenticated...
+            # This response has the possibility of melting down Thrift clients,
+            # but the user is expected to properly authenticate first.
+
+            LOG.debug(client_host + ":" + str(client_port) +
+                      " Invalid access, credentials not found " +
+                      "- session refused.")
+            self.send_response(401)
+            self.send_header("Content-type", "text/plain")
+            self.send_header("Content-length", str(0))
+            self.end_headers()
+
+            return
+
+        # Authentication is handled, we may now respond to the user.
         try:
             session = self.sc_session()
             acc_handler = ThriftRequestHandler(session,
@@ -91,7 +194,21 @@ class RequestHander(SimpleHTTPRequestHandler):
                                                suppress_handler,
                                                self.db_version_info)
 
-            processor = codeCheckerDBAccess.Processor(acc_handler)
+            if self.path == '/Authentication':
+                # Authentication requests must be routed to a different handler.
+                auth_handler = ThriftAuthHandler(self.manager,
+                                                 client_host,
+                                                 sess_token)
+                processor = codeCheckerAuthentication.Processor(auth_handler)
+            else:
+                acc_handler = ThriftRequestHandler(session,
+                                                   checker_md_docs,
+                                                   checker_md_docs_map,
+                                                   suppress_handler,
+                                                   self.db_version_info)
+
+                processor = codeCheckerDBAccess.Processor(acc_handler)
+
             processor.process(iprot, oprot)
             result = otrans.getvalue()
 
@@ -118,7 +235,6 @@ class RequestHander(SimpleHTTPRequestHandler):
         """
         Modified version from SimpleHTTPRequestHandler.
         Path is set to www_root.
-
         """
         # Abandon query parameters.
         path = path.split('?', 1)[0]
@@ -149,7 +265,8 @@ class CCSimpleHttpServer(HTTPServer):
                  db_conn_string,
                  pckg_data,
                  suppress_handler,
-                 db_version_info):
+                 db_version_info,
+                 manager):
 
         LOG.debug('Initializing HTTP server')
 
@@ -159,11 +276,13 @@ class CCSimpleHttpServer(HTTPServer):
         self.checker_md_docs_map = pckg_data['checker_md_docs_map']
         self.suppress_handler = suppress_handler
         self.db_version_info = db_version_info
-        self.__engine = database_handler.SQLServer.create_engine(db_conn_string)
+        self.__engine = database_handler.SQLServer.create_engine(
+            db_conn_string)
 
         Session = scoped_session(sessionmaker())
         Session.configure(bind=self.__engine)
         self.sc_session = Session
+        self.manager = manager
 
         self.__request_handlers = ThreadPool(processes=10)
 
@@ -209,11 +328,12 @@ def start_server(package_data, port, db_conn_string, suppress_handler,
     server_addr = (access_server_host, port)
 
     http_server = CCSimpleHttpServer(server_addr,
-                                     RequestHander,
+                                     RequestHandler,
                                      db_conn_string,
                                      package_data,
                                      suppress_handler,
-                                     db_version_info)
+                                     db_version_info,
+                                     session_manager.SessionManager())
 
     LOG.info('Waiting for client requests on [' +
              access_server_host + ':' + str(port) + ']')

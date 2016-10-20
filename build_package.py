@@ -111,6 +111,15 @@ def generate_thrift_files(thrift_files_dir, env, silent=True):
         LOG.error('Failed to generate viewer server files')
         return ret
 
+    auth_thrift = os.path.join(thrift_files_dir, 'authentication.thrift')
+    auth_thrift = 'authentication.thrift'
+    auth_cmd = ['thrift', '-r', '-I', '.',
+                '--gen', 'py', auth_thrift]
+    ret = run_cmd(auth_cmd, thrift_files_dir, env, silent=silent)
+    if ret:
+        LOG.error('Failed to generate authentication interface files')
+        return ret
+
 
 # -------------------------------------------------------------------
 def generate_documentation(doc_root, env, silent=True):

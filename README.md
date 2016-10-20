@@ -176,3 +176,5 @@ See user guide for further configuration and check options.
 [Test documentation](tests/functional/package_test.md)
 
 [Database schema migration](docs/db_schema_guide.md)
+
+[Privileged server and authentication in client](docs/authentication.md)

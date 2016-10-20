@@ -24,6 +24,7 @@ from codechecker_lib import generic_package_suppress_handler
 from codechecker_lib import host_check
 from codechecker_lib import log_parser
 from codechecker_lib import logger
+from codechecker_lib import session_manager
 from codechecker_lib import util
 from codechecker_lib.analyzers import analyzer_types
 from codechecker_lib.database_handler import SQLServer
@@ -118,6 +119,7 @@ def handle_server(args):
 
     context = generic_package_context.get_context()
     context.codechecker_workspace = workspace
+    session_manager.SessionManager.CodeChecker_Workspace = workspace
     context.db_username = args.dbusername
 
     check_env = analyzer_env.get_check_env(context.path_env_extra,
@@ -438,7 +440,6 @@ def handle_plist(args):
         raise
     finally:
         pool.join()
-
 
 def handle_version_info(args):
     """

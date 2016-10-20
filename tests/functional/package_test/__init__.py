@@ -6,6 +6,7 @@
 # -----------------------------------------------------------------------------
 
 """Setup for the package tests."""
+
 import json
 import multiprocessing
 import os
@@ -93,7 +94,11 @@ def setup_package():
         'CC_TEST_SERVER_PORT': get_free_port(),
         'CC_TEST_SERVER_HOST': 'localhost',
         'CC_TEST_VIEWER_PORT': get_free_port(),
-        'CC_TEST_VIEWER_HOST': 'localhost'
+        'CC_TEST_VIEWER_HOST': 'localhost',
+        'CC_AUTH_SERVER_PORT': get_free_port(),
+        'CC_AUTH_SERVER_HOST': 'localhost',
+        'CC_AUTH_VIEWER_PORT': get_free_port(),
+        'CC_AUTH_VIEWER_HOST': 'localhost',
     }
 
     test_project_clean_cmd = project_info['clean_cmd']
@@ -102,6 +107,8 @@ def setup_package():
     # setup env vars for test cases
     os.environ['CC_TEST_VIEWER_PORT'] = str(test_config['CC_TEST_VIEWER_PORT'])
     os.environ['CC_TEST_SERVER_PORT'] = str(test_config['CC_TEST_SERVER_PORT'])
+    os.environ['CC_AUTH_SERVER_PORT'] = str(test_config['CC_AUTH_SERVER_PORT'])
+    os.environ['CC_AUTH_VIEWER_PORT'] = str(test_config['CC_AUTH_VIEWER_PORT'])
     os.environ['CC_TEST_PROJECT_INFO'] = \
         json.dumps(project_info['clang_' + clang_version])
     # -------------------------------------------------------------------------
@@ -164,7 +171,34 @@ def setup_package():
 
     # Start the CodeChecker server.
     print("Starting server to get results")
-    _start_server(shared_test_params, test_config)
+    _start_server(shared_test_params, test_config, False)
+
+    #
+    # Create a dummy authentication-enabled configuration and an auth-enabled server.
+    #
+    # Running the tests only work if the initial value (in package
+    # session_config.json) is FALSE for authentication.enabled.
+    os.remove(os.path.join(shared_test_params['workspace'], "session_config.json"))
+    session_cfg_file = os.path.join(pkg_root, "config", "session_config.json")
+    with open(session_cfg_file, 'r+') as scfg:
+        __scfg_original = scfg.read()
+        scfg.seek(0)
+        scfg_dict = json.loads(__scfg_original)
+
+        scfg_dict["authentication"]["enabled"] = True
+        scfg_dict["authentication"]["method_dictionary"]["enabled"] = True
+        scfg_dict["authentication"]["method_dictionary"]["auths"] = ["cc:test"]
+
+        json.dump(scfg_dict, scfg, indent=2, sort_keys=True)
+        scfg.truncate()
+
+    print("Starting server to test authentication")
+    _start_server(shared_test_params, test_config, True)
+
+    # Need to save the original configuration back so multiple tests can work after each other
+    os.remove(os.path.join(shared_test_params['workspace'], "session_config.json"))
+    with open(session_cfg_file, 'w') as scfg:
+        scfg.writelines(__scfg_original)
 
 
 def teardown_package():
@@ -279,7 +313,7 @@ def _run_check(shared_test_params, skip_list_file, test_project_build_cmd,
         return cerr.returncode
 
 
-def _start_server(shared_test_params, test_config):
+def _start_server(shared_test_params, test_config, auth=False):
     """Start the CodeChecker server."""
     def start_server_proc(event, server_cmd, checking_env):
         """Target function for starting the CodeChecker server."""
@@ -293,10 +327,19 @@ def _start_server(shared_test_params, test_config):
             proc.terminate()
 
     server_cmd = ['CodeChecker', 'server',
-                  '--check-port', str(test_config['CC_TEST_SERVER_PORT']),
-                  '--view-port', str(test_config['CC_TEST_VIEWER_PORT']),
                   '-w', shared_test_params['workspace'],
                   '--suppress', shared_test_params['suppress_file']]
+	
+    if auth:
+	server_cmd.extend(['--check-port',
+                           str(test_config['CC_AUTH_SERVER_PORT']),
+                           '--view-port',
+                           str(test_config['CC_AUTH_VIEWER_PORT'])])
+    else:
+	server_cmd.extend(['--check-port',
+                           str(test_config['CC_TEST_SERVER_PORT']),
+                           '--view-port',
+                           str(test_config['CC_TEST_VIEWER_PORT'])])
     if shared_test_params['use_postgresql']:
         server_cmd.append('--postgresql')
         server_cmd += _pg_db_config_to_cmdline_params(

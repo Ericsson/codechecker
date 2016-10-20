@@ -1,0 +1,10 @@
+{
+  "client_autologin" : true,
+  "credentials": {
+    "*" : "global:admin",
+    "localhost:14444" : "test:test"
+  },
+  "tokens": {
+    "localhost:14444" : "dummy_token"
+  }
+}
