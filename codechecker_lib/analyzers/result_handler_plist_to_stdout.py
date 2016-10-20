@@ -27,10 +27,11 @@ class PlistToStdout(ResultHandler):
 
     __metaclass__ = ABCMeta
 
-    def __init__(self, buildaction, workspace):
+    def __init__(self, buildaction, workspace, lock):
         super(PlistToStdout, self).__init__(buildaction, workspace)
         self.__print_steps = False
         self.__output = sys.stdout
+        self.__lock = lock
 
     @property
     def print_steps(self):
@@ -134,7 +135,12 @@ class PlistToStdout(ResultHandler):
         err_code = self.analyzer_returncode
 
         if err_code == 0:
-            self.__print_bugs(bugs)
+            try:
+                # No lock when consuming plist.
+                self.__lock.acquire() if self.__lock else None
+                self.__print_bugs(bugs)
+            finally:
+                self.__lock.release() if self.__lock else None
         else:
             self.__output.write('Analyzing %s with %s failed.\n' %
                                 (ntpath.basename(self.analyzed_source_file),

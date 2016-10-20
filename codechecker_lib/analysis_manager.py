@@ -61,12 +61,14 @@ def worker_result_handler(results):
 # Progress reporting.
 progress_checked_num = None
 progress_actions = None
+progress_lock = None
 
 
-def init_worker(x, y):
-    global progress_checked_num, progress_actions
-    progress_checked_num = x
-    progress_actions = y
+def init_worker(checked_num, action_num, lock):
+    global progress_checked_num, progress_actions, progress_lock
+    progress_checked_num = checked_num
+    progress_actions = action_num
+    progress_lock = lock
 
 
 def check(check_data):
@@ -108,6 +110,7 @@ def check(check_data):
                                                          report_output_dir,
                                                          context.severity_map,
                                                          skp_handler,
+                                                         progress_lock,
                                                          use_db)
 
             # Create a source analyzer.
@@ -187,8 +190,9 @@ def start_workers(args, actions, context, analyzer_config_map, skp_handler,
     # Start checking parallel.
     checked_var = multiprocessing.Value('i', 1)
     actions_num = multiprocessing.Value('i', len(actions))
+    lock = multiprocessing.Lock();
     pool = multiprocessing.Pool(args.jobs, initializer=init_worker,
-                                initargs=(checked_var, actions_num))
+                                initargs=(checked_var, actions_num, lock))
 
     try:
         # Workaround, equivalent of map.

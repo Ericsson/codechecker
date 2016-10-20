@@ -388,6 +388,7 @@ def consume_plist(item):
                                                  args.directory,
                                                  {},
                                                  None,
+                                                 None,
                                                  not args.stdout)
 
     rh.handle_plist(os.path.join(args.directory, plist))
