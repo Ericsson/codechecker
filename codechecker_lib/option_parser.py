@@ -3,7 +3,20 @@
 #   This file is distributed under the University of Illinois Open Source
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
+"""
+An extended lookup table for compiler arguments based on ScanBuild
+clang-analyzer.llvm.org/scan-build.html
 
+Used to filter out or change compiler argument not supported by clang
+or clang-tidy.
+
+Keys are the option name, value is the number of options to skip.
+
+Possible improvements:
+    - modular option handling system configuring possibility from config file
+
+"""
+import os
 import re
 import shlex
 
@@ -11,61 +24,27 @@ from codechecker_lib import logger
 
 LOG = logger.get_new_logger('OPTION PARSER')
 
-# TODO: make modular option handling system,
-# configuring possibility from config file
-# class OpenFilterPluginBase(object):
-#     __metaclass__ = abc.ABCMeta
-#
-#     @abc.abstractproperty
-#     def compiler_name(self):
-#         ''' Compiler name (regex expression)'''
-#         return None
-#
-#     @abc.abstactmethod
-#     def get_exclude_rules(self):
-#         ''' Remove options, x -> nothing'''
-#         return {}
-#
-#     @abc.abstactmethod
-#     def get_modify_rules(self):
-#         ''' Modify options, x -> y'''
-#         return {}
-#
-#     @abc.abstactmethod
-#     def get_add_rules(self):
-#         ''' Add rules,::x '''
-#         return []
-#
-# class DefaultFilterPlugin(OpenFilterPluginBase):
-#     __compiler_name = '.*'
-#
-#     @property
-#     def compiler_name(self):
-#         return __compiler_name
-#
-#     def get_exclude_rules(self):
-#         return {}
-#
-#     def get_modify_rules(self):
-#         return {}
-#
-#     def get_add_rules(self):
-#         return []
-
-# ---------------------------------------------------------------------------- #
-#  Lookup tables. From ScanBuild: clang-analyzer.llvm.org/scan-build.html
-# ---------------------------------------------------------------------------- #
+# Compiler options.
 
 COMPILE_OPTION_MAP = {
-    '-nostdinc': 0,
-    '-include': 1,
     '-idirafter': 1,
     '-imacros': 1,
+    '-include': 1,
     '-iprefix': 1,
+    '-isysroot': 1,
     '-isystem': 1,
     '-iwithprefix': 1,
-    '-iwithprefixbefore': 1
+    '-iwithprefixbefore': 1,
+    '-nostdinc': 0,
+    '-sysroot': 1
 }
+
+COMPILE_OPTION_MAP_MERGED = [
+    '^-iquote(.*)$',
+    '^-[DIU](.*)$',
+    '^-F(.+)$'
+]
+
 
 COMPILE_OPTION_MAP_REGEX = {
     '-O([1-3]|s)?$': 0,
@@ -76,28 +55,55 @@ COMPILE_OPTION_MAP_REGEX = {
     '^-m(32|64)$': 0
 }
 
-COMPILE_OPTION_MAP_MERGED = [
-    '^-iquote(.*)$',
-    '^-[DIU](.*)$',
-    '^-F(.+)$'
-]
+# Linker options.
+
+LINKER_OPTION_MAP_REGEX = {
+    '^-:L.*$': 0,
+    '^-l.*$': 0,
+    '^-shared.*$': 0,
+    '^-static.*$': 0
+}
 
 COMPILER_LINKER_OPTION_MAP = {
-    '-write-strings': 0,
+    '-Xlinker': 1,
     '-ftrapv-handler': 1,
+    '-lobjc': 0,
     '-mios-simulator-version-min': 0,
-    '-sysroot': 1,
+    '-miphoneos-version-min': 0,
+    '-mmacosx-version-min': 0,
+    '-no-pie': 0,
+    '-nostartfiles': 0,
+    '-nostdlib': 0,
+    '-pie': 0,
+    '-rdynamic': 0,
+    '-s': 0,
     '-stdlib': 0,
+    '-sysroot': 1,
     '-target': 1,
     '-v': 0,
-    '-mmacosx-version-min': 0,
-    '-miphoneos-version-min': 0
+    '-write-strings': 0
 }
 
 LINKER_OPTION_MAP = {
     '-framework': 1,
     '-fobjc-link-runtime': 0
 }
+
+LINK_OPTION_MAP_MERGED = [
+    '^-[L](.*)$',
+]
+
+# Replace gcc/g++ build target options with values
+# accepted by clang.
+
+REPLACE_OPTIONS_MAP = {
+    '-mips32': ['-target', 'mips', '-mips32'],
+    '-mips64': ['-target', 'mips64', '-mips64'],
+    '-mpowerpc': ['-target', 'powerpc'],
+    '-mpowerpc64': ['-target', 'powerpc64']
+}
+
+# Ignored options.
 
 IGNORED_OPTION_MAP = {
     '-MT': 1,
@@ -119,16 +125,7 @@ IGNORED_OPTION_MAP = {
     '--serialize-diagnostics': 1
 }
 
-UNIQUE_OPTIONS = {
-    '-isysroot': 1
-}
-
-REPLACE_OPTIONS_MAP = {
-    '-mips32': ['-target', 'mips', '-mips32'],
-    '-mips64': ['-target', 'mips64', '-mips64'],
-    '-mpowerpc': ['-target', 'powerpc'],
-    '-mpowerpc64': ['-target', 'powerpc64']
-}
+# Unknown options by clang, will be skipped.
 
 UNKNOWN_OPTIONS_MAP_REGEX = {
     '^-fcall-saved-.*': 0,
@@ -171,21 +168,50 @@ UNKNOWN_OPTIONS_MAP_REGEX = {
 }
 
 
-# -----------------------------------------------------------------------------
 class ActionType(object):
-    LINK, COMPILE, PREPROCESS, INFO = range(4)
+    LINK = 0
+    COMPILE = 1
+    PREPROCESS = 2
+    INFO = 3
+
+    @classmethod
+    def to_string(cls, num):
+        if num == cls.LINK:
+            return 'Link'
+        if num == cls.COMPILE:
+            return 'Compile'
+        if num == cls.PREPROCESS:
+            return 'Preprocess'
+        if num == cls.INFO:
+            return 'Info'
+        return None
 
 
-# -----------------------------------------------------------------------------
 class OptionParserResult(object):
+    """
+    Contain the compiler arguments which can be forwarded to clang
+    or clang tidy after filtering or changing the original compiler arguments.
+    """
     def __init__(self):
-        self._action = ActionType.LINK
+        self._action = ActionType.COMPILE
         self._compile_opts = []
         self._link_opts = []
         self._files = []
         self._arch = ''
         self._lang = None
         self._output = ''
+
+    def __str__(self):
+        return ('action_type: {}\ncompiler options: {}\n'
+                'linker options: {}\nfiles: {}\narch: {}\n'
+                'lang: {}\nout: {}\n') \
+            .format(ActionType.to_string(self._action),
+                    ' '.join(self._compile_opts),
+                    ' '.join(self._link_opts),
+                    ' '.join(self._files),
+                    self._arch,
+                    self._lang,
+                    self._output)
 
     @property
     def action(self):
@@ -244,8 +270,10 @@ class OptionParserResult(object):
         self._output = value
 
 
-# -----------------------------------------------------------------------------
 class OptionIterator(object):
+    """
+    Iterate over the compilation arguments.
+    """
     def __init__(self, args):
         self._item = None
         self._it = iter(args)
@@ -262,7 +290,6 @@ class OptionIterator(object):
         return self._item
 
 
-# -----------------------------------------------------------------------------
 def arg_check(it, result):
     def regex_match(string, pattern):
         regexp = re.compile(pattern)
@@ -271,7 +298,7 @@ def arg_check(it, result):
 
     # Handler functions for options.
     def append_to_list(table, target_list, regex=False):
-        """Append n item from iterator to to result[att_name] list."""
+        """ Append n item from iterator to to result[att_name] list."""
 
         def wrapped(value):
             def append_n(size):
@@ -294,8 +321,8 @@ def arg_check(it, result):
 
     def append_merged_to_list(table, target_list):
         """ Append one or two item to the list.
-                1: if there is no space between two option.
-                2: otherwise.
+              1: if there is no space between two option.
+              2: otherwise.
         """
 
         def wrapped(value):
@@ -313,7 +340,7 @@ def arg_check(it, result):
         return wrapped
 
     def append_to_list_from_file(arg, target_list):
-        """Append items from file to to result[att_name] list."""
+        """ Append items from file to to result[att_name] list."""
 
         def wrapped(value):
             if value == arg:
@@ -327,7 +354,7 @@ def arg_check(it, result):
         return wrapped
 
     def append_replacement_to_list(table, target_list, regex=False):
-        """Append replacement items from table to to result[att_name] list."""
+        """ Append replacement items from table to to result[att_name] list."""
 
         def wrapped(value):
             def append_replacement(items):
@@ -347,23 +374,23 @@ def arg_check(it, result):
 
         return wrapped
 
-    def set_attr(arg, attr_name, attr_value=None, regex=None):
-        """Set an attr value. If no value given then read next from iterator."""
-
+    def set_attr(arg, obj, attr_name, attr_value=None, regex=None):
+        """ Set an attr value. If no value given then
+        read next from iterator."""
         def wrapped(value):
             if (regex and regex_match(value, arg)) or value == arg:
                 tmp = attr_value
                 if attr_value is None:
                     it.next()
                     tmp = it.item
-                attr_name = tmp
+                setattr(obj, attr_name, tmp)
                 return True
             return False
 
         return wrapped
 
     def skip(table, regex=False):
-        """Skip n item in iterator."""
+        """ Skip n item in iterator."""
 
         def wrapped(value):
             def skip_n(size):
@@ -385,40 +412,65 @@ def arg_check(it, result):
     arg_collection = [
         append_replacement_to_list(REPLACE_OPTIONS_MAP, result.compile_opts),
         skip(UNKNOWN_OPTIONS_MAP_REGEX, True),
+        set_attr('-x', result, 'lang'),
+        set_attr('-o', result, 'output'),
+        set_attr('-arch', result, 'arch'),
+        set_attr('-c', result, 'action', ActionType.COMPILE),
+        set_attr('^-(E|MM?)$', result, 'action', ActionType.PREPROCESS, True),
+        set_attr('-print-prog-name', result, 'action', ActionType.INFO),
         append_to_list(COMPILE_OPTION_MAP, result.compile_opts),
-        append_to_list(COMPILER_LINKER_OPTION_MAP, result.compile_opts),
+        append_to_list(COMPILER_LINKER_OPTION_MAP, result.link_opts),
+        append_to_list(LINKER_OPTION_MAP_REGEX, result.link_opts, True),
         append_to_list(COMPILE_OPTION_MAP_REGEX, result.compile_opts, True),
         append_merged_to_list(COMPILE_OPTION_MAP_MERGED, result.compile_opts),
-        set_attr('-x', result.lang),
-        set_attr('-o', result.output),
-        set_attr('-arch', result.arch),
-        set_attr('-c', result.action, ActionType.COMPILE),
-        set_attr('^-(E|MM?)$', result.action, ActionType.PREPROCESS, True),
-        set_attr('-print-prog-name', result.action, ActionType.INFO),
+        append_merged_to_list(LINK_OPTION_MAP_MERGED, result.link_opts),
         skip(LINKER_OPTION_MAP),
         skip(IGNORED_OPTION_MAP),
-        skip(UNIQUE_OPTIONS),
         append_to_list_from_file('-filelist', result.files),
         append_to_list({'^[^-].+': 0}, result.files, True)]
 
-    return any((collection(it.item) for collection in arg_collection))
+    for coll in arg_collection:
+        res = coll(it.item)
+        if res:
+            return True
+
+    # Unhandled compilation argument found.
+    LOG.debug("Unhandled argument: " + str(it.item))
+    return False
 
 
-# -----------------------------------------------------------------------------
 def parse_options(args):
-    """Requires a full compile command with the compiler, not only arguments."""
+    """ Requires a full compile command with the compiler,
+    not only arguments."""
 
     # Keep " characters.
     args = args.replace('"', '\\"')
 
     result_map = OptionParserResult()
+
+    # The first element in the list is the compiler skip it from parsing.
     for it in OptionIterator(shlex.split(args)[1:]):
-        arg_check(it, result_map) # TODO: do sth at False result, actually skip.
+        arg_check(it, result_map)
+
+    is_source = False
+    for source_file in result_map.files:
+        lang = get_language(os.path.splitext(source_file)[1])
+        if lang:
+            is_source = True
+            # If lang is not set already during the argument parsing
+            # set it based on the source file extension.
+            if result_map.lang is None:
+                result_map.lang = lang
+            break
+
+    # If there are no source files in the compilation argument
+    # handle it as a link command.
+    if not is_source:
+        result_map.action = ActionType.LINK
 
     return result_map
 
 
-# -----------------------------------------------------------------------------
 def get_language(extension):
     mapping = {'.c': 'c',
                '.cp': 'c++',
