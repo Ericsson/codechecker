@@ -9,6 +9,8 @@ Prepare and start different analisys types
 import copy
 import json
 import os
+import shlex
+import subprocess
 import sys
 import time
 
@@ -16,6 +18,7 @@ from codechecker_lib import analysis_manager
 from codechecker_lib import client
 from codechecker_lib import logger
 from codechecker_lib import skiplist_handler
+from codechecker_lib import analyzer_env
 from codechecker_lib.analyzers import analyzer_types
 
 LOG = logger.get_new_logger('ANALYZER')
@@ -34,6 +37,27 @@ def prepare_actions(actions, enabled_analyzers):
             new_action.analyzer_type = ea
             res.append(new_action)
     return res
+
+
+def __print_analyzer_version(context, analyzer_config_map):
+    """
+    Print the path and the version of the analyzer binary.
+    """
+    check_env = analyzer_env.get_check_env(context.path_env_extra,
+                                           context.ld_lib_path_extra)
+
+    # get the analyzer binaries from the config_map which
+    # contains only the checked and available analyzers
+    for analyzer_name, analyzer_cfg in analyzer_config_map.iteritems():
+        LOG.info("Using analyzer:")
+        analyzer_bin = analyzer_cfg.analyzer_binary
+        print(analyzer_bin)
+        version = [analyzer_bin, u' --version']
+        try:
+            subprocess.call(shlex.split(' '.join(version)), env=check_env)
+        except OSError as oerr:
+            LOG.warning("Failed to get analyzer version: " + ' '.join(version))
+            LOG.warning(oerr.strerror)
 
 
 def run_check(args, actions, context):
@@ -93,14 +117,17 @@ def run_check(args, actions, context):
         if os.path.exists(suppress_file):
             client.send_suppress(context.run_id, connection, suppress_file)
 
-        analyzer_config_map = \
-            analyzer_types.build_config_handlers(args,
-                                                 context,
-                                                 enabled_analyzers,
-                                                 connection)
+        analyzer_config_map = analyzer_types. \
+            build_config_handlers(args,
+                                  context,
+                                  enabled_analyzers,
+                                  connection)
+
         if skip_handler:
             connection.add_skip_paths(context.run_id,
                                       skip_handler.get_skiplist())
+
+    __print_analyzer_version(context, analyzer_config_map)
 
     LOG.info("Static analysis is starting ...")
     start_time = time.time()
@@ -127,8 +154,8 @@ def run_quick_check(args,
     No result is stored to a database.
     """
 
-    enabled_analyzers = analyzer_types.check_supported_analyzers(args.analyzers,
-                                                                 context)
+    enabled_analyzers = analyzer_types. \
+        check_supported_analyzers(args.analyzers, context)
 
     actions = prepare_actions(actions, enabled_analyzers)
 
@@ -137,5 +164,13 @@ def run_quick_check(args,
                                              context,
                                              enabled_analyzers)
 
-    analysis_manager.start_workers(args, actions, context, analyzer_config_map,
-                                   None, False)
+    __print_analyzer_version(context, analyzer_config_map)
+
+    LOG.info("Static analysis is starting ...")
+
+    analysis_manager.start_workers(args,
+                                   actions,
+                                   context,
+                                   analyzer_config_map,
+                                   None,
+                                   False)

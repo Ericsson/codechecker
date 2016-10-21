@@ -52,7 +52,23 @@ class QuickCheckTestCase(unittest.TestCase):
             output = subprocess.check_output(
                 ['bash', '-c', command], env=self.env, cwd=self.test_dir)
 
-            self.assertEqual(output, correct_output)
+            # skip the analyzer version info between these two lines
+            # it might be different in the test running environments
+            skip_version_after = "[INFO] - Using analyzer:"
+            skip_version_before = "[INFO] - Static analysis is starting"
+            skipline = False
+
+            post_processed_output = []
+            for l in output.splitlines(True):
+                if l.startswith(skip_version_before):
+                    skipline = False
+                if not skipline:
+                    post_processed_output.append(l)
+                if l.startswith(skip_version_after):
+                    skipline = True
+
+            print("Test file path: " + path)
+            self.assertEqual(''.join(post_processed_output), correct_output)
             return 0
         except CalledProcessError as cerr:
             print("Failed to run: " + ' '.join(cerr.cmd))
