@@ -105,6 +105,7 @@ def default_compilation_db(workspace_path):
     """
     Default compilation commands database file in the workspace.
     """
+    workspace_path = os.path.abspath(workspace_path)
     compilation_commands = os.path.join(workspace_path,
                                         'compilation_commands.json')
     return compilation_commands
