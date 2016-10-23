@@ -1,3 +1,5 @@
+multi_error_suppress:
+	$(CXX) -w multi_error_suppress.cpp -o /dev/null
 multi_error:
 	$(CXX) -w multi_error.cpp -o /dev/null
 nofail:

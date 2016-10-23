@@ -98,34 +98,12 @@ class PlistToDB(ResultHandler):
                                                   'UNSPECIFIED')
             severity = shared.ttypes.Severity._NAMES_TO_VALUES[severity_name]
 
-            suppress = False
+            sp_handler = suppress_handler.SourceSuppressHandler(bug)
 
-            source_file = bug.file_path
-            last_bug_event = bug.events()[-1]
-            bug_line = last_bug_event.start_pos.line
-
-            sp_handler = suppress_handler.SourceSuppressHandler(source_file,
-                                                                bug_line)
             # Check for suppress comment.
-            supp = sp_handler.check_source_suppress()
+            supp = sp_handler.get_suppressed()
             if supp:
-                # Something should be suppressed.
-                suppress_checkers = sp_handler.suppressed_checkers()
-
-                if bug.checker_name in suppress_checkers or \
-                                suppress_checkers == ['all']:
-                    suppress = True
-
-                    file_path, file_name = ntpath.split(source_file)
-
-                    # checker_hash, file_name, comment
-                    to_suppress = (bug_hash,
-                                   file_name,
-                                   sp_handler.suppress_comment())
-
-                    LOG.debug(to_suppress)
-
-                    connection.add_suppress_bug(self.__run_id, [to_suppress])
+                connection.add_suppress_bug(self.__run_id, [supp])
 
             LOG.debug('Storing check results to the database')
 
@@ -139,7 +117,7 @@ class PlistToDB(ResultHandler):
                                               bug.category,
                                               bug.type,
                                               severity,
-                                              suppress)
+                                              supp is not None)
 
             report_ids.append(report_id)
 

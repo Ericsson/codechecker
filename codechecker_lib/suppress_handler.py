@@ -9,6 +9,7 @@ Suppress handling.
 
 import abc
 import linecache
+import ntpath
 import re
 
 from codechecker_lib import logger
@@ -57,13 +58,18 @@ class SourceSuppressHandler(object):
 
     suppress_marker = 'codechecker_suppress'
 
-    def __init__(self, source_file, bug_line):
+    def __init__(self, bug):
         """
         Source line number indexing starts at 1.
         """
+        source_file = bug.file_path
+        last_bug_event = bug.events()[-1]
+        bug_line = last_bug_event.start_pos.line
 
         self.__source_file = source_file
         self.__bug_line = bug_line
+        self.__hash_value = bug.hash_value
+        self.__checker_name = bug.checker_name
         self.__suppressed_checkers = []
         self.__suppress_comment = None
 
@@ -173,3 +179,24 @@ class SourceSuppressHandler(object):
         Get the suppress comment.
         """
         return self.__suppress_comment
+
+    def get_suppressed(self):
+        """ Return a (hash, filename, comment) tuple for suppressed reports and
+            None for non-suppressed reports. """
+        if not self.check_source_suppress():
+            return
+
+        suppress_checkers = self.suppressed_checkers()
+
+        if self.__checker_name in suppress_checkers or \
+           suppress_checkers == ['all']:
+
+            file_path, file_name = ntpath.split(self.__source_file)
+
+            to_suppress = (self.__hash_value,
+                           file_name,
+                           self.suppress_comment())
+
+            LOG.debug(to_suppress)
+
+            return to_suppress

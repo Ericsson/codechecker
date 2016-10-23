@@ -4,8 +4,6 @@ CodeChecker quickcheck --analyzers clangsa -b "make multi_error" --quiet-build
 [INFO] - Build finished successfully.
 [INFO] - Using analyzer:
 [INFO] - Static analysis is starting ...
-clangsa found 2 defect(s) while analyzing multi_error.cpp
-
 multi_error.cpp:2:3: Address of stack memory associated with local variable 'x' returned to caller
   int x = 42;
   ^
@@ -13,6 +11,8 @@ multi_error.cpp:2:3: Address of stack memory associated with local variable 'x' 
 multi_error.cpp:9:7: Value stored to 'y' is never read
   y = 7;
       ^
+
+clangsa found 2 defect(s) while analyzing multi_error.cpp
 
 [INFO] - [1/1] clangsa analyzed multi_error.cpp successfully.
 [INFO] - ----==== Summary ====----

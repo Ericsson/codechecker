@@ -324,6 +324,7 @@ def construct_result_handler(args,
                              report_output,
                              severity_map,
                              skiplist_handler,
+                             lock,
                              store_to_db=False):
     """
     Construct a result handler.
@@ -358,15 +359,18 @@ def construct_result_handler(args,
         if buildaction.analyzer_type == CLANG_SA:
             csa_res_handler = result_handler_clangsa.ClangSAPlistToStdout(
                 buildaction,
-                report_output)
+                report_output,
+                lock)
 
             csa_res_handler.print_steps = args.print_steps
+            csa_res_handler.skiplist_handler = skiplist_handler
             return csa_res_handler
 
         elif buildaction.analyzer_type == CLANG_TIDY:
             ct_res_handler = result_handler_clang_tidy.ClangTidyPlistToStdout(
                 buildaction,
-                report_output)
+                report_output,
+                lock)
 
             ct_res_handler.severity_map = severity_map
             ct_res_handler.skiplist_handler = skiplist_handler

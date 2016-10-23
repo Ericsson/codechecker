@@ -326,7 +326,6 @@ def _do_quickcheck(args):
         workspace = util.get_default_workspace()
 
     context.codechecker_workspace = workspace
-    args.jobs = 1
     args.name = "quickcheck"
 
     # Load severity map from config file.
@@ -388,6 +387,7 @@ def consume_plist(item):
                                                  context.run_id,
                                                  args.directory,
                                                  {},
+                                                 None,
                                                  None,
                                                  not args.stdout)
 

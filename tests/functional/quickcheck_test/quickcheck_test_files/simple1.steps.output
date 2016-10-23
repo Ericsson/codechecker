@@ -4,8 +4,6 @@ CodeChecker quickcheck --analyzers clangsa -b "make simple1" --steps --quiet-bui
 [INFO] - Build finished successfully.
 [INFO] - Using analyzer:
 [INFO] - Static analysis is starting ...
-clangsa found 1 defect(s) while analyzing simple1.cpp
-
 simple1.cpp:18:10: Division by zero
   return 2015 / x;
          ^
@@ -17,6 +15,8 @@ simple1.cpp:18:10: Division by zero
     5, simple1.cpp:16:7: Returning from 'foo'
     6, simple1.cpp:16:3: The value 0 is assigned to 'x'
     7, simple1.cpp:18:10: Division by zero
+
+clangsa found 1 defect(s) while analyzing simple1.cpp
 
 [INFO] - [1/1] clangsa analyzed simple1.cpp successfully.
 [INFO] - ----==== Summary ====----
