@@ -6,55 +6,26 @@
 """
 Handle thrift requests.
 """
+
+from collections import defaultdict
 import codecs
 import datetime
 import ntpath
 import os
+import sqlalchemy
 import zlib
-from collections import defaultdict
 
 import shared
-import sqlalchemy
+
 from codeCheckerDBAccess import constants
 from codeCheckerDBAccess.ttypes import *
 
 from codechecker_lib import logger
+from codechecker_lib.profiler import timeit
+
 from db_model.orm_model import *
 
 LOG = logger.get_new_logger('ACCESS HANDLER')
-
-
-# -----------------------------------------------------------------------
-def timefunc(function):
-    """
-    Timer function.
-    """
-
-    func_name = function.__name__
-
-    def debug_wrapper(*args, **kwargs):
-        """
-        Wrapper for debug log.
-        """
-        before = datetime.now()
-        res = function(*args, **kwargs)
-        after = datetime.now()
-        timediff = after - before
-        diff = timediff.microseconds / 1000
-        LOG.debug('[' + str(diff) + 'ms] ' + func_name)
-        return res
-
-    def release_wrapper(*args, **kwargs):
-        """
-        No logging.
-        """
-        res = function(*args, **kwargs)
-        return res
-
-    if logger.get_log_level() == logger.DEBUG:
-        return debug_wrapper
-    else:
-        return release_wrapper
 
 
 def conv(text):
@@ -278,7 +249,7 @@ class ThriftRequestHandler():
             raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
                                               msg)
 
-    @timefunc
+    @timeit
     def getRunData(self):
 
         session = self.__session
@@ -315,11 +286,11 @@ class ThriftRequestHandler():
             raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
                                               msg)
 
-    @timefunc
+    @timeit
     def getReport(self, reportId):
         return self.__queryReport(reportId)
 
-    @timefunc
+    @timeit
     def getRunResults(self, run_id, limit, offset, sort_types, report_filters):
 
         return self.__queryResults(run_id,
@@ -328,7 +299,7 @@ class ThriftRequestHandler():
                                    sort_types,
                                    report_filters)
 
-    @timefunc
+    @timeit
     def getRunResultCount(self, run_id, report_filters):
 
         filter_expression = construct_report_filter(report_filters)
@@ -359,7 +330,7 @@ class ThriftRequestHandler():
             raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
                                               msg)
 
-    @timefunc
+    @timeit
     def __construct_bug_event_list(self, session, start_bug_event):
 
         file_path_cache = {}
@@ -388,7 +359,7 @@ class ThriftRequestHandler():
 
         return bug_events
 
-    @timefunc
+    @timeit
     def __construct_bug_point_list(self, session, start_bug_point):
         # Start_bug_point can be None.
 
@@ -419,7 +390,7 @@ class ThriftRequestHandler():
 
         return bug_points
 
-    @timefunc
+    @timeit
     def getReportDetails(self, reportId):
         """
         Parameters:
@@ -618,7 +589,7 @@ class ThriftRequestHandler():
             session.commit()
             return True
 
-    @timefunc
+    @timeit
     def suppressBug(self, run_ids, report_id, comment):
         """
         Add suppress bug entry to the SuppressBug table.
@@ -651,7 +622,7 @@ class ThriftRequestHandler():
             raise shared.ttypes.RequestFailed(
                 shared.ttypes.ErrorCode.IOERROR, msg)
 
-    @timefunc
+    @timeit
     def unSuppressBug(self, run_ids, report_id):
         """
         Remove the suppress flag from the reports in multiple runs if given.
@@ -737,7 +708,7 @@ class ThriftRequestHandler():
             raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
                                               msg)
 
-    @timefunc
+    @timeit
     def getSkipPaths(self, run_id):
         session = self.__session
         try:
@@ -759,7 +730,7 @@ class ThriftRequestHandler():
             raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
                                               msg)
 
-    @timefunc
+    @timeit
     def getBuildActions(self, reportId):
 
         session = self.__session
@@ -786,7 +757,7 @@ class ThriftRequestHandler():
             raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
                                               msg)
 
-    @timefunc
+    @timeit
     def getFileId(self, run_id, path):
 
         session = self.__session
@@ -808,7 +779,7 @@ class ThriftRequestHandler():
             raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
                                               msg)
 
-    @timefunc
+    @timeit
     def getSourceFileData(self, fileId, fileContent):
         """
         Parameters:
@@ -841,7 +812,7 @@ class ThriftRequestHandler():
             raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
                                               msg)
 
-    @timefunc
+    @timeit
     def getRunResultTypes(self, run_id, report_filters):
 
         session = self.__session
@@ -888,7 +859,7 @@ class ThriftRequestHandler():
                                               msg)
 
     # -----------------------------------------------------------------------
-    @timefunc
+    @timeit
     def __get_hashes_for_diff(self, session, base_run_id, new_run_id):
 
         LOG.debug('query all baseline hashes')
@@ -909,7 +880,7 @@ class ThriftRequestHandler():
         return base_line_hashes, new_check_hashes
 
     # -----------------------------------------------------------------------
-    @timefunc
+    @timeit
     def __queryDiffResults(self,
                            session,
                            diff_hash_list,
@@ -984,7 +955,7 @@ class ThriftRequestHandler():
                                               msg)
 
     # -----------------------------------------------------------------------
-    @timefunc
+    @timeit
     def getNewResults(self,
                       base_run_id,
                       new_run_id,
@@ -1017,7 +988,7 @@ class ThriftRequestHandler():
                                        report_filters)
 
     # -----------------------------------------------------------------------
-    @timefunc
+    @timeit
     def getResolvedResults(self,
                            base_run_id,
                            new_run_id,
@@ -1049,7 +1020,7 @@ class ThriftRequestHandler():
                                        report_filters)
 
     # -----------------------------------------------------------------------
-    @timefunc
+    @timeit
     def getUnresolvedResults(self,
                              base_run_id,
                              new_run_id,
@@ -1081,13 +1052,13 @@ class ThriftRequestHandler():
                                        report_filters)
 
     # -----------------------------------------------------------------------
-    @timefunc
+    @timeit
     def getAPIVersion(self):
         # Returns the thrift api version.
         return constants.API_VERSION
 
     # -----------------------------------------------------------------------
-    @timefunc
+    @timeit
     def removeRunResults(self, run_ids):
 
         session = self.__session
@@ -1161,7 +1132,7 @@ class ThriftRequestHandler():
                                               msg)
 
     # -----------------------------------------------------------------------
-    @timefunc
+    @timeit
     def getDiffResultCount(self,
                            base_run_id,
                            new_run_id,
@@ -1258,7 +1229,7 @@ class ThriftRequestHandler():
                                               msg)
 
     # -----------------------------------------------------------------------
-    @timefunc
+    @timeit
     def getDiffResultTypes(self,
                            base_run_id,
                            new_run_id,

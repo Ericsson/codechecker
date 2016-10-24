@@ -13,12 +13,11 @@ import os
 import shlex
 import shutil
 import subprocess
+import socket
 import sys
 import time
 import uuid
 from subprocess import CalledProcessError
-
-from test_utils import get_free_port
 
 # sys.path modification needed so nosetests can load the test_utils package.
 sys.path.append(os.path.abspath(os.environ['TEST_TESTS_DIR']))
@@ -36,6 +35,15 @@ sys.path.append(os.path.join(
 # Stopping event for CodeChecker server.
 __STOP_SERVER = multiprocessing.Event()
 
+def get_free_port():
+    '''Get a free port from the OS.'''
+
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.bind(('', 0))
+    free_port = s.getsockname()[1]
+    s.close()
+
+    return free_port
 
 def _wait_for_postgres_shutdown(workspace):
     """
@@ -329,14 +337,14 @@ def _start_server(shared_test_params, test_config, auth=False):
     server_cmd = ['CodeChecker', 'server',
                   '-w', shared_test_params['workspace'],
                   '--suppress', shared_test_params['suppress_file']]
-	
+
     if auth:
-	server_cmd.extend(['--check-port',
+        server_cmd.extend(['--check-port',
                            str(test_config['CC_AUTH_SERVER_PORT']),
                            '--view-port',
                            str(test_config['CC_AUTH_VIEWER_PORT'])])
     else:
-	server_cmd.extend(['--check-port',
+        server_cmd.extend(['--check-port',
                            str(test_config['CC_TEST_SERVER_PORT']),
                            '--view-port',
                            str(test_config['CC_TEST_VIEWER_PORT'])])

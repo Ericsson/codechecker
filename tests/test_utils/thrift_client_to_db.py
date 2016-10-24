@@ -1,4 +1,3 @@
-#
 # -----------------------------------------------------------------------------
 #                     The CodeChecker Infrastructure
 #   This file is distributed under the University of Illinois Open Source
@@ -11,6 +10,7 @@ import socket
 from functools import partial
 
 import shared
+
 from thrift.protocol import TBinaryProtocol
 from thrift.protocol import TJSONProtocol
 from thrift.transport import THttpClient
@@ -35,24 +35,17 @@ class ThriftAPIHelper(object):
         except shared.ttypes.RequestFailed as reqfailure:
             if reqfailure.error_code == shared.ttypes.ErrorCode.DATABASE:
 
-                print('****************')
                 print('Database error')
                 print(str(reqfailure.message))
-                print('****************')
             else:
-                print('****************')
                 print('Other error')
                 print(str(reqfailure))
-                print('****************')
 
             return None
 
         except socket.error as serr:
             err_cause = os.strerror(serr.errno)
-            print('*****SOCKET ERROR***********')
-            print(err_cause)
             print(str(serr))
-            print('****************')
 
             return None
 
@@ -62,7 +55,11 @@ class ThriftAPIHelper(object):
 
     def open_connection(self):
         assert not self._auto_handle_connection
-        self._transport.open()
+        try:
+            self._transport.open()
+        except TTransport.TTransportException as terr:
+            print(terr)
+            raise
 
     def close_connection(self):
         assert not self._auto_handle_connection
@@ -72,8 +69,12 @@ class ThriftAPIHelper(object):
         return partial(self._thrift_client_call, attr)
 
     def __enter__(self):
-        self._auto_handle_connection = False
-        self._transport.open()
+        try:
+            self._auto_handle_connection = False
+            self._transport.open()
+        except TTransport.TTransportException as terr:
+            print(terr)
+            raise
         return self
 
     def __exit__(self, type, value, tb):
@@ -91,7 +92,6 @@ class CCReportHelper(ThriftAPIHelper):
         client = CheckerReport.Client(protocol)
         super(CCReportHelper, self).__init__(transport, client,
                                              auto_handle_connection)
-
 
 class CCViewerHelper(ThriftAPIHelper):
 
@@ -122,9 +122,11 @@ class CCViewerHelper(ThriftAPIHelper):
             return partial(self._thrift_client_call, attr)
 
     def _getAll_emu(self, func_name, *args):
-        # do not call the getAll* functions with keyword arguments,
-        # limit and offset must be the -4. / -3. positional arguments
-        # of the wrapped function
+        """
+        Do not call the getAll* functions with keyword arguments,
+        limit and offset must be the -4. / -3. positional arguments
+        of the wrapped function.
+        """
 
         func2call = partial(self._thrift_client_call, func_name)
         limit = self.max_query_size
@@ -164,3 +166,27 @@ class CCAuthHelper(ThriftAPIHelper):
 
     def __getattr__(self, attr):
         return partial(self._thrift_client_call, attr)
+
+def get_all_run_results(client, run_id, sort_mode=[], filters=[]):
+    """
+    Get all the results for a run.
+    Query limit limits the number of results can be got from the
+    server in one API call.
+    """
+
+    offset = 0
+    query_limit = client.max_query_size
+    results = []
+    while True:
+        partial_res = client.getRunResults(run_id,
+                                           query_limit,
+                                           offset,
+                                           sort_mode,
+                                           filters)
+
+        offset += len(partial_res)
+        if len(partial_res) == 0:
+            break
+        results.extend(partial_res)
+
+    return results
