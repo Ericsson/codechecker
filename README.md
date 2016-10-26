@@ -34,7 +34,7 @@ If your clang version does not have these features you will see in debug log the
 
 ## Linux
 For a more detailed dependency list see [Requirements](docs/deps.md)
-### Basic dependecy install & setup
+### Basic dependency install & setup
 Tested on Ubuntu LTS 14.04.2
 ~~~~~~{.sh}
 
