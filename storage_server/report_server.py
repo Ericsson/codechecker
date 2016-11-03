@@ -417,6 +417,8 @@ class CheckerReportHandler(object):
             action = self.session.query(BuildAction).get(build_action_id)
             assert action is not None
 
+            checker_id = checker_id or 'NOT FOUND'
+
             # TODO: perfomance issues when executing the following query on
             # large databaseses?
             reports = self.session.query(self.report_ident) \
