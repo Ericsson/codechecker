@@ -114,9 +114,9 @@ class CheckerReportHandler(object):
                     # can be deleted.
                     report = self.session.query(Report).get(report_id)
 
-                    LOG.debug("Removing bug path events")
+                    LOG.debug("Removing bug path events.")
                     self.__sequence_deleter(BugPathEvent, report.start_bugevent)
-                    LOG.debug("Removing bug report points")
+                    LOG.debug("Removing bug report points.")
                     self.__sequence_deleter(BugReportPoint,
                                             report.start_bugpoint)
 
@@ -608,12 +608,12 @@ class CheckerReportHandler(object):
 
 
 def run_server(port, db_uri, db_version_info, callback_event=None):
-    LOG.debug('Starting codechecker server ...')
+    LOG.debug('Starting CodeChecker server ...')
 
     try:
         engine = database_handler.SQLServer.create_engine(db_uri)
 
-        LOG.debug('Creating new database session')
+        LOG.debug('Creating new database session.')
         session = CreateSession(engine)
 
     except sqlalchemy.exc.SQLAlchemyError as alch_err:
@@ -622,7 +622,7 @@ def run_server(port, db_uri, db_version_info, callback_event=None):
 
     session.autoflush = False  # Autoflush is enabled by default.
 
-    LOG.debug('Starting thrift server')
+    LOG.debug('Starting thrift server.')
     try:
         # Start thrift server.
         handler = CheckerReportHandler(session, True)
@@ -641,13 +641,13 @@ def run_server(port, db_uri, db_version_info, callback_event=None):
         LOG.info('Waiting for check results on [' + str(port) + ']')
         if callback_event:
             callback_event.set()
-        LOG.debug('Starting to serve')
+        LOG.debug('Starting to serve.')
         server.serve()
         session.commit()
     except socket.error as sockerr:
         LOG.error(str(sockerr))
         if sockerr.errno == errno.EADDRINUSE:
-            LOG.error('Checker port ' + str(port) + ' is already used')
+            LOG.error('Checker port ' + str(port) + ' is already used!')
         sys.exit(1)
     except Exception as err:
         LOG.error(str(err))

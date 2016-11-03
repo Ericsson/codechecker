@@ -31,7 +31,7 @@ class ResultHandler(object):
     For each build action
     - postprocess_result and handle_results can be called multiple times
       for the source files in one buildaction they will be analyzed separately
-      with the same build options
+      with the same build options.
 
     Method call order should be:
     postprocess_result()

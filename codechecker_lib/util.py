@@ -87,7 +87,7 @@ def get_env_var(env_var, needed=False):
     value = os.getenv(env_var)
     if needed and not value:
         LOG.critical('Failed to read necessary environment variable %s.'
-                     ' (Maybe codechecker was not configured properly)'
+                     ' (Maybe CodeChecker was not configured properly.)'
                      % env_var)
         sys.exit(1)
 
@@ -106,7 +106,7 @@ def get_tmp_dir_hash():
     dir_hash = hashlib.md5()
     dir_hash.update(data)
 
-    LOG.debug('The generated temporary directory hash is %s'
+    LOG.debug('The generated temporary directory hash is %s.'
               % dir_hash.hexdigest())
 
     return dir_hash.hexdigest()
@@ -133,11 +133,11 @@ def create_dir(path):
 
     if not os.path.isdir(path):
         try:
-            LOG.debug('Creating directory %s' % path)
+            LOG.debug('Creating directory %s.' % path)
             os.makedirs(path)
         except Exception as e:
             if not os.path.isdir(path):
-                LOG.error('Failed to create directory %s' % path)
+                LOG.error('Failed to create directory %s.' % path)
                 raise e
 
     return
@@ -157,7 +157,7 @@ def remove_file_list(file_list):
             os.remove(rfile)
         except OSError:
             # Maybe another thread has already deleted it.
-            LOG.debug('Failed to remove file %s' % rfile)
+            LOG.debug('Failed to remove file %s.' % rfile)
 
     return
 
@@ -165,7 +165,7 @@ def remove_file_list(file_list):
 # -------------------------------------------------------------------------
 def remove_dir(path):
     def error_handler(*args):
-        LOG.warning('Failed to remove directory %s' % path)
+        LOG.warning('Failed to remove directory %s.' % path)
 
     shutil.rmtree(path, onerror=error_handler)
 
@@ -182,7 +182,7 @@ def call_command(command, env=None):
         LOG.debug(out)
         return out, 0
     except subprocess.CalledProcessError as ex:
-        LOG.debug('Running command "' + ' '.join(command) + '" Failed')
+        LOG.debug('Running command "' + ' '.join(command) + '" Failed.')
         LOG.debug(str(ex.returncode))
         LOG.debug(ex.output)
         return ex.output, ex.returncode

@@ -103,7 +103,7 @@ def add_database_arguments(parser):
     # WARNING dbaddress default value influences workspace creation (SQLite).
     parser.add_argument('--dbaddress', type=str, dest="dbaddress",
                         default="localhost", required=False,
-                        help='Postgres database server address')
+                        help='Postgres database server address.')
     parser.add_argument('--dbname', type=str, dest="dbname",
                         default="codechecker", required=False,
                         help='Name of the database.')
@@ -141,13 +141,13 @@ def add_analyzer_arguments(parser):
                         required=False, default=argparse.SUPPRESS,
                         help="File with arguments which will be forwarded"
                         "directly to the Clang static analyzer"
-                        "without modification")
+                        "without modification.")
 
     parser.add_argument('--tidyargs', dest="tidy_args_cfg_file",
                         required=False, default=argparse.SUPPRESS,
                         help="File with arguments which will be forwarded"
                         "directly to the Clang tidy analyzer"
-                        "without modification")
+                        "without modification.")
 
 
 # ------------------------------------------------------------------------------
@@ -200,7 +200,7 @@ CodeChecker quickcheck -w ~/workspace -b "cd ~/myproject && make"
         name_help_msg = 'Name of the analysis.'
 
         jobs_help_msg = 'Number of jobs.' \
-            'Start multiple processes for faster analysis'
+            'Start multiple processes for faster analysis.'
 
         log_argument_help_msg = "Path to the log file which is created "
         "during the build. \nIf there is an already generated log file "
@@ -221,7 +221,7 @@ CodeChecker quickcheck -w ~/workspace -b "cd ~/myproject && make"
         check_parser = subparsers.add_parser('check',
                                              formatter_class=ADHF,
                                              help=''' \
-Run the supported source code analyzers on a project''')
+Run the supported source code analyzers on a project.''')
 
         check_parser.add_argument('-w', '--workspace', type=str,
                                   default=util.get_default_workspace(),
@@ -238,7 +238,7 @@ Run the supported source code analyzers on a project''')
         checkgroup.add_argument('-b', '--build', type=str, dest="command",
                                 default=argparse.SUPPRESS,
                                 required=False, help='''\
-Build command which is used to build the project''')
+Build command which is used to build the project.''')
 
         checkgroup.add_argument('-l', '--log', type=str, dest="logfile",
                                 default=argparse.SUPPRESS,
@@ -270,7 +270,7 @@ Build command which is used to build the project''')
                                   dest="force", default=False, required=False,
                                   help="Delete analysis results form the "
                                        "database if a run with the "
-                                       "given name already exists")
+                                       "given name already exists.")
 
         check_parser.add_argument('-s', '--skip', type=str, dest="skipfile",
                                   default=argparse.SUPPRESS,
@@ -281,7 +281,7 @@ Build command which is used to build the project''')
                                   default=False,
                                   required=False,
                                   help='Do not print out the output of the '
-                                       'original build')
+                                       'original build.')
 
         add_analyzer_arguments(check_parser)
         add_database_arguments(check_parser)
@@ -313,7 +313,7 @@ Build command which is used to build the project''')
                                    default=False,
                                    required=False,
                                    help='Do not print out the output of the '
-                                        'original build')
+                                        'original build.')
         qcheck_parser.add_argument('-i', '--skip', type=str, dest="skipfile",
                                    default=argparse.SUPPRESS,
                                    required=False, help='Path to skip file.')
@@ -426,7 +426,7 @@ Build command which is used to build the project''')
                                                   'the last analyzer run.\n'
                                                   'Requires a database with '
                                                   'the failed compilation '
-                                                  'commands')
+                                                  'commands.')
 
         debug_parser.add_argument('-w', '--workspace', type=str,
                                   dest="workspace",
@@ -479,7 +479,7 @@ Build command which is used to build the project''')
                                   dest="force", default=False, required=False,
                                   help='Delete analysis results form the '
                                        'database if a run with the given '
-                                       'name already exists')
+                                       'name already exists.')
 
         add_database_arguments(plist_parser)
         plist_parser.set_defaults(func=arg_handler.handle_plist)

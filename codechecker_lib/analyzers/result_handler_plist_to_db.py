@@ -43,7 +43,7 @@ class PlistToDB(ResultHandler):
             # Sometimes the file doesn't exist, e.g. when the input of the
             # analysis is pure plist files.
             if not os.path.isfile(file_name):
-                LOG.debug(file_name + ' not found, and will not be stored')
+                LOG.debug(file_name + ' not found, and will not be stored.')
                 continue
 
             if file_descriptor.needed:
@@ -105,7 +105,7 @@ class PlistToDB(ResultHandler):
             if supp:
                 connection.add_suppress_bug(self.__run_id, [supp])
 
-            LOG.debug('Storing check results to the database')
+            LOG.debug('Storing check results to the database.')
 
             report_id = connection.add_report(analisys_id,
                                               file_ids[bug.file_path],
@@ -135,7 +135,7 @@ class PlistToDB(ResultHandler):
             try:
                 files, bugs = plist_parser.parse_plist(plist)
             except Exception as ex:
-                msg = 'Parsing the generated result file failed'
+                msg = 'Parsing the generated result file failed.'
                 LOG.error(msg + ' ' + plist)
                 LOG.error(str(ex))
                 connection.finish_build_action(analysis_id, msg)
@@ -159,7 +159,7 @@ class PlistToDB(ResultHandler):
         with client.get_connection() as connection:
 
             LOG.debug('Storing original build and analyzer command '
-                      'to the database')
+                      'to the database.')
 
             _, source_file_name = ntpath.split(self.analyzed_source_file)
 
@@ -181,7 +181,7 @@ class PlistToDB(ResultHandler):
                 files, bugs = plist_parser.parse_plist(plist_file)
             except Exception as ex:
                 LOG.debug(str(ex))
-                msg = 'Parsing the generated result file failed'
+                msg = 'Parsing the generated result file failed.'
                 LOG.error(msg + ' ' + plist_file)
                 connection.finish_build_action(analysis_id, msg)
                 return 1

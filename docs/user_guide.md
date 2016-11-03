@@ -11,16 +11,16 @@ The main script can be started with different options.
 ~~~~~~~~~~~~~~~~~~~~~
 usage: CodeChecker.py [-h] {check,log,checkers,server,cmd,debug} ...
 
-Run the codechecker script.
+Run the CodeChecker script.
 
 positional arguments:
   {check,log,checkers,server,cmd,debug}
                         commands
-    check               Run codechecker for a project.
+    check               Run CodeChecker for a project.
     log                 Build the project and only create a log file (no
                         checking).
     checkers            List available checkers.
-    server              Start the codechecker database server.
+    server              Start the CodeChecker database server.
     cmd                 Command line client
     debug               Create debug logs for failed actions
 
@@ -102,7 +102,7 @@ usage: CodeChecker check [-h] [-w WORKSPACE] -n NAME (-b COMMAND | -l LOGFILE)
 optional arguments:
   -h, --help            show this help message and exit
   -w WORKSPACE, --workspace WORKSPACE
-                        Directory where the codechecker can store analysis
+                        Directory where the CodeChecker can store analysis
                         related data. (default: /home/<user_home>/.codechecker)
   -n NAME, --name NAME  Name of the analysis.
   -b COMMAND, --build COMMAND
@@ -321,7 +321,7 @@ CodeChecker will execute analysis on as many threads as specified after -j argum
 
 ### Various deployment possibilities
 
-The codechecker server can be started separately when desired.
+The CodeChecker server can be started separately when desired.
 In that case multiple clients can use the same database to store new results or view old ones.
 
 
@@ -350,15 +350,15 @@ CodeChecker check  -w ~/codechecker_wp -n myProject -b "make -j 4" --dbname myPr
 
 #### Codechecker server and database are on different machines
 
-It is possible that the codechecker server and the PostgreSQL database that contains the analysis results are on different machines. To setup PostgreSQL see later section.
+It is possible that the CodeChecker server and the PostgreSQL database that contains the analysis results are on different machines. To setup PostgreSQL see later section.
 
-In this case the codechecker server can be started using the following command:
+In this case the CodeChecker server can be started using the following command:
 
 ~~~~~~~~~~~~~~~~~~~~~
 CodeChecker server --dbname myProjectdb --dbport 5432 --dbaddress 192.168.1.2 --view-port 8001
 ~~~~~~~~~~~~~~~~~~~~~
 
-Start codechecker server locally which connects to a remote database (which is started separately). Workspace is not required in this case.
+Start CodeChecker server locally which connects to a remote database (which is started separately). Workspace is not required in this case.
 
 
 Start the checking as explained previously.
@@ -473,11 +473,11 @@ After the server has started open the outputed link to the browser (localhost:80
 
 ### Run CodeChecker distributed in a cluster
 
-You may want to configure codechecker to do the analysis on separate machines in a distributed way.
+You may want to configure CodeChecker to do the analysis on separate machines in a distributed way.
 Start the postgres database on a central machine (in this example it is called codechecker.central) on a remotely accessible address and port and then run
 ```CodeChecker check``` on multiple machines (called host1 and host2), specify the remote dbaddress and dbport and use the same run name.
 
-Create and start an empty database to which the codechecker server can connect.
+Create and start an empty database to which the CodeChecker server can connect.
 
 #### Setup PostgreSQL (one time only)
 
@@ -498,7 +498,7 @@ postgres -U codechecker -D /path/to/pgsql_data -p 5432 &>pgsql_log &
 
 #### Run CodeChecker on multiple hosts
 
-Then you can run codechecker on multiple hosts but using the same run name (in this example this is called "distributed_run".
+Then you can run CodeChecker on multiple hosts but using the same run name (in this example this is called "distributed_run".
 postgres is listening on codechecker.central port 9999.
 
 ~~~~~~~~~~~~~~~~~~~~~

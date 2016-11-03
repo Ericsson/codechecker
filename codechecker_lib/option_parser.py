@@ -13,7 +13,7 @@ or clang-tidy.
 Keys are the option name, value is the number of options to skip.
 
 Possible improvements:
-    - modular option handling system configuring possibility from config file
+    - modular option handling system configuring possibility from config file.
 
 """
 import os

@@ -37,7 +37,7 @@ source ~/checker_env/bin/activate
 # install required python modules
 pip install -r .ci/python_requirements
 
-# create codechecker package
+# create CodeChecker package
 ./build_package.py -o ~/codechecker_package
 cd ..
 ~~~~~~

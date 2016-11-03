@@ -75,7 +75,7 @@ def main():
 
         checker_env['CODECHECKER_ORIGINAL_BUILD_ENV'] = original_env_file
     except Exception as ex:
-        print('Saving original build environment failed')
+        print('Saving original build environment failed.')
         print(ex)
 
     def signal_term_handler(sig, frame):

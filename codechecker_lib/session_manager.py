@@ -83,7 +83,7 @@ class _Session():
                 self.revalidate()
 
             # The session is still valid if it has been used in the past
-            # (length of "past" is up to server host)
+            # (length of "past" is up to server host).
             return True
 
         # If the session is older than the "soft" limit,
@@ -147,7 +147,7 @@ class SessionManager:
                 else:
                     LOG.warning("LDAP authentication was enabled but "
                                 "prerequisites are NOT installed on the system"
-                                "... Disabling LDAP authentication")
+                                "... Disabling LDAP authentication.")
                     self.__auth_config["method_ldap"]["enabled"] = False
 
             if "method_pam" in self.__auth_config and \
@@ -157,7 +157,7 @@ class SessionManager:
                 else:
                     LOG.warning("PAM authentication was enabled but "
                                 "prerequisites are NOT installed on the system"
-                                "... Disabling PAM authentication")
+                                "... Disabling PAM authentication.")
                     self.__auth_config["method_pam"]["enabled"] = False
 
             #
@@ -218,7 +218,7 @@ class SessionManager:
                         return True
 
                     # Otherwise, check group memeberships. If any of the user's
-                    # groups are an allowed groupl, the user is allowed
+                    # groups are an allowed groupl, the user is allowed.
                     groups = [g.gr_name for g in grp.getgrall()
                               if username in g.gr_mem]
                     gid = pwd.getpwnam(username).pw_gid
