@@ -29,7 +29,6 @@ from codechecker_lib import logger
 from db_model.orm_model import *
 
 from codechecker_lib.profiler import timeit
-from codechecker_lib.profiler import profileit
 
 LOG = logger.get_new_logger('CC SERVER')
 
@@ -161,7 +160,7 @@ class CheckerReportHandler(object):
                     shared.ttypes.ErrorCode.DATABASE,
                     msg)
 
-            LOG.info('Removing previous analisys results ...')
+            LOG.info('Removing previous analysis results ...')
             self.session.delete(run)
             self.session.commit()
 
@@ -173,8 +172,9 @@ class CheckerReportHandler(object):
         elif run:
             # There is already a run, update the results.
             run.date = datetime.now()
-            # Increment update counter.
+            # Increment update counter and the command.
             run.inc_count += 1
+            run.command = command
             self.session.commit()
             return run.id
         else:
@@ -201,8 +201,8 @@ class CheckerReportHandler(object):
     @timeit
     def replaceConfigInfo(self, run_id, config_values):
         """
-        Removes all the previously stored config informations
-        and stores the new values.
+        Removes all the previously stored config information and stores the
+        new values.
         """
         count = self.session.query(Config) \
             .filter(Config.run_id == run_id) \
@@ -269,7 +269,7 @@ class CheckerReportHandler(object):
         """
         action = self.session.query(BuildAction).get(action_id)
         if action is None:
-            # TODO: if file is not needed update reportstobuildactions.
+            # TODO: if file is not needed update reportsToBuildActions.
             return False
 
         action.mark_finished(failure)
@@ -419,8 +419,8 @@ class CheckerReportHandler(object):
 
             checker_id = checker_id or 'NOT FOUND'
 
-            # TODO: perfomance issues when executing the following query on
-            # large databaseses?
+            # TODO: performance issues when executing the following query on
+            # large databases?
             reports = self.session.query(self.report_ident) \
                 .filter(and_(self.report_ident.c.bug_id == bug_hash,
                              self.report_ident.c.run_id == action.run_id))
@@ -559,7 +559,7 @@ class CheckerReportHandler(object):
 
             reports = self.session.query(Report) \
                 .filter(and_(Report.run_id == run_id,
-                             Report.suppressed == True)) \
+                             Report.suppressed)) \
                 .all()
 
             for report in reports:
@@ -599,7 +599,7 @@ class CheckerReportHandler(object):
         self.session.commit()
         sys.exit(0)
 
-    def __init__(self, session, lockDB):
+    def __init__(self, session):
         self.session = session
         self.report_ident = sqlalchemy.orm.query.Bundle('report_ident',
                                                         Report.id,
@@ -609,7 +609,7 @@ class CheckerReportHandler(object):
                                                         Report.start_bugpoint)
 
 
-def run_server(port, db_uri, db_version_info, callback_event=None):
+def run_server(port, db_uri, callback_event=None):
     LOG.debug('Starting CodeChecker server ...')
 
     try:
@@ -627,7 +627,7 @@ def run_server(port, db_uri, db_version_info, callback_event=None):
     LOG.debug('Starting thrift server.')
     try:
         # Start thrift server.
-        handler = CheckerReportHandler(session, True)
+        handler = CheckerReportHandler(session)
 
         processor = CheckerReport.Processor(handler)
         transport = TSocket.TServerSocket(port=port)

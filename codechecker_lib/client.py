@@ -204,14 +204,13 @@ class ConnectionManager(object):
     def create_connection(self):
         return Connection(self.host, self.port)
 
-    def start_report_server(self, db_version_info):
+    def start_report_server(self):
 
         is_server_started = multiprocessing.Event()
         server = multiprocessing.Process(target=report_server.run_server,
                                          args=(
                                              self.port,
                                              self.database_server.get_connection_string(),
-                                             db_version_info,
                                              is_server_started))
 
         server.daemon = True
