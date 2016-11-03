@@ -342,7 +342,7 @@ class PostgreSQLServer(SQLServer):
 
     def _create_database(self):
         try:
-            LOG.debug('Creating new database if not exists')
+            LOG.debug('Creating new database if not exists.')
 
             db_uri = self._get_connection_string('postgres')
             engine = SQLServer.create_engine(db_uri)
@@ -382,10 +382,10 @@ class PostgreSQLServer(SQLServer):
         Return with process instance.
         """
 
-        LOG.debug('Starting/connecting to database')
+        LOG.debug('Starting/connecting to database.')
         if not self._is_running():
             if not util.is_localhost(self.host):
-                LOG.info('Database is not running yet')
+                LOG.info('Database is not running yet.')
                 sys.exit(1)
 
             if not self._is_database_data_exist():

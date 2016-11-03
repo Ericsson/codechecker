@@ -76,7 +76,7 @@ def check(check_data):
     Invoke clang with an action which called by processes.
     Different analyzer object belongs to for each build action.
 
-    skiplist handler is None if no skip file was configured
+    skiplist handler is None if no skip file was configured.
     """
     args, action, context, analyzer_config_map, skp_handler, \
     report_output_dir, use_db = check_data
@@ -167,7 +167,7 @@ def start_workers(args, actions, context, analyzer_config_map, skp_handler,
     for every buildaction there is worker which makes the analysis.
     """
 
-    # Handle SIGINT to stop this script running
+    # Handle SIGINT to stop this script running.
     def signal_handler(*arg, **kwarg):
         try:
             pool.terminate()

@@ -105,10 +105,10 @@ class ClangTidyConfigHandler(config_handler.AnalyzerConfigHandler):
                 else:
                     LOG.debug('no match')
         except ValueError as verr:
-            LOG.debug('Failed to parse config')
+            LOG.debug('Failed to parse config.')
             LOG.debug(verr)
         except Exception as ex:
-            LOG.debug('Failed to process config')
+            LOG.debug('Failed to process config.')
             LOG.debug(ex)
 
         return res

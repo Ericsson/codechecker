@@ -103,7 +103,7 @@ def __check_authentication(client):
 
 def setupClient(host, port, uri):
     ''' setup the thrift client and check
-    API version and authentication needs'''
+    API version and authentication needs. '''
     manager = session_manager.SessionManager_Client()
     session_token = manager.getToken(host, port)
 
@@ -138,14 +138,14 @@ def setupClient(host, port, uri):
         if print_err:
             print('Access denied. This server requires authentication.')
             print('Please log in onto the server '
-                  'using `CodeChecker cmd login`')
+                  'using `CodeChecker cmd login`.')
             sys.exit(1)
 
     client = thrift_helper.ThriftClientHelper(host, port, uri, session_token)
     # test if client can work with thrift API getVersion
     if not check_API_version(client):
         print('Backward incompatible change was in the API.')
-        print('Please update client. Server version is not supported')
+        print('Please update client. Server version is not supported.')
         sys.exit(1)
 
     return client
@@ -558,17 +558,17 @@ def register_client_command_line(argument_parser):
     sum_parser.set_defaults(func=handle_remove_run_results)
 
     # Handle authentication.
-    auth_parser = subparsers.add_parser('login', help='Log in onto a CodeChecker server')
+    auth_parser = subparsers.add_parser('login', help='Log in onto a CodeChecker server.')
     auth_parser.add_argument('--host', type=str, dest="host", default='localhost',
                              help='Server host.')
     auth_parser.add_argument('-p', '--port', type=str, dest="port", default=11444,
                              required=True, help='HTTP Server port.')
     auth_parser.add_argument('-u', '--username', type=str, dest="username",
-                             required=False, help='Username to use on authentication')
+                             required=False, help='Username to use on authentication.')
     auth_parser.add_argument('-pw', '--password', type=str, dest="password",
-                             required=False, help="Password for username-password authentication (optional)")
+                             required=False, help="Password for username-password authentication (optional).")
     auth_parser.add_argument('-d', '--deactivate', '--logout', action='store_true',
-                             dest='logout', help='Send a logout request for the server')
+                             dest='logout', help='Send a logout request for the server.')
     auth_parser.set_defaults(func=handle_auth_requests)
 
 def main():

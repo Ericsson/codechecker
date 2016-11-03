@@ -60,7 +60,7 @@ def perform_build_command(logfile, command, context, silent=False):
     except Exception as ex:
         LOG.warning(str(ex))
         LOG.warning('Failed to get saved original_env'
-                    'using a current copy for logging')
+                    'using a current copy for logging.')
         original_env = os.environ.copy()
 
     # Run user's commands with intercept.
@@ -96,7 +96,7 @@ def perform_build_command(logfile, command, context, silent=False):
             sys.exit(ret_code)
 
     except Exception as ex:
-        LOG.error("Calling original build command failed")
+        LOG.error("Calling original build command failed.")
         LOG.error(str(ex))
         sys.exit(1)
 

@@ -1,6 +1,6 @@
 # Codechecker package builder
 
-Short description for the package layout of the generic codechecker package.
+Short description for the package layout of the generic CodeChecker package.
 Package creation is based on the package layout config file.
 It has two main parts a static and a runtime part.
 

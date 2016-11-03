@@ -27,7 +27,7 @@ def check_zlib():
         return True
     except Exception as ex:
         LOG.error(str(ex))
-        LOG.error('Failed to import zlib module')
+        LOG.error('Failed to import zlib module.')
         return False
 
 

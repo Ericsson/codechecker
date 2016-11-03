@@ -46,8 +46,8 @@ def __print_analyzer_version(context, analyzer_config_map):
     check_env = analyzer_env.get_check_env(context.path_env_extra,
                                            context.ld_lib_path_extra)
 
-    # get the analyzer binaries from the config_map which
-    # contains only the checked and available analyzers
+    # Get the analyzer binaries from the config_map which
+    # contains only the checked and available analyzers.
     for analyzer_name, analyzer_cfg in analyzer_config_map.items():
         LOG.info("Using analyzer:")
         analyzer_bin = analyzer_cfg.analyzer_binary
@@ -103,7 +103,7 @@ def run_check(args, actions, context):
     try:
         suppress_file = os.path.realpath(args.suppress)
     except AttributeError:
-        LOG.debug_analyzer('Suppress file was not set in the command line')
+        LOG.debug_analyzer('Suppress file was not set in the command line.')
 
     # Create one skip list handler shared between the analysis manager workers.
     skip_handler = _get_skip_handler(args)

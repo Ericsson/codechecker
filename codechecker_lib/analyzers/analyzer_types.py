@@ -305,7 +305,7 @@ def build_config_handlers(args, context, enabled_analyzers, connection=None):
             analyzer_config_map[ea] = config_handler
         else:
             LOG.debug_analyzer('Not supported analyzer type. '
-                               'No configuration handler will be created')
+                               'No configuration handler will be created.')
 
     if connection:
         # Collect all configuration options and store them together.
@@ -353,7 +353,7 @@ def construct_result_handler(args,
             return ct_res_handler
 
         else:
-            LOG.error('Not supported analyzer type')
+            LOG.error('Not supported analyzer type.')
             return None
     else:
         if buildaction.analyzer_type == CLANG_SA:
@@ -376,5 +376,5 @@ def construct_result_handler(args,
             ct_res_handler.skiplist_handler = skiplist_handler
             return ct_res_handler
         else:
-            LOG.error('Not supported analyzer type')
+            LOG.error('Not supported analyzer type.')
             return None

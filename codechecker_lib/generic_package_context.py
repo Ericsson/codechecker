@@ -77,7 +77,7 @@ class Context(context_base.ContextBase):
 
         except ValueError as verr:
             # db_version is required to know if the db schema is compatible.
-            LOG.error('Failed to get version info from the version file')
+            LOG.error('Failed to get version info from the version file.')
             LOG.error(verr)
             sys.exit(1)
 
@@ -213,7 +213,7 @@ class Context(context_base.ContextBase):
 
 
 def get_context():
-    LOG.debug('Loading package config')
+    LOG.debug('Loading package config.')
 
     package_root = os.environ['CC_PACKAGE_ROOT']
 

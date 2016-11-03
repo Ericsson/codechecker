@@ -59,7 +59,7 @@ def timefunc(function):
 
 def conv(text):
     '''
-    Convert * to % got from clients for the database queries
+    Convert * to % got from clients for the database queries.
     '''
     if text is None:
         return '%'
@@ -68,7 +68,7 @@ def conv(text):
 
 class ThriftAuthHandler():
     '''
-    Handle Thrift authentication requests
+    Handle Thrift authentication requests.
     '''
 
     def __init__(self, manager, client_host, session_token=None):
@@ -105,7 +105,7 @@ class ThriftAuthHandler():
 
         raise shared.ttypes.RequestFailed(
             shared.ttypes.ErrorCode.PRIVILEGE,
-            "Could not negotiate via common authentication method")
+            "Could not negotiate via common authentication method.")
 
     @timefunc
     def destroySession(self):
