@@ -74,7 +74,7 @@ class _Session():
         if (datetime.now() - self.last_access).total_seconds() <= \
                 session_lifetimes["soft"] \
                 and (datetime.now() - self.last_access).total_seconds() <= \
-                session_lifetimes["hard"]:
+                        session_lifetimes["hard"]:
             # If the session is still valid within the "reuse enabled" (soft)
             # past and the check comes from a real user access, we revalidate
             # the session by extending its lifetime --- the user retains their
@@ -95,7 +95,7 @@ class _Session():
         hard lifetime: while a session is reusable, a valid authentication
         from the session's user will return the user to the session."""
         return (datetime.now() - self.last_access).total_seconds() <= \
-            session_lifetimes["hard"]
+               session_lifetimes["hard"]
 
     def revalidate(self):
         if self.still_reusable():
@@ -104,6 +104,7 @@ class _Session():
             # timeframe, it can NOT be resurrected at all --- the user needs
             # to log in into a brand-new session.
             self.last_access = datetime.now()
+
 
 class SessionManager:
     CodeChecker_Workspace = None
@@ -118,8 +119,8 @@ class SessionManager:
         session_cfg_file = os.path.join(SessionManager.CodeChecker_Workspace,
                                         "session_config.json")
         if not os.path.exists(session_cfg_file):
-            LOG.warning("CodeChecker server's authentication example "
-                        "configuration file created at " + session_cfg_file)
+            LOG.info("CodeChecker server's authentication example "
+                     "configuration file created at " + session_cfg_file)
             shutil.copyfile(os.path.join(os.environ['CC_PACKAGE_ROOT'],
                                          "config", "session_config.json"),
                             session_cfg_file)
@@ -167,10 +168,10 @@ class SessionManager:
                             "Falling back to no authentication.")
                 self.__auth_config["enabled"] = False
 
-        session_lifetimes["soft"] = self.__auth_config.get("soft_expire")\
-            or 60
-        session_lifetimes["hard"] = self.__auth_config.get("session_lifetime")\
-            or 300
+        session_lifetimes["soft"] = self.__auth_config.get("soft_expire") \
+                                    or 60
+        session_lifetimes["hard"] = self.__auth_config.get("session_lifetime") \
+                                    or 300
 
     def isEnabled(self):
         return self.__auth_config.get("enabled")
@@ -185,18 +186,18 @@ class SessionManager:
         """Validate an oncoming authorization request
         against some authority controller."""
         return self.__try_auth_dictionary(auth_string) \
-            or self.__try_auth_pam(auth_string) \
-            or self.__try_auth_ldap(auth_string)
+               or self.__try_auth_pam(auth_string) \
+               or self.__try_auth_ldap(auth_string)
 
     def __is_method_enabled(self, method):
         return method not in unsupported_methods and \
-            "method_" + method in self.__auth_config and \
-            self.__auth_config["method_" + method].get("enabled")
+               "method_" + method in self.__auth_config and \
+               self.__auth_config["method_" + method].get("enabled")
 
     def __try_auth_dictionary(self, auth_string):
         return self.__is_method_enabled("dictionary") and \
-            auth_string in \
-            self.__auth_config.get("method_dictionary").get("auths")
+               auth_string in \
+               self.__auth_config.get("method_dictionary").get("auths")
 
     def __try_auth_pam(self, auth_string):
         if self.__is_method_enabled("pam"):
@@ -205,9 +206,9 @@ class SessionManager:
 
             if auth.authenticate(username, pw):
                 allowed_users = self.__auth_config["method_pam"].get("users") \
-                    or []
-                allowed_group = self.__auth_config["method_pam"].get("groups")\
-                    or []
+                                or []
+                allowed_group = self.__auth_config["method_pam"].get("groups") \
+                                or []
 
                 if len(allowed_users) == 0 and len(allowed_group) == 0:
                     # If no filters are set, only authentication is needed.
@@ -268,7 +269,7 @@ class SessionManager:
 
         self.__logins_since_prune += 1
         if self.__logins_since_prune >= \
-           self.__auth_config["logins_until_cleanup"]:
+                self.__auth_config["logins_until_cleanup"]:
             self.__cleanup_sessions()
 
         if self.__handle_validation(auth_string):
@@ -366,9 +367,9 @@ class SessionManager_Client:
                     or mode & stat.S_IROTH \
                     or mode & stat.S_IWOTH:
                 LOG.warning("Credential file at '" + session_cfg_file + "' is "
-                            "readable by users other than you! This poses a "
-                            "risk of others getting your passwords!\n"
-                            "Please `chmod 0600 " + session_cfg_file + "`")
+                                                                        "readable by users other than you! This poses a "
+                                                                        "risk of others getting your passwords!\n"
+                                                                        "Please `chmod 0600 " + session_cfg_file + "`")
         else:
             with open(self.token_file, 'w') as f:
                 json.dump({'tokens': {}}, f)

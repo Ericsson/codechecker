@@ -1,4 +1,4 @@
-## Generate plist files
+# Generate plist files
 
 Use these scripts and source files to generate plist report files.
 
