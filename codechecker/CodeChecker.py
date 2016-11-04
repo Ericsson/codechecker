@@ -476,7 +476,10 @@ Build command which is used to build the project.''')
         plist_parser = subparsers.add_parser('plist',
                                              formatter_class=ADHF,
                                              help='Parse plist files in '
-                                                  'the given directory.')
+                                                  'the given directory and '
+                                                  'store them to the database '
+                                                  'or print to the standard '
+                                                  'output.')
 
         plist_parser.add_argument('-w', '--workspace', type=str,
                                   dest="workspace",
