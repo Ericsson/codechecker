@@ -34,6 +34,37 @@ html, body {
   top: 10px;
 }
 
+/*** Severity colors ***/
+
+.detail {
+  display: none;
+  color: blue;
+}
+
+.severityCRITICAL {
+  color: #e50000;
+}
+
+.severityHIGH {
+  color: #d92200;
+}
+
+.severityMEDIUM {
+  color: #ce4400;
+}
+
+.severityLOW {
+  color: #c36600;
+}
+
+.severitySTYLE {
+  color: #b88800;
+}
+
+.severityUNSPECIFIED {
+  color: #adab00;
+}
+
 /*** Run diff selector ***/
 
 .diffDisplay {
