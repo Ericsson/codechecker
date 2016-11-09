@@ -226,6 +226,8 @@ class CheckerReportHandler(object):
                        analyzed_source_file):
         """
         """
+        import logging
+
         try:
 
             build_actions = \
@@ -249,8 +251,8 @@ class CheckerReportHandler(object):
                 self.session.commit()
 
             action = BuildAction(run_id,
-                                 build_cmd,
-                                 check_cmd,
+                                 build_cmd if logger.get_log_level() == logging.DEBUG else '',
+                                 check_cmd if logger.get_log_level() == logging.DEBUG else '',
                                  analyzer_type,
                                  analyzed_source_file)
             self.session.add(action)
