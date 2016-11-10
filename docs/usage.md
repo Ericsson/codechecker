@@ -29,16 +29,16 @@ CodeChecker check -e alpha -e llvm -b make
 CodeChecker check –u /home/myuser/myproject/suppress.list -b make
 CodeChecker server –u /home/myuser/myproject/suppress.list
 
-#suppress list will be stored in suppress.list with the bug hashes in the file
-#the user checks in the suppress.list file with the source code
+# Suppress list will be stored in suppress.list.
+# The suppress.list file can be checked in the source control system.
 ```
 ###5.	Same as use case 2., but the developer wants to give extra Config to clang-tidy or clang-sa
 ```
 CodeChecker check --saargs clangsa.config --tidyargs clang-tidy.config -b make
 
-#clang-sa and clang-tidy parameters are stored in simple text files, 
-#is expected to be in the same format as clang-sa/tidy 
-#command line parameters and will be passed to every clang-sa/tidy calls
+# The clang-sa and clang-tidy parameters are stored in simple text files. 
+# The format is the same as clang-sa/tidy command line parameters and will
+# be passed to every clang-sa/tidy calls
 ```
 
 ###6.	Asking for command line help for the check subcommand (all other subcommands would be the same: server, checkers,cmd…)
@@ -58,9 +58,9 @@ Large projects should use postgresql for performance reasons.
 CodeChecker check -n myproject_v1 –postgresql -b make
 CodeChecker check -n myproject_v2 –postgresql -b make
 
-#runs analysis, assumes that postgres is available on the default 5432 TCP port, 
-#codechecker db user exists and codechecker db can be created
-#please note that this use case is also supported with SQLITE db
+# Runs analysis, assumes that postgres is available on the default 5432 TCP port, 
+# codechecker db user exists and codechecker db can be created.
+# Please note that this use case is also supported with SQLITE db.
 ```
 
 Start the webserver and view the diff between the two results in the web browser
@@ -73,16 +73,16 @@ Start the webserver and view the diff between the two results in command line
 ```
 CodeChecker cmd diff –b myproject_v1 –n myproject_v2 –p 8001 -new
 
-#assumes that the server is started on port 8001
-#then shows the new bugs in myproject_v2 compared to baseline myproject_v1
+# Assumes that the server is started on port 8001
+# then shows the new bugs in myproject_v2 compared to baseline myproject_v1.
 
 CodeChecker cmd diff –b myproject_v1 –n myproject_v2 –p 8001 -unresolved
 
-#assumes that the server is started on port 8001
-#then shows the unresolved bugs in myproject_v2 compared to baseline myproject_v1
+# Assumes that the server is started on port 8001
+# then shows the unresolved bugs in myproject_v2 compared to baseline myproject_v1.
 
 CodeChecker cmd diff –b myproject_v1 –n myproject_v2 –p 8001 -resolved
 
-#assumes that the server is started on port 8001
-#then shows the resolved bugs in myproject_v2 compared to baseline myproject_v1
+# Assumes that the server is started on port 8001
+# then shows the resolved bugs in myproject_v2 compared to baseline myproject_v1.
 ```

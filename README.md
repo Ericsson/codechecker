@@ -29,8 +29,8 @@ _Daniel Krupp, Gyorgy Orban, Gabor Horvath and Bence Babati___ ([ Slides](http:/
 CodeChecker requires some new features from clang to work properly.
 If your clang version does not have these features you will see in debug log the following messages:
 
-  * `Check name wasn't found in the plist file.` --> use clang = 3.7 or trunk@r228624; otherwise CodeChecker makes a guess based on the report message
-  * `Hash value wasn't found in the plist file.` --> update for a newer clang version; otherwise CodeChecker generates a simple hash based on the filename and the line content, this method is applied for Clang Tidy results too, because Clang Tidy does not support bug identifier hash generation currently
+  * `Check name wasn't found in the plist file.` --> use clang >= 3.7 or trunk r228624; otherwise CodeChecker makes a guess based on the report message
+  * `Hash value wasn't found in the plist file.` --> use clang >= 3.8 or trunk r251011; otherwise CodeChecker generates a simple hash based on the filename and the line content, this method is applied for Clang Tidy results too, because Clang Tidy does not support bug identifier hash generation currently
 
 ## Linux
 For a more detailed dependency list see [Requirements](docs/deps.md)
