@@ -1,4 +1,3 @@
-
 # -----------------------------------------------------------------------------
 #                     The CodeChecker Infrastructure
 #   This file is distributed under the University of Illinois Open Source
@@ -101,7 +100,7 @@ class BuildCmdTestNose(unittest.TestCase):
         If the escaping fails the source file will not compile.
         """
         compile_cmd = self.compiler + \
-            ' -DDEBUG -DMYPATH="/this/some/path/"'
+                      ' -DDEBUG \'-DMYPATH="/this/some/path/"\''
 
         comp_actions = self.__get_comp_actions(compile_cmd)
 
@@ -128,7 +127,7 @@ class BuildCmdTestNose(unittest.TestCase):
         escape characters in it \".
         If the escaping fails the source file will not compile.
         """
-        compile_cmd = self.compiler + ' -DMYPATH=\"/some/other/path\"'
+        compile_cmd = self.compiler + ''' '-DMYPATH=\"/some/other/path\"' '''
         comp_actions = self.__get_comp_actions(compile_cmd)
 
         for comp_action in comp_actions:
