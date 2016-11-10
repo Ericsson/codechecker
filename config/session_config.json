@@ -16,10 +16,18 @@
       "enabled" : false,
       "authorities": [
         {
-          "connection_url": "ldap://ldap.example.org",
-          "queries": [
-            "uid=$USN$,ou=admins,o=mycompany"
-          ]
+          "connection_url" : "ldap://ldap.example.org",
+          "username" : null,
+          "password" : null,
+          "referrals" : false,
+          "deref" : "always",
+          "accountBase" : null,
+          "accountScope" : "subtree",
+          "accountPattern" : "(&(objectClass=person)(sAMAccountName=$USN$))",
+          "groupBase" : null,
+          "groupScope" : "subtree",
+          "groupPattern" : "(&(objectClass=group)(name=$GRP$))",
+          "groupMemberPattern" : "(member=$USERDN$)"
         }
       ]
     },

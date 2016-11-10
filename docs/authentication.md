@@ -6,12 +6,12 @@ CodeChecker authentication subsytem
 CodeChecker also supports only allowing a privileged set of users to access the results stored on a server.
 
 > **NOTICE!** Some authentication subsystems require additional packages to be installed before they can be used. See below.
- 
+
 ## Serverside configuration
 
 The server's configuration is stored in the server's *workspace* folder, in `session_config.json`.
 This file is created, at the first start of the server, using the package's installed `config/session_config.json` as a template.
- 
+
 The `authentication` section of the config file controls how authentication is handled.
 
  * `enabled`  
@@ -101,9 +101,53 @@ the server can be configured to connect to as much LDAP-servers as the administr
 to attempt to log in the username given.
 
 Servers are connected to and queries are executed in the order they appear in the configuration file.
-Because of this, it is not advised to list too many servers as it can elongenate the authentication process.
+Because of this, it is not advised to list too many servers as it can elongate the authentication process.
 
+##### Configuration options:
+
+`connection_url`  
+URL of the LDAP server which will be queried for user information and group
+membership.
+
+`username`  
+Optional username for LDAP bind, if not set bind with the login credentials will be attempted.
+
+`password`  
+Optional password for configured username.
+
+`referrals`  
+Microsoft Active Directory by returns referrals (search continuations). LDAPv3
+does not specify which credentials should be used by the clients when chasing
+these referrals and will be tried as an anonymous access by the libldap library
+which might fail. Will be disabled by default.
+
+`deref`  
+Configure how the alias dereferencing is done in libldap (valid values: always, never).
+
+`accountBase`  
+Root tree containing all the user accounts.
+
+`accountScope`  
+Scope of the search performed. Accepted values are: base, one, subtree.
+
+`accountPattern`  
 The special `$USN$` token in the query is replaced to the *username* at login.
+Query pattern used to search for a user account. Must be a valid LDAP query
+expression.  
+Example configuration: *(&(objectClass=person)(sAMAccountName=$USN$))*
+
+`groupBase`  
+Root tree containing all the groups.
+
+`groupPattern`  
+Group query pattern used. Must be a valid LDAP query expression.
+
+`groupMemberPattern`  
+Group member pattern will be combined with the group patten to query user for ldap group membership. $USERDN$ will be automatically replaced by the queried user account DN.  
+Example configuration: *(member=$USERDN$)*
+
+`groupScope`  
+Scope of the search performed. (Valid values are: base, one, subtree)
 
 ```json
 "method_ldap": {
@@ -111,15 +155,31 @@ The special `$USN$` token in the query is replaced to the *username* at login.
   "authorities": [
     {
       "connection_url": "ldap://ldap.example.org",
-      "queries": [
-        "uid=$USN$,ou=admins,o=mycompany"
-      ]
+      "username" : null,
+      "password" : null,
+      "referrals" : false,
+      "deref" : "always",
+      "accountBase" : null,
+      "accountScope" : "subtree",
+      "accountPattern" : "(&(objectClass=person)(sAMAccountName=$USN$))",
+      "groupBase" : null,
+      "groupScope" : "subtree",
+      "groupPattern" : "(&(objectClass=group)(name=mygroup))",
+      "groupMemberPattern" : "(member=$USERDN$)"
     },
     {
       "connection_url" : "ldaps://secure.internal.example.org:636",
-      "queries": [
-        "uid=$USN$,ou=owners,ou=secure,o=company"
-      ]
+      "username" : null,
+      "password" : null,
+      "referrals" : false,
+      "deref" : "always",
+      "accountBase" : null,
+      "accountScope" : "subtree",
+      "accountPattern" : null,
+      "groupBase" : null,
+      "groupScope" : "subtree",
+      "groupPattern" : null,
+      "groupMemberPattern" : null
     }
   ]
 }
