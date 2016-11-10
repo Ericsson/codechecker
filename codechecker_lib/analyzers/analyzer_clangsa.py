@@ -56,8 +56,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
 
             command = [analyzer_binary, "-cc1"]
             for plugin in config_handler.analyzer_plugins:
-                command.append("-load")
-                command.append(plugin)
+                command.extend(["-load", plugin])
             command.append("-analyzer-checker-help")
 
             try:
@@ -81,22 +80,15 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             # Get an output file from the result handler.
             analyzer_output_file = res_handler.get_analyzer_result_file()
 
-            analyzer_mode = 'plist-multi-file'
-
             # Get the checkers list from the config_handler.
             # Checker order matters.
             config = self.config_handler
 
-            analyzer_bin = config.analyzer_binary
+            analyzer_cmd = [config.analyzer_binary]
 
-            analyzer_cmd = [analyzer_bin]
-
-            if len(config.compiler_resource_dirs) > 0:
-                for inc_dir in config.compiler_resource_dirs:
-                    analyzer_cmd.append('-resource-dir')
-                    analyzer_cmd.append(inc_dir)
-                    analyzer_cmd.append('-isystem')
-                    analyzer_cmd.append(inc_dir)
+            if len(config.compiler_resource_dir) > 0:
+                analyzer_cmd.extend(['-resource-dir',
+                                     config.compiler_resource_dir])
 
             # Compiling is enough.
             analyzer_cmd.append('-c')
@@ -107,50 +99,41 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             analyzer_cmd.append('--analyzer-no-default-checks')
 
             for plugin in config.analyzer_plugins:
-                analyzer_cmd.append("-Xclang")
-                analyzer_cmd.append("-plugin")
-                analyzer_cmd.append("-Xclang")
-                analyzer_cmd.append("checkercfg")
-                analyzer_cmd.append("-Xclang")
-                analyzer_cmd.append("-load")
-                analyzer_cmd.append("-Xclang")
-                analyzer_cmd.append(plugin)
+                analyzer_cmd.extend(["-Xclang", "-plugin",
+                                     "-Xclang", "checkercfg",
+                                     "-Xclang", "-load",
+                                     "-Xclang", plugin])
 
-            analyzer_cmd.append('-Xclang')
-            analyzer_cmd.append('-analyzer-opt-analyze-headers')
-            analyzer_cmd.append('-Xclang')
-            analyzer_cmd.append('-analyzer-output=' + analyzer_mode)
+            analyzer_mode = 'plist-multi-file'
+            analyzer_cmd.extend(['-Xclang',
+                                 '-analyzer-opt-analyze-headers',
+                                 '-Xclang',
+                                 '-analyzer-output=' + analyzer_mode])
 
             if config.compiler_sysroot:
-                analyzer_cmd.append('--sysroot')
-                analyzer_cmd.append(config.compiler_sysroot)
+                analyzer_cmd.extend(['--sysroot', config.compiler_sysroot])
 
             for path in config.system_includes:
-                analyzer_cmd.append('-isystem')
-                analyzer_cmd.append(path)
+                analyzer_cmd.extend(['-isystem', path])
 
             for path in config.includes:
-                analyzer_cmd.append('-I')
-                analyzer_cmd.append(path)
+                analyzer_cmd.extend(['-I', path])
 
-            analyzer_cmd.append('-o')
-            analyzer_cmd.append(analyzer_output_file)
+            analyzer_cmd.extend(['-o', analyzer_output_file])
 
             # Config handler stores which checkers are enabled or disabled.
             for checker_name, value in config.checks().items():
                 enabled, description = value
                 if enabled:
-                    analyzer_cmd.append('-Xclang')
-                    analyzer_cmd.append('-analyzer-checker=' + checker_name)
+                    analyzer_cmd.extend(['-Xclang',
+                                         '-analyzer-checker=' + checker_name])
                 else:
-                    analyzer_cmd.append('-Xclang')
-                    analyzer_cmd.append('-analyzer-disable-checker')
-                    analyzer_cmd.append('-Xclang')
-                    analyzer_cmd.append(checker_name)
+                    analyzer_cmd.extend(['-Xclang',
+                                         '-analyzer-disable-checker',
+                                         '-Xclang', checker_name])
 
-            # Set lang.
-            analyzer_cmd.append('-x')
-            analyzer_cmd.append(self.buildaction.lang)
+            # Set language.
+            analyzer_cmd.extend(['-x', self.buildaction.lang])
 
             analyzer_cmd.append(config.analyzer_extra_arguments)
 

@@ -191,7 +191,7 @@ def __build_clangsa_config_handler(args, context):
     config_handler = config_handler_clangsa.ClangSAConfigHandler()
     config_handler.analyzer_plugins_dir = context.checker_plugin
     config_handler.analyzer_binary = context.analyzer_binaries.get(CLANG_SA)
-    config_handler.compiler_resource_dirs = context.compiler_resource_dirs
+    config_handler.compiler_resource_dir = context.compiler_resource_dir
     config_handler.compiler_sysroot = context.compiler_sysroot
     config_handler.system_includes = context.extra_system_includes
     config_handler.includes = context.extra_includes
@@ -240,7 +240,7 @@ def __build_clang_tidy_config_handler(args, context):
 
     config_handler = config_handler_clang_tidy.ClangTidyConfigHandler()
     config_handler.analyzer_binary = context.analyzer_binaries.get(CLANG_TIDY)
-    config_handler.compiler_resource_dirs = context.compiler_resource_dirs
+    config_handler.compiler_resource_dir = context.compiler_resource_dir
     config_handler.compiler_sysroot = context.compiler_sysroot
     config_handler.system_includes = context.extra_system_includes
     config_handler.includes = context.extra_includes

@@ -50,8 +50,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
 
             try:
                 command = shlex.split(' '.join(command))
-                result = subprocess.check_output(command,
-                                                 env=env)
+                result = subprocess.check_output(command, env=env)
             except subprocess.CalledProcessError as cperr:
                 LOG.error(cperr)
                 return {}
@@ -66,9 +65,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
         try:
             config = self.config_handler
 
-            analyzer_bin = config.analyzer_binary
-
-            analyzer_cmd = [analyzer_bin]
+            analyzer_cmd = [config.analyzer_binary]
 
             # Disable all checkers by default.
             # The latest clang-tidy (3.9) release enables clang static analyzer
@@ -83,7 +80,8 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
                 else:
                     checkers_cmdline += ',-' + checker_name
 
-            analyzer_cmd.append("-checks='" + checkers_cmdline.lstrip(',') + "'")
+            analyzer_cmd.append("-checks='" + checkers_cmdline.lstrip(',') +
+                                "'")
 
             LOG.debug(config.analyzer_extra_arguments)
             analyzer_cmd.append(config.analyzer_extra_arguments)
@@ -92,31 +90,22 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
 
             analyzer_cmd.append("--")
 
-            extra_arguments_before = []
-            if len(config.compiler_resource_dirs) > 0:
-                for inc_dir in config.compiler_resource_dirs:
-                    extra_arguments_before.append('-resource-dir')
-                    extra_arguments_before.append(inc_dir)
-                    extra_arguments_before.append('-isystem')
-                    extra_arguments_before.append(inc_dir)
+            # Options before the analyzer options.
+            if len(config.compiler_resource_dir) > 0:
+                analyzer_cmd.extend(['-resource-dir',
+                                     config.compiler_resource_dir])
 
             if config.compiler_sysroot:
-                extra_arguments_before.append('--sysroot')
-                extra_arguments_before.append(config.compiler_sysroot)
+                analyzer_cmd.extend(['--sysroot', config.compiler_sysroot])
 
             for path in config.system_includes:
-                extra_arguments_before.append('-isystem')
-                extra_arguments_before.append(path)
+                analyzer_cmd.extend(['-isystem', path])
 
             for path in config.includes:
-                extra_arguments_before.append('-I')
-                extra_arguments_before.append(path)
+                analyzer_cmd.extend(['-I', path])
 
-            # Set lang.
-            extra_arguments_before.append('-x')
-            extra_arguments_before.append(self.buildaction.lang)
-
-            analyzer_cmd.append(' '.join(extra_arguments_before))
+            # Set language.
+            analyzer_cmd.extend(['-x', self.buildaction.lang])
 
             analyzer_cmd.extend(self.buildaction.analyzer_options)
 
