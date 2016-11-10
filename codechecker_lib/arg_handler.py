@@ -135,7 +135,7 @@ def handle_server(args):
         LOG.debug('Starting CodeChecker server and database server.')
         sql_server.start(context.db_version_info, wait_for_start=True,
                          init=True)
-        conn_mgr.start_report_server(context.db_version_info)
+        conn_mgr.start_report_server()
     else:
         LOG.debug('Starting database.')
         sql_server.start(context.db_version_info, wait_for_start=True,
@@ -281,7 +281,7 @@ def handle_check(args):
         sql_server.start(context.db_version_info, wait_for_start=True,
                          init=True)
 
-        conn_mgr.start_report_server(context.db_version_info)
+        conn_mgr.start_report_server()
 
         LOG.debug("Checker server started.")
 
@@ -419,7 +419,7 @@ def handle_plist(args):
         sql_server.start(context.db_version_info, wait_for_start=True,
                          init=True)
 
-        conn_mgr.start_report_server(context.db_version_info)
+        conn_mgr.start_report_server()
 
         with client.get_connection() as connection:
             package_version = context.version['major'] + '.' + context.version[
