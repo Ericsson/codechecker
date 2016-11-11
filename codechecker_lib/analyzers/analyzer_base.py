@@ -116,7 +116,7 @@ class SourceAnalyzer(object):
                 sys.exit(os.EX_OK)
 
         signal.signal(signal.SIGINT, signal_handler)
-        cmd = shlex.split(command, posix=False)
+        cmd = shlex.split(command)
 
         proc = subprocess.Popen(cmd,
                                 bufsize=-1,
