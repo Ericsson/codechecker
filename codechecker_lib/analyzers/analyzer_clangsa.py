@@ -88,6 +88,8 @@ class ClangSA(analyzer_base.SourceAnalyzer):
 
             if len(config.compiler_resource_dir) > 0:
                 analyzer_cmd.extend(['-resource-dir',
+                                     config.compiler_resource_dir,
+                                     '-isystem',
                                      config.compiler_resource_dir])
 
             # Compiling is enough.
