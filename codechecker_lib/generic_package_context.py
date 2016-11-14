@@ -145,18 +145,15 @@ class Context(context_base.ContextBase):
                             self.variables['path_dumps_name'])
 
     @property
-    def compiler_resource_dirs(self):
-        compiler_resource_dirs = self.pckg_layout.get('compiler_resource_dirs')
-        if not compiler_resource_dirs:
-            return []
+    def compiler_resource_dir(self):
+        resource_dir = self.pckg_layout.get('compiler_resource_dir')
+        if not resource_dir:
+            return ""
         else:
-            inc_dirs = []
-            for path in compiler_resource_dirs:
-                if os.path.isabs(path):
-                    inc_dirs.append(path)
-                else:
-                    inc_dirs.append(os.path.join(self.__package_root, path))
-            return inc_dirs
+            if os.path.isabs(resource_dir):
+                return resource_dir
+            else:
+                return os.path.join(self.__package_root, resource_dir)
 
     @property
     def path_env_extra(self):
@@ -199,7 +196,7 @@ class Context(context_base.ContextBase):
             analyzers[analyzer_types.CLANG_SA] = 'clang'
             analyzers[analyzer_types.CLANG_TIDY] = 'clang-tidy'
         else:
-            for name, value in compiler_binaries.iteritems():
+            for name, value in compiler_binaries.items():
                 if os.path.isabs(value):
                     # Check if it is an absolute path.
                     analyzers[name] = value

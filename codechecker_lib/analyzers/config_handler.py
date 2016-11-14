@@ -24,7 +24,7 @@ class AnalyzerConfigHandler(object):
         self.__analyzer_binary = None
         self.__analyzer_plugins_dir = None
         self.__compiler_sysroot = None
-        self.__compiler_resource_dirs = []
+        self.__compiler_resource_dir = ''
         self.__sys_inc = []
         self.__includes = []
         self.__analyzer_extra_arguments = ''
@@ -121,18 +121,18 @@ class AnalyzerConfigHandler(object):
         self.__compiler_sysroot = compiler_sysroot
 
     @property
-    def compiler_resource_dirs(self):
+    def compiler_resource_dir(self):
         """
         Get compiler resource directories.
         """
-        return self.__compiler_resource_dirs
+        return self.__compiler_resource_dir
 
-    @compiler_resource_dirs.setter
-    def compiler_resource_dirs(self, resource_dirs):
+    @compiler_resource_dir.setter
+    def compiler_resource_dir(self, resource_dir):
         """
         Set compiler resource directories.
         """
-        self.__compiler_resource_dirs = resource_dirs
+        self.__compiler_resource_dir = resource_dir
 
     @property
     def system_includes(self):
