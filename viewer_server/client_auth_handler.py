@@ -8,7 +8,6 @@ Handle thrift requests for authentication
 '''
 import zlib
 import os
-import datetime
 from collections import defaultdict
 import ntpath
 import codecs
@@ -20,41 +19,9 @@ from Authentication.ttypes import *
 
 from codechecker_lib import logger
 from codechecker_lib import session_manager
+from codechecker_lib.profiler import timeit
 
 LOG = logger.get_new_logger('AUTH HANDLER')
-
-
-# -----------------------------------------------------------------------
-def timefunc(function):
-    '''
-    timer function
-    '''
-
-    func_name = function.__name__
-
-    def debug_wrapper(*args, **kwargs):
-        '''
-        wrapper for debug log
-        '''
-        before = datetime.now()
-        res = function(*args, **kwargs)
-        after = datetime.now()
-        timediff = after - before
-        diff = timediff.microseconds/1000
-        LOG.debug('['+str(diff)+'ms] ' + func_name)
-        return res
-
-    def release_wrapper(*args, **kwargs):
-        '''
-        no logging
-        '''
-        res = function(*args, **kwargs)
-        return res
-
-    if logger.get_log_level() == logger.DEBUG:
-        return debug_wrapper
-    else:
-        return release_wrapper
 
 
 def conv(text):
@@ -76,7 +43,7 @@ class ThriftAuthHandler():
         self.__client_host = client_host
         self.__session_token = session_token
 
-    @timefunc
+    @timeit
     def getAuthParameters(self):
         return HandshakeInformation(self.__manager.isEnabled(),
                                     self.__manager.is_valid(
@@ -84,13 +51,13 @@ class ThriftAuthHandler():
                                         self.__session_token,
                                         True))
 
-    @timefunc
+    @timeit
     def getAcceptedAuthMethods(self):
         result = []
         result.append("Username:Password")
         return result
 
-    @timefunc
+    @timeit
     def performLogin(self, auth_method, auth_string):
         if auth_method == "Username:Password":
             authToken = self.__manager.create_or_get_session(
@@ -107,7 +74,7 @@ class ThriftAuthHandler():
             shared.ttypes.ErrorCode.PRIVILEGE,
             "Could not negotiate via common authentication method.")
 
-    @timefunc
+    @timeit
     def destroySession(self):
         return self.__manager.invalidate(self.__client_host,
                                          self.__session_token)

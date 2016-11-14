@@ -9,7 +9,6 @@ Handle thrift requests.
 
 from collections import defaultdict
 import codecs
-import datetime
 import ntpath
 import os
 import sqlalchemy
