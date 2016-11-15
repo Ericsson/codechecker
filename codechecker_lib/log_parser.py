@@ -5,6 +5,7 @@
 # -------------------------------------------------------------------------
 
 import os
+import sys
 import traceback
 import subprocess
 import shlex
@@ -155,6 +156,7 @@ def parse_log(logfilepath, add_compiler_defaults=False):
                 LOG.error('The compile database is not valid.')
             LOG.debug(traceback.format_exc())
             LOG.debug(ex)
+            sys.exit(1)
 
     LOG.debug('Parsing log file done.')
     return actions

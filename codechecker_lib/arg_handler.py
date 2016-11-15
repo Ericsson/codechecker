@@ -39,27 +39,20 @@ def handle_list_checkers(args):
     List the default enabled and disabled checkers in the config.
     """
     context = generic_package_context.get_context()
-    enabled_analyzers = args.analyzers
-    analyzer_environment = analyzer_env.get_check_env(
-        context.path_env_extra,
-        context.ld_lib_path_extra)
+    # If nothing is set, list checkers for all supported analyzers.
+    enabled_analyzers = args.analyzers or analyzer_types.supported_analyzers
+    analyzer_environment = analyzer_env.get_check_env(context.path_env_extra,
+                                                      context.ld_lib_path_extra)
 
-    if not enabled_analyzers:
-        # Noting set list checkers for all supported analyzers.
-        enabled_analyzers = list(analyzer_types.supported_analyzers)
-
-    enabled_analyzer_types = set()
     for ea in enabled_analyzers:
         if ea not in analyzer_types.supported_analyzers:
-            LOG.info('Not supported analyzer ' + str(ea))
+            LOG.error('Unsupported analyzer ' + str(ea))
             sys.exit(1)
-        else:
-            enabled_analyzer_types.add(ea)
 
     analyzer_config_map = \
         analyzer_types.build_config_handlers(args,
                                              context,
-                                             enabled_analyzer_types)
+                                             enabled_analyzers)
 
     for ea in enabled_analyzers:
         # Get the config.
@@ -90,30 +83,20 @@ def handle_server(args):
     """
     Starts the report viewer server.
     """
-    if not host_check.check_zlib():
-        LOG.error("zlib error")
-        sys.exit(1)
+    host_check.check_zlib()
 
-    try:
-        workspace = args.workspace
-    except AttributeError:
-        # If no workspace value was set for some reason
-        # in args set the default value.
-        workspace = util.get_default_workspace()
+    workspace = args.workspace
 
     # WARNING
     # In case of SQLite args.dbaddress default value is used
     # for which the is_localhost should return true.
-
-    local_db = util.is_localhost(args.dbaddress)
-    if local_db and not os.path.exists(workspace):
+    if util.is_localhost(args.dbaddress) and not os.path.exists(workspace):
         os.makedirs(workspace)
 
+    suppress_handler = generic_package_suppress_handler.GenericSuppressHandler()
     if args.suppress is None:
-        LOG.warning(
-            "WARNING! No suppress file was given, suppressed results will " +
-            'be only stored in the database.')
-
+        LOG.warning('No suppress file was given, suppressed results will '
+                    'be only stored in the database.')
     else:
         if not os.path.exists(args.suppress):
             LOG.error('Suppress file ' + args.suppress + ' not found!')
@@ -146,29 +129,18 @@ def handle_server(args):
     # Start database viewer.
     db_connection_string = sql_server.get_connection_string()
 
-    suppress_handler = \
-        generic_package_suppress_handler.GenericSuppressHandler()
-    try:
-        suppress_handler.suppress_file = args.suppress
-        LOG.debug('Using suppress file: ' +
-                  str(suppress_handler.suppress_file))
-    except AttributeError as aerr:
-        # Suppress file was not set.
-        LOG.debug(aerr)
-
-    package_data = {'www_root': context.www_root, 'doc_root': context.doc_root}
+    suppress_handler.suppress_file = args.suppress
+    LOG.debug('Using suppress file: ' + str(suppress_handler.suppress_file))
 
     checker_md_docs = os.path.join(context.doc_root, 'checker_md_docs')
-
     checker_md_docs_map = os.path.join(checker_md_docs,
                                        'checker_doc_map.json')
-
-    package_data['checker_md_docs'] = checker_md_docs
-
     with open(checker_md_docs_map, 'r') as dFile:
         checker_md_docs_map = json.load(dFile)
 
-    package_data['checker_md_docs_map'] = checker_md_docs_map
+    package_data = {'www_root': context.www_root, 'doc_root': context.doc_root,
+                    'checker_md_docs': checker_md_docs,
+                    'checker_md_docs_map': checker_md_docs_map}
 
     client_db_access_server.start_server(package_data,
                                          args.view_port,
@@ -186,9 +158,9 @@ def handle_log(args):
     args.logfile = os.path.realpath(args.logfile)
     if os.path.exists(args.logfile):
         os.remove(args.logfile)
+    open(args.logfile, 'a').close()  # Same as linux's touch.
 
     context = generic_package_context.get_context()
-    open(args.logfile, 'a').close()  # Same as linux's touch.
     build_manager.perform_build_command(args.logfile,
                                         args.command,
                                         context)
@@ -201,14 +173,7 @@ def handle_debug(args):
     """
     context = generic_package_context.get_context()
 
-    try:
-        workspace = args.workspace
-    except AttributeError:
-        # If no workspace value was set for some reason
-        # in args set the default value.
-        workspace = util.get_default_workspace()
-
-    context.codechecker_workspace = workspace
+    context.codechecker_workspace = args.workspace
     context.db_username = args.dbusername
 
     check_env = analyzer_env.get_check_env(context.path_env_extra,
@@ -230,19 +195,9 @@ def handle_check(args):
     Based on the log runs the analysis.
     """
     try:
+        host_check.check_zlib()
 
-        if not host_check.check_zlib():
-            LOG.error("zlib error")
-            sys.exit(1)
-
-        try:
-            workspace = args.workspace
-        except AttributeError:
-            # If no workspace value was set for some reason
-            # in args set the default value.
-            workspace = util.get_default_workspace()
-
-        workspace = os.path.realpath(workspace)
+        workspace = os.path.realpath(args.workspace)
         if not os.path.isdir(workspace):
             os.mkdir(workspace)
 
@@ -257,19 +212,8 @@ def handle_check(args):
                       log_file)
             sys.exit(1)
 
-        try:
-            actions = log_parser.parse_log(log_file,
-                                           args.add_compiler_defaults)
-        except Exception as ex:
-            LOG.error("Failed to parse compilation command json file: " +
-                      log_file)
-            sys.exit(1)
-
-        if not actions:
-            LOG.error("There are no compilation commmands"
-                      "in the log file: " + log_file)
-
-            sys.exit(1)
+        actions = log_parser.parse_log(log_file,
+                                       args.add_compiler_defaults))
 
         check_env = analyzer_env.get_check_env(context.path_env_extra,
                                                context.ld_lib_path_extra)
@@ -289,9 +233,7 @@ def handle_check(args):
 
         LOG.debug("Checker server started.")
 
-        analyzer.run_check(args,
-                           actions,
-                           context)
+        analyzer.run_check(args, actions, context)
 
         LOG.info("Analysis has finished.")
 
@@ -329,14 +271,7 @@ def _do_quickcheck(args):
     try:
         context = generic_package_context.get_context()
 
-        try:
-            workspace = args.workspace
-        except AttributeError:
-            # If no workspace value was set for some reason
-            # in args set the default value.
-            workspace = util.get_default_workspace()
-
-        context.codechecker_workspace = workspace
+        context.codechecker_workspace = args.workspace
         args.name = "quickcheck"
 
         # Load severity map from config file.
@@ -347,23 +282,8 @@ def _do_quickcheck(args):
             context.severity_map = json.loads(severity_config)
 
         log_file = build_manager.check_log_file(args, context)
-
-        if not log_file:
-            LOG.error("Failed to generate compilation command file: " +
-                      log_file)
-            sys.exit(1)
-        try:
-            actions = log_parser.parse_log(log_file,
-                                           args.add_compiler_defaults)
-            if not actions:
-                LOG.error("There are no compilation commmands"
-                          "in the log file: " + log_file)
-                sys.exit(1)
-        except Exception as ex:
-            LOG.error("Failed to parse compilation commands json file")
-            LOG.error(ex)
-            sys.exit(1)
-
+        actions = log_parser.parse_log(log_file,
+                                       args.add_compiler_defaults)
         analyzer.run_quick_check(args, context, actions)
 
     except Exception as ex:
@@ -439,8 +359,8 @@ def handle_plist(args):
         conn_mgr.start_report_server()
 
         with client.get_connection() as connection:
-            package_version = context.version['major'] + '.' + context.version[
-                'minor']
+            package_version = context.version['major'] + '.' + \
+                              context.version['minor']
             context.run_id = connection.add_checker_run(' '.join(sys.argv),
                                                         args.name,
                                                         package_version,
