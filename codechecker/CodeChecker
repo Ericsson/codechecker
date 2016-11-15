@@ -20,7 +20,7 @@ import subprocess
 import sys
 import tempfile
 
-procPool = []
+proc_pid = None
 
 
 def run_codechecker(checker_env):
@@ -28,7 +28,6 @@ def run_codechecker(checker_env):
     Run the CodeChecker.
         * checker_env - CodeChecker will be run in the checker env.
     """
-
     package_bin = os.path.dirname(os.path.realpath(__file__))
     package_root, bin_dir = ntpath.split(package_bin)
 
@@ -55,7 +54,8 @@ def run_codechecker(checker_env):
     checker_cmd.extend(sys.argv[1:])
 
     proc = subprocess.Popen(checker_cmd, env=checker_env)
-    procPool.append(proc.pid)
+    global proc_pid
+    proc_pid = proc.pid
 
     proc.wait()
     sys.exit(proc.returncode)
@@ -79,8 +79,9 @@ def main():
         print(ex)
 
     def signal_term_handler(sig, frame):
-        for p in procPool:
-            os.kill(p, signal.SIGINT)
+        global proc_pid
+        if proc_pid:
+            os.kill(proc_pid, signal.SIGINT)
 
         # Remove temporary directory.
         try:
