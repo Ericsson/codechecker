@@ -41,8 +41,9 @@ def handle_list_checkers(args):
     context = generic_package_context.get_context()
     # If nothing is set, list checkers for all supported analyzers.
     enabled_analyzers = args.analyzers or analyzer_types.supported_analyzers
-    analyzer_environment = analyzer_env.get_check_env(context.path_env_extra,
-                                                      context.ld_lib_path_extra)
+    analyzer_environment = analyzer_env.get_check_env(
+        context.path_env_extra,
+        context.ld_lib_path_extra)
 
     for ea in enabled_analyzers:
         if ea not in analyzer_types.supported_analyzers:
@@ -93,7 +94,8 @@ def handle_server(args):
     if util.is_localhost(args.dbaddress) and not os.path.exists(workspace):
         os.makedirs(workspace)
 
-    suppress_handler = generic_package_suppress_handler.GenericSuppressHandler()
+    suppress_handler = generic_package_suppress_handler.\
+        GenericSuppressHandler()
     if args.suppress is None:
         LOG.warning('No suppress file was given, suppressed results will '
                     'be only stored in the database.')
@@ -369,7 +371,8 @@ def handle_plist(args):
     pool = multiprocessing.Pool(args.jobs)
 
     try:
-        items = [(plist, args, context) for plist in os.listdir(args.directory)]
+        items = [(plist, args, context)
+                 for plist in os.listdir(args.directory)]
         pool.map_async(consume_plist, items, 1).get()
         pool.close()
     except Exception:
