@@ -191,7 +191,12 @@ def setup_package():
     with open(session_cfg_file, 'r+') as scfg:
         __scfg_original = scfg.read()
         scfg.seek(0)
-        scfg_dict = json.loads(__scfg_original)
+        try:
+            scfg_dict = json.loads(__scfg_original)
+        except ValueError as verr:
+            print(verr)
+            print('Malformed session config json.')
+            sys.exit(1)
 
         scfg_dict["authentication"]["enabled"] = True
         scfg_dict["authentication"]["method_dictionary"]["enabled"] = True
