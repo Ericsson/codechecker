@@ -79,7 +79,7 @@ def check(check_data):
     skiplist handler is None if no skip file was configured.
     """
     args, action, context, analyzer_config_map, skp_handler, \
-    report_output_dir, use_db = check_data
+        report_output_dir, use_db = check_data
 
     skipped = False
     try:
@@ -190,7 +190,7 @@ def start_workers(args, actions, context, analyzer_config_map, skp_handler,
     # Start checking parallel.
     checked_var = multiprocessing.Value('i', 1)
     actions_num = multiprocessing.Value('i', len(actions))
-    lock = multiprocessing.Lock();
+    lock = multiprocessing.Lock()
     pool = multiprocessing.Pool(args.jobs, initializer=init_worker,
                                 initargs=(checked_var, actions_num, lock))
 

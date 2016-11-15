@@ -19,6 +19,7 @@ from codeCheckerDBAccess.ttypes import SortType
 from test_utils.debug_printer import print_run_results
 from test_utils.thrift_client_to_db import CCViewerHelper
 from test_utils.thrift_client_to_db import get_all_run_results
+from test_utils.result_compare import find_all
 
 
 class RunResults(unittest.TestCase):
@@ -44,7 +45,6 @@ class RunResults(unittest.TestCase):
 
         self._cc_client = CCViewerHelper(host, port, uri)
         self._runid = self._select_one_runid()
-
 
     def test_get_run_results_no_filter(self):
         """ Get all the run results without any filtering. """
@@ -76,30 +76,22 @@ class RunResults(unittest.TestCase):
         self.assertIsNotNone(run_results)
         self.assertEqual(run_result_count, len(run_results))
 
-        found_all = True
-        not_found = []
-        for bug in self._testproject_data['bugs']:
-            found = False
-            for run_res in run_results:
-                found |= ((run_res.checkedFile.endswith(bug['file'])) and
-                         (run_res.lastBugPosition.startLine == bug['line']) and
-                         (run_res.checkerId == bug['checker']) and
-                         (run_res.bugHash == bug['hash']))
-            found_all &= found
-            if not found:
-                not_found.append(bug)
+        not_found = find_all(run_results,
+                             self._testproject_data['bugs'])
+
         print_run_results(run_results)
 
-        print('Not found bugs:')
-        for bug in not_found:
-            print(bug)
+        if not_found:
+            print('Not found bugs:')
+            for bug in not_found:
+                print(bug)
 
-        self.assertTrue(found_all)
+        self.assertTrue(len(not_found) == 0)
 
     def test_get_source_file_content(self):
         """ Test getting the source file content stored to the database.
-            Test unicode support the stored file can be decoded properly compare
-            results form the database to the original file. """
+            Test unicode support the stored file can be decoded properly
+            compare results form the database to the original file. """
         runid = self._runid
         simple_filters = [ReportFilter(checkerId='*', filepath='*.c*')]
 

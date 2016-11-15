@@ -13,6 +13,7 @@ from codechecker_lib import logger
 
 LOG = logger.get_new_logger('SKIPLIST_HANDLER')
 
+
 class SkipListHandler(object):
     """
     Skiplist file format:
@@ -30,7 +31,9 @@ class SkipListHandler(object):
         self.__skip = []
 
         with open(skip_file, 'r') as skip_file:
-            skip_file_content = [line.strip() for line in skip_file if line.strip() != '']
+            skip_file_content = [line.strip()
+                                 for line in skip_file
+                                 if line.strip() != '']
 
         for line in skip_file_content:
             if len(line) < 2 or line[0] not in ['-', '+']:

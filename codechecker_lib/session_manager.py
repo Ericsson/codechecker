@@ -72,7 +72,7 @@ class _Session():
         if (datetime.now() - self.last_access).total_seconds() <= \
                 session_lifetimes["soft"] \
                 and (datetime.now() - self.last_access).total_seconds() <= \
-                        session_lifetimes["hard"]:
+                session_lifetimes["hard"]:
             # If the session is still valid within the "reuse enabled" (soft)
             # past and the check comes from a real user access, we revalidate
             # the session by extending its lifetime --- the user retains their
@@ -93,7 +93,7 @@ class _Session():
         hard lifetime: while a session is reusable, a valid authentication
         from the session's user will return the user to the session."""
         return (datetime.now() - self.last_access).total_seconds() <= \
-               session_lifetimes["hard"]
+            session_lifetimes["hard"]
 
     def revalidate(self):
         if self.still_reusable():
@@ -166,10 +166,10 @@ class SessionManager:
                             "Falling back to no authentication.")
                 self.__auth_config["enabled"] = False
 
-        session_lifetimes["soft"] = self.__auth_config.get("soft_expire") \
-                                    or 60
-        session_lifetimes["hard"] = self.__auth_config.get("session_lifetime") \
-                                    or 300
+        session_lifetimes["soft"] = \
+            self.__auth_config.get("soft_expire") or 60
+        session_lifetimes["hard"] = \
+            self.__auth_config.get("session_lifetime") or 300
 
     def isEnabled(self):
         return self.__auth_config.get("enabled")
@@ -184,18 +184,18 @@ class SessionManager:
         """Validate an oncoming authorization request
         against some authority controller."""
         return self.__try_auth_dictionary(auth_string) \
-               or self.__try_auth_pam(auth_string) \
-               or self.__try_auth_ldap(auth_string)
+            or self.__try_auth_pam(auth_string) \
+            or self.__try_auth_ldap(auth_string)
 
     def __is_method_enabled(self, method):
         return method not in unsupported_methods and \
-               "method_" + method in self.__auth_config and \
-               self.__auth_config["method_" + method].get("enabled")
+            "method_" + method in self.__auth_config and \
+            self.__auth_config["method_" + method].get("enabled")
 
     def __try_auth_dictionary(self, auth_string):
         return self.__is_method_enabled("dictionary") and \
-               auth_string in \
-               self.__auth_config.get("method_dictionary").get("auths")
+            auth_string in \
+            self.__auth_config.get("method_dictionary").get("auths")
 
     def __try_auth_pam(self, auth_string):
         """
@@ -204,7 +204,7 @@ class SessionManager:
         if self.__is_method_enabled("pam"):
             username, password = auth_string.split(":")
             return cc_pam.auth_user(self.__auth_config["method_pam"],
-                    username, password)
+                                    username, password)
         return False
 
     def __try_auth_ldap(self, auth_string):
@@ -215,7 +215,7 @@ class SessionManager:
             username, password = auth_string.split(":")
 
             ldap_authorities = self.__auth_config["method_ldap"] \
-                    .get("authorities")
+                .get("authorities")
             for ldap_conf in ldap_authorities:
                 if cc_ldap.auth_user(ldap_conf, username, password):
                     return True
@@ -235,9 +235,8 @@ class SessionManager:
         if self.__handle_validation(auth_string):
             session_already = next(
                 (s for s
-                 in SessionManager.__valid_sessions if s.client == client
-                 and s.still_reusable()
-                 and s.persistent_hash ==
+                 in SessionManager.__valid_sessions if s.client == client and
+                 s.still_reusable() and s.persistent_hash ==
                  _Session.calc_persistency_hash(client, auth_string)),
                 None)
 
@@ -263,9 +262,8 @@ class SessionManager:
         if not self.isEnabled():
             return True
         else:
-            return any(_sess.client == client
-                       and _sess.token == token
-                       and _sess.still_valid(access)
+            return any(_sess.client == client and _sess.token == token and
+                       _sess.still_valid(access)
                        for _sess in SessionManager.__valid_sessions)
 
     def invalidate(self, client, token):
@@ -327,9 +325,9 @@ class SessionManager_Client:
                     or mode & stat.S_IROTH \
                     or mode & stat.S_IWOTH:
                 LOG.warning("Credential file at '" + session_cfg_file + "' is "
-                                                                        "readable by users other than you! This poses a "
-                                                                        "risk of others getting your passwords!\n"
-                                                                        "Please `chmod 0600 " + session_cfg_file + "`")
+                            "readable by users other than you! This poses a "
+                            "risk of others getting your passwords!\n"
+                            "Please `chmod 0600 " + session_cfg_file + "`")
         else:
             with open(self.token_file, 'w') as f:
                 json.dump({'tokens': {}}, f)

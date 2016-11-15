@@ -100,7 +100,7 @@ class BuildCmdTestNose(unittest.TestCase):
         If the escaping fails the source file will not compile.
         """
         compile_cmd = self.compiler + \
-                      ' -DDEBUG \'-DMYPATH="/this/some/path/"\''
+            ' -DDEBUG \'-DMYPATH="/this/some/path/"\''
 
         comp_actions = self.__get_comp_actions(compile_cmd)
 

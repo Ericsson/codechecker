@@ -15,6 +15,7 @@ from test_utils.debug_printer import print_run_results
 from test_utils.thrift_client_to_db import CCViewerHelper
 from test_utils.thrift_client_to_db import get_all_run_results
 
+
 class Suppress(unittest.TestCase):
     """
     Test suppress functionality

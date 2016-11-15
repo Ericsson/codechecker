@@ -88,7 +88,8 @@ class Connection(object):
         while True:
             try:
                 self._transport = TSocket.TSocket(host, port)
-                self._transport = TTransport.TBufferedTransport(self._transport)
+                self._transport = TTransport.TBufferedTransport(
+                    self._transport)
                 self._protocol = TBinaryProtocol.TBinaryProtocol(
                     self._transport)
                 self._client = CheckerReport.Client(self._protocol)
@@ -148,13 +149,17 @@ class Connection(object):
         return self._client.addSkipPath(run_id, converted)
 
     def replace_config_info(self, run_id, config_list):
-        ''' bool replaceConfigInfo(1: i64 run_id, 2: list<ConfigValue> values) '''
+        ''' bool replaceConfigInfo(1: i64 run_id,
+                                   2: list<ConfigValue> values)
+        '''
         return self._client.replaceConfigInfo(run_id, config_list)
 
     def add_build_action(self, run_id, build_cmd, check_cmd, analyzer_type,
                          analyzed_source_file):
-        """ i64  addBuildAction(1: i64 run_id, 2: string build_cmd,
-        3: string check_cmd, 4: string analyzer_type, 5: string analyzed_source_file)
+        """
+        i64  addBuildAction(1: i64 run_id, 2: string build_cmd,
+                            3: string check_cmd, 4: string analyzer_type,
+                            5: string analyzed_source_file)
         """
         return self._client.addBuildAction(run_id,
                                            build_cmd,
@@ -207,11 +212,11 @@ class ConnectionManager(object):
     def start_report_server(self):
 
         is_server_started = multiprocessing.Event()
+        connection_str = self.database_server.get_connection_string()
         server = multiprocessing.Process(target=report_server.run_server,
-                                         args=(
-                                             self.port,
-                                             self.database_server.get_connection_string(),
-                                             is_server_started))
+                                         args=(self.port,
+                                               connection_str,
+                                               is_server_started))
 
         server.daemon = True
         server.start()

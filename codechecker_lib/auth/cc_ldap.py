@@ -120,7 +120,7 @@ def ldap_error_handler():
         yield
     except ldap.INVALID_CREDENTIALS:
         LOG.error("Invalid credentials, please recheck "
-                "your authentication configuration.")
+                  "your authentication configuration.")
 
     except ldap.FILTER_ERROR:
         LOG.error("Filter error, please recheck your filter patterns.")
@@ -173,6 +173,7 @@ def check_group_membership(connection,
         return len(group_result) != 0
 
     return False
+
 
 class LDAPConnection(object):
     """
@@ -284,12 +285,11 @@ def auth_user(ldap_config, username=None, credentials=None):
 
         if user_dn is None:
             LOG.error('Please check your LDAP server '
-                    'authentication credentials.')
+                      'authentication credentials.')
             if service_user is None:
                 LOG.error('Anonymous bind might not be enabled.')
             LOG.error('Configured username: ' + service_user)
             return False
-
 
     # bind with the users dn to check group membership
     with LDAPConnection(ldap_config, user_dn, credentials) as connection:
@@ -307,7 +307,8 @@ def auth_user(ldap_config, username=None, credentials=None):
 
         group_base = ldap_config.get('groupBase')
         if group_base is None:
-            LOG.error('Group base needs to be configured to query ldap groups.')
+            LOG.error('Group base needs to be configured to'
+                      'query ldap groups.')
             return False
 
         member_pattern = ldap_config.get('groupMemberPattern')
@@ -318,7 +319,7 @@ def auth_user(ldap_config, username=None, credentials=None):
         member_query = '(& ' + group_pattern + member_pattern + ')'
 
         is_member = check_group_membership(connection,
-                                        group_base,
-                                        member_query,
-                                        group_scope)
+                                           group_base,
+                                           member_query,
+                                           group_scope)
         return is_member

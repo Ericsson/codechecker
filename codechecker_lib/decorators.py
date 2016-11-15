@@ -8,6 +8,7 @@
 import shared
 import sqlalchemy
 
+
 def catch_sqlalchemy(method):
     def wrapped(*args, **kw):
         try:

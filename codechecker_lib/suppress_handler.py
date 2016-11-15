@@ -100,7 +100,8 @@ class SourceSuppressHandler(object):
         formatted = ' '.join(nocomment.split())
 
         # Check for codechecker suppress comment.
-        pattern = r'^\s*codechecker_suppress\s*\[\s*(?P<checkers>(.*))\s*\]\s*(?P<comment>.*)$'
+        pattern = r'^\s*codechecker_suppress' \
+            r'\s*\[\s*(?P<checkers>(.*))\s*\]\s*(?P<comment>.*)$'
 
         ptn = re.compile(pattern)
 
@@ -111,11 +112,13 @@ class SourceSuppressHandler(object):
             if checkers == "all":
                 self.__suppressed_checkers.append('all')
             else:
-                suppress_checker_list = re.findall(r"[^,\s]+", checkers.strip())
+                suppress_checker_list = re.findall(r"[^,\s]+",
+                                                   checkers.strip())
                 self.__suppressed_checkers.extend(suppress_checker_list)
             comment = res.group('comment')
             if comment == '':
-                self.__suppress_comment = "WARNING! suppress comment is missing"
+                self.__suppress_comment = \
+                    "WARNING! suppress comment is missing"
             else:
                 self.__suppress_comment = res.group('comment')
             return True
@@ -128,8 +131,8 @@ class SourceSuppressHandler(object):
         """
 
         source_file = self.__source_file
-        LOG.debug('Checking for suppress comment in the source file: '
-                  + self.__source_file)
+        LOG.debug('Checking for suppress comment in the source file: ' +
+                  self.__source_file)
         previous_line_num = self.__bug_line - 1
         suppression_result = False
         if previous_line_num > 0:
