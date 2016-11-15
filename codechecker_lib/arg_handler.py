@@ -449,9 +449,8 @@ def handle_plist(args):
     pool = multiprocessing.Pool(args.jobs)
 
     try:
-        items = [(plist, args, context)
-                 for plist in os.listdir(args.directory)]
-        pool.map_async(consume_plist, items, 1).get(float('inf'))
+        items = [(plist, args, context) for plist in os.listdir(args.directory)]
+        pool.map_async(consume_plist, items, 1).get()
         pool.close()
     except Exception:
         pool.terminate()
