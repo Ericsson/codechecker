@@ -200,7 +200,7 @@ function (declare, dom, domConstruct, style, ItemFileWriteStore, topic, when,
                 connectId : 'detail' + item.runId,
                 label : details
               });
-            }, 0);
+            }, 500);
           });
         });
       });
