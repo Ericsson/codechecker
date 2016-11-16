@@ -14,11 +14,11 @@ def print_run_results(run_results):
     for run_res in run_results:
         print(('''Bugfile: {0} \nStartline: {1} \nCheckedfile: {2}\n''' +
                '''Checkerid: {3}\nBugHash: {4}\nSuppressed: {5}\n--''').format(
-                  run_res.lastBugPosition.filePath,
-                  run_res.lastBugPosition.startLine,
-                  run_res.checkedFile,
-                  run_res.checkerId,
-                  run_res.bugHash,
-                  run_res.suppressed))
+            run_res.lastBugPosition.filePath,
+            run_res.lastBugPosition.startLine,
+            run_res.checkedFile,
+            run_res.checkerId,
+            run_res.bugHash,
+            run_res.suppressed))
     print('Got ' + str(len(run_results)) + ' reports')
     print('---------------------------------------------------------')

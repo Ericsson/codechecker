@@ -29,14 +29,18 @@ commentPattern = re.compile(
 
 def parseArgs():
     global args
-    parser = argparse.ArgumentParser(description=
-                                     'This script appends a C block comment containing special Unicode characters to the end of the source files.')
+    parser = argparse.ArgumentParser(description='This script appends a '
+                                     'C block comment containing special '
+                                     'Unicode characters to the end of '
+                                     'the source files.')
 
     parser.add_argument('--remove', '-r', action='store_true', dest='remove',
                         help='Remove the comments from the files.')
 
     parser.add_argument(dest='paths', nargs='*',
-                        help='The paths of the source files or the directories containing the source files. Directories are explored recursively.')
+                        help='The paths of the source files or the '
+                        'directories containing the source files.'
+                        'Directories are explored recursively.')
 
     args = parser.parse_args()
 

@@ -17,6 +17,7 @@ from codeCheckerDBAccess.ttypes import SortMode
 from codeCheckerDBAccess.ttypes import SortType
 from test_utils.debug_printer import print_run_results
 from test_utils.thrift_client_to_db import CCViewerHelper
+from test_utils.result_compare import find_all
 
 
 class RunResults(unittest.TestCase):
@@ -79,24 +80,14 @@ class RunResults(unittest.TestCase):
 
         self.assertEqual(run_result_count, len(run_results))
 
-        found_all = True
-        not_found = []
-        for bug in self._testproject_data['bugs']:
-            found = False
-            for run_res in run_results:
-                found |= ((run_res.checkedFile.endswith(bug['file'])) and
-                          (run_res.lastBugPosition.startLine == bug['line']) and
-                          (run_res.checkerId == bug['checker']) and
-                          (run_res.bugHash == bug['hash']))
-            found_all &= found
-            if not found:
-                not_found.append(bug)
+        not_found = find_all(run_results,
+                             self._testproject_data['bugs'])
+        if not_found:
+            print('Not found bugs:')
+            for bug in not_found:
+                print(bug)
 
-        print('Not found bugs:')
-        for bug in not_found:
-            print(bug)
-
-        self.assertTrue(found_all)
+        self.assertTrue(len(not_found) == 0)
 
     def test_get_source_file_content(self):  # also for testing Unicode support
         """ Get the stored source file content from the database and compare

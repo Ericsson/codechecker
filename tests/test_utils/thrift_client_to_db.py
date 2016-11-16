@@ -93,6 +93,7 @@ class CCReportHelper(ThriftAPIHelper):
         super(CCReportHelper, self).__init__(transport, client,
                                              auto_handle_connection)
 
+
 class CCViewerHelper(ThriftAPIHelper):
 
     def __init__(self, host, port, uri, auto_handle_connection=True,
@@ -145,6 +146,7 @@ class CCViewerHelper(ThriftAPIHelper):
 
         return results
 
+
 class CCAuthHelper(ThriftAPIHelper):
 
     def __init__(self, host, port, uri, auto_handle_connection=True,
@@ -166,6 +168,7 @@ class CCAuthHelper(ThriftAPIHelper):
 
     def __getattr__(self, attr):
         return partial(self._thrift_client_call, attr)
+
 
 def get_all_run_results(client, run_id, sort_mode=[], filters=[]):
     """

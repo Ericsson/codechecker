@@ -29,6 +29,7 @@ from codechecker_lib import logger
 
 LOG = logger.get_new_logger("PAM")
 
+
 def auth_user(pam_config, username, password):
     """
     Authenticate user with PAM.

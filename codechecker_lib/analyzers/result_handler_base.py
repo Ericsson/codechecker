@@ -197,8 +197,6 @@ class ResultHandler(object):
             except OSError as oserr:
                 # There might be no result file if analysis failed.
                 LOG.debug(oserr)
-                pass
-
 
     @abstractmethod
     def postprocess_result(self):

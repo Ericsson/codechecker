@@ -75,7 +75,8 @@ def get_new_logger(logger_name, out_stream=sys.stdout):
             # report, sourceDep (any other?) are printed out to the stdout.
             logger.setLevel(logging.DEBUG)
             stdout_handler.setLevel(logging.DEBUG)
-            format_str = '[%(process)d] <%(thread)d> - %(filename)s:%(lineno)d %(funcName)s() - %(message)s'
+            format_str = '[%(process)d] <%(thread)d> -' \
+                ' %(filename)s:%(lineno)d %(funcName)s() - %(message)s'
             msg_formatter = logging.Formatter(format_str)
             stdout_handler.setFormatter(msg_formatter)
             logger.addHandler(stdout_handler)

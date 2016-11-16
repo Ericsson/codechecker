@@ -60,10 +60,17 @@ class HashClash(unittest.TestCase):
                               position):
         """Creates a new report with one bug path position and event."""
 
-        bug_path = [BugPathPos(position[0][0], position[0][1],
-                               position[1][0], position[1][1], file_id)]
-        bug_evt = [BugPathEvent(position[0][0], position[0][1],
-                                position[1][0], position[1][1], 'evt', file_id)]
+        bug_path = [BugPathPos(position[0][0],
+                               position[0][1],
+                               position[1][0],
+                               position[1][1],
+                               file_id)]
+        bug_evt = [BugPathEvent(position[0][0],
+                                position[0][1],
+                                position[1][0],
+                                position[1][1],
+                                'evt',
+                                file_id)]
         return self._report.addReport(build_action_id,
                                       file_id,
                                       bug_hash,
@@ -94,7 +101,9 @@ class HashClash(unittest.TestCase):
         # analyzer type needs to match with the supported analyzer types
         # clangsa is used for testing
         analyzer_type = 'clangsa'
-        build_action_id = self._create_build_action(run_id, name, analyzer_type,
+        build_action_id = self._create_build_action(run_id,
+                                                    name,
+                                                    analyzer_type,
                                                     source_file)
         yield (run_id, file_id, build_action_id, source_file)
         self._report.finishBuildAction(build_action_id, 'OK')
@@ -163,7 +172,8 @@ class HashClash(unittest.TestCase):
                                                      build_action_id2_2,
                                                      'XXX',
                                                      ((1, 1), (1, 2)))
-                # Same run, file, hash, and position, but different build action
+                # Same run, file, hash, and position, but
+                # different build action.
                 self.assertEqual(rep_id4, rep_id6)
             finally:
                 self._report.finishBuildAction(build_action_id2_2, 'OK')

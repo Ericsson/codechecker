@@ -35,28 +35,28 @@ class ClangTidyConfigHandler(config_handler.AnalyzerConfigHandler):
         (checker_name, key, key_value) list
 
         {
-          "CheckOptions": [
-            {
-              "key": "readability-simplify-boolean-expr.ChainedConditionalReturn",
-              "value": 1
-            },
-            {
-              "key": "google-readability-namespace-comments.SpacesBeforeComments",
-              "value": 2
-            },
-            {
-              "key": "modernize-loop-convert.NamingStyle",
-              "value": "UPPER_CASE"
-            },
-            {
-              "key": "clang-analyzer-unix.Malloc:Optimistic",
-              "value": true
-            },
-            {
-              "key": "clang-analyzer-unix.test.Checker:Optimistic",
-              "value": true
-            }
-          ]
+         "CheckOptions": [
+           {
+           "key": "readability-simplify-boolean-expr.ChainedConditionalReturn",
+           "value": 1
+           },
+           {
+           "key": "google-readability-namespace-comments.SpacesBeforeComments",
+           "value": 2
+           },
+           {
+           "key": "modernize-loop-convert.NamingStyle",
+           "value": "UPPER_CASE"
+           },
+           {
+           "key": "clang-analyzer-unix.Malloc:Optimistic",
+           "value": true
+           },
+           {
+           "key": "clang-analyzer-unix.test.Checker:Optimistic",
+           "value": true
+           }
+         ]
         }
         """
         LOG.debug(self.analyzer_extra_arguments)
@@ -64,10 +64,12 @@ class ClangTidyConfigHandler(config_handler.AnalyzerConfigHandler):
         res = []
 
         # Match for clang static analyzer names and attributes.
-        clang_sa_checker_rex = r'^clang-analyzer-(?P<checker_name>([^:]+))\:(?P<checker_attribute>([^:]+))$'
+        clang_sa_checker_rex = r'^clang-analyzer-(?P<checker_name>([^:]+))' \
+            r'\:(?P<checker_attribute>([^:]+))$'
 
         # Match for clang tidy analyzer names and attributes.
-        clang_tidy_checker_rex = r'^(?P<checker_name>([^.]+))\.(?P<checker_attribute>([^.]+))$'
+        clang_tidy_checker_rex = r'^(?P<checker_name>([^.]+))' \
+            r'\.(?P<checker_attribute>([^.]+))$'
 
         clangsa_pattern = re.compile(clang_sa_checker_rex)
         tidy_pattern = re.compile(clang_tidy_checker_rex)

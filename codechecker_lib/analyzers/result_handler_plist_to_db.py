@@ -126,11 +126,12 @@ class PlistToDB(ResultHandler):
             # TODO: When the analyzer name can be read from PList, then it
             # should be passed too.
             # TODO: File name should be read from the PList and passed.
-            analysis_id = connection.add_build_action(self.__run_id,
-                                                      plist,
-                                                      'Build action from plist',
-                                                      '',
-                                                      '')
+            analysis_id = connection. \
+                add_build_action(self.__run_id,
+                                 plist,
+                                 'Build action from plist',
+                                 '',
+                                 '')
 
             try:
                 files, bugs = plist_parser.parse_plist(plist)

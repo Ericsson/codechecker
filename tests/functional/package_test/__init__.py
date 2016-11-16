@@ -35,6 +35,7 @@ sys.path.append(os.path.join(
 # Stopping event for CodeChecker server.
 __STOP_SERVER = multiprocessing.Event()
 
+
 def get_free_port():
     '''Get a free port from the OS.'''
 
@@ -44,6 +45,7 @@ def get_free_port():
     s.close()
 
     return free_port
+
 
 def _wait_for_postgres_shutdown(workspace):
     """
@@ -182,12 +184,20 @@ def setup_package():
     _start_server(shared_test_params, test_config, False)
 
     #
-    # Create a dummy authentication-enabled configuration and an auth-enabled server.
+    # Create a dummy authentication-enabled configuration and
+    # an auth-enabled server.
     #
     # Running the tests only work if the initial value (in package
     # session_config.json) is FALSE for authentication.enabled.
-    os.remove(os.path.join(shared_test_params['workspace'], "session_config.json"))
-    session_cfg_file = os.path.join(pkg_root, "config", "session_config.json")
+    session_config_filename = "session_config.json"
+
+    os.remove(os.path.join(shared_test_params['workspace'],
+              session_config_filename))
+
+    session_cfg_file = os.path.join(pkg_root,
+                                    "config",
+                                    session_config_filename)
+
     with open(session_cfg_file, 'r+') as scfg:
         __scfg_original = scfg.read()
         scfg.seek(0)
@@ -203,8 +213,10 @@ def setup_package():
     print("Starting server to test authentication")
     _start_server(shared_test_params, test_config, True)
 
-    # Need to save the original configuration back so multiple tests can work after each other
-    os.remove(os.path.join(shared_test_params['workspace'], "session_config.json"))
+    # Need to save the original configuration back so
+    # multiple tests can work after each other.
+    os.remove(os.path.join(shared_test_params['workspace'],
+              session_config_filename))
     with open(session_cfg_file, 'w') as scfg:
         scfg.writelines(__scfg_original)
 

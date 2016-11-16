@@ -28,7 +28,7 @@ def get_log_env(logfile, context, original_env):
     try:
         original_ld_library_path = new_env['LD_LIBRARY_PATH']
         new_env['LD_LIBRARY_PATH'] = context.path_logger_lib + ':' + \
-                                     original_ld_library_path
+            original_ld_library_path
     except:
         new_env['LD_LIBRARY_PATH'] = context.path_logger_lib
 
@@ -60,7 +60,8 @@ def get_check_env(path_env_extra, ld_lib_path_extra):
     if len(ld_lib_path_extra) > 0:
         extra_lib = ':'.join(ld_lib_path_extra)
         LOG.debug_analyzer(
-            'Extending LD_LIBRARY_PATH environment variable with: ' + extra_lib)
+            'Extending LD_LIBRARY_PATH environment variable with: ' +
+            extra_lib)
         try:
             original_ld_library_path = new_env['LD_LIBRARY_PATH']
             new_env['LD_LIBRARY_PATH'] = \

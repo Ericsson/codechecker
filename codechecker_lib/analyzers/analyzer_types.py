@@ -268,7 +268,8 @@ def __build_clang_tidy_config_handler(args, context):
     try:
         cmdline_checkers = args.ordered_checkers
     except AttributeError:
-        LOG.debug_analyzer('No checkers were defined in the command line for ' +
+        LOG.debug_analyzer('No checkers were defined in '
+                           'the command line for ' +
                            CLANG_TIDY)
         cmdline_checkers = None
 

@@ -34,10 +34,13 @@ def get_suppress_data(suppress_file):
     Process a file object for suppress information.
     """
 
-    old_format_pattern = r"^(?P<bug_hash>[\d\w]{32})(\#(?P<bug_hash_type>\d))?\s*\|\|\s*(?P<comment>[^\|]*)$"
+    old_format_pattern = r"^(?P<bug_hash>[\d\w]{32})" \
+        r"(\#(?P<bug_hash_type>\d))?\s*\|\|\s*(?P<comment>[^\|]*)$"
     old_format = re.compile(old_format_pattern, re.UNICODE)
 
-    new_format_pattern = r"^(?P<bug_hash>[\d\w]{32})(\#(?P<bug_hash_type>\d))?\s*\|\|\s*(?P<file_name>[^\\\|]+)\s*\|\|\s*(?P<comment>[^\|]*)$"
+    new_format_pattern = r"^(?P<bug_hash>[\d\w]{32})" \
+        r"(\#(?P<bug_hash_type>\d))?\s*\|\|\s*" \
+        r"(?P<file_name>[^\\\|]+)\s*\|\|\s*(?P<comment>[^\|]*)$"
     new_format = re.compile(new_format_pattern, re.UNICODE)
 
     suppress_data = []
@@ -93,7 +96,8 @@ def write_to_suppress_file(suppress_file, value, file_name, comment=''):
 
         s_file = codecs.open(suppress_file, 'a', 'UTF-8')
 
-        s_file.write(value + COMMENT_SEPARATOR + file_name + COMMENT_SEPARATOR +
+        s_file.write(value + COMMENT_SEPARATOR +
+                     file_name + COMMENT_SEPARATOR +
                      comment + '\n')
         s_file.close()
 
@@ -118,10 +122,12 @@ def remove_from_suppress_file(suppress_file, value, file_name):
         lines = s_file.readlines()
 
         # Filter out new format first because it is more specific.
-        old_format_pattern = r"^" + value + r"(\#\d)?\s*\|\|\s*(?P<comment>[^\|]*)$"
+        old_format_pattern = r"^" + value + \
+            r"(\#\d)?\s*\|\|\s*(?P<comment>[^\|]*)$"
         old_format = re.compile(old_format_pattern, re.UNICODE)
 
-        new_format_pattern = r"^" + value + r"(\#d)?\s*\|\|\s*" + file_name + r"\s*\|\|\s*(?P<comment>[^\|]*)$"
+        new_format_pattern = r"^" + value + r"(\#d)?\s*\|\|\s*" + file_name + \
+            r"\s*\|\|\s*(?P<comment>[^\|]*)$"
         new_format = re.compile(new_format_pattern, re.UNICODE)
 
         def check_for_match(line):

@@ -30,18 +30,18 @@ def debug(context, connection_string, force):
     try:
         engine = database_handler.SQLServer.create_engine(connection_string)
         session = sqlalchemy.orm.scoped_session(
-                    sqlalchemy.orm.sessionmaker(bind=engine))
+            sqlalchemy.orm.sessionmaker(bind=engine))
 
         # Get latest run id.
         last_run = session.query(Run).order_by(Run.id.desc()).first()
 
         # Get all failed actions.
         actions = session.query(BuildAction).filter(and_(
-                    BuildAction.run_id == last_run.id,
-                    sqlalchemy.sql.func.length(BuildAction.failure_txt) != 0))
+            BuildAction.run_id == last_run.id,
+            sqlalchemy.sql.func.length(BuildAction.failure_txt) != 0))
 
         debug_env = analyzer_env.get_check_env(context.path_env_extra,
-                                                 context.ld_lib_path_extra)
+                                               context.ld_lib_path_extra)
 
         crash_handler = analyzer_crash_handler.AnalyzerCrashHandler(context,
                                                                     debug_env)
@@ -55,7 +55,9 @@ def debug(context, connection_string, force):
         for action in actions:
             LOG.info('Processing action ' + str(action.id) + '.')
             debug_log_file = \
-                os.path.join(dumps_dir, get_dump_file_name(last_run.id, action.id))
+                os.path.join(dumps_dir,
+                             get_dump_file_name(last_run.id, action.id))
+
             if not force and os.path.exists(debug_log_file):
                 LOG.info('This file already exists.')
                 continue
