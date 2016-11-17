@@ -93,6 +93,8 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
             # Options before the analyzer options.
             if len(config.compiler_resource_dir) > 0:
                 analyzer_cmd.extend(['-resource-dir',
+                                     config.compiler_resource_dir,
+                                     '-isystem',
                                      config.compiler_resource_dir])
 
             if config.compiler_sysroot:
