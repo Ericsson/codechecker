@@ -26,11 +26,12 @@ from thrift.transport import TTransport
 from codechecker_lib import database_handler
 from codechecker_lib import decorators
 from codechecker_lib import logger
+from codechecker_lib.logger import LoggerFactory
 from db_model.orm_model import *
 
 from codechecker_lib.profiler import timeit
 
-LOG = logger.get_new_logger('CC SERVER')
+LOG = LoggerFactory.get_new_logger('CC SERVER')
 
 if os.environ.get('CODECHECKER_ALCHEMY_LOG') is not None:
     import logging
@@ -251,8 +252,8 @@ class CheckerReportHandler(object):
                 self.session.commit()
 
             action = BuildAction(run_id,
-                                 build_cmd if logger.get_log_level() == logging.DEBUG else '',
-                                 check_cmd if logger.get_log_level() == logging.DEBUG else '',
+                                 build_cmd if LoggerFactory.get_log_level() == logging.DEBUG else '',
+                                 check_cmd if LoggerFactory.get_log_level() == logging.DEBUG else '',
                                  analyzer_type,
                                  analyzed_source_file)
             self.session.add(action)

@@ -17,11 +17,11 @@ import shared
 from Authentication import constants
 from Authentication.ttypes import *
 
-from codechecker_lib import logger
 from codechecker_lib import session_manager
+from codechecker_lib.logger import LoggerFactory
 from codechecker_lib.profiler import timeit
 
-LOG = logger.get_new_logger('AUTH HANDLER')
+LOG = LoggerFactory.get_new_logger('AUTH HANDLER')
 
 
 def conv(text):

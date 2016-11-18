@@ -12,9 +12,9 @@ import linecache
 import ntpath
 import re
 
-from codechecker_lib import logger
+from codechecker_lib.logger import LoggerFactory
 
-LOG = logger.get_new_logger('SUPPRESS HANDLER')
+LOG = LoggerFactory.get_new_logger('SUPPRESS HANDLER')
 
 
 class SuppressHandler(object):

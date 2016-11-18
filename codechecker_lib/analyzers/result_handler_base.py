@@ -9,9 +9,9 @@ import os
 import uuid
 from abc import ABCMeta, abstractmethod
 
-from codechecker_lib import logger
+from codechecker_lib.logger import LoggerFactory
 
-LOG = logger.get_new_logger('RESULT_HANDLER_BASE')
+LOG = LoggerFactory.get_new_logger('RESULT_HANDLER_BASE')
 
 
 class ResultHandler(object):

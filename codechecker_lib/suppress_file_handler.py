@@ -21,9 +21,9 @@ import codecs
 import os
 import re
 
-from codechecker_lib import logger
+from codechecker_lib.logger import LoggerFactory
 
-LOG = logger.get_new_logger('SUPPRESS_FILE_HANDLER')
+LOG = LoggerFactory.get_new_logger('SUPPRESS_FILE_HANDLER')
 
 COMMENT_SEPARATOR = '||'
 HASH_TYPE_SEPARATOR = '#'

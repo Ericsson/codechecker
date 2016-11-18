@@ -17,10 +17,10 @@ import traceback
 from collections import defaultdict
 
 from codechecker_lib import analyzer_env
-from codechecker_lib import logger
+from codechecker_lib.logger import LoggerFactory
 from codechecker_lib.analyzers import analyzer_types
 
-LOG = logger.get_new_logger('ANALYSIS MANAGER')
+LOG = LoggerFactory.get_new_logger('ANALYSIS MANAGER')
 
 
 def worker_result_handler(results):

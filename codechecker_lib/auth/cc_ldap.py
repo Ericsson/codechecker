@@ -89,9 +89,9 @@ import ldap
 
 from contextlib import contextmanager
 
-from codechecker_lib import logger
+from codechecker_lib.logger import LoggerFactory
 
-LOG = logger.get_new_logger("LDAP")
+LOG = LoggerFactory.get_new_logger("LDAP")
 
 
 def log_ldap_error(ldap_error):

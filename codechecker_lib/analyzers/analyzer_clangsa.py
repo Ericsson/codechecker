@@ -8,10 +8,10 @@ import re
 import shlex
 import subprocess
 
-from codechecker_lib import logger
+from codechecker_lib.logger import LoggerFactory
 from codechecker_lib.analyzers import analyzer_base
 
-LOG = logger.get_new_logger('CLANGSA')
+LOG = LoggerFactory.get_new_logger('CLANGSA')
 
 
 class ClangSA(analyzer_base.SourceAnalyzer):

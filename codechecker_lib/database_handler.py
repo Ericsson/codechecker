@@ -23,14 +23,15 @@ from sqlalchemy.engine.url import URL, make_url
 from sqlalchemy.sql.elements import quoted_name
 
 from codechecker_lib import host_check
-from codechecker_lib import logger
 from codechecker_lib import pgpass
 from codechecker_lib import util
+from codechecker_lib import logger
+from codechecker_lib.logger import LoggerFactory
 from db_model.orm_model import CC_META
 from db_model.orm_model import CreateSession
 from db_model.orm_model import DBVersion
 
-LOG = logger.get_new_logger('DB_HANDLER')
+LOG = LoggerFactory.get_new_logger('DB_HANDLER')
 
 
 class SQLServer(object):
@@ -408,7 +409,8 @@ class PostgreSQLServer(SQLServer):
                 self.port) + ' ' + self.path)
 
             db_logfile = os.path.join(self.workspace, 'postgresql.log') \
-                if logger.get_log_level() == logger.DEBUG else os.devnull
+                if LoggerFactory.get_log_level() == logger.DEBUG \
+                else os.devnull
             self._db_log = open(db_logfile, 'wb')
 
             start_db = ['postgres', '-i',

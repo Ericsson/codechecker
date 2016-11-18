@@ -17,10 +17,10 @@ import socket
 import subprocess
 import sys
 
-from codechecker_lib import logger
+from codechecker_lib.logger import LoggerFactory
 
 # WARNING! LOG should be only used in this module.
-LOG = logger.get_new_logger('UTIL')
+LOG = LoggerFactory.get_new_logger('UTIL')
 
 
 # ---------------------------------------------------------------------

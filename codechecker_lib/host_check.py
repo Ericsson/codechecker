@@ -8,9 +8,9 @@ import errno
 import os
 import subprocess
 
-from codechecker_lib import logger
+from codechecker_lib.logger import LoggerFactory
 
-LOG = logger.get_new_logger('HOST CHECK')
+LOG = LoggerFactory.get_new_logger('HOST CHECK')
 
 
 # -----------------------------------------------------------------------------

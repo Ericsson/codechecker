@@ -19,11 +19,11 @@ import shared
 
 from cmdline_client import cmd_line_client
 from codechecker_lib import arg_handler
-from codechecker_lib import logger
 from codechecker_lib import util
+from codechecker_lib.logger import LoggerFactory
 from codechecker_lib.analyzers import analyzer_types
 
-LOG = logger.get_new_logger('MAIN')
+LOG = LoggerFactory.get_new_logger('MAIN')
 
 analyzers = ' '.join(list(analyzer_types.supported_analyzers))
 
@@ -148,6 +148,16 @@ def add_analyzer_arguments(parser):
                         help="File with arguments which will be forwarded"
                         "directly to the Clang tidy analyzer"
                         "without modification.")
+
+
+def add_verbose_arguments(parser):
+    """
+    Verbosity level arguments.
+    """
+    parser.add_argument('--verbose', type=str, dest='verbose',
+                        choices=['info', 'debug', 'debug_analyzer'],
+                        default='info',
+                        help='Set verbosity level.')
 
 
 # ------------------------------------------------------------------------------
@@ -285,6 +295,7 @@ Build command which is used to build the project.''')
 
         add_analyzer_arguments(check_parser)
         add_database_arguments(check_parser)
+        add_verbose_arguments(check_parser)
         check_parser.set_defaults(func=arg_handler.handle_check)
 
         # --------------------------------------
@@ -326,6 +337,7 @@ Build command which is used to build the project.''')
                                    required=False,
                                    help=suppress_help_msg)
         add_analyzer_arguments(qcheck_parser)
+        add_verbose_arguments(qcheck_parser)
         qcheck_parser.set_defaults(func=arg_handler.handle_quickcheck)
 
         # --------------------------------------
@@ -351,6 +363,7 @@ Build command which is used to build the project.''')
                                default=argparse.SUPPRESS,
                                required=True, help='Build command.')
 
+        add_verbose_arguments(logging_p)
         logging_p.set_defaults(func=arg_handler.handle_log)
 
         # --------------------------------------
@@ -370,6 +383,7 @@ Build command which is used to build the project.''')
                                'should be listed.\nCurrently supported '
                                'analyzers:\n' + analyzers)
 
+        add_verbose_arguments(checker_p)
         checker_p.set_defaults(func=arg_handler.handle_list_checkers)
 
         # --------------------------------------
@@ -408,12 +422,14 @@ Build command which is used to build the project.''')
                                    required=False, help='Server address.')
 
         add_database_arguments(server_parser)
+        add_verbose_arguments(server_parser)
         server_parser.set_defaults(func=arg_handler.handle_server)
 
         # --------------------------------------
         # Cmd_line.
         cmd_line_parser = subparsers.add_parser('cmd',
                                                 help='Command line client')
+        add_verbose_arguments(cmd_line_parser)
         cmd_line_client.register_client_command_line(cmd_line_parser)
 
         # --------------------------------------
@@ -438,6 +454,7 @@ Build command which is used to build the project.''')
                                   help='Overwrite already generated files.')
 
         add_database_arguments(debug_parser)
+        add_verbose_arguments(debug_parser)
         debug_parser.set_defaults(func=arg_handler.handle_debug)
 
         # --------------------------------------
@@ -482,6 +499,7 @@ Build command which is used to build the project.''')
                                        'name already exists.')
 
         add_database_arguments(plist_parser)
+        add_verbose_arguments(plist_parser)
         plist_parser.set_defaults(func=arg_handler.handle_plist)
 
         # --------------------------------------
@@ -492,6 +510,7 @@ Build command which is used to build the project.''')
         version_parser.set_defaults(func=arg_handler.handle_version_info)
 
         args = parser.parse_args()
+        LoggerFactory.set_log_level(args.verbose)
         args.func(args)
 
     except KeyboardInterrupt as kb_err:

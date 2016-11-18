@@ -13,9 +13,9 @@ import os
 import plistlib
 import re
 
-from codechecker_lib import logger
+from codechecker_lib.logger import LoggerFactory
 
-LOG = logger.get_new_logger('TIDY_OUTPUT_HANDLER')
+LOG = LoggerFactory.get_new_logger('TIDY_OUTPUT_HANDLER')
 
 
 class Note(object):

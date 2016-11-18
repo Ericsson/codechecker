@@ -10,8 +10,9 @@ import pstats
 import StringIO
 
 from codechecker_lib import logger
+from codechecker_lib.logger import LoggerFactory
 
-LOG = logger.get_new_logger('PROFILER')
+LOG = LoggerFactory.get_new_logger('PROFILER')
 
 
 def timeit(function):
@@ -40,7 +41,7 @@ def timeit(function):
         res = function(*args, **kwargs)
         return res
 
-    if logger.get_log_level() == logger.DEBUG:
+    if LoggerFactory.get_log_level() == logger.DEBUG:
         return debug_wrapper
     else:
         return release_wrapper

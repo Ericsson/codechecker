@@ -6,10 +6,10 @@
 
 import re
 
-from codechecker_lib import logger
+from codechecker_lib.logger import LoggerFactory
 from codechecker_lib.analyzers import config_handler
 
-LOG = logger.get_new_logger('CLANGSA CONFIG HANDLER')
+LOG = LoggerFactory.get_new_logger('CLANGSA CONFIG HANDLER')
 
 
 class ClangSAConfigHandler(config_handler.AnalyzerConfigHandler):

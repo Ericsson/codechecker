@@ -16,12 +16,12 @@ import time
 
 from codechecker_lib import analysis_manager
 from codechecker_lib import client
-from codechecker_lib import logger
 from codechecker_lib import skiplist_handler
 from codechecker_lib import analyzer_env
+from codechecker_lib.logger import LoggerFactory
 from codechecker_lib.analyzers import analyzer_types
 
-LOG = logger.get_new_logger('ANALYZER')
+LOG = LoggerFactory.get_new_logger('ANALYZER')
 
 
 def prepare_actions(actions, enabled_analyzers):

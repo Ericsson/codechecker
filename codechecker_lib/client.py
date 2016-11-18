@@ -20,11 +20,11 @@ from thrift.protocol import TBinaryProtocol
 from thrift.transport import TSocket
 from thrift.transport import TTransport
 
-from codechecker_lib import logger
 from codechecker_lib import suppress_file_handler
+from codechecker_lib.logger import LoggerFactory
 from storage_server import report_server
 
-LOG = logger.get_new_logger('CLIENT')
+LOG = LoggerFactory.get_new_logger('CLIENT')
 
 
 # -----------------------------------------------------------------------------

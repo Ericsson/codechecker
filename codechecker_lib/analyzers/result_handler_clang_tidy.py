@@ -4,14 +4,14 @@
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
 
-from codechecker_lib import logger
 from codechecker_lib import tidy_output_converter
+from codechecker_lib.logger import LoggerFactory
 
 from codechecker_lib.analyzers.result_handler_plist_to_db import PlistToDB
 from codechecker_lib.analyzers.result_handler_plist_to_stdout import \
     PlistToStdout
 
-LOG = logger.get_new_logger('CLANG_TIDY_RESULT_HANDLER')
+LOG = LoggerFactory.get_new_logger('CLANG_TIDY_RESULT_HANDLER')
 
 
 def generate_plist_from_tidy_result(output_file, tidy_stdout):
