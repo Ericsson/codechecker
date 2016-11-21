@@ -73,8 +73,13 @@ function (declare, Button, ContentPane, Filter) {
         value : 'all'
       }];
 
-      for (var key in Severity) {
-        var item = checkerInfo[Severity[key]];
+      var severities = [];
+      for (var key in Severity)
+        severities.push({ key : key, value : Severity[key] });
+
+      severities.sort(function (a, b) { return b.value - a.value; })
+      .forEach(function (severity) {
+        var item = checkerInfo[severity.value];
 
         if (item.count > 0) {
           selectOptions.push({
@@ -89,7 +94,7 @@ function (declare, Button, ContentPane, Filter) {
               value : 'checker#' + checkerKey
             });
         }
-      }
+      });
 
       cb(selectOptions);
     }
