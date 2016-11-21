@@ -41,7 +41,7 @@ class ClangSAConfigHandler(config_handler.AnalyzerConfigHandler):
             r'(?P<checker_attr>([^:=]+))\=(?P<attr_value>([^:\. ]+))'
 
         raw_config = self.analyzer_extra_arguments
-        LOG.debug_analyzer(raw_config)
+        LOG.debug_analyzer('Analyzer extra args: ' + raw_config)
 
         checker_configs = re.finditer(checker_config_pattern, raw_config)
 
