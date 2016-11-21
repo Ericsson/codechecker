@@ -209,8 +209,8 @@ def __build_clangsa_config_handler(args, context):
     try:
         cmdline_checkers = args.ordered_checkers
     except AttributeError:
-        LOG.debug_analyzer('No checkers were defined in the command line for '
-                           + CLANG_SA)
+        LOG.debug_analyzer('No checkers were defined in '
+                           'the command line for ' + CLANG_SA)
         cmdline_checkers = None
 
     initialize_checkers(config_handler,
