@@ -104,6 +104,23 @@ class _Session():
             self.last_access = datetime.now()
 
 
+def load_session_cfg(session_cfg_file):
+    """
+    Tries to load the session config file which should be a
+    valid json file, if loading fails returns an empty dict.
+    """
+
+    scfg_dict = {}
+    with open(session_cfg_file, 'r') as scfg:
+        try:
+            scfg_dict = json.loads(scfg.read())
+        except ValueError as verr:
+            LOG.warning(verr)
+            LOG.warning('Not valid session config file.')
+
+    return scfg_dict
+
+
 class SessionManager:
     CodeChecker_Workspace = None
 
@@ -126,8 +143,7 @@ class SessionManager:
         LOG.debug(session_cfg_file)
 
         scfg_dict = {'authentication': {'enabled': False}}
-        with open(session_cfg_file, 'r') as scfg:
-            scfg_dict.update(json.loads(scfg.read()))
+        scfg_dict.update(load_session_cfg(session_cfg_file))
 
         self.__auth_config = scfg_dict["authentication"]
 
@@ -300,8 +316,8 @@ class SessionManager_Client:
             os.chmod(session_cfg_file, stat.S_IRUSR | stat.S_IWUSR)
 
         LOG.debug(session_cfg_file)
-        with open(session_cfg_file, 'r') as scfg:
-            scfg_dict = json.loads(scfg.read())
+
+        scfg_dict = load_session_cfg(session_cfg_file)
 
         if not scfg_dict["credentials"]:
             scfg_dict["credentials"] = {}
