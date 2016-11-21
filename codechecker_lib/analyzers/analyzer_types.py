@@ -42,9 +42,7 @@ def is_sa_checker_name(checker_name):
     sa_checker_name = r'^[^-]+$'
     ptn = re.compile(sa_checker_name)
 
-    if ptn.match(checker_name):
-        return True
-    return False
+    return ptn.match(checker_name) is not None
 
 
 def is_tidy_checker_name(checker_name):
@@ -61,9 +59,7 @@ def is_tidy_checker_name(checker_name):
 
     ptn = re.compile(tidy_checker_name)
 
-    if ptn.match(checker_name):
-        return True
-    return False
+    return ptn.match(checker_name) is not None
 
 
 def check_supported_analyzers(analyzers, context):
@@ -87,10 +83,9 @@ def check_supported_analyzers(analyzers, context):
         available_analyzer = True
         analyzer_bin = analyzer_binaries.get(analyzer_name)
         if not analyzer_bin:
-            LOG.debug_analyzer('Failed to detect analyzer binary ' +
-                               analyzer_name)
+            LOG.warning('Failed to detect analyzer binary ' + analyzer_name)
             available_analyzer = False
-        if not host_check.check_clang(analyzer_bin, check_env):
+        elif not host_check.check_clang(analyzer_bin, check_env):
             LOG.warning('Failed to run analyzer ' + analyzer_name + ' !')
             available_analyzer = False
         if available_analyzer:
@@ -104,23 +99,18 @@ def construct_analyzer_type(analyzer_type, config_handler, buildaction):
     Construct a specific analyzer based on the type.
     """
 
+    LOG.debug_analyzer('Constructing ' + analyzer_type + '  analyzer')
     if analyzer_type == CLANG_SA:
-        LOG.debug_analyzer('Constructing clangSA analyzer')
-
         analyzer = analyzer_clangsa.ClangSA(config_handler,
                                             buildaction)
-
         return analyzer
 
     elif analyzer_type == CLANG_TIDY:
-        LOG.debug_analyzer("Constructing clang-tidy analyzer")
-
         analyzer = analyzer_clang_tidy.ClangTidy(config_handler,
                                                  buildaction)
-
         return analyzer
     else:
-        LOG.error('Not supported analyzer type')
+        LOG.error('Unsupported analyzer type')
         return None
 
 
@@ -130,7 +120,6 @@ def construct_analyzer(buildaction,
     Construct an analyzer.
     """
     try:
-        LOG.debug_analyzer('Constructing analyzer')
         analyzer_type = buildaction.analyzer_type
         # Get the proper config handler for this analyzer type.
         config_handler = analyzer_config_map.get(analyzer_type)
@@ -220,8 +209,8 @@ def __build_clangsa_config_handler(args, context):
     try:
         cmdline_checkers = args.ordered_checkers
     except AttributeError:
-        LOG.debug_analyzer('No checkers were defined in the command line for' +
-                           CLANG_SA)
+        LOG.debug_analyzer('No checkers were defined in the command line for '
+                           + CLANG_SA)
         cmdline_checkers = None
 
     initialize_checkers(config_handler,
@@ -299,14 +288,11 @@ def build_config_handlers(args, context, enabled_analyzers, connection=None):
     for ea in enabled_analyzers:
         if ea == CLANG_SA:
             config_handler = __build_clangsa_config_handler(args, context)
-            analyzer_config_map[ea] = config_handler
-
         elif ea == CLANG_TIDY:
             config_handler = __build_clang_tidy_config_handler(args, context)
-            analyzer_config_map[ea] = config_handler
         else:
-            LOG.debug_analyzer('Not supported analyzer type. '
-                               'No configuration handler will be created.')
+            assert False, 'Analyzer types should have been checked already.'
+        analyzer_config_map[ea] = config_handler
 
     if connection:
         # Collect all configuration options and store them together.
@@ -330,52 +316,37 @@ def construct_result_handler(args,
     """
     Construct a result handler.
     """
+    assert buildaction.analyzer_type in supported_analyzers, \
+        'Analyzer types should have been checked already.'
 
     if store_to_db:
         # Create a result handler which stores the results into a database.
         if buildaction.analyzer_type == CLANG_SA:
-            csa_res_handler = result_handler_clangsa.ClangSAPlistToDB(
+            res_handler = result_handler_clangsa.ClangSAPlistToDB(
                 buildaction,
                 report_output,
                 run_id)
-
-            csa_res_handler.severity_map = severity_map
-            csa_res_handler.skiplist_handler = skiplist_handler
-            return csa_res_handler
 
         elif buildaction.analyzer_type == CLANG_TIDY:
-            ct_res_handler = result_handler_clang_tidy.ClangTidyPlistToDB(
+            res_handler = result_handler_clang_tidy.ClangTidyPlistToDB(
                 buildaction,
                 report_output,
                 run_id)
 
-            ct_res_handler.severity_map = severity_map
-            ct_res_handler.skiplist_handler = skiplist_handler
-            return ct_res_handler
-
-        else:
-            LOG.error('Not supported analyzer type.')
-            return None
     else:
         if buildaction.analyzer_type == CLANG_SA:
-            csa_res_handler = result_handler_clangsa.ClangSAPlistToStdout(
+            res_handler = result_handler_clangsa.ClangSAPlistToStdout(
                 buildaction,
                 report_output,
                 lock)
-
-            csa_res_handler.print_steps = args.print_steps
-            csa_res_handler.skiplist_handler = skiplist_handler
-            return csa_res_handler
+            res_handler.print_steps = args.print_steps
 
         elif buildaction.analyzer_type == CLANG_TIDY:
-            ct_res_handler = result_handler_clang_tidy.ClangTidyPlistToStdout(
+            res_handler = result_handler_clang_tidy.ClangTidyPlistToStdout(
                 buildaction,
                 report_output,
                 lock)
 
-            ct_res_handler.severity_map = severity_map
-            ct_res_handler.skiplist_handler = skiplist_handler
-            return ct_res_handler
-        else:
-            LOG.error('Not supported analyzer type.')
-            return None
+    res_handler.severity_map = severity_map
+    res_handler.skiplist_handler = skiplist_handler
+    return res_handler
