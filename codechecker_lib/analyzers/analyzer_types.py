@@ -20,7 +20,8 @@ from codechecker_lib.analyzers import analyzer_clangsa
 from codechecker_lib.analyzers import config_handler_clang_tidy
 from codechecker_lib.analyzers import config_handler_clangsa
 from codechecker_lib.analyzers import result_handler_clang_tidy
-from codechecker_lib.analyzers import result_handler_clangsa
+from codechecker_lib.analyzers import result_handler_plist_to_db
+from codechecker_lib.analyzers import result_handler_plist_to_stdout
 
 LOG = LoggerFactory.get_new_logger('ANALYZER TYPES')
 
@@ -322,7 +323,7 @@ def construct_result_handler(args,
     if store_to_db:
         # Create a result handler which stores the results into a database.
         if buildaction.analyzer_type == CLANG_SA:
-            res_handler = result_handler_clangsa.ClangSAPlistToDB(
+            res_handler = result_handler_plist_to_db.PlistToDB(
                 buildaction,
                 report_output,
                 run_id)
@@ -335,7 +336,7 @@ def construct_result_handler(args,
 
     else:
         if buildaction.analyzer_type == CLANG_SA:
-            res_handler = result_handler_clangsa.ClangSAPlistToStdout(
+            res_handler = result_handler_plist_to_stdout.PlistToStdout(
                 buildaction,
                 report_output,
                 lock)

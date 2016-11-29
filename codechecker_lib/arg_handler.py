@@ -330,7 +330,13 @@ def consume_plist(item):
                                                  None,
                                                  not args.stdout)
 
-    rh.handle_plist(os.path.join(args.directory, plist))
+    rh.analyzer_returncode = 0
+    rh.buildaction.analyzer_type = 'Build action from plist'
+    rh.buildaction.original_command = plist
+    rh.analyzer_cmd = ''
+    rh.analyzer.analyzed_source_file = ''  # TODO: fill from plist.
+    rh.result_file = os.path.join(args.directory, plist)
+    rh.handle_results()
 
 
 def handle_plist(args):

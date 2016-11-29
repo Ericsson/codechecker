@@ -25,8 +25,7 @@ class ResultHandler(object):
     are more than one analyzed source file in one buildaction.
 
     handle_results() handles the results of a static analysis tool processed on
-    a build action. Alternatively one can also handle results given by plist
-    files for which handle_plist() can be used.
+    a build action.
 
     For each build action
     - postprocess_result and handle_results can be called multiple times
@@ -56,7 +55,7 @@ class ResultHandler(object):
         self.__analyzer_returncode = 1
         self.__buildaction = action
 
-        self.__res_file = None
+        self.__result_file = None
 
     @property
     def buildaction(self):
@@ -168,12 +167,13 @@ class ResultHandler(object):
         """
         self.__analyzed_source_file = file_path
 
-    def get_analyzer_result_file(self):
+    @property
+    def analyzer_result_file(self):
         """
         Generate a result filename where the analyzer should put the results.
         Result file should be removed by the result handler eventually.
         """
-        if not self.__res_file:
+        if not self.__result_file:
             analyzed_file = self.analyzed_source_file
             _, analyzed_file_name = ntpath.split(analyzed_file)
 
@@ -183,17 +183,24 @@ class ResultHandler(object):
                 '_' + analyzed_file_name + '_' + uid + '.plist'
 
             out_file = os.path.join(self.__workspace, out_file_name)
-            self.__res_file = out_file
+            self.__result_file = out_file
 
-        return self.__res_file
+        return self.__result_file
+
+    @analyzer_result_file.setter
+    def result_file(self, file_path):
+        """
+        The source file which is analyzed.
+        """
+        self.__result_file = file_path
 
     def clean_results(self):
         """
         Should be called after the postprocessing and result handling is done.
         """
-        if self.__res_file:
+        if self.__result_file:
             try:
-                os.remove(self.__res_file)
+                os.remove(self.__result_file)
             except OSError as oserr:
                 # There might be no result file if analysis failed.
                 LOG.debug(oserr)
@@ -203,13 +210,6 @@ class ResultHandler(object):
         """
         Postprocess result if needed.
         Should be called after the analyses finished.
-        """
-        pass
-
-    @abstractmethod
-    def handle_plist(self, plist):
-        """
-        Handle the results directly from the given plist file.
         """
         pass
 

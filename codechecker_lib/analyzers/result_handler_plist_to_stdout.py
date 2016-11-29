@@ -117,18 +117,8 @@ class PlistToStdout(ResultHandler):
                 (self.buildaction.analyzer_type, non_suppressed,
                  ntpath.basename(self.analyzed_source_file)))
 
-    def handle_plist(self, plist):
-        try:
-            _, bugs = plist_parser.parse_plist(plist)
-        except Exception as ex:
-            LOG.error('The generated plist is not valid!')
-            LOG.debug(ex)
-            return 1
-
-        self.__print_bugs(bugs)
-
     def handle_results(self):
-        plist = self.get_analyzer_result_file()
+        plist = self.analyzer_result_file
 
         try:
             _, bugs = plist_parser.parse_plist(plist)
@@ -151,3 +141,9 @@ class PlistToStdout(ResultHandler):
                                 (ntpath.basename(self.analyzed_source_file),
                                  self.buildaction.analyzer_type))
         return err_code
+
+    def postprocess_result(self):
+        """
+        No postprocessing required for plists.
+        """
+        pass

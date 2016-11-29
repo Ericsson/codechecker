@@ -38,7 +38,7 @@ class ClangTidyPlistToDB(PlistToDB):
         Generate plist file which can be parsed and processed for
         results which can be stored into the database.
         """
-        output_file = self.get_analyzer_result_file()
+        output_file = self.analyzer_result_file
         LOG.debug_analyzer(self.analyzer_stdout)
         tidy_stdout = self.analyzer_stdout.splitlines()
         generate_plist_from_tidy_result(output_file, tidy_stdout)
@@ -55,6 +55,6 @@ class ClangTidyPlistToStdout(PlistToStdout):
         clang static analyzer result files.
         """
 
-        output_file = self.get_analyzer_result_file()
+        output_file = self.analyzer_result_file
         tidy_stdout = self.analyzer_stdout.splitlines()
         generate_plist_from_tidy_result(output_file, tidy_stdout)

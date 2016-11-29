@@ -121,31 +121,6 @@ class PlistToDB(ResultHandler):
 
             report_ids.append(report_id)
 
-    def handle_plist(self, plist):
-        with client.get_connection() as connection:
-            # TODO: When the analyzer name can be read from PList, then it
-            # should be passed too.
-            # TODO: File name should be read from the PList and passed.
-            analysis_id = connection. \
-                add_build_action(self.__run_id,
-                                 plist,
-                                 'Build action from plist',
-                                 '',
-                                 '')
-
-            try:
-                files, bugs = plist_parser.parse_plist(plist)
-            except Exception as ex:
-                msg = 'Parsing the generated result file failed.'
-                LOG.error(msg + ' ' + plist)
-                LOG.error(str(ex))
-                connection.finish_build_action(analysis_id, msg)
-                return 1
-
-            self.__store_bugs(files, bugs, connection, analysis_id)
-
-            connection.finish_build_action(analysis_id, self.analyzer_stderr)
-
     def handle_results(self):
         """
         Send the plist content to the database.
@@ -176,7 +151,7 @@ class PlistToDB(ResultHandler):
 
             assert self.analyzer_returncode == 0
 
-            plist_file = self.get_analyzer_result_file()
+            plist_file = self.analyzer_result_file
 
             try:
                 files, bugs = plist_parser.parse_plist(plist_file)
@@ -190,3 +165,9 @@ class PlistToDB(ResultHandler):
             self.__store_bugs(files, bugs, connection, analysis_id)
 
             connection.finish_build_action(analysis_id, self.analyzer_stderr)
+
+    def postprocess_result(self):
+        """
+        No postprocessing required for plists.
+        """
+        pass
