@@ -7,9 +7,9 @@
 
 import os
 
-from codechecker_lib import logger
+from codechecker_lib.logger import LoggerFactory
 
-LOG = logger.get_new_logger('ENV')
+LOG = LoggerFactory.get_new_logger('ENV')
 
 
 # ------------------------------------------------------------------------------

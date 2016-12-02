@@ -46,51 +46,56 @@ class CCLogger(logging.Logger):
 logging.setLoggerClass(CCLogger)
 
 
-# ------------------------------------------------------------------------------
-def get_log_level():
-    """
-    """
-    level = os.getenv('CODECHECKER_VERBOSE')
-    if level:
+class LoggerFactory(object):
+    log_level = logging.INFO
+    loggers = []
+
+    short_format_handler = logging.StreamHandler(stream=sys.stdout)
+    long_format_handler = logging.StreamHandler(stream=sys.stdout)
+
+    short_format_handler.setFormatter(logging.Formatter(
+        '[%(levelname)s] - %(message)s'))
+    long_format_handler.setFormatter(logging.Formatter(
+        '[%(process)d] <%(thread)d> - '
+        '%(filename)s:%(lineno)d %(funcName)s() - %(message)s'))
+
+    handlers = {
+        logging.INFO: short_format_handler,
+        logging.DEBUG: long_format_handler,
+        logging.DEBUG_ANALYZER: short_format_handler}
+
+    @classmethod
+    def get_log_level(cls):
+        return cls.log_level
+
+    @classmethod
+    def set_log_level(cls, level):
+        for logger in cls.loggers:
+            logger.removeHandler(cls.handlers[LoggerFactory.log_level])
+
         if level == 'debug':
-            return logging.DEBUG
+            cls.log_level = logging.DEBUG
+        elif level == 'info':
+            cls.log_level = logging.INFO
         elif level == 'debug_analyzer':
-            return logging.DEBUG_ANALYZER
-
-    return logging.INFO
-
-
-# ------------------------------------------------------------------------------
-def get_new_logger(logger_name, out_stream=sys.stdout):
-    """
-    """
-    loglevel = get_log_level()
-    logger = logging.getLogger('[' + logger_name + ']')
-    stdout_handler = logging.StreamHandler(stream=out_stream)
-
-    if not getattr(logger, 'handlers'):
-        if loglevel == logging.DEBUG:
-            # FIXME create a new handler to write all log messages into a file.
-            # FIXME filter stdout messages only from analyzer, parser,
-            # report, sourceDep (any other?) are printed out to the stdout.
-            logger.setLevel(logging.DEBUG)
-            stdout_handler.setLevel(logging.DEBUG)
-            format_str = '[%(process)d] <%(thread)d> -' \
-                ' %(filename)s:%(lineno)d %(funcName)s() - %(message)s'
-            msg_formatter = logging.Formatter(format_str)
-            stdout_handler.setFormatter(msg_formatter)
-            logger.addHandler(stdout_handler)
-        elif loglevel == logging.DEBUG_ANALYZER:
-            logger.setLevel(logging.DEBUG_ANALYZER)
-            stdout_handler.setLevel(logging.DEBUG_ANALYZER)
-            msg_formatter = logging.Formatter('[%(levelname)s] - %(message)s')
-            stdout_handler.setFormatter(msg_formatter)
-            logger.addHandler(stdout_handler)
+            cls.log_level = logging.DEBUG_ANALYZER
         else:
-            logger.setLevel(logging.INFO)
-            stdout_handler.setLevel(logging.INFO)
-            msg_formatter = logging.Formatter('[%(levelname)s] - %(message)s')
-            stdout_handler.setFormatter(msg_formatter)
-            logger.addHandler(stdout_handler)
+            cls.log_level = logging.INFO
 
-    return logger
+        cls.short_format_handler.setLevel(cls.log_level)
+        cls.long_format_handler.setLevel(cls.log_level)
+
+        for logger in cls.loggers:
+            logger.setLevel(cls.log_level)
+            logger.addHandler(cls.handlers[cls.log_level])
+
+    @classmethod
+    def get_new_logger(cls, logger_name):
+        logger = logging.getLogger('[' + logger_name + ']')
+
+        logger.setLevel(cls.log_level)
+        logger.addHandler(cls.handlers[cls.log_level])
+
+        cls.loggers.append(logger)
+
+        return logger

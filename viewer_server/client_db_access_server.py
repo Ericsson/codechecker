@@ -41,11 +41,11 @@ from Authentication.ttypes import *
 from client_db_access_handler import ThriftRequestHandler
 from client_auth_handler import ThriftAuthHandler
 
-from codechecker_lib import logger
 from codechecker_lib import database_handler
 from codechecker_lib import session_manager
+from codechecker_lib.logger import LoggerFactory
 
-LOG = logger.get_new_logger('DB ACCESS')
+LOG = LoggerFactory.get_new_logger('DB ACCESS')
 
 
 class RequestHandler(SimpleHTTPRequestHandler):

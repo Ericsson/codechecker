@@ -11,9 +11,9 @@ import subprocess
 import sys
 from abc import ABCMeta, abstractmethod
 
-from codechecker_lib import logger
+from codechecker_lib.logger import LoggerFactory
 
-LOG = logger.get_new_logger('ANALYZER_BASE')
+LOG = LoggerFactory.get_new_logger('ANALYZER_BASE')
 
 
 class SourceAnalyzer(object):

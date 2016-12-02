@@ -8,9 +8,9 @@ import collections
 import os
 from abc import ABCMeta, abstractmethod
 
-from codechecker_lib import logger
+from codechecker_lib.logger import LoggerFactory
 
-LOG = logger.get_new_logger('CONFIG HANDLER')
+LOG = LoggerFactory.get_new_logger('CONFIG HANDLER')
 
 
 class AnalyzerConfigHandler(object):

@@ -21,7 +21,7 @@ import uuid
 
 from datetime import datetime
 
-from codechecker_lib import logger
+from codechecker_lib.logger import LoggerFactory
 
 unsupported_methods = []
 
@@ -35,7 +35,7 @@ try:
 except ImportError:
     unsupported_methods.append("pam")
 
-LOG = logger.get_new_logger("SESSION MANAGER")
+LOG = LoggerFactory.get_new_logger("SESSION MANAGER")
 SESSION_COOKIE_NAME = "__ccPrivilegedAccessToken"
 session_lifetimes = {}
 

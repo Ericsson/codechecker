@@ -10,7 +10,7 @@ import signal
 import subprocess
 import tempfile
 
-from codechecker_lib import logger
+from codechecker_lib.logger import LoggerFactory
 
 
 class AnalyzerCrashHandler(object):
@@ -18,7 +18,7 @@ class AnalyzerCrashHandler(object):
     def __init__(self, context, analyzer_env):
         self._context = context
         self._analyzer_env = analyzer_env
-        self._logger = logger.get_new_logger('ANALYZER_CRASH_HANDLER')
+        self._logger = LoggerFactory.get_new_logger('ANALYZER_CRASH_HANDLER')
 
     # --------------------------------------------------------------------------
     def get_crash_info(self, build_cmd):

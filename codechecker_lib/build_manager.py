@@ -15,9 +15,9 @@ from distutils.spawn import find_executable
 
 from codechecker_lib import analyzer_env
 from codechecker_lib import host_check
-from codechecker_lib import logger
+from codechecker_lib.logger import LoggerFactory
 
-LOG = logger.get_new_logger('BUILD MANAGER')
+LOG = LoggerFactory.get_new_logger('BUILD MANAGER')
 
 
 def execute_buildcmd(command, silent=False, env=None, cwd=None):

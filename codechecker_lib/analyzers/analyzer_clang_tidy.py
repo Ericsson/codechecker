@@ -10,10 +10,10 @@ import re
 import shlex
 import subprocess
 
-from codechecker_lib import logger
+from codechecker_lib.logger import LoggerFactory
 from codechecker_lib.analyzers import analyzer_base
 
-LOG = logger.get_new_logger('CLANG TIDY')
+LOG = LoggerFactory.get_new_logger('CLANG TIDY')
 
 
 class ClangTidy(analyzer_base.SourceAnalyzer):

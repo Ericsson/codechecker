@@ -12,12 +12,12 @@ from abc import ABCMeta
 import shared
 
 from codechecker_lib import client
-from codechecker_lib import logger
 from codechecker_lib import plist_parser
 from codechecker_lib import suppress_handler
+from codechecker_lib.logger import LoggerFactory
 from codechecker_lib.analyzers.result_handler_base import ResultHandler
 
-LOG = logger.get_new_logger('PLIST TO DB')
+LOG = LoggerFactory.get_new_logger('PLIST TO DB')
 
 
 class PlistToDB(ResultHandler):

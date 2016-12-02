@@ -25,9 +25,9 @@ import pam
 import grp
 import pwd
 
-from codechecker_lib import logger
+from codechecker_lib.logger import LoggerFactory
 
-LOG = logger.get_new_logger("PAM")
+LOG = LoggerFactory.get_new_logger("PAM")
 
 
 def auth_user(pam_config, username, password):

@@ -9,10 +9,10 @@ import json
 import re
 import shlex
 
-from codechecker_lib import logger
+from codechecker_lib.logger import LoggerFactory
 from codechecker_lib.analyzers import config_handler
 
-LOG = logger.get_new_logger('CLANG TIDY CONFIG')
+LOG = LoggerFactory.get_new_logger('CLANG TIDY CONFIG')
 
 
 class ClangTidyConfigHandler(config_handler.AnalyzerConfigHandler):

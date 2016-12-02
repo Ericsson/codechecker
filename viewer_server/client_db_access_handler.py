@@ -19,12 +19,12 @@ import shared
 from codeCheckerDBAccess import constants
 from codeCheckerDBAccess.ttypes import *
 
-from codechecker_lib import logger
+from codechecker_lib.logger import LoggerFactory
 from codechecker_lib.profiler import timeit
 
 from db_model.orm_model import *
 
-LOG = logger.get_new_logger('ACCESS HANDLER')
+LOG = LoggerFactory.get_new_logger('ACCESS HANDLER')
 
 
 def conv(text):

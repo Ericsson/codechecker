@@ -7,12 +7,12 @@
 Handler for suppressing a bug.
 """
 
-from codechecker_lib import logger
 from codechecker_lib import suppress_file_handler
 from codechecker_lib import suppress_handler
+from codechecker_lib.logger import LoggerFactory
 
 # Warning! this logger should only be used in this module.
-LOG = logger.get_new_logger('SUPPRESS')
+LOG = LoggerFactory.get_new_logger('SUPPRESS')
 
 
 class GenericSuppressHandler(suppress_handler.SuppressHandler):

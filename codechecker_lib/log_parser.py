@@ -8,10 +8,10 @@ import os
 import traceback
 
 from codechecker_lib import build_action
-from codechecker_lib import logger
 from codechecker_lib import option_parser
+from codechecker_lib.logger import LoggerFactory
 
-LOG = logger.get_new_logger('LOG PARSER')
+LOG = LoggerFactory.get_new_logger('LOG PARSER')
 
 
 # -----------------------------------------------------------------------------

@@ -11,10 +11,10 @@
 import plistlib
 from xml.parsers.expat import ExpatError
 
-from codechecker_lib import logger
+from codechecker_lib.logger import LoggerFactory
 from . import plist_helper
 
-LOG = logger.get_new_logger('PLIST_PARSER')
+LOG = LoggerFactory.get_new_logger('PLIST_PARSER')
 
 
 class GenericEquality(object):

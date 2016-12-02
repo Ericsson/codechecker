@@ -13,9 +13,9 @@ import linecache
 import os
 import re
 
-from codechecker_lib import logger
+from codechecker_lib.logger import LoggerFactory
 
-LOG = logger.get_new_logger('PLIST_HELPER')
+LOG = LoggerFactory.get_new_logger('PLIST_HELPER')
 
 
 def gen_bug_hash(bug):

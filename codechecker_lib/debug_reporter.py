@@ -13,11 +13,11 @@ from sqlalchemy.sql import and_
 from codechecker_lib import analyzer_crash_handler
 from codechecker_lib import analyzer_env
 from codechecker_lib import database_handler
-from codechecker_lib import logger
+from codechecker_lib.logger import LoggerFactory
 from db_model.orm_model import BuildAction
 from db_model.orm_model import Run
 
-LOG = logger.get_new_logger('DEBUG_REPORTER')
+LOG = LoggerFactory.get_new_logger('DEBUG_REPORTER')
 
 
 # -----------------------------------------------------------------------------
