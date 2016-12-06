@@ -23,7 +23,6 @@ before_install:
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update;                        fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install thrift;                fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install doxygen;               fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install coreutils;             fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then curl http://llvm.org/releases/3.7.0/clang+llvm-3.7.0-x86_64-apple-darwin.tar.xz -o clang+llvm-3.7.0-x86_64-apple-darwin.tar.xz; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then tar xf clang+llvm-3.7.0-x86_64-apple-darwin.tar.xz -C ~/; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PATH=~/clang+llvm-3.7.0-x86_64-apple-darwin/bin/:$PATH; fi
