@@ -101,6 +101,8 @@ def handle_server(args):
         # in args set the default value.
         workspace = util.get_default_workspace()
 
+    workspace = os.path.abspath(workspace)
+
     # WARNING
     # In case of SQLite args.dbaddress default value is used
     # for which the is_localhost should return true.
@@ -208,6 +210,7 @@ def handle_debug(args):
         # in args set the default value.
         workspace = util.get_default_workspace()
 
+    workspace = os.path.abspath(workspace)
     context.codechecker_workspace = workspace
     context.db_username = args.dbusername
 
@@ -242,7 +245,7 @@ def handle_check(args):
             # in args set the default value.
             workspace = util.get_default_workspace()
 
-        workspace = os.path.realpath(workspace)
+        workspace = os.path.abspath(workspace)
         if not os.path.isdir(workspace):
             os.mkdir(workspace)
 
@@ -330,6 +333,7 @@ def _do_quickcheck(args):
         # in args set the default value.
         workspace = util.get_default_workspace()
 
+    workspace = os.path.abspath(workspace)
     context.codechecker_workspace = workspace
     args.name = "quickcheck"
 
@@ -401,13 +405,13 @@ def consume_plist(item):
 
 def handle_plist(args):
     context = generic_package_context.get_context()
-    context.codechecker_workspace = args.workspace
+    workspace = os.path.abspath(workspace)
+    context.codechecker_workspace = workspace
     context.db_username = args.dbusername
 
     if not args.stdout:
-        args.workspace = os.path.realpath(args.workspace)
-        if not os.path.isdir(args.workspace):
-            os.mkdir(args.workspace)
+        if not os.path.isdir(workspace):
+            os.mkdir(workspace)
 
         check_env = analyzer_env.get_check_env(context.path_env_extra,
                                                context.ld_lib_path_extra)
