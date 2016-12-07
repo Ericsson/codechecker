@@ -84,7 +84,8 @@ def handle_server(args):
     """
     Starts the report viewer server.
     """
-    host_check.check_zlib()
+    if not host_check.check_zlib():
+        sys.exit(1)
 
     workspace = args.workspace
 
@@ -160,7 +161,6 @@ def handle_log(args):
     args.logfile = os.path.realpath(args.logfile)
     if os.path.exists(args.logfile):
         os.remove(args.logfile)
-    open(args.logfile, 'a').close()  # Same as linux's touch.
 
     context = generic_package_context.get_context()
     build_manager.perform_build_command(args.logfile,
@@ -197,7 +197,8 @@ def handle_check(args):
     Based on the log runs the analysis.
     """
     try:
-        host_check.check_zlib()
+        if not host_check.check_zlib():
+            sys.exit(1)
 
         workspace = os.path.realpath(args.workspace)
         if not os.path.isdir(workspace):
@@ -215,7 +216,7 @@ def handle_check(args):
             sys.exit(1)
 
         actions = log_parser.parse_log(log_file,
-                                       args.add_compiler_defaults))
+                                       args.add_compiler_defaults)
 
         check_env = analyzer_env.get_check_env(context.path_env_extra,
                                                context.ld_lib_path_extra)
@@ -379,7 +380,7 @@ def handle_plist(args):
     try:
         items = [(plist, args, context)
                  for plist in os.listdir(args.directory)]
-        pool.map_async(consume_plist, items, 1).get()
+        pool.map_async(consume_plist, items, 1).get(float('inf'))
         pool.close()
     except Exception:
         pool.terminate()
@@ -407,11 +408,11 @@ def handle_version_info(args):
         db_schema_version = version_data['db_version']['major'] + \
             '.' + version_data['db_version']['minor']
 
-        print('Base package version: \t' + base_version).expandtabs(30)
-        print('Package build date: \t' +
-              version_data['package_build_date']).expandtabs(30)
-        print('Git hash: \t' + version_data['git_hash']).expandtabs(30)
-        print('DB schema version: \t' + db_schema_version).expandtabs(30)
+        print(('Base package version: \t' + base_version).expandtabs(30))
+        print(('Package build date: \t' +
+              version_data['package_build_date']).expandtabs(30))
+        print(('Git hash: \t' + version_data['git_hash']).expandtabs(30))
+        print(('DB schema version: \t' + db_schema_version).expandtabs(30))
 
     except ValueError as verr:
         LOG.error('Failed to decode version information from the config file.')
@@ -425,5 +426,5 @@ def handle_version_info(args):
 
     # Thift api version for the clients.
     from codeCheckerDBAccess import constants
-    print('Thrift client api version: \t' + constants.API_VERSION).\
-        expandtabs(30)
+    print(('Thrift client api version: \t' + constants.API_VERSION).
+          expandtabs(30))

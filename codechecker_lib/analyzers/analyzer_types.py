@@ -111,7 +111,7 @@ def construct_analyzer_type(analyzer_type, config_handler, buildaction):
                                                  buildaction)
         return analyzer
     else:
-        LOG.error('Unsupported analyzer type')
+        LOG.error('Unsupported analyzer type: ' + analyzer_type)
         return None
 
 

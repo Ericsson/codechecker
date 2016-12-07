@@ -77,6 +77,7 @@ def perform_build_command(logfile, command, context, silent=False):
         # TODO: better platform detection.
         if platform.system() == 'Linux':
             LOG.debug_analyzer("with ld logger ...")
+            open(logfile, 'a').close()  # Same as linux's touch.
             log_env = analyzer_env.get_log_env(logfile, context, original_env)
             if 'CC_LOGGER_GCC_LIKE' not in log_env:
                 log_env['CC_LOGGER_GCC_LIKE'] = 'gcc:g++:clang:clang++:cc:c++'

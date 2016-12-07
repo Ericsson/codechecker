@@ -190,7 +190,7 @@ class ResultHandler(object):
     @analyzer_result_file.setter
     def result_file(self, file_path):
         """
-        The source file which is analyzed.
+        The result of the analysis which will be processed afterwards.
         """
         self.__result_file = file_path
 

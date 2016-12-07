@@ -212,7 +212,7 @@ def start_workers(args, actions, context, analyzer_config_map, skp_handler,
         pool.map_async(check,
                        analyzed_actions,
                        1,
-                       callback=worker_result_handler).get()
+                       callback=worker_result_handler).get(float('inf'))
 
         pool.close()
     except Exception:
