@@ -286,10 +286,16 @@ class PListConverter(object):
         diag['category'] = PListConverter._get_checker_category(
             message.checker)
         diag['type'] = 'clang-tidy'
-        diag['path'] = [PListConverter._create_event_from_note(message, fmap)]
+        diag['path'] = []
 
         PListConverter._add_fixits(diag, message, fmap)
         PListConverter._add_notes(diag, message, fmap)
+
+        # The original message should be the last part of the path. This is
+        # displayed by quick check, and this is the main event displayed by
+        # the web interface. FIXME: notes and fixits should not be events.
+        diag['path'].append(PListConverter._create_event_from_note(message,
+                                                                   fmap))
 
         return diag
 

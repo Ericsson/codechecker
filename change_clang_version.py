@@ -7,7 +7,8 @@ with open('config/package_layout.json') as f:
     data = json.load(f)
 
 if platform.system() == 'Linux':
-    data['runtime']['analyzers']['clangsa'] = 'clang-3.7'
+    data['runtime']['analyzers']['clangsa'] = 'clang-3.8'
+    data['runtime']['analyzers']['clang-tidy'] = 'clang-tidy-3.8'
 if platform.system() == 'Darwin':
     data['runtime']['analyzers']['clangsa'] = 'clang'
 

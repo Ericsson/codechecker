@@ -1,0 +1,18 @@
+CodeChecker quickcheck --analyzers clang-tidy -b "make tidy_check" -d "misc" -e "misc-assert-side-effect" --quiet-build
+--------------------------------------------------------------------------------
+[INFO] - Starting build ...
+[INFO] - Build finished successfully.
+[INFO] - Using analyzer:
+[INFO] - Static analysis is starting ...
+tidy_check.cpp:5:5: found assert() with side effect [misc-assert-side-effect]
+    assert(++i);
+    ^
+
+clang-tidy found 1 defect(s) while analyzing tidy_check.cpp
+
+[INFO] - [1/1] clang-tidy analyzed tidy_check.cpp successfully.
+[INFO] - ----==== Summary ====----
+[INFO] - Total compilation commands: 1
+[INFO] - Successfully analyzed
+[INFO] -   clang-tidy: 1
+[INFO] - ----=================----

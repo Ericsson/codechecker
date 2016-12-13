@@ -37,7 +37,14 @@
 						<integer>4</integer>
 					</dict>
 					<key>message</key>
-					<string>use nullptr</string>
+					<string>nullptr (fixit)</string>
+				</dict>
+				<dict>
+					<key>edges</key>
+					<array>
+					</array>
+					<key>kind</key>
+					<string>control</string>
 				</dict>
 				<dict>
 					<key>depth</key>
@@ -54,14 +61,7 @@
 						<integer>4</integer>
 					</dict>
 					<key>message</key>
-					<string>nullptr (fixit)</string>
-				</dict>
-				<dict>
-					<key>edges</key>
-					<array>
-					</array>
-					<key>kind</key>
-					<string>control</string>
+					<string>use nullptr</string>
 				</dict>
 			</array>
 			<key>type</key>
@@ -85,23 +85,6 @@
 			</dict>
 			<key>path</key>
 			<array>
-				<dict>
-					<key>depth</key>
-					<integer>0</integer>
-					<key>kind</key>
-					<string>event</string>
-					<key>location</key>
-					<dict>
-						<key>col</key>
-						<integer>6</integer>
-						<key>file</key>
-						<integer>1</integer>
-						<key>line</key>
-						<integer>6</integer>
-					</dict>
-					<key>message</key>
-					<string>Dereference of null pointer (loaded from variable 'x')</string>
-				</dict>
 				<dict>
 					<key>depth</key>
 					<integer>0</integer>
@@ -410,6 +393,23 @@
 					</array>
 					<key>kind</key>
 					<string>control</string>
+				</dict>
+				<dict>
+					<key>depth</key>
+					<integer>0</integer>
+					<key>kind</key>
+					<string>event</string>
+					<key>location</key>
+					<dict>
+						<key>col</key>
+						<integer>6</integer>
+						<key>file</key>
+						<integer>1</integer>
+						<key>line</key>
+						<integer>6</integer>
+					</dict>
+					<key>message</key>
+					<string>Dereference of null pointer (loaded from variable 'x')</string>
 				</dict>
 			</array>
 			<key>type</key>
