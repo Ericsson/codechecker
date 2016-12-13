@@ -250,12 +250,8 @@ def handle_check(args):
         context.codechecker_workspace = workspace
         context.db_username = args.dbusername
 
-        log_file = build_manager.check_log_file(args)
+        log_file = build_manager.check_log_file(args, context)
 
-        if not log_file:
-            log_file = build_manager.generate_log_file(args,
-                                                       context,
-                                                       args.quiet_build)
         if not log_file:
             LOG.error("Failed to generate compilation command file: " +
                       log_file)
@@ -264,11 +260,14 @@ def handle_check(args):
         try:
             actions = log_parser.parse_log(log_file)
         except Exception as ex:
-            LOG.error(ex)
+            LOG.error("Failed to parse compilation command json file: " +
+                      log_file)
             sys.exit(1)
 
         if not actions:
-            LOG.warning('There are no build actions in the log file.')
+            LOG.error("There are no compilation commmands"
+                      "in the log file: " + log_file)
+
             sys.exit(1)
 
         check_env = analyzer_env.get_check_env(context.path_env_extra,
@@ -309,6 +308,11 @@ def handle_check(args):
         LOG.error(ex)
         import traceback
         print(traceback.format_exc())
+    finally:
+        if not args.keep_tmp:
+            if log_file:
+                LOG.debug('Removing temporary log file: ' + log_file)
+                os.remove(log_file)
 
 
 def _do_quickcheck(args):
@@ -321,46 +325,53 @@ def _do_quickcheck(args):
     This function is called from handle_quickcheck.
     """
 
-    context = generic_package_context.get_context()
-
     try:
-        workspace = args.workspace
-    except AttributeError:
-        # If no workspace value was set for some reason
-        # in args set the default value.
-        workspace = util.get_default_workspace()
+        context = generic_package_context.get_context()
 
-    context.codechecker_workspace = workspace
-    args.name = "quickcheck"
+        try:
+            workspace = args.workspace
+        except AttributeError:
+            # If no workspace value was set for some reason
+            # in args set the default value.
+            workspace = util.get_default_workspace()
 
-    # Load severity map from config file.
-    if os.path.exists(context.checkers_severity_map_file):
-        with open(context.checkers_severity_map_file, 'r') as sev_conf_file:
-            severity_config = sev_conf_file.read()
+        context.codechecker_workspace = workspace
+        args.name = "quickcheck"
 
-        context.severity_map = json.loads(severity_config)
+        # Load severity map from config file.
+        if os.path.exists(context.checkers_severity_map_file):
+            with open(context.checkers_severity_map_file, 'r') as sev_file:
+                severity_config = sev_file.read()
 
-    log_file = build_manager.check_log_file(args)
+            context.severity_map = json.loads(severity_config)
 
-    if not log_file:
-        log_file = build_manager.generate_log_file(args,
-                                                   context,
-                                                   args.quiet_build)
-    if not log_file:
-        LOG.error("Failed to generate compilation command file: " + log_file)
-        sys.exit(1)
+        log_file = build_manager.check_log_file(args, context)
 
-    try:
-        actions = log_parser.parse_log(log_file)
+        if not log_file:
+            LOG.error("Failed to generate compilation command file: " +
+                      log_file)
+            sys.exit(1)
+
+        try:
+            actions = log_parser.parse_log(log_file)
+            if not actions:
+                LOG.error("There are no compilation commmands"
+                          "in the log file: " + log_file)
+                sys.exit(1)
+        except Exception as ex:
+            LOG.error("Failed to parse compilation commands json file")
+            LOG.error(ex)
+            sys.exit(1)
+
+        analyzer.run_quick_check(args, context, actions)
+
     except Exception as ex:
-        LOG.error(ex)
-        sys.exit(1)
-
-    if not actions:
-        LOG.warning('There are no build actions in the log file.')
-        sys.exit(1)
-
-    analyzer.run_quick_check(args, context, actions)
+        LOG.error("Running quickcheck failed.")
+    finally:
+        if not args.keep_tmp:
+            if log_file:
+                LOG.debug('Removing temporary log file: ' + log_file)
+                os.remove(log_file)
 
 
 def handle_quickcheck(args):

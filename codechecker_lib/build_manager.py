@@ -11,6 +11,7 @@ import pickle
 import platform
 import subprocess
 import sys
+from uuid import uuid4
 from distutils.spawn import find_executable
 
 from codechecker_lib import analyzer_env
@@ -101,43 +102,43 @@ def perform_build_command(logfile, command, context, silent=False):
         sys.exit(1)
 
 
-def default_compilation_db(workspace_path):
+def default_compilation_db(workspace_path, run_name):
     """
     Default compilation commands database file in the workspace.
     """
     workspace_path = os.path.abspath(workspace_path)
-    compilation_commands = os.path.join(workspace_path,
-                                        'compilation_commands.json')
+    uid = str(uuid4())[:10]  # 10 chars should be unique enough
+    cmp_json_filename = 'compilation_commands_' + run_name + '_' \
+                        + uid + '.json'
+    compilation_commands = os.path.join(workspace_path, cmp_json_filename)
     return compilation_commands
 
 
-def check_log_file(args):
+def check_log_file(args, context):
     """
-    Check if the compilation command file was set in the command line
-    if not check if it is in the workspace directory.
+    Check if the compilation command file was set in the command line.
+    If the argument is not set generate a new.
     """
     log_file = None
     try:
-        if args.logfile:
-            log_file = os.path.realpath(args.logfile)
-        else:
-            # Log file could be in the workspace directory.
-            log_file = default_compilation_db(args.workspace)
+        log_file = os.path.realpath(args.logfile)
         if not os.path.exists(log_file):
-            LOG.debug_analyzer("Compilation database file does not exists.")
-            return None
+            LOG.error("The given compilation database"
+                      "file does not exists: " + log_file)
+            log_file = None
     except AttributeError as ex:
         # args.log_file was not set.
-        LOG.debug_analyzer(ex)
-        LOG.debug_analyzer("Compilation database file was not set"
-                           " in the command line.")
+        LOG.debug(ex)
+        LOG.debug("Compilation database file was not set"
+                  " in the command line.")
+        log_file = generate_log_file(args, context, args.quiet_build)
     finally:
         return log_file
 
 
 def generate_log_file(args, context, silent=False):
     """
-    Returns a build command log file for check/quickcheck command.
+    Returns a build command log file.
     """
 
     log_file = None
@@ -160,12 +161,7 @@ def generate_log_file(args, context, silent=False):
                                   'Libs are required for logging.')
                         sys.exit(1)
 
-            log_file = default_compilation_db(args.workspace)
-            if os.path.exists(log_file):
-                LOG.debug_analyzer("Removing previous"
-                                   "compilation command file: " + log_file)
-                os.remove(log_file)
-
+            log_file = default_compilation_db(args.workspace, args.name)
             open(log_file, 'a').close()  # Same as linux's touch.
 
             perform_build_command(log_file,
@@ -174,7 +170,6 @@ def generate_log_file(args, context, silent=False):
                                   silent=silent)
 
     except AttributeError as aerr:
-        LOG.error(aerr)
-        sys.exit(1)
-
-    return log_file
+        LOG.error("Missing build command.")
+    finally:
+        return log_file
