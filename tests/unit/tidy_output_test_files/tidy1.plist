@@ -40,6 +40,13 @@
 					<string>Division by zero</string>
 				</dict>
 				<dict>
+					<key>edges</key>
+					<array>
+					</array>
+					<key>kind</key>
+					<string>control</string>
+				</dict>
+				<dict>
 					<key>depth</key>
 					<integer>0</integer>
 					<key>kind</key>
@@ -55,13 +62,6 @@
 					</dict>
 					<key>message</key>
 					<string>Division by zero</string>
-				</dict>
-				<dict>
-					<key>edges</key>
-					<array>
-					</array>
-					<key>kind</key>
-					<string>control</string>
 				</dict>
 			</array>
 			<key>type</key>
@@ -86,6 +86,13 @@
 			<key>path</key>
 			<array>
 				<dict>
+					<key>edges</key>
+					<array>
+					</array>
+					<key>kind</key>
+					<string>control</string>
+				</dict>
+				<dict>
 					<key>depth</key>
 					<integer>0</integer>
 					<key>kind</key>
@@ -101,13 +108,6 @@
 					</dict>
 					<key>message</key>
 					<string>remainder by zero is undefined</string>
-				</dict>
-				<dict>
-					<key>edges</key>
-					<array>
-					</array>
-					<key>kind</key>
-					<string>control</string>
 				</dict>
 			</array>
 			<key>type</key>

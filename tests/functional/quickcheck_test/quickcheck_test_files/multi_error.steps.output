@@ -4,7 +4,7 @@ CodeChecker quickcheck --analyzers clangsa -b "make multi_error" --steps --quiet
 [INFO] - Build finished successfully.
 [INFO] - Using analyzer:
 [INFO] - Static analysis is starting ...
-multi_error.cpp:2:3: Address of stack memory associated with local variable 'x' returned to caller
+multi_error.cpp:2:3: Address of stack memory associated with local variable 'x' returned to caller [core.StackAddressEscape]
   int x = 42;
   ^
   Steps:
@@ -13,7 +13,7 @@ multi_error.cpp:2:3: Address of stack memory associated with local variable 'x' 
     3, multi_error.cpp:3:10: Address of stack memory associated with local variable 'x' returned to caller
     4, multi_error.cpp:2:3: Address of stack memory associated with local variable 'x' returned to caller
 
-multi_error.cpp:9:7: Value stored to 'y' is never read
+multi_error.cpp:9:7: Value stored to 'y' is never read [deadcode.DeadStores]
   y = 7;
       ^
   Steps:

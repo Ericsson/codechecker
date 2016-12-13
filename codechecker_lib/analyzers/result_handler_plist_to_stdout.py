@@ -59,10 +59,14 @@ class PlistToStdout(ResultHandler):
         return '%s%s^' % (line.replace('\t', '  '), marker_line)
 
     @staticmethod
-    def __format_bug_event(event):
+    def __format_bug_event(name, event):
         pos = event.start_pos
         fname = os.path.basename(pos.file_path)
-        return '%s:%d:%d: %s' % (fname, pos.line, pos.col, event.msg)
+        if name:
+            return '%s:%d:%d: %s [%s]' % (fname, pos.line, pos.col, event.msg,
+                                          name)
+        else:
+            return '%s:%d:%d: %s' % (fname, pos.line, pos.col, event.msg)
 
     def __print_bugs(self, bugs):
 
@@ -88,7 +92,8 @@ class PlistToStdout(ResultHandler):
             if sp_handler.get_suppressed():
                 continue
 
-            self.__output.write(self.__format_bug_event(last_event))
+            self.__output.write(self.__format_bug_event(bug.checker_name,
+                                                        last_event))
             self.__output.write('\n')
             self.__output.write(self.__format_location(last_event))
             self.__output.write('\n')
@@ -96,7 +101,7 @@ class PlistToStdout(ResultHandler):
                 self.__output.write('  Steps:\n')
                 for index, event in enumerate(bug.events()):
                     self.__output.write(index_format % (index + 1))
-                    self.__output.write(self.__format_bug_event(event))
+                    self.__output.write(self.__format_bug_event(None, event))
                     self.__output.write('\n')
             self.__output.write('\n')
 
