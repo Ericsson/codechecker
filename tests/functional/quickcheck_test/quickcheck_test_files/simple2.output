@@ -4,7 +4,7 @@ CodeChecker quickcheck --analyzers clangsa -b "make simple2" --quiet-build
 [INFO] - Build finished successfully.
 [INFO] - Using analyzer:
 [INFO] - Static analysis is starting ...
-simple2.cpp:17:9: Division by zero
+simple2.cpp:17:9: Division by zero [core.DivideZero]
   return 2015 / x;
          ^
 
