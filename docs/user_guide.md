@@ -9,23 +9,46 @@ The next step is to start the CodeChecker main script.
 The main script can be started with different options.
 
 ~~~~~~~~~~~~~~~~~~~~~
-usage: CodeChecker.py [-h] {check,log,checkers,server,cmd,debug} ...
+usage: CodeChecker [-h]
 
-Run the CodeChecker script.
+                   {check,quickcheck,log,checkers,server,cmd,debug,plist,version}
+                   ...
+
+Run the CodeChecker source analyzer framework.
+See the subcommands for specific features.
 
 positional arguments:
-  {check,log,checkers,server,cmd,debug}
+  {check,quickcheck,log,checkers,server,cmd,debug,plist,version}
                         commands
-    check               Run CodeChecker for a project.
-    log                 Build the project and only create a log file (no
-                        checking).
-    checkers            List available checkers.
-    server              Start the CodeChecker database server.
+    check               Run the supported source code analyzers on a project.
+    quickcheck          Run CodeChecker for aproject without database.
+    log                 Runs the given build command. During the build the
+                        compilation commands are collected and stored into a
+                        compilation command json file (no analysis is done
+                        during the build).
+    checkers            List the available checkers for the supported
+                        analyzers and show their default status (+ for being
+                        enabled, - for being disabled by default).
+    server              Start the codechecker web server.
     cmd                 Command line client
-    debug               Create debug logs for failed actions
+    debug               Generate gdb debug dump files for all the failed
+                        compilation commands in the last analyzer run.
+                        Requires a database with the failed compilation
+                        commands.
+    plist               Parse plist files in the given directory.
+    version             Print package version information.
 
 optional arguments:
   -h, --help            show this help message and exit
+
+Example usage:
+--------------
+Analyzing a project with default settings:
+CodeChecker check -w ~/workspace -b "cd ~/myproject && make" -n myproject
+
+Start the viewer to see the results:
+CodeChecker server -w ~/workspace
+
 ~~~~~~~~~~~~~~~~~~~~~
 
 
@@ -41,7 +64,7 @@ Just build your project and create a log file but do not invoke the source code 
 
 ~~~~~~~~~~~~~~~~~~~~~
 $CodeChecker log --help
-usage: CodeChecker.py log [-h] -o LOGFILE -b COMMAND
+usage: CodeChecker log [-h] -o LOGFILE -b COMMAND
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -390,7 +413,7 @@ CodeChecker quickcheck -b 'make' --steps
 Usage:
 
 ~~~~~~~~~~~~~~~~~~~~~
-usage: CodeChecker.py quickcheck [-h] (-b COMMAND | -l LOGFILE) [-e ENABLE]
+usage: CodeChecker quickcheck [-h] (-b COMMAND | -l LOGFILE) [-e ENABLE]
                                  [-d DISABLE] [-s]
 
 optional arguments:
@@ -425,7 +448,7 @@ It is a suitable client to integrate with continuous integration, schedule maint
 The commands always need a viewer port of an already running CodeChecker server instance (which can be started using CodeChecker server command).
 
 ~~~~~~~~~~~~~~~~~~~~~
-usage: CodeChecker.py cmd [-h] {runs,results,sum,del} ...
+usage: CodeChecker cmd [-h] {runs,results,sum,del} ...
 
 positional arguments:
   {runs,results,diff,sum,del}
@@ -438,8 +461,18 @@ positional arguments:
 optional arguments:
   -h, --help            show this help message and exit
 ~~~~~~~~~~~~~~~~~~~~~
+## 6. plist mode:
+Clang Static Analyzer's scan-build script can generate analyis output into plist xml files. 
+In this You can import these files into the database.
+You will need to specify containing the plist files afther the -d option.
 
-## 6. debug mode:
+Example:
+~~~~~~~~~~~~~~~~~~~~~
+CodeChecker plist -d ./results_plist -n myresults
+~~~~~~~~~~~~~~~~~~~~~
+
+
+## 7. debug mode:
 
 In debug mode CodeChecker can generate logs for failed build actions. The logs can be helpful debugging the checkers.
 
