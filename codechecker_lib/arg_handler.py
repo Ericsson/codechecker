@@ -258,7 +258,8 @@ def handle_check(args):
             sys.exit(1)
 
         try:
-            actions = log_parser.parse_log(log_file)
+            actions = log_parser.parse_log(log_file,
+                                           args.add_compiler_defaults)
         except Exception as ex:
             LOG.error("Failed to parse compilation command json file: " +
                       log_file)
@@ -351,9 +352,9 @@ def _do_quickcheck(args):
             LOG.error("Failed to generate compilation command file: " +
                       log_file)
             sys.exit(1)
-
         try:
-            actions = log_parser.parse_log(log_file)
+            actions = log_parser.parse_log(log_file,
+                                           args.add_compiler_defaults)
             if not actions:
                 LOG.error("There are no compilation commmands"
                           "in the log file: " + log_file)

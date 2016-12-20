@@ -200,6 +200,7 @@ class OptionParserResult(object):
         self._arch = ''
         self._lang = None
         self._output = ''
+        self._compiler = None
 
     def __str__(self):
         return ('action_type: {}\ncompiler options: {}\n'
@@ -212,6 +213,14 @@ class OptionParserResult(object):
                     self._arch,
                     self._lang,
                     self._output)
+
+    @property
+    def compiler(self):
+        return self._compiler
+
+    @compiler.setter
+    def compiler(self, value):
+        self._compiler = value
 
     @property
     def action(self):
@@ -452,6 +461,7 @@ def parse_options(args):
     for it in OptionIterator(shlex.split(args)[1:]):
         arg_check(it, result_map)
 
+    result_map.compiler = shlex.split(args)[0]
     is_source = False
     for source_file in result_map.files:
         lang = get_language(os.path.splitext(source_file)[1])

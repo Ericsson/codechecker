@@ -293,6 +293,15 @@ Build command which is used to build the project.''')
                                   help='Do not print out the output of the '
                                        'original build.')
 
+        check_parser.add_argument('--add-compiler-defaults',
+                                  action='store_true',
+                                  default=False,
+                                  required=False,
+                                  help='Fetch built in compiler include'
+                                       'paths and defines '
+                                       'and pass them to Clang. This is'
+                                       'useful when you do cross-compilation.')
+
         add_analyzer_arguments(check_parser)
         add_database_arguments(check_parser)
         add_verbose_arguments(check_parser)
@@ -336,6 +345,14 @@ Build command which is used to build the project.''')
                                    default=argparse.SUPPRESS,
                                    required=False,
                                    help=suppress_help_msg)
+        qcheck_parser.add_argument('--add-compiler-defaults',
+                                   action='store_true',
+                                   default=False,
+                                   required=False,
+                                   help='Fetch built in compiler include paths'
+                                        ' and defines and pass them to Clang.'
+                                        'This is useful when you'
+                                        'do cross-compilation.')
         add_analyzer_arguments(qcheck_parser)
         add_verbose_arguments(qcheck_parser)
         qcheck_parser.set_defaults(func=arg_handler.handle_quickcheck)
