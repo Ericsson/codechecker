@@ -14,6 +14,9 @@ import shared
 from . import thrift_helper
 from . import authentication_helper
 
+from thrift.Thrift import TApplicationException
+from Authentication import ttypes as AuthTypes
+
 from codechecker_lib import session_manager
 
 SUPPORTED_VERSION = '5.0'
@@ -46,7 +49,12 @@ def handle_auth_requests(args):
                                                              args.host,
                                                              args.port))
 
-    handshake = auth_client.getAuthParameters()
+    try:
+        handshake = auth_client.getAuthParameters()
+    except TApplicationException as tex:
+        print("This server does not support privileged access.")
+        return
+
     if not handshake.requiresAuthentication:
         print("This server does not require privileged access.")
         return
@@ -114,7 +122,12 @@ def setupClient(host, port, uri):
                                                          uri +
                                                          'Authentication',
                                                          session_token)
-    auth_response = auth_client.getAuthParameters()
+    try:
+        auth_response = auth_client.getAuthParameters()
+    except TApplicationException as tex:
+        auth_response = AuthTypes.HandshakeInformation()
+        auth_response.requiresAuthentication = False
+
     if auth_response.requiresAuthentication and \
             not auth_response.sessionStillActive:
         print_err = False
