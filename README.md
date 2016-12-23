@@ -1,180 +1,220 @@
-[![Build Status](https://travis-ci.org/Ericsson/codechecker.svg?branch=master)](https://travis-ci.org/Ericsson/codechecker)
------
-# Introduction
-CodeChecker is a static analysis infrastructure built on [Clang Static Analyzer](http://clang-analyzer.llvm.org/).  
+[![Build status](https://travis-ci.org/Ericsson/codechecker.png?branch=master)](https://travis-ci.org/Ericsson/codechecker)
 
-CodeChecker replaces [scan-build](http://clang-analyzer.llvm.org/scan-build.html) in Clang Static Analyzer in Linux systems.
+CodeChecker
+===========
 
-Main features:
-  * store the result of multiple large analysis run results efficiently
-  * run multiple analyzers, currently Clang Static Analyzer and Clang-Tidy is supported
-  * dynamic web based defect viewer
-  * a PostgreSQL/SQLite based defect storage & management (both are optional, results can be shown on standard output in quickcheck mode)
-  * update analyzer results only for modified files (depends on the build system)
-  * compare analysis results (new/resolved/unresolved bugs compared to a baseline)
-  * filter analysis results (checker name, severity, source file name ...)
-  * skip analysis in specific source directories if required
-  * suppression of false positives (in config file or in the source)
-  * Thrift API based server-client model for storing bugs and viewing results.
-  * It is possible to connect multiple bug viewers. Currently a web-based viewer and a command line viewer are provided.
+**CodeChecker** is a static analysis infrastructure built on the [LLVM/Clang
+Static Analyzer](http://clang-analyzer.llvm.org) toolchain, replacing
+[`scan-build`](http://clang-analyzer.llvm.org/scan-build.html) in a Linux or
+macOS (OS X) development environment.
 
 
-You can find a high level overview about the infrastructure in the presentation
-at the [2015 Euro LLVM](http://llvm.org/devmtg/2015-04/) Conference:
+![CodeChecker web interface for viewing discovered code defects](docs/images/viewer.png)
 
-__Industrial Experiences with the Clang Static Analysis Toolset  
-_Daniel Krupp, Gyorgy Orban, Gabor Horvath and Bence Babati___ ([ Slides](http://llvm.org/devmtg/2015-04/slides/Clang_static_analysis_toolset_final.pdf))
 
-## Important Limitations
-CodeChecker requires some new features from clang to work properly.
-If your clang version does not have these features you will see in debug log the following messages:
+Main features
+-------------
 
-  * `Check name wasn't found in the plist file.` --> use clang >= 3.7 or trunk r228624; otherwise CodeChecker makes a guess based on the report message
-  * `Hash value wasn't found in the plist file.` --> use clang >= 3.8 or trunk r251011; otherwise CodeChecker generates a simple hash based on the filename and the line content, this method is applied for Clang Tidy results too, because Clang Tidy does not support bug identifier hash generation currently
+  * Support for multiple analyzers, currently _Clang Static Analyzer_ and
+    _Clang-Tidy_
+  * Store results of multiple large-scale analysis runs efficiently, either in
+    a PostgreSQL or SQLite database
+  * **Web application** for viewing discovered code defects with a streamlined,
+    easy experience
+  * **Filterable** (defect checker name, severity, source paths, ...) and
+    **comparable** (calculates difference between two analyses of the project,
+    showing which bugs have been fixed and which are newly introduced) result
+    viewing
+  * Subsequent analysis runs **only check** and update results for **modified
+    files** without analysing the _entire_ project (depends on build toolchain
+    support!)
+  * Suppression of known false positive results, either in configuration file
+    or via annotation in source code, along with exclusion of entire source
+    paths from analysis
+  * `quickcheck` mode shows analysis results on standard output
+  * Easily implementable [Thrift](http://thrift.apache.org)-based
+    server-client communication used for storing and querying of discovered
+    defects
+  * Support for multiple bug visualisation frontends, such as the web
+    application, a [command-line tool](docs/usage.md) and an [Eclipse
+    plugin](http://github.com/Ericsson/CodeCheckerEclipsePlugin)
 
-## Linux
-For a more detailed dependency list see [Requirements](docs/deps.md)
-### Basic dependency install & setup
-Tested on Ubuntu LTS 14.04.2
-~~~~~~{.sh}
 
-# get ubuntu packages
-# clang-3.6 can be replaced by any later versions of clang
-sudo apt-get install clang-3.6 doxygen build-essential thrift-compiler python-virtualenv gcc-multilib git wget python-dev
+A high-level overview about the infrastructure is available amongst the [2015
+Euro LLVM Conference](http://llvm.org/devmtg/2015-04) presentations.<br/>
+**Dániel KRUPP, György ORBÁN, Gábor HORVÁTH and Bence BABATI**:<br/>
+[_Industrial Experiences with the Clang Static Analysis Toolset_](http://llvm.org/devmtg/2015-04/slides/Clang_static_analysis_toolset_final.pdf)
 
-# create new python virtualenv
+Install
+-------
+
+### Linux
+
+For a detailed dependency list, please see [Requirements](docs/deps.md). The
+following commands are used to bootstrap CodeChecker on Ubuntu 14.04.2 LTS:
+
+```bash
+# Install mandatory dependencies for a development and analysis environment
+# NOTE: clang-3.6 can be replaced by any later versions of LLVM/Clang
+sudo apt-get install clang-3.6 build-essential doxygen gcc-multilib git \
+  python-virtualenv python-dev thrift-compiler wget
+
+# Create a Python virtualenv and set it as your environment
 virtualenv -p /usr/bin/python2.7 ~/checker_env
-# activate virtualenv
 source ~/checker_env/bin/activate
 
-# get source code
-git clone https://github.com/Ericsson/codechecker.git
+# Check out CodeChecker
+git clone https://github.com/Ericsson/CodeChecker.git --depth 1
 cd codechecker
 
-# install required basic python modules
+# Install the basic Python modules needed for operation
 pip install -r .ci/basic_python_requirements
 
-# create codechecker package
+# Build and install a CodeChecker package
 ./build_package.py -o ~/codechecker_package
+
+# For ease of access, add the install directory for PATH
+export PATH="~/codechecker_package/CodeChecker/bin:$PATH"
+
 cd ..
-~~~~~~
+```
 
-## OS X
+### Mac OS X
 
-### Basic dependecy install & setup
-Tested on OS X El Capitan 10.11.5 & macOS Sierra 10.12 Beta
-~~~~~~{.sh}
+The following commands are used to bootstrap CodeChecker on OS X El Capitan
+10.11.5 and macOS Sierra 10.12 Beta.
 
-# on El Capitan System Integrity Protection (SIP) need to turn off
-- Click the  (Apple) menu.
-- Select Restart...
-- Hold down command-R to boot into the Recovery System.
-- Click the Utilities menu and select Terminal.
-- Type csrutil disable and press return.
-- Close the Terminal app.
-- Click the  (Apple) menu and select Restart....
+On El Capitan System Integrity Protection (SIP) needs to be turned off:
+  * Click the  (Apple) menu.
+  * Select Restart...
+  * Hold down command-R to boot into the Recovery System.
+  * Click the Utilities menu and select Terminal.
+  * Type csrutil disable and press return.
+  * Close the Terminal app.
+  * Click the  (Apple) menu and select Restart....
 
-# check out and build clang with extra tools
-How to: http://clang.llvm.org/get_started.html
+Check out and build LLVM/Clang with extra tools. Follow the [Get Started with
+LLVM/Clang](http://clang.llvm.org/get_started.html) documentation.
 
-# get dependencies
+```bash
+# Download and install dependencies
 brew update
 brew install doxygen thrift gcc git
 
-# get source code
+# Fetch source code
 git clone https://github.com/tmsblgh/codechecker-osx-migration.git
 cd codechecker
 
-# install required basic python modules
+# Install required basic python modules
 pip install -r .ci/basic_python_requirements
 
-# create codechecker package
+# Create codechecker package
 ./build_package.py -o ~/codechecker_package
 cd ..
-~~~~~~
+```
 
-### Check a test project
-#### Check if clang or clang tidy is available
-The installed clang binary names should be ```clang``` or ```clang-3.6``` which depends on your Linux distribution.
-~~~~~~{.sh}
+Check your first project
+------------------------
+
+### Testing and configuring LLVM/Clang availability
+
+_Clang_ and/or _Clang-Tidy_ must be available on your system before you can
+run analysis on a test project. The binaries are usually named `clang` or
+`clang-3.6` (and `clang-tidy` or `clang-tidy-3.6`, respectively), but this
+depends on your Linux distribution.
+
+```bash
 which clang-3.6
 which clang-tidy-3.6
-~~~~~~
-If 'clang' or 'clang-tidy' commands are not available the package can be configured to use another/newer clang binary for the analysis.  
-Edit the 'CodeChecker/config/package_layout.json' config files "runtime/analyzers"
-section in the generated package and modify the analyzers section to the analyzers
-available in the PATH
 ```
+
+If `clang` or `clang-tidy` is not an available command, you must configure the
+installed CodeChecker package to use the appropriate binaries for analysis.
+Edit the configuration file
+`~/codechecker_package/CodeChecker/config/package_layout.json`. In the
+`runtime/analyzers` section, you must set the values, as shown below, to the
+clang binaries available in your `PATH`.
+
+```json
 "analyzers" : {
   "clangsa" : "clang-3.6",
   "clang-tidy" : "clang-tidy-3.6"
-  },
+},
 ```
 
-#### Activate virtualenv
-~~~~~~{.sh}
+### Setting up the environment in your Terminal
+
+These steps must always be taken in a new command prompt you wish to execute
+analysis in.
+
+```bash
 source ~/checker_env/bin/activate
-~~~~~~
 
-#### Add package bin directory to PATH.
-This step can be skipped if you always give the path of CodeChecker command.
-~~~~~~{.sh}
+# Path of CodeChecker package
+# NOTE: SKIP this line if you want to always specify CodeChecker's full path
 export PATH=~/codechecker_package/CodeChecker/bin:$PATH
-~~~~~~
-Scan-build-py (intercept-build)
-~~~~~~{.sh}
+
+# Path of `scan-build.py` (intercept-build)
+# NOTE: SKIP this line if you don't want to use intercept-build
 export PATH=~/{user path}/llvm/tools/clang/tools/scan-build-py/bin:$PATH
-~~~~~~
-Clang
-~~~~~~{.sh}
+
+# Path of the built LLVM/Clang
+# NOTE: SKIP this line if clang is available in your PATH as an installed Linux package
 export PATH=~/{user path}/build/bin:$PATH
-~~~~~~
+```
 
-#### Check the project
-Check the project using SQLite. The database is placed in the working
-directory which can be provided by -w flag (~/.codechecker by default).
-~~~~~~{.sh}
-CodeChecker check -n test_project_check -b "cd my_test_project && make clean && make"
-~~~~~~
+### Check the test project
 
-#### Start web server to view the results
-~~~~~~{.sh}
+Check your project using SQLite database. The database will be placed in your
+workspace directory (`~/.codechecker` by default), which can be provided via
+the `-w` flag.
+
+```bash
+CodeChecker check -n test-check -b "cd ~/your-project && make clean && make"
+```
+
+### Start a web server
+
+```bash
 CodeChecker server
-~~~~~~
+```
 
-#### View the results with firefox
-~~~~~~{.sh}
-firefox http://localhost:8001
-~~~~~~
+### View results
 
-If all goes well you can check analysis results in your web browser:
+Open the [CodeChecker Web Viewer](http://localhost:8001) in your browser, and
+you should be greeted with a web application showing you the analysis results.
 
-![CodeChecker Viewer](https://raw.githubusercontent.com/Ericsson/codechecker/master/docs/images/viewer.png)
+Known important limitations
+---------------------------
 
-See user guide for further configuration and check options.
+CodeChecker requires some new features from LLVM/Clang to work properly.
 
-## Additional documentations
+If your installed Clang does not support these features you will see the
+following debug messages in your log:
 
-[User guide](docs/user_guide.md)
+> Check name wasn't found in the plist file.
 
-[Use with PostgreSQL database](docs/postgresql_setup.md)
+Use clang `>= 3.7` or trunk `r228624` &mdash; otherwise CodeChecker makes a
+guess based on the report message
 
-[Command line usage_examples](docs/usage.md)
+> Hash value wasn't found in the plist file.
 
-[Checker documentation](docs/checker_docs.md)
+Use clang `>= 3.8` or trunk `r251011` &mdash; otherwise CodeChecker generates
+a simple hash based on the filename and the line content. This method is
+applied for Clang-Tidy results too, because Clang-Tidy does not support
+bug identifier hash generation currently
 
-[Architecture overview](docs/architecture.md)
 
-[Requirements](docs/deps.md)
+Additional documentation
+------------------------
 
-[Package layout](docs/package_layout.md)
-
-[Thrift api](thrift_api/thrift_api.md)
-
-[External source dependencies](docs/deps.md)
-
-[Test documentation](tests/functional/package_test.md)
-
-[Database schema migration](docs/db_schema_guide.md)
-
-[Privileged server and authentication in client](docs/authentication.md)
+  * [User guide](docs/user_guide.md)
+  * [Requirements, external source dependencies](docs/deps.md)
+  * [Architecture overview](docs/architecture.md)
+  * [Package layout](docs/package_layout.md)
+  * [Checker documentation](docs/checker_docs.md)
+  * [Thrift interface](thrift_api/thrift_api.md)
+  * [Package and integration tests](tests/functional/package_test.md)
+  * [Database schema migration](docs/db_schema_guide.md)
+  * [Usage of PostgreSQL database](docs/postgresql_setup.md)
+  * [Requiring credentials to view analysis results](docs/authentication.md)
