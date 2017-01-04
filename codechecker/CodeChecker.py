@@ -508,6 +508,7 @@ Build command which is used to build the project.''')
                                                help='Print package version '
                                                     'information.')
         version_parser.set_defaults(func=arg_handler.handle_version_info)
+        add_verbose_arguments(version_parser)
 
         args = parser.parse_args()
         LoggerFactory.set_log_level(args.verbose)
