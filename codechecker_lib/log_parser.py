@@ -22,7 +22,7 @@ def get_compiler_includes(compiler):
     """
     Returns a list of default includes of the given compiler.
     """
-    LOG.debug_analyzer('getting include paths for  ' + compiler)
+    LOG.debug('getting include paths for  ' + compiler)
     start_mark = "#include <...> search starts here:"
     end_mark = "End of search list."
 
@@ -36,20 +36,19 @@ def get_compiler_includes(compiler):
 
         out, err = proc.communicate("")
 
-        print_line = False
+        do_append = False
         for line in err.splitlines(True):
+            line = line.strip()
             if line.startswith(end_mark):
-                print_line = False
-            if print_line:
-                include_paths.append("-I"+line.strip())
+                do_append = False
+            if do_append:
+                include_paths.append("-I"+line)
             if line.startswith(start_mark):
-                print_line = True
+                do_append = True
 
     except OSError as oerr:
         LOG.error("Cannot find include paths:" + oerr.strerror+"\n")
-
-    finally:
-        return include_paths
+    return include_paths
 
 
 # -----------------------------------------------------------------------------
@@ -59,19 +58,18 @@ def get_compiler_defines(compiler):
     """
     cmd = compiler + " -dM -E -"
     defines = []
-    FNULL = open(os.devnull, 'r')
     try:
-        proc = subprocess.Popen(shlex.split(cmd),
-                                stdin=FNULL,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE)
-        out, err = proc.communicate("")
-        for line in out.splitlines(True):
-            LOG.debug("define:"+line)
-            define = line.strip().split(" ")[1:]
-            d = "-D"+define[0] + '=' + '"' + ' '.join(define[1:]) + '"'
-            defines.append(d)
-
+        with open(os.devnull, 'r') as FNULL:
+            proc = subprocess.Popen(shlex.split(cmd),
+                                    stdin=FNULL,
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE)
+            out, err = proc.communicate("")
+            for line in out.splitlines(True):
+                LOG.debug("define:"+line)
+                define = line.strip().split(" ")[1:]
+                d = "-D"+define[0] + '=' + '"' + ' '.join(define[1:]) + '"'
+                defines.append(d)
     except OSError as oerr:
         LOG.error("Cannot find defines:" + oerr.strerror+"\n")
     return defines
@@ -80,8 +78,7 @@ def get_compiler_defines(compiler):
 # -----------------------------------------------------------------------------
 def parse_compile_commands_json(logfile, add_compiler_defaults=False):
     import json
-    LOG.debug_analyzer('parse_compile_commands_json: ' +
-                       str(add_compiler_defaults))
+    LOG.debug('parse_compile_commands_json: ' + str(add_compiler_defaults))
 
     actions = []
     filtered_build_actions = {}
@@ -144,7 +141,7 @@ def parse_compile_commands_json(logfile, add_compiler_defaults=False):
 
 # -----------------------------------------------------------------------------
 def parse_log(logfilepath, add_compiler_defaults=False):
-    LOG.debug_analyzer('Parsing log file: ' + logfilepath)
+    LOG.debug('Parsing log file: ' + logfilepath)
     actions = []
 
     with open(logfilepath) as logfile:
@@ -159,5 +156,5 @@ def parse_log(logfilepath, add_compiler_defaults=False):
             LOG.debug(traceback.format_exc())
             LOG.debug(ex)
 
-    LOG.debug_analyzer('Parsing log file done.')
+    LOG.debug('Parsing log file done.')
     return actions
