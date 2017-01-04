@@ -70,15 +70,14 @@ class LoggerFactory(object):
 
     @classmethod
     def set_log_level(cls, level):
+
         for logger in cls.loggers:
             logger.removeHandler(cls.handlers[LoggerFactory.log_level])
 
-        if level == 'debug':
-            cls.log_level = logging.DEBUG
-        elif level == 'info':
-            cls.log_level = logging.INFO
-        elif level == 'debug_analyzer':
+        if level == 1:
             cls.log_level = logging.DEBUG_ANALYZER
+        elif level > 1:
+            cls.log_level = logging.DEBUG
         else:
             cls.log_level = logging.INFO
 

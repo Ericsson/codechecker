@@ -154,10 +154,10 @@ def add_verbose_arguments(parser):
     """
     Verbosity level arguments.
     """
-    parser.add_argument('--verbose', type=str, dest='verbose',
-                        choices=['info', 'debug', 'debug_analyzer'],
-                        default='info',
-                        help='Set verbosity level.')
+    parser.add_argument('-v', '--verbose', action='count',
+                        help="Set verbosity level. "
+                        "Increase the number of 'v'-s "
+                        "for more verbose output.")
 
 
 # ------------------------------------------------------------------------------
@@ -397,7 +397,7 @@ Build command which is used to build the project.''')
                                    default=util.get_default_workspace(),
                                    help=workspace_help_msg)
 
-        server_parser.add_argument('-v', '--view-port', type=int,
+        server_parser.add_argument('-p', '--view-port', type=int,
                                    dest="view_port",
                                    default=8001, required=False,
                                    help='Port used for viewing.')
