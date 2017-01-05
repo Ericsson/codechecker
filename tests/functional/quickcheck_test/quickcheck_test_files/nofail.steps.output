@@ -1,13 +1,13 @@
 CodeChecker quickcheck --analyzers clangsa -b "make nofail" --steps --quiet-build
 --------------------------------------------------------------------------------
-[INFO] - Starting build ...
-[INFO] - Build finished successfully.
-[INFO] - Using analyzer:
-[INFO] - Static analysis is starting ...
+[] - Starting build ...
+[] - Build finished successfully.
+[] - Using analyzer:
+[] - Static analysis is starting ...
 clangsa found no defects while analyzing nofail.cpp
-[INFO] - [1/1] clangsa analyzed nofail.cpp successfully.
-[INFO] - ----==== Summary ====----
-[INFO] - Total compilation commands: 1
-[INFO] - Successfully analyzed
-[INFO] -   clangsa: 1
-[INFO] - ----=================----
+[] - [1/1] clangsa analyzed nofail.cpp successfully.
+[] - ----==== Summary ====----
+[] - Total compilation commands: 1
+[] - Successfully analyzed
+[] -   clangsa: 1
+[] - ----=================----
