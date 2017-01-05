@@ -1,6 +1,7 @@
 
 # Architecture overview
-```
+
+~~~~
 Architecture
 
                                                          .---------.
@@ -36,7 +37,8 @@ Architecture
                                                |           |
                                                `._       _.'
                                                   "-----"
-```
+~~~~
+
 ## Buildlogger / CMake
 Generate a Compilation database (in json format) which can be processed by CodeChecker.
 Buildlogger is built-in CodeChecker. Generating the compilation database can be automatically done.

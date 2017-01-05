@@ -41,9 +41,9 @@ To generate a migration script, do the following steps:
    http://alembic.readthedocs.org/en/latest/tutorial.html#editing-the-ini-file)
    according to your database configuration.
 4. Generate the migration script using alembic:
-   ```
-   alembic revision --autogenerate -m "Change description"
-   ```
+
+       alembic revision --autogenerate -m "Change description"
+
 5. The new migration script db_migrate/versions/{hash}_change_description.py is
    generated. **You must always check the generated script because sometimes it
    isn't correct.**
@@ -60,9 +60,9 @@ Further reading:
 Navigate to the root directory of CodeChecker source code and create an empty
 migration script using `alembic revision`:
 
-```
-alembic revision -m "Change description"
-```
+
+    alembic revision -m "Change description"
+
 
 The new file db_migrate/versions/{hash}_change_description.py is generated. This
 file contains an empty `upgrade` and a `downgrade` function. You should always

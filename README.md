@@ -53,7 +53,7 @@ Install
 For a detailed dependency list, please see [Requirements](docs/deps.md). The
 following commands are used to bootstrap CodeChecker on Ubuntu 14.04.2 LTS:
 
-```bash
+~~~{.sh}
 # Install mandatory dependencies for a development and analysis environment
 # NOTE: clang-3.6 can be replaced by any later versions of LLVM/Clang
 sudo apt-get install clang-3.6 build-essential doxygen gcc-multilib git \
@@ -77,7 +77,7 @@ pip install -r .ci/basic_python_requirements
 export PATH="~/codechecker_package/CodeChecker/bin:$PATH"
 
 cd ..
-```
+~~~
 
 ### Mac OS X
 
@@ -96,7 +96,7 @@ On El Capitan System Integrity Protection (SIP) needs to be turned off:
 Check out and build LLVM/Clang with extra tools. Follow the [Get Started with
 LLVM/Clang](http://clang.llvm.org/get_started.html) documentation.
 
-```bash
+~~~{.sh}
 # Download and install dependencies
 brew update
 brew install doxygen thrift gcc git
@@ -111,7 +111,7 @@ pip install -r .ci/basic_python_requirements
 # Create codechecker package
 ./build_package.py -o ~/codechecker_package
 cd ..
-```
+~~~
 
 Check your first project
 ------------------------
@@ -123,10 +123,10 @@ run analysis on a test project. The binaries are usually named `clang` or
 `clang-3.6` (and `clang-tidy` or `clang-tidy-3.6`, respectively), but this
 depends on your Linux distribution.
 
-```bash
-which clang-3.6
-which clang-tidy-3.6
-```
+
+    which clang-3.6
+    which clang-tidy-3.6
+
 
 If `clang` or `clang-tidy` is not an available command, you must configure the
 installed CodeChecker package to use the appropriate binaries for analysis.
@@ -135,19 +135,19 @@ Edit the configuration file
 `runtime/analyzers` section, you must set the values, as shown below, to the
 clang binaries available in your `PATH`.
 
-```json
+~~~{.json}
 "analyzers" : {
   "clangsa" : "clang-3.6",
   "clang-tidy" : "clang-tidy-3.6"
 },
-```
+~~~
 
 ### Setting up the environment in your Terminal
 
 These steps must always be taken in a new command prompt you wish to execute
 analysis in.
 
-```bash
+~~~{.sh}
 source ~/checker_env/bin/activate
 
 # Path of CodeChecker package
@@ -161,7 +161,7 @@ export PATH=~/{user path}/llvm/tools/clang/tools/scan-build-py/bin:$PATH
 # Path of the built LLVM/Clang
 # NOTE: SKIP this line if clang is available in your PATH as an installed Linux package
 export PATH=~/{user path}/build/bin:$PATH
-```
+~~~
 
 ### Check the test project
 
@@ -169,15 +169,15 @@ Check your project using SQLite database. The database will be placed in your
 workspace directory (`~/.codechecker` by default), which can be provided via
 the `-w` flag.
 
-```bash
-CodeChecker check -n test-check -b "cd ~/your-project && make clean && make"
-```
+
+    CodeChecker check -n test-check -b "cd ~/your-project && make clean && make"
+
 
 ### Start a web server
 
-```bash
-CodeChecker server
-```
+
+    CodeChecker server
+
 
 ### View results
 

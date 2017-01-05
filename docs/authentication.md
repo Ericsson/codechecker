@@ -43,12 +43,12 @@ Users are authenticated if **any** authentication method successfully authentica
 Authentications are attempted in the order they are described here: *dicitonary* takes precedence,
 *pam* is a secondary and *ldap* is a tertiary backend, if enabled.
 
-### _Dictionary_ authentication
+### <i>Dictionary</i> authentication
 
 The `authentication.method_dictionary` contains a plaintext `username:password` credentials for authentication.
 If the user's login matches any of the credentials listed, the user will be authenticated.
 
-```json
+~~~{.json}
 "method_dictionary": {
   "enabled" : true,
   "auths" : [
@@ -56,7 +56,7 @@ If the user's login matches any of the credentials listed, the user will be auth
       "test:test"
   ]
 }
-```
+~~~
 
 ### External authentication methods
 
@@ -64,7 +64,7 @@ External authentication methods connect to a privilege manager to authenticate u
 
 Using external authentication methods - such as *PAM* or *LDAP* - require additional packages and libraries to be installed on the system.
 
-~~~~~~{.sh}
+~~~{.sh}
 # get additional system libraries
 sudo apt-get install libldap2-dev libsasl2-dev libssl-dev
 
@@ -73,22 +73,22 @@ source ~/checker_env/bin/activate
 
 # install required python modules
 pip install -r .ci/auth_requirements
-~~~~~~
+~~~
 
-#### _PAM_ authentication
+#### <i>PAM</i> authentication
 
 To access the server via PAM authentication, the user must provide valid username and password which is accepted by PAM.
 
-```json
+~~~{.json}
 "method_pam": {
   "enabled" : true
 }
-```
+~~~
 
 The module can be configured to allow specific users or users belonging to specific groups only.
 In the example below, `root` and `myname` can access the server, and **everyone** who belongs to the `adm` or `cc-users` group can access the server.
 
-```json
+~~~{.json}
 "method_pam": {
   "enabled" : true,
   "users": [
@@ -98,9 +98,9 @@ In the example below, `root` and `myname` can access the server, and **everyone*
     "adm", "cc-users"
   ]
 }
-```
+~~~
 
-#### _LDAP_ authentication
+#### <i>LDAP</i> authentication
 
 CodeChecker also supports *LDAP*-based authentication. The `authentication.method_ldap` section contains the configuration for LDAP authentication:
 the server can be configured to connect to as much LDAP-servers as the administrator wants. Each LDAP server is identified by a `connection_url` and a list of `queries`
@@ -173,7 +173,7 @@ Because of this, it is not advised to list too many servers as it can elongate t
 
   Scope of the search performed. (Valid values are: `base`, `one`, `subtree`)
 
-```json
+~~~{.json}
 "method_ldap": {
   "enabled" : true,
   "authorities": [
@@ -207,7 +207,7 @@ Because of this, it is not advised to list too many servers as it can elongate t
     }
   ]
 }
-```
+~~~
 
 ----
 
@@ -257,14 +257,14 @@ To alleviate the need for supplying authentication in the command-line every tim
 
 To do so, open `~/.codechecker_passwords.json`. The `credentials` section is used by the client to read pre-saved authentication data in `username:password` format.
 
-```json
+~~~{.json}
   "credentials": {
     "*" : "global:passphrase",
     "*:8080" : "webserver:1234",
     "localhost" : "local:admin",
     "localhost:6251" : "super:secret"
   },
-```
+~~~
 
 Credentials are matched for any particular server at login in the following order:
 
