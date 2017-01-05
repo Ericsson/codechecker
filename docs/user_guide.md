@@ -185,9 +185,9 @@ optional arguments:
 ~~~~~~~~~~~~~~~~~~~~~
 
 CodeChecker is able to handle several analyzer tools. Currently CodeChecker
-supports Clang Static Analyzer and Clang Tidy. ```CodeChecker checkers```
+supports Clang Static Analyzer and Clang Tidy. `CodeChecker checkers`
 command lists all checkers from each analyzers. These can be switched on and off
-by ```-e``` and ```-d``` flags. Furthermore ```--analyzers``` specifies which
+by `-e` and `-d` flags. Furthermore `--analyzers` specifies which
 analyzer tool should be used (both by default). The tools are completely
 independent, so either can be omitted if not present as these are provided by
 different binaries.
@@ -205,37 +205,37 @@ and in this case an empty string is inserted in the place of the placeholder.
 
 ##### Clang Static Analyzer
 
-Use the ```--saargs``` argument to a file which contains compilation options.
+Use the `--saargs` argument to a file which contains compilation options.
 
-````
-CodeChecker check --saargs extra_compile_flags -n myProject -b "make -j4"
-````
+
+    CodeChecker check --saargs extra_compile_flags -n myProject -b "make -j4"
+
 
 Where the extra_compile_flags file contains additional compilation options.
 
 Config file example:
-```
+
+~~~~
 -I~/include/for/analysis -I$(MY_LIB)/include -DDEBUG
-```
+~~~~
+
 where `MY_LIB` is the path of a library code.
 
 ##### Clang-tidy
 
-Use the ```--tidyargs``` argument to a file which contains compilation options.
+Use the `--tidyargs` argument to a file which contains compilation options.
 
-````
-CodeChecker check --tidyargs extra_tidy_compile_flags -n myProject -b "make -j4"
-````
+    CodeChecker check --tidyargs extra_tidy_compile_flags -n myProject -b "make -j4"
 
 Where the extra_compile_flags file contains additional compilation flags.
 Clang tidy requires a different format to add compilation options.
-Compilation options can be added before ( ```-extra-arg-before=<string>``` ) and
-after (```-extra-arg=<string>```) the original compilation options.
+Compilation options can be added before ( `-extra-arg-before=<string>` ) and
+after (`-extra-arg=<string>`) the original compilation options.
 
 Config file example:
-```
--extra-arg-before='-I~/include/for/analysis' -extra-arg-before='-I~/other/include/for/analysis/' -extra-arg-before='-I$(MY_LIB)/include' -extra-arg='-DDEBUG'
-```
+
+    -extra-arg-before='-I~/include/for/analysis' -extra-arg-before='-I~/other/include/for/analysis/' -extra-arg-before='-I$(MY_LIB)/include' -extra-arg='-DDEBUG'
+
 where `MY_LIB` is the path of a library code.
 
 ### Using SQLite for database:
@@ -243,11 +243,11 @@ where `MY_LIB` is the path of a library code.
 CodeChecker can also use SQLite for storing the results. In this case the
 SQLite database will be created in the workspace directory.
 
-In order to use PostgreSQL instead of SQLite, use the ```--postgresql``` command
-line argument for ```CodeChecker server``` and ```CodeChecker check```
-commands. If ```--postgresql``` is not given then SQLite is used by default in
-which case ```--dbport```, ```--dbaddress```, ```--dbname```, and
-```--dbusername``` command line arguments are ignored.
+In order to use PostgreSQL instead of SQLite, use the `--postgresql` command
+line argument for `CodeChecker server` and `CodeChecker check`
+commands. If `--postgresql` is not given then SQLite is used by default in
+which case `--dbport`, `--dbaddress`, `--dbname`, and
+`--dbusername` command line arguments are ignored.
 
 #### Note:
 Schema migration is not supported with SQLite. This means if you upgrade your

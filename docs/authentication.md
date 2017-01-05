@@ -14,20 +14,26 @@ This file is created, at the first start of the server, using the package's inst
 
 The `authentication` section of the config file controls how authentication is handled.
 
- * `enabled`  
-    setting this to `false` disables privileged access
- * `realm_name`  
+ * `enabled`
+
+    Setting this to `false` disables privileged access
+ * `realm_name`
+
     The name to show for web-browser viewers' pop-up login window via *HTTP Authenticate*
- * `realm_error`  
+ * `realm_error`
+
     The error message shown in the browser when the user fails to authenticate
- * `logins_until_cleanup`  
+ * `logins_until_cleanup`
+
     After this many login attempts made towards the server, it will perform an automatic cleanup of old, expired sessions.
- * `soft_expire`  
+ * `soft_expire`
+
     (in seconds) When a user is authenticated, a session is created for them and this session identifies the user's access.
     This configuration variable sets how long the session considered "valid" before the user is needed
     to reauthenticate again &mdash; if this time expires, the session will be *hibernated*: the next access will be denied,
     but if the user presents a valid login, they will get their session reused.
- * `session_lifetime`  
+ * `session_lifetime`
+
     (in seconds) The lifetime of the session sets that after this many seconds since last session access the session is permanently invalidated.
 
 Every authentication method is its own JSON object in this section. Every authentication method has its
@@ -37,12 +43,12 @@ Users are authenticated if **any** authentication method successfully authentica
 Authentications are attempted in the order they are described here: *dicitonary* takes precedence,
 *pam* is a secondary and *ldap* is a tertiary backend, if enabled.
 
-### *Dictionary* authentication
+### <i>Dictionary</i> authentication
 
 The `authentication.method_dictionary` contains a plaintext `username:password` credentials for authentication.
 If the user's login matches any of the credentials listed, the user will be authenticated.
 
-```json
+~~~{.json}
 "method_dictionary": {
   "enabled" : true,
   "auths" : [
@@ -50,7 +56,7 @@ If the user's login matches any of the credentials listed, the user will be auth
       "test:test"
   ]
 }
-```
+~~~
 
 ### External authentication methods
 
@@ -58,7 +64,7 @@ External authentication methods connect to a privilege manager to authenticate u
 
 Using external authentication methods - such as *PAM* or *LDAP* - require additional packages and libraries to be installed on the system.
 
-~~~~~~{.sh}
+~~~{.sh}
 # get additional system libraries
 sudo apt-get install libldap2-dev libsasl2-dev libssl-dev
 
@@ -67,22 +73,22 @@ source ~/checker_env/bin/activate
 
 # install required python modules
 pip install -r .ci/auth_requirements
-~~~~~~
+~~~
 
-#### *PAM* authentication
+#### <i>PAM</i> authentication
 
 To access the server via PAM authentication, the user must provide valid username and password which is accepted by PAM.
 
-```json
+~~~{.json}
 "method_pam": {
   "enabled" : true
 }
-```
+~~~
 
 The module can be configured to allow specific users or users belonging to specific groups only.
 In the example below, `root` and `myname` can access the server, and **everyone** who belongs to the `adm` or `cc-users` group can access the server.
 
-```json
+~~~{.json}
 "method_pam": {
   "enabled" : true,
   "users": [
@@ -92,9 +98,9 @@ In the example below, `root` and `myname` can access the server, and **everyone*
     "adm", "cc-users"
   ]
 }
-```
+~~~
 
-#### *LDAP* authentication
+#### <i>LDAP</i> authentication
 
 CodeChecker also supports *LDAP*-based authentication. The `authentication.method_ldap` section contains the configuration for LDAP authentication:
 the server can be configured to connect to as much LDAP-servers as the administrator wants. Each LDAP server is identified by a `connection_url` and a list of `queries`
@@ -103,53 +109,71 @@ to attempt to log in the username given.
 Servers are connected to and queries are executed in the order they appear in the configuration file.
 Because of this, it is not advised to list too many servers as it can elongate the authentication process.
 
-##### Configuration options:
+##### Configuration options
 
-`connection_url`  
-URL of the LDAP server which will be queried for user information and group
-membership.
+ * `connection_url`
 
-`username`  
-Optional username for LDAP bind, if not set bind with the login credentials will be attempted.
+   URL of the LDAP server which will be queried for user information and group
+   membership.
 
-`password`  
-Optional password for configured username.
+ * `username`
 
-`referrals`  
-Microsoft Active Directory by returns referrals (search continuations). LDAPv3
-does not specify which credentials should be used by the clients when chasing
-these referrals and will be tried as an anonymous access by the libldap library
-which might fail. Will be disabled by default.
+   Optional username for LDAP bind, if not set bind with the login credentials
+   will be attempted.
 
-`deref`  
-Configure how the alias dereferencing is done in libldap (valid values: always, never).
+ * `password`
 
-`accountBase`  
-Root tree containing all the user accounts.
+   Optional password for configured username.
 
-`accountScope`  
-Scope of the search performed. Accepted values are: base, one, subtree.
+ * `referrals`
 
-`accountPattern`  
-The special `$USN$` token in the query is replaced to the *username* at login.
-Query pattern used to search for a user account. Must be a valid LDAP query
-expression.  
-Example configuration: *(&(objectClass=person)(sAMAccountName=$USN$))*
+   Microsoft Active Directory by returns referrals (search continuations).
+   LDAPv3 does not specify which credentials should be used by the clients
+   when chasing these referrals and will be tried as an anonymous access by
+   the libldap library which might fail. Will be disabled by default.
 
-`groupBase`  
-Root tree containing all the groups.
+ * `deref`
 
-`groupPattern`  
-Group query pattern used. Must be a valid LDAP query expression.
+   Configure how the alias dereferencing is done in libldap (valid values:
+   `always`, `never`).
 
-`groupMemberPattern`  
-Group member pattern will be combined with the group patten to query user for ldap group membership. $USERDN$ will be automatically replaced by the queried user account DN.  
-Example configuration: *(member=$USERDN$)*
+ * `accountBase`
 
-`groupScope`  
-Scope of the search performed. (Valid values are: base, one, subtree)
+   Root tree containing all the user accounts.
 
-```json
+ * `accountScope`
+
+   Scope of the search performed. Accepted values are: base, one, subtree.
+
+ * `accountPattern`
+
+   The special `$USN$` token in the query is replaced to the *username* at
+   login. Query pattern used to search for a user account. Must be a valid
+   LDAP query expression.
+
+   Example configuration: `(&(objectClass=person)(sAMAccountName=$USN$))`
+
+ * `groupBase`
+
+   Root tree containing all the groups.
+
+ * `groupPattern`
+
+   Group query pattern used. Must be a valid LDAP query expression.
+
+ * `groupMemberPattern`
+
+  Group member pattern will be combined with the group patten to query user
+  for ldap group membership. `$USERDN$` will be automatically replaced by the
+  queried user account DN.
+
+  Example configuration: `(member=$USERDN$)`
+
+ * `groupScope`
+
+  Scope of the search performed. (Valid values are: `base`, `one`, `subtree`)
+
+~~~{.json}
 "method_ldap": {
   "enabled" : true,
   "authorities": [
@@ -183,7 +207,7 @@ Scope of the search performed. (Valid values are: base, one, subtree)
     }
   ]
 }
-```
+~~~
 
 ----
 
@@ -233,14 +257,14 @@ To alleviate the need for supplying authentication in the command-line every tim
 
 To do so, open `~/.codechecker_passwords.json`. The `credentials` section is used by the client to read pre-saved authentication data in `username:password` format.
 
-```json
+~~~{.json}
   "credentials": {
     "*" : "global:passphrase",
     "*:8080" : "webserver:1234",
     "localhost" : "local:admin",
     "localhost:6251" : "super:secret"
   },
-```
+~~~
 
 Credentials are matched for any particular server at login in the following order:
 
