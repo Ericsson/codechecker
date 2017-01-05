@@ -116,7 +116,7 @@ class BuildAction(Base):
     run_id = Column(Integer,
                     ForeignKey('runs.id', deferrable=True, initially="DEFERRED",
                                ondelete='CASCADE'))
-    build_cmd = Column(String)
+    build_cmd_hash = Column('build_cmd', String)
     analyzer_type = Column(String, nullable=False)
     analyzed_source_file = Column(String, nullable=False)
     check_cmd = Column(String)
@@ -127,10 +127,10 @@ class BuildAction(Base):
     # Seconds, -1 if unfinished.
     duration = Column(Integer)
 
-    def __init__(self, run_id, build_cmd, check_cmd, analyzer_type,
+    def __init__(self, run_id, build_cmd_hash, check_cmd, analyzer_type,
                  analyzed_source_file):
-        self.run_id, self.build_cmd, self.check_cmd, self.failure_txt = \
-            run_id, build_cmd, check_cmd, ''
+        self.run_id, self.build_cmd_hash, self.check_cmd, self.failure_txt = \
+            run_id, build_cmd_hash, check_cmd, ''
         self.date = datetime.now()
         self.analyzer_type = analyzer_type
         self.analyzed_source_file = analyzed_source_file

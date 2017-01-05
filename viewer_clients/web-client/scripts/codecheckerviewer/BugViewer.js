@@ -604,12 +604,6 @@ function (declare, dom, style, on, query, Memory, Observable, topic,
             var details = dom.create('dl');
 
             dom.place(
-              dom.create('dt', { innerHTML : 'Build command' }), details);
-            dom.place(
-              dom.create('dd', {
-                innerHTML : buildAction.buildCmd || 'Only in debug mode parsing'
-              }), details);
-            dom.place(
               dom.create('dt', { innerHTML : 'Check command' }), details);
             dom.place(
               dom.create('dd', {

@@ -14,6 +14,7 @@ import shared
 from codechecker_lib import client
 from codechecker_lib import plist_parser
 from codechecker_lib import suppress_handler
+from codechecker_lib import logger
 from codechecker_lib.logger import LoggerFactory
 from codechecker_lib.analyzers.result_handler_base import ResultHandler
 
@@ -139,15 +140,18 @@ class PlistToDB(ResultHandler):
 
             _, source_file_name = ntpath.split(self.analyzed_source_file)
 
+            if LoggerFactory.get_log_level() == logger.DEBUG:
+                analyzer_cmd = ' '.join(self.analyzer_cmd)
+            else:
+                analyzer_cmd = ''
+
+            build_cmd_hash = self.buildaction.original_command_hash
             analysis_id = \
                 connection.add_build_action(self.__run_id,
-                                            self.buildaction.original_command,
-                                            ' '.join(
-                                                self.analyzer_cmd),
+                                            build_cmd_hash,
+                                            analyzer_cmd,
                                             self.buildaction.analyzer_type,
                                             source_file_name)
-
-            # Store buildaction and analyzer command to the database.
 
             assert self.analyzer_returncode == 0
 

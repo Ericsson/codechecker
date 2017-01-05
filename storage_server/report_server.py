@@ -136,7 +136,6 @@ class CheckerReportHandler(object):
 
             self.session.query(ReportsToBuildActions).filter(
                 ReportsToBuildActions.build_action_id == build_action_id).delete()
-
         except Exception as ex:
             raise shared.ttypes.RequestFailed(
                 shared.ttypes.ErrorCode.GENERAL,
@@ -221,20 +220,18 @@ class CheckerReportHandler(object):
     @timeit
     def addBuildAction(self,
                        run_id,
-                       build_cmd,
+                       build_cmd_hash,
                        check_cmd,
                        analyzer_type,
                        analyzed_source_file):
         """
         """
-        import logging
-
         try:
 
             build_actions = \
                 self.session.query(BuildAction) \
                     .filter(and_(BuildAction.run_id == run_id,
-                                 BuildAction.build_cmd == build_cmd,
+                                 BuildAction.build_cmd_hash == build_cmd_hash,
                                  or_(
                                      and_(
                                          BuildAction.analyzer_type == analyzer_type,
@@ -252,8 +249,8 @@ class CheckerReportHandler(object):
                 self.session.commit()
 
             action = BuildAction(run_id,
-                                 build_cmd if LoggerFactory.get_log_level() == logging.DEBUG else '',
-                                 check_cmd if LoggerFactory.get_log_level() == logging.DEBUG else '',
+                                 build_cmd_hash,
+                                 check_cmd,
                                  analyzer_type,
                                  analyzed_source_file)
             self.session.add(action)

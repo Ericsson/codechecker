@@ -741,7 +741,7 @@ class ThriftRequestHandler():
 
             return [BuildActionData(id=ba.id,
                                     runId=ba.run_id,
-                                    buildCmd=ba.build_cmd,
+                                    buildCmd=ba.build_cmd_hash,
                                     analyzerType=ba.analyzer_type,
                                     file=ba.analyzed_source_file,
                                     checkCmd=ba.check_cmd,

@@ -61,7 +61,7 @@ service CheckerReport {
                 // =============================================================
                 i64  addBuildAction(
                                     1: i64 run_id,
-                                    2: string build_cmd,
+                                    2: string build_cmd_hash,
                                     3: string check_cmd,
                                     4: string analyzer_type,
                                     5: string analyzed_source_file)

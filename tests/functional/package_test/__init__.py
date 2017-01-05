@@ -179,6 +179,45 @@ def setup_package():
     if ret:
         sys.exit(1)
 
+    update_check_name = 'update_test'
+    # First check for update mode.
+    print("Running first analysis for update test")
+
+    ret = _clean_project(test_project_path,
+                         test_project_clean_cmd,
+                         env)
+    if ret:
+        sys.exit(ret)
+
+    ret = _run_check(shared_test_params,
+                     skip_list_file,
+                     test_project_build_cmd,
+                     update_check_name,
+                     test_project_path)
+    _wait_for_postgres_shutdown(shared_test_params['workspace'])
+    if ret:
+        sys.exit(1)
+
+    # Second check for update mode.
+    print("Running second analysis for update test")
+
+    ret = _clean_project(test_project_path,
+                         test_project_clean_cmd,
+                         env)
+    if ret:
+        sys.exit(ret)
+
+    checkers = ['-d', 'deadcode.DeadStores']
+    ret = _run_check(shared_test_params,
+                     skip_list_file,
+                     test_project_build_cmd,
+                     update_check_name,
+                     test_project_path,
+                     checkers)
+    _wait_for_postgres_shutdown(shared_test_params['workspace'])
+    if ret:
+        sys.exit(1)
+
     # Start the CodeChecker server.
     print("Starting server to get results")
     _start_server(shared_test_params, test_config, False)
@@ -308,8 +347,14 @@ def _generate_skip_list_file(skip_list_file):
 
 
 def _run_check(shared_test_params, skip_list_file, test_project_build_cmd,
-               test_project_name, test_project_path):
-    """Check a test project."""
+               test_project_name, test_project_path, checkers=[]):
+    """
+    Check a test project.
+
+    :checkers parameter should be a list of enabled or disabled checkers
+    Example: ['-d', 'deadcode.DeadStores']
+
+    """
     check_cmd = ['CodeChecker', 'check',
                  '-w', shared_test_params['workspace'],
                  '--suppress', shared_test_params['suppress_file'],
@@ -318,6 +363,8 @@ def _run_check(shared_test_params, skip_list_file, test_project_build_cmd,
                  '-b', "'" + test_project_build_cmd + "'",
                  '--analyzers', 'clangsa',
                  '--quiet-build']
+    check_cmd.extend(checkers)
+
     if shared_test_params['use_postgresql']:
         check_cmd.append('--postgresql')
         check_cmd += _pg_db_config_to_cmdline_params(
