@@ -44,11 +44,13 @@ class Context(context_base.ContextBase):
 
         self.__package_root = package_root
 
-        version, database_version = self.__get_version(self.version_file)
-        self.__package_version = version
-        self.__db_version_info = db_version.DBVersionInfo(
-            database_version['major'],
-            database_version['minor'])
+        self.__package_version = None
+        self.__db_version_info = None
+        self.__package_build_date = None
+        self.__package_git_hash = None
+
+        self.__set_version()
+
         Context.__instance = self
 
     def set_env(self, env_vars):
@@ -64,16 +66,28 @@ class Context(context_base.ContextBase):
         self.ld_preload = os.environ.get(env_vars['ld_preload'])
         self.ld_lib_path = env_vars['env_ld_lib_path']
 
-    def __get_version(self, version_file):
+    def __set_version(self):
         """
         Get the package version from the version config file.
         """
         try:
-            with open(version_file, 'r') as vfile:
+            with open(self.version_file, 'r') as vfile:
                 vfile_data = json.loads(vfile.read())
 
             package_version = vfile_data['version']
-            db_version = vfile_data['db_version']
+            package_build_date = vfile_data['package_build_date']
+            package_git_hash = vfile_data['git_hash']
+            database_version = vfile_data['db_version']
+
+            self.__package_version = package_version['major'] + '.' + \
+                package_version['minor'] + '.' + \
+                package_version['revision']
+            self.__db_version_info = db_version.DBVersionInfo(
+                database_version['major'],
+                database_version['minor'])
+
+            self.__package_build_date = package_build_date
+            self.__package_git_hash = package_git_hash
 
         except ValueError as verr:
             # db_version is required to know if the db schema is compatible.
@@ -81,7 +95,11 @@ class Context(context_base.ContextBase):
             LOG.error(verr)
             sys.exit(1)
 
-        return package_version, db_version
+        except IOError as ioerr:
+            LOG.error('Failed to read version config file: ' +
+                      self.version_file)
+            LOG.error(ioerr)
+            sys.exit(1)
 
     @property
     def default_checkers_config(self):
@@ -90,6 +108,14 @@ class Context(context_base.ContextBase):
     @property
     def version(self):
         return self.__package_version
+
+    @property
+    def package_build_date(self):
+        return self.__package_build_date
+
+    @property
+    def package_git_hash(self):
+        return self.__package_git_hash
 
     @property
     def db_version_info(self):

@@ -368,11 +368,9 @@ def handle_plist(args):
         conn_mgr.start_report_server()
 
         with client.get_connection() as connection:
-            package_version = context.version['major'] + '.' + \
-                              context.version['minor']
             context.run_id = connection.add_checker_run(' '.join(sys.argv),
                                                         args.name,
-                                                        package_version,
+                                                        context.version,
                                                         args.force)
 
     pool = multiprocessing.Pool(args.jobs)
@@ -396,33 +394,13 @@ def handle_version_info(args):
     """
 
     context = generic_package_context.get_context()
-    version_file = context.version_file
 
-    try:
-        with open(version_file) as v_file:
-            v_data = v_file.read()
-
-        version_data = json.loads(v_data)
-        base_version = version_data['version']['major'] + \
-            '.' + version_data['version']['minor']
-        db_schema_version = version_data['db_version']['major'] + \
-            '.' + version_data['db_version']['minor']
-
-        print(('Base package version: \t' + base_version).expandtabs(30))
-        print(('Package build date: \t' +
-              version_data['package_build_date']).expandtabs(30))
-        print(('Git hash: \t' + version_data['git_hash']).expandtabs(30))
-        print(('DB schema version: \t' + db_schema_version).expandtabs(30))
-
-    except ValueError as verr:
-        LOG.error('Failed to decode version information from the config file.')
-        LOG.error(verr)
-        sys.exit(1)
-
-    except IOError as ioerr:
-        LOG.error('Failed to read version config file: ' + version_file)
-        LOG.error(ioerr)
-        sys.exit(1)
+    print('Base package version: \t' + context.version).expandtabs(30)
+    print('Package build date: \t' +
+          context.package_build_date).expandtabs(30)
+    print('Git hash: \t' + context.package_git_hash).expandtabs(30)
+    print('DB schema version: \t' +
+          str(context.db_version_info)).expandtabs(30)
 
     # Thift api version for the clients.
     from codeCheckerDBAccess import constants
