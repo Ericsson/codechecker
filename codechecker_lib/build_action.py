@@ -12,6 +12,8 @@ class BuildAction(object):
     def __init__(self, build_action_id=0):
         self._id = build_action_id
         self._analyzer_options = []
+        self._compiler_includes = []
+        self._compiler_defines = []
         self.analyzer_type = -1
         self._original_command = ''
         self._directory = ''
@@ -50,6 +52,22 @@ class BuildAction(object):
     @property
     def id(self):
         return self._id
+
+    @property
+    def compiler_includes(self):
+        return self._compiler_includes
+
+    @compiler_includes.setter
+    def compiler_includes(self, value):
+        self._compiler_includes = value
+
+    @property
+    def compiler_defines(self):
+        return self._compiler_defines
+
+    @compiler_defines.setter
+    def compiler_defines(self, value):
+        self._compiler_defines = value
 
     @property
     def analyzer_options(self):
