@@ -12,7 +12,7 @@ import plistlib
 from xml.parsers.expat import ExpatError
 
 from codechecker_lib.logger import LoggerFactory
-from . import plist_helper
+from codechecker_lib import plist_helper
 
 LOG = LoggerFactory.get_new_logger('PLIST_PARSER')
 
