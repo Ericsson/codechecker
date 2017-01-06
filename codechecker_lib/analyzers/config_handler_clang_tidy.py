@@ -59,20 +59,9 @@ class ClangTidyConfigHandler(config_handler.AnalyzerConfigHandler):
          ]
         }
         """
-        LOG.debug(self.analyzer_extra_arguments)
+        LOG.debug("Tidy extra args: " + self.analyzer_extra_arguments)
 
         res = []
-
-        # Match for clang static analyzer names and attributes.
-        clang_sa_checker_rex = r'^clang-analyzer-(?P<checker_name>([^:]+))' \
-            r'\:(?P<checker_attribute>([^:]+))$'
-
-        # Match for clang tidy analyzer names and attributes.
-        clang_tidy_checker_rex = r'^(?P<checker_name>([^.]+))' \
-            r'\.(?P<checker_attribute>([^.]+))$'
-
-        clangsa_pattern = re.compile(clang_sa_checker_rex)
-        tidy_pattern = re.compile(clang_tidy_checker_rex)
 
         # Get config from the extra arguments if there is any.
         try:
@@ -91,16 +80,18 @@ class ClangTidyConfigHandler(config_handler.AnalyzerConfigHandler):
             return res
 
         try:
+            # Match for clang tidy analyzer names and attributes.
+            clang_tidy_checker_rex = r'^(?P<checker_name>([^.]+))' \
+                                     r'\.(?P<checker_attribute>([^.]+))$'
+
+            tidy_pattern = re.compile(clang_tidy_checker_rex)
             tidy_config = json.loads(args.tidy_config)
             for checker_option in tidy_config.get('CheckOptions', []):
                 value = checker_option['value']
-                key_values = re.match(clangsa_pattern, checker_option['key'])
+                # We only store configs related to tidy checks. We run static
+                # analyzer separately, so it does not affect the SA invocation.
                 key_values_tidy = re.match(tidy_pattern, checker_option['key'])
-                if key_values:
-                    checker_name = key_values.group('checker_name')
-                    checker_attr = key_values.group('checker_attribute')
-                    res.append((checker_name, checker_attr, value))
-                elif key_values_tidy:
+                if key_values_tidy:
                     checker_name = key_values_tidy.group('checker_name')
                     checker_attr = key_values_tidy.group('checker_attribute')
                     res.append((checker_name, checker_attr, value))

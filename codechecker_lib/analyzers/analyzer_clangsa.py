@@ -78,7 +78,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         """
         try:
             # Get an output file from the result handler.
-            analyzer_output_file = res_handler.get_analyzer_result_file()
+            analyzer_output_file = res_handler.analyzer_result_file
 
             # Get the checkers list from the config_handler.
             # Checker order matters.

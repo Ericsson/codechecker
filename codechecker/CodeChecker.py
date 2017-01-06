@@ -46,21 +46,18 @@ class OrderedCheckersAction(argparse.Action):
     def __call__(self, parser, namespace, value, option_string=None):
 
         if 'ordered_checkers' not in namespace:
-            setattr(namespace, 'ordered_checkers', [])
+            namespace.ordered_checkers = []
         ordered_checkers = namespace.ordered_checkers
-        if self.dest == 'enable':
-            ordered_checkers.append((value, True))
-        else:
-            ordered_checkers.append((value, False))
+        ordered_checkers.append((value, self.dest == 'enable'))
 
-        setattr(namespace, 'ordered_checkers', ordered_checkers)
+        namespace.ordered_checkers = ordered_checkers
 
 
 # ------------------------------------------------------------------------------
 class DeprecatedOptionAction(argparse.Action):
-    '''
+    """
     Deprecated argument action.
-    '''
+    """
 
     def __init__(self,
                  option_strings,
@@ -169,7 +166,7 @@ def main():
     def signal_handler(sig, frame):
         """
         Without this handler the PostgreSQL
-        server does not terminated at signal.
+        server does not terminate at signal.
         """
         sys.exit(1)
 
@@ -187,10 +184,10 @@ See the subcommands for specific features.''',
 Example usage:
 --------------
 Analyzing a project with default settings:
-CodeChecker check -w ~/workspace -b "cd ~/myproject && make" -n myproject
+CodeChecker check -b "cd ~/myproject && make" -n myproject
 
 Start the viewer to see the results:
-CodeChecker server -w ~/workspace
+CodeChecker server
 
 See the results in a web browser: localhost:8001
 See results in  the command line: CodeChecker cmd results -p 8001 -n myproject
@@ -199,7 +196,7 @@ To analyze a small project quickcheck feature can be used.
 The results will be printed only to the standard output.
 (No database will be used)
 
-CodeChecker quickcheck -w ~/workspace -b "cd ~/myproject && make"
+CodeChecker quickcheck -b "cd ~/myproject && make"
 ''')
 
         subparsers = parser.add_subparsers(help='commands')
