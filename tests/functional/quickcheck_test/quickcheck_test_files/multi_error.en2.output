@@ -1,18 +1,18 @@
 CodeChecker quickcheck --analyzers clangsa -b "make multi_error" -d core.StackAddressEscape -e deadcode.DeadStores --quiet-build
 -----------------------------------------------
-[INFO] - Starting build ...
-[INFO] - Build finished successfully.
-[INFO] - Using analyzer:
-[INFO] - Static analysis is starting ...
+[] - Starting build ...
+[] - Build finished successfully.
+[] - Using analyzer:
+[] - Static analysis is starting ...
 multi_error.cpp:9:7: Value stored to 'y' is never read [deadcode.DeadStores]
   y = 7;
       ^
 
 clangsa found 1 defect(s) while analyzing multi_error.cpp
 
-[INFO] - [1/1] clangsa analyzed multi_error.cpp successfully.
-[INFO] - ----==== Summary ====----
-[INFO] - Total compilation commands: 1
-[INFO] - Successfully analyzed
-[INFO] -   clangsa: 1
-[INFO] - ----=================----
+[] - [1/1] clangsa analyzed multi_error.cpp successfully.
+[] - ----==== Summary ====----
+[] - Total compilation commands: 1
+[] - Successfully analyzed
+[] -   clangsa: 1
+[] - ----=================----

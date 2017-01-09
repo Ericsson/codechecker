@@ -9,6 +9,7 @@
 import logging
 import os
 import sys
+import time
 
 # The logging leaves can be accesses without
 # importing the logging module in other modules.
@@ -46,6 +47,46 @@ class CCLogger(logging.Logger):
 logging.setLoggerClass(CCLogger)
 
 
+class CustomFormatter(logging.Formatter):
+    """
+    Custom formatter to print log level in case of ERROR, WARNING
+    or CRITICAL.
+    """
+
+    info_fmt = '[%(asctime)s] - %(message)s'
+    error_fmt = '[%(levelname)s] [%(asctime)s] - %(message)s'
+    debug_fmt = '[%(asctime)s] [%(process)d] <%(thread)d> - ' \
+        '%(filename)s:%(lineno)d %(funcName)s() - %(message)s'
+
+    def formatTime(self, record, datefmt=None):
+        return time.strftime('%H:%M')
+
+    def format(self, record):
+
+        # Save the original format
+        format_orig = self._fmt
+
+        # Replace the original format
+        if record.levelno == logging.DEBUG:
+            self._fmt = CustomFormatter.debug_fmt
+        if record.levelno == logging.DEBUG_ANALYZER:
+            self._fmt = CustomFormatter.debug_fmt
+        elif record.levelno == logging.INFO:
+            self._fmt = CustomFormatter.info_fmt
+        elif record.levelno == logging.ERROR:
+            self._fmt = CustomFormatter.error_fmt
+        elif record.levelno == logging.WARNING:
+            self._fmt = CustomFormatter.error_fmt
+        elif record.levelno == logging.CRITICAL:
+            self._fmt = CustomFormatter.error_fmt
+
+        result = logging.Formatter.format(self, record)
+
+        self._fmt = format_orig
+
+        return result
+
+
 class LoggerFactory(object):
     log_level = logging.INFO
     loggers = []
@@ -53,11 +94,8 @@ class LoggerFactory(object):
     short_format_handler = logging.StreamHandler(stream=sys.stdout)
     long_format_handler = logging.StreamHandler(stream=sys.stdout)
 
-    short_format_handler.setFormatter(logging.Formatter(
-        '[%(levelname)s] - %(message)s'))
-    long_format_handler.setFormatter(logging.Formatter(
-        '[%(process)d] <%(thread)d> - '
-        '%(filename)s:%(lineno)d %(funcName)s() - %(message)s'))
+    short_format_handler.setFormatter(CustomFormatter())
+    long_format_handler.setFormatter(CustomFormatter())
 
     handlers = {
         logging.INFO: short_format_handler,

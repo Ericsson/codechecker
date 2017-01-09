@@ -8,6 +8,7 @@
 
 import glob
 import os
+import re
 import subprocess
 import unittest
 
@@ -54,20 +55,23 @@ class QuickCheckTestCase(unittest.TestCase):
 
             # skip the analyzer version info between these two lines
             # it might be different in the test running environments
-            skip_version_after = "[INFO] - Using analyzer:"
-            skip_version_before = "[INFO] - Static analysis is starting"
+            skip_version_after = "[] - Using analyzer:"
+            skip_version_before = "[] - Static analysis is starting"
             skipline = False
 
             post_processed_output = []
-            for l in output.splitlines(True):
-                if l.startswith(skip_version_before):
+            for line in output.splitlines(True):
+                # replace timestamps
+                line = re.sub(r'\[\d{2}:\d{2}\]', '[]', line)
+                if line.startswith(skip_version_before):
                     skipline = False
                 if not skipline:
-                    post_processed_output.append(l)
-                if l.startswith(skip_version_after):
+                    post_processed_output.append(line)
+                if line.startswith(skip_version_after):
                     skipline = True
 
             print("Test file path: " + path)
+
             self.assertEqual(''.join(post_processed_output), correct_output)
             return 0
         except CalledProcessError as cerr:
