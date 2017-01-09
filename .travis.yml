@@ -20,8 +20,8 @@ before_install:
     - chmod a+x ~/llvm/tools/scan-build-py/bin/intercept-build
     - export PATH=~/llvm/tools/scan-build-py/bin:$PATH
     - export PYTHONPATH=~/llvm/tools/scan-build-py/
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update;                        fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install thrift;                fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update;               fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install homebrew/versions/thrift090;                fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install doxygen;               fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then curl http://releases.llvm.org/3.8.0/clang+llvm-3.8.0-x86_64-apple-darwin.tar.xz -O; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then tar xf clang+llvm-3.8.0-x86_64-apple-darwin.tar.xz -C ~/; fi
