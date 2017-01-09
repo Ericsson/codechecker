@@ -84,7 +84,7 @@ function (declare, Button, ContentPane, Filter) {
         if (item.count > 0) {
           selectOptions.push({
             label : item.name + ' (' + item.count + ')',
-            value : 'severity#' + Severity[key]
+            value : 'severity#' + severity.value
           });
 
           for (var checkerKey in item.checkers)
