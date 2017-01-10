@@ -220,7 +220,7 @@ def handle_check(args):
         context.codechecker_workspace = args.workspace
         context.db_username = args.dbusername
 
-        log_file = build_manager.check_log_file(args, context)
+        log_file, set_in_cmdline = build_manager.check_log_file(args, context)
 
         if not log_file:
             LOG.error("Failed to generate compilation command file: " +
@@ -260,7 +260,7 @@ def handle_check(args):
         print(traceback.format_exc())
     finally:
         if not args.keep_tmp:
-            if log_file:
+            if log_file and not set_in_cmdline:
                 LOG.debug('Removing temporary log file: ' + log_file)
                 os.remove(log_file)
 
@@ -288,7 +288,7 @@ def _do_quickcheck(args):
 
             context.severity_map = json.loads(severity_config)
 
-        log_file = build_manager.check_log_file(args, context)
+        log_file, set_in_cmdline = build_manager.check_log_file(args, context)
         actions = log_parser.parse_log(log_file,
                                        args.add_compiler_defaults)
         analyzer.run_quick_check(args, context, actions)
@@ -297,7 +297,7 @@ def _do_quickcheck(args):
         LOG.error("Running quickcheck failed.")
     finally:
         if not args.keep_tmp:
-            if log_file:
+            if log_file and not set_in_cmdline:
                 LOG.debug('Removing temporary log file: ' + log_file)
                 os.remove(log_file)
 
