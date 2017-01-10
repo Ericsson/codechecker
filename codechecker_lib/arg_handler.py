@@ -33,6 +33,18 @@ from viewer_server import client_db_access_server
 LOG = LoggerFactory.get_new_logger('ARG_HANDLER')
 
 
+def log_startserver_hint(args):
+    db_data = ""
+    if args.postgresql:
+        db_data += " --postgresql" \
+                   + " --dbname " + args.dbname \
+                   + " --dbport " + str(args.dbport) \
+                   + " --dbusername " + args.dbusername
+
+    LOG.info("To view results run:\nCodeChecker server -w " +
+             args.workspace + db_data)
+
+
 def handle_list_checkers(args):
     """
     List the supported checkers by the analyzers.
@@ -200,12 +212,12 @@ def handle_check(args):
         if not host_check.check_zlib():
             sys.exit(1)
 
-        workspace = os.path.realpath(args.workspace)
-        if not os.path.isdir(workspace):
-            os.mkdir(workspace)
+        args.workspace = os.path.abspath(args.workspace)
+        if not os.path.isdir(args.workspace):
+            os.mkdir(args.workspace)
 
         context = generic_package_context.get_context()
-        context.codechecker_workspace = workspace
+        context.codechecker_workspace = args.workspace
         context.db_username = args.dbusername
 
         log_file = build_manager.check_log_file(args, context)
@@ -240,15 +252,7 @@ def handle_check(args):
 
         LOG.info("Analysis has finished.")
 
-        db_data = ""
-        if args.postgresql:
-            db_data += " --postgresql" \
-                       + " --dbname " + args.dbname \
-                       + " --dbport " + str(args.dbport) \
-                       + " --dbusername " + args.dbusername
-
-        LOG.info("To view results run:\nCodeChecker server -w " +
-                 workspace + db_data)
+        log_startserver_hint(args)
 
     except Exception as ex:
         LOG.error(ex)
@@ -387,6 +391,9 @@ def handle_plist(args):
         raise
     finally:
         pool.join()
+
+    if not args.stdout:
+        log_startserver_hint(args)
 
 
 def handle_version_info(args):
