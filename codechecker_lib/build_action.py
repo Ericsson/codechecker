@@ -84,6 +84,12 @@ class BuildAction(object):
     def original_command(self):
         return self._original_command
 
+    @property
+    def original_command_hash(self):
+        hash_object = hashlib.sha1(self._original_command)
+        hex_dig = hash_object.hexdigest()
+        return hex_dig
+
     @original_command.setter
     def original_command(self, value):
         self._original_command = value

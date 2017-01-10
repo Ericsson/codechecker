@@ -71,9 +71,9 @@ def debug(context, connection_string, force):
 
             with open(debug_log_file, 'w') as log_file:
                 log_file.write('========================\n')
-                log_file.write('Original build command: \n')
+                log_file.write('Build command hash: \n')
                 log_file.write('========================\n')
-                log_file.write(action.build_cmd + '\n')
+                log_file.write(action.build_cmd_hash + '\n')
                 log_file.write('===============\n')
                 log_file.write('Check command: \n')
                 log_file.write('===============\n')
