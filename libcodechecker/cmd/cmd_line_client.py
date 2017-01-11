@@ -240,12 +240,21 @@ def add_filter_conditions(report_filter, filter_str):
     severity, checker, path = map(lambda x: x.strip(), filter_str.split(':'))
 
     if severity:
-        report_filter.severity = \
-            shared.ttypes.Severity._NAMES_TO_VALUES[severity.upper()]
+        report_filter.severity\
+            = shared.ttypes.Severity._NAMES_TO_VALUES[severity.upper()]
     if checker:
         report_filter.checkerId = '*' + checker + '*'
     if path:
         report_filter.filepath = path
+
+
+def add_server_arguments(parser):
+    parser.add_argument('--host', type=str, dest="host",
+                        default='localhost',
+                        help='Server host.')
+    parser.add_argument('-p', '--port', type=str, dest="port",
+                        default=11444,
+                        required=True, help='HTTP Server port.')
 
 
 def handle_list_runs(args):
@@ -475,11 +484,7 @@ def register_client_command_line(argument_parser):
     listruns_parser = subparsers.add_parser('runs',
                                             formatter_class=ADHFormatter,
                                             help='Get the run data.')
-    listruns_parser.add_argument('--host', type=str, dest="host",
-                                 default='localhost',
-                                 help='Server host.')
-    listruns_parser.add_argument('-p', '--port', type=str, dest="port",
-                                 default="8001", help='HTTP Server port.')
+    add_server_arguments(listruns_parser)
     listruns_parser.add_argument('-o', choices=['plaintext', 'json', 'csv'],
                                  default='plaintext', type=str,
                                  dest="output_format", help='Output format.')
@@ -490,11 +495,7 @@ def register_client_command_line(argument_parser):
     listresults_parser = subparsers.add_parser('results',
                                                formatter_class=ADHFormatter,
                                                help='List results.')
-    listresults_parser.add_argument('--host', type=str, dest="host",
-                                    default='localhost',
-                                    help='Server host.')
-    listresults_parser.add_argument('-p', '--port', type=str, dest="port",
-                                    default="8001", help='HTTP Server port.')
+    add_server_arguments(listresults_parser)
     listresults_parser.add_argument('-n', '--name', type=str, dest="name",
                                     required=True,
                                     help='Check name.')
@@ -516,11 +517,10 @@ def register_client_command_line(argument_parser):
     diff_parser = subparsers.add_parser('diff',
                                         formatter_class=ADHFormatter,
                                         help='Diff two run.')
-    diff_parser.add_argument('--host', type=str, dest="host",
-                             default='localhost',
-                             help='Server host.')
-    diff_parser.add_argument('-p', '--port', type=str, dest="port",
-                             default="8001", help='HTTP Server port.')
+    listresults_parser.set_defaults(func=handle_list_results)
+
+    # List diffs.
+    add_server_arguments(diff_parser)
     diff_parser.add_argument('-b', '--basename', type=str, dest="basename",
                              required=True,
                              help='Base name.')
@@ -551,11 +551,7 @@ def register_client_command_line(argument_parser):
     sum_parser = subparsers.add_parser('sum',
                                        formatter_class=ADHFormatter,
                                        help='Sum results.')
-    sum_parser.add_argument('--host', type=str, dest="host",
-                            default='localhost',
-                            help='Server host.')
-    sum_parser.add_argument('-p', '--port', type=str, dest="port",
-                            default="8001", help='HTTP Server port.')
+    add_server_arguments(sum_parser)
     name_group = sum_parser.add_mutually_exclusive_group(required=True)
     name_group.add_argument('-n', '--name', nargs='+', type=str, dest="names",
                             help='Check name.')
@@ -604,6 +600,7 @@ def register_client_command_line(argument_parser):
                        'The last three parts can be omitted from the right '
                        'in which case the default values are 0.')
     logger.add_verbose_arguments(del_parser)
+    add_server_arguments(del_parser)
     del_parser.set_defaults(func=handle_remove_run_results)
 
     # Handle authentication.
@@ -611,18 +608,19 @@ def register_client_command_line(argument_parser):
                                         formatter_class=ADHFormatter,
                                         help='Log in onto a '
                                              'CodeChecker server.')
-    auth_parser.add_argument('--host', type=str, dest="host",
-                             default='localhost', help='Server host.')
-    auth_parser.add_argument('-p', '--port', type=str, dest="port",
-                             default="8001", help='HTTP Server port.')
     auth_parser.add_argument('-u', '--username', type=str, dest="username",
                              required=False,
                              help='Username to use on authentication.',
                              default=getpass.getuser())
+    auth_parser.add_argument('-pw', '--password', type=str, dest="password",
+                             required=False,
+                             help='Password for username-password '
+                             'authentication (optional).')
     auth_parser.add_argument('-d', '--deactivate', '--logout',
                              action='store_true', dest='logout',
                              help='Send a logout request for the server.')
     logger.add_verbose_arguments(auth_parser)
+    add_server_arguments(auth_parser)
     auth_parser.set_defaults(func=handle_auth_requests)
 
 
