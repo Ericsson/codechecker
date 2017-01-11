@@ -79,8 +79,9 @@ class Config(Base):
     __tablename__ = 'configs'
 
     run_id = Column(Integer,
-                    ForeignKey('runs.id', deferrable=True, initially="DEFERRED",
-                               ondelete='CASCADE'), primary_key=True)
+                    ForeignKey('runs.id', deferrable=True,
+                               initially="DEFERRED", ondelete='CASCADE'),
+                    primary_key=True)
     checker_name = Column(String, primary_key=True)
     attribute = Column(String, primary_key=True)
     value = Column(String, primary_key=True)
@@ -95,8 +96,10 @@ class File(Base):
 
     id = Column(Integer, autoincrement=True, primary_key=True)
     run_id = Column(Integer,
-                    ForeignKey('runs.id', deferrable=True, initially="DEFERRED",
-                               ondelete='CASCADE'))
+                    ForeignKey('runs.id', deferrable=True,
+                               initially="DEFERRED",
+                               ondelete='CASCADE')
+                    )
     filepath = Column(String)
     content = Column(Binary)
     inc_count = Column(Integer)
@@ -114,8 +117,9 @@ class BuildAction(Base):
 
     id = Column(Integer, autoincrement=True, primary_key=True)
     run_id = Column(Integer,
-                    ForeignKey('runs.id', deferrable=True, initially="DEFERRED",
-                               ondelete='CASCADE'))
+                    ForeignKey('runs.id', deferrable=True,
+                               initially="DEFERRED", ondelete='CASCADE')
+                    )
     build_cmd_hash = Column('build_cmd', String)
     analyzer_type = Column(String, nullable=False)
     analyzed_source_file = Column(String, nullable=False)
@@ -211,8 +215,10 @@ class Report(Base):
                                          initially="DEFERRED",
                                          ondelete='CASCADE'))
     run_id = Column(Integer,
-                    ForeignKey('runs.id', deferrable=True, initially="DEFERRED",
-                               ondelete='CASCADE'), index=True)
+                    ForeignKey('runs.id', deferrable=True,
+                               initially="DEFERRED",
+                               ondelete='CASCADE'),
+                    index=True)
     bug_id = Column(String, index=True)
     checker_id = Column(String)
     checker_cat = Column(String)
@@ -243,9 +249,9 @@ class Report(Base):
     }
 
     # Priority/severity etc...
-    def __init__(self, run_id, bug_id, file_id, checker_message, start_bugpoint,
-                 start_bugevent, end_bugevent, checker_id, checker_cat,
-                 bug_type, severity, suppressed):
+    def __init__(self, run_id, bug_id, file_id, checker_message,
+                 start_bugpoint, start_bugevent, end_bugevent, checker_id,
+                 checker_cat, bug_type, severity, suppressed):
         self.run_id = run_id
         self.file_id = file_id
         self.bug_id = bug_id
@@ -284,8 +290,10 @@ class SuppressBug(Base):
     hash = Column(String, nullable=False)
     file_name = Column(String)
     run_id = Column(Integer,
-                    ForeignKey('runs.id', deferrable=True, initially="DEFERRED",
-                               ondelete='CASCADE'), nullable=False)
+                    ForeignKey('runs.id', deferrable=True,
+                               initially="DEFERRED",
+                               ondelete='CASCADE'),
+                    nullable=False)
     comment = Column(Binary)
 
     def __init__(self, run_id, hash, file_name, comment):
@@ -300,8 +308,10 @@ class SkipPath(Base):
     id = Column(Integer, autoincrement=True, primary_key=True)
     path = Column(String)
     run_id = Column(Integer,
-                    ForeignKey('runs.id', deferrable=True, initially="DEFERRED",
-                               ondelete='CASCADE'), nullable=False)
+                    ForeignKey('runs.id', deferrable=True,
+                               initially="DEFERRED",
+                               ondelete='CASCADE'),
+                    nullable=False)
     comment = Column(Binary)
 
     def __init__(self, run_id, path, comment):
