@@ -1,7 +1,8 @@
 {
     "version":{
         "major" : "5",
-        "minor" : "6"
+        "minor" : "6",
+        "revision" : "0"
     },
     "db_version":{
         "major" : "5",

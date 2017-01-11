@@ -97,8 +97,6 @@ def run_check(args, actions, context):
 
     actions = prepare_actions(actions, enabled_analyzers)
 
-    package_version = context.version['major'] + '.' + context.version['minor']
-
     suppress_file = ''
     try:
         suppress_file = os.path.realpath(args.suppress)
@@ -111,7 +109,7 @@ def run_check(args, actions, context):
     with client.get_connection() as connection:
         context.run_id = connection.add_checker_run(' '.join(sys.argv),
                                                     args.name,
-                                                    package_version,
+                                                    context.version,
                                                     args.force)
 
         # Clean previous suppress information.
