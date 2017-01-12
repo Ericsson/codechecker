@@ -253,7 +253,7 @@ def add_server_arguments(parser):
                         default='localhost',
                         help='Server host.')
     parser.add_argument('-p', '--port', type=str, dest="port",
-                        default=11444,
+                        default=8001,
                         required=True, help='HTTP Server port.')
 
 
@@ -474,6 +474,19 @@ def handle_diff_results(args):
                     args.output_format)
 
 
+def handle_suppress(args):
+    client = setupClient(args.host, args.port, '/')
+
+    run_info = check_run_names(client, [args.name])
+    run_id, run_date = run_info.get(args.name)
+
+    with open(args.output, 'w') as out:
+        for suppression in client.getSuppressedBugs(run_id):
+            out.write(suppression.bug_hash + '||' +
+                      suppression.file_name + '||' +
+                      suppression.comment)
+
+
 def register_client_command_line(argument_parser):
     """ Should be used to extend the already existing arguments
     extend the argument parser with extra commands."""
@@ -602,6 +615,17 @@ def register_client_command_line(argument_parser):
     logger.add_verbose_arguments(del_parser)
     add_server_arguments(del_parser)
     del_parser.set_defaults(func=handle_remove_run_results)
+
+    # Handle suppress file.
+    suppress_parser = subparsers.add_parser('suppress',
+                                            help='Handle suppress file.')
+    group = suppress_parser.add_mutually_exclusive_group(required=True)
+    group.add_argument('-o', '--output', type=str, dest='output',
+                       help='Export suppress file from database.')
+    suppress_parser.add_argument('-n', '--name', type=str, dest='name',
+                                 help='Run name.')
+    add_server_arguments(suppress_parser)
+    suppress_parser.set_defaults(func=handle_suppress)
 
     # Handle authentication.
     auth_parser = subparsers.add_parser('login',

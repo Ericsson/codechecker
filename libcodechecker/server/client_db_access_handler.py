@@ -657,6 +657,36 @@ class ThriftRequestHandler():
             raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.IOERROR,
                                               msg)
 
+    def getSuppressedBugs(self, run_id):
+        """
+        Return the list of suppressed bugs in the given run.
+        """
+        session = self.__session
+        try:
+            result = []
+
+            suppressed = session.query(SuppressBug) \
+                .filter(SuppressBug.run_id == run_id).all()
+
+            for suppression in suppressed:
+                result.append(shared.ttypes.SuppressBugData(suppression.hash,
+                                                            suppression.file_name,
+                                                            suppression.comment))
+
+            return result
+
+        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
+            msg = str(alchemy_ex)
+            LOG.error(msg)
+            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
+                                              msg)
+
+        except Exception as ex:
+            msg = str(ex)
+            LOG.error(msg)
+            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.IOERROR,
+                                              msg)
+
     def getCheckerDoc(self, checkerId):
         """
         Parameters:

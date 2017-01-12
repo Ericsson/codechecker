@@ -28,6 +28,14 @@ struct BugPathPos {
 typedef list<BugPathPos> BugPath
 
 //-----------------------------------------------------------------------------
+struct SuppressBugData {
+  1: string bug_hash,
+  2: string file_name,
+  3: string comment
+}
+typedef list<SuppressBugData> SuppressBugList
+
+//-----------------------------------------------------------------------------
 struct ConfigValue {
   1: string checker_name,
   2: string attribute,

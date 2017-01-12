@@ -199,6 +199,10 @@ service codeCheckerDBAccess {
                      2: i64 reportId)
                      throws (1: shared.RequestFailed requestError),
 
+  // get suppressed bugs in a run
+  shared.SuppressBugList getSuppressedBugs(1: i64 run_id)
+                                          throws(1: shared.RequestFailed requestError),
+
   // get the md documentation for a checker
   string getCheckerDoc(1: string checkerId)
                        throws (1: shared.RequestFailed requestError),

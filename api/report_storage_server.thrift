@@ -13,13 +13,6 @@ struct NeedFileResult {
                 2: i64 fileId;
 }
 
-struct SuppressBugData {
-    1: string bug_hash,
-    2: string file_name,
-    3: string comment
-}
-typedef list<SuppressBugData> SuppressBugList
-
 // The order of the functions inditaces the order that must be maintained when
 // calling into the server.
 service CheckerReport {
@@ -40,7 +33,7 @@ service CheckerReport {
 
                 bool addSuppressBug(
                                     1: i64 run_id,
-                                    2: SuppressBugList bugsToSuppress
+                                    2: shared.SuppressBugList bugsToSuppress
                                     )
                                     throws (1: shared.RequestFailed requestError),
 
