@@ -35,6 +35,8 @@ sys.path.append(os.path.join(
 # Stopping event for CodeChecker server.
 __STOP_SERVER = multiprocessing.Event()
 
+__shared = {}
+
 
 def get_free_port():
     '''Get a free port from the OS.'''
@@ -138,6 +140,9 @@ def setup_package():
         'workspace': workspace,
         'pg_db_config': pg_db_config
     }
+
+    global __shared
+    __shared = shared_test_params
 
     # First check.
     print("Running first analysis")
@@ -385,18 +390,38 @@ def _run_check(shared_test_params, skip_list_file, test_project_build_cmd,
         return cerr.returncode
 
 
+def _start_server_proc(event, server_cmd, checking_env):
+    """Target function for starting the CodeChecker server."""
+    proc = subprocess.Popen(server_cmd, env=checking_env)
+
+    # Blocking termination until event is set.
+    event.wait()
+
+    # If proc is still running, stop it.
+    if proc.poll() is None:
+        proc.terminate()
+
+
+def start_dummy_server(event, workspace, port):
+    """Starts a dummy server that doesn't run checks on a different event
+    so that the instance test can work."""
+
+    server_cmd = ['CodeChecker', 'server',
+                  '-w', workspace, '--view-port', str(port)]
+
+    print(' '.join(server_cmd))
+    server_proc = multiprocessing.Process(
+        name='dummy-server',
+        target=_start_server_proc,
+        args=(event, server_cmd, __shared['env']))
+
+    server_proc.start()
+
+    time.sleep(5)
+
+
 def _start_server(shared_test_params, test_config, auth=False):
     """Start the CodeChecker server."""
-    def start_server_proc(event, server_cmd, checking_env):
-        """Target function for starting the CodeChecker server."""
-        proc = subprocess.Popen(server_cmd, env=checking_env)
-
-        # Blocking termination until event is set.
-        event.wait()
-
-        # If proc is still running, stop it.
-        if proc.poll() is None:
-            proc.terminate()
 
     server_cmd = ['CodeChecker', 'server',
                   '-w', shared_test_params['workspace'],
@@ -419,8 +444,8 @@ def _start_server(shared_test_params, test_config, auth=False):
 
     print(' '.join(server_cmd))
     server_proc = multiprocessing.Process(
-        name='server',
-        target=start_server_proc,
+        name=('server' if not auth else 'auth-server'),
+        target=_start_server_proc,
         args=(__STOP_SERVER, server_cmd, shared_test_params['env']))
 
     server_proc.start()
