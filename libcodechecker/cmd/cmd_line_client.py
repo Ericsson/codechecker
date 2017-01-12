@@ -480,11 +480,24 @@ def handle_suppress(args):
     run_info = check_run_names(client, [args.name])
     run_id, run_date = run_info.get(args.name)
 
-    with open(args.output, 'w') as out:
-        for suppression in client.getSuppressedBugs(run_id):
-            out.write(suppression.bug_hash + '||' +
-                      suppression.file_name + '||' +
-                      suppression.comment)
+    if args.output:
+        with open(args.output, 'w') as out:
+            for suppression in client.getSuppressedBugs(run_id):
+                out.write(suppression.bug_hash + '||' +
+                          suppression.file_name + '||' +
+                          suppression.comment + '\n')
+
+    elif args.input:
+        with open(args.input, 'r') as inp:
+            for line in inp:
+                bug_hash, file_name, comment = line.rstrip().split('||')
+
+                reports = client.getRunResults(run_id, 500, 0, None, [
+                    codeCheckerDBAccess.ttypes.ReportFilter(bugHash=bug_hash,
+                                                            suppressed=False)])
+
+                for report in reports:
+                    client.suppressBug([run_id], report.reportId, comment)
 
 
 def register_client_command_line(argument_parser):
@@ -622,6 +635,8 @@ def register_client_command_line(argument_parser):
     group = suppress_parser.add_mutually_exclusive_group(required=True)
     group.add_argument('-o', '--output', type=str, dest='output',
                        help='Export suppress file from database.')
+    group.add_argument('-i', '--input', type=str, dest='input',
+                       help='Import suppress file to database.')
     suppress_parser.add_argument('-n', '--name', type=str, dest='name',
                                  help='Run name.')
     add_server_arguments(suppress_parser)

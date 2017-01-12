@@ -61,7 +61,8 @@ struct ReportFilter{
   3: optional shared.Severity severity,
   4: optional string          checkerId,          // should filter in the fully qualified checker id name such as alpha.core.
                                                   // the analyzed system. Projects can optionally use this concept.
-  5: optional bool            suppressed = false  // if the bug state is suppressed
+  5: optional bool            suppressed = false, // if the bug state is suppressed
+  6: optional string          bugHash
 }
 
 /**

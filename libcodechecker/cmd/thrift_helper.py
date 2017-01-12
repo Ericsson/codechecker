@@ -115,3 +115,8 @@ class ThriftClientHelper(object):
     def getResolvedResults(self, base_run_id, new_run_id, limit, offset,
                            sortType, reportFilters):
         pass
+
+    # -----------------------------------------------------------------------
+    @ThriftClientCall
+    def suppressBug(self, runIds, reportId, comment):
+        pass
