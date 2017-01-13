@@ -57,7 +57,7 @@ following commands are used to bootstrap CodeChecker on Ubuntu 14.04.2 LTS:
 # Install mandatory dependencies for a development and analysis environment
 # NOTE: clang-3.6 can be replaced by any later versions of LLVM/Clang
 sudo apt-get install clang-3.6 build-essential doxygen gcc-multilib git \
-  python-virtualenv python-dev thrift-compiler wget
+  python-virtualenv python-dev thrift-compiler curl
 
 # Create a Python virtualenv and set it as your environment
 virtualenv -p /usr/bin/python2.7 ~/checker_env
@@ -102,7 +102,7 @@ brew update
 brew install doxygen thrift gcc git
 
 # Fetch source code
-git clone https://github.com/tmsblgh/codechecker-osx-migration.git
+git clone https://github.com/Ericsson/CodeChecker.git --depth 1
 cd codechecker
 
 # Install required basic python modules
