@@ -23,10 +23,11 @@ def __getInstanceDescriptorPath():
 
 
 def __makeInstanceDescriptorFile():
-    if not os.path.exists(__getInstanceDescriptorPath()):
-        with open(__getInstanceDescriptorPath(), 'w') as f:
+    descriptor = __getInstanceDescriptorPath()
+    if not os.path.exists(descriptor):
+        with open(descriptor, 'w') as f:
             json.dump([], f)
-        os.chmod(__getInstanceDescriptorPath(), stat.S_IRUSR | stat.S_IWUSR)
+        os.chmod(descriptor, stat.S_IRUSR | stat.S_IWUSR)
 
 
 def __checkInstance(pid):
@@ -56,9 +57,9 @@ def __rewriteInstanceFile(append, removePids):
         # would cause duplication.
         #
         # Also, we remove the records to the given PIDs, if any exists.
-        appendPids = [i['pid'] for i in append]
+        append_pids = [i['pid'] for i in append]
         instances = [i for i in json.load(f)
-                     if i['pid'] not in appendPids and
+                     if i['pid'] not in append_pids and
                      i['pid'] not in removePids and
                      __checkInstance(i['pid'])]
 
@@ -91,11 +92,13 @@ def unregister(pid):
 
 def list():
     """Returns the list of running servers for the current user."""
+
     # This method does NOT write the descriptor file.
 
+    descriptor = __getInstanceDescriptorPath()
     instances = []
-    if os.path.exists(__getInstanceDescriptorPath()):
-        with open(__getInstanceDescriptorPath(), 'r') as f:
+    if os.path.exists(descriptor):
+        with open(descriptor, 'r') as f:
             portalocker.lock(f, portalocker.LOCK_SH)
             instances = [i for i in json.load(f) if __checkInstance(i['pid'])]
             portalocker.unlock(f)

@@ -105,7 +105,7 @@ def handle_server(args):
 
     if (args.list or args.stop or args.stop_all) and \
             not (args.list ^ args.stop ^ args.stop_all):
-        print("CodeChecker server: error: argument -l/--list and -s/--stop "
+        print("CodeChecker server: error: argument -l/--list and -s/--stop"
               "and --stop-all are mutually exclusive.")
         sys.exit(2)
 

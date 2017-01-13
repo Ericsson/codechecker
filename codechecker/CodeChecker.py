@@ -53,7 +53,7 @@ class OrderedCheckersAction(argparse.Action):
         namespace.ordered_checkers = ordered_checkers
 
 
-# ------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 class DeprecatedOptionAction(argparse.Action):
     """
     Deprecated argument action.
@@ -157,7 +157,7 @@ def add_verbose_arguments(parser):
                         help='Set verbosity level.')
 
 
-# ------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 def main():
     """
     CodeChecker main command line.
@@ -571,7 +571,7 @@ Build command which is used to build the project.''')
         sys.exit(2)
 
 
-# ------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 if __name__ == "__main__":
     LOG.debug(sys.path)
     LOG.debug(sys.version)

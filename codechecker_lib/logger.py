@@ -30,7 +30,7 @@ class BColors(object):
     ENDC = '\033[0m'
 
 
-# ------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 logging.DEBUG_ANALYZER = 15
 logging.addLevelName(logging.DEBUG_ANALYZER, 'DEBUG_ANALYZER')
 

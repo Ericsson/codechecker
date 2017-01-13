@@ -21,8 +21,8 @@ _Dummy_Event = multiprocessing.Event()
 class RunResults(unittest.TestCase):
     def setUp(self):
         self.workspace = os.path.join(
-                             os.environ['TEST_CODECHECKER_PACKAGE_DIR'],
-                             "workspace")
+            os.environ['TEST_CODECHECKER_PACKAGE_DIR'],
+            "workspace")
 
     def test_instances_environment(self):
         """Tests that the running instances are properly added to the user's
