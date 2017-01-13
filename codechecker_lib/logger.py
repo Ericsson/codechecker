@@ -59,7 +59,11 @@ class CustomFormatter(logging.Formatter):
         '%(filename)s:%(lineno)d %(funcName)s() - %(message)s'
 
     def formatTime(self, record, datefmt=None):
-        return time.strftime('%H:%M')
+        if LoggerFactory.log_level == logging.DEBUG or \
+                LoggerFactory.log_level == logging.DEBUG_ANALYZER:
+            return time.strftime('%H:%M:%S')
+        else:
+            return time.strftime('%H:%M')
 
     def format(self, record):
 
