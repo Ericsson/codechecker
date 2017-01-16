@@ -65,13 +65,13 @@ function (declare, topic, domConstruct, Dialog, DropDownMenu, MenuItem,
       class : 'credits',
       content :
         '<b>D&aacute;niel Krupp</b> <a href="https://github.com/dkrupp">@dkrupp</a><br>daniel.krupp@ericsson.com<br> \
-         <b>Gy&ouml;rgy Orb&aacute;n</b> <a href="https://github.com/gyorb">@gyorb</a><br>daniel.krupp@ericsson.com<br> \
-         <b>Boldizs&aacute;r T&oacute;th</b> <a href="https://github.com/bobszi">@bobszi</a><br>daniel.krupp@ericsson.com<br> \
-         <b>G&aacute;bor Alex Isp&aacute;novics</b> <a href="https://github.com/igalex">@igalex</a><br>daniel.krupp@ericsson.com<br> \
-         <b>Bence Babati</b> <a href="https://github.com/babati">@babati</a><br>daniel.krupp@ericsson.com<br> \
-         <b>G&aacute;bor Horv&aacuteth</b> <a href="https://github.com/Xazax-hun">@Xazax-hun</a><br>daniel.krupp@ericsson.com<br> \
-         <b>Szabolcs Sipos</b> <a href="https://github.com/labuwx">@labuwx</a><br>daniel.krupp@ericsson.com<br> \
-         <b>Tibor Brunner</b> <a href="https://github.com/bruntib">@bruntib</a><br>daniel.krupp@ericsson.com<br>'
+         <b>Gy&ouml;rgy Orb&aacute;n</b> <a href="https://github.com/gyorb">@gyorb</a><br>gyorgy.orban@ericsson.com<br> \
+         <b>Boldizs&aacute;r T&oacute;th</b> <a href="https://github.com/bobszi">@bobszi</a><br>toth.boldizsar@gmail.com<br> \
+         <b>G&aacute;bor Alex Isp&aacute;novics</b> <a href="https://github.com/igalex">@igalex</a><br>gabor.alex.ispanovics@ericsson.com<br> \
+         <b>Bence Babati</b> <a href="https://github.com/babati">@babati</a><br>bence.babati@ericsson.com<br> \
+         <b>G&aacute;bor Horv&aacuteth</b> <a href="https://github.com/Xazax-hun">@Xazax-hun</a><br>gabor.a.horvath@ericsson.com<br> \
+         <b>Szabolcs Sipos</b> <a href="https://github.com/labuwx">@labuwx</a><br>labuwx@balfug.com<br> \
+         <b>Tibor Brunner</b> <a href="https://github.com/bruntib">@bruntib</a><br>tibor.brunner@ericsson.com<br>'
     });
 
     var menuItems = new DropDownMenu();
