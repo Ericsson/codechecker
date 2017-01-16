@@ -7,6 +7,7 @@
 Main viewer server starts a http server which handles thrift client
 and browser requests
 """
+import atexit
 import base64
 import errno
 import os
@@ -347,8 +348,7 @@ def start_server(package_data, port, db_conn_string, suppress_handler,
 
     LOG.info('Waiting for client requests on [' +
              access_server_host + ':' + str(port) + ']')
-    try:
-        http_server.serve_forever()
-        LOG.info('Webserver quit.')
-    finally:
-        instance_manager.unregister(os.getpid())
+
+    atexit.register(instance_manager.unregister, os.getpid())
+    http_server.serve_forever()
+    LOG.info('Webserver quit.')
