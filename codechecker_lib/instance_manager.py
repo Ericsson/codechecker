@@ -13,13 +13,12 @@ import json
 import os
 import portalocker
 import psutil
+import socket
 import stat
-import tempfile
 
 
 def __getInstanceDescriptorPath():
-    return os.path.join(tempfile.gettempdir(), ".codechecker_" +
-                        getpass.getuser() + ".instances.json")
+    return os.path.join(os.path.expanduser("~"), ".codechecker.instances.json")
 
 
 def __makeInstanceDescriptorFile():
@@ -30,9 +29,16 @@ def __makeInstanceDescriptorFile():
         os.chmod(descriptor, stat.S_IRUSR | stat.S_IWUSR)
 
 
-def __checkInstance(pid):
+def __checkInstance(hostname, pid):
     """Check if the given process on the system is a valid, running CodeChecker
     for the current user."""
+
+    # Instances running on a remote host with a filesystem shared with us can
+    # not usually be checked (/proc is rarely shared across computers...),
+    # so we consider them "alive" servers.
+    if hostname != socket.gethostname():
+        return True
+
     try:
         proc = psutil.Process(pid)
 
@@ -43,11 +49,11 @@ def __checkInstance(pid):
         return False
 
 
-def __rewriteInstanceFile(append, removePids):
+def __rewriteInstanceFile(append, remove):
     """This helper method reads the user's instance descriptor and manages it
     eliminating dead records, appending new ones and reserialising the file."""
-    __makeInstanceDescriptorFile()
 
+    __makeInstanceDescriptorFile()
     with open(__getInstanceDescriptorPath(), 'r+') as f:
         portalocker.lock(f, portalocker.LOCK_EX)
 
@@ -60,8 +66,8 @@ def __rewriteInstanceFile(append, removePids):
         append_pids = [i['pid'] for i in append]
         instances = [i for i in json.load(f)
                      if i['pid'] not in append_pids and
-                     i['pid'] not in removePids and
-                     __checkInstance(i['pid'])]
+                     (i['hostname'] + ":" + str(i['pid'])) not in remove and
+                     __checkInstance(i['hostname'], i['pid'])]
 
         instances = instances + append
 
@@ -76,7 +82,9 @@ def register(pid, workspace, port):
     Adds the specified CodeChecker server instance to the user's instance
     descriptor.
     """
+
     __rewriteInstanceFile([{"pid": pid,
+                            "hostname": socket.gethostname(),
                             "workspace": workspace,
                             "port": port}],
                           [])
@@ -87,7 +95,8 @@ def unregister(pid):
     Removes the specified CodeChecker server instance from the user's instance
     descriptor.
     """
-    __rewriteInstanceFile([], [pid])
+
+    __rewriteInstanceFile([], [socket.gethostname() + ":" + str(pid)])
 
 
 def list():
@@ -100,7 +109,9 @@ def list():
     if os.path.exists(descriptor):
         with open(descriptor, 'r') as f:
             portalocker.lock(f, portalocker.LOCK_SH)
-            instances = [i for i in json.load(f) if __checkInstance(i['pid'])]
+            instances = [i for i in json.load(f) if __checkInstance(
+                i['hostname'],
+                i['pid'])]
             portalocker.unlock(f)
 
     return instances
