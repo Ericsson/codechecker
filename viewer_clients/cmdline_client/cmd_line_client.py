@@ -558,17 +558,17 @@ def register_client_command_line(argument_parser):
                             help='Output format.')
     sum_parser.set_defaults(func=handle_list_result_types)
 
-    # List resulttypes.
-    sum_parser = subparsers.add_parser('del', help='Remove run results.')
-    sum_parser.add_argument('--host', type=str, dest="host",
+    # Delete run results.
+    del_parser = subparsers.add_parser('del', help='Remove run results.')
+    del_parser.add_argument('--host', type=str, dest="host",
                             default='localhost',
                             help='Server host.')
-    sum_parser.add_argument('-p', '--port', type=str, dest="port",
+    del_parser.add_argument('-p', '--port', type=str, dest="port",
                             default=11444,
                             required=True, help='HTTP Server port.')
-    sum_parser.add_argument('-n', '--name', nargs='+', type=str, dest="name",
+    del_parser.add_argument('-n', '--name', nargs='+', type=str, dest="name",
                             required=True, help='Server port.')
-    sum_parser.set_defaults(func=handle_remove_run_results)
+    del_parser.set_defaults(func=handle_remove_run_results)
 
     # Handle authentication.
     auth_parser = subparsers.add_parser('login', help='Log in onto a CodeChecker server.')
