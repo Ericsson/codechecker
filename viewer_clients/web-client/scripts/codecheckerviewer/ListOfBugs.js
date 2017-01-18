@@ -73,8 +73,9 @@ function (declare, Deferred, ObjectStore, Store, QueryResults, topic,
         reportData.severity
           = util.severityFromCodeToString(reportData.severity);
 
-        reportData.checkedFile
-          += ' @ Line ' + reportData.lastBugPosition.startLine;
+        // (via http://stackoverflow.com/a/27961022/1428773)
+        reportData.checkedFile = '&lrm;' + reportData.checkedFile +
+            ' @ Line ' + reportData.lastBugPosition.startLine;
       });
 
       return reportDataList;
