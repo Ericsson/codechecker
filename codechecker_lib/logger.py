@@ -30,6 +30,15 @@ class BColors(object):
     ENDC = '\033[0m'
 
 
+def add_verbose_arguments(parser):
+    """
+    Verbosity level arguments.
+    """
+    parser.add_argument('--verbose', type=str, dest='verbose',
+                        choices=['info', 'debug', 'debug_analyzer'],
+                        default='info',
+                        help='Set verbosity level.')
+
 # ------------------------------------------------------------------------------
 logging.DEBUG_ANALYZER = 15
 logging.addLevelName(logging.DEBUG_ANALYZER, 'DEBUG_ANALYZER')

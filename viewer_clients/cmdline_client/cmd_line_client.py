@@ -18,6 +18,7 @@ from thrift.Thrift import TApplicationException
 from Authentication import ttypes as AuthTypes
 
 from codechecker_lib import session_manager
+from codechecker_lib import logger
 
 SUPPORTED_VERSION = '5.0'
 
@@ -475,6 +476,7 @@ def register_client_command_line(argument_parser):
     listruns_parser.add_argument('-o', choices=['plaintext', 'json', 'csv'],
                                  default='plaintext', type=str,
                                  dest="output_format", help='Output format.')
+    logger.add_verbose_arguments(listruns_parser)
     listruns_parser.set_defaults(func=handle_list_runs)
 
     # List results.
@@ -498,6 +500,7 @@ def register_client_command_line(argument_parser):
     listresults_parser.add_argument('-o', choices=['plaintext', 'json', 'csv'],
                                     default='plaintext', type=str,
                                     dest="output_format", help='Output format.')
+    logger.add_verbose_arguments(listresults_parser)
     listresults_parser.set_defaults(func=handle_list_results)
 
     # List diffs.
@@ -531,6 +534,7 @@ def register_client_command_line(argument_parser):
                        help="Show unresolved results.")
     group.add_argument('--resolved', action="store_true", dest="resolved",
                        help="Show resolved results.")
+    logger.add_verbose_arguments(diff_parser)
     diff_parser.set_defaults(func=handle_diff_results)
 
     # List resulttypes.
@@ -558,17 +562,18 @@ def register_client_command_line(argument_parser):
                             help='Output format.')
     sum_parser.set_defaults(func=handle_list_result_types)
 
-    # List resulttypes.
-    sum_parser = subparsers.add_parser('del', help='Remove run results.')
-    sum_parser.add_argument('--host', type=str, dest="host",
+    # Delete run results.
+    del_parser = subparsers.add_parser('del', help='Remove run results.')
+    del_parser.add_argument('--host', type=str, dest="host",
                             default='localhost',
                             help='Server host.')
-    sum_parser.add_argument('-p', '--port', type=str, dest="port",
+    del_parser.add_argument('-p', '--port', type=str, dest="port",
                             default=11444,
                             required=True, help='HTTP Server port.')
-    sum_parser.add_argument('-n', '--name', nargs='+', type=str, dest="name",
+    del_parser.add_argument('-n', '--name', nargs='+', type=str, dest="name",
                             required=True, help='Server port.')
-    sum_parser.set_defaults(func=handle_remove_run_results)
+    logger.add_verbose_arguments(del_parser)
+    del_parser.set_defaults(func=handle_remove_run_results)
 
     # Handle authentication.
     auth_parser = subparsers.add_parser('login', help='Log in onto a CodeChecker server.')
@@ -582,6 +587,7 @@ def register_client_command_line(argument_parser):
                              required=False, help="Password for username-password authentication (optional).")
     auth_parser.add_argument('-d', '--deactivate', '--logout', action='store_true',
                              dest='logout', help='Send a logout request for the server.')
+    logger.add_verbose_arguments(auth_parser)
     auth_parser.set_defaults(func=handle_auth_requests)
 
 def main():
