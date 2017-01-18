@@ -41,6 +41,7 @@ class CmdLineOutputEncoder(json.JSONEncoder):
         d.update(obj.__dict__)
         return d
 
+
 def handle_auth_requests(args):
     session = session_manager.SessionManager_Client()
     auth_client = authentication_helper.ThriftAuthHelper(args.host,
@@ -109,6 +110,7 @@ def __check_authentication(client):
         return True
     else:
         return False
+
 
 def setupClient(host, port, uri):
     ''' setup the thrift client and check
@@ -227,6 +229,7 @@ def check_run_names(client, check_names):
 
     return run_info
 
+
 def add_filter_conditions(report_filter, filter_str):
     """This function fills some attributes of the given report filter based on
     the filter string which is provided in the command line. The filter string
@@ -241,11 +244,13 @@ def add_filter_conditions(report_filter, filter_str):
     severity, checker, path = map(lambda x: x.strip(), filter_str.split(':'))
 
     if severity:
-        report_filter.severity = shared.ttypes.Severity._NAMES_TO_VALUES[severity.upper()]
+        report_filter.severity = \
+                shared.ttypes.Severity._NAMES_TO_VALUES[severity.upper()]
     if checker:
         report_filter.checkerId = '*' + checker + '*'
     if path:
         report_filter.filepath = path
+
 
 def handle_list_runs(args):
     client = setupClient(args.host, args.port, '/')
@@ -281,7 +286,8 @@ def handle_list_results(args):
 
     filters = []
     if args.suppressed:
-        report_filter = codeCheckerDBAccess.ttypes.ReportFilter(suppressed=True)
+        report_filter = codeCheckerDBAccess.ttypes.ReportFilter(
+            suppressed=True)
     else:
         report_filter = codeCheckerDBAccess.ttypes.ReportFilter(
             suppressed=False)
@@ -336,7 +342,8 @@ def handle_list_result_types(args):
 
     filters = []
     if args.suppressed:
-        report_filter = codeCheckerDBAccess.ttypes.ReportFilter(suppressed=True)
+        report_filter = codeCheckerDBAccess.ttypes.ReportFilter(
+            suppressed=True)
     else:
         report_filter = codeCheckerDBAccess.ttypes.ReportFilter(
             suppressed=False)
@@ -452,8 +459,8 @@ def handle_diff_results(args):
         printResult(client.getNewResults, baseid, newid, args.suppressed,
                     args.output_format)
     elif args.unresolved:
-        printResult(client.getUnresolvedResults, baseid, newid, args.suppressed,
-                    args.output_format)
+        printResult(client.getUnresolvedResults, baseid, newid,
+                    args.suppressed, args.output_format)
     elif args.resolved:
         printResult(client.getResolvedResults, baseid, newid, args.suppressed,
                     args.output_format)
@@ -494,12 +501,13 @@ def register_client_command_line(argument_parser):
                                     dest="suppressed",
                                     help='Suppressed results.')
     listresults_parser.add_argument('--filter', dest='filter', type=str,
-                                    default='::', help='Filter string in the '\
-                                    'following format: '\
+                                    default='::', help='Filter string in the '
+                                    'following format: '
                                     '<severity>:<checker_name>:<file_path>')
     listresults_parser.add_argument('-o', choices=['plaintext', 'json', 'csv'],
                                     default='plaintext', type=str,
-                                    dest="output_format", help='Output format.')
+                                    dest="output_format",
+                                    help='Output format.')
     logger.add_verbose_arguments(listresults_parser)
     listresults_parser.set_defaults(func=handle_list_results)
 
@@ -524,8 +532,8 @@ def register_client_command_line(argument_parser):
                              default='plaintext', type=str,
                              dest="output_format", help='Output format.')
     diff_parser.add_argument('--filter', dest='filter', type=str,
-                             default='::', help='Filter string in the '\
-                             'following format: '\
+                             default='::', help='Filter string in the '
+                             'following format: '
                              '<severity>:<checker_name>:<file_path>')
     group = diff_parser.add_mutually_exclusive_group(required=True)
     group.add_argument('--new', action="store_true", dest="new",
@@ -554,12 +562,12 @@ def register_client_command_line(argument_parser):
     sum_parser.add_argument('-s', '--suppressed', action="store_true",
                             dest="suppressed", help='Suppressed results.')
     sum_parser.add_argument('--filter', dest='filter', type=str,
-                            default='::', help='Filter string in the '\
-                            'following format: '\
+                            default='::', help='Filter string in the '
+                            'following format: '
                             '<severity>:<checker_name>:<source_file_path>')
     sum_parser.add_argument('-o', choices=['plaintext', 'json', 'csv'],
-                            default='plaintext', type=str, dest="output_format",
-                            help='Output format.')
+                            default='plaintext', type=str,
+                            dest="output_format", help='Output format.')
     logger.add_verbose_arguments(sum_parser)
     sum_parser.set_defaults(func=handle_list_result_types)
 
@@ -577,19 +585,26 @@ def register_client_command_line(argument_parser):
     del_parser.set_defaults(func=handle_remove_run_results)
 
     # Handle authentication.
-    auth_parser = subparsers.add_parser('login', help='Log in onto a CodeChecker server.')
-    auth_parser.add_argument('--host', type=str, dest="host", default='localhost',
-                             help='Server host.')
-    auth_parser.add_argument('-p', '--port', type=str, dest="port", default=11444,
-                             required=True, help='HTTP Server port.')
+    auth_parser = subparsers.add_parser('login', help='Log in onto a '
+                                                      'CodeChecker server.')
+    auth_parser.add_argument('--host', type=str, dest="host",
+                             default='localhost', help='Server host.')
+    auth_parser.add_argument('-p', '--port', type=str, dest="port",
+                             default=11444, required=True,
+                             help='HTTP Server port.')
     auth_parser.add_argument('-u', '--username', type=str, dest="username",
-                             required=False, help='Username to use on authentication.')
+                             required=False,
+                             help='Username to use on authentication.')
     auth_parser.add_argument('-pw', '--password', type=str, dest="password",
-                             required=False, help="Password for username-password authentication (optional).")
-    auth_parser.add_argument('-d', '--deactivate', '--logout', action='store_true',
-                             dest='logout', help='Send a logout request for the server.')
+                             required=False,
+                             help="Password for username-password"
+                                  "authentication (optional).")
+    auth_parser.add_argument('-d', '--deactivate', '--logout',
+                             action='store_true', dest='logout',
+                             help='Send a logout request for the server.')
     logger.add_verbose_arguments(auth_parser)
     auth_parser.set_defaults(func=handle_auth_requests)
+
 
 def main():
     parser = argparse.ArgumentParser(
