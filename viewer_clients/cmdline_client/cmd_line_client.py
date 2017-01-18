@@ -6,6 +6,7 @@
 
 import argparse
 import csv
+import getpass
 import json
 import sys
 
@@ -608,7 +609,8 @@ def register_client_command_line(argument_parser):
                              help='HTTP Server port.')
     auth_parser.add_argument('-u', '--username', type=str, dest="username",
                              required=False,
-                             help='Username to use on authentication.')
+                             help='Username to use on authentication.',
+                             default=getpass.getuser())
     auth_parser.add_argument('-pw', '--password', type=str, dest="password",
                              required=False,
                              help="Password for username-password"
