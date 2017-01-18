@@ -9,6 +9,8 @@ import csv
 import json
 import sys
 
+from argparse import ArgumentDefaultsHelpFormatter as ADHFormatter
+
 import codeCheckerDBAccess
 import shared
 from . import thrift_helper
@@ -473,12 +475,14 @@ def register_client_command_line(argument_parser):
     subparsers = argument_parser.add_subparsers()
 
     # List runs.
-    listruns_parser = subparsers.add_parser('runs', help='Get the run data.')
+    listruns_parser = subparsers.add_parser('runs',
+                                            formatter_class=ADHFormatter,
+                                            help='Get the run data.')
     listruns_parser.add_argument('--host', type=str, dest="host",
                                  default='localhost',
                                  help='Server host.')
     listruns_parser.add_argument('-p', '--port', type=str, dest="port",
-                                 default=11444,
+                                 default=8001,
                                  required=True, help='HTTP Server port.')
     listruns_parser.add_argument('-o', choices=['plaintext', 'json', 'csv'],
                                  default='plaintext', type=str,
@@ -487,12 +491,14 @@ def register_client_command_line(argument_parser):
     listruns_parser.set_defaults(func=handle_list_runs)
 
     # List results.
-    listresults_parser = subparsers.add_parser('results', help='List results.')
+    listresults_parser = subparsers.add_parser('results',
+                                               formatter_class=ADHFormatter,
+                                               help='List results.')
     listresults_parser.add_argument('--host', type=str, dest="host",
                                     default='localhost',
                                     help='Server host.')
     listresults_parser.add_argument('-p', '--port', type=str, dest="port",
-                                    default=11444,
+                                    default=8001,
                                     required=True, help='HTTP Server port.')
     listresults_parser.add_argument('-n', '--name', type=str, dest="name",
                                     required=True,
@@ -512,12 +518,14 @@ def register_client_command_line(argument_parser):
     listresults_parser.set_defaults(func=handle_list_results)
 
     # List diffs.
-    diff_parser = subparsers.add_parser('diff', help='Diff two run.')
+    diff_parser = subparsers.add_parser('diff',
+                                        formatter_class=ADHFormatter,
+                                        help='Diff two run.')
     diff_parser.add_argument('--host', type=str, dest="host",
                              default='localhost',
                              help='Server host.')
     diff_parser.add_argument('-p', '--port', type=str, dest="port",
-                             default=11444,
+                             default=8001,
                              required=True, help='HTTP Server port.')
     diff_parser.add_argument('-b', '--basename', type=str, dest="basename",
                              required=True,
@@ -546,12 +554,14 @@ def register_client_command_line(argument_parser):
     diff_parser.set_defaults(func=handle_diff_results)
 
     # List resulttypes.
-    sum_parser = subparsers.add_parser('sum', help='Sum results.')
+    sum_parser = subparsers.add_parser('sum',
+                                       formatter_class=ADHFormatter,
+                                       help='Sum results.')
     sum_parser.add_argument('--host', type=str, dest="host",
                             default='localhost',
                             help='Server host.')
     sum_parser.add_argument('-p', '--port', type=str, dest="port",
-                            default=11444,
+                            default=8001,
                             required=True, help='HTTP Server port.')
     name_group = sum_parser.add_mutually_exclusive_group(required=True)
     name_group.add_argument('-n', '--name', nargs='+', type=str, dest="names",
@@ -572,25 +582,29 @@ def register_client_command_line(argument_parser):
     sum_parser.set_defaults(func=handle_list_result_types)
 
     # Delete run results.
-    del_parser = subparsers.add_parser('del', help='Remove run results.')
+    del_parser = subparsers.add_parser('del',
+                                       formatter_class=ADHFormatter,
+                                       help='Remove run results.')
     del_parser.add_argument('--host', type=str, dest="host",
                             default='localhost',
                             help='Server host.')
     del_parser.add_argument('-p', '--port', type=str, dest="port",
-                            default=11444,
+                            default=8001,
                             required=True, help='HTTP Server port.')
     del_parser.add_argument('-n', '--name', nargs='+', type=str, dest="name",
-                            required=True, help='Server port.')
+                            required=True, help='Run name to delete.')
     logger.add_verbose_arguments(del_parser)
     del_parser.set_defaults(func=handle_remove_run_results)
 
     # Handle authentication.
-    auth_parser = subparsers.add_parser('login', help='Log in onto a '
-                                                      'CodeChecker server.')
+    auth_parser = subparsers.add_parser('login',
+                                        formatter_class=ADHFormatter,
+                                        help='Log in onto a '
+                                             'CodeChecker server.')
     auth_parser.add_argument('--host', type=str, dest="host",
                              default='localhost', help='Server host.')
     auth_parser.add_argument('-p', '--port', type=str, dest="port",
-                             default=11444, required=True,
+                             default=8001, required=True,
                              help='HTTP Server port.')
     auth_parser.add_argument('-u', '--username', type=str, dest="username",
                              required=False,
