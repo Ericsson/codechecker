@@ -51,13 +51,13 @@ Install
 ### Linux
 
 For a detailed dependency list, please see [Requirements](docs/deps.md). The
-following commands are used to bootstrap CodeChecker on Ubuntu 14.04.2 LTS:
+following commands are used to bootstrap CodeChecker on Ubuntu 16.04.1 LTS:
 
 ~~~{.sh}
 # Install mandatory dependencies for a development and analysis environment
-# NOTE: clang-3.6 can be replaced by any later versions of LLVM/Clang
-sudo apt-get install clang-3.6 build-essential doxygen gcc-multilib git \
-  python-virtualenv python-dev thrift-compiler curl
+# NOTE: clang-3.8 can be replaced by any later versions of LLVM/Clang
+sudo apt-get install clang-3.8 build-essential curl doxygen gcc-multilib \
+  git python-virtualenv python-dev thrift-compiler
 
 # Create a Python virtualenv and set it as your environment
 virtualenv -p /usr/bin/python2.7 ~/checker_env
@@ -77,6 +77,19 @@ pip install -r .ci/basic_python_requirements
 export PATH="~/codechecker_package/CodeChecker/bin:$PATH"
 
 cd ..
+~~~
+
+#### Upgrading environment after system or Python upgrade
+
+If you have upgraded your system's Python to a newer version (e.g. from
+`2.7.6` to `2.7.12` &ndash; this is the case when upgrading Ubuntu from
+14.04.2 LTS to 16.04.1 LTS), the installed environment will not work
+out-of-the-box. To fix this issue, run the following command to upgrade your
+`checker_env` too:
+
+~~~{.sh}
+cd ~/checker_env
+virtualenv -p /usr/bin/python2.7 .
 ~~~
 
 ### Mac OS X
@@ -120,12 +133,12 @@ Check your first project
 
 _Clang_ and/or _Clang-Tidy_ must be available on your system before you can
 run analysis on a test project. The binaries are usually named `clang` or
-`clang-3.6` (and `clang-tidy` or `clang-tidy-3.6`, respectively), but this
+`clang-3.8` (and `clang-tidy` or `clang-tidy-3.8`, respectively), but this
 depends on your Linux distribution.
 
 
-    which clang-3.6
-    which clang-tidy-3.6
+    which clang-3.8
+    which clang-tidy-3.8
 
 
 If `clang` or `clang-tidy` is not an available command, you must configure the
@@ -137,8 +150,8 @@ clang binaries available in your `PATH`.
 
 ~~~{.json}
 "analyzers" : {
-  "clangsa" : "clang-3.6",
-  "clang-tidy" : "clang-tidy-3.6"
+  "clangsa" : "clang-3.8",
+  "clang-tidy" : "clang-tidy-3.8"
 },
 ~~~
 
@@ -184,25 +197,26 @@ the `-w` flag.
 Open the [CodeChecker Web Viewer](http://localhost:8001) in your browser, and
 you should be greeted with a web application showing you the analysis results.
 
-Known important limitations
----------------------------
+Important limitations with older Clang versions
+-----------------------------------------------
 
-CodeChecker requires some new features from LLVM/Clang to work properly.
+CodeChecker requires some features from LLVM/Clang to work properly which are
+not available in the `3.6` or earlier releases.
 
 If your installed Clang does not support these features you will see the
 following debug messages in your log:
 
 > Check name wasn't found in the plist file.
 
-Use clang `>= 3.7` or trunk `r228624` &mdash; otherwise CodeChecker makes a
-guess based on the report message
+ * Use clang `>= 3.7` or trunk `r228624` &mdash; otherwise CodeChecker makes
+   a guess based on the report message.
 
 > Hash value wasn't found in the plist file.
 
-Use clang `>= 3.8` or trunk `r251011` &mdash; otherwise CodeChecker generates
-a simple hash based on the filename and the line content. This method is
-applied for Clang-Tidy results too, because Clang-Tidy does not support
-bug identifier hash generation currently
+ * Use clang `>= 3.8` or trunk `r251011` &mdash; otherwise CodeChecker
+   generates a simple hash based on the filename and the line content. This
+   method is applied for Clang-Tidy results too, because Clang-Tidy does not
+   support bug identifier hash generation currently.
 
 
 Additional documentation
