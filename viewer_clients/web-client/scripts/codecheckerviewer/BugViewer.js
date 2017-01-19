@@ -79,7 +79,8 @@ function (declare, dom, style, on, query, Memory, Observable, topic,
         mode : 'text/x-c++src',
         foldGutter : true,
         gutters : ['CodeMirror-linenumbers', 'bugInfo'],
-        extraKeys : {}
+        extraKeys : {},
+        viewportMargin : 500
       });
 
       this.codeMirror.on('viewportChange', function (cm, from, to) {
