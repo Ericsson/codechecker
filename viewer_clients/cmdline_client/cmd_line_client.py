@@ -47,61 +47,71 @@ class CmdLineOutputEncoder(json.JSONEncoder):
 
 def handle_auth_requests(args):
     session = session_manager.SessionManager_Client()
+
+    auth_token = session.getToken(args.host, args.port)
+
     auth_client = authentication_helper.ThriftAuthHelper(args.host,
                                                          args.port,
                                                          '/Authentication',
-                                                         session.getToken(
-                                                             args.host,
-                                                             args.port))
-
+                                                         auth_token)
     try:
         handshake = auth_client.getAuthParameters()
+
+        if not handshake.requiresAuthentication:
+            print("This server does not require privileged access.")
+            return
+
+        if auth_token and handshake.sessionStillActive:
+            print("Active authentication token found no new login required.")
+            return
+        else:
+            print("No/Old authentication token found please login again.")
+
     except TApplicationException as tex:
         print("This server does not support privileged access.")
         return
 
-    if not handshake.requiresAuthentication:
-        print("This server does not require privileged access.")
-        return
-
     if args.logout:
-        if args.username or args.password:
-            print('ERROR! Do not supply username and password '
-                  'with `--logout` command.')
-            sys.exit(1)
-
         logout_done = auth_client.destroySession()
         if logout_done:
             session.saveToken(args.host, args.port, None, True)
             print('Successfully deauthenticated from server.')
-
         return
 
     methods = auth_client.getAcceptedAuthMethods()
     # Attempt username-password auth first
     if 'Username:Password' in str(methods):
-        if not args.username or not args.password:
-            # Try to use a previously saved credential from configuration file
-            savedAuth = session.getAuthString(args.host, args.port)
+        pwd = None
+        username = args.username
 
-            if savedAuth:
-                print('Logging in using preconfigured credentials.')
-                args.username = savedAuth.split(":")[0]
-                args.password = savedAuth.split(":")[1]
-            else:
-                print('Can not authenticate with username'
-                      'and password if it is not specified...')
-                sys.exit(1)
+        # Try to use a previously saved credential from configuration file
+        savedAuth = session.getAuthString(args.host, args.port)
 
+        if savedAuth:
+            print('Logging in using preconfigured credentials.')
+            username = savedAuth.split(":")[0]
+            pwd = savedAuth.split(":")[1]
+        else:
+            print('Logging in using command line credentials.')
+            print('Please provide password for user: ' + username)
+            pwd = getpass.getpass('Password:')
+
+        print("Trying to login: " + username + "@" +
+              args.host + ":" + args.port)
         try:
             session_token = auth_client.performLogin("Username:Password",
-                                                     args.username + ":" +
-                                                     args.password)
+                                                     username + ":" +
+                                                     pwd)
+
             session.saveToken(args.host, args.port, session_token)
             print("Server reported successful authentication!")
         except shared.ttypes.RequestFailed as reqfail:
+            print("Authentication failed please check your credentials.")
             print(reqfail.message)
             sys.exit(1)
+    else:
+        print('Username, password authentication is not supported.')
+        sys.exit(1)
 
 
 def __check_authentication(client):
@@ -483,8 +493,7 @@ def register_client_command_line(argument_parser):
                                  default='localhost',
                                  help='Server host.')
     listruns_parser.add_argument('-p', '--port', type=str, dest="port",
-                                 default=8001,
-                                 required=True, help='HTTP Server port.')
+                                 default="8001", help='HTTP Server port.')
     listruns_parser.add_argument('-o', choices=['plaintext', 'json', 'csv'],
                                  default='plaintext', type=str,
                                  dest="output_format", help='Output format.')
@@ -499,8 +508,7 @@ def register_client_command_line(argument_parser):
                                     default='localhost',
                                     help='Server host.')
     listresults_parser.add_argument('-p', '--port', type=str, dest="port",
-                                    default=8001,
-                                    required=True, help='HTTP Server port.')
+                                    default="8001", help='HTTP Server port.')
     listresults_parser.add_argument('-n', '--name', type=str, dest="name",
                                     required=True,
                                     help='Check name.')
@@ -526,8 +534,7 @@ def register_client_command_line(argument_parser):
                              default='localhost',
                              help='Server host.')
     diff_parser.add_argument('-p', '--port', type=str, dest="port",
-                             default=8001,
-                             required=True, help='HTTP Server port.')
+                             default="8001", help='HTTP Server port.')
     diff_parser.add_argument('-b', '--basename', type=str, dest="basename",
                              required=True,
                              help='Base name.')
@@ -562,8 +569,7 @@ def register_client_command_line(argument_parser):
                             default='localhost',
                             help='Server host.')
     sum_parser.add_argument('-p', '--port', type=str, dest="port",
-                            default=8001,
-                            required=True, help='HTTP Server port.')
+                            default="8001", help='HTTP Server port.')
     name_group = sum_parser.add_mutually_exclusive_group(required=True)
     name_group.add_argument('-n', '--name', nargs='+', type=str, dest="names",
                             help='Check name.')
@@ -590,8 +596,7 @@ def register_client_command_line(argument_parser):
                             default='localhost',
                             help='Server host.')
     del_parser.add_argument('-p', '--port', type=str, dest="port",
-                            default=8001,
-                            required=True, help='HTTP Server port.')
+                            default="8001", help='HTTP Server port.')
     del_parser.add_argument('-n', '--name', nargs='+', type=str, dest="name",
                             required=True, help='Run name to delete.')
     logger.add_verbose_arguments(del_parser)
@@ -605,16 +610,11 @@ def register_client_command_line(argument_parser):
     auth_parser.add_argument('--host', type=str, dest="host",
                              default='localhost', help='Server host.')
     auth_parser.add_argument('-p', '--port', type=str, dest="port",
-                             default=8001, required=True,
-                             help='HTTP Server port.')
+                             default="8001", help='HTTP Server port.')
     auth_parser.add_argument('-u', '--username', type=str, dest="username",
                              required=False,
                              help='Username to use on authentication.',
                              default=getpass.getuser())
-    auth_parser.add_argument('-pw', '--password', type=str, dest="password",
-                             required=False,
-                             help="Password for username-password"
-                                  "authentication (optional).")
     auth_parser.add_argument('-d', '--deactivate', '--logout',
                              action='store_true', dest='logout',
                              help='Send a logout request for the server.')

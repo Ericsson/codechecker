@@ -104,6 +104,28 @@ class _Session():
             self.last_access = datetime.now()
 
 
+def check_file_owner_rw(file_to_check):
+    """
+    Check the file permissions.
+    Return:
+        True if only the owner can read or write the file.
+        False if other users or groups can read or write the file.
+    """
+
+    mode = os.stat(file_to_check)[stat.ST_MODE]
+    if mode & stat.S_IRGRP \
+            or mode & stat.S_IWGRP \
+            or mode & stat.S_IROTH \
+            or mode & stat.S_IWOTH:
+        LOG.warning(file_to_check + " is readable by users other than you!"
+                    " This poses a risk of leaking senitive"
+                    "information passwords, session tokens ...!\n"
+                    "Please 'chmod 0600 " + file_to_check + "' so only you can"
+                    " read and write it.")
+        return False
+    return True
+
+
 def load_session_cfg(session_cfg_file):
     """
     Tries to load the session config file which should be a
@@ -111,12 +133,18 @@ def load_session_cfg(session_cfg_file):
     """
 
     scfg_dict = {}
-    with open(session_cfg_file, 'r') as scfg:
-        try:
+    try:
+        with open(session_cfg_file, 'r') as scfg:
             scfg_dict = json.loads(scfg.read())
-        except ValueError as verr:
-            LOG.warning(verr)
-            LOG.warning('Not valid session config file.')
+        check_file_owner_rw(session_cfg_file)
+
+    except IOError:
+        LOG.debug('Failed to open user authentication file: ' +
+                  session_cfg_file)
+    except ValueError as verr:
+        LOG.warning(verr)
+        LOG.warning('Not valid user authentication file: ' +
+                    session_cfg_file)
 
     return scfg_dict
 
@@ -133,6 +161,7 @@ class SessionManager:
         # Check whether workspace's configuration exists.
         session_cfg_file = os.path.join(SessionManager.CodeChecker_Workspace,
                                         "session_config.json")
+
         if not os.path.exists(session_cfg_file):
             LOG.info("CodeChecker server's authentication example "
                      "configuration file created at " + session_cfg_file)
@@ -305,21 +334,14 @@ class SessionManager_Client:
         LOG.debug('Loading session config')
 
         # Check whether user's configuration exists.
-        session_cfg_file = os.path.join(os.path.expanduser("~"),
+        user_home = os.path.expanduser("~")
+        session_cfg_file = os.path.join(user_home,
                                         ".codechecker_passwords.json")
-        if not os.path.exists(session_cfg_file):
-            LOG.info("CodeChecker authentication client's example "
-                     "configuration file created at " + session_cfg_file)
-            shutil.copyfile(os.path.join(os.environ['CC_PACKAGE_ROOT'],
-                                         "config", "session_client.json"),
-                            session_cfg_file)
-            os.chmod(session_cfg_file, stat.S_IRUSR | stat.S_IWUSR)
-
         LOG.debug(session_cfg_file)
 
         scfg_dict = load_session_cfg(session_cfg_file)
 
-        if not scfg_dict["credentials"]:
+        if not scfg_dict.get("credentials"):
             scfg_dict["credentials"] = {}
 
         self.__save = scfg_dict
@@ -327,23 +349,14 @@ class SessionManager_Client:
             if "client_autologin" in scfg_dict else True
 
         # Check and load token storage for user
-        self.token_file = os.path.join(tempfile.gettempdir(), ".codechecker_" +
+        self.token_file = os.path.join(user_home, ".codechecker_" +
                                        getpass.getuser() + ".session.json")
         LOG.debug(self.token_file)
         if os.path.exists(self.token_file):
             with open(self.token_file, 'r') as f:
                 input = json.loads(f.read())
                 self.__tokens = input.get("tokens")
-
-            mode = os.stat(self.token_file)[stat.ST_MODE]
-            if mode & stat.S_IRGRP \
-                    or mode & stat.S_IWGRP \
-                    or mode & stat.S_IROTH \
-                    or mode & stat.S_IWOTH:
-                LOG.warning("Credential file at '" + session_cfg_file + "' is "
-                            "readable by users other than you! This poses a "
-                            "risk of others getting your passwords!\n"
-                            "Please `chmod 0600 " + session_cfg_file + "`")
+            check_file_owner_rw(self.token_file)
         else:
             with open(self.token_file, 'w') as f:
                 json.dump({'tokens': {}}, f)
