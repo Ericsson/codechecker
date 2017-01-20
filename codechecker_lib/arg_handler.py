@@ -6,10 +6,12 @@
 """
 Handle command line arguments.
 """
+import errno
 import json
 import multiprocessing
 import os
 import shutil
+import socket
 import sys
 import tempfile
 
@@ -157,12 +159,21 @@ def handle_server(args):
                     'checker_md_docs': checker_md_docs,
                     'checker_md_docs_map': checker_md_docs_map}
 
-    client_db_access_server.start_server(package_data,
-                                         args.view_port,
-                                         db_connection_string,
-                                         suppress_handler,
-                                         args.not_host_only,
-                                         context.db_version_info)
+    try:
+        client_db_access_server.start_server(package_data,
+                                             args.view_port,
+                                             db_connection_string,
+                                             suppress_handler,
+                                             args.not_host_only,
+                                             context.db_version_info)
+    except socket.error as err:
+        if err.errno == errno.EADDRINUSE:
+            LOG.error("Server can't be started, maybe the given port number "
+                      "({}) is already used. Check the connection "
+                      "parameters.".format(args.view_port))
+            sys.exit(1)
+        else:
+            raise
 
 
 def handle_log(args):
