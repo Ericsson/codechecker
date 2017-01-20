@@ -392,8 +392,11 @@ function (declare, dom, style, on, query, Memory, Observable, topic,
         that.bugStore.put(item);
       });
 
-      var filepath = this.reportData.checkedFile.substr(
-        0, this.reportData.checkedFile.indexOf(' '));
+      var endPos = this.reportData.checkedFile.indexOf(' ');
+      if (endPos === -1)
+        endPos = this.reportData.checkedFile.length;
+
+      var filepath = this.reportData.checkedFile.substr(0, endPos);
 
       var filter_sup = new CC_OBJECTS.ReportFilter();
       filter_sup.filepath = filepath;
