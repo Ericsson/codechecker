@@ -81,8 +81,8 @@ class RequestHandler(SimpleHTTPRequestHandler):
 
         # Authentication can happen in two possible ways:
         #
-        # The user either presents a valid session cookie -- in this case, checking if
-        # the session for the given cookie is valid
+        # The user either presents a valid session cookie -- in this case
+        # checking if the session for the given cookie is valid.
 
         client_host, client_port = self.client_address
 
@@ -98,7 +98,8 @@ class RequestHandler(SimpleHTTPRequestHandler):
 
         if not success:
             # Session cookie was invalid (or not found...)
-            # Attempt to see if the browser has sent us an authentication request
+            # Attempt to see if the browser has sent us
+            # an authentication request.
             authHeader = self.headers.getheader("Authorization")
             if authHeader is not None and authHeader.startswith("Basic "):
                 LOG.info("Client from " + client_host + ":" +
@@ -163,7 +164,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
         otrans = TTransport.TFileObjectTransport(self.wfile)
         itrans = TTransport.TBufferedTransport(itrans,
                                                int(self.headers[
-                                                       'Content-Length']))
+                                                   'Content-Length']))
         otrans = TTransport.TMemoryBuffer()
 
         iprot = input_protocol_factory.getProtocol(itrans)
@@ -195,7 +196,8 @@ class RequestHandler(SimpleHTTPRequestHandler):
                                                self.db_version_info)
 
             if self.path == '/Authentication':
-                # Authentication requests must be routed to a different handler.
+                # Authentication requests must be routed to a different
+                # handler.
                 auth_handler = ThriftAuthHandler(self.manager,
                                                  client_host,
                                                  sess_token)

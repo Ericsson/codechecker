@@ -11,8 +11,11 @@ from collections import defaultdict
 import codecs
 import ntpath
 import os
-import sqlalchemy
 import zlib
+
+from sqlalchemy.sql.expression import false
+from sqlalchemy.sql.expression import true
+import sqlalchemy
 
 import shared
 
@@ -65,9 +68,9 @@ def construct_report_filter(report_filters):
             # severity value can be 0
             AND.append(Report.severity == report_filter.severity)
         if report_filter.suppressed:
-            AND.append(Report.suppressed == True)
+            AND.append(Report.suppressed == true())
         else:
-            AND.append(Report.suppressed == False)
+            AND.append(Report.suppressed == false())
 
         OR.append(and_(*AND))
 
@@ -177,7 +180,8 @@ class ThriftRequestHandler():
 
         return query
 
-    def __queryResults(self, run_id, limit, offset, sort_types, report_filters):
+    def __queryResults(self, run_id, limit, offset, sort_types,
+                       report_filters):
 
         max_query_limit = constants.MAX_QUERY_SIZE
         if limit > max_query_limit:
@@ -258,7 +262,7 @@ class ThriftRequestHandler():
             stmt = session.query(Report.run_id,
                                  func.count(literal_column('*')).label(
                                      'report_count')) \
-                .filter(Report.suppressed == False) \
+                .filter(Report.suppressed == false()) \
                 .group_by(Report.run_id) \
                 .subquery()
 
@@ -487,20 +491,22 @@ class ThriftRequestHandler():
         source_file = session.query(File).get(report.file_id)
         source_file_path, source_file_name = ntpath.split(source_file.filepath)
 
-        LOG.debug('Updating suppress data for: ' + str(report_id) + ' bug id ' +
-                  bug_id_hash + ' file name ' + source_file_name +
-                  ' suppressing ' + str(suppress))
+        LOG.debug('Updating suppress data for: {0} bug id {1}'
+                  'file name {2} supressing {3}'.format(report_id,
+                                                        bug_id_hash,
+                                                        source_file_name,
+                                                        suppress))
 
         # Check if it is already suppressed for any run ids.
         suppressed = session.query(SuppressBug) \
-            .filter(or_( \
-            and_(SuppressBug.hash == bug_id_hash,
-                 SuppressBug.file_name == source_file_name,
-                 SuppressBug.run_id.in_(run_ids)),
-            and_(SuppressBug.hash == bug_id_hash,
-                 SuppressBug.file_name == '',
-                 SuppressBug.run_id.in_(run_ids))
-        )) \
+            .filter(or_(
+                and_(SuppressBug.hash == bug_id_hash,
+                     SuppressBug.file_name == source_file_name,
+                     SuppressBug.run_id.in_(run_ids)),
+                and_(SuppressBug.hash == bug_id_hash,
+                     SuppressBug.file_name == '',
+                     SuppressBug.run_id.in_(run_ids))
+                )) \
             .all()
 
         if not suppressed and suppress:
@@ -583,7 +589,7 @@ class ThriftRequestHandler():
         if not ret:
             session.rollback()
             raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.IOERROR,
-                                              'Failed to store suppress bug id')
+                                              'Failed to store suppress bugId')
         else:
             session.commit()
             return True
@@ -661,10 +667,13 @@ class ThriftRequestHandler():
 
         text = "No documentation found for checker: " + checkerId + \
                "\n\nPlease refer to the documentation at the "
+        sa_link = "http://clang-analyzer.llvm.org/available_checks.html"
+        tidy_link = "http://clang.llvm.org/extra/clang-tidy/checks/list.html"
+
         if "." in checkerId:
-            text += "[ClangSA](http://clang-analyzer.llvm.org/available_checks.html)"
+            text += "[ClangSA](" + sa_checkers_link + ")"
         elif "-" in checkerId:
-            text += "[ClangTidy](http://clang.llvm.org/extra/clang-tidy/checks/list.html)"
+            text += "[ClangTidy](" + tidy_link + ")"
         text += " homepage."
 
         try:
@@ -842,7 +851,8 @@ class ThriftRequestHandler():
 
             results = []
             for checker_id, res in result_reports.items():
-                results.append(ReportDataTypeCount(res.checker_id, res.severity,
+                results.append(ReportDataTypeCount(res.checker_id,
+                                                   res.severity,
                                                    count_results[
                                                        res.checker_id]))
 
