@@ -119,21 +119,6 @@ def generate_thrift_files(thrift_files_dir, env, silent=True):
         LOG.error('Failed to generate authentication interface files')
         return ret
 
-
-# -------------------------------------------------------------------
-def generate_documentation(doc_root, env, silent=True):
-    """ Generate user guide and other documentation. """
-
-    LOG.info('Generating documentation ...')
-    doc_gen_cmd = ['doxygen', 'Doxyfile.in']
-    LOG.debug(doc_gen_cmd)
-
-    ret = run_cmd(doc_gen_cmd, doc_root, env, silent=silent)
-    if ret:
-        LOG.error('Failed to generate documentation')
-        return ret
-
-
 # -------------------------------------------------------------------
 def create_folder_layout(path, layout):
     """ Create package directory layout. """
@@ -424,18 +409,10 @@ def build_package(repository_root, build_package_config, env=None):
             else:
                 LOG.info('Skipping ld logger from package')
 
-    # Generate gen files with thrift.
-    thrift_files_dir = os.path.join(repository_root, 'thrift_api')
+    thrift_files_dir = os.path.join(repository_root, 'build')
     generated_py_files = os.path.join(thrift_files_dir, 'gen-py')
     generated_js_files = os.path.join(thrift_files_dir, 'gen-js')
 
-    # Cleanup already generated files.
-    if os.path.exists(generated_py_files):
-        shutil.rmtree(generated_py_files)
-    if os.path.exists(generated_js_files):
-        shutil.rmtree(generated_js_files)
-
-    generate_thrift_files(thrift_files_dir, env, verbose)
     target = os.path.join(package_root, package_layout['codechecker_gen'])
     copy_tree(generated_py_files, target)
 
@@ -448,9 +425,6 @@ def build_package(repository_root, build_package_config, env=None):
                                         'cmdline_client')
     target = os.path.join(package_root, package_layout['cmdline_client'])
     copy_tree(cmdline_client_files, target)
-
-    # Generate documentation.
-    generate_documentation(repository_root, env, verbose)
 
     source = os.path.join(repository_root, 'gen-docs', 'html')
     target = os.path.join(package_root, package_layout['docs'])
@@ -626,11 +600,6 @@ def build_package(repository_root, build_package_config, env=None):
 # -------------------------------------------------------------------
 def main():
     """ Main script. """
-    repository_root = os.path.dirname(os.path.realpath(__file__))
-
-    default_package_layout = os.path.join(repository_root,
-                                          "config",
-                                          "package_layout.json")
 
     description = '''CodeChecker packager script'''
 
@@ -640,7 +609,6 @@ def main():
 
     parser.add_argument("-l", action="store",
                         dest="package_layout_config",
-                        default=default_package_layout,
                         help="Package layout configuration file.")
     parser.add_argument("-o", "--output", required=True, action="store",
                         dest="output_dir")
@@ -649,13 +617,10 @@ def main():
                         dest='clean',
                         help='Clean external dependencies')
 
-    default_logger_dir = os.path.join(repository_root,
-                                      'external-source-deps',
-                                      'build-logger')
 
     logger_group = parser.add_argument_group('ld-logger')
     logger_group.add_argument("--ld-logger", action="store",
-                              dest="ld_logger_path", default=default_logger_dir,
+                              dest="ld_logger_path",
                               help="Ld logger source path.")
     logger_group.add_argument('--32', action='store_true',
                               dest="ld_logger_32",
@@ -676,7 +641,20 @@ def main():
 
     args = vars(parser.parse_args())
 
+
     build_package_config = {k: args[k] for k in args if args[k] is not None}
+
+    repository_root = os.environ['REPO_ROOT']
+    default_package_layout = os.path.join(repository_root,
+                                          "config",
+                                          "package_layout.json")
+    build_package_config['package_layout_config'] = default_package_layout
+
+    default_logger_dir = os.path.join(repository_root,
+                                      'external-source-deps',
+                                      'build-logger')
+
+    build_package_config['ld_logger_path'] = default_logger_dir
 
     build_package(repository_root, build_package_config)
 

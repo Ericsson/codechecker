@@ -22,7 +22,7 @@ class QuickCheckTestCase(unittest.TestCase):
     def setup_class(cls):
         """Setup the class."""
         cls.package_dir = \
-            os.path.realpath(os.environ.get('TEST_CODECHECKER_DIR'))
+            os.path.realpath(os.environ.get('CC_PACKAGE'))
 
         # Put CodeChecker/bin to PATH so CodeChecker command becomes available.
         cls.env = os.environ.copy()

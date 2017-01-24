@@ -2,6 +2,9 @@
 
 *.py[cod]
 
+build
+venv
+
 # build-logger build dir
 external-source-deps/build-logger/build/
 
