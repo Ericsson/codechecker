@@ -560,6 +560,7 @@ def register_client_command_line(argument_parser):
     sum_parser.add_argument('-o', choices=['plaintext', 'json', 'csv'],
                             default='plaintext', type=str, dest="output_format",
                             help='Output format.')
+    logger.add_verbose_arguments(sum_parser)
     sum_parser.set_defaults(func=handle_list_result_types)
 
     # Delete run results.
