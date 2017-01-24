@@ -74,13 +74,12 @@ class ThriftClientHelper():
 
     # ------------------------------------------------------------
     @ThriftClientCall
-    def getRunData():
+    def getRunData(self):
         pass
 
     # ------------------------------------------------------------
     @ThriftClientCall
-    def getRunResults(self, runId, resultBegin, resultEnd, sortType,
-                      reportFilters):
+    def getRunResults(self, runId, limit, offset, sortType, reportFilters):
         pass
 
     # ------------------------------------------------------------

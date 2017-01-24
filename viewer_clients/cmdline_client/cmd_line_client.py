@@ -295,34 +295,29 @@ def handle_list_results(args):
         print(CmdLineOutputEncoder().encode(results))
     else:  # plaintext, csv
         rows = []
+
         if args.suppressed:
             rows.append(
                 ('File', 'Checker', 'Severity', 'Msg', 'Suppress comment'))
-            while results:
-                for res in results:
-                    bug_line = res.lastBugPosition.startLine
-                    checked_file = res.checkedFile + ' @ ' + str(bug_line)
-                    sev = shared.ttypes.Severity._VALUES_TO_NAMES[res.severity]
-                    rows.append((checked_file, res.checkerId, sev,
-                                 res.checkerMsg, res.suppressComment))
-
-                offset += limit
-                results = client.getRunResults(run_id, limit, offset, None,
-                                               filters)
-
         else:
             rows.append(('File', 'Checker', 'Severity', 'Msg'))
-            while results:
-                for res in results:
-                    bug_line = res.lastBugPosition.startLine
-                    sev = shared.ttypes.Severity._VALUES_TO_NAMES[res.severity]
-                    checked_file = res.checkedFile + ' @ ' + str(bug_line)
+
+        while results:
+            for res in results:
+                bug_line = res.lastBugPosition.startLine
+                checked_file = res.checkedFile + ' @ ' + str(bug_line)
+                sev = shared.ttypes.Severity._VALUES_TO_NAMES[res.severity]
+
+                if args.suppressed:
+                    rows.append((checked_file, res.checkerId, sev,
+                                 res.checkerMsg, res.suppressComment))
+                else:
                     rows.append(
                         (checked_file, res.checkerId, sev, res.checkerMsg))
 
-                offset += limit
-                results = client.getRunResults(run_id, limit, offset, None,
-                                               filters)
+            offset += limit
+            results = client.getRunResults(run_id, limit, offset, None,
+                                           filters)
 
         if args.output_format == 'csv':
             writer = csv.writer(sys.stdout)
@@ -345,52 +340,38 @@ def handle_list_result_types(args):
     filters.append(report_filter)
 
     if args.all_results:
-        run_info = check_run_names(client, None)
-        results_collector = []
-        for name, run_info in run_info.items():
-            run_id, run_date = run_info
-            results = client.getRunResultTypes(run_id, filters)
-            if args.output_format == 'json':
-                results_collector.append({name: results})
-            else:  # plaintext, csv
-                print('Check date: ' + run_date)
-                print('Check name: ' + name)
-                rows = []
-                rows.append(('Checker', 'Severity', 'Count'))
-                for res in results:
-                    sev = shared.ttypes.Severity._VALUES_TO_NAMES[res.severity]
-                    rows.append((res.checkerId, sev, str(res.count)))
-
-                if args.output_format == 'csv':
-                    writer = csv.writer(sys.stdout)
-                    writer.writerows(rows)
-                else:
-                    print_table(rows)
-
-        if args.output_format == 'json':
-            print(CmdLineOutputEncoder().encode(results_collector))
+        items = check_run_names(client, None).items()
     else:
+        items = []
         run_info = check_run_names(client, args.names)
         for name in args.names:
-            run_id, run_date = run_info.get(name)
+            items.append((name, run_info.get(name)))
 
-            results = client.getRunResultTypes(run_id, filters)
-            if args.output_format == 'json':
-                print(CmdLineOutputEncoder().encode(results))
-            else:  # plaintext, csv
-                print('Check date: ' + run_date)
-                print('Check name: ' + name)
-                rows = [('Checker', 'Severity', 'Count')]
-                for res in results:
-                    sev = shared.ttypes.Severity._VALUES_TO_NAMES[res.severity]
-                    rows.append((res.checkerId, sev, str(res.count)))
+    results_collector = []
+    for name, run_info in items:
+        run_id, run_date = run_info
+        results = client.getRunResultTypes(run_id, filters)
 
-                if args.output_format == 'csv':
-                    writer = csv.writer(sys.stdout)
-                    writer.writerows(rows)
-                else:
-                    print_table(rows)
 
+        if args.output_format == 'json':
+            results_collector.append({name: results})
+        else:  # plaintext, csv
+            print('Check date: ' + run_date)
+            print('Check name: ' + name)
+            rows = []
+            rows.append(('Checker', 'Severity', 'Count'))
+            for res in results:
+                sev = shared.ttypes.Severity._VALUES_TO_NAMES[res.severity]
+                rows.append((res.checkerId, sev, str(res.count)))
+
+            if args.output_format == 'csv':
+                writer = csv.writer(sys.stdout)
+                writer.writerows(rows)
+            else:
+                print_table(rows)
+
+    if args.output_format == 'json':
+        print(CmdLineOutputEncoder().encode(results_collector))
 
 # ------------------------------------------------------------
 def handle_remove_run_results(args):
