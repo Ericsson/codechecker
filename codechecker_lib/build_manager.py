@@ -121,12 +121,14 @@ def check_log_file(args, context):
     If the argument is not set generate a new.
     """
     log_file = None
+    set_in_cmdline = False
     try:
         log_file = os.path.realpath(args.logfile)
         if not os.path.exists(log_file):
             LOG.error("The given compilation database"
                       "file does not exists: " + log_file)
             log_file = None
+        set_in_cmdline = True
     except AttributeError as ex:
         # args.log_file was not set.
         LOG.debug(ex)
@@ -134,7 +136,7 @@ def check_log_file(args, context):
                   " in the command line.")
         log_file = generate_log_file(args, context, args.quiet_build)
     finally:
-        return log_file
+        return log_file, set_in_cmdline
 
 
 def generate_log_file(args, context, silent=False):
