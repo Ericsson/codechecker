@@ -161,7 +161,7 @@ def handle_server(args):
                                          args.view_port,
                                          db_connection_string,
                                          suppress_handler,
-                                         args.not_host_only,
+                                         args.listen_address,
                                          context.db_version_info)
 
 

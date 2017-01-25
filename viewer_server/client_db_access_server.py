@@ -314,20 +314,15 @@ class CCSimpleHttpServer(HTTPServer):
 
 
 def start_server(package_data, port, db_conn_string, suppress_handler,
-                 not_host_only, db_version_info):
+                 listen_address, db_version_info):
     """
     Start http server to handle web client and thrift requests.
     """
     LOG.debug('Starting the codechecker DB access server')
 
-    if not_host_only:
-        access_server_host = ''
-    else:
-        access_server_host = 'localhost'
-
     LOG.debug('Suppressing to ' + str(suppress_handler.suppress_file))
 
-    server_addr = (access_server_host, port)
+    server_addr = (listen_address, port)
 
     http_server = CCSimpleHttpServer(server_addr,
                                      RequestHandler,
@@ -338,6 +333,6 @@ def start_server(package_data, port, db_conn_string, suppress_handler,
                                      session_manager.SessionManager())
 
     LOG.info('Waiting for client requests on [' +
-             access_server_host + ':' + str(port) + ']')
+             listen_address + ':' + str(port) + ']')
     http_server.serve_forever()
     LOG.info('done.')

@@ -411,11 +411,11 @@ Build command which is used to build the project.''')
                                    required=False,
                                    help='Path to suppress file.')
 
-        server_parser.add_argument('--not-host-only', action="store_true",
-                                   dest="not_host_only",
-                                   help='Viewing the results is possible not'
-                                        'only by browsers or clients'
-                                        ' started locally.')
+        server_parser.add_argument('-l', '--listen-address', type=str,
+                                   dest='listen_address',
+                                   default='localhost',
+                                   help='IP address or name of the server to '
+                                        'listen on.')
 
         server_parser.add_argument('--check-port', type=int, dest="check_port",
                                    default=None, required=False,
