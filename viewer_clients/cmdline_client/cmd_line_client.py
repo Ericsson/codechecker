@@ -289,35 +289,36 @@ def handle_list_results(args):
     add_filter_conditions(report_filter, args.filter)
     filters.append(report_filter)
 
+    all_results = []
     results = client.getRunResults(run_id, limit, offset, None, filters)
 
-    if args.output_format == 'json':
-        print(CmdLineOutputEncoder().encode(results))
-    else:  # plaintext, csv
-        rows = []
+    while results:
+        all_results.extend(results)
+        offset += limit
+        results = client.getRunResults(run_id, limit, offset, None,
+                                       filters)
 
+    if args.output_format == 'json':
+        print(CmdLineOutputEncoder().encode(all_results))
+    else:
+        rows = []
         if args.suppressed:
             rows.append(
                 ('File', 'Checker', 'Severity', 'Msg', 'Suppress comment'))
         else:
             rows.append(('File', 'Checker', 'Severity', 'Msg'))
 
-        while results:
-            for res in results:
-                bug_line = res.lastBugPosition.startLine
-                checked_file = res.checkedFile + ' @ ' + str(bug_line)
-                sev = shared.ttypes.Severity._VALUES_TO_NAMES[res.severity]
+        for res in all_results:
+            bug_line = res.lastBugPosition.startLine
+            checked_file = res.checkedFile + ' @ ' + str(bug_line)
+            sev = shared.ttypes.Severity._VALUES_TO_NAMES[res.severity]
 
-                if args.suppressed:
-                    rows.append((checked_file, res.checkerId, sev,
-                                 res.checkerMsg, res.suppressComment))
-                else:
-                    rows.append(
-                        (checked_file, res.checkerId, sev, res.checkerMsg))
-
-            offset += limit
-            results = client.getRunResults(run_id, limit, offset, None,
-                                           filters)
+            if args.suppressed:
+                rows.append((checked_file, res.checkerId, sev,
+                             res.checkerMsg, res.suppressComment))
+            else:
+                rows.append(
+                    (checked_file, res.checkerId, sev, res.checkerMsg))
 
         if args.output_format == 'csv':
             writer = csv.writer(sys.stdout)
@@ -396,26 +397,33 @@ def handle_diff_results(args):
         report_filter = [
             codeCheckerDBAccess.ttypes.ReportFilter(suppressed=suppr)]
         add_filter_conditions(report_filter[0], args.filter)
-        rows, sort_type, limit, offset = [], None, 500, 0
 
-        rows.append(('File', 'Checker', 'Severity', 'Msg'))
+        sort_type = None
+        limit = 500
+        offset = 0
+
+        all_results=[]
         results = getterFn(baseid, newid, limit, offset, sort_type,
                            report_filter)
 
-        if output_format == 'json':
-            print(CmdLineOutputEncoder().encode(results))
-        else:  # plaintext, csv
-            while results:
-                for res in results:
-                    bug_line = res.lastBugPosition.startLine
-                    sev = shared.ttypes.Severity._VALUES_TO_NAMES[res.severity]
-                    checked_file = res.checkedFile + ' @ ' + str(bug_line)
-                    rows.append(
-                        (checked_file, res.checkerId, sev, res.checkerMsg))
+        while results:
+            all_results.extend(results)
+            offset += limit
+            results = getterFn(baseid, newid, limit, offset, sort_type,
+                               report_filter)
 
-                offset += limit
-                results = getterFn(baseid, newid, limit, offset, sort_type,
-                                   report_filter)
+
+        if output_format == 'json':
+            print(CmdLineOutputEncoder().encode(all_results))
+        else:
+            rows = []
+            rows.append(('File', 'Checker', 'Severity', 'Msg'))
+            for res in all_results:
+                bug_line = res.lastBugPosition.startLine
+                sev = shared.ttypes.Severity._VALUES_TO_NAMES[res.severity]
+                checked_file = res.checkedFile + ' @ ' + str(bug_line)
+                rows.append(
+                    (checked_file, res.checkerId, sev, res.checkerMsg))
 
             if output_format == 'csv':
                 writer = csv.writer(sys.stdout)
