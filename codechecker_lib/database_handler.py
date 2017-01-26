@@ -381,8 +381,8 @@ class PostgreSQLServer(SQLServer):
         LOG.debug('Checking if database is running at ' +
                   self.host + ':' + str(self.port))
 
-        check_db = ['psql', '-U', self.user, '-l', '-p', str(self.port), '-h',
-                    self.host]
+        check_db = ['psql', '-U', self.user, '-c', 'SELECT version();',
+                    '-p', str(self.port), '-h', self.host, '-d', 'postgres']
         err, code = util.call_command(check_db, self.run_env)
         return code == 0
 
