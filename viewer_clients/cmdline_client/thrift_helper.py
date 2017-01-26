@@ -19,6 +19,7 @@ from codechecker_lib import session_manager
 from codeCheckerDBAccess import codeCheckerDBAccess
 import shared
 
+
 class ThriftClientHelper():
 
     def __init__(self, host, port, uri, session_token=None):
@@ -35,11 +36,12 @@ class ThriftClientHelper():
 
 # ------------------------------------------------------------
     def ThriftClientCall(function):
-        #print type(function)
+        # print type(function)
         funcName = function.__name__
+
         def wrapper(self, *args, **kwargs):
-            #print('['+host+':'+str(port)+'] >>>>> ['+funcName+']')
-            #before = datetime.datetime.now()
+            # print('['+host+':'+str(port)+'] >>>>> ['+funcName+']')
+            # before = datetime.datetime.now()
             self.transport.open()
             func = getattr(self.client, funcName)
             try:

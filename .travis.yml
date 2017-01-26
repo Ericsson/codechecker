@@ -56,7 +56,7 @@ addons:
     postgresql: "9.3"
 
 script:
-    - pep8 codechecker codechecker_lib tests db_model viewer_server
+    - pep8 codechecker codechecker_lib tests db_model viewer_server viewer_clients
 
     - ./change_clang_version.py
 
