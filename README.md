@@ -59,22 +59,19 @@ following commands are used to bootstrap CodeChecker on Ubuntu 16.04.1 LTS:
 sudo apt-get install clang-3.8 build-essential curl doxygen gcc-multilib \
   git python-virtualenv python-dev thrift-compiler
 
-# Create a Python virtualenv and set it as your environment
-virtualenv -p /usr/bin/python2.7 ~/checker_env
-source ~/checker_env/bin/activate
-
 # Check out CodeChecker
-git clone https://github.com/Ericsson/CodeChecker.git --depth 1
-cd codechecker
+git clone https://github.com/Ericsson/CodeChecker.git --depth 1 ~/codechecker
+cd ~/codechecker
 
-# Install the basic Python modules needed for operation
-pip install -r .ci/basic_python_requirements
+# Create a Python virtualenv and set it as your environment
+make venv
+source $PWD/venv/bin/activate
 
 # Build and install a CodeChecker package
-./build_package.py -o ~/codechecker_package
+make package
 
-# For ease of access, add the install directory for PATH
-export PATH="~/codechecker_package/CodeChecker/bin:$PATH"
+# For ease of access, add the build directory to PATH
+export PATH="$PWD/build/CodeChecker/bin:$PATH"
 
 cd ..
 ~~~
@@ -88,7 +85,7 @@ out-of-the-box. To fix this issue, run the following command to upgrade your
 `checker_env` too:
 
 ~~~{.sh}
-cd ~/checker_env
+cd ~/codechecker/venv
 virtualenv -p /usr/bin/python2.7 .
 ~~~
 
@@ -115,14 +112,19 @@ brew update
 brew install doxygen thrift gcc git
 
 # Fetch source code
-git clone https://github.com/Ericsson/CodeChecker.git --depth 1
-cd codechecker
+git clone https://github.com/Ericsson/CodeChecker.git --depth 1 ~/codechecker
+cd ~/codechecker
 
-# Install required basic python modules
-pip install -r .ci/basic_python_requirements
+# Create a Python virtualenv and set it as your environment
+make venv
+source $PWD/venv/bin/activate
 
-# Create codechecker package
-./build_package.py -o ~/codechecker_package
+# Build and install a CodeChecker package
+make package
+
+# For ease of access, add the build directory to PATH
+export PATH="$PWD/build/CodeChecker/bin:$PATH"
+
 cd ..
 ~~~
 
@@ -144,7 +146,7 @@ depends on your Linux distribution.
 If `clang` or `clang-tidy` is not an available command, you must configure the
 installed CodeChecker package to use the appropriate binaries for analysis.
 Edit the configuration file
-`~/codechecker_package/CodeChecker/config/package_layout.json`. In the
+`~/codechecker/build/CodeChecker/config/package_layout.json`. In the
 `runtime/analyzers` section, you must set the values, as shown below, to the
 clang binaries available in your `PATH`.
 
@@ -161,11 +163,11 @@ These steps must always be taken in a new command prompt you wish to execute
 analysis in.
 
 ~~~{.sh}
-source ~/checker_env/bin/activate
+source ~/codechecker/venv/bin/activate
 
 # Path of CodeChecker package
 # NOTE: SKIP this line if you want to always specify CodeChecker's full path
-export PATH=~/codechecker_package/CodeChecker/bin:$PATH
+export PATH=~/codechecker/build/CodeChecker/bin:$PATH
 
 # Path of `scan-build.py` (intercept-build)
 # NOTE: SKIP this line if you don't want to use intercept-build
