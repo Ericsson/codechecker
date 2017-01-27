@@ -118,8 +118,8 @@ def check_file_owner_rw(file_to_check):
             or mode & stat.S_IROTH \
             or mode & stat.S_IWOTH:
         LOG.warning(file_to_check + " is readable by users other than you!"
-                    " This poses a risk of leaking senitive"
-                    "information passwords, session tokens ...!\n"
+                    " This poses a risk of leaking sensitive"
+                    " information passwords, session tokens ...!\n"
                     "Please 'chmod 0600 " + file_to_check + "' so only you can"
                     " read and write it.")
         return False
