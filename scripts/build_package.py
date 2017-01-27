@@ -409,7 +409,8 @@ def build_package(repository_root, build_package_config, env=None):
             else:
                 LOG.info('Skipping ld logger from package')
 
-    thrift_files_dir = os.path.join(repository_root, 'build')
+    thrift_files_dir = os.path.join(repository_root,
+                                    build_package_config['local_build_folder'])
     generated_py_files = os.path.join(thrift_files_dir, 'gen-py')
     generated_js_files = os.path.join(thrift_files_dir, 'gen-js')
 
@@ -426,7 +427,10 @@ def build_package(repository_root, build_package_config, env=None):
     target = os.path.join(package_root, package_layout['cmdline_client'])
     copy_tree(cmdline_client_files, target)
 
-    source = os.path.join(repository_root, 'gen-docs', 'html')
+    # Documentation files.
+    source = os.path.join(repository_root,
+                          build_package_config['local_build_folder'],
+                          'gen-docs', 'html')
     target = os.path.join(package_root, package_layout['docs'])
     copy_tree(source, target)
 
@@ -612,6 +616,11 @@ def main():
                         help="Package layout configuration file.")
     parser.add_argument("-o", "--output", required=True, action="store",
                         dest="output_dir")
+    parser.add_argument("-b", "--build-folder",
+                        dest="local_build_folder",
+                        default="build",
+                        help="The local dependency folder under which Thrift "
+                             "and documentation files have been generated.")
     parser.add_argument("--clean",
                         action="store_true",
                         dest='clean',

@@ -14,29 +14,32 @@ CLANG_VERSION = TEST_CLANG_VERSION=stable
 TEST_PROJECT = TEST_PROJ=$(CURRENT_DIR)/tests/test_projects/test_files
 
 # the build package which should be tested
-PKG_TO_TEST = CC_PACKAGE=$(CURRENT_DIR)/build/CodeChecker
+PKG_TO_TEST = CC_PACKAGE=$(BUILD_DIR)/CodeChecker
 
 # test runner needs to know the root of the repository
 ROOT = REPO_ROOT=$(CURRENT_DIR)
+
+default: package
 
 pep8:
 	pep8 codechecker codechecker_lib tests db_model viewer_server viewer_clients
 
 gen-docs:
-	doxygen ./Doxyfile.in
+	doxygen ./Doxyfile.in && \
+	cp -a ./gen-docs $(BUILD_DIR)/gen-docs
 
 thrift: build_dir
 
-	if [ ! -d "$(BUILD_DIR)/gen-py" ]; then rm -rf build/gen-py; fi
-	if [ ! -d "$(BUILD_DIR)/gen-js" ]; then rm -rf build/gen-js; fi
+	if [ ! -d "$(BUILD_DIR)/gen-py" ]; then rm -rf $(BUILD_DIR)/gen-py; fi
+	if [ ! -d "$(BUILD_DIR)/gen-js" ]; then rm -rf $(BUILD_DIR)/gen-js; fi
 
-	thrift -r -o build -I thrift_api/ --gen py thrift_api/report_storage_server.thrift
-	thrift -r -o build -I thrift_api/ --gen py --gen js:query thrift_api/report_viewer_server.thrift
-	thrift -r -o build -I thrift_api/ --gen py thrift_api/authentication.thrift
+	thrift -r -o $(BUILD_DIR) -I thrift_api/ --gen py thrift_api/report_storage_server.thrift
+	thrift -r -o $(BUILD_DIR) -I thrift_api/ --gen py --gen js:query thrift_api/report_viewer_server.thrift
+	thrift -r -o $(BUILD_DIR) -I thrift_api/ --gen py thrift_api/authentication.thrift
 
 package: build_dir gen-docs thrift
 	if [ ! -d "$(BUILD_DIR)/CodeChecker" ]; then \
-		$(ROOT) ./scripts/build_package.py -o $(CURRENT_DIR)/build; \
+		$(ROOT) ./scripts/build_package.py -o $(BUILD_DIR) -b $(BUILD_DIR); \
 	fi
 
 travis:
