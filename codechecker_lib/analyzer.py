@@ -87,14 +87,6 @@ def run_check(args, actions, context):
         args.analyzers,
         context)
 
-    # Load severity map from config file.
-    LOG.debug_analyzer("Loading checker severity map.")
-    if os.path.exists(context.checkers_severity_map_file):
-        with open(context.checkers_severity_map_file, 'r') as sev_conf_file:
-            severity_config = sev_conf_file.read()
-
-        context.severity_map = json.loads(severity_config)
-
     actions = prepare_actions(actions, enabled_analyzers)
 
     suppress_file = ''

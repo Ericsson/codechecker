@@ -5,7 +5,11 @@
 # -------------------------------------------------------------------------
 
 import abc
+import json
 import os
+from codechecker_lib.logger import LoggerFactory
+
+LOG = LoggerFactory.get_new_logger("CONTEXT BASE")
 
 
 # -----------------------------------------------------------------------------
@@ -59,6 +63,14 @@ class ContextBase(object):
         codechecker_workspace = os.environ.get('codechecker_workspace')
         if codechecker_workspace:
             self._codechecker_workspace = codechecker_workspace
+
+        try:
+            with open(self.checkers_severity_map_file) as severity_file:
+                self._severity_map = json.load(severity_file)
+        except (IOError, ValueError):
+            LOG.warning(self.checkers_severity_map_file + " doesn't exist or "
+                        "not JSON format. Severity levels will not be "
+                        "available!")
 
     @property
     def package_root(self):
@@ -189,7 +201,3 @@ class ContextBase(object):
     @property
     def severity_map(self):
         return self._severity_map
-
-    @severity_map.setter
-    def severity_map(self, value):
-        self._severity_map = value

@@ -258,7 +258,7 @@ def add_filter_conditions(report_filter, filter_str):
 
     if severity:
         report_filter.severity = \
-                shared.ttypes.Severity._NAMES_TO_VALUES[severity.upper()]
+            shared.ttypes.Severity._NAMES_TO_VALUES[severity.upper()]
     if checker:
         report_filter.checkerId = '*' + checker + '*'
     if path:
@@ -373,7 +373,6 @@ def handle_list_result_types(args):
         run_id, run_date = run_info
         results = client.getRunResultTypes(run_id, filters)
 
-
         if args.output_format == 'json':
             results_collector.append({name: results})
         else:  # plaintext, csv
@@ -393,6 +392,7 @@ def handle_list_result_types(args):
 
     if args.output_format == 'json':
         print(CmdLineOutputEncoder().encode(results_collector))
+
 
 # ------------------------------------------------------------
 def handle_remove_run_results(args):
@@ -422,7 +422,7 @@ def handle_diff_results(args):
         limit = 500
         offset = 0
 
-        all_results=[]
+        all_results = []
         results = getterFn(baseid, newid, limit, offset, sort_type,
                            report_filter)
 
@@ -431,7 +431,6 @@ def handle_diff_results(args):
             offset += limit
             results = getterFn(baseid, newid, limit, offset, sort_type,
                                report_filter)
-
 
         if output_format == 'json':
             print(CmdLineOutputEncoder().encode(all_results))

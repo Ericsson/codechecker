@@ -292,13 +292,6 @@ def _do_quickcheck(args):
         context.codechecker_workspace = args.workspace
         args.name = "quickcheck"
 
-        # Load severity map from config file.
-        if os.path.exists(context.checkers_severity_map_file):
-            with open(context.checkers_severity_map_file, 'r') as sev_file:
-                severity_config = sev_file.read()
-
-            context.severity_map = json.loads(severity_config)
-
         log_file, set_in_cmdline = build_manager.check_log_file(args, context)
         actions = log_parser.parse_log(log_file,
                                        args.add_compiler_defaults)
@@ -341,7 +334,7 @@ def consume_plist(item):
                                                  action,
                                                  context.run_id,
                                                  args.directory,
-                                                 {},
+                                                 context.severity_map,
                                                  None,
                                                  None,
                                                  not args.stdout)
