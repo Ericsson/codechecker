@@ -4,6 +4,7 @@
 
 build
 venv
+Makefile.local
 
 # build-logger build dir
 external-source-deps/build-logger/build/
