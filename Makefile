@@ -1,17 +1,19 @@
+-include Makefile.local
+
 CURRENT_DIR = $(shell pwd)
 BUILD_DIR = $(CURRENT_DIR)/build
 
 # environment variables to run tests
 # database settings
-PSQL = TEST_USE_POSTGRESQL=true
-PG800 = CODECHECKER_DB_DRIVER=pg8000
-PSYCOPG2 = CODECHECKER_DB_DRIVER=psycopg2
-DBPORT = TEST_DBPORT=5432
-DBUNAME = TEST_DBUSERNAME=postgres
+PSQL ?= TEST_USE_POSTGRESQL=true
+PG800 ?= CODECHECKER_DB_DRIVER=pg8000
+PSYCOPG2 ?= CODECHECKER_DB_DRIVER=psycopg2
+DBPORT ?= TEST_DBPORT=5432
+DBUNAME ?= TEST_DBUSERNAME=postgres
 
 # test project configuration, tests are run on these files
-CLANG_VERSION = TEST_CLANG_VERSION=stable
-TEST_PROJECT = TEST_PROJ=$(CURRENT_DIR)/tests/test_projects/test_files
+CLANG_VERSION ?= TEST_CLANG_VERSION=stable
+TEST_PROJECT ?= TEST_PROJ=$(CURRENT_DIR)/tests/test_projects/test_files
 
 # the build package which should be tested
 PKG_TO_TEST = CC_PACKAGE=$(BUILD_DIR)/CodeChecker
@@ -24,7 +26,7 @@ default: package
 pep8:
 	pep8 codechecker codechecker_lib tests db_model viewer_server viewer_clients
 
-gen-docs:
+gen-docs: build_dir
 	doxygen ./Doxyfile.in && \
 	cp -a ./gen-docs $(BUILD_DIR)/gen-docs
 
