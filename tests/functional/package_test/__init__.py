@@ -85,8 +85,8 @@ def setup_package():
     test_project_path = os.path.join(
         os.path.abspath(os.environ['REPO_ROOT']),
         'tests',
-        'test_projects',
-        'test_files')
+        'projects',
+        'cpp')
 
     clang_version = os.environ.get('TEST_CLANG_VERSION', 'stable')
 

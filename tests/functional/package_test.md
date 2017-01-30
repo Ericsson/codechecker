@@ -19,7 +19,7 @@ Make sure you install all the package building dependencies before running the t
  * The test modules are invoked.
 
 # Test projects
-Test projects can be found in `tests/test_projects/` .
+Test projects can be found in `tests/project/` .
 Test projects must have `project_info.json` in their root directory. This file contains the build commands and other data required by the test modules.
 The build commands are executed in bash, in the project's root directory.
 

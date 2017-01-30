@@ -13,7 +13,7 @@ DBUNAME ?= TEST_DBUSERNAME=postgres
 
 # test project configuration, tests are run on these files
 CLANG_VERSION ?= TEST_CLANG_VERSION=stable
-TEST_PROJECT ?= TEST_PROJ=$(CURRENT_DIR)/tests/test_projects/test_files
+TEST_PROJECT ?= TEST_PROJ=$(CURRENT_DIR)/tests/projects/cpp
 
 # the build package which should be tested
 PKG_TO_TEST = CC_PACKAGE=$(BUILD_DIR)/CodeChecker
@@ -79,7 +79,7 @@ venv:
 
 venv_dev:
 	# virtual environment for development
-	virtualenv -p /usr/bin/python2.7 venv && . venv/bin/activate && pip install -r .ci/python_requirements && pip install nose
+	virtualenv -p /usr/bin/python2.7 venv && . venv/bin/activate && pip install -r .ci/python_requirements && pip install -r tests/requirements.txt
 
 clean_venv:
 	rm -rf venv

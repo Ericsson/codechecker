@@ -1,4 +1,4 @@
 all:
 	clang -c DeallocUseAfterFreeErrors.m -o DeallocUseAfterFreeErrors
 clean:
-	rm -f DeallocUseAfterFreeErrors.o
+	rm -f DeallocUseAfterFreeErrors
