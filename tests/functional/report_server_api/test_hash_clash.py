@@ -1,18 +1,24 @@
-#!/usr/bin/env python2
+#
+# -----------------------------------------------------------------------------
+#                     The CodeChecker Infrastructure
+#   This file is distributed under the University of Illinois Open Source
+#   License. See LICENSE.TXT for details.
+# -----------------------------------------------------------------------------
 
 """
-Tests hash clash handling.
+    report_server_api function tests.
 """
-
 import os
 import random
 import string
 import unittest
+
 from contextlib import contextmanager
 from uuid import uuid4
 
+from libtest import env
+
 from shared.ttypes import BugPathPos, BugPathEvent, Severity
-from libtest.thrift_client_to_db import CCReportHelper
 
 
 def _generate_content(cols, lines):
@@ -85,7 +91,8 @@ class HashClash(unittest.TestCase):
 
     @contextmanager
     def _init_new_test(self, name):
-        """Creates a new run, file, and build action.
+        """
+        Creates a new run, file, and build action.
 
         Use it in a 'with' statement. At the end of the 'with' statement it
         calls the finish methods for the run and the build action.
@@ -110,11 +117,17 @@ class HashClash(unittest.TestCase):
         self._report.finishCheckerRun(run_id)
 
     def setUp(self):
-        self._report = CCReportHelper('localhost',
-                                      int(os.environ['CC_TEST_SERVER_PORT']),
-                                      '/')
+        """
+        Not much setup is needed.
+        Runs and results are automatically generated.
+        """
+        test_workspace = os.environ['TEST_WORKSPACE']
+        self._report = env.setup_server_client(test_workspace)
 
-    def test(self):
+        test_class = self.__class__.__name__
+        print('Running ' + test_class + ' tests in ' + test_workspace)
+
+    def test_hash_clash(self):
         """Runs the following tests:
 
         - Duplicates.
@@ -160,8 +173,8 @@ class HashClash(unittest.TestCase):
             # Same file and position, different hash
             self.assertNotEqual(rep_id4, rep_id5)
 
-            # analyzer type needs to match with the supported analyzer types
-            # clangsa is used for testing
+            # Analyzer type needs to match with the supported analyzer types
+            # clangsa is used for testing.
             analyzer_type = 'clangsa'
             build_action_id2_2 = self._create_build_action(run_id2,
                                                            'test2_2',
@@ -182,5 +195,5 @@ class HashClash(unittest.TestCase):
                                                  build_action_id2,
                                                  'XXX',
                                                  ((1, 1), (1, 2)))
-            # build_action_id1 and build_action_id2 is in different runs
+            # build_action_id1 and build_action_id2 is in different runs.
             self.assertNotEqual(rep_id1, rep_id7)

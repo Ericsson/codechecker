@@ -4,6 +4,7 @@
 
 build
 venv
+venv_dev
 Makefile.local
 
 # build-logger build dir

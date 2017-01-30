@@ -13,50 +13,35 @@ import unittest
 
 from thrift.protocol.TProtocol import TProtocolException
 
-from libtest.thrift_client_to_db import CCViewerHelper
-from libtest.thrift_client_to_db import CCAuthHelper
+from libtest.thrift_client_to_db import get_viewer_client
+from libtest.thrift_client_to_db import get_auth_client
+from libtest import env
+
+"""
+Authentication tests.
+"""
 
 
-class RunResults(unittest.TestCase):
+class DictAuth(unittest.TestCase):
+    """
+    Dictionary based authentication tests.
+    """
+
     def setUp(self):
-        self.host = 'localhost'
-        self.port = int(os.environ['CC_AUTH_VIEWER_PORT'])
-        self.uri = '/Authentication'
 
-    def test_initial_access(self):
-        """Tests that initially, a non-authenticating server is accessible,
-        but an authenticating one is not."""
-        viewer_port = int(os.environ['CC_TEST_VIEWER_PORT'])
-        client_unprivileged = CCViewerHelper(self.host,
-                                             viewer_port,
-                                             '/',
-                                             True,
-                                             None)
-        client_privileged = CCViewerHelper(self.host,
-                                           self.port,
-                                           '/',
-                                           True,
-                                           None)
+        # Get the test workspace used to authentication tests.
+        self._test_workspace = os.environ['TEST_WORKSPACE']
 
-        self.assertIsNotNone(client_unprivileged.getAPIVersion(),
-                             "Unprivileged client was not accessible.")
-
-        try:
-            client_privileged.getAPIVersion()
-            success = False
-        except TProtocolException as tpe:
-            # The server reports a HTTP 401 error which
-            # is not a valid Thrift response.
-            # But if it does so, it passes the test!
-            success = True
-        self.assertTrue(success,
-                        "Privileged client allowed access without session.")
+        test_class = self.__class__.__name__
+        print('Running ' + test_class + ' tests in ' + self._test_workspace)
 
     def test_privileged_access(self):
-        """Tests that initially, a non-authenticating server is accessible,
-        but an authenticating one is not."""
-        auth_client = CCAuthHelper(self.host, self.port, self.uri, True, None)
+        """
+        Tests that initially, a non-authenticating server is accessible,
+        but an authenticating one is not.
+        """
 
+        auth_client = env.setup_auth_client(self._test_workspace)
         handshake = auth_client.getAuthParameters()
         self.assertTrue(handshake.requiresAuthentication,
                         "Privileged server " +
@@ -80,17 +65,14 @@ class RunResults(unittest.TestCase):
         self.assertFalse(handshake.sessionStillActive,
                          "Valid session was " + "reported not to be active.")
 
-        client = CCViewerHelper(self.host,
-                                self.port,
-                                '/',
-                                True,
-                                self.sessionToken)
+        client = env.setup_viewer_client(self._test_workspace,
+                                         session_token=self.sessionToken)
 
         self.assertIsNotNone(client.getAPIVersion(),
                              "Privileged server didn't respond properly.")
 
-        auth_client = CCAuthHelper(self.host, self.port, self.uri, True,
-                                   self.sessionToken)
+        auth_client = env.setup_auth_client(self._test_workspace,
+                                            session_token=self.sessionToken)
         result = auth_client.destroySession()
 
         self.assertTrue(result, "Server did not allow us to destroy session.")

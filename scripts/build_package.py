@@ -748,13 +748,20 @@ def main():
     parser.add_argument("-l", action="store",
                         dest="package_layout_config",
                         help="Package layout configuration file.")
+
     parser.add_argument("-o", "--output", required=True, action="store",
                         dest="output_dir")
+
+    parser.add_argument("-r", "--repository", required=True, action="store",
+                        dest="repository",
+                        help="Root path of the source repository.")
+
     parser.add_argument("-b", "--build-folder",
                         dest="local_build_folder",
                         default="build",
                         help="The local dependency folder under which Thrift "
                              "and documentation files have been generated.")
+
     parser.add_argument("--clean",
                         action="store_true",
                         dest='clean',
@@ -786,10 +793,8 @@ def main():
 
     build_package_config = {k: args[k] for k in args if args[k] is not None}
 
-    if 'REPO_ROOT' not in os.environ:
-        LOG.error("REPO_ROOT environmental variable wasn't specified.")
-        sys.exit(1)
-    repository_root = os.environ['REPO_ROOT']
+    repository_root = build_package_config['repository']
+
     default_package_layout = os.path.join(repository_root,
                                           "config",
                                           "package_layout.json")

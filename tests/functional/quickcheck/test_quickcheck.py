@@ -14,6 +14,8 @@ import unittest
 
 from subprocess import CalledProcessError
 
+from libtest import env
+
 
 class QuickCheckTestCase(unittest.TestCase):
     """This class tests the CodeChecker quickcheck feature."""
@@ -21,13 +23,9 @@ class QuickCheckTestCase(unittest.TestCase):
     @classmethod
     def setup_class(cls):
         """Setup the class."""
-        cls.package_dir = \
-            os.path.realpath(os.environ.get('CC_PACKAGE'))
 
-        # Put CodeChecker/bin to PATH so CodeChecker command becomes available.
-        cls.env = os.environ.copy()
-        cls.env['PATH'] = \
-            os.path.join(cls.package_dir, 'bin') + ':' + cls.env['PATH']
+        # Get an environment with CodeChecker command in it.
+        cls.env = env.codechecker_env()
 
         cls.test_dir = os.path.join(
             os.path.dirname(__file__), 'quickcheck_test_files')
@@ -36,7 +34,8 @@ class QuickCheckTestCase(unittest.TestCase):
         os.chdir(cls.test_dir)
 
     def __check_one_file(self, path):
-        """Test quickcheck output on a ".output" file.
+        """
+        Test quickcheck output on a ".output" file.
 
         The first line of the '.output' file contains the build command of the
         corresponding test file.
@@ -53,8 +52,8 @@ class QuickCheckTestCase(unittest.TestCase):
             output = subprocess.check_output(
                 ['bash', '-c', command], env=self.env, cwd=self.test_dir)
 
-            # skip the analyzer version info between these two lines
-            # it might be different in the test running environments
+            # Skip the analyzer version info between these two lines
+            # it might be different in the test running environments.
             skip_version_after = "[] - Using analyzer:"
             skip_version_before = "[] - Static analysis is starting"
             skipline = False

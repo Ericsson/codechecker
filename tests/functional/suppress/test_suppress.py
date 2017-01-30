@@ -14,37 +14,44 @@ from codeCheckerDBAccess.ttypes import ReportFilter
 from libtest.debug_printer import print_run_results
 from libtest.thrift_client_to_db import CCViewerHelper
 from libtest.thrift_client_to_db import get_all_run_results
+from libtest import env
+
+"""
+Test suppression functionality.
+"""
 
 
-class Suppress(unittest.TestCase):
+class TestSuppress(unittest.TestCase):
     """
     Test suppress functionality
     """
 
     _ccClient = None
 
-    # selected runid for running the tests
-    _runid = None
-
-    def _select_one_runid(self):
-        """
-        Select one run id for the test.
-        """
-        runs = self._cc_client.getRunData()
-        self.assertIsNotNone(runs)
-        self.assertNotEqual(len(runs), 0)
-        idx = 0
-        return runs[idx].runId
-
     def setUp(self):
-        host = 'localhost'
-        port = int(os.environ['CC_TEST_VIEWER_PORT'])
-        uri = '/'
-        self._testproject_data = json.loads(os.environ['CC_TEST_PROJECT_INFO'])
+        test_workspace = os.environ['TEST_WORKSPACE']
+
+        test_class = self.__class__.__name__
+        print('Running ' + test_class + ' tests in ' + test_workspace)
+
+        test_cfg = env.import_test_cfg(test_workspace)
+
+        self._testproject_data = env.setup_test_proj_cfg(test_workspace)
         self.assertIsNotNone(self._testproject_data)
 
-        self._cc_client = CCViewerHelper(host, port, uri)
-        self._runid = self._select_one_runid()
+        self._cc_client = env.setup_viewer_client(test_workspace)
+        self.assertIsNotNone(self._cc_client)
+
+        # Get the run names which belong to this test.
+        run_names = env.get_run_names(test_workspace)
+
+        runs = self._cc_client.getRunData()
+
+        test_runs = [run for run in runs if run.name in run_names]
+
+        self.assertEqual(len(test_runs), 1,
+                         'There should be only one run for this test.')
+        self._runid = test_runs[0].runId
 
     def test_double_suppress(self):
         """
@@ -69,7 +76,7 @@ class Suppress(unittest.TestCase):
         self.assertTrue(success)
         logging.debug('Bug suppressed successfully')
 
-        # try to suppress the same bug again
+        # Try to suppress the same bug again.
         second_suppress_msg = r'Second suppress msg'
         success = self._cc_client.suppressBug([runid],
                                               bug.reportId,
@@ -104,3 +111,56 @@ class Suppress(unittest.TestCase):
 
         self.assertIsNotNone(run_results_unsuppressed)
         self.assertEqual(len(run_results), len(run_results_unsuppressed))
+
+    def test_get_run_results_checker_msg_filter_suppressed(self):
+
+        runid = self._runid
+        logging.debug('Get all run results from the db for runid: ' +
+                      str(runid))
+
+        simple_filters = [ReportFilter(suppressed=False)]
+        run_results = self._cc_client.getRunResults(runid, 50, 0, [],
+                                                    simple_filters)
+        self.assertIsNotNone(run_results)
+        self.assertNotEqual(len(run_results), 0)
+
+        suppress_msg = r'My beautiful Unicode comment.'
+        bug = run_results[0]
+        success = self._cc_client.suppressBug([runid],
+                                              bug.reportId,
+                                              suppress_msg)
+        self.assertTrue(success)
+        logging.debug('Bug suppressed successfully')
+
+        simple_filters = [ReportFilter(suppressed=True)]
+        run_results = self._cc_client.getRunResults(runid, 50, 0, [],
+                                                    simple_filters)
+        self.assertIsNotNone(run_results)
+        self.assertNotEqual(len(run_results), 0)
+
+        filtered_run_results = filter(
+            lambda result:
+            (result.reportId == bug.reportId) and result.suppressed,
+            run_results)
+        self.assertEqual(len(filtered_run_results), 1)
+        suppressed_bug = filtered_run_results[0]
+        self.assertEqual(suppressed_bug.suppressComment, suppress_msg)
+
+        success = self._cc_client.unSuppressBug([runid],
+                                                suppressed_bug.reportId)
+        self.assertTrue(success)
+        logging.debug('Bug unsuppressed successfully')
+
+        simple_filters = [ReportFilter(suppressed=False)]
+        run_results = self._cc_client.getRunResults(runid, 50, 0, [],
+                                                    simple_filters)
+        self.assertIsNotNone(run_results)
+        self.assertNotEqual(len(run_results), 0)
+
+        filtered_run_results = filter(
+            lambda result:
+            (result.reportId == bug.reportId) and not result.suppressed,
+            run_results)
+        self.assertEqual(len(filtered_run_results), 1)
+
+        logging.debug('Done.\n')

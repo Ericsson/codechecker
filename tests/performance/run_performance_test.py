@@ -253,7 +253,7 @@ def measure(test_conf,
 
         number_of_runs = test_conf.get("number_of_runs", 1)
 
-        # TODO simulate append by using the same run name in multiple threads
+        # TODO: simulate append by using the same run name in multiple threads
         run_perf = {}
         for run_count in range(number_of_runs):
             run_name = 'name_' + str(run_count) + '_' + str(uuid4())

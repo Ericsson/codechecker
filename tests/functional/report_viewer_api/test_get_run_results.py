@@ -17,34 +17,43 @@ from codeCheckerDBAccess.ttypes import SortMode
 from codeCheckerDBAccess.ttypes import SortType
 
 from libtest.debug_printer import print_run_results
-from libtest.thrift_client_to_db import CCViewerHelper
 from libtest.thrift_client_to_db import get_all_run_results
 from libtest.result_compare import find_all
+from libtest import env
 
 
 class RunResults(unittest.TestCase):
+
     _ccClient = None
 
-    # selected runid for running the tests
-    _runid = None
-
-    def _select_one_runid(self):
-        runs = self._cc_client.getRunData()
-        self.assertIsNotNone(runs)
-        self.assertNotEqual(len(runs), 0)
-        # select one random run
-        idx = 0
-        return runs[idx].runId
-
     def setUp(self):
-        host = 'localhost'
-        port = int(os.environ['CC_TEST_VIEWER_PORT'])
-        uri = '/'
-        self._testproject_data = json.loads(os.environ['CC_TEST_PROJECT_INFO'])
+        test_workspace = os.environ['TEST_WORKSPACE']
+
+        test_class = self.__class__.__name__
+        print('Running ' + test_class + ' tests in ' + test_workspace)
+
+        test_cfg = env.import_test_cfg(test_workspace)
+
+        # Get the clang version which is tested.
+        self._clang_to_test = env.clang_to_test()
+
+        self._testproject_data = env.setup_test_proj_cfg(test_workspace)
         self.assertIsNotNone(self._testproject_data)
 
-        self._cc_client = CCViewerHelper(host, port, uri)
-        self._runid = self._select_one_runid()
+        self._cc_client = env.setup_viewer_client(test_workspace)
+        self.assertIsNotNone(self._cc_client)
+
+        # Get the run names which belong to this test.
+        run_names = env.get_run_names(test_workspace)
+
+        runs = self._cc_client.getRunData()
+
+        test_runs = [run for run in runs if run.name in run_names]
+
+        self.assertEqual(len(test_runs), 1,
+                         "There should be only one run for this test.")
+
+        self._runid = test_runs[0].runId
 
     def test_get_run_results_no_filter(self):
         """ Get all the run results without any filtering. """
@@ -76,22 +85,31 @@ class RunResults(unittest.TestCase):
         self.assertIsNotNone(run_results)
         self.assertEqual(run_result_count, len(run_results))
 
-        not_found = find_all(run_results,
-                             self._testproject_data['bugs'])
+        test_project_results = self._testproject_data[
+                self._clang_to_test]['bugs']
+        for r in test_project_results:
+            print(r)
+
+        not_found = find_all(run_results, test_project_results)
 
         print_run_results(run_results)
 
         if not_found:
+            print("===================")
             print('Not found bugs:')
             for bug in not_found:
                 print(bug)
+            print("===================")
 
-        self.assertTrue(len(not_found) == 0)
+        self.assertEqual(len(not_found), 0)
 
     def test_get_source_file_content(self):
-        """ Test getting the source file content stored to the database.
-            Test unicode support the stored file can be decoded properly
-            compare results form the database to the original file. """
+        """
+        Test getting the source file content stored to the database.
+        Test unicode support the stored file can be decoded properly
+        compare results form the database to the original file.
+        """
+
         runid = self._runid
         simple_filters = [ReportFilter(checkerId='*', filepath='*.c*')]
 
@@ -123,63 +141,6 @@ class RunResults(unittest.TestCase):
         logging.debug('got ' + str(len(run_results)) + ' files')
 
         self.assertEqual(run_result_count, len(run_results))
-
-    def test_zzzzz_get_run_results_checker_msg_filter_suppressed(self):
-        """ This test must be run for last, suppresses some results
-            which potentially changes the result counts. """
-        runid = self._runid
-        logging.debug('Get all run results from the db for runid: ' +
-                      str(runid))
-
-        simple_filters = [ReportFilter(suppressed=False)]
-        run_results = get_all_run_results(self._cc_client,
-                                          runid,
-                                          filters=simple_filters)
-        self.assertIsNotNone(run_results)
-        self.assertNotEqual(len(run_results), 0)
-
-        suppress_msg = r'My beautiful Unicode comment.'
-        bug = run_results[0]
-        success = self._cc_client.suppressBug([runid],
-                                              bug.reportId,
-                                              suppress_msg)
-        self.assertTrue(success)
-        logging.debug('Bug suppressed successfully')
-
-        simple_filters = [ReportFilter(suppressed=True)]
-        run_results = get_all_run_results(self._cc_client,
-                                          runid,
-                                          filters=simple_filters)
-        self.assertIsNotNone(run_results)
-        self.assertNotEqual(len(run_results), 0)
-
-        filtered_run_results = filter(
-            lambda result:
-            (result.reportId == bug.reportId) and result.suppressed,
-            run_results)
-        self.assertEqual(len(filtered_run_results), 1)
-        suppressed_bug = filtered_run_results[0]
-        self.assertEqual(suppressed_bug.suppressComment, suppress_msg)
-
-        success = self._cc_client.unSuppressBug([runid],
-                                                suppressed_bug.reportId)
-        self.assertTrue(success)
-        logging.debug('Bug unsuppressed successfully')
-
-        simple_filters = [ReportFilter(suppressed=False)]
-        run_results = get_all_run_results(self._cc_client,
-                                          runid,
-                                          filters=simple_filters)
-        self.assertIsNotNone(run_results)
-        self.assertNotEqual(len(run_results), 0)
-
-        filtered_run_results = filter(
-            lambda result:
-            (result.reportId == bug.reportId) and not result.suppressed,
-            run_results)
-        self.assertEqual(len(filtered_run_results), 1)
-
-        logging.debug('Done.\n')
 
     def test_get_run_results_severity_sort(self):
         """ Get the run results and sort them by severity and filename ASC. """

@@ -26,11 +26,13 @@
             { "file": "new_delete.cpp", "line": 37, "checker": "cplusplus.NewDelete", "hash": "304d1a6ccce39882b947abde8749aad2" },
             { "file": "new_delete.cpp", "line": 42, "checker": "cplusplus.NewDelete", "hash": "1ebd7e1678a01d9d31f58e3375bdc70e" },
             { "file": "new_delete.cpp", "line": 47, "checker": "cplusplus.NewDelete", "hash": "c36365086067fd9a87a473e6c08ef762" },
-            { "file": "new_delete.cpp", "line": 31, "checker": "unix.Malloc", "hash": "c2132f78ef0e01bdb5eacf616048625f" }],
-        "filter_severity_levels": [{"MEDIUM": 1}, {"LOW": 4}, {"HIGH": 18}, {"STYLE": 0}, {"UNSPECIFIED": 0}, {"CRITICAL": 0}],
-        "filter_checker_id": [{"*unix*": 1}, {"core*": 13}, {"*DeadStores": 4}],
+            { "file": "new_delete.cpp", "line": 31, "checker": "unix.Malloc", "hash": "c2132f78ef0e01bdb5eacf616048625f" },
+            { "file": "file_to_be_skipped.cpp", "line": 11, "checker": "core.DivideZero", "hash": "516537a4e487b7853786ce5776a73b6e" },
+            { "file": "file_to_be_skipped.cpp", "line": 11, "checker": "deadcode.DeadStores", "hash": "c57c2ba58f80addc8635e65ad382c500" }],
+        "filter_severity_levels": [{"MEDIUM": 1}, {"LOW": 5}, {"HIGH": 19}, {"STYLE": 0}, {"UNSPECIFIED": 0}, {"CRITICAL": 0}],
+        "filter_checker_id": [{"*unix*": 1}, {"core*": 14}, {"*DeadStores": 5}],
         "filter_filepath": [{"*null*": 5}],
         "filter_filepath_case_insensitive": [{"*null*": 5}, {"*nULl*": 5}, {"*NULL*": 5}, {"*Null*": 5}],
-        "diff_res_types_filter": [{"deadcode.DeadStores": 4}, {"core.CallAndMessage": 5}, {"cplusplus.NewDelete": 5}, {"unix.Malloc": 1}]
+        "diff_res_types_filter": [{"deadcode.DeadStores": 5}, {"core.CallAndMessage": 5}, {"cplusplus.NewDelete": 5}, {"unix.Malloc": 1}]
     }
 }

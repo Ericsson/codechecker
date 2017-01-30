@@ -3,15 +3,20 @@
 #   This file is distributed under the University of Illinois Open Source
 #   License. See LICENSE.TXT for details.
 # -----------------------------------------------------------------------------
-import socket
+
+""" Unit tests for the $MODULE_NAME$ module. """
+
+import unittest
+
+import $MODULE_NAME$
 
 
-def get_free_port():
-    '''Get a free port from the OS.'''
+class $MODULE_NAME$Test(unittest.TestCase):
+    """
+    Testing the $MODULE_NAME$.
+    """
 
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.bind(('', 0))
-    free_port = s.getsockname()[1]
-    s.close()
-
-    return free_port
+    def test(self):
+        """
+        """
+        pass

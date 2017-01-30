@@ -193,3 +193,25 @@ def get_all_run_results(client, run_id, sort_mode=[], filters=[]):
         results.extend(partial_res)
 
     return results
+
+
+def get_viewer_client(port, host='localhost', uri='/',
+                      auto_handle_connection=True,
+                      session_token=None):
+
+    return CCViewerHelper(host,
+                          port,
+                          uri,
+                          auto_handle_connection,
+                          session_token)
+
+
+def get_server_client(port, host='localhost', uri='/'):
+    return CCReportHelper(host, port, uri)
+
+
+def get_auth_client(port, host='localhost', uri='/Authentication',
+                    auto_handle_connection=True, session_token=None):
+    return CCAuthHelper(host, port, uri,
+                        auto_handle_connection,
+                        session_token)

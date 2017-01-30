@@ -1,17 +1,18 @@
+# coding=utf-8
 # -----------------------------------------------------------------------------
 #                     The CodeChecker Infrastructure
 #   This file is distributed under the University of Illinois Open Source
 #   License. See LICENSE.TXT for details.
 # -----------------------------------------------------------------------------
-import socket
+
+"""
+No package setup is needed for the command line quickcheck test.
+"""
 
 
-def get_free_port():
-    '''Get a free port from the OS.'''
+def setup_package():
+    pass
 
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.bind(('', 0))
-    free_port = s.getsockname()[1]
-    s.close()
 
-    return free_port
+def teardown_package():
+    pass

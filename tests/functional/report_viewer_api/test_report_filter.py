@@ -12,7 +12,8 @@ import unittest
 
 import shared
 from codeCheckerDBAccess.ttypes import ReportFilter
-from libtest.thrift_client_to_db import CCViewerHelper
+
+from libtest import env
 
 
 def get_severity_level(name):
@@ -20,29 +21,37 @@ def get_severity_level(name):
     return shared.ttypes.Severity._NAMES_TO_VALUES[name]
 
 
-class RunResults(unittest.TestCase):
+class TestReportFilter(unittest.TestCase):
+
     _ccClient = None
 
-    # Selected runid for running the tests.
-    _runid = None
-
-    def _select_one_runid(self):
-        runs = self._cc_client.getRunData()
-        self.assertIsNotNone(runs)
-        self.assertNotEqual(len(runs), 0)
-        # Select one random run.
-        idx = 0
-        return runs[idx].runId
-
     def setUp(self):
-        host = 'localhost'
-        port = int(os.environ['CC_TEST_VIEWER_PORT'])
-        uri = '/'
-        self._testproject_data = json.loads(os.environ['CC_TEST_PROJECT_INFO'])
+        test_workspace = os.environ['TEST_WORKSPACE']
+
+        test_class = self.__class__.__name__
+        print('Running ' + test_class + ' tests in ' + test_workspace)
+
+        test_cfg = env.import_test_cfg(test_workspace)
+
+        # Get the clang version which is tested.
+        self._clang_to_test = env.clang_to_test()
+
+        self._testproject_data = env.setup_test_proj_cfg(test_workspace)
         self.assertIsNotNone(self._testproject_data)
 
-        self._cc_client = CCViewerHelper(host, port, uri)
-        self._runid = self._select_one_runid()
+        self._cc_client = env.setup_viewer_client(test_workspace)
+        self.assertIsNotNone(self._cc_client)
+
+        # Get the run names which belong to this test.
+        run_names = env.get_run_names(test_workspace)
+
+        runs = self._cc_client.getRunData()
+
+        test_runs = [run for run in runs if run.name in run_names]
+
+        self.assertEqual(len(test_runs), 1,
+                         "There should be only one run for this test.")
+        self._runid = test_runs[0].runId
 
     def test_filter_none(self):
         """ Filter value is None should return all results."""
@@ -78,7 +87,8 @@ class RunResults(unittest.TestCase):
         """ Filter by severity levels."""
         runid = self._runid
 
-        severity_test_data = self._testproject_data['filter_severity_levels']
+        severity_test_data = self._testproject_data[self._clang_to_test][
+                'filter_severity_levels']
 
         for level in severity_test_data:
             for severity_level, test_result_count in level.items():
@@ -101,7 +111,8 @@ class RunResults(unittest.TestCase):
         """ Filter by checker id. """
         runid = self._runid
 
-        severity_test_data = self._testproject_data['filter_checker_id']
+        severity_test_data = self._testproject_data[self._clang_to_test][
+                'filter_checker_id']
 
         for level in severity_test_data:
             for checker_id_filter, test_result_count in level.items():
@@ -112,10 +123,15 @@ class RunResults(unittest.TestCase):
                 simple_filter = ReportFilter(checkerId=checker_id_filter)
                 simple_filters.append(simple_filter)
 
+                print(simple_filters)
                 run_result_count = self._cc_client.getRunResultCount(
                     runid, simple_filters)
+                run_results = []
                 run_results = self._cc_client.getRunResults(
-                    runid, run_result_count, 0, sort_types, simple_filters)
+                    runid, 500, 0, sort_types, simple_filters)
+                for r in run_results:
+                    print(r)
+                    print("")
                 self.assertIsNotNone(run_results)
                 self.assertEqual(test_result_count, len(run_results))
 
@@ -123,7 +139,8 @@ class RunResults(unittest.TestCase):
         """ Filter by checker id. """
         runid = self._runid
 
-        severity_test_data = self._testproject_data['filter_filepath']
+        severity_test_data = self._testproject_data[self._clang_to_test][
+                'filter_filepath']
 
         for level in severity_test_data:
             for filepath_filter, test_result_count in level.items():
@@ -146,7 +163,7 @@ class RunResults(unittest.TestCase):
         """ Filter by file path case insensitive."""
 
         runid = self._runid
-        filter_test_data = self._testproject_data[
+        filter_test_data = self._testproject_data[self._clang_to_test][
             'filter_filepath_case_insensitive']
 
         for level in filter_test_data:
