@@ -12,7 +12,7 @@ import logging
 
 import shared
 
-from test_utils.thrift_client_to_db import CCViewerHelper
+from libtest.thrift_client_to_db import CCViewerHelper
 
 
 class UpdateMode(unittest.TestCase):

@@ -13,8 +13,8 @@ import unittest
 
 from thrift.protocol.TProtocol import TProtocolException
 
-from test_utils.thrift_client_to_db import CCViewerHelper
-from test_utils.thrift_client_to_db import CCAuthHelper
+from libtest.thrift_client_to_db import CCViewerHelper
+from libtest.thrift_client_to_db import CCAuthHelper
 
 
 class RunResults(unittest.TestCase):

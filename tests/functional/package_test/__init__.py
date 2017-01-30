@@ -20,7 +20,7 @@ import uuid
 from subprocess import CalledProcessError
 
 __REPO_ROOT = os.path.abspath(os.environ['REPO_ROOT'])
-# sys.path modification needed so nosetests can load the test_utils package.
+# sys.path modification needed so nosetests can load the libtest package.
 sys.path.append(os.path.abspath(__REPO_ROOT))
 
 # Because of the nature of the python-env loading of nosetests, we need to

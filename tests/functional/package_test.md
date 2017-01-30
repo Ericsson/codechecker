@@ -34,7 +34,7 @@ Available environment variables for the tests:
 
 The test cases can use the port of the viewer server and the project info through environment variables:
 
-The `test_utils.thrift_client_to_db` module contains `CCViewerHelper` which is a wrapper for the thrift viewer api.
+The `libtest.thrift_client_to_db` module contains `CCViewerHelper` which is a wrapper for the thrift viewer api.
 
 # Nosetest config
 Nosetest config file can be used to provide more information during the tests.  

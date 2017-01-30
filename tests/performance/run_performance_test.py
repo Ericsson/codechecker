@@ -25,8 +25,8 @@ from uuid import uuid4
 from shared.ttypes import BugPathPos
 from shared.ttypes import BugPathEvent
 from shared.ttypes import Severity
-from test_utils.thrift_client_to_db import CCReportHelper, CCViewerHelper
-from test_utils.thrift_client_to_db import get_all_run_results
+from libtest.thrift_client_to_db import CCReportHelper, CCViewerHelper
+from libtest.thrift_client_to_db import get_all_run_results
 
 
 logging.basicConfig(format='[%(process)s] %(message)s', level=logging.INFO)

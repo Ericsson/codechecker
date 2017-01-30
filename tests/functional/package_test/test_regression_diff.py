@@ -15,10 +15,10 @@ import shared
 from codeCheckerDBAccess.ttypes import DiffType
 from codeCheckerDBAccess.ttypes import ReportFilter
 
-from test_utils.thrift_client_to_db import CCViewerHelper
-from test_utils.thrift_client_to_db import get_all_run_results
-from test_utils.debug_printer import print_run_results
-from test_utils.thrift_client_to_db import CCViewerHelper
+from libtest.thrift_client_to_db import CCViewerHelper
+from libtest.thrift_client_to_db import get_all_run_results
+from libtest.debug_printer import print_run_results
+from libtest.thrift_client_to_db import CCViewerHelper
 
 
 def get_severity_level(name):

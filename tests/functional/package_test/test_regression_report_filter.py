@@ -12,7 +12,7 @@ import unittest
 
 import shared
 from codeCheckerDBAccess.ttypes import ReportFilter
-from test_utils.thrift_client_to_db import CCViewerHelper
+from libtest.thrift_client_to_db import CCViewerHelper
 
 
 def get_severity_level(name):

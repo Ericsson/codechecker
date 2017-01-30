@@ -12,7 +12,7 @@ from contextlib import contextmanager
 from uuid import uuid4
 
 from shared.ttypes import BugPathPos, BugPathEvent, Severity
-from test_utils.thrift_client_to_db import CCReportHelper
+from libtest.thrift_client_to_db import CCReportHelper
 
 
 def _generate_content(cols, lines):
