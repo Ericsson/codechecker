@@ -439,18 +439,21 @@ function (declare, dom, style, on, query, Memory, Observable, topic,
         var column = item.report.lastBugPosition.startCol;
       }
 
-      if (fileId !== this.editor.get('sourceFileData').fileId)
+      if (fileId !== this.editor.get('sourceFileData').fileId) {
         this.editor.set(
           'sourceFileData',
           CC_SERVICE.getSourceFileData(fileId, true));
+
+        // TODO: Now arrows are redrawn only if new file is opened. But what if
+        // in the same file the path goes out of the CodeMirror-rendered area?
+        if (this.buttonPane.showArrowCheckbox.get('checked'))
+          this.editor.drawBugPath();
+      }
 
       if (this.editor.reportData.reportId != item.parent) {
         this.editor.set('reportData', item.report);
         hashHelper.setReport(item.report.reportId);
       }
-
-      if (this.buttonPane.showArrowCheckbox.get('checked'))
-        this.editor.drawBugPath();
 
       this.editor.jumpTo(line, column);
 
