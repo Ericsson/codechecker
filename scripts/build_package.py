@@ -119,6 +119,7 @@ def generate_thrift_files(thrift_files_dir, env, silent=True):
         LOG.error('Failed to generate authentication interface files')
         return ret
 
+
 # -------------------------------------------------------------------
 def create_folder_layout(path, layout):
     """ Create package directory layout. """
@@ -378,7 +379,8 @@ def build_package(repository_root, build_package_config, env=None):
 
                 ld_logger32 = build_package_config.get('ld_logger_32')
                 ld_logger64 = build_package_config.get('ld_logger_64')
-                rebuild = build_package_config.get('rebuild_ld_logger') or clean
+                rebuild = build_package_config.get('rebuild_ld_logger')\
+                    or clean
 
                 arch = None
                 if ld_logger32 == ld_logger64:
@@ -389,12 +391,14 @@ def build_package(repository_root, build_package_config, env=None):
                 elif ld_logger64:
                     arch = '64'
 
-                if build_ld_logger(ld_logger_path, env, arch, rebuild, verbose):
+                if build_ld_logger(ld_logger_path, env, arch,
+                                   rebuild, verbose):
                     LOG.error('Failed to build ld logger')
                     sys.exit()
 
                 # Copy ld logger files.
-                target = os.path.join(package_root, package_layout['ld_logger'])
+                target = os.path.join(package_root,
+                                      package_layout['ld_logger'])
 
                 copy_tree(ld_logger_build, target)
 
@@ -626,7 +630,6 @@ def main():
                         dest='clean',
                         help='Clean external dependencies')
 
-
     logger_group = parser.add_argument_group('ld-logger')
     logger_group.add_argument("--ld-logger", action="store",
                               dest="ld_logger_path",
@@ -649,7 +652,6 @@ def main():
                         help='Set log level to higher verbosity.')
 
     args = vars(parser.parse_args())
-
 
     build_package_config = {k: args[k] for k in args if args[k] is not None}
 

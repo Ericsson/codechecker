@@ -24,7 +24,7 @@ ROOT = REPO_ROOT=$(CURRENT_DIR)
 default: package
 
 pep8:
-	pep8 codechecker codechecker_lib tests db_model viewer_server viewer_clients
+	pep8 codechecker codechecker_lib db_model scripts storage_server viewer_server viewer_clients tests
 
 gen-docs: build_dir
 	doxygen ./Doxyfile.in && \
