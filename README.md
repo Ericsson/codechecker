@@ -115,7 +115,8 @@ LLVM/Clang](http://clang.llvm.org/get_started.html) documentation.
 ~~~{.sh}
 # Download and install dependencies
 brew update
-brew install doxygen thrift gcc git
+brew install doxygen gcc git
+brew install homebrew/versions/thrift090
 
 # Fetch source code
 git clone https://github.com/Ericsson/CodeChecker.git --depth 1 ~/codechecker
