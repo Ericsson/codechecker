@@ -16,10 +16,10 @@ matrix:
       language: generic
 
 before_install:
-    - git clone https://github.com/llvm-mirror/clang.git ~/llvm\
-    - chmod a+x ~/llvm/tools/scan-build-py/bin/intercept-build
-    - export PATH=~/llvm/tools/scan-build-py/bin:$PATH
-    - export PYTHONPATH=~/llvm/tools/scan-build-py/
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then git clone https://github.com/llvm-mirror/clang.git ~/llvm; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then chmod a+x ~/llvm/tools/scan-build-py/bin/intercept-build; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PATH=~/llvm/tools/scan-build-py/bin:$PATH; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PYTHONPATH=~/llvm/tools/scan-build-py/; fi 
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update;               fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install homebrew/versions/thrift090;                fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install doxygen;               fi
