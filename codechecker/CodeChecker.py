@@ -340,6 +340,13 @@ Build command which is used to build the project.''')
                                         ' and defines and pass them to Clang.'
                                         'This is useful when you'
                                         'do cross-compilation.')
+        qcheck_parser.add_argument('--export-plist',
+                                   type=str,
+                                   required=False,
+                                   help='Instead of printing analysis '
+                                        'results to the standard output, '
+                                        'export the generated plist files '
+                                        'to the specified directory.')
         add_analyzer_arguments(qcheck_parser)
         logger.add_verbose_arguments(qcheck_parser)
         qcheck_parser.set_defaults(func=arg_handler.handle_quickcheck)

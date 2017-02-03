@@ -295,7 +295,8 @@ def _do_quickcheck(args):
         log_file, set_in_cmdline = build_manager.check_log_file(args, context)
         actions = log_parser.parse_log(log_file,
                                        args.add_compiler_defaults)
-        analyzer.run_quick_check(args, context, actions)
+        analyzer.run_quick_check(args, context, actions,
+                                 args.export_plist)
 
     except Exception as ex:
         LOG.error("Running quickcheck failed.")
@@ -316,6 +317,12 @@ def handle_quickcheck(args):
     """
 
     args.workspace = tempfile.mkdtemp(prefix='codechecker-qc')
+
+    if args.export_plist:
+        if not os.path.exists(args.export_plist):
+            os.mkdir(args.export_plist)
+        args.export_plist = os.path.abspath(args.export_plist)
+
     try:
         _do_quickcheck(args)
     finally:
