@@ -319,7 +319,8 @@ def handle_quickcheck(args):
     try:
         _do_quickcheck(args)
     finally:
-        shutil.rmtree(args.workspace)
+        if not args.keep_tmp:
+            shutil.rmtree(args.workspace)
 
 
 def consume_plist(item):
