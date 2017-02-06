@@ -131,7 +131,6 @@ class PlistToStdout(ResultHandler):
 
         if err_code == 0:
             try:
-                # No lock when consuming plist.
                 self.__lock.acquire() if self.__lock else None
                 self.__print_bugs(bugs)
             finally:

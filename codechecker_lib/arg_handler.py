@@ -322,6 +322,14 @@ def handle_quickcheck(args):
         shutil.rmtree(args.workspace)
 
 
+progress_lock = None
+
+
+def init_worker(lock):
+    global progress_lock
+    progress_lock = lock
+
+
 def consume_plist(item):
     plist, args, context = item
     LOG.info('Consuming ' + plist)
@@ -336,7 +344,7 @@ def consume_plist(item):
                                                  args.directory,
                                                  context.severity_map,
                                                  None,
-                                                 None,
+                                                 progress_lock,
                                                  not args.stdout)
 
     rh.analyzer_returncode = 0
@@ -381,7 +389,9 @@ def handle_plist(args):
                                                         context.version,
                                                         args.force)
 
-    pool = multiprocessing.Pool(args.jobs)
+    lock = multiprocessing.Lock()
+    pool = multiprocessing.Pool(args.jobs, initializer=init_worker,
+                                initargs=(lock,))
 
     try:
         items = [(plist, args, context)
@@ -406,12 +416,12 @@ def handle_version_info(args):
 
     context = generic_package_context.get_context()
 
-    print('Base package version: \t' + context.version).expandtabs(30)
-    print('Package build date: \t' +
-          context.package_build_date).expandtabs(30)
-    print('Git hash: \t' + context.package_git_hash).expandtabs(30)
-    print('DB schema version: \t' +
-          str(context.db_version_info)).expandtabs(30)
+    print(('Base package version: \t' + context.version).expandtabs(30))
+    print(('Package build date: \t' +
+          context.package_build_date).expandtabs(30))
+    print(('Git hash: \t' + context.package_git_hash).expandtabs(30))
+    print(('DB schema version: \t' +
+          str(context.db_version_info)).expandtabs(30))
 
     # Thift api version for the clients.
     from codeCheckerDBAccess import constants
