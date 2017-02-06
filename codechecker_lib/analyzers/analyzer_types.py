@@ -354,7 +354,6 @@ def construct_result_handler(args,
             res_handler = result_handler_plist_to_file.PlistToFile(
                 buildaction,
                 report_output,
-                lock,
                 export_plist_path)
             res_handler.print_steps = args.print_steps
 
@@ -362,7 +361,6 @@ def construct_result_handler(args,
             res_handler = result_handler_clang_tidy.ClangTidyPlistToFile(
                 buildaction,
                 report_output,
-                lock,
                 export_plist_path)
 
     res_handler.severity_map = severity_map

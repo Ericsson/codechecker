@@ -23,9 +23,8 @@ class PlistToFile(ResultHandler):
 
     __metaclass__ = ABCMeta
 
-    def __init__(self, buildaction, workspace, lock, export_plist_path):
+    def __init__(self, buildaction, workspace, export_plist_path):
         super(PlistToFile, self).__init__(buildaction, workspace)
-        self.__lock = lock
         self.__folder = export_plist_path
 
     @property
@@ -61,14 +60,9 @@ class PlistToFile(ResultHandler):
             return err_code
 
         if err_code == 0:
-            try:
-                # No lock when consuming plist.
-                self.__lock.acquire() if self.__lock else None
-                shutil.copy(plist, os.path.join(self.__folder,
-                                                os.path.basename(plist)))
-                LOG.debug("Exported '" + os.path.basename(plist) + "'")
-            finally:
-                self.__lock.release() if self.__lock else None
+            shutil.copy(plist, os.path.join(self.__folder,
+                                            os.path.basename(plist)))
+            LOG.debug("Exported '" + os.path.basename(plist) + "'")
         else:
             LOG.error('Analyzing %s with %s failed.\n' %
                       (ntpath.basename(self.analyzed_source_file),
