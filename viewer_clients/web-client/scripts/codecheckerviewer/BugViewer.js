@@ -7,6 +7,7 @@ define([
   'dojo/store/Memory',
   'dojo/store/Observable',
   'dojo/topic',
+  'dojox/html/entities',
   'dijit/Dialog',
   'dijit/tree/ObjectStoreModel',
   'dijit/layout/ContentPane',
@@ -18,7 +19,7 @@ define([
   'codechecker/HtmlTree',
   'codechecker/util',
   'codechecker/hashHelper'],
-function (declare, dom, style, on, query, Memory, Observable, topic,
+function (declare, dom, style, on, query, Memory, Observable, topic, entities,
   Dialog, ObjectStoreModel, ContentPane, BorderContainer, Button, CheckBox,
   Textarea, Tooltip, HtmlTree, util, hashHelper) {
 
@@ -136,7 +137,7 @@ function (declare, dom, style, on, query, Memory, Observable, topic,
         var element = dom.create('div', {
           style : 'margin-left: ' + left,
           class : 'checkMsg',
-          innerHTML : bubble.msg
+          innerHTML : entities.encode(bubble.msg)
         });
 
         that._lineWidgets.push(that.codeMirror.addLineWidget(
@@ -473,7 +474,8 @@ function (declare, dom, style, on, query, Memory, Observable, topic,
 
       this.bugStore.put({
         id : report.reportId + '',
-        name : 'Line ' + report.lastBugPosition.startLine + ': ' + report.checkerId,
+        name : 'Line ' + report.lastBugPosition.startLine
+             + ': ' + report.checkerId,
         parent : util.severityFromCodeToString(report.severity),
         report : report,
         isLeaf : false
@@ -481,7 +483,9 @@ function (declare, dom, style, on, query, Memory, Observable, topic,
 
       this.bugStore.put({
         id : report.reportId + '_0',
-        name : '<b><u>Result</u>: ' + report.checkerMsg + '</b>',
+        name : '<b><u>Result</u>: '
+             + entities.encode(report.checkerMsg)
+             + '</b>',
         parent : report.reportId + '',
         report : report,
         isLeaf : true
@@ -491,7 +495,7 @@ function (declare, dom, style, on, query, Memory, Observable, topic,
         reportDetails.pathEvents.forEach(function (step, index) {
           that.bugStore.put({
             id : report.reportId + '_' + (index + 1),
-            name : 'Line ' + step.startLine + ': ' + step.msg,
+            name : 'Line ' + step.startLine + ': ' + entities.encode(step.msg),
             parent : report.reportId,
             bugPathEvent : step,
             isLeaf : true,
