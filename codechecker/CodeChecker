@@ -11,6 +11,7 @@ Used to run the logging in the same env.
 """
 from __future__ import print_function
 
+import errno
 import ntpath
 import os
 import pickle
@@ -69,6 +70,16 @@ def main():
 
     original_env_file = os.path.join(tmp_dir, 'original_env.pickle')
 
+    def _remove_tmp():
+        # Remove temporary directory.
+        try:
+            shutil.rmtree(tmp_dir)
+        except Exception as ex:
+            if type(ex) != OSError or ex.errno != errno.ENOENT:
+                print('Failed to remove temporary directory: ' + tmp_dir)
+                print('Manual cleanup is required.')
+                print(ex)
+
     try:
         with open(original_env_file, 'wb') as env_save:
             pickle.dump(original_env, env_save)
@@ -83,22 +94,16 @@ def main():
         if proc_pid:
             os.kill(proc_pid, signal.SIGINT)
 
-        # Remove temporary directory.
-        try:
-            shutil.rmtree(tmp_dir)
-        except Exception as ex:
-            print('Failed to remove temporary directory: ' + tmp_dir)
-            print('Manual cleanup is required.')
-            print(ex)
-
+        _remove_tmp()
         sys.exit(1)
 
     signal.signal(signal.SIGTERM, signal_term_handler)
     signal.signal(signal.SIGINT, signal_term_handler)
 
-    run_codechecker(checker_env)
-
-    shutil.rmtree(tmp_dir)
+    try:
+        run_codechecker(checker_env)
+    finally:
+        _remove_tmp()
 
 
 if __name__ == "__main__":
