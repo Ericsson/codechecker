@@ -120,3 +120,8 @@ class ThriftClientHelper(object):
     @ThriftClientCall
     def suppressBug(self, runIds, reportId, comment):
         pass
+
+    # -----------------------------------------------------------------------
+    @ThriftClientCall
+    def unSuppressBug(self, runIds, reportId):
+        pass

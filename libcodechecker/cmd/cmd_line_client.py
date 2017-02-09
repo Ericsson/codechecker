@@ -502,10 +502,13 @@ def handle_suppress(args):
     elif args.bughash:
         reports = client.getRunResults(run_id, 500, 0, None, [
             codeCheckerDBAccess.ttypes.ReportFilter(bugHash=args.bughash,
-                                                    suppressed=False)])
+                                                    suppressed=args.x)])
 
         for report in reports:
-            client.suppressBug([run_id], report.reportId, args.comment)
+            if args.x:
+                client.unSuppressBug([run_id], report.reportId)
+            else:
+                client.suppressBug([run_id], report.reportId, args.comment)
 
 
 def register_client_command_line(argument_parser):
@@ -647,6 +650,9 @@ def register_client_command_line(argument_parser):
                        help='Import suppress file to database.')
     group.add_argument('--bughash', type=str, dest='bughash',
                        help='Suppress a specific bug by bug hash.')
+    suppress_parser.add_argument('-x', action='store_true', dest='x',
+                                 help='If this flag is given then the bug '
+                                 'provided by --bughash will be unsuppressed.')
     suppress_parser.add_argument('-c', '--comment', type=str, dest='comment',
                                  default='',
                                  help='Comment for bug suppression. It has '
