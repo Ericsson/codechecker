@@ -669,9 +669,10 @@ class ThriftRequestHandler():
                 .filter(SuppressBug.run_id == run_id).all()
 
             for suppression in suppressed:
-                result.append(shared.ttypes.SuppressBugData(suppression.hash,
-                                                            suppression.file_name,
-                                                            suppression.comment))
+                result.append(shared.ttypes.SuppressBugData(
+                    suppression.hash,
+                    suppression.file_name,
+                    suppression.comment))
 
             return result
 
