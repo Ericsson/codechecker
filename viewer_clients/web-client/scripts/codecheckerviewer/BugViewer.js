@@ -472,13 +472,66 @@ function (declare, dom, style, on, query, Memory, Observable, topic, entities,
         Tooltip.hide(node.domNode);
     },
 
+    _highlight_colours : [
+      "#ffffff",
+      "#e9dddd",
+      "#dde0eb",
+      "#e5e8e5",
+      "#cbc2b6",
+      "#b8ccea",
+      "#c1c9cd",
+      "#dbb78b",
+      "#9d8678",
+    ],
+
+    _highlightStep : function(stack, step) {
+      var that = this;
+      var msg = step.msg;
+
+      // The background must be saved BEFORE stack transition. Calling is in the caller, return is in the called func.
+      var highlight = {
+        background : stack.background
+      };
+
+      var stackTransition = function() {
+        var extractFuncName = function(prefix) {
+          if (msg.indexOf(prefix) !== -1) {
+            return msg.replace(prefix, "").replace("'", "");
+          }
+
+          return false;
+        };
+
+        var func;
+        if (func = extractFuncName("Calling ")) {
+          stack.funcStack.push(func);
+          stack.background = that._highlight_colours[stack.funcStack.length % that._highlight_colours.length];
+        } else if (func = extractFuncName("Returning from ")) {
+          if (func === stack.funcStack[stack.funcStack.length - 1]) {
+            stack.funcStack.pop();
+            stack.background = that._highlight_colours[stack.funcStack.length % that._highlight_colours.length];
+          } else {
+            throw {
+              name : 'StackError',
+              message : "Returned from " + func + " while the last function was " +
+                        stack.funcStack[stack.funcStack.length - 1]
+            };
+          }
+        }
+      };
+
+      stackTransition();
+
+      return highlight;
+    },
+
     _addReport : function (report) {
       var that = this;
 
       this.bugStore.put({
         id : report.reportId + '',
         name : 'Line ' + report.lastBugPosition.startLine
-             + ': ' + report.checkerId,
+             + ' &ndash; ' + report.checkerId,
         parent : util.severityFromCodeToString(report.severity),
         report : report,
         isLeaf : false
@@ -486,19 +539,52 @@ function (declare, dom, style, on, query, Memory, Observable, topic, entities,
 
       this.bugStore.put({
         id : report.reportId + '_0',
-        name : '<b><u>Result</u>: '
-             + entities.encode(report.checkerMsg)
-             + '</b>',
+        name : '<b><u>' + entities.encode(report.checkerMsg) + '</u></b>',
         parent : report.reportId + '',
         report : report,
         isLeaf : true
       });
 
+      var filePaths = [];
+      var areThereMultipleFiles = false;
+      var highlightStack = {
+        funcStack : [],
+        background : this._highlight_colours[0]
+      };
+
       CC_SERVICE.getReportDetails(report.reportId, function (reportDetails) {
+        // Check if there are multiple files (XTU?) affected by this bug.
+        // If so, we show the file names properly.
+        reportDetails.pathEvents.some(function (step) {
+          if (filePaths.indexOf(step.filePath) > -1) {
+            areThereMultipleFiles = true;
+            return true; // Break execution of this foreach.
+          }
+
+          filePaths.push(step.filePath);
+          return false;
+        });
+
         reportDetails.pathEvents.forEach(function (step, index) {
+          var highlightData = that._highlightStep(highlightStack, step);
+
+          if (areThereMultipleFiles) {
+            name = step.filePath.replace(/^.*(\\|\/|\:)/, '') + ':';
+          } else {
+            name = 'Line ';
+          }
+
+          name += step.startLine + ' &ndash; ' + entities.encode(step.msg);
+
+          if (index == reportDetails.pathEvents.length - 1) {
+            // The final line in the BugPath is the result once again
+            name = '<i><u>' + name + '</u></i>';
+          }
+
           that.bugStore.put({
             id : report.reportId + '_' + (index + 1),
-            name : 'Line ' + step.startLine + ': ' + entities.encode(step.msg),
+            name : name,
+            backgroundColor: highlightData.background,
             parent : report.reportId,
             bugPathEvent : step,
             isLeaf : true,
