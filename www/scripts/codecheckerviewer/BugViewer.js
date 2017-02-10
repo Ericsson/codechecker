@@ -721,6 +721,26 @@ function (declare, dom, style, on, query, Memory, Observable, topic, entities,
         unsuppressDialog.addChild(sendUnsuppressButton);
       }
 
+      function setSuppressDialogContent() {
+        suppressDialog.getChildren().forEach(function (child) {
+          suppressDialog.removeChild(child);
+        });
+
+        suppressDialog.set('content', dom.create('div', {
+          innerHTML : 'You can also use command line for suppression:<br>' +
+            '<tt>CodeChecker cmd suppress ' +
+            ' --bughash ' + that.reportData.bugHash +
+            ' -n ' + that.runData.name +
+            ' -c &lt;comment&gt;' +
+            ' --file ' + getProperFilePath(that.reportData.checkedFile) +
+            ' -p ' + location.port +
+            '</tt><br><b>Comment:</b>'
+        }));
+
+        suppressDialog.addChild(suppressTextarea);
+        suppressDialog.addChild(sendSuppressButton);
+      }
+
       //--- Bug suppression ---//
 
       var suppressTextarea = new Textarea();
@@ -765,9 +785,7 @@ function (declare, dom, style, on, query, Memory, Observable, topic, entities,
       var suppressDialog = new Dialog({ title : 'Suppress bug' });
       var unsuppressDialog = new Dialog({ title : 'Unsuppress bug' });
 
-      suppressDialog.addChild(suppressTextarea);
-      suppressDialog.addChild(sendSuppressButton);
-
+      setSuppressDialogContent();
       setUnsuppressDialogContent();
 
       var suppressButton = new Button({
