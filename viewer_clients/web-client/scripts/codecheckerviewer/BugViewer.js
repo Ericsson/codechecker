@@ -384,12 +384,12 @@ function (declare, dom, style, on, query, Memory, Observable, topic, entities,
 
       [
         { id : 'root',        name : 'Bugs by priority' },
-        { id : 'critical',    name : 'Critical',    parent : 'root', isLeaf : false },
-        { id : 'high',        name : 'High',        parent : 'root', isLeaf : false },
-        { id : 'medium',      name : 'Medium',      parent : 'root', isLeaf : false },
-        { id : 'low',         name : 'Low',         parent : 'root', isLeaf : false },
-        { id : 'style',       name : 'Style',       parent : 'root', isLeaf : false },
-        { id : 'unspecified', name : 'Unspecified', parent : 'root', isLeaf : false }
+        { id : 'critical',    name : 'Critical',    parent : 'root', isLeaf : false, kind : 'severity' },
+        { id : 'high',        name : 'High',        parent : 'root', isLeaf : false, kind : 'severity' },
+        { id : 'medium',      name : 'Medium',      parent : 'root', isLeaf : false, kind : 'severity' },
+        { id : 'low',         name : 'Low',         parent : 'root', isLeaf : false, kind : 'severity' },
+        { id : 'style',       name : 'Style',       parent : 'root', isLeaf : false, kind : 'severity' },
+        { id : 'unspecified', name : 'Unspecified', parent : 'root', isLeaf : false, kind : 'severity' }
       ].forEach(function (item) {
         that.bugStore.put(item);
       });
@@ -462,6 +462,32 @@ function (declare, dom, style, on, query, Memory, Observable, topic, entities,
         this.editor.highlightBugPathEvent(item.bugPathEvent);
     },
 
+    getIconClass : function(item, opened) {
+      if (item == this.model.root) {
+        return (opened ? "dijitFolderOpened" : "dijitFolderClosed");
+      } else if (!item.isLeaf) {
+        switch (item.kind) {
+          case 'severity':
+            return "customIcon severity-" + item.id;
+          case 'bugpath':
+            return (opened ? "customIcon pathOpened" : "customIcon pathClosed");
+        }
+
+        return (opened ? "dijitFolderOpened" : "dijitFolderClosed");
+      } else if (item.isLeaf) {
+        switch (item.kind) {
+          case 'msg':
+            return "customIcon assume_msg nocolor";
+          case 'event':
+            return (item.iconOverride ? "customIcon " + item.iconOverride : "customIcon msg");
+          case 'result':
+            return "customIcon result";
+        }
+
+        return "dijitLeaf";
+      }
+    },
+
     _onNodeMouseEnter : function (node) {
       if (node.item.isLeaf)
         Tooltip.show(node.item.name, node.domNode, ['above']);
@@ -480,8 +506,7 @@ function (declare, dom, style, on, query, Memory, Observable, topic, entities,
       "#cbc2b6",
       "#b8ccea",
       "#c1c9cd",
-      "#dbb78b",
-      "#9d8678",
+      "#a7a28f"
     ],
 
     _highlightStep : function(stack, step) {
@@ -490,12 +515,17 @@ function (declare, dom, style, on, query, Memory, Observable, topic, entities,
 
       // The background must be saved BEFORE stack transition. Calling is in the caller, return is in the called func.
       var highlight = {
-        background : stack.background
+        background : stack.background,
+        iconOverride : undefined
       };
 
       var stackTransition = function() {
+        var contains = function(substr) {
+          return msg.indexOf(substr) !== -1;
+        };
+
         var extractFuncName = function(prefix) {
-          if (msg.indexOf(prefix) !== -1) {
+          if (contains(prefix)) {
             return msg.replace(prefix, "").replace("'", "");
           }
 
@@ -506,10 +536,16 @@ function (declare, dom, style, on, query, Memory, Observable, topic, entities,
         if (func = extractFuncName("Calling ")) {
           stack.funcStack.push(func);
           stack.background = that._highlight_colours[stack.funcStack.length % that._highlight_colours.length];
+
+          highlight.iconOverride = "calling";
+        } else if (contains("Entered call from ")) {
+          highlight.iconOverride = "entered_call";
         } else if (func = extractFuncName("Returning from ")) {
           if (func === stack.funcStack[stack.funcStack.length - 1]) {
             stack.funcStack.pop();
             stack.background = that._highlight_colours[stack.funcStack.length % that._highlight_colours.length];
+
+            highlight.iconOverride = "returning";
           } else {
             throw {
               name : 'StackError',
@@ -517,6 +553,16 @@ function (declare, dom, style, on, query, Memory, Observable, topic, entities,
                         stack.funcStack[stack.funcStack.length - 1]
             };
           }
+        } else if (contains("Assuming the condition")) {
+          highlight.iconOverride = "assume_switch";
+        } else if (contains("Assuming")) {
+          highlight.iconOverride = "assume_exclamation";
+        } else if (msg == "Entering loop body") {
+          highlight.iconOverride = "loop_enter";
+        } else if (contains("Loop body executed")) {
+          highlight.iconOverride = "loop_execute";
+        } else if (msg == "Looping back to the head of the loop") {
+          highlight.iconOverride = "loop_back";
         }
       };
 
@@ -534,7 +580,8 @@ function (declare, dom, style, on, query, Memory, Observable, topic, entities,
              + ' &ndash; ' + report.checkerId,
         parent : util.severityFromCodeToString(report.severity),
         report : report,
-        isLeaf : false
+        isLeaf : false,
+        kind : 'bugpath'
       });
 
       this.bugStore.put({
@@ -542,7 +589,8 @@ function (declare, dom, style, on, query, Memory, Observable, topic, entities,
         name : '<b><u>' + entities.encode(report.checkerMsg) + '</u></b>',
         parent : report.reportId + '',
         report : report,
-        isLeaf : true
+        isLeaf : true,
+        kind : 'msg'
       });
 
       var filePaths = [];
@@ -566,6 +614,7 @@ function (declare, dom, style, on, query, Memory, Observable, topic, entities,
         });
 
         reportDetails.pathEvents.forEach(function (step, index) {
+          var name;
           var highlightData = that._highlightStep(highlightStack, step);
 
           if (areThereMultipleFiles) {
@@ -576,18 +625,22 @@ function (declare, dom, style, on, query, Memory, Observable, topic, entities,
 
           name += step.startLine + ' &ndash; ' + entities.encode(step.msg);
 
+          var kind = 'event';
           if (index == reportDetails.pathEvents.length - 1) {
             // The final line in the BugPath is the result once again
             name = '<i><u>' + name + '</u></i>';
+            kind = 'result';
           }
 
           that.bugStore.put({
             id : report.reportId + '_' + (index + 1),
             name : name,
-            backgroundColor: highlightData.background,
+            backgroundColor : highlightData.background,
+            iconOverride : highlightData.iconOverride,
             parent : report.reportId,
             bugPathEvent : step,
             isLeaf : true,
+            kind : kind,
             report : report
           });
         });
