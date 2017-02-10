@@ -475,6 +475,19 @@ def handle_diff_results(args):
 
 
 def handle_suppress(args):
+    def update_suppression_comment(run_id, report_id, comment):
+        client.unSuppressBug([run_id], report_id)
+        client.suppressBug([run_id], report_id, comment)
+
+    def bug_hash_filter(bug_hash):
+        bughash_filter = [
+            codeCheckerDBAccess.ttypes.ReportFilter(bugHash=bug_hash,
+                                                    suppressed=True),
+            codeCheckerDBAccess.ttypes.ReportFilter(bugHash=bug_hash,
+                                                    suppressed=False)]
+
+    already_suppressed = 'Bug {} in file {} already suppressed. Use --force!'
+
     client = setupClient(args.host, args.port, '/')
 
     run_info = check_run_names(client, [args.name])
@@ -492,23 +505,30 @@ def handle_suppress(args):
             for line in inp:
                 bug_hash, file_name, comment = line.rstrip().split('||')
 
-                reports = client.getRunResults(run_id, 500, 0, None, [
-                    codeCheckerDBAccess.ttypes.ReportFilter(bugHash=bug_hash,
-                                                            suppressed=False)])
+                reports = client.getRunResults(run_id, 500, 0, None,
+                                               bug_hash_filter(bug_hash))
 
                 for report in reports:
-                    client.suppressBug([run_id], report.reportId, comment)
+                    if report.suppressed and not args.force:
+                        print(already_suppressed.format(bug_hash, file_name))
+                    else:
+                        update_suppression_comment(run_id,
+                                                   report.reportId,
+                                                   comment)
 
     elif args.bughash:
-        reports = client.getRunResults(run_id, 500, 0, None, [
-            codeCheckerDBAccess.ttypes.ReportFilter(bugHash=args.bughash,
-                                                    suppressed=args.x)])
+        reports = client.getRunResults(run_id, 500, 0, None,
+                                       bug_hash_filter(args.bughash))
 
         for report in reports:
             if args.x:
                 client.unSuppressBug([run_id], report.reportId)
+            elif report.suppressed and not args.force:
+                print(already_suppressed.format(args.bughash, args.file))
             else:
-                client.suppressBug([run_id], report.reportId, args.comment)
+                update_suppression_comment(run_id,
+                                           report.reportId,
+                                           args.comment)
 
 
 def register_client_command_line(argument_parser):
@@ -653,10 +673,20 @@ def register_client_command_line(argument_parser):
     suppress_parser.add_argument('-x', action='store_true', dest='x',
                                  help='If this flag is given then the bug '
                                  'provided by --bughash will be unsuppressed.')
+    suppress_parser.add_argument('-f', '--force', action='store_true',
+                                 dest='force',
+                                 help="By default already suppressed bugs "
+                                 "can't be suppressed again unless --force "
+                                 "is given.")
     suppress_parser.add_argument('-c', '--comment', type=str, dest='comment',
                                  default='',
                                  help='Comment for bug suppression. It has '
                                  'sense only when --bughash is also provided.')
+    suppress_parser.add_argument('--file', type=str, dest='file',
+                                 default='',
+                                 help='File name in which the bug will be '
+                                 'suppressed. It has sense only when '
+                                 '--bughash is also provided.')
     suppress_parser.add_argument('-n', '--name', type=str, dest='name',
                                  required=True,
                                  help='Run name.')
