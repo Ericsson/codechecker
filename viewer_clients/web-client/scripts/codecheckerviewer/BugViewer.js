@@ -523,12 +523,10 @@ function (declare, dom, style, on, query, Memory, Observable, topic, entities,
         var contains = function(substr) {
           return msg.indexOf(substr) !== -1;
         };
-
         var extractFuncName = function(prefix) {
           if (contains(prefix)) {
             return msg.replace(prefix, "").replace("'", "");
           }
-
           return false;
         };
 
@@ -604,46 +602,52 @@ function (declare, dom, style, on, query, Memory, Observable, topic, entities,
         // Check if there are multiple files (XTU?) affected by this bug.
         // If so, we show the file names properly.
         reportDetails.pathEvents.some(function (step) {
-          if (filePaths.indexOf(step.filePath) > -1) {
-            areThereMultipleFiles = true;
-            return true; // Break execution of this foreach.
-          }
-
-          filePaths.push(step.filePath);
-          return false;
-        });
-
-        reportDetails.pathEvents.forEach(function (step, index) {
-          var name;
-          var highlightData = that._highlightStep(highlightStack, step);
-
-          if (areThereMultipleFiles) {
-            name = step.filePath.replace(/^.*(\\|\/|\:)/, '') + ':';
+          if (filePaths.indexOf(step.filePath) === -1) {
+            // File is not yet in the array, put it in.
+            filePaths.push(step.filePath);
           } else {
-            name = 'Line ';
+            if (filePaths.length !== 1) {
+              areThereMultipleFiles = true;
+              return true; // Break execution, multiple files were found
+            }
           }
 
-          name += step.startLine + ' &ndash; ' + entities.encode(step.msg);
-
-          var kind = 'event';
-          if (index == reportDetails.pathEvents.length - 1) {
-            // The final line in the BugPath is the result once again
-            name = '<i><u>' + name + '</u></i>';
-            kind = 'result';
-          }
-
-          that.bugStore.put({
-            id : report.reportId + '_' + (index + 1),
-            name : name,
-            backgroundColor : highlightData.background,
-            iconOverride : highlightData.iconOverride,
-            parent : report.reportId,
-            bugPathEvent : step,
-            isLeaf : true,
-            kind : kind,
-            report : report
-          });
+          return false; // Continue checking
         });
+
+        if (reportDetails.pathEvents.length > 1) {
+          reportDetails.pathEvents.forEach(function (step, index) {
+            var name;
+            var highlightData = that._highlightStep(highlightStack, step);
+
+            if (areThereMultipleFiles) {
+              name = step.filePath.replace(/^.*(\\|\/|\:)/, '') + ':';
+            } else {
+              name = 'Line ';
+            }
+
+            name += step.startLine + ' &ndash; ' + entities.encode(step.msg);
+
+            var kind = 'event';
+            if (index == reportDetails.pathEvents.length - 1) {
+              // The final line in the BugPath is the result once again
+              name = '<i><u>' + name + '</u></i>';
+              kind = 'result';
+            }
+
+            that.bugStore.put({
+              id : report.reportId + '_' + (index + 1),
+              name : name,
+              backgroundColor : highlightData.background,
+              iconOverride : highlightData.iconOverride,
+              parent : report.reportId,
+              bugPathEvent : step,
+              isLeaf : true,
+              kind : kind,
+              report : report
+            });
+          });
+        }
       });
     },
 
