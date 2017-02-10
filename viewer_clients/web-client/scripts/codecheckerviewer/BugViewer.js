@@ -489,8 +489,8 @@ function (declare, dom, style, on, query, Memory, Observable, topic, entities,
     },
 
     _onNodeMouseEnter : function (node) {
-      if (node.item.isLeaf)
-        Tooltip.show(node.item.name, node.domNode, ['above']);
+      if (node.item.tooltip)
+        Tooltip.show(node.item.tooltip, node.domNode, ['above']);
     },
 
     _onNodeMouseLeave : function (node) {
@@ -617,15 +617,10 @@ function (declare, dom, style, on, query, Memory, Observable, topic, entities,
 
         if (reportDetails.pathEvents.length > 1) {
           reportDetails.pathEvents.forEach(function (step, index) {
-            var name;
+            var filename = step.filePath.replace(/^.*(\\|\/|\:)/, '');
             var highlightData = that._highlightStep(highlightStack, step);
 
-            if (areThereMultipleFiles) {
-              name = step.filePath.replace(/^.*(\\|\/|\:)/, '') + ':';
-            } else {
-              name = 'Line ';
-            }
-
+            var name = (areThereMultipleFiles ? '{FILENAME}:' : 'Line ');
             name += step.startLine + ' &ndash; ' + entities.encode(step.msg);
 
             var kind = 'event';
@@ -635,9 +630,23 @@ function (declare, dom, style, on, query, Memory, Observable, topic, entities,
               kind = 'result';
             }
 
+            // Tooltip and name should have the same formatting, but tooltip contains the full filename
+            var tooltip = name.replace('{FILENAME}', filename);
+
+            if (filename.length > 12) {
+              var extensionParts = filename.split('.');
+              var fnWithoutExt = extensionParts.slice(0, extensionParts.length).join('.');
+              var extension = (extensionParts.length > 1 ? '.' + extensionParts[extensionParts.length - 1] : '');
+
+              name = name.replace('{FILENAME}', fnWithoutExt.substr(0, 8) + "..." + extension);
+            } else {
+              name = name.replace('{FILENAME}', filename);
+            }
+
             that.bugStore.put({
               id : report.reportId + '_' + (index + 1),
               name : name,
+              tooltip : tooltip,
               backgroundColor : highlightData.background,
               iconOverride : highlightData.iconOverride,
               parent : report.reportId,
