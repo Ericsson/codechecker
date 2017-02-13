@@ -471,9 +471,9 @@ function (declare, dom, style, on, query, Memory, Observable, topic, entities,
             return "customIcon severity-" + item.id;
           case 'bugpath':
             return (opened ? "customIcon pathOpened" : "customIcon pathClosed");
+          default:
+            return (opened ? "dijitFolderOpened" : "dijitFolderClosed");
         }
-
-        return (opened ? "dijitFolderOpened" : "dijitFolderClosed");
       } else if (item.isLeaf) {
         switch (item.kind) {
           case 'msg':
@@ -482,9 +482,9 @@ function (declare, dom, style, on, query, Memory, Observable, topic, entities,
             return (item.iconOverride ? "customIcon " + item.iconOverride : "customIcon msg");
           case 'result':
             return "customIcon result";
+          default:
+            return "dijitLeaf";
         }
-
-        return "dijitLeaf";
       }
     },
 
@@ -523,8 +523,11 @@ function (declare, dom, style, on, query, Memory, Observable, topic, entities,
         var contains = function(substr) {
           return msg.indexOf(substr) !== -1;
         };
+        var startsWith = function(substr) {
+          return msg.startsWith(substr);
+        };
         var extractFuncName = function(prefix) {
-          if (contains(prefix)) {
+          if (startsWith(prefix)) {
             return msg.replace(prefix, "").replace("'", "");
           }
           return false;
@@ -536,7 +539,7 @@ function (declare, dom, style, on, query, Memory, Observable, topic, entities,
           stack.background = that._highlight_colours[stack.funcStack.length % that._highlight_colours.length];
 
           highlight.iconOverride = "calling";
-        } else if (contains("Entered call from ")) {
+        } else if (startsWith("Entered call from ")) {
           highlight.iconOverride = "entered_call";
         } else if (func = extractFuncName("Returning from ")) {
           if (func === stack.funcStack[stack.funcStack.length - 1]) {
@@ -551,13 +554,13 @@ function (declare, dom, style, on, query, Memory, Observable, topic, entities,
                         stack.funcStack[stack.funcStack.length - 1]
             };
           }
-        } else if (contains("Assuming the condition")) {
+        } else if (startsWith("Assuming the condition")) {
           highlight.iconOverride = "assume_switch";
-        } else if (contains("Assuming")) {
+        } else if (startsWith("Assuming")) {
           highlight.iconOverride = "assume_exclamation";
         } else if (msg == "Entering loop body") {
           highlight.iconOverride = "loop_enter";
-        } else if (contains("Loop body executed")) {
+        } else if (startsWith("Loop body executed")) {
           highlight.iconOverride = "loop_execute";
         } else if (msg == "Looping back to the head of the loop") {
           highlight.iconOverride = "loop_back";
@@ -599,23 +602,23 @@ function (declare, dom, style, on, query, Memory, Observable, topic, entities,
       };
 
       CC_SERVICE.getReportDetails(report.reportId, function (reportDetails) {
-        // Check if there are multiple files (XTU?) affected by this bug.
-        // If so, we show the file names properly.
-        reportDetails.pathEvents.some(function (step) {
-          if (filePaths.indexOf(step.filePath) === -1) {
-            // File is not yet in the array, put it in.
-            filePaths.push(step.filePath);
-          } else {
-            if (filePaths.length !== 1) {
-              areThereMultipleFiles = true;
-              return true; // Break execution, multiple files were found
-            }
-          }
-
-          return false; // Continue checking
-        });
-
         if (reportDetails.pathEvents.length > 1) {
+          // Check if there are multiple files (XTU?) affected by this bug.
+          // If so, we show the file names properly.
+          reportDetails.pathEvents.some(function (step) {
+            if (filePaths.indexOf(step.filePath) === -1) {
+              // File is not yet in the array, put it in.
+              filePaths.push(step.filePath);
+            } else {
+              if (filePaths.length !== 1) {
+                areThereMultipleFiles = true;
+                return true; // Break execution, multiple files were found
+              }
+            }
+
+            return false; // Continue checking
+          });
+
           reportDetails.pathEvents.forEach(function (step, index) {
             var filename = step.filePath.replace(/^.*(\\|\/|\:)/, '');
             var highlightData = that._highlightStep(highlightStack, step);
