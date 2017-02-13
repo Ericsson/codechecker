@@ -671,7 +671,7 @@ class ThriftRequestHandler():
         tidy_link = "http://clang.llvm.org/extra/clang-tidy/checks/list.html"
 
         if "." in checkerId:
-            text += "[ClangSA](" + sa_checkers_link + ")"
+            text += "[ClangSA](" + sa_link + ")"
         elif "-" in checkerId:
             text += "[ClangTidy](" + tidy_link + ")"
         text += " homepage."
