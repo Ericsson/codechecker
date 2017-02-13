@@ -470,7 +470,8 @@ function (declare, dom, style, on, query, Memory, Observable, topic, entities,
           case 'severity':
             return "customIcon severity-" + item.id;
           case 'bugpath':
-            return (opened ? "customIcon pathOpened" : "customIcon pathClosed");
+            return (opened ? "customIcon pathOpened"
+                           : "customIcon pathClosed");
           default:
             return (opened ? "dijitFolderOpened" : "dijitFolderClosed");
         }
@@ -479,7 +480,8 @@ function (declare, dom, style, on, query, Memory, Observable, topic, entities,
           case 'msg':
             return "customIcon assume_msg nocolor";
           case 'event':
-            return (item.iconOverride ? "customIcon " + item.iconOverride : "customIcon msg");
+            return (item.iconOverride ? "customIcon " + item.iconOverride
+                                      : "customIcon msg");
           case 'result':
             return "customIcon result";
           default:
@@ -498,6 +500,8 @@ function (declare, dom, style, on, query, Memory, Observable, topic, entities,
         Tooltip.hide(node.domNode);
     },
 
+    // Highlight colours go further down this array in a circular fashion
+    // at each function call.
     _highlight_colours : [
       "#ffffff",
       "#e9dddd",
@@ -513,63 +517,130 @@ function (declare, dom, style, on, query, Memory, Observable, topic, entities,
       var that = this;
       var msg = step.msg;
 
-      // The background must be saved BEFORE stack transition. Calling is in the caller, return is in the called func.
+      // The background must be saved BEFORE stack transition.
+      // Calling is in the caller, return is in the called func, not "outside"
       var highlight = {
         background : stack.background,
         iconOverride : undefined
       };
 
-      var stackTransition = function() {
-        var contains = function(substr) {
-          return msg.indexOf(substr) !== -1;
-        };
-        var startsWith = function(substr) {
-          return msg.startsWith(substr);
-        };
-        var extractFuncName = function(prefix) {
-          if (startsWith(prefix)) {
-            return msg.replace(prefix, "").replace("'", "");
-          }
-          return false;
-        };
-
-        var func;
-        if (func = extractFuncName("Calling ")) {
-          stack.funcStack.push(func);
-          stack.background = that._highlight_colours[stack.funcStack.length % that._highlight_colours.length];
-
-          highlight.iconOverride = "calling";
-        } else if (startsWith("Entered call from ")) {
-          highlight.iconOverride = "entered_call";
-        } else if (func = extractFuncName("Returning from ")) {
-          if (func === stack.funcStack[stack.funcStack.length - 1]) {
-            stack.funcStack.pop();
-            stack.background = that._highlight_colours[stack.funcStack.length % that._highlight_colours.length];
-
-            highlight.iconOverride = "returning";
-          } else {
-            throw {
-              name : 'StackError',
-              message : "Returned from " + func + " while the last function was " +
-                        stack.funcStack[stack.funcStack.length - 1]
-            };
-          }
-        } else if (startsWith("Assuming the condition")) {
-          highlight.iconOverride = "assume_switch";
-        } else if (startsWith("Assuming")) {
-          highlight.iconOverride = "assume_exclamation";
-        } else if (msg == "Entering loop body") {
-          highlight.iconOverride = "loop_enter";
-        } else if (startsWith("Loop body executed")) {
-          highlight.iconOverride = "loop_execute";
-        } else if (msg == "Looping back to the head of the loop") {
-          highlight.iconOverride = "loop_back";
+      function extractFuncName(prefix) {
+        if (msg.startsWith(prefix)) {
+          return msg.replace(prefix, "").replace(/'/g, "");
         }
-      };
+      }
 
-      stackTransition();
+      var func;
+      if (func = extractFuncName("Calling ")) {
+        stack.funcStack.push(func);
+        stack.background = that._highlight_colours[
+          stack.funcStack.length % that._highlight_colours.length];
+
+        highlight.iconOverride = "calling";
+      } else if (msg.startsWith("Entered call from ")) {
+        highlight.iconOverride = "entered_call";
+      } else if (func = extractFuncName("Returning from ")) {
+        if (func === stack.funcStack[stack.funcStack.length - 1]) {
+          stack.funcStack.pop();
+          stack.background = that._highlight_colours[
+            stack.funcStack.length % that._highlight_colours.length];
+
+          highlight.iconOverride = "returning";
+        } else {
+          throw {
+            name : 'StackError',
+            message : "Returned from " + func + " while the last function " +
+                      "was " + stack.funcStack[stack.funcStack.length - 1]
+          };
+        }
+      } else if (msg.startsWith("Assuming the condition")) {
+        highlight.iconOverride = "assume_switch";
+      } else if (msg.startsWith("Assuming")) {
+        highlight.iconOverride = "assume_exclamation";
+      } else if (msg == "Entering loop body") {
+        highlight.iconOverride = "loop_enter";
+      } else if (msg.startsWith("Loop body executed")) {
+        highlight.iconOverride = "loop_execute";
+      } else if (msg == "Looping back to the head of the loop") {
+        highlight.iconOverride = "loop_back";
+      }
 
       return highlight;
+    },
+
+    _formatReportDetails : function (report, reportDetails) {
+      if (reportDetails.pathEvents.length <= 1)
+        return;
+
+      var filePaths = [];
+      var areThereMultipleFiles = false;
+      var highlightStack = {
+        funcStack : [],
+        background : this._highlight_colours[0]
+      };
+
+      // Check if there are multiple files (XTU?) affected by this bug.
+      // If so, we show the file names properly.
+      reportDetails.pathEvents.some(function (step) {
+        if (filePaths.indexOf(step.filePath) === -1) {
+          // File is not yet in the array, put it in.
+          filePaths.push(step.filePath);
+        } else {
+          if (filePaths.length !== 1) {
+            areThereMultipleFiles = true;
+            return true; // Break execution, multiple files were found
+          }
+        }
+
+        return false; // Continue checking
+      });
+
+      var that = this;
+      reportDetails.pathEvents.forEach(function (step, index) {
+        var filename = step.filePath.replace(/^.*(\\|\/|\:)/, '');
+        var highlightData = that._highlightStep(highlightStack, step);
+
+        var name = (areThereMultipleFiles ? '{FILENAME}:' : 'Line ');
+        name += step.startLine + ' &ndash; ' + entities.encode(step.msg);
+
+        var kind = 'event';
+        if (index == reportDetails.pathEvents.length - 1) {
+          // The final line in the BugPath is the result once again
+          name = '<i><u>' + name + '</u></i>';
+          kind = 'result';
+        }
+
+        // Tooltip and name should have the same formatting,
+        // but tooltip contains the full filename
+        var tooltip = name.replace('{FILENAME}', filename);
+
+        if (filename.length > 12) {
+          var extensionParts = filename.split('.');
+          var fnWithoutExt = extensionParts.slice(0, extensionParts.length)
+                                           .join('.');
+          var extension = (extensionParts.length > 1
+                           ? '.' + extensionParts[extensionParts.length - 1]
+                           : '');
+
+          name = name.replace('{FILENAME}',
+                              fnWithoutExt.substr(0, 8) + "..." + extension);
+        } else {
+          name = name.replace('{FILENAME}', filename);
+        }
+
+        that.bugStore.put({
+          id : report.reportId + '_' + (index + 1),
+          name : name,
+          tooltip : tooltip,
+          backgroundColor : highlightData.background,
+          iconOverride : highlightData.iconOverride,
+          parent : report.reportId,
+          bugPathEvent : step,
+          isLeaf : true,
+          kind : kind,
+          report : report
+        });
+      })
     },
 
     _addReport : function (report) {
@@ -594,72 +665,8 @@ function (declare, dom, style, on, query, Memory, Observable, topic, entities,
         kind : 'msg'
       });
 
-      var filePaths = [];
-      var areThereMultipleFiles = false;
-      var highlightStack = {
-        funcStack : [],
-        background : this._highlight_colours[0]
-      };
-
       CC_SERVICE.getReportDetails(report.reportId, function (reportDetails) {
-        if (reportDetails.pathEvents.length > 1) {
-          // Check if there are multiple files (XTU?) affected by this bug.
-          // If so, we show the file names properly.
-          reportDetails.pathEvents.some(function (step) {
-            if (filePaths.indexOf(step.filePath) === -1) {
-              // File is not yet in the array, put it in.
-              filePaths.push(step.filePath);
-            } else {
-              if (filePaths.length !== 1) {
-                areThereMultipleFiles = true;
-                return true; // Break execution, multiple files were found
-              }
-            }
-
-            return false; // Continue checking
-          });
-
-          reportDetails.pathEvents.forEach(function (step, index) {
-            var filename = step.filePath.replace(/^.*(\\|\/|\:)/, '');
-            var highlightData = that._highlightStep(highlightStack, step);
-
-            var name = (areThereMultipleFiles ? '{FILENAME}:' : 'Line ');
-            name += step.startLine + ' &ndash; ' + entities.encode(step.msg);
-
-            var kind = 'event';
-            if (index == reportDetails.pathEvents.length - 1) {
-              // The final line in the BugPath is the result once again
-              name = '<i><u>' + name + '</u></i>';
-              kind = 'result';
-            }
-
-            // Tooltip and name should have the same formatting, but tooltip contains the full filename
-            var tooltip = name.replace('{FILENAME}', filename);
-
-            if (filename.length > 12) {
-              var extensionParts = filename.split('.');
-              var fnWithoutExt = extensionParts.slice(0, extensionParts.length).join('.');
-              var extension = (extensionParts.length > 1 ? '.' + extensionParts[extensionParts.length - 1] : '');
-
-              name = name.replace('{FILENAME}', fnWithoutExt.substr(0, 8) + "..." + extension);
-            } else {
-              name = name.replace('{FILENAME}', filename);
-            }
-
-            that.bugStore.put({
-              id : report.reportId + '_' + (index + 1),
-              name : name,
-              tooltip : tooltip,
-              backgroundColor : highlightData.background,
-              iconOverride : highlightData.iconOverride,
-              parent : report.reportId,
-              bugPathEvent : step,
-              isLeaf : true,
-              kind : kind,
-              report : report
-            });
-          });
-        }
+        that._formatReportDetails(report, reportDetails);
       });
     },
 
