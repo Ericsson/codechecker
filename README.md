@@ -8,8 +8,9 @@ Static Analyzer](http://clang-analyzer.llvm.org) toolchain, replacing
 [`scan-build`](http://clang-analyzer.llvm.org/scan-build.html) in a Linux or
 macOS (OS X) development environment.
 
+![Web interface showing list of analysed projects and bugs](docs/images/buglist.png)
 
-![CodeChecker web interface for viewing discovered code defects](docs/images/viewer.png)
+![Web interface for viewing discovered defects in the source code](docs/images/viewer.png)
 
 
 Main features
