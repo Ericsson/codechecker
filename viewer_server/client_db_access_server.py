@@ -189,11 +189,6 @@ class RequestHandler(SimpleHTTPRequestHandler):
         # Authentication is handled, we may now respond to the user.
         try:
             session = self.sc_session()
-            acc_handler = ThriftRequestHandler(session,
-                                               checker_md_docs,
-                                               checker_md_docs_map,
-                                               suppress_handler,
-                                               self.db_version_info)
 
             if self.path == '/Authentication':
                 # Authentication requests must be routed to a different
