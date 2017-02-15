@@ -89,11 +89,13 @@ class ThriftRequestHandler():
                  checker_md_docs,
                  checker_md_docs_map,
                  suppress_handler,
-                 db_version_info):
+                 db_version_info,
+                 version):
 
         self.__checker_md_docs = checker_md_docs
         self.__checker_doc_map = checker_md_docs_map
         self.__suppress_handler = suppress_handler
+        self.__version = version
         self.__session = session
 
     def __queryReport(self, reportId):
@@ -1065,6 +1067,11 @@ class ThriftRequestHandler():
     def getAPIVersion(self):
         # Returns the thrift api version.
         return constants.API_VERSION
+
+    # -----------------------------------------------------------------------
+    @timeit
+    def getPackageVersion(self):
+        return self.__version
 
     # -----------------------------------------------------------------------
     @timeit

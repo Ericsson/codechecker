@@ -530,7 +530,34 @@ def build_package(repository_root, build_package_config, env=None):
         LOG.error(str(oerr))
         sys.exit(1)
 
+    git_describe = ''
+    git_describe_dirty = ''
+    try:
+        # The full dirty hash (vX.Y.Z-n-gabcdef0-tainted)
+
+        git_describe_cmd = ['git', 'describe', '--always', '--tags',
+                            '--dirty=-tainted']
+        git_describe_dirty = subprocess.check_output(git_describe_cmd,
+                                                     cwd=repository_root)
+        git_describe_dirty = str(git_describe_dirty.rstrip())
+
+        # The tag only (vX.Y.Z)
+        git_describe_cmd = ['git', 'describe', '--always', '--tags',
+                            '--abbrev=0']
+        git_describe = subprocess.check_output(git_describe_cmd,
+                                               cwd=repository_root)
+        git_describe = str(git_describe.rstrip())
+    except subprocess.CalledProcessError as cperr:
+        LOG.error('Failed to get last commit describe.')
+        LOG.error(str(cperr))
+    except OSError as oerr:
+        LOG.error('Failed to run command:' + ' '.join(git_describe_cmd))
+        LOG.error(str(oerr))
+        sys.exit(1)
+
     version_json_data['git_hash'] = git_hash
+    version_json_data['git_describe'] = {'tag': git_describe,
+                                         'dirty': git_describe_dirty}
 
     time_now = time.strftime("%Y-%m-%dT%H:%M")
     version_json_data['package_build_date'] = time_now

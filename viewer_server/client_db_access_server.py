@@ -155,6 +155,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
         checker_md_docs = self.server.checker_md_docs
         checker_md_docs_map = self.server.checker_md_docs_map
         suppress_handler = self.server.suppress_handler
+        version = self.server.version
 
         protocol_factory = TJSONProtocol.TJSONProtocolFactory()
         input_protocol_factory = protocol_factory
@@ -202,7 +203,8 @@ class RequestHandler(SimpleHTTPRequestHandler):
                                                    checker_md_docs,
                                                    checker_md_docs_map,
                                                    suppress_handler,
-                                                   self.db_version_info)
+                                                   self.db_version_info,
+                                                   version)
 
                 processor = codeCheckerDBAccess.Processor(acc_handler)
 
@@ -271,6 +273,7 @@ class CCSimpleHttpServer(HTTPServer):
         self.doc_root = pckg_data['doc_root']
         self.checker_md_docs = pckg_data['checker_md_docs']
         self.checker_md_docs_map = pckg_data['checker_md_docs_map']
+        self.version = pckg_data['version']
         self.suppress_handler = suppress_handler
         self.db_version_info = db_version_info
         self.__engine = database_handler.SQLServer.create_engine(

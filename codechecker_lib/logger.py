@@ -41,6 +41,7 @@ def add_verbose_arguments(parser):
 
 # ------------------------------------------------------------------------------
 logging.DEBUG_ANALYZER = 15
+DEBUG_ANALYZER = logging.DEBUG_ANALYZER
 logging.addLevelName(logging.DEBUG_ANALYZER, 'DEBUG_ANALYZER')
 
 

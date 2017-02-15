@@ -250,6 +250,9 @@ service codeCheckerDBAccess {
   // returns the database access handler api version
   string getAPIVersion();
 
+  // returns the CodeChecker version that is running on the server
+  string getPackageVersion();
+
   // remove bug results from the database
   bool removeRunResults(1: list<i64> runIds)
                         throws (1: shared.RequestFailed requestError),
