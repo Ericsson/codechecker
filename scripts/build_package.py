@@ -92,35 +92,6 @@ def build_ld_logger(ld_logger_path, env, arch=None, clean=True, silent=True):
 
 
 # -------------------------------------------------------------------
-def generate_thrift_files(thrift_files_dir, env, silent=True):
-    """ Generate python and javascript files from thrift IDL. """
-
-    LOG.info('Generating thrift files ...')
-    rss_thrift = 'report_storage_server.thrift'
-    rss_cmd = ['thrift', '-r', '-I', '.', '--gen', 'py', rss_thrift]
-    ret = run_cmd(rss_cmd, thrift_files_dir, env, silent=silent)
-    if ret:
-        LOG.error('Failed to generate storage server files')
-        return ret
-
-    rvs_thrift = 'report_viewer_server.thrift'
-    rvs_cmd = ['thrift', '-r', '-I', '.',
-               '--gen', 'py', '--gen', 'js:jquery', rvs_thrift]
-    ret = run_cmd(rvs_cmd, thrift_files_dir, env, silent=silent)
-    if ret:
-        LOG.error('Failed to generate viewer server files')
-        return ret
-
-    auth_thrift = 'authentication.thrift'
-    auth_cmd = ['thrift', '-r', '-I', '.',
-                '--gen', 'py', auth_thrift]
-    ret = run_cmd(auth_cmd, thrift_files_dir, env, silent=silent)
-    if ret:
-        LOG.error('Failed to generate authentication interface files')
-        return ret
-
-
-# -------------------------------------------------------------------
 def create_folder_layout(path, layout):
     """ Create package directory layout. """
 
@@ -646,7 +617,8 @@ def main():
 
     parser.add_argument("--compress", action="store",
                         dest="compress", default=False,
-                        help="Compress package to tar.gz")
+                        metavar="PACKAGE.tar.gz",
+                        help="Compress package to given PACKAGE.tar.gz file")
 
     parser.add_argument("-v", action="store_true", dest="verbose_log",
                         help='Set log level to higher verbosity.')
@@ -655,6 +627,9 @@ def main():
 
     build_package_config = {k: args[k] for k in args if args[k] is not None}
 
+    if 'REPO_ROOT' not in os.environ:
+        LOG.error("REPO_ROOT environmental variable wasn't specified.")
+        sys.exit(1)
     repository_root = os.environ['REPO_ROOT']
     default_package_layout = os.path.join(repository_root,
                                           "config",
