@@ -333,6 +333,8 @@ def build_package(repository_root, build_package_config, env=None):
     package_layout = layout['static']
 
     output_dir = build_package_config['output_dir']
+    build_dir = os.path.join(repository_root,
+                             build_package_config['local_build_folder'])
 
     package_root = os.path.join(output_dir, 'CodeChecker')
     package_layout['root'] = package_root
@@ -409,10 +411,8 @@ def build_package(repository_root, build_package_config, env=None):
             else:
                 LOG.info('Skipping ld logger from package')
 
-    thrift_files_dir = os.path.join(repository_root,
-                                    build_package_config['local_build_folder'])
-    generated_py_files = os.path.join(thrift_files_dir, 'gen-py')
-    generated_js_files = os.path.join(thrift_files_dir, 'gen-js')
+    generated_py_files = os.path.join(build_dir, 'gen-py')
+    generated_js_files = os.path.join(build_dir, 'gen-js')
 
     target = os.path.join(package_root, package_layout['codechecker_gen'])
     copy_tree(generated_py_files, target)
@@ -428,8 +428,7 @@ def build_package(repository_root, build_package_config, env=None):
     copy_tree(cmdline_client_files, target)
 
     # Documentation files.
-    source = os.path.join(repository_root,
-                          build_package_config['local_build_folder'],
+    source = os.path.join(build_dir,
                           'gen-docs', 'html')
     target = os.path.join(package_root, package_layout['docs'])
     copy_tree(source, target)
@@ -523,15 +522,15 @@ def build_package(repository_root, build_package_config, env=None):
                                            cwd=repository_root)
         git_hash = str(git_hash.rstrip())
     except subprocess.CalledProcessError as cperr:
-        LOG.error('Failed to get last commit hash.')
-        LOG.error(str(cperr))
+        LOG.warning('Failed to get last commit hash.')
+        LOG.warning(str(cperr))
     except OSError as oerr:
-        LOG.error('Failed to run command:' + ' '.join(git_hash_cmd))
-        LOG.error(str(oerr))
+        LOG.warning('Failed to run command:' + ' '.join(git_hash_cmd))
+        LOG.warning(str(oerr))
         sys.exit(1)
 
-    git_describe = ''
-    git_describe_dirty = ''
+    git_describe = '.'.join(version_json_data['version'].values())
+    git_describe_dirty = git_describe
     try:
         # The full dirty hash (vX.Y.Z-n-gabcdef0-tainted)
 
@@ -548,11 +547,11 @@ def build_package(repository_root, build_package_config, env=None):
                                                cwd=repository_root)
         git_describe = str(git_describe.rstrip())
     except subprocess.CalledProcessError as cperr:
-        LOG.error('Failed to get last commit describe.')
-        LOG.error(str(cperr))
+        LOG.warning('Failed to get last commit describe.')
+        LOG.warning(str(cperr))
     except OSError as oerr:
-        LOG.error('Failed to run command:' + ' '.join(git_describe_cmd))
-        LOG.error(str(oerr))
+        LOG.warning('Failed to run command:' + ' '.join(git_describe_cmd))
+        LOG.warning(str(oerr))
         sys.exit(1)
 
     version_json_data['git_hash'] = git_hash

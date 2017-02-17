@@ -40,9 +40,8 @@ def add_verbose_arguments(parser):
                         help='Set verbosity level.')
 
 # ------------------------------------------------------------------------------
-logging.DEBUG_ANALYZER = 15
-DEBUG_ANALYZER = logging.DEBUG_ANALYZER
-logging.addLevelName(logging.DEBUG_ANALYZER, 'DEBUG_ANALYZER')
+DEBUG_ANALYZER = logging.DEBUG_ANALYZER = 15
+logging.addLevelName(DEBUG_ANALYZER, 'DEBUG_ANALYZER')
 
 
 class CCLogger(logging.Logger):
