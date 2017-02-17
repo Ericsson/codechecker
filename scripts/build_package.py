@@ -9,6 +9,7 @@ import errno
 import json
 import logging
 import ntpath
+import re
 import os
 import shutil
 import sys
@@ -18,6 +19,7 @@ try:
 except ImportError:
     import urllib.parse as urlparse
 import tarfile
+import tempfile
 import subprocess
 import time
 import shlex
@@ -223,19 +225,33 @@ def handle_external_file(dep, clean, env, verbose):
         LOG.error('Unsupported file type')
 
 
+font_user_agents = {
+    'default': '""',
+    'eot': 'Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.1; Trident/4.0)',
+    'woff': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:27.0) '
+            'Gecko/20100101 Firefox/27.0',
+    'woff2': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:40.0) '
+             'Gecko/20100101 Firefox/40.0',
+    'svg': 'Mozilla/4.0 (iPad; CPU OS 4_0_1 like Mac OS X) AppleWebKit/534.46'
+           '(KHTML, like Gecko) Version/4.1 Mobile/9A405 Safari/7534.48.3',
+    'ttf': 'Mozilla/5.0 (Linux; Android 4.3; HTCONE Build/JSS15J) '
+           'AppleWebKit/534.30 (KHTML, like Gecko) Version/4.0 '
+           'Mobile Safari/534.30'}
+
+
 # -------------------------------------------------------------------
 def handle_external_repository(dep, clean, env, verbose):
     """ Download external repository. """
     repository = dep['repository']
-    if repository['type'] == 'git':
-        directory = dep['directory']
-        if clean and os.path.exists(directory):
-            LOG.debug('Removing directory ' + directory)
-            shutil.rmtree(directory)
-        else:
-            if os.path.exists(directory):
-                return
+    directory = dep['directory']
+    if clean and os.path.exists(directory):
+        LOG.debug('Removing directory ' + directory)
+        shutil.rmtree(directory)
+    else:
+        if os.path.exists(directory):
+            return
 
+    if repository['type'] == 'git':
         git_cmd = ['git', 'clone', '--depth', '1', '--single-branch']
 
         git_tag = repository.get('git_tag')
@@ -250,6 +266,97 @@ def handle_external_repository(dep, clean, env, verbose):
         if run_cmd(git_cmd, dir_name, env=env, silent=verbose):
             LOG.error('Failed to get dependency')
             sys.exit(1)
+    elif repository['type'] == 'font_import':
+        # Download the font information from the given CSS file
+        source = repository.get('url')
+        font = repository.get('font')
+
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+
+        if source:
+            tmp = tempfile.mkdtemp()
+            LOG.debug("Downloading font files " + source + " to " + tmp)
+            for fformat, agent in font_user_agents.iteritems():
+                command = ['curl', '-sSfL',
+                           '-A', agent,
+                           '--get', source,
+                           '-o', os.path.join(tmp,
+                                              fformat + '.css')]
+                if run_cmd(command):
+                    LOG.warning("Failed to download font CSS for {0} "
+                                "(format {1})".format(source, fformat))
+                    continue
+
+                LOG.debug("Font format " + fformat + " downloaded.")
+
+            localdefs = []
+            urls = []
+            for _, _, files in os.walk(tmp):
+                for fontcss in files:
+                    if fontcss == "default.css":
+                        continue
+
+                    font_type = fontcss.replace(".css", "")
+                    fontcss = os.path.join(tmp, fontcss)
+                    LOG.debug("Retrieving font for " + font + "(" +
+                              os.path.basename(fontcss) + ")")
+                    with open(fontcss, 'r') as input:
+                        css = input.read()
+
+                    for local_name in re.findall(r'local\(([\S ]+?)\)', css):
+                        if local_name not in localdefs:
+                            localdefs.append("local(" + local_name + ")")
+
+                    src = re.search(r'url\(([\S]+)\)( format\(([\S]+)\))?',
+                                    css)
+                    command = ['curl', '-sSfL',
+                               '-A',
+                               font_user_agents[font_type],
+                               '--get', src.group(1),
+                               '-o', os.path.join(tmp,
+                                                  font + '.' + font_type)]
+                    if run_cmd(command):
+                        LOG.warning("Couldn't download font FILE for "
+                                    "{0}.{1}".format(font, font_type))
+                        continue
+
+                    if font_type == 'svg':
+                        # SVG fonts need a HTTP anchor to work,
+                        # i.e. Arial.svg#Arial, not just Arial.svg
+
+                        url_parsed = urlparse.urlparse(src.group(1))
+                        suffix = font_type + "#" + url_parsed.fragment
+                    else:
+                        suffix = font_type
+
+                    urls.append("url('" +
+                                os.path.join("..", "fonts",
+                                             font + '.' + suffix) +
+                                "')" + src.group(2) if src.group(2) else '')
+
+                    # Export the downloaded files
+                    basename = font + '.' + font_type
+                    shutil.copy(os.path.join(tmp, basename),
+                                os.path.join(directory, basename))
+
+            # Export "fixed" font information
+            localdefs = list(set(localdefs))
+            with open(os.path.join(tmp, "default.css"), 'r') as cssfile:
+                css = re.sub(r'(src:.*;)', "{SRCLINE}", cssfile.read())
+                css = css.replace("{SRCLINE}",
+                                  "src: " + ','.join(localdefs + urls)
+                                               .rstrip(',')
+                                               .replace(',', ',\n       ') +
+                                  ";")
+
+                with open(os.path.join(directory, "generated_fonts.css"),
+                          'w') as export:
+                    export.write(css)
+
+            shutil.rmtree(tmp)
+        else:
+            LOG.error('Font repository URL was not given!')
     else:
         LOG.error('Unsupported repository type')
 
@@ -571,6 +678,32 @@ def build_package(repository_root, build_package_config, env=None):
                           'web-client')
     target = os.path.join(package_root, package_layout['www'])
     copy_tree(source, target)
+
+    # Copy font files.
+    for _, dep in external_dependencies.iteritems():
+        if 'repository' not in dep:
+            continue
+        if dep['repository']['type'] != "font_import":
+            continue
+
+        root = os.path.join(repository_root,
+                            dep.get('directory'))
+        target = os.path.join(package_root,
+                              package_layout['www'],
+                              'fonts')
+        copy_tree(root, target)
+
+        # The generated_fonts.css file must be handled separately,
+        # because each font alone specifies a generated_fonts.css
+        # but it has to be appended, and not rewritten by subsequent
+        # copies. The file also goes to style/, not fonts/
+        with open(os.path.join(package_root,
+                               package_layout['www'],
+                               "style", "generated_fonts.css"), 'a') as style:
+            with open(os.path.join(root, "generated_fonts.css"), 'r') as css:
+                style.write(css.read() + "\n")
+
+        os.remove(os.path.join(root, "generated_fonts.css"))
 
     # CodeChecker main scripts.
     LOG.debug('Copy main codechecker files')
