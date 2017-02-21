@@ -10,10 +10,10 @@ import sys
 
 from codechecker_lib import context_base
 from codechecker_lib import db_version
-from codechecker_lib.logger import LoggerFactory
+from codechecker_lib import logger
 from codechecker_lib.analyzers import analyzer_types
 
-LOG = LoggerFactory.get_new_logger('CONTEXT')
+LOG = logger.LoggerFactory.get_new_logger('CONTEXT')
 
 
 # -----------------------------------------------------------------------------
@@ -77,6 +77,8 @@ class Context(context_base.ContextBase):
             package_version = vfile_data['version']
             package_build_date = vfile_data['package_build_date']
             package_git_hash = vfile_data['git_hash']
+            package_git_tag = vfile_data['git_describe']['tag']
+            package_git_dirtytag = vfile_data['git_describe']['dirty']
             database_version = vfile_data['db_version']
 
             self.__package_version = package_version['major'] + '.' + \
@@ -88,6 +90,12 @@ class Context(context_base.ContextBase):
 
             self.__package_build_date = package_build_date
             self.__package_git_hash = package_git_hash
+
+            self.__package_git_tag = package_git_tag
+            if (logger.LoggerFactory.get_log_level() == logger.DEBUG or
+                    logger.LoggerFactory.get_log_level() ==
+                    logger.DEBUG_ANALYZER):
+                self.__package_git_tag = package_git_dirtytag
 
         except ValueError as verr:
             # db_version is required to know if the db schema is compatible.
@@ -116,6 +124,10 @@ class Context(context_base.ContextBase):
     @property
     def package_git_hash(self):
         return self.__package_git_hash
+
+    @property
+    def package_git_tag(self):
+        return self.__package_git_tag
 
     @property
     def db_version_info(self):

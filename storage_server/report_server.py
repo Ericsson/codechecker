@@ -526,13 +526,19 @@ class CheckerReportHandler(object):
         try:
             suppressList = []
             for bug_to_suppress in bugs_to_suppress:
-                suppress_bug = SuppressBug(run_id,
-                                           bug_to_suppress.bug_hash,
-                                           bug_to_suppress.file_name,
-                                           bug_to_suppress.comment)
-                suppressList.append(suppress_bug)
+                res = self.session.query(SuppressBug) \
+                    .filter(SuppressBug.hash == bug_to_suppress.bug_hash,
+                            SuppressBug.run_id == run_id,
+                            SuppressBug.file_name == bug_to_suppress.file_name)
 
-            self.session.bulk_save_objects(suppressList)
+                if res.one_or_none():
+                    res.update({'comment': bug_to_suppress.comment})
+                else:
+                    self.session.add(SuppressBug(run_id,
+                                                 bug_to_suppress.bug_hash,
+                                                 bug_to_suppress.file_name,
+                                                 bug_to_suppress.comment))
+
             self.session.commit()
 
         except Exception as ex:
