@@ -678,8 +678,6 @@ def build_package(repository_root, build_package_config, env=None):
             with open(os.path.join(root, "generated_fonts.css"), 'r') as css:
                 style.write(css.read() + "\n")
 
-        os.remove(os.path.join(root, "generated_fonts.css"))
-
     # CodeChecker main scripts.
     LOG.debug('Copy main codechecker files')
     source = os.path.join(repository_root, 'codechecker', 'CodeChecker.py')
