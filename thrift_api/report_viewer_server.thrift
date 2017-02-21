@@ -17,7 +17,7 @@ namespace js codeCheckerDBAccess
 namespace cpp cc.service.codechecker
 
 //=================================================
-const string API_VERSION = '5.0'
+const string API_VERSION = '5.1'
 const i64 MAX_QUERY_SIZE = 500
 //=================================================
 
@@ -249,6 +249,9 @@ service codeCheckerDBAccess {
 
   // returns the database access handler api version
   string getAPIVersion();
+
+  // returns the CodeChecker version that is running on the server
+  string getPackageVersion();
 
   // remove bug results from the database
   bool removeRunResults(1: list<i64> runIds)

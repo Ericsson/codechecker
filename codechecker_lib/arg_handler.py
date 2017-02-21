@@ -155,9 +155,11 @@ def handle_server(args):
     with open(checker_md_docs_map, 'r') as dFile:
         checker_md_docs_map = json.load(dFile)
 
-    package_data = {'www_root': context.www_root, 'doc_root': context.doc_root,
+    package_data = {'www_root': context.www_root,
+                    'doc_root': context.doc_root,
                     'checker_md_docs': checker_md_docs,
-                    'checker_md_docs_map': checker_md_docs_map}
+                    'checker_md_docs_map': checker_md_docs_map,
+                    'version': context.package_git_tag}
 
     try:
         client_db_access_server.start_server(package_data,
@@ -410,6 +412,7 @@ def handle_version_info(args):
     print('Package build date: \t' +
           context.package_build_date).expandtabs(30)
     print('Git hash: \t' + context.package_git_hash).expandtabs(30)
+    print('Git tag info: \t' + context.package_git_tag).expandtabs(30)
     print('DB schema version: \t' +
           str(context.db_version_info)).expandtabs(30)
 

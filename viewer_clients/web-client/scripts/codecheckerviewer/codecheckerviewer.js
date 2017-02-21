@@ -56,6 +56,15 @@ function (declare, topic, domConstruct, Dialog, DropDownMenu, MenuItem,
       innerHTML : 'CodeChecker'
     });
 
+    var serverVersion = CC_SERVICE.getPackageVersion();
+
+    var version = domConstruct.create('span', {
+      id : 'version',
+      innerHTML : serverVersion
+    });
+
+    domConstruct.place(version, logo);
+
     domConstruct.place(logo, headerPane.domNode);
 
     //--- Menu button ---//

@@ -16,6 +16,7 @@ external-source-deps/highlightjs/
 external-source-deps/jsplumb/
 external-source-deps/marked/
 external-source-deps/thrift/
+external-source-deps/fonts/
 
 # doxygen generated files
 gen-docs/
