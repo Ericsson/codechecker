@@ -14,7 +14,13 @@ function (declare, Tree) {
 
   return declare(Tree, {
     _createTreeNode : function (args) {
-      return new HtmlTreeNode(args);
+      node = new HtmlTreeNode(args);
+
+      if (args.item.backgroundColor) {
+        node.domNode.style.backgroundColor = args.item.backgroundColor;
+      }
+
+      return node;
     }
   });
 });

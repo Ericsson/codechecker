@@ -1,3 +1,4 @@
+@charset "UTF-8";
 @import url('generated_fonts.css');
 
 /*** Main stuff ***/
@@ -160,4 +161,165 @@ html, body {
 .otherFileMsg:hover {
   text-decoration: underline;
   cursor: pointer;
+}
+
+/*** BugPathList icons ***/
+
+@font-face {
+  font-family: "codechecker";
+  src: url("../fonts/codechecker.eot");
+  src: url("../fonts/codechecker.eot#iefix") format("embedded-opentype"),
+    url("../fonts/codechecker.ttf") format("truetype"),
+    url("../fonts/codechecker.woff") format("woff"),
+    url("../fonts/codechecker.svg#codechecker") format("svg");
+  font-weight: normal;
+  font-style: normal;
+}
+
+.customIcon {
+  font-family: 'codechecker', Sans-Serif !important;
+  speak: none;
+  position: relative;
+  display: inline-block;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  width: 16px;
+  height: 16px;
+  font-size: 1.125em;
+  padding-right: 4px;
+}
+
+.customIcon.spacer::before {
+  content: "\e000";
+}
+
+/* -- Severities -- */
+span[class*="severity-"]::before {
+  content: "\e001";
+}
+
+.customIcon.severity-critical {
+  color: #b32424;
+}
+
+.customIcon.severity-high {
+  color: #f28500;
+}
+
+.customIcon.severity-medium {
+  color: #d2c20c;
+}
+
+.customIcon.severity-low {
+  color: #49994a;
+}
+
+.customIcon.severity-style {
+  color: #9932cc;
+}
+
+.customIcon.severity-style::before {
+  content: "\e002";
+}
+
+.customIcon.severity-unspecified {
+  color: #5b6169;
+}
+
+/* -- */
+
+.customIcon.pathClosed:before {
+  content: "\e003";
+}
+
+.customIcon.pathOpened:before {
+  content: "\e004";
+}
+
+.customIcon.result:before {
+  content: "\e005";
+}
+
+.customIcon.result {
+  color: #2125b6;
+}
+
+.customIcon.calling:before {
+  content: "\e006";
+}
+
+.customIcon.calling {
+  color: #1855B6;
+}
+
+.customIcon.entered_call:before {
+  content: "\e007";
+}
+
+.customIcon.entered_call {
+  color: #316ecf;
+}
+
+.customIcon.returning:before {
+  content: "\e008";
+}
+
+.customIcon.returning {
+  color: #61a2ff;
+}
+
+.customIcon.loop_enter:before {
+  content: "\e009";
+}
+
+.customIcon.loop_execute:before {
+  content: "\e00a";
+}
+
+.customIcon.loop_back:before {
+  content: "\e00b";
+}
+
+.customIcon.assume_msg:before {
+  content: "\e00c";
+}
+
+.customIcon.assume_msg:not(.nocolor) {
+  color: #b48a07;
+}
+
+.customIcon.assume_exclamation:before {
+  content: "\e00d";
+}
+
+.customIcon.assume_exclamation {
+  color: #ff5c11;
+}
+
+.customIcon.msg:before {
+  content: "\e00e";
+}
+
+/* -UNUSED-
+.customIcon.assume_bulb:before {
+  content: "\e00f";
+}
+
+.customIcon.assume_board:before {
+  content: "\e010";
+}
+
+.customIcon.assume_board {
+  color: #7f410c;
+} */
+
+.customIcon.assume_switch:before {
+  content: "\e011";
+}
+
+.customIcon.assume_switch {
+  color: #7f410c;
 }

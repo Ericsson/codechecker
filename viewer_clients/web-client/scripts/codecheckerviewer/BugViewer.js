@@ -384,12 +384,12 @@ function (declare, dom, style, on, query, Memory, Observable, topic, entities,
 
       [
         { id : 'root',        name : 'Bugs by priority' },
-        { id : 'critical',    name : 'Critical',    parent : 'root', isLeaf : false },
-        { id : 'high',        name : 'High',        parent : 'root', isLeaf : false },
-        { id : 'medium',      name : 'Medium',      parent : 'root', isLeaf : false },
-        { id : 'low',         name : 'Low',         parent : 'root', isLeaf : false },
-        { id : 'style',       name : 'Style',       parent : 'root', isLeaf : false },
-        { id : 'unspecified', name : 'Unspecified', parent : 'root', isLeaf : false }
+        { id : 'critical',    name : 'Critical',    parent : 'root', isLeaf : false, kind : 'severity' },
+        { id : 'high',        name : 'High',        parent : 'root', isLeaf : false, kind : 'severity' },
+        { id : 'medium',      name : 'Medium',      parent : 'root', isLeaf : false, kind : 'severity' },
+        { id : 'low',         name : 'Low',         parent : 'root', isLeaf : false, kind : 'severity' },
+        { id : 'style',       name : 'Style',       parent : 'root', isLeaf : false, kind : 'severity' },
+        { id : 'unspecified', name : 'Unspecified', parent : 'root', isLeaf : false, kind : 'severity' }
       ].forEach(function (item) {
         that.bugStore.put(item);
       });
@@ -462,14 +462,185 @@ function (declare, dom, style, on, query, Memory, Observable, topic, entities,
         this.editor.highlightBugPathEvent(item.bugPathEvent);
     },
 
+    getIconClass : function(item, opened) {
+      if (item == this.model.root) {
+        return (opened ? "dijitFolderOpened" : "dijitFolderClosed");
+      } else if (!item.isLeaf) {
+        switch (item.kind) {
+          case 'severity':
+            return "customIcon severity-" + item.id;
+          case 'bugpath':
+            return (opened ? "customIcon pathOpened"
+                           : "customIcon pathClosed");
+          default:
+            return (opened ? "dijitFolderOpened" : "dijitFolderClosed");
+        }
+      } else if (item.isLeaf) {
+        switch (item.kind) {
+          case 'msg':
+            return "customIcon assume_msg nocolor";
+          case 'event':
+            return (item.iconOverride ? "customIcon " + item.iconOverride
+                                      : "customIcon msg");
+          case 'result':
+            return "customIcon result";
+          default:
+            return "dijitLeaf";
+        }
+      }
+    },
+
     _onNodeMouseEnter : function (node) {
-      if (node.item.isLeaf)
-        Tooltip.show(node.item.name, node.domNode, ['above']);
+      if (node.item.tooltip)
+        Tooltip.show(node.item.tooltip, node.domNode, ['above']);
     },
 
     _onNodeMouseLeave : function (node) {
       if (node.item.isLeaf)
         Tooltip.hide(node.domNode);
+    },
+
+    // Highlight colours go further down this array in a circular fashion
+    // at each function call.
+    _highlight_colours : [
+      "#ffffff",
+      "#e9dddd",
+      "#dde0eb",
+      "#e5e8e5",
+      "#cbc2b6",
+      "#b8ccea",
+      "#c1c9cd",
+      "#a7a28f"
+    ],
+
+    _highlightStep : function(stack, step) {
+      var that = this;
+      var msg = step.msg;
+
+      // The background must be saved BEFORE stack transition.
+      // Calling is in the caller, return is in the called func, not "outside"
+      var highlight = {
+        background : stack.background,
+        iconOverride : undefined
+      };
+
+      function extractFuncName(prefix) {
+        if (msg.startsWith(prefix)) {
+          return msg.replace(prefix, "").replace(/'/g, "");
+        }
+      }
+
+      var func;
+      if (func = extractFuncName("Calling ")) {
+        stack.funcStack.push(func);
+        stack.background = that._highlight_colours[
+          stack.funcStack.length % that._highlight_colours.length];
+
+        highlight.iconOverride = "calling";
+      } else if (msg.startsWith("Entered call from ")) {
+        highlight.iconOverride = "entered_call";
+      } else if (func = extractFuncName("Returning from ")) {
+        if (func === stack.funcStack[stack.funcStack.length - 1]) {
+          stack.funcStack.pop();
+          stack.background = that._highlight_colours[
+            stack.funcStack.length % that._highlight_colours.length];
+
+          highlight.iconOverride = "returning";
+        } else {
+          throw {
+            name : 'StackError',
+            message : "Returned from " + func + " while the last function " +
+                      "was " + stack.funcStack[stack.funcStack.length - 1]
+          };
+        }
+      } else if (msg.startsWith("Assuming the condition")) {
+        highlight.iconOverride = "assume_switch";
+      } else if (msg.startsWith("Assuming")) {
+        highlight.iconOverride = "assume_exclamation";
+      } else if (msg == "Entering loop body") {
+        highlight.iconOverride = "loop_enter";
+      } else if (msg.startsWith("Loop body executed")) {
+        highlight.iconOverride = "loop_execute";
+      } else if (msg == "Looping back to the head of the loop") {
+        highlight.iconOverride = "loop_back";
+      }
+
+      return highlight;
+    },
+
+    _formatReportDetails : function (report, reportDetails) {
+      if (reportDetails.pathEvents.length <= 1)
+        return;
+
+      var filePaths = [];
+      var areThereMultipleFiles = false;
+      var highlightStack = {
+        funcStack : [],
+        background : this._highlight_colours[0]
+      };
+
+      // Check if there are multiple files (XTU?) affected by this bug.
+      // If so, we show the file names properly.
+      reportDetails.pathEvents.some(function (step) {
+        if (filePaths.indexOf(step.filePath) === -1) {
+          // File is not yet in the array, put it in.
+          filePaths.push(step.filePath);
+        } else {
+          if (filePaths.length !== 1) {
+            areThereMultipleFiles = true;
+            return true; // Break execution, multiple files were found
+          }
+        }
+
+        return false; // Continue checking
+      });
+
+      var that = this;
+      reportDetails.pathEvents.forEach(function (step, index) {
+        var filename = step.filePath.replace(/^.*(\\|\/|\:)/, '');
+        var highlightData = that._highlightStep(highlightStack, step);
+
+        var name = (areThereMultipleFiles ? '{FILENAME}:' : 'Line ');
+        name += step.startLine + ' &ndash; ' + entities.encode(step.msg);
+
+        var kind = 'event';
+        if (index == reportDetails.pathEvents.length - 1) {
+          // The final line in the BugPath is the result once again
+          name = '<i><u>' + name + '</u></i>';
+          kind = 'result';
+        }
+
+        // Tooltip and name should have the same formatting,
+        // but tooltip contains the full filename
+        var tooltip = name.replace('{FILENAME}', filename);
+
+        if (filename.length > 12) {
+          var extensionParts = filename.split('.');
+          var fnWithoutExt = extensionParts.slice(0, extensionParts.length)
+                                           .join('.');
+          var extension = (extensionParts.length > 1
+                           ? '.' + extensionParts[extensionParts.length - 1]
+                           : '');
+
+          name = name.replace('{FILENAME}',
+                              fnWithoutExt.substr(0, 8) + "..." + extension);
+        } else {
+          name = name.replace('{FILENAME}', filename);
+        }
+
+        that.bugStore.put({
+          id : report.reportId + '_' + (index + 1),
+          name : name,
+          tooltip : tooltip,
+          backgroundColor : highlightData.background,
+          iconOverride : highlightData.iconOverride,
+          parent : report.reportId,
+          bugPathEvent : step,
+          isLeaf : true,
+          kind : kind,
+          report : report
+        });
+      })
     },
 
     _addReport : function (report) {
@@ -478,33 +649,24 @@ function (declare, dom, style, on, query, Memory, Observable, topic, entities,
       this.bugStore.put({
         id : report.reportId + '',
         name : 'Line ' + report.lastBugPosition.startLine
-             + ': ' + report.checkerId,
+             + ' &ndash; ' + report.checkerId,
         parent : util.severityFromCodeToString(report.severity),
         report : report,
-        isLeaf : false
+        isLeaf : false,
+        kind : 'bugpath'
       });
 
       this.bugStore.put({
         id : report.reportId + '_0',
-        name : '<b><u>Result</u>: '
-             + entities.encode(report.checkerMsg)
-             + '</b>',
+        name : '<b><u>' + entities.encode(report.checkerMsg) + '</u></b>',
         parent : report.reportId + '',
         report : report,
-        isLeaf : true
+        isLeaf : true,
+        kind : 'msg'
       });
 
       CC_SERVICE.getReportDetails(report.reportId, function (reportDetails) {
-        reportDetails.pathEvents.forEach(function (step, index) {
-          that.bugStore.put({
-            id : report.reportId + '_' + (index + 1),
-            name : 'Line ' + step.startLine + ': ' + entities.encode(step.msg),
-            parent : report.reportId,
-            bugPathEvent : step,
-            isLeaf : true,
-            report : report
-          });
-        });
+        that._formatReportDetails(report, reportDetails);
       });
     },
 
