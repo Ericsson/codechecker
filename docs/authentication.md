@@ -238,10 +238,7 @@ optional arguments:
   --host HOST           Server host.
   -p PORT, --port PORT  HTTP Server port.
   -u USERNAME, --username USERNAME
-                        Username to use on authentication
-  -pw PASSWORD, --password PASSWORD
-                        Password for username-password authentication
-                        (optional)
+                        Username to use on authentication (default: logged in user)
   -d, --deactivate, --logout
                         Send a logout request for the server
 ~~~~~~~~~~~~~~~~~~~~~
@@ -255,7 +252,10 @@ Privileged session expire after a set amount of time. To log out manually, issue
 
 To alleviate the need for supplying authentication in the command-line every time a server is connected to, users can pre-configure their credentials to be used in authentication.
 
-To do so, open `~/.codechecker_passwords.json`. The `credentials` section is used by the client to read pre-saved authentication data in `username:password` format.
+To do so first copy the `config/session_client.json` file from the CodeChecker package to your home directory and rename it to `codechecker_passwords.json`
+After creating the new file open `~/.codechecker_passwords.json`.
+
+The `credentials` section is used by the client to read pre-saved authentication data in `username:password` format.
 
 ~~~{.json}
   "credentials": {
@@ -281,4 +281,4 @@ This behaviour can be disabled by setting `client_autologin` to `false`.
 
 #### Currently active tokens
 
-The user's currently active sessions' token are stored in the `/tmp/.codechecker_USERNAME.session.json` (where `/tmp` is the environment's *temp* folder) file.
+The user's currently active sessions' token are stored in the `~/.codechecker_USERNAME.session.json`.

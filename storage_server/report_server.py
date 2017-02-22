@@ -101,7 +101,8 @@ class CheckerReportHandler(object):
                 other_reference = self.session.query(ReportsToBuildActions) \
                     .filter(
                     and_(ReportsToBuildActions.report_id == report_id,
-                         ReportsToBuildActions.build_action_id != build_action_id))
+                         ReportsToBuildActions.build_action_id !=
+                         build_action_id))
 
                 LOG.debug("Checking report id:" + str(report_id))
 
@@ -115,7 +116,8 @@ class CheckerReportHandler(object):
                     report = self.session.query(Report).get(report_id)
 
                     LOG.debug("Removing bug path events.")
-                    self.__sequence_deleter(BugPathEvent, report.start_bugevent)
+                    self.__sequence_deleter(BugPathEvent,
+                                            report.start_bugevent)
                     LOG.debug("Removing bug report points.")
                     self.__sequence_deleter(BugReportPoint,
                                             report.start_bugpoint)
@@ -134,8 +136,10 @@ class CheckerReportHandler(object):
                 BuildAction.id == build_action_id) \
                 .delete()
 
-            self.session.query(ReportsToBuildActions).filter(
-                ReportsToBuildActions.build_action_id == build_action_id).delete()
+            self.session.query(ReportsToBuildActions).\
+                filter(ReportsToBuildActions.build_action_id ==
+                       build_action_id).\
+                delete()
         except Exception as ex:
             raise shared.ttypes.RequestFailed(
                 shared.ttypes.ErrorCode.GENERAL,
@@ -230,15 +234,17 @@ class CheckerReportHandler(object):
 
             build_actions = \
                 self.session.query(BuildAction) \
-                    .filter(and_(BuildAction.run_id == run_id,
-                                 BuildAction.build_cmd_hash == build_cmd_hash,
-                                 or_(
-                                     and_(
-                                         BuildAction.analyzer_type == analyzer_type,
-                                         BuildAction.analyzed_source_file == analyzed_source_file),
-                                     and_(BuildAction.analyzer_type == "",
-                                          BuildAction.analyzed_source_file == "")
-                                 ))) \
+                    .filter(
+                    and_(BuildAction.run_id == run_id,
+                         BuildAction.build_cmd_hash == build_cmd_hash,
+                         or_(
+                             and_(
+                                 BuildAction.analyzer_type == analyzer_type,
+                                 BuildAction.analyzed_source_file ==
+                                 analyzed_source_file),
+                             and_(BuildAction.analyzer_type == "",
+                                  BuildAction.analyzed_source_file == "")
+                         ))) \
                     .all()
 
             if build_actions:
@@ -432,8 +438,9 @@ class CheckerReportHandler(object):
                         # file id, and position.
                         dup_report_obj = self.session.query(Report).get(
                             possib_dup.report_ident.id)
-                        if dup_report_obj and dup_report_obj.checker_id == checker_id and \
-                                        dup_report_obj.file_id == file_id and \
+                        if dup_report_obj and \
+                                dup_report_obj.checker_id == checker_id and \
+                                dup_report_obj.file_id == file_id and \
                                 self.__is_same_event_path(
                                     dup_report_obj.start_bugevent, events):
                             # It's a duplicate.
@@ -526,13 +533,19 @@ class CheckerReportHandler(object):
         try:
             suppressList = []
             for bug_to_suppress in bugs_to_suppress:
-                suppress_bug = SuppressBug(run_id,
-                                           bug_to_suppress.bug_hash,
-                                           bug_to_suppress.file_name,
-                                           bug_to_suppress.comment)
-                suppressList.append(suppress_bug)
+                res = self.session.query(SuppressBug) \
+                    .filter(SuppressBug.hash == bug_to_suppress.bug_hash,
+                            SuppressBug.run_id == run_id,
+                            SuppressBug.file_name == bug_to_suppress.file_name)
 
-            self.session.bulk_save_objects(suppressList)
+                if res.one_or_none():
+                    res.update({'comment': bug_to_suppress.comment})
+                else:
+                    self.session.add(SuppressBug(run_id,
+                                                 bug_to_suppress.bug_hash,
+                                                 bug_to_suppress.file_name,
+                                                 bug_to_suppress.comment))
+
             self.session.commit()
 
         except Exception as ex:
@@ -554,8 +567,8 @@ class CheckerReportHandler(object):
             count = self.session.query(SuppressBug) \
                 .filter(SuppressBug.run_id == run_id) \
                 .delete()
-            LOG.debug('Cleaning previous suppress entries from the database. '
-                      + str(count) + ' removed items.')
+            LOG.debug('Cleaning previous suppress entries from the database.'
+                      '{0} removed items.'.format(str(count)))
 
             reports = self.session.query(Report) \
                 .filter(and_(Report.run_id == run_id,

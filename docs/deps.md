@@ -5,7 +5,7 @@
   *  [Doxygen](http://www.stack.nl/~dimitri/doxygen/) (> 1.8) to generate documentation
   *  Build logging
     - It is possible to build package without the ld-logger. In that case no automatic compilation database generation is done. To build ld-logger 32 and 64 bit versions automatically, `gcc multilib` and `make` is required.
-    - Compilation command database can be generated with CMake during the build (run `cmake` with the 'CMAKE_EXPORT_COMPILE_COMMANDS' option). CodeChecker can process the generated compilation database at runtime.
+    - Compilation command database can be generated with CMake during the build (run `cmake` with the `CMAKE_EXPORT_COMPILE_COMMANDS` option). CodeChecker can process the generated compilation database at runtime.
 
   * Other external dependencies are automatically downloaded and
     copied to the necessary directories in the package.

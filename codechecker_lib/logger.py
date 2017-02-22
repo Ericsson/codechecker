@@ -30,9 +30,17 @@ class BColors(object):
     ENDC = '\033[0m'
 
 
-# -----------------------------------------------------------------------------
-logging.DEBUG_ANALYZER = 15
-logging.addLevelName(logging.DEBUG_ANALYZER, 'DEBUG_ANALYZER')
+def add_verbose_arguments(parser):
+    """
+    Verbosity level arguments.
+    """
+    parser.add_argument('--verbose', type=str, dest='verbose',
+                        choices=['info', 'debug', 'debug_analyzer'],
+                        default='info',
+                        help='Set verbosity level.')
+
+DEBUG_ANALYZER = logging.DEBUG_ANALYZER = 15
+logging.addLevelName(DEBUG_ANALYZER, 'DEBUG_ANALYZER')
 
 
 class CCLogger(logging.Logger):
@@ -59,7 +67,11 @@ class CustomFormatter(logging.Formatter):
         '%(filename)s:%(lineno)d %(funcName)s() - %(message)s'
 
     def formatTime(self, record, datefmt=None):
-        return time.strftime('%H:%M')
+        if LoggerFactory.log_level == logging.DEBUG or \
+                LoggerFactory.log_level == logging.DEBUG_ANALYZER:
+            return time.strftime('%H:%M:%S')
+        else:
+            return time.strftime('%H:%M')
 
     def format(self, record):
 

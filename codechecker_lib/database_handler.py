@@ -301,6 +301,13 @@ class PostgreSQLServer(SQLServer):
     def _get_connection_string(self, database):
         """
         Helper method for getting the connection string for the given database.
+
+        database -- The user can force the database name in the returning
+        connection string. However the password, if any, provided e.g. in a
+        .pgpass file will be queried based on the database name which is given
+        as a command line argument, even if it has a default value. The reason
+        is that sometimes a connection with a common database name is needed,
+        (e.g. 'postgres'), which requires less user permission.
         """
 
         port = str(self.port)
@@ -312,7 +319,7 @@ class PostgreSQLServer(SQLServer):
                 password = pgpass.get_password_from_file(pfilepath,
                                                          self.host,
                                                          port,
-                                                         database,
+                                                         self.database,
                                                          self.user)
 
         extra_args = {'client_encoding': 'utf8'}
@@ -374,8 +381,8 @@ class PostgreSQLServer(SQLServer):
         LOG.debug('Checking if database is running at ' +
                   self.host + ':' + str(self.port))
 
-        check_db = ['psql', '-U', self.user, '-l', '-p', str(self.port), '-h',
-                    self.host]
+        check_db = ['psql', '-U', self.user, '-c', 'SELECT version();',
+                    '-p', str(self.port), '-h', self.host, '-d', 'postgres']
         err, code = util.call_command(check_db, self.run_env)
         return code == 0
 

@@ -175,6 +175,9 @@ def call_command(command, env=None):
         LOG.debug(str(ex.returncode))
         LOG.debug(ex.output)
         return ex.output, ex.returncode
+    except OSError as oerr:
+        LOG.warning(oerr.strerror)
+        return oerr.strerror, oerr.errno
 
 
 def kill_process_tree(parent_pid):

@@ -84,8 +84,8 @@ class RequestHandler(SimpleHTTPRequestHandler):
 
         # Authentication can happen in two possible ways:
         #
-        # The user either presents a valid session cookie -- in this case, checking if
-        # the session for the given cookie is valid
+        # The user either presents a valid session cookie -- in this case
+        # checking if the session for the given cookie is valid.
 
         client_host, client_port = self.client_address
 
@@ -101,7 +101,8 @@ class RequestHandler(SimpleHTTPRequestHandler):
 
         if not success:
             # Session cookie was invalid (or not found...)
-            # Attempt to see if the browser has sent us an authentication request
+            # Attempt to see if the browser has sent us
+            # an authentication request.
             authHeader = self.headers.getheader("Authorization")
             if authHeader is not None and authHeader.startswith("Basic "):
                 LOG.info("Client from " + client_host + ":" +
@@ -157,6 +158,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
         checker_md_docs = self.server.checker_md_docs
         checker_md_docs_map = self.server.checker_md_docs_map
         suppress_handler = self.server.suppress_handler
+        version = self.server.version
 
         protocol_factory = TJSONProtocol.TJSONProtocolFactory()
         input_protocol_factory = protocol_factory
@@ -166,7 +168,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
         otrans = TTransport.TFileObjectTransport(self.wfile)
         itrans = TTransport.TBufferedTransport(itrans,
                                                int(self.headers[
-                                                       'Content-Length']))
+                                                   'Content-Length']))
         otrans = TTransport.TMemoryBuffer()
 
         iprot = input_protocol_factory.getProtocol(itrans)
@@ -191,14 +193,10 @@ class RequestHandler(SimpleHTTPRequestHandler):
         # Authentication is handled, we may now respond to the user.
         try:
             session = self.sc_session()
-            acc_handler = ThriftRequestHandler(session,
-                                               checker_md_docs,
-                                               checker_md_docs_map,
-                                               suppress_handler,
-                                               self.db_version_info)
 
             if self.path == '/Authentication':
-                # Authentication requests must be routed to a different handler.
+                # Authentication requests must be routed to a different
+                # handler.
                 auth_handler = ThriftAuthHandler(self.manager,
                                                  client_host,
                                                  sess_token)
@@ -208,7 +206,8 @@ class RequestHandler(SimpleHTTPRequestHandler):
                                                    checker_md_docs,
                                                    checker_md_docs_map,
                                                    suppress_handler,
-                                                   self.db_version_info)
+                                                   self.db_version_info,
+                                                   version)
 
                 processor = codeCheckerDBAccess.Processor(acc_handler)
 
@@ -277,6 +276,7 @@ class CCSimpleHttpServer(HTTPServer):
         self.doc_root = pckg_data['doc_root']
         self.checker_md_docs = pckg_data['checker_md_docs']
         self.checker_md_docs_map = pckg_data['checker_md_docs_map']
+        self.version = pckg_data['version']
         self.suppress_handler = suppress_handler
         self.db_version_info = db_version_info
         self.__engine = database_handler.SQLServer.create_engine(

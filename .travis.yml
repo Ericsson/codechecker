@@ -16,10 +16,10 @@ matrix:
       language: generic
 
 before_install:
-    - git clone https://github.com/llvm-mirror/clang.git ~/llvm\
-    - chmod a+x ~/llvm/tools/scan-build-py/bin/intercept-build
-    - export PATH=~/llvm/tools/scan-build-py/bin:$PATH
-    - export PYTHONPATH=~/llvm/tools/scan-build-py/
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then git clone https://github.com/llvm-mirror/clang.git ~/llvm; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then chmod a+x ~/llvm/tools/scan-build-py/bin/intercept-build; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PATH=~/llvm/tools/scan-build-py/bin:$PATH; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PYTHONPATH=~/llvm/tools/scan-build-py/; fi 
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update;               fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install homebrew/versions/thrift090;                fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install doxygen;               fi
@@ -56,26 +56,5 @@ addons:
     postgresql: "9.3"
 
 script:
-    - pep8 codechecker codechecker_lib tests db_model
-
-    - ./change_clang_version.py
-
-    - source tests/test_env_setup.sh
-
-    - ./build_package.py -o $TEST_CODECHECKER_PACKAGE_DIR -v
-
-    - export TEST_USE_POSTGRESQL=false
-    - unset CODECHECKER_DB_DRIVER
-    - nosetests tests
-
-    - export TEST_USE_POSTGRESQL=true
-    - export TEST_DBUSERNAME="postgres"
-    - export TEST_DBPORT="5432"
-
-    - export CODECHECKER_DB_DRIVER=psycopg2
-    - nosetests tests/functional/package_test/
-
-    - export CODECHECKER_DB_DRIVER=pg8000
-    - nosetests tests/functional/package_test/
-
-    - ./tests/clean_tests.sh
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then make travis; fi
+    - make test

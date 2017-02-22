@@ -9,6 +9,7 @@ import errno
 import json
 import logging
 import ntpath
+import re
 import os
 import shutil
 import sys
@@ -18,6 +19,7 @@ try:
 except ImportError:
     import urllib.parse as urlparse
 import tarfile
+import tempfile
 import subprocess
 import time
 import shlex
@@ -88,49 +90,6 @@ def build_ld_logger(ld_logger_path, env, arch=None, clean=True, silent=True):
     ret = run_cmd(make_cmd, ld_logger_path, env, silent=silent)
     if ret:
         LOG.error('Failed to run: ' + ' '.join(make_cmd))
-        return ret
-
-
-# -------------------------------------------------------------------
-def generate_thrift_files(thrift_files_dir, env, silent=True):
-    """ Generate python and javascript files from thrift IDL. """
-
-    LOG.info('Generating thrift files ...')
-    rss_thrift = 'report_storage_server.thrift'
-    rss_cmd = ['thrift', '-r', '-I', '.', '--gen', 'py', rss_thrift]
-    ret = run_cmd(rss_cmd, thrift_files_dir, env, silent=silent)
-    if ret:
-        LOG.error('Failed to generate storage server files')
-        return ret
-
-    rvs_thrift = 'report_viewer_server.thrift'
-    rvs_cmd = ['thrift', '-r', '-I', '.',
-               '--gen', 'py', '--gen', 'js:jquery', rvs_thrift]
-    ret = run_cmd(rvs_cmd, thrift_files_dir, env, silent=silent)
-    if ret:
-        LOG.error('Failed to generate viewer server files')
-        return ret
-
-    auth_thrift = 'authentication.thrift'
-    auth_cmd = ['thrift', '-r', '-I', '.',
-                '--gen', 'py', auth_thrift]
-    ret = run_cmd(auth_cmd, thrift_files_dir, env, silent=silent)
-    if ret:
-        LOG.error('Failed to generate authentication interface files')
-        return ret
-
-
-# -------------------------------------------------------------------
-def generate_documentation(doc_root, env, silent=True):
-    """ Generate user guide and other documentation. """
-
-    LOG.info('Generating documentation ...')
-    doc_gen_cmd = ['doxygen', 'Doxyfile.in']
-    LOG.debug(doc_gen_cmd)
-
-    ret = run_cmd(doc_gen_cmd, doc_root, env, silent=silent)
-    if ret:
-        LOG.error('Failed to generate documentation')
         return ret
 
 
@@ -238,19 +197,33 @@ def handle_external_file(dep, clean, env, verbose):
         LOG.error('Unsupported file type')
 
 
+font_user_agents = {
+    'default': '""',
+    'eot': 'Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.1; Trident/4.0)',
+    'woff': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:27.0) '
+            'Gecko/20100101 Firefox/27.0',
+    'woff2': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:40.0) '
+             'Gecko/20100101 Firefox/40.0',
+    'svg': 'Mozilla/4.0 (iPad; CPU OS 4_0_1 like Mac OS X) AppleWebKit/534.46'
+           '(KHTML, like Gecko) Version/4.1 Mobile/9A405 Safari/7534.48.3',
+    'ttf': 'Mozilla/5.0 (Linux; Android 4.3; HTCONE Build/JSS15J) '
+           'AppleWebKit/534.30 (KHTML, like Gecko) Version/4.0 '
+           'Mobile Safari/534.30'}
+
+
 # -------------------------------------------------------------------
 def handle_external_repository(dep, clean, env, verbose):
     """ Download external repository. """
     repository = dep['repository']
-    if repository['type'] == 'git':
-        directory = dep['directory']
-        if clean and os.path.exists(directory):
-            LOG.debug('Removing directory ' + directory)
-            shutil.rmtree(directory)
-        else:
-            if os.path.exists(directory):
-                return
+    directory = dep['directory']
+    if clean and os.path.exists(directory):
+        LOG.debug('Removing directory ' + directory)
+        shutil.rmtree(directory)
+    else:
+        if os.path.exists(directory):
+            return
 
+    if repository['type'] == 'git':
         git_cmd = ['git', 'clone', '--depth', '1', '--single-branch']
 
         git_tag = repository.get('git_tag')
@@ -265,6 +238,97 @@ def handle_external_repository(dep, clean, env, verbose):
         if run_cmd(git_cmd, dir_name, env=env, silent=verbose):
             LOG.error('Failed to get dependency')
             sys.exit(1)
+    elif repository['type'] == 'font_import':
+        # Download the font information from the given CSS file
+        source = repository.get('url')
+        font = repository.get('font')
+
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+
+        if source:
+            tmp = tempfile.mkdtemp()
+            LOG.debug("Downloading font files " + source + " to " + tmp)
+            for fformat, agent in font_user_agents.iteritems():
+                command = ['curl', '-sSfL',
+                           '-A', agent,
+                           '--get', source,
+                           '-o', os.path.join(tmp,
+                                              fformat + '.css')]
+                if run_cmd(command):
+                    LOG.warning("Failed to download font CSS for {0} "
+                                "(format {1})".format(source, fformat))
+                    continue
+
+                LOG.debug("Font format " + fformat + " downloaded.")
+
+            localdefs = []
+            urls = []
+            for _, _, files in os.walk(tmp):
+                for fontcss in files:
+                    if fontcss == "default.css":
+                        continue
+
+                    font_type = fontcss.replace(".css", "")
+                    fontcss = os.path.join(tmp, fontcss)
+                    LOG.debug("Retrieving font for " + font + "(" +
+                              os.path.basename(fontcss) + ")")
+                    with open(fontcss, 'r') as input:
+                        css = input.read()
+
+                    for local_name in re.findall(r'local\(([\S ]+?)\)', css):
+                        if local_name not in localdefs:
+                            localdefs.append("local(" + local_name + ")")
+
+                    src = re.search(r'url\(([\S]+)\)( format\(([\S]+)\))?',
+                                    css)
+                    command = ['curl', '-sSfL',
+                               '-A',
+                               font_user_agents[font_type],
+                               '--get', src.group(1),
+                               '-o', os.path.join(tmp,
+                                                  font + '.' + font_type)]
+                    if run_cmd(command):
+                        LOG.warning("Couldn't download font FILE for "
+                                    "{0}.{1}".format(font, font_type))
+                        continue
+
+                    if font_type == 'svg':
+                        # SVG fonts need a HTTP anchor to work,
+                        # i.e. Arial.svg#Arial, not just Arial.svg
+
+                        url_parsed = urlparse.urlparse(src.group(1))
+                        suffix = font_type + "#" + url_parsed.fragment
+                    else:
+                        suffix = font_type
+
+                    urls.append("url('" +
+                                os.path.join("..", "fonts",
+                                             font + '.' + suffix) +
+                                "')" + src.group(2) if src.group(2) else '')
+
+                    # Export the downloaded files
+                    basename = font + '.' + font_type
+                    shutil.copy(os.path.join(tmp, basename),
+                                os.path.join(directory, basename))
+
+            # Export "fixed" font information
+            localdefs = list(set(localdefs))
+            with open(os.path.join(tmp, "default.css"), 'r') as cssfile:
+                css = re.sub(r'(src:.*;)', "{SRCLINE}", cssfile.read())
+                css = css.replace("{SRCLINE}",
+                                  "src: " + ','.join(localdefs + urls)
+                                               .rstrip(',')
+                                               .replace(',', ',\n       ') +
+                                  ";")
+
+                with open(os.path.join(directory, "generated_fonts.css"),
+                          'w') as export:
+                    export.write(css)
+
+            shutil.rmtree(tmp)
+        else:
+            LOG.error('Font repository URL was not given!')
     else:
         LOG.error('Unsupported repository type')
 
@@ -348,6 +412,8 @@ def build_package(repository_root, build_package_config, env=None):
     package_layout = layout['static']
 
     output_dir = build_package_config['output_dir']
+    build_dir = os.path.join(repository_root,
+                             build_package_config['local_build_folder'])
 
     package_root = os.path.join(output_dir, 'CodeChecker')
     package_layout['root'] = package_root
@@ -393,7 +459,8 @@ def build_package(repository_root, build_package_config, env=None):
 
                 ld_logger32 = build_package_config.get('ld_logger_32')
                 ld_logger64 = build_package_config.get('ld_logger_64')
-                rebuild = build_package_config.get('rebuild_ld_logger') or clean
+                rebuild = build_package_config.get('rebuild_ld_logger')\
+                    or clean
 
                 arch = None
                 if ld_logger32 == ld_logger64:
@@ -404,12 +471,14 @@ def build_package(repository_root, build_package_config, env=None):
                 elif ld_logger64:
                     arch = '64'
 
-                if build_ld_logger(ld_logger_path, env, arch, rebuild, verbose):
+                if build_ld_logger(ld_logger_path, env, arch,
+                                   rebuild, verbose):
                     LOG.error('Failed to build ld logger')
                     sys.exit()
 
                 # Copy ld logger files.
-                target = os.path.join(package_root, package_layout['ld_logger'])
+                target = os.path.join(package_root,
+                                      package_layout['ld_logger'])
 
                 copy_tree(ld_logger_build, target)
 
@@ -424,18 +493,9 @@ def build_package(repository_root, build_package_config, env=None):
             else:
                 LOG.info('Skipping ld logger from package')
 
-    # Generate gen files with thrift.
-    thrift_files_dir = os.path.join(repository_root, 'thrift_api')
-    generated_py_files = os.path.join(thrift_files_dir, 'gen-py')
-    generated_js_files = os.path.join(thrift_files_dir, 'gen-js')
+    generated_py_files = os.path.join(build_dir, 'gen-py')
+    generated_js_files = os.path.join(build_dir, 'gen-js')
 
-    # Cleanup already generated files.
-    if os.path.exists(generated_py_files):
-        shutil.rmtree(generated_py_files)
-    if os.path.exists(generated_js_files):
-        shutil.rmtree(generated_js_files)
-
-    generate_thrift_files(thrift_files_dir, env, verbose)
     target = os.path.join(package_root, package_layout['codechecker_gen'])
     copy_tree(generated_py_files, target)
 
@@ -449,10 +509,9 @@ def build_package(repository_root, build_package_config, env=None):
     target = os.path.join(package_root, package_layout['cmdline_client'])
     copy_tree(cmdline_client_files, target)
 
-    # Generate documentation.
-    generate_documentation(repository_root, env, verbose)
-
-    source = os.path.join(repository_root, 'gen-docs', 'html')
+    # Documentation files.
+    source = os.path.join(build_dir,
+                          'gen-docs', 'html')
     target = os.path.join(package_root, package_layout['docs'])
     copy_tree(source, target)
 
@@ -545,14 +604,41 @@ def build_package(repository_root, build_package_config, env=None):
                                            cwd=repository_root)
         git_hash = str(git_hash.rstrip())
     except subprocess.CalledProcessError as cperr:
-        LOG.error('Failed to get last commit hash.')
-        LOG.error(str(cperr))
+        LOG.warning('Failed to get last commit hash.')
+        LOG.warning(str(cperr))
     except OSError as oerr:
-        LOG.error('Failed to run command:' + ' '.join(git_hash_cmd))
-        LOG.error(str(oerr))
+        LOG.warning('Failed to run command:' + ' '.join(git_hash_cmd))
+        LOG.warning(str(oerr))
+        sys.exit(1)
+
+    git_describe = '.'.join(version_json_data['version'].values())
+    git_describe_dirty = git_describe
+    try:
+        # The full dirty hash (vX.Y.Z-n-gabcdef0-tainted)
+
+        git_describe_cmd = ['git', 'describe', '--always', '--tags',
+                            '--dirty=-tainted']
+        git_describe_dirty = subprocess.check_output(git_describe_cmd,
+                                                     cwd=repository_root)
+        git_describe_dirty = str(git_describe_dirty.rstrip())
+
+        # The tag only (vX.Y.Z)
+        git_describe_cmd = ['git', 'describe', '--always', '--tags',
+                            '--abbrev=0']
+        git_describe = subprocess.check_output(git_describe_cmd,
+                                               cwd=repository_root)
+        git_describe = str(git_describe.rstrip())
+    except subprocess.CalledProcessError as cperr:
+        LOG.warning('Failed to get last commit describe.')
+        LOG.warning(str(cperr))
+    except OSError as oerr:
+        LOG.warning('Failed to run command:' + ' '.join(git_describe_cmd))
+        LOG.warning(str(oerr))
         sys.exit(1)
 
     version_json_data['git_hash'] = git_hash
+    version_json_data['git_describe'] = {'tag': git_describe,
+                                         'dirty': git_describe_dirty}
 
     time_now = time.strftime("%Y-%m-%dT%H:%M")
     version_json_data['package_build_date'] = time_now
@@ -567,6 +653,32 @@ def build_package(repository_root, build_package_config, env=None):
                           'web-client')
     target = os.path.join(package_root, package_layout['www'])
     copy_tree(source, target)
+
+    # Copy font files.
+    for _, dep in external_dependencies.iteritems():
+        if 'repository' not in dep:
+            continue
+        if dep['repository']['type'] != "font_import":
+            continue
+
+        root = os.path.join(repository_root,
+                            dep.get('directory'))
+        target = os.path.join(package_root,
+                              package_layout['www'],
+                              'fonts')
+        copy_tree(root, target)
+
+        # The generated_fonts.css file must be handled separately,
+        # because each font alone specifies a generated_fonts.css
+        # but it has to be appended, and not rewritten by subsequent
+        # copies. The file also goes to style/, not fonts/
+        with open(os.path.join(package_root,
+                               package_layout['www'],
+                               "style", "generated_fonts.css"), 'a') as style:
+            with open(os.path.join(root, "generated_fonts.css"), 'r') as css:
+                style.write(css.read() + "\n")
+
+        os.remove(os.path.join(root, "generated_fonts.css"))
 
     # CodeChecker main scripts.
     LOG.debug('Copy main codechecker files')
@@ -626,11 +738,6 @@ def build_package(repository_root, build_package_config, env=None):
 # -------------------------------------------------------------------
 def main():
     """ Main script. """
-    repository_root = os.path.dirname(os.path.realpath(__file__))
-
-    default_package_layout = os.path.join(repository_root,
-                                          "config",
-                                          "package_layout.json")
 
     description = '''CodeChecker packager script'''
 
@@ -640,22 +747,22 @@ def main():
 
     parser.add_argument("-l", action="store",
                         dest="package_layout_config",
-                        default=default_package_layout,
                         help="Package layout configuration file.")
     parser.add_argument("-o", "--output", required=True, action="store",
                         dest="output_dir")
+    parser.add_argument("-b", "--build-folder",
+                        dest="local_build_folder",
+                        default="build",
+                        help="The local dependency folder under which Thrift "
+                             "and documentation files have been generated.")
     parser.add_argument("--clean",
                         action="store_true",
                         dest='clean',
                         help='Clean external dependencies')
 
-    default_logger_dir = os.path.join(repository_root,
-                                      'external-source-deps',
-                                      'build-logger')
-
     logger_group = parser.add_argument_group('ld-logger')
     logger_group.add_argument("--ld-logger", action="store",
-                              dest="ld_logger_path", default=default_logger_dir,
+                              dest="ld_logger_path",
                               help="Ld logger source path.")
     logger_group.add_argument('--32', action='store_true',
                               dest="ld_logger_32",
@@ -669,7 +776,8 @@ def main():
 
     parser.add_argument("--compress", action="store",
                         dest="compress", default=False,
-                        help="Compress package to tar.gz")
+                        metavar="PACKAGE.tar.gz",
+                        help="Compress package to given PACKAGE.tar.gz file")
 
     parser.add_argument("-v", action="store_true", dest="verbose_log",
                         help='Set log level to higher verbosity.')
@@ -677,6 +785,21 @@ def main():
     args = vars(parser.parse_args())
 
     build_package_config = {k: args[k] for k in args if args[k] is not None}
+
+    if 'REPO_ROOT' not in os.environ:
+        LOG.error("REPO_ROOT environmental variable wasn't specified.")
+        sys.exit(1)
+    repository_root = os.environ['REPO_ROOT']
+    default_package_layout = os.path.join(repository_root,
+                                          "config",
+                                          "package_layout.json")
+    build_package_config['package_layout_config'] = default_package_layout
+
+    default_logger_dir = os.path.join(repository_root,
+                                      'external-source-deps',
+                                      'build-logger')
+
+    build_package_config['ld_logger_path'] = default_logger_dir
 
     build_package(repository_root, build_package_config)
 

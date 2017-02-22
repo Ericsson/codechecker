@@ -19,13 +19,15 @@ import time
 import uuid
 from subprocess import CalledProcessError
 
+__REPO_ROOT = os.path.abspath(os.environ['REPO_ROOT'])
 # sys.path modification needed so nosetests can load the test_utils package.
-sys.path.append(os.path.abspath(os.environ['TEST_TESTS_DIR']))
+sys.path.append(os.path.abspath(__REPO_ROOT))
 
 # Because of the nature of the python-env loading of nosetests, we need to
 # add the codechecker_gen package to the pythonpath here, so it is available
 # for the actual test cases.
-__PKG_ROOT = os.path.abspath(os.environ['TEST_CODECHECKER_DIR'])
+__PKG_ROOT = os.path.abspath(os.environ['CC_PACKAGE'])
+
 __LAYOUT_FILE_PATH = os.path.join(__PKG_ROOT, 'config', 'package_layout.json')
 with open(__LAYOUT_FILE_PATH) as layout_file:
     __PACKAGE_LAYOUT = json.load(layout_file)
@@ -70,20 +72,22 @@ def _wait_for_postgres_shutdown(workspace):
 def setup_package():
     """Setup the environment for the tests. Check the test project twice,
     then start the server."""
-    pkg_root = os.path.abspath(os.environ['TEST_CODECHECKER_DIR'])
+    pkg_root = os.path.abspath(__PKG_ROOT)
 
     env = os.environ.copy()
     env['PATH'] = os.path.join(pkg_root, 'bin') + ':' + env['PATH']
 
-    tmp_dir = os.path.abspath(os.environ['TEST_CODECHECKER_PACKAGE_DIR'])
+    tmp_dir = os.path.join(__REPO_ROOT, 'build')
     workspace = os.path.join(tmp_dir, 'workspace')
+    os.environ['CC_WORKSPACE'] = workspace
     if os.path.exists(workspace):
         print("Removing previous workspace")
         shutil.rmtree(workspace)
     os.makedirs(workspace)
 
     test_project_path = os.path.join(
-        os.path.abspath(os.environ['TEST_TESTS_DIR']),
+        os.path.abspath(os.environ['REPO_ROOT']),
+        'tests',
         'test_projects',
         'test_files')
 
@@ -99,8 +103,10 @@ def setup_package():
         if os.environ.get('TEST_DBUSERNAME', False):
             pg_db_config['dbusername'] = os.environ['TEST_DBUSERNAME']
 
+    test_proj_cfg = os.path.join(os.path.realpath(env['TEST_PROJ']),
+                                 'project_info.json')
     project_info = \
-        json.load(open(os.path.realpath(env['TEST_TEST_PROJECT_CONFIG'])))
+        json.load(open(test_proj_cfg))
 
     test_config = {
         'CC_TEST_SERVER_PORT': get_free_port(),

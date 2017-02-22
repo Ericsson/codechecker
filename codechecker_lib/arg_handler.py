@@ -6,12 +6,14 @@
 """
 Handle command line arguments.
 """
+import errno
 import json
 import multiprocessing
 import os
 import psutil
 import socket
 import shutil
+import socket
 import sys
 import tempfile
 
@@ -207,16 +209,27 @@ def handle_server(args):
     with open(checker_md_docs_map, 'r') as dFile:
         checker_md_docs_map = json.load(dFile)
 
-    package_data = {'www_root': context.www_root, 'doc_root': context.doc_root,
+    package_data = {'www_root': context.www_root,
+                    'doc_root': context.doc_root,
                     'checker_md_docs': checker_md_docs,
-                    'checker_md_docs_map': checker_md_docs_map}
+                    'checker_md_docs_map': checker_md_docs_map,
+                    'version': context.package_git_tag}
 
-    client_db_access_server.start_server(package_data,
-                                         args.view_port,
-                                         db_connection_string,
-                                         suppress_handler,
-                                         args.not_host_only,
-                                         context)
+    try:
+        client_db_access_server.start_server(package_data,
+                                             args.view_port,
+                                             db_connection_string,
+                                             suppress_handler,
+                                             args.not_host_only,
+                                             context)
+    except socket.error as err:
+        if err.errno == errno.EADDRINUSE:
+            LOG.error("Server can't be started, maybe the given port number "
+                      "({}) is already used. Check the connection "
+                      "parameters.".format(args.view_port))
+            sys.exit(1)
+        else:
+            raise
 
 
 def handle_log(args):
@@ -274,7 +287,7 @@ def handle_check(args):
         context.codechecker_workspace = args.workspace
         context.db_username = args.dbusername
 
-        log_file = build_manager.check_log_file(args, context)
+        log_file, set_in_cmdline = build_manager.check_log_file(args, context)
 
         if not log_file:
             LOG.error("Failed to generate compilation command file: " +
@@ -314,7 +327,7 @@ def handle_check(args):
         print(traceback.format_exc())
     finally:
         if not args.keep_tmp:
-            if log_file:
+            if log_file and not set_in_cmdline:
                 LOG.debug('Removing temporary log file: ' + log_file)
                 os.remove(log_file)
 
@@ -335,14 +348,7 @@ def _do_quickcheck(args):
         context.codechecker_workspace = args.workspace
         args.name = "quickcheck"
 
-        # Load severity map from config file.
-        if os.path.exists(context.checkers_severity_map_file):
-            with open(context.checkers_severity_map_file, 'r') as sev_file:
-                severity_config = sev_file.read()
-
-            context.severity_map = json.loads(severity_config)
-
-        log_file = build_manager.check_log_file(args, context)
+        log_file, set_in_cmdline = build_manager.check_log_file(args, context)
         actions = log_parser.parse_log(log_file,
                                        args.add_compiler_defaults)
         analyzer.run_quick_check(args, context, actions)
@@ -351,7 +357,7 @@ def _do_quickcheck(args):
         LOG.error("Running quickcheck failed.")
     finally:
         if not args.keep_tmp:
-            if log_file:
+            if log_file and not set_in_cmdline:
                 LOG.debug('Removing temporary log file: ' + log_file)
                 os.remove(log_file)
 
@@ -384,7 +390,7 @@ def consume_plist(item):
                                                  action,
                                                  context.run_id,
                                                  args.directory,
-                                                 {},
+                                                 context.severity_map,
                                                  None,
                                                  None,
                                                  not args.stdout)
@@ -393,7 +399,7 @@ def consume_plist(item):
     rh.buildaction.analyzer_type = 'Build action from plist'
     rh.buildaction.original_command = plist
     rh.analyzer_cmd = ''
-    rh.analyzer.analyzed_source_file = ''  # TODO: fill from plist.
+    rh.analyzed_source_file = ''  # TODO: fill from plist.
     rh.result_file = os.path.join(args.directory, plist)
     rh.handle_results()
 
@@ -460,6 +466,7 @@ def handle_version_info(args):
     print('Package build date: \t' +
           context.package_build_date).expandtabs(30)
     print('Git hash: \t' + context.package_git_hash).expandtabs(30)
+    print('Git tag info: \t' + context.package_git_tag).expandtabs(30)
     print('DB schema version: \t' +
           str(context.db_version_info)).expandtabs(30)
 
