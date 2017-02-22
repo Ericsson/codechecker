@@ -3,4 +3,5 @@ alembic==0.8.2
 psycopg2==2.5.4
 pg8000==1.10.2
 thrift==0.9.1
+psutil==5.0.1
 portalocker==1.0.0

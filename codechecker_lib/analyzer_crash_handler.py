@@ -20,7 +20,7 @@ class AnalyzerCrashHandler(object):
         self._analyzer_env = analyzer_env
         self._logger = LoggerFactory.get_new_logger('ANALYZER_CRASH_HANDLER')
 
-    # --------------------------------------------------------------------------
+    # -------------------------------------------------------------------------
     def get_crash_info(self, build_cmd):
         """
         Get the crash info by running the build command

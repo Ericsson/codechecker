@@ -12,7 +12,7 @@ from codechecker_lib.logger import LoggerFactory
 LOG = LoggerFactory.get_new_logger('ENV')
 
 
-# ------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 def get_log_env(logfile, context, original_env):
     """
     Environment for logging. With the ld logger.

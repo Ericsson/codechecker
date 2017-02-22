@@ -12,6 +12,7 @@ import glob
 import hashlib
 import ntpath
 import os
+import psutil
 import shutil
 import socket
 import subprocess
@@ -23,7 +24,6 @@ from codechecker_lib.logger import LoggerFactory
 LOG = LoggerFactory.get_new_logger('UTIL')
 
 
-# ---------------------------------------------------------------------
 def get_free_port():
     """ Get a free port from the OS. """
 
@@ -35,7 +35,6 @@ def get_free_port():
     return free_port
 
 
-# ---------------------------------------------------------------------
 def is_localhost(address):
     """
     Check if address is one of the valid values and try to get the
@@ -59,7 +58,6 @@ def is_localhost(address):
     return address in valid_values
 
 
-# ---------------------------------------------------------------------
 def match_file_name(file_name, pattern):
     file_name_parts = file_name.split('--')
 
@@ -69,7 +67,6 @@ def match_file_name(file_name, pattern):
         return False
 
 
-# ---------------------------------------------------------------------
 def get_file_last_modification_time(file):
     """
     Returns the last modification time of a file.
@@ -77,7 +74,6 @@ def get_file_last_modification_time(file):
     return datetime.datetime.fromtimestamp(os.path.getmtime(file))
 
 
-# ---------------------------------------------------------------------
 def get_env_var(env_var, needed=False):
     """
     Read the environment variables and handle the exception if a necessary
@@ -94,7 +90,6 @@ def get_env_var(env_var, needed=False):
     return value
 
 
-# -------------------------------------------------------------------------
 def get_tmp_dir_hash():
     """Generate a hash based on the current time and process id."""
 
@@ -112,19 +107,16 @@ def get_tmp_dir_hash():
     return dir_hash.hexdigest()
 
 
-# -------------------------------------------------------------------------
 def get_file_name_from_path(path):
     """Get the filename from a path."""
     head, tail = ntpath.split(path)
     return head, tail
 
 
-# -------------------------------------------------------------------------
 def get_obj_target(object_file_path):
     return os.path.split(os.path.abspath(dir))[-2]
 
 
-# -------------------------------------------------------------------------
 def create_dir(path):
     """Create a directory safely if it does not exist yet.
     This may be called from several processes or threads, creating the same
@@ -143,13 +135,11 @@ def create_dir(path):
     return
 
 
-# -------------------------------------------------------------------------
 def get_file_list(path, pattern):
     glob_pattern = os.path.join(path, pattern)
     return glob.glob(glob_pattern)
 
 
-# -------------------------------------------------------------------------
 def remove_file_list(file_list):
     for rfile in file_list:
         LOG.debug(rfile)
@@ -162,7 +152,6 @@ def remove_file_list(file_list):
     return
 
 
-# -------------------------------------------------------------------------
 def remove_dir(path):
     def error_handler(*args):
         LOG.warning('Failed to remove directory %s.' % path)
@@ -191,9 +180,53 @@ def call_command(command, env=None):
         return oerr.strerror, oerr.errno
 
 
+def kill_process_tree(parent_pid):
+    proc = psutil.Process(parent_pid)
+    children = proc.children()
+
+    # Send a SIGTERM (Ctrl-C) to the main process
+    proc.terminate()
+
+    # If children processes don't stop gracefully in time,
+    # slaughter them by force.
+    __, still_alive = psutil.wait_procs(children, timeout=5)
+    for p in still_alive:
+        p.kill()
+
+
 def get_default_workspace():
     """
     Default workspace in the users home directory.
     """
     workspace = os.path.join(os.path.expanduser("~"), '.codechecker')
     return workspace
+
+
+def print_table(lines, separate_head=True):
+    """Prints a formatted table given a 2 dimensional array."""
+
+    # Count the column width.
+    widths = []
+    for line in lines:
+        for i, size in enumerate([len(x) for x in line]):
+            while i >= len(widths):
+                widths.append(0)
+            if size > widths[i]:
+                widths[i] = size
+
+    # Generate the format string to pad the columns.
+    print_string = ""
+    for i, width in enumerate(widths):
+        print_string += "{" + str(i) + ":" + str(width) + "} | "
+    if len(print_string) == 0:
+        return
+    print_string = print_string[:-3]
+
+    # Print the actual data.
+    print("-" * (sum(widths) + 3 * (len(widths) - 1)))
+    for i, line in enumerate(lines):
+        print(print_string.format(*line))
+        if i == 0 and separate_head:
+            print("-" * (sum(widths) + 3 * (len(widths) - 1)))
+    print("-" * (sum(widths) + 3 * (len(widths) - 1)))
+    print('')

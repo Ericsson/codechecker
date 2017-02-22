@@ -2,3 +2,4 @@ sqlalchemy==1.0.9
 alembic==0.8.2
 thrift==0.9.1
 portalocker==1.0.0
+psutil==5.0.1

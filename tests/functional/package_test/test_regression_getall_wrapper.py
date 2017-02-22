@@ -155,7 +155,7 @@ class RunResults(unittest.TestCase):
 
         filtered_run_results = filter(
             lambda result:
-                (result.reportId == bug.reportId) and result.suppressed,
+            (result.reportId == bug.reportId) and result.suppressed,
             run_results)
         self.assertEqual(len(filtered_run_results), 1)
         suppressed_bug = filtered_run_results[0]

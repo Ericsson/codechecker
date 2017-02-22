@@ -10,6 +10,8 @@ import errno
 import json
 import multiprocessing
 import os
+import psutil
+import socket
 import shutil
 import socket
 import sys
@@ -24,6 +26,7 @@ from codechecker_lib import debug_reporter
 from codechecker_lib import generic_package_context
 from codechecker_lib import generic_package_suppress_handler
 from codechecker_lib import host_check
+from codechecker_lib import instance_manager
 from codechecker_lib import log_parser
 from codechecker_lib import session_manager
 from codechecker_lib import util
@@ -103,6 +106,57 @@ def handle_server(args):
 
     workspace = args.workspace
 
+    if (args.list or args.stop or args.stop_all) and \
+            not (args.list ^ args.stop ^ args.stop_all):
+        print("CodeChecker server: error: argument -l/--list and -s/--stop"
+              "and --stop-all are mutually exclusive.")
+        sys.exit(2)
+
+    if args.list:
+        instances = instance_manager.list()
+
+        instances_on_multiple_hosts = any(True for inst in instances
+                                          if inst['hostname'] !=
+                                          socket.gethostname())
+        if not instances_on_multiple_hosts:
+            rows = [('Workspace', 'View port')]
+        else:
+            rows = [('Workspace', 'Computer host', 'View port')]
+
+        for instance in instance_manager.list():
+            if not instances_on_multiple_hosts:
+                rows.append((instance['workspace'], str(instance['port'])))
+            else:
+                rows.append((instance['workspace'],
+                             instance['hostname']
+                             if instance['hostname'] != socket.gethostname()
+                             else '',
+                             str(instance['port'])))
+
+        print("Your running CodeChecker servers:")
+        util.print_table(rows)
+        sys.exit(0)
+    elif args.stop or args.stop_all:
+        for i in instance_manager.list():
+            # A STOP only stops the server associated with the given workspace
+            # and view-port.
+            if i['hostname'] != socket.gethostname() or (
+                        args.stop and not (i['port'] == args.view_port and
+                                           os.path.abspath(i['workspace']) ==
+                                           os.path.abspath(workspace))):
+                continue
+
+            try:
+                util.kill_process_tree(i['pid'])
+                LOG.info("Stopped CodeChecker server running on port {0} "
+                         "in workspace {1} (PID: {2})".
+                         format(i['port'], i['workspace'], i['pid']))
+            except:
+                # Let the exception come out if the commands fail
+                LOG.error("Couldn't stop process PID #" + str(i['pid']))
+                raise
+        sys.exit(0)
+
     # WARNING
     # In case of SQLite args.dbaddress default value is used
     # for which the is_localhost should return true.
@@ -167,7 +221,7 @@ def handle_server(args):
                                              db_connection_string,
                                              suppress_handler,
                                              args.not_host_only,
-                                             context.db_version_info)
+                                             context)
     except socket.error as err:
         if err.errno == errno.EADDRINUSE:
             LOG.error("Server can't be started, maybe the given port number "

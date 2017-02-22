@@ -54,7 +54,7 @@ class OrderedCheckersAction(argparse.Action):
         namespace.ordered_checkers = ordered_checkers
 
 
-# ------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 class DeprecatedOptionAction(argparse.Action):
     """
     Deprecated argument action.
@@ -394,12 +394,32 @@ Build command which is used to build the project.''')
         # Server.
         server_parser = subparsers.add_parser('server',
                                               formatter_class=ADHF,
-                                              help='Start the codechecker '
-                                                   'web server.')
+                                              help='Start and manage the '
+                                                   'CodeChecker web server.')
         server_parser.add_argument('-w', '--workspace', type=str,
                                    dest="workspace",
                                    default=util.get_default_workspace(),
                                    help=workspace_help_msg)
+
+        server_parser.add_argument('-l', '--list',
+                                   action='store_true',
+                                   dest="list",
+                                   required=False,
+                                   help='List servers started by your user.')
+
+        server_parser.add_argument('-s', '--stop',
+                                   action='store_true',
+                                   dest="stop",
+                                   required=False,
+                                   help='Stops the server associated with '
+                                        'the given view-port and workspace.')
+
+        server_parser.add_argument('--stop-all',
+                                   action='store_true',
+                                   dest="stop_all",
+                                   required=False,
+                                   help='Stops all of your running '
+                                        'CodeChecker instances.')
 
         server_parser.add_argument('-v', '--view-port', type=int,
                                    dest="view_port",
@@ -414,7 +434,7 @@ Build command which is used to build the project.''')
         server_parser.add_argument('--not-host-only', action="store_true",
                                    dest="not_host_only",
                                    help='Viewing the results is possible not'
-                                        'only by browsers or clients'
+                                        ' only by browsers or clients'
                                         ' started locally.')
 
         server_parser.add_argument('--check-port', type=int, dest="check_port",
@@ -540,7 +560,7 @@ Build command which is used to build the project.''')
         sys.exit(2)
 
 
-# ------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 if __name__ == "__main__":
     LOG.debug(sys.path)
     LOG.debug(sys.version)

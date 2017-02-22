@@ -7,11 +7,13 @@
 Main viewer server starts a http server which handles thrift client
 and browser requests
 """
+import atexit
 import base64
 import errno
 import os
 import posixpath
 import socket
+import sys
 import urllib
 from multiprocessing.pool import ThreadPool
 
@@ -42,6 +44,7 @@ from client_db_access_handler import ThriftRequestHandler
 from client_auth_handler import ThriftAuthHandler
 
 from codechecker_lib import database_handler
+from codechecker_lib import instance_manager
 from codechecker_lib import session_manager
 from codechecker_lib.logger import LoggerFactory
 
@@ -286,9 +289,13 @@ class CCSimpleHttpServer(HTTPServer):
 
         self.__request_handlers = ThreadPool(processes=10)
 
-        HTTPServer.__init__(self, server_address,
-                            RequestHandlerClass,
-                            bind_and_activate=True)
+        try:
+            HTTPServer.__init__(self, server_address,
+                                RequestHandlerClass,
+                                bind_and_activate=True)
+        except Exception as e:
+            LOG.error("Couldn't start the server: " + e.__str__())
+            sys.exit(1)
 
     def process_request_thread(self, request, client_address):
         try:
@@ -312,7 +319,7 @@ class CCSimpleHttpServer(HTTPServer):
 
 
 def start_server(package_data, port, db_conn_string, suppress_handler,
-                 not_host_only, db_version_info):
+                 not_host_only, context):
     """
     Start http server to handle web client and thrift requests.
     """
@@ -332,10 +339,16 @@ def start_server(package_data, port, db_conn_string, suppress_handler,
                                      db_conn_string,
                                      package_data,
                                      suppress_handler,
-                                     db_version_info,
+                                     context.db_version_info,
                                      session_manager.SessionManager())
+
+    instance_manager.register(os.getpid(),
+                              os.path.abspath(context.codechecker_workspace),
+                              port)
 
     LOG.info('Waiting for client requests on [' +
              access_server_host + ':' + str(port) + ']')
+
+    atexit.register(instance_manager.unregister, os.getpid())
     http_server.serve_forever()
-    LOG.info('done.')
+    LOG.info('Webserver quit.')
