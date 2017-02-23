@@ -250,7 +250,7 @@ def handle_external_repository(dep, clean, env, verbose):
             tmp = tempfile.mkdtemp()
             LOG.debug("Downloading font files " + source + " to " + tmp)
             for fformat, agent in font_user_agents.iteritems():
-                command = ['curl', '-sSfL',
+                command = ['curl', '-sSfLk',
                            '-A', agent,
                            '--get', source,
                            '-o', os.path.join(tmp,
@@ -282,7 +282,7 @@ def handle_external_repository(dep, clean, env, verbose):
 
                     src = re.search(r'url\(([\S]+)\)( format\(([\S]+)\))?',
                                     css)
-                    command = ['curl', '-sSfL',
+                    command = ['curl', '-sSfLk',
                                '-A',
                                font_user_agents[font_type],
                                '--get', src.group(1),
