@@ -4,6 +4,7 @@
 
 build
 venv
+venv_dev
 Makefile.local
 
 # build-logger build dir
@@ -25,13 +26,9 @@ gen-docs/
 thrift_api/gen-js/
 thrift_api/gen-py/
 
-# test_files build files
-tests/test_projects/test_files/call_and_message.o
-tests/test_projects/test_files/divide_zero.o
-tests/test_projects/test_files/new_delete.o
-tests/test_projects/test_files/null_dereference.o
-tests/test_projects/test_files/stack_address_escape.o
-tests/test_projects/test_files/file_to_be_skipped.o
+# object and binary files for tests
+tests/projects/cpp/*.o
+tests/projects/objc/DeallocUseAfterFreeErrors
 
 # idea files
 .idea/
