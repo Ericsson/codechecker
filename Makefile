@@ -1,8 +1,5 @@
 -include Makefile.local
 
-# Test running related targets.
-include tests/Makefile
-
 CURRENT_DIR = $(shell pwd)
 BUILD_DIR = $(CURRENT_DIR)/build
 
@@ -10,6 +7,9 @@ BUILD_DIR = $(CURRENT_DIR)/build
 ROOT = $(CURRENT_DIR)
 
 default: package
+
+# Test running related targets.
+include tests/Makefile
 
 gen-docs: build_dir
 	doxygen ./Doxyfile.in && \
