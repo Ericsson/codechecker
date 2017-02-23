@@ -186,7 +186,7 @@ class Diff(unittest.TestCase):
         new_run_id = self._new_runid
 
         diff_res_types_filter = self._testproject_data[self._clang_to_test][
-                'diff_res_types_filter']
+            'diff_res_types_filter']
 
         for level in diff_res_types_filter:
             for checker_name, test_result_count in level.items():
@@ -216,7 +216,7 @@ class Diff(unittest.TestCase):
         new_run_id = self._new_runid
 
         diff_res_types_filter = self._testproject_data[self._clang_to_test][
-                'diff_res_types_filter']
+            'diff_res_types_filter']
 
         for level in diff_res_types_filter:
             for checker_name, test_result_count in level.items():

@@ -86,7 +86,7 @@ class RunResults(unittest.TestCase):
         self.assertEqual(run_result_count, len(run_results))
 
         test_project_results = self._testproject_data[
-                self._clang_to_test]['bugs']
+            self._clang_to_test]['bugs']
         for r in test_project_results:
             print(r)
 

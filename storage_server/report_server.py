@@ -215,7 +215,7 @@ class CheckerReportHandler(object):
 
         configs = [Config(
             run_id, info.checker_name, info.attribute, info.value) for
-                   info in config_values]
+            info in config_values]
         self.session.bulk_save_objects(configs)
         self.session.commit()
         return True
@@ -330,11 +330,11 @@ class CheckerReportHandler(object):
 
             for point1 in events:
                 if point1.startLine != point2.line_begin or \
-                                point1.startCol != point2.col_begin or \
-                                point1.endLine != point2.line_end or \
-                                point1.endCol != point2.col_end or \
-                                point1.msg != point2.msg or \
-                                point1.fileId != point2.file_id:
+                        point1.startCol != point2.col_begin or \
+                        point1.endLine != point2.line_end or \
+                        point1.endCol != point2.col_end or \
+                        point1.msg != point2.msg or \
+                        point1.fileId != point2.file_id:
                     return False
 
                 if point2.next is None:

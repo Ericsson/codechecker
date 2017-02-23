@@ -88,7 +88,7 @@ class TestReportFilter(unittest.TestCase):
         runid = self._runid
 
         severity_test_data = self._testproject_data[self._clang_to_test][
-                'filter_severity_levels']
+            'filter_severity_levels']
 
         for level in severity_test_data:
             for severity_level, test_result_count in level.items():
@@ -112,7 +112,7 @@ class TestReportFilter(unittest.TestCase):
         runid = self._runid
 
         severity_test_data = self._testproject_data[self._clang_to_test][
-                'filter_checker_id']
+            'filter_checker_id']
 
         for level in severity_test_data:
             for checker_id_filter, test_result_count in level.items():
@@ -140,7 +140,7 @@ class TestReportFilter(unittest.TestCase):
         runid = self._runid
 
         severity_test_data = self._testproject_data[self._clang_to_test][
-                'filter_filepath']
+            'filter_filepath']
 
         for level in severity_test_data:
             for filepath_filter, test_result_count in level.items():
