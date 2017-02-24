@@ -67,7 +67,7 @@ class TestUpdate(unittest.TestCase):
             sys.exit(ret)
 
         initial_codechecker_cfg = env.import_test_cfg(
-                self._test_workspace)['codechecker_cfg']
+            self._test_workspace)['codechecker_cfg']
 
         # Disable some checkers for the analysis.
         deadcode = 'deadcode.DeadStores'

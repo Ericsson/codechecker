@@ -9,6 +9,7 @@ import csv
 import getpass
 import json
 import sys
+from datetime import datetime
 
 from argparse import ArgumentDefaultsHelpFormatter as ADHFormatter
 
@@ -214,6 +215,14 @@ def check_run_names(client, check_names):
     return run_info
 
 
+def valid_time(t):
+    try:
+        minute, hour, day, month, year = map(int, t.split(':'))
+        return datetime(year, month, day, hour, minute)
+    except ValueError as ex:
+        raise argparse.ArgumentTypeError(ex)
+
+
 def add_filter_conditions(report_filter, filter_str):
     """This function fills some attributes of the given report filter based on
     the filter string which is provided in the command line. The filter string
@@ -369,16 +378,46 @@ def handle_list_result_types(args):
 def handle_remove_run_results(args):
     client = setupClient(args.host, args.port, '/')
 
-    run_info = check_run_names(client, args.name)
+    def is_later(d1, d2):
+        dateformat = '%Y-%m-%d %H:%M:%S.%f'
 
-    # FIXME LIST comprehension
-    run_ids_to_delete = []
-    for name, info in run_info.items():
-        run_id, run_date = info
-        if name in args.name:
-            run_ids_to_delete.append(run_id)
+        if not isinstance(d1, datetime):
+            d1 = datetime.strptime(d1, dateformat)
+        if not isinstance(d2, datetime):
+            d2 = datetime.strptime(d2, dateformat)
 
-    client.removeRunResults(run_ids_to_delete)
+        return d1 > d2
+
+    run_info = get_run_ids(client)
+
+    if args.name:
+        check_run_names(client, args.name)
+
+        def condition(name, runid, date):
+            return name in args.name
+    elif args.all_after_run and args.all_after_run in run_info:
+        run_date = run_info[args.all_after_run][1]
+
+        def condition(name, runid, date):
+            return is_later(date, run_date)
+    elif args.all_before_run and args.all_before_run in run_info:
+        run_date = run_info[args.all_before_run][1]
+
+        def condition(name, runid, date):
+            return is_later(run_date, date)
+    elif args.all_after_time:
+        def condition(name, runid, date):
+            return is_later(date, args.all_after_time)
+    elif args.all_before_time:
+        def condition(name, runid, date):
+            return is_later(args.all_before_time, date)
+    else:
+        def condition(name, runid, date):
+            return False
+
+    client.removeRunResults([runid for (name, (runid, date))
+                            in run_info.items()
+                            if condition(name, runid, date)])
 
     print('Done.')
 
@@ -555,9 +594,23 @@ def register_client_command_line(argument_parser):
                             default='localhost',
                             help='Server host.')
     del_parser.add_argument('-p', '--port', type=str, dest="port",
-                            default="8001", help='HTTP Server port.')
-    del_parser.add_argument('-n', '--name', nargs='+', type=str, dest="name",
-                            required=True, help='Run name to delete.')
+                            default=8001,
+                            required=True, help='HTTP Server port.')
+    group = del_parser.add_mutually_exclusive_group(required=True)
+    group.add_argument('-n', '--name', nargs='+', type=str, dest="name",
+                       help='Server port.')
+    group.add_argument('--all-after-run', type=str, dest='all_after_run',
+                       help='Delete all runs checked after this run.')
+    group.add_argument('--all-before-run', type=str, dest='all_before_run',
+                       help='Delete all runs checked before this run.')
+    group.add_argument('--all-after-time', type=valid_time,
+                       dest='all_after_time',
+                       help='Delete all runs checked after this timestamp. '
+                       'The format should be min:hour:day:month:year.')
+    group.add_argument('--all-before-time', type=valid_time,
+                       dest='all_before_time',
+                       help='Delete all runs checked before this timestamp. '
+                       'The format should be min:hour:day:month:year.')
     logger.add_verbose_arguments(del_parser)
     del_parser.set_defaults(func=handle_remove_run_results)
 
