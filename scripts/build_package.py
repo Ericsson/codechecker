@@ -255,7 +255,7 @@ def handle_external_repository(dep, clean, env, verbose):
                            '--get', source,
                            '-o', os.path.join(tmp,
                                               fformat + '.css')]
-                if run_cmd(command):
+                if run_cmd(command, env=env):
                     LOG.warning("Failed to download font CSS for {0} "
                                 "(format {1})".format(source, fformat))
                     continue
@@ -288,7 +288,7 @@ def handle_external_repository(dep, clean, env, verbose):
                                '--get', src.group(1),
                                '-o', os.path.join(tmp,
                                                   font + '.' + font_type)]
-                    if run_cmd(command):
+                    if run_cmd(command, env=env):
                         LOG.warning("Couldn't download font FILE for "
                                     "{0}.{1}".format(font, font_type))
                         continue
