@@ -40,8 +40,6 @@ SESSION_COOKIE_NAME = "__ccPrivilegedAccessToken"
 session_lifetimes = {}
 
 
-# ------------------------------
-# ----------- SERVER -----------
 class _Session():
     """A session for an authenticated, privileged client connection."""
 
@@ -327,8 +325,6 @@ class SessionManager:
         self.__logins_since_prune = 0
 
 
-# ------------------------------
-# ----------- CLIENT -----------
 class SessionManager_Client:
     def __init__(self):
         LOG.debug('Loading session config')

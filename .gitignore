@@ -11,13 +11,8 @@ Makefile.local
 external-source-deps/build-logger/build/
 
 # external source
-external-source-deps/codemirror/
-external-source-deps/dojotoolkit/
-external-source-deps/highlightjs/
-external-source-deps/jsplumb/
-external-source-deps/marked/
-external-source-deps/thrift/
-external-source-deps/fonts/
+vendor/*
+!vendor/build-logger
 
 # doxygen generated files
 gen-docs/
