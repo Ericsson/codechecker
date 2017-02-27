@@ -19,37 +19,58 @@ NOSECFG = --config .noserc
 
 test: pep8 test_unit test_functional
 
+test_novenv: pep8 test_unit_novenv test_functional_novenv
+
 pep8:
 	pep8 codechecker codechecker_lib db_model scripts storage_server viewer_server viewer_clients tests
 
-run_test: venv_dev package
-	. venv_dev/bin/activate && \
+
+UNIT_TEST_CMD = nosetests $(NOSECFG) tests/unit
+FUNCTIONAL_TEST_CMD = $(REPO_ROOT) $(CLANG_VERSION) $(TEST_PROJECT) \
+		nosetests $(NOSECFG) tests/functional
+
+run_test: package venv_dev
+	$(ACTIVATE_DEV_VENV) && \
 		$(REPO_ROOT) $(CLANG_VERSION) $(TEST_PROJECT) \
 		nosetests $(NOSECFG) ${TEST}
 
 test_unit: venv_dev
-	. venv_dev/bin/activate && nosetests $(NOSECFG) tests/unit
+	$(ACTIVATE_DEV_VENV) && $(UNIT_TEST_CMD)
+
+test_unit_novenv:
+	$(UNIT_TEST_CMD)
 
 test_functional: test_sqlite test_psql
+test_functional_novenv: test_sqlite_novenv test_psql_novenv
 
 test_sqlite: package venv_dev
-	. venv_dev/bin/activate && \
-		$(REPO_ROOT) $(CLANG_VERSION) $(TEST_PROJECT) \
-		nosetests $(NOSECFG) tests/functional
+		$(ACTIVATE_DEV_VENV) && $(FUNCTIONAL_TEST_CMD)
+
+test_sqlite_novenv: package
+		$(FUNCTIONAL_TEST_CMD)
 
 test_psql: test_psql_psycopg2 test_psql_pg8000
+test_psql: test_psql_psycopg2_novenv test_psql_pg8000_novenv
 
 test_psql_psycopg2: package venv_dev
-	. venv_dev/bin/activate && \
-		$(REPO_ROOT) $(CLANG_VERSION) $(TEST_PROJECT) \
+	$(ACTIVATE_DEV_VENV) && \
 		$(PSQL) $(DBUNAME) $(DBPORT) $(PSYCOPG2) \
-		nosetests $(NOSECFG) tests/functional
+		$(FUNCTIONAL_TEST_CMD)
+
+test_psql_psycopg2_novenv: package
+		$(PSQL) $(DBUNAME) $(DBPORT) $(PSYCOPG2) \
+		$(FUNCTIONAL_TEST_CMD)
 
 test_psql_pg8000: package venv_dev
-	. venv_dev/bin/activate && \
-		$(REPO_ROOT) $(CLANG_VERSION) $(TEST_PROJECT) \
+	$(ACTIVATE_DEV_VENV) && \
 		$(PSQL) $(DBUNAME) $(DBPORT) $(PG800) \
-		nosetests $(NOSECFG) tests/functional
+		$(PSQL) $(DBUNAME) $(DBPORT) $(PSYCOPG2) \
+		$(FUNCTIONAL_TEST_CMD)
+
+test_psql_pg8000_novenv: package
+		$(PSQL) $(DBUNAME) $(DBPORT) $(PG800) \
+		$(PSQL) $(DBUNAME) $(DBPORT) $(PSYCOPG2) \
+		$(FUNCTIONAL_TEST_CMD)
 
 test_clean:
 	rm -rf build/workspace

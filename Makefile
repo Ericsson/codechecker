@@ -6,6 +6,9 @@ BUILD_DIR = $(CURRENT_DIR)/build
 # Root of the repository.
 ROOT = $(CURRENT_DIR)
 
+ACTIVATE_RUNTIME_VENV ?= . venv/bin/activate
+ACTIVATE_DEV_VENV ?= . venv_dev/bin/activate
+
 default: package
 
 # Test running related targets.
@@ -44,7 +47,7 @@ build_dir:
 venv:
 	# virtual environment to run the package
 	virtualenv -p python2 venv && \
-		. venv/bin/activate && pip install -r .ci/basic_python_requirements
+		$(ACTIVATE_RUNTIME_VENV) && pip install -r .ci/basic_python_requirements
 
 clean_venv:
 	rm -rf venv
@@ -52,7 +55,7 @@ clean_venv:
 venv_dev:
 	# virtual environment for development
 	virtualenv -p python2 venv_dev && \
-		. venv_dev/bin/activate && pip install -r .ci/python_requirements && \
+		$(ACTIVATE_DEV_VENV) && pip install -r .ci/python_requirements && \
 		pip install -r tests/requirements.txt
 
 clean_venv_dev:
