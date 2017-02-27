@@ -43,7 +43,7 @@ build_dir:
 
 venv:
 	# virtual environment to run the package
-	virtualenv -p /usr/bin/python2.7 venv && \
+	virtualenv -p python2 venv && \
 		. venv/bin/activate && pip install -r .ci/basic_python_requirements
 
 clean_venv:
@@ -51,7 +51,7 @@ clean_venv:
 
 venv_dev:
 	# virtual environment for development
-	virtualenv -p /usr/bin/python2.7 venv_dev && \
+	virtualenv -p python2 venv_dev && \
 		. venv_dev/bin/activate && pip install -r .ci/python_requirements && \
 		pip install -r tests/requirements.txt
 
