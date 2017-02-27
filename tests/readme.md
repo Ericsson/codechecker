@@ -6,12 +6,7 @@
 |`make test_functional` | functional tests (SQLite and PostgreSQL) |  
 |`make test_sqlite` | functional test (SQLite) |  
 |`make test_psql` | functional tests (PostgreSQL)
-
-### Run only a specific test
-SQLite is used
-~~~~~~{.sh}
-make TEST="tests/functional/cmdline" run_test
-~~~~~~
+|`make TEST="tests/functional/cmdline" run_test` | run only a specific test (SQLite) |
 
 ### Clean test workspace
 ~~~~~~{.sh}
