@@ -219,8 +219,10 @@ def check_run_names(client, check_names):
 
 def valid_time(t):
     try:
-        minute, hour, day, month, year = map(int, t.split(':'))
-        return datetime(year, month, day, hour, minute)
+        parts = map(int, t.split(':'))
+        parts = parts + [0] * (6 - len(parts))
+        year, month, day, hour, minute, second = parts
+        return datetime(year, month, day, hour, minute, second)
     except ValueError as ex:
         raise argparse.ArgumentTypeError(ex)
 
@@ -593,11 +595,15 @@ def register_client_command_line(argument_parser):
     group.add_argument('--all-after-time', type=valid_time,
                        dest='all_after_time',
                        help='Delete all runs checked after this timestamp. '
-                       'The format should be min:hour:day:month:year.')
+                       'The format should be year:month:day:hour:min:sec. '
+                       'The last three parts can be omitted from the right '
+                       'in which case the default values are 0.')
     group.add_argument('--all-before-time', type=valid_time,
                        dest='all_before_time',
                        help='Delete all runs checked before this timestamp. '
-                       'The format should be min:hour:day:month:year.')
+                       'The format should be year:month:day:hour:min:sec. '
+                       'The last three parts can be omitted from the right '
+                       'in which case the default values are 0.')
     logger.add_verbose_arguments(del_parser)
     del_parser.set_defaults(func=handle_remove_run_results)
 
