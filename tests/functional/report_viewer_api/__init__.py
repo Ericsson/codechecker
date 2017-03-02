@@ -88,9 +88,9 @@ def setup_package():
         sys.exit(1)
     print("Analyzing the test project was successful.")
 
-    codechecker.wait_for_postgres_shutdown(TEST_WORKSPACE)
     if pg_db_config:
         print("Waiting PostgreSQL to stop.")
+        codechecker.wait_for_postgres_shutdown(TEST_WORKSPACE)
 
     codechecker_cfg['run_names'] = [test_project_name]
 
