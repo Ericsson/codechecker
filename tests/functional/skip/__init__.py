@@ -66,7 +66,6 @@ def setup_package():
         'suppress_file': suppress_file,
         'skip_file': skip_list_file,
         'check_env': test_env,
-        'use_postgresql': False,
         'workspace': TEST_WORKSPACE,
         'pg_db_config': pg_db_config,
         'checkers': []
