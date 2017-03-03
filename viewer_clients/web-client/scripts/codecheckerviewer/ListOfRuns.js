@@ -6,16 +6,20 @@
 
 define([
   'dojo/_base/declare',
+  'dojo/dom',
   'dojo/dom-construct',
+  'dojo/dom-style',
   'dojo/data/ItemFileWriteStore',
   'dojo/topic',
+  'dojo/when',
   'dijit/Dialog',
   'dijit/form/Button',
   'dijit/layout/BorderContainer',
   'dijit/layout/ContentPane',
+  'dijit/Tooltip',
   'dojox/grid/DataGrid'],
-function (declare, domConstruct, ItemFileWriteStore, topic, Dialog, Button,
-  BorderContainer, ContentPane, DataGrid) {
+function (declare, dom, domConstruct, style, ItemFileWriteStore, topic, when,
+  Dialog, Button, BorderContainer, ContentPane, Tooltip, DataGrid) {
 
   function prettifyDuration(seconds) {
     var prettyDuration = "--------";
@@ -34,6 +38,28 @@ function (declare, domConstruct, ItemFileWriteStore, topic, Dialog, Button,
     }
 
     return prettyDuration;
+  }
+
+  function generateSeverityDispersion(runId) {
+    function filterForSeverity(severity) {
+      var filter = new CC_OBJECTS.ReportFilter();
+      filter.severity = severity;
+      return [filter];
+    }
+
+    var severities = [];
+
+    for (var severity in Severity) {
+      var num = CC_SERVICE.getRunResultCount(
+        runId, filterForSeverity(Severity[severity]));
+
+      severities.push(
+        '<span class="severity' + severity + '">' +
+        severity.toLowerCase() + ': ' + num +
+        '</span>');
+    }
+
+    return severities.join(', ');
   }
 
   var ListOfRunsGrid = declare(DataGrid, {
@@ -156,11 +182,25 @@ function (declare, domConstruct, ItemFileWriteStore, topic, Dialog, Button,
             runid : item.runId,
             name : '<span class="link">' + item.name + '</span>',
             date : currItemDate[0] + ' ' + currItemDate[1],
-            numberofbugs : item.resultCount,
+            numberofbugs : item.resultCount
+              + ' <span id="detail' + item.runId
+              + '" class="detail">(Details)</span>',
             duration : prettifyDuration(item.duration),
             del : false,
             runData : item,
             checkcmd : '<span class="link">Show</span>'
+          });
+
+          when(generateSeverityDispersion(item.runId), function (details) {
+            setTimeout(function () {
+              var elem = dom.byId('detail' + item.runId);
+              style.set(elem, 'display', 'inline');
+
+              new Tooltip({
+                connectId : 'detail' + item.runId,
+                label : details
+              });
+            }, 500);
           });
         });
       });

@@ -78,6 +78,21 @@ def construct_report_filter(report_filters):
 
     return filter_expression
 
+def hash_report_filters(report_filters):
+    return hash(tuple(map(
+        lambda rf: (rf.checkerId, rf.severity), report_filters)))
+
+def cache_needed(report_filters):
+    return report_filters and all(map(
+        lambda rf: \
+            not rf.checkerMsg and (not rf.filepath or \
+            set(rf.filepath) == set('*')),
+        report_filters))
+
+_run_result_count_cache = {}
+_run_result_type_cache = {}
+_diff_result_type_cache = {}
+
 
 class ThriftRequestHandler():
     """
@@ -307,6 +322,12 @@ class ThriftRequestHandler():
     @timeit
     def getRunResultCount(self, run_id, report_filters):
 
+        need = cache_needed(report_filters)
+        if need:
+            key = (run_id, hash_report_filters(report_filters))
+            if key in _run_result_count_cache:
+                return _run_result_count_cache[key]
+
         filter_expression = construct_report_filter(report_filters)
 
         session = self.__session
@@ -326,6 +347,9 @@ class ThriftRequestHandler():
 
             if reportCount is None:
                 reportCount = 0
+
+            if need:
+                _run_result_count_cache[key] = reportCount
 
             return reportCount
 
@@ -825,6 +849,12 @@ class ThriftRequestHandler():
     @timeit
     def getRunResultTypes(self, run_id, report_filters):
 
+        need = cache_needed(report_filters)
+        if need:
+            key = (run_id, hash_report_filters(report_filters))
+            if key in _run_result_type_cache:
+                return _run_result_type_cache[key]
+
         session = self.__session
         try:
 
@@ -860,6 +890,9 @@ class ThriftRequestHandler():
 
             # Result count ascending.
             results = sorted(results, key=lambda rep: rep.count, reverse=True)
+
+            if need:
+                _run_result_type_cache[key] = results
 
             return results
 
@@ -1252,6 +1285,13 @@ class ThriftRequestHandler():
                            diff_type,
                            report_filters):
 
+        need = cache_needed(report_filters)
+        if need:
+            key = (base_run_id, new_run_id, diff_type,
+                hash_report_filters(report_filters))
+            if key in _diff_result_type_cache:
+                return _diff_result_type_cache[key]
+
         session = self.__session
         base_line_hashes, new_check_hashes = \
             self.__get_hashes_for_diff(session,
@@ -1282,7 +1322,12 @@ class ThriftRequestHandler():
             raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
                                               msg)
 
-        return self.__queryDiffResultTypes(session,
-                                           diff_hashes,
-                                           run_id,
-                                           report_filters)
+        result = self.__queryDiffResultTypes(session,
+                                             diff_hashes,
+                                             run_id,
+                                             report_filters)
+
+        if need:
+            _diff_result_type_cache[key] = result
+
+        return result
