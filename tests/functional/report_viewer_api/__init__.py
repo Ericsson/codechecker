@@ -68,7 +68,6 @@ def setup_package():
         'suppress_file': suppress_file,
         'skip_list_file': skip_list_file,
         'check_env': test_env,
-        'use_postgresql': False,
         'workspace': TEST_WORKSPACE,
         'pg_db_config': pg_db_config,
         'checkers': []
@@ -89,9 +88,9 @@ def setup_package():
         sys.exit(1)
     print("Analyzing the test project was successful.")
 
-    codechecker.wait_for_postgres_shutdown(TEST_WORKSPACE)
     if pg_db_config:
         print("Waiting PostgreSQL to stop.")
+        codechecker.wait_for_postgres_shutdown(TEST_WORKSPACE)
 
     codechecker_cfg['run_names'] = [test_project_name]
 

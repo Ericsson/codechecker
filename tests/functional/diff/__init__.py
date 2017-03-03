@@ -67,7 +67,6 @@ def setup_package():
         'suppress_file': suppress_file,
         'skip_list_file': skip_list_file,
         'check_env': test_env,
-        'use_postgresql': False,
         'workspace': TEST_WORKSPACE,
         'pg_db_config': pg_db_config,
         'checkers': []
@@ -90,8 +89,9 @@ def setup_package():
         sys.exit(1)
     print("First analysis of the test project was successful.")
 
-    codechecker.wait_for_postgres_shutdown(TEST_WORKSPACE)
-    print("Waiting for PostgreSQL to stop.")
+    if pg_db_config:
+        print("Waiting for PotgreSQL to stop.")
+        codechecker.wait_for_postgres_shutdown(TEST_WORKSPACE)
 
     ret = project.clean(test_project_path, test_env)
     if ret:
@@ -106,8 +106,9 @@ def setup_package():
         sys.exit(1)
     print("Second analysis of the test project was successful.")
 
-    codechecker.wait_for_postgres_shutdown(TEST_WORKSPACE)
-    print("Waiting for PostgreSQL to stop.")
+    if pg_db_config:
+        print("Waiting for PotgreSQL to stop.")
+        codechecker.wait_for_postgres_shutdown(TEST_WORKSPACE)
 
     # Order of the test run names matter at comparison!
     codechecker_cfg['run_names'] = [test_project_name_base,
