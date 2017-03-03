@@ -61,13 +61,16 @@ class ClangSA(analyzer_base.SourceAnalyzer):
 
             try:
                 command = shlex.split(' '.join(command))
-                result = subprocess.check_output(command,
-                                                 env=env)
+                result = subprocess.check_output(command, env=env)
+                self.__parse_checkers(result)
             except subprocess.CalledProcessError as cperr:
                 LOG.error(cperr)
-                return {}
-
-            self.__parse_checkers(result)
+            except OSError as oerr:
+                LOG.error("Failed to get checkers list.")
+                LOG.error(command)
+                LOG.error(oerr.strerror)
+                LOG.error("Please check your " + analyzer_binary +
+                          " installation.")
 
         return self.checkers
 
