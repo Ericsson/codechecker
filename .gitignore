@@ -7,12 +7,12 @@ venv
 venv_dev
 Makefile.local
 
-# build-logger build dir
-external-source-deps/build-logger/build/
-
-# external source
+# external sources
 vendor/*
 !vendor/build-logger
+
+# build-logger build dir
+vendor/build-logger/build/
 
 # doxygen generated files
 gen-docs/
