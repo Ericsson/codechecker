@@ -79,7 +79,7 @@ def check(check_data):
     skiplist handler is None if no skip file was configured.
     """
     args, action, context, analyzer_config_map, skp_handler, \
-        report_output_dir, use_db = check_data
+        report_output_dir, use_db, plist_export_path = check_data
 
     skipped = False
     try:
@@ -111,7 +111,8 @@ def check(check_data):
                                                          context.severity_map,
                                                          skp_handler,
                                                          progress_lock,
-                                                         use_db)
+                                                         use_db,
+                                                         plist_export_path)
 
             # Create a source analyzer.
             source_analyzer = \
@@ -161,7 +162,7 @@ def check(check_data):
 
 
 def start_workers(args, actions, context, analyzer_config_map, skp_handler,
-                  use_db=True):
+                  use_db=True, export_plist_path=None):
     """
     Start the workers in the process pool
     for every buildaction there is worker which makes the analysis.
@@ -207,7 +208,8 @@ def start_workers(args, actions, context, analyzer_config_map, skp_handler,
                              analyzer_config_map,
                              skp_handler,
                              report_output,
-                             use_db) for build_action in actions]
+                             use_db,
+                             export_plist_path) for build_action in actions]
 
         pool.map_async(check,
                        analyzed_actions,

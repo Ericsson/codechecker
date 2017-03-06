@@ -21,6 +21,7 @@ from codechecker_lib.analyzers import config_handler_clang_tidy
 from codechecker_lib.analyzers import config_handler_clangsa
 from codechecker_lib.analyzers import result_handler_clang_tidy
 from codechecker_lib.analyzers import result_handler_plist_to_db
+from codechecker_lib.analyzers import result_handler_plist_to_file
 from codechecker_lib.analyzers import result_handler_plist_to_stdout
 
 LOG = LoggerFactory.get_new_logger('ANALYZER TYPES')
@@ -313,7 +314,8 @@ def construct_result_handler(args,
                              severity_map,
                              skiplist_handler,
                              lock,
-                             store_to_db=False):
+                             store_to_db=False,
+                             export_plist_path=None):
     """
     Construct a result handler.
     """
@@ -334,7 +336,7 @@ def construct_result_handler(args,
                 report_output,
                 run_id)
 
-    else:
+    elif not store_to_db and not export_plist_path:
         if buildaction.analyzer_type == CLANG_SA:
             res_handler = result_handler_plist_to_stdout.PlistToStdout(
                 buildaction,
@@ -347,6 +349,19 @@ def construct_result_handler(args,
                 buildaction,
                 report_output,
                 lock)
+    elif export_plist_path:
+        if buildaction.analyzer_type == CLANG_SA:
+            res_handler = result_handler_plist_to_file.PlistToFile(
+                buildaction,
+                report_output,
+                export_plist_path)
+            res_handler.print_steps = args.print_steps
+
+        elif buildaction.analyzer_type == CLANG_TIDY:
+            res_handler = result_handler_clang_tidy.ClangTidyPlistToFile(
+                buildaction,
+                report_output,
+                export_plist_path)
 
     res_handler.severity_map = severity_map
     res_handler.skiplist_handler = skiplist_handler
