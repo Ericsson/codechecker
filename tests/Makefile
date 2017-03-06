@@ -22,7 +22,7 @@ test: pep8 test_unit test_functional
 test_novenv: pep8 test_unit_novenv test_functional_novenv
 
 pep8:
-	pep8 codechecker codechecker_lib db_model scripts storage_server viewer_server viewer_clients tests
+	pep8 bin libcodechecker scripts tests
 
 
 UNIT_TEST_CMD = nosetests $(NOSECFG) tests/unit

@@ -163,6 +163,8 @@ def setupClient(host, port, uri):
                     print("Authenticated using pre-configured credentials...")
                 except shared.ttypes.RequestFailed:
                     print_err = True
+            else:
+                print_err = True
         else:
             print_err = True
 

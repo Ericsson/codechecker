@@ -206,7 +206,6 @@ font_user_agents = {
            'Mobile Safari/534.30'}
 
 
-# -------------------------------------------------------------------
 def handle_external_repository(dep, clean, env, verbose):
     """ Download external repository. """
     repository = dep['repository']
@@ -772,4 +771,3 @@ if __name__ == "__main__":
     build_package_config['ld_logger_path'] = default_logger_dir
 
     build_package(repository_root, build_package_config)
-

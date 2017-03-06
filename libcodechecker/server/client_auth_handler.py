@@ -24,18 +24,18 @@ LOG = LoggerFactory.get_new_logger('AUTH HANDLER')
 
 
 def conv(text):
-    '''
+    """
     Convert * to % got from clients for the database queries.
-    '''
+    """
     if text is None:
         return '%'
     return text.replace('*', '%')
 
 
 class ThriftAuthHandler():
-    '''
+    """
     Handle Thrift authentication requests.
-    '''
+    """
 
     def __init__(self, manager, client_host, session_token=None):
         self.__manager = manager

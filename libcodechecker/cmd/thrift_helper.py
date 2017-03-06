@@ -40,7 +40,8 @@ class ThriftClientHelper():
         funcName = function.__name__
 
         def wrapper(self, *args, **kwargs):
-            # print('['+host+':'+str(port)+'] >>>>> ['+funcName+']')
+            # print('['+self.__host+':'+str(self.__port)+'] '
+            #       '>>>>> ['+funcName+']')
             # before = datetime.datetime.now()
             self.transport.open()
             func = getattr(self.client, funcName)
