@@ -6,6 +6,7 @@
 """
 """
 
+from collections import defaultdict
 import multiprocessing
 import ntpath
 import os
@@ -14,11 +15,10 @@ import shutil
 import signal
 import sys
 import traceback
-from collections import defaultdict
 
-from codechecker_lib import analyzer_env
-from codechecker_lib.logger import LoggerFactory
-from codechecker_lib.analyzers import analyzer_types
+from libcodechecker.analyze import analyzer_env
+from libcodechecker.analyze.analyzers import analyzer_types
+from libcodechecker.logger import LoggerFactory
 
 LOG = LoggerFactory.get_new_logger('ANALYSIS MANAGER')
 

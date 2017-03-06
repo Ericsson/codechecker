@@ -8,10 +8,11 @@ import json
 import os
 import sys
 
-from codechecker_lib import context_base
-from codechecker_lib import db_version
-from codechecker_lib import logger
-from codechecker_lib.analyzers import analyzer_types
+from libcodechecker import context_base
+from libcodechecker import db_version
+from libcodechecker import logger
+# TODO: Refers subpackage library
+from libcodechecker.analyze.analyzers import analyzer_types
 
 LOG = logger.LoggerFactory.get_new_logger('CONTEXT')
 

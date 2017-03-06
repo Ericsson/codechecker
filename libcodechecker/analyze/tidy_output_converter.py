@@ -13,7 +13,7 @@ import os
 import plistlib
 import re
 
-from codechecker_lib.logger import LoggerFactory
+from libcodechecker.logger import LoggerFactory
 
 LOG = LoggerFactory.get_new_logger('TIDY_OUTPUT_HANDLER')
 

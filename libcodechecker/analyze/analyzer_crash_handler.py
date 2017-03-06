@@ -10,7 +10,7 @@ import signal
 import subprocess
 import tempfile
 
-from codechecker_lib.logger import LoggerFactory
+from libcodechecker.logger import LoggerFactory
 
 
 class AnalyzerCrashHandler(object):

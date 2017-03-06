@@ -6,8 +6,8 @@
 
 import re
 
-from codechecker_lib.logger import LoggerFactory
-from codechecker_lib.analyzers import config_handler
+from libcodechecker.analyze.analyzers import config_handler
+from libcodechecker.logger import LoggerFactory
 
 LOG = LoggerFactory.get_new_logger('CLANGSA CONFIG HANDLER')
 

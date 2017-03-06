@@ -11,8 +11,8 @@
 import plistlib
 from xml.parsers.expat import ExpatError
 
-from codechecker_lib.logger import LoggerFactory
-from codechecker_lib import plist_helper
+from libcodechecker.analyze import plist_helper
+from libcodechecker.logger import LoggerFactory
 
 LOG = LoggerFactory.get_new_logger('PLIST_PARSER')
 

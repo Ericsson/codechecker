@@ -17,23 +17,22 @@ import socket
 import sys
 import tempfile
 
-from codechecker_lib import analyzer
-from codechecker_lib import analyzer_env
-from codechecker_lib import build_action
-from codechecker_lib import build_manager
-from codechecker_lib import client
-from codechecker_lib import debug_reporter
-from codechecker_lib import generic_package_context
-from codechecker_lib import generic_package_suppress_handler
-from codechecker_lib import host_check
-from codechecker_lib import instance_manager
-from codechecker_lib import log_parser
-from codechecker_lib import session_manager
-from codechecker_lib import util
-from codechecker_lib.logger import LoggerFactory
-from codechecker_lib.analyzers import analyzer_types
-from codechecker_lib.database_handler import SQLServer
-from viewer_server import client_db_access_server
+from libcodechecker import client
+from libcodechecker import debug_reporter
+from libcodechecker import generic_package_context
+from libcodechecker import generic_package_suppress_handler
+from libcodechecker import host_check
+from libcodechecker import session_manager
+from libcodechecker import util
+from libcodechecker.analyze import analyzer
+from libcodechecker.analyze import analyzer_env
+from libcodechecker.analyze import log_parser
+from libcodechecker.analyze.analyzers import analyzer_types
+from libcodechecker.database_handler import SQLServer
+from libcodechecker.log import build_action
+from libcodechecker.log import build_manager
+from libcodechecker.logger import LoggerFactory
+from libcodechecker.server import client_db_access_server
 
 LOG = LoggerFactory.get_new_logger('ARG_HANDLER')
 

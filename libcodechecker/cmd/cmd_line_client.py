@@ -4,26 +4,26 @@
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
 
+from argparse import ArgumentDefaultsHelpFormatter as ADHFormatter
+from datetime import datetime
 import argparse
 import csv
 import getpass
 import json
 import sys
-from datetime import datetime
 
-from argparse import ArgumentDefaultsHelpFormatter as ADHFormatter
+from thrift.Thrift import TApplicationException
 
 import codeCheckerDBAccess
 import shared
-from . import thrift_helper
-from . import authentication_helper
-
-from thrift.Thrift import TApplicationException
 from Authentication import ttypes as AuthTypes
 
-from codechecker_lib import logger
-from codechecker_lib import session_manager
-from codechecker_lib.util import print_table
+from libcodechecker import session_manager
+from libcodechecker import logger
+from libcodechecker.util import print_table
+
+from . import thrift_helper
+from . import authentication_helper
 
 SUPPORTED_VERSION = '5.0'
 

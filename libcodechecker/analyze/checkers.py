@@ -4,9 +4,9 @@
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
 
-from codechecker import globalConfig
-from codechecker import util
-from codechecker.logger import LoggerFactory
+from libcodechecker import globalConfig
+from libcodechecker import util
+from libcodechecker.logger import LoggerFactory
 
 
 def get_env_checkers_list(env_name):

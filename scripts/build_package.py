@@ -495,7 +495,7 @@ def build_package(repository_root, build_package_config, env=None):
     generated_py_files = os.path.join(build_dir, 'gen-py')
     generated_js_files = os.path.join(build_dir, 'gen-js')
 
-    target = os.path.join(package_root, package_layout['codechecker_gen'])
+    target = os.path.join(package_root, package_layout['gencodechecker'])
     copy_tree(generated_py_files, target)
 
     target = os.path.join(package_root, package_layout['web_client'])
@@ -503,7 +503,7 @@ def build_package(repository_root, build_package_config, env=None):
 
     # CodeChecker library files.
     source = os.path.join(repository_root, 'libcodechecker')
-    target = os.path.join(package_root, package_layout['codechecker_lib'])
+    target = os.path.join(package_root, package_layout['libcodechecker'])
     copy_tree(source, target)
 
     # Documentation files.
@@ -651,7 +651,7 @@ def build_package(repository_root, build_package_config, env=None):
     copy_tree(source, target)
 
     # Copy font files.
-    for _, dep in external_dependencies.iteritems():
+    for _, dep in vendor_projects.iteritems():
         if 'repository' not in dep:
             continue
         if dep['repository']['type'] != "font_import":

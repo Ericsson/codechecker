@@ -4,11 +4,11 @@
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
 
+from abc import ABCMeta, abstractmethod
 import collections
 import os
-from abc import ABCMeta, abstractmethod
 
-from codechecker_lib.logger import LoggerFactory
+from libcodechecker.logger import LoggerFactory
 
 LOG = LoggerFactory.get_new_logger('CONFIG HANDLER')
 

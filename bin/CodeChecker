@@ -34,13 +34,13 @@ def run_codechecker(checker_env):
 
     python = os.path.join('python')
     common_lib = os.path.join(package_root,
-                              'cc_lib',
+                              'lib',
                               'python2.7')
 
     gen_lib = os.path.join(package_root,
-                           'cc_lib',
+                           'lib',
                            'python2.7',
-                           'codechecker_gen')
+                           'gencodechecker')
 
     checker_env['PYTHONPATH'] = common_lib + ':' + gen_lib
 

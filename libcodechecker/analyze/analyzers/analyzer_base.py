@@ -4,14 +4,14 @@
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
 
+from abc import ABCMeta, abstractmethod
 import os
 import shlex
 import signal
 import subprocess
 import sys
-from abc import ABCMeta, abstractmethod
 
-from codechecker_lib.logger import LoggerFactory
+from libcodechecker.logger import LoggerFactory
 
 LOG = LoggerFactory.get_new_logger('ANALYZER_BASE')
 

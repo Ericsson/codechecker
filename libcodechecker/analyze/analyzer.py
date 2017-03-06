@@ -14,12 +14,12 @@ import subprocess
 import sys
 import time
 
-from codechecker_lib import analysis_manager
-from codechecker_lib import client
-from codechecker_lib import skiplist_handler
-from codechecker_lib import analyzer_env
-from codechecker_lib.logger import LoggerFactory
-from codechecker_lib.analyzers import analyzer_types
+from libcodechecker import client
+from libcodechecker.logger import LoggerFactory
+from libcodechecker.analyze import analysis_manager
+from libcodechecker.analyze import analyzer_env
+from libcodechecker.analyze import skiplist_handler
+from libcodechecker.analyze.analyzers import analyzer_types
 
 LOG = LoggerFactory.get_new_logger('ANALYZER')
 

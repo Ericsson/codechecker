@@ -7,7 +7,8 @@
 import abc
 import json
 import os
-from codechecker_lib.logger import LoggerFactory
+
+from libcodechecker.logger import LoggerFactory
 
 LOG = LoggerFactory.get_new_logger("CONTEXT BASE")
 

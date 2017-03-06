@@ -20,7 +20,7 @@ import os
 import re
 import shlex
 
-from codechecker_lib.logger import LoggerFactory
+from libcodechecker.logger import LoggerFactory
 
 LOG = LoggerFactory.get_new_logger('OPTION PARSER')
 

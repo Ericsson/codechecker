@@ -9,8 +9,8 @@ import cProfile
 import pstats
 import StringIO
 
-from codechecker_lib import logger
-from codechecker_lib.logger import LoggerFactory
+from libcodechecker import logger
+from libcodechecker.logger import LoggerFactory
 
 LOG = LoggerFactory.get_new_logger('PROFILER')
 

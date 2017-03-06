@@ -10,10 +10,10 @@ import traceback
 import subprocess
 import shlex
 
-
-from codechecker_lib import build_action
-from codechecker_lib import option_parser
-from codechecker_lib.logger import LoggerFactory
+# TODO: This is a cross-subpackage import!
+from libcodechecker.log import build_action
+from libcodechecker.log import option_parser
+from libcodechecker.logger import LoggerFactory
 
 LOG = LoggerFactory.get_new_logger('LOG PARSER')
 

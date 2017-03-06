@@ -14,22 +14,21 @@ import os
 import socket
 import sys
 
-import shared
 import sqlalchemy
-from codechecker_gen.DBThriftAPI import CheckerReport
-from codechecker_gen.DBThriftAPI.ttypes import *
+
 from thrift.protocol import TBinaryProtocol
 from thrift.server import TServer
 from thrift.transport import TSocket
 from thrift.transport import TTransport
 
-from codechecker_lib import database_handler
-from codechecker_lib import decorators
-from codechecker_lib import logger
-from codechecker_lib.logger import LoggerFactory
-from db_model.orm_model import *
+from DBThriftAPI import CheckerReport
+from DBThriftAPI.ttypes import *
 
-from codechecker_lib.profiler import timeit
+from libcodechecker import database_handler
+from libcodechecker import decorators
+from libcodechecker.logger import LoggerFactory
+from libcodechecker.orm_model import *
+from libcodechecker.profiler import timeit
 
 LOG = LoggerFactory.get_new_logger('CC SERVER')
 

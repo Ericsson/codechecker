@@ -13,19 +13,17 @@ import ntpath
 import os
 import zlib
 
+import sqlalchemy
 from sqlalchemy.sql.expression import false
 from sqlalchemy.sql.expression import true
-import sqlalchemy
 
 import shared
-
 from codeCheckerDBAccess import constants
 from codeCheckerDBAccess.ttypes import *
 
-from codechecker_lib.logger import LoggerFactory
-from codechecker_lib.profiler import timeit
-
-from db_model.orm_model import *
+from libcodechecker.logger import LoggerFactory
+from libcodechecker.orm_model import *
+from libcodechecker.profiler import timeit
 
 LOG = LoggerFactory.get_new_logger('ACCESS HANDLER')
 

@@ -8,6 +8,7 @@ Handles the allocation and destruction of privileged sessions associated
 with a particular CodeChecker server.
 """
 
+from datetime import datetime
 import getpass
 import hashlib
 import json
@@ -19,19 +20,17 @@ import time
 import tempfile
 import uuid
 
-from datetime import datetime
-
-from codechecker_lib.logger import LoggerFactory
+from libcodechecker.logger import LoggerFactory
 
 unsupported_methods = []
 
 try:
-    from codechecker_lib.auth import cc_ldap
+    from libcodechecker.auth import cc_ldap
 except ImportError:
     unsupported_methods.append("ldap")
 
 try:
-    from codechecker_lib.auth import cc_pam
+    from libcodechecker.auth import cc_pam
 except ImportError:
     unsupported_methods.append("pam")
 

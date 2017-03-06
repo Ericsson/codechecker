@@ -10,15 +10,12 @@ and browser requests
 import atexit
 import base64
 import errno
+from multiprocessing.pool import ThreadPool
 import os
 import posixpath
 import socket
 import sys
 import urllib
-from multiprocessing.pool import ThreadPool
-
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.orm import scoped_session
 
 try:
     from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
@@ -27,26 +24,28 @@ except ImportError:
     from http.server import HTTPServer, BaseHTTPRequestHandler, \
         SimpleHTTPRequestHandler
 
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import scoped_session
 from thrift import Thrift
 from thrift.Thrift import TException
 from thrift.transport import TTransport
 from thrift.protocol import TJSONProtocol
 
 import shared
-from codeCheckerDBAccess import codeCheckerDBAccess
-from codeCheckerDBAccess import constants
-from codeCheckerDBAccess.ttypes import *
 from Authentication import codeCheckerAuthentication
 from Authentication import constants
 from Authentication.ttypes import *
+from codeCheckerDBAccess import codeCheckerDBAccess
+from codeCheckerDBAccess import constants
+from codeCheckerDBAccess.ttypes import *
 
-from client_db_access_handler import ThriftRequestHandler
+from libcodechecker import database_handler
+from libcodechecker import session_manager
+from libcodechecker.logger import LoggerFactory
+
+from . import instance_manager
 from client_auth_handler import ThriftAuthHandler
-
-from codechecker_lib import database_handler
-from codechecker_lib import instance_manager
-from codechecker_lib import session_manager
-from codechecker_lib.logger import LoggerFactory
+from client_db_access_handler import ThriftRequestHandler
 
 LOG = LoggerFactory.get_new_logger('DB ACCESS')
 

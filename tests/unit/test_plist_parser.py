@@ -9,7 +9,7 @@
 import os
 import unittest
 
-from codechecker_lib import plist_parser
+from libcodechecker.analyze import plist_parser
 
 
 class PlistParserTestCaseNose(unittest.TestCase):

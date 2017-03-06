@@ -10,12 +10,13 @@ import sys
 import sqlalchemy
 from sqlalchemy.sql import and_
 
-from codechecker_lib import analyzer_crash_handler
-from codechecker_lib import analyzer_env
-from codechecker_lib import database_handler
-from codechecker_lib.logger import LoggerFactory
-from db_model.orm_model import BuildAction
-from db_model.orm_model import Run
+from libcodechecker import database_handler
+# TODO: Refers subpackage library
+from libcodechecker.analyze import analyzer_crash_handler
+from libcodechecker.analyze import analyzer_env
+from libcodechecker.logger import LoggerFactory
+from libcodechecker.orm_model import BuildAction
+from libcodechecker.orm_model import Run
 
 LOG = LoggerFactory.get_new_logger('DEBUG_REPORTER')
 

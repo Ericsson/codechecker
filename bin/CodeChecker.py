@@ -17,12 +17,13 @@ import sys
 
 import shared
 
-from cmdline_client import cmd_line_client
-from codechecker_lib import arg_handler
-from codechecker_lib import util
-from codechecker_lib import logger
-from codechecker_lib.logger import LoggerFactory
-from codechecker_lib.analyzers import analyzer_types
+
+from libcodechecker import arg_handler
+from libcodechecker import logger
+from libcodechecker.logger import LoggerFactory
+from libcodechecker import util
+from libcodechecker.cmd import cmd_line_client
+from libcodechecker.analyze.analyzers import analyzer_types
 
 LOG = LoggerFactory.get_new_logger('MAIN')
 

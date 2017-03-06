@@ -4,19 +4,19 @@
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
 
+from abc import ABCMeta
 import ntpath
 import os
 import zlib
-from abc import ABCMeta
 
 import shared
 
-from codechecker_lib import client
-from codechecker_lib import plist_parser
-from codechecker_lib import suppress_handler
-from codechecker_lib import logger
-from codechecker_lib.logger import LoggerFactory
-from codechecker_lib.analyzers.result_handler_base import ResultHandler
+from libcodechecker import client
+from libcodechecker import logger
+from libcodechecker import suppress_handler
+from libcodechecker.analyze import plist_parser
+from libcodechecker.analyze.analyzers.result_handler_base import ResultHandler
+from libcodechecker.logger import LoggerFactory
 
 LOG = LoggerFactory.get_new_logger('PLIST TO DB')
 

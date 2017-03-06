@@ -12,17 +12,19 @@ import os
 import sys
 import time
 
-import shared
-from DBThriftAPI import CheckerReport
-from DBThriftAPI.ttypes import SuppressBugData
 from thrift import Thrift
 from thrift.protocol import TBinaryProtocol
 from thrift.transport import TSocket
 from thrift.transport import TTransport
 
-from codechecker_lib import suppress_file_handler
-from codechecker_lib.logger import LoggerFactory
-from storage_server import report_server
+import shared
+from DBThriftAPI import CheckerReport
+from DBThriftAPI.ttypes import SuppressBugData
+
+from libcodechecker import suppress_file_handler
+from libcodechecker.logger import LoggerFactory
+# TODO: Refers sub-package library
+from libcodechecker.storage import report_server
 
 LOG = LoggerFactory.get_new_logger('CLIENT')
 

@@ -4,9 +4,9 @@
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
 
+import sqlalchemy
 
 import shared
-import sqlalchemy
 
 
 def catch_sqlalchemy(method):

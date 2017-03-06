@@ -6,17 +6,18 @@
 """
 Build and log related functionality.
 """
+from distutils.spawn import find_executable
 import os
 import pickle
 import platform
 import subprocess
 import sys
 from uuid import uuid4
-from distutils.spawn import find_executable
 
-from codechecker_lib import analyzer_env
-from codechecker_lib import host_check
-from codechecker_lib.logger import LoggerFactory
+from libcodechecker import host_check
+from libcodechecker.logger import LoggerFactory
+# TODO: Cross-reference between subpacakges...
+from libcodechecker.analyze import analyzer_env
 
 LOG = LoggerFactory.get_new_logger('BUILD MANAGER')
 

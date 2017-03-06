@@ -15,10 +15,10 @@ from thrift.transport import THttpClient
 from thrift.protocol import TJSONProtocol
 from thrift.protocol.TProtocol import TProtocolException
 
-from codechecker_lib import session_manager
-
-from Authentication import codeCheckerAuthentication
 import shared
+from Authentication import codeCheckerAuthentication
+
+from libcodechecker import session_manager
 
 
 class ThriftAuthHelper():

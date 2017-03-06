@@ -25,7 +25,7 @@ import pam
 import grp
 import pwd
 
-from codechecker_lib.logger import LoggerFactory
+from libcodechecker.logger import LoggerFactory
 
 LOG = LoggerFactory.get_new_logger("PAM")
 

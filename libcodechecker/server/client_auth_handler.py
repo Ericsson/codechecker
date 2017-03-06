@@ -3,23 +3,22 @@
 #   This file is distributed under the University of Illinois Open Source
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
-'''
+"""
 Handle thrift requests for authentication
-'''
-import zlib
-import os
+"""
 from collections import defaultdict
-import ntpath
 import codecs
+import os
+import ntpath
+import zlib
 
 
 import shared
 from Authentication import constants
 from Authentication.ttypes import *
 
-from codechecker_lib import session_manager
-from codechecker_lib.logger import LoggerFactory
-from codechecker_lib.profiler import timeit
+from libcodechecker.logger import LoggerFactory
+from libcodechecker.profiler import timeit
 
 LOG = LoggerFactory.get_new_logger('AUTH HANDLER')
 

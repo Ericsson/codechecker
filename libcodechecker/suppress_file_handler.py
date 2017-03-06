@@ -21,7 +21,7 @@ import codecs
 import os
 import re
 
-from codechecker_lib.logger import LoggerFactory
+from libcodechecker.logger import LoggerFactory
 
 LOG = LoggerFactory.get_new_logger('SUPPRESS_FILE_HANDLER')
 

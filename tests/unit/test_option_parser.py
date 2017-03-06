@@ -8,8 +8,8 @@
 
 import unittest
 
-from codechecker_lib import option_parser
-from codechecker_lib.option_parser import ActionType
+from libcodechecker.log import option_parser
+from libcodechecker.log.option_parser import ActionType
 
 
 class OptionParserTest(unittest.TestCase):
