@@ -88,7 +88,7 @@
   },
   {
     "name":"googlefont_Raleway",
-    "directory":"external-source-deps/fonts/Raleway",
+    "directory":"vendor/fonts/Raleway",
     "description":"Google Fonts required for styling the webpage",
     "homepage":"https://fonts.google.com/",
     "repository":{
@@ -99,7 +99,7 @@
   },
   {
     "name":"googlefont_SourceCodePro",
-    "directory":"external-source-deps/fonts/SourceCodePro",
+    "directory":"vendor/fonts/SourceCodePro",
     "description":"Google Fonts required for styling the webpage",
     "homepage":"https://fonts.google.com/",
     "repository":{
