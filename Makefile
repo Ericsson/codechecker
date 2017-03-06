@@ -20,8 +20,8 @@ gen-docs: build_dir
 
 thrift: build_dir
 
-	if [ ! -d "$(BUILD_DIR)/gen-py" ]; then rm -rf $(BUILD_DIR)/gen-py; fi
-	if [ ! -d "$(BUILD_DIR)/gen-js" ]; then rm -rf $(BUILD_DIR)/gen-js; fi
+	if [ -d "$(BUILD_DIR)/gen-py" ]; then rm -rf $(BUILD_DIR)/gen-py; fi
+	if [ -d "$(BUILD_DIR)/gen-js" ]; then rm -rf $(BUILD_DIR)/gen-js; fi
 
 	thrift -r -o $(BUILD_DIR) -I api/ \
 		--gen py api/report_storage_server.thrift
