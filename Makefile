@@ -23,14 +23,14 @@ thrift: build_dir
 	if [ ! -d "$(BUILD_DIR)/gen-py" ]; then rm -rf $(BUILD_DIR)/gen-py; fi
 	if [ ! -d "$(BUILD_DIR)/gen-js" ]; then rm -rf $(BUILD_DIR)/gen-js; fi
 
-	thrift -r -o $(BUILD_DIR) -I thrift_api/ \
-		--gen py thrift_api/report_storage_server.thrift
+	thrift -r -o $(BUILD_DIR) -I api/ \
+		--gen py api/report_storage_server.thrift
 
-	thrift -r -o $(BUILD_DIR) -I thrift_api/ \
-		--gen py --gen js:jquery thrift_api/report_viewer_server.thrift
+	thrift -r -o $(BUILD_DIR) -I api/ \
+		--gen py --gen js:jquery api/report_viewer_server.thrift
 
-	thrift -r -o $(BUILD_DIR) -I thrift_api/ \
-		--gen py thrift_api/authentication.thrift
+	thrift -r -o $(BUILD_DIR) -I api/ \
+		--gen py api/authentication.thrift
 
 package: build_dir gen-docs thrift
 	if [ ! -d "$(BUILD_DIR)/CodeChecker" ]; then \
@@ -42,7 +42,7 @@ travis:
 	scripts/change_clang_version.py $(CURRENT_DIR)
 
 build_dir:
-	mkdir -p build
+	mkdir -p $(BUILD_DIR)
 
 venv:
 	# virtual environment to run the package
@@ -62,6 +62,6 @@ clean_venv_dev:
 	rm -rf venv_dev
 
 clean:
-	rm -rf build
+	rm -rf $(BUILD_DIR)
 	rm -rf gen-docs
 

@@ -19,4 +19,4 @@ __LAYOUT_FILE_PATH = os.path.join(PKG_ROOT, 'config', 'package_layout.json')
 with open(__LAYOUT_FILE_PATH) as layout_file:
     __PACKAGE_LAYOUT = json.load(layout_file)
 sys.path.append(os.path.join(
-    PKG_ROOT, __PACKAGE_LAYOUT['static']['codechecker_gen']))
+    PKG_ROOT, __PACKAGE_LAYOUT['static']['gencodechecker']))

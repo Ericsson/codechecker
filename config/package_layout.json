@@ -17,14 +17,9 @@
     "js_thrift": "www/scripts/plugins/thrift",
     "config": "config",
     "ld_logger": "ld_logger",
-    "codechecker_modules": "cc_lib/python2.7",
-    "codechecker_lib": "cc_lib/python2.7/codechecker_lib",
-    "codechecker_gen": "cc_lib/python2.7/codechecker_gen",
-    "codechecker_db_model": "cc_lib/python2.7/db_model",
-    "codechecker_db_migrate": "cc_lib/python2.7/db_migrate",
-    "storage_server_modules": "cc_lib/python2.7/storage_server",
-    "viewer_server_modules": "cc_lib/python2.7/viewer_server",
-    "cmdline_client": "cc_lib/python2.7/cmdline_client"
+    "libcodechecker": "lib/python2.7/libcodechecker",
+    "gencodechecker": "lib/python2.7/gencodechecker",
+    "codechecker_db_migrate": "cc_lib/python2.7/db_migrate"
   },
   "runtime": {
     "analyzers": {

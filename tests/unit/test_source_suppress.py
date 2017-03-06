@@ -11,7 +11,7 @@
 import os
 import unittest
 
-from codechecker_lib.suppress_handler import SourceSuppressHandler
+from libcodechecker.suppress_handler import SourceSuppressHandler
 
 
 def _get_bug(file, line):

@@ -10,8 +10,11 @@ import json
 import logging
 import ntpath
 import re
+import platform
 import os
+import shlex
 import shutil
+import subprocess
 import sys
 
 try:
@@ -20,10 +23,7 @@ except ImportError:
     import urllib.parse as urlparse
 import tarfile
 import tempfile
-import subprocess
 import time
-import shlex
-import platform
 
 from distutils.spawn import find_executable
 
@@ -36,7 +36,6 @@ LOG.setLevel(logging.INFO)
 LOG.addHandler(log_handler)
 
 
-# -------------------------------------------------------------------
 def run_cmd(cmd, cwd=None, env=None, silent=False):
     """ Run a command. """
 
@@ -66,7 +65,6 @@ def run_cmd(cmd, cwd=None, env=None, silent=False):
         sys.exit(1)
 
 
-# -------------------------------------------------------------------
 def build_ld_logger(ld_logger_path, env, arch=None, clean=True, silent=True):
     """ Build ld logger. """
 
@@ -93,7 +91,6 @@ def build_ld_logger(ld_logger_path, env, arch=None, clean=True, silent=True):
         return ret
 
 
-# -------------------------------------------------------------------
 def create_folder_layout(path, layout):
     """ Create package directory layout. """
 
@@ -121,7 +118,6 @@ def create_folder_layout(path, layout):
                     sys.exit()
 
 
-# -------------------------------------------------------------------
 def copy_tree(src, dst):
     """ Copy file tree. """
 
@@ -138,7 +134,6 @@ def copy_tree(src, dst):
                 shutil.copy2(source, destination)
 
 
-# -------------------------------------------------------------------
 def handle_external_file(dep, clean, env, verbose):
     """
     Download (and if needed, extract) files from the given url.
@@ -211,7 +206,6 @@ font_user_agents = {
            'Mobile Safari/534.30'}
 
 
-# -------------------------------------------------------------------
 def handle_external_repository(dep, clean, env, verbose):
     """ Download external repository. """
     repository = dep['repository']
@@ -224,6 +218,14 @@ def handle_external_repository(dep, clean, env, verbose):
             return
 
     if repository['type'] == 'git':
+        directory = dep['directory']
+        if clean and os.path.exists(directory):
+            LOG.debug('Removing directory ' + directory)
+            shutil.rmtree(directory)
+        else:
+            if os.path.exists(directory):
+                return
+
         git_cmd = ['git', 'clone', '--depth', '1', '--single-branch']
 
         git_tag = repository.get('git_tag')
@@ -333,8 +335,7 @@ def handle_external_repository(dep, clean, env, verbose):
         LOG.error('Unsupported repository type')
 
 
-# -------------------------------------------------------------------
-def handle_ext_source_dep(dep, clean, env, verbose):
+def handle_vendor_record(dep, clean, env, verbose):
     """ Handle external project dependencies."""
 
     LOG.info('Checking source: ' + dep['name'])
@@ -352,7 +353,6 @@ def handle_ext_source_dep(dep, clean, env, verbose):
     LOG.info('Done.')
 
 
-# -------------------------------------------------------------------
 def compress_to_tar(source_folder, target_folder, compress):
     """ Compress folder to tar.gz file. """
 
@@ -379,7 +379,6 @@ def compress_to_tar(source_folder, target_folder, compress):
     return True
 
 
-# -------------------------------------------------------------------
 def get_ext_package_data(deps, dep_name):
     """ Search for a dependency in the list. """
     for dep in deps:
@@ -387,7 +386,6 @@ def get_ext_package_data(deps, dep_name):
             return dep
 
 
-# -------------------------------------------------------------------
 def build_package(repository_root, build_package_config, env=None):
     """ Package can be integrated easier to build systems if required. """
 
@@ -419,21 +417,21 @@ def build_package(repository_root, build_package_config, env=None):
     package_layout['root'] = package_root
 
     # Get external dependencies.
-    ext_deps_dir = os.path.join(repository_root, 'external-source-deps')
-    ext_deps_config = os.path.join(ext_deps_dir, 'ext_source_deps_config.json')
-    LOG.debug(ext_deps_config)
-    with open(ext_deps_config, 'r') as ext_cfg:
-        ext_dep_cfg = ext_cfg.read()
-        ext_deps = json.loads(ext_dep_cfg)
+    vendor_dir = os.path.join(repository_root, 'vendor')
+    vendor_proj_config = os.path.join(repository_root, 'vendor_projects.json')
+    LOG.debug(vendor_proj_config)
+    with open(vendor_proj_config, 'r') as vendor_cfg:
+        vendor_proj_config = vendor_cfg.read()
+        vendor_projs = json.loads(vendor_proj_config)
 
     clean = build_package_config['clean']
-    for dep in ext_deps:
+    for dep in vendor_projs:
         dep['directory'] = os.path.join(repository_root, dep['directory'])
-        handle_ext_source_dep(dep, clean, env, verbose)
+        handle_vendor_record(dep, clean, env, verbose)
 
-    external_dependencies = {dep['name']: dep for dep in ext_deps}
+    vendor_projects = {dep['name']: dep for dep in vendor_projs}
 
-    LOG.info('Getting external dependencies done.')
+    LOG.info('Getting external dependency projects done.')
 
     # Create package folder layout.
     create_folder_layout(output_dir, package_layout)
@@ -496,18 +494,16 @@ def build_package(repository_root, build_package_config, env=None):
     generated_py_files = os.path.join(build_dir, 'gen-py')
     generated_js_files = os.path.join(build_dir, 'gen-js')
 
-    target = os.path.join(package_root, package_layout['codechecker_gen'])
+    target = os.path.join(package_root, package_layout['gencodechecker'])
     copy_tree(generated_py_files, target)
 
     target = os.path.join(package_root, package_layout['web_client'])
     copy_tree(generated_js_files, target)
 
-    # The cmd_line client.
-    cmdline_client_files = os.path.join(repository_root,
-                                        'viewer_clients',
-                                        'cmdline_client')
-    target = os.path.join(package_root, package_layout['cmdline_client'])
-    copy_tree(cmdline_client_files, target)
+    # CodeChecker library files.
+    source = os.path.join(repository_root, 'libcodechecker')
+    target = os.path.join(package_root, package_layout['libcodechecker'])
+    copy_tree(source, target)
 
     # Documentation files.
     source = os.path.join(build_dir,
@@ -520,14 +516,14 @@ def build_package(repository_root, build_package_config, env=None):
     copy_tree(source, target)
 
     # Thift js.
-    thrift_dep = external_dependencies['thrift']
+    thrift_dep = vendor_projects['thrift']
     thrift_root = os.path.join(repository_root, thrift_dep.get('directory'))
     thift_js_files = os.path.join(thrift_root, 'lib', 'js', 'src')
     target = os.path.join(package_root, package_layout['js_thrift'])
     copy_tree(thift_js_files, target)
 
     # CodeMirror.
-    codemirror_dep = external_dependencies['codemirror']
+    codemirror_dep = vendor_projects['codemirror']
     codemirror_root = os.path.join(repository_root,
                                    codemirror_dep.get('directory'))
     target = os.path.join(package_root,
@@ -535,7 +531,7 @@ def build_package(repository_root, build_package_config, env=None):
     copy_tree(codemirror_root, target)
 
     # HighlightJs.
-    highlightjs_dep = external_dependencies['highlightjs']
+    highlightjs_dep = vendor_projects['highlightjs']
     highlightjs_root = os.path.join(repository_root,
                                     highlightjs_dep.get('directory'))
     target = os.path.join(package_root,
@@ -543,7 +539,7 @@ def build_package(repository_root, build_package_config, env=None):
     copy_tree(highlightjs_root, target)
 
     # HighlightJs_css.
-    highlightjs_css_dep = external_dependencies['highlightjs_css']
+    highlightjs_css_dep = vendor_projects['highlightjs_css']
     highlightjs_css_root = os.path.join(repository_root,
                                         highlightjs_css_dep.get('directory'))
     target = os.path.join(package_root,
@@ -552,7 +548,7 @@ def build_package(repository_root, build_package_config, env=None):
     copy_tree(highlightjs_css_root, target)
 
     # Dojo.
-    dojo_dep = external_dependencies['dojotoolkit']
+    dojo_dep = vendor_projects['dojotoolkit']
     file_url = dojo_dep['source_package']['url']
     url_data = urlparse.urlparse(file_url)
     head, file_name = ntpath.split(url_data.path)
@@ -564,13 +560,13 @@ def build_package(repository_root, build_package_config, env=None):
     copy_tree(dojo_root, target)
 
     # Marked.
-    marked_dep = external_dependencies['marked']
+    marked_dep = vendor_projects['marked']
     marked_root = os.path.join(repository_root, marked_dep.get('directory'))
     target = os.path.join(package_root, package_layout['web_client_marked'])
     shutil.copy(os.path.join(marked_root, 'marked.min.js'), target)
 
     # JsPlumb.
-    jsplumb_dep = external_dependencies['jsplumb']
+    jsplumb_dep = vendor_projects['jsplumb']
     jsplumb_root = os.path.join(repository_root, jsplumb_dep.get('directory'))
     target = os.path.join(package_root, package_layout['web_client_jsplumb'])
     jsplumb = os.path.join(jsplumb_root, 'dist', 'js',
@@ -649,13 +645,12 @@ def build_package(repository_root, build_package_config, env=None):
 
     # CodeChecker web client.
     LOG.debug('Copy web client files')
-    source = os.path.join(repository_root, 'viewer_clients',
-                          'web-client')
+    source = os.path.join(repository_root, 'www')
     target = os.path.join(package_root, package_layout['www'])
     copy_tree(source, target)
 
     # Copy font files.
-    for _, dep in external_dependencies.iteritems():
+    for _, dep in vendor_projects.iteritems():
         if 'repository' not in dep:
             continue
         if dep['repository']['type'] != "font_import":
@@ -680,45 +675,19 @@ def build_package(repository_root, build_package_config, env=None):
 
     # CodeChecker main scripts.
     LOG.debug('Copy main codechecker files')
-    source = os.path.join(repository_root, 'codechecker', 'CodeChecker.py')
+    source = os.path.join(repository_root, 'bin', 'CodeChecker.py')
     target = os.path.join(package_root, package_layout['cc_bin'])
     shutil.copy2(source, target)
 
-    source = os.path.join(repository_root, 'codechecker', 'CodeChecker')
+    source = os.path.join(repository_root, 'bin', 'CodeChecker')
     target = os.path.join(package_root, package_layout['bin'])
     shutil.copy2(source, target)
-
-    # CodeChecker modules.
-    LOG.debug('Copy codechecker modules')
-    source = os.path.join(repository_root, 'codechecker_lib')
-    target = os.path.join(package_root, package_layout['codechecker_lib'])
-    copy_tree(source, target)
-
-    # CodeChecker db model.
-    LOG.debug('Copy codechecker database model')
-    source = os.path.join(repository_root, 'db_model')
-    target = os.path.join(package_root, package_layout['codechecker_db_model'])
-    copy_tree(source, target)
 
     # CodeChecker db migrate.
     LOG.debug('Copy codechecker database migration')
     source = os.path.join(repository_root, 'db_migrate')
     target = os.path.join(package_root,
                           package_layout['codechecker_db_migrate'])
-    copy_tree(source, target)
-
-    # CodeChecker storage server.
-    LOG.debug('Copy codechecker storage server')
-    source = os.path.join(repository_root, 'storage_server')
-    target = os.path.join(package_root,
-                          package_layout['storage_server_modules'])
-    copy_tree(source, target)
-
-    # CodeChecker viewer server.
-    LOG.debug('Copy codechecker viewer server')
-    source = os.path.join(repository_root, 'viewer_server')
-    target = os.path.join(package_root,
-                          package_layout['viewer_server_modules'])
     copy_tree(source, target)
 
     # License.
@@ -733,11 +702,8 @@ def build_package(repository_root, build_package_config, env=None):
     LOG.info('Creating package finished successfully.')
 
 
-# -------------------------------------------------------------------
-def main():
-    """ Main script. """
-
-    description = '''CodeChecker packager script'''
+if __name__ == "__main__":
+    description = '''CodeChecker package creator'''
 
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -799,13 +765,9 @@ def main():
     build_package_config['package_layout_config'] = default_package_layout
 
     default_logger_dir = os.path.join(repository_root,
-                                      'external-source-deps',
+                                      'vendor',
                                       'build-logger')
 
     build_package_config['ld_logger_path'] = default_logger_dir
 
     build_package(repository_root, build_package_config)
-
-
-if __name__ == "__main__":
-    main()

@@ -18,7 +18,7 @@ try:
 except ImportError:
     from io import BytesIO as StringIO
 
-import codechecker_lib.tidy_output_converter as tidy_out_conv
+import libcodechecker.analyze.tidy_output_converter as tidy_out_conv
 
 
 def setup_module():

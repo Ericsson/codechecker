@@ -99,7 +99,7 @@ class CCViewerHelper(ThriftAPIHelper):
     def __init__(self, host, port, uri, auto_handle_connection=True,
                  session_token=None):
         # import only if necessary; some tests may not add this to PYTHONPATH
-        from codechecker_lib import session_manager
+        from libcodechecker import session_manager
         from codeCheckerDBAccess import codeCheckerDBAccess
         from codeCheckerDBAccess.constants import MAX_QUERY_SIZE
 
@@ -152,7 +152,7 @@ class CCAuthHelper(ThriftAPIHelper):
     def __init__(self, host, port, uri, auto_handle_connection=True,
                  session_token=None):
         # import only if necessary; some tests may not add this to PYTHONPATH
-        from codechecker_lib import session_manager
+        from libcodechecker import session_manager
         from Authentication import codeCheckerAuthentication
         from Authentication.ttypes import HandshakeInformation
 
