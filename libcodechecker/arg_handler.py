@@ -33,6 +33,7 @@ from libcodechecker.log import build_action
 from libcodechecker.log import build_manager
 from libcodechecker.logger import LoggerFactory
 from libcodechecker.server import client_db_access_server
+from libcodechecker.server import instance_manager
 
 LOG = LoggerFactory.get_new_logger('ARG_HANDLER')
 
