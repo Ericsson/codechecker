@@ -43,14 +43,14 @@ def setup_package():
 
     test_config = {}
 
-    test_proj_path_orig = os.path.join(
-        os.path.dirname(__file__), 'delete_runs_test_files')
-    project_info = project.get_info(test_proj_path_orig)
+    test_project = 'simple'
+
+    project_info = project.get_info(test_project)
 
     # Copy the test project to the workspace. The tests should
     # work only on this test project.
     test_proj_path = os.path.join(TEST_WORKSPACE, "test_proj")
-    shutil.copytree(test_proj_path_orig, test_proj_path)
+    shutil.copytree(project.path(test_project), test_proj_path)
 
     project_info['project_path'] = test_proj_path
 
@@ -88,7 +88,7 @@ def setup_package():
 
     for i in range(0, 5):
         # Clean the test project, if needed by the tests.
-        ret = project.clean(test_proj_path)
+        ret = project.clean(test_project)
         if ret:
             sys.exit(ret)
 

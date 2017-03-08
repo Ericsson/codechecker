@@ -5,13 +5,11 @@
 #   License. See LICENSE.TXT for details.
 # -----------------------------------------------------------------------------
 
-""" delete_runs function test.
-
-WARNING!!!
-This is a generated test skeleton remove the parts not required by the tests.
-WARNING!!!
-
 """
+Testing deletion of multiple runs.
+"""
+
+
 import os
 import unittest
 import itertools
@@ -27,7 +25,7 @@ def run_cmd(cmd):
     return proc.returncode
 
 
-class TestSkeleton(unittest.TestCase):
+class TestCmdLineDeletion(unittest.TestCase):
 
     def setUp(self):
         # TEST_WORKSPACE is automatically set by test package __init__.py .
@@ -53,10 +51,15 @@ class TestSkeleton(unittest.TestCase):
     def test_multiple_deletion(self):
         """
         Test deletion of multiple runs.
+        In the beginning five runs are placed in the database. This test checks
+        if more runs can be deleted at once by --all-after-run and
+        --all-before-time command line functions. Deleting a run by name should
+        also work.
         """
 
         def all_exists(runs):
             run_names = map(lambda run: run.name, self._cc_client.getRunData())
+            print run_names
             return set(runs) <= set(run_names)
 
         def none_exists(runs):
@@ -68,12 +71,12 @@ class TestSkeleton(unittest.TestCase):
         project_name = self._testproject_data['name']
         run2_name = project_name + '_' + str(2)
 
-        # Get all 5 runs
+        # Get all 5 runs.
 
         self.assertTrue(all_exists(
             [project_name + '_' + str(i) for i in range(0, 5)]))
 
-        # Remove runs after run 2 by run name
+        # Remove runs after run 2 by run name.
 
         del_cmd = [self._codechecker_cmd,
                    'cmd', 'del',
@@ -87,7 +90,7 @@ class TestSkeleton(unittest.TestCase):
         self.assertTrue(none_exists(
             [project_name + '_' + str(i) for i in range(3, 5)]))
 
-        # Remove runs before run 2 by run date
+        # Remove runs before run 2 by run date.
 
         run2 = next(itertools.ifilter(
             lambda run: run.name == run2_name, self._cc_client.getRunData()),
@@ -112,7 +115,7 @@ class TestSkeleton(unittest.TestCase):
         self.assertTrue(none_exists(
             [project_name + '_' + str(i) for i in range(0, 5) if i != 2]))
 
-        # Remove run by run name
+        # Remove run by run name.
 
         del_cmd = [self._codechecker_cmd,
                    'cmd', 'del',

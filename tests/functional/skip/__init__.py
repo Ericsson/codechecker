@@ -37,7 +37,7 @@ def setup_package():
 
     os.environ['TEST_WORKSPACE'] = TEST_WORKSPACE
 
-    test_project_path = project.path()
+    test_project = 'cpp'
 
     clang_version = env.clang_to_test()
 
@@ -45,7 +45,7 @@ def setup_package():
 
     test_config = {}
 
-    project_info = project.get_info(project.path())
+    project_info = project.get_info(test_project)
 
     test_config['test_project'] = project_info
 
@@ -73,7 +73,7 @@ def setup_package():
 
     codechecker_cfg.update(host_port_cfg)
 
-    ret = project.clean(test_project_path, test_env)
+    ret = project.clean(test_project, test_env)
     if ret:
         sys.exit(ret)
 
@@ -81,7 +81,7 @@ def setup_package():
 
     ret = codechecker.check(codechecker_cfg,
                             test_project_name,
-                            test_project_path)
+                            project.path(test_project))
 
     if ret:
         sys.exit(1)

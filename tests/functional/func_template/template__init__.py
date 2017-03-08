@@ -55,12 +55,14 @@ def setup_package():
 
     test_config = {}
 
-    project_info = project.get_info(project.path())
+    test_project = 'cpp'
+
+    project_info = project.get_info(test_project)
 
     # Copy the test project to the workspace. The tests should
     # work only on this test project.
     test_proj_path = os.path.join(TEST_WORKSPACE, "test_proj")
-    shutil.copytree(project.path(), test_proj_path)
+    shutil.copytree(project.path(test_project), test_proj_path)
 
     project_info['project_path'] = test_proj_path
 
@@ -97,14 +99,14 @@ def setup_package():
     codechecker_cfg.update(host_port_cfg)
 
     # Clean the test project, if needed by the tests.
-    ret = project.clean(project.path())
+    ret = project.clean(test_project)
     if ret:
         sys.exit(ret)
 
     # Check the test project, if needed by the tests.
     ret = codechecker.check(codechecker_cfg,
                             test_project_name,
-                            project.path())
+                            project.path(test_project))
     if ret:
         sys.exit(1)
     print("Analyzing the test project was successful.")

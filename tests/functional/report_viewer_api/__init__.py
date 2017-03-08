@@ -36,7 +36,7 @@ def setup_package():
 
     os.environ['TEST_WORKSPACE'] = TEST_WORKSPACE
 
-    test_project_path = project.path()
+    test_project = 'cpp'
 
     clang_version = env.clang_to_test()
 
@@ -44,10 +44,10 @@ def setup_package():
 
     test_config = {}
 
-    project_info = project.get_info(project.path())
+    project_info = project.get_info(test_project)
 
     test_proj_path = os.path.join(TEST_WORKSPACE, "test_proj")
-    shutil.copytree(project.path(), test_proj_path)
+    shutil.copytree(project.path(test_project), test_proj_path)
 
     project_info['project_path'] = test_proj_path
 
@@ -75,7 +75,7 @@ def setup_package():
 
     codechecker_cfg.update(host_port_cfg)
 
-    ret = project.clean(test_project_path)
+    ret = project.clean(test_project)
     if ret:
         sys.exit(ret)
 
@@ -83,7 +83,7 @@ def setup_package():
 
     ret = codechecker.check(codechecker_cfg,
                             test_project_name,
-                            test_project_path)
+                            project.path(test_project))
     if ret:
         sys.exit(1)
     print("Analyzing the test project was successful.")

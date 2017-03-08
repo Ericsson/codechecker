@@ -20,7 +20,6 @@ import uuid
 from libtest import codechecker
 from libtest import env
 from libtest import get_free_port
-from libtest import project
 
 # Stopping event for CodeChecker server.
 __STOP_SERVER = multiprocessing.Event()
@@ -36,8 +35,6 @@ def setup_package():
     TEST_WORKSPACE = env.get_workspace('report_server_api')
 
     os.environ['TEST_WORKSPACE'] = TEST_WORKSPACE
-
-    test_project_path = project.path()
 
     pg_db_config = env.get_postgresql_cfg()
 
