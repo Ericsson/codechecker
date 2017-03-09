@@ -14,10 +14,11 @@ import subprocess
 import sys
 from uuid import uuid4
 
-from libcodechecker import host_check
 from libcodechecker.logger import LoggerFactory
 # TODO: Cross-reference between subpacakges...
 from libcodechecker.analyze import analyzer_env
+
+from . import host_check
 
 LOG = LoggerFactory.get_new_logger('BUILD MANAGER')
 

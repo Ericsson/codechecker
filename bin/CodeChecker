@@ -24,10 +24,13 @@ import tempfile
 proc_pid = None
 
 
-def run_codechecker(checker_env):
+def run_codechecker(checker_env, subcommand=None):
     """
     Run the CodeChecker.
         * checker_env - CodeChecker will be run in the checker env.
+        * subcommand - CodeChecker will run the given subcommand by default,
+                       if specified. If not, the main script will run and parse
+                       all the commands.
     """
     package_bin = os.path.dirname(os.path.realpath(__file__))
     package_root, bin_dir = ntpath.split(package_bin)
@@ -52,6 +55,13 @@ def run_codechecker(checker_env):
                                     'CodeChecker.py')
 
     checker_cmd = [python, codechecker_main]
+
+    if subcommand:
+        # If a subcommand is specified (script is executed from a
+        # wrapper entry point, add it to the command list).
+        # E.g. 'codechecker-log ...' is the same as 'CodeChecker log ...'.
+        checker_cmd.append(subcommand)
+
     checker_cmd.extend(sys.argv[1:])
 
     proc = subprocess.Popen(checker_cmd, env=checker_env)
@@ -62,7 +72,7 @@ def run_codechecker(checker_env):
     sys.exit(proc.returncode)
 
 
-def main():
+def main(subcommand=None):
     original_env = os.environ.copy()
     checker_env = original_env
 
@@ -101,10 +111,10 @@ def main():
     signal.signal(signal.SIGINT, signal_term_handler)
 
     try:
-        run_codechecker(checker_env)
+        run_codechecker(checker_env, subcommand)
     finally:
         _remove_tmp()
 
 
 if __name__ == "__main__":
-    main()
+    main(None)

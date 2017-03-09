@@ -347,32 +347,6 @@ Build command which is used to build the project.''')
         qcheck_parser.set_defaults(func=arg_handler.handle_quickcheck)
 
         # --------------------------------------
-        # Log commands.
-        logging_p = subparsers.add_parser('log',
-                                          formatter_class=ADHF,
-                                          help='Runs the given build '
-                                               'command. During the '
-                                               'build the compilation '
-                                               'commands are collected '
-                                               'and stored into a '
-                                               'compilation command '
-                                               'json file '
-                                               '(no analysis is done '
-                                               'during the build).')
-
-        logging_p.add_argument('-o', '--output', type=str, dest="logfile",
-                               default=argparse.SUPPRESS,
-                               required=True,
-                               help='Path to the log file.')
-
-        logging_p.add_argument('-b', '--build', type=str, dest="command",
-                               default=argparse.SUPPRESS,
-                               required=True, help='Build command.')
-
-        logger.add_verbose_arguments(logging_p)
-        logging_p.set_defaults(func=arg_handler.handle_log)
-
-        # --------------------------------------
         # Checkers parser.
         checker_p = subparsers.add_parser('checkers',
                                           formatter_class=ADHF,
