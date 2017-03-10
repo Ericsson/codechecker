@@ -560,6 +560,12 @@ Build command which is used to build the project.''')
                 LOG.debug("Creating arg parser for subcommand " + subcommand)
 
                 try:
+                    # Even though command verbs and nouns are joined by a
+                    # hyphen, the Python files contain underscores.
+                    command_file = os.path.join(libcc_path,
+                                                subcommand.replace('-', '_') +
+                                                ".py")
+
                     # Load the module's source code, located under
                     # libcodechecker/sub_command.py.
                     # We can't use find_module() and load_module() here as both
@@ -569,10 +575,7 @@ Build command which is used to build the project.''')
                     # Thus, manual source-code reading is required.
                     # NOTE: load_source() loads the compiled .pyc, if such
                     # exists.
-                    command_module = imp.load_source(subcommand,
-                                                     os.path.join(libcc_path,
-                                                                  subcommand +
-                                                                  ".py"))
+                    command_module = imp.load_source(subcommand, command_file)
 
                     # Now that the module is loaded, construct an
                     # ArgumentParser for it.
@@ -620,17 +623,14 @@ if __name__ == "__main__":
     LOG.debug(os.environ.get('LD_LIBRARY_PATH'))
 
     # Load the available CodeChecker subcommands.
-    # This list is generated dynamically by scripts/build_package.py
-    version_cfg = os.path.join(os.environ['CC_PACKAGE_ROOT'],
-                               "config", "version.json")
+    # This list is generated dynamically by scripts/build_package.py, and is
+    # always meant to be available alongside the CodeChecker.py.
+    commands_cfg = os.path.join(os.path.dirname(__file__), "commands.json")
 
-    with open(version_cfg) as cfg_file:
-        config = json.load(cfg_file)
-
-    if 'available_commands' not in config:
-        config['available_commands'] = []
+    with open(commands_cfg) as cfg_file:
+        commands = json.load(cfg_file)
 
     LOG.debug("Available CodeChecker subcommands: ")
-    LOG.debug(config['available_commands'])
+    LOG.debug(commands)
 
-    main(config['available_commands'])
+    main(commands)

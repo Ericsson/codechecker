@@ -639,13 +639,18 @@ def build_package(repository_root, build_package_config, env=None):
     time_now = time.strftime("%Y-%m-%dT%H:%M")
     version_json_data['package_build_date'] = time_now
 
-    version_json_data['available_commands'] = []
+    # Rewrite version config file with the extended data.
+    with open(version_file, 'w') as v_file:
+        v_file.write(
+            json.dumps(version_json_data, sort_keys=True, indent=4))
 
     # CodeChecker main scripts.
     LOG.debug('Copy main codechecker files')
     source = os.path.join(repository_root, 'bin')
     target = os.path.join(package_root, package_layout['bin'])
     target_cc = os.path.join(package_root, package_layout['cc_bin'])
+
+    available_commands = []
 
     for _, _, files in os.walk(source):
         for f in files:
@@ -655,23 +660,17 @@ def build_package(repository_root, build_package_config, env=None):
                 shutil.copy2(os.path.join(source, f), target)
 
                 if f.startswith("codechecker-"):
-                    # Entry points have the format of 'codechecker-sub-command'
-                    # to which the corresponding library file is in
-                    # libcodechecker/sub_command.py, so we register this.
                     commandname = f.replace("codechecker-", "")
                     LOG.info("CodeChecker command '{0}' available.".format(
                         commandname))
 
-                    version_json_data['available_commands'].append(
-                        commandname.replace("-", "_"))
+                    available_commands.append(commandname)
             else:
                 # .py files are Python code that must run in a valid env.
                 shutil.copy2(os.path.join(source, f), target_cc)
 
-    # Rewrite version config file with the extended data.
-    with open(version_file, 'w') as v_file:
-        v_file.write(
-            json.dumps(version_json_data, sort_keys=True, indent=4))
+    with open(os.path.join(target_cc, 'commands.json'), 'w') as commands:
+        json.dump(available_commands, commands, sort_keys=True)
 
     # CodeChecker web client.
     LOG.debug('Copy web client files')
