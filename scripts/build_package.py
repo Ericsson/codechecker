@@ -639,9 +639,39 @@ def build_package(repository_root, build_package_config, env=None):
     time_now = time.strftime("%Y-%m-%dT%H:%M")
     version_json_data['package_build_date'] = time_now
 
+    version_json_data['available_commands'] = []
+
+    # CodeChecker main scripts.
+    LOG.debug('Copy main codechecker files')
+    source = os.path.join(repository_root, 'bin')
+    target = os.path.join(package_root, package_layout['bin'])
+    target_cc = os.path.join(package_root, package_layout['cc_bin'])
+
+    for _, _, files in os.walk(source):
+        for f in files:
+            if not f.endswith(".py"):
+                # Non-py files use the environment to appear as python files,
+                # they go into the folder in PATH as they are entrypoints.
+                shutil.copy2(os.path.join(source, f), target)
+
+                if f.startswith("codechecker-"):
+                    # Entry points have the format of 'codechecker-sub-command'
+                    # to which the corresponding library file is in
+                    # libcodechecker/sub_command.py, so we register this.
+                    commandname = f.replace("codechecker-", "")
+                    LOG.info("CodeChecker command '{0}' available.".format(
+                        commandname))
+
+                    version_json_data['available_commands'].append(
+                        commandname.replace("-", "_"))
+            else:
+                # .py files are Python code that must run in a valid env.
+                shutil.copy2(os.path.join(source, f), target_cc)
+
     # Rewrite version config file with the extended data.
     with open(version_file, 'w') as v_file:
-        v_file.write(json.dumps(version_json_data, sort_keys=True, indent=4))
+        v_file.write(
+            json.dumps(version_json_data, sort_keys=True, indent=4))
 
     # CodeChecker web client.
     LOG.debug('Copy web client files')
@@ -672,16 +702,6 @@ def build_package(repository_root, build_package_config, env=None):
                                "style", "generated_fonts.css"), 'a') as style:
             with open(os.path.join(root, "generated_fonts.css"), 'r') as css:
                 style.write(css.read() + "\n")
-
-    # CodeChecker main scripts.
-    LOG.debug('Copy main codechecker files')
-    source = os.path.join(repository_root, 'bin', 'CodeChecker.py')
-    target = os.path.join(package_root, package_layout['cc_bin'])
-    shutil.copy2(source, target)
-
-    source = os.path.join(repository_root, 'bin', 'CodeChecker')
-    target = os.path.join(package_root, package_layout['bin'])
-    shutil.copy2(source, target)
 
     # CodeChecker db migrate.
     LOG.debug('Copy codechecker database migration')
