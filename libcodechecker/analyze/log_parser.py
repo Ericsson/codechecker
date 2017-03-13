@@ -93,6 +93,13 @@ def parse_compile_commands_json(logfile, add_compiler_defaults=False):
     counter = 0
     for entry in data:
         sourcefile = entry['file']
+
+        if not os.path.isabs(sourcefile):
+            # Newest versions of intercept-build can create the 'file' in the
+            # JSON Compilation Database as a relative path.
+            sourcefile = os.path.join(os.path.abspath(entry['directory']),
+                                      sourcefile)
+
         lang = option_parser.get_language(sourcefile[sourcefile.rfind('.'):])
 
         if not lang:
@@ -100,7 +107,26 @@ def parse_compile_commands_json(logfile, add_compiler_defaults=False):
 
         action = build_action.BuildAction(counter)
 
-        command = entry['command']
+        if 'command' in entry:
+            command = entry['command']
+        elif 'arguments' in entry:
+            # Newest versions of intercept-build create an argument vector
+            # instead of a command string.
+            for i in range(0, len(entry['arguments'])):
+                arg = entry['arguments'][i]
+                if ' ' in arg:
+                    # If there is an argument with a space in it, the join
+                    # below will mess the invocation up. (-DVAR=va lue will be
+                    # passed as -DVAR=va)
+                    #
+                    # Build.json created by ld-logger escapes these strings
+                    # and they never reach the analyser later on.
+                    #
+                    # TODO: Better handle this. (See issue #505.)
+                    entry['arguments'][i] = '\"' + arg + '\"'
+            command = ' '.join(entry['arguments'])
+        else:
+            raise KeyError("No valid 'command' or 'arguments' entry found!")
         results = option_parser.parse_options(command)
 
         action.original_command = command

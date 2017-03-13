@@ -17,7 +17,7 @@ def check_intercept(env):
     """
     Simple check if intercept (scan-build-py) is available.
     """
-    intercept_cmd = ['intercept-build']
+    intercept_cmd = ['intercept-build', '--help']
     try:
         with open(os.devnull, 'wb') as null:
             res = subprocess.check_call(intercept_cmd,

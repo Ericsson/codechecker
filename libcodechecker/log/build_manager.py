@@ -70,7 +70,9 @@ def perform_build_command(logfile, command, context, silent=False):
     if host_check.check_intercept(original_env):
         LOG.debug_analyzer("with intercept ...")
         final_command = command
-        command = "intercept-build " + "--cdb " + logfile + " " + final_command
+        command = ' '.join(["intercept-build",
+                            "--cdb", logfile,
+                            "sh -c \"" + final_command + "\""])
         log_env = original_env
         LOG.debug_analyzer(command)
 
