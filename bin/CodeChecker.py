@@ -365,6 +365,7 @@ Build command which is used to build the project.''')
 
         # --------------------------------------
         # Checkers parser.
+        # TODO: Supersede by libcodechecker/checkers.py.
         checker_p = subparsers.add_parser('checkers',
                                           formatter_class=ADHF,
                                           help='List the available checkers '
