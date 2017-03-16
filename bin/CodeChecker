@@ -61,6 +61,14 @@ def run_codechecker(checker_env, subcommand=None):
         # wrapper entry point, add it to the command list).
         # E.g. 'codechecker-log ...' is the same as 'CodeChecker log ...'.
         checker_cmd.append(subcommand)
+    else:
+        # For some commands the "legacy" old implementation is different,
+        # such as the case with 'CodeChecker checkers' instead of
+        # 'codechecker-checkers'. For this, we use a little HACK here through
+        # environmental variables.
+        #
+        # TODO: Delete this once "old" commands are removed in a later release.
+        checker_env['CC_FROM_LEGACY_INVOKE'] = str(1)
 
     checker_cmd.extend(sys.argv[1:])
 

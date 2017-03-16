@@ -193,6 +193,21 @@ CodeChecker quickcheck -b "cd ~/myproject && make"
 
         subparsers = parser.add_subparsers(help='commands')
 
+        # TODO: Delete these once a later version rolls.
+        old_subcommands = []
+
+        def _warn_deprecated_command(cmd_name):
+            # This warning is implemented for showing later on, once old
+            # behaviour commands are deprecated. We don't warn between 5.8 and
+            # 6.0 for now.
+            pass
+            LOG.warning("The called command 'CodeChecker {0}' is DEPRECATED "
+                        "since version A.B. A new version is available as "
+                        "'codechecker-{0}'.\nThe DEPRECATED command will be "
+                        "REPLACED when version X.Y is released.\n"
+                        "Please see 'codechecker-{0} --help' on details how "
+                        "to call the new version.\n".format(cmd_name))
+
         workspace_help_msg = 'Directory where the CodeChecker can' \
             ' store analysis related data.'
 
@@ -221,6 +236,7 @@ CodeChecker quickcheck -b "cd ~/myproject && make"
                                              formatter_class=ADHF,
                                              help=''' \
 Run the supported source code analyzers on a project.''')
+        old_subcommands.append('check')
 
         check_parser.add_argument('-w', '--workspace', type=str,
                                   default=util.get_default_workspace(),
@@ -302,6 +318,7 @@ Build command which is used to build the project.''')
                                               formatter_class=ADHF,
                                               help='Run CodeChecker for a '
                                                    'project without database.')
+        old_subcommands.append('quickcheck')
 
         qcheckgroup = qcheck_parser.add_mutually_exclusive_group(required=True)
 
@@ -356,6 +373,7 @@ Build command which is used to build the project.''')
                                                '(+ for being enabled, '
                                                '- for being disabled by '
                                                'default).')
+        old_subcommands.append('checkers')
 
         checker_p.add_argument('--analyzers', nargs='+',
                                dest="analyzers", required=False,
@@ -372,6 +390,8 @@ Build command which is used to build the project.''')
                                               formatter_class=ADHF,
                                               help='Start and manage the '
                                                    'CodeChecker web server.')
+        old_subcommands.append('server')
+
         server_parser.add_argument('-w', '--workspace', type=str,
                                    dest="workspace",
                                    default=util.get_default_workspace(),
@@ -429,6 +449,7 @@ Build command which is used to build the project.''')
         # Cmd_line.
         cmd_line_parser = subparsers.add_parser('cmd',
                                                 help='Command line client')
+        old_subcommands.append('cmd')
         cmd_line_client.register_client_command_line(cmd_line_parser)
 
         # --------------------------------------
@@ -442,6 +463,7 @@ Build command which is used to build the project.''')
                                                   'Requires a database with '
                                                   'the failed compilation '
                                                   'commands.')
+        old_subcommands.append('debug')
 
         debug_parser.add_argument('-w', '--workspace', type=str,
                                   dest="workspace",
@@ -465,6 +487,7 @@ Build command which is used to build the project.''')
                                                   'store them to the database '
                                                   'or print to the standard '
                                                   'output.')
+        old_subcommands.append('plist')
 
         plist_parser.add_argument('-w', '--workspace', type=str,
                                   dest="workspace",
@@ -509,6 +532,8 @@ Build command which is used to build the project.''')
         version_parser = subparsers.add_parser('version',
                                                help='Print package version '
                                                     'information.')
+        old_subcommands.append('version')
+
         version_parser.set_defaults(func=arg_handler.handle_version_info)
         logger.add_verbose_arguments(version_parser)
 
@@ -527,12 +552,30 @@ Build command which is used to build the project.''')
                     LOG.debug("Supplied an existing, valid subcommand: " +
                               first_command)
 
-                    # Consider only the given command as an available one.
-                    subcommands = [first_command]
+                    if 'CC_FROM_LEGACY_INVOKE' not in os.environ:
+                        # Consider only the given command as an available one.
+                        subcommands = [first_command]
+                    else:
+                        if first_command in old_subcommands:
+                            # Certain commands as of now have a 'new' and an
+                            # 'old' invocation and execution. In case of an
+                            # 'old' invocation is passed ('CodeChecker
+                            # command'), do NOT load the 'new' argument parser
+                            # and executed method.
+                            #
+                            # TODO: Delete this once the new commands are
+                            # fleshed out and old are deprecated later on.
+                            _warn_deprecated_command(first_command)
+                            subcommands = []
 
             for subcommand in subcommands:
-                LOG.debug("Creating arg parser for subcommand " + subcommand)
+                if 'CC_FROM_LEGACY_INVOKE' in os.environ and \
+                        subcommand in old_subcommands:
+                    # Make sure 'old' commands have a priority in the listing
+                    # when '--help' is queried.
+                    continue
 
+                LOG.debug("Creating arg parser for subcommand " + subcommand)
                 try:
                     # Even though command verbs and nouns are joined by a
                     # hyphen, the Python files contain underscores.
@@ -568,6 +611,10 @@ Build command which is used to build the project.''')
         if 'verbose' in args:
             LoggerFactory.set_log_level(args.verbose)
         args.func(args)
+
+        if 'CC_FROM_LEGACY_INVOKE' in os.environ and \
+                first_command and first_command in old_subcommands:
+            _warn_deprecated_command(first_command)
 
     except KeyboardInterrupt as kb_err:
         LOG.info(str(kb_err))
