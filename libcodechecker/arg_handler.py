@@ -134,7 +134,7 @@ def handle_server(args):
                              str(instance['port'])))
 
         print("Your running CodeChecker servers:")
-        util.print_table(rows)
+        print(util.twodim_to_table(rows))
         sys.exit(0)
     elif args.stop or args.stop_all:
         for i in instance_manager.list():

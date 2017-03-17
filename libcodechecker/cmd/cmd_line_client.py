@@ -20,7 +20,7 @@ from Authentication import ttypes as AuthTypes
 
 from libcodechecker import session_manager
 from libcodechecker import logger
-from libcodechecker.util import print_table
+from libcodechecker.output_formatters import twodim_to_str
 
 from . import thrift_helper
 from . import authentication_helper
@@ -258,15 +258,12 @@ def handle_list_runs(args):
         print(CmdLineOutputEncoder().encode(results))
 
     else:  # plaintext, csv
-        rows = [('Name', 'ResultCount', 'RunDate')]
+        header = ['Name', 'ResultCount', 'RunDate']
+        rows = []
         for run in runs:
             rows.append((run.name, str(run.resultCount), run.runDate))
 
-        if args.output_format == 'csv':
-            writer = csv.writer(sys.stdout)
-            writer.writerows(rows)
-        else:
-            print_table(rows)
+        print(twodim_to_str(args.output_format, header, rows))
 
 
 def handle_list_results(args):
@@ -302,13 +299,13 @@ def handle_list_results(args):
     if args.output_format == 'json':
         print(CmdLineOutputEncoder().encode(all_results))
     else:
-        rows = []
-        if args.suppressed:
-            rows.append(
-                ('File', 'Checker', 'Severity', 'Msg', 'Suppress comment'))
-        else:
-            rows.append(('File', 'Checker', 'Severity', 'Msg'))
 
+        if args.suppressed:
+            header = ['File', 'Checker', 'Severity', 'Msg', 'Suppress comment']
+        else:
+            header = ['File', 'Checker', 'Severity', 'Msg']
+
+        rows = []
         for res in all_results:
             bug_line = res.lastBugPosition.startLine
             checked_file = res.checkedFile + ' @ ' + str(bug_line)
@@ -321,11 +318,7 @@ def handle_list_results(args):
                 rows.append(
                     (checked_file, res.checkerId, sev, res.checkerMsg))
 
-        if args.output_format == 'csv':
-            writer = csv.writer(sys.stdout)
-            writer.writerows(rows)
-        else:
-            print_table(rows)
+        print(twodim_to_str(args.output_format, header, rows))
 
 
 def handle_list_result_types(args):
@@ -361,16 +354,12 @@ def handle_list_result_types(args):
             print('Check date: ' + run_date)
             print('Check name: ' + name)
             rows = []
-            rows.append(('Checker', 'Severity', 'Count'))
+            header = ['Checker', 'Severity', 'Count']
             for res in results:
                 sev = shared.ttypes.Severity._VALUES_TO_NAMES[res.severity]
                 rows.append((res.checkerId, sev, str(res.count)))
 
-            if args.output_format == 'csv':
-                writer = csv.writer(sys.stdout)
-                writer.writerows(rows)
-            else:
-                print_table(rows)
+            print(twodim_to_str(args.output_format, header, rows))
 
     if args.output_format == 'json':
         print(CmdLineOutputEncoder().encode(results_collector))
@@ -447,8 +436,8 @@ def handle_diff_results(args):
         if output_format == 'json':
             print(CmdLineOutputEncoder().encode(all_results))
         else:
+            header = ['File', 'Checker', 'Severity', 'Msg']
             rows = []
-            rows.append(('File', 'Checker', 'Severity', 'Msg'))
             for res in all_results:
                 bug_line = res.lastBugPosition.startLine
                 sev = shared.ttypes.Severity._VALUES_TO_NAMES[res.severity]
@@ -456,11 +445,7 @@ def handle_diff_results(args):
                 rows.append(
                     (checked_file, res.checkerId, sev, res.checkerMsg))
 
-            if output_format == 'csv':
-                writer = csv.writer(sys.stdout)
-                writer.writerows(rows)
-            else:
-                print_table(rows)
+            print(twodim_to_str(output_format, header, rows))
 
     client = setupClient(args.host, args.port, '/')
     run_info = check_run_names(client, [args.basename, args.newname])
