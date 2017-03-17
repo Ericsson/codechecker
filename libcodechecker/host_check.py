@@ -4,9 +4,7 @@
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
 
-import errno
 import os
-import subprocess
 
 from libcodechecker.logger import LoggerFactory
 
@@ -78,29 +76,3 @@ def check_sql_driver(check_postgresql):
             LOG.debug(ex)
             return False
         return True
-
-
-# -----------------------------------------------------------------------------
-def check_clang(compiler_bin, env):
-    """
-    Simple check if clang is available.
-    """
-    clang_version_cmd = [compiler_bin, '--version']
-    LOG.debug_analyzer(' '.join(clang_version_cmd))
-    try:
-        res = subprocess.call(clang_version_cmd,
-                              env=env,
-                              stdout=subprocess.PIPE,
-                              stderr=subprocess.PIPE)
-        if not res:
-            return True
-
-        LOG.debug_analyzer('Failed to run: "' + ' '.join(clang_version_cmd) +
-                           '"')
-        return False
-
-    except OSError as oerr:
-        if oerr.errno == errno.ENOENT:
-            LOG.error(oerr)
-            LOG.error('Failed to run: "' + ' '.join(clang_version_cmd) + '"')
-            return False
