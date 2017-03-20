@@ -58,6 +58,8 @@ def handle_list_checkers(args):
     context = generic_package_context.get_context()
     # If nothing is set, list checkers for all supported analyzers.
     enabled_analyzers = args.analyzers or analyzer_types.supported_analyzers
+    enabled_analyzers = analyzer_types.check_supported_analyzers(
+        enabled_analyzers, context)
     analyzer_environment = analyzer_env.get_check_env(
         context.path_env_extra,
         context.ld_lib_path_extra)

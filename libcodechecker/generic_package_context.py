@@ -49,8 +49,10 @@ class Context(context_base.ContextBase):
         self.__db_version_info = None
         self.__package_build_date = None
         self.__package_git_hash = None
+        self.__analyzers = {}
 
         self.__set_version()
+        self.__populate_analyzers()
 
         Context.__instance = self
 
@@ -109,6 +111,27 @@ class Context(context_base.ContextBase):
                       self.version_file)
             LOG.error(ioerr)
             sys.exit(1)
+
+    def __populate_analyzers(self):
+        compiler_binaries = self.pckg_layout.get('analyzers')
+        if not compiler_binaries:
+            # Set default analyzers assume they are in the PATH
+            # will be checked later.
+            # Key naming in the dict should be the same as in
+            # the supported analyzers list.
+            self.__analyzers[analyzer_types.CLANG_SA] = 'clang'
+            self.__analyzers[analyzer_types.CLANG_TIDY] = 'clang-tidy'
+        else:
+            for name, value in compiler_binaries.items():
+                if os.path.isabs(value):
+                    # Check if it is an absolute path.
+                    self.__analyzers[name] = value
+                elif os.path.dirname(value):
+                    # Check if it is a package relative path.
+                    self.__analyzers[name] = os.path.join(self.__package_root,
+                                                          value)
+                else:
+                    self.__analyzers[name] = value
 
     @property
     def default_checkers_config(self):
@@ -224,28 +247,7 @@ class Context(context_base.ContextBase):
 
     @property
     def analyzer_binaries(self):
-        analyzers = {}
-
-        compiler_binaries = self.pckg_layout.get('analyzers')
-        if not compiler_binaries:
-            # Set default analyzers assume they are in the PATH
-            # will be checked later.
-            # Key naming in the dict should be the same as in
-            # the supported analyzers list.
-            analyzers[analyzer_types.CLANG_SA] = 'clang'
-            analyzers[analyzer_types.CLANG_TIDY] = 'clang-tidy'
-        else:
-            for name, value in compiler_binaries.items():
-                if os.path.isabs(value):
-                    # Check if it is an absolute path.
-                    analyzers[name] = value
-                elif os.path.dirname(value):
-                    # Check if it is a package relative path.
-                    analyzers[name] = os.path.join(self.__package_root, value)
-                else:
-                    analyzers[name] = value
-
-        return analyzers
+        return self.__analyzers
 
 
 def get_context():
