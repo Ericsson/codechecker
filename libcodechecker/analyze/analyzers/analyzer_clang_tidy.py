@@ -53,11 +53,9 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
             try:
                 command = shlex.split(' '.join(command))
                 result = subprocess.check_output(command, env=env)
-            except subprocess.CalledProcessError as cperr:
-                LOG.error(cperr)
+                self.__parse_checkers(result)
+            except (subprocess.CalledProcessError, OSError):
                 return {}
-
-            self.__parse_checkers(result)
 
         return self.checkers
 

@@ -102,5 +102,5 @@ def check_clang(compiler_bin, env):
     except OSError as oerr:
         if oerr.errno == errno.ENOENT:
             LOG.error(oerr)
-            LOG.error('Failed to run: ' + ' '.join(clang_version_cmd) + '"')
+            LOG.error('Failed to run: "' + ' '.join(clang_version_cmd) + '"')
             return False

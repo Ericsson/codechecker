@@ -81,17 +81,19 @@ def check_supported_analyzers(analyzers, context):
     analyzer_binaries = context.analyzer_binaries
 
     enabled_analyzers = set()
+    failed_analyzers = set()
 
     for analyzer_name in analyzers:
         if analyzer_name not in supported_analyzers:
-            LOG.error('Unsupported analyzer ' + analyzer_name + ' !')
-            sys.exit(1)
+            failed_analyzers.add((analyzer_name,
+                                  "Analyzer unsupported by CodeChecker."))
 
         # Get the compiler binary to check if it can run.
         available_analyzer = True
         analyzer_bin = analyzer_binaries.get(analyzer_name)
         if not analyzer_bin:
-            LOG.warning('Failed to detect analyzer binary ' + analyzer_name)
+            failed_analyzers.add((analyzer_name,
+                                  "Failed to detect analyzer binary."))
             available_analyzer = False
         elif not os.path.isabs(analyzer_bin):
             # If the analyzer is not in an absolute path, try to find it...
@@ -116,7 +118,8 @@ def check_supported_analyzers(analyzers, context):
             if not found_bin or \
                     not host_check.check_clang(found_bin, check_env):
                 # If analyzer_bin is not False here, the resolver found one.
-                LOG.warning('Failed to run analyzer ' + analyzer_name + ' !')
+		failed_analyzers.add((analyzer_name,
+                                  "Couldn't run analyzer binary."))
                 available_analyzer = False
         elif host_check.check_clang(analyzer_bin, check_env):
             # Analyzers unavailable under absolute paths are deliberately a
@@ -127,7 +130,7 @@ def check_supported_analyzers(analyzers, context):
         if available_analyzer:
             enabled_analyzers.add(analyzer_name)
 
-    return enabled_analyzers
+    return enabled_analyzers, failed_analyzers
 
 
 def construct_analyzer_type(analyzer_type, config_handler, buildaction):
