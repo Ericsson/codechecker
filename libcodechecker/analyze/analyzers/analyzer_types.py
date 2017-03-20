@@ -98,10 +98,10 @@ def check_supported_analyzers(analyzers, context):
         elif not os.path.isabs(analyzer_bin):
             # If the analyzer is not in an absolute path, try to find it...
             if analyzer_name == CLANG_SA:
-                found_bin = analyzer_clangsa.ClangSA.\
+                found_bin = analyzer_clangsa.ClangSA. \
                     resolve_missing_binary(analyzer_bin, check_env)
             elif analyzer_name == CLANG_TIDY:
-                found_bin = analyzer_clang_tidy.ClangTidy.\
+                found_bin = analyzer_clang_tidy.ClangTidy. \
                     resolve_missing_binary(analyzer_bin, check_env)
 
             # found_bin is an absolute path, an executable in one of the
@@ -118,13 +118,14 @@ def check_supported_analyzers(analyzers, context):
             if not found_bin or \
                     not host_check.check_clang(found_bin, check_env):
                 # If analyzer_bin is not False here, the resolver found one.
-		failed_analyzers.add((analyzer_name,
-                                  "Couldn't run analyzer binary."))
+                failed_analyzers.add((analyzer_name,
+                                      "Couldn't run analyzer binary."))
                 available_analyzer = False
         elif host_check.check_clang(analyzer_bin, check_env):
             # Analyzers unavailable under absolute paths are deliberately a
             # configuration problem.
-            LOG.warning('Failed to run analyzer ' + analyzer_name + ' !')
+            failed_analyzers.add((analyzer_name,
+                                  "Cannot execute analyzer binary."))
             available_analyzer = False
 
         if available_analyzer:
