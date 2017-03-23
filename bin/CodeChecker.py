@@ -11,12 +11,13 @@ from __future__ import print_function
 
 import argparse
 from argparse import ArgumentDefaultsHelpFormatter as ADHF
+import imp
+import json
 import os
 import signal
 import sys
 
 import shared
-
 
 from libcodechecker import arg_handler
 from libcodechecker import logger
@@ -149,7 +150,7 @@ def add_analyzer_arguments(parser):
                         "without modification.")
 
 
-def main():
+def main(subcommands=None):
     """
     CodeChecker main command line.
     """
@@ -346,32 +347,6 @@ Build command which is used to build the project.''')
         qcheck_parser.set_defaults(func=arg_handler.handle_quickcheck)
 
         # --------------------------------------
-        # Log commands.
-        logging_p = subparsers.add_parser('log',
-                                          formatter_class=ADHF,
-                                          help='Runs the given build '
-                                               'command. During the '
-                                               'build the compilation '
-                                               'commands are collected '
-                                               'and stored into a '
-                                               'compilation command '
-                                               'json file '
-                                               '(no analysis is done '
-                                               'during the build).')
-
-        logging_p.add_argument('-o', '--output', type=str, dest="logfile",
-                               default=argparse.SUPPRESS,
-                               required=True,
-                               help='Path to the log file.')
-
-        logging_p.add_argument('-b', '--build', type=str, dest="command",
-                               default=argparse.SUPPRESS,
-                               required=True, help='Build command.')
-
-        logger.add_verbose_arguments(logging_p)
-        logging_p.set_defaults(func=arg_handler.handle_log)
-
-        # --------------------------------------
         # Checkers parser.
         checker_p = subparsers.add_parser('checkers',
                                           formatter_class=ADHF,
@@ -537,8 +512,61 @@ Build command which is used to build the project.''')
         version_parser.set_defaults(func=arg_handler.handle_version_info)
         logger.add_verbose_arguments(version_parser)
 
+        if subcommands:
+            # Load the 'libcodechecker' module and acquire its path.
+            file, path, descr = imp.find_module("libcodechecker")
+            libcc_path = imp.load_module("libcodechecker",
+                                         file, path, descr).__path__[0]
+
+            # Try to check if the user has already given us a subcommand to
+            # execute. If so, don't load every available parts of CodeChecker
+            # to ensure a more optimised run.
+            if len(sys.argv) > 1:
+                first_command = sys.argv[1]
+                if first_command in subcommands:
+                    LOG.debug("Supplied an existing, valid subcommand: " +
+                              first_command)
+
+                    # Consider only the given command as an available one.
+                    subcommands = [first_command]
+
+            for subcommand in subcommands:
+                LOG.debug("Creating arg parser for subcommand " + subcommand)
+
+                try:
+                    # Even though command verbs and nouns are joined by a
+                    # hyphen, the Python files contain underscores.
+                    command_file = os.path.join(libcc_path,
+                                                subcommand.replace('-', '_') +
+                                                ".py")
+
+                    # Load the module's source code, located under
+                    # libcodechecker/sub_command.py.
+                    # We can't use find_module() and load_module() here as both
+                    # a file AND a package exists with the same name, and
+                    # find_module() would find
+                    # libcodechecker/sub_command/__init__.py first.
+                    # Thus, manual source-code reading is required.
+                    # NOTE: load_source() loads the compiled .pyc, if such
+                    # exists.
+                    command_module = imp.load_source(subcommand, command_file)
+
+                    # Now that the module is loaded, construct an
+                    # ArgumentParser for it.
+                    sc_parser = subparsers.add_parser(
+                        subcommand, **command_module.get_argparser_ctor_args())
+
+                    command_module.add_arguments_to_parser(sc_parser)
+
+                except (IOError, ImportError):
+                    LOG.warning("Couldn't import module for subcommand '" +
+                                subcommand + "'... ignoring.")
+                    import traceback
+                    traceback.print_exc(file=sys.stdout)
+
         args = parser.parse_args()
-        LoggerFactory.set_log_level(args.verbose)
+        if 'verbose' in args:
+            LoggerFactory.set_log_level(args.verbose)
         args.func(args)
 
     except KeyboardInterrupt as kb_err:
@@ -568,4 +596,15 @@ if __name__ == "__main__":
     LOG.debug(sys.executable)
     LOG.debug(os.environ.get('LD_LIBRARY_PATH'))
 
-    main()
+    # Load the available CodeChecker subcommands.
+    # This list is generated dynamically by scripts/build_package.py, and is
+    # always meant to be available alongside the CodeChecker.py.
+    commands_cfg = os.path.join(os.path.dirname(__file__), "commands.json")
+
+    with open(commands_cfg) as cfg_file:
+        commands = json.load(cfg_file)
+
+    LOG.debug("Available CodeChecker subcommands: ")
+    LOG.debug(commands)
+
+    main(commands)

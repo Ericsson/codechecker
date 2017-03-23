@@ -232,21 +232,6 @@ def handle_server(args):
             raise
 
 
-def handle_log(args):
-    """
-    Generates a build log by running the original build command.
-    No analysis is done.
-    """
-    args.logfile = os.path.realpath(args.logfile)
-    if os.path.exists(args.logfile):
-        os.remove(args.logfile)
-
-    context = generic_package_context.get_context()
-    build_manager.perform_build_command(args.logfile,
-                                        args.command,
-                                        context)
-
-
 def handle_debug(args):
     """
     Runs a debug command on the buildactions where the analysis
