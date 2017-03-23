@@ -124,8 +124,8 @@ function (declare, dom, style, on, query, Memory, Observable, topic, entities,
       points.forEach(function (bubble) { --bubble.startCol; });
 
       that.addBubbles(bubbles);
-      that.addLines(points);
       that.addOtherFileBubbles(reportDetails.executionPath);
+      that.addLines(points);
     },
 
     addBubbles : function (bubbles) {
