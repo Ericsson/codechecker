@@ -8,6 +8,7 @@
 Supported analyzer types.
 """
 import os
+import platform
 import re
 import sys
 
@@ -18,6 +19,7 @@ from libcodechecker.analyze.analyzers import analyzer_clang_tidy
 from libcodechecker.analyze.analyzers import analyzer_clangsa
 from libcodechecker.analyze.analyzers import config_handler_clang_tidy
 from libcodechecker.analyze.analyzers import config_handler_clangsa
+from libcodechecker.analyze.analyzers import result_handler_base
 from libcodechecker.analyze.analyzers import result_handler_clang_tidy
 from libcodechecker.analyze.analyzers import result_handler_plist_to_db
 from libcodechecker.analyze.analyzers import result_handler_plist_to_stdout
@@ -177,12 +179,19 @@ def construct_analyzer(buildaction,
 def initialize_checkers(config_handler,
                         checkers,
                         default_checkers=None,
-                        cmdline_checkers=None):
+                        cmdline_checkers=None,
+                        enable_all=False):
+    """
+    Initializes the checker list for the specified config handler based
+    on the given defaults, commandline arguments and analyzer-retriever
+    checker list.
+    """
+
     # By default disable all checkers.
     for checker_name, description in checkers:
         config_handler.add_checker(checker_name, False, description)
 
-    # Set default enabled or disabled checkers.
+    # Set default enabled or disabled checkers, retrieved from a config file.
     if default_checkers:
         for checker in default_checkers:
             for checker_name, enabled in checker.items():
@@ -190,6 +199,21 @@ def initialize_checkers(config_handler,
                     config_handler.enable_checker(checker_name)
                 else:
                     config_handler.disable_checker(checker_name)
+
+    # If enable_all is given, almost all checkers should be enabled.
+    if enable_all:
+        for checker_name, enabled in checkers:
+            if not checker_name.startswith("alpha.") and \
+                    not checker_name.startswith("debug.") and \
+                    not checker_name.startswith("osx."):
+                # There are a few exceptions, though, which still need to
+                # be manually enabled by the user: alpha and debug.
+                config_handler.enable_checker(checker_name)
+
+            if checker_name.startswith("osx.") and \
+                    platform.system() == 'Darwin':
+                # OSX checkers are only enable-all'd if we are on OSX.
+                config_handler.enable_checker(checker_name)
 
     # Set user defined enabled or disabled checkers from the command line.
     if cmdline_checkers:
@@ -243,7 +267,7 @@ def __build_clangsa_config_handler(args, context):
 
     checkers = analyzer.get_analyzer_checkers(config_handler, check_env)
 
-    # Read clang-tidy checkers from the config file.
+    # Read clang-sa checkers from the config file.
     clang_sa_checkers = context.default_checkers_config.get(CLANG_SA +
                                                             '_checkers')
     try:
@@ -256,7 +280,8 @@ def __build_clangsa_config_handler(args, context):
     initialize_checkers(config_handler,
                         checkers,
                         clang_sa_checkers,
-                        cmdline_checkers)
+                        cmdline_checkers,
+                        'enable_all' in args and args.enable_all)
 
     return config_handler
 
@@ -305,7 +330,8 @@ def __build_clang_tidy_config_handler(args, context):
     initialize_checkers(config_handler,
                         checkers,
                         clang_tidy_checkers,
-                        cmdline_checkers)
+                        cmdline_checkers,
+                        'enable_all' in args and args.enable_all)
 
     return config_handler
 
@@ -386,6 +412,27 @@ def construct_result_handler(args,
                 buildaction,
                 report_output,
                 lock)
+
+    res_handler.severity_map = severity_map
+    res_handler.skiplist_handler = skiplist_handler
+    return res_handler
+
+
+def construct_result_callback(buildaction,
+                              report_output,
+                              severity_map,
+                              skiplist_handler):
+    """
+    Construct an empty (base) ResultHandler which is capable of returning
+    analyzer worker statuses to the caller method, but does not provide
+    actual parsing and processing of results.
+    """
+
+    assert buildaction.analyzer_type in supported_analyzers, \
+        'Analyzer types should have been checked already.'
+
+    res_handler = result_handler_base.ResultHandler(buildaction,
+                                                    report_output)
 
     res_handler.severity_map = severity_map
     res_handler.skiplist_handler = skiplist_handler

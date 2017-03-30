@@ -112,6 +112,7 @@ def add_database_arguments(parser):
                         help='Database user name.')
 
 
+# TODO: Superseded by libcodechecker/analyze.py
 def add_analyzer_arguments(parser):
     """
     Analyzer related arguments.
