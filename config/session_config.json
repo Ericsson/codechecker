@@ -8,9 +8,7 @@
     "logins_until_cleanup" : 30,
     "method_dictionary": {
       "enabled" : false,
-      "auths" : [
-        "global:admin", "test:test"
-      ]
+      "auths" : []
     },
     "method_ldap": {
       "enabled" : false,

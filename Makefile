@@ -38,14 +38,18 @@ package: build_dir gen-docs thrift
 	fi
 
 travis:
-	# travis specific changes
+	# Make TravisCI specific changes.
 	scripts/change_clang_version.py $(CURRENT_DIR)
+
+clean_travis:
+	# Clean CodeChecker config files stored in the users home directory.
+	rm -rf ~/.codechecker*
 
 build_dir:
 	mkdir -p $(BUILD_DIR)
 
 venv:
-	# virtual environment to run the package
+	# Create a virtual environment which can be used to run the build package.
 	virtualenv -p python2 venv && \
 		$(ACTIVATE_RUNTIME_VENV) && pip install -r .ci/basic_python_requirements
 
@@ -53,7 +57,7 @@ clean_venv:
 	rm -rf venv
 
 venv_dev:
-	# virtual environment for development
+	# Create a virtual environment for development.
 	virtualenv -p python2 venv_dev && \
 		$(ACTIVATE_DEV_VENV) && pip install -r .ci/python_requirements && \
 		pip install -r tests/requirements.txt
