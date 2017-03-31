@@ -93,6 +93,13 @@ function (declare, topic, domConstruct, Dialog, DropDownMenu, MenuItem,
     }));
 
     menuItems.addChild(new MenuItem({
+      label : 'Report a bug here',
+      onClick : function () {
+        window.open('https://github.com/Ericsson/codechecker/issues/new', '_blank');
+      }
+    }));
+
+    menuItems.addChild(new MenuItem({
       label : 'Credits',
       onClick : function () { credits.show(); }
     }));
