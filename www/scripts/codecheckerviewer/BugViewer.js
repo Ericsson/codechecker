@@ -709,7 +709,7 @@ function (declare, dom, style, on, query, Memory, Observable, topic, entities,
           innerHTML : '<b>Are you sure to unsuppress this bug?</b><br>' +
             'You can also use command line for unsuppression:<br>' +
             '<tt>CodeChecker cmd suppress -x ' +
-            ' --bughash ' + that.reportData.bugHash +
+            ' --bugid ' + that.reportData.bugHash +
             ' -n ' + that.runData.name +
             ' --file ' + getProperFilePath(that.reportData.checkedFile) +
             ' -p ' + location.port +
@@ -729,7 +729,7 @@ function (declare, dom, style, on, query, Memory, Observable, topic, entities,
         suppressDialog.set('content', dom.create('div', {
           innerHTML : 'You can also use command line for suppression:<br>' +
             '<tt>CodeChecker cmd suppress ' +
-            ' --bughash ' + that.reportData.bugHash +
+            ' --bugid ' + that.reportData.bugHash +
             ' -n ' + that.runData.name +
             ' -c &lt;comment&gt;' +
             ' --file ' + getProperFilePath(that.reportData.checkedFile) +

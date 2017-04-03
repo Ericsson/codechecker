@@ -64,6 +64,8 @@ def construct_report_filter(report_filters):
         if report_filter.severity is not None:
             # severity value can be 0
             AND.append(Report.severity == report_filter.severity)
+        if report_filter.bugHash:
+            AND.append(Report.bug_id == report_filter.bugHash)
         if report_filter.suppressed:
             AND.append(Report.suppressed == true())
         else:

@@ -19,7 +19,6 @@ from thrift.transport import TTransport
 
 import shared
 from DBThriftAPI import CheckerReport
-from DBThriftAPI.ttypes import SuppressBugData
 
 from libcodechecker import suppress_file_handler
 from libcodechecker.logger import LoggerFactory
