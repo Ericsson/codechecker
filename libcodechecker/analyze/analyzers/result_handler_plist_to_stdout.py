@@ -32,6 +32,7 @@ class PlistToStdout(ResultHandler):
         self.__print_steps = False
         self.__output = sys.stdout
         self.__lock = lock
+        self.suppress_handler = None
 
     @property
     def print_steps(self):
@@ -89,6 +90,11 @@ class PlistToStdout(ResultHandler):
             if self.skiplist_handler and \
                     self.skiplist_handler.should_skip(f_path):
                 LOG.debug(report + ' is skipped (in ' + f_path + ")")
+                continue
+
+            if self.suppress_handler and \
+                    self.suppress_handler.get_suppressed(report):
+                LOG.debug(report + " is suppressed by suppress file.")
                 continue
 
             last_report_event = report.bug_path[-1]

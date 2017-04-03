@@ -167,7 +167,7 @@ def handle_server(args):
         os.makedirs(workspace)
 
     suppress_handler = generic_package_suppress_handler.\
-        GenericSuppressHandler()
+        GenericSuppressHandler(None)
     if args.suppress is None:
         LOG.warning('No suppress file was given, suppressed results will '
                     'be only stored in the database.')

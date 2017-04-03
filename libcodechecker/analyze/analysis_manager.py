@@ -213,7 +213,7 @@ def check(check_data):
 
             # The result handler for analysis is an empty result handler
             # which only returns metadata, but can't process the results.
-            rh = analyzer_types.construct_result_callback(action,
+            rh = analyzer_types.construct_analyze_handler(action,
                                                           output_dir,
                                                           context.severity_map,
                                                           skip_handler)
@@ -227,6 +227,8 @@ def check(check_data):
                     LOG.debug_analyzer('\n' + rh.analyzer_stdout)
                 if rh.analyzer_stderr != '':
                     LOG.debug_analyzer('\n' + rh.analyzer_stderr)
+                rh.postprocess_result()
+                rh.handle_results()
 
                 LOG.info("[%d/%d] %s analyzed %s successfully." %
                          (progress_checked_num.value, progress_actions.value,

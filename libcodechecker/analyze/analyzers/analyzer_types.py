@@ -371,6 +371,63 @@ def build_config_handlers(args, context, enabled_analyzers, connection=None):
     return analyzer_config_map
 
 
+def construct_analyze_handler(buildaction,
+                              report_output,
+                              severity_map,
+                              skiplist_handler):
+    """
+    Construct an empty (base) ResultHandler which is capable of returning
+    analyzer worker statuses to the caller method, but does not provide
+    actual parsing and processing of results, instead only saves the analysis
+    results.
+    """
+
+    assert buildaction.analyzer_type in supported_analyzers, \
+        'Analyzer types should have been checked already.'
+
+    if buildaction.analyzer_type == CLANG_SA:
+        res_handler = result_handler_base.ResultHandler(buildaction,
+                                                        report_output)
+
+    elif buildaction.analyzer_type == CLANG_TIDY:
+        res_handler = result_handler_clang_tidy.ClangTidyPlistToFile(
+            buildaction, report_output)
+
+    res_handler.severity_map = severity_map
+    res_handler.skiplist_handler = skiplist_handler
+    return res_handler
+
+
+def construct_parse_handler(buildaction,
+                            output,
+                            severity_map,
+                            suppress_handler,
+                            print_steps):
+    """
+    Construct a result handler for parsing results in a human-readable format.
+    """
+    assert buildaction.analyzer_type in supported_analyzers, \
+        'Analyzer types should have been checked already.'
+
+    if buildaction.analyzer_type == CLANG_SA:
+        res_handler = result_handler_plist_to_stdout.PlistToStdout(
+            buildaction,
+            output,
+            None)
+        res_handler.print_steps = print_steps
+
+    elif buildaction.analyzer_type == CLANG_TIDY:
+        res_handler = result_handler_clang_tidy.ClangTidyPlistToStdout(
+            buildaction,
+            output,
+            None)
+
+    res_handler.severity_map = severity_map
+    res_handler.suppress_handler = suppress_handler
+    return res_handler
+
+
+# TODO: This is deprecated.
 def construct_result_handler(args,
                              buildaction,
                              run_id,
@@ -412,27 +469,6 @@ def construct_result_handler(args,
                 buildaction,
                 report_output,
                 lock)
-
-    res_handler.severity_map = severity_map
-    res_handler.skiplist_handler = skiplist_handler
-    return res_handler
-
-
-def construct_result_callback(buildaction,
-                              report_output,
-                              severity_map,
-                              skiplist_handler):
-    """
-    Construct an empty (base) ResultHandler which is capable of returning
-    analyzer worker statuses to the caller method, but does not provide
-    actual parsing and processing of results.
-    """
-
-    assert buildaction.analyzer_type in supported_analyzers, \
-        'Analyzer types should have been checked already.'
-
-    res_handler = result_handler_base.ResultHandler(buildaction,
-                                                    report_output)
 
     res_handler.severity_map = severity_map
     res_handler.skiplist_handler = skiplist_handler
