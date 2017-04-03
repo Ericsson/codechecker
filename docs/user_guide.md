@@ -1,6 +1,4 @@
-# CodeChecker Userguide
-
-## CodeChecker usage
+# CodeChecker
 
 First of all, you have to setup the environment for CodeChecker.
 Codechecker server uses SQLite database (by default) to store the results which is also packed into the package.
@@ -52,30 +50,48 @@ CodeChecker server -w ~/workspace
 ~~~~~~~~~~~~~~~~~~~~~
 
 
-## Default configuration:
+## Default configuration
 
 Used ports:
-* 5432 - PostgreSQL
-* 8001 - CodeChecker result viewer
+* `5432` - PostgreSQL
+* `8001` - CodeChecker result viewer
 
-## 1. log mode:
+## 1. `log` mode
 
-Just build your project and create a log file but do not invoke the source code analysis.
+The first step in performing an analysis on your project is to record
+information about the files in your project for the analyzers. This is done by
+recording a build of your project, which is done by the command `CodeChecker
+log`.
 
 ~~~~~~~~~~~~~~~~~~~~~
-$CodeChecker log --help
 usage: CodeChecker log [-h] -o LOGFILE -b COMMAND
+                       [--verbose {info,debug,debug_analyzer}]
+
+Runs the given build command and records the executed compilation steps. These
+steps are written to the output file in a JSON format. Available build logger
+tool that will be used is '...'.
 
 optional arguments:
   -h, --help            show this help message and exit
   -o LOGFILE, --output LOGFILE
-                        Path to the log file.
+                        Path of the file to write the collected compilation
+                        commands to. If the file already exists, it will be
+                        overwritten.
   -b COMMAND, --build COMMAND
-                        Build command.
+                        The build command to execute. Build commands can be
+                        simple calls to 'g++' or 'clang++' or 'make', but a
+                        more complex command, or the call of a custom script
+                        file is also supported.
+  --verbose {info,debug,debug_analyzer}
+                        Set verbosity level. (default: info)
 ~~~~~~~~~~~~~~~~~~~~~
 
+Please note, that only the files that are used in the given `--build` argument
+will be recorded. To analyze your whole project, make sure your build tree has
+been cleaned before `log`ging.
+
 You can change the compilers that should be logged.
-Set CC_LOGGER_GCC_LIKE environment variable to a colon separated list.
+Set `CC_LOGGER_GCC_LIKE` environment variable to a colon separated list.
 For example (default):
 
 ~~~~~~~~~~~~~~~~~~~~~
@@ -87,9 +103,6 @@ Example:
 ~~~~~~~~~~~~~~~~~~~~~
 CodeChecker log -o ../codechecker_myProject_build.log -b "make -j2"
 ~~~~~~~~~~~~~~~~~~~~~
-
-Note:
-In case you want to analyze your whole project, do not forget to clean your build tree before logging.
 
 ## 2. check mode:
 
