@@ -65,7 +65,17 @@ venv_dev:
 clean_venv_dev:
 	rm -rf venv_dev
 
-clean:
+clean: clean_package clean_vendor
+
+clean_package:
 	rm -rf $(BUILD_DIR)
 	rm -rf gen-docs
 
+clean_vendor:
+	rm -rf vendor/codemirror
+	rm -rf vendor/dojotoolkit
+	rm -rf vendor/fonts
+	rm -rf vendor/highlightjs
+	rm -rf vendor/jsplumb
+	rm -rf vendor/marked
+	rm -rf vendor/thrift
