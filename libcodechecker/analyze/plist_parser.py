@@ -3,109 +3,100 @@
 #   This file is distributed under the University of Illinois Open Source
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
-""""""
-
-# FIXME: This file contains some workarounds.
-# Remove them as soon as a proper clang version comes out.
+"""
+Parse the plist output of an analyzer and convert it to a report for
+further processing.
+"""
 
 import plistlib
+import traceback
 from xml.parsers.expat import ExpatError
 
 from libcodechecker.analyze import plist_helper
 from libcodechecker.logger import LoggerFactory
 
+from libcodechecker.report import BugPath
+from libcodechecker.report import DiagSection
+from libcodechecker.report import Position
+from libcodechecker.report import Range
+from libcodechecker.report import Report
+
 LOG = LoggerFactory.get_new_logger('PLIST_PARSER')
 
 
-class GenericEquality(object):
-
-    def __eq__(self, other):
-        return (isinstance(other, self.__class__) and
-                self.__dict__ == other.__dict__)
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
-
-
-# -----------------------------------------------------------------------------
-class Position(GenericEquality):
-
-    """Represent a postion."""
-
-    def __init__(self, x, y, f):
-        self.line = x
-        self.col = y
-        self.file_path = f
-
-
-# -----------------------------------------------------------------------------
-class Range(GenericEquality):
-
-    """Represent a location in the bug path."""
-
-    def __init__(self, start_pos, end_pos, msg=''):
-        self.start_pos = start_pos
-        self.end_pos = end_pos
-        self.msg = msg
-
-
-# -----------------------------------------------------------------------------
 def make_position(pos_map, files):
     return Position(pos_map.line, pos_map.col, files[pos_map.file])
 
 
-# -----------------------------------------------------------------------------
-def make_range(array, files):
-    if len(array) == 2:
-        start = make_position(array[0], files)
-        end = make_position(array[1], files)
-        return Range(start, end)
+def __handle_control(item, files):
+    """
+    Builds a list of DiagSections for a control section.
+    """
+    ctrl_diag_sections = []
+    for edge in item['edges']:
+        control = DiagSection('control')
+
+        start_edge = edge['start']
+        end_edge = edge['end']
+
+        # Edge element has start range.
+        start_pos_s = make_position(start_edge[0], files)
+        start_pos_e = make_position(start_edge[1], files)
+        start_range = Range(start_pos_s, start_pos_e)
+
+        # Edge element has end range.
+        end_pos_s = make_position(end_edge[0], files)
+        end_pos_e = make_position(end_edge[1], files)
+        end_range = Range(end_pos_s, end_pos_e)
+
+        control.start_range = start_range
+        control.end_range = end_range
+        ctrl_diag_sections.append(control)
+
+    return ctrl_diag_sections
 
 
-# -----------------------------------------------------------------------------
-class Bug(object):
+def __handle_event(item, files):
+    """
+    Builds a DiagSection for an event section.
+    """
+    message = item['message']
 
-    """The bug with all information, it include bugpath too."""
+    event = DiagSection('event', message)
 
-    def __init__(self, file, from_pos, until_pos=None, msg=None, category=None,
-                 type=None, hash_value=''):
-        self.file_path = file
-        self.msg = msg
-        self._paths = []
-        self._events = []
-        self.hash_value = hash_value
+    # Every event should have a location.
+    item_loc = item['location']
+    if item_loc:
+        location = make_position(item['location'],
+                                 files)
+        event.location = location
 
-        if not until_pos:
-            until_pos = from_pos
+    # Events might have ranges but it is optional.
+    ranges = item.get('ranges')
+    if ranges:
+        start = make_position(ranges[0][0], files)
+        start_range = Range(start)
 
-        (self.from_line, self.from_col) = from_pos
-        (self.until_line, self.until_col) = until_pos
+        end = make_position(ranges[0][1], files)
+        end_range = Range(end)
 
-    def paths(self):
-        return self._paths
+        event.start_range = start_range
+        event.end_range = end_range
 
-    def events(self):
-        return self._events
+    # An event migth have an extended message.
+    event.extended_msg = item.get('extended_message', '')
 
-    def add_to_path(self, new_range):
-        self._paths.append(new_range)
-
-    def add_to_events(self, new_range):
-        self._events.append(new_range)
-
-    def get_last_path(self):
-        return self._paths[-1] if len(self._paths) > 0 else None
-
-    def get_last_event(self):
-        return self._events[-1] if len(self._events) > 0 else None
+    return event
 
 
-# -----------------------------------------------------------------------------
 def parse_plist(path):
     """
-    Parse the plist file.
+    Parse the reports from a plist file.
+    One plist file can contain multiple reports.
     """
-    bugs = []
+    LOG.debug("Parsing plist: " + path)
+
+    reports = []
     files = []
     try:
         plist = plistlib.readPlist(path)
@@ -113,60 +104,65 @@ def parse_plist(path):
         files = plist['files']
 
         for diag in plist['diagnostics']:
-            current = Bug(files[diag['location']['file']],
-                          (diag['location']['line'], diag['location']['col']))
 
-            for item in diag['path']:
-                if item['kind'] == 'event':
-                    message = item['message']
-                    if 'ranges' in item:
-                        for arr in item['ranges']:
-                            source_range = make_range(arr, files)
-                            source_range.msg = message
-                            current.add_to_events(source_range)
-                    else:
-                        location = make_position(item['location'], files)
-                        source_range = Range(location, location, message)
-                        source_range.msg = message
-                        current.add_to_events(source_range)
-
-                elif item['kind'] == 'control':
-                    for edge in item['edges']:
-                        start = make_range(edge.start, files)
-                        end = make_range(edge.end, files)
-
-                        if start != current.get_last_path():
-                            current.add_to_path(start)
-
-                        current.add_to_path(end)
-
-            current.msg = diag['description']
-            current.category = diag['category']
-            current.type = diag['type']
-
-            try:
-                current.checker_name = diag['check_name']
-            except KeyError as kerr:
+            message = diag['description']
+            checker_name = diag.get('check_name')
+            if not checker_name:
                 LOG.debug("Check name wasn't found in the plist file. "
                           "Read the user guide!")
-                current.checker_name = plist_helper.get_check_name(current.msg)
-                LOG.debug('Guessed check name: ' + current.checker_name)
+                checker_name = plist_helper.get_check_name(message)
+                LOG.debug('Guessed check name: ' + checker_name)
 
-            try:
-                current.hash_value = \
-                    diag['issue_hash_content_of_line_in_context']
-            except KeyError as kerr:
-                # Hash was not found.
-                # Generate some hash for older clang versions.
-                LOG.debug(kerr)
-                LOG.debug("Hash value wasn't found in the plist file. "
-                          "Read the user guide!")
-                current.hash_value = plist_helper.gen_bug_hash(current)
+            hash_value = diag.get('issue_hash_content_of_line_in_context')
 
-            bugs.append(current)
+            new_report = Report(checker_name,
+                                hash_value,
+                                diag['category'],
+                                diag['type'])
+
+            # Set the main diagnostic section used at the listing of reports.
+            start_pos = Position(line=diag['location']['line'],
+                                 col=diag['location']['col'],
+                                 filepath=files[diag['location']['file']])
+
+            main_section = DiagSection(kind="main", msg=message)
+            main_range = Range(start_pos)
+            main_section.start_range = main_range
+            main_section.end_range = main_range
+
+            new_report.main_section = main_section
+
+            # Build a bug path from the DiagSections.
+            # NOTE: the order of the elements matter!
+            bug_path_items = []
+            for item in diag['path']:
+                # Only event and control items are added to the path.
+                if item['kind'] == 'event':
+                    event = __handle_event(item, files)
+                    bug_path_items.append(event)
+
+                elif item['kind'] == 'control':
+                    ctrl_sections = __handle_control(item, files)
+                    for cs in ctrl_sections:
+                        bug_path_items.append(cs)
+                else:
+                    LOG.warning('Not supported item kind "' + item['kind'] +
+                                '" found during plist parsing.')
+
+            new_report.set_path(BugPath(bug_path_items))
+
+            reports.append(new_report)
 
     except ExpatError as err:
-        LOG.debug('Failed to process plist file: ' + path)
-        LOG.debug(err)
+        LOG.error('Failed to process plist file: ' + path +
+                  ' wrong file format?')
+        LOG.error(err)
+    except AttributeError as ex:
+        LOG.error('Failed to get important report data from plist.')
+        LOG.error(ex)
+    except Exception as ex:
+        LOG.error('Error during processing reports from the plist file: ' +
+                  path)
+        LOG.error(ex)
     finally:
-        return files, bugs
+        return files, reports

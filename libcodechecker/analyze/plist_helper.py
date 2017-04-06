@@ -19,21 +19,6 @@ from libcodechecker.logger import LoggerFactory
 LOG = LoggerFactory.get_new_logger('PLIST_HELPER')
 
 
-def gen_bug_hash(bug):
-    line_content = linecache.getline(bug.file_path, bug.from_line)
-    if line_content == '' and not os.path.isfile(bug.file_path):
-        LOG.debug('%s does not exists!' % bug.file_path)
-
-    file_name = os.path.basename(bug.file_path)
-    l = [file_name, bug.checker_name, bug.msg, line_content,
-         str(bug.from_col), str(bug.until_col)]
-    for p in bug.paths():
-        l.append(str(p.start_pos.col))
-        l.append(str(p.end_pos.col))
-    string_to_hash = '|||'.join(l)
-    return hashlib.md5(string_to_hash.encode()).hexdigest()
-
-
 def levenshtein(a, b):  # http://hetland.org/coding/python/levenshtein.py
     """"Calculates the Levenshtein distance between a and b."""
     n, m = len(a), len(b)

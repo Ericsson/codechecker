@@ -44,36 +44,36 @@ class PlistParserTestCaseNose(unittest.TestCase):
 
     def __core_div_bug_event(self, bug_event):
         """Check the core.dividezero checker last event position."""
-        self.assertEqual(bug_event.start_pos.line, 7)
-        self.assertEqual(bug_event.start_pos.col, 12)
-        self.assertEqual(bug_event.start_pos.file_path, './test.h')
-        self.assertEqual(bug_event.end_pos.line, 7)
-        self.assertEqual(bug_event.end_pos.col, 17)
-        self.assertEqual(bug_event.end_pos.file_path, './test.h')
+        self.assertEqual(bug_event.start_range.end.line, 7)
+        self.assertEqual(bug_event.start_range.end.col, 12)
+        self.assertEqual(bug_event.start_range.end.file_path, './test.h')
+        self.assertEqual(bug_event.end_range.end.line, 7)
+        self.assertEqual(bug_event.end_range.end.col, 17)
+        self.assertEqual(bug_event.end_range.end.file_path, './test.h')
 
     def __core_stack_addr_esc_event(self, bug_event):
         """Check the core.StackAddressEscape checker last event position."""
-        self.assertEqual(bug_event.start_pos.line, 14)
-        self.assertEqual(bug_event.start_pos.col, 3)
-        self.assertEqual(bug_event.start_pos.file_path, 'test.cpp')
-        self.assertEqual(bug_event.end_pos.line, 14)
-        self.assertEqual(bug_event.end_pos.col, 29)
-        self.assertEqual(bug_event.end_pos.file_path, 'test.cpp')
+        self.assertEqual(bug_event.start_range.end.line, 14)
+        self.assertEqual(bug_event.start_range.end.col, 3)
+        self.assertEqual(bug_event.start_range.end.file_path, 'test.cpp')
+        self.assertEqual(bug_event.end_range.end.line, 14)
+        self.assertEqual(bug_event.end_range.end.col, 29)
+        self.assertEqual(bug_event.end_range.end.file_path, 'test.cpp')
 
     def test_empty_file(self):
         """Plist file is empty."""
         empty_plist = os.path.join(self.__plist_test_files, 'empty_file')
-        files, bugs = plist_parser.parse_plist(empty_plist)
+        files, reports = plist_parser.parse_plist(empty_plist)
         self.assertEquals(files, [])
-        self.assertEquals(bugs, [])
+        self.assertEquals(reports, [])
 
     def test_no_bug_file(self):
         """There was no bug in the checked file."""
         no_bug_plist = os.path.join(
             self.__plist_test_files, 'clang-3.7-noerror.plist')
-        files, bugs = plist_parser.parse_plist(no_bug_plist)
+        files, reports = plist_parser.parse_plist(no_bug_plist)
         self.assertEquals(files, [])
-        self.assertEquals(bugs, [])
+        self.assertEquals(reports, [])
 
     def test_clang34_plist(self):
         """
@@ -82,20 +82,20 @@ class PlistParserTestCaseNose(unittest.TestCase):
         """
         clang34_plist = os.path.join(
             self.__plist_test_files, 'clang-3.4.plist')
-        files, bugs = plist_parser.parse_plist(clang34_plist)
+        files, reports = plist_parser.parse_plist(clang34_plist)
         self.assertEquals(files, self.__found_file_names)
-        self.assertEquals(len(bugs), 3)
+        self.assertEquals(len(reports), 3)
 
         valid_checker_names = []
         valid_checker_names.extend(self.__found_checker_names)
         valid_checker_names.extend(self.__not_found_checker_names)
 
-        for bug in bugs:
+        for bug in reports:
             self.assertIn(bug.checker_name, valid_checker_names)
             if bug.checker_name == 'core.DivideZero':
-                self.__core_div_bug_event(bug.get_last_event())
+                self.__core_div_bug_event(bug.obsolate_main_section)
             if bug.checker_name == 'NOT FOUND':
-                self.__core_stack_addr_esc_event(bug.get_last_event())
+                self.__core_stack_addr_esc_event(bug.obsolate_main_section)
 
             self.assertIn(bug.hash_value, self.__framework_generated_hashes)
 
@@ -106,20 +106,20 @@ class PlistParserTestCaseNose(unittest.TestCase):
         """
         clang35_plist = os.path.join(
             self.__plist_test_files, 'clang-3.5.plist')
-        files, bugs = plist_parser.parse_plist(clang35_plist)
+        files, reports = plist_parser.parse_plist(clang35_plist)
         self.assertEquals(files, self.__found_file_names)
-        self.assertEquals(len(bugs), 3)
+        self.assertEquals(len(reports), 3)
 
         valid_checker_names = []
         valid_checker_names.extend(self.__found_checker_names)
         valid_checker_names.extend(self.__not_found_checker_names)
 
-        for bug in bugs:
+        for bug in reports:
             self.assertIn(bug.checker_name, valid_checker_names)
             if bug.checker_name == 'core.DivideZero':
-                self.__core_div_bug_event(bug.get_last_event())
+                self.__core_div_bug_event(bug.obsolate_main_section)
             if bug.checker_name == 'NOT FOUND':
-                self.__core_stack_addr_esc_event(bug.get_last_event())
+                self.__core_stack_addr_esc_event(bug.obsolate_main_section)
 
             self.assertIn(bug.hash_value, self.__framework_generated_hashes)
 
@@ -130,20 +130,20 @@ class PlistParserTestCaseNose(unittest.TestCase):
         """
         clang36_plist = os.path.join(
             self.__plist_test_files, 'clang-3.6.plist')
-        files, bugs = plist_parser.parse_plist(clang36_plist)
+        files, reports = plist_parser.parse_plist(clang36_plist)
         self.assertEquals(files, self.__found_file_names)
-        self.assertEquals(len(bugs), 3)
+        self.assertEquals(len(reports), 3)
 
         valid_checker_names = []
         valid_checker_names.extend(self.__found_checker_names)
         valid_checker_names.extend(self.__not_found_checker_names)
 
-        for bug in bugs:
+        for bug in reports:
             self.assertIn(bug.checker_name, valid_checker_names)
             if bug.checker_name == 'core.DivideZero':
-                self.__core_div_bug_event(bug.get_last_event())
+                self.__core_div_bug_event(bug.obsolate_main_section)
             if bug.checker_name == 'NOT FOUND':
-                self.__core_stack_addr_esc_event(bug.get_last_event())
+                self.__core_stack_addr_esc_event(bug.obsolate_main_section)
 
             self.assertIn(bug.hash_value, self.__framework_generated_hashes)
 
@@ -154,24 +154,24 @@ class PlistParserTestCaseNose(unittest.TestCase):
         """
         clang37_plist = os.path.join(
             self.__plist_test_files, 'clang-3.7.plist')
-        files, bugs = plist_parser.parse_plist(clang37_plist)
+        files, reports = plist_parser.parse_plist(clang37_plist)
 
         self.assertEquals(files, self.__found_file_names)
-        self.assertEquals(len(bugs), 3)
+        self.assertEquals(len(reports), 3)
 
         valid_checker_names = []
         valid_checker_names.extend(self.__found_checker_names)
 
-        for bug in bugs:
+        for bug in reports:
             # Checker name should be in the plist file.
             self.assertNotEqual(bug.checker_name, 'NOT FOUND')
 
             self.assertIn(bug.checker_name, valid_checker_names)
 
             if bug.checker_name == 'core.DivideZero':
-                self.__core_div_bug_event(bug.get_last_event())
+                self.__core_div_bug_event(bug.obsolate_main_section)
             if bug.checker_name == 'core.StackAddressEscape':
-                self.__core_stack_addr_esc_event(bug.get_last_event())
+                self.__core_stack_addr_esc_event(bug.obsolate_main_section)
 
             self.assertNotEquals(bug.hash_value, '')
 
@@ -182,26 +182,26 @@ class PlistParserTestCaseNose(unittest.TestCase):
         """
         clang38_plist = os.path.join(
             self.__plist_test_files, 'clang-3.8-trunk.plist')
-        files, bugs = plist_parser.parse_plist(clang38_plist)
+        files, reports = plist_parser.parse_plist(clang38_plist)
 
         self.assertEquals(files, self.__found_file_names)
-        self.assertEquals(len(bugs), 3)
+        self.assertEquals(len(reports), 3)
 
         valid_checker_names = []
         valid_checker_names.extend(self.__found_checker_names)
 
-        for bug in bugs:
+        for bug in reports:
             # Checker name should be in the plist file.
             self.assertNotEqual(bug.checker_name, 'NOT FOUND')
 
             self.assertIn(bug.checker_name, valid_checker_names)
 
             if bug.checker_name == 'core.DivideZero':
-                self.__core_div_bug_event(bug.get_last_event())
+                self.__core_div_bug_event(bug.obsolate_main_section)
                 self.assertEquals(
                     bug.hash_value, '79e31a6ba028f0b7d9779faf4a6cb9cf')
             if bug.checker_name == 'core.StackAddressEscape':
-                self.__core_stack_addr_esc_event(bug.get_last_event())
+                self.__core_stack_addr_esc_event(bug.obsolate_main_section)
                 self.assertEquals(
                     bug.hash_value, 'f7b5072d428e890f2d309217f3ead16f')
             if bug.checker_name == 'deadcode.DeadStores':

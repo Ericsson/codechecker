@@ -69,8 +69,7 @@ class QuickCheckTestCase(unittest.TestCase):
                 if line.startswith(skip_version_after):
                     skipline = True
 
-            print("Test file path: " + path)
-
+            print("Test output file: " + path)
             self.assertEqual(''.join(post_processed_output), correct_output)
             return 0
         except CalledProcessError as cerr:
