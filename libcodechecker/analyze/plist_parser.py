@@ -3,109 +3,136 @@
 #   This file is distributed under the University of Illinois Open Source
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
-""""""
+"""
+Parse the plist output of an analyzer and convert it to a report for
+further processing.
 
-# FIXME: This file contains some workarounds.
-# Remove them as soon as a proper clang version comes out.
+With the newer clang releases more information is available in the plist files.
 
+* Before Clang v3.7:
+  - Checker name is misssing (tried to detect based on the description)
+  - Report hash is not avilable (generated based on the report path elemens
+    see report handling and plist parsing modules for more details.
+
+* Clang v3.7:
+  - Checker name is available in the plist
+  - Report hash is still missing (hash is generated as before)
+
+* After Clang v3.8:
+  - Checker name is available
+  - Report hash is available
+
+* Clang-tidy:
+  - No plist format is provided in the available releases (v3.9 and before)
+  - Checker name can be parsed from the output
+  - Report hash is generated based on the report path elements the same way as
+    for Clang versions before v3.7
+
+"""
+
+import json
+import os
 import plistlib
+import re
+import sys
+import traceback
 from xml.parsers.expat import ExpatError
 
-from libcodechecker.analyze import plist_helper
 from libcodechecker.logger import LoggerFactory
+
+from libcodechecker.report import Report
+from libcodechecker.report import generate_report_hash
 
 LOG = LoggerFactory.get_new_logger('PLIST_PARSER')
 
 
-class GenericEquality(object):
+def levenshtein(a, b):  # http://hetland.org/coding/python/levenshtein.py
+    """"Calculates the Levenshtein distance between a and b."""
+    n, m = len(a), len(b)
+    if n > m:
+        # Make sure n <= m, to use O(min(n,m)) space.
+        a, b = b, a
+        n, m = m, n
 
-    def __eq__(self, other):
-        return (isinstance(other, self.__class__) and
-                self.__dict__ == other.__dict__)
+    current = range(n+1)
+    for i in range(1, m+1):
+        previous, current = current, [i]+[0]*n
+        for j in range(1, n+1):
+            add, delete = previous[j]+1, current[j-1]+1
+            change = previous[j-1]
+            if a[j-1] != b[i-1]:
+                change = change + 1
+            current[j] = min(add, delete, change)
 
-    def __ne__(self, other):
-        return not self.__eq__(other)
-
-
-# -----------------------------------------------------------------------------
-class Position(GenericEquality):
-
-    """Represent a postion."""
-
-    def __init__(self, x, y, f):
-        self.line = x
-        self.col = y
-        self.file_path = f
-
-
-# -----------------------------------------------------------------------------
-class Range(GenericEquality):
-
-    """Represent a location in the bug path."""
-
-    def __init__(self, start_pos, end_pos, msg=''):
-        self.start_pos = start_pos
-        self.end_pos = end_pos
-        self.msg = msg
+    return current[n]
 
 
-# -----------------------------------------------------------------------------
-def make_position(pos_map, files):
-    return Position(pos_map.line, pos_map.col, files[pos_map.file])
+def checker_name_from_description(current_msg):
+    """
+    Try to find out the checker name based on the description
+    provided by a checker.
+    """
+
+    # Clean message from variable and class name.
+    clean_msg = re.sub(r"'.*?'", '', current_msg)
+
+    closest_msg = ''
+    min_dist = len(clean_msg) // 4
+
+    message_map_path = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)),
+        'checker_message_map.json')
+
+    checker_message_map = {}
+    with open(message_map_path) as map_file:
+        checker_message_map = json.load(map_file)
+
+    for msg in checker_message_map.keys():
+        tmp_dist = levenshtein(clean_msg, msg)
+        if tmp_dist < min_dist:
+            closest_msg = msg
+            min_dist = tmp_dist
+
+    return checker_message_map[closest_msg]
 
 
-# -----------------------------------------------------------------------------
-def make_range(array, files):
-    if len(array) == 2:
-        start = make_position(array[0], files)
-        end = make_position(array[1], files)
-        return Range(start, end)
+def get_checker_name(diagnostic):
+    """
+    Check if checker name is available in the report.
+    Checker name was not available in older clang versions before 3.7.
+    """
+    checker_name = diagnostic.get('check_name')
+    if not checker_name:
+        LOG.debug("Check name wasn't found in the plist file. "
+                  "Read the user guide!")
+        desc = diagnostic.get('description', '')
+        checker_name = checker_name_from_description(desc)
+        LOG.debug('Guessed check name: ' + checker_name)
+    return checker_name
 
 
-# -----------------------------------------------------------------------------
-class Bug(object):
+def get_report_hash(diagnostic, files):
+    """
+    Check if checker name is available in the report.
+    Checker hash was not available in older clang versions before 3.8.
+    """
 
-    """The bug with all information, it include bugpath too."""
-
-    def __init__(self, file, from_pos, until_pos=None, msg=None, category=None,
-                 type=None, hash_value=''):
-        self.file_path = file
-        self.msg = msg
-        self._paths = []
-        self._events = []
-        self.hash_value = hash_value
-
-        if not until_pos:
-            until_pos = from_pos
-
-        (self.from_line, self.from_col) = from_pos
-        (self.until_line, self.until_col) = until_pos
-
-    def paths(self):
-        return self._paths
-
-    def events(self):
-        return self._events
-
-    def add_to_path(self, new_range):
-        self._paths.append(new_range)
-
-    def add_to_events(self, new_range):
-        self._events.append(new_range)
-
-    def get_last_path(self):
-        return self._paths[-1] if len(self._paths) > 0 else None
-
-    def get_last_event(self):
-        return self._events[-1] if len(self._events) > 0 else None
+    report_hash = diagnostic.get('issue_hash_content_of_line_in_context')
+    if not report_hash:
+        # Generate hash value if it is missing from the report.
+        report_hash = generate_report_hash(diagnostic['path'], files,
+                                           get_checker_name(diagnostic))
+    return report_hash
 
 
-# -----------------------------------------------------------------------------
 def parse_plist(path):
     """
-    Parse the plist file.
+    Parse the reports from a plist file.
+    One plist file can contain multiple reports.
     """
-    bugs = []
+    LOG.debug("Parsing plist: " + path)
+
+    reports = []
     files = []
     try:
         plist = plistlib.readPlist(path)
@@ -113,60 +140,48 @@ def parse_plist(path):
         files = plist['files']
 
         for diag in plist['diagnostics']:
-            current = Bug(files[diag['location']['file']],
-                          (diag['location']['line'], diag['location']['col']))
 
-            for item in diag['path']:
-                if item['kind'] == 'event':
-                    message = item['message']
-                    if 'ranges' in item:
-                        for arr in item['ranges']:
-                            source_range = make_range(arr, files)
-                            source_range.msg = message
-                            current.add_to_events(source_range)
-                    else:
-                        location = make_position(item['location'], files)
-                        source_range = Range(location, location, message)
-                        source_range.msg = message
-                        current.add_to_events(source_range)
+            available_keys = diag.keys()
 
-                elif item['kind'] == 'control':
-                    for edge in item['edges']:
-                        start = make_range(edge.start, files)
-                        end = make_range(edge.end, files)
+            main_section = {}
+            for key in available_keys:
+                # Skip path it is handled separately.
+                if key != 'path':
+                    main_section.update({key: diag[key]})
 
-                        if start != current.get_last_path():
-                            current.add_to_path(start)
+            # We need to extend information for plist files generated
+            # by older clang version (before 3.7).
+            main_section['check_name'] = get_checker_name(diag)
 
-                        current.add_to_path(end)
+            # We need to extend information for plist files generated
+            # by older clang version (before 3.8).
+            main_section['issue_hash_content_of_line_in_context'] = \
+                get_report_hash(diag, files)
 
-            current.msg = diag['description']
-            current.category = diag['category']
-            current.type = diag['type']
+            bug_path_items = [item for item in diag['path']]
 
-            try:
-                current.checker_name = diag['check_name']
-            except KeyError as kerr:
-                LOG.debug("Check name wasn't found in the plist file. "
-                          "Read the user guide!")
-                current.checker_name = plist_helper.get_check_name(current.msg)
-                LOG.debug('Guessed check name: ' + current.checker_name)
-
-            try:
-                current.hash_value = \
-                    diag['issue_hash_content_of_line_in_context']
-            except KeyError as kerr:
-                # Hash was not found.
-                # Generate some hash for older clang versions.
-                LOG.debug(kerr)
-                LOG.debug("Hash value wasn't found in the plist file. "
-                          "Read the user guide!")
-                current.hash_value = plist_helper.gen_bug_hash(current)
-
-            bugs.append(current)
+            report = Report(main_section, bug_path_items)
+            reports.append(report)
 
     except ExpatError as err:
-        LOG.debug('Failed to process plist file: ' + path)
-        LOG.debug(err)
+        LOG.error('Failed to process plist file: ' + path +
+                  ' wrong file format?')
+        LOG.error(err)
+    except AttributeError as ex:
+        LOG.error('Failed to get important report data from plist.')
+        LOG.error(ex)
+    except IndexError as iex:
+        LOG.error('Indexing error during processing plist file ' +
+                  path)
+        LOG.error(type(iex))
+        LOG.error(repr(iex))
+        exc_type, exc_value, exc_traceback = sys.exc_info()
+        traceback.print_tb(exc_traceback, limit=1, file=sys.stdout)
+    except Exception as ex:
+        LOG.error('Error during processing reports from the plist file: ' +
+                  path)
+        traceback.print_exc()
+        LOG.error(type(ex))
+        LOG.error(ex)
     finally:
-        return files, bugs
+        return files, reports

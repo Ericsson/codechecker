@@ -48,60 +48,77 @@ class PlistToStdout(ResultHandler):
         self.__print_steps = value
 
     @staticmethod
-    def __format_location(event):
-        pos = event.start_pos
-        line = linecache.getline(pos.file_path, pos.line)
+    def __format_location(event, source_file):
+        loc = event['location']
+        line = linecache.getline(source_file, loc['line'])
         if line == '':
             return line
 
-        marker_line = line[0:(pos.col - 1)]
+        marker_line = line[0:(loc['col'] - 1)]
         marker_line = ' ' * (len(marker_line) + marker_line.count('\t'))
         return '%s%s^' % (line.replace('\t', '  '), marker_line)
 
     @staticmethod
-    def __format_bug_event(name, event):
-        pos = event.start_pos
-        fname = os.path.basename(pos.file_path)
+    def __format_bug_event(name, event, source_file):
+
+        loc = event['location']
+        fname = os.path.basename(source_file)
         if name:
-            return '%s:%d:%d: %s [%s]' % (fname, pos.line, pos.col, event.msg,
+            return '%s:%d:%d: %s [%s]' % (fname,
+                                          loc['line'],
+                                          loc['col'],
+                                          event['message'],
                                           name)
         else:
-            return '%s:%d:%d: %s' % (fname, pos.line, pos.col, event.msg)
+            return '%s:%d:%d: %s' % (fname,
+                                     loc['line'],
+                                     loc['col'],
+                                     event['message'])
 
-    def __print_bugs(self, bugs):
+    def __print_bugs(self, reports, files):
 
-        report_num = len(bugs)
+        report_num = len(reports)
         if report_num > 0:
-            index_format = '    %%%dd, ' % int(
-                math.floor(math.log10(report_num)) + 1)
+            index_format = '    %%%dd, ' % \
+                    int(math.floor(math.log10(report_num)) + 1)
 
         non_suppressed = 0
-        for bug in bugs:
-            last_event = bug.get_last_event()
-
+        for report in reports:
+            events = [i for i in report.bug_path if i.get('kind') == 'event']
+            f_path = files[events[-1]['location']['file']]
             if self.skiplist_handler and \
-                self.skiplist_handler.should_skip(
-                    last_event.start_pos.file_path):
-                    LOG.debug(bug.hash_value + ' is skipped (in ' +
-                              last_event.start_pos.file_path + ")")
-                    continue
+                    self.skiplist_handler.should_skip(f_path):
+                LOG.debug(report + ' is skipped (in ' + f_path + ")")
+                continue
 
-            sp_handler = suppress_handler.SourceSuppressHandler(bug)
+            last_report_event = report.bug_path[-1]
+            source_file = files[last_report_event['location']['file']]
+            report_line = last_report_event['location']['line']
+            report_hash = report.main['issue_hash_content_of_line_in_context']
+            checker_name = report.main['check_name']
+            sp_handler = suppress_handler.SourceSuppressHandler(source_file,
+                                                                report_line,
+                                                                report_hash,
+                                                                checker_name)
 
             # Check for suppress comment.
             if sp_handler.get_suppressed():
                 continue
 
-            self.__output.write(self.__format_bug_event(bug.checker_name,
-                                                        last_event))
+            self.__output.write(self.__format_bug_event(checker_name,
+                                                        last_report_event,
+                                                        source_file))
             self.__output.write('\n')
-            self.__output.write(self.__format_location(last_event))
+            self.__output.write(self.__format_location(last_report_event,
+                                                       source_file))
             self.__output.write('\n')
             if self.__print_steps:
                 self.__output.write('  Steps:\n')
-                for index, event in enumerate(bug.events()):
+                for index, event in enumerate(events):
                     self.__output.write(index_format % (index + 1))
-                    self.__output.write(self.__format_bug_event(None, event))
+                    source_file = files[event['location']['file']]
+                    self.__output.write(self.__format_bug_event(None, event,
+                                                                source_file))
                     self.__output.write('\n')
             self.__output.write('\n')
 
@@ -121,7 +138,7 @@ class PlistToStdout(ResultHandler):
         plist = self.analyzer_result_file
 
         try:
-            _, bugs = plist_parser.parse_plist(plist)
+            files, reports = plist_parser.parse_plist(plist)
         except Exception as ex:
             LOG.error('The generated plist is not valid!')
             LOG.error(ex)
@@ -133,7 +150,7 @@ class PlistToStdout(ResultHandler):
             try:
                 # No lock when consuming plist.
                 self.__lock.acquire() if self.__lock else None
-                self.__print_bugs(bugs)
+                self.__print_bugs(reports, files)
             finally:
                 self.__lock.release() if self.__lock else None
         else:

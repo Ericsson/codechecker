@@ -53,23 +53,20 @@ class SuppressHandler(object):
 
 class SourceSuppressHandler(object):
     """
-    Handle bug suppression in the source.
+    Handle report suppression in the source.
     """
 
     suppress_marker = 'codechecker_suppress'
 
-    def __init__(self, bug):
+    def __init__(self, source_file, report_line, report_hash, checker_name):
         """
         Source line number indexing starts at 1.
         """
-        source_file = bug.file_path
-        last_bug_event = bug.events()[-1]
-        bug_line = last_bug_event.start_pos.line
 
         self.__source_file = source_file
-        self.__bug_line = bug_line
-        self.__hash_value = bug.hash_value
-        self.__checker_name = bug.checker_name
+        self.__bug_line = report_line
+        self.__hash_value = report_hash
+        self.__checker_name = checker_name
         self.__suppressed_checkers = []
         self.__suppress_comment = None
 
