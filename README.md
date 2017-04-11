@@ -140,29 +140,24 @@ cd ..
 Check your first project
 ------------------------
 
-### Testing and configuring LLVM/Clang availability
+### Configuring Clang version
 
 _Clang_ and/or _Clang-Tidy_ must be available on your system before you can
-run analysis on a test project. The binaries are usually named `clang` or
-`clang-3.8` (and `clang-tidy` or `clang-tidy-3.8`, respectively), but this
-depends on your Linux distribution.
+run analysis on a project. CodeChecker automatically detects and uses the
+latest available version in your `PATH`.
 
-
-    which clang-3.8
-    which clang-tidy-3.8
-
-
-If `clang` or `clang-tidy` is not an available command, you must configure the
-installed CodeChecker package to use the appropriate binaries for analysis.
-Edit the configuration file
+If you wish to use a custom `clang` or `clang-tidy` binary, e.g. because you
+intend to use a specific version or a specific build, you need to configure
+the installed CodeChecker package to use the appropriate binaries. Please edit
+the configuration file
 `~/codechecker/build/CodeChecker/config/package_layout.json`. In the
 `runtime/analyzers` section, you must set the values, as shown below, to the
-clang binaries available in your `PATH`.
+binaries you intend to use.
 
 ~~~{.json}
 "analyzers" : {
-  "clangsa" : "clang-3.8",
-  "clang-tidy" : "clang-tidy-3.8"
+  "clangsa" : "/path/to/clang/bin/clang-4.0",
+  "clang-tidy" : "/path/to/clang/bin/clang-tidy-3.8"
 },
 ~~~
 

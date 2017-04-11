@@ -13,6 +13,7 @@ import hashlib
 import ntpath
 import os
 import psutil
+import re
 import shutil
 import socket
 import subprocess
@@ -157,6 +158,26 @@ def remove_dir(path):
         LOG.warning('Failed to remove directory %s.' % path)
 
     shutil.rmtree(path, onerror=error_handler)
+
+
+def find_by_regex_in_envpath(pattern, environment):
+    """
+    Searches for files matching the pattern string in the environment's PATH.
+    """
+
+    regex = re.compile(pattern)
+
+    binaries = {}
+    for path in environment['PATH'].split(os.pathsep):
+        _, _, filenames = next(os.walk(path), ([], [], []))
+        for f in filenames:
+            if re.match(regex, f):
+                if binaries.get(f) is None:
+                    binaries[f] = [os.path.join(path, f)]
+                else:
+                    binaries[f].append(os.path.join(path, f))
+
+    return binaries
 
 
 def call_command(command, env=None):

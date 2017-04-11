@@ -60,6 +60,5 @@ addons:
 
 script:
     - make clean_travis
-    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then make travis; fi
     - make test
     - make clean_travis

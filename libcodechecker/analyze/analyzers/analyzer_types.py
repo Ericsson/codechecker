@@ -65,7 +65,14 @@ def is_tidy_checker_name(checker_name):
 
 def check_supported_analyzers(analyzers, context):
     """
-    Check if the selected analyzers are supported.
+    Checks the given analyzers in the current context for their executability
+    and support in CodeChecker.
+
+    This method also updates the given context.analyzer_binaries if the
+    context's configuration is bogus but had been resolved.
+
+    :return: (enabled, failed) where enabled is a list of analyzer names
+     and failed is a list of (analyzer, reason) tuple.
     """
 
     check_env = analyzer_env.get_check_env(context.path_env_extra,
@@ -86,9 +93,37 @@ def check_supported_analyzers(analyzers, context):
         if not analyzer_bin:
             LOG.warning('Failed to detect analyzer binary ' + analyzer_name)
             available_analyzer = False
-        elif not host_check.check_clang(analyzer_bin, check_env):
+        elif not os.path.isabs(analyzer_bin):
+            # If the analyzer is not in an absolute path, try to find it...
+            if analyzer_name == CLANG_SA:
+                found_bin = analyzer_clangsa.ClangSA.\
+                    resolve_missing_binary(analyzer_bin, check_env)
+            elif analyzer_name == CLANG_TIDY:
+                found_bin = analyzer_clang_tidy.ClangTidy.\
+                    resolve_missing_binary(analyzer_bin, check_env)
+
+            # found_bin is an absolute path, an executable in one of the
+            # PATH folders.
+            # If found_bin is the same as the original binary, ie., normally
+            # calling the binary without any search would have resulted in
+            # the same binary being called, it's NOT a "not found".
+            if found_bin and os.path.basename(found_bin) != analyzer_bin:
+                LOG.debug("Configured binary '{0}' for analyzer '{1}' was "
+                          "not found, but environment PATH contains '{2}'."
+                          .format(analyzer_bin, analyzer_name, found_bin))
+                context.analyzer_binaries[analyzer_name] = found_bin
+
+            if not found_bin or \
+                    not host_check.check_clang(found_bin, check_env):
+                # If analyzer_bin is not False here, the resolver found one.
+                LOG.warning('Failed to run analyzer ' + analyzer_name + ' !')
+                available_analyzer = False
+        elif host_check.check_clang(analyzer_bin, check_env):
+            # Analyzers unavailable under absolute paths are deliberately a
+            # configuration problem.
             LOG.warning('Failed to run analyzer ' + analyzer_name + ' !')
             available_analyzer = False
+
         if available_analyzer:
             enabled_analyzers.add(analyzer_name)
 

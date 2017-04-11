@@ -4,12 +4,14 @@
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
 
+import os
 import re
 import shlex
 import subprocess
 
 from libcodechecker.analyze.analyzers import analyzer_base
 from libcodechecker.logger import LoggerFactory
+from libcodechecker.util import find_by_regex_in_envpath
 
 LOG = LoggerFactory.get_new_logger('CLANGSA')
 
@@ -151,3 +153,34 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         except Exception as ex:
             LOG.error(ex)
             return []
+
+    @classmethod
+    def resolve_missing_binary(cls, configured_binary, env):
+        """
+        In case of the configured binary for the analyzer is not found in the
+        PATH, this method is used to find a callable binary.
+        """
+
+        LOG.debug(configured_binary + " not found in path for ClangSA!")
+
+        if os.path.isabs(configured_binary):
+            # Do not autoresolve if the path is an absolute path as there
+            # is nothing we could auto-resolve that way.
+            return False
+
+        # clang, clang-5.0, clang++, clang++-5.1, ...
+        binaries = find_by_regex_in_envpath(
+            r'^clang(\+\+)?(-\d+(\.\d+){0,2})?$', env)
+
+        if len(binaries) == 0:
+            return False
+        elif len(binaries) == 1:
+            # Return the first found (earliest in PATH) binary for the only
+            # found binary name group.
+            return binaries.values()[0][0]
+        else:
+            # Select the "newest" available clang version if there are multiple
+            keys = list(binaries.keys())
+            keys.sort()
+            files = binaries[keys[-1]]
+            return files[-1]

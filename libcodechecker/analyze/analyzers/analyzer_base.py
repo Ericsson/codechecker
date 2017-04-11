@@ -61,6 +61,14 @@ class SourceAnalyzer(object):
         """
         pass
 
+    @classmethod
+    def resolve_missing_binary(cls, configured_binary, env):
+        """
+        In case of the configured binary for the analyzer is not found in the
+        PATH, this method is used to find a callable binary.
+        """
+        pass
+
     def analyze(self, res_handler, env=None):
         """
         Run the analyzer.

@@ -37,14 +37,6 @@ package: build_dir gen-docs thrift
 		./scripts/build_package.py -r $(ROOT) -o $(BUILD_DIR) -b $(BUILD_DIR); \
 	fi
 
-travis:
-	# Make TravisCI specific changes.
-	scripts/change_clang_version.py $(CURRENT_DIR)
-
-clean_travis:
-	# Clean CodeChecker config files stored in the users home directory.
-	rm -rf ~/.codechecker*
-
 build_dir:
 	mkdir -p $(BUILD_DIR)
 
