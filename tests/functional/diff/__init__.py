@@ -42,7 +42,9 @@ def setup_package():
 
     os.environ['TEST_WORKSPACE'] = TEST_WORKSPACE
 
-    test_project_path = project.path()
+    test_project = 'cpp'
+
+    test_project_path = project.path(test_project)
 
     clang_version = env.clang_to_test()
 
@@ -50,7 +52,7 @@ def setup_package():
 
     test_config = {}
 
-    project_info = project.get_info(project.path())
+    project_info = project.get_info(test_project)
 
     test_config['test_project'] = project_info
 
@@ -76,7 +78,7 @@ def setup_package():
 
     test_config['codechecker_cfg'] = codechecker_cfg
 
-    ret = project.clean(test_project_path, test_env)
+    ret = project.clean(test_project, test_env)
     if ret:
         sys.exit(ret)
 
@@ -93,7 +95,7 @@ def setup_package():
         print("Waiting for PotgreSQL to stop.")
         codechecker.wait_for_postgres_shutdown(TEST_WORKSPACE)
 
-    ret = project.clean(test_project_path, test_env)
+    ret = project.clean(test_project, test_env)
     if ret:
         sys.exit(ret)
 

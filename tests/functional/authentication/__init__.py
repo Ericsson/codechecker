@@ -77,7 +77,7 @@ def setup_package():
 
     os.environ['TEST_WORKSPACE'] = TEST_WORKSPACE
 
-    test_project_path = project.path()
+    test_project = 'cpp'
 
     clang_version = env.clang_to_test()
 
@@ -85,7 +85,7 @@ def setup_package():
 
     test_config = {}
 
-    project_info = project.get_info(project.path())
+    project_info = project.get_info(test_project)
 
     test_config['test_project'] = project_info
 
