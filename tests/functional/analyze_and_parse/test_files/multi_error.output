@@ -1,0 +1,24 @@
+NORMAL#CodeChecker log --output $LOGFILE$ --build "make multi_error" --quiet-build
+NORMAL#CodeChecker analyze $LOGFILE$ --output $OUTPUT$ --analyzers clangsa
+NORMAL#CodeChecker parse $OUTPUT$
+QUICKCHECK#CodeChecker quickcheck --build "make multi_error" --quiet-build --analyzers clangsa
+-----------------------------------------------
+[] - Starting build ...
+[] - Build finished successfully.
+[] - Starting static analysis ...
+[] - [1/1] clangsa analyzed multi_error.cpp successfully.
+[] - ----==== Summary ====----
+[] - Total compilation commands: 1
+[] - Successfully analyzed
+[] -   clangsa: 1
+[] - ----=================----
+multi_error.cpp:3:3: Address of stack memory associated with local variable 'x' returned to caller [core.StackAddressEscape]
+  return &x;
+  ^
+
+multi_error.cpp:9:3: Value stored to 'y' is never read [deadcode.DeadStores]
+  y = 7;
+  ^
+
+clangsa found 2 defect(s) while analyzing
+

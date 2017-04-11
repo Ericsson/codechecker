@@ -68,7 +68,7 @@ def add_arguments_to_parser(parser):
                         help="Specify the format the analysis results were "
                              "created as.")
 
-    parser.add_argument('-u', '--suppress',
+    parser.add_argument('--suppress',
                         type=str,
                         dest="suppress",
                         default=argparse.SUPPRESS,

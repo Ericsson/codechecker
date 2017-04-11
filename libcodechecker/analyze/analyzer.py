@@ -125,7 +125,7 @@ def run_check(args, actions, context):
 
     versions = __get_analyzer_version(context, analyzer_config_map)
     for analyzer, version in versions.iteritems():
-        LOG.info("Using analyzer: " + analyzer + "\n\nVersion:\n" + version)
+        LOG.info("Using analyzer:\n" + analyzer + "\n\nversion:\n" + version)
 
     LOG.info("Static analysis is starting ...")
     start_time = time.time()
@@ -164,7 +164,7 @@ def run_quick_check(args,
 
     versions = __get_analyzer_version(context, analyzer_config_map)
     for analyzer, version in versions.iteritems():
-        LOG.info("Using analyzer: " + analyzer + "\n\nVersion:\n" + version)
+        LOG.info("Using analyzer:\n" + analyzer + "\n\nversion:\n" + version)
 
     LOG.info("Static analysis is starting ...")
 
@@ -203,7 +203,7 @@ def perform_analysis(args, context, actions, metadata):
             metadata['checkers'][analyzer].append(check)
 
     # Run analysis.
-    LOG.info("Starting static analysis...")
+    LOG.info("Starting static analysis ...")
     start_time = time.time()
 
     analysis_manager.start_workers(actions, context, config_map,

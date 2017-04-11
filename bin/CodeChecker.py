@@ -318,59 +318,7 @@ Build command which is used to build the project.''')
         check_parser.set_defaults(func=arg_handler.handle_check)
 
         # --------------------------------------
-        # QuickCheck commands.
-        qcheck_parser = subparsers.add_parser('quickcheck',
-                                              formatter_class=ADHF,
-                                              help='Run CodeChecker for a '
-                                                   'project without database.')
-        old_subcommands.append('quickcheck')
-
-        qcheckgroup = qcheck_parser.add_mutually_exclusive_group(required=True)
-
-        qcheckgroup.add_argument('-b', '--build', type=str, dest="command",
-                                 default=argparse.SUPPRESS,
-                                 required=False, help='Build command.')
-
-        qcheckgroup.add_argument('-l', '--log', type=str, dest="logfile",
-                                 required=False,
-                                 default=argparse.SUPPRESS,
-                                 help=log_argument_help_msg)
-
-        qcheck_parser.add_argument('-s', '--steps', action="store_true",
-                                   dest="print_steps", help='Print steps.')
-
-        qcheck_parser.add_argument('--quiet-build',
-                                   action='store_true',
-                                   default=False,
-                                   required=False,
-                                   help='Do not print out the output of the '
-                                        'original build.')
-        qcheck_parser.add_argument('-i', '--skip', type=str, dest="skipfile",
-                                   default=argparse.SUPPRESS,
-                                   required=False, help='Path to skip file.')
-        qcheck_parser.add_argument('-j', '--jobs', type=int, dest="jobs",
-                                   default=1, required=False,
-                                   help=jobs_help_msg)
-        qcheck_parser.add_argument('-u', '--suppress', type=str,
-                                   dest="suppress",
-                                   default=argparse.SUPPRESS,
-                                   required=False,
-                                   help=suppress_help_msg)
-        qcheck_parser.add_argument('--add-compiler-defaults',
-                                   action='store_true',
-                                   default=False,
-                                   required=False,
-                                   help='Fetch built in compiler include paths'
-                                        ' and defines and pass them to Clang. '
-                                        'This is useful when you'
-                                        'do cross-compilation.')
-        add_analyzer_arguments(qcheck_parser)
-        logger.add_verbose_arguments(qcheck_parser)
-        qcheck_parser.set_defaults(func=arg_handler.handle_quickcheck)
-
-        # --------------------------------------
         # Checkers parser.
-        # TODO: Supersede by libcodechecker/checkers.py.
         checker_p = subparsers.add_parser('checkers',
                                           formatter_class=ADHF,
                                           help='List the available checkers '
@@ -582,6 +530,7 @@ Build command which is used to build the project.''')
                     continue
 
                 LOG.debug("Creating arg parser for subcommand " + subcommand)
+
                 try:
                     # Even though command verbs and nouns are joined by a
                     # hyphen, the Python files contain underscores.

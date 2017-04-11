@@ -56,6 +56,102 @@ Used ports:
 * `5432` - PostgreSQL
 * `8001` - CodeChecker result viewer
 
+# Easy analysis wrappers
+
+CodeChecker provides, along with the more fine-tuneable commands, some easy
+out-of-the-box invocations to ensure the most user-friendly operation. These
+two modes are called **quickcheck** and **check**.
+
+## Quickcheck
+
+It is possible to easily analyse the project for defects without keeping the
+temporary analysis files and without using any database to store the reports
+in, but instead printing the found issues to the standard output.
+
+To analyse your project by doing a build and reporting every found issue in the
+built files, execute
+
+~~~~~~~~~~~~~~~~~~~~~
+CodeChecker quickcheck --build "make"
+~~~~~~~~~~~~~~~~~~~~~
+
+Please make sure your build command actually compiles (builds) the source
+files you intend to analyse, as CodeChecker only analyzes files that had been
+used by the build system.
+
+If you have an already existing JSON Compilation Commands file, you can also
+supply it to `quickcheck`:
+
+~~~~~~~~~~~~~~~~~~~~~
+CodeChecker quickcheck --logfile ./my-build.json
+~~~~~~~~~~~~~~~~~~~~~
+
+By default, only the report's main messages are printed. To print the
+individual steps the analysers took in discovering the issue, specify
+`--steps`.
+
+`quickcheck` is a wrapper over the following calls:
+
+ * If `--build` is specified, the build is executed as if `CodeChecker log`
+   were invoked.
+ * The resulting logfile, or a `--logfile` specified is used for `CodeChecker
+   analyze`
+ * The analysis results are feeded for `CodeChecker parse`.
+
+After the results has been printed to the standard output, the temporary files
+used for the analysis are cleaned up.
+
+Please see the individual help for `log`, `analyze` and `parse` (below in this
+_User guide_) for information about the arguments of `quickcheck`.
+
+~~~~~~~~~~~~~~~~~~~~~
+usage: CodeChecker quickcheck [-h] [-q] (-b COMMAND | -l LOGFILE)
+                              [-j JOBS] [-i SKIPFILE]
+                              [--analyzers ANALYZER [ANALYZER ...]]
+                              [--add-compiler-defaults]
+                              [--saargs CLANGSA_ARGS_CFG_FILE]
+                              [--tidyargs TIDY_ARGS_CFG_FILE]
+                              [-e checker/checker-group]
+                              [-d checker/checker-group] [-u SUPPRESS] [-s]
+                              [--verbose {info,debug,debug_analyzer}]
+
+Run analysis for a project with printing results immediately on the standard
+output. Quickcheck only needs a build command or an already existing logfile
+and performs every step of doing the analysis in batch.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --verbose {info,debug,debug_analyzer}
+                        Set verbosity level. (default: info)
+
+log arguments:
+
+  -q, --quiet-build
+  -b COMMAND, --build COMMAND
+  -l LOGFILE, --logfile LOGFILE
+
+analyzer arguments:
+
+  -j JOBS, --jobs JOBS
+  -i SKIPFILE, --skip SKIPFILE
+  --analyzers ANALYZER [ANALYZER ...]
+  --add-compiler-defaults
+  --saargs CLANGSA_ARGS_CFG_FILE
+  --tidyargs TIDY_ARGS_CFG_FILE
+
+checker configuration:
+
+  -e checker/checker-group, --enable checker/checker-group
+  -d checker/checker-group, --disable checker/checker-group
+
+output arguments:
+
+  -u SUPPRESS, --suppress SUPPRESS
+  -s, --steps, --print-steps
+~~~~~~~~~~~~~~~~~~~~~
+
+# Available CodeChecker commands
+
 ## 1. `log` mode
 
 The first step in performing an analysis on your project is to record
@@ -209,81 +305,6 @@ optional arguments:
                         Set verbosity level. (default: info)
 ~~~~~~~~~~~~~~~~~~~~~
 
-CodeChecker is able to handle several analyzer tools. Currently CodeChecker
-supports Clang Static Analyzer and Clang Tidy. `CodeChecker checkers`
-command lists all checkers from each analyzers. These can be switched on and off
-by `-e` and `-d` flags. Furthermore `--analyzers` specifies which
-analyzer tool should be used (both by default). The tools are completely
-independent, so either can be omitted if not present as these are provided by
-different binaries.
-
-#### Include paths and compiler defines detection (cross compilation)
-
-Some of the include paths are hardcoded during compiler build. If a (cross) compiler
-is used to build a project it is possible that the wrong include paths are searched
-and the wrong headers will be included which causes the analysis to fail.
-These hardcoded include paths and defines can be automatically detected
-with the `--add-compiler-defaults` flag used at the check command.
-
-CodeChecker will get the hardcoded values for the compilers set in the
-`CC_LOGGER_GCC_LIKE` environment variable.
-
-~~~~~~~~~~~~~~~~~~~~~
-export CC_LOGGER_GCC_LIKE="gcc:g++:clang"
-~~~~~~~~~~~~~~~~~~~~~
-
-If there are still compilaton errors after using the `--add-compiler-defaults` flag
-it is possible that the wrong build target architecture (32bit, 64bit) is used. Please try to forward these compilation flags to the analyzers:
-- `-m32` (32bit build)
-- `-m64` (64bit build)
-
-See the Forward compiler options section how to do this.
-
-#### Forward compiler options
-
-These options can modify the compilation actions logged by the build logger or
-created by cmake (exporting compile commands). The extra compiler options can be
-given in config files which are provided by the flags described below.
-
-The config files can contain placeholders in `$(ENV_VAR)` format. If the
-`ENV_VAR` environment variable is set then the placeholder is replaced to its
-value. Otherwise an error message is logged saying that the variable is not set,
-and in this case an empty string is inserted in the place of the placeholder.
-
-##### Clang Static Analyzer
-
-Use the `--saargs` argument to a file which contains compilation options.
-
-
-    CodeChecker check --saargs extra_compile_flags -n myProject -b "make -j4"
-
-
-Where the extra_compile_flags file contains additional compilation options.
-
-Config file example:
-
-~~~~
--I~/include/for/analysis -I$(MY_LIB)/include -DDEBUG
-~~~~
-
-where `MY_LIB` is the path of a library code.
-
-##### Clang-tidy
-
-Use the `--tidyargs` argument to a file which contains compilation options.
-
-    CodeChecker check --tidyargs extra_tidy_compile_flags -n myProject -b "make -j4"
-
-Where the extra_compile_flags file contains additional compilation flags.
-Clang tidy requires a different format to add compilation options.
-Compilation options can be added before ( `-extra-arg-before=<string>` ) and
-after (`-extra-arg=<string>`) the original compilation options.
-
-Config file example:
-
-    -extra-arg-before='-I~/include/for/analysis' -extra-arg-before='-I~/other/include/for/analysis/' -extra-arg-before='-I$(MY_LIB)/include' -extra-arg='-DDEBUG'
-
-where `MY_LIB` is the path of a library code.
 
 ### Using SQLite for database:
 
@@ -336,59 +357,6 @@ void test() {
 }
 ~~~~~~~~~~~~~~~~~~~~~
 
-### Suppress file:
-
-~~~~~~~~~~~~~~~~~~~~~
--u SUPPRESS
-~~~~~~~~~~~~~~~~~~~~~
-
-Suppress file can contain bug hashes and comments.
-Suppressed bugs will not be showed in the viewer by default.
-Usually a reason to suppress a bug is a false positive result (reporting a non-existent bug). Such false positives should be reported, so we can fix the checkers.
-A comment can be added to suppressed reports that describes why that report is false positive. You should not edit suppress file by hand. The server should handle it.
-The suppress file can be checked into the source code repository.
-Bugs can be suppressed on the viewer even when suppress file was not set by command line arguments. This case the suppress will not be permanent. For this reason it is
-advised to always provide (the same) suppress file for the checks.
-
-### Skip file:
-
-~~~~~~~~~~~~~~~~~~~~~
--s SKIPFILE, --skip SKIPFILE
-~~~~~~~~~~~~~~~~~~~~~
-With a skip file you can filter which files should or shouldn't be checked.
-Each line in a skip file should start with a '-' or '+' character followed by a path glob pattern. A minus character means that if a checked file path - including the headers - matches with the pattern, the file will not be checked. The plus character means the opposite: if a file path matches with the pattern, it will be checked.
-CodeChecker reads the file from top to bottom and stops at the first matching pattern.
-
-For example:
-
-~~~~~~~~~~~~~~~~~~~~~
--/skip/all/source/in/directory*
--/do/not/check/this.file
-+/dir/check.this.file
--/dir/*
-~~~~~~~~~~~~~~~~~~~~~
-
-### Enable/Disable checkers
-
-~~~~~~~~~~~~~~~~~~~~~
--e ENABLE, --enable ENABLE
--d DISABLE, --disable DISABLE
-~~~~~~~~~~~~~~~~~~~~~
-You can enable or disable checkers or checker groups. If you want to enable more checker groups use -e multiple times. To get the actual list of checkers run ```CodeChecer checkers``` command.
-For example if you want to enable core and security checkers, but want to disable alpha checkers use
-
-~~~~~~~~~~~~~~~~~~~~~
-CodeChecker check -e core -e security -d alpha ...
-~~~~~~~~~~~~~~~~~~~~~
-
-### Multithreaded Checking
-
-~~~~~~~~~~~~~~~~~~~~~
--j JOBS, --jobs JOBS  Number of jobs.
-~~~~~~~~~~~~~~~~~~~~~
-CodeChecker will execute analysis on as many threads as specified after -j argument.
-
-
 ### Various deployment possibilities
 
 The CodeChecker server can be started separately when desired.
@@ -435,46 +403,6 @@ Start the checking as explained previously.
 
 ~~~~~~~~~~~~~~~~~~~~~
 CodeChecker check -w ~/codechecker_wp -n myProject -b "make -j 4" --dbname myProjectdb --dbaddress 192.168.1.2 --dbport 5432
-~~~~~~~~~~~~~~~~~~~~~
-
-## 3. Quick check mode:
-
-It's possible to quickly check a small project (set of files) for bugs without
-storing the results into a database. In this case only the build command is
-required and the defect list appears on the console. The defect list doesn't
-shows the bug paths by default but you can turn it on using the --steps command
-line parameter.
-
-Basic usage:
-
-~~~~~~~~~~~~~~~~~~~~~
-CodeChecker quickcheck -b 'make'
-~~~~~~~~~~~~~~~~~~~~~
-
-Enabling bug path:
-
-~~~~~~~~~~~~~~~~~~~~~
-CodeChecker quickcheck -b 'make' --steps
-~~~~~~~~~~~~~~~~~~~~~
-
-Usage:
-
-~~~~~~~~~~~~~~~~~~~~~
-usage: CodeChecker quickcheck [-h] (-b COMMAND | -l LOGFILE) [-e ENABLE]
-                                 [-d DISABLE] [-s]
-
-optional arguments:
-  -h, --help            show this help message and exit
-  -b COMMAND, --build COMMAND
-                        Build command.
-  -l LOGFILE, --log LOGFILE
-                        Path to the log file which is created during the
-                        build.
-  -e ENABLE, --enable ENABLE
-                        Enable checker.
-  -d DISABLE, --disable DISABLE
-                        Disable checker.
-  -s, --steps           Print steps.
 ~~~~~~~~~~~~~~~~~~~~~
 
 ## 4. `checkers` mode
@@ -575,6 +503,9 @@ optional arguments:
 
 A detailed view of the available analyzers is available via `--details`. In the
 *detailed view*, version string and install path is also printed.
+
+A machine-readable `csv` or `json` output can be generated by supplying the
+`--output csv` or `--output json` argument.
 
 ## 5. cmd mode:
 

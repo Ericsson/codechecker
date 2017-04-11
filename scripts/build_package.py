@@ -657,14 +657,22 @@ def build_package(repository_root, build_package_config, env=None):
             if not f.endswith(".py"):
                 # Non-py files use the environment to appear as python files,
                 # they go into the folder in PATH as they are entrypoints.
-                shutil.copy2(os.path.join(source, f), target)
-
                 if f.startswith("codechecker-"):
                     commandname = f.replace("codechecker-", "")
                     LOG.info("CodeChecker command '{0}' available.".format(
                         commandname))
 
                     available_commands.append(commandname)
+                    with open(os.path.join(source, f), 'r') as file:
+                        if file.readline().strip() ==\
+                                "# DO_NOT_INSTALL_TO_PATH":
+                            # If the file is marked not to install, do not
+                            # install it. This happens with entry points whom
+                            # should not act as "lowercase" entries, but
+                            # the subcommand exists as an available command.
+                            continue
+
+                shutil.copy2(os.path.join(source, f), target)
             else:
                 # .py files are Python code that must run in a valid env.
                 shutil.copy2(os.path.join(source, f), target_cc)

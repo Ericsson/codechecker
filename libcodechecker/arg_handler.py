@@ -320,52 +320,6 @@ def handle_check(args):
                 os.remove(log_file)
 
 
-def _do_quickcheck(args):
-    """
-    Handles the "quickcheck" command.
-
-    For arguments see main function in CodeChecker.py.
-    It also requires an extra property in args object, namely workspace which
-    is a directory path as a string.
-    This function is called from handle_quickcheck.
-    """
-
-    try:
-        context = generic_package_context.get_context()
-
-        context.codechecker_workspace = args.workspace
-        args.name = "quickcheck"
-
-        log_file, set_in_cmdline = build_manager.check_log_file(args, context)
-        actions = log_parser.parse_log(log_file,
-                                       args.add_compiler_defaults)
-        analyzer.run_quick_check(args, context, actions)
-
-    except Exception as ex:
-        LOG.error("Running quickcheck failed.")
-    finally:
-        if not args.keep_tmp:
-            if log_file and not set_in_cmdline:
-                LOG.debug('Removing temporary log file: ' + log_file)
-                os.remove(log_file)
-
-
-def handle_quickcheck(args):
-    """
-    Handles the "quickcheck" command using _do_quickcheck function.
-
-    It creates a new temporary directory and sets it as workspace directory.
-    After _do_quickcheck call it deletes the temporary directory and its
-    content.
-    """
-
-    args.workspace = tempfile.mkdtemp(prefix='codechecker-qc')
-    try:
-        _do_quickcheck(args)
-    finally:
-        shutil.rmtree(args.workspace)
-
-
 def consume_plist(item):
     plist, args, context = item
     LOG.info('Consuming ' + plist)

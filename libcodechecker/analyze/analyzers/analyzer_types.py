@@ -457,18 +457,8 @@ def construct_result_handler(args,
                 run_id)
 
     else:
-        if buildaction.analyzer_type == CLANG_SA:
-            res_handler = result_handler_plist_to_stdout.PlistToStdout(
-                buildaction,
-                report_output,
-                lock)
-            res_handler.print_steps = args.print_steps
-
-        elif buildaction.analyzer_type == CLANG_TIDY:
-            res_handler = result_handler_clang_tidy.ClangTidyPlistToStdout(
-                buildaction,
-                report_output,
-                lock)
+        assert False, 'store_to_db argument has been deprecated as ' \
+                      'quickcheck uses a different wrapper now.'
 
     res_handler.severity_map = severity_map
     res_handler.skiplist_handler = skiplist_handler

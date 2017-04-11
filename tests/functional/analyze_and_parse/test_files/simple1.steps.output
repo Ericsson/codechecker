@@ -1,0 +1,28 @@
+NORMAL#CodeChecker log --output $LOGFILE$ --build "make simple1" --quiet-build
+NORMAL#CodeChecker analyze $LOGFILE$ --output $OUTPUT$ --analyzers clangsa
+NORMAL#CodeChecker parse $OUTPUT$ --print-steps
+QUICKCHECK#CodeChecker quickcheck --build "make simple1" --quiet-build --analyzers clangsa --print-steps
+--------------------------------------------------------------------------------
+[] - Starting build ...
+[] - Build finished successfully.
+[] - Starting static analysis ...
+[] - [1/1] clangsa analyzed simple1.cpp successfully.
+[] - ----==== Summary ====----
+[] - Total compilation commands: 1
+[] - Successfully analyzed
+[] -   clangsa: 1
+[] - ----=================----
+simple1.cpp:18:15: Division by zero [core.DivideZero]
+  return 2015 / x;
+              ^
+  Steps:
+    1, simple1.cpp:16:7: Calling 'foo'
+    2, simple1.cpp:3:1: Entered call from 'main'
+    3, simple1.cpp:4:7: Assuming 'y' is <= 0
+    4, simple1.cpp:5:5: Returning zero
+    5, simple1.cpp:16:7: Returning from 'foo'
+    6, simple1.cpp:16:3: The value 0 is assigned to 'x'
+    7, simple1.cpp:18:15: Division by zero
+
+clangsa found 1 defect(s) while analyzing
+
