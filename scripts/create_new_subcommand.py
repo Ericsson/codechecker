@@ -80,10 +80,15 @@ def main():
     print("-------------------------------")
     print("Please see the file ")
     print("'" + lib_file + "'")
-    print("to add your subcommand's detailed help, argument list")
-    print("and to write the function to execute.")
+    print("to add your subcommand's argument list, detailed help,")
+    print("and to write the main() of the subcommand.")
     print("")
     print("Please rebuild CodeChecker to make sure your command is available.")
+    print("Also please make sure you add the following paths to version "
+          "control:")
+    print("  * " + entryfile)
+    print("  * " + lib_file)
+    print("  * " + os.path.join(lib_dir, lib_name))
 
 if __name__ == "__main__":
     main()

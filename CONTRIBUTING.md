@@ -1,3 +1,15 @@
+Issue report guidelines
+=======================
+Please insert every possible information you can obtain that could help us
+reproduce and triage your issue. This usually includes:
+
+ * The relevant parts from CodeChecker's output.
+ * The version number of CodeChecker &ndash; execute
+   `CodeChecker version --verbose debug` and copy the value for `Git tag info`.
+ * What you were trying to do.
+ * What behaviour was expected instead of what happened.
+
+
 Contribution guidelines
 =======================
 
@@ -5,10 +17,11 @@ Python style
 ------------
 In CodeChecker, we use the [PEP-8](https://www.python.org/dev/peps/pep-0008)
 rules in our coding style. _PEP-8_ is enforced by the test infrastructure
-&ndash; if you write a new module, make sure to add its path to
-[`tests/Makefile`](`tests/Makefile`) under the `pep8` target.
+&ndash; if you write a new module outside the current directory structure,
+make sure to add its path to [`tests/Makefile`](`tests/Makefile`) under the
+`pep8` target.
 
-In addition to the general ruleset of _PEP-8_, please keep the following rules
+In addition to the general rules of _PEP-8_, please keep the following rules
 while writing your code:
 
   * Comments must be whole sentences, beginning with a capital letter and
@@ -83,3 +96,32 @@ import client_db_access_handler
 # ... your code here
 ~~~~
 
+### Directory layout
+`libcodechecker` is the folder where all CodeChecker related source code is
+found. CodeChecker is organised into different entry-points based on different
+features of the program, such as logging, analysing, result storage, web
+server, etc. All these features have their own module under `libcodechecker`.
+
+A CodeChecker feature having its entry point consists of a bare minimum of
+two (2) things:
+
+ * An entry point under `bin/codechecker-myfeature`.
+ * The entry point's definition containing the feature's command-line help and
+   argument parser under `libcodechecker/myfeature.py`.
+
+Additionally, you may use different Python files to store code for your library
+for better code organisation. Library code related to `myfeature` go into the
+`libcodechecker/myfeature` folder.
+
+If the library code is used between multiple subcommands, the file is put into
+`libcodechecker` itself. Please try to localise your library code in its own
+folder as much as possible.
+
+Do **NOT** do _cross-subcommand_ import, aka. `from libcodechecker.analyze` in
+a `libcodechecker.myfeature` file. This might change in the future as we
+consider how to make CodeChecker a more modular application.
+
+Please execute `scripts/create_new_subcommand.py myfeature` to automatically
+generate the skeleton for `myfeature`. Already existing files, such as
+`libcodechecker/log.py` give a nice overview on how entry-point handlers should
+be laid out.
