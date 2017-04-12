@@ -155,14 +155,13 @@ class SQLServer(object):
                                             encoding='utf8')
 
     @staticmethod
-    def from_cmdline_args(args, workspace, migration_root, env=None):
+    def from_cmdline_args(args, migration_root, env=None):
         """
         Normally only this method is called form outside of this module in
         order to instance the proper server implementation.
 
         Parameters:
             args: the command line arguments from CodeChecker.py
-            workspace: path to the CodeChecker workspace directory
             migration_root: path to the database migration scripts
             env: a run environment dictionary.
         """
@@ -173,7 +172,20 @@ class SQLServer(object):
 
         if args.postgresql:
             LOG.debug("Using PostgreSQLServer")
-            return PostgreSQLServer(workspace,
+            if 'workspace' in args:
+                data_url = os.path.join(args.workspace, 'pgsql_data')
+            else:
+                # TODO: This will be refactored eventually so that
+                # CodeChecker is no longer bringing up a postgres database...
+                # It is an external dependency, it is an external
+                # responbitility. Until then, use the default folder now
+                # for the new commands who no longer define workspace.
+                if 'dbdatadir' in args:
+                    workspace = args.dbdatadir
+                else:
+                    workspace = util.get_default_workspace()
+                data_url = os.path.join(workspace, 'pgsql_data')
+            return PostgreSQLServer(data_url,
                                     migration_root,
                                     args.dbaddress,
                                     args.dbport,
@@ -182,7 +194,11 @@ class SQLServer(object):
                                     run_env=env)
         else:
             LOG.debug("Using SQLiteDatabase")
-            return SQLiteDatabase(workspace, migration_root, run_env=env)
+            if 'workspace' in args:
+                data_file = os.path.join(args.workspace, 'codechecker.sqlite')
+            else:
+                data_file = args.sqlite
+            return SQLiteDatabase(data_file, migration_root, run_env=env)
 
     def check_db_version(self, db_version_info, session=None):
         """
@@ -263,18 +279,18 @@ class PostgreSQLServer(SQLServer):
     Handler for PostgreSQL.
     """
 
-    def __init__(self, workspace, migration_root, host, port, user, database,
+    def __init__(self, data_url, migration_root, host, port, user, database,
                  password=None, run_env=None):
         super(PostgreSQLServer, self).__init__(migration_root)
 
-        self.path = os.path.join(workspace, 'pgsql_data')
+        self.path = data_url
         self.host = host
         self.port = port
         self.user = user
         self.database = database
         self.password = password
         self.run_env = run_env
-        self.workspace = workspace
+        self.workspace = os.path.abspath(os.path.join(data_url, ".."))
 
         self.proc = None
 
@@ -461,10 +477,10 @@ class SQLiteDatabase(SQLServer):
     Handler for SQLite.
     """
 
-    def __init__(self, workspace, migration_root, run_env=None):
+    def __init__(self, data_file, migration_root, run_env=None):
         super(SQLiteDatabase, self).__init__(migration_root)
 
-        self.dbpath = os.path.join(workspace, 'codechecker.sqlite')
+        self.dbpath = data_file
         self.run_env = run_env
 
         def _set_sqlite_pragma(dbapi_connection, connection_record):

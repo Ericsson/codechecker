@@ -427,6 +427,31 @@ def construct_parse_handler(buildaction,
     return res_handler
 
 
+def construct_store_handler(buildaction,
+                            run_id,
+                            severity_map):
+    """
+    Construct a result handler for parsing results in a human-readable format.
+    """
+    assert buildaction.analyzer_type in supported_analyzers, \
+        'Analyzer types should have been checked already.'
+
+    if buildaction.analyzer_type == CLANG_SA:
+        res_handler = result_handler_plist_to_db.PlistToDB(
+            buildaction,
+            None,
+            run_id)
+
+    elif buildaction.analyzer_type == CLANG_TIDY:
+        res_handler = result_handler_clang_tidy.ClangTidyPlistToDB(
+            buildaction,
+            None,
+            run_id)
+
+    res_handler.severity_map = severity_map
+    return res_handler
+
+
 # TODO: This is deprecated.
 def construct_result_handler(args,
                              buildaction,
@@ -443,23 +468,10 @@ def construct_result_handler(args,
         'Analyzer types should have been checked already.'
 
     if store_to_db:
-        # Create a result handler which stores the results into a database.
-        if buildaction.analyzer_type == CLANG_SA:
-            res_handler = result_handler_plist_to_db.PlistToDB(
-                buildaction,
-                report_output,
-                run_id)
-
-        elif buildaction.analyzer_type == CLANG_TIDY:
-            res_handler = result_handler_clang_tidy.ClangTidyPlistToDB(
-                buildaction,
-                report_output,
-                run_id)
-
+        assert False, 'store_to_db argument has been deprecated as ' \
+                      'check uses a different wrapper now.'
     else:
         assert False, 'store_to_db argument has been deprecated as ' \
                       'quickcheck uses a different wrapper now.'
 
-    res_handler.severity_map = severity_map
-    res_handler.skiplist_handler = skiplist_handler
-    return res_handler
+    return None

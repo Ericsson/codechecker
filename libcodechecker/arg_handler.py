@@ -185,7 +185,6 @@ def handle_server(args):
                                            context.ld_lib_path_extra)
 
     sql_server = SQLServer.from_cmdline_args(args,
-                                             context.codechecker_workspace,
                                              context.migration_root,
                                              check_env)
     conn_mgr = client.ConnectionManager(sql_server, args.check_address,
@@ -249,7 +248,6 @@ def handle_debug(args):
                                            context.ld_lib_path_extra)
 
     sql_server = SQLServer.from_cmdline_args(args,
-                                             context.codechecker_workspace,
                                              context.migration_root,
                                              check_env)
     sql_server.start(context.db_version_info, wait_for_start=True, init=False)
@@ -289,7 +287,6 @@ def handle_check(args):
                                                context.ld_lib_path_extra)
 
         sql_server = SQLServer.from_cmdline_args(args,
-                                                 context.codechecker_workspace,
                                                  context.migration_root,
                                                  check_env)
 
@@ -360,7 +357,6 @@ def handle_plist(args):
                                                context.ld_lib_path_extra)
 
         sql_server = SQLServer.from_cmdline_args(args,
-                                                 context.codechecker_workspace,
                                                  context.migration_root,
                                                  check_env)
 

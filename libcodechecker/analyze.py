@@ -239,6 +239,11 @@ def main(args):
     actions = []
 
     for log_file in args.logfile:
+        if not os.path.exists(log_file):
+            LOG.error("The specified logfile '" + log_file + "' does not "
+                      "exist!")
+            continue
+
         actions += log_parser.parse_log(log_file,
                                         args.add_compiler_defaults)
 
