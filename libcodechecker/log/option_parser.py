@@ -453,13 +453,21 @@ def parse_options(args):
     not only arguments."""
 
     # Keep " characters.
-    args = args.replace('"', '\\"')
+    args = args.replace(r'"', r'"\"')
 
     result_map = OptionParserResult()
 
     # The first element in the list is the compiler skip it from parsing.
     for it in OptionIterator(shlex.split(args)[1:]):
         arg_check(it, result_map)
+
+    for idx, opt in enumerate(result_map.compile_opts):
+        if '"' in opt:
+            # Arguments with a space in them are given back in a way
+            # (-DVAR="val ue") that they need an extra escape round. We can't
+            # do this earlier because shlex would undo these changes and
+            # mess up the result.
+            result_map.compile_opts[idx] = opt.replace('"', r'"\"')
 
     result_map.compiler = shlex.split(args)[0]
     is_source = False

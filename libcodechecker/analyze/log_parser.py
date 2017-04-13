@@ -106,24 +106,20 @@ def parse_compile_commands_json(logfile, add_compiler_defaults=False):
             continue
 
         action = build_action.BuildAction(counter)
-
         if 'command' in entry:
             command = entry['command']
+
+            # Old versions of intercept-build (confirmed to those shipping
+            # with upstream clang-5.0) do escapes in another way:
+            # -DVARIABLE="a b" becomes -DVARIABLE=\"a b\" in the output.
+            # This would be messed up later on by options_parser, so need a
+            # fix here. (Should be removed once we are sure noone uses this
+            # intercept-build anymore!)
+            if r'\"' in command:
+                command = command.replace(r'\"', '"')
         elif 'arguments' in entry:
             # Newest versions of intercept-build create an argument vector
             # instead of a command string.
-            for i in range(0, len(entry['arguments'])):
-                arg = entry['arguments'][i]
-                if ' ' in arg:
-                    # If there is an argument with a space in it, the join
-                    # below will mess the invocation up. (-DVAR=va lue will be
-                    # passed as -DVAR=va)
-                    #
-                    # Build.json created by ld-logger escapes these strings
-                    # and they never reach the analyser later on.
-                    #
-                    # TODO: Better handle this. (See issue #505.)
-                    entry['arguments'][i] = '\"' + arg + '\"'
             command = ' '.join(entry['arguments'])
         else:
             raise KeyError("No valid 'command' or 'arguments' entry found!")
@@ -131,6 +127,7 @@ def parse_compile_commands_json(logfile, add_compiler_defaults=False):
 
         action.original_command = command
         action.analyzer_options = results.compile_opts
+
         action.lang = results.lang
         action.target = results.arch
 
