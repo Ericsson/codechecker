@@ -52,7 +52,20 @@ def get_compiler_includes(compiler):
     return include_paths
 
 
-# -----------------------------------------------------------------------------
+# Certain includes are defined by GCC to a GCC internal "macro" never exported
+# by the compiler, such as
+# #define __has_include(STR) __has_include__(STR)
+# which causes Clang to fail in certain cross-compiler and cross-architecture
+# setups due to blabla__ not being defined by Clang in a way GCC does it.
+#
+# Thus, we ignore these "defines" and let Clang fall back to its own
+# __has_include definition. List taken from the "extension" list of Clang and
+# the GCC extension list referenced therein:
+# https://clang.llvm.org/docs/LanguageExtensions.html
+IGNORED_DEFINES = ['__has_include',
+                   '__has_include_next']
+
+
 def get_compiler_defines(compiler):
     """
     Returns a list of default defines of the given compiler.
@@ -72,6 +85,9 @@ def get_compiler_defines(compiler):
 
                 variable = define[0]
                 value = ' '.join(define[1:])
+
+                if variable in IGNORED_DEFINES:
+                    continue
 
                 if value:
                     if '"' in value:
