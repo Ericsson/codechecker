@@ -52,7 +52,20 @@ def get_compiler_includes(compiler):
     return include_paths
 
 
-# -----------------------------------------------------------------------------
+# Certain includes are defined by GCC to a GCC internal "macro" never exported
+# by the compiler, such as
+# #define __has_include(STR) __has_include__(STR)
+# which causes Clang to fail in certain cross-compiler and cross-architecture
+# setups due to blabla__ not being defined by Clang in a way GCC does it.
+#
+# Thus, we ignore these "defines" and let Clang fall back to its own
+# __has_include definition. List taken from the "extension" list of Clang and
+# the GCC extension list referenced therein:
+# https://clang.llvm.org/docs/LanguageExtensions.html
+IGNORED_DEFINES = ['__has_include',
+                   '__has_include_next']
+
+
 def get_compiler_defines(compiler):
     """
     Returns a list of default defines of the given compiler.
@@ -67,9 +80,30 @@ def get_compiler_defines(compiler):
                                     stderr=subprocess.PIPE)
             out, err = proc.communicate("")
             for line in out.splitlines(True):
-                LOG.debug("define:"+line)
+                LOG.debug("define: " + line)
                 define = line.strip().split(" ")[1:]
-                d = "-D"+define[0] + '=' + '"' + ' '.join(define[1:]) + '"'
+
+                variable = define[0]
+                value = ' '.join(define[1:])
+
+                if variable in IGNORED_DEFINES:
+                    continue
+
+                if value:
+                    if '"' in value:
+                        # Certain defines might contain string literals, such
+                        # as
+                        #   #define __VERSION__ "5.4.0 20160609"
+                        # which causes a problem when manually defining as
+                        # Clang will not understand '-D__VERSION__=""...""'
+                        # (note double quote) and instead attempt to use it as
+                        # a folder...
+                        value = value.replace('"', r'\"')
+
+                    d = "-D{0}=\"{1}\"".format(variable, value)
+                else:
+                    d = "-D{0}".format(variable)
+
                 defines.append(d)
     except OSError as oerr:
         LOG.error("Cannot find defines:" + oerr.strerror+"\n")
