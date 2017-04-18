@@ -5,6 +5,7 @@
 # -------------------------------------------------------------------------
 
 import os
+import re
 import sys
 import traceback
 import subprocess
@@ -18,16 +19,27 @@ from libcodechecker.logger import LoggerFactory
 LOG = LoggerFactory.get_new_logger('LOG PARSER')
 
 
-# -----------------------------------------------------------------------------
-def get_compiler_includes(compiler):
+# If these options are present in the original build command, they must
+# be forwarded to get_compiler_includes and get_compiler_defines so the
+# resulting includes point to the target that was used in the build.
+COMPILE_OPTS_FWD_TO_DEFAULTS_GETTER = frozenset(
+    ['^-m(32|64)',
+     '^-std=.*'])
+
+
+def get_compiler_includes(compiler, extra_opts=None):
     """
     Returns a list of default includes of the given compiler.
     """
-    LOG.debug('getting include paths for  ' + compiler)
     start_mark = "#include <...> search starts here:"
     end_mark = "End of search list."
 
-    cmd = compiler + " -E -x c++ - -v "  # what if not c++?
+    if extra_opts is None:
+        extra_opts = []
+
+    # What if not c++?
+    cmd = compiler + " " + ' '.join(extra_opts) + " -E -x c++ - -v "
+    LOG.debug("Retrieving default includes via '" + cmd + "'")
     include_paths = []
     try:
         proc = subprocess.Popen(shlex.split(cmd),
@@ -62,15 +74,19 @@ def get_compiler_includes(compiler):
 # __has_include definition. List taken from the "extension" list of Clang and
 # the GCC extension list referenced therein:
 # https://clang.llvm.org/docs/LanguageExtensions.html
-IGNORED_DEFINES = ['__has_include',
-                   '__has_include_next']
+IGNORED_DEFINES = frozenset(
+    ['__has_include'])  # Matches __has_include and __has_include_next.
 
 
-def get_compiler_defines(compiler):
+def get_compiler_defines(compiler, extra_opts=None):
     """
     Returns a list of default defines of the given compiler.
     """
-    cmd = compiler + " -dM -E -"
+    if extra_opts is None:
+        extra_opts = []
+
+    cmd = compiler + " " + ' '.join(extra_opts) + " -dM -E -"
+    LOG.debug("Retrieving default defines via '" + cmd + "'")
     defines = []
     try:
         with open(os.devnull, 'r') as FNULL:
@@ -86,7 +102,10 @@ def get_compiler_defines(compiler):
                 variable = define[0]
                 value = ' '.join(define[1:])
 
-                if variable in IGNORED_DEFINES:
+                if any(ignored_def in variable
+                       for ignored_def in IGNORED_DEFINES):
+                    LOG.debug("Refusing to pass-through define {}={}, it is "
+                              "ignored.".format(variable, value))
                     continue
 
                 if value:
@@ -168,14 +187,22 @@ def parse_compile_commands_json(logfile, add_compiler_defaults=False):
         action.lang = results.lang
         action.target = results.arch
 
-        # store the compiler built in include paths
-        # and defines
+        # Store the compiler built in include paths and defines.
         if add_compiler_defaults and results.compiler:
             if not (results.compiler in compiler_defines):
+                # Fetch defaults from the compiler,
+                # make sure we use the correct architecture.
+                extra_opts = []
+                for regex in COMPILE_OPTS_FWD_TO_DEFAULTS_GETTER:
+                    pattern = re.compile(regex)
+                    for comp_opt in action.analyzer_options:
+                        if re.match(pattern, comp_opt):
+                            extra_opts.append(comp_opt)
+
                 compiler_defines[results.compiler] = \
-                    get_compiler_defines(results.compiler)
+                    get_compiler_defines(results.compiler, extra_opts)
                 compiler_includes[results.compiler] = \
-                    get_compiler_includes(results.compiler)
+                    get_compiler_includes(results.compiler, extra_opts)
             action.compiler_defines = compiler_defines[results.compiler]
             action.compiler_includes = compiler_includes[results.compiler]
 
@@ -183,7 +210,7 @@ def parse_compile_commands_json(logfile, add_compiler_defaults=False):
            results.action == option_parser.ActionType.LINK:
             action.skip = False
 
-        # TODO: check arch.
+        # TODO: Check arch.
         action.directory = entry['directory']
         action.sources = sourcefile
         # Filter out duplicate compilation commands.
