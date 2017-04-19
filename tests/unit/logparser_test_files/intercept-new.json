@@ -1,0 +1,14 @@
+[
+    {
+        "arguments": [
+            "c++",
+            "-c",
+            "-DVARIABLE=\"some value\"",
+            "-o",
+            "a.out",
+            "a.cpp"
+        ],
+        "directory": "/tmp",
+        "file": "a.cpp"
+    }
+]
