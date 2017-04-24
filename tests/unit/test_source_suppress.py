@@ -15,15 +15,28 @@ from libcodechecker.suppress_handler import SourceSuppressHandler
 
 
 def _get_bug(file, line):
-    class Dummy:
+    class DummyReport:
         pass
-    bug = Dummy()
-    bug.file_path = file
+
+    class DummyEvent:
+        pass
+
+    class Location:
+        pass
+
+    bug = DummyReport()
     bug.hash_value = 0
     bug.checker_name = ""
-    event = Dummy()
-    event.start_pos = Dummy()
+
+    event = DummyEvent()
+    event.start_pos = Location()
     event.start_pos.line = line
+    event.location = Location()
+    event.location.file_path = file
+    event.location.line = line
+
+    bug.obsolate_main_section = event
+
     bug.events = lambda: [event]
     return bug
 

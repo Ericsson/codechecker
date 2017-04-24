@@ -49,7 +49,7 @@ class PlistToStdout(ResultHandler):
 
     @staticmethod
     def __format_location(event):
-        pos = event.start_pos
+        pos = event.location
         line = linecache.getline(pos.file_path, pos.line)
         if line == '':
             return line
@@ -60,7 +60,7 @@ class PlistToStdout(ResultHandler):
 
     @staticmethod
     def __format_bug_event(name, event):
-        pos = event.start_pos
+        pos = event.location
         fname = os.path.basename(pos.file_path)
         if name:
             return '%s:%d:%d: %s [%s]' % (fname, pos.line, pos.col, event.msg,
@@ -68,22 +68,22 @@ class PlistToStdout(ResultHandler):
         else:
             return '%s:%d:%d: %s' % (fname, pos.line, pos.col, event.msg)
 
-    def __print_bugs(self, bugs):
+    def __print_bugs(self, reports):
 
-        report_num = len(bugs)
+        report_num = len(reports)
         if report_num > 0:
             index_format = '    %%%dd, ' % int(
                 math.floor(math.log10(report_num)) + 1)
 
         non_suppressed = 0
-        for bug in bugs:
-            last_event = bug.get_last_event()
+        for bug in reports:
+            last_event = bug.obsolate_main_section
 
             if self.skiplist_handler and \
                 self.skiplist_handler.should_skip(
-                    last_event.start_pos.file_path):
+                    last_event.start_range.begin.file_path):
                     LOG.debug(bug.hash_value + ' is skipped (in ' +
-                              last_event.start_pos.file_path + ")")
+                              last_event.start_range.begin.file_path + ")")
                     continue
 
             sp_handler = suppress_handler.SourceSuppressHandler(bug)
@@ -121,7 +121,7 @@ class PlistToStdout(ResultHandler):
         plist = self.analyzer_result_file
 
         try:
-            _, bugs = plist_parser.parse_plist(plist)
+            _, reports = plist_parser.parse_plist(plist)
         except Exception as ex:
             LOG.error('The generated plist is not valid!')
             LOG.error(ex)
@@ -133,7 +133,7 @@ class PlistToStdout(ResultHandler):
             try:
                 # No lock when consuming plist.
                 self.__lock.acquire() if self.__lock else None
-                self.__print_bugs(bugs)
+                self.__print_bugs(reports)
             finally:
                 self.__lock.release() if self.__lock else None
         else:
