@@ -17,7 +17,6 @@ import portalocker
 import stat
 import shutil
 import time
-import tempfile
 import uuid
 
 from libcodechecker.logger import LoggerFactory
@@ -116,7 +115,7 @@ def check_file_owner_rw(file_to_check):
             or mode & stat.S_IWOTH:
         LOG.warning(file_to_check + " is readable by users other than you!"
                     " This poses a risk of leaking sensitive"
-                    " information passwords, session tokens ...!\n"
+                    " information: passwords, session tokens ...!\n"
                     "Please 'chmod 0600 " + file_to_check + "' so only you can"
                     " read and write it.")
         return False
@@ -331,8 +330,14 @@ class SessionManager_Client:
         # Check whether user's configuration exists.
         user_home = os.path.expanduser("~")
         session_cfg_file = os.path.join(user_home,
-                                        ".codechecker_passwords.json")
+                                        ".codechecker.passwords.json")
         LOG.debug(session_cfg_file)
+
+        if not os.path.exists(session_cfg_file):
+            # Filenames were different pre-5.8.
+            old_file = os.path.join(user_home, ".codechecker_passwords.json")
+            if os.path.exists(old_file):
+                shutil.move(old_file, session_cfg_file)
 
         scfg_dict = load_session_cfg(session_cfg_file)
 
@@ -344,9 +349,18 @@ class SessionManager_Client:
             if "client_autologin" in scfg_dict else True
 
         # Check and load token storage for user
-        self.token_file = os.path.join(user_home, ".codechecker_" +
-                                       getpass.getuser() + ".session.json")
+        self.token_file = os.path.join(user_home, ".codechecker.session.json")
         LOG.debug(self.token_file)
+
+        if not os.path.exists(self.token_file):
+            # Filenames were different pre-5.8.
+            old_file = os.path.join(user_home,
+                                    ".codechecker_{0}.session.json".format(
+                                        getpass.getuser()
+                                    ))
+            if os.path.exists(old_file):
+                shutil.move(old_file, self.token_file)
+
         if os.path.exists(self.token_file):
             with open(self.token_file, 'r') as f:
                 input = json.loads(f.read())
