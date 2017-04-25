@@ -273,6 +273,13 @@ def main(args):
     if 'name' in args:
         metadata['name'] = args.name
 
+    if 'skipfile' in args:
+        # Skip information needs to be saved because reports in a header
+        # can only be skipped by the report-server used in 'store' later
+        # on if this information is persisted.
+        with open(args.skipfile, 'r') as skipfile:
+            metadata['skip_data'] = [l.strip() for l in skipfile.readlines()]
+
     analyzer.perform_analysis(args, context, actions, metadata)
 
     metadata_path = os.path.join(args.output_path, 'metadata.json')

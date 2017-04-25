@@ -151,8 +151,8 @@ def add_arguments_to_parser(parser):
                         help="Delete analysis results stored in the database "
                              "for the current analysis run's name and store "
                              "only the results reported in the 'input' files. "
-                             "(By default, CodeChecker would keep reports that "
-                             "were coming from files not affected by the "
+                             "(By default, CodeChecker would keep reports "
+                             "that were coming from files not affected by the "
                              "analysis, and only incrementally update defect "
                              "reports for source files that were analysed.)")
 
@@ -305,8 +305,8 @@ def main(args):
             else:
                 # If we are saving to a SQLite database, the wrapped 'check'
                 # command used to do it in the workspace folder.
-                setattr(store_args, 'sqlite', os.path.join(workspace,
-                                                           'codechecker.sqlite'))
+                setattr(store_args, 'sqlite',
+                        os.path.join(workspace, 'codechecker.sqlite'))
             args_to_update = ['suppress',
                               'name'
                               ]

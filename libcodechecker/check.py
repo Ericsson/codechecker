@@ -168,8 +168,8 @@ def add_arguments_to_parser(parser):
                         help="Delete analysis results stored in the database "
                              "for the current analysis run's name and store "
                              "only the results reported in the 'input' files. "
-                             "(By default, CodeChecker would keep reports that "
-                             "were coming from files not affected by the "
+                             "(By default, CodeChecker would keep reports "
+                             "that were coming from files not affected by the "
                              "analysis, and only incrementally update defect "
                              "reports for source files that were analysed.)")
 

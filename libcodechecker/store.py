@@ -11,14 +11,16 @@ database.
 import argparse
 import json
 import multiprocessing
-import sys
 import os
+import sys
+import tempfile
 
 from libcodechecker import client
 from libcodechecker import generic_package_context
 from libcodechecker import host_check
 from libcodechecker import util
 from libcodechecker.analyze import analyzer_env
+from libcodechecker.analyze import skiplist_handler
 from libcodechecker.analyze.analyzers import analyzer_types
 from libcodechecker.database_handler import SQLServer
 from libcodechecker.log import build_action
@@ -249,6 +251,9 @@ def consume_plist(item):
 
     LOG.debug("Parsing input file '" + f + "'")
 
+    if 'working_directory' in metadata_dict:
+        os.chdir(metadata_dict['working_directory'])
+
     buildaction = build_action.BuildAction()
     if os.path.basename(f).startswith("clangsa_"):
         buildaction.analyzer_type = analyzer_types.CLANG_SA
@@ -310,6 +315,9 @@ def main(args):
     database.
     """
 
+    if not host_check.check_zlib():
+        raise Exception("zlib is not available on the system!")
+
     # To ensure the help message prints the default folder properly,
     # the 'default' for 'args.input' is a string, not a list.
     # But we need lists for the foreach here to work.
@@ -336,8 +344,27 @@ def main(args):
     context = generic_package_context.get_context()
     context.db_username = args.dbusername
 
+    check_env = analyzer_env.get_check_env(context.path_env_extra,
+                                           context.ld_lib_path_extra)
+
+    sql_server = SQLServer.from_cmdline_args(args,
+                                             context.migration_root,
+                                             check_env)
+
+    conn_mgr = client.ConnectionManager(sql_server,
+                                        'localhost',
+                                        util.get_free_port())
+
+    sql_server.start(context.db_version_info, wait_for_start=True, init=True)
+
+    conn_mgr.start_report_server()
+
+    original_cwd = os.getcwd()
+    empty_metadata = {'working_directory': original_cwd}
+
     check_commands = []
     check_durations = []
+    skip_handlers = []
     items = []
     for input_path in args.input:
         LOG.debug("Parsing input argument: '" + input_path + "'")
@@ -346,7 +373,7 @@ def main(args):
             if not input_path.endswith(".plist"):
                 continue
 
-            items.append((input_path, context, {}))
+            items.append((input_path, context, empty_metadata))
         elif os.path.isdir(input_path):
             metadata_file = os.path.join(input_path, "metadata.json")
             if os.path.exists(metadata_file):
@@ -360,6 +387,19 @@ def main(args):
                         check_durations.append(
                             float(metadata_dict['timestamps']['end'] -
                                   metadata_dict['timestamps']['begin']))
+                    if 'skip_data' in metadata_dict:
+                        # Save previously stored skip data for sending to the
+                        # database, to ensure skipped headers are actually
+                        # skipped --- 'analyze' can't do this.
+                        handle, path = tempfile.mkstemp()
+                        with os.fdopen(handle, 'w') as tmpf:
+                            tmpf.write('\n'.join(metadata_dict['skip_data']))
+
+                        skip_handlers.append(
+                            skiplist_handler.SkipListHandler(path))
+                        os.remove(path)
+            else:
+                metadata_dict = empty_metadata
 
             _, _, files = next(os.walk(input_path), ([], [], []))
             for f in files:
@@ -368,22 +408,6 @@ def main(args):
 
                 items.append((os.path.join(input_path, f),
                               context, metadata_dict))
-
-    check_env = analyzer_env.get_check_env(context.path_env_extra,
-                                           context.ld_lib_path_extra)
-
-    sql_server = SQLServer.from_cmdline_args(args,
-                                             context.migration_root,
-                                             check_env)
-
-    conn_mgr = client.ConnectionManager(sql_server,
-                                        'localhost',
-                                        util.get_free_port())
-
-    sql_server.start(context.db_version_info, wait_for_start=True,
-                     init=True)
-
-    conn_mgr.start_report_server()
 
     with client.get_connection() as connection:
         if len(check_commands) == 0:
@@ -410,6 +434,11 @@ def main(args):
                 client.send_suppress(context.run_id, connection,
                                      os.path.realpath(args.suppress))
 
+        # Send previously collected skip information to the server.
+        for skip_handler in skip_handlers:
+            connection.add_skip_paths(context.run_id,
+                                      skip_handler.get_skiplist())
+
     pool = multiprocessing.Pool(args.jobs)
 
     try:
@@ -421,6 +450,7 @@ def main(args):
         raise  # CodeChecker.py is the invoker, it will handle this.
     finally:
         pool.join()
+        os.chdir(original_cwd)
 
         with client.get_connection() as connection:
             connection.finish_checker_run(context.run_id)
