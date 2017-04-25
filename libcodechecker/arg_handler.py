@@ -4,18 +4,14 @@
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
 """
-Handle command line arguments.
+Handle old-style subcommand invocation.
 """
 import errno
 import json
 import multiprocessing
 import os
-import psutil
-import socket
-import shutil
 import socket
 import sys
-import tempfile
 
 from libcodechecker import client
 from libcodechecker import debug_reporter
@@ -24,13 +20,10 @@ from libcodechecker import generic_package_suppress_handler
 from libcodechecker import host_check
 from libcodechecker import session_manager
 from libcodechecker import util
-from libcodechecker.analyze import analyzer
 from libcodechecker.analyze import analyzer_env
-from libcodechecker.analyze import log_parser
 from libcodechecker.analyze.analyzers import analyzer_types
 from libcodechecker.database_handler import SQLServer
 from libcodechecker.log import build_action
-from libcodechecker.log import build_manager
 from libcodechecker.logger import LoggerFactory
 from libcodechecker.server import client_db_access_server
 from libcodechecker.server import instance_manager
@@ -242,81 +235,6 @@ def handle_debug(args):
 
     debug_reporter.debug(context, sql_server.get_connection_string(),
                          args.force)
-
-
-def consume_plist(item):
-    plist, args, context = item
-    LOG.info('Consuming ' + plist)
-
-    action = build_action.BuildAction()
-    action.analyzer_type = analyzer_types.CLANG_SA
-    action.original_command = 'Imported from PList directly'
-
-    rh = analyzer_types.construct_result_handler(args,
-                                                 action,
-                                                 context.run_id,
-                                                 args.directory,
-                                                 context.severity_map,
-                                                 None,
-                                                 None,
-                                                 not args.stdout)
-
-    rh.analyzer_returncode = 0
-    rh.buildaction.analyzer_type = 'Build action from plist'
-    rh.buildaction.original_command = plist
-    rh.analyzer_cmd = ''
-    rh.analyzed_source_file = ''  # TODO: fill from plist.
-    rh.result_file = os.path.join(args.directory, plist)
-    rh.handle_results()
-
-
-def handle_plist(args):
-    context = generic_package_context.get_context()
-    context.codechecker_workspace = args.workspace
-    context.db_username = args.dbusername
-
-    if not args.stdout:
-        args.workspace = os.path.realpath(args.workspace)
-        if not os.path.isdir(args.workspace):
-            os.mkdir(args.workspace)
-
-        check_env = analyzer_env.get_check_env(context.path_env_extra,
-                                               context.ld_lib_path_extra)
-
-        sql_server = SQLServer.from_cmdline_args(args,
-                                                 context.migration_root,
-                                                 check_env)
-
-        conn_mgr = client.ConnectionManager(sql_server,
-                                            'localhost',
-                                            util.get_free_port())
-
-        sql_server.start(context.db_version_info, wait_for_start=True,
-                         init=True)
-
-        conn_mgr.start_report_server()
-
-        with client.get_connection() as connection:
-            context.run_id = connection.add_checker_run(' '.join(sys.argv),
-                                                        args.name,
-                                                        context.version,
-                                                        args.force)
-
-    pool = multiprocessing.Pool(args.jobs)
-
-    try:
-        items = [(plist, args, context)
-                 for plist in os.listdir(args.directory)]
-        pool.map_async(consume_plist, items, 1).get(float('inf'))
-        pool.close()
-    except Exception:
-        pool.terminate()
-        raise
-    finally:
-        pool.join()
-
-    if not args.stdout:
-        log_startserver_hint(args)
 
 
 def handle_version_info(args):

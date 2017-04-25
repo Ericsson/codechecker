@@ -31,31 +31,6 @@ LOG = LoggerFactory.get_new_logger('MAIN')
 analyzers = ' '.join(list(analyzer_types.supported_analyzers))
 
 
-class OrderedCheckersAction(argparse.Action):
-    """
-    Action to store enabled and disabled checkers
-    and keep ordering from command line.
-
-    Create separate lists based on the checker names for
-    each analyzer.
-    """
-
-    def __init__(self, option_strings, dest, nargs=None, **kwargs):
-        if nargs is not None:
-            raise ValueError("nargs not allowed")
-        super(OrderedCheckersAction, self).__init__(option_strings, dest,
-                                                    **kwargs)
-
-    def __call__(self, parser, namespace, value, option_string=None):
-
-        if 'ordered_checkers' not in namespace:
-            namespace.ordered_checkers = []
-        ordered_checkers = namespace.ordered_checkers
-        ordered_checkers.append((value, self.dest == 'enable'))
-
-        namespace.ordered_checkers = ordered_checkers
-
-
 # -----------------------------------------------------------------------------
 class DeprecatedOptionAction(argparse.Action):
     """
@@ -110,45 +85,6 @@ def add_database_arguments(parser):
     parser.add_argument('--dbusername', type=str, dest="dbusername",
                         default='codechecker', required=False,
                         help='Database user name.')
-
-
-# TODO: Superseded by libcodechecker/analyze.py
-def add_analyzer_arguments(parser):
-    """
-    Analyzer related arguments.
-    """
-    parser.add_argument('-e', '--enable',
-                        default=argparse.SUPPRESS,
-                        action=OrderedCheckersAction,
-                        help='Enable checker.')
-    parser.add_argument('-d', '--disable',
-                        default=argparse.SUPPRESS,
-                        action=OrderedCheckersAction,
-                        help='Disable checker.')
-    parser.add_argument('--keep-tmp', action="store_true",
-                        dest="keep_tmp", required=False,
-                        help="Keep temporary report files "
-                        "generated during the analysis.")
-
-    parser.add_argument('--analyzers', nargs='+',
-                        dest="analyzers", required=False,
-                        default=[analyzer_types.CLANG_SA,
-                                 analyzer_types.CLANG_TIDY],
-                        help="Select which analyzer should be enabled.\n"
-                        "Currently supported analyzers are: " +
-                        analyzers + "\ne.g. '--analyzers " + analyzers + "'")
-
-    parser.add_argument('--saargs', dest="clangsa_args_cfg_file",
-                        required=False, default=argparse.SUPPRESS,
-                        help="File with arguments which will be forwarded "
-                        "directly to the Clang static analyzer "
-                        "without modification.")
-
-    parser.add_argument('--tidyargs', dest="tidy_args_cfg_file",
-                        required=False, default=argparse.SUPPRESS,
-                        help="File with arguments which will be forwarded "
-                        "directly to the Clang tidy analyzer "
-                        "without modification.")
 
 
 def main(subcommands=None):
@@ -215,11 +151,6 @@ CodeChecker quickcheck -b "cd ~/myproject && make"
 
         workspace_help_msg = 'Directory where the CodeChecker can' \
             ' store analysis related data.'
-
-        name_help_msg = 'Name of the analysis.'
-
-        jobs_help_msg = 'Number of jobs. ' \
-            'Start multiple processes for faster analysis.'
 
         # --------------------------------------
         # Checkers parser.
@@ -335,55 +266,6 @@ CodeChecker quickcheck -b "cd ~/myproject && make"
         add_database_arguments(debug_parser)
         logger.add_verbose_arguments(debug_parser)
         debug_parser.set_defaults(func=arg_handler.handle_debug)
-
-        # --------------------------------------
-        # Plist parser.
-        plist_parser = subparsers.add_parser('plist',
-                                             formatter_class=ADHF,
-                                             help='Parse plist files in '
-                                                  'the given directory and '
-                                                  'store them to the database '
-                                                  'or print to the standard '
-                                                  'output.')
-        old_subcommands.append('plist')
-
-        plist_parser.add_argument('-w', '--workspace', type=str,
-                                  dest="workspace",
-                                  default=util.get_default_workspace(),
-                                  help=workspace_help_msg)
-
-        plist_parser.add_argument('-n', '--name', type=str,
-                                  dest="name", required=True,
-                                  default=argparse.SUPPRESS,
-                                  help=name_help_msg)
-
-        plist_parser.add_argument('-d', '--directory', type=str,
-                                  dest="directory", required=True,
-                                  help='Path of a directory containing plist '
-                                  'files to parse.')
-
-        plist_parser.add_argument('-j', '--jobs', type=int, dest="jobs",
-                                  default=1, required=False,
-                                  help=jobs_help_msg)
-
-        plist_parser.add_argument('-s', '--steps', action="store_true",
-                                  dest="print_steps", help='Print steps.')
-
-        plist_parser.add_argument('--stdout', action="store_true",
-                                  dest="stdout",
-                                  required=False, default=False,
-                                  help='Print results to stdout instead of '
-                                       'storing to the database.')
-
-        plist_parser.add_argument('--force', action="store_true",
-                                  dest="force", default=False, required=False,
-                                  help='Delete analysis results form the '
-                                       'database if a run with the given '
-                                       'name already exists.')
-
-        add_database_arguments(plist_parser)
-        logger.add_verbose_arguments(plist_parser)
-        plist_parser.set_defaults(func=arg_handler.handle_plist)
 
         # --------------------------------------
         # Package version info.

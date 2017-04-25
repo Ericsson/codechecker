@@ -4,17 +4,13 @@
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
 """
-Prepare and start different analisys types
+Prepare and start different analysis types
 """
 import copy
-import json
-import os
 import shlex
 import subprocess
-import sys
 import time
 
-from libcodechecker import client
 from libcodechecker.logger import LoggerFactory
 from libcodechecker.analyze import analysis_manager
 from libcodechecker.analyze import analyzer_env

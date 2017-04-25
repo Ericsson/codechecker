@@ -953,16 +953,6 @@ positional arguments:
 optional arguments:
   -h, --help            show this help message and exit
 ~~~~~~~~~~~~~~~~~~~~~
-## 6. plist mode:
-Clang Static Analyzer's scan-build script can generate analyis output into plist xml files. 
-In this You can import these files into the database.
-You will need to specify containing the plist files afther the -d option.
-
-Example:
-~~~~~~~~~~~~~~~~~~~~~
-CodeChecker plist -d ./results_plist -n myresults
-~~~~~~~~~~~~~~~~~~~~~
-
 
 ## 7. debug mode:
 
