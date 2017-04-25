@@ -246,7 +246,7 @@ def add_arguments_to_parser(parser):
 
 
 def consume_plist(item):
-    f, context = item
+    f, context, metadata_dict = item
 
     LOG.debug("Parsing input file '" + f + "'")
 
@@ -265,10 +265,19 @@ def consume_plist(item):
     rh.analyzer_returncode = 0
     rh.analyzer_cmd = ''
 
-    # TODO: How to get file from plists?! :'(
-    rh.analyzed_source_file = ''  # TODO: fill from plist.
+    rh.analyzed_source_file = "UNKNOWN"
+    base_f = os.path.basename(f)
+    if 'result_source_files' in metadata_dict and\
+            base_f in metadata_dict['result_source_files']:
+        rh.analyzed_source_file = \
+            metadata_dict['result_source_files'][base_f]
     rh.result_file = f
 
+    if rh.analyzed_source_file == "UNKNOWN":
+        LOG.info("Storing defects in input file '" + base_f + "'")
+    else:
+        LOG.info("Storing analysis results for file '" +
+                 rh.analyzed_source_file + "'")
     rh.handle_results()
 
 
@@ -338,7 +347,7 @@ def main(args):
             if not input_path.endswith(".plist"):
                 continue
 
-            items.append((input_path, context))
+            items.append((input_path, context, {}))
         elif os.path.isdir(input_path):
             metadata_file = os.path.join(input_path, "metadata.json")
             if os.path.exists(metadata_file):
@@ -359,7 +368,7 @@ def main(args):
                     continue
 
                 items.append((os.path.join(input_path, f),
-                              context))
+                              context, metadata_dict))
 
     check_env = analyzer_env.get_check_env(context.path_env_extra,
                                            context.ld_lib_path_extra)

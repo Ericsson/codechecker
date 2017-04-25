@@ -10,21 +10,18 @@ from collections import defaultdict
 import multiprocessing
 import ntpath
 import os
-import re
-import shutil
 import signal
 import sys
 import traceback
 
 from libcodechecker.analyze import analyzer_env
 from libcodechecker.analyze.analyzers import analyzer_types
-from libcodechecker.analyze.analyzers import result_handler_base
 from libcodechecker.logger import LoggerFactory
 
 LOG = LoggerFactory.get_new_logger('ANALYSIS MANAGER')
 
 
-def worker_result_handler(results, metadata):
+def worker_result_handler(results, metadata, output_path):
     """
     Print the analysis summary.
     """
@@ -46,9 +43,9 @@ def worker_result_handler(results, metadata):
                 failed_analysis[analyzer_type] += 1
 
     LOG.info("----==== Summary ====----")
-    LOG.info('Total compilation commands: ' + str(len(results)))
+    LOG.info("Total compilation commands: " + str(len(results)))
     if successful_analysis:
-        LOG.info('Successfully analyzed')
+        LOG.info("Successfully analyzed")
         for analyzer_type, res in successful_analysis.items():
             LOG.info('  ' + analyzer_type + ': ' + str(res))
 
@@ -58,12 +55,32 @@ def worker_result_handler(results, metadata):
             LOG.info('  ' + analyzer_type + ': ' + str(res))
 
     if skipped_num:
-        LOG.info('Skipped compilation commands: ' + str(skipped_num))
+        LOG.info("Skipped compilation commands: " + str(skipped_num))
     LOG.info("----=================----")
 
     metadata['successful'] = successful_analysis
     metadata['failed'] = failed_analysis
     metadata['skipped'] = skipped_num
+
+    # check() created the result .plist files and additional, per-analysis
+    # meta information in forms of .plist.source files.
+    # We now soak these files into the metadata dict, as they are not needed
+    # as loose files on the disk... but synchronizing LARGE dicts between
+    # threads would be more error prone.
+    source_map = {}
+    _, _, files = next(os.walk(output_path), ([], [], []))
+    for f in files:
+        if not f.endswith(".source"):
+            continue
+
+        abspath = os.path.join(output_path, f)
+        f = f.replace(".source", '')
+        with open(abspath, 'r') as sfile:
+            source_map[f] = sfile.read().strip()
+
+        os.remove(abspath)
+
+    metadata['result_source_files'] = source_map
 
 
 # Progress reporting.
@@ -143,6 +160,11 @@ def check_old(check_data):
                     LOG.debug_analyzer('\n' + rh.analyzer_stderr)
                 rh.postprocess_result()
                 rh.handle_results()
+
+                # Save some extra information next to the plist, .source
+                # acting as an extra metadata file.
+                with open(rh.analyzer_result_file + ".source", 'w') as orig:
+                    orig.write(rh.analyzed_source_file + "\n")
 
                 LOG.info("[%d/%d] %s analyzed %s successfully." %
                          (progress_checked_num.value, progress_actions.value,
@@ -229,6 +251,11 @@ def check(check_data):
                     LOG.debug_analyzer('\n' + rh.analyzer_stderr)
                 rh.postprocess_result()
                 rh.handle_results()
+
+                # Save some extra information next to the plist, .source
+                # acting as an extra metadata file.
+                with open(rh.analyzer_result_file + ".source", 'w') as orig:
+                    orig.write(rh.analyzed_source_file + "\n")
 
                 LOG.info("[%d/%d] %s analyzed %s successfully." %
                          (progress_checked_num.value, progress_actions.value,
@@ -362,7 +389,7 @@ def start_workers(actions, context, analyzer_config_map,
                        analyzed_actions,
                        1,
                        callback=lambda results: worker_result_handler(
-                           results, metadata)
+                           results, metadata, output_path)
                        ).get(float('inf'))
 
         pool.close()
