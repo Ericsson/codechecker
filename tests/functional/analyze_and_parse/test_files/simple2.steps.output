@@ -24,5 +24,5 @@ simple2.cpp:17:14: Division by zero [core.DivideZero]
     6, simple2.cpp:15:2: The value 0 is assigned to 'x'
     7, simple2.cpp:17:14: Division by zero
 
-clangsa found 1 defect(s) while analyzing
+clangsa found 1 defect(s) while analyzing simple2.cpp
 

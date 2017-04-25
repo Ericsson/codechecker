@@ -16,5 +16,5 @@ multi_error_suppress.cpp:3:3: Address of stack memory associated with local vari
   return &x;
   ^
 
-clangsa found 1 defect(s) while analyzing
+clangsa found 1 defect(s) while analyzing multi_error_suppress.cpp
 

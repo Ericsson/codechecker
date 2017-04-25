@@ -95,7 +95,7 @@ def add_arguments_to_parser(parser):
     parser.set_defaults(func=main)
 
 
-def parse(f, context, suppress_handler, steps):
+def parse(f, context, metadata_dict, suppress_handler, steps):
     """
     Prints the results in the given file to the standard output in a human-
     readable format.
@@ -124,8 +124,12 @@ def parse(f, context, suppress_handler, steps):
     rh.result_file = f
     rh.analyzer_cmd = ""
 
-    # TODO: Retrieve the analysed file from the plist.
-    rh.analyzed_source_file = ''
+    rh.analyzed_source_file = "UNKNOWN"
+    base_f = os.path.basename(f)
+    if 'result_source_files' in metadata_dict and \
+            base_f in metadata_dict['result_source_files']:
+        rh.analyzed_source_file = \
+            metadata_dict['result_source_files'][base_f]
 
     rh.handle_results()
 
@@ -160,9 +164,10 @@ def main(args):
         LOG.debug("Parsing input argument: '" + input_path + "'")
 
         if os.path.isfile(input_path):
-            parse(input_path, context, suppress_handler, args.print_steps)
+            parse(input_path, context, {}, suppress_handler, args.print_steps)
         elif os.path.isdir(input_path):
             metadata_file = os.path.join(input_path, "metadata.json")
+            metadata_dict = {}
             if os.path.exists(metadata_file):
                 with open(metadata_file, 'r') as metadata:
                     metadata_dict = json.load(metadata)
@@ -173,7 +178,7 @@ def main(args):
 
             _, _, files = next(os.walk(input_path), ([], [], []))
             for f in files:
-                parse(os.path.join(input_path, f), context,
+                parse(os.path.join(input_path, f), context, metadata_dict,
                       suppress_handler, args.print_steps)
 
     os.chdir(original_cwd)

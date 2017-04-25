@@ -12,4 +12,4 @@ QUICKCHECK#CodeChecker quickcheck --build "make nofail" --quiet-build --analyzer
 [] - Successfully analyzed
 [] -   clangsa: 1
 [] - ----=================----
-clangsa found no defects while analyzing
+clangsa found no defects while analyzing nofail.cpp

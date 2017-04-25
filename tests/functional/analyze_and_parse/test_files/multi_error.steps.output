@@ -26,5 +26,5 @@ multi_error.cpp:9:3: Value stored to 'y' is never read [deadcode.DeadStores]
   Steps:
     1, multi_error.cpp:9:3: Value stored to 'y' is never read
 
-clangsa found 2 defect(s) while analyzing
+clangsa found 2 defect(s) while analyzing multi_error.cpp
 

@@ -16,5 +16,5 @@ tidy_check.cpp:5:5: found assert() with side effect [misc-assert-side-effect]
     assert(++i);
     ^
 
-clang-tidy found 1 defect(s) while analyzing
+clang-tidy found 1 defect(s) while analyzing tidy_check.cpp
 
