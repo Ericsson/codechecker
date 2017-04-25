@@ -60,7 +60,113 @@ Used ports:
 
 CodeChecker provides, along with the more fine-tuneable commands, some easy
 out-of-the-box invocations to ensure the most user-friendly operation. These
-two modes are called **quickcheck** and **check**.
+two modes are called **check** and **quickcheck**.
+
+## Check
+
+`check` is the basic, most used and most important command used in
+_CodeChecker_. It analyzes your project and stores the reported code defects
+in a database, which can be viewed in a Web Browser later on (via `CodeChecker
+server`).
+
+To analyse your project by doing a build and reporting every
+found issue in the built files, execute
+
+~~~~~~~~~~~~~~~~~~~~~
+CodeChecker check --build "make" --name "run_name"
+~~~~~~~~~~~~~~~~~~~~~
+
+Please make sure your build command actually compiles (builds) the source
+files you intend to analyse, as CodeChecker only analyzes files that had been
+used by the build system.
+
+If you have an already existing JSON Compilation Commands file, you can also
+supply it to `check`:
+
+~~~~~~~~~~~~~~~~~~~~~
+CodeChecker check --logfile ./my-build.json --name "run_name"
+~~~~~~~~~~~~~~~~~~~~~
+
+`check` is a wrapper over the following calls:
+
+ * If `--build` is specified, the build is executed as if `CodeChecker log`
+   were invoked.
+ * The resulting logfile, or a `--logfile` specified is used for `CodeChecker
+   analyze`
+ * The analysis results are feeded for `CodeChecker store`.
+
+After the results has been stored in the database, the temporary files
+used for the analysis are cleaned up.
+
+Please see the individual help for `log`, `analyze` and `store` (below in this
+_User guide_) for information about the arguments of `check`.
+
+~~~~~~~~~~~~~~~~~~~~~
+usage: CodeChecker check [-h] [--keep-tmp] [-c] [--update] -n NAME
+                         [-w WORKSPACE] [-f] [-q] (-b COMMAND | -l LOGFILE)
+                         [-j JOBS] [-i SKIPFILE]
+                         [--analyzers ANALYZER [ANALYZER ...]]
+                         [--add-compiler-defaults]
+                         [--saargs CLANGSA_ARGS_CFG_FILE]
+                         [--tidyargs TIDY_ARGS_CFG_FILE]
+                         [-e checker/checker-group] [-d checker/checker-group]
+                         [-u SUPPRESS] [--sqlite  | --postgresql]
+                         [--dbaddress DBADDRESS] [--dbport DBPORT]
+                         [--dbusername DBUSERNAME] [--dbname DBNAME]
+                         [--verbose {info,debug,debug_analyzer}]
+
+Run analysis for a project with storing results in the database. Check only
+needs a build command or an already existing logfile and performs every step
+of doing the analysis in batch.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --keep-tmp
+  -c , --clean
+  --update
+  -n NAME, --name NAME
+  -w WORKSPACE, --workspace WORKSPACE
+                        Directory where CodeChecker can store analysis related
+                        data, such as intermediate result files and the
+                        database. (default: /home/<username>/.codechecker)
+  -f, --force
+  -u SUPPRESS, --suppress SUPPRESS
+  --verbose {info,debug,debug_analyzer}
+                        Set verbosity level. (default: info)
+
+log arguments:
+
+  -q, --quiet-build
+  -b COMMAND, --build COMMAND
+  -l LOGFILE, --logfile LOGFILE
+
+analyzer arguments:
+
+  -j JOBS, --jobs JOBS
+  -i SKIPFILE, --skip SKIPFILE
+  --analyzers ANALYZER [ANALYZER ...]
+  --add-compiler-defaults
+  --saargs CLANGSA_ARGS_CFG_FILE
+  --tidyargs TIDY_ARGS_CFG_FILE
+
+checker configuration:
+
+  -e checker/checker-group, --enable checker/checker-group
+  -d checker/checker-group, --disable checker/checker-group
+
+database arguments:
+
+  --sqlite              (Usage of this argument is DEPRECATED and has no
+                        effect!)
+  --postgresql
+
+PostgreSQL arguments:
+
+  --dbaddress DBADDRESS
+  --dbport DBPORT
+  --dbusername DBUSERNAME
+  --dbname DBNAME
+~~~~~~~~~~~~~~~~~~~~~
 
 ## Quickcheck
 
@@ -152,9 +258,12 @@ output arguments:
 
 # Available CodeChecker commands
 
-## 1. log mode:
+## 1. `log` mode
 
-Just build your project and create a log file but do not invoke the source code analysis.
+The first step in performing an analysis on your project is to record
+information about the files in your project for the analyzers. This is done by
+recording a build of your project, which is done by the command `CodeChecker
+log`.
 
 ~~~~~~~~~~~~~~~~~~~~~
 usage: CodeChecker log [-h] -o LOGFILE -b COMMAND [-q]
@@ -657,112 +766,6 @@ with
 ~~~~
 CodeChecker store ./my_plists
 ~~~~
-
-
-## 2. check mode:
-
-### Basic Usage
-
-Database and connections will be automatically configured.
-The main script starts and setups everything what is required for analyzing a project (database server, tables ...).
-
-~~~~~~~~~~~~~~~~~~~~~
-CodeChecker check -w codechecker_workspace -n myTestProject -b "make"
-~~~~~~~~~~~~~~~~~~~~~
-
-Static analysis can be started also by using an already generated buildlog (see log mode).
-If log is not available the analyzer will automatically create it.
-An already created CMake json compilation database can be used as well.
-
-~~~~~~~~~~~~~~~~~~~~~
-CodeChecker check -w ~/codechecker_wp -n myProject -l ~/codechecker_wp/build_log.json
-~~~~~~~~~~~~~~~~~~~~~
-
-### Advanced Usage
-
-~~~~~~~~~~~~~~~~~~~~~
-usage: CodeChecker check [-h] [-w WORKSPACE] -n NAME (-b COMMAND | -l LOGFILE)
-                         [-j JOBS] [-u SUPPRESS] [-c [DEPRECATED]]
-                         [--update [DEPRECATED]] [--force] [-s SKIPFILE]
-                         [--quiet-build] [--add-compiler-defaults] [-e ENABLE]
-                         [-d DISABLE] [--keep-tmp]
-                         [--analyzers ANALYZERS [ANALYZERS ...]]
-                         [--saargs CLANGSA_ARGS_CFG_FILE]
-                         [--tidyargs TIDY_ARGS_CFG_FILE]
-                         [--sqlite [DEPRECATED]] [--postgresql]
-                         [--dbport DBPORT] [--dbaddress DBADDRESS]
-                         [--dbname DBNAME] [--dbusername DBUSERNAME]
-                         [--verbose {info,debug,debug_analyzer}]
-
-optional arguments:
-  -h, --help            show this help message and exit
-  -w WORKSPACE, --workspace WORKSPACE
-                        Directory where the CodeChecker can store analysis
-                        related data. (default: /home/<user_home>/.codechecker)
-  -n NAME, --name NAME  Name of the analysis.
-  -b COMMAND, --build COMMAND
-                        Build command which is used to build the project.
-  -l LOGFILE, --log LOGFILE
-                        Path to the log file which is created during the
-                        build. If there is an already generated log file with
-                        the compilation commands generated by 'CodeChecker
-                        log' or 'cmake -DCMAKE_EXPORT_COMPILE_COMMANDS'
-                        CodeChecker check can use it for the analysis in that
-                        case running the original build will be left out from
-                        the analysis process (no log is needed).
-  -j JOBS, --jobs JOBS  Number of jobs. Start multiple processes for faster
-                        analysis. (default: 1)
-  -u SUPPRESS, --suppress SUPPRESS
-                        Path to suppress file. Suppress file can be used to
-                        suppress analysis results during the analysis. It is
-                        based on the bug identifier generated by the compiler
-                        which is experimental. Do not depend too much on this
-                        file because identifier or file format can be changed.
-                        For other in source suppress features see the user
-                        guide.
-  -c [DEPRECATED], --clean [DEPRECATED]
-                        DEPRECATED argument! (default: None)
-  --update [DEPRECATED]
-                        DEPRECATED argument! (default: None)
-  --force               Delete analysis results form the database if a run
-                        with the given name already exists. (default: False)
-  -s SKIPFILE, --skip SKIPFILE
-                        Path to skip file.
-  --quiet-build         Do not print out the output of the original build.
-                        (default: False)
-  --add-compiler-defaults
-                        Fetch built in compiler include paths and defines and
-                        pass them to Clang. This is useful when you do cross-
-                        compilation. (default: False)
-  -e ENABLE, --enable ENABLE
-                        Enable checker.
-  -d DISABLE, --disable DISABLE
-                        Disable checker.
-  --keep-tmp            Keep temporary report files generated during the
-                        analysis. (default: False)
-  --analyzers ANALYZERS [ANALYZERS ...]
-                        Select which analyzer should be enabled. Currently
-                        supported analyzers are: clangsa clang-tidy e.g. '--
-                        analyzers clangsa clang-tidy' (default: ['clangsa',
-                        'clang-tidy'])
-  --saargs CLANGSA_ARGS_CFG_FILE
-                        File with arguments which will be forwarded directly
-                        to the Clang static analyzer without modification.
-  --tidyargs TIDY_ARGS_CFG_FILE
-                        File with arguments which will be forwarded directly
-                        to the Clang tidy analyzer without modification.
-  --sqlite [DEPRECATED]
-                        DEPRECATED argument! (default: None)
-  --postgresql          Use PostgreSQL database. (default: False)
-  --dbport DBPORT       Postgres server port. (default: 5432)
-  --dbaddress DBADDRESS
-                        Postgres database server address. (default: localhost)
-  --dbname DBNAME       Name of the database. (default: codechecker)
-  --dbusername DBUSERNAME
-                        Database user name. (default: codechecker)
-  --verbose {info,debug,debug_analyzer}
-                        Set verbosity level. (default: info)
-~~~~~~~~~~~~~~~~~~~~~
 
 
 ### Using SQLite for database:

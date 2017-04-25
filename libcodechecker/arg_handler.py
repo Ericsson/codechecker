@@ -38,18 +38,6 @@ from libcodechecker.server import instance_manager
 LOG = LoggerFactory.get_new_logger('ARG_HANDLER')
 
 
-def log_startserver_hint(args):
-    db_data = ""
-    if args.postgresql:
-        db_data += " --postgresql" \
-                   + " --dbname " + args.dbname \
-                   + " --dbport " + str(args.dbport) \
-                   + " --dbusername " + args.dbusername
-
-    LOG.info("To view results run:\nCodeChecker server -w " +
-             args.workspace + db_data)
-
-
 # TODO: Will be replaced wholly by libcodechecker/checkers.py.
 def handle_list_checkers(args):
     """
@@ -254,67 +242,6 @@ def handle_debug(args):
 
     debug_reporter.debug(context, sql_server.get_connection_string(),
                          args.force)
-
-
-def handle_check(args):
-    """
-    Runs the original build and logs the buildactions.
-    Based on the log runs the analysis.
-    """
-    try:
-        if not host_check.check_zlib():
-            sys.exit(1)
-
-        args.workspace = os.path.abspath(args.workspace)
-        if not os.path.isdir(args.workspace):
-            os.mkdir(args.workspace)
-
-        context = generic_package_context.get_context()
-        context.codechecker_workspace = args.workspace
-        context.db_username = args.dbusername
-
-        log_file, set_in_cmdline = build_manager.check_log_file(args, context)
-
-        if not log_file:
-            LOG.error("Failed to generate compilation command file: " +
-                      log_file)
-            sys.exit(1)
-
-        actions = log_parser.parse_log(log_file,
-                                       args.add_compiler_defaults)
-
-        check_env = analyzer_env.get_check_env(context.path_env_extra,
-                                               context.ld_lib_path_extra)
-
-        sql_server = SQLServer.from_cmdline_args(args,
-                                                 context.migration_root,
-                                                 check_env)
-
-        conn_mgr = client.ConnectionManager(sql_server, 'localhost',
-                                            util.get_free_port())
-
-        sql_server.start(context.db_version_info, wait_for_start=True,
-                         init=True)
-
-        conn_mgr.start_report_server()
-
-        LOG.debug("Checker server started.")
-
-        analyzer.run_check(args, actions, context)
-
-        LOG.info("Analysis has finished.")
-
-        log_startserver_hint(args)
-
-    except Exception as ex:
-        LOG.error(ex)
-        import traceback
-        print(traceback.format_exc())
-    finally:
-        if not args.keep_tmp:
-            if log_file and not set_in_cmdline:
-                LOG.debug('Removing temporary log file: ' + log_file)
-                os.remove(log_file)
 
 
 def consume_plist(item):

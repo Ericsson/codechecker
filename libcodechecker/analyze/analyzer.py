@@ -63,114 +63,13 @@ def __get_analyzer_version(context, analyzer_config_map):
     return versions
 
 
-def _get_skip_handler(args):
+def __get_skip_handler(args):
     try:
         if args.skipfile:
             LOG.debug_analyzer("Creating skiplist handler.")
             return skiplist_handler.SkipListHandler(args.skipfile)
     except AttributeError:
         LOG.debug_analyzer('Skip file was not set in the command line')
-
-
-def run_check(args, actions, context):
-    """
-    Prepare:
-    - analyzer config handlers
-    - skiplist handling
-    - analyzer severity levels
-
-    Stores analysis related data to the database and starts the analysis.
-    """
-
-    if args.jobs <= 0:
-        args.jobs = 1
-
-    LOG.debug_analyzer("Checking supported analyzers.")
-    enabled_analyzers, _ = analyzer_types.check_supported_analyzers(
-        args.analyzers,
-        context)
-
-    actions = prepare_actions(actions, enabled_analyzers)
-
-    suppress_file = ''
-    try:
-        suppress_file = os.path.realpath(args.suppress)
-    except AttributeError:
-        LOG.debug_analyzer('Suppress file was not set in the command line.')
-
-    # Create one skip list handler shared between the analysis manager workers.
-    skip_handler = _get_skip_handler(args)
-
-    with client.get_connection() as connection:
-        context.run_id = connection.add_checker_run(' '.join(sys.argv),
-                                                    args.name,
-                                                    context.version,
-                                                    args.force)
-
-        # Clean previous suppress information.
-        client.clean_suppress(connection, context.run_id)
-
-        if os.path.exists(suppress_file):
-            client.send_suppress(context.run_id, connection, suppress_file)
-
-        analyzer_config_map = analyzer_types. \
-            build_config_handlers(args,
-                                  context,
-                                  enabled_analyzers,
-                                  connection)
-
-        if skip_handler:
-            connection.add_skip_paths(context.run_id,
-                                      skip_handler.get_skiplist())
-
-    versions = __get_analyzer_version(context, analyzer_config_map)
-    for analyzer, version in versions.iteritems():
-        LOG.info("Using analyzer:\n" + analyzer + "\n\nversion:\n" + version)
-
-    LOG.info("Static analysis is starting ...")
-    start_time = time.time()
-
-    analysis_manager.start_workers_old(args,
-                                       actions,
-                                       context,
-                                       analyzer_config_map,
-                                       skip_handler)
-
-    end_time = time.time()
-
-    with client.get_connection() as connection:
-        connection.finish_checker_run(context.run_id)
-
-    LOG.info("Analysis length: " + str(end_time - start_time) + " sec.")
-
-
-def run_quick_check(args,
-                    context,
-                    actions):
-    """
-    This function implements the "quickcheck" feature.
-    No result is stored to a database.
-    """
-
-    enabled_analyzers, _ = analyzer_types. \
-        check_supported_analyzers(args.analyzers, context)
-
-    actions = prepare_actions(actions, enabled_analyzers)
-
-    analyzer_config_map = \
-        analyzer_types.build_config_handlers(args,
-                                             context,
-                                             enabled_analyzers)
-
-    versions = __get_analyzer_version(context, analyzer_config_map)
-    for analyzer, version in versions.iteritems():
-        LOG.info("Using analyzer:\n" + analyzer + "\n\nversion:\n" + version)
-
-    LOG.info("Static analysis is starting ...")
-
-    analysis_manager.start_workers_old(args, actions, context,
-                                       analyzer_config_map,
-                                       _get_skip_handler(args), False)
 
 
 def perform_analysis(args, context, actions, metadata):
@@ -208,7 +107,7 @@ def perform_analysis(args, context, actions, metadata):
 
     analysis_manager.start_workers(actions, context, config_map,
                                    args.jobs, args.output_path,
-                                   _get_skip_handler(args), metadata)
+                                   __get_skip_handler(args), metadata)
 
     end_time = time.time()
     LOG.info("Analysis length: " + str(end_time - start_time) + " sec.")

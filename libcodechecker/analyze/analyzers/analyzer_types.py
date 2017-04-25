@@ -431,7 +431,7 @@ def construct_store_handler(buildaction,
                             run_id,
                             severity_map):
     """
-    Construct a result handler for parsing results in a human-readable format.
+    Construct a result handler for storing results in a database.
     """
     assert buildaction.analyzer_type in supported_analyzers, \
         'Analyzer types should have been checked already.'
@@ -450,28 +450,3 @@ def construct_store_handler(buildaction,
 
     res_handler.severity_map = severity_map
     return res_handler
-
-
-# TODO: This is deprecated.
-def construct_result_handler(args,
-                             buildaction,
-                             run_id,
-                             report_output,
-                             severity_map,
-                             skiplist_handler,
-                             lock,
-                             store_to_db=False):
-    """
-    Construct a result handler.
-    """
-    assert buildaction.analyzer_type in supported_analyzers, \
-        'Analyzer types should have been checked already.'
-
-    if store_to_db:
-        assert False, 'store_to_db argument has been deprecated as ' \
-                      'check uses a different wrapper now.'
-    else:
-        assert False, 'store_to_db argument has been deprecated as ' \
-                      'quickcheck uses a different wrapper now.'
-
-    return None

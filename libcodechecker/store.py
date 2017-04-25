@@ -9,8 +9,6 @@ database.
 """
 
 import argparse
-import datetime
-import getpass
 import json
 import multiprocessing
 import sys
@@ -18,6 +16,7 @@ import os
 
 from libcodechecker import client
 from libcodechecker import generic_package_context
+from libcodechecker import host_check
 from libcodechecker import util
 from libcodechecker.analyze import analyzer_env
 from libcodechecker.analyze.analyzers import analyzer_types
@@ -328,7 +327,7 @@ def main(args):
                       "--name run_name in the invocation.")
             sys.exit(2)  # argparse returns error code 2 for bad invocations.
 
-    LOG.info("Storing analysis results '" + args.name + "'")
+    LOG.info("Storing analysis results for run '" + args.name + "'")
 
     if args.force:
         LOG.info("argument --force was specified: the run with name '" +
@@ -399,6 +398,9 @@ def main(args):
                                                     args.name,
                                                     context.version,
                                                     args.force)
+
+        # Clean previous suppress information.
+        client.clean_suppress(connection, context.run_id)
 
         if 'suppress' in args:
             if not os.path.isfile(args.suppress):
