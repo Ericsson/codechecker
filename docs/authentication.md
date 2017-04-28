@@ -223,7 +223,7 @@ For browser authentication to work, cookies must be enabled!
 
 The `CodeChecker cmd` client needs to be authenticated for a server before any data communication could take place.
 
-The client's configuration file is expected to be at `~/.codechecker_passwords.json`, which is created at the first command executed
+The client's configuration file is expected to be at `~/.codechecker.passwords.json`, which is created at the first command executed
 by using the package's `config/session_client.json` as an example.
 
 > Please make sure, as a security precaution, that **only you** are allowed to access this file.
@@ -252,8 +252,8 @@ Privileged session expire after a set amount of time. To log out manually, issue
 
 To alleviate the need for supplying authentication in the command-line every time a server is connected to, users can pre-configure their credentials to be used in authentication.
 
-To do so first copy the `config/session_client.json` file from the CodeChecker package to your home directory and rename it to `codechecker_passwords.json`
-After creating the new file open `~/.codechecker_passwords.json`.
+To do so first copy the `config/session_client.json` file from the CodeChecker package to your home directory and rename it to `codechecker.passwords.json`
+After creating the new file open `~/.codechecker.passwords.json`.
 
 The `credentials` section is used by the client to read pre-saved authentication data in `username:password` format.
 
@@ -281,4 +281,4 @@ This behaviour can be disabled by setting `client_autologin` to `false`.
 
 #### Currently active tokens
 
-The user's currently active sessions' token are stored in the `~/.codechecker_USERNAME.session.json`.
+The user's currently active sessions' token are stored in the `~/.codechecker.session.json`.
