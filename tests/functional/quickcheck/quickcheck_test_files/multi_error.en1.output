@@ -4,8 +4,8 @@ CodeChecker quickcheck --analyzers clangsa -b "make multi_error" -e core.StackAd
 [] - Build finished successfully.
 [] - Using analyzer:
 [] - Static analysis is starting ...
-multi_error.cpp:2:3: Address of stack memory associated with local variable 'x' returned to caller [core.StackAddressEscape]
-  int x = 42;
+multi_error.cpp:3:3: Address of stack memory associated with local variable 'x' returned to caller [core.StackAddressEscape]
+  return &x;
   ^
 
 clangsa found 1 defect(s) while analyzing multi_error.cpp

@@ -33,7 +33,7 @@ class PlistToDB(ResultHandler):
         super(PlistToDB, self).__init__(buildaction, workspace)
         self.__run_id = run_id
 
-    def __store_bugs(self, files, bugs, connection, analisys_id):
+    def __store_bugs(self, files, reports, connection, analisys_id):
         file_ids = {}
         # Send content of file to the server if needed.
         for file_name in files:
@@ -58,48 +58,68 @@ class PlistToDB(ResultHandler):
                 connection.add_file_content(file_descriptor.fileId,
                                             compressed_file)
 
-        # Skipping bugs in header files handled here.
+        # Skipping reports in header files handled here.
         report_ids = []
-        for bug in bugs:
-            events = bug.events()
+        for report in reports:
+            events = [i for i in report.bug_path if i.get('kind') == 'event']
 
             # Skip list handler can be None if no config file is set.
             if self.skiplist_handler:
-                if events and self.skiplist_handler.should_skip(
-                        events[-1].start_pos.file_path):
-                    # Issue #20: this bug is in a file which should be skipped
-                    LOG.debug(bug.hash_value + ' is skipped (in ' +
-                              events[-1].start_pos.file_path + ")")
+                # Skip is checked based on the file path of the last reported
+                # event.
+                # TODO: this should be changed in later versions
+                # to use the main diag section to check if the report
+                # should be skipped or not.
+                f_path = files[events[-1]['location']['file']]
+                if events and self.skiplist_handler.should_skip(f_path):
+                    LOG.debug(report + ' is skipped (in ' + f_path + ")")
                     continue
 
             # Create remaining data for bugs and send them to the server.
             bug_paths = []
-            for path in bug.paths():
+            report_path = [i for i in report.bug_path if
+                           i.get('kind') == 'control']
+            for path in report_path:
+                start_range = path['edges'][0]['start']
+                start_line = start_range[1]['line']
+                start_col = start_range[1]['col']
+
+                end_range = path['edges'][0]['end']
+                end_line = end_range[1]['line']
+                end_col = end_range[1]['col']
+                source_file_path = files[end_range[1]['file']]
                 bug_paths.append(
-                    shared.ttypes.BugPathPos(path.start_pos.line,
-                                             path.start_pos.col,
-                                             path.end_pos.line,
-                                             path.end_pos.col,
-                                             file_ids[
-                                                 path.start_pos.file_path]))
+                    shared.ttypes.BugPathPos(start_line,
+                                             start_col,
+                                             end_line,
+                                             end_col,
+                                             file_ids[source_file_path]))
 
             bug_events = []
-            for event in bug.events():
+            for event in events:
+                file_path = files[event['location']['file']]
                 bug_events.append(shared.ttypes.BugPathEvent(
-                    event.start_pos.line,
-                    event.start_pos.col,
-                    event.end_pos.line,
-                    event.end_pos.col,
-                    event.msg,
-                    file_ids[event.start_pos.file_path]))
+                    event['location']['line'],
+                    event['location']['col'],
+                    event['location']['line'],
+                    event['location']['col'],
+                    event['message'],
+                    file_ids[file_path]))
 
-            bug_hash = bug.hash_value
-
-            severity_name = self.severity_map.get(bug.checker_name,
-                                                  'UNSPECIFIED')
+            bug_hash = report.main['issue_hash_content_of_line_in_context']
+            checker_name = report.main['check_name']
+            severity_name = self.severity_map.get(checker_name, 'UNSPECIFIED')
             severity = shared.ttypes.Severity._NAMES_TO_VALUES[severity_name]
 
-            sp_handler = suppress_handler.SourceSuppressHandler(bug)
+            last_report_event = report.bug_path[-1]
+            source_file = files[last_report_event['location']['file']]
+            report_line = last_report_event['location']['line']
+            report_hash = report.main['issue_hash_content_of_line_in_context']
+            checker_name = report.main['check_name']
+            sp_handler = suppress_handler.SourceSuppressHandler(source_file,
+                                                                report_line,
+                                                                report_hash,
+                                                                checker_name)
 
             # Check for suppress comment.
             supp = sp_handler.get_suppressed()
@@ -108,15 +128,20 @@ class PlistToDB(ResultHandler):
 
             LOG.debug('Storing check results to the database.')
 
+            fpath = files[report.main['location']['file']]
+            msg = report.main['description']
+            checker_name = report.main['check_name']
+            category = report.main['category']
+            type = report.main['type']
             report_id = connection.add_report(analisys_id,
-                                              file_ids[bug.file_path],
+                                              file_ids[fpath],
                                               bug_hash,
-                                              bug.msg,
+                                              msg,
                                               bug_paths,
                                               bug_events,
-                                              bug.checker_name,
-                                              bug.category,
-                                              bug.type,
+                                              checker_name,
+                                              category,
+                                              type,
                                               severity,
                                               supp is not None)
 
@@ -158,7 +183,7 @@ class PlistToDB(ResultHandler):
             plist_file = self.analyzer_result_file
 
             try:
-                files, bugs = plist_parser.parse_plist(plist_file)
+                files, reports = plist_parser.parse_plist(plist_file)
             except Exception as ex:
                 LOG.debug(str(ex))
                 msg = 'Parsing the generated result file failed.'
@@ -166,7 +191,7 @@ class PlistToDB(ResultHandler):
                 connection.finish_build_action(analysis_id, msg)
                 return 1
 
-            self.__store_bugs(files, bugs, connection, analysis_id)
+            self.__store_bugs(files, reports, connection, analysis_id)
 
             connection.finish_build_action(analysis_id, self.analyzer_stderr)
 
