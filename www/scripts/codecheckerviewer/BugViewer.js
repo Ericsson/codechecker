@@ -377,6 +377,12 @@ function (declare, dom, style, on, query, Memory, Observable, topic, entities,
         this.reportData.reportId + '',
         this.reportData.reportId + '_0'
       ]);
+
+      var that = this;
+
+      setTimeout(function () {
+        that.editor.highlightBugPathEvent(that.reportData.lastBugPosition);
+      }, 0);
     },
 
     loadBugStoreData : function () {
@@ -663,6 +669,7 @@ function (declare, dom, style, on, query, Memory, Observable, topic, entities,
         id : report.reportId + '_0',
         name : '<b><u>' + entities.encode(report.checkerMsg) + '</u></b>',
         parent : report.reportId + '',
+        bugPathEvent : report.lastBugPosition,
         report : report,
         isLeaf : true,
         kind : 'msg'
