@@ -450,6 +450,7 @@ function (declare, dom, style, on, query, Memory, Observable, topic, entities,
 
       if (isOtherReport) {
         this.editor.set('reportData', item.report);
+        this.buttonPane.set('reportData', item.report);
         hashHelper.setReport(item.report.reportId);
       }
 
