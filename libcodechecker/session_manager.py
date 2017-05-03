@@ -24,12 +24,12 @@ from libcodechecker.logger import LoggerFactory
 unsupported_methods = []
 
 try:
-    from libcodechecker.auth import cc_ldap
+    from libcodechecker.libauth import cc_ldap
 except ImportError:
     unsupported_methods.append("ldap")
 
 try:
-    from libcodechecker.auth import cc_pam
+    from libcodechecker.libauth import cc_pam
 except ImportError:
     unsupported_methods.append("pam")
 
