@@ -91,6 +91,10 @@ def repository_root():
     return os.path.abspath(os.environ['REPO_ROOT'])
 
 
+def test_proj_root():
+    return os.path.abspath(os.environ['TEST_PROJ'])
+
+
 def setup_test_proj_cfg(workspace):
     return import_test_cfg(workspace)['test_project']
 

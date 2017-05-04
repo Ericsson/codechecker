@@ -19,10 +19,7 @@ def get_info(test_project):
 
 
 def path(test_project):
-    return os.path.join(env.repository_root(),
-                        'tests',
-                        'projects',
-                        test_project)
+    return os.path.join(env.test_proj_root(), test_project)
 
 
 def get_build_cmd(test_project):
