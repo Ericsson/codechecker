@@ -9,6 +9,7 @@ for the plist_parser module.
 """
 
 import copy
+import json
 import os
 import plistlib
 import re
@@ -380,3 +381,6 @@ class PListConverter(object):
         """
 
         plistlib.writePlist(self.plist, file)
+
+    def __str__(self):
+        return str(json.dumps(self.plist, indent=4, separators=(',', ': ')))
