@@ -354,10 +354,12 @@ class PListConverter(object):
                 note, fmap))
             last = note
 
-        diag['path'].append({
-            'kind': 'control',
-            'edges': edges
-        })
+        # Add control items only if there is any.
+        if edges:
+            diag['path'].append({
+                'kind': 'control',
+                'edges': edges
+            })
 
     def add_messages(self, messages):
         """

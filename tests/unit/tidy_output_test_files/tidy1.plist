@@ -40,13 +40,6 @@
 					<string>Division by zero</string>
 				</dict>
 				<dict>
-					<key>edges</key>
-					<array>
-					</array>
-					<key>kind</key>
-					<string>control</string>
-				</dict>
-				<dict>
 					<key>depth</key>
 					<integer>0</integer>
 					<key>kind</key>
@@ -85,13 +78,6 @@
 			</dict>
 			<key>path</key>
 			<array>
-				<dict>
-					<key>edges</key>
-					<array>
-					</array>
-					<key>kind</key>
-					<string>control</string>
-				</dict>
 				<dict>
 					<key>depth</key>
 					<integer>0</integer>
