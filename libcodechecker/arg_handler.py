@@ -50,6 +50,7 @@ def log_startserver_hint(args):
              args.workspace + db_data)
 
 
+# TODO: Will be replaced wholly by libcodechecker/checkers.py.
 def handle_list_checkers(args):
     """
     List the supported checkers by the analyzers.

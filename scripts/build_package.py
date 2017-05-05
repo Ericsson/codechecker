@@ -669,6 +669,7 @@ def build_package(repository_root, build_package_config, env=None):
                 # .py files are Python code that must run in a valid env.
                 shutil.copy2(os.path.join(source, f), target_cc)
 
+    available_commands.sort()
     with open(os.path.join(target_cc, 'commands.json'), 'w') as commands:
         json.dump(available_commands, commands, sort_keys=True)
 

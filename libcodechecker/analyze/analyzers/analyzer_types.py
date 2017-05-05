@@ -12,8 +12,8 @@ import re
 import sys
 
 from libcodechecker import client
-from libcodechecker import host_check
 from libcodechecker.analyze import analyzer_env
+from libcodechecker.analyze import host_check
 from libcodechecker.analyze.analyzers import analyzer_clang_tidy
 from libcodechecker.analyze.analyzers import analyzer_clangsa
 from libcodechecker.analyze.analyzers import config_handler_clang_tidy
