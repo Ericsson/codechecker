@@ -197,21 +197,20 @@ CodeChecker quickcheck -b "cd ~/myproject && make"
         old_subcommands = []
 
         def _warn_deprecated_command(cmd_name):
-            # This warning is implemented for showing later on, once old
-            # behaviour commands are deprecated. We don't warn between 5.8 and
-            # 6.0 for now.
-            pass
-
             # Write to stderr so the output is not captured by pipes, e.g.
             # with the "checkers" command, the "-" in the new command's name
             # would mess up pipe usage.
-            sys.stderr.write(
-                "[WARNING] The called command 'CodeChecker {0}' is DEPRECATED "
-                "since version A.B. A new version is available as "
-                "'codechecker-{0}'.\nThe DEPRECATED command will be REPLACED "
-                "when version X.Y is released.\nPlease see 'codechecker-{0} "
-                "--help' on details how to run the new version.\n".
-                format(cmd_name))
+            err_msg = "[WARNING] The called command 'CodeChecker {0}' is " \
+                      "DEPRECATED since version A.B. A new version is "    \
+                      "available as 'codechecker-{0}'.\nThe DEPRECATED "   \
+                      "command will be REPLACED when version X.Y is "      \
+                      "released.\nPlease see 'codechecker-{0} --help' on " \
+                      "details how to run the new version.\n".format(cmd_name)
+
+            # This warning is implemented for showing later on, once old
+            # behaviour commands are deprecated. We don't warn between 5.8 and
+            # 6.0 for now.
+            # sys.stderr.write(err_msg)
 
         workspace_help_msg = 'Directory where the CodeChecker can' \
             ' store analysis related data.'
