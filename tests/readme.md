@@ -1,6 +1,6 @@
 # Running tests
-|cmd||
-|----|---|----|
+|cmd||  
+|----|---|  
 |`make test`| run all tests (unit and functional)|  
 |`make test_unit` | unittests |  
 |`make test_functional` | functional tests (SQLite and PostgreSQL) |  
