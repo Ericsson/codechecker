@@ -80,20 +80,24 @@ class PlistToDB(ResultHandler):
             report_path = [i for i in report.bug_path if
                            i.get('kind') == 'control']
             for path in report_path:
-                start_range = path['edges'][0]['start']
-                start_line = start_range[1]['line']
-                start_col = start_range[1]['col']
+                try:
+                    start_range = path['edges'][0]['start']
+                    start_line = start_range[1]['line']
+                    start_col = start_range[1]['col']
 
-                end_range = path['edges'][0]['end']
-                end_line = end_range[1]['line']
-                end_col = end_range[1]['col']
-                source_file_path = files[end_range[1]['file']]
-                bug_paths.append(
-                    shared.ttypes.BugPathPos(start_line,
-                                             start_col,
-                                             end_line,
-                                             end_col,
-                                             file_ids[source_file_path]))
+                    end_range = path['edges'][0]['end']
+                    end_line = end_range[1]['line']
+                    end_col = end_range[1]['col']
+                    source_file_path = files[end_range[1]['file']]
+                    bug_paths.append(
+                        shared.ttypes.BugPathPos(start_line,
+                                                 start_col,
+                                                 end_line,
+                                                 end_col,
+                                                 file_ids[source_file_path]))
+                except IndexError as iex:
+                    # Edges might be empty nothing can be stored.
+                    continue
 
             bug_events = []
             for event in events:

@@ -40,13 +40,6 @@
 					<string>nullptr (fixit)</string>
 				</dict>
 				<dict>
-					<key>edges</key>
-					<array>
-					</array>
-					<key>kind</key>
-					<string>control</string>
-				</dict>
-				<dict>
 					<key>depth</key>
 					<integer>0</integer>
 					<key>kind</key>

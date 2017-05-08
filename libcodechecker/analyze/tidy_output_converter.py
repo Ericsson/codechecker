@@ -9,6 +9,7 @@ for the plist_parser module.
 """
 
 import copy
+import json
 import os
 import plistlib
 import re
@@ -353,10 +354,12 @@ class PListConverter(object):
                 note, fmap))
             last = note
 
-        diag['path'].append({
-            'kind': 'control',
-            'edges': edges
-        })
+        # Add control items only if there is any.
+        if edges:
+            diag['path'].append({
+                'kind': 'control',
+                'edges': edges
+            })
 
     def add_messages(self, messages):
         """
@@ -380,3 +383,6 @@ class PListConverter(object):
         """
 
         plistlib.writePlist(self.plist, file)
+
+    def __str__(self):
+        return str(json.dumps(self.plist, indent=4, separators=(',', ': ')))
