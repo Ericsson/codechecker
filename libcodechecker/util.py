@@ -42,7 +42,7 @@ def is_localhost(address):
     IP-addresses from the system.
     """
 
-    valid_values = ['localhost', '0.0.0.0', '*']
+    valid_values = ['localhost', '0.0.0.0', '*', '::1']
 
     try:
         valid_values.append(socket.gethostbyname('localhost'))

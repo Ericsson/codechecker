@@ -174,67 +174,6 @@ CodeChecker quickcheck -b "cd ~/myproject && make"
         checker_p.set_defaults(func=arg_handler.handle_list_checkers)
 
         # --------------------------------------
-        # Server.
-        server_parser = subparsers.add_parser('server',
-                                              formatter_class=ADHF,
-                                              help='Start and manage the '
-                                                   'CodeChecker web server.')
-        old_subcommands.append('server')
-
-        server_parser.add_argument('-w', '--workspace', type=str,
-                                   dest="workspace",
-                                   default=util.get_default_workspace(),
-                                   help=workspace_help_msg)
-
-        server_parser.add_argument('-l', '--list',
-                                   action='store_true',
-                                   dest="list",
-                                   required=False,
-                                   help='List servers started by your user.')
-
-        server_parser.add_argument('-s', '--stop',
-                                   action='store_true',
-                                   dest="stop",
-                                   required=False,
-                                   help='Stops the server associated with '
-                                        'the given view-port and workspace.')
-
-        server_parser.add_argument('--stop-all',
-                                   action='store_true',
-                                   dest="stop_all",
-                                   required=False,
-                                   help='Stops all of your running '
-                                        'CodeChecker instances.')
-
-        server_parser.add_argument('-v', '--view-port', type=int,
-                                   dest="view_port",
-                                   default=8001, required=False,
-                                   help='Port used for viewing.')
-
-        server_parser.add_argument('-u', '--suppress', type=str,
-                                   dest="suppress",
-                                   required=False,
-                                   help='Path to suppress file.')
-
-        server_parser.add_argument('--not-host-only', action="store_true",
-                                   dest="not_host_only",
-                                   help='Viewing the results is possible not '
-                                        'only by browsers or clients '
-                                        'started locally.')
-
-        server_parser.add_argument('--check-port', type=int, dest="check_port",
-                                   default=None, required=False,
-                                   help='Port used for checking.')
-
-        server_parser.add_argument('--check-address', type=str,
-                                   dest="check_address", default="localhost",
-                                   required=False, help='Server address.')
-
-        add_database_arguments(server_parser)
-        logger.add_verbose_arguments(server_parser)
-        server_parser.set_defaults(func=arg_handler.handle_server)
-
-        # --------------------------------------
         # Cmd_line.
         cmd_line_parser = subparsers.add_parser('cmd',
                                                 help='Command line client')
