@@ -10,10 +10,32 @@ matrix:
       sudo: required
       dist: trusty
       python: "2.7"
+      env: DATABASE=sqlite
+    - os: linux
+      sudo: required
+      dist: trusty
+      python: "2.7"
+      env: DATABASE=psql_psycopg2
+    - os: linux
+      sudo: required
+      dist: trusty
+      python: "2.7"
+      env: DATABASE=psql_pg8000
     - os: osx
       osx_image: xcode8
       sudo: false
       language: generic
+      env: DATABASE=sqlite
+    - os: osx
+      osx_image: xcode8
+      sudo: false
+      language: generic
+      env: DATABASE=psql_psycopg2
+    - os: osx
+      osx_image: xcode8
+      sudo: false
+      language: generic
+      env: DATABASE=psql_pg8000
 
 before_install:
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then git clone https://github.com/llvm-mirror/clang.git ~/llvm; fi
@@ -30,7 +52,6 @@ before_install:
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then chmod a+x ~/llvm/tools/scan-build-py/bin/intercept-build; fi
 
 install:
-    - pip install -r ./.ci/python_requirements
     - pip install nose pep8
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pip install virtualenv; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PG_DATA=$(brew --prefix)/var/postgres; fi
@@ -60,5 +81,5 @@ addons:
 
 script:
     - make clean_travis
-    - make test
+    - if [[ ! -z "$DATABASE" ]]; then make test_matrix_${DATABASE}; else make test; fi
     - make clean_travis
