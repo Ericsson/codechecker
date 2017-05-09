@@ -378,14 +378,14 @@ class SessionManager_Client:
         return self.__autologin
 
     def getToken(self, host, port):
-        return self.__tokens.get(host + ":" + port)
+        return self.__tokens.get("{0}:{1}".format(host, port))
 
     def getAuthString(self, host, port):
-        ret = self.__save["credentials"].get(host + ":" + port)
+        ret = self.__save["credentials"].get("{0}:{1}".format(host, port))
         if not ret:
             ret = self.__save["credentials"].get(host)
         if not ret:
-            ret = self.__save["credentials"].get("*:" + port)
+            ret = self.__save["credentials"].get("*:{0}".format(port))
         if not ret:
             ret = self.__save["credentials"].get("*")
 
@@ -393,9 +393,9 @@ class SessionManager_Client:
 
     def saveToken(self, host, port, token, destroy=False):
         if destroy:
-            del self.__tokens[host + ":" + port]
+            del self.__tokens["{0}:{1}".format(host, port)]
         else:
-            self.__tokens[host + ":" + port] = token
+            self.__tokens["{0}:{1}".format(host, port)] = token
 
         with open(self.token_file, 'w') as scfg:
             portalocker.lock(scfg, portalocker.LOCK_EX)

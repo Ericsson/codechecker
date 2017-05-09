@@ -23,7 +23,6 @@ from libcodechecker import arg_handler
 from libcodechecker import logger
 from libcodechecker.logger import LoggerFactory
 from libcodechecker import util
-from libcodechecker.cmd import cmd_line_client
 from libcodechecker.analyze.analyzers import analyzer_types
 
 LOG = LoggerFactory.get_new_logger('MAIN')
@@ -233,13 +232,6 @@ CodeChecker quickcheck -b "cd ~/myproject && make"
         add_database_arguments(server_parser)
         logger.add_verbose_arguments(server_parser)
         server_parser.set_defaults(func=arg_handler.handle_server)
-
-        # --------------------------------------
-        # Cmd_line.
-        cmd_line_parser = subparsers.add_parser('cmd',
-                                                help='Command line client')
-        old_subcommands.append('cmd')
-        cmd_line_client.register_client_command_line(cmd_line_parser)
 
         # --------------------------------------
         # Debug parser.

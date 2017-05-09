@@ -4,9 +4,7 @@
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
 
-from argparse import ArgumentDefaultsHelpFormatter as ADHFormatter
 from datetime import datetime
-import argparse
 import getpass
 import json
 import sys
@@ -18,7 +16,6 @@ import shared
 from Authentication import ttypes as AuthTypes
 
 from libcodechecker import session_manager
-from libcodechecker import logger
 from libcodechecker import suppress_file_handler
 from libcodechecker.output_formatters import twodim_to_str
 
@@ -73,7 +70,7 @@ def handle_auth_requests(args):
         print("This server does not support privileged access.")
         return
 
-    if args.logout:
+    if 'logout' in args:
         logout_done = auth_client.destroySession()
         if logout_done:
             session.saveToken(args.host, args.port, None, True)
@@ -217,16 +214,6 @@ def check_run_names(client, check_names):
     return run_info
 
 
-def valid_time(t):
-    try:
-        parts = map(int, t.split(':'))
-        parts = parts + [0] * (6 - len(parts))
-        year, month, day, hour, minute, second = parts
-        return datetime(year, month, day, hour, minute, second)
-    except ValueError as ex:
-        raise argparse.ArgumentTypeError(ex)
-
-
 def add_filter_conditions(report_filter, filter_str):
     """This function fills some attributes of the given report filter based on
     the filter string which is provided in the command line. The filter string
@@ -249,14 +236,9 @@ def add_filter_conditions(report_filter, filter_str):
         report_filter.filepath = path
 
 
-def add_server_arguments(parser):
-    parser.add_argument('--host', type=str, dest="host",
-                        default='localhost',
-                        help='Server host.')
-    parser.add_argument('-p', '--port', type=str, dest="port",
-                        default=8001,
-                        required=True, help='HTTP Server port.')
-
+# ---------------------------------------------------------------------------
+# Argument handlers for the 'CodeChecker cmd' subcommands.
+# ---------------------------------------------------------------------------
 
 def handle_list_runs(args):
     client = setupClient(args.host, args.port, '/')
@@ -346,7 +328,7 @@ def handle_list_result_types(args):
     add_filter_conditions(report_filter, args.filter)
     filters.append(report_filter)
 
-    if args.all_results:
+    if 'all_results' in args:
         items = check_run_names(client, None).items()
     else:
         items = []
@@ -360,6 +342,9 @@ def handle_list_result_types(args):
         results = client.getRunResultTypes(run_id, filters)
 
         if args.output_format == 'json':
+            for res in results:
+                res.severity =\
+                    shared.ttypes.Severity._VALUES_TO_NAMES[res.severity]
             results_collector.append({name: results})
         else:  # plaintext, csv
             print('Check date: ' + run_date)
@@ -376,7 +361,6 @@ def handle_list_result_types(args):
         print(CmdLineOutputEncoder().encode(results_collector))
 
 
-# ------------------------------------------------------------
 def handle_remove_run_results(args):
     client = setupClient(args.host, args.port, '/')
 
@@ -392,25 +376,25 @@ def handle_remove_run_results(args):
 
     run_info = get_run_ids(client)
 
-    if args.name:
+    if 'name' in args:
         check_run_names(client, args.name)
 
         def condition(name, runid, date):
             return name in args.name
-    elif args.all_after_run and args.all_after_run in run_info:
+    elif 'all_after_run' in args and args.all_after_run in run_info:
         run_date = run_info[args.all_after_run][1]
 
         def condition(name, runid, date):
             return is_later(date, run_date)
-    elif args.all_before_run and args.all_before_run in run_info:
+    elif 'all_before_run' in args and args.all_before_run in run_info:
         run_date = run_info[args.all_before_run][1]
 
         def condition(name, runid, date):
             return is_later(run_date, date)
-    elif args.all_after_time:
+    elif 'all_after_time' in args:
         def condition(name, runid, date):
             return is_later(date, args.all_after_time)
-    elif args.all_before_time:
+    elif 'all_before_time' in args:
         def condition(name, runid, date):
             return is_later(args.all_before_time, date)
     else:
@@ -464,13 +448,13 @@ def handle_diff_results(args):
     baseid = run_info[args.basename][0]
     newid = run_info[args.newname][0]
 
-    if args.new:
+    if 'new' in args:
         printResult(client.getNewResults, baseid, newid, args.suppressed,
                     args.output_format)
-    elif args.unresolved:
+    elif 'unresolved' in args:
         printResult(client.getUnresolvedResults, baseid, newid,
                     args.suppressed, args.output_format)
-    elif args.resolved:
+    elif 'resolved' in args:
         printResult(client.getResolvedResults, baseid, newid, args.suppressed,
                     args.output_format)
 
@@ -498,7 +482,7 @@ def handle_suppress(args):
     run_info = check_run_names(client, [args.name])
     run_id, run_date = run_info.get(args.name)
 
-    if args.output:
+    if 'output' in args:
         for suppression in client.getSuppressedBugs(run_id):
             suppress_file_handler.write_to_suppress_file(
                 args.output,
@@ -506,7 +490,7 @@ def handle_suppress(args):
                 suppression.file_name,
                 suppression.comment)
 
-    elif args.input:
+    elif 'input' in args:
         with open(args.input) as supp_file:
             suppress_data = suppress_file_handler.get_suppress_data(supp_file)
 
@@ -515,213 +499,28 @@ def handle_suppress(args):
                                            bug_hash_filter(bug_id, file_name))
 
             for report in reports:
-                if report.suppressed and not args.force:
+                if report.suppressed and 'force' not in args:
                     print(already_suppressed.format(bug_id, file_name))
                 else:
                     update_suppression_comment(
                         run_id, report.reportId, comment)
 
-    elif args.bugid:
+    elif 'bugid' in args:
         reports = client.getRunResults(run_id, limit, 0, None,
                                        bug_hash_filter(args.bugid,
-                                                       args.file))
+                                                       args.file if 'file'
+                                                       in args else ""))
 
         for report in reports:
-            if args.x:
+            if 'unsuppress' in args:
                 client.unSuppressBug([run_id], report.reportId)
-            elif report.suppressed and not args.force:
-                print(already_suppressed.format(args.bugid, args.file))
+            elif report.suppressed and 'force' not in args:
+                print(already_suppressed.format(args.bugid,
+                                                args.file if 'file' in args
+                                                else ""))
             else:
                 update_suppression_comment(run_id,
                                            report.reportId,
-                                           args.comment)
+                                           args.comment if 'comment' in args
+                                           else "")
 
-
-def register_client_command_line(argument_parser):
-    """ Should be used to extend the already existing arguments
-    extend the argument parser with extra commands."""
-
-    subparsers = argument_parser.add_subparsers()
-
-    # List runs.
-    listruns_parser = subparsers.add_parser('runs',
-                                            formatter_class=ADHFormatter,
-                                            help='Get the run data.')
-    add_server_arguments(listruns_parser)
-    listruns_parser.add_argument('-o', choices=['plaintext', 'json', 'csv'],
-                                 default='plaintext', type=str,
-                                 dest="output_format", help='Output format.')
-    logger.add_verbose_arguments(listruns_parser)
-    listruns_parser.set_defaults(func=handle_list_runs)
-
-    # List results.
-    listresults_parser = subparsers.add_parser('results',
-                                               formatter_class=ADHFormatter,
-                                               help='List results.')
-    add_server_arguments(listresults_parser)
-    listresults_parser.add_argument('-n', '--name', type=str, dest="name",
-                                    required=True,
-                                    help='Check name.')
-    listresults_parser.add_argument('-s', '--suppressed', action="store_true",
-                                    dest="suppressed",
-                                    help='Suppressed results.')
-    listresults_parser.add_argument('--filter', dest='filter', type=str,
-                                    default='::', help='Filter string in the '
-                                    'following format: '
-                                    '<severity>:<checker_name>:<file_path>')
-    listresults_parser.add_argument('-o', choices=['plaintext', 'json', 'csv'],
-                                    default='plaintext', type=str,
-                                    dest="output_format",
-                                    help='Output format.')
-    logger.add_verbose_arguments(listresults_parser)
-    listresults_parser.set_defaults(func=handle_list_results)
-
-    # List diffs.
-    diff_parser = subparsers.add_parser('diff',
-                                        formatter_class=ADHFormatter,
-                                        help='Diff two run.')
-    listresults_parser.set_defaults(func=handle_list_results)
-
-    # List diffs.
-    add_server_arguments(diff_parser)
-    diff_parser.add_argument('-b', '--basename', type=str, dest="basename",
-                             required=True,
-                             help='Base name.')
-    diff_parser.add_argument('-n', '--newname', type=str, dest="newname",
-                             required=True,
-                             help='New name.')
-    diff_parser.add_argument('-s', '--suppressed', action="store_true",
-                             dest="suppressed", default=False,
-                             required=False, help='Show suppressed bugs.')
-    diff_parser.add_argument('-o', choices=['plaintext', 'json', 'csv'],
-                             default='plaintext', type=str,
-                             dest="output_format", help='Output format.')
-    diff_parser.add_argument('--filter', dest='filter', type=str,
-                             default='::', help='Filter string in the '
-                             'following format: '
-                             '<severity>:<checker_name>:<file_path>')
-    group = diff_parser.add_mutually_exclusive_group(required=True)
-    group.add_argument('--new', action="store_true", dest="new",
-                       help="Show new results.")
-    group.add_argument('--unresolved', action="store_true", dest="unresolved",
-                       help="Show unresolved results.")
-    group.add_argument('--resolved', action="store_true", dest="resolved",
-                       help="Show resolved results.")
-    logger.add_verbose_arguments(diff_parser)
-    diff_parser.set_defaults(func=handle_diff_results)
-
-    # List resulttypes.
-    sum_parser = subparsers.add_parser('sum',
-                                       formatter_class=ADHFormatter,
-                                       help='Sum results.')
-    add_server_arguments(sum_parser)
-    name_group = sum_parser.add_mutually_exclusive_group(required=True)
-    name_group.add_argument('-n', '--name', nargs='+', type=str, dest="names",
-                            help='Check name.')
-    name_group.add_argument('-a', '--all', action='store_true',
-                            dest="all_results", help='All results.')
-
-    sum_parser.add_argument('-s', '--suppressed', action="store_true",
-                            dest="suppressed", help='Suppressed results.')
-    sum_parser.add_argument('--filter', dest='filter', type=str,
-                            default='::', help='Filter string in the '
-                            'following format: '
-                            '<severity>:<checker_name>:<source_file_path>')
-    sum_parser.add_argument('-o', choices=['plaintext', 'json', 'csv'],
-                            default='plaintext', type=str,
-                            dest="output_format", help='Output format.')
-    logger.add_verbose_arguments(sum_parser)
-    sum_parser.set_defaults(func=handle_list_result_types)
-
-    # Delete run results.
-    del_parser = subparsers.add_parser('del',
-                                       formatter_class=ADHFormatter,
-                                       help='Remove run results.')
-    group = del_parser.add_mutually_exclusive_group(required=True)
-    group.add_argument('-n', '--name', nargs='+', type=str, dest="name",
-                       help='Server port.')
-    group.add_argument('--all-after-run', type=str, dest='all_after_run',
-                       help='Delete all runs checked after this run.')
-    group.add_argument('--all-before-run', type=str, dest='all_before_run',
-                       help='Delete all runs checked before this run.')
-    group.add_argument('--all-after-time', type=valid_time,
-                       dest='all_after_time',
-                       help='Delete all runs checked after this timestamp. '
-                       'The format should be year:month:day:hour:min:sec. '
-                       'The last three parts can be omitted from the right '
-                       'in which case the default values are 0.')
-    group.add_argument('--all-before-time', type=valid_time,
-                       dest='all_before_time',
-                       help='Delete all runs checked before this timestamp. '
-                       'The format should be year:month:day:hour:min:sec. '
-                       'The last three parts can be omitted from the right '
-                       'in which case the default values are 0.')
-    logger.add_verbose_arguments(del_parser)
-    add_server_arguments(del_parser)
-    del_parser.set_defaults(func=handle_remove_run_results)
-
-    # Handle suppress file.
-    suppress_parser = subparsers.add_parser('suppress',
-                                            help='Handle suppress file.')
-    group = suppress_parser.add_mutually_exclusive_group(required=True)
-    group.add_argument('-o', '--output', type=str, dest='output',
-                       help='Export suppress file from database.')
-    group.add_argument('-i', '--input', type=str, dest='input',
-                       help='Import suppress file to database.')
-    group.add_argument('--bugid', type=str, dest='bugid',
-                       help='Suppress a specific bug by bug ID.')
-    suppress_parser.add_argument('-x', action='store_true', dest='x',
-                                 help='If this flag is given then the bug '
-                                 'provided by --bugid will be unsuppressed.')
-    suppress_parser.add_argument('-f', '--force', action='store_true',
-                                 dest='force',
-                                 help="By default already suppressed bugs "
-                                 "can't be suppressed again unless --force "
-                                 "is given.")
-    suppress_parser.add_argument('-c', '--comment', type=str, dest='comment',
-                                 default='',
-                                 help='Comment for bug suppression. It has '
-                                 'sense only when --bughash is also provided.')
-    suppress_parser.add_argument('--file', type=str, dest='file',
-                                 default='',
-                                 help='File name in which the bug will be '
-                                 'suppressed. It has sense only when '
-                                 '--bugid is also provided. If this parameter '
-                                 'is not given then all reports with the '
-                                 '--bugid will be suppressed/unsuppressed '
-                                 'regardless of the file.')
-    suppress_parser.add_argument('-n', '--name', type=str, dest='name',
-                                 required=True,
-                                 help='Run name.')
-    logger.add_verbose_arguments(suppress_parser)
-    add_server_arguments(suppress_parser)
-    suppress_parser.set_defaults(func=handle_suppress)
-
-    # Handle authentication.
-    auth_parser = subparsers.add_parser('login',
-                                        formatter_class=ADHFormatter,
-                                        help='Log in onto a '
-                                             'CodeChecker server.')
-    auth_parser.add_argument('-u', '--username', type=str, dest="username",
-                             required=False,
-                             help='Username to use on authentication.',
-                             default=getpass.getuser())
-    auth_parser.add_argument('-d', '--deactivate', '--logout',
-                             action='store_true', dest='logout',
-                             help='Send a logout request for the server.')
-    logger.add_verbose_arguments(auth_parser)
-    add_server_arguments(auth_parser)
-    auth_parser.set_defaults(func=handle_auth_requests)
-
-
-def main():
-    parser = argparse.ArgumentParser(
-        description='Simple command line client for CodeChecker.')
-
-    register_client_command_line(parser)
-    args = parser.parse_args()
-    args.func(args)
-
-
-if __name__ == "__main__":
-    main()
