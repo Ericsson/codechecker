@@ -325,6 +325,14 @@ def __register_suppress(parser):
         "per-report arguments",
         "Options here are only applicable is '--bugid' is specified!")
 
+    bugid.add_argument('--file',
+                       type=str,
+                       dest="file",
+                       default=argparse.SUPPRESS,
+                       help="Suppress/unsuppress the given report ONLY in the "
+                            "specified file, instead of every occurrence of "
+                            "it.")
+
     bugid.add_argument('-x', '--unsuppress',
                        dest="unsuppress",
                        action='store_true',
@@ -338,14 +346,6 @@ def __register_suppress(parser):
                        default=argparse.SUPPRESS,
                        help="Specify the (optional) comment which explains "
                             "why the given report is suppressed.")
-
-    bugid.add_argument('--file',
-                       type=str,
-                       dest="file",
-                       default=argparse.SUPPRESS,
-                       help="Suppress/unsuppress the given report ONLY in the "
-                            "specified file, instead of every occurrence of "
-                            "it.")
 
 
 def __register_auth(parser):
