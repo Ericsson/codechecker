@@ -40,6 +40,7 @@ test_unit_novenv:
 	$(UNIT_TEST_CMD)
 
 test_functional: test_sqlite test_psql
+
 test_functional_novenv: test_sqlite_novenv test_psql_novenv
 
 test_sqlite: package venv_dev
@@ -49,7 +50,8 @@ test_sqlite_novenv: package
 		$(FUNCTIONAL_TEST_CMD)
 
 test_psql: test_psql_psycopg2 test_psql_pg8000
-test_psql: test_psql_psycopg2_novenv test_psql_pg8000_novenv
+
+test_psql_novenv: test_psql_psycopg2_novenv test_psql_pg8000_novenv
 
 test_psql_psycopg2: package venv_dev
 	$(ACTIVATE_DEV_VENV) && \
@@ -63,16 +65,24 @@ test_psql_psycopg2_novenv: package
 test_psql_pg8000: package venv_dev
 	$(ACTIVATE_DEV_VENV) && \
 		$(PSQL) $(DBUNAME) $(DBPORT) $(PG800) \
-		$(PSQL) $(DBUNAME) $(DBPORT) $(PSYCOPG2) \
 		$(FUNCTIONAL_TEST_CMD)
 
 test_psql_pg8000_novenv: package
 		$(PSQL) $(DBUNAME) $(DBPORT) $(PG800) \
-		$(PSQL) $(DBUNAME) $(DBPORT) $(PSYCOPG2) \
 		$(FUNCTIONAL_TEST_CMD)
 
 test_clean:
 	rm -rf build/workspace
+
+# Use the proper requirement file for the given test configuration
+test_matrix_sqlite: VENV_DEV_REQ_FILE = .ci/basic_python_requirements
+test_matrix_sqlite: pep8 test_unit test_sqlite
+
+test_matrix_psql_psycopg2: VENV_DEV_REQ_FILE = .ci/python_requirements_psql_psycopg2
+test_matrix_psql_psycopg2: pep8 test_unit test_psql_psycopg2
+
+test_matrix_psql_pg8000: VENV_DEV_REQ_FILE = .ci/python_requirements_psql_pg8000
+test_matrix_psql_pg8000: pep8 test_unit test_psql_pg8000
 
 clean_travis:
 	# Clean CodeChecker config files stored in the users home directory.
