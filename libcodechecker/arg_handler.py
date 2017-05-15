@@ -13,7 +13,6 @@ import socket
 import sys
 
 from libcodechecker import client
-from libcodechecker import debug_reporter
 from libcodechecker import generic_package_context
 from libcodechecker import generic_package_suppress_handler
 from libcodechecker import host_check
@@ -211,25 +210,3 @@ def handle_server(args):
             sys.exit(1)
         else:
             raise
-
-
-def handle_debug(args):
-    """
-    Runs a debug command on the buildactions where the analysis
-    failed for some reason.
-    """
-    context = generic_package_context.get_context()
-
-    context.codechecker_workspace = args.workspace
-    context.db_username = args.dbusername
-
-    check_env = analyzer_env.get_check_env(context.path_env_extra,
-                                           context.ld_lib_path_extra)
-
-    sql_server = SQLServer.from_cmdline_args(args,
-                                             context.migration_root,
-                                             check_env)
-    sql_server.start(context.db_version_info, wait_for_start=True, init=False)
-
-    debug_reporter.debug(context, sql_server.get_connection_string(),
-                         args.force)
