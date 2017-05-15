@@ -267,16 +267,6 @@ CodeChecker quickcheck -b "cd ~/myproject && make"
         logger.add_verbose_arguments(debug_parser)
         debug_parser.set_defaults(func=arg_handler.handle_debug)
 
-        # --------------------------------------
-        # Package version info.
-        version_parser = subparsers.add_parser('version',
-                                               help='Print package version '
-                                                    'information.')
-        old_subcommands.append('version')
-
-        version_parser.set_defaults(func=arg_handler.handle_version_info)
-        logger.add_verbose_arguments(version_parser)
-
         if subcommands:
             # Load the 'libcodechecker' module and acquire its path.
             file, path, descr = imp.find_module("libcodechecker")

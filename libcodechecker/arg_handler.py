@@ -235,25 +235,3 @@ def handle_debug(args):
 
     debug_reporter.debug(context, sql_server.get_connection_string(),
                          args.force)
-
-
-def handle_version_info(args):
-    """
-    Get and print the version information from the
-    version config file and thrift API versions.
-    """
-
-    context = generic_package_context.get_context()
-
-    print('Base package version: \t' + context.version).expandtabs(30)
-    print('Package build date: \t' +
-          context.package_build_date).expandtabs(30)
-    print('Git hash: \t' + context.package_git_hash).expandtabs(30)
-    print('Git tag info: \t' + context.package_git_tag).expandtabs(30)
-    print('DB schema version: \t' +
-          str(context.db_version_info)).expandtabs(30)
-
-    # Thift api version for the clients.
-    from codeCheckerDBAccess import constants
-    print(('Thrift client api version: \t' + constants.API_VERSION).
-          expandtabs(30))
