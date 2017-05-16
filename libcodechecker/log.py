@@ -69,6 +69,14 @@ def add_arguments_to_parser(parser):
                              "'make', but a more complex command, or the call "
                              "of a custom script file is also supported.")
 
+    parser.add_argument('-q', '--quiet-build',
+                        dest="quiet_build",
+                        action='store_true',
+                        default=False,
+                        required=False,
+                        help="Do not print the output of the build tool into "
+                             "the output of this command.")
+
     add_verbose_arguments(parser)
     parser.set_defaults(func=main)
 
@@ -85,4 +93,5 @@ def main(args):
     context = generic_package_context.get_context()
     build_manager.perform_build_command(args.logfile,
                                         args.command,
-                                        context)
+                                        context,
+                                        silent=args.quiet_build)

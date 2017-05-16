@@ -205,7 +205,6 @@ class ResultHandler(object):
                 # There might be no result file if analysis failed.
                 LOG.debug(oserr)
 
-    @abstractmethod
     def postprocess_result(self):
         """
         Postprocess result if needed.
@@ -213,7 +212,6 @@ class ResultHandler(object):
         """
         pass
 
-    @abstractmethod
     def handle_results(self):
         """
         Handle the results.

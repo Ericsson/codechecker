@@ -31,31 +31,6 @@ LOG = LoggerFactory.get_new_logger('MAIN')
 analyzers = ' '.join(list(analyzer_types.supported_analyzers))
 
 
-class OrderedCheckersAction(argparse.Action):
-    """
-    Action to store enabled and disabled checkers
-    and keep ordering from command line.
-
-    Create separate lists based on the checker names for
-    each analyzer.
-    """
-
-    def __init__(self, option_strings, dest, nargs=None, **kwargs):
-        if nargs is not None:
-            raise ValueError("nargs not allowed")
-        super(OrderedCheckersAction, self).__init__(option_strings, dest,
-                                                    **kwargs)
-
-    def __call__(self, parser, namespace, value, option_string=None):
-
-        if 'ordered_checkers' not in namespace:
-            namespace.ordered_checkers = []
-        ordered_checkers = namespace.ordered_checkers
-        ordered_checkers.append((value, self.dest == 'enable'))
-
-        namespace.ordered_checkers = ordered_checkers
-
-
 # -----------------------------------------------------------------------------
 class DeprecatedOptionAction(argparse.Action):
     """
@@ -112,44 +87,6 @@ def add_database_arguments(parser):
                         help='Database user name.')
 
 
-def add_analyzer_arguments(parser):
-    """
-    Analyzer related arguments.
-    """
-    parser.add_argument('-e', '--enable',
-                        default=argparse.SUPPRESS,
-                        action=OrderedCheckersAction,
-                        help='Enable checker.')
-    parser.add_argument('-d', '--disable',
-                        default=argparse.SUPPRESS,
-                        action=OrderedCheckersAction,
-                        help='Disable checker.')
-    parser.add_argument('--keep-tmp', action="store_true",
-                        dest="keep_tmp", required=False,
-                        help="Keep temporary report files "
-                        "generated during the analysis.")
-
-    parser.add_argument('--analyzers', nargs='+',
-                        dest="analyzers", required=False,
-                        default=[analyzer_types.CLANG_SA,
-                                 analyzer_types.CLANG_TIDY],
-                        help="Select which analyzer should be enabled.\n"
-                        "Currently supported analyzers are: " +
-                        analyzers + "\ne.g. '--analyzers " + analyzers + "'")
-
-    parser.add_argument('--saargs', dest="clangsa_args_cfg_file",
-                        required=False, default=argparse.SUPPRESS,
-                        help="File with arguments which will be forwarded "
-                        "directly to the Clang static analyzer "
-                        "without modification.")
-
-    parser.add_argument('--tidyargs', dest="tidy_args_cfg_file",
-                        required=False, default=argparse.SUPPRESS,
-                        help="File with arguments which will be forwarded "
-                        "directly to the Clang tidy analyzer "
-                        "without modification.")
-
-
 def main(subcommands=None):
     """
     CodeChecker main command line.
@@ -197,180 +134,26 @@ CodeChecker quickcheck -b "cd ~/myproject && make"
         old_subcommands = []
 
         def _warn_deprecated_command(cmd_name):
-            # This warning is implemented for showing later on, once old
-            # behaviour commands are deprecated. We don't warn between 5.8 and
-            # 6.0 for now.
-            pass
-
             # Write to stderr so the output is not captured by pipes, e.g.
             # with the "checkers" command, the "-" in the new command's name
             # would mess up pipe usage.
-            sys.stderr.write(
-                "[WARNING] The called command 'CodeChecker {0}' is DEPRECATED "
-                "since version A.B. A new version is available as "
-                "'codechecker-{0}'.\nThe DEPRECATED command will be REPLACED "
-                "when version X.Y is released.\nPlease see 'codechecker-{0} "
-                "--help' on details how to run the new version.\n".
-                format(cmd_name))
+            err_msg = "[WARNING] The called command 'CodeChecker {0}' is " \
+                      "DEPRECATED since version A.B. A new version is "    \
+                      "available as 'codechecker-{0}'.\nThe DEPRECATED "   \
+                      "command will be REPLACED when version X.Y is "      \
+                      "released.\nPlease see 'codechecker-{0} --help' on " \
+                      "details how to run the new version.\n".format(cmd_name)
+
+            # This warning is implemented for showing later on, once old
+            # behaviour commands are deprecated. We don't warn between 5.8 and
+            # 6.0 for now.
+            # sys.stderr.write(err_msg)
 
         workspace_help_msg = 'Directory where the CodeChecker can' \
             ' store analysis related data.'
 
-        name_help_msg = 'Name of the analysis.'
-
-        jobs_help_msg = 'Number of jobs. ' \
-            'Start multiple processes for faster analysis.'
-
-        log_argument_help_msg = """Path to the log file which is created
-         during the build. \nIf there is an already generated log file
-         with the compilation commands\ngenerated by \'CodeChecker log\' or
-         \'cmake -DCMAKE_EXPORT_COMPILE_COMMANDS\' \n CodeChecker check can
-         use it for the analysis in that case running the original build
-         will \nbe left out from the analysis process (no log is needed)."""
-
-        suppress_help_msg = """Path to suppress file.\nSuppress file can be used
-         to suppress analysis results during the analysis.\nIt is based on the
-         bug identifier generated by the compiler which is experimental.\nDo
-         not depend too much on this file because identifier or file format
-         can be changed.\nFor other in source suppress features see the user
-         guide."""
-
-        # --------------------------------------
-        # check commands
-        check_parser = subparsers.add_parser('check',
-                                             formatter_class=ADHF,
-                                             help=''' \
-Run the supported source code analyzers on a project.''')
-        old_subcommands.append('check')
-
-        check_parser.add_argument('-w', '--workspace', type=str,
-                                  default=util.get_default_workspace(),
-                                  dest="workspace",
-                                  help=workspace_help_msg)
-
-        check_parser.add_argument('-n', '--name', type=str,
-                                  dest="name", required=True,
-                                  default=argparse.SUPPRESS,
-                                  help=name_help_msg)
-
-        checkgroup = check_parser.add_mutually_exclusive_group(required=True)
-
-        checkgroup.add_argument('-b', '--build', type=str, dest="command",
-                                default=argparse.SUPPRESS,
-                                required=False, help='''\
-Build command which is used to build the project.''')
-
-        checkgroup.add_argument('-l', '--log', type=str, dest="logfile",
-                                default=argparse.SUPPRESS,
-                                required=False,
-                                help=log_argument_help_msg)
-
-        check_parser.add_argument('-j', '--jobs', type=int, dest="jobs",
-                                  default=1, required=False,
-                                  help=jobs_help_msg)
-
-        check_parser.add_argument('-u', '--suppress', type=str,
-                                  dest="suppress",
-                                  default=argparse.SUPPRESS,
-                                  required=False,
-                                  help=suppress_help_msg)
-        check_parser.add_argument('-c', '--clean',
-                                  default=argparse.SUPPRESS,
-                                  action=DeprecatedOptionAction)
-
-        check_parser.add_argument('--update', action=DeprecatedOptionAction,
-                                  dest="update", default=False, required=False,
-                                  help="Incremental parsing, update the "
-                                       "results of a previous run. "
-                                       "Only the files changed since the last "
-                                       "build will be reanalyzed. Depends on"
-                                       " the build system.")
-
-        check_parser.add_argument('--force', action="store_true",
-                                  dest="force", default=False, required=False,
-                                  help="Delete analysis results form the "
-                                       "database if a run with the "
-                                       "given name already exists.")
-
-        check_parser.add_argument('-s', '--skip', type=str, dest="skipfile",
-                                  default=argparse.SUPPRESS,
-                                  required=False, help='Path to skip file.')
-
-        check_parser.add_argument('--quiet-build',
-                                  action='store_true',
-                                  default=False,
-                                  required=False,
-                                  help='Do not print out the output of the '
-                                       'original build.')
-
-        check_parser.add_argument('--add-compiler-defaults',
-                                  action='store_true',
-                                  default=False,
-                                  required=False,
-                                  help='Fetch built in compiler include '
-                                       'paths and defines '
-                                       'and pass them to Clang. This is '
-                                       'useful when you do cross-compilation.')
-
-        add_analyzer_arguments(check_parser)
-        add_database_arguments(check_parser)
-        logger.add_verbose_arguments(check_parser)
-        check_parser.set_defaults(func=arg_handler.handle_check)
-
-        # --------------------------------------
-        # QuickCheck commands.
-        qcheck_parser = subparsers.add_parser('quickcheck',
-                                              formatter_class=ADHF,
-                                              help='Run CodeChecker for a '
-                                                   'project without database.')
-        old_subcommands.append('quickcheck')
-
-        qcheckgroup = qcheck_parser.add_mutually_exclusive_group(required=True)
-
-        qcheckgroup.add_argument('-b', '--build', type=str, dest="command",
-                                 default=argparse.SUPPRESS,
-                                 required=False, help='Build command.')
-
-        qcheckgroup.add_argument('-l', '--log', type=str, dest="logfile",
-                                 required=False,
-                                 default=argparse.SUPPRESS,
-                                 help=log_argument_help_msg)
-
-        qcheck_parser.add_argument('-s', '--steps', action="store_true",
-                                   dest="print_steps", help='Print steps.')
-
-        qcheck_parser.add_argument('--quiet-build',
-                                   action='store_true',
-                                   default=False,
-                                   required=False,
-                                   help='Do not print out the output of the '
-                                        'original build.')
-        qcheck_parser.add_argument('-i', '--skip', type=str, dest="skipfile",
-                                   default=argparse.SUPPRESS,
-                                   required=False, help='Path to skip file.')
-        qcheck_parser.add_argument('-j', '--jobs', type=int, dest="jobs",
-                                   default=1, required=False,
-                                   help=jobs_help_msg)
-        qcheck_parser.add_argument('-u', '--suppress', type=str,
-                                   dest="suppress",
-                                   default=argparse.SUPPRESS,
-                                   required=False,
-                                   help=suppress_help_msg)
-        qcheck_parser.add_argument('--add-compiler-defaults',
-                                   action='store_true',
-                                   default=False,
-                                   required=False,
-                                   help='Fetch built in compiler include paths'
-                                        ' and defines and pass them to Clang. '
-                                        'This is useful when you'
-                                        'do cross-compilation.')
-        add_analyzer_arguments(qcheck_parser)
-        logger.add_verbose_arguments(qcheck_parser)
-        qcheck_parser.set_defaults(func=arg_handler.handle_quickcheck)
-
         # --------------------------------------
         # Checkers parser.
-        # TODO: Supersede by libcodechecker/checkers.py.
         checker_p = subparsers.add_parser('checkers',
                                           formatter_class=ADHF,
                                           help='List the available checkers '
@@ -485,55 +268,6 @@ Build command which is used to build the project.''')
         debug_parser.set_defaults(func=arg_handler.handle_debug)
 
         # --------------------------------------
-        # Plist parser.
-        plist_parser = subparsers.add_parser('plist',
-                                             formatter_class=ADHF,
-                                             help='Parse plist files in '
-                                                  'the given directory and '
-                                                  'store them to the database '
-                                                  'or print to the standard '
-                                                  'output.')
-        old_subcommands.append('plist')
-
-        plist_parser.add_argument('-w', '--workspace', type=str,
-                                  dest="workspace",
-                                  default=util.get_default_workspace(),
-                                  help=workspace_help_msg)
-
-        plist_parser.add_argument('-n', '--name', type=str,
-                                  dest="name", required=True,
-                                  default=argparse.SUPPRESS,
-                                  help=name_help_msg)
-
-        plist_parser.add_argument('-d', '--directory', type=str,
-                                  dest="directory", required=True,
-                                  help='Path of a directory containing plist '
-                                  'files to parse.')
-
-        plist_parser.add_argument('-j', '--jobs', type=int, dest="jobs",
-                                  default=1, required=False,
-                                  help=jobs_help_msg)
-
-        plist_parser.add_argument('-s', '--steps', action="store_true",
-                                  dest="print_steps", help='Print steps.')
-
-        plist_parser.add_argument('--stdout', action="store_true",
-                                  dest="stdout",
-                                  required=False, default=False,
-                                  help='Print results to stdout instead of '
-                                       'storing to the database.')
-
-        plist_parser.add_argument('--force', action="store_true",
-                                  dest="force", default=False, required=False,
-                                  help='Delete analysis results form the '
-                                       'database if a run with the given '
-                                       'name already exists.')
-
-        add_database_arguments(plist_parser)
-        logger.add_verbose_arguments(plist_parser)
-        plist_parser.set_defaults(func=arg_handler.handle_plist)
-
-        # --------------------------------------
         # Package version info.
         version_parser = subparsers.add_parser('version',
                                                help='Print package version '
@@ -582,6 +316,7 @@ Build command which is used to build the project.''')
                     continue
 
                 LOG.debug("Creating arg parser for subcommand " + subcommand)
+
                 try:
                     # Even though command verbs and nouns are joined by a
                     # hyphen, the Python files contain underscores.
@@ -639,7 +374,7 @@ Build command which is used to build the project.''')
     except Exception:
         import traceback
         traceback.print_exc(file=sys.stdout)
-        sys.exit(2)
+        sys.exit(1)
 
 
 # -----------------------------------------------------------------------------

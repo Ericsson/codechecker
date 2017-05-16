@@ -99,6 +99,10 @@ service CheckerReport {
                 bool finishCheckerRun(1: i64 run_id)
                                       throws (1: shared.RequestFailed requestError),
 
+                bool setRunDuration(1: i64 run_id,
+                                    2: i64 duration)
+                                    throws (1: shared.RequestFailed requestError),
+
                 bool stopServer()
                                 throws (1: shared.RequestFailed requestError)
 }

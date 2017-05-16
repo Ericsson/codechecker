@@ -50,6 +50,14 @@ class SuppressHandler(object):
         """ Set the suppress file. """
         self.__suppressfile = value
 
+    @abc.abstractmethod
+    def get_suppressed(self, bug):
+        """
+        Retrieve whether the given bug is suppressed according to the
+        suppress handler.
+        """
+        pass
+
 
 class SourceSuppressHandler(object):
     """

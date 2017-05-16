@@ -120,6 +120,10 @@ class Connection(object):
         """ bool finishCheckerRun(1: i64 run_id) """
         self._client.finishCheckerRun(run_id)
 
+    def set_run_duration(self, run_id, duration):
+        """ bool setRunDuration(1: i64 run_id, 2: float duration) """
+        self._client.setRunDuration(run_id, duration)
+
     def clean_suppress_data(self, run_id):
         """
         Clean suppress data.

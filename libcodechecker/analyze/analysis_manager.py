@@ -10,8 +10,6 @@ from collections import defaultdict
 import multiprocessing
 import ntpath
 import os
-import re
-import shutil
 import signal
 import sys
 import traceback
@@ -23,10 +21,13 @@ from libcodechecker.logger import LoggerFactory
 LOG = LoggerFactory.get_new_logger('ANALYSIS MANAGER')
 
 
-def worker_result_handler(results):
+def worker_result_handler(results, metadata, output_path):
     """
     Print the analysis summary.
     """
+
+    if metadata is None:
+        metadata = {}
 
     successful_analysis = defaultdict(int)
     failed_analysis = defaultdict(int)
@@ -42,9 +43,9 @@ def worker_result_handler(results):
                 failed_analysis[analyzer_type] += 1
 
     LOG.info("----==== Summary ====----")
-    LOG.info('Total compilation commands: ' + str(len(results)))
+    LOG.info("Total compilation commands: " + str(len(results)))
     if successful_analysis:
-        LOG.info('Successfully analyzed')
+        LOG.info("Successfully analyzed")
         for analyzer_type, res in successful_analysis.items():
             LOG.info('  ' + analyzer_type + ': ' + str(res))
 
@@ -54,21 +55,43 @@ def worker_result_handler(results):
             LOG.info('  ' + analyzer_type + ': ' + str(res))
 
     if skipped_num:
-        LOG.info('Skipped compilation commands: ' + str(skipped_num))
+        LOG.info("Skipped compilation commands: " + str(skipped_num))
     LOG.info("----=================----")
+
+    metadata['successful'] = successful_analysis
+    metadata['failed'] = failed_analysis
+    metadata['skipped'] = skipped_num
+
+    # check() created the result .plist files and additional, per-analysis
+    # meta information in forms of .plist.source files.
+    # We now soak these files into the metadata dict, as they are not needed
+    # as loose files on the disk... but synchronizing LARGE dicts between
+    # threads would be more error prone.
+    source_map = {}
+    _, _, files = next(os.walk(output_path), ([], [], []))
+    for f in files:
+        if not f.endswith(".source"):
+            continue
+
+        abspath = os.path.join(output_path, f)
+        f = f.replace(".source", '')
+        with open(abspath, 'r') as sfile:
+            source_map[f] = sfile.read().strip()
+
+        os.remove(abspath)
+
+    metadata['result_source_files'] = source_map
 
 
 # Progress reporting.
 progress_checked_num = None
 progress_actions = None
-progress_lock = None
 
 
-def init_worker(checked_num, action_num, lock):
-    global progress_checked_num, progress_actions, progress_lock
+def init_worker(checked_num, action_num):
+    global progress_checked_num, progress_actions
     progress_checked_num = checked_num
     progress_actions = action_num
-    progress_lock = lock
 
 
 def check(check_data):
@@ -78,8 +101,8 @@ def check(check_data):
 
     skiplist handler is None if no skip file was configured.
     """
-    args, action, context, analyzer_config_map, skp_handler, \
-        report_output_dir, use_db = check_data
+
+    action, context, analyzer_config_map, output_dir, skip_handler = check_data
 
     skipped = False
     try:
@@ -93,7 +116,7 @@ def check(check_data):
             # C++ file skipping is handled here.
             _, source_file_name = ntpath.split(source)
 
-            if skp_handler and skp_handler.should_skip(source):
+            if skip_handler and skip_handler.should_skip(source):
                 LOG.debug_analyzer(source_file_name + ' is skipped')
                 skipped = True
                 continue
@@ -102,16 +125,6 @@ def check(check_data):
             analyzer_environment = analyzer_env.get_check_env(
                 context.path_env_extra,
                 context.ld_lib_path_extra)
-            run_id = context.run_id
-
-            rh = analyzer_types.construct_result_handler(args,
-                                                         action,
-                                                         run_id,
-                                                         report_output_dir,
-                                                         context.severity_map,
-                                                         skp_handler,
-                                                         progress_lock,
-                                                         use_db)
 
             # Create a source analyzer.
             source_analyzer = \
@@ -121,6 +134,13 @@ def check(check_data):
             # Source is the currently analyzed source file
             # there can be more in one buildaction.
             source_analyzer.source_file = source
+
+            # The result handler for analysis is an empty result handler
+            # which only returns metadata, but can't process the results.
+            rh = analyzer_types.construct_analyze_handler(action,
+                                                          output_dir,
+                                                          context.severity_map,
+                                                          skip_handler)
 
             # Fills up the result handler with the analyzer information.
             source_analyzer.analyze(rh, analyzer_environment)
@@ -133,6 +153,11 @@ def check(check_data):
                     LOG.debug_analyzer('\n' + rh.analyzer_stderr)
                 rh.postprocess_result()
                 rh.handle_results()
+
+                # Save some extra information next to the plist, .source
+                # acting as an extra metadata file.
+                with open(rh.analyzer_result_file + ".source", 'w') as orig:
+                    orig.write(rh.analyzed_source_file + "\n")
 
                 LOG.info("[%d/%d] %s analyzed %s successfully." %
                          (progress_checked_num.value, progress_actions.value,
@@ -147,9 +172,6 @@ def check(check_data):
                     LOG.error(rh.analyzer_stderr)
                 return_codes = rh.analyzer_returncode
 
-            if not args.keep_tmp:
-                rh.clean_results()
-
         progress_checked_num.value += 1
 
         return return_codes, skipped, action.analyzer_type
@@ -160,11 +182,11 @@ def check(check_data):
         return 1, skipped, action.analyzer_type
 
 
-def start_workers(args, actions, context, analyzer_config_map, skp_handler,
-                  use_db=True):
+def start_workers(actions, context, analyzer_config_map,
+                  jobs, output_path, skip_handler, metadata):
     """
-    Start the workers in the process pool
-    for every buildaction there is worker which makes the analysis.
+    Start the workers in the process pool.
+    For every build action there is worker which makes the analysis.
     """
 
     # Handle SIGINT to stop this script running.
@@ -176,23 +198,13 @@ def start_workers(args, actions, context, analyzer_config_map, skp_handler,
 
     signal.signal(signal.SIGINT, signal_handler)
 
-    # Remove characters which could cause directory creation problems.
-    no_spec_char_name = re.sub(r'[^\w\-_. ]', '_', args.name)
-    report_output = os.path.join(context.codechecker_workspace,
-                                 no_spec_char_name + '_reports')
-
-    # Create report output dir which will be used by the result handlers for
-    # each analyzer to store analyzer results or temporary files.
-    # Each analyzer instance does its own cleanup.
-    if not os.path.exists(report_output):
-        os.mkdir(report_output)
-
     # Start checking parallel.
     checked_var = multiprocessing.Value('i', 1)
     actions_num = multiprocessing.Value('i', len(actions))
-    lock = multiprocessing.Lock()
-    pool = multiprocessing.Pool(args.jobs, initializer=init_worker,
-                                initargs=(checked_var, actions_num, lock))
+    pool = multiprocessing.Pool(jobs,
+                                initializer=init_worker,
+                                initargs=(checked_var,
+                                          actions_num))
 
     try:
         # Workaround, equivalent of map.
@@ -201,18 +213,18 @@ def start_workers(args, actions, context, analyzer_config_map, skp_handler,
         # It is a python bug, this does not happen if a timeout is specified;
         # then receive the interrupt immediately.
 
-        analyzed_actions = [(args,
-                             build_action,
+        analyzed_actions = [(build_action,
                              context,
                              analyzer_config_map,
-                             skp_handler,
-                             report_output,
-                             use_db) for build_action in actions]
+                             output_path,
+                             skip_handler) for build_action in actions]
 
         pool.map_async(check,
                        analyzed_actions,
                        1,
-                       callback=worker_result_handler).get(float('inf'))
+                       callback=lambda results: worker_result_handler(
+                           results, metadata, output_path)
+                       ).get(float('inf'))
 
         pool.close()
     except Exception:
@@ -220,6 +232,3 @@ def start_workers(args, actions, context, analyzer_config_map, skp_handler,
         raise
     finally:
         pool.join()
-        if not args.keep_tmp:
-            LOG.debug('Removing temporary directory: ' + report_output)
-            shutil.rmtree(report_output)

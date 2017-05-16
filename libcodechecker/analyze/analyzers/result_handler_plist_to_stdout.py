@@ -32,6 +32,7 @@ class PlistToStdout(ResultHandler):
         self.__print_steps = False
         self.__output = sys.stdout
         self.__lock = lock
+        self.suppress_handler = None
 
     @property
     def print_steps(self):
@@ -91,6 +92,11 @@ class PlistToStdout(ResultHandler):
                 LOG.debug(report + ' is skipped (in ' + f_path + ")")
                 continue
 
+            if self.suppress_handler and \
+                    self.suppress_handler.get_suppressed(report):
+                LOG.debug(report + " is suppressed by suppress file.")
+                continue
+
             last_report_event = report.bug_path[-1]
             source_file = files[last_report_event['location']['file']]
             report_line = last_report_event['location']['line']
@@ -124,15 +130,20 @@ class PlistToStdout(ResultHandler):
 
             non_suppressed += 1
 
+        basefile_print = (' ' +
+                          ntpath.basename(self.analyzed_source_file)) \
+            if self.analyzed_source_file and \
+            len(self.analyzed_source_file) > 0 else ''
+
         if non_suppressed == 0:
-            self.__output.write('%s found no defects while analyzing %s\n' %
+            self.__output.write('%s found no defects while analyzing%s\n' %
                                 (self.buildaction.analyzer_type,
-                                 ntpath.basename(self.analyzed_source_file)))
+                                 basefile_print))
         else:
             self.__output.write(
-                '%s found %d defect(s) while analyzing %s\n\n' %
+                '%s found %d defect(s) while analyzing%s\n\n' %
                 (self.buildaction.analyzer_type, non_suppressed,
-                 ntpath.basename(self.analyzed_source_file)))
+                 basefile_print))
 
     def handle_results(self):
         plist = self.analyzer_result_file

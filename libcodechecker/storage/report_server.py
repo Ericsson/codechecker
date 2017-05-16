@@ -202,6 +202,19 @@ class CheckerReportHandler(object):
 
     @decorators.catch_sqlalchemy
     @timeit
+    def setRunDuration(self, run_id, duration):
+        """
+        """
+        run = self.session.query(Run).get(run_id)
+        if not run:
+            return False
+
+        run.duration = duration
+        self.session.commit()
+        return True
+
+    @decorators.catch_sqlalchemy
+    @timeit
     def replaceConfigInfo(self, run_id, config_values):
         """
         Removes all the previously stored config information and stores the

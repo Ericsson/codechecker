@@ -56,6 +56,208 @@ Used ports:
 * `5432` - PostgreSQL
 * `8001` - CodeChecker result viewer
 
+# Easy analysis wrappers
+
+CodeChecker provides, along with the more fine-tuneable commands, some easy
+out-of-the-box invocations to ensure the most user-friendly operation. These
+two modes are called **check** and **quickcheck**.
+
+## Check
+
+`check` is the basic, most used and most important command used in
+_CodeChecker_. It analyzes your project and stores the reported code defects
+in a database, which can be viewed in a Web Browser later on (via `CodeChecker
+server`).
+
+To analyse your project by doing a build and reporting every
+found issue in the built files, execute
+
+~~~~~~~~~~~~~~~~~~~~~
+CodeChecker check --build "make" --name "run_name"
+~~~~~~~~~~~~~~~~~~~~~
+
+Please make sure your build command actually compiles (builds) the source
+files you intend to analyse, as CodeChecker only analyzes files that had been
+used by the build system.
+
+If you have an already existing JSON Compilation Commands file, you can also
+supply it to `check`:
+
+~~~~~~~~~~~~~~~~~~~~~
+CodeChecker check --logfile ./my-build.json --name "run_name"
+~~~~~~~~~~~~~~~~~~~~~
+
+`check` is a wrapper over the following calls:
+
+ * If `--build` is specified, the build is executed as if `CodeChecker log`
+   were invoked.
+ * The resulting logfile, or a `--logfile` specified is used for `CodeChecker
+   analyze`
+ * The analysis results are feeded for `CodeChecker store`.
+
+After the results has been stored in the database, the temporary files
+used for the analysis are cleaned up.
+
+Please see the individual help for `log`, `analyze` and `store` (below in this
+_User guide_) for information about the arguments of `check`.
+
+~~~~~~~~~~~~~~~~~~~~~
+usage: CodeChecker check [-h] [--keep-tmp] [-c] [--update] -n NAME
+                         [-w WORKSPACE] [-f] [-q] (-b COMMAND | -l LOGFILE)
+                         [-j JOBS] [-i SKIPFILE]
+                         [--analyzers ANALYZER [ANALYZER ...]]
+                         [--add-compiler-defaults]
+                         [--saargs CLANGSA_ARGS_CFG_FILE]
+                         [--tidyargs TIDY_ARGS_CFG_FILE]
+                         [-e checker/checker-group] [-d checker/checker-group]
+                         [-u SUPPRESS] [--sqlite  | --postgresql]
+                         [--dbaddress DBADDRESS] [--dbport DBPORT]
+                         [--dbusername DBUSERNAME] [--dbname DBNAME]
+                         [--verbose {info,debug,debug_analyzer}]
+
+Run analysis for a project with storing results in the database. Check only
+needs a build command or an already existing logfile and performs every step
+of doing the analysis in batch.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --keep-tmp
+  -c , --clean
+  --update
+  -n NAME, --name NAME
+  -w WORKSPACE, --workspace WORKSPACE
+                        Directory where CodeChecker can store analysis related
+                        data, such as intermediate result files and the
+                        database. (default: /home/<username>/.codechecker)
+  -f, --force
+  -u SUPPRESS, --suppress SUPPRESS
+  --verbose {info,debug,debug_analyzer}
+                        Set verbosity level. (default: info)
+
+log arguments:
+
+  -q, --quiet-build
+  -b COMMAND, --build COMMAND
+  -l LOGFILE, --logfile LOGFILE
+
+analyzer arguments:
+
+  -j JOBS, --jobs JOBS
+  -i SKIPFILE, --skip SKIPFILE
+  --analyzers ANALYZER [ANALYZER ...]
+  --add-compiler-defaults
+  --saargs CLANGSA_ARGS_CFG_FILE
+  --tidyargs TIDY_ARGS_CFG_FILE
+
+checker configuration:
+
+  -e checker/checker-group, --enable checker/checker-group
+  -d checker/checker-group, --disable checker/checker-group
+
+database arguments:
+
+  --sqlite              (Usage of this argument is DEPRECATED and has no
+                        effect!)
+  --postgresql
+
+PostgreSQL arguments:
+
+  --dbaddress DBADDRESS
+  --dbport DBPORT
+  --dbusername DBUSERNAME
+  --dbname DBNAME
+~~~~~~~~~~~~~~~~~~~~~
+
+## Quickcheck
+
+It is possible to easily analyse the project for defects without keeping the
+temporary analysis files and without using any database to store the reports
+in, but instead printing the found issues to the standard output.
+
+To analyse your project by doing a build and reporting every found issue in the
+built files, execute
+
+~~~~~~~~~~~~~~~~~~~~~
+CodeChecker quickcheck --build "make"
+~~~~~~~~~~~~~~~~~~~~~
+
+Please make sure your build command actually compiles (builds) the source
+files you intend to analyse, as CodeChecker only analyzes files that had been
+used by the build system.
+
+If you have an already existing JSON Compilation Commands file, you can also
+supply it to `quickcheck`:
+
+~~~~~~~~~~~~~~~~~~~~~
+CodeChecker quickcheck --logfile ./my-build.json
+~~~~~~~~~~~~~~~~~~~~~
+
+By default, only the report's main messages are printed. To print the
+individual steps the analysers took in discovering the issue, specify
+`--steps`.
+
+`quickcheck` is a wrapper over the following calls:
+
+ * If `--build` is specified, the build is executed as if `CodeChecker log`
+   were invoked.
+ * The resulting logfile, or a `--logfile` specified is used for `CodeChecker
+   analyze`
+ * The analysis results are feeded for `CodeChecker parse`.
+
+After the results has been printed to the standard output, the temporary files
+used for the analysis are cleaned up.
+
+Please see the individual help for `log`, `analyze` and `parse` (below in this
+_User guide_) for information about the arguments of `quickcheck`.
+
+~~~~~~~~~~~~~~~~~~~~~
+usage: CodeChecker quickcheck [-h] [-q] (-b COMMAND | -l LOGFILE)
+                              [-j JOBS] [-i SKIPFILE]
+                              [--analyzers ANALYZER [ANALYZER ...]]
+                              [--add-compiler-defaults]
+                              [--saargs CLANGSA_ARGS_CFG_FILE]
+                              [--tidyargs TIDY_ARGS_CFG_FILE]
+                              [-e checker/checker-group]
+                              [-d checker/checker-group] [-u SUPPRESS] [-s]
+                              [--verbose {info,debug,debug_analyzer}]
+
+Run analysis for a project with printing results immediately on the standard
+output. Quickcheck only needs a build command or an already existing logfile
+and performs every step of doing the analysis in batch.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --verbose {info,debug,debug_analyzer}
+                        Set verbosity level. (default: info)
+
+log arguments:
+
+  -q, --quiet-build
+  -b COMMAND, --build COMMAND
+  -l LOGFILE, --logfile LOGFILE
+
+analyzer arguments:
+
+  -j JOBS, --jobs JOBS
+  -i SKIPFILE, --skip SKIPFILE
+  --analyzers ANALYZER [ANALYZER ...]
+  --add-compiler-defaults
+  --saargs CLANGSA_ARGS_CFG_FILE
+  --tidyargs TIDY_ARGS_CFG_FILE
+
+checker configuration:
+
+  -e checker/checker-group, --enable checker/checker-group
+  -d checker/checker-group, --disable checker/checker-group
+
+output arguments:
+
+  -u SUPPRESS, --suppress SUPPRESS
+  -s, --steps, --print-steps
+~~~~~~~~~~~~~~~~~~~~~
+
+# Available CodeChecker commands
+
 ## 1. `log` mode
 
 The first step in performing an analysis on your project is to record
@@ -64,7 +266,7 @@ recording a build of your project, which is done by the command `CodeChecker
 log`.
 
 ~~~~~~~~~~~~~~~~~~~~~
-usage: CodeChecker log [-h] -o LOGFILE -b COMMAND
+usage: CodeChecker log [-h] -o LOGFILE -b COMMAND [-q]
                        [--verbose {info,debug,debug_analyzer}]
 
 Runs the given build command and records the executed compilation steps. These
@@ -82,6 +284,8 @@ optional arguments:
                         simple calls to 'g++' or 'clang++' or 'make', but a
                         more complex command, or the call of a custom script
                         file is also supported.
+  -q, --quiet-build     Do not print the output of the build tool into the
+                        output of this command. (default: False)
   --verbose {info,debug,debug_analyzer}
                         Set verbosity level. (default: info)
 ~~~~~~~~~~~~~~~~~~~~~
@@ -104,126 +308,131 @@ Example:
 CodeChecker log -o ../codechecker_myProject_build.log -b "make -j2"
 ~~~~~~~~~~~~~~~~~~~~~
 
-## 2. check mode:
+## 2. `analyze` mode
 
-### Basic Usage
+After a JSON Compilation Command Database has been created, the next step is
+to invoke and execute the analyzers. CodeChecker will use the specified
+`logfile`s (there can be multiple given) and create the outputs to the
+`--output` directory. (These outputs will be `plist` files, currently only
+these are supported.) The machine-readable output files can be used later on
+for printing an overview in the terminal (`CodeChecker parse`) or storing
+(`CodeChecker store`) analysis results in a database, which can later on be
+viewed in a browser.
 
-Database and connections will be automatically configured.
-The main script starts and setups everything what is required for analyzing a project (database server, tables ...).
-
-~~~~~~~~~~~~~~~~~~~~~
-CodeChecker check -w codechecker_workspace -n myTestProject -b "make"
-~~~~~~~~~~~~~~~~~~~~~
-
-Static analysis can be started also by using an already generated buildlog (see log mode).
-If log is not available the analyzer will automatically create it.
-An already created CMake json compilation database can be used as well.
+Example:
 
 ~~~~~~~~~~~~~~~~~~~~~
-CodeChecker check -w ~/codechecker_wp -n myProject -l ~/codechecker_wp/build_log.json
+CodeChecker analyze ../codechecker_myProject_build.log -o my_plists
 ~~~~~~~~~~~~~~~~~~~~~
 
-### Advanced Usage
+`CodeChecker analyze` supports a myriad of fine-tuning arguments, explained
+below:
 
 ~~~~~~~~~~~~~~~~~~~~~
-usage: CodeChecker check [-h] [-w WORKSPACE] -n NAME (-b COMMAND | -l LOGFILE)
-                         [-j JOBS] [-u SUPPRESS] [-c [DEPRECATED]]
-                         [--update [DEPRECATED]] [--force] [-s SKIPFILE]
-                         [--quiet-build] [--add-compiler-defaults] [-e ENABLE]
-                         [-d DISABLE] [--keep-tmp]
-                         [--analyzers ANALYZERS [ANALYZERS ...]]
-                         [--saargs CLANGSA_ARGS_CFG_FILE]
-                         [--tidyargs TIDY_ARGS_CFG_FILE]
-                         [--sqlite [DEPRECATED]] [--postgresql]
-                         [--dbport DBPORT] [--dbaddress DBADDRESS]
-                         [--dbname DBNAME] [--dbusername DBUSERNAME]
-                         [--verbose {info,debug,debug_analyzer}]
+usage: CodeChecker analyze [-h] [-j JOBS] [-i SKIPFILE] [-o OUTPUT_PATH]
+                           [-t {plist}] [-n NAME]
+                           [--analyzers ANALYZER [ANALYZER ...]]
+                           [--add-compiler-defaults]
+                           [--saargs CLANGSA_ARGS_CFG_FILE]
+                           [--tidyargs TIDY_ARGS_CFG_FILE]
+                           [-e checker/checker-group]
+                           [-d checker/checker-group] [--enable-all]
+                           [--verbose {info,debug,debug_analyzer}]
+                           logfile [logfile ...]
+
+Use the previously created JSON Compilation Database to perform an analysis on
+the project, outputting analysis results in a machine-readable format.
+
+positional arguments:
+  logfile               Path to the JSON compilation command database files
+                        which were created during the build. The analyzers
+                        will check only the files registered in these build
+                        databases.
 
 optional arguments:
   -h, --help            show this help message and exit
-  -w WORKSPACE, --workspace WORKSPACE
-                        Directory where the CodeChecker can store analysis
-                        related data. (default: /home/<user_home>/.codechecker)
-  -n NAME, --name NAME  Name of the analysis.
-  -b COMMAND, --build COMMAND
-                        Build command which is used to build the project.
-  -l LOGFILE, --log LOGFILE
-                        Path to the log file which is created during the
-                        build. If there is an already generated log file with
-                        the compilation commands generated by 'CodeChecker
-                        log' or 'cmake -DCMAKE_EXPORT_COMPILE_COMMANDS'
-                        CodeChecker check can use it for the analysis in that
-                        case running the original build will be left out from
-                        the analysis process (no log is needed).
-  -j JOBS, --jobs JOBS  Number of jobs. Start multiple processes for faster
-                        analysis. (default: 1)
-  -u SUPPRESS, --suppress SUPPRESS
-                        Path to suppress file. Suppress file can be used to
-                        suppress analysis results during the analysis. It is
-                        based on the bug identifier generated by the compiler
-                        which is experimental. Do not depend too much on this
-                        file because identifier or file format can be changed.
-                        For other in source suppress features see the user
-                        guide.
-  -c [DEPRECATED], --clean [DEPRECATED]
-                        DEPRECATED argument! (default: None)
-  --update [DEPRECATED]
-                        DEPRECATED argument! (default: None)
-  --force               Delete analysis results form the database if a run
-                        with the given name already exists. (default: False)
-  -s SKIPFILE, --skip SKIPFILE
-                        Path to skip file.
-  --quiet-build         Do not print out the output of the original build.
-                        (default: False)
-  --add-compiler-defaults
-                        Fetch built in compiler include paths and defines and
-                        pass them to Clang. This is useful when you do cross-
-                        compilation. (default: False)
-  -e ENABLE, --enable ENABLE
-                        Enable checker.
-  -d DISABLE, --disable DISABLE
-                        Disable checker.
-  --keep-tmp            Keep temporary report files generated during the
-                        analysis. (default: False)
-  --analyzers ANALYZERS [ANALYZERS ...]
-                        Select which analyzer should be enabled. Currently
-                        supported analyzers are: clangsa clang-tidy e.g. '--
-                        analyzers clangsa clang-tidy' (default: ['clangsa',
-                        'clang-tidy'])
-  --saargs CLANGSA_ARGS_CFG_FILE
-                        File with arguments which will be forwarded directly
-                        to the Clang static analyzer without modification.
-  --tidyargs TIDY_ARGS_CFG_FILE
-                        File with arguments which will be forwarded directly
-                        to the Clang tidy analyzer without modification.
-  --sqlite [DEPRECATED]
-                        DEPRECATED argument! (default: None)
-  --postgresql          Use PostgreSQL database. (default: False)
-  --dbport DBPORT       Postgres server port. (default: 5432)
-  --dbaddress DBADDRESS
-                        Postgres database server address. (default: localhost)
-  --dbname DBNAME       Name of the database. (default: codechecker)
-  --dbusername DBUSERNAME
-                        Database user name. (default: codechecker)
+  -j JOBS, --jobs JOBS  Number of threads to use in analysis. More threads
+                        mean faster analysis at the cost of using more memory.
+                        (default: 1)
+  -i SKIPFILE, --ignore SKIPFILE, --skip SKIPFILE
+                        Path to the Skipfile dictating which project files
+                        should be omitted from analysis. Please consult the
+                        User guide on how a Skipfile should be laid out.
+  -o OUTPUT_PATH, --output OUTPUT_PATH
+                        Store the analysis output in the given folder.
+                        (default: /home/<username>/.codechecker/reports)
+  -t {plist}, --type {plist}, --output-format {plist}
+                        Specify the format the analysis results should use.
+                        (default: plist)
+  -n NAME, --name NAME  Annotate the ran analysis with a custom name in the
+                        created metadata file.
   --verbose {info,debug,debug_analyzer}
                         Set verbosity level. (default: info)
 ~~~~~~~~~~~~~~~~~~~~~
 
-CodeChecker is able to handle several analyzer tools. Currently CodeChecker
-supports Clang Static Analyzer and Clang Tidy. `CodeChecker checkers`
-command lists all checkers from each analyzers. These can be switched on and off
-by `-e` and `-d` flags. Furthermore `--analyzers` specifies which
-analyzer tool should be used (both by default). The tools are completely
-independent, so either can be omitted if not present as these are provided by
-different binaries.
+### _Skip_ file
 
-#### Include paths and compiler defines detection (cross compilation)
+~~~~~~~~~~~~~~~~~~~~~
+-s SKIPFILE, --ignore SKIPFILE, --skip SKIPFILE
+                      Path to the Skipfile dictating which project files
+                      should be omitted from analysis.
+~~~~~~~~~~~~~~~~~~~~~
 
-Some of the include paths are hardcoded during compiler build. If a (cross) compiler
-is used to build a project it is possible that the wrong include paths are searched
-and the wrong headers will be included which causes the analysis to fail.
-These hardcoded include paths and defines can be automatically detected
-with the `--add-compiler-defaults` flag used at the check command.
+Skipfiles filter which files should or should not be analyzed. CodeChecker
+reads the skipfile from top to bottom and stops at the first matching pattern
+when deciding whether or not a file should be analyzed.
+
+Each line in the skip file begins with a `-` or a `+`, followed by a path glob
+pattern. `-` means that if a file matches a pattern it should **not** be
+checked, `+` means that it should be.
+
+#### Example
+
+~~~~~~~~~~~~~~~~~~~~~
+-/skip/all/files/in/directory/*
+-/do/not/check/this.file
++/dir/do.check.this.file
+-/dir/*
+~~~~~~~~~~~~~~~~~~~~~
+
+In the above example, every file under `/dir` **will be** skipped, except the
+one explicitly specified to **be analyzed** (`/dir/do.check.this.file`).
+
+### Analyzer configuration
+
+~~~~~~~~~~~~~~~~~~~~~
+analyzer arguments:
+  --analyzers ANALYZER [ANALYZER ...]
+                        Run analysis only with the analyzers specified.
+                        Currently supported analyzers are: clangsa, clang-
+                        tidy.
+  --add-compiler-defaults
+                        Retrieve compiler-specific configuration from the
+                        compilers themselves, and use them with Clang. This is
+                        used when the compiler on the system is special, e.g.
+                        when doing cross-compilation. (default: False)
+  --saargs CLANGSA_ARGS_CFG_FILE
+                        File containing argument which will be forwarded
+                        verbatim for the Clang Static Analyzer.
+  --tidyargs TIDY_ARGS_CFG_FILE
+                        File containing argument which will be forwarded
+                        verbatim for Clang-Tidy.
+~~~~~~~~~~~~~~~~~~~~~
+
+CodeChecker supports several analyzer tools. Currently, these analyzers are
+the [_Clang Static Analyzer_](http://clang-analyzer.llvm.org) and
+[_Clang-Tidy_](http://clang.llvm.org/extra/clang-tidy). `--analyzers` can be
+used to specify which analyzer tool should be used (by default, all supported
+are used). The tools are completely independent, so either can be omitted if
+not present as they are provided by different binaries.
+
+#### Compiler-specific include path and define detection (cross compilation)
+
+Some of the include paths are hardcoded during compiler build. If a (cross)
+compiler is used to build a project it is possible that the wrong include
+paths are searched and the wrong headers will be included which causes
+analyses to fail. These hardcoded include paths and defines can be marked for
+automatically detection by specifying the `--add-compiler-defaults` flag.
 
 CodeChecker will get the hardcoded values for the compilers set in the
 `CC_LOGGER_GCC_LIKE` environment variable.
@@ -232,81 +441,215 @@ CodeChecker will get the hardcoded values for the compilers set in the
 export CC_LOGGER_GCC_LIKE="gcc:g++:clang"
 ~~~~~~~~~~~~~~~~~~~~~
 
-If there are still compilaton errors after using the `--add-compiler-defaults` flag
-it is possible that the wrong build target architecture (32bit, 64bit) is used. Please try to forward these compilation flags to the analyzers:
-- `-m32` (32bit build)
-- `-m64` (64bit build)
+If there are still compilation errors after using the `--add-compiler-defaults`
+argument, it is possible that the wrong build target architecture
+(32bit, 64bit) is used. Please try to forward these compilation flags
+to the analyzers:
 
-See the Forward compiler options section how to do this.
+ - `-m32` (32-bit build)
+ - `-m64` (64-bit build)
 
-#### Forward compiler options
+#### Forwarding compiler options
 
-These options can modify the compilation actions logged by the build logger or
-created by cmake (exporting compile commands). The extra compiler options can be
-given in config files which are provided by the flags described below.
+Forwarded options can modify the compilation actions logged by the build logger
+or created by CMake (when exporting compile commands). The extra compiler
+options can be given in config files which are provided by the flags
+described below.
 
 The config files can contain placeholders in `$(ENV_VAR)` format. If the
 `ENV_VAR` environment variable is set then the placeholder is replaced to its
-value. Otherwise an error message is logged saying that the variable is not set,
-and in this case an empty string is inserted in the place of the placeholder.
+value. Otherwise an error message is logged saying that the variable is not
+set, and in this case an empty string is inserted in the place of the
+placeholder.
 
-##### Clang Static Analyzer
+##### _Clang Static Analyzer_
 
 Use the `--saargs` argument to a file which contains compilation options.
 
-
-    CodeChecker check --saargs extra_compile_flags -n myProject -b "make -j4"
-
-
-Where the extra_compile_flags file contains additional compilation options.
-
-Config file example:
-
 ~~~~
+CodeChecker analyze mylogfile.json --saargs extra_sa_compile_flags.txt -n myProject
+~~~~
+
+Where the `extra_sa_compile_flags.txt` file contains additional compilation
+options, for example:
+
+~~~~~
 -I~/include/for/analysis -I$(MY_LIB)/include -DDEBUG
-~~~~
+~~~~~
 
-where `MY_LIB` is the path of a library code.
+(where `MY_LIB` is the path of a library code)
 
-##### Clang-tidy
+##### _Clang-Tidy_
 
 Use the `--tidyargs` argument to a file which contains compilation options.
 
-    CodeChecker check --tidyargs extra_tidy_compile_flags -n myProject -b "make -j4"
+~~~~
+CodeChecker analyze mylogfile.json --tidyargs extra_tidy_compile_flags.txt -n myProject
+~~~~
 
-Where the extra_compile_flags file contains additional compilation flags.
-Clang tidy requires a different format to add compilation options.
-Compilation options can be added before ( `-extra-arg-before=<string>` ) and
+Where the `extra_tidy_compile_flags.txt` file contains additional compilation
+flags.
+
+Clang-Tidy requires a different format to add compilation options.
+Compilation options can be added before (`-extra-arg-before=<string>`) and
 after (`-extra-arg=<string>`) the original compilation options.
 
-Config file example:
+Example:
 
-    -extra-arg-before='-I~/include/for/analysis' -extra-arg-before='-I~/other/include/for/analysis/' -extra-arg-before='-I$(MY_LIB)/include' -extra-arg='-DDEBUG'
+~~~~
+-extra-arg-before='-I~/include/for/analysis' -extra-arg-before='-I~/other/include/for/analysis/' -extra-arg-before='-I$(MY_LIB)/include' -extra-arg='-DDEBUG'
+~~~~
 
-where `MY_LIB` is the path of a library code.
+(where `MY_LIB` is the path of a library code)
 
-### Using SQLite for database:
+### Toggling checkers
 
-CodeChecker can also use SQLite for storing the results. In this case the
-SQLite database will be created in the workspace directory.
+The list of checkers to be used in the analysis can be fine-tuned with the
+`--enable` and `--disable` options. See `codechecker-checkers` for the list of
+available checkers in the binaries installed on your system.
 
-In order to use PostgreSQL instead of SQLite, use the `--postgresql` command
-line argument for `CodeChecker server` and `CodeChecker check`
-commands. If `--postgresql` is not given then SQLite is used by default in
-which case `--dbport`, `--dbaddress`, `--dbname`, and
-`--dbusername` command line arguments are ignored.
+~~~~~~~~~~~~~~~~~~~~~
+checker configuration:
 
-#### Note:
-Schema migration is not supported with SQLite. This means if you upgrade your
-CodeChecker to a newer version, you might need to re-check your project.
+  -e checker/checker-group, --enable checker/checker-group
+                        Set a checker (or checker group) to BE USED in the
+                        analysis.
+  -d checker/checker-group, --disable checker/checker-group
+                        Set a checker (or checker group) to BE PROHIBITED from
+                        use in the analysis.
+  --enable-all          Force the running analyzers to use almost every
+                        checker available. The checker groups 'alpha.',
+                        'debug.' and 'osx.' (on Linux) are NOT enabled
+                        automatically and must be EXPLICITLY specified.
+                        WARNING! Enabling all checkers might result in the
+                        analysis losing precision and stability, and could
+                        even result in a total failure of the analysis. USE
+                        WISELY AND AT YOUR OWN RISK!
+~~~~~~~~~~~~~~~~~~~~~
 
-### Suppression in the source:
+Both `--enable` and `--disable` take individual checkers or checker groups as
+their argument and there can be any number of such flags specified.
 
-Suppress comments can be used in the source to suppress specific or all checker results found in a source line.
-Suppress comment should be above the line where the bug was found no empty lines are allowed between the line with the bug and the suppress comment.
-Only comment lines staring with "//" are supported
+For example
 
-Supported comment formats:
+~~~
+--enable core --disable core.uninitialized --enable core.uninitialized.Assign
+~~~
+
+will enable every `core` checker which is not `core.uninitialized`, but
+`core.uninitialized.Assign` will also be enabled.
+
+Disabling certain checkers - such as the `core` group - is unsupported by
+the LLVM/Clang community, and thus discouraged.
+
+#### `--enable-all`
+
+Specifying `--enable-all` will "force" CodeChecker to enable **every** checker
+available in the analyzers. This presents an easy shortcut to force such an
+analysis without the need of editing configuration files or supplying long
+command-line arguments. However, `--enable-all` *might* result in the analysis
+losing stability and precision, and worst case, might result in a complete and
+utter failure in the analysis itself. **`--enable-all` may only be used at
+your own risk!**
+
+Even specifying `--enable-all` will **NOT** enable checkers from some special
+checker groups, such as `alpha.` and `debug.`. `osx.` checkers are only enabled
+if CodeChecker is ran on a macOS machine. `--enable-all` can further be
+fine-tuned with subsequent `--enable` and `--disable` arguments, for example
+
+~~~~
+--enable-all --enable alpha --disable misc
+~~~~
+
+can be used to "further" enable `alpha.` checkers, and disable `misc` ones.
+
+## 3. `parse` mode
+
+`parse` is used to read previously created machine-readable analysis results
+(such as `plist` files), usually previously generated by `CodeChecker analyze`.
+`parse` prints analysis results to the standard output.
+
+~~~~~~~~~~~~~~~~~~~~~
+usage: CodeChecker parse [-h] [-t {plist}] [--suppress SUPPRESS]
+                         [--print-steps]
+                         [--verbose {info,debug,debug_analyzer}]
+                         [file/folder [file/folder ...]]
+
+Parse and pretty-print the summary and results from one or more 'codechecker-
+analyze' result files.
+
+positional arguments:
+  file/folder           The analysis result files and/or folders containing
+                        analysis results which should be parsed and printed.
+                        (default: /home/<username>/.codechecker/reports)
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -t {plist}, --type {plist}, --input-format {plist}
+                        Specify the format the analysis results were created
+                        as. (default: plist)
+  --suppress SUPPRESS   Path of the suppress file to use. Records in the
+                        suppress file are used to suppress the display of
+                        certain results when parsing the analyses' report.
+                        (Reports to an analysis result can also be suppressed
+                        in the source code -- please consult the manual on how
+                        to do so.) NOTE: The suppress file relies on the "bug
+                        identifier" generated by the analyzers which is
+                        experimental, take care when relying on it.
+  --print-steps         Print the steps the analyzers took in finding the
+                        reported defect. (default: False)
+  --verbose {info,debug,debug_analyzer}
+                        Set verbosity level. (default: info)
+~~~~~~~~~~~~~~~~~~~~~
+
+For example, if the analysis was ran like:
+
+~~~~
+CodeChecker analyze ../codechecker_myProject_build.log -o my_plists
+~~~~
+
+then the results of the analysis can be printed with
+
+~~~~
+CodeChecker parse ./my_plists
+~~~~
+
+### _Suppress_ file
+
+~~~~~~~~~~~~~~~~~~~~~
+--suppress SUPPRESS   Path of the suppress file to use. Records in the
+                      suppress file are used to suppress the display of
+                      certain results when parsing the analyses' report.
+                      NOTE: The suppress file relies on the "bug
+                      identifier" generated by the analyzers which is
+                      experimental, take care when relying on it.
+~~~~~~~~~~~~~~~~~~~~~
+
+Certain defects reported by the analyzers might only cause clutter in the
+output, e.g. because they are false positive results, or some other reason why
+we don't want to show them, such as the bug not being relevant to your project
+as it happens in a library you use. (In case of false positives, please report
+the false positive to us and/or the LLVM community so that the checker which
+reported it could be investigated and fixed!)
+
+Suppress files contain information about suppressed analysis reports in an
+internal format, and a suppressed report will not be shown in the output by
+default. Suppress files should not be edited manually, instead, a CodeChecker
+viewer server should manage them, but the suppress file could be committed
+into the source code repository for distribution to teammates.
+
+If `--suppress` is specified, `parse` will use the given suppress file and
+will not show reports on the standard output which are marked as suppressed.
+
+### Suppression in the source code
+
+Suppress comments can be used in the source files to suppress specific or all
+checker results found in a particular line of code. Suppress comment should be
+above the line where the defect was found, and no empty lines are allowed
+between the line with the bug and the suppress comment.
+Only comment lines staring with `//` are supported
+
+#### Supported formats
 
 ~~~~~~~~~~~~~~~~~~~~~
 void test() {
@@ -336,58 +679,109 @@ void test() {
 }
 ~~~~~~~~~~~~~~~~~~~~~
 
-### Suppress file:
+## 4. `store` mode
+
+`store` is used to save previously created machine-readable analysis results
+(such as `plist` files), usually previously generated by `CodeChecker analyze`
+to the database.
 
 ~~~~~~~~~~~~~~~~~~~~~
--u SUPPRESS
+usage: CodeChecker store [-h] [-t {plist}] [-j JOBS] [-n NAME]
+                         [--suppress SUPPRESS] [-f]
+                         [--sqlite SQLITE_FILE | --postgresql]
+                         [--db-host DBADDRESS] [--db-port DBPORT]
+                         [--db-username DBUSERNAME] [--db-name DBNAME]
+                         [--verbose {info,debug,debug_analyzer}]
+                         [file/folder [file/folder ...]]
+
+Store the results from one or more 'codechecker-analyze' result files in a
+database.
+
+positional arguments:
+  file/folder           The analysis result files and/or folders containing
+                        analysis results which should be parsed and printed.
+                        (default: /home/<username>/.codechecker/reports)
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -t {plist}, --type {plist}, --input-format {plist}
+                        Specify the format the analysis results were created
+                        as. (default: plist)
+  -j JOBS, --jobs JOBS  Number of threads to use in storing results. More
+                        threads mean faster operation at the cost of using
+                        more memory. (default: 1)
+  -n NAME, --name NAME  The name of the analysis run to use in storing the
+                        reports to the database. If not specified, the '--
+                        name' parameter given to 'codechecker-analyze' will be
+                        used, if exists.
+  --suppress SUPPRESS   Path of the suppress file to use. Records in the
+                        suppress file are used to mark certain stored analysis
+                        results as 'suppressed'. (Reports to an analysis
+                        result can also be suppressed in the source code --
+                        please consult the manual on how to do so.) NOTE: The
+                        suppress file relies on the "bug identifier" generated
+                        by the analyzers which is experimental, take care when
+                        relying on it.
+  -f, --force           Delete analysis results stored in the database for the
+                        current analysis run's name and store only the results
+                        reported in the 'input' files. (By default,
+                        CodeChecker would keep reports that were coming from
+                        files not affected by the analysis, and only
+                        incrementally update defect reports for source files
+                        that were analysed.) (default: False)
+  --verbose {info,debug,debug_analyzer}
+                        Set verbosity level. (default: info)
+
+database arguments:
+  --sqlite SQLITE_FILE  Path of the SQLite database file to use. (default:
+                        /home/<username>/.codechecker/codechecker.sqlite)
+  --postgresql          Specifies that a PostgreSQL database is to be used
+                        instead of SQLite. See the "PostgreSQL arguments"
+                        section on how to configure the database connection.
+
+PostgreSQL arguments:
+  Values of these arguments are ignored, unless '--postgresql' is specified!
+
+  --db-host DBADDRESS
+                        Database server address. (default: localhost)
+  --db-port DBPORT      Database server port. (default: 5432)
+  --db-username DBUSERNAME
+                        Username to use for connection. (default: codechecker)
+  --db-name DBNAME      Name of the database to use. (default: codechecker)
+
+To start a server which connects to a database where results are stored, use
+'CodeChecker server'. The results can be viewed by connecting to such a server
+in a Web browser or via 'CodeChecker cmd'.
 ~~~~~~~~~~~~~~~~~~~~~
 
-Suppress file can contain bug hashes and comments.
-Suppressed bugs will not be showed in the viewer by default.
-Usually a reason to suppress a bug is a false positive result (reporting a non-existent bug). Such false positives should be reported, so we can fix the checkers.
-A comment can be added to suppressed reports that describes why that report is false positive. You should not edit suppress file by hand. The server should handle it.
-The suppress file can be checked into the source code repository.
-Bugs can be suppressed on the viewer even when suppress file was not set by command line arguments. This case the suppress will not be permanent. For this reason it is
-advised to always provide (the same) suppress file for the checks.
+For example, if the analysis was ran like:
 
-### Skip file:
+~~~~
+CodeChecker analyze ../codechecker_myProject_build.log -o ./my_plists
+~~~~
 
-~~~~~~~~~~~~~~~~~~~~~
--s SKIPFILE, --skip SKIPFILE
-~~~~~~~~~~~~~~~~~~~~~
-With a skip file you can filter which files should or shouldn't be checked.
-Each line in a skip file should start with a '-' or '+' character followed by a path glob pattern. A minus character means that if a checked file path - including the headers - matches with the pattern, the file will not be checked. The plus character means the opposite: if a file path matches with the pattern, it will be checked.
-CodeChecker reads the file from top to bottom and stops at the first matching pattern.
+then the results of the analysis can be stored to a default SQLite database
+with
 
-For example:
+~~~~
+CodeChecker store ./my_plists
+~~~~
 
-~~~~~~~~~~~~~~~~~~~~~
--/skip/all/source/in/directory*
--/do/not/check/this.file
-+/dir/check.this.file
--/dir/*
-~~~~~~~~~~~~~~~~~~~~~
 
-### Enable/Disable checkers
+### Using SQLite for database:
 
-~~~~~~~~~~~~~~~~~~~~~
--e ENABLE, --enable ENABLE
--d DISABLE, --disable DISABLE
-~~~~~~~~~~~~~~~~~~~~~
-You can enable or disable checkers or checker groups. If you want to enable more checker groups use -e multiple times. To get the actual list of checkers run ```CodeChecer checkers``` command.
-For example if you want to enable core and security checkers, but want to disable alpha checkers use
+CodeChecker can also use SQLite for storing the results. In this case the
+SQLite database will be created in the workspace directory.
 
-~~~~~~~~~~~~~~~~~~~~~
-CodeChecker check -e core -e security -d alpha ...
-~~~~~~~~~~~~~~~~~~~~~
+In order to use PostgreSQL instead of SQLite, use the `--postgresql` command
+line argument for `CodeChecker server` and `CodeChecker check`
+commands. If `--postgresql` is not given then SQLite is used by default in
+which case `--dbport`, `--dbaddress`, `--dbname`, and
+`--dbusername` command line arguments are ignored.
 
-### Multithreaded Checking
-
-~~~~~~~~~~~~~~~~~~~~~
--j JOBS, --jobs JOBS  Number of jobs.
-~~~~~~~~~~~~~~~~~~~~~
-CodeChecker will execute analysis on as many threads as specified after -j argument.
-
+#### Note:
+Schema migration is not supported with SQLite. This means if you upgrade your
+CodeChecker to a newer version, you might need to re-check your project.
 
 ### Various deployment possibilities
 
@@ -435,46 +829,6 @@ Start the checking as explained previously.
 
 ~~~~~~~~~~~~~~~~~~~~~
 CodeChecker check -w ~/codechecker_wp -n myProject -b "make -j 4" --dbname myProjectdb --dbaddress 192.168.1.2 --dbport 5432
-~~~~~~~~~~~~~~~~~~~~~
-
-## 3. Quick check mode:
-
-It's possible to quickly check a small project (set of files) for bugs without
-storing the results into a database. In this case only the build command is
-required and the defect list appears on the console. The defect list doesn't
-shows the bug paths by default but you can turn it on using the --steps command
-line parameter.
-
-Basic usage:
-
-~~~~~~~~~~~~~~~~~~~~~
-CodeChecker quickcheck -b 'make'
-~~~~~~~~~~~~~~~~~~~~~
-
-Enabling bug path:
-
-~~~~~~~~~~~~~~~~~~~~~
-CodeChecker quickcheck -b 'make' --steps
-~~~~~~~~~~~~~~~~~~~~~
-
-Usage:
-
-~~~~~~~~~~~~~~~~~~~~~
-usage: CodeChecker quickcheck [-h] (-b COMMAND | -l LOGFILE) [-e ENABLE]
-                                 [-d DISABLE] [-s]
-
-optional arguments:
-  -h, --help            show this help message and exit
-  -b COMMAND, --build COMMAND
-                        Build command.
-  -l LOGFILE, --log LOGFILE
-                        Path to the log file which is created during the
-                        build.
-  -e ENABLE, --enable ENABLE
-                        Enable checker.
-  -d DISABLE, --disable DISABLE
-                        Disable checker.
-  -s, --steps           Print steps.
 ~~~~~~~~~~~~~~~~~~~~~
 
 ## 4. `checkers` mode
@@ -576,6 +930,9 @@ optional arguments:
 A detailed view of the available analyzers is available via `--details`. In the
 *detailed view*, version string and install path is also printed.
 
+A machine-readable `csv` or `json` output can be generated by supplying the
+`--output csv` or `--output json` argument.
+
 ## 5. cmd mode:
 
 A lightweigh command line interface to query the results of an analysis.
@@ -596,16 +953,6 @@ positional arguments:
 optional arguments:
   -h, --help            show this help message and exit
 ~~~~~~~~~~~~~~~~~~~~~
-## 6. plist mode:
-Clang Static Analyzer's scan-build script can generate analyis output into plist xml files. 
-In this You can import these files into the database.
-You will need to specify containing the plist files afther the -d option.
-
-Example:
-~~~~~~~~~~~~~~~~~~~~~
-CodeChecker plist -d ./results_plist -n myresults
-~~~~~~~~~~~~~~~~~~~~~
-
 
 ## 7. debug mode:
 
