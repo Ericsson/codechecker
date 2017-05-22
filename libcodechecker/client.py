@@ -155,9 +155,9 @@ class Connection(object):
         return self._client.addSkipPath(run_id, converted)
 
     def replace_config_info(self, run_id, config_list):
-        ''' bool replaceConfigInfo(1: i64 run_id,
+        """ bool replaceConfigInfo(1: i64 run_id,
                                    2: list<ConfigValue> values)
-        '''
+        """
         return self._client.replaceConfigInfo(run_id, config_list)
 
     def add_build_action(self, run_id, build_cmd_hash, check_cmd,

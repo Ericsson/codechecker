@@ -14,8 +14,6 @@ All hash generation algorithms should be documented and implemented here.
 import hashlib
 import linecache
 import os
-import sys
-import traceback
 
 from libcodechecker.logger import LoggerFactory
 
@@ -125,7 +123,7 @@ def generate_report_hash(path, files, check_name):
 
                 hash_content.append(str(end_range_begin['col']))
                 hash_content.append(str(end_range_end['col']))
-            except IndexError as iex:
+            except IndexError:
                 # Edges might be empty.
                 hash_from_ctrl_section = False
 
@@ -136,7 +134,6 @@ def generate_report_hash(path, files, check_name):
 
             for i, section in enumerate(event_sections):
                 loc = section['location']
-                line_num = loc['line']
                 col_num = loc['col']
                 hash_content.append(str(col_num))
 

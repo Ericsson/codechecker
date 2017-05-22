@@ -7,7 +7,11 @@
 from datetime import datetime
 import cProfile
 import pstats
-import StringIO
+
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import BytesIO as StringIO
 
 from libcodechecker import logger
 from libcodechecker.logger import LoggerFactory

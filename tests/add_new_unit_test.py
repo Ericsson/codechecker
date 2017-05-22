@@ -33,8 +33,6 @@ def main():
 
     template = os.path.join(unit_test_path, 'unit_template.py')
 
-    new_test_content = ''
-
     with open(template, 'r') as init:
         new_test_content = init.read()
 

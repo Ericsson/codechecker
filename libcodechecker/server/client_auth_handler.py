@@ -6,15 +6,8 @@
 """
 Handle thrift requests for authentication
 """
-from collections import defaultdict
-import codecs
-import os
-import ntpath
-import zlib
-
 
 import shared
-from Authentication import constants
 from Authentication.ttypes import *
 
 from libcodechecker.logger import LoggerFactory
@@ -52,9 +45,7 @@ class ThriftAuthHandler():
 
     @timeit
     def getAcceptedAuthMethods(self):
-        result = []
-        result.append("Username:Password")
-        return result
+        return ["Username:Password"]
 
     @timeit
     def performLogin(self, auth_method, auth_string):

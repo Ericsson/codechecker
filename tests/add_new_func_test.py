@@ -35,9 +35,6 @@ def main():
     templ_init = os.path.join(test_skeleton_path, 'template__init__.py')
     templ_test = os.path.join(test_skeleton_path, 'template_test.py')
 
-    new_init_content = ''
-    new_test_content = ''
-
     with open(templ_init, 'r') as init:
         new_init_content = init.read()
 

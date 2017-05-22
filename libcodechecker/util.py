@@ -12,12 +12,13 @@ import glob
 import hashlib
 import ntpath
 import os
-import psutil
 import re
 import shutil
 import socket
 import subprocess
 import sys
+
+import psutil
 
 from libcodechecker.logger import LoggerFactory
 
@@ -112,10 +113,6 @@ def get_file_name_from_path(path):
     """Get the filename from a path."""
     head, tail = ntpath.split(path)
     return head, tail
-
-
-def get_obj_target(object_file_path):
-    return os.path.split(os.path.abspath(dir))[-2]
 
 
 def create_dir(path):
