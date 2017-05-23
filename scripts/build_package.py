@@ -9,9 +9,9 @@ import errno
 import json
 import logging
 import ntpath
-import re
-import platform
 import os
+import platform
+import re
 import shlex
 import shutil
 import subprocess
@@ -78,12 +78,12 @@ def build_ld_logger(ld_logger_path, env, arch=None, clean=True, silent=True):
             LOG.error('Failed to run: ' + ' '.join(make_cmd))
             return ret
 
-    if arch is None:
-        make_cmd = ['make', '-f', 'Makefile.manual']
-    elif arch == '32':
+    if arch == '32':
         make_cmd = ['make', '-f', 'Makefile.manual', 'pack32bit']
     elif arch == '64':
         make_cmd = ['make', '-f', 'Makefile.manual', 'pack64bit']
+    else:
+        make_cmd = ['make', '-f', 'Makefile.manual']
 
     ret = run_cmd(make_cmd, ld_logger_path, env, silent=silent)
     if ret:
@@ -251,7 +251,7 @@ def handle_external_repository(dep, clean, env, verbose):
         if source:
             tmp = tempfile.mkdtemp()
             LOG.debug("Downloading font files " + source + " to " + tmp)
-            for fformat, agent in font_user_agents.iteritems():
+            for fformat, agent in font_user_agents.items():
                 command = ['curl', '-sSfLk',
                            '-A', agent,
                            '--get', source,
@@ -417,7 +417,6 @@ def build_package(repository_root, build_package_config, env=None):
     package_layout['root'] = package_root
 
     # Get external dependencies.
-    vendor_dir = os.path.join(repository_root, 'vendor')
     vendor_proj_config = os.path.join(repository_root, 'vendor_projects.json')
     LOG.debug(vendor_proj_config)
     with open(vendor_proj_config, 'r') as vendor_cfg:
@@ -688,7 +687,7 @@ def build_package(repository_root, build_package_config, env=None):
     copy_tree(source, target)
 
     # Copy font files.
-    for _, dep in vendor_projects.iteritems():
+    for _, dep in vendor_projects.items():
         if 'repository' not in dep:
             continue
         if dep['repository']['type'] != "font_import":

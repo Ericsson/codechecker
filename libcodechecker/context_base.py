@@ -96,15 +96,15 @@ class ContextBase(object):
         return self._extra_include_paths
 
     @extra_includes.setter
-    def add_extra_includes(self, path):
+    def extra_includes(self, path):
         self._extra_include_paths.append(path)
 
     @property
     def extra_system_includes(self):
         return self._extra_system_include_paths
 
-    @extra_includes.setter
-    def add_extra_system_includes(self, path):
+    @extra_system_includes.setter
+    def extra_system_includes(self, path):
         self._extra_system_include_paths.append(path)
 
     @property

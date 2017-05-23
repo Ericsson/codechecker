@@ -85,9 +85,9 @@ Scope of the search performed. (Valid values are: base, one, subtree)
 
 """
 
-import ldap
-
 from contextlib import contextmanager
+
+import ldap
 
 from libcodechecker.logger import LoggerFactory
 
@@ -172,8 +172,6 @@ def check_group_membership(connection,
         # There is at least one match for one of the groups.
         return len(group_result) != 0
 
-    return False
-
 
 class LDAPConnection(object):
     """
@@ -191,7 +189,7 @@ class LDAPConnection(object):
         ldap_server = ldap_config['connection_url']
         if ldap_server is None:
             LOG.error('Server address is missing from the configuration')
-            return None
+            return
 
         referals = ldap_config.get('referals', False)
         ldap.set_option(ldap.OPT_REFERRALS, 1 if referals else 0)
@@ -211,7 +209,7 @@ class LDAPConnection(object):
 
         self.connection = ldap.initialize(ldap_server)
 
-        LOG.error('Binding to LDAP server with user: ' + who)
+        LOG.error('Binding to LDAP server with user: ' + who if who else '')
 
         with ldap_error_handler():
             if who is None or cred is None:

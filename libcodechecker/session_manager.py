@@ -13,11 +13,12 @@ import getpass
 import hashlib
 import json
 import os
-import portalocker
-import stat
 import shutil
+import stat
 import time
 import uuid
+
+import portalocker
 
 from libcodechecker.logger import LoggerFactory
 
@@ -38,7 +39,7 @@ SESSION_COOKIE_NAME = "__ccPrivilegedAccessToken"
 session_lifetimes = {}
 
 
-class _Session():
+class _Session(object):
     """A session for an authenticated, privileged client connection."""
 
     # Create an initial salt from system environment for use with the session
