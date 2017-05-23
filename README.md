@@ -234,7 +234,7 @@ Additional documentation
   * [Package layout](docs/package_layout.md)
   * [Checker documentation](docs/checker_docs.md)
   * [Thrift interface](thrift_api/thrift_api.md)
-  * [Package and integration tests](tests/functional/package_test.md)
+  * [Package and integration tests](tests/readme.md)
   * [Database schema migration](docs/db_schema_guide.md)
   * [Usage of PostgreSQL database](docs/postgresql_setup.md)
   * [Requiring credentials to view analysis results](docs/authentication.md)
