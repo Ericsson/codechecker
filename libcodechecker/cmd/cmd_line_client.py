@@ -7,7 +7,6 @@
 from argparse import ArgumentDefaultsHelpFormatter as ADHFormatter
 from datetime import datetime
 import argparse
-import csv
 import getpass
 import json
 import sys

@@ -16,7 +16,6 @@ import sys
 import time
 import zlib
 
-from sets import Set
 
 from StringIO import StringIO
 from multiprocessing import Process, Value, Lock, Manager

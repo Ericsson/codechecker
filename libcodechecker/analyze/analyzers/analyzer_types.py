@@ -10,7 +10,6 @@ Supported analyzer types.
 import os
 import platform
 import re
-import sys
 
 from libcodechecker import client
 from libcodechecker.analyze import analyzer_env

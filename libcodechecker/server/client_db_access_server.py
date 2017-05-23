@@ -26,12 +26,10 @@ except ImportError:
 
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import scoped_session
-from thrift import Thrift
 from thrift.Thrift import TException
 from thrift.transport import TTransport
 from thrift.protocol import TJSONProtocol
 
-import shared
 from Authentication import codeCheckerAuthentication
 from Authentication import constants
 from Authentication.ttypes import *
@@ -245,8 +243,8 @@ class RequestHandler(SimpleHTTPRequestHandler):
         words = filter(None, words)
         path = self.server.www_root
         for word in words:
-            drive, word = os.path.splitdrive(word)
-            head, word = os.path.split(word)
+            _, word = os.path.splitdrive(word)
+            _, word = os.path.split(word)
             if word in (os.curdir, os.pardir):
                 continue
             path = os.path.join(path, word)

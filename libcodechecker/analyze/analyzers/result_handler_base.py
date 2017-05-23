@@ -4,7 +4,7 @@
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
 
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta
 import ntpath
 import os
 import uuid

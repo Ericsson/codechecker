@@ -175,7 +175,7 @@ def parse_plist(path):
                   path)
         LOG.error(type(iex))
         LOG.error(repr(iex))
-        exc_type, exc_value, exc_traceback = sys.exc_info()
+        _, _, exc_traceback = sys.exc_info()
         traceback.print_tb(exc_traceback, limit=1, file=sys.stdout)
     except Exception as ex:
         LOG.error('Error during processing reports from the plist file: ' +

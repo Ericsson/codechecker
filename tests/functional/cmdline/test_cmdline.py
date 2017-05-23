@@ -8,7 +8,6 @@
 This module tests the CodeChecker command line.
 """
 
-import os
 import subprocess
 import unittest
 

@@ -5,7 +5,6 @@
 #   License. See LICENSE.TXT for details.
 # -----------------------------------------------------------------------------
 
-import json
 import os
 import unittest
 import logging

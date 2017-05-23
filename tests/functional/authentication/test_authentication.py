@@ -5,10 +5,7 @@
 #   License. See LICENSE.TXT for details.
 # -----------------------------------------------------------------------------
 
-import json
-import logging
 import os
-import re
 import unittest
 
 from thrift.protocol.TProtocol import TProtocolException

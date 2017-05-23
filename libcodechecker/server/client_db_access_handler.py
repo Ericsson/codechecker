@@ -456,7 +456,7 @@ class ThriftRequestHandler():
             return
 
         def check_filename(data):
-            report, file_obj = data
+            _, file_obj = data
             source_file_path, f_name = ntpath.split(file_obj.filepath)
             if f_name == source_file_name:
                 return True
@@ -471,7 +471,7 @@ class ThriftRequestHandler():
 
         reports = filter(check_filename, reports)
 
-        for report, file_obj in reports:
+        for report, _ in reports:
             report.suppressed = suppress_flag
 
     def __update_suppress_storage_data(self,
@@ -489,7 +489,7 @@ class ThriftRequestHandler():
         bug_id_hash = report.bug_id
 
         source_file = session.query(File).get(report.file_id)
-        source_file_path, source_file_name = ntpath.split(source_file.filepath)
+        _, source_file_name = ntpath.split(source_file.filepath)
 
         LOG.debug('Updating suppress data for: {0} bug id {1}'
                   'file name {2} supressing {3}'.format(report_id,
