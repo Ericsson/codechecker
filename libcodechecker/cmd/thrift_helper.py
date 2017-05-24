@@ -8,7 +8,6 @@ import os
 import socket
 import sys
 
-from thrift import Thrift
 from thrift.Thrift import TException, TApplicationException
 from thrift.transport import THttpClient
 from thrift.protocol import TJSONProtocol

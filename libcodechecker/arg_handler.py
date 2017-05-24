@@ -8,7 +8,6 @@ Handle old-style subcommand invocation.
 """
 import errno
 import json
-import multiprocessing
 import os
 import socket
 import sys

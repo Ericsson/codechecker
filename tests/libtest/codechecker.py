@@ -1,6 +1,10 @@
+# -----------------------------------------------------------------------------
+#                     The CodeChecker Infrastructure
+#   This file is distributed under the University of Illinois Open Source
+#   License. See LICENSE.TXT for details.
+# -----------------------------------------------------------------------------
 import os
 import shlex
-import socket
 import subprocess
 import time
 

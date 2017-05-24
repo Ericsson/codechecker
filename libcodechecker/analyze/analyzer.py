@@ -92,7 +92,7 @@ def perform_analysis(args, context, actions, metadata):
         metadata['checkers'][analyzer] = []
 
         for check, data in config_map[analyzer].checks().iteritems():
-            enabled, descr = data
+            enabled, _ = data
             if not enabled:
                 continue
             metadata['checkers'][analyzer].append(check)
