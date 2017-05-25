@@ -143,7 +143,7 @@ def remove_from_suppress_file(suppress_file, value, file_name):
                 return True
 
         # Filter out lines which should be removed.
-        lines = filter(lambda line: check_for_match(line), lines)
+        lines = filter(check_for_match, lines)
 
         s_file.seek(0)
         s_file.truncate()

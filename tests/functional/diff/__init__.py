@@ -46,8 +46,6 @@ def setup_package():
 
     test_project_path = project.path(test_project)
 
-    clang_version = env.clang_to_test()
-
     pg_db_config = env.get_postgresql_cfg()
 
     test_config = {}

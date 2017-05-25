@@ -25,7 +25,7 @@ def conv(text):
     return text.replace('*', '%')
 
 
-class ThriftAuthHandler():
+class ThriftAuthHandler(object):
     """
     Handle Thrift authentication requests.
     """

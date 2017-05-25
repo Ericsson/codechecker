@@ -58,15 +58,13 @@ class TestCmdLineDeletion(unittest.TestCase):
         """
 
         def all_exists(runs):
-            run_names = map(lambda run: run.name, self._cc_client.getRunData())
-            print run_names
+            run_names = [run.name for run in self._cc_client.getRunData()]
+            print(run_names)
             return set(runs) <= set(run_names)
 
         def none_exists(runs):
-            run_names = map(lambda run: run.name, self._cc_client.getRunData())
+            run_names = [run.name for run in self._cc_client.getRunData()]
             return not bool(set(runs).intersection(run_names))
-
-        test_workspace = os.environ['TEST_WORKSPACE']
 
         project_name = self._testproject_data['name']
         run2_name = project_name + '_' + str(2)
@@ -84,7 +82,6 @@ class TestCmdLineDeletion(unittest.TestCase):
                    '-p', str(self._cc_port)]
         run_cmd(del_cmd)
 
-        run_names = map(lambda run: run.name, self._cc_client.getRunData())
         self.assertTrue(all_exists(
             [project_name + '_' + str(i) for i in range(0, 3)]))
         self.assertTrue(none_exists(

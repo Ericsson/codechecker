@@ -3,21 +3,17 @@
 #   This file is distributed under the University of Illinois Open Source
 #   License. See LICENSE.TXT for details.
 # -----------------------------------------------------------------------------
-
+"""
+Test suppression functionality.
+"""
 import logging
 import os
 import unittest
 
 from codeCheckerDBAccess.ttypes import ReportFilter
 
-from libtest.debug_printer import print_run_results
-from libtest.thrift_client_to_db import CCViewerHelper
 from libtest.thrift_client_to_db import get_all_run_results
 from libtest import env
-
-"""
-Test suppression functionality.
-"""
 
 
 class TestSuppress(unittest.TestCase):
@@ -32,8 +28,6 @@ class TestSuppress(unittest.TestCase):
 
         test_class = self.__class__.__name__
         print('Running ' + test_class + ' tests in ' + test_workspace)
-
-        test_cfg = env.import_test_cfg(test_workspace)
 
         self._testproject_data = env.setup_test_proj_cfg(test_workspace)
         self.assertIsNotNone(self._testproject_data)

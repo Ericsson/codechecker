@@ -32,7 +32,7 @@ logging.basicConfig(format='[%(process)s] %(message)s', level=logging.INFO)
 log = logging.getLogger('PERF')
 
 
-class Timer():
+class Timer(object):
     """
     Simple timer context manager
     to measure code block execution time.
@@ -223,17 +223,17 @@ def store_reports(run_id, file_content, test_conf):
                 bug_hash = 'hash_' + str(run_id) + '_' + str(file_count) + \
                     '_' + str(bug_count)
 
-                r_id = store_server.addReport(ba_id,
-                                              file_id,
-                                              bug_hash,
-                                              'checker_message',
-                                              bug_paths,
-                                              bug_events,
-                                              'checker_name',
-                                              'checker_cat',
-                                              'bug_type',
-                                              Severity.STYLE,
-                                              False)
+                store_server.addReport(ba_id,
+                                       file_id,
+                                       bug_hash,
+                                       'checker_message',
+                                       bug_paths,
+                                       bug_events,
+                                       'checker_name',
+                                       'checker_cat',
+                                       'bug_type',
+                                       Severity.STYLE,
+                                       False)
 
 
 def measure(test_conf,
@@ -278,7 +278,7 @@ def measure(test_conf,
             with CCViewerHelper(view_host, view_port, '/') as viewer_client:
 
                 with Timer('getRunData', run_perf):
-                    run_data = viewer_client.getRunData()
+                    viewer_client.getRunData()
 
                 with Timer('getAllRunResulst', run_perf):
                     res = get_all_run_results(viewer_client, run_id)

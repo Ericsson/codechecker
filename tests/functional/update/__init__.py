@@ -7,18 +7,14 @@
 
 """Setup for the package tests."""
 
-import json
 import multiprocessing
 import os
-import shlex
 import shutil
 import subprocess
 import sys
 import time
 import uuid
-from subprocess import CalledProcessError
 
-from libtest import get_free_port
 from libtest import project
 from libtest import codechecker
 from libtest import env
@@ -38,10 +34,6 @@ def setup_package():
     os.environ['TEST_WORKSPACE'] = TEST_WORKSPACE
 
     test_project = 'cpp'
-
-    test_project_path = project.path(test_project)
-
-    clang_version = env.clang_to_test()
 
     pg_db_config = env.get_postgresql_cfg()
 

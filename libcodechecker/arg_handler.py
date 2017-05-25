@@ -22,7 +22,6 @@ from libcodechecker import util
 from libcodechecker.analyze import analyzer_env
 from libcodechecker.analyze.analyzers import analyzer_types
 from libcodechecker.database_handler import SQLServer
-from libcodechecker.log import build_action
 from libcodechecker.logger import LoggerFactory
 from libcodechecker.server import client_db_access_server
 from libcodechecker.server import instance_manager
@@ -39,7 +38,7 @@ def handle_list_checkers(args):
     context = generic_package_context.get_context()
     # If nothing is set, list checkers for all supported analyzers.
     analyzers = args.analyzers or analyzer_types.supported_analyzers
-    enabled_analyzers, failed_analyzers = analyzer_types\
+    enabled_analyzers, _ = analyzer_types\
         .check_supported_analyzers(analyzers, context)
     analyzer_environment = analyzer_env.get_check_env(
         context.path_env_extra,

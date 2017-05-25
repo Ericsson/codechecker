@@ -68,7 +68,7 @@ def handle_auth_requests(args):
         else:
             print("No/Old authentication token found please login again.")
 
-    except TApplicationException as tex:
+    except TApplicationException:
         print("This server does not support privileged access.")
         return
 
@@ -209,7 +209,7 @@ def check_run_names(client, check_names):
 
     if missing_name:
         print('Possible check names are:')
-        for name, info in run_info.items():
+        for name, _ in run_info.items():
             print(name)
         sys.exit(1)
 
@@ -272,7 +272,7 @@ def handle_list_results(args):
 
     run_info = check_run_names(client, [args.name])
 
-    run_id, run_date = run_info.get(args.name)
+    run_id, _ = run_info.get(args.name)
 
     limit = 500
     offset = 0

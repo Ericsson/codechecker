@@ -7,18 +7,14 @@
 
 """Setup for the package tests."""
 
-import json
 import multiprocessing
 import os
-import shlex
 import shutil
 import subprocess
 import sys
 import time
 import uuid
-from subprocess import CalledProcessError
 
-from libtest import get_free_port
 from libtest import project
 from libtest import codechecker
 from libtest import env

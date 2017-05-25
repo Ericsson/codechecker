@@ -8,8 +8,6 @@
 import os
 import unittest
 
-import shared
-
 from libtest import env
 from libtest import project
 from libtest import codechecker
@@ -24,8 +22,6 @@ class TestUpdate(unittest.TestCase):
 
         test_class = self.__class__.__name__
         print('Running ' + test_class + ' tests in ' + self._test_workspace)
-
-        test_cfg = env.import_test_cfg(self._test_workspace)
 
         self._clang_to_test = env.clang_to_test()
 

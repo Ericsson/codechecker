@@ -128,7 +128,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
 
             # Config handler stores which checkers are enabled or disabled.
             for checker_name, value in config.checks().items():
-                enabled, description = value
+                enabled, _ = value
                 if enabled:
                     analyzer_cmd.extend(['-Xclang',
                                          '-analyzer-checker=' + checker_name])

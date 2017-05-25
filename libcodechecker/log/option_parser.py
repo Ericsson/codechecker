@@ -312,7 +312,7 @@ def arg_check(it, result):
         def wrapped(value):
             def append_n(size):
                 target_list.append(it.item)
-                for x in xrange(0, size):
+                for _ in range(size):
                     it.next()
                     target_list.append(it.item)
 
@@ -403,7 +403,7 @@ def arg_check(it, result):
 
         def wrapped(value):
             def skip_n(size):
-                for x in range(0, size):
+                for _ in range(size):
                     it.next()
 
             if regex:

@@ -95,7 +95,7 @@ class PlistToDB(ResultHandler):
                                                  end_line,
                                                  end_col,
                                                  file_ids[source_file_path]))
-                except IndexError as iex:
+                except IndexError:
                     # Edges might be empty nothing can be stored.
                     continue
 

@@ -25,8 +25,8 @@ def _generate_content(cols, lines):
     """Generates a random file content string."""
 
     content = ""
-    for _ in xrange(1, lines):
-        for _ in xrange(1, cols):
+    for _ in range(1, lines):
+        for _ in range(1, cols):
             content += random.choice(string.letters)
         content += '\n'
     return content
@@ -138,7 +138,7 @@ class HashClash(unittest.TestCase):
 
         with self._init_new_test('test1') as ids1, \
                 self._init_new_test('test2') as ids2:
-            _, file_id1, build_action_id1, source_file1 = ids1
+            _, file_id1, build_action_id1, _ = ids1
             run_id2, file_id2, build_action_id2, source_file2 = ids2
             rep_id1 = self._create_simple_report(file_id1,
                                                  build_action_id1,

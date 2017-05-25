@@ -83,7 +83,6 @@ def checker_name_from_description(current_msg):
         os.path.dirname(os.path.realpath(__file__)),
         'checker_message_map.json')
 
-    checker_message_map = {}
     with open(message_map_path) as map_file:
         checker_message_map = json.load(map_file)
 

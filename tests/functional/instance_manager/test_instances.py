@@ -4,7 +4,9 @@
 #   This file is distributed under the University of Illinois Open Source
 #   License. See LICENSE.TXT for details.
 # -----------------------------------------------------------------------------
-
+"""
+Instance manager tests.
+"""
 import os
 import subprocess
 import time
@@ -15,10 +17,6 @@ from libcodechecker.server import instance_manager
 from libtest import env
 from . import EVENT_1, EVENT_2, EVENT_3
 from . import start_server
-
-"""
-Instance manager tests.
-"""
 
 
 def run_cmd(cmd):

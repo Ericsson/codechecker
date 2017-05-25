@@ -8,7 +8,6 @@ import os
 import socket
 import sys
 
-from thrift.Thrift import TException, TApplicationException
 from thrift.transport import THttpClient
 from thrift.protocol import TJSONProtocol
 from thrift.protocol.TProtocol import TProtocolException
@@ -19,7 +18,7 @@ from codeCheckerDBAccess import codeCheckerDBAccess
 from libcodechecker import session_manager
 
 
-class ThriftClientHelper():
+class ThriftClientHelper(object):
 
     def __init__(self, host, port, uri, session_token=None):
         self.__host = host
@@ -33,7 +32,6 @@ class ThriftClientHelper():
                        "=" + session_token}
             self.transport.setCustomHeaders(headers)
 
-# ------------------------------------------------------------
     def ThriftClientCall(function):
         # print type(function)
         funcName = function.__name__
@@ -74,49 +72,40 @@ class ThriftClientHelper():
 
         return wrapper
 
-    # ------------------------------------------------------------
     @ThriftClientCall
     def getRunData(self):
         pass
 
-    # ------------------------------------------------------------
     @ThriftClientCall
     def getRunResults(self, runId, limit, offset, sortType, reportFilters):
         pass
 
-    # ------------------------------------------------------------
     @ThriftClientCall
     def getRunResultCount(self, runId, reportFilters):
         pass
 
-    # -----------------------------------------------------------------------
     @ThriftClientCall
     def getRunResultTypes(self, runId, reportFilters):
         pass
 
-    # -----------------------------------------------------------------------
     @ThriftClientCall
     def getAPIVersion(self):
         pass
 
-    # -----------------------------------------------------------------------
     @ThriftClientCall
     def removeRunResults(self, run_ids):
         pass
 
-    # -----------------------------------------------------------------------
     @ThriftClientCall
     def getNewResults(self, base_run_id, new_run_id, limit, offset, sortType,
                       reportFilters):
         pass
 
-    # -----------------------------------------------------------------------
     @ThriftClientCall
     def getUnresolvedResults(self, base_run_id, new_run_id, limit, offset,
                              sortType, reportFilters):
         pass
 
-    # -----------------------------------------------------------------------
     @ThriftClientCall
     def getResolvedResults(self, base_run_id, new_run_id, limit, offset,
                            sortType, reportFilters):
