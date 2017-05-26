@@ -19,6 +19,7 @@ from Authentication import ttypes as AuthTypes
 
 from libcodechecker import session_manager
 from libcodechecker import logger
+from libcodechecker import suppress_file_handler
 from libcodechecker.output_formatters import twodim_to_str
 
 from . import thrift_helper
@@ -498,28 +499,27 @@ def handle_suppress(args):
     run_id, run_date = run_info.get(args.name)
 
     if args.output:
-        with open(args.output, 'w') as out:
-            for suppression in client.getSuppressedBugs(run_id):
-                out.write(suppression.bug_hash + '||' +
-                          suppression.file_name + '||' +
-                          suppression.comment + '\n')
+        for suppression in client.getSuppressedBugs(run_id):
+            suppress_file_handler.write_to_suppress_file(
+                args.output,
+                suppression.bug_hash,
+                suppression.file_name,
+                suppression.comment)
 
     elif args.input:
-        with open(args.input, 'r') as inp:
-            for line in inp:
-                bug_id, file_name, comment = line.rstrip().split('||')
+        with open(args.input) as supp_file:
+            suppress_data = suppress_file_handler.get_suppress_data(supp_file)
 
-                reports = client.getRunResults(run_id, limit, 0, None,
-                                               bug_hash_filter(bug_id,
-                                                               file_name))
+        for bug_id, file_name, comment in suppress_data:
+            reports = client.getRunResults(run_id, limit, 0, None,
+                                           bug_hash_filter(bug_id, file_name))
 
-                for report in reports:
-                    if report.suppressed and not args.force:
-                        print(already_suppressed.format(bug_id, file_name))
-                    else:
-                        update_suppression_comment(run_id,
-                                                   report.reportId,
-                                                   comment)
+            for report in reports:
+                if report.suppressed and not args.force:
+                    print(already_suppressed.format(bug_id, file_name))
+                else:
+                    update_suppression_comment(
+                        run_id, report.reportId, comment)
 
     elif args.bugid:
         reports = client.getRunResults(run_id, limit, 0, None,

@@ -32,13 +32,6 @@ function (declare, topic, domConstruct, Dialog, DropDownMenu, MenuItem,
 
     CC_OBJECTS = codeCheckerDBAccess;
 
-    CC_SERVICE.getSuppressFile(function (filePath) {
-      CC_SUPPRESS_FILE_EXISTS
-        = filePath instanceof RequestFailed
-        ? false
-        : (filePath !== '')
-    });
-
     //----------------------------- Main layout ------------------------------//
 
     var layout = new BorderContainer({ id : 'mainLayout' });

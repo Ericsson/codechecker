@@ -790,13 +790,11 @@ function (declare, dom, style, on, query, Memory, Observable, topic, entities,
 
       var suppressButton = new Button({
         label : 'Suppress bug',
-        disabled : !CC_SUPPRESS_FILE_EXISTS,
         onClick : function () { suppressDialog.show(); }
       });
 
       var unsuppressButton = new Button({
         label : 'Unsuppress bug',
-        disabled : !CC_SUPPRESS_FILE_EXISTS,
         onClick : function () { unsuppressDialog.show(); }
       });
 
