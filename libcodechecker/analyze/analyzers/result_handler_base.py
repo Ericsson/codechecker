@@ -5,7 +5,6 @@
 # -------------------------------------------------------------------------
 
 from abc import ABCMeta
-import ntpath
 import os
 import uuid
 
@@ -175,7 +174,7 @@ class ResultHandler(object):
         """
         if not self.__result_file:
             analyzed_file = self.analyzed_source_file
-            _, analyzed_file_name = ntpath.split(analyzed_file)
+            _, analyzed_file_name = os.path.split(analyzed_file)
 
             uid = str(uuid.uuid1()).split('-')[0]
 
@@ -188,7 +187,7 @@ class ResultHandler(object):
         return self.__result_file
 
     @analyzer_result_file.setter
-    def result_file(self, file_path):
+    def analyzer_result_file(self, file_path):
         """
         The result of the analysis which will be processed afterwards.
         """

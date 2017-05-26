@@ -9,7 +9,6 @@ from __future__ import unicode_literals
 
 import datetime
 import errno
-import ntpath
 import os
 import socket
 import sys
@@ -381,7 +380,7 @@ class CheckerReportHandler(object):
             path_start = path_ids[0].id if len(path_ids) > 0 else None
 
             source_file = self.session.query(File).get(file_id)
-            _, source_file_name = ntpath.split(source_file.filepath)
+            _, source_file_name = os.path.split(source_file.filepath)
 
             # Old suppress format did not contain file name.
             suppressed = self.session.query(SuppressBug).filter(

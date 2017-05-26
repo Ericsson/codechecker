@@ -9,7 +9,6 @@ Handle thrift requests.
 
 from collections import defaultdict
 import codecs
-import ntpath
 import os
 import zlib
 
@@ -456,7 +455,7 @@ class ThriftRequestHandler():
 
         def check_filename(data):
             _, file_obj = data
-            _, f_name = ntpath.split(file_obj.filepath)
+            _, f_name = os.path.split(file_obj.filepath)
             if f_name == source_file_name:
                 return True
             else:
@@ -488,7 +487,7 @@ class ThriftRequestHandler():
         bug_id_hash = report.bug_id
 
         source_file = session.query(File).get(report.file_id)
-        _, source_file_name = ntpath.split(source_file.filepath)
+        _, source_file_name = os.path.split(source_file.filepath)
 
         LOG.debug('Updating suppress data for: {0} bug id {1}'
                   'file name {2} supressing {3}'.format(report_id,

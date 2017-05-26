@@ -121,7 +121,7 @@ def parse(f, context, metadata_dict, suppress_handler, steps):
 
     # Set some variables of the result handler to use the saved file.
     rh.analyzer_returncode = 0
-    rh.result_file = f
+    rh.analyzer_result_file = f
     rh.analyzer_cmd = ""
 
     rh.analyzed_source_file = "UNKNOWN"

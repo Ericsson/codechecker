@@ -5,7 +5,6 @@
 # -------------------------------------------------------------------------
 
 from abc import ABCMeta
-import ntpath
 import os
 import zlib
 
@@ -167,7 +166,7 @@ class PlistToDB(ResultHandler):
             LOG.debug('Storing original build and analyzer command '
                       'to the database.')
 
-            _, source_file_name = ntpath.split(self.analyzed_source_file)
+            _, source_file_name = os.path.split(self.analyzed_source_file)
 
             if LoggerFactory.get_log_level() == logger.DEBUG:
                 analyzer_cmd = ' '.join(self.analyzer_cmd)

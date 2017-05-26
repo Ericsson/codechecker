@@ -10,7 +10,6 @@ import datetime
 import json
 import logging
 import multiprocessing
-import ntpath
 import os
 import sys
 import time
@@ -344,7 +343,7 @@ def main():
     with open(args.test_config) as test_config:
         test_conf = json.loads(test_config.read())
 
-    _, file_name = ntpath.split(args.test_config)
+    _, file_name = os.path.split(args.test_config)
     measure_id, _ = os.path.splitext(file_name)
 
     log.info("Starting performance tests for: " + measure_id)
