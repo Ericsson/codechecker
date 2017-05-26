@@ -4,19 +4,15 @@
 #   This file is distributed under the University of Illinois Open Source
 #   License. See LICENSE.TXT for details.
 # -----------------------------------------------------------------------------
-
+"""
+Authentication tests.
+"""
 import os
 import unittest
 
 from thrift.protocol.TProtocol import TProtocolException
 
-from libtest.thrift_client_to_db import get_viewer_client
-from libtest.thrift_client_to_db import get_auth_client
 from libtest import env
-
-"""
-Authentication tests.
-"""
 
 
 class DictAuth(unittest.TestCase):
@@ -77,7 +73,7 @@ class DictAuth(unittest.TestCase):
         try:
             client.getAPIVersion()
             success = False
-        except TProtocolException as tpe:
+        except TProtocolException:
             # The server reports a HTTP 401 error which
             # is not a valid Thrift response.
             # But if it does so, it passes the test!

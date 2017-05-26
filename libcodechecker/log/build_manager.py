@@ -176,7 +176,7 @@ def generate_log_file(args, context, silent=False):
                                   context,
                                   silent=silent)
 
-    except AttributeError as aerr:
+    except AttributeError:
         LOG.error("Missing build command.")
     finally:
         return log_file

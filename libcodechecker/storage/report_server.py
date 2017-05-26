@@ -9,7 +9,6 @@ from __future__ import unicode_literals
 
 import datetime
 import errno
-import ntpath
 import os
 import socket
 import sys
@@ -381,8 +380,7 @@ class CheckerReportHandler(object):
             path_start = path_ids[0].id if len(path_ids) > 0 else None
 
             source_file = self.session.query(File).get(file_id)
-            source_file_path, source_file_name = ntpath.split(
-                source_file.filepath)
+            _, source_file_name = os.path.split(source_file.filepath)
 
             # Old suppress format did not contain file name.
             suppressed = self.session.query(SuppressBug).filter(
@@ -520,12 +518,12 @@ class CheckerReportHandler(object):
 
     def storeBugPath(self, bugpath):
         paths = []
-        for i in range(len(bugpath)):
-            brp = BugReportPoint(bugpath[i].startLine,
-                                 bugpath[i].startCol,
-                                 bugpath[i].endLine,
-                                 bugpath[i].endCol,
-                                 bugpath[i].fileId)
+        for piece in bugpath:
+            brp = BugReportPoint(piece.startLine,
+                                 piece.startCol,
+                                 piece.endLine,
+                                 piece.endCol,
+                                 piece.fileId)
             self.session.add(brp)
             paths.append(brp)
 
@@ -545,7 +543,6 @@ class CheckerReportHandler(object):
         """
 
         try:
-            suppressList = []
             for bug_to_suppress in bugs_to_suppress:
                 res = self.session.query(SuppressBug) \
                     .filter(SuppressBug.hash == bug_to_suppress.bug_hash,

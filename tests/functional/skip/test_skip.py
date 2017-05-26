@@ -29,9 +29,6 @@ class TestSkip(unittest.TestCase):
         test_class = self.__class__.__name__
         print('Running ' + test_class + ' tests in ' + test_workspace)
 
-        # Get the test configuration from the prepared test workspace.
-        test_cfg = env.import_test_cfg(test_workspace)
-
         # Get the clang version which is tested.
         self._clang_to_test = env.clang_to_test()
 

@@ -7,7 +7,6 @@
 from abc import ABCMeta
 import linecache
 import math
-import ntpath
 import os
 import sys
 
@@ -131,7 +130,7 @@ class PlistToStdout(ResultHandler):
             non_suppressed += 1
 
         basefile_print = (' ' +
-                          ntpath.basename(self.analyzed_source_file)) \
+                          os.path.basename(self.analyzed_source_file)) \
             if self.analyzed_source_file and \
             len(self.analyzed_source_file) > 0 else ''
 
@@ -166,7 +165,7 @@ class PlistToStdout(ResultHandler):
                 self.__lock.release() if self.__lock else None
         else:
             self.__output.write('Analyzing %s with %s failed.\n' %
-                                (ntpath.basename(self.analyzed_source_file),
+                                (os.path.basename(self.analyzed_source_file),
                                  self.buildaction.analyzer_type))
         return err_code
 

@@ -9,7 +9,6 @@ import sys
 # import datetime
 import socket
 
-from thrift.Thrift import TException, TApplicationException
 from thrift.transport import THttpClient
 from thrift.protocol import TJSONProtocol
 from thrift.protocol.TProtocol import TProtocolException

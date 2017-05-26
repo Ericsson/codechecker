@@ -4,7 +4,9 @@
 #   This file is distributed under the University of Illinois Open Source
 #   License. See LICENSE.TXT for details.
 # -----------------------------------------------------------------------------
-
+"""
+Diff feature tests. Comparing results from two runs.
+"""
 import os
 import unittest
 import logging
@@ -17,10 +19,6 @@ from codeCheckerDBAccess.ttypes import ReportFilter
 from libtest.thrift_client_to_db import get_all_run_results
 from libtest.debug_printer import print_run_results
 from libtest import env
-
-"""
-Diff feature tests. Comparing results from two runs.
-"""
 
 
 def get_severity_level(name):
@@ -38,8 +36,6 @@ class Diff(unittest.TestCase):
 
         test_class = self.__class__.__name__
         print('Running ' + test_class + ' tests in ' + test_workspace)
-
-        test_cfg = env.import_test_cfg(test_workspace)
 
         # Get the clang version which is tested.
         self._clang_to_test = env.clang_to_test()
@@ -219,9 +215,7 @@ class Diff(unittest.TestCase):
 
         for level in diff_res_types_filter:
             for checker_name, test_result_count in level.items():
-                simple_filters = []
-                simple_filter = ReportFilter(checkerId=checker_name)
-                simple_filters.append(simple_filter)
+                simple_filters = [ReportFilter(checkerId=checker_name)]
 
                 diff_res = \
                     self._cc_client.getDiffResultTypes(base_run_id,

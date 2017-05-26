@@ -12,7 +12,6 @@ Used to run the logging in the same env.
 from __future__ import print_function
 
 import errno
-import ntpath
 import os
 import pickle
 import shutil
@@ -33,7 +32,7 @@ def run_codechecker(checker_env, subcommand=None):
                        all the commands.
     """
     package_bin = os.path.dirname(os.path.realpath(__file__))
-    package_root, bin_dir = ntpath.split(package_bin)
+    package_root, bin_dir = os.path.split(package_bin)
 
     python = os.path.join('python')
     common_lib = os.path.join(package_root,

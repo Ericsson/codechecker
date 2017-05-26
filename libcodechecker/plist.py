@@ -11,10 +11,8 @@ functionality of 'store' and 'parse'.
 import argparse
 import imp
 import os
-import shutil
 
 from libcodechecker import util
-from libcodechecker.analyze.analyzers import analyzer_types
 from libcodechecker.logger import add_verbose_arguments
 from libcodechecker.logger import LoggerFactory
 

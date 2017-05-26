@@ -275,7 +275,7 @@ def consume_plist(item):
             base_f in metadata_dict['result_source_files']:
         rh.analyzed_source_file = \
             metadata_dict['result_source_files'][base_f]
-    rh.result_file = f
+    rh.analyzer_result_file = f
 
     if rh.analyzed_source_file == "UNKNOWN":
         LOG.info("Storing defects in input file '" + base_f + "'")

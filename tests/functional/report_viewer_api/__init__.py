@@ -38,8 +38,6 @@ def setup_package():
 
     test_project = 'cpp'
 
-    clang_version = env.clang_to_test()
-
     pg_db_config = env.get_postgresql_cfg()
 
     test_config = {}
@@ -50,8 +48,6 @@ def setup_package():
     shutil.copytree(project.path(test_project), test_proj_path)
 
     project_info['project_path'] = test_proj_path
-
-    test_project_name = project_info['name'] + '_' + uuid.uuid4().hex
 
     test_config['test_project'] = project_info
 

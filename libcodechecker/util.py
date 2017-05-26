@@ -10,7 +10,6 @@ Util module.
 import datetime
 import glob
 import hashlib
-import ntpath
 import os
 import re
 import shutil
@@ -107,12 +106,6 @@ def get_tmp_dir_hash():
               % dir_hash.hexdigest())
 
     return dir_hash.hexdigest()
-
-
-def get_file_name_from_path(path):
-    """Get the filename from a path."""
-    head, tail = ntpath.split(path)
-    return head, tail
 
 
 def create_dir(path):

@@ -8,7 +8,6 @@
 
 from collections import defaultdict
 import multiprocessing
-import ntpath
 import os
 import signal
 import sys
@@ -114,7 +113,7 @@ def check(check_data):
             # If there is no skiplist handler there was no skip list file
             # in the command line.
             # C++ file skipping is handled here.
-            _, source_file_name = ntpath.split(source)
+            _, source_file_name = os.path.split(source)
 
             if skip_handler and skip_handler.should_skip(source):
                 LOG.debug_analyzer(source_file_name + ' is skipped')

@@ -26,15 +26,12 @@ except ImportError:
 
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import scoped_session
-from thrift.Thrift import TException
 from thrift.transport import TTransport
 from thrift.protocol import TJSONProtocol
 
 from Authentication import codeCheckerAuthentication
-from Authentication import constants
 from Authentication.ttypes import *
 from codeCheckerDBAccess import codeCheckerDBAccess
-from codeCheckerDBAccess import constants
 from codeCheckerDBAccess.ttypes import *
 
 from libcodechecker import database_handler

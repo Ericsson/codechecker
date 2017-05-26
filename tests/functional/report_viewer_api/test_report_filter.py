@@ -30,8 +30,6 @@ class TestReportFilter(unittest.TestCase):
         test_class = self.__class__.__name__
         print('Running ' + test_class + ' tests in ' + test_workspace)
 
-        test_cfg = env.import_test_cfg(test_workspace)
-
         # Get the clang version which is tested.
         self._clang_to_test = env.clang_to_test()
 
@@ -94,10 +92,8 @@ class TestReportFilter(unittest.TestCase):
                 logging.debug('Severity level filter ' + severity_level +
                               ' test result count: ' + str(test_result_count))
                 sort_types = None
-                simple_filters = []
                 sev = get_severity_level(severity_level)
-                simple_filter = ReportFilter(severity=sev)
-                simple_filters.append(simple_filter)
+                simple_filters = [ReportFilter(severity=sev)]
 
                 run_result_count = self._cc_client.getRunResultCount(
                     runid, simple_filters)
@@ -118,14 +114,8 @@ class TestReportFilter(unittest.TestCase):
                 logging.debug('Checker id filter ' + checker_id_filter +
                               ' test result count: ' + str(test_result_count))
                 sort_types = None
-                simple_filters = []
-                simple_filter = ReportFilter(checkerId=checker_id_filter)
-                simple_filters.append(simple_filter)
+                simple_filters = [ReportFilter(checkerId=checker_id_filter)]
 
-                print(simple_filters)
-                run_result_count = self._cc_client.getRunResultCount(
-                    runid, simple_filters)
-                run_results = []
                 run_results = self._cc_client.getRunResults(
                     runid, 500, 0, sort_types, simple_filters)
                 for r in run_results:
@@ -147,9 +137,7 @@ class TestReportFilter(unittest.TestCase):
                               ' test result count: ' + str(test_result_count))
 
                 sort_types = None
-                simple_filters = []
-                simple_filter = ReportFilter(filepath=filepath_filter)
-                simple_filters.append(simple_filter)
+                simple_filters = [ReportFilter(filepath=filepath_filter)]
 
                 run_result_count = self._cc_client.getRunResultCount(
                     runid, simple_filters)
@@ -171,9 +159,7 @@ class TestReportFilter(unittest.TestCase):
                               ' test result count: ' + str(test_result_count))
 
                 sort_types = None
-                simple_filters = []
-                simple_filter = ReportFilter(filepath=filepath_filter)
-                simple_filters.append(simple_filter)
+                simple_filters = [ReportFilter(filepath=filepath_filter)]
 
                 run_result_count = self._cc_client.getRunResultCount(
                     runid, simple_filters)

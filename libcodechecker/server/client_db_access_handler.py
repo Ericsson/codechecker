@@ -9,7 +9,6 @@ Handle thrift requests.
 
 from collections import defaultdict
 import codecs
-import ntpath
 import os
 import zlib
 
@@ -160,11 +159,10 @@ class ThriftRequestHandler():
         """
 
         # Get a list of sort_types which will be a nested ORDER BY.
-        sort_type_map = {}
-        sort_type_map[SortType.FILENAME] = [File.filepath,
-                                            BugPathEvent.line_begin]
-        sort_type_map[SortType.CHECKER_NAME] = [Report.checker_id]
-        sort_type_map[SortType.SEVERITY] = [Report.severity]
+        sort_type_map = {SortType.FILENAME: [File.filepath,
+                                             BugPathEvent.line_begin],
+                         SortType.CHECKER_NAME: [Report.checker_id],
+                         SortType.SEVERITY: [Report.severity]}
 
         # Mapping the SQLAlchemy functions.
         order_type_map = {Order.ASC: asc, Order.DESC: desc}
@@ -457,7 +455,7 @@ class ThriftRequestHandler():
 
         def check_filename(data):
             _, file_obj = data
-            source_file_path, f_name = ntpath.split(file_obj.filepath)
+            _, f_name = os.path.split(file_obj.filepath)
             if f_name == source_file_name:
                 return True
             else:
@@ -489,7 +487,7 @@ class ThriftRequestHandler():
         bug_id_hash = report.bug_id
 
         source_file = session.query(File).get(report.file_id)
-        _, source_file_name = ntpath.split(source_file.filepath)
+        _, source_file_name = os.path.split(source_file.filepath)
 
         LOG.debug('Updating suppress data for: {0} bug id {1}'
                   'file name {2} supressing {3}'.format(report_id,
@@ -851,10 +849,9 @@ class ThriftRequestHandler():
 
             results = []
             for checker_id, res in result_reports.items():
-                results.append(ReportDataTypeCount(res.checker_id,
+                results.append(ReportDataTypeCount(checker_id,
                                                    res.severity,
-                                                   count_results[
-                                                       res.checker_id]))
+                                                   count_results[checker_id]))
 
             # Result count ascending.
             results = sorted(results, key=lambda rep: rep.count, reverse=True)

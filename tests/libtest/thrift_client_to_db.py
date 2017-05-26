@@ -45,7 +45,7 @@ class ThriftAPIHelper(object):
 
         except socket.error as serr:
             err_cause = os.strerror(serr.errno)
-            print(str(serr))
+            print(str(serr) + " " + err_cause)
 
             return None
 
@@ -154,7 +154,6 @@ class CCAuthHelper(ThriftAPIHelper):
         # import only if necessary; some tests may not add this to PYTHONPATH
         from libcodechecker import session_manager
         from Authentication import codeCheckerAuthentication
-        from Authentication.ttypes import HandshakeInformation
 
         transport = THttpClient.THttpClient(host, port, uri)
         protocol = TJSONProtocol.TJSONProtocol(transport)
@@ -206,8 +205,8 @@ def get_viewer_client(port, host='localhost', uri='/',
                           session_token)
 
 
-def get_server_client(port, host='localhost', uri='/'):
-    return CCReportHelper(host, port, uri)
+def get_server_client(port, host='localhost'):
+    return CCReportHelper(host, port)
 
 
 def get_auth_client(port, host='localhost', uri='/Authentication',

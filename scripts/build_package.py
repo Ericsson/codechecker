@@ -8,7 +8,6 @@ import argparse
 import errno
 import json
 import logging
-import ntpath
 import os
 import platform
 import re
@@ -172,7 +171,7 @@ def handle_external_file(dep, clean, env, verbose):
         sys.exit(1)
 
     url_data = urlparse.urlparse(file_url)
-    head, file_name = ntpath.split(url_data.path)
+    head, file_name = os.path.split(url_data.path)
 
     head, file_ext = os.path.splitext(file_name)
     if file_ext == '.gz' and head.endswith('.tar'):
@@ -235,7 +234,7 @@ def handle_external_repository(dep, clean, env, verbose):
         git_cmd.append(repository.get('url'))
         git_cmd.append(directory)
 
-        dir_name, tail = ntpath.split(directory)
+        dir_name, _ = os.path.split(directory)
         LOG.info('Downloading ...')
         if run_cmd(git_cmd, dir_name, env=env, silent=verbose):
             LOG.error('Failed to get dependency')
@@ -367,9 +366,9 @@ def compress_to_tar(source_folder, target_folder, compress):
 
     t = tarfile.open(target, mode='w:gz')
 
-    head, tail = os.path.split(source)
+    head, _ = os.path.split(source)
 
-    for root, dirs, files in os.walk(source_folder):
+    for root, _, files in os.walk(source_folder):
         for f in files:
             cfile = os.path.join(root, f)
             rename = cfile.replace(head, '')
@@ -550,8 +549,8 @@ def build_package(repository_root, build_package_config, env=None):
     dojo_dep = vendor_projects['dojotoolkit']
     file_url = dojo_dep['source_package']['url']
     url_data = urlparse.urlparse(file_url)
-    head, file_name = ntpath.split(url_data.path)
-    head, tail = file_name.split('.tar.gz')
+    _, file_name = os.path.split(url_data.path)
+    head, _ = file_name.split('.tar.gz')
 
     dojo_root = os.path.join(repository_root, dojo_dep.get('directory'))
     dojo_root = os.path.join(dojo_root, head)

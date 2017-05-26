@@ -5,11 +5,9 @@
 #   License. See LICENSE.TXT for details.
 # -----------------------------------------------------------------------------
 
-import json
 import os
 import unittest
 
-from libtest.thrift_client_to_db import CCViewerHelper
 from libtest import env
 
 
@@ -22,8 +20,6 @@ class SuppressSetInCmdLine(unittest.TestCase):
 
         test_class = self.__class__.__name__
         print('Running ' + test_class + ' tests in ' + test_workspace)
-
-        test_cfg = env.import_test_cfg(test_workspace)
 
         self._testproject_data = env.setup_test_proj_cfg(test_workspace)
         self.assertIsNotNone(self._testproject_data)

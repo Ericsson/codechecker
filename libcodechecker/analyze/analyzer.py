@@ -45,7 +45,7 @@ def __get_analyzer_version(context, analyzer_config_map):
     # Get the analyzer binaries from the config_map which
     # contains only the checked and available analyzers.
     versions = {}
-    for analyzer_name, analyzer_cfg in analyzer_config_map.items():
+    for _, analyzer_cfg in analyzer_config_map.items():
         analyzer_bin = analyzer_cfg.analyzer_binary
         version = [analyzer_bin, u' --version']
         try:
@@ -91,7 +91,7 @@ def perform_analysis(args, context, actions, metadata):
     for analyzer in analyzers:
         metadata['checkers'][analyzer] = []
 
-        for check, data in config_map[analyzer].checks().iteritems():
+        for check, data in config_map[analyzer].checks().items():
             enabled, _ = data
             if not enabled:
                 continue
