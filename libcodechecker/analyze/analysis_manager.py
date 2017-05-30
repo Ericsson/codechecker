@@ -7,6 +7,7 @@
 """
 
 from collections import defaultdict
+import glob
 import multiprocessing
 import os
 import signal
@@ -67,20 +68,12 @@ def worker_result_handler(results, metadata, output_path):
     # as loose files on the disk... but synchronizing LARGE dicts between
     # threads would be more error prone.
     source_map = {}
-    _, _, files = next(os.walk(output_path), ([], [], []))
-    for f in files:
-        if not f.endswith(".source"):
-            continue
-
-        abspath = os.path.join(output_path, f)
-        f = f.replace(".source", '')
-        with open(abspath, 'r') as sfile:
-            source_map[f] = sfile.read().strip()
-
-        os.remove(abspath)
+    for f in glob.glob(os.path.join(output_path, "*.source")):
+        with open(f, 'r') as sfile:
+            source_map[f[:-7]] = sfile.read().strip()
+        os.remove(f)
 
     metadata['result_source_files'] = source_map
-
 
 # Progress reporting.
 progress_checked_num = None
@@ -101,7 +94,8 @@ def check(check_data):
     skiplist handler is None if no skip file was configured.
     """
 
-    action, context, analyzer_config_map, output_dir, skip_handler = check_data
+    action, context, analyzer_config_map, \
+        output_dir, skip_handler = check_data
 
     skipped = False
     try:
@@ -216,7 +210,8 @@ def start_workers(actions, context, analyzer_config_map,
                              context,
                              analyzer_config_map,
                              output_path,
-                             skip_handler) for build_action in actions]
+                             skip_handler)
+                            for build_action in actions]
 
         pool.map_async(check,
                        analyzed_actions,

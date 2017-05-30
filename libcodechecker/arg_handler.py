@@ -146,7 +146,7 @@ def handle_server(args):
         os.makedirs(workspace)
 
     suppress_handler = generic_package_suppress_handler.\
-        GenericSuppressHandler(None)
+        GenericSuppressHandler(None, False)
     if args.suppress is None:
         LOG.warning('No suppress file was given, suppressed results will '
                     'be only stored in the database.')
@@ -154,6 +154,11 @@ def handle_server(args):
         if not os.path.exists(args.suppress):
             LOG.error('Suppress file ' + args.suppress + ' not found!')
             sys.exit(1)
+
+        LOG.debug('Using suppress file: ' +
+                  str(suppress_handler.suppress_file))
+        suppress_handler = generic_package_suppress_handler.\
+            GenericSuppressHandler(args.suppress, True)
 
     context = generic_package_context.get_context()
     context.codechecker_workspace = workspace
@@ -180,9 +185,6 @@ def handle_server(args):
 
     # Start database viewer.
     db_connection_string = sql_server.get_connection_string()
-
-    suppress_handler.suppress_file = args.suppress
-    LOG.debug('Using suppress file: ' + str(suppress_handler.suppress_file))
 
     checker_md_docs = os.path.join(context.doc_root, 'checker_md_docs')
     checker_md_docs_map = os.path.join(checker_md_docs,

@@ -111,7 +111,16 @@ class PlistToStdout(ResultHandler):
                                                                 checker_name)
 
             # Check for suppress comment.
-            if sp_handler.get_suppressed():
+            suppress_data = sp_handler.get_suppressed()
+            if suppress_data:
+                if self.suppress_handler:
+                    LOG.info("Writing source-code suppress at '{0}:{1}' to "
+                             "suppress file".format(source_file, report_line))
+                    hash_value, file_name, comment = suppress_data
+                    self.suppress_handler.store_suppress_bug_id(hash_value,
+                                                                file_name,
+                                                                comment)
+
                 continue
 
             self.__output.write(self.__format_bug_event(checker_name,
