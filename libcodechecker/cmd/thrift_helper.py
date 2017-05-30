@@ -97,6 +97,11 @@ class ThriftClientHelper(object):
         pass
 
     @ThriftClientCall
+    def getSuppressedBugs(self, run_id):
+        pass
+
+    # -----------------------------------------------------------------------
+    @ThriftClientCall
     def getNewResults(self, base_run_id, new_run_id, limit, offset, sortType,
                       reportFilters):
         pass
@@ -109,4 +114,14 @@ class ThriftClientHelper(object):
     @ThriftClientCall
     def getResolvedResults(self, base_run_id, new_run_id, limit, offset,
                            sortType, reportFilters):
+        pass
+
+    # -----------------------------------------------------------------------
+    @ThriftClientCall
+    def suppressBug(self, runIds, reportId, comment):
+        pass
+
+    # -----------------------------------------------------------------------
+    @ThriftClientCall
+    def unSuppressBug(self, runIds, reportId):
         pass

@@ -17,7 +17,7 @@ namespace js codeCheckerDBAccess
 namespace cpp cc.service.codechecker
 
 //=================================================
-const string API_VERSION = '5.1'
+const string API_VERSION = '5.2'
 const i64 MAX_QUERY_SIZE = 500
 //=================================================
 
@@ -61,7 +61,8 @@ struct ReportFilter{
   3: optional shared.Severity severity,
   4: optional string          checkerId,          // should filter in the fully qualified checker id name such as alpha.core.
                                                   // the analyzed system. Projects can optionally use this concept.
-  5: optional bool            suppressed = false  // if the bug state is suppressed
+  5: optional bool            suppressed = false, // if the bug state is suppressed
+  6: optional string          bugHash
 }
 
 /**
@@ -198,6 +199,10 @@ service codeCheckerDBAccess {
   bool unSuppressBug(1: list<i64> runIds,
                      2: i64 reportId)
                      throws (1: shared.RequestFailed requestError),
+
+  // get suppressed bugs in a run
+  shared.SuppressBugList getSuppressedBugs(1: i64 run_id)
+                                          throws(1: shared.RequestFailed requestError),
 
   // get the md documentation for a checker
   string getCheckerDoc(1: string checkerId)

@@ -19,6 +19,7 @@ from Authentication import ttypes as AuthTypes
 
 from libcodechecker import session_manager
 from libcodechecker import logger
+from libcodechecker import suppress_file_handler
 from libcodechecker.output_formatters import twodim_to_str
 
 from . import thrift_helper
@@ -240,12 +241,21 @@ def add_filter_conditions(report_filter, filter_str):
     severity, checker, path = map(lambda x: x.strip(), filter_str.split(':'))
 
     if severity:
-        report_filter.severity = \
-            shared.ttypes.Severity._NAMES_TO_VALUES[severity.upper()]
+        report_filter.severity\
+            = shared.ttypes.Severity._NAMES_TO_VALUES[severity.upper()]
     if checker:
         report_filter.checkerId = '*' + checker + '*'
     if path:
         report_filter.filepath = path
+
+
+def add_server_arguments(parser):
+    parser.add_argument('--host', type=str, dest="host",
+                        default='localhost',
+                        help='Server host.')
+    parser.add_argument('-p', '--port', type=str, dest="port",
+                        default=8001,
+                        required=True, help='HTTP Server port.')
 
 
 def handle_list_runs(args):
@@ -274,7 +284,7 @@ def handle_list_results(args):
 
     run_id, _ = run_info.get(args.name)
 
-    limit = 500
+    limit = codeCheckerDBAccess.constants.MAX_QUERY_SIZE
     offset = 0
 
     filters = []
@@ -421,7 +431,7 @@ def handle_diff_results(args):
         add_filter_conditions(report_filter[0], args.filter)
 
         sort_type = None
-        limit = 500
+        limit = codeCheckerDBAccess.constants.MAX_QUERY_SIZE
         offset = 0
 
         all_results = []
@@ -465,6 +475,68 @@ def handle_diff_results(args):
                     args.output_format)
 
 
+def handle_suppress(args):
+    def update_suppression_comment(run_id, report_id, comment):
+        client.unSuppressBug([run_id], report_id)
+        client.suppressBug([run_id], report_id, comment)
+
+    def bug_hash_filter(bug_id, filepath):
+        filepath = '%' + filepath
+        return [
+            codeCheckerDBAccess.ttypes.ReportFilter(bugHash=bug_id,
+                                                    suppressed=True,
+                                                    filepath=filepath),
+            codeCheckerDBAccess.ttypes.ReportFilter(bugHash=bug_id,
+                                                    suppressed=False,
+                                                    filepath=filepath)]
+
+    already_suppressed = 'Bug {} in file {} already suppressed. Use --force!'
+    limit = codeCheckerDBAccess.constants.MAX_QUERY_SIZE
+
+    client = setupClient(args.host, args.port, '/')
+
+    run_info = check_run_names(client, [args.name])
+    run_id, run_date = run_info.get(args.name)
+
+    if args.output:
+        for suppression in client.getSuppressedBugs(run_id):
+            suppress_file_handler.write_to_suppress_file(
+                args.output,
+                suppression.bug_hash,
+                suppression.file_name,
+                suppression.comment)
+
+    elif args.input:
+        with open(args.input) as supp_file:
+            suppress_data = suppress_file_handler.get_suppress_data(supp_file)
+
+        for bug_id, file_name, comment in suppress_data:
+            reports = client.getRunResults(run_id, limit, 0, None,
+                                           bug_hash_filter(bug_id, file_name))
+
+            for report in reports:
+                if report.suppressed and not args.force:
+                    print(already_suppressed.format(bug_id, file_name))
+                else:
+                    update_suppression_comment(
+                        run_id, report.reportId, comment)
+
+    elif args.bugid:
+        reports = client.getRunResults(run_id, limit, 0, None,
+                                       bug_hash_filter(args.bugid,
+                                                       args.file))
+
+        for report in reports:
+            if args.x:
+                client.unSuppressBug([run_id], report.reportId)
+            elif report.suppressed and not args.force:
+                print(already_suppressed.format(args.bugid, args.file))
+            else:
+                update_suppression_comment(run_id,
+                                           report.reportId,
+                                           args.comment)
+
+
 def register_client_command_line(argument_parser):
     """ Should be used to extend the already existing arguments
     extend the argument parser with extra commands."""
@@ -475,11 +547,7 @@ def register_client_command_line(argument_parser):
     listruns_parser = subparsers.add_parser('runs',
                                             formatter_class=ADHFormatter,
                                             help='Get the run data.')
-    listruns_parser.add_argument('--host', type=str, dest="host",
-                                 default='localhost',
-                                 help='Server host.')
-    listruns_parser.add_argument('-p', '--port', type=str, dest="port",
-                                 default="8001", help='HTTP Server port.')
+    add_server_arguments(listruns_parser)
     listruns_parser.add_argument('-o', choices=['plaintext', 'json', 'csv'],
                                  default='plaintext', type=str,
                                  dest="output_format", help='Output format.')
@@ -490,11 +558,7 @@ def register_client_command_line(argument_parser):
     listresults_parser = subparsers.add_parser('results',
                                                formatter_class=ADHFormatter,
                                                help='List results.')
-    listresults_parser.add_argument('--host', type=str, dest="host",
-                                    default='localhost',
-                                    help='Server host.')
-    listresults_parser.add_argument('-p', '--port', type=str, dest="port",
-                                    default="8001", help='HTTP Server port.')
+    add_server_arguments(listresults_parser)
     listresults_parser.add_argument('-n', '--name', type=str, dest="name",
                                     required=True,
                                     help='Check name.')
@@ -516,11 +580,10 @@ def register_client_command_line(argument_parser):
     diff_parser = subparsers.add_parser('diff',
                                         formatter_class=ADHFormatter,
                                         help='Diff two run.')
-    diff_parser.add_argument('--host', type=str, dest="host",
-                             default='localhost',
-                             help='Server host.')
-    diff_parser.add_argument('-p', '--port', type=str, dest="port",
-                             default="8001", help='HTTP Server port.')
+    listresults_parser.set_defaults(func=handle_list_results)
+
+    # List diffs.
+    add_server_arguments(diff_parser)
     diff_parser.add_argument('-b', '--basename', type=str, dest="basename",
                              required=True,
                              help='Base name.')
@@ -551,11 +614,7 @@ def register_client_command_line(argument_parser):
     sum_parser = subparsers.add_parser('sum',
                                        formatter_class=ADHFormatter,
                                        help='Sum results.')
-    sum_parser.add_argument('--host', type=str, dest="host",
-                            default='localhost',
-                            help='Server host.')
-    sum_parser.add_argument('-p', '--port', type=str, dest="port",
-                            default="8001", help='HTTP Server port.')
+    add_server_arguments(sum_parser)
     name_group = sum_parser.add_mutually_exclusive_group(required=True)
     name_group.add_argument('-n', '--name', nargs='+', type=str, dest="names",
                             help='Check name.')
@@ -578,12 +637,6 @@ def register_client_command_line(argument_parser):
     del_parser = subparsers.add_parser('del',
                                        formatter_class=ADHFormatter,
                                        help='Remove run results.')
-    del_parser.add_argument('--host', type=str, dest="host",
-                            default='localhost',
-                            help='Server host.')
-    del_parser.add_argument('-p', '--port', type=str, dest="port",
-                            default=8001,
-                            required=True, help='HTTP Server port.')
     group = del_parser.add_mutually_exclusive_group(required=True)
     group.add_argument('-n', '--name', nargs='+', type=str, dest="name",
                        help='Server port.')
@@ -604,17 +657,51 @@ def register_client_command_line(argument_parser):
                        'The last three parts can be omitted from the right '
                        'in which case the default values are 0.')
     logger.add_verbose_arguments(del_parser)
+    add_server_arguments(del_parser)
     del_parser.set_defaults(func=handle_remove_run_results)
+
+    # Handle suppress file.
+    suppress_parser = subparsers.add_parser('suppress',
+                                            help='Handle suppress file.')
+    group = suppress_parser.add_mutually_exclusive_group(required=True)
+    group.add_argument('-o', '--output', type=str, dest='output',
+                       help='Export suppress file from database.')
+    group.add_argument('-i', '--input', type=str, dest='input',
+                       help='Import suppress file to database.')
+    group.add_argument('--bugid', type=str, dest='bugid',
+                       help='Suppress a specific bug by bug ID.')
+    suppress_parser.add_argument('-x', action='store_true', dest='x',
+                                 help='If this flag is given then the bug '
+                                 'provided by --bugid will be unsuppressed.')
+    suppress_parser.add_argument('-f', '--force', action='store_true',
+                                 dest='force',
+                                 help="By default already suppressed bugs "
+                                 "can't be suppressed again unless --force "
+                                 "is given.")
+    suppress_parser.add_argument('-c', '--comment', type=str, dest='comment',
+                                 default='',
+                                 help='Comment for bug suppression. It has '
+                                 'sense only when --bughash is also provided.')
+    suppress_parser.add_argument('--file', type=str, dest='file',
+                                 default='',
+                                 help='File name in which the bug will be '
+                                 'suppressed. It has sense only when '
+                                 '--bugid is also provided. If this parameter '
+                                 'is not given then all reports with the '
+                                 '--bugid will be suppressed/unsuppressed '
+                                 'regardless of the file.')
+    suppress_parser.add_argument('-n', '--name', type=str, dest='name',
+                                 required=True,
+                                 help='Run name.')
+    logger.add_verbose_arguments(suppress_parser)
+    add_server_arguments(suppress_parser)
+    suppress_parser.set_defaults(func=handle_suppress)
 
     # Handle authentication.
     auth_parser = subparsers.add_parser('login',
                                         formatter_class=ADHFormatter,
                                         help='Log in onto a '
                                              'CodeChecker server.')
-    auth_parser.add_argument('--host', type=str, dest="host",
-                             default='localhost', help='Server host.')
-    auth_parser.add_argument('-p', '--port', type=str, dest="port",
-                             default="8001", help='HTTP Server port.')
     auth_parser.add_argument('-u', '--username', type=str, dest="username",
                              required=False,
                              help='Username to use on authentication.',
@@ -623,6 +710,7 @@ def register_client_command_line(argument_parser):
                              action='store_true', dest='logout',
                              help='Send a logout request for the server.')
     logger.add_verbose_arguments(auth_parser)
+    add_server_arguments(auth_parser)
     auth_parser.set_defaults(func=handle_auth_requests)
 
 

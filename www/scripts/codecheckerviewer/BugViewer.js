@@ -59,6 +59,19 @@ function (declare, dom, style, on, query, Memory, Observable, topic, entities,
       marginTop + marginBottom;
   }
 
+  /**
+   * The report information come from the ListOfBugs table in which the file
+   * paths are formatted: /file/path.xyz @ Line 123. This function cuts the path
+   * part of this string.
+   */
+  function getProperFilePath(filepath) {
+    var endPos = filepath.indexOf(' ');
+    if (endPos === -1)
+      endPos = filepath.length;
+
+    return filepath.substr(0, endPos);
+  }
+
   var Editor = declare(ContentPane, {
     constructor : function () {
       this._lineWidgets = [];
@@ -400,11 +413,7 @@ function (declare, dom, style, on, query, Memory, Observable, topic, entities,
         that.bugStore.put(item);
       });
 
-      var endPos = this.reportData.checkedFile.indexOf(' ');
-      if (endPos === -1)
-        endPos = this.reportData.checkedFile.length;
-
-      var filepath = this.reportData.checkedFile.substr(0, endPos);
+      var filepath = getProperFilePath(this.reportData.checkedFile);
 
       var filter_sup = new CC_OBJECTS.ReportFilter();
       filter_sup.filepath = filepath;
@@ -698,10 +707,38 @@ function (declare, dom, style, on, query, Memory, Observable, topic, entities,
 
         unsuppressDialog.set('content', dom.create('div', {
           innerHTML : '<b>Are you sure to unsuppress this bug?</b><br>' +
+            'You can also use command line for unsuppression:<br>' +
+            '<tt>CodeChecker cmd suppress -x ' +
+            ' --bugid ' + that.reportData.bugHash +
+            ' -n ' + that.runData.name +
+            ' --file ' + getProperFilePath(that.reportData.checkedFile) +
+            ' -p ' + location.port +
+            '</tt>' +
+            '<hr>' +
             that.reportData.suppressComment
         }));
 
         unsuppressDialog.addChild(sendUnsuppressButton);
+      }
+
+      function setSuppressDialogContent() {
+        suppressDialog.getChildren().forEach(function (child) {
+          suppressDialog.removeChild(child);
+        });
+
+        suppressDialog.set('content', dom.create('div', {
+          innerHTML : 'You can also use command line for suppression:<br>' +
+            '<tt>CodeChecker cmd suppress ' +
+            ' --bugid ' + that.reportData.bugHash +
+            ' -n ' + that.runData.name +
+            ' -c &lt;comment&gt;' +
+            ' --file ' + getProperFilePath(that.reportData.checkedFile) +
+            ' -p ' + location.port +
+            '</tt><br><b>Comment:</b>'
+        }));
+
+        suppressDialog.addChild(suppressTextarea);
+        suppressDialog.addChild(sendSuppressButton);
       }
 
       //--- Bug suppression ---//
@@ -748,20 +785,16 @@ function (declare, dom, style, on, query, Memory, Observable, topic, entities,
       var suppressDialog = new Dialog({ title : 'Suppress bug' });
       var unsuppressDialog = new Dialog({ title : 'Unsuppress bug' });
 
-      suppressDialog.addChild(suppressTextarea);
-      suppressDialog.addChild(sendSuppressButton);
-
+      setSuppressDialogContent();
       setUnsuppressDialogContent();
 
       var suppressButton = new Button({
         label : 'Suppress bug',
-        disabled : !CC_SUPPRESS_FILE_EXISTS,
         onClick : function () { suppressDialog.show(); }
       });
 
       var unsuppressButton = new Button({
         label : 'Unsuppress bug',
-        disabled : !CC_SUPPRESS_FILE_EXISTS,
         onClick : function () { unsuppressDialog.show(); }
       });
 

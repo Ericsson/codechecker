@@ -19,7 +19,6 @@ from thrift.transport import TTransport
 
 import shared
 from DBThriftAPI import CheckerReport
-from DBThriftAPI.ttypes import SuppressBugData
 
 from libcodechecker import suppress_file_handler
 from libcodechecker.logger import LoggerFactory
@@ -138,9 +137,9 @@ class Connection(object):
         bugs_to_suppress = []
         for checker_hash, file_name, comment in suppress_data:
             comment = comment.encode('UTF-8')
-            suppress_bug = SuppressBugData(checker_hash,
-                                           file_name,
-                                           comment)
+            suppress_bug = shared.ttypes.SuppressBugData(checker_hash,
+                                                         file_name,
+                                                         comment)
             bugs_to_suppress.append(suppress_bug)
 
         return self._client.addSuppressBug(run_id,
