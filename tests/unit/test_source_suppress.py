@@ -34,7 +34,7 @@ class SourceSuppressTestCase(unittest.TestCase):
                                              "")
         res = test_handler.check_source_suppress()
         self.assertFalse(res)
-        self.assertEqual(test_handler.suppressed_checkers(), [])
+        self.assertEqual(test_handler.suppressed_checkers(), set())
         self.assertIsNone(test_handler.suppress_comment())
 
     def test_no_comment(self):
@@ -45,7 +45,7 @@ class SourceSuppressTestCase(unittest.TestCase):
                                            "")
         res = sp_handler.check_source_suppress()
         self.assertFalse(res)
-        self.assertEqual(sp_handler.suppressed_checkers(), [])
+        self.assertEqual(sp_handler.suppressed_checkers(), set())
         self.assertIsNone(sp_handler.suppress_comment())
 
     def test_no_suppress_comment(self):
@@ -56,7 +56,7 @@ class SourceSuppressTestCase(unittest.TestCase):
                                            "")
         res = sp_handler.check_source_suppress()
         self.assertTrue(res)
-        self.assertEqual(sp_handler.suppressed_checkers(), ['all'])
+        self.assertEqual(sp_handler.suppressed_checkers(), {'all'})
         self.assertEqual(sp_handler.suppress_comment(), 'some comment')
 
     def test_multi_liner_all(self):
@@ -67,7 +67,7 @@ class SourceSuppressTestCase(unittest.TestCase):
                                            "")
         res = sp_handler.check_source_suppress()
         self.assertTrue(res)
-        self.assertEqual(sp_handler.suppressed_checkers(), ['all'])
+        self.assertEqual(sp_handler.suppressed_checkers(), {'all'})
         self.assertEqual(sp_handler.suppress_comment(), 'some long comment')
 
     def test_one_liner_all(self):
@@ -79,7 +79,7 @@ class SourceSuppressTestCase(unittest.TestCase):
         res = sp_handler.check_source_suppress()
         self.assertTrue(res)
         self.assertEqual(
-            sp_handler.suppressed_checkers(), ['my_checker_1', 'my_checker_2'])
+            sp_handler.suppressed_checkers(), {'my_checker_1', 'my_checker_2'})
         self.assertEqual(sp_handler.suppress_comment(), 'some comment')
 
     def test_multi_liner_all_2(self):
@@ -91,7 +91,7 @@ class SourceSuppressTestCase(unittest.TestCase):
         res = sp_handler.check_source_suppress()
         self.assertTrue(res)
         self.assertEqual(
-            sp_handler.suppressed_checkers(), ['my.checker_1', 'my.checker_2'])
+            sp_handler.suppressed_checkers(), {'my.checker_1', 'my.checker_2'})
         self.assertEqual(
             sp_handler.suppress_comment(), 'some really long comment')
 
@@ -104,7 +104,7 @@ class SourceSuppressTestCase(unittest.TestCase):
         res = sp_handler.check_source_suppress()
         self.assertTrue(res)
         self.assertEqual(
-            sp_handler.suppressed_checkers(), ['my.Checker_1', 'my.Checker_2'])
+            sp_handler.suppressed_checkers(), {'my.Checker_1', 'my.Checker_2'})
         self.assertEqual(
             sp_handler.suppress_comment(), 'some really really long comment')
 
@@ -116,7 +116,7 @@ class SourceSuppressTestCase(unittest.TestCase):
                                            "")
         res = sp_handler.check_source_suppress()
         self.assertFalse(res)
-        self.assertEqual(sp_handler.suppressed_checkers(), [])
+        self.assertEqual(sp_handler.suppressed_checkers(), set())
         self.assertIsNone(sp_handler.suppress_comment())
 
     def test_comment_characters(self):
@@ -128,7 +128,7 @@ class SourceSuppressTestCase(unittest.TestCase):
         res = sp_handler.check_source_suppress()
         self.assertTrue(res)
         self.assertEqual(
-            sp_handler.suppressed_checkers(), ['my.checker_1', 'my.checker_2'])
+            sp_handler.suppressed_checkers(), {'my.checker_1', 'my.checker_2'})
         self.assertEqual(sp_handler.suppress_comment(), "i/';0 (*&^%$#@!)")
 
     def test_fancy_comment_characters(self):
@@ -139,7 +139,7 @@ class SourceSuppressTestCase(unittest.TestCase):
                                            "")
         res = sp_handler.check_source_suppress()
         self.assertTrue(res)
-        self.assertEqual(sp_handler.suppressed_checkers(), ['my_checker_1'])
+        self.assertEqual(sp_handler.suppressed_checkers(), {'my_checker_1'})
         self.assertEqual(
             sp_handler.suppress_comment(),
             "áúőóüöáé ▬▬▬▬▬▬▬▬▬▬ஜ۩۞۩ஜ▬▬▬▬▬▬▬▬▬▬")
@@ -152,7 +152,7 @@ class SourceSuppressTestCase(unittest.TestCase):
                                            "")
         res = sp_handler.check_source_suppress()
         self.assertTrue(res)
-        self.assertEqual(sp_handler.suppressed_checkers(), ['my_checker_1'])
+        self.assertEqual(sp_handler.suppressed_checkers(), {'my_checker_1'})
         self.assertEqual(
             sp_handler.suppress_comment(),
             'WARNING! suppress comment is missing')
@@ -165,5 +165,5 @@ class SourceSuppressTestCase(unittest.TestCase):
                                            "")
         res = sp_handler.check_source_suppress()
         self.assertFalse(res)
-        self.assertEqual(sp_handler.suppressed_checkers(), [])
+        self.assertEqual(sp_handler.suppressed_checkers(), set())
         self.assertIsNone(sp_handler.suppress_comment())
