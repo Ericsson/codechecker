@@ -247,6 +247,11 @@ def main(args):
         actions += log_parser.parse_log(log_file,
                                         args.add_compiler_defaults)
 
+    if len(actions) == 0:
+        LOG.info("None of the specified build log files contained "
+                 "valid compilation commands. No analysis needed...")
+        return
+
     if 'enable_all' in args:
         LOG.info("'--enable-all' was supplied for this analysis.")
 
