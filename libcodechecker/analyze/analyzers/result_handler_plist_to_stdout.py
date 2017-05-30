@@ -91,9 +91,13 @@ class PlistToStdout(ResultHandler):
                 LOG.debug(report + ' is skipped (in ' + f_path + ")")
                 continue
 
+            bug = {'hash_value':
+                   report.main['issue_hash_content_of_line_in_context'],
+                   'file_path': f_path
+                   }
             if self.suppress_handler and \
-                    self.suppress_handler.get_suppressed(report):
-                LOG.debug(report + " is suppressed by suppress file.")
+                    self.suppress_handler.get_suppressed(bug):
+                LOG.debug("Suppressed by suppress file: {0}".format(report))
                 continue
 
             last_report_event = report.bug_path[-1]

@@ -72,5 +72,5 @@ class GenericSuppressHandler(suppress_handler.SuppressHandler):
     def get_suppressed(self, bug):
 
         return any([suppress for suppress in self.__suppress_info
-                    if suppress[0] == bug.hash_value and
-                    suppress[1] == os.path.basename(bug.file_path)])
+                    if suppress[0] == bug['hash_value'] and
+                    suppress[1] == os.path.basename(bug['file_path'])])
