@@ -17,24 +17,27 @@ from Authentication import ttypes as AuthTypes
 
 from libcodechecker import session_manager
 from libcodechecker import suppress_file_handler
+from libcodechecker.logger import LoggerFactory
 from libcodechecker.output_formatters import twodim_to_str
 
 from . import thrift_helper
 from . import authentication_helper
 
+LOG = LoggerFactory.get_new_logger('CMD')
 SUPPORTED_VERSION = '5.0'
 
 
-def check_API_version(client):
-    """ Check if server API is supported by the client. """
+def check_api_version(client):
+    """
+    Check if server API is supported by the client.
+    """
+
     version = client.getAPIVersion()
     supp_major_version = SUPPORTED_VERSION.split('.')[0]
     api_major_version = version.split('.')[0]
 
-    if supp_major_version != api_major_version:
-        return False
-
-    return True
+    # There is NO compatibility between major versions.
+    return supp_major_version == api_major_version
 
 
 class CmdLineOutputEncoder(json.JSONEncoder):
@@ -42,75 +45,6 @@ class CmdLineOutputEncoder(json.JSONEncoder):
         d = {}
         d.update(obj.__dict__)
         return d
-
-
-def handle_auth_requests(args):
-    session = session_manager.SessionManager_Client()
-
-    auth_token = session.getToken(args.host, args.port)
-
-    auth_client = authentication_helper.ThriftAuthHelper(args.host,
-                                                         args.port,
-                                                         '/Authentication',
-                                                         auth_token)
-    try:
-        handshake = auth_client.getAuthParameters()
-
-        if not handshake.requiresAuthentication:
-            print("This server does not require privileged access.")
-            return
-
-        if auth_token and handshake.sessionStillActive:
-            print("Active authentication token found no new login required.")
-            return
-        else:
-            print("No/Old authentication token found please login again.")
-
-    except TApplicationException:
-        print("This server does not support privileged access.")
-        return
-
-    if 'logout' in args:
-        logout_done = auth_client.destroySession()
-        if logout_done:
-            session.saveToken(args.host, args.port, None, True)
-            print('Successfully deauthenticated from server.')
-        return
-
-    methods = auth_client.getAcceptedAuthMethods()
-    # Attempt username-password auth first
-    if 'Username:Password' in str(methods):
-        pwd = None
-        username = args.username
-
-        # Try to use a previously saved credential from configuration file
-        savedAuth = session.getAuthString(args.host, args.port)
-
-        if savedAuth:
-            print('Logging in using preconfigured credentials.')
-            username = savedAuth.split(":")[0]
-            pwd = savedAuth.split(":")[1]
-        else:
-            print('Logging in using command line credentials.')
-            print('Please provide password for user: ' + username)
-            pwd = getpass.getpass('Password:')
-
-        print("Trying to login: " + username + "@" +
-              args.host + ":" + args.port)
-        try:
-            session_token = auth_client.performLogin("Username:Password",
-                                                     username + ":" +
-                                                     pwd)
-
-            session.saveToken(args.host, args.port, session_token)
-            print("Server reported successful authentication!")
-        except shared.ttypes.RequestFailed as reqfail:
-            print("Authentication failed please check your credentials.")
-            print(reqfail.message)
-            sys.exit(1)
-    else:
-        print('Username, password authentication is not supported.')
-        sys.exit(1)
 
 
 def __check_authentication(client):
@@ -124,14 +58,15 @@ def __check_authentication(client):
         return False
 
 
-def setupClient(host, port, uri):
-    ''' setup the thrift client and check
-    API version and authentication needs. '''
+def setup_client(host, port, uri):
+    """
+    Stup the thrift client and check API version and authentication needs.
+    """
     manager = session_manager.SessionManager_Client()
     session_token = manager.getToken(host, port)
 
     # Before actually communicating with the server,
-    # we need to check authentication first
+    # we need to check authentication first.
     auth_client = authentication_helper.ThriftAuthHelper(host,
                                                          port,
                                                          uri +
@@ -151,13 +86,14 @@ def setupClient(host, port, uri):
             auto_auth_string = manager.getAuthString(host, port)
             if auto_auth_string:
                 # Try to automatically log in with a saved credential
-                # if it exists for the server
+                # if it exists for the server.
                 try:
                     session_token = auth_client.performLogin(
                         "Username:Password",
                         auto_auth_string)
                     manager.saveToken(host, port, session_token)
-                    print("Authenticated using pre-configured credentials...")
+                    LOG.info("Authenticated using pre-configured "
+                             "credentials.")
                 except shared.ttypes.RequestFailed:
                     print_err = True
             else:
@@ -166,23 +102,25 @@ def setupClient(host, port, uri):
             print_err = True
 
         if print_err:
-            print('Access denied. This server requires authentication.')
-            print('Please log in onto the server '
-                  'using `CodeChecker cmd login`.')
+            LOG.error("Access denied. This server requires authentication.")
+            LOG.error("Please log in onto the server using 'CodeChecker cmd "
+                      "login'.")
             sys.exit(1)
 
     client = thrift_helper.ThriftClientHelper(host, port, uri, session_token)
-    # test if client can work with thrift API getVersion
-    if not check_API_version(client):
-        print('Backward incompatible change was in the API.')
-        print('Please update client. Server version is not supported.')
+    # Test if client can work with the server's API.
+    if not check_api_version(client):
+        LOG.critical("The server uses a newer version of the API which is "
+                     "incompatible with this client. Please update client.")
         sys.exit(1)
 
     return client
 
 
 def get_run_ids(client):
-    """ Returns a map for run names and run_ids. """
+    """
+    Returns a map for run names and run_ids.
+    """
 
     runs = client.getRunData()
 
@@ -194,6 +132,9 @@ def get_run_ids(client):
 
 
 def check_run_names(client, check_names):
+    """
+    Check if the given names are valid runs on the server.
+    """
     run_info = get_run_ids(client)
 
     if not check_names:
@@ -202,11 +143,11 @@ def check_run_names(client, check_names):
     missing_name = False
     for name in check_names:
         if not run_info.get(name):
-            print('No check name found: ' + name)
+            LOG.warning("The run named '" + name + "' was not found.")
             missing_name = True
 
     if missing_name:
-        print('Possible check names are:')
+        print("Possible run names are:")
         for name, _ in run_info.items():
             print(name)
         sys.exit(1)
@@ -215,14 +156,17 @@ def check_run_names(client, check_names):
 
 
 def add_filter_conditions(report_filter, filter_str):
-    """This function fills some attributes of the given report filter based on
+    """
+    This function fills some attributes of the given report filter based on
     the filter string which is provided in the command line. The filter string
     has to contain three parts divided by colons: the severity, checker id and
     the file path respectively. The file path can contain joker characters, and
-    the checker id doesn't have to be complete (e.g. unix)."""
+    the checker id doesn't have to be complete (e.g. unix).
+    """
 
     if filter_str.count(':') != 2:
-        print('Filter string has to contain two colons (e.g. ":unix:*.cpp").')
+        LOG.error("Filter string has to contain two colons (e.g. "
+                  "\":unix:*.cpp\").")
         sys.exit(1)
 
     severity, checker, path = map(lambda x: x.strip(), filter_str.split(':'))
@@ -241,7 +185,7 @@ def add_filter_conditions(report_filter, filter_str):
 # ---------------------------------------------------------------------------
 
 def handle_list_runs(args):
-    client = setupClient(args.host, args.port, '/')
+    client = setup_client(args.host, args.port, '/')
     runs = client.getRunData()
 
     if args.output_format == 'json':
@@ -260,7 +204,7 @@ def handle_list_runs(args):
 
 
 def handle_list_results(args):
-    client = setupClient(args.host, args.port, '/')
+    client = setup_client(args.host, args.port, '/')
 
     run_info = check_run_names(client, [args.name])
 
@@ -314,8 +258,59 @@ def handle_list_results(args):
         print(twodim_to_str(args.output_format, header, rows))
 
 
+def handle_diff_results(args):
+    def printResult(getterFn, baseid, newid, suppr, output_format):
+        report_filter = [
+            codeCheckerDBAccess.ttypes.ReportFilter(suppressed=suppr)]
+        add_filter_conditions(report_filter[0], args.filter)
+
+        sort_type = None
+        limit = codeCheckerDBAccess.constants.MAX_QUERY_SIZE
+        offset = 0
+
+        all_results = []
+        results = getterFn(baseid, newid, limit, offset, sort_type,
+                           report_filter)
+
+        while results:
+            all_results.extend(results)
+            offset += limit
+            results = getterFn(baseid, newid, limit, offset, sort_type,
+                               report_filter)
+
+        if output_format == 'json':
+            print(CmdLineOutputEncoder().encode(all_results))
+        else:
+            header = ['File', 'Checker', 'Severity', 'Msg']
+            rows = []
+            for res in all_results:
+                bug_line = res.lastBugPosition.startLine
+                sev = shared.ttypes.Severity._VALUES_TO_NAMES[res.severity]
+                checked_file = res.checkedFile + ' @ ' + str(bug_line)
+                rows.append(
+                    (checked_file, res.checkerId, sev, res.checkerMsg))
+
+            print(twodim_to_str(output_format, header, rows))
+
+    client = setup_client(args.host, args.port, '/')
+    run_info = check_run_names(client, [args.basename, args.newname])
+
+    baseid = run_info[args.basename][0]
+    newid = run_info[args.newname][0]
+
+    if 'new' in args:
+        printResult(client.getNewResults, baseid, newid, args.suppressed,
+                    args.output_format)
+    elif 'unresolved' in args:
+        printResult(client.getUnresolvedResults, baseid, newid,
+                    args.suppressed, args.output_format)
+    elif 'resolved' in args:
+        printResult(client.getResolvedResults, baseid, newid, args.suppressed,
+                    args.output_format)
+
+
 def handle_list_result_types(args):
-    client = setupClient(args.host, args.port, '/')
+    client = setup_client(args.host, args.port, '/')
 
     filters = []
     if args.suppressed:
@@ -347,8 +342,7 @@ def handle_list_result_types(args):
                     shared.ttypes.Severity._VALUES_TO_NAMES[res.severity]
             results_collector.append({name: results})
         else:  # plaintext, csv
-            print('Check date: ' + run_date)
-            print('Check name: ' + name)
+            print("Run '" + name + "', executed at '" + run_date + "'")
             rows = []
             header = ['Checker', 'Severity', 'Count']
             for res in results:
@@ -362,7 +356,7 @@ def handle_list_result_types(args):
 
 
 def handle_remove_run_results(args):
-    client = setupClient(args.host, args.port, '/')
+    client = setup_client(args.host, args.port, '/')
 
     def is_later(d1, d2):
         dateformat = '%Y-%m-%d %H:%M:%S.%f'
@@ -405,58 +399,7 @@ def handle_remove_run_results(args):
                             in run_info.items()
                             if condition(name, runid, date)])
 
-    print('Done.')
-
-
-def handle_diff_results(args):
-    def printResult(getterFn, baseid, newid, suppr, output_format):
-        report_filter = [
-            codeCheckerDBAccess.ttypes.ReportFilter(suppressed=suppr)]
-        add_filter_conditions(report_filter[0], args.filter)
-
-        sort_type = None
-        limit = codeCheckerDBAccess.constants.MAX_QUERY_SIZE
-        offset = 0
-
-        all_results = []
-        results = getterFn(baseid, newid, limit, offset, sort_type,
-                           report_filter)
-
-        while results:
-            all_results.extend(results)
-            offset += limit
-            results = getterFn(baseid, newid, limit, offset, sort_type,
-                               report_filter)
-
-        if output_format == 'json':
-            print(CmdLineOutputEncoder().encode(all_results))
-        else:
-            header = ['File', 'Checker', 'Severity', 'Msg']
-            rows = []
-            for res in all_results:
-                bug_line = res.lastBugPosition.startLine
-                sev = shared.ttypes.Severity._VALUES_TO_NAMES[res.severity]
-                checked_file = res.checkedFile + ' @ ' + str(bug_line)
-                rows.append(
-                    (checked_file, res.checkerId, sev, res.checkerMsg))
-
-            print(twodim_to_str(output_format, header, rows))
-
-    client = setupClient(args.host, args.port, '/')
-    run_info = check_run_names(client, [args.basename, args.newname])
-
-    baseid = run_info[args.basename][0]
-    newid = run_info[args.newname][0]
-
-    if 'new' in args:
-        printResult(client.getNewResults, baseid, newid, args.suppressed,
-                    args.output_format)
-    elif 'unresolved' in args:
-        printResult(client.getUnresolvedResults, baseid, newid,
-                    args.suppressed, args.output_format)
-    elif 'resolved' in args:
-        printResult(client.getResolvedResults, baseid, newid, args.suppressed,
-                    args.output_format)
+    LOG.info("Done.")
 
 
 def handle_suppress(args):
@@ -474,10 +417,10 @@ def handle_suppress(args):
                                                     suppressed=False,
                                                     filepath=filepath)]
 
-    already_suppressed = 'Bug {} in file {} already suppressed. Use --force!'
+    already_suppressed = "Bug {} in file {} already suppressed. Use '--force'!"
     limit = codeCheckerDBAccess.constants.MAX_QUERY_SIZE
 
-    client = setupClient(args.host, args.port, '/')
+    client = setup_client(args.host, args.port, '/')
 
     run_info = check_run_names(client, [args.name])
     run_id, run_date = run_info.get(args.name)
@@ -524,3 +467,72 @@ def handle_suppress(args):
                                            args.comment if 'comment' in args
                                            else "")
 
+
+def handle_auth_requests(args):
+    session = session_manager.SessionManager_Client()
+
+    auth_token = session.getToken(args.host, args.port)
+
+    auth_client = authentication_helper.ThriftAuthHelper(args.host,
+                                                         args.port,
+                                                         '/Authentication',
+                                                         auth_token)
+    try:
+        handshake = auth_client.getAuthParameters()
+
+        if not handshake.requiresAuthentication:
+            LOG.info("This server does not require privileged access.")
+            return
+
+        if auth_token and handshake.sessionStillActive:
+            LOG.info("You are already logged in.")
+            return
+        else:
+            LOG.info("Server requires authentication to access. Please use "
+                     "'CodeChecker cmd login' to authenticate.")
+
+    except TApplicationException:
+        LOG.info("This server does not support privileged access.")
+        return
+
+    if 'logout' in args:
+        logout_done = auth_client.destroySession()
+        if logout_done:
+            session.saveToken(args.host, args.port, None, True)
+            LOG.info("Successfully logged out.")
+        return
+
+    methods = auth_client.getAcceptedAuthMethods()
+    # Attempt username-password auth first.
+    if 'Username:Password' in str(methods):
+        username = args.username
+
+        # Try to use a previously saved credential from configuration file.
+        saved_auth = session.getAuthString(args.host, args.port)
+
+        if saved_auth:
+            LOG.info("Logging in using preconfigured credentials...")
+            username = saved_auth.split(":")[0]
+            pwd = saved_auth.split(":")[1]
+        else:
+            LOG.info("Logging in using credentials from command line...")
+            pwd = getpass.getpass("Please provide password for user '{0}'"
+                                  .format(username))
+
+        LOG.debug("Trying to login as {0} to {1}:{2}"
+                  .format(username, args.host, args.port))
+        try:
+            session_token = auth_client.performLogin("Username:Password",
+                                                     username + ":" +
+                                                     pwd)
+
+            session.saveToken(args.host, args.port, session_token)
+            LOG.info("Server reported successful authentication.")
+        except shared.ttypes.RequestFailed as reqfail:
+            LOG.error("Authentication failed! Please check your credentials.")
+            LOG.error(reqfail.message)
+            sys.exit(1)
+    else:
+        LOG.critical("No authentication methods were reported by the server "
+                     "that this client could support.")
+        sys.exit(1)
