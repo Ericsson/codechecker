@@ -75,7 +75,7 @@ class SourceSuppressHandler(object):
         self.__bug_line = report_line
         self.__hash_value = report_hash
         self.__checker_name = checker_name
-        self.__suppressed_checkers = []
+        self.__suppressed_checkers = set()
         self.__suppress_comment = None
 
     def __check_if_comment(self, line):
@@ -115,11 +115,11 @@ class SourceSuppressHandler(object):
         if res:
             checkers = res.group('checkers')
             if checkers == "all":
-                self.__suppressed_checkers.append('all')
+                self.__suppressed_checkers.add('all')
             else:
                 suppress_checker_list = re.findall(r"[^,\s]+",
                                                    checkers.strip())
-                self.__suppressed_checkers.extend(suppress_checker_list)
+                self.__suppressed_checkers.update(suppress_checker_list)
             comment = res.group('comment')
             if comment == '':
                 self.__suppress_comment = \
@@ -197,7 +197,7 @@ class SourceSuppressHandler(object):
         suppress_checkers = self.suppressed_checkers()
 
         if self.__checker_name in suppress_checkers or \
-           suppress_checkers == ['all']:
+           suppress_checkers == {'all'}:
 
             file_path, file_name = os.path.split(self.__source_file)
 
