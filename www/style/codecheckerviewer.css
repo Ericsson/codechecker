@@ -129,6 +129,10 @@ html, body {
   border-radius: 5px;
 }
 
+.checkMsg .enum {
+  color: gray;
+}
+
 .editorHeader {
   padding: 4px;
   border-bottom: 1px solid lightgrey;
