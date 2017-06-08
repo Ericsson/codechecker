@@ -144,13 +144,14 @@ function (declare, dom, style, on, query, Memory, Observable, topic, entities,
     addBubbles : function (bubbles) {
       var that = this;
 
-      bubbles.forEach(function (bubble) {
+      bubbles.forEach(function (bubble, i) {
         var left = that.codeMirror.defaultCharWidth() * bubble.startCol + 'px';
+        var enumeration = '<span class="enum">(' + (i + 1) + ')</span> ';
 
         var element = dom.create('div', {
           style : 'margin-left: ' + left,
           class : 'checkMsg',
-          innerHTML : entities.encode(bubble.msg)
+          innerHTML : enumeration + entities.encode(bubble.msg)
         });
 
         that._lineWidgets.push(that.codeMirror.addLineWidget(
