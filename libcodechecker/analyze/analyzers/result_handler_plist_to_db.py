@@ -75,24 +75,46 @@ class PlistToDB(ResultHandler):
                     continue
 
             # Create remaining data for bugs and send them to the server.
+            # In plist file the source and target of the arrows are provided as
+            # starting and ending ranges of the arrow. The path A->B->C is
+            # given as A->B and B->C, thus range B is provided twice. So in the
+            # loop only target points of the arrows are stored, and an extra
+            # insertion is done for the source of the first arrow before the
+            # loop.
             bug_paths = []
             report_path = [i for i in report.bug_path if
                            i.get('kind') == 'control']
+
+            if report_path:
+                try:
+                    start_range = report_path[0]['edges'][0]['start']
+                    start1_line = start_range[0]['line']
+                    start1_col = start_range[0]['col']
+                    start2_line = start_range[1]['line']
+                    start2_col = start_range[1]['col']
+                    source_file_path = files[start_range[1]['file']]
+                    bug_paths.append(
+                        shared.ttypes.BugPathPos(start1_line,
+                                                 start1_col,
+                                                 start2_line,
+                                                 start2_col,
+                                                 file_ids[source_file_path]))
+                except IndexError:
+                    pass
+
             for path in report_path:
                 try:
-                    start_range = path['edges'][0]['start']
-                    start_line = start_range[1]['line']
-                    start_col = start_range[1]['col']
-
                     end_range = path['edges'][0]['end']
-                    end_line = end_range[1]['line']
-                    end_col = end_range[1]['col']
+                    end1_line = end_range[0]['line']
+                    end1_col = end_range[0]['col']
+                    end2_line = end_range[1]['line']
+                    end2_col = end_range[1]['col']
                     source_file_path = files[end_range[1]['file']]
                     bug_paths.append(
-                        shared.ttypes.BugPathPos(start_line,
-                                                 start_col,
-                                                 end_line,
-                                                 end_col,
+                        shared.ttypes.BugPathPos(end1_line,
+                                                 end1_col,
+                                                 end2_line,
+                                                 end2_col,
                                                  file_ids[source_file_path]))
                 except IndexError:
                     # Edges might be empty nothing can be stored.
