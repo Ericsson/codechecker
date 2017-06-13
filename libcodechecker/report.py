@@ -12,6 +12,7 @@ All hash generation algorithms should be documented and implemented here.
 
 """
 import hashlib
+import json
 import linecache
 import os
 
