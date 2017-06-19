@@ -89,7 +89,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
                 values = cookie.split("=")
                 if len(values) == 2 and \
                         values[0] == session_manager.SESSION_COOKIE_NAME:
-                    if self.manager.is_valid(client_host, values[1], True):
+                    if self.manager.is_valid(values[1], True):
                         # The session cookie contains valid data.
                         success = values[1]
 
@@ -105,8 +105,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
                     self.headers.getheader("Authorization").
                     replace("Basic ", ""))
 
-                token = self.manager.create_or_get_session(client_host,
-                                                           authString)
+                token = self.manager.create_or_get_session(authString)
                 if token:
                     LOG.info("Client from " + client_host + ":" +
                              str(client_port) + " successfully logged in")
@@ -192,7 +191,6 @@ class RequestHandler(SimpleHTTPRequestHandler):
                 # Authentication requests must be routed to a different
                 # handler.
                 auth_handler = ThriftAuthHandler(self.manager,
-                                                 client_host,
                                                  sess_token)
                 processor = codeCheckerAuthentication.Processor(auth_handler)
             else:

@@ -80,7 +80,7 @@ class PlistToStdout(ResultHandler):
         report_num = len(reports)
         if report_num > 0:
             index_format = '    %%%dd, ' % \
-                    int(math.floor(math.log10(report_num)) + 1)
+                int(math.floor(math.log10(report_num)) + 1)
 
         non_suppressed = 0
         for report in reports:
