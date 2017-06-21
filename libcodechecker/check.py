@@ -456,7 +456,15 @@ def main(args):
         analyze_module.main(analyze_args)
 
         # --- Step 3.: Store to database.
+        # TODO: The store command supposes that in case of PostgreSQL a
+        # database instance is already running. The "CodeChecker check" command
+        # is able to start its own instance in the given workdir, so we pass
+        # this argument to the argument list. Although this is not used by
+        # store command at all, the SQL utility is still able to start the
+        # database. When changing this behavior, the workspace argument should
+        # be removed from here.
         store_args = argparse.Namespace(
+            workspace=args.workspace,
             input=[report_dir],
             input_format='plist',
             jobs=args.jobs,
