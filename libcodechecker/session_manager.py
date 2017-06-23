@@ -49,16 +49,15 @@ class _Session(object):
                                     os.urandom(16)).hexdigest()
 
     @staticmethod
-    def calc_persistency_hash(client_addr, auth_string):
+    def calc_persistency_hash(auth_string):
         """Calculates a more secure persistency hash for the session. This
         persistency hash is intended to be used for the "session recycle"
         feature to prevent NAT endpoints from accidentally getting each
         other's session."""
-        return hashlib.sha256(auth_string + "@" + client_addr + ":" +
+        return hashlib.sha256(auth_string + "@" +
                               _Session.__initial_salt).hexdigest()
 
-    def __init__(self, client_addr, token, phash):
-        self.client = client_addr
+    def __init__(self, token, phash):
         self.token = token
         self.persistent_hash = phash
         self.last_access = datetime.now()
@@ -263,9 +262,9 @@ class SessionManager:
                     return True
         return False
 
-    def create_or_get_session(self, client, auth_string):
-        """Create a new session for the given client and auth-string, if
-        it is valid. If an existing session is found, return that instead."""
+    def create_or_get_session(self, auth_string):
+        """Create a new session for the given auth-string, if it is valid. If
+        an existing session is found, return that instead."""
         if not self.__auth_config["enabled"]:
             return None
 
@@ -277,9 +276,9 @@ class SessionManager:
         if self.__handle_validation(auth_string):
             session_already = next(
                 (s for s
-                 in SessionManager.__valid_sessions if s.client == client and
-                 s.still_reusable() and s.persistent_hash ==
-                 _Session.calc_persistency_hash(client, auth_string)),
+                 in SessionManager.__valid_sessions if s.still_reusable() and
+                 s.persistent_hash ==
+                    _Session.calc_persistency_hash(auth_string)),
                 None)
 
             if session_already:
@@ -289,29 +288,27 @@ class SessionManager:
                 # TODO: Use a more secure way for token generation?
                 token = uuid.UUID(bytes=os.urandom(16)).__str__().replace("-",
                                                                           "")
-                session = _Session(client, token,
-                                   _Session.calc_persistency_hash(client,
-                                                                  auth_string))
+                session = _Session(token,
+                                   _Session.calc_persistency_hash(auth_string))
                 SessionManager.__valid_sessions.append(session)
 
             return session.token
         else:
             return None
 
-    def is_valid(self, client, token, access=False):
+    def is_valid(self, token, access=False):
         """Validates a given token (cookie) against
         the known list of privileged sessions."""
         if not self.isEnabled():
             return True
         else:
-            return any(_sess.client == client and _sess.token == token and
-                       _sess.still_valid(access)
+            return any(_sess.token == token and _sess.still_valid(access)
                        for _sess in SessionManager.__valid_sessions)
 
-    def invalidate(self, client, token):
+    def invalidate(self, token):
         """Remove a user's previous session from the store."""
         for session in SessionManager.__valid_sessions[:]:
-            if session.client == client and session.token == token:
+            if session.token == token:
                 SessionManager.__valid_sessions.remove(session)
                 return True
 

@@ -269,9 +269,9 @@ def main(args):
     metadata = {'action_num': len(actions),
                 'command': sys.argv,
                 'versions': {
-                    'codechecker': "{0} ({1})".format(context.package_git_tag,
-                                                      context.package_git_hash)
-                },
+                    'codechecker': "{0} ({1})".format(
+                        context.package_git_tag,
+                        context.package_git_hash)},
                 'working_directory': os.getcwd(),
                 'output_path': args.output_path}
 

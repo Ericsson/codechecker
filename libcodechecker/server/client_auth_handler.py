@@ -30,16 +30,14 @@ class ThriftAuthHandler(object):
     Handle Thrift authentication requests.
     """
 
-    def __init__(self, manager, client_host, session_token=None):
+    def __init__(self, manager, session_token=None):
         self.__manager = manager
-        self.__client_host = client_host
         self.__session_token = session_token
 
     @timeit
     def getAuthParameters(self):
         return HandshakeInformation(self.__manager.isEnabled(),
                                     self.__manager.is_valid(
-                                        self.__client_host,
                                         self.__session_token,
                                         True))
 
@@ -50,9 +48,7 @@ class ThriftAuthHandler(object):
     @timeit
     def performLogin(self, auth_method, auth_string):
         if auth_method == "Username:Password":
-            authToken = self.__manager.create_or_get_session(
-                self.__client_host,
-                auth_string)
+            authToken = self.__manager.create_or_get_session(auth_string)
             if authToken:
                 return authToken
             else:
@@ -66,5 +62,4 @@ class ThriftAuthHandler(object):
 
     @timeit
     def destroySession(self):
-        return self.__manager.invalidate(self.__client_host,
-                                         self.__session_token)
+        return self.__manager.invalidate(self.__session_token)
