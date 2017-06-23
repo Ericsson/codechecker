@@ -439,6 +439,11 @@ def main(args):
             connection.add_skip_paths(context.run_id,
                                       skip_handler.get_skiplist())
 
+    # TODO: This is a hotfix for a data race problem in storage.
+    # Currently removal of build actions is based on plist files which lack
+    # build command that is needed for unambiguous deletion.
+    args.jobs = 1
+
     pool = multiprocessing.Pool(args.jobs)
 
     try:
