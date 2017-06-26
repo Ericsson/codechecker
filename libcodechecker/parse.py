@@ -11,6 +11,7 @@ human-readable format.
 import argparse
 import json
 import os
+import sys
 
 from libcodechecker import generic_package_context
 from libcodechecker import generic_package_suppress_handler
@@ -84,6 +85,17 @@ def add_arguments_to_parser(parser):
                              "which is experimental, take care when relying "
                              "on it.")
 
+    parser.add_argument('--export-source-suppress',
+                        dest="create_suppress",
+                        action="store_true",
+                        required=False,
+                        default=argparse.SUPPRESS,
+                        help="Write suppress data from the suppression "
+                             "annotations found in the source files that were "
+                             "analyzed earlier that created the results. "
+                             "The suppression information will be written "
+                             "to the parameter of '--suppress'.")
+
     parser.add_argument('--print-steps',
                         dest="print_steps",
                         action="store_true",
@@ -124,12 +136,12 @@ def parse(f, context, metadata_dict, suppress_handler, steps):
     rh.analyzer_result_file = f
     rh.analyzer_cmd = ""
 
-    rh.analyzed_source_file = "UNKNOWN"
-    base_f = os.path.basename(f)
     if 'result_source_files' in metadata_dict and \
-            base_f in metadata_dict['result_source_files']:
+            f in metadata_dict['result_source_files']:
         rh.analyzed_source_file = \
-            metadata_dict['result_source_files'][base_f]
+            metadata_dict['result_source_files'][f]
+    else:
+        rh.analyzed_source_file = "UNKNOWN"
 
     rh.handle_results()
 
@@ -152,12 +164,28 @@ def main(args):
 
     suppress_handler = None
     if 'suppress' in args:
+        __make_handler = False
         if not os.path.isfile(args.suppress):
-            LOG.warning("Suppress file '" + args.suppress + "' given, but it "
-                        "does not exist -- will not suppress anything.")
+            if 'create_suppress' in args:
+                with open(args.suppress, 'w') as _:
+                    # Just create the file.
+                    __make_handler = True
+                    LOG.info("Will write source-code suppressions to "
+                             "suppress file.")
+            else:
+                LOG.warning("Suppress file '" + args.suppress + "' given, but "
+                            "it does not exist -- will not suppress anything.")
         else:
+            __make_handler = True
+
+        if __make_handler:
             suppress_handler = generic_package_suppress_handler.\
-                GenericSuppressHandler(args.suppress)
+                GenericSuppressHandler(args.suppress,
+                                       'create_suppress' in args)
+    elif 'create_suppress' in args:
+        LOG.error("Can't use '--export-source-suppress' unless '--suppress "
+                  "SUPPRESS_FILE' is also given.")
+        sys.exit(2)
 
     for input_path in args.input:
         os.chdir(original_cwd)

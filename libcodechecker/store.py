@@ -270,15 +270,14 @@ def consume_plist(item):
     rh.analyzer_cmd = ''
 
     rh.analyzed_source_file = "UNKNOWN"
-    base_f = os.path.basename(f)
     if 'result_source_files' in metadata_dict and\
-            base_f in metadata_dict['result_source_files']:
+            f in metadata_dict['result_source_files']:
         rh.analyzed_source_file = \
-            metadata_dict['result_source_files'][base_f]
+            metadata_dict['result_source_files'][f]
     rh.analyzer_result_file = f
 
     if rh.analyzed_source_file == "UNKNOWN":
-        LOG.info("Storing defects in input file '" + base_f + "'")
+        LOG.info("Storing defects in input file '" + f + "'")
     else:
         LOG.info("Storing analysis results for file '" +
                  rh.analyzed_source_file + "'")

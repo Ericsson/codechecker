@@ -421,7 +421,7 @@ def main(args):
         LOG.warning("No suppress file was given, suppressed results will "
                     "be only stored in the database.")
         suppress_handler = generic_package_suppress_handler. \
-            GenericSuppressHandler(None)
+            GenericSuppressHandler(None, False)
     else:
         if not os.path.exists(args.suppress):
             LOG.error("Suppress file " + args.suppress + " not found!")
@@ -430,7 +430,7 @@ def main(args):
         LOG.debug("Using suppress file: " +
                   str(args.suppress))
         suppress_handler = generic_package_suppress_handler. \
-            GenericSuppressHandler(args.suppress)
+            GenericSuppressHandler(args.suppress, True)
 
     context = generic_package_context.get_context()
     context.codechecker_workspace = args.config_directory
