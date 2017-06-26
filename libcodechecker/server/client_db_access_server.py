@@ -143,9 +143,8 @@ class RequestHandler(SimpleHTTPRequestHandler):
     def do_POST(self):
         """ Handling thrift messages. """
         client_host, client_port = self.client_address
-        LOG.debug('Processing request from: ' +
-                  client_host + ':' +
-                  str(client_port))
+        LOG.debug("Processing request from {0}:{1}".format(client_host,
+                                                           str(client_port)))
 
         # Create new thrift handler.
         checker_md_docs = self.server.checker_md_docs
@@ -222,7 +221,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
 
     def list_directory(self, path):
         """ Disable directory listing. """
-        self.send_error(404, "No permission to list directory")
+        self.send_error(405, "No permission to list directory")
         return None
 
     def translate_path(self, path):
@@ -262,7 +261,7 @@ class CCSimpleHttpServer(HTTPServer):
                  db_version_info,
                  manager):
 
-        LOG.debug('Initializing HTTP server')
+        LOG.debug("Initializing HTTP server...")
 
         self.www_root = pckg_data['www_root']
         self.doc_root = pckg_data['doc_root']
@@ -287,7 +286,7 @@ class CCSimpleHttpServer(HTTPServer):
                                 bind_and_activate=True)
         except Exception as e:
             LOG.error("Couldn't start the server: " + e.__str__())
-            sys.exit(1)
+            raise
 
     def process_request_thread(self, request, client_address):
         try:
@@ -296,7 +295,7 @@ class CCSimpleHttpServer(HTTPServer):
             self.shutdown_request(request)
         except socket.error as serr:
             if serr[0] == errno.EPIPE:
-                LOG.debug('Broken pipe')
+                LOG.debug("Broken pipe")
                 LOG.debug(serr)
                 self.shutdown_request(request)
 
@@ -311,20 +310,16 @@ class CCSimpleHttpServer(HTTPServer):
 
 
 def start_server(package_data, port, db_conn_string, suppress_handler,
-                 not_host_only, context):
+                 listen_address, context):
     """
     Start http server to handle web client and thrift requests.
     """
-    LOG.debug('Starting the codechecker DB access server')
+    LOG.debug("Starting CodeChecker viewer server...")
 
-    if not_host_only:
-        access_server_host = ''
-    else:
-        access_server_host = 'localhost'
+    LOG.debug("Using suppress file '{0}'"
+              .format(suppress_handler.suppress_file))
 
-    LOG.debug('Suppressing to ' + str(suppress_handler.suppress_file))
-
-    server_addr = (access_server_host, port)
+    server_addr = (listen_address, port)
 
     http_server = CCSimpleHttpServer(server_addr,
                                      RequestHandler,
@@ -338,9 +333,9 @@ def start_server(package_data, port, db_conn_string, suppress_handler,
                               os.path.abspath(context.codechecker_workspace),
                               port)
 
-    LOG.info('Waiting for client requests on [' +
-             access_server_host + ':' + str(port) + ']')
+    LOG.info("Viewer server waiting for client requests on [{0}:{1}]"
+             .format(listen_address, str(port)))
 
     atexit.register(instance_manager.unregister, os.getpid())
     http_server.serve_forever()
-    LOG.info('Webserver quit.')
+    LOG.info("Webserver quit.")
