@@ -4,9 +4,7 @@
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
 
-from argparse import ArgumentDefaultsHelpFormatter as ADHFormatter
 from datetime import datetime
-import argparse
 import getpass
 import json
 import sys
@@ -18,26 +16,28 @@ import shared
 from Authentication import ttypes as AuthTypes
 
 from libcodechecker import session_manager
-from libcodechecker import logger
 from libcodechecker import suppress_file_handler
+from libcodechecker.logger import LoggerFactory
 from libcodechecker.output_formatters import twodim_to_str
 
 from . import thrift_helper
 from . import authentication_helper
 
+LOG = LoggerFactory.get_new_logger('CMD')
 SUPPORTED_VERSION = '5.0'
 
 
-def check_API_version(client):
-    """ Check if server API is supported by the client. """
+def check_api_version(client):
+    """
+    Check if server API is supported by the client.
+    """
+
     version = client.getAPIVersion()
     supp_major_version = SUPPORTED_VERSION.split('.')[0]
     api_major_version = version.split('.')[0]
 
-    if supp_major_version != api_major_version:
-        return False
-
-    return True
+    # There is NO compatibility between major versions.
+    return supp_major_version == api_major_version
 
 
 class CmdLineOutputEncoder(json.JSONEncoder):
@@ -45,75 +45,6 @@ class CmdLineOutputEncoder(json.JSONEncoder):
         d = {}
         d.update(obj.__dict__)
         return d
-
-
-def handle_auth_requests(args):
-    session = session_manager.SessionManager_Client()
-
-    auth_token = session.getToken(args.host, args.port)
-
-    auth_client = authentication_helper.ThriftAuthHelper(args.host,
-                                                         args.port,
-                                                         '/Authentication',
-                                                         auth_token)
-    try:
-        handshake = auth_client.getAuthParameters()
-
-        if not handshake.requiresAuthentication:
-            print("This server does not require privileged access.")
-            return
-
-        if auth_token and handshake.sessionStillActive:
-            print("Active authentication token found no new login required.")
-            return
-        else:
-            print("No/Old authentication token found please login again.")
-
-    except TApplicationException:
-        print("This server does not support privileged access.")
-        return
-
-    if args.logout:
-        logout_done = auth_client.destroySession()
-        if logout_done:
-            session.saveToken(args.host, args.port, None, True)
-            print('Successfully deauthenticated from server.')
-        return
-
-    methods = auth_client.getAcceptedAuthMethods()
-    # Attempt username-password auth first
-    if 'Username:Password' in str(methods):
-        pwd = None
-        username = args.username
-
-        # Try to use a previously saved credential from configuration file
-        savedAuth = session.getAuthString(args.host, args.port)
-
-        if savedAuth:
-            print('Logging in using preconfigured credentials.')
-            username = savedAuth.split(":")[0]
-            pwd = savedAuth.split(":")[1]
-        else:
-            print('Logging in using command line credentials.')
-            print('Please provide password for user: ' + username)
-            pwd = getpass.getpass('Password:')
-
-        print("Trying to login: " + username + "@" +
-              args.host + ":" + args.port)
-        try:
-            session_token = auth_client.performLogin("Username:Password",
-                                                     username + ":" +
-                                                     pwd)
-
-            session.saveToken(args.host, args.port, session_token)
-            print("Server reported successful authentication!")
-        except shared.ttypes.RequestFailed as reqfail:
-            print("Authentication failed please check your credentials.")
-            print(reqfail.message)
-            sys.exit(1)
-    else:
-        print('Username, password authentication is not supported.')
-        sys.exit(1)
 
 
 def __check_authentication(client):
@@ -127,14 +58,15 @@ def __check_authentication(client):
         return False
 
 
-def setupClient(host, port, uri):
-    ''' setup the thrift client and check
-    API version and authentication needs. '''
+def setup_client(host, port, uri):
+    """
+    Stup the thrift client and check API version and authentication needs.
+    """
     manager = session_manager.SessionManager_Client()
     session_token = manager.getToken(host, port)
 
     # Before actually communicating with the server,
-    # we need to check authentication first
+    # we need to check authentication first.
     auth_client = authentication_helper.ThriftAuthHelper(host,
                                                          port,
                                                          uri +
@@ -154,13 +86,14 @@ def setupClient(host, port, uri):
             auto_auth_string = manager.getAuthString(host, port)
             if auto_auth_string:
                 # Try to automatically log in with a saved credential
-                # if it exists for the server
+                # if it exists for the server.
                 try:
                     session_token = auth_client.performLogin(
                         "Username:Password",
                         auto_auth_string)
                     manager.saveToken(host, port, session_token)
-                    print("Authenticated using pre-configured credentials...")
+                    LOG.info("Authenticated using pre-configured "
+                             "credentials.")
                 except shared.ttypes.RequestFailed:
                     print_err = True
             else:
@@ -169,23 +102,25 @@ def setupClient(host, port, uri):
             print_err = True
 
         if print_err:
-            print('Access denied. This server requires authentication.')
-            print('Please log in onto the server '
-                  'using `CodeChecker cmd login`.')
+            LOG.error("Access denied. This server requires authentication.")
+            LOG.error("Please log in onto the server using 'CodeChecker cmd "
+                      "login'.")
             sys.exit(1)
 
     client = thrift_helper.ThriftClientHelper(host, port, uri, session_token)
-    # test if client can work with thrift API getVersion
-    if not check_API_version(client):
-        print('Backward incompatible change was in the API.')
-        print('Please update client. Server version is not supported.')
+    # Test if client can work with the server's API.
+    if not check_api_version(client):
+        LOG.critical("The server uses a newer version of the API which is "
+                     "incompatible with this client. Please update client.")
         sys.exit(1)
 
     return client
 
 
 def get_run_ids(client):
-    """ Returns a map for run names and run_ids. """
+    """
+    Returns a map for run names and run_ids.
+    """
 
     runs = client.getRunData()
 
@@ -197,6 +132,9 @@ def get_run_ids(client):
 
 
 def check_run_names(client, check_names):
+    """
+    Check if the given names are valid runs on the server.
+    """
     run_info = get_run_ids(client)
 
     if not check_names:
@@ -205,11 +143,11 @@ def check_run_names(client, check_names):
     missing_name = False
     for name in check_names:
         if not run_info.get(name):
-            print('No check name found: ' + name)
+            LOG.warning("The run named '" + name + "' was not found.")
             missing_name = True
 
     if missing_name:
-        print('Possible check names are:')
+        print("Possible run names are:")
         for name, _ in run_info.items():
             print(name)
         sys.exit(1)
@@ -217,25 +155,18 @@ def check_run_names(client, check_names):
     return run_info
 
 
-def valid_time(t):
-    try:
-        parts = map(int, t.split(':'))
-        parts = parts + [0] * (6 - len(parts))
-        year, month, day, hour, minute, second = parts
-        return datetime(year, month, day, hour, minute, second)
-    except ValueError as ex:
-        raise argparse.ArgumentTypeError(ex)
-
-
 def add_filter_conditions(report_filter, filter_str):
-    """This function fills some attributes of the given report filter based on
+    """
+    This function fills some attributes of the given report filter based on
     the filter string which is provided in the command line. The filter string
     has to contain three parts divided by colons: the severity, checker id and
     the file path respectively. The file path can contain joker characters, and
-    the checker id doesn't have to be complete (e.g. unix)."""
+    the checker id doesn't have to be complete (e.g. unix).
+    """
 
     if filter_str.count(':') != 2:
-        print('Filter string has to contain two colons (e.g. ":unix:*.cpp").')
+        LOG.error("Filter string has to contain two colons (e.g. "
+                  "\":unix:*.cpp\").")
         sys.exit(1)
 
     severity, checker, path = map(lambda x: x.strip(), filter_str.split(':'))
@@ -249,17 +180,12 @@ def add_filter_conditions(report_filter, filter_str):
         report_filter.filepath = path
 
 
-def add_server_arguments(parser):
-    parser.add_argument('--host', type=str, dest="host",
-                        default='localhost',
-                        help='Server host.')
-    parser.add_argument('-p', '--port', type=str, dest="port",
-                        default=8001,
-                        required=True, help='HTTP Server port.')
-
+# ---------------------------------------------------------------------------
+# Argument handlers for the 'CodeChecker cmd' subcommands.
+# ---------------------------------------------------------------------------
 
 def handle_list_runs(args):
-    client = setupClient(args.host, args.port, '/')
+    client = setup_client(args.host, args.port, '/')
     runs = client.getRunData()
 
     if args.output_format == 'json':
@@ -278,7 +204,7 @@ def handle_list_runs(args):
 
 
 def handle_list_results(args):
-    client = setupClient(args.host, args.port, '/')
+    client = setup_client(args.host, args.port, '/')
 
     run_info = check_run_names(client, [args.name])
 
@@ -332,98 +258,6 @@ def handle_list_results(args):
         print(twodim_to_str(args.output_format, header, rows))
 
 
-def handle_list_result_types(args):
-    client = setupClient(args.host, args.port, '/')
-
-    filters = []
-    if args.suppressed:
-        report_filter = codeCheckerDBAccess.ttypes.ReportFilter(
-            suppressed=True)
-    else:
-        report_filter = codeCheckerDBAccess.ttypes.ReportFilter(
-            suppressed=False)
-
-    add_filter_conditions(report_filter, args.filter)
-    filters.append(report_filter)
-
-    if args.all_results:
-        items = check_run_names(client, None).items()
-    else:
-        items = []
-        run_info = check_run_names(client, args.names)
-        for name in args.names:
-            items.append((name, run_info.get(name)))
-
-    results_collector = []
-    for name, run_info in items:
-        run_id, run_date = run_info
-        results = client.getRunResultTypes(run_id, filters)
-
-        if args.output_format == 'json':
-            results_collector.append({name: results})
-        else:  # plaintext, csv
-            print('Check date: ' + run_date)
-            print('Check name: ' + name)
-            rows = []
-            header = ['Checker', 'Severity', 'Count']
-            for res in results:
-                sev = shared.ttypes.Severity._VALUES_TO_NAMES[res.severity]
-                rows.append((res.checkerId, sev, str(res.count)))
-
-            print(twodim_to_str(args.output_format, header, rows))
-
-    if args.output_format == 'json':
-        print(CmdLineOutputEncoder().encode(results_collector))
-
-
-# ------------------------------------------------------------
-def handle_remove_run_results(args):
-    client = setupClient(args.host, args.port, '/')
-
-    def is_later(d1, d2):
-        dateformat = '%Y-%m-%d %H:%M:%S.%f'
-
-        if not isinstance(d1, datetime):
-            d1 = datetime.strptime(d1, dateformat)
-        if not isinstance(d2, datetime):
-            d2 = datetime.strptime(d2, dateformat)
-
-        return d1 > d2
-
-    run_info = get_run_ids(client)
-
-    if args.name:
-        check_run_names(client, args.name)
-
-        def condition(name, runid, date):
-            return name in args.name
-    elif args.all_after_run and args.all_after_run in run_info:
-        run_date = run_info[args.all_after_run][1]
-
-        def condition(name, runid, date):
-            return is_later(date, run_date)
-    elif args.all_before_run and args.all_before_run in run_info:
-        run_date = run_info[args.all_before_run][1]
-
-        def condition(name, runid, date):
-            return is_later(run_date, date)
-    elif args.all_after_time:
-        def condition(name, runid, date):
-            return is_later(date, args.all_after_time)
-    elif args.all_before_time:
-        def condition(name, runid, date):
-            return is_later(args.all_before_time, date)
-    else:
-        def condition(name, runid, date):
-            return False
-
-    client.removeRunResults([runid for (name, (runid, date))
-                            in run_info.items()
-                            if condition(name, runid, date)])
-
-    print('Done.')
-
-
 def handle_diff_results(args):
     def printResult(getterFn, baseid, newid, suppr, output_format):
         report_filter = [
@@ -458,21 +292,114 @@ def handle_diff_results(args):
 
             print(twodim_to_str(output_format, header, rows))
 
-    client = setupClient(args.host, args.port, '/')
+    client = setup_client(args.host, args.port, '/')
     run_info = check_run_names(client, [args.basename, args.newname])
 
     baseid = run_info[args.basename][0]
     newid = run_info[args.newname][0]
 
-    if args.new:
+    if 'new' in args:
         printResult(client.getNewResults, baseid, newid, args.suppressed,
                     args.output_format)
-    elif args.unresolved:
+    elif 'unresolved' in args:
         printResult(client.getUnresolvedResults, baseid, newid,
                     args.suppressed, args.output_format)
-    elif args.resolved:
+    elif 'resolved' in args:
         printResult(client.getResolvedResults, baseid, newid, args.suppressed,
                     args.output_format)
+
+
+def handle_list_result_types(args):
+    client = setup_client(args.host, args.port, '/')
+
+    filters = []
+    if args.suppressed:
+        report_filter = codeCheckerDBAccess.ttypes.ReportFilter(
+            suppressed=True)
+    else:
+        report_filter = codeCheckerDBAccess.ttypes.ReportFilter(
+            suppressed=False)
+
+    add_filter_conditions(report_filter, args.filter)
+    filters.append(report_filter)
+
+    if 'all_results' in args:
+        items = check_run_names(client, None).items()
+    else:
+        items = []
+        run_info = check_run_names(client, args.names)
+        for name in args.names:
+            items.append((name, run_info.get(name)))
+
+    results_collector = []
+    for name, run_info in items:
+        run_id, run_date = run_info
+        results = client.getRunResultTypes(run_id, filters)
+
+        if args.output_format == 'json':
+            for res in results:
+                res.severity =\
+                    shared.ttypes.Severity._VALUES_TO_NAMES[res.severity]
+            results_collector.append({name: results})
+        else:  # plaintext, csv
+            print("Run '" + name + "', executed at '" + run_date + "'")
+            rows = []
+            header = ['Checker', 'Severity', 'Count']
+            for res in results:
+                sev = shared.ttypes.Severity._VALUES_TO_NAMES[res.severity]
+                rows.append((res.checkerId, sev, str(res.count)))
+
+            print(twodim_to_str(args.output_format, header, rows))
+
+    if args.output_format == 'json':
+        print(CmdLineOutputEncoder().encode(results_collector))
+
+
+def handle_remove_run_results(args):
+    client = setup_client(args.host, args.port, '/')
+
+    def is_later(d1, d2):
+        dateformat = '%Y-%m-%d %H:%M:%S.%f'
+
+        if not isinstance(d1, datetime):
+            d1 = datetime.strptime(d1, dateformat)
+        if not isinstance(d2, datetime):
+            d2 = datetime.strptime(d2, dateformat)
+
+        return d1 > d2
+
+    run_info = get_run_ids(client)
+
+    if 'name' in args:
+        check_run_names(client, args.name)
+
+        def condition(name, runid, date):
+            return name in args.name
+    elif 'all_after_run' in args and args.all_after_run in run_info:
+        run_date = run_info[args.all_after_run][1]
+
+        def condition(name, runid, date):
+            return is_later(date, run_date)
+    elif 'all_before_run' in args and args.all_before_run in run_info:
+        run_date = run_info[args.all_before_run][1]
+
+        def condition(name, runid, date):
+            return is_later(run_date, date)
+    elif 'all_after_time' in args:
+        def condition(name, runid, date):
+            return is_later(date, args.all_after_time)
+    elif 'all_before_time' in args:
+        def condition(name, runid, date):
+            return is_later(args.all_before_time, date)
+    else:
+        def condition(name, runid, date):
+            return False
+
+    client.removeRunResults([runid for (name, (runid, date))
+                            in run_info.items()
+                            if condition(name, runid, date)])
+
+    LOG.info("Done.")
 
 
 def handle_suppress(args):
@@ -490,15 +417,15 @@ def handle_suppress(args):
                                                     suppressed=False,
                                                     filepath=filepath)]
 
-    already_suppressed = 'Bug {} in file {} already suppressed. Use --force!'
+    already_suppressed = "Bug {} in file {} already suppressed. Use '--force'!"
     limit = codeCheckerDBAccess.constants.MAX_QUERY_SIZE
 
-    client = setupClient(args.host, args.port, '/')
+    client = setup_client(args.host, args.port, '/')
 
     run_info = check_run_names(client, [args.name])
     run_id, run_date = run_info.get(args.name)
 
-    if args.output:
+    if 'output' in args:
         for suppression in client.getSuppressedBugs(run_id):
             suppress_file_handler.write_to_suppress_file(
                 args.output,
@@ -506,7 +433,7 @@ def handle_suppress(args):
                 suppression.file_name,
                 suppression.comment)
 
-    elif args.input:
+    elif 'input' in args:
         with open(args.input) as supp_file:
             suppress_data = suppress_file_handler.get_suppress_data(supp_file)
 
@@ -515,213 +442,97 @@ def handle_suppress(args):
                                            bug_hash_filter(bug_id, file_name))
 
             for report in reports:
-                if report.suppressed and not args.force:
+                if report.suppressed and 'force' not in args:
                     print(already_suppressed.format(bug_id, file_name))
                 else:
                     update_suppression_comment(
                         run_id, report.reportId, comment)
 
-    elif args.bugid:
+    elif 'bugid' in args:
         reports = client.getRunResults(run_id, limit, 0, None,
                                        bug_hash_filter(args.bugid,
-                                                       args.file))
+                                                       args.file if 'file'
+                                                       in args else ""))
 
         for report in reports:
-            if args.x:
+            if 'unsuppress' in args:
                 client.unSuppressBug([run_id], report.reportId)
-            elif report.suppressed and not args.force:
-                print(already_suppressed.format(args.bugid, args.file))
+            elif report.suppressed and 'force' not in args:
+                print(already_suppressed.format(args.bugid,
+                                                args.file if 'file' in args
+                                                else ""))
             else:
                 update_suppression_comment(run_id,
                                            report.reportId,
-                                           args.comment)
+                                           args.comment if 'comment' in args
+                                           else "")
 
 
-def register_client_command_line(argument_parser):
-    """ Should be used to extend the already existing arguments
-    extend the argument parser with extra commands."""
+def handle_auth_requests(args):
+    session = session_manager.SessionManager_Client()
 
-    subparsers = argument_parser.add_subparsers()
+    auth_token = session.getToken(args.host, args.port)
 
-    # List runs.
-    listruns_parser = subparsers.add_parser('runs',
-                                            formatter_class=ADHFormatter,
-                                            help='Get the run data.')
-    add_server_arguments(listruns_parser)
-    listruns_parser.add_argument('-o', choices=['plaintext', 'json', 'csv'],
-                                 default='plaintext', type=str,
-                                 dest="output_format", help='Output format.')
-    logger.add_verbose_arguments(listruns_parser)
-    listruns_parser.set_defaults(func=handle_list_runs)
+    auth_client = authentication_helper.ThriftAuthHelper(args.host,
+                                                         args.port,
+                                                         '/Authentication',
+                                                         auth_token)
+    try:
+        handshake = auth_client.getAuthParameters()
 
-    # List results.
-    listresults_parser = subparsers.add_parser('results',
-                                               formatter_class=ADHFormatter,
-                                               help='List results.')
-    add_server_arguments(listresults_parser)
-    listresults_parser.add_argument('-n', '--name', type=str, dest="name",
-                                    required=True,
-                                    help='Check name.')
-    listresults_parser.add_argument('-s', '--suppressed', action="store_true",
-                                    dest="suppressed",
-                                    help='Suppressed results.')
-    listresults_parser.add_argument('--filter', dest='filter', type=str,
-                                    default='::', help='Filter string in the '
-                                    'following format: '
-                                    '<severity>:<checker_name>:<file_path>')
-    listresults_parser.add_argument('-o', choices=['plaintext', 'json', 'csv'],
-                                    default='plaintext', type=str,
-                                    dest="output_format",
-                                    help='Output format.')
-    logger.add_verbose_arguments(listresults_parser)
-    listresults_parser.set_defaults(func=handle_list_results)
+        if not handshake.requiresAuthentication:
+            LOG.info("This server does not require privileged access.")
+            return
 
-    # List diffs.
-    diff_parser = subparsers.add_parser('diff',
-                                        formatter_class=ADHFormatter,
-                                        help='Diff two run.')
-    listresults_parser.set_defaults(func=handle_list_results)
+        if auth_token and handshake.sessionStillActive:
+            LOG.info("You are already logged in.")
+            return
+        else:
+            LOG.info("Server requires authentication to access. Please use "
+                     "'CodeChecker cmd login' to authenticate.")
 
-    # List diffs.
-    add_server_arguments(diff_parser)
-    diff_parser.add_argument('-b', '--basename', type=str, dest="basename",
-                             required=True,
-                             help='Base name.')
-    diff_parser.add_argument('-n', '--newname', type=str, dest="newname",
-                             required=True,
-                             help='New name.')
-    diff_parser.add_argument('-s', '--suppressed', action="store_true",
-                             dest="suppressed", default=False,
-                             required=False, help='Show suppressed bugs.')
-    diff_parser.add_argument('-o', choices=['plaintext', 'json', 'csv'],
-                             default='plaintext', type=str,
-                             dest="output_format", help='Output format.')
-    diff_parser.add_argument('--filter', dest='filter', type=str,
-                             default='::', help='Filter string in the '
-                             'following format: '
-                             '<severity>:<checker_name>:<file_path>')
-    group = diff_parser.add_mutually_exclusive_group(required=True)
-    group.add_argument('--new', action="store_true", dest="new",
-                       help="Show new results.")
-    group.add_argument('--unresolved', action="store_true", dest="unresolved",
-                       help="Show unresolved results.")
-    group.add_argument('--resolved', action="store_true", dest="resolved",
-                       help="Show resolved results.")
-    logger.add_verbose_arguments(diff_parser)
-    diff_parser.set_defaults(func=handle_diff_results)
+    except TApplicationException:
+        LOG.info("This server does not support privileged access.")
+        return
 
-    # List resulttypes.
-    sum_parser = subparsers.add_parser('sum',
-                                       formatter_class=ADHFormatter,
-                                       help='Sum results.')
-    add_server_arguments(sum_parser)
-    name_group = sum_parser.add_mutually_exclusive_group(required=True)
-    name_group.add_argument('-n', '--name', nargs='+', type=str, dest="names",
-                            help='Check name.')
-    name_group.add_argument('-a', '--all', action='store_true',
-                            dest="all_results", help='All results.')
+    if 'logout' in args:
+        logout_done = auth_client.destroySession()
+        if logout_done:
+            session.saveToken(args.host, args.port, None, True)
+            LOG.info("Successfully logged out.")
+        return
 
-    sum_parser.add_argument('-s', '--suppressed', action="store_true",
-                            dest="suppressed", help='Suppressed results.')
-    sum_parser.add_argument('--filter', dest='filter', type=str,
-                            default='::', help='Filter string in the '
-                            'following format: '
-                            '<severity>:<checker_name>:<source_file_path>')
-    sum_parser.add_argument('-o', choices=['plaintext', 'json', 'csv'],
-                            default='plaintext', type=str,
-                            dest="output_format", help='Output format.')
-    logger.add_verbose_arguments(sum_parser)
-    sum_parser.set_defaults(func=handle_list_result_types)
+    methods = auth_client.getAcceptedAuthMethods()
+    # Attempt username-password auth first.
+    if 'Username:Password' in str(methods):
+        username = args.username
 
-    # Delete run results.
-    del_parser = subparsers.add_parser('del',
-                                       formatter_class=ADHFormatter,
-                                       help='Remove run results.')
-    group = del_parser.add_mutually_exclusive_group(required=True)
-    group.add_argument('-n', '--name', nargs='+', type=str, dest="name",
-                       help='Server port.')
-    group.add_argument('--all-after-run', type=str, dest='all_after_run',
-                       help='Delete all runs checked after this run.')
-    group.add_argument('--all-before-run', type=str, dest='all_before_run',
-                       help='Delete all runs checked before this run.')
-    group.add_argument('--all-after-time', type=valid_time,
-                       dest='all_after_time',
-                       help='Delete all runs checked after this timestamp. '
-                       'The format should be year:month:day:hour:min:sec. '
-                       'The last three parts can be omitted from the right '
-                       'in which case the default values are 0.')
-    group.add_argument('--all-before-time', type=valid_time,
-                       dest='all_before_time',
-                       help='Delete all runs checked before this timestamp. '
-                       'The format should be year:month:day:hour:min:sec. '
-                       'The last three parts can be omitted from the right '
-                       'in which case the default values are 0.')
-    logger.add_verbose_arguments(del_parser)
-    add_server_arguments(del_parser)
-    del_parser.set_defaults(func=handle_remove_run_results)
+        # Try to use a previously saved credential from configuration file.
+        saved_auth = session.getAuthString(args.host, args.port)
 
-    # Handle suppress file.
-    suppress_parser = subparsers.add_parser('suppress',
-                                            help='Handle suppress file.')
-    group = suppress_parser.add_mutually_exclusive_group(required=True)
-    group.add_argument('-o', '--output', type=str, dest='output',
-                       help='Export suppress file from database.')
-    group.add_argument('-i', '--input', type=str, dest='input',
-                       help='Import suppress file to database.')
-    group.add_argument('--bugid', type=str, dest='bugid',
-                       help='Suppress a specific bug by bug ID.')
-    suppress_parser.add_argument('-x', action='store_true', dest='x',
-                                 help='If this flag is given then the bug '
-                                 'provided by --bugid will be unsuppressed.')
-    suppress_parser.add_argument('-f', '--force', action='store_true',
-                                 dest='force',
-                                 help="By default already suppressed bugs "
-                                 "can't be suppressed again unless --force "
-                                 "is given.")
-    suppress_parser.add_argument('-c', '--comment', type=str, dest='comment',
-                                 default='',
-                                 help='Comment for bug suppression. It has '
-                                 'sense only when --bughash is also provided.')
-    suppress_parser.add_argument('--file', type=str, dest='file',
-                                 default='',
-                                 help='File name in which the bug will be '
-                                 'suppressed. It has sense only when '
-                                 '--bugid is also provided. If this parameter '
-                                 'is not given then all reports with the '
-                                 '--bugid will be suppressed/unsuppressed '
-                                 'regardless of the file.')
-    suppress_parser.add_argument('-n', '--name', type=str, dest='name',
-                                 required=True,
-                                 help='Run name.')
-    logger.add_verbose_arguments(suppress_parser)
-    add_server_arguments(suppress_parser)
-    suppress_parser.set_defaults(func=handle_suppress)
+        if saved_auth:
+            LOG.info("Logging in using preconfigured credentials...")
+            username = saved_auth.split(":")[0]
+            pwd = saved_auth.split(":")[1]
+        else:
+            LOG.info("Logging in using credentials from command line...")
+            pwd = getpass.getpass("Please provide password for user '{0}'"
+                                  .format(username))
 
-    # Handle authentication.
-    auth_parser = subparsers.add_parser('login',
-                                        formatter_class=ADHFormatter,
-                                        help='Log in onto a '
-                                             'CodeChecker server.')
-    auth_parser.add_argument('-u', '--username', type=str, dest="username",
-                             required=False,
-                             help='Username to use on authentication.',
-                             default=getpass.getuser())
-    auth_parser.add_argument('-d', '--deactivate', '--logout',
-                             action='store_true', dest='logout',
-                             help='Send a logout request for the server.')
-    logger.add_verbose_arguments(auth_parser)
-    add_server_arguments(auth_parser)
-    auth_parser.set_defaults(func=handle_auth_requests)
+        LOG.debug("Trying to login as {0} to {1}:{2}"
+                  .format(username, args.host, args.port))
+        try:
+            session_token = auth_client.performLogin("Username:Password",
+                                                     username + ":" +
+                                                     pwd)
 
-
-def main():
-    parser = argparse.ArgumentParser(
-        description='Simple command line client for CodeChecker.')
-
-    register_client_command_line(parser)
-    args = parser.parse_args()
-    args.func(args)
-
-
-if __name__ == "__main__":
-    main()
+            session.saveToken(args.host, args.port, session_token)
+            LOG.info("Server reported successful authentication.")
+        except shared.ttypes.RequestFailed as reqfail:
+            LOG.error("Authentication failed! Please check your credentials.")
+            LOG.error(reqfail.message)
+            sys.exit(1)
+    else:
+        LOG.critical("No authentication methods were reported by the server "
+                     "that this client could support.")
+        sys.exit(1)
