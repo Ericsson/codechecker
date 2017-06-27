@@ -323,7 +323,9 @@ def add_arguments_to_parser(parser):
                                        'codechecker.sqlite')
 
         # Workspace should not exist as a Namespace key.
-        delattr(args, 'workspace')
+        # TODO: Keep workspace setting until the separate PostgreSQL
+        # initialization is done, not the current auto setup.
+        # delattr(args, 'workspace')
 
         if 'postgresql' not in args:
             # Later called database modules need the argument to be actually
