@@ -19,19 +19,26 @@ LOG = LoggerFactory.get_new_logger('SUPPRESS')
 
 class GenericSuppressHandler(suppress_handler.SuppressHandler):
 
-    def __init__(self, suppress_file):
+    def __init__(self, suppress_file, allow_write):
         """
         Create a new suppress handler with a suppress_file as backend.
         """
         super(GenericSuppressHandler, self).__init__()
 
         self.__suppress_info = []
+        self.__allow_write = allow_write
+
         if suppress_file:
             self.suppress_file = suppress_file
             self.__have_memory_backend = True
             self.__revalidate_suppress_data()
         else:
             self.__have_memory_backend = False
+            self.__arrow_write = False
+
+            if allow_write:
+                raise ValueError("Can't create allow_write=True suppress "
+                                 "handler without a backend file.")
 
     def __revalidate_suppress_data(self):
         """Reload the information in the suppress file to the memory."""
@@ -47,7 +54,7 @@ class GenericSuppressHandler(suppress_handler.SuppressHandler):
 
     def store_suppress_bug_id(self, bug_id, file_name, comment):
 
-        if self.suppress_file is None:
+        if not self.__allow_write:
             return True
 
         ret = suppress_file_handler.write_to_suppress_file(self.suppress_file,
@@ -59,7 +66,7 @@ class GenericSuppressHandler(suppress_handler.SuppressHandler):
 
     def remove_suppress_bug_id(self, bug_id, file_name):
 
-        if self.suppress_file is None:
+        if not self.__allow_write:
             return True
 
         ret = suppress_file_handler.remove_from_suppress_file(
