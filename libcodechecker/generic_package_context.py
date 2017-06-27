@@ -202,11 +202,6 @@ class Context(context_base.ContextBase):
                             self.pgsql_data_dir_name)
 
     @property
-    def dump_output_dir(self):
-        return os.path.join(self.codechecker_workspace,
-                            self.variables['path_dumps_name'])
-
-    @property
     def compiler_resource_dir(self):
         resource_dir = self.pckg_layout.get('compiler_resource_dir')
         if not resource_dir:
