@@ -41,7 +41,6 @@
           {"misc-dangling-handle" : true },
           {"misc-inaccurate-erase" : true },
           {"misc-incorrect-roundings" : true },
-          {"misc-misplaced-widening-cast" : true },
           {"misc-move-forwarding-reference" : true },
           {"misc-move-constructor-init" : true },
           {"misc-move-const-arg" : true },
@@ -56,7 +55,6 @@
           {"misc-suspicious-missing-comma" : true },
           {"misc-suspicious-semicolon" : true },
           {"misc-swapped-arguments" : true },
-          {"misc-throw-by-value-catch-by-reference" : true },
           {"misc-undelegated-constructor" : true },
           {"misc-unused-raii" : true }
       ]
