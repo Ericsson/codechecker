@@ -1394,9 +1394,56 @@ can be used normally.
 The password can be saved on the disk. If such "preconfigured" password is
 not found, the user will be asked, in the command-line, to provide credentials.
 
-## 7. debug mode:
+## 7. `debug` mode
 
-In debug mode CodeChecker can generate logs for failed build actions. The logs can be helpful debugging the checkers.
+The `debug` mode of CodeChecker generates log files for failed build actions,
+which can be helpful for debugging checkers.
+
+~~~~~~~~~~~~~~~~~~~~~
+usage: CodeChecker debug [-h] [-w WORKSPACE] [-o OUTPUT_DIR] [-f]
+                         [--sqlite SQLITE_FILE | --postgresql]
+                         [--dbaddress DBADDRESS] [--dbport DBPORT]
+                         [--dbusername DBUSERNAME] [--dbname DBNAME]
+                         [--verbose {info,debug,debug_analyzer}]
+
+Create debug logs and GNU GDB debug dump files for all compilation commands
+whose analysis failed in the most recent analysis run in the database
+specified.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -w WORKSPACE, --workspace WORKSPACE
+                        Directory where CodeChecker can find analysis result
+                        related data, such as the database. (Cannot be
+                        specified at the same time with '--sqlite' and '--
+                        output'.) (default: /home/<username>/.codechecker)
+  -o OUTPUT_DIR, --output OUTPUT_DIR
+                        Directory where the created files should be put to.
+                        (default: /home/<username>/.codechecker/dumps)
+  -f, --force           Overwrite already existing debug files. (default:
+                        False)
+  --verbose {info,debug,debug_analyzer}
+                        Set verbosity level. (default: info)
+
+database arguments:
+  --sqlite SQLITE_FILE  Path of the SQLite database file to use. (default:
+                        /home/<username>/.codechecker/codechecker.sqlite)
+  --postgresql          Specifies that a PostgreSQL database is to be used
+                        instead of SQLite. See the "PostgreSQL arguments"
+                        section on how to configure the database connection.
+
+PostgreSQL arguments:
+  Values of these arguments are ignored, unless '--postgresql' is specified!
+
+  --dbaddress DBADDRESS, --db-host DBADDRESS
+                        Database server address. (default: localhost)
+  --dbport DBPORT, --db-port DBPORT
+                        Database server port. (default: 5432)
+  --dbusername DBUSERNAME, --db-username DBUSERNAME
+                        Username to use for connection. (default: codechecker)
+  --dbname DBNAME, --db-name DBNAME
+                        Name of the database to use. (default: codechecker)
+~~~~~~~~~~~~~~~~~~~~~
 
 ## Example Usage
 

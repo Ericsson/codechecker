@@ -172,32 +172,6 @@ CodeChecker quickcheck -b "cd ~/myproject && make"
         logger.add_verbose_arguments(checker_p)
         checker_p.set_defaults(func=arg_handler.handle_list_checkers)
 
-        # --------------------------------------
-        # Debug parser.
-        debug_parser = subparsers.add_parser('debug',
-                                             formatter_class=ADHF,
-                                             help='Generate gdb debug dump '
-                                                  'files for all the failed '
-                                                  'compilation commands in '
-                                                  'the last analyzer run.\n'
-                                                  'Requires a database with '
-                                                  'the failed compilation '
-                                                  'commands.')
-        old_subcommands.append('debug')
-
-        debug_parser.add_argument('-w', '--workspace', type=str,
-                                  dest="workspace",
-                                  default=util.get_default_workspace(),
-                                  help=workspace_help_msg)
-
-        debug_parser.add_argument('-f', '--force', action="store_true",
-                                  dest="force", required=False, default=False,
-                                  help='Overwrite already generated files.')
-
-        add_database_arguments(debug_parser)
-        logger.add_verbose_arguments(debug_parser)
-        debug_parser.set_defaults(func=arg_handler.handle_debug)
-
         if subcommands:
             # Load the 'libcodechecker' module and acquire its path.
             file, path, descr = imp.find_module("libcodechecker")
