@@ -188,6 +188,7 @@ def main(args):
         sys.exit(2)
 
     for input_path in args.input:
+        input_path = os.path.abspath(input_path)
         os.chdir(original_cwd)
         LOG.debug("Parsing input argument: '" + input_path + "'")
 
