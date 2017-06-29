@@ -12,6 +12,11 @@ QUICKCHECK#CodeChecker quickcheck --build "make multi_error" --quiet-build --ana
 [] - Successfully analyzed
 [] -   clangsa: 1
 [] - ----=================----
+[] - Analysis finished.
+[] - To view results in the terminal use the "CodeChecker parse" command.
+[] - To store results use the "CodeChecker store" command.
+[] - See --help and the user guide for further options about parsing and storing the reports.
+[] - ----=================----
 multi_error.cpp:9:3: Value stored to 'y' is never read [deadcode.DeadStores]
   y = 7;
   ^

@@ -12,4 +12,9 @@ QUICKCHECK#CodeChecker quickcheck --build "make nofail" --quiet-build --analyzer
 [] - Successfully analyzed
 [] -   clangsa: 1
 [] - ----=================----
+[] - Analysis finished.
+[] - To view results in the terminal use the "CodeChecker parse" command.
+[] - To store results use the "CodeChecker store" command.
+[] - See --help and the user guide for further options about parsing and storing the reports.
+[] - ----=================----
 clangsa found no defects while analyzing nofail.cpp

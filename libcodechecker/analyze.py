@@ -291,3 +291,11 @@ def main(args):
     LOG.debug("Analysis metadata write to '" + metadata_path + "'")
     with open(metadata_path, 'w') as metafile:
         json.dump(metadata, metafile)
+
+    LOG.info("Analysis finished.")
+    LOG.info("To view results in the terminal use the "
+             "\"CodeChecker parse\" command.")
+    LOG.info("To store results use the \"CodeChecker store\" command.")
+    LOG.info("See --help and the user guide for further options about"
+             " parsing and storing the reports.")
+    LOG.info("----=================----")
