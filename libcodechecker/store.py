@@ -366,6 +366,7 @@ def main(args):
     skip_handlers = []
     items = []
     for input_path in args.input:
+        input_path = os.path.abspath(input_path)
         LOG.debug("Parsing input argument: '" + input_path + "'")
 
         if os.path.isfile(input_path):

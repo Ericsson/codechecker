@@ -198,6 +198,7 @@ class SQLServer(object):
                 data_file = os.path.join(args.workspace, 'codechecker.sqlite')
             else:
                 data_file = args.sqlite
+            data_file = os.path.abspath(data_file)
             return SQLiteDatabase(data_file, migration_root, run_env=env)
 
     def check_db_version(self, db_version_info, session=None):
