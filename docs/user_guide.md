@@ -8,45 +8,60 @@ The main script can be started with different options.
 
 ~~~~~~~~~~~~~~~~~~~~~
 usage: CodeChecker [-h]
-
-                   {check,quickcheck,log,checkers,server,cmd,debug,plist,version}
+                   {checkers,analyze,analyzers,check,cmd,debug,log,parse,plist,quickcheck,server,store,version}
                    ...
 
 Run the CodeChecker source analyzer framework.
 See the subcommands for specific features.
 
 positional arguments:
-  {check,quickcheck,log,checkers,server,cmd,debug,plist,version}
+  {checkers,analyze,analyzers,check,cmd,debug,log,parse,plist,quickcheck,server,store,version}
                         commands
-    check               Run the supported source code analyzers on a project.
-    quickcheck          Run CodeChecker for aproject without database.
-    log                 Runs the given build command. During the build the
-                        compilation commands are collected and stored into a
-                        compilation command json file (no analysis is done
-                        during the build).
     checkers            List the available checkers for the supported
                         analyzers and show their default status (+ for being
                         enabled, - for being disabled by default).
-    server              Start the codechecker web server.
-    cmd                 Command line client
-    debug               Generate gdb debug dump files for all the failed
-                        compilation commands in the last analyzer run.
-                        Requires a database with the failed compilation
-                        commands.
-    plist               Parse plist files in the given directory.
-    version             Print package version information.
+    analyze             Execute the supported code analyzers for the files
+                        recorded in a JSON Compilation Database.
+    analyzers           List supported and available analyzers.
+    check               Perform analysis on a project and store results to
+                        database.
+    checkers            List the checkers available in code analysis.
+    cmd                 View analysis results on a running server from the
+                        command line.
+    debug               Create debug log files and GDB dumps for the failed
+                        commands in the most recent run.
+    log                 Run a build command and collect the executed
+                        compilation commands, storing them in a JSON file.
+    parse               Print analysis summary and results in a human-readable
+                        format.
+    plist               Use plist files in a given directory to pretty-print
+                        or store the results.
+    quickcheck          Perform analysis on a project and print results to
+                        standard output.
+    server              Start and manage the CodeChecker Web server
+    store               Save analysis results to a database.
+    version             Print the version of CodeChecker package that is being
+                        used.
 
 optional arguments:
   -h, --help            show this help message and exit
-
+  
 Example usage:
 --------------
 Analyzing a project with default settings:
-CodeChecker check -w ~/workspace -b "cd ~/myproject && make" -n myproject
+CodeChecker check -b "cd ~/myproject && make" -n myproject
 
 Start the viewer to see the results:
-CodeChecker server -w ~/workspace
+CodeChecker server
 
+See the results in a web browser: localhost:8001
+See results in  the command line: CodeChecker cmd results -p 8001 -n myproject
+
+To analyze a small project quickcheck feature can be used.
+The results will be printed only to the standard output.
+(No database will be used)
+
+CodeChecker quickcheck -b "cd ~/myproject && make"
 ~~~~~~~~~~~~~~~~~~~~~
 
 
