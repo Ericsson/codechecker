@@ -12,6 +12,11 @@ QUICKCHECK#CodeChecker quickcheck --build "make simple1" --quiet-build --analyze
 [] - Successfully analyzed
 [] -   clangsa: 1
 [] - ----=================----
+[] - Analysis finished.
+[] - To view results in the terminal use the "CodeChecker parse" command.
+[] - To store results use the "CodeChecker store" command.
+[] - See --help and the user guide for further options about parsing and storing the reports.
+[] - ----=================----
 simple1.cpp:18:15: Division by zero [core.DivideZero]
   return 2015 / x;
               ^

@@ -12,6 +12,11 @@ QUICKCHECK#CodeChecker quickcheck --build "make multi_error_suppress" --quiet-bu
 [] - Successfully analyzed
 [] -   clangsa: 1
 [] - ----=================----
+[] - Analysis finished.
+[] - To view results in the terminal use the "CodeChecker parse" command.
+[] - To store results use the "CodeChecker store" command.
+[] - See --help and the user guide for further options about parsing and storing the reports.
+[] - ----=================----
 multi_error_suppress.cpp:3:3: Address of stack memory associated with local variable 'x' returned to caller [core.StackAddressEscape]
   return &x;
   ^
