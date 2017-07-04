@@ -47,7 +47,11 @@ def check(codechecker_cfg, test_project_name, test_project_path):
                  '-n', test_project_name,
                  '-b', "'" + build_cmd + "'",
                  '--analyzers', 'clangsa',
-                 '--quiet-build']
+                 '--quiet-build', '--verbose', 'debug']
+
+    check_cmd.extend(['--host', 'localhost',
+                      '--port', str(codechecker_cfg['viewer_port'])
+                      ])
 
     suppress_file = codechecker_cfg.get('suppress_file')
     if suppress_file:
@@ -59,21 +63,11 @@ def check(codechecker_cfg, test_project_name, test_project_path):
 
     check_cmd.extend(codechecker_cfg['checkers'])
 
-    psql_cfg = codechecker_cfg.get('pg_db_config')
-    if psql_cfg:
-        check_cmd.append('--postgresql')
-        check_cmd += _pg_db_config_to_cmdline_params(psql_cfg)
-
     try:
         print(' '.join(check_cmd))
-        proc = subprocess.Popen(shlex.split(' '.join(check_cmd)),
-                                cwd=test_project_path,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE,
-                                env=codechecker_cfg['check_env'])
-        out, err = proc.communicate()
-        print(out)
-        print(err)
+        proc = subprocess.call(shlex.split(' '.join(check_cmd)),
+                               cwd=test_project_path,
+                               env=codechecker_cfg['check_env'])
         return 0
 
     except CalledProcessError as cerr:
@@ -90,9 +84,8 @@ def serv_cmd(codechecker_cfg, test_config):
     if suppress_file:
         server_cmd.extend(['--suppress', suppress_file])
 
-    server_cmd.extend(['--check-port',
-                       str(codechecker_cfg['server_port']),
-                       '--view-port',
+    server_cmd.extend(['--host', 'localhost',
+                       '--port',
                        str(codechecker_cfg['viewer_port'])
                        ])
 

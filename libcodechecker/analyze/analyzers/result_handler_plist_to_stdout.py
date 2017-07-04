@@ -157,7 +157,7 @@ class PlistToStdout(ResultHandler):
                 (self.buildaction.analyzer_type, non_suppressed,
                  basefile_print))
 
-    def handle_results(self):
+    def handle_results(self, client=None):
         plist = self.analyzer_result_file
 
         try:

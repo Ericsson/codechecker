@@ -27,10 +27,7 @@ thrift: build_dir
 	if [ -d "$(BUILD_DIR)/gen-js" ]; then rm -rf $(BUILD_DIR)/gen-js; fi
 
 	thrift -r -o $(BUILD_DIR) -I api/ \
-		--gen py api/report_storage_server.thrift
-
-	thrift -r -o $(BUILD_DIR) -I api/ \
-		--gen py --gen js:jquery api/report_viewer_server.thrift
+		--gen py --gen js:jquery api/report_server.thrift
 
 	thrift -r -o $(BUILD_DIR) -I api/ \
 		--gen py api/authentication.thrift

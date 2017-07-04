@@ -4,8 +4,8 @@
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
 """
-Main viewer server starts a http server which handles thrift client
-and browser requests
+Main server starts a http server which handles Thrift client
+and browser requests.
 """
 import atexit
 import base64
@@ -14,7 +14,6 @@ from multiprocessing.pool import ThreadPool
 import os
 import posixpath
 import socket
-import sys
 import urllib
 
 try:
@@ -314,7 +313,7 @@ def start_server(package_data, port, db_conn_string, suppress_handler,
     """
     Start http server to handle web client and thrift requests.
     """
-    LOG.debug("Starting CodeChecker viewer server...")
+    LOG.debug("Starting CodeChecker server...")
 
     LOG.debug("Using suppress file '{0}'"
               .format(suppress_handler.suppress_file))
@@ -333,7 +332,7 @@ def start_server(package_data, port, db_conn_string, suppress_handler,
                               os.path.abspath(context.codechecker_workspace),
                               port)
 
-    LOG.info("Viewer server waiting for client requests on [{0}:{1}]"
+    LOG.info("Server waiting for client requests on [{0}:{1}]"
              .format(listen_address, str(port)))
 
     atexit.register(instance_manager.unregister, os.getpid())

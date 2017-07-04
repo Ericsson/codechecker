@@ -11,7 +11,6 @@ import os
 import platform
 import re
 
-from libcodechecker import client
 from libcodechecker.analyze import analyzer_env
 from libcodechecker.analyze import host_check
 from libcodechecker.analyze.analyzers import analyzer_clang_tidy
@@ -335,10 +334,8 @@ def __build_clang_tidy_config_handler(args, context):
     return config_handler
 
 
-def build_config_handlers(args, context, enabled_analyzers, connection=None):
+def build_config_handlers(args, context, enabled_analyzers):
     """
-    Construct multiple config handlers and if there is a connection.
-    Store configs into the database.
 
     Handle config from command line or from config file if no command line
     config is given.
@@ -347,7 +344,6 @@ def build_config_handlers(args, context, enabled_analyzers, connection=None):
     no standard lib for yaml parsing is available in python.
     """
 
-    run_id = context.run_id
     analyzer_config_map = {}
 
     for ea in enabled_analyzers:
@@ -356,16 +352,8 @@ def build_config_handlers(args, context, enabled_analyzers, connection=None):
         elif ea == CLANG_TIDY:
             config_handler = __build_clang_tidy_config_handler(args, context)
         else:
-            assert False, 'Analyzer types should have been checked already.'
+            LOG.debug("Unhandled analyzer: " + str(ea))
         analyzer_config_map[ea] = config_handler
-
-    if connection:
-        # Collect all configuration options and store them together.
-        configs = []
-        for _, config_handler in analyzer_config_map.items():
-            configs.extend(config_handler.get_checker_configs())
-
-        client.replace_config_in_db(run_id, connection, configs)
 
     return analyzer_config_map
 
@@ -380,9 +368,8 @@ def construct_analyze_handler(buildaction,
     actual parsing and processing of results, instead only saves the analysis
     results.
     """
-
-    assert buildaction.analyzer_type in supported_analyzers, \
-        'Analyzer types should have been checked already.'
+    if buildaction.analyzer_type not in supported_analyzers:
+        return None
 
     if buildaction.analyzer_type == CLANG_SA:
         res_handler = result_handler_base.ResultHandler(buildaction,
@@ -405,8 +392,8 @@ def construct_parse_handler(buildaction,
     """
     Construct a result handler for parsing results in a human-readable format.
     """
-    assert buildaction.analyzer_type in supported_analyzers, \
-        'Analyzer types should have been checked already.'
+    if buildaction.analyzer_type not in supported_analyzers:
+        return None
 
     if buildaction.analyzer_type == CLANG_SA:
         res_handler = result_handler_plist_to_stdout.PlistToStdout(
@@ -432,20 +419,9 @@ def construct_store_handler(buildaction,
     """
     Construct a result handler for storing results in a database.
     """
-    assert buildaction.analyzer_type in supported_analyzers, \
-        'Analyzer types should have been checked already.'
-
-    if buildaction.analyzer_type == CLANG_SA:
-        res_handler = result_handler_plist_to_db.PlistToDB(
-            buildaction,
-            None,
-            run_id)
-
-    elif buildaction.analyzer_type == CLANG_TIDY:
-        res_handler = result_handler_clang_tidy.ClangTidyPlistToDB(
-            buildaction,
-            None,
-            run_id)
-
+    res_handler = result_handler_plist_to_db.PlistToDB(
+        buildaction,
+        None,
+        run_id)
     res_handler.severity_map = severity_map
     return res_handler

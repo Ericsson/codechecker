@@ -4,10 +4,11 @@
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
 """
-Handle thrift requests.
+Handle Thrift requests.
 """
 
 from collections import defaultdict
+import base64
 import codecs
 import os
 import zlib
@@ -96,6 +97,12 @@ class ThriftRequestHandler():
         self.__suppress_handler = suppress_handler
         self.__package_version = package_version
         self.__session = session
+        self.report_ident = sqlalchemy.orm.query.Bundle('report_ident',
+                                                        Report.id,
+                                                        Report.bug_id,
+                                                        Report.run_id,
+                                                        Report.start_bugevent,
+                                                        Report.start_bugpoint)
 
     def __queryReport(self, reportId):
         session = self.__session
@@ -1314,3 +1321,628 @@ class ThriftRequestHandler():
                                            diff_hashes,
                                            run_id,
                                            report_filters)
+
+    def __sequence_deleter(self, table, first_id):
+        """Delete points of sequence in a general way."""
+        next_id = first_id
+        while next_id:
+            item = self.__session.query(table).get(next_id)
+            if item:
+                next_id = item.next
+                self.__session.delete(item)
+            else:
+                break
+
+    def __del_source_file_for_report(self, run_id, report_id, report_file_id):
+        """
+        Delete the stored file if there are no report references to it
+        in the database.
+        """
+        report_reference_to_file = self.__session.query(Report) \
+            .filter(
+            and_(Report.run_id == run_id,
+                 Report.file_id == report_file_id,
+                 Report.id != report_id))
+        rep_ref_count = report_reference_to_file.count()
+        if rep_ref_count == 0:
+            LOG.debug("No other references to the source file \n id: " +
+                      str(report_file_id) + " can be deleted.")
+            # There are no other references to the file, it can be deleted.
+            self.__session.query(File).filter(File.id == report_file_id) \
+                .delete()
+        return rep_ref_count
+
+    def __del_buildaction_results(self, build_action_id, run_id):
+        """
+        Delete the build action and related analysis results from the database.
+
+        Report entry will be deleted by ReportsToBuildActions cascade delete.
+        """
+        LOG.debug("Cleaning old buildactions")
+
+        try:
+            rep_to_ba = self.__session.query(ReportsToBuildActions) \
+                .filter(ReportsToBuildActions.build_action_id ==
+                        build_action_id)
+
+            reports_to_delete = [r.report_id for r in rep_to_ba]
+
+            LOG.debug("Trying to delete reports belonging to the buildaction:")
+            LOG.debug(reports_to_delete)
+
+            for report_id in reports_to_delete:
+                # Check if there is another reference to this report from
+                # other buildactions.
+                other_reference = self.__session.query(ReportsToBuildActions) \
+                    .filter(
+                    and_(ReportsToBuildActions.report_id == report_id,
+                         ReportsToBuildActions.build_action_id !=
+                         build_action_id))
+
+                LOG.debug("Checking report id:" + str(report_id))
+
+                LOG.debug("Report id " + str(report_id) +
+                          " reference count: " +
+                          str(other_reference.count()))
+
+                if other_reference.count() == 0:
+                    # There is no other reference, data related to the report
+                    # can be deleted.
+                    report = self.__session.query(Report).get(report_id)
+                    if report:
+                        LOG.debug("Removing bug path events.")
+                        self.__sequence_deleter(BugPathEvent,
+                                                report.start_bugevent)
+                        LOG.debug("Removing bug report points.")
+                        self.__sequence_deleter(BugReportPoint,
+                                                report.start_bugpoint)
+
+                        if self.__del_source_file_for_report(run_id, report.id,
+                                                             report.file_id):
+                            LOG.debug("Stored source file needs to be kept, "
+                                      "there is reference to it from another "
+                                      "report.")
+                            # Report needs to be deleted if there is
+                            # no reference the file cascade delete will
+                            # remove it else manual cleanup is needed.
+                            self.__session.delete(report)
+                    else:
+                        LOG.debug("Report migth be deleted already")
+
+            self.__session.query(BuildAction).filter(
+                BuildAction.id == build_action_id) \
+                .delete()
+
+            self.__session.query(ReportsToBuildActions).\
+                filter(ReportsToBuildActions.build_action_id ==
+                       build_action_id).\
+                delete()
+        except Exception as ex:
+            raise shared.ttypes.RequestFailed(
+                shared.ttypes.ErrorCode.GENERAL,
+                str(ex))
+
+    @timeit
+    def addCheckerRun(self, command, name, version, force):
+        """
+        Store checker run related data to the database.
+        By default updates the results if name already exists.
+        Using the force flag removes existing analysis results for a run.
+        """
+        try:
+            LOG.debug("adding checker run")
+            run = self.__session.query(Run).filter(Run.name == name).first()
+            if run and force:
+                # Clean already collected results.
+                if not run.can_delete:
+                    # Deletion is already in progress.
+                    msg = "Can't delete " + str(run.id)
+                    LOG.debug(msg)
+                    raise shared.ttypes.RequestFailed(
+                        shared.ttypes.ErrorCode.DATABASE,
+                        msg)
+
+                LOG.info('Removing previous analysis results ...')
+                self.__session.delete(run)
+                self.__session.commit()
+
+                checker_run = Run(name, version, command)
+                self.__session.add(checker_run)
+                self.__session.commit()
+                return checker_run.id
+
+            elif run:
+                # There is already a run, update the results.
+                run.date = datetime.now()
+                # Increment update counter and the command.
+                run.inc_count += 1
+                run.command = command
+                self.__session.commit()
+                return run.id
+            else:
+                # There is no run create new.
+                checker_run = Run(name, version, command)
+                self.__session.add(checker_run)
+                self.__session.commit()
+                return checker_run.id
+        except Exception as ex:
+            raise shared.ttypes.RequestFailed(
+                shared.ttypes.ErrorCode.GENERAL,
+                str(ex))
+
+    @timeit
+    def finishCheckerRun(self, run_id):
+        """
+        """
+        try:
+            LOG.debug("Finishing checker run")
+            run = self.__session.query(Run).get(run_id)
+            if not run:
+                return False
+
+            run.mark_finished()
+            self.__session.commit()
+            return True
+
+        except Exception as ex:
+            LOG.error(ex)
+            return False
+
+    @timeit
+    def setRunDuration(self, run_id, duration):
+        """
+        """
+        try:
+            LOG.debug("setting run duartion")
+            run = self.__session.query(Run).get(run_id)
+            if not run:
+                return False
+
+            run.duration = duration
+            self.__session.commit()
+            return True
+        except Exception as ex:
+            LOG.error(ex)
+            return false
+
+    @timeit
+    def replaceConfigInfo(self, run_id, config_values):
+        """
+        Removes all the previously stored config information and stores the
+        new values.
+        """
+        try:
+            LOG.debug("Replacing config info")
+            count = self.__session.query(Config) \
+                .filter(Config.run_id == run_id) \
+                .delete()
+            LOG.debug('Config: ' + str(count) + ' removed item.')
+
+            configs = [Config(
+                run_id, info.checker_name, info.attribute, info.value) for
+                info in config_values]
+            self.__session.bulk_save_objects(configs)
+            self.__session.commit()
+            return True
+
+        except Exception as ex:
+            LOG.error(ex)
+            return False
+
+    @timeit
+    def addBuildAction(self,
+                       run_id,
+                       build_cmd_hash,
+                       check_cmd,
+                       analyzer_type,
+                       analyzed_source_file):
+        """
+        """
+        try:
+            LOG.debug("Storign buildaction")
+            LOG.debug(run_id)
+            LOG.debug(build_cmd_hash)
+            LOG.debug(check_cmd)
+            LOG.debug(analyzer_type)
+            LOG.debug(analyzed_source_file)
+
+            build_actions = \
+                self.__session.query(BuildAction) \
+                    .filter(
+                    and_(BuildAction.run_id == run_id,
+                         BuildAction.build_cmd_hash == build_cmd_hash,
+                         or_(
+                             and_(
+                                 BuildAction.analyzer_type == analyzer_type,
+                                 BuildAction.analyzed_source_file ==
+                                 analyzed_source_file),
+                             and_(BuildAction.analyzer_type == "",
+                                  BuildAction.analyzed_source_file == "")
+                         ))) \
+                    .all()
+
+            if build_actions:
+                # Delete the already stored buildaction and analysis results.
+                for build_action in build_actions:
+                    self.__del_buildaction_results(build_action.id, run_id)
+
+                self.__session.commit()
+
+            action = BuildAction(run_id,
+                                 build_cmd_hash,
+                                 check_cmd,
+                                 analyzer_type,
+                                 analyzed_source_file)
+            self.__session.add(action)
+            self.__session.commit()
+
+            return action.id
+
+        except Exception as ex:
+            LOG.error(ex)
+            raise
+
+    @timeit
+    def finishBuildAction(self, action_id, failure):
+        """
+        """
+        try:
+            action = self.__session.query(BuildAction).get(action_id)
+            if action is None:
+                # TODO: if file is not needed update reportsToBuildActions.
+                return False
+
+            failure = \
+                failure.decode('unicode_escape').encode('ascii', 'ignore')
+
+            action.mark_finished(failure)
+            self.__session.commit()
+            return True
+
+        except Exception as ex:
+            LOG.error(ex)
+            return False
+
+    @timeit
+    def needFileContent(self, run_id, filepath):
+        """
+        """
+        try:
+            f = self.__session.query(File) \
+                .filter(and_(File.run_id == run_id,
+                             File.filepath == filepath)) \
+                .one_or_none()
+        except Exception as ex:
+            raise shared.ttypes.RequestFailed(
+                shared.ttypes.ErrorCode.GENERAL,
+                str(ex))
+
+        run_inc_count = self.__session.query(Run).get(run_id).inc_count
+        needed = False
+        if not f:
+            needed = True
+            f = File(run_id, filepath)
+            self.__session.add(f)
+            self.__session.commit()
+        elif f.inc_count < run_inc_count:
+            needed = True
+            f.inc_count = run_inc_count
+            self.__session.commit()
+        return NeedFileResult(needed, f.id)
+
+    @timeit
+    def addFileContent(self, fid, content):
+        """
+        """
+        content = base64.b64decode(content)
+        try:
+            f = self.__session.query(File).get(fid)
+            compresssed_content = zlib.compress(content,
+                                                zlib.Z_BEST_COMPRESSION)
+            f.addContent(compresssed_content)
+            self.__session.commit()
+            return True
+
+        except Exception as ex:
+            LOG.debug(ex)
+            return False
+
+    def __is_same_event_path(self, start_bugevent_id, events):
+        """
+        Checks if the given event path is the same as the one in the
+        events argument.
+        """
+        try:
+            # There should be at least one bug event.
+            point2 = self.__session.query(BugPathEvent).get(start_bugevent_id)
+
+            for point1 in events:
+                if point1.startLine != point2.line_begin or \
+                        point1.startCol != point2.col_begin or \
+                        point1.endLine != point2.line_end or \
+                        point1.endCol != point2.col_end or \
+                        point1.msg != point2.msg or \
+                        point1.fileId != point2.file_id:
+                    return False
+
+                if point2.next is None:
+                    return point1 == events[-1]
+
+                point2 = self.__session.query(BugPathEvent).get(point2.next)
+
+        except Exception as ex:
+            raise shared.ttypes.RequestFailed(
+                shared.ttypes.ErrorCode.GENERAL,
+                str(ex))
+
+    @timeit
+    def storeReportInfo(self,
+                        action,
+                        file_id,
+                        bug_hash,
+                        msg,
+                        bugpath,
+                        events,
+                        checker_id,
+                        checker_cat,
+                        bug_type,
+                        severity,
+                        suppressed=False):
+        """
+        """
+        try:
+            LOG.debug("storing bug path")
+            path_ids = self.__storeBugPath(bugpath)
+            LOG.debug("storing events")
+            event_ids = self.__storeBugEvents(events)
+            path_start = path_ids[0].id if len(path_ids) > 0 else None
+
+            LOG.debug("getting source file for report")
+            source_file = self.__session.query(File).get(file_id)
+            _, source_file_name = os.path.split(source_file.filepath)
+
+            LOG.debug("Checking if suppressed")
+            # Old suppress format did not contain file name.
+            suppressed = self.__session.query(SuppressBug).filter(
+                and_(SuppressBug.run_id == action.run_id,
+                     SuppressBug.hash == bug_hash,
+                     or_(SuppressBug.file_name == source_file_name,
+                         SuppressBug.file_name == u''))).count() > 0
+
+            LOG.debug("initializing report")
+            report = Report(action.run_id,
+                            bug_hash,
+                            file_id,
+                            msg,
+                            path_start,
+                            event_ids[0].id,
+                            event_ids[-1].id,
+                            checker_id,
+                            checker_cat,
+                            bug_type,
+                            severity,
+                            suppressed)
+
+            self.__session.add(report)
+            self.__session.commit()
+            LOG.debug("extending reports to ba table")
+            # Commit required to get the ID of the newly added report.
+            reportToActions = ReportsToBuildActions(report.id, action.id)
+            self.__session.add(reportToActions)
+            # Avoid data loss for duplicate keys.
+            self.__session.commit()
+            LOG.debug("Storing report done")
+            return report.id
+        except Exception as ex:
+            raise shared.ttypes.RequestFailed(
+                shared.ttypes.ErrorCode.GENERAL,
+                str(ex))
+
+    @timeit
+    def addReport(self,
+                  build_action_id,
+                  file_id,
+                  bug_hash,
+                  msg,
+                  bugpath,
+                  events,
+                  checker_id,
+                  checker_cat,
+                  bug_type,
+                  severity,
+                  suppress):
+        """
+        """
+        try:
+            LOG.debug("store report")
+            action = self.__session.query(BuildAction).get(build_action_id)
+            assert action is not None
+
+            checker_id = checker_id or 'NOT FOUND'
+
+            # TODO: performance issues when executing the following query on
+            # large databases?
+            reports = self.__session.query(self.report_ident) \
+                .filter(and_(self.report_ident.c.bug_id == bug_hash,
+                             self.report_ident.c.run_id == action.run_id))
+            try:
+                # Check for duplicates by bug hash.
+                LOG.debug("checking duplicates")
+                if reports.count() != 0:
+                    for possib_dup in reports:
+                        LOG.debug("there is a possible duplicate")
+                        # It's a duplicate or a hash clash. Check checker name,
+                        # file id, and position.
+                        dup_report_obj = self.__session.query(Report).get(
+                            possib_dup.report_ident.id)
+                        if dup_report_obj and \
+                                dup_report_obj.checker_id == checker_id and \
+                                dup_report_obj.file_id == file_id and \
+                                self.__is_same_event_path(
+                                    dup_report_obj.start_bugevent, events):
+                            # It's a duplicate.
+                            LOG.debug("it is a duplicate")
+                            rtp = self.__session.query(ReportsToBuildActions) \
+                                .get((dup_report_obj.id,
+                                      action.id))
+                            if not rtp:
+                                LOG.debug("no rep to ba entry found")
+                                reportToActions = ReportsToBuildActions(
+                                    dup_report_obj.id, action.id)
+                                self.__session.add(reportToActions)
+                                self.__session.commit()
+                            LOG.debug("rep to ba entry found")
+                            LOG.debug("returning duplicate id")
+                            LOG.debug(dup_report_obj.id)
+
+                            return dup_report_obj.id
+
+                LOG.debug("no duplicate storing report")
+                return self.storeReportInfo(action,
+                                            file_id,
+                                            bug_hash,
+                                            msg,
+                                            bugpath,
+                                            events,
+                                            checker_id,
+                                            checker_cat,
+                                            bug_type,
+                                            severity,
+                                            suppress)
+
+            except sqlalchemy.exc.IntegrityError as ex:
+                self.__session.rollback()
+
+                reports = self.__session.query(self.report_ident) \
+                    .filter(and_(self.report_ident.c.bug_id == bug_hash,
+                                 self.report_ident.c.run_id == action.run_id))
+                if reports.count() != 0:
+                    return reports.first().report_ident.id
+                else:
+                    raise
+        except Exception as ex:
+            self.__session.rollback()
+            raise shared.ttypes.RequestFailed(
+                shared.ttypes.ErrorCode.GENERAL,
+                str(ex))
+
+    def __storeBugEvents(self, bugevents):
+        """
+        """
+        events = []
+        for event in bugevents:
+            bpe = BugPathEvent(event.startLine,
+                               event.startCol,
+                               event.endLine,
+                               event.endCol,
+                               event.msg,
+                               event.fileId)
+            self.__session.add(bpe)
+            events.append(bpe)
+
+        self.__session.flush()
+
+        if len(events) > 1:
+            for i in range(len(events) - 1):
+                events[i].addNext(events[i + 1].id)
+                events[i + 1].addPrev(events[i].id)
+            events[-1].addPrev(events[-2].id)
+        return events
+
+    def __storeBugPath(self, bugpath):
+        paths = []
+        for piece in bugpath:
+            brp = BugReportPoint(piece.startLine,
+                                 piece.startCol,
+                                 piece.endLine,
+                                 piece.endCol,
+                                 piece.fileId)
+            self.__session.add(brp)
+            paths.append(brp)
+
+        self.__session.flush()
+
+        for i in range(len(paths) - 1):
+            paths[i].addNext(paths[i + 1].id)
+
+        return paths
+
+    @timeit
+    def addSuppressBug(self, run_id, bugs_to_suppress):
+        """
+        Supppress multiple bugs for a run. This can be used before storing
+        the suppress file content.
+        """
+
+        try:
+            for bug_to_suppress in bugs_to_suppress:
+                res = self.__session.query(SuppressBug) \
+                    .filter(SuppressBug.hash == bug_to_suppress.bug_hash,
+                            SuppressBug.run_id == run_id,
+                            SuppressBug.file_name == bug_to_suppress.file_name)
+
+                if res.one_or_none():
+                    res.update({'comment': bug_to_suppress.comment})
+                else:
+                    self.__session.add(SuppressBug(run_id,
+                                                   bug_to_suppress.bug_hash,
+                                                   bug_to_suppress.file_name,
+                                                   bug_to_suppress.comment))
+
+            self.__session.commit()
+            return True
+
+        except Exception as ex:
+            LOG.error(str(ex))
+            return False
+
+    @timeit
+    def cleanSuppressData(self, run_id):
+        """
+        Clean the suppress bug entries for a run
+        and remove suppressed flags for the suppressed reports.
+        Only the database is modified.
+        """
+
+        try:
+            count = self.__session.query(SuppressBug) \
+                .filter(SuppressBug.run_id == run_id) \
+                .delete()
+            LOG.debug('Cleaning previous suppress entries from the database.'
+                      '{0} removed items.'.format(str(count)))
+
+            reports = self.__session.query(Report) \
+                .filter(and_(Report.run_id == run_id,
+                             Report.suppressed)) \
+                .all()
+
+            for report in reports:
+                report.suppressed = False
+
+            self.__session.commit()
+            return True
+
+        except Exception as ex:
+            LOG.error(str(ex))
+            return False
+
+    @timeit
+    def addSkipPath(self, run_id, paths):
+        """
+        """
+        try:
+            count = self.__session.query(SkipPath) \
+                .filter(SkipPath.run_id == run_id) \
+                .delete()
+            LOG.debug('SkipPath: ' + str(count) + ' removed item.')
+
+            skipPathList = []
+            for path, comment in paths.items():
+                skipPath = SkipPath(run_id, path, comment)
+                skipPathList.append(skipPath)
+            self.__session.bulk_save_objects(skipPathList)
+            self.__session.commit()
+            return True
+        except Exception as ex:
+            LOG.error(str(ex))
+            return False

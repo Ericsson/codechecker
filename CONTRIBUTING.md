@@ -80,8 +80,6 @@ from codeCheckerDBAccess import codeCheckerDBAccess
 from codeCheckerDBAccess.ttypes import *
 
 # -- 7. libcodechecker and subpackages, etc.
-from libcodechecker import client
-
 from libcodechecker import host_check
 from libcodechecker import util
 from libcodechecker.analyze import analyzer

@@ -75,6 +75,9 @@ def setup_package():
     if ret:
         sys.exit(ret)
 
+    print("Starting server to get results.")
+    _start_server(codechecker_cfg, test_config, False)
+
     test_project_name = project_info['name'] + '_' + uuid.uuid4().hex
 
     ret = codechecker.check(codechecker_cfg,
@@ -84,18 +87,11 @@ def setup_package():
         sys.exit(1)
     print("Analyzing the test project was successful.")
 
-    if pg_db_config:
-        print("Waiting PostgreSQL to stop.")
-        codechecker.wait_for_postgres_shutdown(TEST_WORKSPACE)
-
     codechecker_cfg['run_names'] = [test_project_name]
 
     test_config['codechecker_cfg'] = codechecker_cfg
 
     env.export_test_cfg(TEST_WORKSPACE, test_config)
-
-    print("Starting server to get results.")
-    _start_server(codechecker_cfg, test_config, False)
 
 
 def teardown_package():

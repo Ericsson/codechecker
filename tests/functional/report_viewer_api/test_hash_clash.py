@@ -8,6 +8,7 @@
 """
     report_server_api function tests.
 """
+import base64
 import os
 import random
 import string
@@ -35,6 +36,26 @@ def _generate_content(cols, lines):
 class HashClash(unittest.TestCase):
     """Unit test for testing hash clash handling."""
 
+    def setUp(self):
+        """
+        Not much setup is needed.
+        Runs and results are automatically generated.
+        """
+
+        test_workspace = os.environ['TEST_WORKSPACE']
+
+        test_class = self.__class__.__name__
+        print('Running ' + test_class + ' tests in ' + test_workspace)
+
+        # Get the clang version which is tested.
+        self._clang_to_test = env.clang_to_test()
+
+        self._testproject_data = env.setup_test_proj_cfg(test_workspace)
+        self.assertIsNotNone(self._testproject_data)
+
+        self._report = env.setup_viewer_client(test_workspace)
+        self.assertIsNotNone(self._report)
+
     def _create_run(self, name):
         """Creates a new run using an unique id."""
 
@@ -51,6 +72,7 @@ class HashClash(unittest.TestCase):
         self.assertTrue(need.needed)
 
         content = _generate_content(cols, lines)
+        content = base64.b64encode(content)
         success = self._report.addFileContent(need.fileId, content)
         self.assertTrue(success)
 
@@ -115,17 +137,6 @@ class HashClash(unittest.TestCase):
         yield (run_id, file_id, build_action_id, source_file)
         self._report.finishBuildAction(build_action_id, 'OK')
         self._report.finishCheckerRun(run_id)
-
-    def setUp(self):
-        """
-        Not much setup is needed.
-        Runs and results are automatically generated.
-        """
-        test_workspace = os.environ['TEST_WORKSPACE']
-        self._report = env.setup_server_client(test_workspace)
-
-        test_class = self.__class__.__name__
-        print('Running ' + test_class + ' tests in ' + test_workspace)
 
     def test_hash_clash(self):
         """Runs the following tests:

@@ -4,7 +4,7 @@
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
 """
-Handle thrift requests for authentication
+Handle Thrift requests for authentication.
 """
 
 import shared

@@ -57,7 +57,7 @@ class ThriftAuthHelper():
                     print(str(reqfailure))
 
                 sys.exit(1)
-            except TProtocolException:
+            except TProtocolException as ex:
                 print("Connection failed to {0}:{1}"
                       .format(self.__host, self.__port))
                 sys.exit(1)

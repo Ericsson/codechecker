@@ -194,15 +194,13 @@ Check your project using SQLite database. The database will be placed in your
 workspace directory (`~/.codechecker` by default), which can be provided via
 the `-w` flag.
 
-
-    CodeChecker check -n test-check -b "cd ~/your-project && make clean && make"
-
-
-### Start a web server
-
+Start a CodeChecker web and storage server in another terminal or as a background process. By default it will listen on `localhost:8001'.
 
     CodeChecker server
 
+Analyze your project with the check command.
+
+    CodeChecker check -n test-check -b "cd ~/your-project && make clean && make"
 
 ### View results
 
