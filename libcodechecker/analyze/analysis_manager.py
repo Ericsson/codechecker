@@ -157,6 +157,20 @@ def check(check_data):
                           action.analyzer_type, source_file_name))
             else:
                 # Analysis failed.
+                failed_dir = os.path.join(output_dir, "failed")
+                if not os.path.exists(failed_dir):
+                    os.makedirs(failed_dir)
+                (res_file, ext) = os.path.splitext(rh.analyzer_result_file)
+                err_file = os.path.basename(
+                    res_file)
+                err_file = os.path.join(failed_dir, err_file)
+                LOG.debug("Writing error into:" + err_file + ".error")
+                if (len(rh.analyzer_stderr) > 0):
+                    with open(err_file + ".error", 'w') as orig:
+                        orig.write(rh.analyzer_stderr)
+                if (len(rh.analyzer_stdout) > 0):
+                    with open(err_file + ".stdout", 'w') as orig:
+                        orig.write(rh.analyzer_stdout)
                 LOG.error('Analyzing ' + source_file_name + ' with ' +
                           action.analyzer_type + ' failed.')
                 if rh.analyzer_stdout != '':
