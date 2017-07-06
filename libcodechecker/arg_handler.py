@@ -6,17 +6,11 @@
 """
 Handle old-style subcommand invocation.
 """
-import os
-import socket
 import sys
 
-from libcodechecker import client
 from libcodechecker import generic_package_context
-from libcodechecker import host_check
-from libcodechecker import util
 from libcodechecker.analyze import analyzer_env
 from libcodechecker.analyze.analyzers import analyzer_types
-from libcodechecker.database_handler import SQLServer
 from libcodechecker.logger import LoggerFactory
 
 LOG = LoggerFactory.get_new_logger('ARG_HANDLER')

@@ -22,68 +22,11 @@ import shared
 from libcodechecker import arg_handler
 from libcodechecker import logger
 from libcodechecker.logger import LoggerFactory
-from libcodechecker import util
 from libcodechecker.analyze.analyzers import analyzer_types
 
 LOG = LoggerFactory.get_new_logger('MAIN')
 
 analyzers = ' '.join(list(analyzer_types.supported_analyzers))
-
-
-# -----------------------------------------------------------------------------
-class DeprecatedOptionAction(argparse.Action):
-    """
-    Deprecated argument action.
-    """
-
-    def __init__(self,
-                 option_strings,
-                 dest,
-                 nargs=None,
-                 const=None,
-                 default=None,
-                 type=None,
-                 choices=None,
-                 required=False,
-                 help=None,
-                 metavar=None):
-        super(DeprecatedOptionAction, self). \
-            __init__(option_strings,
-                     dest,
-                     nargs='?',
-                     const='deprecated_option',
-                     default=None,
-                     type=None,
-                     choices=None,
-                     required=False,
-                     help="DEPRECATED argument!",
-                     metavar='DEPRECATED')
-
-    def __call__(self, parser, namespace, value=None, option_string=None):
-        LOG.warning("Deprecated command line option in use: '" +
-                    option_string + "'")
-
-
-def add_database_arguments(parser):
-    """ Helper method for adding database arguments to an argument parser. """
-
-    parser.add_argument('--sqlite', action=DeprecatedOptionAction)
-    parser.add_argument('--postgresql', dest="postgresql",
-                        action='store_true', required=False,
-                        help='Use PostgreSQL database.')
-    parser.add_argument('--dbport', type=int, dest="dbport",
-                        default=5432, required=False,
-                        help='Postgres server port.')
-    # WARNING dbaddress default value influences workspace creation (SQLite).
-    parser.add_argument('--dbaddress', type=str, dest="dbaddress",
-                        default="localhost", required=False,
-                        help='Postgres database server address.')
-    parser.add_argument('--dbname', type=str, dest="dbname",
-                        default="codechecker", required=False,
-                        help='Name of the database.')
-    parser.add_argument('--dbusername', type=str, dest="dbusername",
-                        default='codechecker', required=False,
-                        help='Database user name.')
 
 
 def main(subcommands=None):
@@ -103,29 +46,29 @@ def main(subcommands=None):
 
     try:
         parser = argparse.ArgumentParser(
-            prog='CodeChecker',
+            prog="CodeChecker",
             formatter_class=argparse.RawDescriptionHelpFormatter,
-            description='''
-Run the CodeChecker source analyzer framework.
-See the subcommands for specific features.''',
-            epilog='''
-Example usage:
---------------
-Analyzing a project with default settings:
-CodeChecker check -b "cd ~/myproject && make" -n myproject
+            description="""Run the CodeChecker sourcecode analyzer framework.
+Please specify a subcommand to access individual features.""",
+            epilog="""Example scenario: Analyzing, and storing results
+------------------------------------------------
+Analyze a project with default settings:
+    CodeChecker check -b "cd ~/myproject && make" -n myproject
 
 Start the viewer to see the results:
-CodeChecker server
+    CodeChecker server
 
-See the results in a web browser: localhost:8001
-See results in  the command line: CodeChecker cmd results -p 8001 -n myproject
+The results can be viewed:
+ * In a web browser: http://localhost:8001
+ * In the command line:
+    CodeChecker cmd results -p 8001 -n myproject
 
-To analyze a small project quickcheck feature can be used.
-The results will be printed only to the standard output.
-(No database will be used)
+Example scenario: Analyzing, and printing results to Terminal (no storage)
+--------------------------------------------------------------------------
+In this case, no database is used, and the results are printed on the standard
+output.
 
-CodeChecker quickcheck -b "cd ~/myproject && make"
-''')
+    CodeChecker quickcheck -b "cd ~/myproject && make\"""")
 
         subparsers = parser.add_subparsers(help='commands')
 
@@ -147,9 +90,6 @@ CodeChecker quickcheck -b "cd ~/myproject && make"
             # behaviour commands are deprecated. We don't warn between 5.8 and
             # 6.0 for now.
             # sys.stderr.write(err_msg)
-
-        workspace_help_msg = 'Directory where the CodeChecker can' \
-            ' store analysis related data.'
 
         # --------------------------------------
         # Checkers parser.
