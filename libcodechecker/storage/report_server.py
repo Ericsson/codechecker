@@ -286,7 +286,7 @@ class CheckerReportHandler(object):
                             dup_report_obj.checker_id == checker_id and \
                             dup_report_obj.file_id == file_id and \
                             self.__is_same_event_path(
-                                dup_report_obj.start_bugevent, events):
+                                dup_report_obj.id, events):
 
                         new_status = None
 

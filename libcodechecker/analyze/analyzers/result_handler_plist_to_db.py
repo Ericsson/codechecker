@@ -197,9 +197,7 @@ class PlistToDB(ResultHandler):
                 LOG.error(msg + ' ' + plist_file)
                 return 1
 
-            report_ids = self.__store_bugs(files, reports, connection)
-
-        return report_ids
+            return self.__store_bugs(files, reports, connection)
 
     def postprocess_result(self):
         """
