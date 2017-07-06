@@ -155,18 +155,9 @@ class ThriftClientHelper(object):
     # The next few following functions must be called via the same connection.
     # =============================================================
     @ThriftClientCall
-    def addBuildAction(self, run_id, build_cmd_hash, check_cmd, analyzer_type,
-                       analyzed_source_file):
-        pass
-
-    @ThriftClientCall
-    def addReport(self, build_action_id, file_id, bug_hash, checker_message,
-                  bugpath, events, checker_id, checker_cat, bug_type,
-                  severity, suppress):
-        pass
-
-    @ThriftClientCall
-    def finishBuildAction(self, action_id, failure):
+    def addReport(self, run_id, file_id, bug_hash, checker_message, bugpath,
+                  events, checker_id, checker_cat, bug_type, severity,
+                  suppress):
         pass
 
     @ThriftClientCall

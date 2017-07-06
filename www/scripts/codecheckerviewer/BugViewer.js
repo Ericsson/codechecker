@@ -792,7 +792,6 @@ function (declare, dom, style, on, query, Memory, Observable, topic, entities,
         }
       });
 
-      var detailsDialog = new Dialog({ title : 'Report details' });
       var suppressDialog = new Dialog({ title : 'Suppress bug' });
       var unsuppressDialog = new Dialog({ title : 'Unsuppress bug' });
 
@@ -818,41 +817,6 @@ function (declare, dom, style, on, query, Memory, Observable, topic, entities,
         label : 'Show documentation',
         onClick : function () {
           topic.publish('showDocumentation', that.reportData.checkerId);
-        }
-      }));
-
-      //--- Details ---//
-
-      this.addChild(new Button({
-        label : 'Details',
-        onClick : function () {
-          var content = dom.create('div', { class : 'buildActionInfo' });
-
-          CC_SERVICE.getBuildActions(that.reportData.reportId).forEach(
-          function (buildAction) {
-            var details = dom.create('dl');
-
-            dom.place(
-              dom.create('dt', { innerHTML : 'Check command' }), details);
-            dom.place(
-              dom.create('dd', {
-                innerHTML : buildAction.checkCmd || 'Only in debug mode parsing'
-              }), details);
-            dom.place(
-              dom.create('dt', { innerHTML : 'Failure' }), details);
-            dom.place(
-              dom.create('dd', { innerHTML : buildAction.failure }), details);
-            dom.place(
-              dom.create('dt', { innerHTML : 'Checked file' }), details);
-            dom.place(
-              dom.create('dd', { innerHTML : buildAction.file }), details);
-
-            dom.place(details, content);
-            dom.place(dom.create('hr'), content);
-          });
-
-          detailsDialog.set('content', content);
-          detailsDialog.show();
         }
       }));
 
