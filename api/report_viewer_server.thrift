@@ -133,20 +133,6 @@ enum DiffType {
 }
 
 //-----------------------------------------------------------------------------
-struct BuildActionData {
-  1: i64 id,
-  2: i64 runId,
-  3: string buildCmd,
-  4: string analyzerType,
-  5: string file,
-  6: string checkCmd,
-  7: string failure,
-  8: string date,
-  9: i64 duration
-}
-typedef list<BuildActionData> BuildActionDataList
-
-//-----------------------------------------------------------------------------
 service codeCheckerDBAccess {
 
   // get the run Ids and dates from the database to select one run
@@ -240,11 +226,6 @@ service codeCheckerDBAccess {
   // get the skip list of paths
   SkipPathDataList getSkipPaths(1: i64 runId)
                                 throws (1: shared.RequestFailed requestError),
-
-  // gives back the build Actions that generate the given report.
-  // multiple build actions can belong to a report in a header.
-  BuildActionDataList getBuildActions(1: i64 reportId)
-                                      throws (1: shared.RequestFailed requestError),
 
   // get all the results for one runId
   // count all results for a checker
