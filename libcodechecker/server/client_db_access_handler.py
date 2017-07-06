@@ -770,33 +770,6 @@ class ThriftRequestHandler():
                                               msg)
 
     @timeit
-    def getBuildActions(self, reportId):
-
-        session = self.__session
-        try:
-            build_actions = session.query(BuildAction) \
-                .outerjoin(ReportsToBuildActions) \
-                .filter(ReportsToBuildActions.report_id == reportId) \
-                .all()
-
-            return [BuildActionData(id=ba.id,
-                                    runId=ba.run_id,
-                                    buildCmd=ba.build_cmd_hash,
-                                    analyzerType=ba.analyzer_type,
-                                    file=ba.analyzed_source_file,
-                                    checkCmd=ba.check_cmd,
-                                    failure=ba.failure_txt,
-                                    date=str(ba.date),
-                                    duration=ba.duration) for ba in
-                    build_actions]
-
-        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
-            msg = str(alchemy_ex)
-            LOG.error(msg)
-            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
-                                              msg)
-
-    @timeit
     def getFileId(self, run_id, path):
 
         session = self.__session

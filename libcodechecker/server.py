@@ -376,11 +376,11 @@ def __instance_management(args):
             # A STOP only stops the server associated with the given workspace
             # and view-port.
             if i['hostname'] != socket.gethostname() or (
-                        args.stop and not (i['port'] == args.view_port and
-                                           os.path.abspath(
-                                           i['workspace']) ==
-                                           os.path.abspath(
-                                               args.config_directory))):
+                    args.stop and not (i['port'] == args.view_port and
+                                       os.path.abspath(
+                                       i['workspace']) ==
+                                       os.path.abspath(
+                                           args.config_directory))):
                 continue
 
             try:

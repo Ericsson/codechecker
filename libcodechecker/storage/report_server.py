@@ -45,104 +45,6 @@ class CheckerReportHandler(object):
     information to the database.
     """
 
-    def __sequence_deleter(self, table, first_id):
-        """Delete points of sequence in a general way."""
-        next_id = first_id
-        while next_id:
-            item = self.session.query(table).get(next_id)
-            if item:
-                next_id = item.next
-                self.session.delete(item)
-            else:
-                break
-
-    def __del_source_file_for_report(self, run_id, report_id, report_file_id):
-        """
-        Delete the stored file if there are no report references to it
-        in the database.
-        """
-        report_reference_to_file = self.session.query(Report) \
-            .filter(
-            and_(Report.run_id == run_id,
-                 Report.file_id == report_file_id,
-                 Report.id != report_id))
-        rep_ref_count = report_reference_to_file.count()
-        if rep_ref_count == 0:
-            LOG.debug("No other references to the source file \n id: " +
-                      str(report_file_id) + " can be deleted.")
-            # There are no other references to the file, it can be deleted.
-            self.session.query(File).filter(File.id == report_file_id) \
-                .delete()
-        return rep_ref_count
-
-    def __del_buildaction_results(self, build_action_id, run_id):
-        """
-        Delete the build action and related analysis results from the database.
-
-        Report entry will be deleted by ReportsToBuildActions cascade delete.
-        """
-        LOG.debug("Cleaning old buildactions")
-
-        try:
-            rep_to_ba = self.session.query(ReportsToBuildActions) \
-                .filter(ReportsToBuildActions.build_action_id ==
-                        build_action_id)
-
-            reports_to_delete = [r.report_id for r in rep_to_ba]
-
-            LOG.debug("Trying to delete reports belonging to the buildaction:")
-            LOG.debug(reports_to_delete)
-
-            for report_id in reports_to_delete:
-                # Check if there is another reference to this report from
-                # other buildactions.
-                other_reference = self.session.query(ReportsToBuildActions) \
-                    .filter(
-                    and_(ReportsToBuildActions.report_id == report_id,
-                         ReportsToBuildActions.build_action_id !=
-                         build_action_id))
-
-                LOG.debug("Checking report id:" + str(report_id))
-
-                LOG.debug("Report id " + str(report_id) +
-                          " reference count: " +
-                          str(other_reference.count()))
-
-                if other_reference.count() == 0:
-                    # There is no other reference, data related to the report
-                    # can be deleted.
-                    report = self.session.query(Report).get(report_id)
-
-                    LOG.debug("Removing bug path events.")
-                    self.__sequence_deleter(BugPathEvent,
-                                            report.start_bugevent)
-                    LOG.debug("Removing bug report points.")
-                    self.__sequence_deleter(BugReportPoint,
-                                            report.start_bugpoint)
-
-                    if self.__del_source_file_for_report(run_id, report.id,
-                                                         report.file_id):
-                        LOG.debug("Stored source file needs to be kept, "
-                                  "there is reference to it from another "
-                                  "report.")
-                        # Report needs to be deleted if there is no reference
-                        # the file cascade delete will remove it else manual
-                        # cleanup is needed.
-                        self.session.delete(report)
-
-            self.session.query(BuildAction).filter(
-                BuildAction.id == build_action_id) \
-                .delete()
-
-            self.session.query(ReportsToBuildActions).\
-                filter(ReportsToBuildActions.build_action_id ==
-                       build_action_id).\
-                delete()
-        except Exception as ex:
-            raise shared.ttypes.RequestFailed(
-                shared.ttypes.ErrorCode.GENERAL,
-                str(ex))
-
     @decorators.catch_sqlalchemy
     @timeit
     def addCheckerRun(self, command, name, version, force):
@@ -233,70 +135,6 @@ class CheckerReportHandler(object):
 
     @decorators.catch_sqlalchemy
     @timeit
-    def addBuildAction(self,
-                       run_id,
-                       build_cmd_hash,
-                       check_cmd,
-                       analyzer_type,
-                       analyzed_source_file):
-        """
-        """
-        try:
-
-            build_actions = \
-                self.session.query(BuildAction) \
-                    .filter(
-                    and_(BuildAction.run_id == run_id,
-                         BuildAction.build_cmd_hash == build_cmd_hash,
-                         or_(
-                             and_(
-                                 BuildAction.analyzer_type == analyzer_type,
-                                 BuildAction.analyzed_source_file ==
-                                 analyzed_source_file),
-                             and_(BuildAction.analyzer_type == "",
-                                  BuildAction.analyzed_source_file == "")
-                         ))) \
-                    .all()
-
-            if build_actions:
-                # Delete the already stored buildaction and analysis results.
-                for build_action in build_actions:
-                    self.__del_buildaction_results(build_action.id, run_id)
-
-                self.session.commit()
-
-            action = BuildAction(run_id,
-                                 build_cmd_hash,
-                                 check_cmd,
-                                 analyzer_type,
-                                 analyzed_source_file)
-            self.session.add(action)
-            self.session.commit()
-
-        except Exception as ex:
-            LOG.error(ex)
-            raise
-
-        return action.id
-
-    @decorators.catch_sqlalchemy
-    @timeit
-    def finishBuildAction(self, action_id, failure):
-        """
-        """
-        action = self.session.query(BuildAction).get(action_id)
-        if action is None:
-            # TODO: if file is not needed update reportsToBuildActions.
-            return False
-
-        failure = failure.decode('unicode_escape').encode('ascii', 'ignore')
-
-        action.mark_finished(failure)
-        self.session.commit()
-        return True
-
-    @decorators.catch_sqlalchemy
-    @timeit
     def needFileContent(self, run_id, filepath):
         """
         """
@@ -361,7 +199,7 @@ class CheckerReportHandler(object):
                 str(ex))
 
     def storeReportInfo(self,
-                        action,
+                        run_id,
                         file_id,
                         bug_hash,
                         msg,
@@ -384,12 +222,12 @@ class CheckerReportHandler(object):
 
             # Old suppress format did not contain file name.
             suppressed = self.session.query(SuppressBug).filter(
-                and_(SuppressBug.run_id == action.run_id,
+                and_(SuppressBug.run_id == run_id,
                      SuppressBug.hash == bug_hash,
                      or_(SuppressBug.file_name == source_file_name,
                          SuppressBug.file_name == u''))).count() > 0
 
-            report = Report(action.run_id,
+            report = Report(run_id,
                             bug_hash,
                             file_id,
                             msg,
@@ -404,11 +242,6 @@ class CheckerReportHandler(object):
 
             self.session.add(report)
             self.session.commit()
-            # Commit required to get the ID of the newly added report.
-            reportToActions = ReportsToBuildActions(report.id, action.id)
-            self.session.add(reportToActions)
-            # Avoid data loss for duplicate keys.
-            self.session.commit()
             return report.id
         except Exception as ex:
             raise shared.ttypes.RequestFailed(
@@ -418,7 +251,7 @@ class CheckerReportHandler(object):
     @decorators.catch_sqlalchemy
     @timeit
     def addReport(self,
-                  build_action_id,
+                  run_id,
                   file_id,
                   bug_hash,
                   msg,
@@ -432,16 +265,13 @@ class CheckerReportHandler(object):
         """
         """
         try:
-            action = self.session.query(BuildAction).get(build_action_id)
-            assert action is not None
-
             checker_id = checker_id or 'NOT FOUND'
 
             # TODO: performance issues when executing the following query on
             # large databases?
             reports = self.session.query(self.report_ident) \
                 .filter(and_(self.report_ident.c.bug_id == bug_hash,
-                             self.report_ident.c.run_id == action.run_id))
+                             self.report_ident.c.run_id == run_id))
             try:
                 # Check for duplicates by bug hash.
                 if reports.count() != 0:
@@ -455,18 +285,13 @@ class CheckerReportHandler(object):
                                 dup_report_obj.file_id == file_id and \
                                 self.__is_same_event_path(
                                     dup_report_obj.start_bugevent, events):
-                            # It's a duplicate.
-                            rtp = self.session.query(ReportsToBuildActions) \
-                                .get((dup_report_obj.id,
-                                      action.id))
-                            if not rtp:
-                                reportToActions = ReportsToBuildActions(
-                                    dup_report_obj.id, action.id)
-                                self.session.add(reportToActions)
-                                self.session.commit()
+                            # TODO: It is not clear why this commit is needed
+                            # but if it is not here then the commit in
+                            # finishCheckerRun() hangs.
+                            self.session.commit()
                             return dup_report_obj.id
 
-                return self.storeReportInfo(action,
+                return self.storeReportInfo(run_id,
                                             file_id,
                                             bug_hash,
                                             msg,
@@ -483,7 +308,7 @@ class CheckerReportHandler(object):
 
                 reports = self.session.query(self.report_ident) \
                     .filter(and_(self.report_ident.c.bug_id == bug_hash,
-                                 self.report_ident.c.run_id == action.run_id))
+                                 self.report_ident.c.run_id == run_id))
                 if reports.count() != 0:
                     return reports.first().report_ident.id
                 else:
