@@ -78,14 +78,7 @@ class HashClash(unittest.TestCase):
 
         return need.fileId, path
 
-    def _create_build_action(self, run_id, name, analyzer_type, source_file):
-        """Creates a new build action."""
-
-        return self._report.addBuildAction(run_id, name, name, analyzer_type,
-                                           source_file)
-
-    def _create_simple_report(self, file_id, build_action_id, bug_hash,
-                              position):
+    def _create_simple_report(self, file_id, run_id, bug_hash, position):
         """Creates a new report with one bug path position and event."""
 
         bug_path = [BugPathPos(position[0][0],
@@ -99,7 +92,7 @@ class HashClash(unittest.TestCase):
                                 position[1][1],
                                 'evt',
                                 file_id)]
-        return self._report.addReport(build_action_id,
+        return self._report.addReport(run_id,
                                       file_id,
                                       bug_hash,
                                       'test',
@@ -114,10 +107,10 @@ class HashClash(unittest.TestCase):
     @contextmanager
     def _init_new_test(self, name):
         """
-        Creates a new run, file, and build action.
+        Creates a new run and file.
 
         Use it in a 'with' statement. At the end of the 'with' statement it
-        calls the finish methods for the run and the build action.
+        calls the finish methods for the run.
 
         Example:
             with self._init_new_test('test') as ids:
@@ -130,12 +123,7 @@ class HashClash(unittest.TestCase):
         # analyzer type needs to match with the supported analyzer types
         # clangsa is used for testing
         analyzer_type = 'clangsa'
-        build_action_id = self._create_build_action(run_id,
-                                                    name,
-                                                    analyzer_type,
-                                                    source_file)
-        yield (run_id, file_id, build_action_id, source_file)
-        self._report.finishBuildAction(build_action_id, 'OK')
+        yield (run_id, file_id, source_file)
         self._report.finishCheckerRun(run_id)
 
     def test_hash_clash(self):
@@ -149,32 +137,32 @@ class HashClash(unittest.TestCase):
 
         with self._init_new_test('test1') as ids1, \
                 self._init_new_test('test2') as ids2:
-            _, file_id1, build_action_id1, _ = ids1
-            run_id2, file_id2, build_action_id2, source_file2 = ids2
+            run_id1, file_id1, _ = ids1
+            run_id2, file_id2, source_file2 = ids2
             rep_id1 = self._create_simple_report(file_id1,
-                                                 build_action_id1,
+                                                 run_id1,
                                                  'XXX',
                                                  ((1, 1), (1, 2)))
             rep_id2 = self._create_simple_report(file_id1,
-                                                 build_action_id1,
+                                                 run_id1,
                                                  'XXX',
                                                  ((1, 1), (1, 2)))
             # Same file, same hash and position
             self.assertEqual(rep_id1, rep_id2)
 
             rep_id3 = self._create_simple_report(file_id1,
-                                                 build_action_id1,
+                                                 run_id1,
                                                  'XXX',
                                                  ((2, 1), (2, 2)))
             # Same file, same hash and different position
             self.assertNotEqual(rep_id1, rep_id3)
 
             rep_id4 = self._create_simple_report(file_id2,
-                                                 build_action_id2,
+                                                 run_id2,
                                                  'XXX',
                                                  ((1, 1), (1, 2)))
             rep_id5 = self._create_simple_report(file_id2,
-                                                 build_action_id2,
+                                                 run_id2,
                                                  'YYY',
                                                  ((1, 1), (1, 2)))
             # Different file, same hash, and position
@@ -184,27 +172,8 @@ class HashClash(unittest.TestCase):
             # Same file and position, different hash
             self.assertNotEqual(rep_id4, rep_id5)
 
-            # Analyzer type needs to match with the supported analyzer types
-            # clangsa is used for testing.
-            analyzer_type = 'clangsa'
-            build_action_id2_2 = self._create_build_action(run_id2,
-                                                           'test2_2',
-                                                           analyzer_type,
-                                                           source_file2)
-            try:
-                rep_id6 = self._create_simple_report(file_id2,
-                                                     build_action_id2_2,
-                                                     'XXX',
-                                                     ((1, 1), (1, 2)))
-                # Same run, file, hash, and position, but
-                # different build action.
-                self.assertEqual(rep_id4, rep_id6)
-            finally:
-                self._report.finishBuildAction(build_action_id2_2, 'OK')
-
             rep_id7 = self._create_simple_report(file_id1,
-                                                 build_action_id2,
+                                                 run_id2,
                                                  'XXX',
                                                  ((1, 1), (1, 2)))
-            # build_action_id1 and build_action_id2 is in different runs.
             self.assertNotEqual(rep_id1, rep_id7)
