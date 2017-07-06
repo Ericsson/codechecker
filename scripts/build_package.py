@@ -605,23 +605,36 @@ def build_package(repository_root, build_package_config, env=None):
         LOG.warning(str(oerr))
         sys.exit(1)
 
-    git_describe = '.'.join(version_json_data['version'].values())
-    git_describe_dirty = git_describe
+    version = version_json_data['version']
+    version_string = str(version['major'])
+    if int(version['minor']) != 0 or int(version['revision']) != 0:
+        version_string += ".{0}".format(version['minor'])
+    if int(version['revision']) != 0:
+        version_string += ".{0}".format(version['revision'])
+
+    git_describe = git_describe_dirty = version_string
     try:
-        # The full dirty hash (vX.Y.Z-n-gabcdef0-tainted)
-
-        git_describe_cmd = ['git', 'describe', '--always', '--tags',
-                            '--dirty=-tainted']
-        git_describe_dirty = subprocess.check_output(git_describe_cmd,
-                                                     cwd=repository_root)
-        git_describe_dirty = str(git_describe_dirty.rstrip())
-
         # The tag only (vX.Y.Z)
         git_describe_cmd = ['git', 'describe', '--always', '--tags',
                             '--abbrev=0']
         git_describe = subprocess.check_output(git_describe_cmd,
                                                cwd=repository_root)
         git_describe = str(git_describe.rstrip())
+
+        # The full dirty hash (vX.Y.Z-n-gabcdef0-tainted)
+        git_describe_cmd = ['git', 'describe', '--always', '--tags',
+                            '--dirty=-tainted']
+        git_describe_dirty = subprocess.check_output(git_describe_cmd,
+                                                     cwd=repository_root)
+        git_describe_dirty = str(git_describe_dirty.rstrip())
+
+        # Always replace the git tag with the manually configured version
+        # information -- but keep the "tainted" flag (if the working directory
+        # differs from a commit) information visible, along with the
+        # abbreviated command hash.
+        git_describe_dirty = git_describe_dirty.replace(git_describe,
+                                                        version_string)
+        git_describe = version_string
     except subprocess.CalledProcessError as cperr:
         LOG.warning('Failed to get last commit describe.')
         LOG.warning(str(cperr))
