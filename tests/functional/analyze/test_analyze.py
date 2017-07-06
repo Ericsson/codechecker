@@ -98,8 +98,8 @@ class TestAnalyze(unittest.TestCase):
 
         print(analyze_cmd)
         process = subprocess.Popen(
-                    analyze_cmd, stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE, cwd=self.test_dir)
+            analyze_cmd, stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE, cwd=self.test_dir)
         out, err = process.communicate()
         print(out+err)
         errcode = process.returncode
