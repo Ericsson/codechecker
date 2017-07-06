@@ -1,18 +1,18 @@
 # CodeChecker
 
 First of all, you have to setup the environment for CodeChecker.
-Codechecker server uses SQLite database (by default) to store the results which is also packed into the package.
+CodeChecker uses SQLite database (by default) to store the results
+which is also packed into the package.
 
-The next step is to start the CodeChecker main script.
-The main script can be started with different options.
+Running CodeChecker is via its main invocation script, `CodeChecker`:
 
 ~~~~~~~~~~~~~~~~~~~~~
 usage: CodeChecker [-h]
                    {checkers,analyze,analyzers,check,cmd,debug,log,parse,plist,quickcheck,server,store,version}
                    ...
 
-Run the CodeChecker source analyzer framework.
-See the subcommands for specific features.
+Run the CodeChecker sourcecode analyzer framework.
+Please specify a subcommand to access individual features.
 
 positional arguments:
   {checkers,analyze,analyzers,check,cmd,debug,log,parse,plist,quickcheck,server,store,version}
@@ -25,7 +25,6 @@ positional arguments:
     analyzers           List supported and available analyzers.
     check               Perform analysis on a project and store results to
                         database.
-    checkers            List the checkers available in code analysis.
     cmd                 View analysis results on a running server from the
                         command line.
     debug               Create debug log files and GDB dumps for the failed
@@ -45,23 +44,26 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
-  
-Example usage:
---------------
-Analyzing a project with default settings:
-CodeChecker check -b "cd ~/myproject && make" -n myproject
+
+Example scenario: Analyzing, and storing results
+------------------------------------------------
+Analyze a project with default settings:
+    CodeChecker check -b "cd ~/myproject && make" -n myproject
 
 Start the viewer to see the results:
-CodeChecker server
+    CodeChecker server
 
-See the results in a web browser: localhost:8001
-See results in  the command line: CodeChecker cmd results -p 8001 -n myproject
+The results can be viewed:
+ * In a web browser: http://localhost:8001
+ * In the command line:
+    CodeChecker cmd results -p 8001 -n myproject
 
-To analyze a small project quickcheck feature can be used.
-The results will be printed only to the standard output.
-(No database will be used)
+Example scenario: Analyzing, and printing results to Terminal (no storage)
+--------------------------------------------------------------------------
+In this case, no database is used, and the results are printed on the standard
+output.
 
-CodeChecker quickcheck -b "cd ~/myproject && make"
+    CodeChecker quickcheck -b "cd ~/myproject && make"
 ~~~~~~~~~~~~~~~~~~~~~
 
 
