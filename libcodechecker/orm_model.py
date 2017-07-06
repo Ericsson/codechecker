@@ -62,8 +62,6 @@ class Run(Base):
     # Relationships (One to Many).
     configlist = relationship('Config', cascade="all, delete-orphan",
                               passive_deletes=True)
-    buildactionlist = relationship('BuildAction', cascade="all, delete-orphan",
-                                   passive_deletes=True)
 
     def __init__(self, name, version, command):
         self.date, self.name, self.version, self.command = \
@@ -110,39 +108,6 @@ class File(Base):
 
     def addContent(self, content):
         self.content = content
-
-
-class BuildAction(Base):
-    __tablename__ = 'build_actions'
-
-    id = Column(Integer, autoincrement=True, primary_key=True)
-    run_id = Column(Integer,
-                    ForeignKey('runs.id', deferrable=True,
-                               initially="DEFERRED", ondelete='CASCADE')
-                    )
-    build_cmd_hash = Column('build_cmd', String)
-    analyzer_type = Column(String, nullable=False)
-    analyzed_source_file = Column(String, nullable=False)
-    check_cmd = Column(String)
-    # No failure if the text is empty.
-    failure_txt = Column(String)
-    date = Column(DateTime)
-
-    # Seconds, -1 if unfinished.
-    duration = Column(Integer)
-
-    def __init__(self, run_id, build_cmd_hash, check_cmd, analyzer_type,
-                 analyzed_source_file):
-        self.run_id, self.build_cmd_hash, self.check_cmd, self.failure_txt = \
-            run_id, build_cmd_hash, check_cmd, ''
-        self.date = datetime.now()
-        self.analyzer_type = analyzer_type
-        self.analyzed_source_file = analyzed_source_file
-        self.duration = -1
-
-    def mark_finished(self, failure_txt):
-        self.failure_txt = failure_txt
-        self.duration = (datetime.now() - self.date).total_seconds()
 
 
 class BugPathEvent(Base):
@@ -264,23 +229,6 @@ class Report(Base):
         self.checker_cat = checker_cat
         self.suppressed = suppressed
         self.bug_type = bug_type
-
-
-class ReportsToBuildActions(Base):
-    __tablename__ = 'reports_to_build_actions'
-
-    report_id = Column(Integer, ForeignKey('reports.id', deferrable=True,
-                                           initially="DEFERRED",
-                                           ondelete='CASCADE'),
-                       primary_key=True)
-    build_action_id = Column(
-        Integer,
-        ForeignKey('build_actions.id', deferrable=True, initially="DEFERRED",
-                   ondelete='CASCADE'), primary_key=True)
-
-    def __init__(self, report_id, build_action_id):
-        self.report_id = report_id
-        self.build_action_id = build_action_id
 
 
 class SuppressBug(Base):
