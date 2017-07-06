@@ -17,8 +17,9 @@ macOS (OS X) development environment.
 Main features
 -------------
 
-  * Support for multiple analyzers, currently _Clang Static Analyzer_ and
-    _Clang-Tidy_
+  * Support for multiple analyzers, currently
+    [_Clang Static Analyzer_](http://clang-analyzer.llvm.org/) and
+    [_Clang-Tidy_](http://clang.llvm.org/extra/clang-tidy/)
   * Store results of multiple large-scale analysis runs efficiently, either in
     a PostgreSQL or SQLite database
   * **Web application** for viewing discovered code defects with a streamlined,
@@ -45,7 +46,8 @@ Main features
 A high-level overview about the infrastructure is available amongst the [2015
 Euro LLVM Conference](http://llvm.org/devmtg/2015-04) presentations.<br/>
 **Dániel KRUPP, György ORBÁN, Gábor HORVÁTH and Bence BABATI**:<br/>
-[_Industrial Experiences with the Clang Static Analysis Toolset_](http://llvm.org/devmtg/2015-04/slides/Clang_static_analysis_toolset_final.pdf)
+[_Industrial Experiences with the Clang Static Analysis
+Toolset_](http://llvm.org/devmtg/2015-04/slides/Clang_static_analysis_toolset_final.pdf)
 
 Install
 -------
@@ -93,12 +95,15 @@ virtualenv -p /usr/bin/python2.7 .
 
 ### Mac OS X
 
-In OSX environment the intercept-build tool from [scan-build](https://github.com/rizsotto/scan-build)
-is used to log the compiler invocations.
+In OSX environment the intercept-build tool from
+[scan-build](https://github.com/rizsotto/scan-build) is used to log the
+compiler invocations.
 
 
-It is possible that the [intercept-build can not log](https://github.com/rizsotto/scan-build#limitations)
-the compiler calls without turning off System Integrity Protection (SIP). `intercept build` can automatically detect if SIP is turned off.
+It is possible that the [intercept-build can not
+log](https://github.com/rizsotto/scan-build#limitations)
+the compiler calls without turning off *System Integrity Protection (SIP)*.
+`intercept build` can automatically detect if SIP is turned off.
 
 You can turn off SIP on El Capitan this way:
   * Click the  (Apple) menu.
@@ -109,7 +114,8 @@ You can turn off SIP on El Capitan this way:
   * Close the Terminal app.
   * Click the  (Apple) menu and select Restart....
 
-The following commands are used to bootstrap CodeChecker on OS X El Capitan 10.11.5 and macOS Sierra 10.12 Beta.
+The following commands are used to bootstrap CodeChecker on
+OS X El Capitan 10.11.5 and macOS Sierra 10.12 Beta.
 
 Check out and build LLVM/Clang with extra tools. Follow the [Get Started with
 LLVM/Clang](http://clang.llvm.org/get_started.html) documentation.
