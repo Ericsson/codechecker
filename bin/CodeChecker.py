@@ -11,7 +11,6 @@ from __future__ import print_function
 
 import argparse
 from argparse import ArgumentDefaultsHelpFormatter as ADHF
-import imp
 import json
 import os
 import signal
@@ -20,9 +19,11 @@ import sys
 import shared
 
 from libcodechecker import arg_handler
+from libcodechecker import libhandlers
 from libcodechecker import logger
-from libcodechecker.logger import LoggerFactory
 from libcodechecker.analyze.analyzers import analyzer_types
+from libcodechecker.logger import LoggerFactory
+
 
 LOG = LoggerFactory.get_new_logger('MAIN')
 
@@ -113,11 +114,6 @@ output.
         checker_p.set_defaults(func=arg_handler.handle_list_checkers)
 
         if subcommands:
-            # Load the 'libcodechecker' module and acquire its path.
-            file, path, descr = imp.find_module("libcodechecker")
-            libcc_path = imp.load_module("libcodechecker",
-                                         file, path, descr).__path__[0]
-
             # Try to check if the user has already given us a subcommand to
             # execute. If so, don't load every available parts of CodeChecker
             # to ensure a more optimised run.
@@ -153,30 +149,7 @@ output.
                 LOG.debug("Creating arg parser for subcommand " + subcommand)
 
                 try:
-                    # Even though command verbs and nouns are joined by a
-                    # hyphen, the Python files contain underscores.
-                    command_file = os.path.join(libcc_path,
-                                                subcommand.replace('-', '_') +
-                                                ".py")
-
-                    # Load the module's source code, located under
-                    # libcodechecker/sub_command.py.
-                    # We can't use find_module() and load_module() here as both
-                    # a file AND a package exists with the same name, and
-                    # find_module() would find
-                    # libcodechecker/sub_command/__init__.py first.
-                    # Thus, manual source-code reading is required.
-                    # NOTE: load_source() loads the compiled .pyc, if such
-                    # exists.
-                    command_module = imp.load_source(subcommand, command_file)
-
-                    # Now that the module is loaded, construct an
-                    # ArgumentParser for it.
-                    sc_parser = subparsers.add_parser(
-                        subcommand, **command_module.get_argparser_ctor_args())
-
-                    command_module.add_arguments_to_parser(sc_parser)
-
+                    libhandlers.add_subcommand(subparsers, subcommand)
                 except (IOError, ImportError):
                     LOG.warning("Couldn't import module for subcommand '" +
                                 subcommand + "'... ignoring.")

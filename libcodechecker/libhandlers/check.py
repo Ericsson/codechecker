@@ -10,10 +10,10 @@ stdout.
 """
 
 import argparse
-import imp
 import os
 import shutil
 
+from libcodechecker import libhandlers
 from libcodechecker import util
 from libcodechecker.analyze.analyzers import analyzer_types
 from libcodechecker.logger import add_verbose_arguments
@@ -375,16 +375,10 @@ def main(args):
     Execute a wrapper over log-analyze-store, aka 'check'.
     """
 
-    # Load the 'libcodechecker' module and acquire its path.
-    file, path, descr = imp.find_module("libcodechecker")
-    libcc_path = imp.load_module("libcodechecker",
-                                 file, path, descr).__path__[0]
-
     def __load_module(name):
         """Loads the given subcommand's definition from the libs."""
-        module_file = os.path.join(libcc_path, name.replace('-', '_') + ".py")
         try:
-            module = imp.load_source(name, module_file)
+            module = libhandlers.load_module(name)
         except ImportError:
             LOG.error("Couldn't import subcommand '" + name + "'.")
             raise

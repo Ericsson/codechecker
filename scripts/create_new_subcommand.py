@@ -26,10 +26,11 @@ def main():
 
     bin_dir = os.path.join(parent_dir, 'bin')
     lib_dir = os.path.join(parent_dir, 'libcodechecker')
+    handler_dir = os.path.join(lib_dir, 'libhandlers')
 
     if os.path.exists(os.path.join(bin_dir, 'codechecker-' + command_name)) \
             or os.path.exists(os.path.join(lib_dir, command_name)) \
-            or os.path.exists(os.path.join(lib_dir, command_name + '.py')):
+            or os.path.exists(os.path.join(handler_dir, command_name + '.py')):
         print("This command already exists, refusing to create!")
         sys.exit(1)
 
@@ -67,10 +68,10 @@ def main():
 
         init.write(s)
 
-    lib_file = os.path.join(lib_dir, lib_name + '.py')
-    print("Creating subcommand definition in '" + lib_file + "'")
+    handler_file = os.path.join(handler_dir, lib_name + '.py')
+    print("Creating subcommand definition in '" + handler_file + "'")
     with open(os.path.join(resource_dir, 'command_template.py')) as template:
-        with open(lib_file, 'w') as libfile:
+        with open(handler_file, 'w') as libfile:
             contents = template.read()
             contents = contents.replace("$COMMAND$", command_name)
             libfile.write(contents)
@@ -79,7 +80,7 @@ def main():
     print("Subcommand created successfully")
     print("-------------------------------")
     print("Please see the file ")
-    print("'" + lib_file + "'")
+    print("'" + handler_file + "'")
     print("to add your subcommand's argument list, detailed help,")
     print("and to write the main() of the subcommand.")
     print("")
@@ -87,7 +88,7 @@ def main():
     print("Also please make sure you add the following paths to version "
           "control:")
     print("  * " + entryfile)
-    print("  * " + lib_file)
+    print("  * " + handler_file)
     print("  * " + os.path.join(lib_dir, lib_name))
 
 if __name__ == "__main__":
