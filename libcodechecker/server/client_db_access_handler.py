@@ -117,7 +117,7 @@ class ThriftRequestHandler():
             if len(results) < 1:
                 raise shared.ttypes.RequestFailed(
                     shared.ttypes.ErrorCode.DATABASE,
-                    "Report " + reportId + " not found!")
+                    "Report " + str(reportId) + " not found!")
 
             report, source_file, lbpe, suppress_bug = results[0]
 
