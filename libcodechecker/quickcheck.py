@@ -316,7 +316,7 @@ def main(args):
     try:
         # --- Step 1.: Perform logging if build command was specified.
         if 'command' in args:
-            logfile = os.path.join(workspace, 'build.json')
+            logfile = os.path.join(workspace, 'compile_cmd.json')
 
             # Translate the argument list between quickcheck and log.
             log_args = argparse.Namespace(

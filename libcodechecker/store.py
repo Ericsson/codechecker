@@ -247,7 +247,7 @@ def add_arguments_to_parser(parser):
 
 
 def consume_plist(item):
-    f, context, metadata_dict = item
+    f, context, metadata_dict, compile_cmds = item
 
     LOG.debug("Parsing input file '" + f + "'")
 
@@ -260,27 +260,32 @@ def consume_plist(item):
     elif os.path.basename(f).startswith("clang-tidy_"):
         buildaction.analyzer_type = analyzer_types.CLANG_TIDY
 
-    buildaction.original_command = "IMPORTED"
+    analyzed_source = 'UNKNOWN'
+    if 'result_source_files' in metadata_dict and\
+            f in metadata_dict['result_source_files']:
+            analyzed_source = metadata_dict['result_source_files'][f]
+
+    if analyzed_source == "UNKNOWN":
+        LOG.info("Storing defects in input file '" + f + "'")
+    else:
+        LOG.info("Storing analysis results for file '" +
+                 analyzed_source + "'")
+
+    buildaction.original_command = compile_cmds.get(analyzed_source,
+                                                    'MISSING')
+
+    if buildaction.original_command == 'MISSING':
+        LOG.warning("Compilation action was not found for file: " +
+                    analyzed_source)
 
     rh = analyzer_types.construct_store_handler(buildaction,
                                                 context.run_id,
                                                 context.severity_map)
 
     rh.analyzer_returncode = 0
-    rh.analyzer_cmd = ''
-
-    rh.analyzed_source_file = "UNKNOWN"
-    if 'result_source_files' in metadata_dict and\
-            f in metadata_dict['result_source_files']:
-        rh.analyzed_source_file = \
-            metadata_dict['result_source_files'][f]
     rh.analyzer_result_file = f
-
-    if rh.analyzed_source_file == "UNKNOWN":
-        LOG.info("Storing defects in input file '" + f + "'")
-    else:
-        LOG.info("Storing analysis results for file '" +
-                 rh.analyzed_source_file + "'")
+    rh.analyzer_cmd = ''
+    rh.analyzed_source_file = analyzed_source
     rh.handle_results()
 
 
@@ -306,6 +311,34 @@ def __get_run_name(input_list):
         return "multiple projects: " + ', '.join(names)
     else:
         return False
+
+
+def process_compile_db(compile_db):
+    """
+    Create a dict where the source file name (absolute path) is the key and
+    the correspoding compilation command is the value.
+    """
+    compile_db = os.path.abspath(compile_db)
+    comp_cmds = {}
+
+    if not os.path.exists(compile_db):
+        LOG.warning("Compilation command file is missing: " + compile_db)
+        LOG.warning("Update mode will not work properly!!!")
+        return comp_cmds
+
+    with open(compile_db, 'r') as ccdb:
+        comp_cmds = json.load(ccdb)
+
+    processed = {}
+    for cc in comp_cmds:
+        file_path = os.path.join(cc['directory'], cc['file'])
+        try:
+            # newer compile command json format
+            processed[file_path] = str(' '.join(cc['arguments']))
+        except Exception:
+            processed[file_path] = cc['command']
+
+    return processed
 
 
 def main(args):
@@ -367,13 +400,22 @@ def main(args):
     items = []
     for input_path in args.input:
         input_path = os.path.abspath(input_path)
+
+        # WARN: analyze command should create this file!
+        cmp_db = os.path.join(input_path, 'compile_cmd.json')
+        compile_commands = process_compile_db(cmp_db)
+
         LOG.debug("Parsing input argument: '" + input_path + "'")
 
         if os.path.isfile(input_path):
             if not input_path.endswith(".plist"):
                 continue
 
-            items.append((input_path, context, empty_metadata))
+            items.append((input_path,
+                          context,
+                          empty_metadata,
+                          compile_commands))
+
         elif os.path.isdir(input_path):
             metadata_file = os.path.join(input_path, "metadata.json")
             if os.path.exists(metadata_file):
@@ -407,7 +449,7 @@ def main(args):
                     continue
 
                 items.append((os.path.join(input_path, f),
-                              context, metadata_dict))
+                              context, metadata_dict, compile_commands))
 
     with client.get_connection() as connection:
         if len(check_commands) == 0:

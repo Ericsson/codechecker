@@ -238,6 +238,10 @@ def main(args):
     # Parse the JSON CCDBs and retrieve the compile commands.
     actions = []
 
+    if len(args.logfile) != 1:
+        LOG.warning("Only one log file can be processed right now!")
+        sys.exit(1)
+
     for log_file in args.logfile:
         if not os.path.exists(log_file):
             LOG.error("The specified logfile '" + log_file + "' does not "
@@ -291,6 +295,17 @@ def main(args):
     LOG.debug("Analysis metadata write to '" + metadata_path + "'")
     with open(metadata_path, 'w') as metafile:
         json.dump(metadata, metafile)
+
+    # WARN: store command will search for this file!!!!
+    compile_cmd_json = os.path.join(args.output_path, 'compile_cmd.json')
+    try:
+        source = os.path.abspath(args.logfile[0])
+        target = os.path.abspath(compile_cmd_json)
+        shutil.copyfile(source, target)
+    except shutil.Error as serr:
+        LOG.debug("Compile command json file is the same")
+    except Exception as ex:
+        LOG.debug("Copying compile command json file failed.")
 
     LOG.info("Analysis finished.")
     LOG.info("To view results in the terminal use the "
