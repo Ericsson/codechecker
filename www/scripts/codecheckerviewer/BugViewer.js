@@ -392,6 +392,7 @@ function (declare, dom, style, on, query, Memory, Observable, topic, entities,
         this.reportData.reportId + '_0'
       ]);
 
+      topic.publish("hooks/report/Opened", this.reportData);
       var that = this;
 
       setTimeout(function () {
@@ -478,8 +479,13 @@ function (declare, dom, style, on, query, Memory, Observable, topic, entities,
 
       this.editor.jumpTo(line, column);
 
-      if (item.bugPathEvent)
+      if (item.bugPathEvent) {
         this.editor.highlightBugPathEvent(item.bugPathEvent);
+        topic.publish("hooks/bugpath/EventClicked", {
+          id    : item.id.split('_')[1],
+          event : item.bugPathEvent
+        });
+      }
     },
 
     getIconClass : function(item, opened) {
@@ -757,12 +763,15 @@ function (declare, dom, style, on, query, Memory, Observable, topic, entities,
               if (success) {
                 that.reportData.suppressed = true;
                 that.reportData.suppressComment = suppressTextarea.get('value');
+                topic.publish("hooks/bug/Suppressed", that.reportData);
                 setUnsuppressDialogContent();
                 that.removeChild(suppressButton);
                 that.addChild(unsuppressButton, 0);
                 suppressDialog.hide();
+
               }
             });
+
         }
       });
 
@@ -775,6 +784,7 @@ function (declare, dom, style, on, query, Memory, Observable, topic, entities,
             function (success) {
               that.reportData.suppressed = false;
               that.reportData.suppressComment = null;
+              topic.publish("hooks/bug/Unsuppressed", that.reportData);
               that.removeChild(unsuppressButton);
               that.addChild(suppressButton, 0);
               unsuppressDialog.hide();

@@ -146,9 +146,11 @@ function (declare, domConstruct, ItemFileWriteStore, topic, Dialog, Button,
         });
 
         that.onLoaded(runDataList);
+        topic.publish("hooks/RunsListed", runDataList.length);
 
         runDataList.forEach(function (item) {
           var currItemDate = item.runDate.split(/[\s\.]+/);
+          topic.publish("hooks/run/Observed", item);
 
           that.store.newItem({
             diff : false,
