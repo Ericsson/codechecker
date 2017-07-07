@@ -313,10 +313,21 @@ class CheckerReportHandler(object):
         run_inc_count = self.session.query(Run).get(run_id).inc_count
         needed = False
         if not f:
-            needed = True
-            f = File(run_id, filepath)
-            self.session.add(f)
+            # There is a concurrency problem. In case an other process already
+            # inserted the file since we checked, rollback the transaction and
+            # use the already inserted file.
             self.session.commit()
+            try:
+                f = File(run_id, filepath)
+                self.session.add(f)
+                self.session.commit()
+                needed = True
+            except sqlalchemy.exc.IntegrityError:
+                self.session.rollback()
+                f = self.session.query(File) \
+                    .filter(and_(File.run_id == run_id,
+                                 File.filepath == filepath)) \
+                    .one()
         elif f.inc_count < run_inc_count:
             needed = True
             f.inc_count = run_inc_count

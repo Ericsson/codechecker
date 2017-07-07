@@ -104,6 +104,9 @@ class File(Base):
     content = Column(Binary)
     inc_count = Column(Integer)
 
+    __table_args__ = (UniqueConstraint('run_id', 'filepath',
+                                       name='_run_id_filpath_uc'),)
+
     def __init__(self, run_id, filepath):
         self.run_id, self.filepath = run_id, filepath
         self.inc_count = 0
