@@ -57,7 +57,7 @@ class DeprecatedOptionAction(argparse.Action):
     def __init__(self,
                  option_strings,
                  dest,
-                 nargs=None,
+                 nargs=0,
                  const=None,
                  default=None,
                  type=None,
@@ -71,6 +71,7 @@ class DeprecatedOptionAction(argparse.Action):
                      const='deprecated_option',
                      default=argparse.SUPPRESS,
                      type=None,
+                     nargs=nargs,
                      choices=None,
                      required=False,
                      help="(Usage of this argument is DEPRECATED and has no "
