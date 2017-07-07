@@ -9,9 +9,9 @@ functionality of 'store' and 'parse'.
 """
 
 import argparse
-import imp
 import os
 
+from libcodechecker import libhandlers
 from libcodechecker import util
 from libcodechecker.logger import add_verbose_arguments
 from libcodechecker.logger import LoggerFactory
@@ -57,7 +57,7 @@ class DeprecatedOptionAction(argparse.Action):
     def __init__(self,
                  option_strings,
                  dest,
-                 nargs=None,
+                 nargs=0,
                  const=None,
                  default=None,
                  type=None,
@@ -71,6 +71,7 @@ class DeprecatedOptionAction(argparse.Action):
                      const='deprecated_option',
                      default=argparse.SUPPRESS,
                      type=None,
+                     nargs=nargs,
                      choices=None,
                      required=False,
                      help="(Usage of this argument is DEPRECATED and has no "
@@ -243,16 +244,10 @@ def main(args):
     Execute a wrapper over 'parse' or 'store'.
     """
 
-    # Load the 'libcodechecker' module and acquire its path.
-    file, path, descr = imp.find_module("libcodechecker")
-    libcc_path = imp.load_module("libcodechecker",
-                                 file, path, descr).__path__[0]
-
     def __load_module(name):
         """Loads the given subcommand's definition from the libs."""
-        module_file = os.path.join(libcc_path, name.replace('-', '_') + ".py")
         try:
-            module = imp.load_source(name, module_file)
+            module = libhandlers.load_module(name)
         except ImportError:
             LOG.error("Couldn't import subcommand '" + name + "'.")
             raise

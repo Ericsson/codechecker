@@ -4,22 +4,22 @@
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
 """
-Quickcheck implements a wrapper over 'log' + 'analyze' + 'parse', essentially
+Check implements a wrapper over 'log' + 'analyze' + 'store', essentially
 giving an easy way to perform analysis from a log command and print results to
 stdout.
 """
 
 import argparse
-import imp
 import os
 import shutil
-import tempfile
 
+from libcodechecker import libhandlers
+from libcodechecker import util
 from libcodechecker.analyze.analyzers import analyzer_types
 from libcodechecker.logger import add_verbose_arguments
 from libcodechecker.logger import LoggerFactory
 
-LOG = LoggerFactory.get_new_logger('QUICKCHECK')
+LOG = LoggerFactory.get_new_logger('CHECK')
 
 
 class OrderedCheckersAction(argparse.Action):
@@ -60,7 +60,7 @@ class DeprecatedOptionAction(argparse.Action):
     def __init__(self,
                  option_strings,
                  dest,
-                 nargs=None,
+                 nargs=0,
                  const=None,
                  default=None,
                  type=None,
@@ -74,6 +74,7 @@ class DeprecatedOptionAction(argparse.Action):
                      const='deprecated_option',
                      default=argparse.SUPPRESS,
                      type=None,
+                     nargs=nargs,
                      choices=None,
                      required=False,
                      help="(Usage of this argument is DEPRECATED and has no "
@@ -92,34 +93,33 @@ def get_argparser_ctor_args():
     """
 
     return {
-        'prog': 'CodeChecker quickcheck',
+        'prog': 'CodeChecker check',
         'formatter_class': argparse.ArgumentDefaultsHelpFormatter,
 
         # Description is shown when the command's help is queried directly
-        'description': "Run analysis for a project with printing results "
-                       "immediately on the standard output. Quickcheck only "
-                       "needs a build command or an already existing logfile "
-                       "and performs every step of doing the analysis in "
-                       "batch.",
+        'description': "Run analysis for a project with storing results "
+                       "in the database. Check only needs a build command or "
+                       "an already existing logfile and performs every step "
+                       "of doing the analysis in batch.",
 
         # Epilogue is shown after the arguments when the help is queried
         # directly.
         'epilog': "If you wish to reuse the logfile resulting from executing "
                   "the build, see 'codechecker-log'. To keep analysis "
                   "results for later, see and use 'codechecker-analyze'. "
-                  "To print human-readable output from previously saved "
-                  "analysis results, see 'codechecker-parse'. 'CodeChecker "
-                  "quickcheck' exposes a wrapper calling these three commands "
-                  "in succession. Please make sure your build command "
-                  "actually builds the files -- it is advised to execute "
-                  "builds on empty trees, aka. after a 'make clean', as "
-                  "CodeChecker only analyzes files that had been used by the "
-                  "build system.",
+                  "To store previously saved analysis results in a database, "
+                  "see 'codechecker-store'. 'CodeChecker check' exposes a "
+                  "wrapper calling these three commands in succession. Please "
+                  "make sure your build command actually builds the files -- "
+                  "it is advised to execute builds on empty trees, aka. after "
+                  "a 'make clean', as CodeChecker only analyzes files that "
+                  "had been used by the build system. Analysis results can be "
+                  "viewed by starting a 'CodeChecker server' and connecting "
+                  "to it from a Web browser, or via 'CodeChecker cmd'.",
 
         # Help is shown when the "parent" CodeChecker command lists the
         # individual subcommands.
-        'help': "Perform analysis on a project and print results to standard "
-                "output."
+        'help': "Perform analysis on a project and store results to database."
     }
 
 
@@ -128,8 +128,51 @@ def add_arguments_to_parser(parser):
     Add the subcommand's arguments to the given argparse.ArgumentParser.
     """
 
+    # Some arguments were deprecated already in 'CodeChecker check'.
     parser.add_argument('--keep-tmp',
                         action=DeprecatedOptionAction)
+
+    parser.add_argument('-c', '--clean',
+                        action=DeprecatedOptionAction)
+
+    parser.add_argument('--update',
+                        action=DeprecatedOptionAction)
+
+    # In 'store', --name is not a required argument by argparse, as 'analyze'
+    # can prepare a name, which is read after 'store' is started.
+    # If the name is missing, the user is explicitly warned.
+    # TODO: This should be an optional argument here too.
+    parser.add_argument('-n', '--name',
+                        type=str,
+                        dest="name",
+                        required=True,
+                        default=argparse.SUPPRESS,
+                        help="The name of the analysis run to use in storing "
+                             "the reports to the database. If not specified, "
+                             "the '--name' parameter given to 'codechecker-"
+                             "analyze' will be used, if exists.")
+
+    # TODO: Workspace is no longer a concept in the new subcommands.
+    parser.add_argument('-w', '--workspace',
+                        type=str,
+                        default=util.get_default_workspace(),
+                        dest="workspace",
+                        help="Directory where CodeChecker can store analysis "
+                             "related data, such as intermediate result files "
+                             "and the database.")
+
+    parser.add_argument('-f', '--force',
+                        dest="force",
+                        default=False,
+                        action='store_true',
+                        required=False,
+                        help="Delete analysis results stored in the database "
+                             "for the current analysis run's name and store "
+                             "only the results reported in the 'input' files. "
+                             "(By default, CodeChecker would keep reports "
+                             "that were coming from files not affected by the "
+                             "analysis, and only incrementally update defect "
+                             "reports for source files that were analysed.)")
 
     log_args = parser.add_argument_group(
         "log arguments",
@@ -202,12 +245,11 @@ def add_arguments_to_parser(parser):
                                default=False,
                                required=False,
                                help="Retrieve compiler-specific configuration "
-                                    "from the analyzers themselves, and use "
+                                    "from the compilers themselves, and use "
                                     "them with Clang. This is used when the "
                                     "compiler on the system is special, e.g. "
                                     "when doing cross-compilation.")
 
-    # TODO: One day, get rid of these. See Issue #36, #427.
     analyzer_opts.add_argument('--saargs',
                                dest="clangsa_args_cfg_file",
                                required=False,
@@ -253,32 +295,77 @@ def add_arguments_to_parser(parser):
                                     "to BE PROHIBITED from use in the "
                                     "analysis.")
 
-    output_opts = parser.add_argument_group("output arguments")
     # TODO: Analyze does not know '-u', only '--suppress'
-    output_opts.add_argument('-u', '--suppress',
-                             type=str,
-                             dest="suppress",
-                             default=argparse.SUPPRESS,
-                             required=False,
-                             help="Path of the suppress file to use. Records "
-                                  "in the suppress file are used to suppress "
-                                  "the display of certain results when "
-                                  "parsing the analyses' report. (Reports to "
-                                  "an analysis result can also be suppressed "
-                                  "in the source code -- please consult the "
-                                  "manual on how to do so.) NOTE: The "
-                                  "suppress file relies on the \"bug "
-                                  "identifier\" generated by the analyzers "
-                                  "which is experimental, take care when "
-                                  "relying on it.")
+    parser.add_argument('-u', '--suppress',
+                        type=str,
+                        dest="suppress",
+                        default=argparse.SUPPRESS,
+                        required=False,
+                        help="Path of the suppress file to use. Records in "
+                             "the suppress file are used to suppress the "
+                             "storage of certain results when parsing the "
+                             "analyses' report. (Reports to an analysis "
+                             "result can also be suppressed in the source "
+                             "code -- please consult the manual on how to do "
+                             "so.) NOTE: The suppress file relies on the "
+                             "\"bug identifier\" generated by the analyzers "
+                             "which is experimental, take care when relying "
+                             "on it.")
 
-    # TODO: Parse does not know '-s' or '--steps' for this.
-    output_opts.add_argument('-s', '--steps', '--print-steps',
-                             dest="print_steps",
-                             action="store_true",
-                             required=False,
-                             help="Print the steps the analyzers took in "
-                                  "finding the reported defect.")
+    dbmodes = parser.add_argument_group("database arguments")
+
+    dbmodes = dbmodes.add_mutually_exclusive_group(required=False)
+
+    # SQLite is the default, and for 'check', it was deprecated.
+    # TODO: In 'store', --sqlite has been replaced as an option to specify the
+    # .sqlite file, essentially replacing the concept of 'workspace'.
+    dbmodes.add_argument('--sqlite',
+                         action=DeprecatedOptionAction)
+
+    dbmodes.add_argument('--postgresql',
+                         dest="postgresql",
+                         action='store_true',
+                         required=False,
+                         default=argparse.SUPPRESS,
+                         help="Specifies that a PostgreSQL database is to be "
+                              "used instead of SQLite. See the \"PostgreSQL "
+                              "arguments\" section on how to configure the "
+                              "database connection.")
+
+    pgsql = parser.add_argument_group("PostgreSQL arguments",
+                                      "Values of these arguments are ignored, "
+                                      "unless '--postgresql' is specified!")
+
+    # WARNING: '--dbaddress' default value influences workspace creation
+    # in SQLite.
+    # TODO: These are '--db-something' in 'store', not '--dbsomething'.
+    pgsql.add_argument('--dbaddress',
+                       type=str,
+                       dest="dbaddress",
+                       default="localhost",
+                       required=False,
+                       help="Database server address.")
+
+    pgsql.add_argument('--dbport',
+                       type=int,
+                       dest="dbport",
+                       default=5432,
+                       required=False,
+                       help="Database server port.")
+
+    pgsql.add_argument('--dbusername',
+                       type=str,
+                       dest="dbusername",
+                       default='codechecker',
+                       required=False,
+                       help="Username to use for connection.")
+
+    pgsql.add_argument('--dbname',
+                       type=str,
+                       dest="dbname",
+                       default="codechecker",
+                       required=False,
+                       help="Name of the database to use.")
 
     add_verbose_arguments(parser)
     parser.set_defaults(func=main)
@@ -286,19 +373,13 @@ def add_arguments_to_parser(parser):
 
 def main(args):
     """
-    Execute a wrapper over log-analyze-parse, aka 'quickcheck'.
+    Execute a wrapper over log-analyze-store, aka 'check'.
     """
-
-    # Load the 'libcodechecker' module and acquire its path.
-    file, path, descr = imp.find_module("libcodechecker")
-    libcc_path = imp.load_module("libcodechecker",
-                                 file, path, descr).__path__[0]
 
     def __load_module(name):
         """Loads the given subcommand's definition from the libs."""
-        module_file = os.path.join(libcc_path, name.replace('-', '_') + ".py")
         try:
-            module = imp.load_source(name, module_file)
+            module = libhandlers.load_module(name)
         except ImportError:
             LOG.error("Couldn't import subcommand '" + name + "'.")
             raise
@@ -311,7 +392,11 @@ def main(args):
         if key in source:
             setattr(target, key, getattr(source, key))
 
-    workspace = tempfile.mkdtemp(prefix='codechecker-qc')
+    workspace = os.path.abspath(args.workspace)
+    report_dir = os.path.join(workspace, 'reports')
+    if not os.path.isdir(report_dir):
+        os.makedirs(report_dir)
+
     logfile = None
     try:
         # --- Step 1.: Perform logging if build command was specified.
@@ -341,7 +426,7 @@ def main(args):
 
         analyze_args = argparse.Namespace(
             logfile=[logfile],
-            output_path=workspace,
+            output_path=report_dir,
             output_format='plist',
             jobs=args.jobs,
             add_compiler_defaults=args.add_compiler_defaults
@@ -365,26 +450,71 @@ def main(args):
         LOG.debug(analyze_args)
         analyze_module.main(analyze_args)
 
-        # --- Step 3.: Print to stdout.
-        parse_args = argparse.Namespace(
-            input=[workspace],
+        # --- Step 3.: Store to database.
+        # TODO: The store command supposes that in case of PostgreSQL a
+        # database instance is already running. The "CodeChecker check" command
+        # is able to start its own instance in the given workdir, so we pass
+        # this argument to the argument list. Although this is not used by
+        # store command at all, the SQL utility is still able to start the
+        # database. When changing this behavior, the workspace argument should
+        # be removed from here.
+        store_args = argparse.Namespace(
+            workspace=args.workspace,
+            input=[report_dir],
             input_format='plist',
-            print_steps=args.print_steps
+            jobs=args.jobs,
+            force=args.force,
+            dbaddress=args.dbaddress,
+            dbport=args.dbport,
+            dbusername=args.dbusername,
+            dbname=args.dbname
         )
-        # 'suppress' does not have an argument by default.
-        __update_if_key_exists(args, parse_args, "suppress")
+        # Some arguments don't have default values.
+        # We can't set these keys to None because it would result in an error
+        # after the call.
+        if 'postgresql' in args:
+            __update_if_key_exists(args, store_args, 'postgresql')
+        else:
+            # If we are saving to a SQLite database, the wrapped 'check'
+            # command used to do it in the workspace folder.
+            setattr(store_args, 'sqlite', os.path.join(workspace,
+                                                       'codechecker.sqlite'))
+            setattr(store_args, 'postgresql', False)
 
-        parse_module = __load_module("parse")
-        __update_if_key_exists(args, parse_args, "verbose")
+        args_to_update = ['suppress',
+                          'name'
+                          ]
+        for key in args_to_update:
+            __update_if_key_exists(args, store_args, key)
 
-        LOG.debug("Calling PARSE with args:")
-        LOG.debug(parse_args)
-        parse_module.main(parse_args)
+        store_module = __load_module("store")
+        __update_if_key_exists(args, store_args, "verbose")
+
+        LOG.debug("Calling STORE with args:")
+        LOG.debug(store_args)
+        store_module.main(store_args)
+
+        # Show a hint for server start.
+        db_data = ""
+        if 'postgresql' in args:
+            db_data += " --postgresql" \
+                       + " --dbname " + args.dbname \
+                       + " --dbport " + str(args.dbport) \
+                       + " --dbusername " + args.dbusername
+
+        LOG.info("To view results run:\nCodeChecker server -w " +
+                 args.workspace + db_data)
     except ImportError:
-        LOG.error("Quickcheck failed: couldn't import a library.")
+        LOG.error("Check failed: couldn't import a library.")
     except Exception as ex:
-        LOG.error("Running quickcheck failed. " + ex.message)
+        LOG.error("Running check failed. " + ex.message)
     finally:
-        shutil.rmtree(workspace)
+        LOG.debug("Cleaning up reports folder ...")
+        shutil.rmtree(report_dir)
 
-    LOG.debug("Quickcheck finished.")
+        if 'command' in args and logfile:
+            # Only remove the build.json if it was on-the-fly created by us!
+            LOG.debug("Cleaning up build.json ...")
+            os.remove(logfile)
+
+    LOG.debug("Check finished.")
