@@ -21,5 +21,5 @@ simple1.cpp:18:15: Division by zero [core.DivideZero]
   return 2015 / x;
               ^
 
-clangsa found 1 defect(s) while analyzing simple1.cpp
+Found 1 defect(s) while analyzing simple1.cpp
 

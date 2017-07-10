@@ -142,6 +142,16 @@ def add_arguments_to_parser(parser):
                         help="Specify the format the analysis results should "
                              "use.")
 
+    parser.add_argument('-c', '--clean',
+                        dest="clean",
+                        required=False,
+                        action='store_true',
+                        default=argparse.SUPPRESS,
+                        help="Delete analysis reports stored in the output "
+                             "directory. (By default, CodeChecker would keep "
+                             "reports and overwrites only those files that "
+                             "were update by the current build command).")
+
     parser.add_argument('-n', '--name',
                         dest="name",
                         required=False,
@@ -337,13 +347,21 @@ def main(args):
 
     # Run the analysis.
     args.output_path = os.path.abspath(args.output_path)
-    if 'ctu_phases' not in args or args.ctu_phases[0] or \
-            (not args.ctu_phases[0] and not args.ctu_phases[1]):
-        if os.path.isdir(args.output_path):
-            LOG.info("Previous analysis results in '{0}' have been "
-                     "removed, overwriting with current result".
-                     format(args.output_path))
-            shutil.rmtree(args.output_path)
+
+    # We clear the output directory in the following cases.
+    ctu_dir = os.path.join(args.output_path, 'ctu-dir')
+    if 'ctu_phases' in args and args.ctu_phases[0] and \
+            os.path.isdir(ctu_dir):
+        # Clear the CTU-dir if the user turned on the collection phase.
+        LOG.debug("Previous CTU contents have been deleted.")
+        shutil.rmtree(ctu_dir)
+
+    if 'clean' in args and os.path.isdir(args.output_path):
+        LOG.info("Previous analysis results in '{0}' have been removed, "
+                 "overwriting with current result".format(args.output_path))
+        shutil.rmtree(args.output_path)
+
+    if not os.path.exists(args.output_path):
         os.makedirs(args.output_path)
 
     LOG.debug("Output will be stored to: '" + args.output_path + "'")
@@ -355,7 +373,8 @@ def main(args):
                         context.package_git_tag,
                         context.package_git_hash)},
                 'working_directory': os.getcwd(),
-                'output_path': args.output_path}
+                'output_path': args.output_path,
+                'result_source_files': {}}
 
     if 'name' in args:
         metadata['name'] = args.name
@@ -367,11 +386,18 @@ def main(args):
         with open(args.skipfile, 'r') as skipfile:
             metadata['skip_data'] = [l.strip() for l in skipfile.readlines()]
 
+    # Update metadata dictionary with old values.
+    metadata_file = os.path.join(args.output_path, 'metadata.json')
+    if os.path.exists(metadata_file):
+        with open(metadata_file, 'r') as data:
+            metadata_prev = json.load(data)
+            metadata['result_source_files'] =\
+                metadata_prev['result_source_files']
+
     analyzer.perform_analysis(args, context, actions, metadata)
 
-    metadata_path = os.path.join(args.output_path, 'metadata.json')
-    LOG.debug("Analysis metadata write to '" + metadata_path + "'")
-    with open(metadata_path, 'w') as metafile:
+    LOG.debug("Analysis metadata write to '" + metadata_file + "'")
+    with open(metadata_file, 'w') as metafile:
         json.dump(metadata, metafile)
 
     # WARN: store command will search for this file!!!!

@@ -17,4 +17,4 @@ QUICKCHECK#CodeChecker quickcheck --build "make saargs_forward" --quiet-build --
 [] - To store results use the "CodeChecker store" command.
 [] - See --help and the user guide for further options about parsing and storing the reports.
 [] - ----=================----
-clangsa found no defects while analyzing saargs_forward.cpp
+Found no defects while analyzing saargs_forward.cpp

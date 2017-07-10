@@ -42,6 +42,56 @@ class TestAnalyze(unittest.TestCase):
         """Restore environment after tests have ran."""
         os.chdir(self.__old_pwd)
 
+    def __get_plist_files(self, reportdir):
+        return [os.path.join(reportdir, filename)
+                for filename in os.listdir(reportdir)
+                if filename.endswith('.plist')]
+
+    def __analyze_incremental(self, content_, build_json, reports_dir,
+                              plist_count, failed_count):
+        """
+        Helper function to test analyze incremental mode. It's create a file
+        with the given content. Run analyze on that file and checks the count
+        of the plist end error files.
+        """
+        source_file = os.path.join(self.test_workspace, "simple.cpp")
+
+        # Write content to the test file
+        with open(source_file, 'w') as source:
+            source.write(content_)
+
+        # Create analyze command.
+        analyze_cmd = [self._codechecker_cmd, "analyze", build_json,
+                       "--analyzers", "clangsa", "-o", reports_dir]
+
+        # Run analyze
+        process = subprocess.Popen(
+            analyze_cmd, stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE, cwd=self.test_dir)
+        process.communicate()
+
+        errcode = process.returncode
+        self.assertEquals(errcode, 0)
+
+        # Check the count of the plist files.
+        plist_files = [os.path.join(reports_dir, filename)
+                       for filename in os.listdir(reports_dir)
+                       if filename.endswith('.plist')]
+        self.assertEquals(len(plist_files), plist_count)
+
+        # Check the count of the error files.
+        failed_dir = os.path.join(reports_dir, "failed")
+        failed_file_count = 0
+        if os.path.exists(failed_dir):
+            failed_files = [os.path.join(failed_dir, filename)
+                            for filename in os.listdir(failed_dir)
+                            if filename.endswith('.zip')]
+            failed_file_count = len(failed_files)
+
+            for f in failed_files:
+                os.remove(f)
+        self.assertEquals(failed_file_count, failed_count)
+
     def test_capture_analysis_output(self):
         """
         Test if reports/success/<output_file>.[stdout,stderr].txt
@@ -84,10 +134,9 @@ class TestAnalyze(unittest.TestCase):
         """
         build_json = os.path.join(self.test_workspace, "build.json")
         failed_dir = os.path.join(self.report_dir, "failed")
-        analyze_cmd = [self._codechecker_cmd, "analyze", build_json,
-                       "--analyzers", "clangsa", "-o", self.report_dir]
-
         source_file = os.path.join(self.test_dir, "failure.c")
+
+        # Create a compilation database.
         build_log = [{"directory": self.test_workspace,
                       "command": "gcc -c " + source_file,
                       "file": source_file
@@ -96,18 +145,21 @@ class TestAnalyze(unittest.TestCase):
         with open(build_json, 'w') as outfile:
             json.dump(build_log, outfile)
 
+        # Create and run analyze command.
+        analyze_cmd = [self._codechecker_cmd, "analyze", build_json,
+                       "--analyzers", "clangsa", "-o", self.report_dir]
+
         print(analyze_cmd)
         process = subprocess.Popen(
             analyze_cmd, stdout=subprocess.PIPE,
             stderr=subprocess.PIPE, cwd=self.test_dir)
-        out, err = process.communicate()
-        print(out+err)
+        process.communicate()
+
         errcode = process.returncode
         self.assertEquals(errcode, 0)
 
         # We expect a failure archive to be in the failed directory.
         failed_files = os.listdir(failed_dir)
-        print(failed_files)
         self.assertEquals(len(failed_files), 1)
         self.assertIn("failure.c", failed_files[0])
 
@@ -172,3 +224,37 @@ class TestAnalyze(unittest.TestCase):
         self.assertIn("failure.c", failed_files[0])
 
         os.remove(os.path.join(failed_dir, failed_files[0]))
+
+    def test_incremental_analyze(self):
+        """
+        Test incremental mode to analysis command which overwrites only those
+        plist files that were update by the current build command.
+        """
+        build_json = os.path.join(self.test_workspace, "build_simple.json")
+        reports_dir = os.path.join(self.test_workspace, "reports_incremental")
+        source_file = os.path.join(self.test_workspace, "simple.cpp")
+
+        # Create a compilation database.
+        build_log = [{"directory": self.test_workspace,
+                      "command": "gcc -c "+source_file,
+                      "file": source_file
+                      }]
+
+        with open(build_json, 'w') as outfile:
+            json.dump(build_log, outfile)
+
+        # Test file contents
+        simple_file_content = "int main() { return 0; }"
+        failed_file_content = "int main() { err; return 0; }"
+
+        # Run analyze on the simple file.
+        self.__analyze_incremental(simple_file_content, build_json,
+                                   reports_dir, 1, 0)
+
+        # Run analyze on the failed file.
+        self.__analyze_incremental(failed_file_content, build_json,
+                                   reports_dir, 0, 1)
+
+        # Run analyze on the simple file again.
+        self.__analyze_incremental(simple_file_content, build_json,
+                                   reports_dir, 1, 0)
