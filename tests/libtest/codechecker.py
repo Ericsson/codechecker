@@ -61,6 +61,10 @@ def check(codechecker_cfg, test_project_name, test_project_path):
     if skip_file:
         check_cmd.extend(['--skip', skip_file])
 
+    force = codechecker_cfg.get('force')
+    if force:
+        check_cmd.extend(['--force'])
+
     check_cmd.extend(codechecker_cfg['checkers'])
 
     try:

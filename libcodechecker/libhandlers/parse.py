@@ -120,10 +120,6 @@ def parse(f, context, metadata_dict, suppress_handler, steps):
     LOG.debug("Parsing input file '" + f + "'")
 
     buildaction = build_action.BuildAction()
-    if os.path.basename(f).startswith("clangsa_"):
-        buildaction.analyzer_type = analyzer_types.CLANG_SA
-    elif os.path.basename(f).startswith("clang-tidy_"):
-        buildaction.analyzer_type = analyzer_types.CLANG_TIDY
 
     rh = analyzer_types.construct_parse_handler(buildaction,
                                                 f,

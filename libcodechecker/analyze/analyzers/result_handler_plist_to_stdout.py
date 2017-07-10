@@ -148,14 +148,12 @@ class PlistToStdout(ResultHandler):
             len(self.analyzed_source_file) > 0 else ''
 
         if non_suppressed == 0:
-            self.__output.write('%s found no defects while analyzing%s\n' %
-                                (self.buildaction.analyzer_type,
-                                 basefile_print))
+            self.__output.write('Found no defects while analyzing%s\n' %
+                                (basefile_print))
         else:
             self.__output.write(
-                '%s found %d defect(s) while analyzing%s\n\n' %
-                (self.buildaction.analyzer_type, non_suppressed,
-                 basefile_print))
+                'Found %d defect(s) while analyzing%s\n\n' %
+                (non_suppressed, basefile_print))
 
     def handle_results(self, client=None):
         plist = self.analyzer_result_file

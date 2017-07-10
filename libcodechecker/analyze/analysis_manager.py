@@ -32,17 +32,18 @@ def worker_result_handler(results, metadata, output_path):
     successful_analysis = defaultdict(int)
     failed_analysis = defaultdict(int)
     skipped_num = 0
+    reanalyzed_num = 0
 
-    buildactions = []
-    for res, skipped, buildaction, result_file in results:
-        buildactions.append(buildaction)
+    for res, skipped, reanalyzed, analyzer_type, result_file in results:
         if skipped:
             skipped_num += 1
+        elif reanalyzed:
+            reanalyzed_num += 1
         else:
             if res == 0:
-                successful_analysis[buildaction.analyzer_type] += 1
+                successful_analysis[analyzer_type] += 1
             else:
-                failed_analysis[buildaction.analyzer_type] += 1
+                failed_analysis[analyzer_type] += 1
 
     LOG.info("----==== Summary ====----")
     LOG.info("Total compilation commands: " + str(len(results)))
@@ -56,6 +57,8 @@ def worker_result_handler(results, metadata, output_path):
         for analyzer_type, res in failed_analysis.items():
             LOG.info('  ' + analyzer_type + ': ' + str(res))
 
+    if reanalyzed_num:
+        LOG.info("Reanalyzed compilation commands: " + str(reanalyzed_num))
     if skipped_num:
         LOG.info("Skipped compilation commands: " + str(skipped_num))
     LOG.info("----=================----")
@@ -75,7 +78,13 @@ def worker_result_handler(results, metadata, output_path):
             source_map[f[:-7]] = sfile.read().strip()
         os.remove(f)
 
-    metadata['result_source_files'] = source_map
+    for f in glob.glob(os.path.join(output_path, 'failed', "*.error")):
+        (err_file, ext) = os.path.splitext(f)
+        plist_file = os.path.basename(err_file) + ".plist"
+        plist_file = os.path.join(output_path, plist_file)
+        metadata['result_source_files'].pop(plist_file, None)
+
+    metadata['result_source_files'].update(source_map)
 
 # Progress reporting.
 progress_checked_num = None
@@ -100,6 +109,7 @@ def check(check_data):
         output_dir, skip_handler = check_data
 
     skipped = False
+    reanalyzed = False
     try:
         # If one analysis fails the check fails.
         return_codes = 0
@@ -139,8 +149,14 @@ def check(check_data):
                                                           context.severity_map,
                                                           skip_handler)
 
+            rh.analyzed_source_file = source
+            if os.path.exists(rh.analyzer_result_file):
+                reanalyzed = True
+
             # Fills up the result handler with the analyzer information.
             source_analyzer.analyze(rh, analyzer_environment)
+
+            failed_dir = os.path.join(output_dir, "failed")
 
             if rh.analyzer_returncode == 0:
                 # Analysis was successful processing results.
@@ -160,9 +176,17 @@ def check(check_data):
                 LOG.info("[%d/%d] %s analyzed %s successfully." %
                          (progress_checked_num.value, progress_actions.value,
                           action.analyzer_type, source_file_name))
+
+                # Remove the previously generated error file.
+                if os.path.exists(failed_dir):
+                    (res_file, ext) = os.path.splitext(rh.analyzer_result_file)
+                    err_file = os.path.basename(res_file) + ".error"
+                    err_file = os.path.join(failed_dir, err_file)
+
+                    if os.path.exists(err_file):
+                        os.remove(err_file)
             else:
                 # Analysis failed.
-                failed_dir = os.path.join(output_dir, "failed")
                 if not os.path.exists(failed_dir):
                     os.makedirs(failed_dir)
                 (res_file, ext) = os.path.splitext(rh.analyzer_result_file)
@@ -184,14 +208,20 @@ def check(check_data):
                     LOG.error(rh.analyzer_stderr)
                 return_codes = rh.analyzer_returncode
 
+                # Remove files that successfully analyzed earlier on.
+                plist_file = os.path.basename(res_file) + ".plist"
+                if os.path.exists(plist_file):
+                    os.remove(plist_file)
+
         progress_checked_num.value += 1
 
-        return return_codes, skipped, action, result_file
+        return return_codes, skipped, reanalyzed, action.analyzer_type, \
+            result_file
 
     except Exception as e:
         LOG.debug_analyzer(str(e))
         traceback.print_exc(file=sys.stdout)
-        return 1, skipped, action.analyzer_type, None
+        return 1, skipped, reanalyzed, action.analyzer_type, None
 
 
 def start_workers(actions, context, analyzer_config_map,
