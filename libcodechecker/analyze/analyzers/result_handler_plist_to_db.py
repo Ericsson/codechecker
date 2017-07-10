@@ -172,6 +172,8 @@ class PlistToDB(ResultHandler):
 
             report_ids.append(report_id)
 
+        return report_ids
+
     def handle_results(self):
         """
         Send the plist content to the database.
@@ -195,7 +197,9 @@ class PlistToDB(ResultHandler):
                 LOG.error(msg + ' ' + plist_file)
                 return 1
 
-            self.__store_bugs(files, reports, connection)
+            report_ids = self.__store_bugs(files, reports, connection)
+
+        return report_ids
 
     def postprocess_result(self):
         """

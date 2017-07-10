@@ -31,6 +31,8 @@ struct RunData{
   6: string         runCmd,       // the used check command
   7: optional bool  can_delete    // true if codeCheckerDBAccess::removeRunResults()
                                   // is allowed on this run (see issue 151)
+  8: map<string, i32> detectionStatusCount
+                                  // this maps the detection status to its count
 }
 typedef list<RunData> RunDataList
 
@@ -47,6 +49,7 @@ struct ReportData{
                                           // execution step list.
   9: shared.Severity     severity         // checker severity
   10: optional string    suppressComment  // suppress commment if report is suppressed
+  11: string             detectionStatus  // 'new', 'resolved', 'unresolved', 'reopened'
 }
 typedef list<ReportData> ReportDataList
 

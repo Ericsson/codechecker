@@ -247,46 +247,61 @@ def add_arguments_to_parser(parser):
 
 
 def consume_plist(item):
-    f, context, metadata_dict, compile_cmds = item
+    try:
+        f, context, metadata_dict, compile_cmds = item
 
-    LOG.debug("Parsing input file '" + f + "'")
+        LOG.debug("Parsing input file '" + f + "'")
 
-    if 'working_directory' in metadata_dict:
-        os.chdir(metadata_dict['working_directory'])
+        if 'working_directory' in metadata_dict:
+            os.chdir(metadata_dict['working_directory'])
 
-    buildaction = build_action.BuildAction()
-    if os.path.basename(f).startswith("clangsa_"):
-        buildaction.analyzer_type = analyzer_types.CLANG_SA
-    elif os.path.basename(f).startswith("clang-tidy_"):
-        buildaction.analyzer_type = analyzer_types.CLANG_TIDY
+        buildaction = build_action.BuildAction()
+        if os.path.basename(f).startswith("clangsa_"):
+            buildaction.analyzer_type = analyzer_types.CLANG_SA
+        elif os.path.basename(f).startswith("clang-tidy_"):
+            buildaction.analyzer_type = analyzer_types.CLANG_TIDY
 
-    analyzed_source = 'UNKNOWN'
-    if 'result_source_files' in metadata_dict and\
-            f in metadata_dict['result_source_files']:
-            analyzed_source = metadata_dict['result_source_files'][f]
+        analyzed_source = 'UNKNOWN'
+        if 'result_source_files' in metadata_dict and\
+                f in metadata_dict['result_source_files']:
+                analyzed_source = metadata_dict['result_source_files'][f]
 
-    if analyzed_source == "UNKNOWN":
-        LOG.info("Storing defects in input file '" + f + "'")
-    else:
-        LOG.info("Storing analysis results for file '" +
-                 analyzed_source + "'")
+        if analyzed_source == "UNKNOWN":
+            LOG.info("Storing defects in input file '" + f + "'")
+        else:
+            LOG.info("Storing analysis results for file '" +
+                     analyzed_source + "'")
 
-    buildaction.original_command = compile_cmds.get(analyzed_source,
-                                                    'MISSING')
+        buildaction.original_command = compile_cmds.get(analyzed_source,
+                                                        'MISSING')
 
-    if buildaction.original_command == 'MISSING':
-        LOG.warning("Compilation action was not found for file: " +
-                    analyzed_source)
+        if buildaction.original_command == 'MISSING':
+            LOG.warning("Compilation action was not found for file: " +
+                        analyzed_source)
 
-    rh = analyzer_types.construct_store_handler(buildaction,
-                                                context.run_id,
-                                                context.severity_map)
+        rh = analyzer_types.construct_store_handler(buildaction,
+                                                    context.run_id,
+                                                    context.severity_map)
 
-    rh.analyzer_returncode = 0
-    rh.analyzer_result_file = f
-    rh.analyzer_cmd = ''
-    rh.analyzed_source_file = analyzed_source
-    rh.handle_results()
+        rh.analyzer_returncode = 0
+        rh.analyzer_result_file = f
+        rh.analyzer_cmd = ''
+        rh.analyzed_source_file = analyzed_source
+
+        return rh.handle_results()
+    except Exception as ex:
+        LOG.error("Plist consumer exception: " + str(ex))
+        return []
+
+
+def consumed_results(client, run_id):
+    def markFixed(l):
+        # Flatten list
+        l = [x for sublist in l for x in sublist]
+        with client.get_connection() as connection:
+            connection.mark_reports_fixed(run_id, l)
+
+    return markFixed
 
 
 def __get_run_name(input_list):
@@ -489,12 +504,10 @@ def main(args):
     pool = multiprocessing.Pool(args.jobs)
 
     try:
-        pool.map_async(consume_plist, items, 1).get(float('inf'))
+        pool.map_async(
+            consume_plist, items, 1,
+            consumed_results(client, context.run_id)).get(float('inf'))
         pool.close()
-    except Exception:
-        pool.terminate()
-        LOG.error("Storing the results failed.")
-        raise  # CodeChecker.py is the invoker, it will handle this.
     finally:
         pool.join()
         os.chdir(original_cwd)

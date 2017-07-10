@@ -146,7 +146,8 @@ class ThriftRequestHandler():
                 lastBugPosition=last_event_pos,
                 checkerId=report.checker_id,
                 severity=report.severity,
-                suppressComment=suppress_comment)
+                suppressComment=suppress_comment,
+                detectionStatus=report.detection_status)
         except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
             msg = str(alchemy_ex)
             LOG.error(msg)
@@ -241,7 +242,8 @@ class ThriftRequestHandler():
                                lastBugPosition=last_event_pos,
                                checkerId=report.checker_id,
                                severity=report.severity,
-                               suppressComment=suppress_comment)
+                               suppressComment=suppress_comment,
+                               detectionStatus=report.detection_status)
                 )
 
             return results
@@ -270,6 +272,16 @@ class ThriftRequestHandler():
                 .outerjoin(stmt, Run.id == stmt.c.run_id) \
                 .order_by(Run.date)
 
+            status_q = session.query(Report.run_id,
+                                     Report.detection_status,
+                                     func.count(literal_column('*'))
+                                         .label('status_count')) \
+                .group_by(Report.detection_status)
+
+            status_sum = defaultdict(defaultdict)
+            for run_id, status, count in status_q:
+                status_sum[run_id][status] = count
+
             for instance, reportCount in q:
                 if reportCount is None:
                     reportCount = 0
@@ -279,7 +291,9 @@ class ThriftRequestHandler():
                                        instance.name,
                                        instance.duration,
                                        reportCount,
-                                       instance.command
+                                       instance.command,
+                                       None,
+                                       status_sum[instance.id]
                                        ))
             return results
 
@@ -956,7 +970,9 @@ class ThriftRequestHandler():
                                           lastBugPosition=lastEventPos,
                                           checkerId=report.checker_id,
                                           severity=report.severity,
-                                          suppressComment=suppress_comment))
+                                          suppressComment=suppress_comment,
+                                          detectionStatus=report
+                                          .detection_status))
 
             return results
 

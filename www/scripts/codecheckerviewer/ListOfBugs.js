@@ -170,6 +170,7 @@ function (declare, Deferred, ObjectStore, Store, QueryResults, topic,
         { name : 'Message', field : 'checkerMsg', width : '100%' },
         { name : 'Checker name', field : 'checkerId', cellClasses : 'link', width : '50%' },
         { name : 'Severity', field : 'severity' },
+        { name : 'Status', field : 'detectionStatus' },
         { name : 'Suppress', field : 'suppressComment' }
       ];
 
@@ -194,7 +195,8 @@ function (declare, Deferred, ObjectStore, Store, QueryResults, topic,
 
       return cell.field === 'checkedFile' ||
              cell.field === 'checkerId'   ||
-             cell.field === 'severity';
+             cell.field === 'severity'    ||
+             cell.field === 'detectionStatus';
     },
 
     scrollToLastSelected : function () {

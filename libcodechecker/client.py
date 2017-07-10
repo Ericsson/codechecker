@@ -168,6 +168,10 @@ class Connection(object):
                                       events, checker_id, checker_cat,
                                       bug_type, severity, suppress)
 
+    def mark_reports_fixed(self, run_id, skip_report_ids):
+        """  """
+        return self._client.markReportsFixed(run_id, skip_report_ids)
+
     def need_file_content(self, run_id, filepath):
         """ NeedFileResult needFileContent(1: i64 run_id, 2: string filepath)
         """

@@ -206,6 +206,10 @@ class Report(Base):
                                      initially="DEFERRED", ondelete='CASCADE'),
                           index=True)
     suppressed = Column(Boolean)
+    detection_status = Column(Enum('new',
+                                   'unresolved',
+                                   'resolved',
+                                   'reopened'))
 
     # Cascade delete might remove rows SQLAlchemy warns about this
     # to remove warnings about already deleted items set this to False.
@@ -216,7 +220,8 @@ class Report(Base):
     # Priority/severity etc...
     def __init__(self, run_id, bug_id, file_id, checker_message,
                  start_bugpoint, start_bugevent, end_bugevent, checker_id,
-                 checker_cat, bug_type, severity, suppressed):
+                 checker_cat, bug_type, severity, suppressed,
+                 detection_status):
         self.run_id = run_id
         self.file_id = file_id
         self.bug_id = bug_id
@@ -229,6 +234,7 @@ class Report(Base):
         self.checker_cat = checker_cat
         self.suppressed = suppressed
         self.bug_type = bug_type
+        self.detection_status = detection_status
 
 
 class SuppressBug(Base):

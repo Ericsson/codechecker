@@ -209,7 +209,8 @@ class CheckerReportHandler(object):
                         checker_cat,
                         bug_type,
                         severity,
-                        suppressed=False):
+                        suppressed=False,
+                        detection_status='new'):
         """
         """
         try:
@@ -238,7 +239,8 @@ class CheckerReportHandler(object):
                             checker_cat,
                             bug_type,
                             severity,
-                            suppressed)
+                            suppressed,
+                            detection_status)
 
             self.session.add(report)
             self.session.commit()
@@ -267,29 +269,38 @@ class CheckerReportHandler(object):
         try:
             checker_id = checker_id or 'NOT FOUND'
 
-            # TODO: performance issues when executing the following query on
-            # large databases?
+            # Theoretically this query should return at most one result because
+            # path hash makes a bug unique in a run.
+            # TODO: Add path hash to the query condition.
             reports = self.session.query(self.report_ident) \
                 .filter(and_(self.report_ident.c.bug_id == bug_hash,
                              self.report_ident.c.run_id == run_id))
             try:
                 # Check for duplicates by bug hash.
-                if reports.count() != 0:
-                    for possib_dup in reports:
-                        # It's a duplicate or a hash clash. Check checker name,
-                        # file id, and position.
-                        dup_report_obj = self.session.query(Report).get(
-                            possib_dup.report_ident.id)
-                        if dup_report_obj and \
-                                dup_report_obj.checker_id == checker_id and \
-                                dup_report_obj.file_id == file_id and \
-                                self.__is_same_event_path(
-                                    dup_report_obj.start_bugevent, events):
-                            # TODO: It is not clear why this commit is needed
-                            # but if it is not here then the commit in
-                            # finishCheckerRun() hangs.
-                            self.session.commit()
-                            return dup_report_obj.id
+                for possib_dup in reports:
+                    dup_report_obj = self.session.query(Report).get(
+                        possib_dup.report_ident.id)
+                    # TODO: file_id and path equality check won't be necessary
+                    # when path hash is added.
+                    if dup_report_obj and \
+                            dup_report_obj.checker_id == checker_id and \
+                            dup_report_obj.file_id == file_id and \
+                            self.__is_same_event_path(
+                                dup_report_obj.start_bugevent, events):
+
+                        new_status = None
+
+                        if dup_report_obj.detection_status == 'new' or \
+                                dup_report_obj.detection_status == 'reopened':
+                            new_status = 'unresolved'
+                        elif dup_report_obj.detection_status == 'resolved':
+                            new_status = 'reopened'
+
+                        if new_status:
+                            dup_report_obj.detection_status = new_status
+
+                        self.session.commit()
+                        return dup_report_obj.id
 
                 return self.storeReportInfo(run_id,
                                             file_id,
@@ -317,6 +328,14 @@ class CheckerReportHandler(object):
             raise shared.ttypes.RequestFailed(
                 shared.ttypes.ErrorCode.GENERAL,
                 str(ex))
+
+    def markReportsFixed(self, run_id, skip_report_ids):
+        self.session.query(Report) \
+            .filter(Report.id.notin_(skip_report_ids)) \
+            .update({Report.detection_status: 'resolved'},
+                    synchronize_session='fetch')
+        self.session.commit()
+        return True
 
     def storeBugEvents(self, bugevents):
         """

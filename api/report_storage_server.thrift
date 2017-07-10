@@ -66,6 +66,10 @@ service CheckerReport {
                                11: bool suppress)
                                throws (1: shared.RequestFailed requestError),
 
+                bool markReportsFixed(
+                                      1: i64 run_id,
+                                      2: list<i64> skip_report_ids)
+
                 NeedFileResult needFileContent(
                                                1: i64 run_id,
                                                2: string filepath)

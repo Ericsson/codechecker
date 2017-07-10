@@ -36,6 +36,13 @@ function (declare, domConstruct, ItemFileWriteStore, topic, Dialog, Button,
     return prettyDuration;
   }
 
+  function prettifyStatus(statusCounts) {
+    items = []
+    for (statusCount in statusCounts)
+      items.push(statusCount + '&nbsp(' + statusCounts[statusCount] + ')')
+    return items.join(', ');
+  }
+
   var ListOfRunsGrid = declare(DataGrid, {
     constructor : function () {
       this.store = new ItemFileWriteStore({
@@ -50,6 +57,7 @@ function (declare, domConstruct, ItemFileWriteStore, topic, Dialog, Button,
         { name : 'Number of bugs', field : 'numberofbugs', styles : 'text-align: center;', width : '20%' },
         { name : 'Duration', field : 'duration', styles : 'text-align: center;' },
         { name : 'Check command', field : 'checkcmd', styles : 'text-align: center;' },
+        { name : 'Detection status', field : 'detectionstatus', styles : 'text-align: center;', width : '30%' },
         { name : 'Delete', field : 'del', styles : 'text-align: center;', type : 'dojox.grid.cells.Bool', editable : true }
       ];
 
@@ -160,7 +168,8 @@ function (declare, domConstruct, ItemFileWriteStore, topic, Dialog, Button,
             duration : prettifyDuration(item.duration),
             del : false,
             runData : item,
-            checkcmd : '<span class="link">Show</span>'
+            checkcmd : '<span class="link">Show</span>',
+            detectionstatus : prettifyStatus(item.detectionStatusCount)
           });
         });
       });
