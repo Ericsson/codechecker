@@ -11,7 +11,6 @@ stdout.
 
 import argparse
 import os
-import shutil
 import sys
 
 from libcodechecker import libhandlers
@@ -471,6 +470,7 @@ def main(args):
             logfile=[logfile],
             output_path=report_dir,
             output_format='plist',
+            clean=args.force,
             jobs=args.jobs,
             add_compiler_defaults=args.add_compiler_defaults
         )
@@ -535,9 +535,6 @@ def main(args):
     except Exception as ex:
         LOG.error("Running check failed. " + ex.message)
     finally:
-        LOG.debug("Cleaning up reports folder ...")
-        shutil.rmtree(report_dir)
-
         if 'command' in args and logfile:
             # Only remove the build.json if it was on-the-fly created by us!
             LOG.debug("Cleaning up build.json ...")

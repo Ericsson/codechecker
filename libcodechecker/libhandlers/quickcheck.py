@@ -338,6 +338,7 @@ def main(args):
             logfile=[logfile],
             output_path=workspace,
             output_format='plist',
+            clean=True,
             jobs=args.jobs,
             add_compiler_defaults=args.add_compiler_defaults
         )

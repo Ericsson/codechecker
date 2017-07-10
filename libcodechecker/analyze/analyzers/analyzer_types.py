@@ -401,22 +401,12 @@ def construct_parse_handler(buildaction,
     """
     Construct a result handler for parsing results in a human-readable format.
     """
-    if buildaction.analyzer_type not in supported_analyzers:
-        return None
+    res_handler = result_handler_plist_to_stdout.PlistToStdout(
+        buildaction,
+        output,
+        None)
 
-    if buildaction.analyzer_type == CLANG_SA:
-        res_handler = result_handler_plist_to_stdout.PlistToStdout(
-            buildaction,
-            output,
-            None)
-        res_handler.print_steps = print_steps
-
-    elif buildaction.analyzer_type == CLANG_TIDY:
-        res_handler = result_handler_clang_tidy.ClangTidyPlistToStdout(
-            buildaction,
-            output,
-            None)
-
+    res_handler.print_steps = print_steps
     res_handler.severity_map = severity_map
     res_handler.suppress_handler = suppress_handler
     return res_handler

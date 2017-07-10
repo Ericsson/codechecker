@@ -21,5 +21,5 @@ saargs_forward.cpp:11:10: Dereference of null pointer (loaded from variable 'ptr
   return *ptr;
          ^
 
-clangsa found 1 defect(s) while analyzing saargs_forward.cpp
+Found 1 defect(s) while analyzing saargs_forward.cpp
 
