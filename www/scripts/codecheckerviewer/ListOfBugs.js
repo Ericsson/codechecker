@@ -210,6 +210,7 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
         { name : 'Severity', field : 'severity' },
         { name : 'Review status', field : 'reviewStatusHtml', cellClasses : 'review-status', width : '25%' },
         { name : 'Review comment', cellClasses : 'review-comment-message compact', field : 'reviewComment', width : '50%' }
+        { name : 'Detection status', field : 'detectionStatus' },
       ];
 
       this.focused = true;
@@ -233,7 +234,8 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
 
       return cell.field === 'checkedFile' ||
              cell.field === 'checkerId'   ||
-             cell.field === 'severity';
+             cell.field === 'severity'    ||
+             cell.field === 'detectionStatus';
     },
 
     scrollToLastSelected : function () {

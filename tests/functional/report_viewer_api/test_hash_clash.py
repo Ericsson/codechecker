@@ -66,7 +66,7 @@ class HashClash(unittest.TestCase):
                                           'v',
                                           False)
 
-    def _create_file(self, name, cols=10, lines=10):
+    def _create_file(self, name, run_id, cols=10, lines=10):
         """Creates a new file with random content."""
 
         path = name + "_" + str(uuid4())
@@ -74,12 +74,12 @@ class HashClash(unittest.TestCase):
         hasher = sha256()
         hasher.update(content)
         content_hash = hasher.hexdigest()
-        need = self._report.needFileContent(path, content_hash)
+        need = self._report.needFileContent(path, content_hash, run_id)
         self.assertTrue(need.needed)
 
         content = base64.b64encode(content)
         success = self._report.addFileContent(content_hash, content,
-                                              Encoding.BASE64)
+                                              Encoding.BASE64, run_id)
         self.assertTrue(success)
 
         return need.fileId, path
@@ -123,7 +123,7 @@ class HashClash(unittest.TestCase):
         """
 
         run_id = self._create_run(name)
-        file_id, source_file = self._create_file(name)
+        file_id, source_file = self._create_file(name, run_id)
 
         # analyzer type needs to match with the supported analyzer types
         # clangsa is used for testing
@@ -140,10 +140,8 @@ class HashClash(unittest.TestCase):
         - Hash clash in different build actions.
         """
 
-        with self._init_new_test('test1') as ids1, \
-                self._init_new_test('test2') as ids2:
+        with self._init_new_test('test1') as ids1:
             run_id1, file_id1, _ = ids1
-            run_id2, file_id2, source_file2 = ids2
             rep_id1 = self._create_simple_report(file_id1,
                                                  run_id1,
                                                  'XXX',
@@ -162,6 +160,16 @@ class HashClash(unittest.TestCase):
             # Same file, same hash and different position in line
             self.assertEqual(rep_id1, rep_id3)
 
+            rep_id6 = self._create_simple_report(file_id1,
+                                                 run_id1,
+                                                 'XXX',
+                                                 ((1, 3), (1, 4)))
+
+            # Same file, same hash and different position in column
+            self.assertNotEqual(rep_id1, rep_id6)
+
+        with self._init_new_test('test2') as ids2:
+            run_id2, file_id2, source_file2 = ids2
             rep_id4 = self._create_simple_report(file_id2,
                                                  run_id2,
                                                  'XXX',
@@ -170,6 +178,10 @@ class HashClash(unittest.TestCase):
                                                  run_id2,
                                                  'YYY',
                                                  ((1, 1), (1, 2)))
+            rep_id7 = self._create_simple_report(file_id1,
+                                                 run_id2,
+                                                 'XXX',
+                                                 ((1, 1), (1, 2)))
             # Different file, same hash, and position
             self.assertNotEqual(rep_id1, rep_id4)
             # Different file, same hash and different position
@@ -177,8 +189,4 @@ class HashClash(unittest.TestCase):
             # Same file and position, different hash
             self.assertNotEqual(rep_id4, rep_id5)
 
-            rep_id7 = self._create_simple_report(file_id1,
-                                                 run_id2,
-                                                 'XXX',
-                                                 ((1, 1), (1, 2)))
             self.assertNotEqual(rep_id1, rep_id7)

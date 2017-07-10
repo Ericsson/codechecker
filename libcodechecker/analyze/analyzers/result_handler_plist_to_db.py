@@ -53,19 +53,35 @@ class PlistToDB(ResultHandler):
             hasher = sha256()
             hasher.update(source)
             content_hash = hasher.hexdigest()
-            file_descriptor = client.needFileContent(file_name, content_hash)
+            file_descriptor = client.needFileContent(file_name,
+                                                     content_hash,
+                                                     self.__run_id)
             file_ids[file_name] = file_descriptor.fileId
 
             if file_descriptor.needed:
                 source64 = base64.b64encode(source)
                 res = client.addFileContent(content_hash,
                                             source64,
-                                            Encoding.BASE64)
+                                            Encoding.BASE64,
+                                            self.__run_id)
                 if not res:
                     LOG.debug("Failed to store file content")
+                with codecs.open(file_name, 'r', 'UTF-8') as source_file:
+                    file_content = source_file.read()
+                    # WARN the right content encoding is needed for thrift!
+                    source = codecs.encode(file_content, 'utf-8')
+                    # TODO: we may not use the file content in the end
+                    # depending on skippaths.
+
+                    source64 = base64.b64encode(source)
+                    res = client.addFileContent(file_descriptor.fileId,
+                                                source64,
+                                                Encoding.BASE64,
+                                                self.__run_id)
+                    if not res:
+                        LOG.debug("Failed to store file content")
 
         # Skipping reports in header files handled here.
-        report_ids = []
         for report in reports:
             events = [i for i in report.bug_path if i.get('kind') == 'event']
 
@@ -174,7 +190,6 @@ class PlistToDB(ResultHandler):
                                          severity)
 
             LOG.debug("Storing done for report " + str(report_id))
-            report_ids.append(report_id)
 
             # Check for suppress comment.
             supp = sp_handler.get_suppressed()
@@ -183,7 +198,7 @@ class PlistToDB(ResultHandler):
                 status = shared.ttypes.ReviewStatus.UNREVIEWED
                 client.changeReviewStatus(report_id, status, comment)
 
-    def handle_results(self, client=None):
+    def handle_results(self, client):
         """
         Send the plist content to the database.
         Server API calls should be used in one connection.

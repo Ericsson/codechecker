@@ -51,7 +51,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
     """
 
     def __init__(self, request, client_address, server):
-        self.sc_session = server.sc_session
+        self.Session = server.Session
 
         self.db_version_info = server.db_version_info
         self.manager = server.manager
@@ -189,8 +189,6 @@ class RequestHandler(SimpleHTTPRequestHandler):
 
         # Authentication is handled, we may now respond to the user.
         try:
-            session = self.sc_session()
-
             if self.path == '/Authentication':
                 # Authentication requests must be routed to a different
                 # handler.
@@ -204,7 +202,8 @@ class RequestHandler(SimpleHTTPRequestHandler):
                 else:
                     LOG.debug("Unauthenticated access.")
 
-                acc_handler = ThriftRequestHandler(session, auth_session,
+                acc_handler = ThriftRequestHandler(self.Session,
+                                                   auth_session,
                                                    checker_md_docs,
                                                    checker_md_docs_map,
                                                    suppress_handler,
@@ -215,8 +214,6 @@ class RequestHandler(SimpleHTTPRequestHandler):
 
             processor.process(iprot, oprot)
             result = otrans.getvalue()
-
-            self.sc_session.remove()
 
             self.send_response(200)
             self.send_header("content-type", "application/x-thrift")
@@ -284,9 +281,7 @@ class CCSimpleHttpServer(HTTPServer):
         self.__engine = database_handler.SQLServer.create_engine(
             db_conn_string)
 
-        Session = scoped_session(sessionmaker())
-        Session.configure(bind=self.__engine)
-        self.sc_session = Session
+        self.Session = sessionmaker(bind=self.__engine)
         self.manager = manager
 
         self.__request_handlers = ThreadPool(processes=10)
