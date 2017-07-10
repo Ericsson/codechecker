@@ -5,8 +5,8 @@
 # -------------------------------------------------------------------------
 
 from abc import ABCMeta
+import hashlib
 import os
-import uuid
 
 from libcodechecker.logger import LoggerFactory
 
@@ -176,10 +176,11 @@ class ResultHandler(object):
             analyzed_file = self.analyzed_source_file
             _, analyzed_file_name = os.path.split(analyzed_file)
 
-            uid = str(uuid.uuid1()).split('-')[0]
+            build_info = str(self.buildaction.analyzer_type) + '_' + \
+                self.buildaction.original_command
 
-            out_file_name = str(self.buildaction.analyzer_type) + \
-                '_' + analyzed_file_name + '_' + uid + '.plist'
+            out_file_name = analyzed_file_name + '_' + \
+                hashlib.md5(build_info).hexdigest() + '.plist'
 
             out_file = os.path.join(self.__workspace, out_file_name)
             self.__result_file = out_file

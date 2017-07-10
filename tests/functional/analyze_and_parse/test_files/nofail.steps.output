@@ -17,4 +17,4 @@ QUICKCHECK#CodeChecker quickcheck --build "make nofail" --quiet-build --analyzer
 [] - To store results use the "CodeChecker store" command.
 [] - See --help and the user guide for further options about parsing and storing the reports.
 [] - ----=================----
-clangsa found no defects while analyzing nofail.cpp
+Found no defects while analyzing nofail.cpp
