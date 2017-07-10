@@ -53,7 +53,6 @@ class Run(Base):
     name = Column(String)
     version = Column(String)
     command = Column(String)
-    inc_count = Column(Integer)
     can_delete = Column(Boolean, nullable=False, server_default=true(),
                         default=True)
 
@@ -65,7 +64,6 @@ class Run(Base):
         self.date, self.name, self.version, self.command = \
             datetime.now(), name, version, command
         self.duration = -1
-        self.inc_count = 0
 
     def mark_finished(self):
         self.duration = ceil((datetime.now() - self.date).total_seconds())
@@ -191,6 +189,11 @@ class Report(Base):
 
     # TODO: multiple messages to multiple source locations?
     checker_message = Column(String)
+    detection_status = Column(String)
+    # detection_status = Column(Enum('new',
+    #                                'unresolved',
+    #                                'resolved',
+    #                                'reopened'))
 
     # Cascade delete might remove rows SQLAlchemy warns about this
     # to remove warnings about already deleted items set this to False.
@@ -200,7 +203,7 @@ class Report(Base):
 
     # Priority/severity etc...
     def __init__(self, run_id, bug_id, file_id, checker_message, checker_id,
-                 checker_cat, bug_type, severity):
+                 checker_cat, bug_type, severity, detection_status):
         self.run_id = run_id
         self.file_id = file_id
         self.bug_id = bug_id
@@ -209,6 +212,7 @@ class Report(Base):
         self.checker_id = checker_id
         self.checker_cat = checker_cat
         self.bug_type = bug_type
+        self.detection_status = detection_status
 
 
 class SkipPath(Base):

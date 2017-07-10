@@ -31,6 +31,8 @@ struct RunData{
   6: string         runCmd,       // the used check command
   7: optional bool  can_delete    // true if codeCheckerDBAccess::removeRunResults()
                                   // is allowed on this run (see issue 151)
+  8: map<string, i32> detectionStatusCount
+                                  // this maps the detection status to its count
 }
 typedef list<RunData> RunDataList
 
@@ -43,16 +45,17 @@ struct ReviewData{
 
 //-----------------------------------------------------------------------------
 struct ReportData{
-  1: string               checkerId,       // the qualified id of the checker that reported this
-  2: string               bugHash,         // This is unique id of the concrete report.
-  3: string               checkedFile,     // this is a filepath
-  4: string               checkerMsg,      // description of the bug report
-  5: i64                  reportId,        // id of the report in the current run in the db
-  6: i64                  fileId,          // unique id of the file the report refers to
-  7: shared.BugPathEvent  lastBugPosition  // This contains the range and message of the last item in the symbolic
-                                           // execution step list.
-  8: shared.Severity      severity         // checker severity
-  9: ReviewData           review           // bug review status informations.
+  1: string              checkerId,       // the qualified id of the checker that reported this
+  2: string              bugHash,         // This is unique id of the concrete report.
+  3: string              checkedFile,     // this is a filepath
+  4: string              checkerMsg,      // description of the bug report
+  5: i64                 reportId,        // id of the report in the current run in the db
+  6: i64                 fileId,          // unique id of the file the report refers to
+  7: shared.BugPathEvent lastBugPosition  // This contains the range and message of the last item in the symbolic
+                                          // execution step list.
+  8: shared.Severity     severity         // checker severity
+  9: ReviewData          review           // bug review status informations.
+  10: string             detectionStatus  // 'new', 'resolved', 'unresolved', 'reopened'
 }
 typedef list<ReportData> ReportDataList
 
@@ -347,13 +350,15 @@ service codeCheckerDBAccess {
   // * If none of them matches a (new file_id, true) is returned.
   NeedFileResult needFileContent(
                                  1: string filepath,
-                                 2: string content_hash)
+                                 2: string content_hash,
+                                 3: i64 run_id)
                                  throws (1: shared.RequestFailed requestError),
 
   bool addFileContent(
                       1: string content_hash,
                       2: string file_content,
-                      3: Encoding encoding)
+                      3: optional Encoding encoding,
+                      4: i64 run_id)
                       throws (1: shared.RequestFailed requestError),
 
   bool finishCheckerRun(1: i64 run_id)

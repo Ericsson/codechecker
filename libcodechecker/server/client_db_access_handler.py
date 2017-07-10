@@ -12,6 +12,8 @@ import codecs
 from collections import defaultdict
 import datetime
 import os
+import threading
+import time
 import zlib
 
 import sqlalchemy
@@ -93,13 +95,87 @@ def bugreportpoint_db_to_api(brp):
         fileId=brp.file_id)
 
 
+class StorageSession:
+    '''This class is a singleton which helps to handle a transaction which
+    belong to the checking of an entire run. This class holds the SQLAlchemy
+    session for the run being checked and the set of touched reports. This
+    latter one is needed so at the end the detection status of the rest reports
+    can be set to "resolved".'''
+
+    class __StorageSession:
+        def __init__(self):
+            self.__sessions = dict()
+            self._timeout_sessions()
+
+        def start_run_session(self, run_id, transaction):
+            self.__sessions[run_id] = {
+                'touched_reports': set(),
+                'transaction': transaction,
+                'timer': time.time()}
+
+        def end_run_session(self, run_id):
+            this_session = self.__sessions[run_id]
+            transaction = this_session['transaction']
+
+            # Set resolved reports
+
+            transaction.query(Report) \
+                .filter(Report.run_id == run_id,
+                        Report.id.notin_(this_session['touched_reports'])) \
+                .update({Report.detection_status: 'resolved'},
+                        synchronize_session='fetch')
+
+            transaction.commit()
+            transaction.close()
+
+            del self.__sessions[run_id]
+
+        def abort_session(self, run_id):
+            transaction = self.__sessions[run_id]['transaction']
+            transaction.rollback()
+            transaction.close()
+            del self.__sessions[run_id]
+
+        def touch_report(self, run_id, report_id):
+            self.__sessions[run_id]['touched_reports'].add(report_id)
+
+        def is_touched(self, run_id, report_id):
+            return report_id in self.__sessions[run_id]['touched_reports']
+
+        def has_ongoing_run(self, run_id):
+            return run_id in self.__sessions
+
+        def get_transaction(self, run_id):
+            self.__sessions[run_id]['timer'] = time.time()
+            return self.__sessions[run_id]['transaction']
+
+        def _timeout_sessions(self):
+            for run_id, session in self.__sessions.iteritems():
+                if int(time.time() - session['timer']) > 10:
+                    LOG.info('Session timeout for run ' + str(run_id))
+                    self.abort_session(run_id)
+                    break
+
+            threading.Timer(10, self._timeout_sessions).start()
+
+    instance = None
+
+    def __init__(self):
+        if not StorageSession.instance:
+            StorageSession.instance = \
+                StorageSession.__StorageSession()
+
+    def __getattr__(self, name):
+        return getattr(self.instance, name)
+
+
 class ThriftRequestHandler(object):
     """
     Connect to database and handle thrift client requests.
     """
 
     def __init__(self,
-                 session,
+                 Session,
                  auth_session,
                  checker_md_docs,
                  checker_md_docs_map,
@@ -112,7 +188,8 @@ class ThriftRequestHandler(object):
         self.__checker_doc_map = checker_md_docs_map
         self.__suppress_handler = suppress_handler
         self.__package_version = package_version
-        self.__session = session
+        self.__Session = Session
+        self.__storage_session = StorageSession()
         self.report_ident = sqlalchemy.orm.query.Bundle('report_ident',
                                                         Report.id,
                                                         Report.bug_id,
@@ -124,18 +201,31 @@ class ThriftRequestHandler(object):
         belongs to the given report. If no such event is found then None
         returns.
         """
-        last = self.__session.query(BugPathEvent) \
-            .filter(BugPathEvent.report_id == report_id) \
-            .order_by(BugPathEvent.order.desc()) \
-            .limit(1).one_or_none()
+        try:
+            session = self.__Session()
 
-        if not last:
-            return None
+            last = session.query(BugPathEvent) \
+                .filter(BugPathEvent.report_id == report_id) \
+                .order_by(BugPathEvent.order.desc()) \
+                .limit(1).all()
 
-        bpe = bugpathevent_db_to_api(last)
-        bpe.filePath = self.__session.query(File).get(bpe.fileId).filepath
+            if len(last) < 1:
+                return None
 
-        return bpe
+            last = last[0]
+
+            bpe = bugpathevent_db_to_api(last)
+            bpe.filePath = session.query(File).get(bpe.fileId).filepath
+
+            return bpe
+        except sqlalchemy.exc.SQLAlchemyError as ex:
+            msg = str(ex)
+            LOG.error(msg)
+            raise shared.ttypes.RequestFailed(
+                shared.ttypes.ErrorCode.DATABASE,
+                msg)
+        finally:
+            session.close()
 
     def __sortResultsQuery(self, query, sort_types=None):
         """
@@ -164,9 +254,10 @@ class ThriftRequestHandler(object):
     @timeit
     def getRunData(self, run_name_filter):
 
-        session = self.__session
-        results = []
         try:
+            results = []
+            session = self.__Session()
+
             # Count the reports subquery.
             stmt = session.query(Report.run_id,
                                  func.count(literal_column('*')).label(
@@ -182,6 +273,16 @@ class ThriftRequestHandler(object):
             q = q.outerjoin(stmt, Run.id == stmt.c.run_id) \
                 .order_by(Run.date)
 
+            status_q = session.query(Report.run_id,
+                                     Report.detection_status,
+                                     func.count(literal_column('*'))
+                                         .label('status_count')) \
+                .group_by(Report.run_id, Report.detection_status)
+
+            status_sum = defaultdict(defaultdict)
+            for run_id, status, count in status_q:
+                status_sum[run_id][status] = count
+
             for instance, reportCount in q:
                 if reportCount is None:
                     reportCount = 0
@@ -191,20 +292,25 @@ class ThriftRequestHandler(object):
                                        instance.name,
                                        instance.duration,
                                        reportCount,
-                                       instance.command
+                                       instance.command,
+                                       None,
+                                       status_sum[instance.id]
                                        ))
             return results
 
         except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
-            LOG.error(str(alchemy_ex))
+            msg = str(alchemy_ex)
+            LOG.error(msg)
             raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
-                                              str(alchemy_ex))
+                                              msg)
+        finally:
+            session.close()
 
     @timeit
     def getReport(self, reportId):
-        session = self.__session
-
         try:
+            session = self.__Session()
+
             result = session.query(Report,
                                    File,
                                    ReviewStatus) \
@@ -243,7 +349,8 @@ class ThriftRequestHandler(object):
                 lastBugPosition=self.__lastBugEventPos(report.id),
                 checkerId=report.checker_id,
                 severity=report.severity,
-                review=review_data)
+                review=review_data,
+                detectionStatus=report.detection_status)
         except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
             msg = str(alchemy_ex)
             LOG.error(msg)
@@ -253,7 +360,6 @@ class ThriftRequestHandler(object):
 
     @timeit
     def getRunResults(self, run_id, limit, offset, sort_types, report_filters):
-
         max_query_limit = constants.MAX_QUERY_SIZE
         if limit > max_query_limit:
             LOG.debug('Query limit ' + str(limit) +
@@ -262,10 +368,10 @@ class ThriftRequestHandler(object):
                       str(max_query_limit))
             limit = max_query_limit
 
-        session = self.__session
         filter_expression = construct_report_filter(report_filters)
 
         try:
+            session = self.__Session()
 
             q = session.query(Report,
                               File,
@@ -306,7 +412,8 @@ class ThriftRequestHandler(object):
                                    report.id),
                                checkerId=report.checker_id,
                                severity=report.severity,
-                               review=review_data)
+                               review=review_data,
+                               detectionStatus=report.detection_status)
                 )
 
             return results
@@ -316,14 +423,17 @@ class ThriftRequestHandler(object):
             LOG.error(msg)
             raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
                                               msg)
+        finally:
+            session.close()
 
     @timeit
     def getRunResultCount(self, run_id, report_filters):
 
         filter_expression = construct_report_filter(report_filters)
 
-        session = self.__session
         try:
+            session = self.__Session()
+
             reportCount = session.query(Report) \
                 .filter(Report.run_id == run_id) \
                 .outerjoin(File, Report.file_id == File.id) \
@@ -340,6 +450,8 @@ class ThriftRequestHandler(object):
             LOG.error(msg)
             raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
                                               msg)
+        finally:
+            session.close()
 
     @timeit
     def __construct_bug_item_list(self, session, report_id, item_type):
@@ -363,8 +475,9 @@ class ThriftRequestHandler(object):
          - reportId
         """
 
-        session = self.__session
         try:
+            session = self.__Session()
+
             report = session.query(Report).get(reportId)
 
             events = self.__construct_bug_item_list(session,
@@ -393,14 +506,17 @@ class ThriftRequestHandler(object):
             LOG.error(msg)
             raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
                                               msg)
+        finally:
+            session.close()
 
     @timeit
     def changeReviewStatus(self, report_id, status, message):
         """
         Change review status of the bug by report id.
         """
-        session = self.__session
         try:
+            session = self.__Session()
+
             report = session.query(Report).get(report_id)
             if report:
                 review_status = session.query(ReviewStatus).get(report.bug_id)
@@ -437,8 +553,8 @@ class ThriftRequestHandler(object):
         """
             Return the list of comments for the given bug.
         """
-        session = self.__session
         try:
+            session = self.__Session()
             report = session.query(Report).get(report_id)
             if report:
                 result = []
@@ -474,14 +590,16 @@ class ThriftRequestHandler(object):
             LOG.error(msg)
             raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.IOERROR,
                                               msg)
+        finally:
+            session.close()
 
     @timeit
     def getCommentCount(self, report_id):
         """
             Return the number of comments for the given bug.
         """
-        session = self.__session
         try:
+            session = self.__Session()
             report = session.query(Report).get(report_id)
             if report:
                 commentCount = session.query(Comment) \
@@ -503,13 +621,15 @@ class ThriftRequestHandler(object):
             LOG.error(msg)
             raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.IOERROR,
                                               msg)
+        finally:
+            session.close()
 
     @timeit
     def addComment(self, report_id, comment_data):
         """
             Add new comment for the given bug.
         """
-        session = self.__session
+        session = self.__Session()
         try:
             report = session.query(Report).get(report_id)
             if report:
@@ -549,10 +669,12 @@ class ThriftRequestHandler(object):
             comments to be updated by it's original author only, except for
             Anyonymous comments that can be updated by anybody.
         """
-        session = self.__session
-        user = self.__auth_session.user\
-            if self.__auth_session else "Anonymous"
         try:
+            session = self.__Session()
+
+            user = self.__auth_session.user \
+                if self.__auth_session else "Anonymous"
+
             comment = session.query(Comment).get(comment_id)
             if comment:
                 if comment.author != 'Anonymous' and comment.author != user:
@@ -580,6 +702,8 @@ class ThriftRequestHandler(object):
             LOG.error(msg)
             raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.IOERROR,
                                               msg)
+        finally:
+            session.close()
 
     @timeit
     def removeComment(self, comment_id):
@@ -588,10 +712,12 @@ class ThriftRequestHandler(object):
             original author only, except for Anyonymous comments that can be
             updated by anybody.
         """
-        user = self.__auth_session.user\
-            if self.__auth_session else "Anonymous"
-        session = self.__session
         try:
+            session = self.__Session()
+
+            user = self.__auth_session.user \
+                if self.__auth_session else "Anonymous"
+
             comment = session.query(Comment).get(comment_id)
             if comment:
                 if comment.author != 'Anonymous' and comment.author != user:
@@ -618,6 +744,8 @@ class ThriftRequestHandler(object):
             LOG.error(msg)
             raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.IOERROR,
                                               msg)
+        finally:
+            session.close()
 
     def getCheckerDoc(self, checkerId):
         """
@@ -656,8 +784,9 @@ class ThriftRequestHandler(object):
         Parameters:
          - run_id
         """
-        session = self.__session
         try:
+            session = self.__Session()
+
             configs = session.query(Config) \
                 .filter(Config.run_id == run_id) \
                 .all()
@@ -675,11 +804,14 @@ class ThriftRequestHandler(object):
             LOG.error(msg)
             raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
                                               msg)
+        finally:
+            session.close()
 
     @timeit
     def getSkipPaths(self, run_id):
-        session = self.__session
         try:
+            session = self.__Session()
+
             suppressed_paths = session.query(SkipPath) \
                 .filter(SkipPath.run_id == run_id) \
                 .all()
@@ -697,6 +829,8 @@ class ThriftRequestHandler(object):
             LOG.error(msg)
             raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
                                               msg)
+        finally:
+            session.close()
 
     @timeit
     def getSourceFileData(self, fileId, fileContent, encoding):
@@ -706,8 +840,8 @@ class ThriftRequestHandler(object):
          - fileContent
          - enum Encoding
         """
-        session = self.__session
         try:
+            session = self.__Session()
             sourcefile = session.query(File).get(fileId)
 
             if sourcefile is None:
@@ -734,12 +868,14 @@ class ThriftRequestHandler(object):
             LOG.error(msg)
             raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
                                               msg)
+        finally:
+            session.close()
 
     @timeit
     def getRunResultTypes(self, run_id, report_filters):
 
-        session = self.__session
         try:
+            session = self.__Session()
 
             filter_expression = construct_report_filter(report_filters)
 
@@ -774,6 +910,8 @@ class ThriftRequestHandler(object):
             LOG.error(msg)
             raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
                                               msg)
+        finally:
+            session.close()
 
     # -----------------------------------------------------------------------
     @timeit
@@ -825,6 +963,9 @@ class ThriftRequestHandler(object):
                 .outerjoin(File, Report.file_id == File.id) \
                 .outerjoin(ReviewStatus,
                            ReviewStatus.bug_hash == Report.bug_id) \
+                .outerjoin(SuppressBug,
+                           and_(SuppressBug.hash == Report.bug_id,
+                                SuppressBug.run_id == run_id)) \
                 .filter(Report.bug_id.in_(diff_hash_list)) \
                 .filter(filter_expression)
 
@@ -857,7 +998,9 @@ class ThriftRequestHandler(object):
                     lastBugPosition=self.__lastBugEventPos(report.id),
                     checkerId=report.checker_id,
                     severity=report.severity,
-                    review=review_data))
+                    review=review_data,
+                    detectionStatus=report
+                    .detection_status))
 
             return results
 
@@ -877,7 +1020,7 @@ class ThriftRequestHandler(object):
                       sort_types=None,
                       report_filters=None):
 
-        session = self.__session
+        session = self.__Session()
 
         base_line_hashes, new_check_hashes = \
             self.__get_hashes_for_diff(session,
@@ -890,15 +1033,19 @@ class ThriftRequestHandler(object):
         LOG.debug(diff_hashes)
 
         if len(diff_hashes) == 0:
+            session.close()
             return []
 
-        return self.__queryDiffResults(session,
-                                       diff_hashes,
-                                       new_run_id,
-                                       limit,
-                                       offset,
-                                       sort_types,
-                                       report_filters)
+        result = self.__queryDiffResults(session,
+                                         diff_hashes,
+                                         new_run_id,
+                                         limit,
+                                         offset,
+                                         sort_types,
+                                         report_filters)
+
+        session.close()
+        return result
 
     # -----------------------------------------------------------------------
     @timeit
@@ -910,7 +1057,7 @@ class ThriftRequestHandler(object):
                            sort_types=None,
                            report_filters=None):
 
-        session = self.__session
+        session = self.__Session()
         base_line_hashes, new_check_hashes = \
             self.__get_hashes_for_diff(session,
                                        base_run_id,
@@ -922,15 +1069,18 @@ class ThriftRequestHandler(object):
         LOG.debug(diff_hashes)
 
         if len(diff_hashes) == 0:
+            session.close()
             return []
 
-        return self.__queryDiffResults(session,
-                                       diff_hashes,
-                                       base_run_id,
-                                       limit,
-                                       offset,
-                                       sort_types,
-                                       report_filters)
+        result = self.__queryDiffResults(session,
+                                         diff_hashes,
+                                         base_run_id,
+                                         limit,
+                                         offset,
+                                         sort_types,
+                                         report_filters)
+        session.close()
+        return result
 
     # -----------------------------------------------------------------------
     @timeit
@@ -942,7 +1092,7 @@ class ThriftRequestHandler(object):
                              sort_types=None,
                              report_filters=None):
 
-        session = self.__session
+        session = self.__Session()
         base_line_hashes, new_check_hashes = \
             self.__get_hashes_for_diff(session,
                                        base_run_id,
@@ -954,15 +1104,17 @@ class ThriftRequestHandler(object):
         LOG.debug(diff_hashes)
 
         if len(diff_hashes) == 0:
+            session.close()
             return []
 
-        return self.__queryDiffResults(session,
-                                       diff_hashes,
-                                       new_run_id,
-                                       limit,
-                                       offset,
-                                       sort_types,
-                                       report_filters)
+        result = self.__queryDiffResults(session,
+                                         diff_hashes,
+                                         new_run_id,
+                                         limit,
+                                         offset,
+                                         sort_types,
+                                         report_filters)
+        return result
 
     # -----------------------------------------------------------------------
     @timeit
@@ -979,7 +1131,7 @@ class ThriftRequestHandler(object):
     @timeit
     def removeRunResults(self, run_ids):
 
-        session = self.__session
+        session = self.__Session()
 
         runs_to_delete = []
         for run_id in run_ids:
@@ -1008,6 +1160,7 @@ class ThriftRequestHandler(object):
         session.query(FileContent).filter(not_(FileContent.content_hash.in_(
             select([File.content_hash])))).delete(synchronize_session=False)
         session.commit()
+        session.close()
         return True
 
     # -----------------------------------------------------------------------
@@ -1062,40 +1215,47 @@ class ThriftRequestHandler(object):
         Count the diff results.
         """
 
-        session = self.__session
-        base_line_hashes, new_check_hashes = \
-            self.__get_hashes_for_diff(session,
-                                       base_run_id,
-                                       new_run_id)
+        try:
+            session = self.__Session()
+            base_line_hashes, new_check_hashes = \
+                self.__get_hashes_for_diff(session,
+                                           base_run_id,
+                                           new_run_id)
 
-        if diff_type == DiffType.NEW:
-            diff_hashes = list(new_check_hashes.difference(base_line_hashes))
-            if not diff_hashes:
-                return 0
-            run_id = new_run_id
+            if diff_type == DiffType.NEW:
+                diff_hashes = list(
+                    new_check_hashes.difference(base_line_hashes))
+                if not diff_hashes:
+                    return 0
+                run_id = new_run_id
 
-        elif diff_type == DiffType.RESOLVED:
-            diff_hashes = list(base_line_hashes.difference(new_check_hashes))
-            if not diff_hashes:
-                return 0
-            run_id = base_run_id
+            elif diff_type == DiffType.RESOLVED:
+                diff_hashes = list(
+                    base_line_hashes.difference(new_check_hashes))
+                if not diff_hashes:
+                    return 0
+                run_id = base_run_id
 
-        elif diff_type == DiffType.UNRESOLVED:
-            diff_hashes = list(base_line_hashes.intersection(new_check_hashes))
-            if not diff_hashes:
-                return 0
-            run_id = new_run_id
+            elif diff_type == DiffType.UNRESOLVED:
+                diff_hashes = list(
+                    base_line_hashes.intersection(new_check_hashes))
+                if not diff_hashes:
+                    return 0
+                run_id = new_run_id
 
-        else:
-            msg = 'Unsupported diff type: ' + str(diff_type)
-            LOG.error(msg)
-            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
-                                              msg)
+            else:
+                msg = 'Unsupported diff type: ' + str(diff_type)
+                LOG.error(msg)
+                raise shared.ttypes.RequestFailed(
+                    shared.ttypes.ErrorCode.DATABASE,
+                    msg)
 
-        return self.__queryDiffResultsCount(session,
-                                            diff_hashes,
-                                            run_id,
-                                            report_filters)
+            return self.__queryDiffResultsCount(session,
+                                                diff_hashes,
+                                                run_id,
+                                                report_filters)
+        finally:
+            session.close()
 
     # -----------------------------------------------------------------------
     def __queryDiffResultTypes(self,
@@ -1150,40 +1310,47 @@ class ThriftRequestHandler(object):
                            diff_type,
                            report_filters):
 
-        session = self.__session
-        base_line_hashes, new_check_hashes = \
-            self.__get_hashes_for_diff(session,
-                                       base_run_id,
-                                       new_run_id)
+        try:
+            session = self.__Session()
+            base_line_hashes, new_check_hashes = \
+                self.__get_hashes_for_diff(session,
+                                           base_run_id,
+                                           new_run_id)
 
-        if diff_type == DiffType.NEW:
-            diff_hashes = list(new_check_hashes.difference(base_line_hashes))
-            if not diff_hashes:
-                return diff_hashes
-            run_id = new_run_id
+            if diff_type == DiffType.NEW:
+                diff_hashes = list(
+                    new_check_hashes.difference(base_line_hashes))
+                if not diff_hashes:
+                    return diff_hashes
+                run_id = new_run_id
 
-        elif diff_type == DiffType.RESOLVED:
-            diff_hashes = list(base_line_hashes.difference(new_check_hashes))
-            if not diff_hashes:
-                return diff_hashes
-            run_id = base_run_id
+            elif diff_type == DiffType.RESOLVED:
+                diff_hashes = list(
+                    base_line_hashes.difference(new_check_hashes))
+                if not diff_hashes:
+                    return diff_hashes
+                run_id = base_run_id
 
-        elif diff_type == DiffType.UNRESOLVED:
-            diff_hashes = list(base_line_hashes.intersection(new_check_hashes))
-            if not diff_hashes:
-                return diff_hashes
-            run_id = new_run_id
+            elif diff_type == DiffType.UNRESOLVED:
+                diff_hashes = list(
+                    base_line_hashes.intersection(new_check_hashes))
+                if not diff_hashes:
+                    return diff_hashes
+                run_id = new_run_id
 
-        else:
-            msg = 'Unsupported diff type: ' + str(diff_type)
-            LOG.error(msg)
-            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
-                                              msg)
+            else:
+                msg = 'Unsupported diff type: ' + str(diff_type)
+                LOG.error(msg)
+                raise shared.ttypes.RequestFailed(
+                    shared.ttypes.ErrorCode.DATABASE,
+                    msg)
 
-        return self.__queryDiffResultTypes(session,
-                                           diff_hashes,
-                                           run_id,
-                                           report_filters)
+            return self.__queryDiffResultTypes(session,
+                                               diff_hashes,
+                                               run_id,
+                                               report_filters)
+        finally:
+            session.close()
 
     @timeit
     def addCheckerRun(self, command, name, version, force):
@@ -1194,7 +1361,13 @@ class ThriftRequestHandler(object):
         """
         try:
             LOG.debug("adding checker run")
-            run = self.__session.query(Run).filter(Run.name == name).first()
+
+            session = self.__Session()
+            run = session.query(Run).filter(Run.name == name).first()
+
+            if run and self.__storage_session.has_ongoing_run(run.id):
+                raise Exception('Storage of ' + name + ' is already going')
+
             if run and force:
                 # Clean already collected results.
                 if not run.can_delete:
@@ -1206,29 +1379,31 @@ class ThriftRequestHandler(object):
                         msg)
 
                 LOG.info('Removing previous analysis results ...')
-                self.__session.delete(run)
-                self.__session.commit()
+                session.delete(run)
 
                 checker_run = Run(name, version, command)
-                self.__session.add(checker_run)
-                self.__session.commit()
-                return checker_run.id
+                session.add(checker_run)
+                session.flush()
+                run_id = checker_run.id
 
             elif run:
                 # There is already a run, update the results.
                 run.date = datetime.now()
                 # Increment update counter and the command.
-                run.inc_count += 1
                 run.command = command
-                self.__session.commit()
-                return run.id
+                session.flush()
+                run_id = run.id
             else:
                 # There is no run create new.
                 checker_run = Run(name, version, command)
-                self.__session.add(checker_run)
-                self.__session.commit()
-                return checker_run.id
+                session.add(checker_run)
+                session.flush()
+                run_id = checker_run.id
+
+            self.__storage_session.start_run_session(run_id, session)
+            return run_id
         except Exception as ex:
+            session.close()
             raise shared.ttypes.RequestFailed(
                 shared.ttypes.ErrorCode.GENERAL,
                 str(ex))
@@ -1238,13 +1413,18 @@ class ThriftRequestHandler(object):
         """
         """
         try:
+            session = self.__storage_session.get_transaction(run_id)
+
             LOG.debug("Finishing checker run")
-            run = self.__session.query(Run).get(run_id)
+            run = session.query(Run).get(run_id)
             if not run:
+                self.__storage_session.abort_session(run_id)
                 return False
 
             run.mark_finished()
-            self.__session.commit()
+
+            self.__storage_session.end_run_session(run_id)
+
             return True
 
         except Exception as ex:
@@ -1256,13 +1436,14 @@ class ThriftRequestHandler(object):
         """
         """
         try:
+            session = self.__storage_session.get_transaction(run_id)
+
             LOG.debug("setting run duartion")
-            run = self.__session.query(Run).get(run_id)
+            run = session.query(Run).get(run_id)
             if not run:
                 return False
 
             run.duration = duration
-            self.__session.commit()
             return True
         except Exception as ex:
             LOG.error(ex)
@@ -1275,8 +1456,9 @@ class ThriftRequestHandler(object):
         new values.
         """
         try:
+            session = self.__Session()
             LOG.debug("Replacing config info")
-            count = self.__session.query(Config) \
+            count = session.query(Config) \
                 .filter(Config.run_id == run_id) \
                 .delete()
             LOG.debug('Config: ' + str(count) + ' removed item.')
@@ -1284,75 +1466,76 @@ class ThriftRequestHandler(object):
             configs = [Config(
                 run_id, info.checker_name, info.attribute, info.value) for
                 info in config_values]
-            self.__session.bulk_save_objects(configs)
-            self.__session.commit()
+            session.bulk_save_objects(configs)
+            session.commit()
             return True
 
         except Exception as ex:
             LOG.error(ex)
             return False
+        finally:
+            session.close()
 
     @timeit
-    def needFileContent(self, filepath, content_hash):
+    def needFileContent(self, filepath, content_hash, run_id):
         """
         """
-        f = self.__session.query(File) \
+        session = self.__storage_session.get_transaction(run_id)
+        f = session.query(File) \
             .filter(and_(File.content_hash == content_hash,
                          File.filepath == filepath)) \
             .one_or_none()
 
-        needed = self.__session.query(FileContent).get(content_hash) is None
+        needed = session.query(FileContent).get(content_hash) is None
 
         if not f or needed:
             try:
-                self.__session.commit()
                 if needed:
                     # Avoid foreign key errors: add empty content.
                     file_content = FileContent(content_hash, "")
-                    self.__session.add(file_content)
+                    session.add(file_content)
                 f = File(filepath, content_hash)
-                self.__session.add(f)
-                self.__session.commit()
+                session.add(f)
+                session.flush()
             except sqlalchemy.exc.IntegrityError:
                 # Other transaction might added the same file in the meantime.
-                self.__session.rollback()
+                session.rollback()
 
         return NeedFileResult(needed, f.id)
 
     @timeit
-    def addFileContent(self, content_hash, content, encoding):
+    def addFileContent(self, content_hash, content, encoding, run_id):
         """
         """
+        session = self.__storage_session.get_transaction(run_id)
         if encoding == Encoding.BASE64:
             content = base64.b64decode(content)
 
         compressed_content = zlib.compress(content,
                                            zlib.Z_BEST_COMPRESSION)
-        self.__session.commit()
         try:
-            file_content = self.__session.query(FileContent).get(content_hash)
+            file_content = session.query(FileContent).get(content_hash)
             file_content.content = compressed_content
-            self.__session.add(file_content)
-            self.__session.commit()
+            session.add(file_content)
+            session.flush()
         except sqlalchemy.exc.IntegrityError as ex:
             # Other transaction might added the same content in the meantime.
-            self.__session.rollback()
+            session.rollback()
             return False
         return True
 
-    def __is_same_event_path(self, report_id, events):
+    def __is_same_event_path(self, report_id, events, session):
         """
         Checks if the given event path is the same as the one in the
         events argument.
         """
         try:
-            q = self.__session.query(BugPathEvent) \
+            q = session.query(BugPathEvent) \
                 .filter(BugPathEvent.report_id == report_id) \
                 .order_by(BugPathEvent.order)
 
-            len_events = len(events)
             for i, point2 in enumerate(q):
-                if i == len_events:
+                if i == len(events):
                     return False
 
                 point1 = events[i]
@@ -1372,6 +1555,7 @@ class ThriftRequestHandler(object):
 
     @timeit
     def storeReportInfo(self,
+                        session,
                         run_id,
                         file_id,
                         bug_hash,
@@ -1381,12 +1565,13 @@ class ThriftRequestHandler(object):
                         checker_id,
                         checker_cat,
                         bug_type,
-                        severity):
+                        severity,
+                        detection_status='new'):
         """
         """
         try:
             LOG.debug("getting source file for report")
-            source_file = self.__session.query(File).get(file_id)
+            source_file = session.query(File).get(file_id)
             _, source_file_name = os.path.split(source_file.filepath)
 
             LOG.debug("initializing report")
@@ -1397,17 +1582,16 @@ class ThriftRequestHandler(object):
                             checker_id,
                             checker_cat,
                             bug_type,
-                            severity)
+                            severity,
+                            detection_status)
 
-            self.__session.add(report)
-            self.__session.flush()
+            session.add(report)
+            session.flush()
 
             LOG.debug("storing bug path")
-            self.__storeBugPath(bugpath, report.id)
+            self.__storeBugPath(session, bugpath, report.id)
             LOG.debug("storing events")
-            self.__storeBugEvents(events, report.id)
-
-            self.__session.commit()
+            self.__storeBugEvents(session, events, report.id)
 
             return report.id
         except Exception as ex:
@@ -1430,63 +1614,74 @@ class ThriftRequestHandler(object):
         """
         """
         try:
+            session = self.__storage_session.get_transaction(run_id)
+
             checker_id = checker_id or 'NOT FOUND'
 
             # TODO: performance issues when executing the following query on
             # large databases?
-            reports = self.__session.query(self.report_ident) \
+            reports = session.query(self.report_ident) \
                 .filter(and_(self.report_ident.c.bug_id == bug_hash,
                              self.report_ident.c.run_id == run_id))
-            try:
-                # Check for duplicates by bug hash.
-                LOG.debug("checking duplicates")
-                if reports.count() != 0:
-                    for possib_dup in reports:
-                        LOG.debug("there is a possible duplicate")
-                        # It's a duplicate or a hash clash. Check checker name,
-                        # file id, and position.
-                        dup_report_obj = self.__session.query(Report).get(
-                            possib_dup.report_ident.id)
-                        if dup_report_obj and \
-                                dup_report_obj.checker_id == checker_id and \
-                                dup_report_obj.file_id == file_id and \
-                                self.__is_same_event_path(
-                                    dup_report_obj.id, events):
-                            # TODO: It is not clear why this commit is needed
-                            # but if it is not here then the commit in
-                            # finishCheckerRun() hangs.
-                            self.__session.commit()
-                            return dup_report_obj.id
+            # Check for duplicates by bug hash.
+            LOG.debug("checking duplicates")
+            for possib_dup in reports:
+                LOG.debug("there is a possible duplicate")
+                dup_report_obj = session.query(Report).get(
+                    possib_dup.report_ident.id)
+                # TODO: file_id and path equality check won't be necessary
+                # when path hash is added.
+                if dup_report_obj and \
+                        dup_report_obj.checker_id == checker_id and \
+                        dup_report_obj.file_id == file_id and \
+                        self.__is_same_event_path(
+                            dup_report_obj.id,
+                            events,
+                            session):
 
-                LOG.debug("no duplicate storing report")
-                return self.storeReportInfo(run_id,
-                                            file_id,
-                                            bug_hash,
-                                            msg,
-                                            bugpath,
-                                            events,
-                                            checker_id,
-                                            checker_cat,
-                                            bug_type,
-                                            severity)
+                    new_status = None
 
-            except sqlalchemy.exc.IntegrityError as ex:
-                self.__session.rollback()
+                    if dup_report_obj.detection_status == 'new' and not \
+                            self.__storage_session.is_touched(
+                                run_id,
+                                dup_report_obj.id):
+                        new_status = 'unresolved'
+                    elif dup_report_obj.detection_status == 'resolved':
+                        new_status = 'reopened'
 
-                reports = self.__session.query(self.report_ident) \
-                    .filter(and_(self.report_ident.c.bug_id == bug_hash,
-                                 self.report_ident.c.run_id == run_id))
-                if reports.count() != 0:
-                    return reports.first().report_ident.id
-                else:
-                    raise
+                    if new_status:
+                        dup_report_obj.detection_status = new_status
+
+                    self.__storage_session.touch_report(
+                        run_id,
+                        dup_report_obj.id)
+
+                    return dup_report_obj.id
+
+            LOG.debug("no duplicate storing report")
+            report_id = self.storeReportInfo(session,
+                                             run_id,
+                                             file_id,
+                                             bug_hash,
+                                             msg,
+                                             bugpath,
+                                             events,
+                                             checker_id,
+                                             checker_cat,
+                                             bug_type,
+                                             severity,
+                                             suppress)
+
+            self.__storage_session.touch_report(run_id, report_id)
+
+            return report_id
+
         except Exception as ex:
-            self.__session.rollback()
             raise shared.ttypes.RequestFailed(
                 shared.ttypes.ErrorCode.GENERAL,
                 str(ex))
 
-    def __storeBugEvents(self, bugevents, report_id):
+    def __storeBugEvents(self, session, bugevents, report_id):
         """
         """
         for i, event in enumerate(bugevents):
@@ -1498,10 +1693,9 @@ class ThriftRequestHandler(object):
                                event.msg,
                                event.fileId,
                                report_id)
+            session.add(bpe)
 
-            self.__session.add(bpe)
-
-    def __storeBugPath(self, bugpath, report_id):
+    def __storeBugPath(self, session, bugpath, report_id):
         for i, piece in enumerate(bugpath):
             brp = BugReportPoint(piece.startLine,
                                  piece.startCol,
@@ -1510,15 +1704,16 @@ class ThriftRequestHandler(object):
                                  i,
                                  piece.fileId,
                                  report_id)
-
-            self.__session.add(brp)
+            session.add(brp)
 
     @timeit
     def addSkipPath(self, run_id, paths):
         """
         """
         try:
-            count = self.__session.query(SkipPath) \
+            session = self.__storage_session.get_transaction(run_id)
+
+            count = session.query(SkipPath) \
                 .filter(SkipPath.run_id == run_id) \
                 .delete()
             LOG.debug('SkipPath: ' + str(count) + ' removed item.')
@@ -1527,8 +1722,7 @@ class ThriftRequestHandler(object):
             for path, comment in paths.items():
                 skipPath = SkipPath(run_id, path, comment)
                 skipPathList.append(skipPath)
-            self.__session.bulk_save_objects(skipPathList)
-            self.__session.commit()
+            session.bulk_save_objects(skipPathList)
             return True
         except Exception as ex:
             LOG.error(str(ex))
