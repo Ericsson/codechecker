@@ -147,9 +147,11 @@ class SQLServer(object):
 
         if make_url(connection_string).drivername == 'sqlite+pysqlite':
             # FIXME: workaround for locking errors
-            return sqlalchemy.create_engine(connection_string,
-                                            encoding='utf8',
-                                            connect_args={'timeout': 600})
+            return sqlalchemy.create_engine(
+                connection_string,
+                encoding='utf8',
+                connect_args={'timeout': 600,
+                              'check_same_thread': False})
         else:
             return sqlalchemy.create_engine(connection_string,
                                             encoding='utf8')

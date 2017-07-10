@@ -415,19 +415,14 @@ def main(args):
                        1,
                        callback=lambda results: res_handler(results)
                        ).get(float('inf'))
-
         pool.close()
-    except Exception:
-        pool.terminate()
-        raise  # CodeChecker.py is the invoker, it will handle this.
     finally:
         pool.join()
         os.chdir(original_cwd)
-
-    client.finishCheckerRun(context.run_id)
 
     if len(check_durations) > 0:
         client.setRunDuration(context.run_id,
                               # Round the duration to seconds.
                               int(sum(check_durations)))
-    return
+
+    client.finishCheckerRun(context.run_id)
