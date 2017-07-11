@@ -512,12 +512,12 @@ function (declare, dom, style, on, query, Memory, Observable, topic, entities,
 
     _onNodeMouseEnter : function (node) {
       if (node.item.tooltip)
-        Tooltip.show(node.item.tooltip, node.domNode, ['above']);
+        Tooltip.show(node.item.tooltip, node.labelNode, ['above']);
     },
 
     _onNodeMouseLeave : function (node) {
       if (node.item.isLeaf)
-        Tooltip.hide(node.domNode);
+        Tooltip.hide(node.labelNode);
     },
 
     // Highlight colours go further down this array in a circular fashion
