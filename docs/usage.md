@@ -1,9 +1,10 @@
-#CodeChecker command line examples
-###1.	Quickly check some files and print results in command line
+# CodeChecker command line examples
+### 1. Quickly check some files and print results in command line
 ```
 CodeChecker quickcheck -b make
 ```
-###2.	Check a project, update earlier results  and view results from a browser
+
+### 2. Check a project, update earlier results  and view results from a browser
 Runs make, logs build, run analyzers and store the results in sqlite db.
 ```
 CodeChecker check -b make
@@ -20,11 +21,11 @@ At the end, the project can be rechecked.
 ```
 CodeChecker check make
 ```
-###3. Same as use case 2., but the developer would like to enable alpha checkers and llvm checkers
+### 3. Same as use case 2., but the developer would like to enable alpha checkers and llvm checkers
 ```
 CodeChecker check -e alpha -e llvm -b make
 ```
-###4.	Same as use case 2., but the developer stores suppressed false positives in a text file that is checked in into version control
+### 4. Same as use case 2., but the developer stores suppressed false positives in a text file that is checked in into version control
 ```
 CodeChecker check –u /home/myuser/myproject/suppress.list -b make
 CodeChecker server –u /home/myuser/myproject/suppress.list
@@ -32,7 +33,7 @@ CodeChecker server –u /home/myuser/myproject/suppress.list
 # Suppress list will be stored in suppress.list.
 # The suppress.list file can be checked in the source control system.
 ```
-###5.	Same as use case 2., but the developer wants to give extra Config to clang-tidy or clang-sa
+### 5. Same as use case 2., but the developer wants to give extra Config to clang-tidy or clang-sa
 ```
 CodeChecker check --saargs clangsa.config --tidyargs clang-tidy.config -b make
 
@@ -41,13 +42,13 @@ CodeChecker check --saargs clangsa.config --tidyargs clang-tidy.config -b make
 # be passed to every clang-sa/tidy calls
 ```
 
-###6.	Asking for command line help for the check subcommand (all other subcommands would be the same: server, checkers,cmd…)
+### 6. Asking for command line help for the check subcommand (all other subcommands would be the same: server, checkers,cmd…)
 ```
 CodeChecker check -h
 ```
 
 
-###7.	Run analysis on 2 versions of the project
+### 7. Run analysis on 2 versions of the project
 Analyze a large project from a script/Jenkins job periodically. Developers view the results on a central web-server.
 If a hit is false positive, developers can mark it and comment it on the web interface and the suppress hashes are stored in a text file that can be version controlled.
 Different versions of the project can be compared for new/resolved/unresolved bugs. Differences between runs can be viewed in the web browser or from command line (and can be sent in email if needed).
