@@ -29,5 +29,3 @@ Javascript dependencies are automatically downloaded based on the ext_source_dep
 
 #### PostgreSQL
 For the additional PostgreSQL dependencies see the [PostgreSQL setup](postgresql_setup.md) documentation.
-
-\include ext_source_deps_config.json
