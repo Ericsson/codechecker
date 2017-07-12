@@ -366,6 +366,8 @@ function (declare, Deferred, ObjectStore, Store, QueryResults, topic,
 
         that.addChild(bugViewer);
         that.selectChild(bugViewer);
+
+        topic.publish('showComments', reportData.bugHash, bugViewer._editor)
       });
     },
 
