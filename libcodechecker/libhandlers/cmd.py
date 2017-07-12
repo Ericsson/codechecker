@@ -105,7 +105,8 @@ def __add_filtering_arguments(parser):
     parser.add_argument('-s', '--suppressed',
                         dest="suppressed",
                         action='store_true',
-                        help="Filter results to only show suppressed entries.")
+                        help="Show only suppressed results instead of only "
+                             "unsuppressed ones.")
 
     parser.add_argument('--filter',
                         type=str,
@@ -159,7 +160,11 @@ def __register_diff(parser):
                         default=argparse.SUPPRESS,
                         help="The 'new' (right) side of the difference: this "
                              "analysis run is compared to the -b/--basename "
-                             "run.")
+                             "run. The parameter can be a run name"
+                             "(on the remote server) or a local "
+                             "report directory "
+                             "(result of the analyze command)."
+                        )
 
     __add_filtering_arguments(parser)
 
