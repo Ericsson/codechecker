@@ -10,6 +10,7 @@ Handle Thrift requests.
 import base64
 import codecs
 from collections import defaultdict
+import datetime
 import os
 import zlib
 
@@ -683,6 +684,146 @@ class ThriftRequestHandler():
 
             return result
 
+        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
+            msg = str(alchemy_ex)
+            LOG.error(msg)
+            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
+                                              msg)
+
+        except Exception as ex:
+            msg = str(ex)
+            LOG.error(msg)
+            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.IOERROR,
+                                              msg)
+
+    @timeit
+    def getComments(self, bug_hash):
+        """
+            Return the list of comments for the given bug.
+        """
+        session = self.__session
+        try:
+            result = []
+
+            comments = session.query(Comment) \
+                .filter(Comment.bug_hash == bug_hash) \
+                .order_by(Comment.created_at.desc()) \
+                .all()
+
+            for comment in comments:
+                result.append(CommentData(
+                    comment.id,
+                    comment.author,
+                    comment.message,
+                    str(comment.created_at)))
+
+            return result
+
+        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
+            msg = str(alchemy_ex)
+            LOG.error(msg)
+            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
+                                              msg)
+
+        except Exception as ex:
+            msg = str(ex)
+            LOG.error(msg)
+            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.IOERROR,
+                                              msg)
+
+    @timeit
+    def getCommentCount(self, bug_hash):
+        """
+            Return the number of comments for the given bug.
+        """
+        session = self.__session
+        try:
+            commentCount = session.query(Comment) \
+                .filter(Comment.bug_hash == bug_hash) \
+                .count()
+
+            if commentCount is None:
+                commentCount = 0
+
+            return commentCount
+        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
+            msg = str(alchemy_ex)
+            LOG.error(msg)
+            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
+                                              msg)
+
+        except Exception as ex:
+            msg = str(ex)
+            LOG.error(msg)
+            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.IOERROR,
+                                              msg)
+
+    @timeit
+    def addComment(self, bug_hash, comment_data):
+        """
+            Add new comment for the given bug.
+        """
+        session = self.__session
+        comment = Comment(bug_hash,
+                          'Anonymous',  # TODO: author must be queried from the
+                                        # authenticated session
+                          comment_data.message,
+                          datetime.now())
+
+        session.add(comment)
+        session.commit()
+
+        return True
+
+    @timeit
+    def updateComment(self, comment_id, content):
+        """
+            Update the given comment message with new content.
+        """
+        session = self.__session
+        try:
+            comment = session.query(Comment).get(comment_id)
+            if comment:
+                comment.message = content
+                session.add(comment)
+                session.commit()
+                return True
+            else:
+                msg = 'Comment id ' + str(comment_id) + \
+                      ' was not found in the database.'
+                LOG.error(msg)
+                raise shared.ttypes.RequestFailed(
+                    shared.ttypes.ErrorCode.DATABASE, msg)
+        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
+            msg = str(alchemy_ex)
+            LOG.error(msg)
+            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
+                                              msg)
+
+        except Exception as ex:
+            msg = str(ex)
+            LOG.error(msg)
+            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.IOERROR,
+                                              msg)
+
+    @timeit
+    def removeComment(self, comment_id):
+        """
+            Remove the comment.
+        """
+        session = self.__session
+        try:
+            comment = session.query(Comment).get(comment_id)
+            if comment:
+                session.delete(comment)
+                session.commit()
+                return True
+            else:
+                msg = 'Comment id ' + str(comment_id) + \
+                      ' was not found in the database.'
+                LOG.error(msg)
+                raise shared.ttypes.RequestFailed(
+                    shared.ttypes.ErrorCode.DATABASE, msg)
         except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
             msg = str(alchemy_ex)
             LOG.error(msg)
