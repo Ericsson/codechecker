@@ -22,6 +22,23 @@ function (declare, Deferred, ObjectStore, Store, QueryResults, topic,
   BorderContainer, TabContainer, DataGrid, hashHelper, BugViewer, filterHelper,
   util) {
 
+  var filterHook = function(query, isDiff) {
+    var length;
+    if (query.reportFilters.length > 1)
+      length = query.reportFilters.length;
+    else {
+      var onlyFilter = query.reportFilters[0];
+      if (onlyFilter.filepath !== "**" || onlyFilter.checkerId ||
+          onlyFilter.checkerMsg || onlyFilter.severity ||
+          onlyFilter.suppressed)
+        length = 1;
+      else
+        length = null; // null indicates default filters.
+    }
+
+    topic.publish("hooks/FilteringChanged" + (isDiff ? "Diff" : ""), length);
+  };
+
   var BugStore = declare(Store, {
     constructor : function () {
       this.sortType = [];
@@ -57,8 +74,10 @@ function (declare, Deferred, ObjectStore, Store, QueryResults, topic,
         function (reportDataList) {
           if (reportDataList instanceof RequestFailed)
             deferred.reject('Failed to get reports: ' + reportDataList.message);
-          else
+          else {
             deferred.resolve(that._formatItems(reportDataList));
+            filterHook(query, false);
+          }
         });
 
       deferred.total = CC_SERVICE.getRunResultCount(
@@ -117,8 +136,10 @@ function (declare, Deferred, ObjectStore, Store, QueryResults, topic,
               if (reportDataList instanceof RequestFailed)
                 deferred.reject(
                   'Failed to get reports: ' + reportDataList.message);
-              else
+              else {
                 deferred.resolve(that._formatItems(reportDataList));
+                filterHook(query, true);
+              }
             });
           break;
 
@@ -134,8 +155,10 @@ function (declare, Deferred, ObjectStore, Store, QueryResults, topic,
               if (reportDataList instanceof RequestFailed)
                 deferred.reject(
                   'Failed to get reports: ' + reportDataList.message);
-              else
+              else {
                 deferred.resolve(that._formatItems(reportDataList));
+                filterHook(query, true);
+              }
             });
           break;
 
@@ -151,8 +174,10 @@ function (declare, Deferred, ObjectStore, Store, QueryResults, topic,
               if (reportDataList instanceof RequestFailed)
                 deferred.reject(
                   'Failed to get reports: ' + reportDataList.message);
-              else
+              else {
                 deferred.resolve(that._formatItems(reportDataList));
+                filterHook(query, true);
+              }
             });
           break;
       }
