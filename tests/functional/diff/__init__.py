@@ -80,6 +80,10 @@ def setup_package():
     if ret:
         sys.exit(ret)
 
+    # Start the CodeChecker server.
+    print("Starting server to get results")
+    _start_server(codechecker_cfg, test_config, False)
+
     test_project_name_base = project_info['name'] + '_' + uuid.uuid4().hex
 
     ret = codechecker.check(codechecker_cfg,
@@ -88,10 +92,6 @@ def setup_package():
     if ret:
         sys.exit(1)
     print("First analysis of the test project was successful.")
-
-    if pg_db_config:
-        print("Waiting for PotgreSQL to stop.")
-        codechecker.wait_for_postgres_shutdown(TEST_WORKSPACE)
 
     ret = project.clean(test_project, test_env)
     if ret:
@@ -106,10 +106,6 @@ def setup_package():
         sys.exit(1)
     print("Second analysis of the test project was successful.")
 
-    if pg_db_config:
-        print("Waiting for PotgreSQL to stop.")
-        codechecker.wait_for_postgres_shutdown(TEST_WORKSPACE)
-
     # Order of the test run names matter at comparison!
     codechecker_cfg['run_names'] = [test_project_name_base,
                                     test_project_name_new]
@@ -118,10 +114,6 @@ def setup_package():
 
     # Export test configuration to the workspace.
     env.export_test_cfg(TEST_WORKSPACE, test_config)
-
-    # Start the CodeChecker server.
-    print("Starting server to get results")
-    _start_server(codechecker_cfg, test_config, False)
 
 
 def teardown_package():

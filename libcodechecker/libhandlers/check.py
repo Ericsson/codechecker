@@ -12,6 +12,7 @@ stdout.
 import argparse
 import os
 import shutil
+import sys
 
 from libcodechecker import libhandlers
 from libcodechecker import util
@@ -67,7 +68,9 @@ class DeprecatedOptionAction(argparse.Action):
                  choices=None,
                  required=False,
                  help=None,
-                 metavar=None):
+                 metavar=None,
+                 kill_if_used=False,
+                 error_string=None):
         super(DeprecatedOptionAction, self). \
             __init__(option_strings,
                      dest,
@@ -80,10 +83,18 @@ class DeprecatedOptionAction(argparse.Action):
                      help="(Usage of this argument is DEPRECATED and has no "
                           "effect!)",
                      metavar='')
+        self.__error_string = error_string
+        self.__kill_if_used = kill_if_used
 
     def __call__(self, parser, namespace, value=None, option_string=None):
-        LOG.warning("Deprecated command line option used: '" +
-                    option_string + "'")
+        if not self.__error_string:
+            LOG.warning("Deprecated command line option used: '" +
+                        option_string + "'")
+        else:
+            LOG.warning(self.__error_string)
+
+        if self.__kill_if_used:
+            setattr(namespace, '_deprecated', True)
 
 
 def get_argparser_ctor_args():
@@ -114,8 +125,9 @@ def get_argparser_ctor_args():
                   "it is advised to execute builds on empty trees, aka. after "
                   "a 'make clean', as CodeChecker only analyzes files that "
                   "had been used by the build system. Analysis results can be "
-                  "viewed by starting a 'CodeChecker server' and connecting "
-                  "to it from a Web browser, or via 'CodeChecker cmd'.",
+                  "viewed by connecting to the server which was used in "
+                  "storing the results from a Web browser, or via "
+                  "'CodeChecker cmd'.",
 
         # Help is shown when the "parent" CodeChecker command lists the
         # individual subcommands.
@@ -312,25 +324,47 @@ def add_arguments_to_parser(parser):
                              "which is experimental, take care when relying "
                              "on it.")
 
-    dbmodes = parser.add_argument_group("database arguments")
+    server_args = parser.add_argument_group(
+        "server arguments",
+        "Specifies a 'CodeChecker server' instance which will be used to "
+        "store the results. This server must be running and listening prior "
+        "to the 'store' command being ran.")
 
+    server_args.add_argument('--host',
+                             type=str,
+                             dest="host",
+                             required=False,
+                             default="localhost",
+                             help="The IP address or hostname of the "
+                                  "CodeChecker server.")
+
+    server_args.add_argument('-p', '--port',
+                             type=int,
+                             dest="port",
+                             required=False,
+                             default=8001,
+                             help="The port of the server to use for storing.")
+
+    # TODO: These arguments have been retroactively removed from 'store'
+    # and are deprecated here. They should be completely removed.
+    dbmodes = parser.add_argument_group("database arguments")
     dbmodes = dbmodes.add_mutually_exclusive_group(required=False)
+    db_deprec = "Database connectivity has been removed from 'check'. " \
+                "Please specify a CodeChecker server address via --host "   \
+                "and --port instead!"
 
     # SQLite is the default, and for 'check', it was deprecated.
     # TODO: In 'store', --sqlite has been replaced as an option to specify the
     # .sqlite file, essentially replacing the concept of 'workspace'.
     dbmodes.add_argument('--sqlite',
+                         kill_if_used=True,
+                         error_string=db_deprec,
                          action=DeprecatedOptionAction)
 
     dbmodes.add_argument('--postgresql',
-                         dest="postgresql",
-                         action='store_true',
-                         required=False,
-                         default=argparse.SUPPRESS,
-                         help="Specifies that a PostgreSQL database is to be "
-                              "used instead of SQLite. See the \"PostgreSQL "
-                              "arguments\" section on how to configure the "
-                              "database connection.")
+                         kill_if_used=True,
+                         error_string=db_deprec,
+                         action=DeprecatedOptionAction)
 
     pgsql = parser.add_argument_group("PostgreSQL arguments",
                                       "Values of these arguments are ignored, "
@@ -340,35 +374,44 @@ def add_arguments_to_parser(parser):
     # in SQLite.
     # TODO: These are '--db-something' in 'store', not '--dbsomething'.
     pgsql.add_argument('--dbaddress',
-                       type=str,
-                       dest="dbaddress",
-                       default="localhost",
-                       required=False,
-                       help="Database server address.")
+                       nargs=1,
+                       kill_if_used=True,
+                       error_string=db_deprec,
+                       action=DeprecatedOptionAction)
 
     pgsql.add_argument('--dbport',
-                       type=int,
-                       dest="dbport",
-                       default=5432,
-                       required=False,
-                       help="Database server port.")
+                       nargs=1,
+                       kill_if_used=True,
+                       error_string=db_deprec,
+                       action=DeprecatedOptionAction)
 
     pgsql.add_argument('--dbusername',
-                       type=str,
-                       dest="dbusername",
-                       default='codechecker',
-                       required=False,
-                       help="Username to use for connection.")
+                       nargs=1,
+                       kill_if_used=True,
+                       error_string=db_deprec,
+                       action=DeprecatedOptionAction)
 
     pgsql.add_argument('--dbname',
-                       type=str,
-                       dest="dbname",
-                       default="codechecker",
-                       required=False,
-                       help="Name of the database to use.")
+                       nargs=1,
+                       kill_if_used=True,
+                       error_string=db_deprec,
+                       action=DeprecatedOptionAction)
 
     add_verbose_arguments(parser)
-    parser.set_defaults(func=main)
+
+    def __kill_deprec(args):
+        if '_deprecated' in args:
+            LOG.warning("A deprecated argument was passed to the "
+                        "commandline. This argument has no effect anymore, "
+                        "and the behaviour has changed.")
+            LOG.error("Execution halted: CodeChecker would work in an "
+                      "unexpected way with this argument passed.")
+            sys.exit(2)  # argparse kills with error code 2.
+
+        # Call the main process if everything matches.
+        main(args)
+
+    parser.set_defaults(func=__kill_deprec)
 
 
 def main(args):
@@ -393,7 +436,7 @@ def main(args):
             setattr(target, key, getattr(source, key))
 
     workspace = os.path.abspath(args.workspace)
-    report_dir = os.path.join(workspace, 'reports')
+    report_dir = os.path.join(workspace, "reports")
     if not os.path.isdir(report_dir):
         os.makedirs(report_dir)
 
@@ -401,7 +444,7 @@ def main(args):
     try:
         # --- Step 1.: Perform logging if build command was specified.
         if 'command' in args:
-            logfile = os.path.join(workspace, 'compile_cmd.json')
+            logfile = os.path.join(workspace, "compile_cmd.json")
 
             # Translate the argument list between quickcheck and log.
             log_args = argparse.Namespace(
@@ -464,10 +507,8 @@ def main(args):
             input_format='plist',
             jobs=args.jobs,
             force=args.force,
-            dbaddress=args.dbaddress,
-            dbport=args.dbport,
-            dbusername=args.dbusername,
-            dbname=args.dbname
+            host=args.host,
+            port=args.port
         )
         # Some arguments don't have default values.
         # We can't set these keys to None because it would result in an error
@@ -478,7 +519,7 @@ def main(args):
             # If we are saving to a SQLite database, the wrapped 'check'
             # command used to do it in the workspace folder.
             setattr(store_args, 'sqlite', os.path.join(workspace,
-                                                       'codechecker.sqlite'))
+                                                       "codechecker.sqlite"))
             setattr(store_args, 'postgresql', False)
 
         args_to_update = ['suppress',
@@ -495,15 +536,9 @@ def main(args):
         store_module.main(store_args)
 
         # Show a hint for server start.
-        db_data = ""
-        if 'postgresql' in args:
-            db_data += " --postgresql" \
-                       + " --dbname " + args.dbname \
-                       + " --dbport " + str(args.dbport) \
-                       + " --dbusername " + args.dbusername
-
-        LOG.info("To view results run:\nCodeChecker server -w " +
-                 args.workspace + db_data)
+        LOG.info("To view results, open the CodeChecker server "
+                 "'http://{0}:{1}' in your browser".format(args.host,
+                                                           args.port))
     except ImportError:
         LOG.error("Check failed: couldn't import a library.")
     except Exception as ex:

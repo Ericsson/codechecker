@@ -7,7 +7,9 @@
 """
 Authentication tests.
 """
+import json
 import os
+import subprocess
 import unittest
 
 from thrift.protocol.TProtocol import TProtocolException
@@ -27,6 +29,12 @@ class DictAuth(unittest.TestCase):
 
         test_class = self.__class__.__name__
         print('Running ' + test_class + ' tests in ' + self._test_workspace)
+
+        tcfg = os.path.join(self._test_workspace, 'test_config.json')
+        with open(tcfg, 'r') as cfg:
+            t = json.load(cfg)
+            self._host = t['codechecker_cfg']['viewer_host']
+            self._port = t['codechecker_cfg']['viewer_port']
 
     def test_privileged_access(self):
         """
@@ -85,3 +93,20 @@ class DictAuth(unittest.TestCase):
         self.assertFalse(handshake.sessionStillActive,
                          "Destroyed session was " +
                          "reported to be still active.")
+
+    def test_nonauth_storage(self):
+        """
+        Storing the result should fail.
+        Authentication is required by the server but before the
+        store command there was no login so storing the report should fail.
+        """
+
+        test_dir = os.path.dirname(os.path.realpath(__file__))
+        report_file = os.path.join(test_dir, 'clang-5.0-trunk.plist')
+
+        store_cmd = [env.codechecker_cmd(), 'store', '--name', 'auth',
+                     '--host', str(self._host), '--port', str(self._port),
+                     report_file]
+
+        with self.assertRaises(subprocess.CalledProcessError):
+            subprocess.check_output(store_cmd)

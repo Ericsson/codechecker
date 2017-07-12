@@ -33,14 +33,16 @@ def worker_result_handler(results, metadata, output_path):
     failed_analysis = defaultdict(int)
     skipped_num = 0
 
-    for res, skipped, analyzer_type in results:
+    buildactions = []
+    for res, skipped, buildaction, result_file in results:
+        buildactions.append(buildaction)
         if skipped:
             skipped_num += 1
         else:
             if res == 0:
-                successful_analysis[analyzer_type] += 1
+                successful_analysis[buildaction.analyzer_type] += 1
             else:
-                failed_analysis[analyzer_type] += 1
+                failed_analysis[buildaction.analyzer_type] += 1
 
     LOG.info("----==== Summary ====----")
     LOG.info("Total compilation commands: " + str(len(results)))
@@ -102,6 +104,8 @@ def check(check_data):
         # If one analysis fails the check fails.
         return_codes = 0
         skipped = False
+
+        result_file = ''
         for source in action.sources:
 
             # If there is no skiplist handler there was no skip list file
@@ -145,10 +149,11 @@ def check(check_data):
                 if rh.analyzer_stderr != '':
                     LOG.debug_analyzer('\n' + rh.analyzer_stderr)
                 rh.postprocess_result()
-                rh.handle_results()
+                # Generated reports will be handled separately at store.
 
                 # Save some extra information next to the plist, .source
                 # acting as an extra metadata file.
+                result_file = rh.analyzer_result_file
                 with open(rh.analyzer_result_file + ".source", 'w') as orig:
                     orig.write(rh.analyzed_source_file + "\n")
 
@@ -161,10 +166,10 @@ def check(check_data):
                 if not os.path.exists(failed_dir):
                     os.makedirs(failed_dir)
                 (res_file, ext) = os.path.splitext(rh.analyzer_result_file)
-                err_file = os.path.basename(
-                    res_file)
+                err_file = os.path.basename(res_file)
                 err_file = os.path.join(failed_dir, err_file)
                 LOG.debug("Writing error into:" + err_file + ".error")
+                result_file = err_file
                 if (len(rh.analyzer_stderr) > 0):
                     with open(err_file + ".error", 'w') as orig:
                         orig.write(rh.analyzer_stderr)
@@ -181,12 +186,12 @@ def check(check_data):
 
         progress_checked_num.value += 1
 
-        return return_codes, skipped, action.analyzer_type
+        return return_codes, skipped, action, result_file
 
     except Exception as e:
         LOG.debug_analyzer(str(e))
         traceback.print_exc(file=sys.stdout)
-        return 1, skipped, action.analyzer_type
+        return 1, skipped, action.analyzer_type, None
 
 
 def start_workers(actions, context, analyzer_config_map,

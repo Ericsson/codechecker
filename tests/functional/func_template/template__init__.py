@@ -98,6 +98,10 @@ def setup_package():
     # Extend the checker configuration with the port numbers.
     codechecker_cfg.update(host_port_cfg)
 
+    # Start the CodeChecker server.
+    print("Starting server to get results")
+    _start_server(codechecker_cfg, test_config, False)
+
     # Clean the test project, if needed by the tests.
     ret = project.clean(test_project)
     if ret:
@@ -111,10 +115,6 @@ def setup_package():
         sys.exit(1)
     print("Analyzing the test project was successful.")
 
-    if pg_db_config:
-        print("Waiting for PostgreSQL to stop.")
-        codechecker.wait_for_postgres_shutdown(TEST_WORKSPACE)
-
     # Save the run names in the configuration.
     codechecker_cfg['run_names'] = [test_project_name]
 
@@ -122,10 +122,6 @@ def setup_package():
 
     # Export the test configuration to the workspace.
     env.export_test_cfg(TEST_WORKSPACE, test_config)
-
-    # Start the CodeChecker server.
-    print("Starting server to get results")
-    _start_server(codechecker_cfg, test_config, False)
 
 
 def teardown_package():

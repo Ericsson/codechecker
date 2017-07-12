@@ -6,7 +6,6 @@
 
 import os
 import socket
-import sys
 
 from thrift.transport import THttpClient
 from thrift.protocol import TJSONProtocol
@@ -44,6 +43,7 @@ class ThriftClientHelper(object):
             func = getattr(self.client, funcName)
             try:
                 res = func(*args, **kwargs)
+                return res
 
             except shared.ttypes.RequestFailed as reqfailure:
                 if reqfailure.error_code == shared.ttypes.ErrorCode.DATABASE:
@@ -53,22 +53,22 @@ class ThriftClientHelper(object):
                     print('Unauthorized access')
                     print(str(reqfailure.message))
                 else:
-                    print('Other error')
+                    print('API call error: ' + funcName)
                     print(str(reqfailure))
 
-                sys.exit(1)
-            except TProtocolException:
+            except TProtocolException as ex:
                 print("Connection failed to {0}:{1}"
                       .format(self.__host, self.__port))
-                sys.exit(1)
+                print("Check if your CodeChecker server is running.")
             except socket.error as serr:
+                print("Connection failed to {0}:{1}"
+                      .format(self.__host, self.__port))
                 errCause = os.strerror(serr.errno)
                 print(errCause)
                 print(str(serr))
-                sys.exit(1)
+                print("Check if your CodeChecker server is running.")
 
             self.transport.close()
-            return res
 
         return wrapper
 
@@ -124,4 +124,63 @@ class ThriftClientHelper(object):
     # -----------------------------------------------------------------------
     @ThriftClientCall
     def unSuppressBug(self, runIds, reportId):
+        pass
+
+    # STORAGE RELATED API CALLS
+
+    @ThriftClientCall
+    def addCheckerRun(self, command, name, version, force):
+        pass
+
+    @ThriftClientCall
+    def replaceConfigInfo(self, run_id, values):
+        pass
+
+    @ThriftClientCall
+    def addSuppressBug(self, run_id, bugsToSuppress):
+        pass
+
+    @ThriftClientCall
+    def cleanSuppressData(self, run_id):
+        pass
+
+    @ThriftClientCall
+    def addSkipPath(self, run_id, paths):
+        pass
+
+    # The next few following functions must be called via the same connection.
+    # =============================================================
+    @ThriftClientCall
+    def addBuildAction(self, run_id, build_cmd_hash, check_cmd, analyzer_type,
+                       analyzed_source_file):
+        pass
+
+    @ThriftClientCall
+    def addReport(self, build_action_id, file_id, bug_hash, checker_message,
+                  bugpath, events, checker_id, checker_cat, bug_type,
+                  severity, suppress):
+        pass
+
+    @ThriftClientCall
+    def finishBuildAction(self, action_id, failure):
+        pass
+
+    @ThriftClientCall
+    def needFileContent(self, run_id, filepath):
+        pass
+
+    @ThriftClientCall
+    def addFileContent(self, file_id, file_content):
+        pass
+
+    @ThriftClientCall
+    def finishCheckerRun(self, run_id):
+        pass
+
+    @ThriftClientCall
+    def setRunDuration(self, run_id, duration):
+        pass
+
+    @ThriftClientCall
+    def stopServer(self):
         pass

@@ -446,7 +446,7 @@ def add_arguments_to_parser(parser):
                     "command-line.",
         help="Authenticate into CodeChecker servers that require privileges.")
     __register_auth(login)
-    login.set_defaults(func=cmd_line_client.handle_auth_requests)
+    login.set_defaults(func=cmd_line_client.handle_login)
     __add_common_arguments(login)
 
 # 'cmd' does not have a main() method in itself, as individual subcommands are

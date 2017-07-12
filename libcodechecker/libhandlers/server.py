@@ -15,7 +15,6 @@ import os
 import socket
 import sys
 
-from libcodechecker import client
 from libcodechecker import generic_package_context
 from libcodechecker import generic_package_suppress_handler
 from libcodechecker import host_check
@@ -43,14 +42,15 @@ def get_argparser_ctor_args():
         'formatter_class': argparse.ArgumentDefaultsHelpFormatter,
 
         # Description is shown when the command's help is queried directly
-        'description': "The CodeChecker Web server is used to navigate "
-                       "analysis results. A started server can be connected "
-                       "to via a Web browser, or by using the 'CodeChecker "
-                       "cmd' command-line client.",
+        'description': "The CodeChecker Web server is used to handle the "
+                       "storage and navigation of analysis results. A "
+                       "started server can be connected to via a Web "
+                       "browser, or by using the 'CodeChecker cmd' "
+                       "command-line client.",
 
         # Help is shown when the "parent" CodeChecker command lists the
         # individual subcommands.
-        'help': "Start and manage the CodeChecker Web server"
+        'help': "Start and manage the CodeChecker Web server."
     }
 
 
@@ -105,10 +105,10 @@ def add_arguments_to_parser(parser):
                         dest="not_host_only",
                         action="store_true",
                         required=False,
-                        help="If specified, viewing the results will be "
-                             "possible not only by browsers and clients "
-                             "running locally, but to everyone, who can "
-                             "access the server over the Internet. "
+                        help="If specified, storing and viewing the results "
+                             "will be possible not only by browsers and "
+                             "clients running locally, but to everyone, who "
+                             "can access the server over the Internet. "
                              "(Equivalent to specifying '--host \"\"'.)")
 
     # TODO: Refactor the tests so that these arguments can be eliminated.
@@ -447,18 +447,9 @@ def main(args):
                                              context.migration_root,
                                              check_env)
 
-    if 'check_port' in args:
-        conn_mgr = client.ConnectionManager(sql_server, args.check_address,
-                                            args.check_port)
-
-        LOG.debug("Starting CodeChecker storage server and database server.")
-        sql_server.start(context.db_version_info, wait_for_start=True,
-                         init=True)
-        conn_mgr.start_report_server()
-    else:
-        LOG.debug("Starting database server.")
-        sql_server.start(context.db_version_info, wait_for_start=True,
-                         init=True)
+    LOG.debug("Starting database server.")
+    sql_server.start(context.db_version_info, wait_for_start=True,
+                     init=True)
 
     # Start database viewer.
     db_connection_string = sql_server.get_connection_string()

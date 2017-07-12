@@ -5,12 +5,13 @@
 # -------------------------------------------------------------------------
 
 from abc import ABCMeta
+import base64
+import codecs
 import os
-import zlib
+import traceback
 
 import shared
 
-from libcodechecker import client
 from libcodechecker import logger
 from libcodechecker import suppress_handler
 from libcodechecker.analyze import plist_parser
@@ -32,12 +33,12 @@ class PlistToDB(ResultHandler):
         super(PlistToDB, self).__init__(buildaction, workspace)
         self.__run_id = run_id
 
-    def __store_bugs(self, files, reports, connection, analisys_id):
+    def __store_bugs(self, files, reports, client, analisys_id):
         file_ids = {}
         # Send content of file to the server if needed.
         for file_name in files:
-            file_descriptor = connection.need_file_content(self.__run_id,
-                                                           file_name)
+            file_descriptor = client.needFileContent(self.__run_id,
+                                                     file_name)
             file_ids[file_name] = file_descriptor.fileId
 
             # Sometimes the file doesn't exist, e.g. when the input of the
@@ -47,15 +48,18 @@ class PlistToDB(ResultHandler):
                 continue
 
             if file_descriptor.needed:
-                with open(file_name, 'r') as source_file:
+                with codecs.open(file_name, 'r', 'UTF-8') as source_file:
                     file_content = source_file.read()
-                compressed_file = zlib.compress(file_content,
-                                                zlib.Z_BEST_COMPRESSION)
-                # TODO: we may not use the file content in the end
-                # depending on skippaths.
-                LOG.debug('storing file content to the database')
-                connection.add_file_content(file_descriptor.fileId,
-                                            compressed_file)
+                    # WARN the right content encoding is needed for thrift!
+                    source = codecs.encode(file_content, 'utf-8')
+                    # TODO: we may not use the file content in the end
+                    # depending on skippaths.
+
+                    source64 = base64.b64encode(source)
+                    res = client.addFileContent(file_descriptor.fileId,
+                                                source64)
+                    if not res:
+                        LOG.debug("Failed to store file content")
 
         # Skipping reports in header files handled here.
         report_ids = []
@@ -149,7 +153,11 @@ class PlistToDB(ResultHandler):
             # Check for suppress comment.
             supp = sp_handler.get_suppressed()
             if supp:
-                connection.add_suppress_bug(self.__run_id, [supp])
+                bhash, fname, comment = supp
+                suppress_data = shared.ttypes.SuppressBugData(bhash,
+                                                              fname,
+                                                              comment)
+                client.addSuppressBug(self.__run_id, [suppress_data])
 
             LOG.debug('Storing check results to the database.')
 
@@ -158,21 +166,24 @@ class PlistToDB(ResultHandler):
             checker_name = report.main['check_name']
             category = report.main['category']
             type = report.main['type']
-            report_id = connection.add_report(analisys_id,
-                                              file_ids[fpath],
-                                              bug_hash,
-                                              msg,
-                                              bug_paths,
-                                              bug_events,
-                                              checker_name,
-                                              category,
-                                              type,
-                                              severity,
-                                              supp is not None)
 
+            LOG.debug("Storing report")
+            report_id = client.addReport(analisys_id,
+                                         file_ids[fpath],
+                                         bug_hash,
+                                         msg,
+                                         bug_paths,
+                                         bug_events,
+                                         checker_name,
+                                         category,
+                                         type,
+                                         severity,
+                                         supp is not None)
+
+            LOG.debug("Storing done for report " + str(report_id))
             report_ids.append(report_id)
 
-    def handle_results(self):
+    def handle_results(self, client=None):
         """
         Send the plist content to the database.
         Server API calls should be used in one connection.
@@ -182,43 +193,51 @@ class PlistToDB(ResultHandler):
          - addFileContent
          - finishBuildAction
         """
+        if not client:
+            LOG.error("Client needs to be set to store the "
+                      "results to the database")
+            return
 
-        with client.get_connection() as connection:
+        LOG.debug('Storing original build and analyzer command '
+                  'to the database.')
 
-            LOG.debug('Storing original build and analyzer command '
-                      'to the database.')
+        _, source_file_name = os.path.split(self.analyzed_source_file)
 
-            _, source_file_name = os.path.split(self.analyzed_source_file)
+        if LoggerFactory.get_log_level() == logger.DEBUG:
+            analyzer_cmd = ' '.join(self.analyzer_cmd)
+        else:
+            analyzer_cmd = ''
 
-            if LoggerFactory.get_log_level() == logger.DEBUG:
-                analyzer_cmd = ' '.join(self.analyzer_cmd)
-            else:
-                analyzer_cmd = ''
+        build_cmd_hash = self.buildaction.original_command_hash
+        analysis_id = \
+            client.addBuildAction(self.__run_id,
+                                  build_cmd_hash,
+                                  analyzer_cmd,
+                                  self.buildaction.analyzer_type,
+                                  source_file_name)
 
-            build_cmd_hash = self.buildaction.original_command_hash
-            analysis_id = \
-                connection.add_build_action(self.__run_id,
-                                            build_cmd_hash,
-                                            analyzer_cmd,
-                                            self.buildaction.analyzer_type,
-                                            source_file_name)
+        plist_file = self.analyzer_result_file
 
-            assert self.analyzer_returncode == 0
+        try:
+            files, reports = plist_parser.parse_plist(plist_file)
+        except Exception as ex:
+            LOG.debug(str(ex))
+            msg = 'Parsing the generated result file failed.'
+            LOG.error(msg + ' ' + plist_file)
+            client.finishBuildAction(analysis_id, msg)
+            return 1
 
-            plist_file = self.analyzer_result_file
-
-            try:
-                files, reports = plist_parser.parse_plist(plist_file)
-            except Exception as ex:
-                LOG.debug(str(ex))
-                msg = 'Parsing the generated result file failed.'
-                LOG.error(msg + ' ' + plist_file)
-                connection.finish_build_action(analysis_id, msg)
-                return 1
-
-            self.__store_bugs(files, reports, connection, analysis_id)
-
-            connection.finish_build_action(analysis_id, self.analyzer_stderr)
+        try:
+            self.__store_bugs(files, reports, client, analysis_id)
+        except Exception as ex:
+            LOG.error("Failed to store results")
+            traceback.print_stack()
+            LOG.error(ex)
+            return 1
+        finally:
+            LOG.debug("Finishing buildaction")
+            client.finishBuildAction(analysis_id, self.analyzer_stderr)
+            LOG.debug("Finishing buildaction done.")
 
     def postprocess_result(self):
         """

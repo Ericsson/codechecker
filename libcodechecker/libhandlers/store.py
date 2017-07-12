@@ -9,26 +9,43 @@ database.
 """
 
 import argparse
+import codecs
+import functools
 import json
 import multiprocessing
 import os
 import sys
 import tempfile
+import traceback
 
-from libcodechecker import client
+import shared
+
 from libcodechecker import generic_package_context
 from libcodechecker import host_check
+from libcodechecker import suppress_file_handler
 from libcodechecker import util
 from libcodechecker.analyze import analyzer_env
 from libcodechecker.analyze import skiplist_handler
 from libcodechecker.analyze.analyzers import analyzer_types
-from libcodechecker.database_handler import SQLServer
+from libcodechecker.libclient.client import setup_client
 from libcodechecker.log import build_action
 from libcodechecker.logger import add_verbose_arguments
 from libcodechecker.logger import LoggerFactory
 
 
 LOG = LoggerFactory.get_new_logger('STORE')
+
+
+def full_traceback(func):
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except Exception as e:
+            msg = "{}\n\nOriginal {}".format(e, traceback.format_exc())
+            raise type(e)(msg)
+    return wrapper
 
 
 def get_argparser_ctor_args():
@@ -47,10 +64,8 @@ def get_argparser_ctor_args():
 
         # Epilogue is shown after the arguments when the help is queried
         # directly.
-        'epilog': "To start a server which connects to a database where "
-                  "results are stored, use 'CodeChecker server'. The results "
-                  "can be viewed by connecting to such a server in a Web "
-                  "browser or via 'CodeChecker cmd'.",
+        'epilog': "The results can be viewed by connecting to such a server "
+                  "in a Web browser or via 'CodeChecker cmd'.",
 
         # Help is shown when the "parent" CodeChecker command lists the
         # individual subcommands.
@@ -142,151 +157,89 @@ def add_arguments_to_parser(parser):
                              "analysis, and only incrementally update defect "
                              "reports for source files that were analysed.)")
 
-    dbmodes = parser.add_argument_group("database arguments")
+    server_args = parser.add_argument_group(
+        "server arguments",
+        "Specifies a 'CodeChecker server' instance which will be used to "
+        "store the results. This server must be running and listening prior "
+        "to the 'store' command being ran.")
 
-    dbmodes = dbmodes.add_mutually_exclusive_group(required=False)
+    server_args.add_argument('--host',
+                             type=str,
+                             dest="host",
+                             required=False,
+                             default="localhost",
+                             help="The IP address or hostname of the "
+                                  "CodeChecker server.")
 
-    dbmodes.add_argument('--sqlite',
-                         type=str,
-                         dest="sqlite",
-                         metavar='SQLITE_FILE',
-                         default=os.path.join(
-                             util.get_default_workspace(),
-                             "codechecker.sqlite"),
-                         required=False,
-                         help="Path of the SQLite database file to use.")
-
-    dbmodes.add_argument('--postgresql',
-                         dest="postgresql",
-                         action='store_true',
-                         required=False,
-                         default=argparse.SUPPRESS,
-                         help="Specifies that a PostgreSQL database is to be "
-                              "used instead of SQLite. See the \"PostgreSQL "
-                              "arguments\" section on how to configure the "
-                              "database connection.")
-
-    pgsql = parser.add_argument_group("PostgreSQL arguments",
-                                      "Values of these arguments are ignored, "
-                                      "unless '--postgresql' is specified!")
-
-    # WARNING: '--dbaddress' default value influences workspace creation
-    # in SQLite.
-    pgsql.add_argument('--db-host',
-                       type=str,
-                       dest="dbaddress",
-                       default="localhost",
-                       required=False,
-                       help="Database server address.")
-
-    pgsql.add_argument('--db-port',
-                       type=int,
-                       dest="dbport",
-                       default=5432,
-                       required=False,
-                       help="Database server port.")
-
-    pgsql.add_argument('--db-username',
-                       type=str,
-                       dest="dbusername",
-                       default='codechecker',
-                       required=False,
-                       help="Username to use for connection.")
-
-    pgsql.add_argument('--db-name',
-                       type=str,
-                       dest="dbname",
-                       default="codechecker",
-                       required=False,
-                       help="Name of the database to use.")
+    server_args.add_argument('-p', '--port',
+                             type=int,
+                             dest="port",
+                             required=False,
+                             default=8001,
+                             help="The port of the server to use for storing.")
 
     add_verbose_arguments(parser)
-
-    def __handle(args):
-        """Custom handler for 'store' so custom error messages can be
-        printed without having to capture 'parser' in main."""
-
-        def arg_match(options):
-            """Checks and selects the option string specified in 'options'
-            that are present in the invocation argv."""
-            matched_args = []
-            for option in options:
-                if any([arg if option.startswith(arg) else None
-                        for arg in sys.argv[1:]]):
-                    matched_args.append(option)
-                    continue
-
-            return matched_args
-
-        # See if there is a "PostgreSQL argument" specified in the invocation
-        # without '--postgresql' being there. There is no way to distinguish
-        # a default argument and a deliberately specified argument without
-        # inspecting sys.argv.
-        options = ['--db-host', '--db-port', '--db-username', '--db-name']
-        psql_args_matching = arg_match(options)
-        if any(psql_args_matching) and \
-                'postgresql' not in args:
-            first_matching_arg = next(iter([match for match
-                                            in psql_args_matching]))
-            parser.error("argument {0}: not allowed without "
-                         "argument --postgresql".format(first_matching_arg))
-            # parser.error() terminates with return code 2.
-
-        if 'postgresql' not in args:
-            # Later called database modules need the argument to be actually
-            # present, even though the default is suppressed in the optstring.
-            setattr(args, 'postgresql', False)
-        else:
-            # If --postgresql is given, --sqlite is useless.
-            delattr(args, 'sqlite')
-
-        # If everything is fine, do call the handler for the subcommand.
-        main(args)
-
-    parser.set_defaults(func=__handle)
+    parser.set_defaults(func=main)
 
 
+@full_traceback
 def consume_plist(item):
-    f, context, metadata_dict, compile_cmds = item
+    try:
+        f, context, metadata_dict, compile_cmds, server_data = item
 
-    LOG.debug("Parsing input file '" + f + "'")
+        LOG.debug("Parsing input file '" + f + "'")
 
-    if 'working_directory' in metadata_dict:
-        os.chdir(metadata_dict['working_directory'])
+        if 'working_directory' in metadata_dict:
+            os.chdir(metadata_dict['working_directory'])
 
-    buildaction = build_action.BuildAction()
-    if os.path.basename(f).startswith("clangsa_"):
-        buildaction.analyzer_type = analyzer_types.CLANG_SA
-    elif os.path.basename(f).startswith("clang-tidy_"):
-        buildaction.analyzer_type = analyzer_types.CLANG_TIDY
+        LOG.debug("Parsing input file '" + f + "'")
+        buildaction = build_action.BuildAction()
+        if os.path.basename(f).startswith("clangsa_"):
+            buildaction.analyzer_type = analyzer_types.CLANG_SA
+        elif os.path.basename(f).startswith("clang-tidy_"):
+            buildaction.analyzer_type = analyzer_types.CLANG_TIDY
+        else:
+            # should be the default if report naming is different
+            # reports from scan-build ...
+            buildaction.analyzer_type = analyzer_types.CLANG_SA
 
-    analyzed_source = 'UNKNOWN'
-    if 'result_source_files' in metadata_dict and\
-            f in metadata_dict['result_source_files']:
-            analyzed_source = metadata_dict['result_source_files'][f]
+        LOG.debug("Parsing input file '" + f + "'")
+        analyzed_source = 'UNKNOWN'
+        if 'result_source_files' in metadata_dict and\
+                f in metadata_dict['result_source_files']:
+                analyzed_source = metadata_dict['result_source_files'][f]
 
-    if analyzed_source == "UNKNOWN":
-        LOG.info("Storing defects in input file '" + f + "'")
-    else:
-        LOG.info("Storing analysis results for file '" +
-                 analyzed_source + "'")
+        if analyzed_source == "UNKNOWN":
+            LOG.info("Storing defects in input file '" + f + "'")
+        else:
+            LOG.info("Storing analysis results for file '" +
+                     analyzed_source + "'")
 
-    buildaction.original_command = compile_cmds.get(analyzed_source,
-                                                    'MISSING')
+        LOG.debug("Parsing input file '" + f + "'")
+        buildaction.original_command = compile_cmds.get(analyzed_source,
+                                                        'MISSING')
 
-    if buildaction.original_command == 'MISSING':
-        LOG.warning("Compilation action was not found for file: " +
-                    analyzed_source)
+        LOG.debug("Parsing input file '" + f + "'")
+        if buildaction.original_command == 'MISSING':
+            LOG.warning("Compilation action was not found for file: " +
+                        analyzed_source)
 
-    rh = analyzer_types.construct_store_handler(buildaction,
-                                                context.run_id,
-                                                context.severity_map)
+        rh = analyzer_types.construct_store_handler(buildaction,
+                                                    context.run_id,
+                                                    context.severity_map)
 
-    rh.analyzer_returncode = 0
-    rh.analyzer_result_file = f
-    rh.analyzer_cmd = ''
-    rh.analyzed_source_file = analyzed_source
-    rh.handle_results()
+        rh.analyzer_returncode = 0
+        rh.analyzer_result_file = f
+        rh.analyzer_cmd = ''
+        rh.analyzed_source_file = analyzed_source
+
+        host, port = server_data
+        client = setup_client(host, port, '/')
+        rh.handle_results(client)
+        return 0
+    except Exception as ex:
+        LOG.warning("Failed to process report: " + f)
+        return 1
 
 
 def __get_run_name(input_list):
@@ -313,6 +266,15 @@ def __get_run_name(input_list):
         return False
 
 
+def res_handler(results):
+    """
+    Summary about the parsing and storage results.
+    """
+    LOG.info("Finished processing and storing reports.")
+    LOG.info("Failed: " + str(results.count(1)) + "/" + str(len(results)))
+    LOG.info("Successful " + str(results.count(0)) + "/" + str(len(results)))
+
+
 def process_compile_db(compile_db):
     """
     Create a dict where the source file name (absolute path) is the key and
@@ -333,7 +295,7 @@ def process_compile_db(compile_db):
     for cc in comp_cmds:
         file_path = os.path.join(cc['directory'], cc['file'])
         try:
-            # newer compile command json format
+            # Newer compile command json format.
             processed[file_path] = str(' '.join(cc['arguments']))
         except Exception:
             processed[file_path] = cc['command']
@@ -374,22 +336,6 @@ def main(args):
                  args.name + "' will be deleted.")
 
     context = generic_package_context.get_context()
-    context.db_username = args.dbusername
-
-    check_env = analyzer_env.get_check_env(context.path_env_extra,
-                                           context.ld_lib_path_extra)
-
-    sql_server = SQLServer.from_cmdline_args(args,
-                                             context.migration_root,
-                                             check_env)
-
-    conn_mgr = client.ConnectionManager(sql_server,
-                                        'localhost',
-                                        util.get_free_port())
-
-    sql_server.start(context.db_version_info, wait_for_start=True, init=True)
-
-    conn_mgr.start_report_server()
 
     original_cwd = os.getcwd()
     empty_metadata = {'working_directory': original_cwd}
@@ -398,6 +344,9 @@ def main(args):
     check_durations = []
     skip_handlers = []
     items = []
+
+    server_data = (args.host, args.port)
+
     for input_path in args.input:
         input_path = os.path.abspath(input_path)
 
@@ -414,7 +363,8 @@ def main(args):
             items.append((input_path,
                           context,
                           empty_metadata,
-                          compile_commands))
+                          compile_commands,
+                          server_data))
 
         elif os.path.isdir(input_path):
             metadata_file = os.path.join(input_path, "metadata.json")
@@ -449,37 +399,60 @@ def main(args):
                     continue
 
                 items.append((os.path.join(input_path, f),
-                              context, metadata_dict, compile_commands))
+                              context, metadata_dict, compile_commands,
+                              server_data))
 
-    with client.get_connection() as connection:
-        if len(check_commands) == 0:
-            command = ' '.join(sys.argv)
-        elif len(check_commands) == 1:
-            command = ' '.join(check_commands[0])
+    if len(check_commands) == 0:
+        command = ' '.join(sys.argv)
+    elif len(check_commands) == 1:
+        command = ' '.join(check_commands[0])
+    else:
+        command = "multiple analyze calls: " +\
+                  '; '.join([' '.join(com) for com in check_commands])
+
+    # setup connection to the remote server
+    client = setup_client(args.host,
+                          args.port, '/')
+
+    LOG.debug("Initializing client connecting to " +
+              str(args.host) + ":" + str(args.port) + " done.")
+    context.run_id = client.addCheckerRun(command,
+                                          args.name,
+                                          context.version,
+                                          args.force)
+
+    # Clean previous suppress information.
+    res = client.cleanSuppressData(context.run_id)
+    if not res:
+        LOG.debug("Cleaning suppress data failed for run: " +
+                  str(context.run_id))
+
+    if 'suppress' in args:
+        if not os.path.isfile(args.suppress):
+            LOG.warning("Suppress file '" + args.suppress + "' given, but "
+                        "it does not exist -- will not suppress anything.")
         else:
-            command = "multiple analyze calls: " +\
-                      '; '.join([' '.join(com) for com in check_commands])
+            suppress_data = []
+            supp_file_path = os.path.realpath(args.suppress)
+            if os.path.exists(supp_file_path):
+                with codecs.open(supp_file_path, 'r', 'UTF-8') as s_file:
+                    suppress_data = \
+                        suppress_file_handler.get_suppress_data(s_file)
 
-        context.run_id = connection.add_checker_run(command,
-                                                    args.name,
-                                                    context.version,
-                                                    args.force)
+            if len(suppress_data) > 0:
+                s_dat = []
+                for s in suppress_data:
+                    bhash, sfile, comment = s
+                    s_dat.append(shared.ttypes.SuppressBugData(bhash,
+                                                               sfile,
+                                                               comment))
+                client.addSuppressBug(context.run_id, s_dat)
 
-        # Clean previous suppress information.
-        client.clean_suppress(connection, context.run_id)
-
-        if 'suppress' in args:
-            if not os.path.isfile(args.suppress):
-                LOG.warning("Suppress file '" + args.suppress + "' given, but "
-                            "it does not exist -- will not suppress anything.")
-            else:
-                client.send_suppress(context.run_id, connection,
-                                     os.path.realpath(args.suppress))
-
-        # Send previously collected skip information to the server.
-        for skip_handler in skip_handlers:
-            connection.add_skip_paths(context.run_id,
-                                      skip_handler.get_skiplist())
+    # Send previously collected skip information to the server.
+    LOG.debug("Storing skip information")
+    for skip_handler in skip_handlers:
+        if not client.addSkipPath(context.run_id, skip_handler.get_skiplist()):
+            LOG.debug("Adding skip path failed!")
 
     # TODO: This is a hotfix for a data race problem in storage.
     # Currently removal of build actions is based on plist files which lack
@@ -489,20 +462,24 @@ def main(args):
     pool = multiprocessing.Pool(args.jobs)
 
     try:
-        pool.map_async(consume_plist, items, 1).get(float('inf'))
+        pool.map_async(consume_plist,
+                       items,
+                       1,
+                       callback=lambda results: res_handler(results)
+                       ).get(float('inf'))
+
         pool.close()
     except Exception:
         pool.terminate()
-        LOG.error("Storing the results failed.")
         raise  # CodeChecker.py is the invoker, it will handle this.
     finally:
         pool.join()
         os.chdir(original_cwd)
 
-        with client.get_connection() as connection:
-            connection.finish_checker_run(context.run_id)
+    client.finishCheckerRun(context.run_id)
 
-            if len(check_durations) > 0:
-                connection.set_run_duration(context.run_id,
-                                            # Round the duration to seconds.
-                                            int(sum(check_durations)))
+    if len(check_durations) > 0:
+        client.setRunDuration(context.run_id,
+                              # Round the duration to seconds.
+                              int(sum(check_durations)))
+    return

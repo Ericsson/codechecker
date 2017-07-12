@@ -211,7 +211,7 @@ class ResultHandler(object):
         """
         pass
 
-    def handle_results(self):
+    def handle_results(self, client):
         """
         Handle the results.
         """
