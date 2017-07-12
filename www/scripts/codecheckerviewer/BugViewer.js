@@ -2,6 +2,8 @@ define([
   'dojo/_base/declare',
   'dojo/dom-construct',
   'dojo/dom-style',
+  'dojo/fx',
+  'dojo/fx/Toggler',
   'dojo/on',
   'dojo/query',
   'dojo/store/Memory',
@@ -16,12 +18,14 @@ define([
   'dijit/form/CheckBox',
   'dijit/form/Textarea',
   'dijit/Tooltip',
+  'codechecker/CommentView',
   'codechecker/HtmlTree',
   'codechecker/util',
   'codechecker/hashHelper'],
-function (declare, dom, style, on, query, Memory, Observable, topic, entities,
-  Dialog, ObjectStoreModel, ContentPane, BorderContainer, Button, CheckBox,
-  Textarea, Tooltip, HtmlTree, util, hashHelper) {
+function (declare, dom, style, fx, Toggler, on, query, Memory, Observable,
+  topic, entities, Dialog, ObjectStoreModel, ContentPane, BorderContainer,
+  Button, CheckBox, Textarea, Tooltip, CommentView, HtmlTree, util,
+  hashHelper) {
 
   function resetJsPlumb(editor) {
     if (editor.jsPlumbInstance)
@@ -102,7 +106,7 @@ function (declare, dom, style, on, query, Memory, Observable, topic, entities,
       });
 
       on(document, 'keydown', function (event) {
-        if (event.keyCode === 13) // Enter
+        if (event.ctrlKey && event.keyCode === 13) // Enter
           that.codeMirror.execCommand('findPersistentNext');
 
         if (event.ctrlKey && event.keyCode === 70) { // Ctrl-f
@@ -471,6 +475,11 @@ function (declare, dom, style, on, query, Memory, Observable, topic, entities,
         hashHelper.setReport(item.report.reportId);
       }
 
+      if (this.bugHash !== item.report.bugHash)
+        topic.publish('showComments', item.report.bugHash, this.editor);
+
+      this.bugHash = item.report.bugHash;
+
       if (isOtherFile || isOtherReport)
         // TODO: Now arrows are redrawn only if new file is opened. But what if
         // in the same file the path goes out of the CodeMirror-rendered area?
@@ -820,6 +829,48 @@ function (declare, dom, style, on, query, Memory, Observable, topic, entities,
         }
       }));
 
+      //--- Comments ---//
+
+      var toggler = new dojo.fx.Toggler({
+        node: that.commentView.domNode,
+        showFunc: dojo.fx.wipeIn,
+        hideFunc: dojo.fx.wipeOut,
+        showDuration: 0,
+        hideDuration: 0
+      });
+
+      this.addChild(new Button({
+        class      : 'comment-btn',
+        postCreate : function () {
+          this._subscribeTopics();
+          toggler.hide();
+        },
+
+        _subscribeTopics : function () {
+          var _that = this;
+
+          topic.subscribe('showComments', function (bugHash, sender) {
+            if (sender !== that.editor)
+              return;
+
+            var count = CC_SERVICE.getCommentCount(bugHash);
+            _that.set('label', 'Comments'
+              + '<span class="comment-count">(' + count + ')</span>');
+          });
+        },
+
+        onClick : function () {
+          if (this.hide) {
+            toggler.hide();
+            this.hide = false;
+          } else {
+            toggler.show();
+            this.hide = true;
+          }
+          that.main.resize();
+        }
+      }));
+
       //--- Show arrows ---//
 
       this.showArrowCheckbox = new CheckBox({
@@ -867,13 +918,26 @@ function (declare, dom, style, on, query, Memory, Observable, topic, entities,
 
       this.addChild(this._editor);
 
+      //--- Comments ---//
+
+      this._commentView = new CommentView({
+        class    : 'comment-view',
+        region   : 'right',
+        style    : 'width: 300px;',
+        sender   : this._editor
+      });
+
+      this.addChild(this._commentView);
+
       //--- Buttons ---//
 
       var buttonPane = new ButtonPane({
-        region : 'top',
-        reportData : this.reportData,
-        runData : this.runData,
-        editor : this._editor
+        region      : 'top',
+        reportData  : this.reportData,
+        runData     : this.runData,
+        editor      : this._editor,
+        commentView : this._commentView,
+        main        : this
       });
 
       this.addChild(buttonPane);

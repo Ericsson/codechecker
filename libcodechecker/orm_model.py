@@ -268,6 +268,21 @@ class SkipPath(Base):
         self.comment = comment
 
 
+class Comment(Base):
+    __tablename__ = 'comments'
+
+    id = Column(Integer, autoincrement=True, primary_key=True)
+    bug_hash = Column(String, nullable=False, index=True)
+    author = Column(String, nullable=False)
+    message = Column(Binary, nullable=False)
+    created_at = Column(DateTime, nullable=False)
+
+    def __init__(self, bug_hash, author, message, created_at):
+        self.bug_hash = bug_hash
+        self.author = author
+        self.message = message
+        self.created_at = created_at
+
 # End of ORM classes.
 
 
