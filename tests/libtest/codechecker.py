@@ -75,6 +75,56 @@ def check(codechecker_cfg, test_project_name, test_project_path):
         return cerr.returncode
 
 
+def analyze(codechecker_cfg, test_project_name, test_project_path):
+    """
+    Analyze a test project.
+
+    :checkers parameter should be a list of enabled or disabled checkers
+    Example: ['-d', 'deadcode.DeadStores']
+
+    """
+
+    build_cmd = project.get_build_cmd(test_project_path)
+    build_json = os.path.join(codechecker_cfg['workspace'], "build.json")
+
+    log_cmd = ['CodeChecker', 'log',
+               '-o', build_json,
+               '-b', "'" + build_cmd + "'",
+               ]
+
+    analyze_cmd = ['CodeChecker', 'analyze',
+                   build_json,
+                   '-o', codechecker_cfg['reportdir'],
+                   '--analyzers', 'clangsa'
+                   ]
+
+    analyze_cmd.extend(codechecker_cfg['checkers'])
+    try:
+        print("LOG:")
+        proc = subprocess.Popen(shlex.split(' '.join(log_cmd)),
+                                cwd=test_project_path,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE,
+                                env=codechecker_cfg['check_env'])
+        out, err = proc.communicate()
+        print(out)
+        print(err)
+
+        print("ANALYZE:")
+        print(shlex.split(' '.join(analyze_cmd)))
+        proc = subprocess.Popen(shlex.split(' '.join(analyze_cmd)),
+                                cwd=test_project_path,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE,
+                                env=codechecker_cfg['check_env'])
+        out, err = proc.communicate()
+        print(out)
+        print(err)
+        return 0
+    except CalledProcessError as cerr:
+        print("Failed to call:\n" + ' '.join(cerr.cmd))
+        return cerr.returncode
+
 def serv_cmd(codechecker_cfg, test_config):
 
     server_cmd = ['CodeChecker', 'server',

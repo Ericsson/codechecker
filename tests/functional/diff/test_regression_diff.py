@@ -11,7 +11,9 @@ import os
 import unittest
 import logging
 
+import re
 import shared
+import subprocess
 
 from codeCheckerDBAccess.ttypes import DiffType
 from codeCheckerDBAccess.ttypes import ReportFilter
@@ -63,6 +65,11 @@ class Diff(unittest.TestCase):
         # Name order matters from __init__ !
         self._base_runid = test_runs[0].runId  # base
         self._new_runid = test_runs[1].runId  # new
+
+        self._codechecker_cmd = env.codechecker_cmd()
+        self._report_dir = os.path.join(test_workspace, "reports")
+        self._test_config = env.import_test_cfg(test_workspace)
+        self._run_names = env.get_run_names(test_workspace)
 
     def test_get_diff_res_count_new(self):
         """
@@ -231,3 +238,88 @@ class Diff(unittest.TestCase):
                 self.assertEqual(len(diff_res), 1)
                 self.assertEqual(test_result_count, diff_res[0].count)
                 self.assertEqual(checker_name, diff_res[0].checkerId)
+
+    def test_local_compare_res_count_new(self):
+        """
+        Count the new results with no filter in local compare mode.
+        """
+        base_run_name = self._run_names[0]
+        vh = self._test_config['codechecker_cfg']['viewer_host']
+        vp = self._test_config['codechecker_cfg']['viewer_port']
+        diff_cmd = [self._codechecker_cmd, "cmd", "diff",
+                    "--new",
+                    "--host", vh,
+                    "--port", str(vp),
+                    "-b", base_run_name,
+                    "-n", self._report_dir
+                    ]
+        print(diff_cmd)
+        process = subprocess.Popen(
+                    diff_cmd, stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE, cwd=os.environ['TEST_WORKSPACE'])
+        out, err = process.communicate()
+        print(out+err)
+
+        # 5 new core.CallAndMessage issues.
+        count = len(re.findall(r'\[core\.CallAndMessage\]', out))
+        self.assertEqual(count, 5)
+
+    def test_local_compare_res_count_resovled(self):
+        """
+        Count the resolved results with no filter in local compare mode.
+        """
+        base_run_name = self._run_names[0]
+        vh = self._test_config['codechecker_cfg']['viewer_host']
+        vp = self._test_config['codechecker_cfg']['viewer_port']
+        diff_cmd = [self._codechecker_cmd, "cmd", "diff",
+                    "--resolved",
+                    "--host", vh,
+                    "--port", str(vp),
+                    "-b", base_run_name,
+                    "-n", self._report_dir
+                    ]
+        print(diff_cmd)
+        process = subprocess.Popen(
+                    diff_cmd, stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE, cwd=os.environ['TEST_WORKSPACE'])
+        out, err = process.communicate()
+        print(out+err)
+
+        # # 3 disappeared core.StackAddressEscape issues
+        count = len(re.findall(r'\[core\.StackAddressEscape\]', out))
+        self.assertEqual(count, 3)
+
+    def test_local_compare_res_count_unresovled(self):
+        """
+        Count the unresolved results with no filter in local compare mode.
+        """
+        base_run_name = self._run_names[0]
+        vh = self._test_config['codechecker_cfg']['viewer_host']
+        vp = self._test_config['codechecker_cfg']['viewer_port']
+        diff_cmd = [self._codechecker_cmd, "cmd", "diff",
+                    "--unresolved",
+                    "--host", vh,
+                    "--port", str(vp),
+                    "-b", base_run_name,
+                    "-n", self._report_dir
+                    ]
+        print(diff_cmd)
+        process = subprocess.Popen(
+                    diff_cmd, stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE, cwd=os.environ['TEST_WORKSPACE'])
+        out, err = process.communicate()
+        print(out+err)
+
+        # # 3 disappeared core.StackAddressEscape issues
+        count = len(re.findall(r'\[core\.DivideZero\]', out))
+        self.assertEqual(count, 3)
+        count = len(re.findall(r'\[deadcode\.DeadStores\]', out))
+        self.assertEqual(count, 5)
+        count = len(re.findall(r'\[core\.NullDereference\]', out))
+        self.assertEqual(count, 3)
+        count = len(re.findall(r'\[cplusplus\.NewDelete\]', out))
+        self.assertEqual(count, 5)
+        count = len(re.findall(r'\[unix\.Malloc\]', out))
+        self.assertEqual(count, 1)
+        count = len(re.findall(r'\[core.DivideZero\]', out))
+        self.assertEqual(count, 3)

@@ -68,6 +68,7 @@ def setup_package():
         'skip_list_file': skip_list_file,
         'check_env': test_env,
         'workspace': TEST_WORKSPACE,
+        'reportdir': os.path.join(TEST_WORKSPACE, 'reports'),
         'pg_db_config': pg_db_config,
         'checkers': ['-d', 'core.CallAndMessage',
                      '-e', 'core.StackAddressEscape']
@@ -110,6 +111,19 @@ def setup_package():
     if ret:
         sys.exit(1)
     print("Second analysis of the test project was successful.")
+
+    # Run the second analysis results
+    # into a report directory
+    ret = codechecker.analyze(codechecker_cfg,
+                              test_project_name_new,
+                              test_project_path)
+    if ret:
+        sys.exit(1)
+    print("CodeChecker analyze of test project was successful.")
+
+    if pg_db_config:
+        print("Waiting for PotgreSQL to stop.")
+        codechecker.wait_for_postgres_shutdown(TEST_WORKSPACE)
 
     # Order of the test run names matter at comparison!
     codechecker_cfg['run_names'] = [test_project_name_base,
