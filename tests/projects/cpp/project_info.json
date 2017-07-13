@@ -33,6 +33,6 @@
         "filter_checker_id": [{"*unix*": 1}, {"core*": 14}, {"*DeadStores": 5}],
         "filter_filepath": [{"*null*": 5}],
         "filter_filepath_case_insensitive": [{"*null*": 5}, {"*nULl*": 5}, {"*NULL*": 5}, {"*Null*": 5}],
-        "diff_res_types_filter": [{"deadcode.DeadStores": 5}, {"core.CallAndMessage": 5}, {"cplusplus.NewDelete": 5}, {"unix.Malloc": 1}]
+        "diff_res_types_filter": [{"deadcode.DeadStores": 5},  {"cplusplus.NewDelete": 5}, {"unix.Malloc": 1}]
     }
 }

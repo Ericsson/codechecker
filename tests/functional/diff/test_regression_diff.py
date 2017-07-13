@@ -11,7 +11,9 @@ import os
 import unittest
 import logging
 
+import re
 import shared
+import subprocess
 
 from codeCheckerDBAccess.ttypes import DiffType
 from codeCheckerDBAccess.ttypes import ReportFilter
@@ -64,6 +66,11 @@ class Diff(unittest.TestCase):
         self._base_runid = test_runs[0].runId  # base
         self._new_runid = test_runs[1].runId  # new
 
+        self._codechecker_cmd = env.codechecker_cmd()
+        self._report_dir = os.path.join(test_workspace, "reports")
+        self._test_config = env.import_test_cfg(test_workspace)
+        self._run_names = env.get_run_names(test_workspace)
+
     def test_get_diff_res_count_new(self):
         """
         Count the new results with no filter.
@@ -75,7 +82,8 @@ class Diff(unittest.TestCase):
                                                       new_run_id,
                                                       DiffType.NEW,
                                                       [])
-        self.assertEqual(diff_res, 0)
+        # 5 new core.CallAndMessage issues.
+        self.assertEqual(diff_res, 5)
 
     def test_get_diff_res_count_resolved(self):
         """
@@ -88,7 +96,8 @@ class Diff(unittest.TestCase):
                                                       new_run_id,
                                                       DiffType.RESOLVED,
                                                       [])
-        self.assertEqual(diff_res, 0)
+        # 3 disappeared core.StackAddressEscape issues.
+        self.assertEqual(diff_res, 3)
 
     def test_get_diff_res_count_unresolved(self):
         """
@@ -117,21 +126,16 @@ class Diff(unittest.TestCase):
                                                       new_run_id,
                                                       DiffType.UNRESOLVED,
                                                       [])
-        # Nothing is resolved.
-        self.assertEqual(diff_res, base_count)
+
+        self.assertEqual(diff_res, 17)
 
     def test_get_diff_res_count_unresolved_filter(self):
-        """
-        This test asumes nothing has been resolved between the two checker
-        runs. The the same severity levels and numbers are used as in a
-        simple filter test for only one run from the project config.
-        """
         base_run_id = self._base_runid
         new_run_id = self._new_runid
 
-        # Severity levels used for filtering.
-        filter_severity_levels = self._testproject_data[self._clang_to_test][
-            'filter_severity_levels']
+        filter_severity_levels = [{"MEDIUM": 1}, {"LOW": 5},
+                                  {"HIGH": 11}, {"STYLE": 0},
+                                  {"UNSPECIFIED": 0}, {"CRITICAL": 0}]
 
         for level in filter_severity_levels:
             for severity_level, test_result_count in level.items():
@@ -157,7 +161,8 @@ class Diff(unittest.TestCase):
                                                       new_run_id,
                                                       DiffType.NEW,
                                                       [])
-        self.assertEqual(len(diff_res), 0)
+        # core.CallAndMessage is the new type.
+        self.assertEqual(len(diff_res), 1)
 
     def test_get_diff_res_types_resolved(self):
         """
@@ -170,7 +175,8 @@ class Diff(unittest.TestCase):
                                                       new_run_id,
                                                       DiffType.RESOLVED,
                                                       [])
-        self.assertEqual(len(diff_res), 0)
+        # core.CallAndMessage issues are resoved.
+        self.assertEqual(len(diff_res), 1)
 
     def test_get_diff_res_types_unresolved(self):
         """
@@ -232,3 +238,88 @@ class Diff(unittest.TestCase):
                 self.assertEqual(len(diff_res), 1)
                 self.assertEqual(test_result_count, diff_res[0].count)
                 self.assertEqual(checker_name, diff_res[0].checkerId)
+
+    def test_local_compare_res_count_new(self):
+        """
+        Count the new results with no filter in local compare mode.
+        """
+        base_run_name = self._run_names[0]
+        vh = self._test_config['codechecker_cfg']['viewer_host']
+        vp = self._test_config['codechecker_cfg']['viewer_port']
+        diff_cmd = [self._codechecker_cmd, "cmd", "diff",
+                    "--new",
+                    "--host", vh,
+                    "--port", str(vp),
+                    "-b", base_run_name,
+                    "-n", self._report_dir
+                    ]
+        print(diff_cmd)
+        process = subprocess.Popen(
+                    diff_cmd, stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE, cwd=os.environ['TEST_WORKSPACE'])
+        out, err = process.communicate()
+        print(out+err)
+
+        # 5 new core.CallAndMessage issues.
+        count = len(re.findall(r'\[core\.CallAndMessage\]', out))
+        self.assertEqual(count, 5)
+
+    def test_local_compare_res_count_resovled(self):
+        """
+        Count the resolved results with no filter in local compare mode.
+        """
+        base_run_name = self._run_names[0]
+        vh = self._test_config['codechecker_cfg']['viewer_host']
+        vp = self._test_config['codechecker_cfg']['viewer_port']
+        diff_cmd = [self._codechecker_cmd, "cmd", "diff",
+                    "--resolved",
+                    "--host", vh,
+                    "--port", str(vp),
+                    "-b", base_run_name,
+                    "-n", self._report_dir
+                    ]
+        print(diff_cmd)
+        process = subprocess.Popen(
+                    diff_cmd, stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE, cwd=os.environ['TEST_WORKSPACE'])
+        out, err = process.communicate()
+        print(out+err)
+
+        # # 3 disappeared core.StackAddressEscape issues
+        count = len(re.findall(r'\[core\.StackAddressEscape\]', out))
+        self.assertEqual(count, 3)
+
+    def test_local_compare_res_count_unresovled(self):
+        """
+        Count the unresolved results with no filter in local compare mode.
+        """
+        base_run_name = self._run_names[0]
+        vh = self._test_config['codechecker_cfg']['viewer_host']
+        vp = self._test_config['codechecker_cfg']['viewer_port']
+        diff_cmd = [self._codechecker_cmd, "cmd", "diff",
+                    "--unresolved",
+                    "--host", vh,
+                    "--port", str(vp),
+                    "-b", base_run_name,
+                    "-n", self._report_dir
+                    ]
+        print(diff_cmd)
+        process = subprocess.Popen(
+                    diff_cmd, stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE, cwd=os.environ['TEST_WORKSPACE'])
+        out, err = process.communicate()
+        print(out+err)
+
+        # # 3 disappeared core.StackAddressEscape issues
+        count = len(re.findall(r'\[core\.DivideZero\]', out))
+        self.assertEqual(count, 3)
+        count = len(re.findall(r'\[deadcode\.DeadStores\]', out))
+        self.assertEqual(count, 5)
+        count = len(re.findall(r'\[core\.NullDereference\]', out))
+        self.assertEqual(count, 3)
+        count = len(re.findall(r'\[cplusplus\.NewDelete\]', out))
+        self.assertEqual(count, 5)
+        count = len(re.findall(r'\[unix\.Malloc\]', out))
+        self.assertEqual(count, 1)
+        count = len(re.findall(r'\[core.DivideZero\]', out))
+        self.assertEqual(count, 3)

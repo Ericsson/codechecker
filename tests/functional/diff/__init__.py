@@ -68,8 +68,10 @@ def setup_package():
         'skip_list_file': skip_list_file,
         'check_env': test_env,
         'workspace': TEST_WORKSPACE,
+        'reportdir': os.path.join(TEST_WORKSPACE, 'reports'),
         'pg_db_config': pg_db_config,
-        'checkers': []
+        'checkers': ['-d', 'core.CallAndMessage',
+                     '-e', 'core.StackAddressEscape']
     }
 
     codechecker_cfg.update(host_port_cfg)
@@ -99,12 +101,30 @@ def setup_package():
 
     test_project_name_new = project_info['name'] + '_' + uuid.uuid4().hex
 
+    # Let's run the second analysis with different
+    # checkers to have some real difference.
+    codechecker_cfg['checkers'] = ['-e', 'core.CallAndMessage',
+                                   '-d', 'core.StackAddressEscape'
+                                   ]
     ret = codechecker.check(codechecker_cfg,
                             test_project_name_new,
                             test_project_path)
     if ret:
         sys.exit(1)
     print("Second analysis of the test project was successful.")
+
+    # Run the second analysis results
+    # into a report directory
+    ret = codechecker.analyze(codechecker_cfg,
+                              test_project_name_new,
+                              test_project_path)
+    if ret:
+        sys.exit(1)
+    print("CodeChecker analyze of test project was successful.")
+
+    if pg_db_config:
+        print("Waiting for PotgreSQL to stop.")
+        codechecker.wait_for_postgres_shutdown(TEST_WORKSPACE)
 
     # Order of the test run names matter at comparison!
     codechecker_cfg['run_names'] = [test_project_name_base,

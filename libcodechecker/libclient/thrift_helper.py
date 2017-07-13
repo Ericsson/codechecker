@@ -81,6 +81,10 @@ class ThriftClientHelper(object):
         pass
 
     @ThriftClientCall
+    def getSourceFileData(self, fileId, fileContent):
+        pass
+
+    @ThriftClientCall
     def getRunResultCount(self, runId, reportFilters):
         pass
 

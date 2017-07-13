@@ -1202,7 +1202,11 @@ optional arguments:
 ### Show differences between two runs (`diff`)
 
 This mode shows analysis results (in the same format as `results`) does, but
-from the comparison of two runs.
+from the comparison of two runs. The command can be used in *local* or *remote* compare
+modes. In *local mode* the results of a local analysis (see CodeChecker analyze command) 
+can be compared to the results stored on a remote CodeChecker server. In *remote*
+compare mode two runs stored on a remote CodeChekcer server can be compared to each
+other.
 
 ~~~~~~~~~~~~~~~~~~~~~
 usage: CodeChecker cmd diff [-h] -b BASE_RUN -n NEW_RUN [-s] [--filter FILTER]
@@ -1221,6 +1225,9 @@ optional arguments:
   -n NEW_RUN, --newname NEW_RUN
                         The 'new' (right) side of the difference: this
                         analysis run is compared to the -b/--basename run.
+                        The parameter can be a run name(on the remote server) 
+                        or a local report directory (result of the analyze
+                        command).
   -s, --suppressed      Filter results to only show suppressed entries.
                         (default: False)
   --filter FILTER       Filter results. The filter string has the following
