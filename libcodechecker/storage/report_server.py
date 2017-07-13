@@ -170,16 +170,24 @@ class CheckerReportHandler(object):
         f.addContent(content)
         return True
 
-    def __is_same_event_path(self, start_bugevent_id, events):
+    def __is_same_event_path(self, report_id, events):
         """
         Checks if the given event path is the same as the one in the
         events argument.
         """
         try:
-            # There should be at least one bug event.
-            point2 = self.session.query(BugPathEvent).get(start_bugevent_id)
+            q = self.session.query(DiagSection) \
+                .filter(DiagSection.report_id == report_id,
+                        DiagSection.kind ==
+                        DiagSection.get_kind('BugPathEvent')) \
+                .order_by(DiagSection.order)
 
-            for point1 in events:
+            for i, point2 in enumerate(q):
+                if i == len(events):
+                    return False
+
+                point1 = events[i]
+
                 if point1.startLine != point2.line_begin or \
                         point1.startCol != point2.col_begin or \
                         point1.endLine != point2.line_end or \
@@ -188,10 +196,7 @@ class CheckerReportHandler(object):
                         point1.fileId != point2.file_id:
                     return False
 
-                if point2.next is None:
-                    return point1 == events[-1]
-
-                point2 = self.session.query(BugPathEvent).get(point2.next)
+            return True
 
         except Exception as ex:
             raise shared.ttypes.RequestFailed(
@@ -214,10 +219,6 @@ class CheckerReportHandler(object):
         """
         """
         try:
-            path_ids = self.storeBugPath(bugpath)
-            event_ids = self.storeBugEvents(events)
-            path_start = path_ids[0].id if len(path_ids) > 0 else None
-
             source_file = self.session.query(File).get(file_id)
             _, source_file_name = os.path.split(source_file.filepath)
 
@@ -232,9 +233,6 @@ class CheckerReportHandler(object):
                             bug_hash,
                             file_id,
                             msg,
-                            path_start,
-                            event_ids[0].id,
-                            event_ids[-1].id,
                             checker_id,
                             checker_cat,
                             bug_type,
@@ -244,6 +242,10 @@ class CheckerReportHandler(object):
 
             self.session.add(report)
             self.session.commit()
+
+            self.storeBugPath(bugpath, report.id)
+            self.storeBugEvents(events, report.id)
+
             return report.id
         except Exception as ex:
             raise shared.ttypes.RequestFailed(
@@ -337,46 +339,38 @@ class CheckerReportHandler(object):
         self.session.commit()
         return True
 
-    def storeBugEvents(self, bugevents):
+    def storeBugEvents(self, bugevents, report_id):
         """
         """
-        events = []
-        for event in bugevents:
-            bpe = BugPathEvent(event.startLine,
+        for i, event in enumerate(bugevents):
+            diag = DiagSection(event.startLine,
                                event.startCol,
                                event.endLine,
                                event.endCol,
+                               i,
+                               DiagSection.get_kind('BugPathEvent'),
                                event.msg,
-                               event.fileId)
-            self.session.add(bpe)
-            events.append(bpe)
+                               event.fileId,
+                               report_id)
+            self.session.add(diag)
 
-        self.session.flush()
+        self.session.commit()
 
-        if len(events) > 1:
-            for i in range(len(events) - 1):
-                events[i].addNext(events[i + 1].id)
-                events[i + 1].addPrev(events[i].id)
-            events[-1].addPrev(events[-2].id)
-        return events
-
-    def storeBugPath(self, bugpath):
+    def storeBugPath(self, bugpath, report_id):
         paths = []
-        for piece in bugpath:
-            brp = BugReportPoint(piece.startLine,
-                                 piece.startCol,
-                                 piece.endLine,
-                                 piece.endCol,
-                                 piece.fileId)
-            self.session.add(brp)
-            paths.append(brp)
+        for i, piece in enumerate(bugpath):
+            diag = DiagSection(piece.startLine,
+                               piece.startCol,
+                               piece.endLine,
+                               piece.endCol,
+                               i,
+                               DiagSection.get_kind('BugReportPoint'),
+                               None,
+                               piece.fileId,
+                               report_id)
+            self.session.add(diag)
 
-        self.session.flush()
-
-        for i in range(len(paths) - 1):
-            paths[i].addNext(paths[i + 1].id)
-
-        return paths
+        self.session.commit()
 
     @decorators.catch_sqlalchemy
     @timeit
@@ -472,9 +466,7 @@ class CheckerReportHandler(object):
         self.report_ident = sqlalchemy.orm.query.Bundle('report_ident',
                                                         Report.id,
                                                         Report.bug_id,
-                                                        Report.run_id,
-                                                        Report.start_bugevent,
-                                                        Report.start_bugpoint)
+                                                        Report.run_id)
 
 
 def run_server(port, db_uri, callback_event=None):

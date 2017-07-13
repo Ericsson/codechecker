@@ -78,6 +78,16 @@ def construct_report_filter(report_filters):
     return filter_expression
 
 
+def diag_section_db_to_api(diag_section):
+    return shared.ttypes.BugPathEvent(
+        startLine=diag_section.line_begin,
+        startCol=diag_section.col_begin,
+        endLine=diag_section.line_end,
+        endCol=diag_section.col_end,
+        msg=diag_section.msg,
+        fileId=diag_section.file_id)
+
+
 class ThriftRequestHandler():
     """
     Connect to database and handle thrift client requests.
@@ -97,63 +107,23 @@ class ThriftRequestHandler():
         self.__package_version = package_version
         self.__session = session
 
-    def __queryReport(self, reportId):
-        session = self.__session
+    def __lastBugEventPos(self, reportId):
+        """
+        This function returns the last DiagSection object position of kind
+        "BugPathEvent" which belongs to the given report. If no such event is
+        found then None returns.
+        """
+        last = self.__session.query(DiagSection) \
+            .filter(DiagSection.report_id == reportId) \
+            .order_by(DiagSection.order.desc()) \
+            .limit(1).all()
 
-        try:
-            q = session.query(Report,
-                              File,
-                              BugPathEvent,
-                              SuppressBug) \
-                .filter(Report.id == reportId) \
-                .outerjoin(File,
-                           Report.file_id == File.id) \
-                .outerjoin(BugPathEvent,
-                           Report.end_bugevent == BugPathEvent.id) \
-                .outerjoin(SuppressBug,
-                           SuppressBug.hash == Report.bug_id)
+        if len(last) < 1:
+            return None
 
-            results = q.limit(1).all()
-            if len(results) < 1:
-                raise shared.ttypes.RequestFailed(
-                    shared.ttypes.ErrorCode.DATABASE,
-                    "Report " + str(reportId) + " not found!")
+        last = last[0]
 
-            report, source_file, lbpe, suppress_bug = results[0]
-
-            last_event_pos = \
-                shared.ttypes.BugPathEvent(
-                    startLine=lbpe.line_begin,
-                    startCol=lbpe.col_begin,
-                    endLine=lbpe.line_end,
-                    endCol=lbpe.col_end,
-                    msg=lbpe.msg,
-                    fileId=lbpe.file_id,
-                    filePath=source_file.filepath)
-
-            if suppress_bug:
-                suppress_comment = suppress_bug.comment
-            else:
-                suppress_comment = None
-
-            return ReportData(
-                bugHash=report.bug_id,
-                checkedFile=source_file.filepath,
-                checkerMsg=report.checker_message,
-                suppressed=report.suppressed,
-                reportId=report.id,
-                fileId=source_file.id,
-                lastBugPosition=last_event_pos,
-                checkerId=report.checker_id,
-                severity=report.severity,
-                suppressComment=suppress_comment,
-                detectionStatus=report.detection_status)
-        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
-            msg = str(alchemy_ex)
-            LOG.error(msg)
-            raise shared.ttypes.RequestFailed(
-                shared.ttypes.ErrorCode.DATABASE,
-                msg)
+        return diag_section_db_to_api(last)
 
     def __sortResultsQuery(self, query, sort_types=None):
         """
@@ -162,8 +132,7 @@ class ThriftRequestHandler():
         """
 
         # Get a list of sort_types which will be a nested ORDER BY.
-        sort_type_map = {SortType.FILENAME: [File.filepath,
-                                             BugPathEvent.line_begin],
+        sort_type_map = {SortType.FILENAME: [File.filepath],
                          SortType.CHECKER_NAME: [Report.checker_id],
                          SortType.SEVERITY: [Report.severity]}
 
@@ -180,79 +149,6 @@ class ThriftRequestHandler():
                 query = query.order_by(order_type(sorttype))
 
         return query
-
-    def __queryResults(self, run_id, limit, offset, sort_types,
-                       report_filters):
-
-        max_query_limit = constants.MAX_QUERY_SIZE
-        if limit > max_query_limit:
-            LOG.debug('Query limit ' + str(limit) +
-                      ' was larger than max query limit ' +
-                      str(max_query_limit) + ', setting limit to ' +
-                      str(max_query_limit))
-            limit = max_query_limit
-
-        session = self.__session
-        filter_expression = construct_report_filter(report_filters)
-
-        try:
-
-            q = session.query(Report,
-                              File,
-                              BugPathEvent,
-                              SuppressBug) \
-                .filter(Report.run_id == run_id) \
-                .outerjoin(File,
-                           and_(Report.file_id == File.id,
-                                File.run_id == run_id)) \
-                .outerjoin(BugPathEvent,
-                           Report.end_bugevent == BugPathEvent.id) \
-                .outerjoin(SuppressBug,
-                           and_(SuppressBug.hash == Report.bug_id,
-                                SuppressBug.run_id == run_id)) \
-                .filter(filter_expression)
-
-            q = self.__sortResultsQuery(q, sort_types)
-
-            results = []
-            for report, source_file, lbpe, suppress_bug in \
-                    q.limit(limit).offset(offset):
-
-                last_event_pos = \
-                    shared.ttypes.BugPathEvent(startLine=lbpe.line_begin,
-                                               startCol=lbpe.col_begin,
-                                               endLine=lbpe.line_end,
-                                               endCol=lbpe.col_end,
-                                               msg=lbpe.msg,
-                                               fileId=lbpe.file_id,
-                                               filePath=source_file.filepath)
-
-                if suppress_bug:
-                    suppress_comment = suppress_bug.comment
-                else:
-                    suppress_comment = None
-
-                results.append(
-                    ReportData(bugHash=report.bug_id,
-                               checkedFile=source_file.filepath,
-                               checkerMsg=report.checker_message,
-                               suppressed=report.suppressed,
-                               reportId=report.id,
-                               fileId=source_file.id,
-                               lastBugPosition=last_event_pos,
-                               checkerId=report.checker_id,
-                               severity=report.severity,
-                               suppressComment=suppress_comment,
-                               detectionStatus=report.detection_status)
-                )
-
-            return results
-
-        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
-            msg = str(alchemy_ex)
-            LOG.error(msg)
-            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
-                                              msg)
 
     @timeit
     def getRunData(self):
@@ -305,16 +201,111 @@ class ThriftRequestHandler():
 
     @timeit
     def getReport(self, reportId):
-        return self.__queryReport(reportId)
+        session = self.__session
+
+        try:
+            q = session.query(Report,
+                              File,
+                              SuppressBug) \
+                .filter(Report.id == reportId) \
+                .outerjoin(File,
+                           Report.file_id == File.id) \
+                .outerjoin(SuppressBug,
+                           SuppressBug.hash == Report.bug_id)
+
+            results = q.limit(1).all()
+            if len(results) < 1:
+                raise shared.ttypes.RequestFailed(
+                    shared.ttypes.ErrorCode.DATABASE,
+                    "Report " + str(reportId) + " not found!")
+
+            report, source_file, suppress_bug = results[0]
+
+            if suppress_bug:
+                suppress_comment = suppress_bug.comment
+            else:
+                suppress_comment = None
+
+            return ReportData(
+                bugHash=report.bug_id,
+                checkedFile=source_file.filepath,
+                checkerMsg=report.checker_message,
+                suppressed=report.suppressed,
+                reportId=report.id,
+                fileId=source_file.id,
+                lastBugPosition=self.__lastBugEventPos(report.id),
+                checkerId=report.checker_id,
+                severity=report.severity,
+                suppressComment=suppress_comment,
+                detectionStatus=report.detection_status)
+        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
+            msg = str(alchemy_ex)
+            LOG.error(msg)
+            raise shared.ttypes.RequestFailed(
+                shared.ttypes.ErrorCode.DATABASE,
+                msg)
 
     @timeit
     def getRunResults(self, run_id, limit, offset, sort_types, report_filters):
 
-        return self.__queryResults(run_id,
-                                   limit,
-                                   offset,
-                                   sort_types,
-                                   report_filters)
+        max_query_limit = constants.MAX_QUERY_SIZE
+        if limit > max_query_limit:
+            LOG.debug('Query limit ' + str(limit) +
+                      ' was larger than max query limit ' +
+                      str(max_query_limit) + ', setting limit to ' +
+                      str(max_query_limit))
+            limit = max_query_limit
+
+        session = self.__session
+        filter_expression = construct_report_filter(report_filters)
+
+        try:
+
+            q = session.query(Report,
+                              File,
+                              SuppressBug) \
+                .filter(Report.run_id == run_id) \
+                .outerjoin(File,
+                           and_(Report.file_id == File.id,
+                                File.run_id == run_id)) \
+                .outerjoin(SuppressBug,
+                           and_(SuppressBug.hash == Report.bug_id,
+                                SuppressBug.run_id == run_id)) \
+                .filter(filter_expression)
+
+            q = self.__sortResultsQuery(q, sort_types)
+
+            results = []
+            for report, source_file, suppress_bug in \
+                    q.limit(limit).offset(offset):
+
+                if suppress_bug:
+                    suppress_comment = suppress_bug.comment
+                else:
+                    suppress_comment = None
+
+                results.append(
+                    ReportData(bugHash=report.bug_id,
+                               checkedFile=source_file.filepath,
+                               checkerMsg=report.checker_message,
+                               suppressed=report.suppressed,
+                               reportId=report.id,
+                               fileId=source_file.id,
+                               lastBugPosition=self.__lastBugEventPos(
+                                   report.id),
+                               checkerId=report.checker_id,
+                               severity=report.severity,
+                               suppressComment=suppress_comment,
+                               detectionStatus=report.detection_status)
+                )
+
+            return results
+
+        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
+            msg = str(alchemy_ex)
+            LOG.error(msg)
+            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
+                                              msg)
 
     @timeit
     def getRunResultCount(self, run_id, report_filters):
@@ -328,8 +319,6 @@ class ThriftRequestHandler():
                 .outerjoin(File,
                            and_(Report.file_id == File.id,
                                 File.run_id == run_id)) \
-                .outerjoin(BugPathEvent,
-                           Report.end_bugevent == BugPathEvent.id) \
                 .outerjoin(SuppressBug,
                            and_(SuppressBug.hash == Report.bug_id,
                                 SuppressBug.run_id == run_id)) \
@@ -348,64 +337,27 @@ class ThriftRequestHandler():
                                               msg)
 
     @timeit
-    def __construct_bug_event_list(self, session, start_bug_event):
+    def __construct_diag_sections(self, session, report_id, kind):
+
+        q = session.query(DiagSection) \
+            .filter(DiagSection.report_id == report_id,
+                    DiagSection.kind == DiagSection.get_kind(kind)) \
+            .order_by(DiagSection.order)
 
         file_path_cache = {}
         bug_events = []
-        event = session.query(BugPathEvent).get(start_bug_event)
 
-        file_path = file_path_cache.get(event.file_id)
-        if not file_path:
-            f = session.query(File).get(event.file_id)
-            file_path = f.filepath
-            file_path_cache[event.file_id] = file_path
+        for diag_section in q:
+            file_path = file_path_cache.get(diag_section.file_id)
 
-        bug_events.append((event, file_path))
-
-        while event.next is not None:
-
-            event = session.query(BugPathEvent).get(event.next)
-
-            file_path = file_path_cache.get(event.file_id)
             if not file_path:
-                f = session.query(File).get(event.file_id)
+                f = session.query(File).get(diag_section.file_id)
                 file_path = f.filepath
-                file_path_cache[event.file_id] = file_path
+                file_path_cache[diag_section.file_id] = file_path
 
-            bug_events.append((event, file_path))
+            bug_events.append((diag_section, file_path))
 
         return bug_events
-
-    @timeit
-    def __construct_bug_point_list(self, session, start_bug_point):
-        # Start_bug_point can be None.
-
-        file_path_cache = {}
-        bug_points = []
-
-        if start_bug_point:
-
-            bug_point = session.query(BugReportPoint).get(start_bug_point)
-            file_path = file_path_cache.get(bug_point.file_id)
-            if not file_path:
-                f = session.query(File).get(bug_point.file_id)
-                file_path = f.filepath
-                file_path_cache[bug_point.file_id] = file_path
-
-            bug_points.append((bug_point, file_path))
-            while bug_point.next is not None:
-
-                bug_point = session.query(BugReportPoint).get(bug_point.next)
-
-                file_path = file_path_cache.get(bug_point.file_id)
-                if not file_path:
-                    f = session.query(File).get(bug_point.file_id)
-                    file_path = f.filepath
-                    file_path_cache[bug_point.file_id] = file_path
-
-                bug_points.append((bug_point, file_path))
-
-        return bug_points
 
     @timeit
     def getReportDetails(self, reportId):
@@ -418,33 +370,24 @@ class ThriftRequestHandler():
         try:
             report = session.query(Report).get(reportId)
 
-            events = self.__construct_bug_event_list(session,
-                                                     report.start_bugevent)
+            diags = self.__construct_diag_sections(session,
+                                                   report.id,
+                                                   'BugPathEvent')
             bug_events_list = []
-            for (event, file_path) in events:
-                bug_events_list.append(
-                    shared.ttypes.BugPathEvent(
-                        startLine=event.line_begin,
-                        startCol=event.col_begin,
-                        endLine=event.line_end,
-                        endCol=event.col_end,
-                        msg=event.msg,
-                        fileId=event.file_id,
-                        filePath=file_path))
+            for diag, file_path in diags:
+                diag = diag_section_db_to_api(diag)
+                diag.filePath = file_path
+                bug_events_list.append(diag)
 
-            points = self.__construct_bug_point_list(session,
-                                                     report.start_bugpoint)
+            diags = self.__construct_diag_sections(session,
+                                                   report.id,
+                                                   'BugReportPoint')
 
             bug_point_list = []
-            for (bug_point, file_path) in points:
-                bug_point_list.append(
-                    shared.ttypes.BugPathPos(
-                        startLine=bug_point.line_begin,
-                        startCol=bug_point.col_begin,
-                        endLine=bug_point.line_end,
-                        endCol=bug_point.col_end,
-                        fileId=bug_point.file_id,
-                        filePath=file_path))
+            for diag, file_path in diags:
+                diag = diag_section_db_to_api(diag)
+                diag.filePath = file_path
+                bug_point_list.append(diag)
 
             return ReportDetails(bug_events_list, bug_point_list)
 
@@ -850,8 +793,6 @@ class ThriftRequestHandler():
                 .filter(Report.run_id == run_id) \
                 .outerjoin(File,
                            Report.file_id == File.id) \
-                .outerjoin(BugPathEvent,
-                           Report.end_bugevent == BugPathEvent.id) \
                 .outerjoin(SuppressBug,
                            and_(SuppressBug.hash == Report.bug_id,
                                 SuppressBug.run_id == run_id)) \
@@ -929,14 +870,11 @@ class ThriftRequestHandler():
         try:
             q = session.query(Report,
                               File,
-                              BugPathEvent,
                               SuppressBug) \
                 .filter(Report.run_id == run_id) \
                 .outerjoin(File,
                            and_(Report.file_id == File.id,
                                 File.run_id == run_id)) \
-                .outerjoin(BugPathEvent,
-                           Report.end_bugevent == BugPathEvent.id) \
                 .outerjoin(SuppressBug,
                            and_(SuppressBug.hash == Report.bug_id,
                                 SuppressBug.run_id == run_id)) \
@@ -946,16 +884,8 @@ class ThriftRequestHandler():
             q = self.__sortResultsQuery(q, sort_types)
 
             results = []
-            for report, source_file, lbpe, suppress_bug \
+            for report, source_file, suppress_bug \
                     in q.limit(limit).offset(offset):
-
-                lastEventPos = \
-                    shared.ttypes.BugPathEvent(startLine=lbpe.line_begin,
-                                               startCol=lbpe.col_begin,
-                                               endLine=lbpe.line_end,
-                                               endCol=lbpe.col_end,
-                                               msg=lbpe.msg,
-                                               fileId=lbpe.file_id)
 
                 if suppress_bug:
                     suppress_comment = suppress_bug.comment
@@ -967,7 +897,9 @@ class ThriftRequestHandler():
                                           suppressed=report.suppressed,
                                           reportId=report.id,
                                           fileId=source_file.id,
-                                          lastBugPosition=lastEventPos,
+                                          lastBugPosition=
+                                            self.__lastBugEventPos(
+                                                report.id),
                                           checkerId=report.checker_id,
                                           severity=report.severity,
                                           suppressComment=suppress_comment,
@@ -1144,8 +1076,6 @@ class ThriftRequestHandler():
                 .outerjoin(File,
                            and_(Report.file_id == File.id,
                                 File.run_id == run_id)) \
-                .outerjoin(BugPathEvent,
-                           Report.end_bugevent == BugPathEvent.id) \
                 .outerjoin(SuppressBug,
                            and_(SuppressBug.hash == Report.bug_id,
                                 SuppressBug.run_id == run_id)) \
@@ -1226,8 +1156,6 @@ class ThriftRequestHandler():
                 .filter(Report.run_id == run_id) \
                 .outerjoin(File,
                            Report.file_id == File.id) \
-                .outerjoin(BugPathEvent,
-                           Report.end_bugevent == BugPathEvent.id) \
                 .outerjoin(SuppressBug,
                            and_(SuppressBug.hash == Report.bug_id,
                                 SuppressBug.run_id == run_id)) \
