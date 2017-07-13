@@ -75,7 +75,8 @@ class Diff(unittest.TestCase):
                                                       new_run_id,
                                                       DiffType.NEW,
                                                       [])
-        self.assertEqual(diff_res, 0)
+        # 5 new core.CallAndMessage issues.
+        self.assertEqual(diff_res, 5)
 
     def test_get_diff_res_count_resolved(self):
         """
@@ -88,7 +89,8 @@ class Diff(unittest.TestCase):
                                                       new_run_id,
                                                       DiffType.RESOLVED,
                                                       [])
-        self.assertEqual(diff_res, 0)
+        # 3 disappeared core.StackAddressEscape issues.
+        self.assertEqual(diff_res, 3)
 
     def test_get_diff_res_count_unresolved(self):
         """
@@ -117,21 +119,16 @@ class Diff(unittest.TestCase):
                                                       new_run_id,
                                                       DiffType.UNRESOLVED,
                                                       [])
-        # Nothing is resolved.
-        self.assertEqual(diff_res, base_count)
+
+        self.assertEqual(diff_res, 17)
 
     def test_get_diff_res_count_unresolved_filter(self):
-        """
-        This test asumes nothing has been resolved between the two checker
-        runs. The the same severity levels and numbers are used as in a
-        simple filter test for only one run from the project config.
-        """
         base_run_id = self._base_runid
         new_run_id = self._new_runid
 
-        # Severity levels used for filtering.
-        filter_severity_levels = self._testproject_data[self._clang_to_test][
-            'filter_severity_levels']
+        filter_severity_levels = [{"MEDIUM": 1}, {"LOW": 5},
+                                  {"HIGH": 11}, {"STYLE": 0},
+                                  {"UNSPECIFIED": 0}, {"CRITICAL": 0}]
 
         for level in filter_severity_levels:
             for severity_level, test_result_count in level.items():
@@ -157,7 +154,8 @@ class Diff(unittest.TestCase):
                                                       new_run_id,
                                                       DiffType.NEW,
                                                       [])
-        self.assertEqual(len(diff_res), 0)
+        # core.CallAndMessage is the new type.
+        self.assertEqual(len(diff_res), 1)
 
     def test_get_diff_res_types_resolved(self):
         """
@@ -170,7 +168,8 @@ class Diff(unittest.TestCase):
                                                       new_run_id,
                                                       DiffType.RESOLVED,
                                                       [])
-        self.assertEqual(len(diff_res), 0)
+        # core.CallAndMessage issues are resoved.
+        self.assertEqual(len(diff_res), 1)
 
     def test_get_diff_res_types_unresolved(self):
         """

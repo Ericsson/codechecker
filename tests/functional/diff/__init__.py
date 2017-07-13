@@ -69,7 +69,8 @@ def setup_package():
         'check_env': test_env,
         'workspace': TEST_WORKSPACE,
         'pg_db_config': pg_db_config,
-        'checkers': []
+        'checkers': ['-d', 'core.CallAndMessage',
+                     '-e', 'core.StackAddressEscape']
     }
 
     codechecker_cfg.update(host_port_cfg)
@@ -99,6 +100,10 @@ def setup_package():
 
     test_project_name_new = project_info['name'] + '_' + uuid.uuid4().hex
 
+    # Let's run the second analysis with different
+    # checkers to have some real difference.
+    codechecker_cfg['checkers'] = ['-d', 'core.StackAddressEscape',
+                                   '-e', 'core.CallAndMessage']
     ret = codechecker.check(codechecker_cfg,
                             test_project_name_new,
                             test_project_path)
