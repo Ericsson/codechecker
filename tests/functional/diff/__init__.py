@@ -103,8 +103,9 @@ def setup_package():
 
     # Let's run the second analysis with different
     # checkers to have some real difference.
-    codechecker_cfg['checkers'] = ['-d', 'core.StackAddressEscape',
-                                   '-e', 'core.CallAndMessage']
+    codechecker_cfg['checkers'] = ['-e', 'core.CallAndMessage',
+                                   '-d', 'core.StackAddressEscape'
+                                   ]
     ret = codechecker.check(codechecker_cfg,
                             test_project_name_new,
                             test_project_path)

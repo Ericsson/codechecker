@@ -125,6 +125,7 @@ def analyze(codechecker_cfg, test_project_name, test_project_path):
         print("Failed to call:\n" + ' '.join(cerr.cmd))
         return cerr.returncode
 
+
 def serv_cmd(codechecker_cfg, test_config):
 
     server_cmd = ['CodeChecker', 'server',

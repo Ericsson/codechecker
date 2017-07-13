@@ -9,7 +9,6 @@ import json
 import os
 import sys
 
-
 import codeCheckerDBAccess
 import shared
 from Authentication import ttypes as AuthTypes
@@ -190,10 +189,9 @@ def handle_diff_results(args):
         report_filter = [
             codeCheckerDBAccess.ttypes.ReportFilter(suppressed=suppr)]
         add_filter_conditions(report_filter[0], args.filter)
-        sort_mode = []
-        sort_mode.append(ttypes.SortMode(
+        sort_mode = [(ttypes.SortMode(
             ttypes.SortType.FILENAME,
-            ttypes.Order.ASC))
+            ttypes.Order.ASC))]
         limit = codeCheckerDBAccess.constants.MAX_QUERY_SIZE
         offset = 0
 
@@ -241,21 +239,16 @@ def handle_diff_results(args):
         source = client.getSourceFileData(fid, True)
         i = 1
         lines = source.fileContent.split('\n')
-        for line in lines:
-                if i == lineno:
-                    return line
-                i += 1
-        return ""
+        return "" if len(lines) < lineno else lines[lineno - 1]
 
     def getDiffReportDir(getterFn, baseid, report_dir, suppr, diff_type):
         report_filter = [
             codeCheckerDBAccess.ttypes.ReportFilter(suppressed=suppr)]
         add_filter_conditions(report_filter[0], args.filter)
 
-        sort_mode = []
-        sort_mode.append(ttypes.SortMode(
+        sort_mode = [(ttypes.SortMode(
             ttypes.SortType.FILENAME,
-            ttypes.Order.ASC))
+            ttypes.Order.ASC))]
         limit = codeCheckerDBAccess.constants.MAX_QUERY_SIZE
         offset = 0
 
