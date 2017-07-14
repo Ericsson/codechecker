@@ -7,15 +7,13 @@
 Handle Thrift requests.
 """
 
-from collections import defaultdict
 import base64
 import codecs
+from collections import defaultdict
 import os
 import zlib
 
 import sqlalchemy
-from sqlalchemy.sql.expression import false
-from sqlalchemy.sql.expression import true
 
 import shared
 from codeCheckerDBAccess import constants
@@ -826,11 +824,12 @@ class ThriftRequestHandler():
                                               msg)
 
     @timeit
-    def getSourceFileData(self, fileId, fileContent):
+    def getSourceFileData(self, fileId, fileContent, encoding):
         """
         Parameters:
          - fileId
          - fileContent
+         - enum Encoding
         """
         session = self.__session
         try:
@@ -843,7 +842,10 @@ class ThriftRequestHandler():
             if fileContent and sourcefile.content:
                 source = zlib.decompress(sourcefile.content)
 
-                source = codecs.decode(source, 'utf-8', 'replace')
+                if not encoding or encoding == Encoding.DEFAULT:
+                    source = codecs.decode(source, 'utf-8', 'replace')
+                elif encoding == Encoding.BASE64:
+                    source = base64.b64encode(source)
 
                 return SourceFileData(fileId=sourcefile.id,
                                       filePath=sourcefile.filepath,
@@ -1631,10 +1633,12 @@ class ThriftRequestHandler():
         return NeedFileResult(needed, f.id)
 
     @timeit
-    def addFileContent(self, fid, content):
+    def addFileContent(self, fid, content, encoding):
         """
         """
-        content = base64.b64decode(content)
+        if encoding == Encoding.BASE64:
+            content = base64.b64decode(content)
+
         try:
             f = self.__session.query(File).get(fid)
             compresssed_content = zlib.compress(content,

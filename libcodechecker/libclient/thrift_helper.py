@@ -81,7 +81,7 @@ class ThriftClientHelper(object):
         pass
 
     @ThriftClientCall
-    def getSourceFileData(self, fileId, fileContent):
+    def getSourceFileData(self, fileId, fileContent, encoding):
         pass
 
     @ThriftClientCall
@@ -174,7 +174,7 @@ class ThriftClientHelper(object):
         pass
 
     @ThriftClientCall
-    def addFileContent(self, file_id, file_content):
+    def addFileContent(self, file_id, file_content, encoding):
         pass
 
     @ThriftClientCall

@@ -895,7 +895,7 @@ function (declare, dom, style, on, query, Memory, Observable, topic, entities,
         runData : this.runData
       });
 
-      CC_SERVICE.getSourceFileData(this.reportData.fileId, true,
+      CC_SERVICE.getSourceFileData(this.reportData.fileId, true, null,
       function (sourceFileData) {
         that._editor.set('sourceFileData', sourceFileData);
         that._editor.drawBugPath();

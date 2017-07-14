@@ -5,11 +5,13 @@
 #   License. See LICENSE.TXT for details.
 # -----------------------------------------------------------------------------
 
+import base64
 import logging
 import os
 import re
 import unittest
 
+from codeCheckerDBAccess.ttypes import Encoding
 from codeCheckerDBAccess.ttypes import Order
 from codeCheckerDBAccess.ttypes import ReportFilter
 from codeCheckerDBAccess.ttypes import SortMode
@@ -124,7 +126,9 @@ class RunResults(unittest.TestCase):
 
             logging.debug('Getting the content of ' + run_res.checkedFile)
 
-            file_data = self._cc_client.getSourceFileData(run_res.fileId, True)
+            file_data = self._cc_client.getSourceFileData(run_res.fileId,
+                                                          True,
+                                                          None)
             self.assertIsNotNone(file_data)
 
             file_content1 = file_data.fileContent
@@ -134,6 +138,15 @@ class RunResults(unittest.TestCase):
                 file_content2 = source_file.read()
 
             self.assertEqual(file_content1, file_content2)
+
+            file_data_b64 = self._cc_client.getSourceFileData(
+                run_res.fileId, True, Encoding.BASE64)
+            self.assertIsNotNone(file_data_b64)
+
+            file_content1_b64 = base64.b64decode(file_data_b64.fileContent)
+            self.assertIsNotNone(file_content1_b64)
+
+            self.assertEqual(file_content1_b64, file_content2)
 
         logging.debug('got ' + str(len(run_results)) + ' files')
 

@@ -195,7 +195,7 @@ def store_reports(run_id, file_content, test_conf):
                                                    str(file_count)
                                                    ).fileId
 
-            store_server.addFileContent(file_id, file_content)
+            store_server.addFileContent(file_id, file_content, None)
 
             store_server.finishBuildAction(ba_id, '')
             for bug_count in range(bug_per_file):
