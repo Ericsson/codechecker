@@ -793,7 +793,7 @@ CodeChecker analyze ../codechecker_myProject_build.log -o ./my_plists
 then the results of the analysis can be stored with this command:
 
 ~~~~
-CodeChecker store ./my_plists
+CodeChecker store ./my_plists -n my_project
 ~~~~
 
 
@@ -1202,11 +1202,7 @@ optional arguments:
 ### Show differences between two runs (`diff`)
 
 This mode shows analysis results (in the same format as `results`) does, but
-from the comparison of two runs. The command can be used in *local* or *remote* compare
-modes. In *local mode* the results of a local analysis (see CodeChecker analyze command) 
-can be compared to the results stored on a remote CodeChecker server. In *remote*
-compare mode two runs stored on a remote CodeChekcer server can be compared to each
-other.
+from the comparison of two runs.
 
 ~~~~~~~~~~~~~~~~~~~~~
 usage: CodeChecker cmd diff [-h] -b BASE_RUN -n NEW_RUN [-s] [--filter FILTER]
@@ -1241,6 +1237,23 @@ comparison modes:
                         disappeared from the 'new' run.
   --unresolved          Show results that appear in both the 'base' and the
                         'new' run.
+~~~~~~~~~~~~~~~~~~~~~
+
+The command can be used in *local* or *remote* compare modes.
+
+In *local mode* the results of a local analysis (see `CodeChecker analyze`)
+can be compared to the results stored (see `CodeChecker store`) on a remote
+CodeChecker server:
+
+~~~~~~~~~~~~~~~~~~~~~
+CodeChecker cmd diff -p 8001 --basename my_project --newname ./my_updated_plists --new
+~~~~~~~~~~~~~~~~~~~~~
+
+In *remote* compare mode, two runs stored on a remote CodeChecker server can
+be compared to each other:
+
+~~~~~~~~~~~~~~~~~~~~~
+CodeChecker cmd diff -p 8001 --basename my_project --newname my_new_checkin --new
 ~~~~~~~~~~~~~~~~~~~~~
 
 ### Show summarised count of results (`sum`)
@@ -1390,7 +1403,7 @@ action is used to perform an authentication in the command-line.
 optional arguments:
   -h, --help            show this help message and exit
   -u USERNAME, --username USERNAME
-                        The username to authenticate with. (default: ericsza)
+                        The username to authenticate with. (default: <username>)
   -d, --deactivate, --logout
                         Send a logout request to end your privileged session.
 ~~~~~~~~~~~~~~~~~~~~~

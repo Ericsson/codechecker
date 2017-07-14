@@ -53,11 +53,12 @@ def main(subcommands=None):
 Please specify a subcommand to access individual features.""",
             epilog="""Example scenario: Analyzing, and storing results
 ------------------------------------------------
+Start the server where the results will be stored and can be viewed
+after the analysis is done:
+    CodeChecker server
+
 Analyze a project with default settings:
     CodeChecker check -b "cd ~/myproject && make" -n myproject
-
-Start the viewer to see the results:
-    CodeChecker server
 
 The results can be viewed:
  * In a web browser: http://localhost:8001
