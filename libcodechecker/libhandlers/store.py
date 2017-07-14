@@ -215,14 +215,17 @@ def consume_plist(item):
             LOG.info("Storing analysis results for file '" +
                      analyzed_source + "'")
 
-        LOG.debug("Parsing input file '" + f + "'")
+        LOG.debug("Getting build command for '" + f + "'")
         buildaction.original_command = compile_cmds.get(analyzed_source,
                                                         'MISSING')
 
-        LOG.debug("Parsing input file '" + f + "'")
         if buildaction.original_command == 'MISSING':
-            LOG.warning("Compilation action was not found for file: " +
-                        analyzed_source)
+            # Create a "good enough" command based on the plist's name, so
+            # even without a build command, we can still store the results.
+            LOG.warning("Compilation action was not found for file '" +
+                        analyzed_source + "' (input '" + f + "')")
+            LOG.debug("Considering results in input '" + f + "' brand new.")
+            buildaction.original_command = f
 
         rh = analyzer_types.construct_store_handler(buildaction,
                                                     context.run_id,
@@ -284,8 +287,10 @@ def process_compile_db(compile_db):
     comp_cmds = {}
 
     if not os.path.exists(compile_db):
-        LOG.warning("Compilation command file is missing: " + compile_db)
-        LOG.warning("Update mode will not work properly!!!")
+        LOG.warning("Compilation command file '" + compile_db +
+                    "' is missing.")
+        LOG.warning("Update mode will not work, without compilation "
+                    "command it is not known which file to update.")
         return comp_cmds
 
     with open(compile_db, 'r') as ccdb:

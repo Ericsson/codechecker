@@ -1539,12 +1539,12 @@ class ThriftRequestHandler():
         """
         """
         try:
-            LOG.debug("Storign buildaction")
-            LOG.debug(run_id)
-            LOG.debug(build_cmd_hash)
-            LOG.debug(check_cmd)
-            LOG.debug(analyzer_type)
-            LOG.debug(analyzed_source_file)
+            LOG.debug("Storing buildaction")
+            LOG.debug("run_id {0}".format(run_id))
+            LOG.debug("cmd_hash {0}".format(build_cmd_hash))
+            LOG.debug("check command {0}".format(check_cmd))
+            LOG.debug("analyzer: {0}".format(analyzer_type))
+            LOG.debug("analyzed source file {0}".format(analyzed_source_file))
 
             build_actions = \
                 self.__session.query(BuildAction) \
