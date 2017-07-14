@@ -73,7 +73,7 @@ class HashClash(unittest.TestCase):
 
         content = _generate_content(cols, lines)
         content = base64.b64encode(content)
-        success = self._report.addFileContent(need.fileId, content)
+        success = self._report.addFileContent(need.fileId, content, None)
         self.assertTrue(success)
 
         return need.fileId, path

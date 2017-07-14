@@ -17,7 +17,7 @@ namespace js codeCheckerDBAccess
 namespace cpp cc.service.codechecker
 
 //=================================================
-const string API_VERSION = '5.2'
+const string API_VERSION = '5.3'
 const i64 MAX_QUERY_SIZE = 500
 //=================================================
 
@@ -77,6 +77,7 @@ struct ReportDetails{
 }
 
 //-----------------------------------------------------------------------------
+// TODO: This type is unused.
 struct ReportFileData{
   1: i64    reportFileId,
   2: string reportFileContent
@@ -88,6 +89,12 @@ enum SortType {
   FILENAME,
   CHECKER_NAME,
   SEVERITY
+}
+
+//-----------------------------------------------------------------------------
+enum Encoding {
+  DEFAULT,
+  BASE64
 }
 
 //-----------------------------------------------------------------------------
@@ -183,11 +190,12 @@ service codeCheckerDBAccess {
                                  1: i64 reportId)
                                  throws (1: shared.RequestFailed requestError),
 
-  // get file informations if fileContent is true the content of the source file
-  // will be also returned
+  // get file information, if fileContent is true the content of the source
+  // file will be also returned
   SourceFileData getSourceFileData(
                                    1: i64 fileId,
-                                   2: bool fileContent)
+                                   2: bool fileContent,
+                                   3: optional Encoding encoding)
                                    throws (1: shared.RequestFailed requestError),
 
   // get the file id from the database for a filepath, returns -1 if not found
@@ -362,7 +370,8 @@ service codeCheckerDBAccess {
 
   bool addFileContent(
                       1: i64 file_id,
-                      2: string file_content)
+                      2: string file_content,
+                      3: optional Encoding encoding)
                       throws (1: shared.RequestFailed requestError),
 
   bool finishCheckerRun(1: i64 run_id)

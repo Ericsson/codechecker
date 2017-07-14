@@ -4,14 +4,14 @@
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
 
+import base64
 from datetime import datetime
 import json
 import os
 import sys
 
-import codeCheckerDBAccess
 import shared
-from Authentication import ttypes as AuthTypes
+import codeCheckerDBAccess
 from codeCheckerDBAccess import ttypes
 
 from libcodechecker import suppress_file_handler
@@ -234,11 +234,10 @@ def handle_diff_results(args):
         return ""
 
     def getLineFromRemoteFile(client, fid, lineno):
-        # FIXME: Certain UTF8 file content
-        # causes connection abort.
-        source = client.getSourceFileData(fid, True)
-        i = 1
-        lines = source.fileContent.split('\n')
+        # Thrift Python client cannot decode JSONs that contain non '\u00??'
+        # characters, so we instead ask for a Base64-encoded version.
+        source = client.getSourceFileData(fid, True, ttypes.Encoding.BASE64)
+        lines = base64.b64decode(source.fileContent).split('\n')
         return "" if len(lines) < lineno else lines[lineno - 1]
 
     def getDiffReportDir(getterFn, baseid, report_dir, suppr, diff_type):

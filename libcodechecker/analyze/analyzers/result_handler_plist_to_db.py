@@ -11,6 +11,7 @@ import os
 import traceback
 
 import shared
+from codeCheckerDBAccess.ttypes import Encoding
 
 from libcodechecker import logger
 from libcodechecker import suppress_handler
@@ -57,7 +58,8 @@ class PlistToDB(ResultHandler):
 
                     source64 = base64.b64encode(source)
                     res = client.addFileContent(file_descriptor.fileId,
-                                                source64)
+                                                source64,
+                                                Encoding.BASE64)
                     if not res:
                         LOG.debug("Failed to store file content")
 
