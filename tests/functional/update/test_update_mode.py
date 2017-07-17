@@ -83,5 +83,6 @@ class TestUpdate(unittest.TestCase):
             [bug['hash'] for bug in all_bugs if bug['checker'] == deadcode]
 
         self.assertEquals(len(updated_results), len(all_bugs))
-        self.assertTrue(all(map(lambda b: b.detectionStatus == 'unresolved',
-            filter(lambda x: x in deadcode_bugs, updated_results))))
+        self.assertTrue(all(
+            map(lambda b: b.detectionStatus == 'unresolved',
+                filter(lambda x: x in deadcode_bugs, updated_results))))
