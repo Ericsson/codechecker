@@ -79,7 +79,10 @@ class TestUpdate(unittest.TestCase):
         updated_results = get_all_run_results(self._cc_client, self._runid)
 
         all_bugs = self._testproject_data[self._clang_to_test]['bugs']
-        deadcode_bugs = [bug for bug in all_bugs if bug['checker'] == deadcode]
+        deadcode_bugs = \
+            [bug['hash'] for bug in all_bugs if bug['checker'] == deadcode]
 
-        self.assertEquals(len(updated_results),
-                          len(all_bugs) - len(deadcode_bugs))
+        self.assertEquals(len(updated_results), len(all_bugs))
+        self.assertTrue(all(
+            map(lambda b: b.detectionStatus == 'unresolved',
+                filter(lambda x: x in deadcode_bugs, updated_results))))

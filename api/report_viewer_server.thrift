@@ -31,6 +31,8 @@ struct RunData{
   6: string         runCmd,       // the used check command
   7: optional bool  can_delete    // true if codeCheckerDBAccess::removeRunResults()
                                   // is allowed on this run (see issue 151)
+  8: map<string, i32> detectionStatusCount
+                                  // this maps the detection status to its count
 }
 typedef list<RunData> RunDataList
 
@@ -47,6 +49,7 @@ struct ReportData{
                                           // execution step list.
   9: shared.Severity     severity         // checker severity
   10: optional string    suppressComment  // suppress commment if report is suppressed
+  11: string             detectionStatus  // 'new', 'resolved', 'unresolved', 'reopened'
 }
 typedef list<ReportData> ReportDataList
 
@@ -131,20 +134,6 @@ enum DiffType {
   RESOLVED,
   UNRESOLVED
 }
-
-//-----------------------------------------------------------------------------
-struct BuildActionData {
-  1: i64 id,
-  2: i64 runId,
-  3: string buildCmd,
-  4: string analyzerType,
-  5: string file,
-  6: string checkCmd,
-  7: string failure,
-  8: string date,
-  9: i64 duration
-}
-typedef list<BuildActionData> BuildActionDataList
 
 //-----------------------------------------------------------------------------
 service codeCheckerDBAccess {
@@ -240,11 +229,6 @@ service codeCheckerDBAccess {
   // get the skip list of paths
   SkipPathDataList getSkipPaths(1: i64 runId)
                                 throws (1: shared.RequestFailed requestError),
-
-  // gives back the build Actions that generate the given report.
-  // multiple build actions can belong to a report in a header.
-  BuildActionDataList getBuildActions(1: i64 reportId)
-                                      throws (1: shared.RequestFailed requestError),
 
   // get all the results for one runId
   // count all results for a checker
