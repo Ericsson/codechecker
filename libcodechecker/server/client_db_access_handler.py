@@ -260,7 +260,7 @@ class ThriftRequestHandler(object):
                                               msg)
 
     @timeit
-    def getRunData(self):
+    def getRunData(self, run_name_filter):
 
         session = self.__session
         results = []
@@ -273,8 +273,12 @@ class ThriftRequestHandler(object):
                 .group_by(Report.run_id) \
                 .subquery()
 
-            q = session.query(Run, stmt.c.report_count) \
-                .outerjoin(stmt, Run.id == stmt.c.run_id) \
+            q = session.query(Run, stmt.c.report_count)
+
+            if run_name_filter is not None:
+                q = q.filter(Run.name.like('%' + run_name_filter + '%'))
+
+            q = q.outerjoin(stmt, Run.id == stmt.c.run_id) \
                 .order_by(Run.date)
 
             for instance, reportCount in q:
