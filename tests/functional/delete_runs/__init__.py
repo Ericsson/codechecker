@@ -105,6 +105,12 @@ def setup_package():
 
         print("Analyzing the test project was successful {}.".format(str(i)))
 
+        # If the check process is very fast, datetime of multiple runs can be
+        # almost the same different in microseconds. Test cases of delete runs
+        # can be failed for this reason because we didn't process microseconds
+        # in command line arguments.
+        time.sleep(1)
+
     # Save the run names in the configuration.
     codechecker_cfg['run_names'] \
         = [test_project_name + '_' + str(i) for i in range(0, 5)]
