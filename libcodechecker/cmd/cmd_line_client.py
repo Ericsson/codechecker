@@ -48,7 +48,7 @@ def get_run_ids(client):
     Returns a map for run names and run_ids.
     """
 
-    runs = client.getRunData()
+    runs = client.getRunData(None)
 
     run_data = {}
     for run in runs:
@@ -112,7 +112,7 @@ def add_filter_conditions(report_filter, filter_str):
 
 def handle_list_runs(args):
     client = setup_client(args.host, args.port, '/')
-    runs = client.getRunData()
+    runs = client.getRunData(None)
 
     if args.output_format == 'json':
         results = []

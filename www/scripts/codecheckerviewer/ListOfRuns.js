@@ -11,11 +11,12 @@ define([
   'dojo/topic',
   'dijit/Dialog',
   'dijit/form/Button',
+  'dijit/form/TextBox',
   'dijit/layout/BorderContainer',
   'dijit/layout/ContentPane',
   'dojox/grid/DataGrid'],
 function (declare, domConstruct, ItemFileWriteStore, topic, Dialog, Button,
-  BorderContainer, ContentPane, DataGrid) {
+  TextBox, BorderContainer, ContentPane, DataGrid) {
 
   function prettifyDuration(seconds) {
     var prettyDuration = "--------";
@@ -137,33 +138,70 @@ function (declare, domConstruct, ItemFileWriteStore, topic, Dialog, Button,
       return result;
     },
 
-    _populateRuns : function () {
+    /**
+     * Sorts run data list by date (newest comes first).
+     */
+    _sortRunData : function (runDataList) {
+      runDataList.sort(function (lhs, rhs) {
+        return new Date(rhs.runDate) - new Date(lhs.runDate);
+      });
+    },
+
+    /**
+     * This function refreshes grid with available run data based on text run
+     * name filter.
+     */
+    refreshGrid : function (runNameFilter) {
       var that = this;
 
-      CC_SERVICE.getRunData(function (runDataList) {
-        runDataList.sort(function (lhs, rhs) {
-          return new Date(rhs.runDate) - new Date(lhs.runDate);
+      this.store.fetch({
+        onComplete : function (runs) {
+          runs.forEach(function (run) {
+            that.store.deleteItem(run);
+          });
+          that.store.save();
+        }
+      });
+
+      CC_SERVICE.getRunData(runNameFilter, function (runDataList) {
+        that._sortRunData(runDataList);
+        runDataList.forEach(function (item) {
+          that._addRunData(item);
         });
+      });
+    },
+
+    /**
+     * This function adds a new run data to the store.
+     */
+    _addRunData : function (runData) {
+      var currItemDate = runData.runDate.split(/[\s\.]+/);
+      this.store.newItem({
+        id           : runData.runId,
+        runid        : runData.runId,
+        name         : '<span class="link">' + runData.name + '</span>',
+        date         : currItemDate[0] + ' ' + currItemDate[1],
+        numberofbugs : runData.resultCount,
+        duration     : prettifyDuration(runData.duration),
+        runData      : runData,
+        checkcmd     : '<span class="link">Show</span>',
+        del          : false,
+        diff         : false
+      });
+    },
+
+    _populateRuns : function (runNameFilter) {
+      var that = this;
+
+      CC_SERVICE.getRunData(runNameFilter, function (runDataList) {
+        that._sortRunData(runDataList);
 
         that.onLoaded(runDataList);
         topic.publish("hooks/RunsListed", runDataList.length);
 
         runDataList.forEach(function (item) {
-          var currItemDate = item.runDate.split(/[\s\.]+/);
           topic.publish("hooks/run/Observed", item);
-
-          that.store.newItem({
-            diff : false,
-            id : item.runId,
-            runid : item.runId,
-            name : '<span class="link">' + item.name + '</span>',
-            date : currItemDate[0] + ' ' + currItemDate[1],
-            numberofbugs : item.resultCount,
-            duration : prettifyDuration(item.duration),
-            del : false,
-            runData : item,
-            checkcmd : '<span class="link">Show</span>'
-          });
+          that._addRunData(item);
         });
       });
     },
@@ -285,9 +323,37 @@ function (declare, domConstruct, ItemFileWriteStore, topic, Dialog, Button,
     }
   });
 
+  var RunFilter = declare(ContentPane, {
+    constructor : function () {
+      var that = this;
+
+      this._runFilter = new TextBox({
+        id          : 'runs-filter',
+        placeHolder : 'Search for runs...',
+        onKeyUp    : function (evt) {
+          clearTimeout(this.timer);
+
+          var filter = this.get('value');
+          this.timer = setTimeout(function () {
+            that.listOfRunsGrid.refreshGrid(filter);
+          }, 500);
+        }
+      });
+    },
+
+    postCreate : function () {
+      this.addChild(this._runFilter);
+    }
+  });
+
   return declare(BorderContainer, {
     postCreate : function () {
       var that = this;
+
+      var filterPane = new RunFilter({
+        id : 'runs-filter-container',
+        region : 'top'
+      });
 
       var runsInfoPane = new RunsInfoPane({
         region : 'bottom'
@@ -300,7 +366,9 @@ function (declare, domConstruct, ItemFileWriteStore, topic, Dialog, Button,
       });
 
       runsInfoPane.set('listOfRunsGrid', listOfRunsGrid);
+      filterPane.set('listOfRunsGrid', listOfRunsGrid);
 
+      this.addChild(filterPane);
       this.addChild(runsInfoPane);
       this.addChild(listOfRunsGrid);
     },
