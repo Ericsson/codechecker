@@ -277,7 +277,7 @@ def measure(test_conf,
             with CCViewerHelper(view_host, view_port, '/') as viewer_client:
 
                 with Timer('getRunData', run_perf):
-                    viewer_client.getRunData()
+                    viewer_client.getRunData(None)
 
                 with Timer('getAllRunResulst', run_perf):
                     res = get_all_run_results(viewer_client, run_id)

@@ -158,7 +158,7 @@ typedef list<CommentData> CommentDataList
 service codeCheckerDBAccess {
 
   // get the run Ids and dates from the database to select one run
-  RunDataList getRunData()
+  RunDataList getRunData(1: string runNameFilter)
                          throws (1: shared.RequestFailed requestError),
 
   ReportData getReport(

@@ -42,7 +42,7 @@ class TestReportFilter(unittest.TestCase):
         # Get the run names which belong to this test.
         run_names = env.get_run_names(test_workspace)
 
-        runs = self._cc_client.getRunData()
+        runs = self._cc_client.getRunData(None)
 
         test_runs = [run for run in runs if run.name in run_names]
 
