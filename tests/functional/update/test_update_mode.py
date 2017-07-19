@@ -81,5 +81,10 @@ class TestUpdate(unittest.TestCase):
         all_bugs = self._testproject_data[self._clang_to_test]['bugs']
         deadcode_bugs = [bug for bug in all_bugs if bug['checker'] == deadcode]
 
-        self.assertEquals(len(updated_results),
-                          len(all_bugs) - len(deadcode_bugs))
+        # TODO: By removing build actions from the architecture, there is no
+        # update mode. If a run already contains a given bug then it is not
+        # overwritten. Later in "detection status" functionality the status of
+        # these bugs will be set to "resolved" and that will be checked.
+        self.assertEquals(len(updated_results), len(all_bugs))
+        # self.assertEquals(len(updated_results),
+        #                   len(all_bugs) - len(deadcode_bugs))

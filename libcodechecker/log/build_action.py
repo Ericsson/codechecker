@@ -14,7 +14,7 @@ class BuildAction(object):
         self._analyzer_options = []
         self._compiler_includes = []
         self._compiler_defines = []
-        self.analyzer_type = -1
+        self._analyzer_type = -1
         self._original_command = ''
         self._directory = ''
         self._output = ''
@@ -164,7 +164,7 @@ class BuildAction(object):
         """
         hash_content = []
         hash_content.extend(self.analyzer_options)
-        hash_content.append(str(self.analyzer_type))
+        hash_content.append(str(self._analyzer_type))
         hash_content.append(self.output)
         hash_content.append(self.target)
         hash_content.extend(self.sources)

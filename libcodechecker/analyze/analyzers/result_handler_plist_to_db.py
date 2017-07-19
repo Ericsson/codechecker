@@ -34,7 +34,7 @@ class PlistToDB(ResultHandler):
         super(PlistToDB, self).__init__(buildaction, workspace)
         self.__run_id = run_id
 
-    def __store_bugs(self, files, reports, client, analisys_id):
+    def __store_bugs(self, files, reports, client):
         file_ids = {}
         # Send content of file to the server if needed.
         for file_name in files:
@@ -170,7 +170,7 @@ class PlistToDB(ResultHandler):
             type = report.main['type']
 
             LOG.debug("Storing report")
-            report_id = client.addReport(analisys_id,
+            report_id = client.addReport(self.__run_id,
                                          file_ids[fpath],
                                          bug_hash,
                                          msg,
@@ -189,34 +189,12 @@ class PlistToDB(ResultHandler):
         """
         Send the plist content to the database.
         Server API calls should be used in one connection.
-         - addBuildAction
          - addReport
          - needFileContent
          - addFileContent
-         - finishBuildAction
         """
-        if not client:
-            LOG.error("Client needs to be set to store the "
-                      "results to the database")
-            return
 
-        LOG.debug('Storing original build and analyzer command '
-                  'to the database.')
-
-        _, source_file_name = os.path.split(self.analyzed_source_file)
-
-        if LoggerFactory.get_log_level() == logger.DEBUG:
-            analyzer_cmd = ' '.join(self.analyzer_cmd)
-        else:
-            analyzer_cmd = ''
-
-        build_cmd_hash = self.buildaction.original_command_hash
-        analysis_id = \
-            client.addBuildAction(self.__run_id,
-                                  build_cmd_hash,
-                                  analyzer_cmd,
-                                  self.buildaction.analyzer_type,
-                                  source_file_name)
+        assert self.analyzer_returncode == 0
 
         plist_file = self.analyzer_result_file
 
@@ -226,20 +204,9 @@ class PlistToDB(ResultHandler):
             LOG.debug(str(ex))
             msg = 'Parsing the generated result file failed.'
             LOG.error(msg + ' ' + plist_file)
-            client.finishBuildAction(analysis_id, msg)
             return 1
 
-        try:
-            self.__store_bugs(files, reports, client, analysis_id)
-        except Exception as ex:
-            LOG.error("Failed to store results")
-            traceback.print_stack()
-            LOG.error(ex)
-            return 1
-        finally:
-            LOG.debug("Finishing buildaction")
-            client.finishBuildAction(analysis_id, self.analyzer_stderr)
-            LOG.debug("Finishing buildaction done.")
+        self.__store_bugs(files, reports, client)
 
     def postprocess_result(self):
         """
