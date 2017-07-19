@@ -291,7 +291,7 @@ def add_arguments_to_parser(parser):
         else:
             # Apply the shortcut.
             if len(arg_match(['--not-host-only'])) > 0:
-                args.listen_address = ""  # listen on every interface
+                args.listen_address = ""  # Listen on every interface.
 
             # --not-host-only is just a shortcut optstring, no actual use
             # is intended later on.
@@ -321,16 +321,21 @@ def add_arguments_to_parser(parser):
             args.config_directory = args.workspace
             args.sqlite = os.path.join(args.workspace,
                                        'codechecker.sqlite')
+            setattr(args, 'dbdatadir', os.path.join(args.workspace,
+                                                    'pgsql_data'))
 
         # Workspace should not exist as a Namespace key.
-        # TODO: Keep workspace setting until the separate PostgreSQL
-        # initialization is done, not the current auto setup.
-        # delattr(args, 'workspace')
+        delattr(args, 'workspace')
 
         if 'postgresql' not in args:
             # Later called database modules need the argument to be actually
             # present, even though the default is suppressed in the optstring.
             setattr(args, 'postgresql', False)
+
+            # This is not needed by the database starter as we are
+            # running SQLite.
+            if 'dbdatadir' in args:
+                delattr(args, 'dbdatadir')
         else:
             # If --postgresql is given, --sqlite is useless.
             delattr(args, 'sqlite')
