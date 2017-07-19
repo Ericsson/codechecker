@@ -195,7 +195,7 @@ service codeCheckerDBAccess {
   SourceFileData getSourceFileData(
                                    1: i64 fileId,
                                    2: bool fileContent,
-                                   3: optional Encoding encoding)
+                                   3: Encoding encoding)
                                    throws (1: shared.RequestFailed requestError),
 
   // get the file id from the database for a filepath, returns -1 if not found
@@ -371,7 +371,7 @@ service codeCheckerDBAccess {
   bool addFileContent(
                       1: i64 file_id,
                       2: string file_content,
-                      3: optional Encoding encoding)
+                      3: Encoding encoding)
                       throws (1: shared.RequestFailed requestError),
 
   bool finishCheckerRun(1: i64 run_id)
