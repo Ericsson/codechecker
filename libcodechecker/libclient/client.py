@@ -14,9 +14,11 @@ from Authentication import ttypes as AuthTypes
 
 from libcodechecker import session_manager
 from libcodechecker.logger import LoggerFactory
+from libcodechecker.util import split_product_url
 
-from . import thrift_helper
 from . import authentication_helper
+from . import thrift_helper
+from . import product_helper
 
 LOG = LoggerFactory.get_new_logger('CLIENT')
 SUPPORTED_API_VERSION = '6.0'
@@ -36,11 +38,8 @@ def check_api_version(client):
 
 
 def handle_auth(host, port, username, login=False):
-
     session = session_manager.SessionManager_Client()
-
     auth_token = session.getToken(host, port)
-
     auth_client = authentication_helper.ThriftAuthHelper(host,
                                                          port,
                                                          '/Authentication',
@@ -63,9 +62,6 @@ def handle_auth(host, port, username, login=False):
         if auth_token and handshake.sessionStillActive:
             LOG.info("You are already logged in.")
             return
-        else:
-            LOG.info("Server requires authentication to access. Please use "
-                     "'CodeChecker cmd login' to authenticate.")
 
     except TApplicationException:
         LOG.info("This server does not support privileged access.")
@@ -106,19 +102,12 @@ def handle_auth(host, port, username, login=False):
         sys.exit(1)
 
 
-def setup_client(host, port, uri):
-    """
-    Stup the thrift client and check API version and authentication needs.
-    """
-    manager = session_manager.SessionManager_Client()
-    session_token = manager.getToken(host, port)
-
+def perform_auth_for_handler(manager, host, port, session_token):
     # Before actually communicating with the server,
     # we need to check authentication first.
     auth_client = authentication_helper.ThriftAuthHelper(host,
                                                          port,
-                                                         uri +
-                                                         'Authentication',
+                                                         '/Authentication',
                                                          session_token)
     try:
         auth_response = auth_client.getAuthParameters()
@@ -142,6 +131,7 @@ def setup_client(host, port, uri):
                     manager.saveToken(host, port, session_token)
                     LOG.info("Authenticated using pre-configured "
                              "credentials.")
+                    return session_token
                 except shared.ttypes.RequestFailed:
                     print_err = True
             else:
@@ -155,7 +145,92 @@ def setup_client(host, port, uri):
                       "login'.")
             sys.exit(1)
 
-    client = thrift_helper.ThriftClientHelper(host, port, uri, session_token)
+
+def setup_product_client(host, port, product_name=None):
+    """
+    Setup the Thrift client for the product management endpoint.
+    """
+
+    # Check if the user has authenticated.
+    manager = session_manager.SessionManager_Client()
+    session_token = manager.getToken(host, port)
+    session_token_new = perform_auth_for_handler(manager, host,
+                                                 port, session_token)
+    if session_token_new:
+        session_token = session_token_new
+
+    if not product_name:
+        # Attach to the server-wide product service.
+        product_client = product_helper.ThriftProductHelper(
+            host, port, "/Products", session_token)
+    else:
+        # Attach to the product service and provide a product name
+        # as "viewpoint" from which the product service is called.
+        product_client = product_helper.ThriftProductHelper(
+            host, port, "/" + product_name + "/Products", session_token)
+
+        # However, in this case, the specified product might not be existing,
+        # which makes subsequent calls to this API crash (server sends
+        # HTTP 500 Internal Server Error error page).
+        if not product_client.getAPIVersion():
+            LOG.error("The product '{0}' cannot be communicated with. It "
+                      "either doesn't exist, or the server's configuration "
+                      "is bogus.".format(product_name))
+            sys.exit(1)
+
+    if not check_api_version(product_client):
+        LOG.critical("The server uses a newer version of the API which is "
+                     "incompatible with this client. Please update client.")
+        sys.exit(1)
+
+    return product_client
+
+
+def setup_client(product_url):
+    """
+    Setup the Thrift client and check API version and authentication needs.
+    """
+
+    try:
+        host, port, product_name = split_product_url(product_url)
+    except:
+        LOG.error("Malformed product URL was provided.")
+        sys.exit(2)  # 2 for argument error.
+
+    # Check if the user has authenticated.
+    manager = session_manager.SessionManager_Client()
+    session_token = manager.getToken(host, port)
+    session_token_new = perform_auth_for_handler(manager, host,
+                                                 port, session_token)
+    if session_token_new:
+        session_token = session_token_new
+
+    # Check if the product exists.
+    product_client = setup_product_client(host, port,
+                                          product_name=None)
+    product = product_client.getProducts(product_name, None)
+    product_error_str = None
+    if not (product and len(product) == 1):
+        product_error_str = "It does not exist."
+    else:
+        if product[0].endpoint != product_name:
+            # Only a "substring" match was found. We explicitly reject it
+            # on the command-line!
+            product_error_str = "It does not exist."
+        elif not product[0].connected:
+            product_error_str = "The database has issues, or the connection " \
+                                "is badly configured."
+        elif not product[0].accessible:
+            product_error_str = "You do not have access."
+
+    if product_error_str:
+        LOG.error("The given product '{0}' can not be used! {1}"
+                  .format(product_name, product_error_str))
+        sys.exit(1)
+
+    client = thrift_helper.ThriftClientHelper(
+        host, port, "/" + product_name + "/CodeCheckerService", session_token)
+
     # Test if client can work with the server's API.
     if not check_api_version(client):
         LOG.critical("The server uses a newer version of the API which is "

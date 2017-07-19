@@ -72,20 +72,21 @@ function (declare, domConstruct, ItemFileWriteStore, topic, Button,
     },
 
     _addProductData : function (item) {
+      var name = util.atou(item.displayedName_b64);
+      var description = item.description_b64
+                      ? util.atou(item.description_b64)
+                      : "";
+      var statusIcon = '';
       var icon ='<div class="product-avatar" '
         + 'style="background-color: '
         + util.strToColorBlend(item.endpoint, "white", 0.75).toHex() + '">'
         + '<span class="product-avatar">'
-        + item.displayedName[0].toUpperCase()
+        + name[0].toUpperCase()
         + '</span></div>';
-
-      var name = item.displayedName;
-      var description = item.description ? item.description : "";
-      var statusIcon = '';
 
       if (!item.connected || !item.accessible) {
         name = '<span class="product-error">'
-          + item.displayedName + '</span>';
+          + name + '</span>';
 
         if (!item.connected) {
           statusIcon = '<abbr class="customIcon product-error"></abbr>';
@@ -99,7 +100,7 @@ function (declare, domConstruct, ItemFileWriteStore, topic, Button,
             + '</span><br />' + description;
         }
       } else {
-        name = '<span class="link">' + item.displayedName + '</span>';
+        name = '<span class="link">' + name + '</span>';
       }
 
       this.store.newItem({

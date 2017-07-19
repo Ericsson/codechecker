@@ -44,16 +44,15 @@ class ThriftClientHelper(object):
             try:
                 res = func(*args, **kwargs)
                 return res
-
             except shared.ttypes.RequestFailed as reqfailure:
                 if reqfailure.error_code == shared.ttypes.ErrorCode.DATABASE:
                     print('Database error on server')
                     print(str(reqfailure.message))
-                if reqfailure.error_code ==\
+                elif reqfailure.error_code ==\
                         shared.ttypes.ErrorCode.AUTH_DENIED:
                     print('Authentication denied')
                     print(str(reqfailure.message))
-                if reqfailure.error_code ==\
+                elif reqfailure.error_code ==\
                         shared.ttypes.ErrorCode.UNAUTHORIZED:
                     print('Unauthorized to access')
                     print(str(reqfailure.message))
@@ -72,8 +71,8 @@ class ThriftClientHelper(object):
                 print(errCause)
                 print(str(serr))
                 print("Check if your CodeChecker server is running.")
-
-            self.transport.close()
+            finally:
+                self.transport.close()
 
         return wrapper
 

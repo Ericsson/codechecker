@@ -259,6 +259,25 @@ function (locale, dom, style) {
       }, content);
 
       return content;
+    },
+
+    /**
+     * Converts the given string containing Unicode characters to a base64
+     * string.
+     */
+    utoa : function(ustring) {
+      return window.btoa(unescape(encodeURIComponent(ustring)));
+    },
+
+    /**
+     * Converts the given Base64-encoded string to a Unicode string, properly
+     * handling the wider codepoints.
+     *
+     * (Normal "atob" would convert base64 to string where each character
+     * is one byte long, chopping up Unicode.)
+     */
+    atou : function(b64) {
+      return decodeURIComponent(escape(window.atob(b64)));
     }
   };
 });

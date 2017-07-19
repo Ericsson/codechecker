@@ -61,10 +61,11 @@ class Product(Base):
     display_name = Column(String, nullable=False)
     description = Column(Text)
 
-    def __init__(self, endpoint, conn_str, name=None):
+    def __init__(self, endpoint, conn_str, name=None, description=None):
         self.endpoint = endpoint
         self.connection = conn_str
         self.display_name = name if name else endpoint
+        self.description = description
 
 
 # class ProductAdmin(Base):

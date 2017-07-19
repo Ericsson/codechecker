@@ -84,12 +84,12 @@ from libcodechecker import host_check
 from libcodechecker import util
 from libcodechecker.analyze import analyzer
 from libcodechecker.analyze.analyzers import analyzer_types
-from libcodechecker.database_handler import SQLServer
 from libcodechecker.log import build_action
 from libcodechecker.logger import LoggerFactory
 
 # -- 9. imports from the local package
-import client_db_access_handler
+from . import client_db_access_handler
+from product_db_access_handler import ThriftProductHandler
 
 # ... your code here
 ~~~~
