@@ -19,7 +19,7 @@ typedef list<PrivilegeRecord> PrivilegeRecords
 */
 
 struct DatabaseConnection {
-  1:          string engine,
+  1:          string engine,         // The database engine, such as "sqlite" or "postgresql".
   2:          string host,
   3:          i32    port,
   4:          string username_b64,
@@ -27,24 +27,24 @@ struct DatabaseConnection {
   6:          string database        // SQLite: Database file path; PostgreSQL: Database name
 }
 
-/* ProductConfiguration carries administrative data regarding product settings */
+/* ProductConfiguration carries administrative data regarding product settings. */
 struct ProductConfiguration {
   1:          i64                id,
   2:          string             endpoint,
-  3:          string             displayedName,
-  4:          string             description,
+  3:          string             displayedName_b64,
+  4:          string             description_b64,
   5: optional DatabaseConnection connection
 }
 typedef list<ProductConfiguration> ProductConfigurations
 
-/* Product carries data to the end user's product list and tasks */
+/* Product carries data to the end user's product list and tasks. */
 struct Product {
   1: i64    id,
   2: string endpoint,
-  3: string displayedName,
-  4: string description,
-  5: bool   connected,      // Indicates that the server could set up the database connection properly.
-  6: bool   accessible      // Indicates whether the current user can access this product.
+  3: string displayedName_b64,
+  4: string description_b64,
+  5: bool   connected,         // Indicates that the server could set up the database connection properly.
+  6: bool   accessible         // Indicates whether the current user can access this product.
 }
 typedef list<Product> Products
 
@@ -69,7 +69,7 @@ service codeCheckerProductService {
 
   // *** Handling the add-modify-remove of products registered *** //
 
-  bool addProduct(1: Product product)
+  bool addProduct(1: ProductConfiguration product)
                   throws (1: shared.RequestFailed requestError),
 
   bool removeProduct(1: i64 productId)

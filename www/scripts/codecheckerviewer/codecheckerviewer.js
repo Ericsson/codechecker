@@ -57,7 +57,8 @@ function (declare, topic, domConstruct, Dialog, DropDownMenu, MenuItem,
     //--- Logo ---//
 
     var currentProduct = PROD_SERVICE.getCurrentProduct();
-    document.title = currentProduct.displayedName + ' - CodeChecker';
+    var currentProductName = util.atou(currentProduct.displayedName_b64);
+    document.title = currentProductName + ' - CodeChecker';
 
     var logoContainer = domConstruct.create('div', {
       id : 'logo-container'
@@ -67,7 +68,7 @@ function (declare, topic, domConstruct, Dialog, DropDownMenu, MenuItem,
 
     var logoText = domConstruct.create('div', {
       id : 'logo-text',
-      innerHTML : 'CodeChecker - ' + currentProduct.displayedName
+      innerHTML : 'CodeChecker - ' + currentProductName
     }, logoContainer);
 
     var version = domConstruct.create('span', {

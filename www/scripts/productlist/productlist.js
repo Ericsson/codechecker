@@ -70,13 +70,13 @@ function (declare, topic, domConstruct, Button, BorderContainer,
     //--- Admin button ---//
 
     // TODO: Show admin button only if superuser.
-    var menuButton = new Button({
+    /* var menuButton = new Button({
       class : 'mainMenuButton',
       label : 'Administration',
       onClick : function () {
         window.open('/Administration', '_self');
       }
-    });
+    }); */
 
     var headerMenu = domConstruct.create('div', {
         id : 'header-menu'
@@ -85,7 +85,7 @@ function (declare, topic, domConstruct, Button, BorderContainer,
     if (loginUserSpan != null)
         domConstruct.place(loginUserSpan, headerMenu);
 
-    domConstruct.place(menuButton.domNode, headerMenu);
+    /* domConstruct.place(menuButton.domNode, headerMenu); */
 
     domConstruct.place(headerMenu, headerPane.domNode);
 

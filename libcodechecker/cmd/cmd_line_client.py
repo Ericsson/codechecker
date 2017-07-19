@@ -32,17 +32,6 @@ class CmdLineOutputEncoder(json.JSONEncoder):
         return d
 
 
-def __check_authentication(client):
-    """Communicate with the authentication server
-    to handle authentication requests."""
-    result = client.getAuthParameters()
-
-    if result.sessionStillActive:
-        return True
-    else:
-        return False
-
-
 def get_run_ids(client):
     """
     Returns a map for run names and run_ids.
@@ -111,7 +100,7 @@ def add_filter_conditions(report_filter, filter_str):
 # ---------------------------------------------------------------------------
 
 def handle_list_runs(args):
-    client = setup_client(args.host, args.port, '/')
+    client = setup_client(args.product_url)
     runs = client.getRunData(None)
 
     if args.output_format == 'json':
@@ -130,7 +119,7 @@ def handle_list_runs(args):
 
 
 def handle_list_results(args):
-    client = setup_client(args.host, args.port, '/')
+    client = setup_client(args.product_url)
 
     run_info = check_run_names(client, [args.name])
 
@@ -331,7 +320,7 @@ def handle_diff_results(args):
         else:
             print(twodim_to_str(output_format, header, rows))
 
-    client = setup_client(args.host, args.port, '/')
+    client = setup_client(args.product_url)
 
     report_dir_mode = False
     if os.path.isdir(args.newname):
@@ -367,7 +356,7 @@ def handle_diff_results(args):
 
 
 def handle_list_result_types(args):
-    client = setup_client(args.host, args.port, '/')
+    client = setup_client(args.product_url)
 
     filters = []
     report_filter = codeCheckerDBAccess.ttypes.ReportFilter()
@@ -408,7 +397,7 @@ def handle_list_result_types(args):
 
 
 def handle_remove_run_results(args):
-    client = setup_client(args.host, args.port, '/')
+    client = setup_client(args.product_url)
 
     def is_later(d1, d2):
         dateformat = '%Y-%m-%d %H:%M:%S.%f'
@@ -465,7 +454,7 @@ def handle_suppress(args):
 
     limit = codeCheckerDBAccess.constants.MAX_QUERY_SIZE
 
-    client = setup_client(args.host, args.port, '/')
+    client = setup_client(args.product_url)
 
     run_info = check_run_names(client, [args.name])
     run_id, run_date = run_info.get(args.name)

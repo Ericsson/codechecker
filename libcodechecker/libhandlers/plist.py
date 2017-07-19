@@ -8,6 +8,8 @@ Implements the old command "CodeChecker plist", a branching wrapper over the
 functionality of 'store' and 'parse'.
 """
 
+# TODO: This command should be removed as a whole.
+
 import argparse
 import os
 import sys

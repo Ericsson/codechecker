@@ -235,3 +235,55 @@ def get_default_workspace():
     """
     workspace = os.path.join(os.path.expanduser("~"), '.codechecker')
     return workspace
+
+
+def split_product_url(url):
+    """
+    Sets up a Thrift CodeCheckerService client for the given product URL.
+    """
+    LOG.debug("Parsing product url '{0}'".format(url))
+    if url.startswith("http"):
+        url = url.replace("http://", "").replace("https://", "")
+
+    if url.endswith("/"):
+        url = url.rstrip("/")
+
+    if url.startswith("/"):
+        url = url.lstrip("/")
+
+    # A valid product_url looks like this: 'localhost:8001/Product'.
+    host, port, product_name = "localhost", 8001, "Default"
+    try:
+        parts = url.split("/")
+
+        if len(parts) == 1:
+            # If only one word is given in the URL, consider it as product
+            # name, but then it cannot begin with a number.
+            product_name = parts[0]
+            if product_name[0].isdigit():
+                raise ValueError("Product name was given in URL, but it "
+                                 "cannot begin with a number!")
+        elif len(parts) == 2:
+            # URL is at least something/product-name.
+            product_name = parts[1]
+
+            # Something is either a hostname, or a host:port.
+            server_addr = parts[0].split(":")
+            if len(server_addr) == 2:
+                host, port = server_addr[0], int(server_addr[1])
+            elif len(server_addr) == 1:
+                # We consider "localhost/product" as "localhost:8001/product".
+                host = server_addr[0]
+            else:
+                raise ValueError("The server's address is not in a valid "
+                                 "'host:port' format!")
+        else:
+            raise ValueError("Product URL can not contain extra '/' chars.")
+    except:
+        LOG.error("The specified product URL is invalid.")
+        raise
+
+    LOG.debug("Result: On server '{0}:{1}', product '{2}'"
+              .format(host, port, product_name))
+
+    return host, port, product_name

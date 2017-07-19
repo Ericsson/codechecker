@@ -172,8 +172,6 @@ def add_arguments_to_parser(parser):
                                       "Values of these arguments are ignored, "
                                       "unless '--postgresql' is specified!")
 
-    # WARNING: '--dbaddress' default value influences workspace creation
-    # in SQLite.
     # TODO: --dbSOMETHING arguments are kept to not break interface from
     # old command. Database using commands such as "CodeChecker store" no
     # longer supports these --- it would be ideal to break and remove args
@@ -476,7 +474,8 @@ def main(args):
                     'version': context.package_git_tag}
 
     try:
-        client_db_access_server.start_server(package_data,
+        client_db_access_server.start_server(args.config_directory,
+                                             package_data,
                                              args.view_port,
                                              sql_server,
                                              suppress_handler,

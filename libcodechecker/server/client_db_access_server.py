@@ -9,6 +9,7 @@ and browser requests.
 """
 import atexit
 import base64
+import datetime
 import errno
 from multiprocessing.pool import ThreadPool
 import os
@@ -301,6 +302,19 @@ class RequestHandler(SimpleHTTPRequestHandler):
                 # The current request came through a product route, and not
                 # to the main endpoint.
                 product = self.server.get_product(product_name)
+                if not product.connected:
+                    # If the product is not connected, try reconnecting...
+                    LOG.debug("Request's product '{0}' is not connected! "
+                              "Attempting reconnect...".format(product_name))
+                    product.connect()
+
+                    if not product.connected:
+                        # If the reconnection fails, send an error to the user.
+                        self.send_error(  # 500 Internal Server Error
+                            500, "Product '{0}' database connection failed!"
+                                 .format(product_name))
+                        return
+
                 session_makers['run_db'] = product.session_factory
 
             if request_endpoint == '/Authentication':
@@ -321,7 +335,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
             elif request_endpoint == '/CodeCheckerService':
                 # This endpoint is a product's report_server.
                 if not product:
-                    self.send_error(
+                    self.send_error(  # 404 Not Found
                         404, "The specified product '{0}' does not exist!"
                              .format(product_name))
                     return
@@ -336,8 +350,8 @@ class RequestHandler(SimpleHTTPRequestHandler):
                     version)
                 processor = codeCheckerDBAccess.Processor(acc_handler)
             else:
-                self.send_error(404,
-                                "No endpoint named {0}".format(self.path))
+                self.send_error(404,  # 404 Not Fount
+                                "No endpoint named '{0}'.".format(self.path))
                 return
 
             processor.process(iprot, oprot)
@@ -389,6 +403,10 @@ class Product(object):
     a separate database (and database connection) with its own access control.
     """
 
+    # The amount of SECONDS that need to pass after the last unsuccessful
+    # connect() call so the next could be made.
+    CONNECT_RETRY_TIMEOUT = 300
+
     def __init__(self, orm_object, context, check_env):
         """
         Set up a new managed product object for the configuration given.
@@ -399,6 +417,8 @@ class Product(object):
         self.__engine = None
         self.__session = None
         self.__connected = False
+
+        self.__last_connect_attempt = None
 
     @property
     def id(self):
@@ -451,6 +471,11 @@ class Product(object):
         if self.__connected:
             return
 
+        if self.__last_connect_attempt and \
+                (datetime.datetime.now() - self.__last_connect_attempt[0]). \
+                total_seconds() <= Product.CONNECT_RETRY_TIMEOUT:
+            return
+
         LOG.debug("Connecting database for product '{0}'".
                   format(self.__orm_object.endpoint))
 
@@ -480,6 +505,7 @@ class Product(object):
                       .format(self.__orm_object.endpoint))
             LOG.error(ex.message)
             self.__connected = False
+            self.__last_connect_attempt = (datetime.datetime.now(), ex.message)
 
     def teardown(self):
         """
@@ -489,6 +515,9 @@ class Product(object):
             return
 
         self.__engine.dispose()
+
+        self.__session = None
+        self.__engine = None
 
 
 class CCSimpleHttpServer(HTTPServer):
@@ -501,6 +530,7 @@ class CCSimpleHttpServer(HTTPServer):
     def __init__(self,
                  server_address,
                  RequestHandlerClass,
+                 config_directory,
                  product_db_sql_server,
                  pckg_data,
                  suppress_handler,
@@ -510,6 +540,7 @@ class CCSimpleHttpServer(HTTPServer):
 
         LOG.debug("Initializing HTTP server...")
 
+        self.config_directory = config_directory
         self.www_root = pckg_data['www_root']
         self.doc_root = pckg_data['doc_root']
         self.checker_md_docs = pckg_data['checker_md_docs']
@@ -590,9 +621,20 @@ class CCSimpleHttpServer(HTTPServer):
         return self.__products.items()[0][1] if len(self.__products) == 1 \
             else None
 
+    def remove_product(self, endpoint):
+        product = self.get_product(endpoint)
+        if not product:
+            raise ValueError("The product with the given endpoint '{0}' does "
+                             "not exist!".format(endpoint))
 
-def start_server(package_data, port, db_conn_string, suppress_handler,
-                 listen_address, context, check_env):
+        LOG.info("Disconnecting product '{0}'".format(endpoint))
+        product.teardown()
+
+        del self.__products[endpoint]
+
+
+def start_server(config_directory, package_data, port, db_conn_string,
+                 suppress_handler, listen_address, context, check_env):
     """
     Start http server to handle web client and thrift requests.
     """
@@ -605,6 +647,7 @@ def start_server(package_data, port, db_conn_string, suppress_handler,
 
     http_server = CCSimpleHttpServer(server_addr,
                                      RequestHandler,
+                                     config_directory,
                                      db_conn_string,
                                      package_data,
                                      suppress_handler,

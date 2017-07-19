@@ -5,8 +5,8 @@
 # -------------------------------------------------------------------------
 """
 Check implements a wrapper over 'log' + 'analyze' + 'store', essentially
-giving an easy way to perform analysis from a log command and print results to
-stdout.
+giving an easy way to perform analysis from a log command and push them to a
+remove CodeChecker server.
 """
 
 import argparse
@@ -18,6 +18,7 @@ from libcodechecker import util
 from libcodechecker.analyze.analyzers import analyzer_types
 from libcodechecker.logger import add_verbose_arguments
 from libcodechecker.logger import LoggerFactory
+from libcodechecker.util import split_product_url
 
 LOG = LoggerFactory.get_new_logger('CHECK')
 
@@ -309,23 +310,18 @@ def add_arguments_to_parser(parser):
     server_args = parser.add_argument_group(
         "server arguments",
         "Specifies a 'CodeChecker server' instance which will be used to "
-        "store the results. This server must be running and listening prior "
-        "to the 'store' command being ran.")
+        "store the results. This server must be running and listening, and "
+        "the given product must exist prior to the 'check' command being ran.")
 
-    server_args.add_argument('--host',
+    server_args.add_argument('--url',
                              type=str,
-                             dest="host",
+                             metavar='PRODUCT_URL',
+                             dest="product_url",
+                             default="localhost:8001/Default",
                              required=False,
-                             default="localhost",
-                             help="The IP address or hostname of the "
-                                  "CodeChecker server.")
-
-    server_args.add_argument('-p', '--port',
-                             type=int,
-                             dest="port",
-                             required=False,
-                             default=8001,
-                             help="The port of the server to use for storing.")
+                             help="The URL of the product to store the "
+                                  "results for, in the format of "
+                                  "host:port/ProductName.")
 
     # TODO: These arguments have been retroactively removed from 'store'
     # and are deprecated here. They should be completely removed.
@@ -489,8 +485,7 @@ def main(args):
             input=[report_dir],
             input_format='plist',
             force=args.force,
-            host=args.host,
-            port=args.port
+            product_url=args.product_url
         )
         # Some arguments don't have default values.
         # We can't set these keys to None because it would result in an error
@@ -507,9 +502,11 @@ def main(args):
         store_module.main(store_args)
 
         # Show a hint for server start.
+        host, port, product_url = split_product_url(args.product_url)
         LOG.info("To view results, open the CodeChecker server "
-                 "'http://{0}:{1}' in your browser".format(args.host,
-                                                           args.port))
+                 "'http://{0}:{1}/{2}' in your browser".format(host,
+                                                               port,
+                                                               product_url))
     except ImportError:
         LOG.error("Check failed: couldn't import a library.")
     except Exception as ex:
