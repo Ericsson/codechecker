@@ -172,19 +172,16 @@ class SQLServer(object):
 
         if args.postgresql:
             LOG.debug("Using PostgreSQLServer")
-            if 'workspace' in args:
-                data_url = os.path.join(args.workspace, 'pgsql_data')
+            # TODO: This will be refactored eventually so that
+            # CodeChecker is no longer bringing up a postgres database...
+            # It is an external dependency, it is an external
+            # responsibility. Until then, use the default folder now
+            # for the new commands who no longer define workspace.
+            if 'dbdatadir' in args:
+                workspace = args.dbdatadir
             else:
-                # TODO: This will be refactored eventually so that
-                # CodeChecker is no longer bringing up a postgres database...
-                # It is an external dependency, it is an external
-                # responbitility. Until then, use the default folder now
-                # for the new commands who no longer define workspace.
-                if 'dbdatadir' in args:
-                    workspace = args.dbdatadir
-                else:
-                    workspace = util.get_default_workspace()
-                data_url = os.path.join(workspace, 'pgsql_data')
+                workspace = util.get_default_workspace()
+            data_url = os.path.join(workspace, 'pgsql_data')
             return PostgreSQLServer(data_url,
                                     migration_root,
                                     args.dbaddress,
@@ -194,11 +191,7 @@ class SQLServer(object):
                                     run_env=env)
         else:
             LOG.debug("Using SQLiteDatabase")
-            if 'workspace' in args:
-                data_file = os.path.join(args.workspace, 'codechecker.sqlite')
-            else:
-                data_file = args.sqlite
-            data_file = os.path.abspath(data_file)
+            data_file = os.path.abspath(args.sqlite)
             return SQLiteDatabase(data_file, migration_root, run_env=env)
 
     def check_db_version(self, db_version_info, session=None):
