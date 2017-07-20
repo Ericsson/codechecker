@@ -1,5 +1,4 @@
 {
   "client_autologin" : true,
-  "credentials": {},
-  "tokens": {}
+  "credentials": {}
 }
