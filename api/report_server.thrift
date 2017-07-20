@@ -146,6 +146,15 @@ struct NeedFileResult {
 }
 
 //-----------------------------------------------------------------------------
+struct CommentData {
+  1: i64 id,
+  2: string author,
+  3: string message,
+  4: string createdAt
+}
+typedef list<CommentData> CommentDataList
+
+//-----------------------------------------------------------------------------
 service codeCheckerDBAccess {
 
   // get the run Ids and dates from the database to select one run
@@ -203,6 +212,28 @@ service codeCheckerDBAccess {
   // get suppressed bugs in a run
   shared.SuppressBugList getSuppressedBugs(1: i64 run_id)
                                           throws(1: shared.RequestFailed requestError),
+
+  // get comments for a bug
+  CommentDataList getComments(1: string bugHash)
+                              throws(1: shared.RequestFailed requestError),
+
+  // count all the comments for one bug
+  i64 getCommentCount(1: string bugHash)
+                      throws(1: shared.RequestFailed requestError),
+
+  // add new comment for a bug
+  bool addComment(1: string bugHash,
+                  2: CommentData comment)
+                  throws(1: shared.RequestFailed requestError),
+
+  // update a comment
+  bool updateComment(1: i64 commentId,
+                     2: string newMessage)
+                     throws(1: shared.RequestFailed requestError),
+
+  // remove a comment
+  bool removeComment(1: i64 commentId)
+                     throws(1: shared.RequestFailed requestError),
 
   // get the md documentation for a checker
   string getCheckerDoc(1: string checkerId)
