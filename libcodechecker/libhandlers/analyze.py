@@ -89,6 +89,12 @@ def add_arguments_to_parser(parser):
     Add the subcommand's arguments to the given argparse.ArgumentParser.
     """
 
+    def is_ctu_capable():
+        """ Detects if the current clang is CTU compatible. """
+
+        ret = util.call_command(['clang-func-mapping', '-version'])
+        return ret[1] == 0
+
     parser.add_argument('logfile',
                         type=str,
                         nargs='+',
@@ -176,6 +182,52 @@ def add_arguments_to_parser(parser):
                                default=argparse.SUPPRESS,
                                help="File containing argument which will be "
                                     "forwarded verbatim for Clang-Tidy.")
+
+    if is_ctu_capable():
+        ctu_opts = parser.add_argument_group('cross translation unit analysis')
+        ctu_mutex_group = ctu_opts.add_mutually_exclusive_group()
+        ctu_mutex_group.add_argument('--ctu',
+                                     action='store_const',
+                                     const=[True, True],
+                                     dest='ctu_phases',
+                                     default=argparse.SUPPRESS,
+                                     help="Perform cross translation unit "
+                                          "(CTU) analysis (both collect and "
+                                          "analyze phases) using default "
+                                          "<ctu-dir> for temporary output. "
+                                          "At the end of the analysis, the "
+                                          "temporary directory is removed.")
+        ctu_opts.add_argument('--ctu-dir',
+                              metavar='<ctu-dir>',
+                              default=os.path.join(
+                                  util.get_default_workspace(),
+                                  'ctu-dir'),
+                              help="Optional parameter defines the temporary "
+                                   "directory used between CTU phases.")
+        ctu_mutex_group.add_argument('--ctu-collect-only',
+                                     action='store_const',
+                                     const=[True, False],
+                                     dest='ctu_phases',
+                                     default=argparse.SUPPRESS,
+                                     help="Perform only the collect phase of "
+                                          "CTU. Keep <ctu-dir> for further "
+                                          "use.")
+        ctu_mutex_group.add_argument('--ctu-analyze-only',
+                                     action='store_const',
+                                     const=[False, True],
+                                     dest='ctu_phases',
+                                     default=argparse.SUPPRESS,
+                                     help="Perform only the analyze phase of "
+                                          "CTU. <ctu-dir> should be present "
+                                          "and will not be removed after "
+                                          "analysis.")
+        ctu_opts.add_argument('--on-the-fly',
+                              action='store_true',
+                              dest='ctu_in_memory',
+                              default=argparse.SUPPRESS,
+                              help="Do not create AST dumps in collect phase, "
+                                   "recompile external files on the fly "
+                                   "(memory intensive).")
 
     checkers_opts = parser.add_argument_group(
         "checker configuration",
