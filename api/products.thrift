@@ -50,9 +50,24 @@ typedef list<Product> Products
 
 service codeCheckerProductService {
 
-  // *** Handling the add-modify-remove of products registered *** //
-  Products getProducts()
+  // Return the product management API version.
+  string getAPIVersion(),
+
+  // Returns the CodeChecker version that is running on the server.
+  string getPackageVersion(),
+
+  // *** Handling of product lists and metadata querying *** //
+
+  // Get the list of product that matches the display name and endpoint
+  // filters specified.
+  Products getProducts(1: string productEndpointFilter,
+                       2: string productNameFilter)
                        throws (1: shared.RequestFailed requestError),
+
+  Product getCurrentProduct()
+                            throws (1: shared.RequestFailed requestError),
+
+  // *** Handling the add-modify-remove of products registered *** //
 
   bool addProduct(1: Product product)
                   throws (1: shared.RequestFailed requestError),

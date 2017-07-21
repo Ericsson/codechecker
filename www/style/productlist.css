@@ -1,0 +1,74 @@
+
+/* Do not use this stylesheet without codecheckerviewer.css! */
+
+/*** Product grid ***/
+
+#productGrid .dojoxGridCell {
+  border: 0;
+}
+
+.dojoxGridCell.product-icon {
+  text-align: center;
+}
+
+.dojoxGridCell.product-name {
+  text-align: left;
+  font-size: 12pt;
+}
+
+.dojoxGridCell.product-name .product-error {
+  text-decoration: line-through;
+}
+
+.dojoxGridCell .product-description-error {
+  font-style: italic;
+  font-family: 'Source Code Pro', monospace;
+  font-size: 12px;
+}
+
+.dojoxGridCell .product-description-error.database {
+  color: #b32424;
+}
+
+.dojoxGridCell .product-description-error.access {
+  color: #5b6169;
+}
+
+div.product-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 55%;
+  background-color: #eee;
+}
+
+span.product-avatar {
+  font-size: 18px;
+  width: 40px;
+  height: 40px;
+  text-align: center;
+  vertical-align: middle;
+  color: black;
+  font-weight: 600;
+  font-family: Helvetica, Arial, sans-serif;
+  display: table-cell;
+}
+
+.dojoxGridCell.status {
+  text-align: center;
+}
+
+.customIcon.product-noaccess {
+  color: #5b6169;
+}
+
+.customIcon.product-noaccess:before {
+  content: "\e014";
+}
+
+.customIcon.product-error {
+  color: #b32424;
+}
+
+.customIcon.product-error:before {
+  content: "\e015";
+}

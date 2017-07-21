@@ -39,7 +39,7 @@ from libcodechecker.profiler import timeit
 
 from run_db_model import *
 
-LOG = LoggerFactory.get_new_logger('ACCESS HANDLER')
+LOG = LoggerFactory.get_new_logger('RUN ACCESS HANDLER')
 
 
 class CountFilter:

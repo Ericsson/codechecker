@@ -45,12 +45,22 @@ from run_db_model import IDENTIFIER as RUN_META
 
 LOG = LoggerFactory.get_new_logger('DB ACCESS')
 
-NON_PRODUCT_NAMES = ['index.html',
+# A list of top-level path elements under the webserver root
+# which should not be considered as a product route.
+NON_PRODUCT_NAMES = ['products.html',
+                     'index.html',
                      'fonts',
                      'images',
                      'scripts',
                      'style'
                      ]
+
+# A list of top-level path elements in requests (such as Thrift endpoints)
+# which should not be considered as a product route.
+NON_PRODUCT_NAMES += ['Authentication',
+                      'Products',
+                      'CodeCheckerService'
+                      ]
 
 
 class RequestHandler(SimpleHTTPRequestHandler):
@@ -60,9 +70,6 @@ class RequestHandler(SimpleHTTPRequestHandler):
     """
 
     def __init__(self, request, client_address, server):
-        self.db_version_info = server.db_version_info
-        self.manager = server.manager
-
         BaseHTTPRequestHandler.__init__(self,
                                         request,
                                         client_address,
@@ -80,7 +87,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
         present.
         """
 
-        if not self.manager.isEnabled():
+        if not self.server.manager.isEnabled():
             return None
 
         success = None
@@ -98,9 +105,10 @@ class RequestHandler(SimpleHTTPRequestHandler):
                 values = cookie.split("=")
                 if len(values) == 2 and \
                         values[0] == session_manager.SESSION_COOKIE_NAME:
-                    if self.manager.is_valid(values[1], True):
+                    if self.server.manager.is_valid(values[1], True):
                         # The session cookie contains valid data.
-                        success = self.manager.get_session(values[1], True)
+                        success = self.server.manager.get_session(values[1],
+                                                                  True)
 
         if success is None:
             # Session cookie was invalid (or not found...)
@@ -114,7 +122,8 @@ class RequestHandler(SimpleHTTPRequestHandler):
                     self.headers.getheader("Authorization").
                     replace("Basic ", ""))
 
-                session = self.manager.create_or_get_session(authString)
+                session = self.server.manager.create_or_get_session(
+                    authString)
                 if session:
                     LOG.info("Client from " + client_host + ":" +
                              str(client_port) +
@@ -144,7 +153,8 @@ class RequestHandler(SimpleHTTPRequestHandler):
         # viewer client from the www/ folder.
 
         # The split array looks like ['', 'product-name', ...].
-        return urlparse.urlparse(self.path).path.split('/', 2)[1]
+        first_part = urlparse.urlparse(self.path).path.split('/', 2)[1]
+        return first_part if first_part not in NON_PRODUCT_NAMES else None
 
     def do_GET(self):
         """
@@ -167,12 +177,12 @@ class RequestHandler(SimpleHTTPRequestHandler):
             self.send_header("Content-length", str(len(error_body)))
             self.send_header('Connection', 'close')
             self.end_headers()
-            self.wfile.write(self.manager.getRealm()["error"])
+            self.wfile.write(error_body)
             return
         else:
             product_name = self.__get_product_name()
 
-            if product_name not in NON_PRODUCT_NAMES and product_name != '':
+            if product_name is not None and product_name != '':
                 if not self.server.get_product(product_name):
                     LOG.info("Product named '{0}' does not exist."
                              .format(product_name))
@@ -189,13 +199,14 @@ class RequestHandler(SimpleHTTPRequestHandler):
                     LOG.debug("Redirecting user from /{0} to /{0}/index.html"
                               .format(product_name))
 
-                    # WARN: Browsers cache '301 Moved Permanently' responses,
+                    # WARN: Browsers cache '308 Permanent Redirect' responses,
                     # in the event of debugging this, use Private Browsing!
-                    self.send_response(301)
+                    self.send_response(308)
                     self.send_header("Location",
                                      self.path.replace(product_name,
                                                        product_name + '/', 1))
                     self.end_headers()
+                    return
                 else:
                     # Serves the main page and the resources:
                     # /prod/(index.html) -> /(index.html)
@@ -205,6 +216,26 @@ class RequestHandler(SimpleHTTPRequestHandler):
                         "{0}/".format(product_name), "", 1)
                     LOG.debug("Product routing after: " + self.path)
             else:
+                if self.path in ['/', '/index.html']:
+                    only_product = self.server.get_only_product()
+                    if only_product and only_product.connected:
+                        LOG.debug("Redirecting '/' to ONLY product '/{0}'"
+                                  .format(only_product.endpoint))
+
+                        self.send_response(307)  # 307 Temporary Redirect
+                        self.send_header("Location",
+                                         '/{0}'.format(only_product.endpoint))
+                        self.end_headers()
+                        return
+
+                    # Route homepage queries to serving the product list.
+                    LOG.debug("Serving product list as homepage.")
+                    self.path = '/products.html'
+                else:
+                    # The path requested does not specify a product: it is most
+                    # likely a resource file.
+                    LOG.debug("Serving resource '{0}'".format(self.path))
+
                 self.send_response(200)  # 200 OK
                 if auth_session is not None:
                     # Browsers get a standard cookie for session.
@@ -212,16 +243,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
                         "Set-Cookie",
                         "{0}={1}; Path=/".format(
                             session_manager.SESSION_COOKIE_NAME,
-                            auth_session.auth_token))
-
-                if self.path in ['/', '/index.html', '/products.html']:
-                    # Route homepage queries to serving the product list.
-                    LOG.debug("Serving product list as homepage.")
-                    self.path = "/products.html"
-                else:
-                    # The path requested does not specify a product: it is most
-                    # likely a resource file.
-                    LOG.debug("Serving resource '{0}'".format(self.path))
+                            auth_session.token))
 
             SimpleHTTPRequestHandler.do_GET(self)
 
@@ -559,6 +581,14 @@ class CCSimpleHttpServer(HTTPServer):
         Get the product connection object for the given endpoint, or None.
         """
         return self.__products.get(endpoint, None)
+
+    def get_only_product(self):
+        """
+        Returns the Product object for the only product connected to by the
+        server, or None, if there are 0 or >= 2 products managed.
+        """
+        return self.__products.items()[0][1] if len(self.__products) == 1 \
+            else None
 
 
 def start_server(package_data, port, db_conn_string, suppress_handler,
