@@ -76,6 +76,45 @@ function (locale, dom, style) {
     },
 
     /**
+     * This function creates a colour from a string, then blend it with the
+     * given other colour with the given ratio.
+     *
+     * @param blendColour a variable applicable to the constructor of
+     * dojo.Color. It can be a color name, a hex string, on an array of RGB.
+     */
+    strToColorBlend : function (str, blendColour, ratio) {
+      if (ratio === undefined) {
+        ratio = 0.75;
+      }
+
+      var baseColour = new dojo.Color(this.strToColor(str));
+      return dojo.blendColors(baseColour, new dojo.Color(blendColour), ratio);
+    },
+
+    /**
+     * Converts the given number of seconds into a more human-readable
+     * 'hh:mm:ss' format.
+      */
+    prettifyDuration: function (seconds) {
+      var prettyDuration = "--------";
+
+      if (seconds >= 0) {
+        var durHours = Math.floor(seconds / 3600);
+        var durMins  = Math.floor(seconds / 60) - durHours * 60;
+        var durSecs  = seconds - durMins * 60 - durHours * 3600;
+
+        var prettyDurHours = (durHours < 10 ? '0' : '') + durHours;
+        var prettyDurMins  = (durMins  < 10 ? '0' : '') + durMins;
+        var prettyDurSecs  = (durSecs  < 10 ? '0' : '') + durSecs;
+
+        prettyDuration
+          = prettyDurHours + ':' + prettyDurMins + ':' + prettyDurSecs;
+      }
+
+      return prettyDuration;
+    },
+
+    /**
      * Creates a human friendly relative time ago on the date.
      */
     timeAgo : function (date) {
@@ -85,7 +124,7 @@ function (locale, dom, style) {
           hour   = minute * 60,
           day    = hour * 24,
           week   = day * 7,
-          month  = day * 30
+          month  = day * 30,
           year   = day * 365;
 
       var fuzzy;

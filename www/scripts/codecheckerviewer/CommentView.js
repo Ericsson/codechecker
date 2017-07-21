@@ -20,9 +20,9 @@ define([
   'dijit/tree/ObjectStoreModel',
   'codechecker/HtmlTree',
   'codechecker/util'],
-function (declare, dom, style, topic, Memory, Observable, ConfirmDialog, Dialog,
-  ContentPane, Button, SimpleTextarea, TextBox, ObjectStoreModel, HtmlTree,
-  util) {
+function (declare, dom, style, topic, Memory, Observable, ConfirmDialog,
+  Dialog, ContentPane, Button, SimpleTextarea, TextBox, ObjectStoreModel,
+  HtmlTree, util) {
 
   var Reply = declare(ContentPane, {
     constructor : function () {
