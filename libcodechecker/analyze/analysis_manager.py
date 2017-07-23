@@ -195,7 +195,8 @@ def check(check_data):
 
 
 def start_workers(actions, context, analyzer_config_map,
-                  jobs, output_path, skip_handler, metadata):
+                  jobs, output_path, skip_handler, metadata,
+                  ctu_collect, ctu_analyze, ctu_dir, ctu_func_map_cmd):
     """
     Start the workers in the process pool.
     For every build action there is worker which makes the analysis.

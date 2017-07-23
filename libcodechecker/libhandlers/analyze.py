@@ -22,6 +22,7 @@ from libcodechecker.logger import add_verbose_arguments
 from libcodechecker.logger import LoggerFactory
 
 LOG = LoggerFactory.get_new_logger('ANALYZE')
+CTU_FUNC_MAP_CMD = 'clang-func-mapping'
 
 
 class OrderedCheckersAction(argparse.Action):
@@ -92,7 +93,7 @@ def add_arguments_to_parser(parser):
     def is_ctu_capable():
         """ Detects if the current clang is CTU compatible. """
 
-        ret = util.call_command(['clang-func-mapping', '-version'])
+        ret = util.call_command([CTU_FUNC_MAP_CMD, '-version'])
         return ret[1] == 0
 
     parser.add_argument('logfile',
@@ -224,10 +225,16 @@ def add_arguments_to_parser(parser):
         ctu_opts.add_argument('--on-the-fly',
                               action='store_true',
                               dest='ctu_in_memory',
-                              default=argparse.SUPPRESS,
+                              default=False,
                               help="Do not create AST dumps in collect phase, "
                                    "recompile external files on the fly "
                                    "(memory intensive).")
+        ctu_opts.add_argument('--use-func-map-cmd',
+                              metavar='<path>',
+                              dest='ctu_func_map_cmd',
+                              default=CTU_FUNC_MAP_CMD,
+                              help="Executable to be used for dumping "
+                                   "function maps from compilation units.")
 
     checkers_opts = parser.add_argument_group(
         "checker configuration",

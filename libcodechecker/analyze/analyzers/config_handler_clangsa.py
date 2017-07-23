@@ -20,6 +20,9 @@ class ClangSAConfigHandler(config_handler.AnalyzerConfigHandler):
     def __init__(self):
         super(ClangSAConfigHandler, self).__init__()
         self.__checker_configs = []
+        self.__ctu_dir = ''
+        self.__ctu_in_memory = False
+        self.__log_file = ''
 
     def add_checker_config(self, config):
         """
@@ -56,3 +59,27 @@ class ClangSAConfigHandler(config_handler.AnalyzerConfigHandler):
         LOG.debug_analyzer(self.__checker_configs)
 
         return self.__checker_configs
+
+    @property
+    def ctu_dir(self):
+        return self.__ctu_dir
+
+    @ctu_dir.setter
+    def ctu_dir(self, value):
+        self.__ctu_dir = value
+
+    @property
+    def ctu_in_memory(self):
+        return self.__ctu_in_memory
+
+    @ctu_in_memory.setter
+    def ctu_in_memory(self, value):
+        self.__ctu_in_memory = value
+
+    @property
+    def log_file(self):
+        return self.__log_file
+
+    @log_file.setter
+    def log_file(self, value):
+        self.__log_file = value

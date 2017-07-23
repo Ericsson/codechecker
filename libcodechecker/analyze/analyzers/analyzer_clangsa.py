@@ -137,6 +137,16 @@ class ClangSA(analyzer_base.SourceAnalyzer):
                                          '-analyzer-disable-checker',
                                          '-Xclang', checker_name])
 
+            if config.ctu_dir:
+                analyzer_cmd.extend(['-Xclang', '-analyzer-config',
+                                     '-Xclang', 'xtu-dir=' + config.ctu_dir,
+                                     '-Xclang', '-analyzer-config',
+                                     '-Xclang', 'reanalyze-xtu-visited=true'])
+                if config.ctu_in_memory:
+                    analyzer_cmd.extend(['-Xclang', '-analyzer-config',
+                                         '-Xclang',
+                                         'xtu-reparse=' + config.log_file])
+
             # Set language.
             analyzer_cmd.extend(['-x', self.buildaction.lang])
 

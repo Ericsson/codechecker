@@ -7,6 +7,7 @@
 Prepare and start different analysis types
 """
 import copy
+import os
 import shlex
 import subprocess
 import time
@@ -75,6 +76,18 @@ def perform_analysis(args, context, actions, metadata):
     Additionally, insert statistical information into the metadata dict.
     """
 
+    ctu_collect = False
+    ctu_analyze = False
+    ctu_dir = ''
+    ctu_func_map_cmd = ''
+    if hasattr(args, 'ctu_phases'):
+        args.ctu_dir = os.path.abspath(args.ctu_dir)
+        args.logfile = os.path.abspath(args.logfile)
+        ctu_collect = args.ctu_phases[0]
+        ctu_analyze = args.ctu_phases[1]
+        ctu_dir = args.ctu_dir
+        ctu_func_map_cmd = args.ctu_func_map_cmd
+
     analyzers = args.analyzers if 'analyzers' in args \
         else analyzer_types.supported_analyzers
     analyzers, _ = analyzer_types.check_supported_analyzers(
@@ -103,7 +116,9 @@ def perform_analysis(args, context, actions, metadata):
 
     analysis_manager.start_workers(actions, context, config_map,
                                    args.jobs, args.output_path,
-                                   __get_skip_handler(args), metadata)
+                                   __get_skip_handler(args), metadata,
+                                   ctu_collect, ctu_analyze,
+                                   ctu_dir, ctu_func_map_cmd)
 
     end_time = time.time()
     LOG.info("Analysis length: " + str(end_time - start_time) + " sec.")
