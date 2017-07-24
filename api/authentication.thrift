@@ -7,6 +7,7 @@
 include "shared.thrift"
 
 namespace py Authentication
+namespace js codeCheckerAuthentication
 
 struct HandshakeInformation {
   1: bool requiresAuthentication,       // true if the server has a privileged zone --- the state of having a valid access is not considered here
@@ -27,5 +28,11 @@ service codeCheckerAuthentication {
 
   // performs logout action for the user (must be called from the corresponding valid session)
   bool destroySession()
+             throws (1: shared.RequestFailed requestError),
+
+  // returns currently logged in user within the active session
+  // returns empty string if the session is not active
+  string getLoggedInUser()
              throws (1: shared.RequestFailed requestError)
+
 }

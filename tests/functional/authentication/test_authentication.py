@@ -54,6 +54,10 @@ class DictAuth(unittest.TestCase):
                                                 "invalid:invalid")
         self.assertIsNone(sessionToken, "Invalid credentials gave us a token!")
 
+        # A non-authenticated session should return an empty user.
+        user = auth_client.getLoggedInUser()
+        self.assertEqual(user, "")
+
         self.sessionToken = auth_client.performLogin("Username:Password",
                                                      "cc:test")
         self.assertIsNotNone(self.sessionToken,
@@ -71,6 +75,12 @@ class DictAuth(unittest.TestCase):
 
         self.assertIsNotNone(client.getAPIVersion(),
                              "Privileged server didn't respond properly.")
+
+        authd_auth_client =\
+            env.setup_auth_client(self._test_workspace,
+                                  session_token=self.sessionToken)
+        user = authd_auth_client.getLoggedInUser()
+        self.assertEqual(user, "cc")
 
         auth_client = env.setup_auth_client(self._test_workspace,
                                             session_token=self.sessionToken)

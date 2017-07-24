@@ -29,6 +29,10 @@ function (declare, topic, domConstruct, Dialog, DropDownMenu, MenuItem,
 
     CC_SERVICE = new codeCheckerDBAccess.codeCheckerDBAccessClient(
       new Thrift.Protocol(new Thrift.Transport("CodeCheckerService")));
+    CC_AUTH_SERVICE =
+      new codeCheckerAuthentication.codeCheckerAuthenticationClient(
+        new Thrift.TJSONProtocol(
+          new Thrift.Transport("/Authentication")));
 
     CC_OBJECTS = codeCheckerDBAccess;
 
@@ -60,7 +64,16 @@ function (declare, topic, domConstruct, Dialog, DropDownMenu, MenuItem,
 
     domConstruct.place(logo, headerPane.domNode);
 
-    //--- Menu button ---//
+    var user = CC_AUTH_SERVICE.getLoggedInUser();
+    var loginUserSpan = null;
+    if (user.length > 0) {
+      loginUserSpan = domConstruct.create('span', {
+        id: 'loggedin',
+        innerHTML: "Logged in as " + user + "."
+      });
+    }
+
+      //--- Menu button ---//
 
     var credits = new Dialog({
       title : 'Credits',
@@ -103,7 +116,17 @@ function (declare, topic, domConstruct, Dialog, DropDownMenu, MenuItem,
       dropDown : menuItems
     });
 
-    headerPane.addChild(menuButton);
+    var headerMenu = domConstruct.create('div', {
+        id : 'header-menu'
+      });
+
+    if (loginUserSpan != null)
+        domConstruct.place(loginUserSpan, headerMenu);
+
+    domConstruct.place(menuButton.domNode, headerMenu);
+
+
+    domConstruct.place(headerMenu, headerPane.domNode);
 
     //--- Center panel ---//
 
