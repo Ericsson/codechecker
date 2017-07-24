@@ -67,6 +67,7 @@ def setup_package():
         'suppress_file': suppress_file,
         'skip_list_file': skip_list_file,
         'check_env': test_env,
+        'force': True,
         'workspace': TEST_WORKSPACE,
         'reportdir': os.path.join(TEST_WORKSPACE, 'reports'),
         'pg_db_config': pg_db_config,

@@ -24,7 +24,6 @@ from libcodechecker import generic_package_context
 from libcodechecker import host_check
 from libcodechecker import suppress_file_handler
 from libcodechecker import util
-from libcodechecker.analyze import analyzer_env
 from libcodechecker.analyze import skiplist_handler
 from libcodechecker.analyze.analyzers import analyzer_types
 from libcodechecker.libclient.client import setup_client
@@ -194,14 +193,6 @@ def consume_plist(item):
 
         LOG.debug("Parsing input file '" + f + "'")
         buildaction = build_action.BuildAction()
-        if os.path.basename(f).startswith("clangsa_"):
-            buildaction.analyzer_type = analyzer_types.CLANG_SA
-        elif os.path.basename(f).startswith("clang-tidy_"):
-            buildaction.analyzer_type = analyzer_types.CLANG_TIDY
-        else:
-            # should be the default if report naming is different
-            # reports from scan-build ...
-            buildaction.analyzer_type = analyzer_types.CLANG_SA
 
         LOG.debug("Parsing input file '" + f + "'")
         analyzed_source = 'UNKNOWN'
