@@ -85,12 +85,14 @@ class ThriftRequestHandler():
 
     def __init__(self,
                  session,
+                 auth_session,
                  checker_md_docs,
                  checker_md_docs_map,
                  suppress_handler,
                  db_version_info,
                  package_version):
 
+        self.__auth_session = auth_session
         self.__checker_md_docs = checker_md_docs
         self.__checker_doc_map = checker_md_docs_map
         self.__suppress_handler = suppress_handler

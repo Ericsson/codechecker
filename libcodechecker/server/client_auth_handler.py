@@ -30,16 +30,26 @@ class ThriftAuthHandler(object):
     Handle Thrift authentication requests.
     """
 
-    def __init__(self, manager, session_token=None):
+    def __init__(self, manager, auth_session):
         self.__manager = manager
-        self.__session_token = session_token
+        self.__auth_session = auth_session
 
     @timeit
     def getAuthParameters(self):
+        token = None
+        if self.__auth_session:
+            token = self.__auth_session.token
         return HandshakeInformation(self.__manager.isEnabled(),
                                     self.__manager.is_valid(
-                                        self.__session_token,
+                                        token,
                                         True))
+
+    @timeit
+    def getLoggedInUser(self):
+        if self.__auth_session:
+            return self.__auth_session.user
+        else:
+            return ""
 
     @timeit
     def getAcceptedAuthMethods(self):
@@ -48,9 +58,10 @@ class ThriftAuthHandler(object):
     @timeit
     def performLogin(self, auth_method, auth_string):
         if auth_method == "Username:Password":
-            authToken = self.__manager.create_or_get_session(auth_string)
-            if authToken:
-                return authToken
+            session = self.__manager.create_or_get_session(auth_string)
+
+            if session:
+                return session.token
             else:
                 raise shared.ttypes.RequestFailed(
                     shared.ttypes.ErrorCode.PRIVILEGE,
@@ -62,4 +73,7 @@ class ThriftAuthHandler(object):
 
     @timeit
     def destroySession(self):
-        return self.__manager.invalidate(self.__session_token)
+        token = None
+        if self.__auth_session:
+            token = self.__auth_session.token
+        return self.__manager.invalidate(token)
