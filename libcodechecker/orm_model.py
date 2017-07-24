@@ -29,8 +29,6 @@ CC_META = MetaData(naming_convention={
 Base = declarative_base(metadata=CC_META)
 
 
-# Start of ORM classes.
-
 class DBVersion(Base):
     __tablename__ = 'db_version'
     # TODO: constraint, only one line in this table
@@ -89,25 +87,30 @@ class Config(Base):
         self.checker_name, self.run_id = checker_name, run_id
 
 
+class FileContent(Base):
+    __tablename__ = 'file_contents'
+
+    content_hash = Column(String, primary_key=True)
+    content = Column(Binary)
+
+    def __init__(self, content_hash, content):
+        self.content_hash, self.content = content_hash, content
+
+
 class File(Base):
     __tablename__ = 'files'
 
     id = Column(Integer, autoincrement=True, primary_key=True)
-    run_id = Column(Integer,
-                    ForeignKey('runs.id', deferrable=True,
-                               initially="DEFERRED",
-                               ondelete='CASCADE')
-                    )
     filepath = Column(String)
-    content = Column(Binary)
-    inc_count = Column(Integer)
+    content_hash = Column(String,
+                          ForeignKey('file_contents.content_hash',
+                                     deferrable=True,
+                                     initially="DEFERRED", ondelete='CASCADE'))
 
-    def __init__(self, run_id, filepath):
-        self.run_id, self.filepath = run_id, filepath
-        self.inc_count = 0
+    __table_args__ = (UniqueConstraint('filepath', 'content_hash'),)
 
-    def addContent(self, content):
-        self.content = content
+    def __init__(self, filepath, content_hash):
+        self.filepath, self.content_hash = filepath, content_hash
 
 
 class BugPathEvent(Base):
@@ -282,8 +285,6 @@ class Comment(Base):
         self.author = author
         self.message = message
         self.created_at = created_at
-
-# End of ORM classes.
 
 
 def CreateSchema(engine):
