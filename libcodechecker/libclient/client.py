@@ -20,7 +20,7 @@ from libcodechecker.logger import LoggerFactory
 import shared
 
 LOG = LoggerFactory.get_new_logger('CLIENT')
-SUPPORTED_VERSION = '5.0'
+SUPPORTED_VERSION = '6.0'
 
 
 def check_api_version(client):

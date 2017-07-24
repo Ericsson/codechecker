@@ -186,12 +186,9 @@ def consume_plist(item):
     try:
         f, context, metadata_dict, compile_cmds, server_data = item
 
-        LOG.debug("Parsing input file '" + f + "'")
-
         if 'working_directory' in metadata_dict:
             os.chdir(metadata_dict['working_directory'])
 
-        LOG.debug("Parsing input file '" + f + "'")
         buildaction = build_action.BuildAction()
 
         LOG.debug("Parsing input file '" + f + "'")
@@ -232,6 +229,7 @@ def consume_plist(item):
         rh.handle_results(client)
         return 0
     except Exception as ex:
+        LOG.warning(str(ex))
         LOG.warning("Failed to process report: " + f)
         return 1
 

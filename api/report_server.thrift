@@ -17,7 +17,7 @@ namespace js codeCheckerDBAccess
 namespace cpp cc.service.codechecker
 
 //=================================================
-const string API_VERSION = '5.3'
+const string API_VERSION = '6.0'
 const i64 MAX_QUERY_SIZE = 500
 //=================================================
 
@@ -193,11 +193,6 @@ service codeCheckerDBAccess {
                                    3: optional Encoding encoding)
                                    throws (1: shared.RequestFailed requestError),
 
-  // get the file id from the database for a filepath, returns -1 if not found
-  i64 getFileId(1: i64 runId,
-                2: string path)
-                throws (1: shared.RequestFailed requestError),
-
   // suppress the bug
   bool suppressBug(1: list<i64> runIds,
                    2: i64 reportId,
@@ -362,13 +357,18 @@ service codeCheckerDBAccess {
                  11: bool suppress)
                  throws (1: shared.RequestFailed requestError),
 
+
+  // * If (filepath, content_hash) is in the DB return (existing fileId, false).
+  // * If only the content_hash matches, a (new fileId, false) is returned.
+  // * If the filepath matches, but content_hash not, a (new file_id, true) is returned.
+  // * If none of them matches a (new file_id, true) is returned.
   NeedFileResult needFileContent(
-                                 1: i64 run_id,
-                                 2: string filepath)
+                                 1: string filepath,
+                                 2: string content_hash)
                                  throws (1: shared.RequestFailed requestError),
 
   bool addFileContent(
-                      1: i64 file_id,
+                      1: string content_hash,
                       2: string file_content,
                       3: optional Encoding encoding)
                       throws (1: shared.RequestFailed requestError),
