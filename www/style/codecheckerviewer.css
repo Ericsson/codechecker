@@ -22,7 +22,7 @@ html, body {
 
 #logo {
   font-family: 'Raleway', sans-serif;
-  font-size: 24pt;
+  font-size: 20pt;
   color: white;
 }
 
@@ -38,7 +38,14 @@ html, body {
   text-align: center;
 }
 
-.mainMenuButton {
+#loggedin {
+  font-family: 'Raleway', sans-serif;
+  font-size: 11pt;
+  color: white;
+  padding-right: 10px;
+}
+
+#header-menu {  
   position: absolute;
   right: 10px;
   top: 10px;

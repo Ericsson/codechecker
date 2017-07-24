@@ -57,7 +57,9 @@ class _Session(object):
         return hashlib.sha256(auth_string + "@" +
                               _Session.__initial_salt).hexdigest()
 
-    def __init__(self, token, phash):
+    def __init__(self, token, phash, user, authenticated):
+        self.authenticated = authenticated
+        self.user = user
         self.token = token
         self.persistent_hash = phash
         self.last_access = datetime.now()
@@ -65,10 +67,9 @@ class _Session(object):
     def still_valid(self, do_revalidate=False):
         """Returns if the session is still valid, and optionally revalidates
         it. A session is valid in its soft-lifetime."""
+
         if (datetime.now() - self.last_access).total_seconds() <= \
-                session_lifetimes["soft"] \
-                and (datetime.now() - self.last_access).total_seconds() <= \
-                session_lifetimes["hard"]:
+                session_lifetimes["soft"] and self.still_reusable():
             # If the session is still valid within the "reuse enabled" (soft)
             # past and the check comes from a real user access, we revalidate
             # the session by extending its lifetime --- the user retains their
@@ -262,9 +263,15 @@ class SessionManager:
                     return True
         return False
 
+    def get_user_name(self, auth_string):
+        return auth_string.split(":")[0]
+
     def create_or_get_session(self, auth_string):
         """Create a new session for the given auth-string, if it is valid. If
-        an existing session is found, return that instead."""
+        an existing session is found, return that instead.
+        Currently only username:password format auth_string
+        is supported.
+        """
         if not self.__auth_config["enabled"]:
             return None
 
@@ -274,6 +281,8 @@ class SessionManager:
             self.__cleanup_sessions()
 
         if self.__handle_validation(auth_string):
+            # If the session is still valid and credentials
+            # are resent return old token.
             session_already = next(
                 (s for s
                  in SessionManager.__valid_sessions if s.still_reusable() and
@@ -288,11 +297,13 @@ class SessionManager:
                 # TODO: Use a more secure way for token generation?
                 token = uuid.UUID(bytes=os.urandom(16)).__str__().replace("-",
                                                                           "")
+                user_name = self.get_user_name(auth_string)
                 session = _Session(token,
-                                   _Session.calc_persistency_hash(auth_string))
+                                   _Session.calc_persistency_hash(auth_string),
+                                   user_name, True)
                 SessionManager.__valid_sessions.append(session)
 
-            return session.token
+            return session
         else:
             return None
 
@@ -304,6 +315,17 @@ class SessionManager:
         else:
             return any(_sess.token == token and _sess.still_valid(access)
                        for _sess in SessionManager.__valid_sessions)
+
+    def get_session(self, token, access=False):
+        """Gets the privileged session object based
+        based on the token.
+        """
+        if not self.isEnabled():
+            return None
+        for _sess in SessionManager.__valid_sessions:
+            if _sess.token == token and _sess.still_valid(access):
+                return _sess
+        return None
 
     def invalidate(self, token):
         """Remove a user's previous session from the store."""
