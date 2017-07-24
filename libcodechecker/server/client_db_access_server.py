@@ -68,12 +68,15 @@ class RequestHandler(SimpleHTTPRequestHandler):
     def check_auth_in_request(self):
         """
         Wrapper to handle authentication needs from both GET and POST requests.
+        Returns a session object if correct cookie is presented or creates a
+        new session if the Authorization header and the correct credentials are
+        present.
         """
 
         if not self.manager.isEnabled():
-            return True
+            return None
 
-        success = False
+        success = None
 
         # Authentication can happen in two possible ways:
         #
@@ -90,9 +93,9 @@ class RequestHandler(SimpleHTTPRequestHandler):
                         values[0] == session_manager.SESSION_COOKIE_NAME:
                     if self.manager.is_valid(values[1], True):
                         # The session cookie contains valid data.
-                        success = values[1]
+                        success = self.manager.get_session(values[1], True)
 
-        if not success:
+        if success is None:
             # Session cookie was invalid (or not found...)
             # Attempt to see if the browser has sent us
             # an authentication request.
@@ -104,14 +107,16 @@ class RequestHandler(SimpleHTTPRequestHandler):
                     self.headers.getheader("Authorization").
                     replace("Basic ", ""))
 
-                token = self.manager.create_or_get_session(authString)
-                if token:
+                session = self.manager.create_or_get_session(authString)
+                if session:
                     LOG.info("Client from " + client_host + ":" +
-                             str(client_port) + " successfully logged in")
-                    return token
+                             str(client_port) +
+                             " successfully logged in as user " +
+                             session.user)
+                    return session
 
         # Else, access is still not granted.
-        if not success:
+        if success is None:
             LOG.debug(client_host + ":" + str(client_port) +
                       " Invalid access, credentials not found " +
                       "- session refused.")
@@ -120,13 +125,13 @@ class RequestHandler(SimpleHTTPRequestHandler):
         return success
 
     def do_GET(self):
-        authToken = self.check_auth_in_request()
-        if authToken:
+        auth_session = self.check_auth_in_request()
+        if not self.manager.isEnabled() or auth_session:
             self.send_response(200)
-            if isinstance(authToken, str):
+            if auth_session:
                 self.send_header("Set-Cookie",
                                  session_manager.SESSION_COOKIE_NAME + "=" +
-                                 authToken + "; Path=/")
+                                 auth_session.token + "; Path=/")
             SimpleHTTPRequestHandler.do_GET(self)
         else:
             self.send_response(401)
@@ -165,8 +170,9 @@ class RequestHandler(SimpleHTTPRequestHandler):
         iprot = input_protocol_factory.getProtocol(itrans)
         oprot = output_protocol_factory.getProtocol(otrans)
 
-        sess_token = self.check_auth_in_request()
-        if self.path != '/Authentication' and not sess_token:
+        auth_session = self.check_auth_in_request()
+        if self.manager.isEnabled() and self.path != '/Authentication' \
+                and not auth_session:
             # Bail out if the user is not authenticated...
             # This response has the possibility of melting down Thrift clients,
             # but the user is expected to properly authenticate first.
@@ -188,11 +194,17 @@ class RequestHandler(SimpleHTTPRequestHandler):
             if self.path == '/Authentication':
                 # Authentication requests must be routed to a different
                 # handler.
+
                 auth_handler = ThriftAuthHandler(self.manager,
-                                                 sess_token)
+                                                 auth_session)
                 processor = codeCheckerAuthentication.Processor(auth_handler)
             else:
-                acc_handler = ThriftRequestHandler(session,
+                if auth_session:
+                    LOG.debug("Accessing as user " + auth_session.user)
+                else:
+                    LOG.debug("Unauthenticated access.")
+
+                acc_handler = ThriftRequestHandler(session, auth_session,
                                                    checker_md_docs,
                                                    checker_md_docs_map,
                                                    suppress_handler,
