@@ -27,7 +27,6 @@ from libtest import env
 # Stopping events for CodeChecker servers.
 EVENT_1 = multiprocessing.Event()
 EVENT_2 = multiprocessing.Event()
-EVENT_3 = multiprocessing.Event()
 
 # Test workspace initialized at setup for authentication tests.
 TEST_WORKSPACE = None
@@ -83,7 +82,6 @@ def teardown_package():
     # Let the remaining CodeChecker servers die.
     EVENT_1.set()
     EVENT_2.set()
-    EVENT_3.set()
 
     # TODO If environment variable is set keep the workspace
     # and print out the path.

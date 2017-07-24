@@ -15,7 +15,7 @@ import unittest
 from libcodechecker.server import instance_manager
 
 from libtest import env
-from . import EVENT_1, EVENT_2, EVENT_3
+from . import EVENT_1, EVENT_2
 from . import start_server
 
 
@@ -46,6 +46,7 @@ class Instances(unittest.TestCase):
 
         test_cfg = env.import_test_cfg(self._test_workspace)
         codechecker_1 = test_cfg['codechecker_1']
+        EVENT_1.clear()
         start_server(codechecker_1, test_cfg, EVENT_1)
 
         instance = [i for i in instance_manager.list()
@@ -62,6 +63,7 @@ class Instances(unittest.TestCase):
         test_cfg = env.import_test_cfg(self._test_workspace)
         codechecker_1 = test_cfg['codechecker_1']
         codechecker_2 = test_cfg['codechecker_2']
+        EVENT_2.clear()
         start_server(codechecker_2, test_cfg, EVENT_2)
 
         # Workspaces must match, servers were started in the same workspace.
@@ -119,10 +121,11 @@ class Instances(unittest.TestCase):
 
         # NOTE: Yet again keep the lexicographical flow, no renames!
 
+        EVENT_2.clear()
         test_cfg = env.import_test_cfg(self._test_workspace)
         codechecker_1 = test_cfg['codechecker_1']
         codechecker_2 = test_cfg['codechecker_2']
-        start_server(codechecker_2, test_cfg, EVENT_3)
+        start_server(codechecker_2, test_cfg, EVENT_2)
 
         # Kill the server, but yet again give a grace period.
         self.assertEqual(0, run_cmd([env.codechecker_cmd(),
@@ -175,3 +178,30 @@ class Instances(unittest.TestCase):
         self.assertEqual(instance_2, [],
                          "The stopped server made another server's record "
                          "appear in the instance list.")
+
+    def testShutdownTerminateStopAll(self):
+        """Tests that --stop-all kills all servers on the host."""
+
+        # NOTE: Yet again keep the lexicographical flow, no renames!
+
+        test_cfg = env.import_test_cfg(self._test_workspace)
+        codechecker_1 = test_cfg['codechecker_1']
+        codechecker_2 = test_cfg['codechecker_2']
+        EVENT_1.clear()
+        EVENT_2.clear()
+        start_server(codechecker_1, test_cfg, EVENT_1)
+        start_server(codechecker_2, test_cfg, EVENT_2)
+
+        self.assertEqual(len(instance_manager.list()), 2,
+                         "Two servers were started but they don't appear "
+                         "in the instance list.")
+
+        # Kill the servers via cmdline.
+        self.assertEqual(0, run_cmd([env.codechecker_cmd(),
+                                     'server', '--stop-all']),
+                         "The stop-all command didn't return exit code 0.")
+        time.sleep(5)
+
+        self.assertEqual(len(instance_manager.list()), 0,
+                         "Both servers were allegedly stopped but they "
+                         "did not disappear.")
