@@ -89,8 +89,12 @@ function (declare, Deferred, ObjectStore, Store, QueryResults, topic,
 
     _formatItems : function (reportDataList) {
       reportDataList.forEach(function (reportData) {
-        reportData.severity
-          = util.severityFromCodeToString(reportData.severity);
+        reportData.severity =
+          util.severityFromCodeToString(reportData.severity);
+
+        reportData.severityContent ='<span title="' + reportData.severity + '"'
+          + ' class="icon-severity icon-severity-' + reportData.severity
+          + '"></span>';
 
         reportData.checkedFile = reportData.checkedFile +
           ' @ Line ' + reportData.lastBugPosition.startLine;
@@ -194,7 +198,7 @@ function (declare, Deferred, ObjectStore, Store, QueryResults, topic,
         { name : 'File', field : 'checkedFile', cellClasses : 'link compact', width : '100%' },
         { name : 'Message', field : 'checkerMsg', width : '100%' },
         { name : 'Checker name', field : 'checkerId', cellClasses : 'link', width : '50%' },
-        { name : 'Severity', field : 'severity' },
+        { name : 'Severity', field : 'severityContent', cellClasses : 'severity' },
         { name : 'Suppress', field : 'suppressComment' }
       ];
 

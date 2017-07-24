@@ -494,7 +494,7 @@ function (declare, dom, style, on, query, Memory, Observable, topic, entities,
       } else if (!item.isLeaf) {
         switch (item.kind) {
           case 'severity':
-            return "customIcon severity-" + item.id;
+            return "icon-severity icon-severity-" + item.id;
           case 'bugpath':
             return (opened ? "customIcon pathOpened"
                            : "customIcon pathClosed");
