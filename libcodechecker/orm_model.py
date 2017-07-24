@@ -89,25 +89,25 @@ class Config(Base):
         self.checker_name, self.run_id = checker_name, run_id
 
 
+class FileContent(Base):
+    __tablename__ = 'file_content'
+
+    content_hash = Column(String, primary_key=True)
+    content = Column(Binary)
+
+
 class File(Base):
     __tablename__ = 'files'
 
     id = Column(Integer, autoincrement=True, primary_key=True)
-    run_id = Column(Integer,
-                    ForeignKey('runs.id', deferrable=True,
-                               initially="DEFERRED",
-                               ondelete='CASCADE')
-                    )
     filepath = Column(String)
-    content = Column(Binary)
-    inc_count = Column(Integer)
+    content_hash = Column(String,
+                          ForeignKey('file_content.content_hash',
+                                     deferrable=True,
+                                     initially="DEFERRED", ondelete='CASCADE'))
 
-    def __init__(self, run_id, filepath):
-        self.run_id, self.filepath = run_id, filepath
-        self.inc_count = 0
-
-    def addContent(self, content):
-        self.content = content
+    def __init__(self, filepath, content_hash):
+        self.filepath, self.content_hash = filepath, content_hash
 
 
 class BugPathEvent(Base):
@@ -282,6 +282,7 @@ class Comment(Base):
         self.author = author
         self.message = message
         self.created_at = created_at
+
 
 # End of ORM classes.
 
