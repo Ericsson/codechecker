@@ -78,7 +78,7 @@ def construct_report_filter(report_filters):
     return filter_expression
 
 
-class ThriftRequestHandler():
+class ThriftRequestHandler(object):
     """
     Connect to database and handle thrift client requests.
     """
@@ -208,8 +208,7 @@ class ThriftRequestHandler():
                               SuppressBug) \
                 .filter(Report.run_id == run_id) \
                 .outerjoin(File,
-                           and_(Report.file_id == File.id,
-                                File.run_id == run_id)) \
+                           Report.file_id == File.id) \
                 .outerjoin(BugPathEvent,
                            Report.end_bugevent == BugPathEvent.id) \
                 .outerjoin(SuppressBug,
@@ -318,8 +317,7 @@ class ThriftRequestHandler():
             reportCount = session.query(Report) \
                 .filter(Report.run_id == run_id) \
                 .outerjoin(File,
-                           and_(Report.file_id == File.id,
-                                File.run_id == run_id)) \
+                           Report.file_id == File.id) \
                 .outerjoin(BugPathEvent,
                            Report.end_bugevent == BugPathEvent.id) \
                 .outerjoin(SuppressBug,
@@ -916,28 +914,6 @@ class ThriftRequestHandler():
                                               msg)
 
     @timeit
-    def getFileId(self, run_id, path):
-
-        session = self.__session
-
-        try:
-            sourcefile = session.query(File) \
-                .filter(File.run_id == run_id,
-                        File.filepath == path) \
-                .first()
-
-            if sourcefile is None:
-                return -1
-
-            return sourcefile.id
-
-        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
-            msg = str(alchemy_ex)
-            LOG.error(msg)
-            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
-                                              msg)
-
-    @timeit
     def getSourceFileData(self, fileId, fileContent, encoding):
         """
         Parameters:
@@ -947,14 +923,14 @@ class ThriftRequestHandler():
         """
         session = self.__session
         try:
-            sourcefile = session.query(File) \
-                .filter(File.id == fileId).first()
+            sourcefile = session.query(File).get(fileId)
 
             if sourcefile is None:
                 return SourceFileData()
 
-            if fileContent and sourcefile.content:
-                source = zlib.decompress(sourcefile.content)
+            if fileContent:
+                cont = session.query(FileContent).get(sourcefile.content_hash)
+                source = zlib.decompress(cont.content)
 
                 if not encoding or encoding == Encoding.DEFAULT:
                     source = codecs.decode(source, 'utf-8', 'replace')
@@ -1069,8 +1045,7 @@ class ThriftRequestHandler():
                               SuppressBug) \
                 .filter(Report.run_id == run_id) \
                 .outerjoin(File,
-                           and_(Report.file_id == File.id,
-                                File.run_id == run_id)) \
+                           Report.file_id == File.id) \
                 .outerjoin(BugPathEvent,
                            Report.end_bugevent == BugPathEvent.id) \
                 .outerjoin(SuppressBug,
@@ -1232,8 +1207,7 @@ class ThriftRequestHandler():
 
         runs_to_delete = []
         for run_id in run_ids:
-            LOG.debug('run ids to delete')
-            LOG.debug(run_id)
+            LOG.debug('Run id to delete: ' + str(run_id))
 
             run_to_delete = session.query(Run).get(run_id)
             if not run_to_delete.can_delete:
@@ -1245,9 +1219,19 @@ class ThriftRequestHandler():
             runs_to_delete.append(run_to_delete)
 
         for run_to_delete in runs_to_delete:
+            # FIXME: clean up bugpaths. Once run_id is a foreign key there,
+            # it should be automatic.
             session.delete(run_to_delete)
             session.commit()
 
+        # Delete files and contents that are not present in any bug paths.
+        s1 = select([BugPathEvent.file_id])
+        s2 = select([BugReportPoint.file_id])
+        session.query(File).filter(not_(File.id.in_(s1.union(s2)))).delete(
+            synchronize_session=False)
+        session.query(FileContent).filter(not_(FileContent.content_hash.in_(
+            select([File.content_hash])))).delete(synchronize_session=False)
+        session.commit()
         return True
 
     # -----------------------------------------------------------------------
@@ -1276,8 +1260,7 @@ class ThriftRequestHandler():
             report_count = session.query(Report) \
                 .filter(Report.run_id == run_id) \
                 .outerjoin(File,
-                           and_(Report.file_id == File.id,
-                                File.run_id == run_id)) \
+                           Report.file_id == File.id) \
                 .outerjoin(BugPathEvent,
                            Report.end_bugevent == BugPathEvent.id) \
                 .outerjoin(SuppressBug,
@@ -1546,50 +1529,52 @@ class ThriftRequestHandler():
             return False
 
     @timeit
-    def needFileContent(self, run_id, filepath):
+    def needFileContent(self, filepath, content_hash):
         """
         """
-        try:
-            f = self.__session.query(File) \
-                .filter(and_(File.run_id == run_id,
-                             File.filepath == filepath)) \
-                .one_or_none()
-        except Exception as ex:
-            raise shared.ttypes.RequestFailed(
-                shared.ttypes.ErrorCode.GENERAL,
-                str(ex))
+        f = self.__session.query(File) \
+            .filter(and_(File.content_hash == content_hash,
+                         File.filepath == filepath)) \
+            .one_or_none()
 
-        run_inc_count = self.__session.query(Run).get(run_id).inc_count
-        needed = False
-        if not f:
-            needed = True
-            f = File(run_id, filepath)
-            self.__session.add(f)
-            self.__session.commit()
-        elif f.inc_count < run_inc_count:
-            needed = True
-            f.inc_count = run_inc_count
-            self.__session.commit()
+        needed = self.__session.query(FileContent).get(content_hash) is None
+
+        if not f or needed:
+            try:
+                self.__session.commit()
+                if needed:
+                    # Avoid foreign key errors: add empty content.
+                    file_content = FileContent(content_hash, "")
+                    self.__session.add(file_content)
+                f = File(filepath, content_hash)
+                self.__session.add(f)
+                self.__session.commit()
+            except sqlalchemy.exc.IntegrityError:
+                # Other transaction might added the same file in the meantime.
+                self.__session.rollback()
+
         return NeedFileResult(needed, f.id)
 
     @timeit
-    def addFileContent(self, fid, content, encoding):
+    def addFileContent(self, content_hash, content, encoding):
         """
         """
         if encoding == Encoding.BASE64:
             content = base64.b64decode(content)
 
+        compressed_content = zlib.compress(content,
+                                           zlib.Z_BEST_COMPRESSION)
+        self.__session.commit()
         try:
-            f = self.__session.query(File).get(fid)
-            compresssed_content = zlib.compress(content,
-                                                zlib.Z_BEST_COMPRESSION)
-            f.addContent(compresssed_content)
+            file_content = self.__session.query(FileContent).get(content_hash)
+            file_content.content = compressed_content
+            self.__session.add(file_content)
             self.__session.commit()
-            return True
-
-        except Exception as ex:
-            LOG.debug(ex)
+        except sqlalchemy.exc.IntegrityError as ex:
+            # Other transaction might added the same content in the meantime.
+            self.__session.rollback()
             return False
+        return True
 
     def __is_same_event_path(self, start_bugevent_id, events):
         """

@@ -9,6 +9,7 @@
     report_server_api function tests.
 """
 import base64
+from hashlib import sha256
 import os
 import random
 import string
@@ -20,6 +21,7 @@ from uuid import uuid4
 from libtest import env
 
 from shared.ttypes import BugPathPos, BugPathEvent, Severity
+from codeCheckerDBAccess.ttypes import Encoding
 
 
 def _generate_content(cols, lines):
@@ -64,16 +66,20 @@ class HashClash(unittest.TestCase):
                                           'v',
                                           False)
 
-    def _create_file(self, run_id, name, cols=10, lines=10):
+    def _create_file(self, name, cols=10, lines=10):
         """Creates a new file with random content."""
 
         path = name + "_" + str(uuid4())
-        need = self._report.needFileContent(run_id, path)
+        content = _generate_content(cols, lines)
+        hasher = sha256()
+        hasher.update(content)
+        content_hash = hasher.hexdigest()
+        need = self._report.needFileContent(path, content_hash)
         self.assertTrue(need.needed)
 
-        content = _generate_content(cols, lines)
         content = base64.b64encode(content)
-        success = self._report.addFileContent(need.fileId, content, None)
+        success = self._report.addFileContent(content_hash, content,
+                                              Encoding.BASE64)
         self.assertTrue(success)
 
         return need.fileId, path
@@ -118,7 +124,7 @@ class HashClash(unittest.TestCase):
         """
 
         run_id = self._create_run(name)
-        file_id, source_file = self._create_file(run_id, name)
+        file_id, source_file = self._create_file(name)
 
         # analyzer type needs to match with the supported analyzer types
         # clangsa is used for testing
