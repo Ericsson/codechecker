@@ -7,13 +7,12 @@
 from abc import ABCMeta
 import base64
 import codecs
+from hashlib import sha256
 import os
-import traceback
 
 import shared
 from codeCheckerDBAccess.ttypes import Encoding
 
-from libcodechecker import logger
 from libcodechecker import suppress_handler
 from libcodechecker.analyze import plist_parser
 from libcodechecker.analyze.analyzers.result_handler_base import ResultHandler
@@ -38,30 +37,32 @@ class PlistToDB(ResultHandler):
         file_ids = {}
         # Send content of file to the server if needed.
         for file_name in files:
-            file_descriptor = client.needFileContent(self.__run_id,
-                                                     file_name)
-            file_ids[file_name] = file_descriptor.fileId
-
             # Sometimes the file doesn't exist, e.g. when the input of the
             # analysis is pure plist files.
             if not os.path.isfile(file_name):
                 LOG.debug(file_name + ' not found, and will not be stored.')
                 continue
 
-            if file_descriptor.needed:
-                with codecs.open(file_name, 'r', 'UTF-8') as source_file:
-                    file_content = source_file.read()
-                    # WARN the right content encoding is needed for thrift!
-                    source = codecs.encode(file_content, 'utf-8')
-                    # TODO: we may not use the file content in the end
-                    # depending on skippaths.
+            with codecs.open(file_name, 'r', 'UTF-8') as source_file:
+                file_content = source_file.read()
+                # WARN the right content encoding is needed for thrift!
+                # TODO: we may not use the file content in the end
+                # depending on skippaths.
+                source = codecs.encode(file_content, 'utf-8')
 
-                    source64 = base64.b64encode(source)
-                    res = client.addFileContent(file_descriptor.fileId,
-                                                source64,
-                                                Encoding.BASE64)
-                    if not res:
-                        LOG.debug("Failed to store file content")
+            hasher = sha256()
+            hasher.update(source)
+            content_hash = hasher.hexdigest()
+            file_descriptor = client.needFileContent(file_name, content_hash)
+            file_ids[file_name] = file_descriptor.fileId
+
+            if file_descriptor.needed:
+                source64 = base64.b64encode(source)
+                res = client.addFileContent(content_hash,
+                                            source64,
+                                            Encoding.BASE64)
+                if not res:
+                    LOG.debug("Failed to store file content")
 
         # Skipping reports in header files handled here.
         report_ids = []
