@@ -29,8 +29,6 @@ CC_META = MetaData(naming_convention={
 Base = declarative_base(metadata=CC_META)
 
 
-# Start of ORM classes.
-
 class DBVersion(Base):
     __tablename__ = 'db_version'
     # TODO: constraint, only one line in this table
@@ -282,9 +280,6 @@ class Comment(Base):
         self.author = author
         self.message = message
         self.created_at = created_at
-
-
-# End of ORM classes.
 
 
 def CreateSchema(engine):

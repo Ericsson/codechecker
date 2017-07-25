@@ -363,12 +363,12 @@ service codeCheckerDBAccess {
                  throws (1: shared.RequestFailed requestError),
 
   NeedFileResult needFileContent(
-                                 1: i64 run_id,
-                                 2: string filepath)
+                                 1: string filepath,
+                                 2: string content_hash)
                                  throws (1: shared.RequestFailed requestError),
 
   bool addFileContent(
-                      1: i64 file_id,
+                      1: string content_hash,
                       2: string file_content,
                       3: optional Encoding encoding)
                       throws (1: shared.RequestFailed requestError),

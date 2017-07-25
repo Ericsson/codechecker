@@ -1559,12 +1559,13 @@ class ThriftRequestHandler():
                 shared.ttypes.ErrorCode.GENERAL,
                 str(ex))
 
+        needed = self.__session.query(FileContent).get(content_hash) is None
+
         if not f:
             f = File(filepath, content_hash)
             self.__session.add(f)
             self.__session.commit()
-            return NeedFileResult(True, f.id)
-        return NeedFileResult(False, f.id)
+        return NeedFileResult(needed, f.id)
 
     @timeit
     def addFileContent(self, content_hash, content, encoding):
@@ -1574,10 +1575,10 @@ class ThriftRequestHandler():
             content = base64.b64decode(content)
 
         try:
-            f = self.__session.query(FileContent).get(content_hash)
             compressed_content = zlib.compress(content,
-                                                zlib.Z_BEST_COMPRESSION)
-            f.content = compressed_content
+                                               zlib.Z_BEST_COMPRESSION)
+            file_content = FileContent(content_hash, compressed_content)
+            self.__session.add(file_content)
             self.__session.commit()
             return True
 
