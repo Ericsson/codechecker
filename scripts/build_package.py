@@ -725,10 +725,16 @@ def build_package(repository_root, build_package_config, env=None):
                 style.write(css.read() + "\n")
 
     # CodeChecker db migrate.
-    LOG.debug('Copy codechecker database migration')
+    LOG.debug('Copy codechecker config database migration')
+    source = os.path.join(repository_root, 'product_db_migrate')
+    target = os.path.join(package_root,
+                          package_layout['config_db_migrate'])
+    copy_tree(source, target)
+
+    LOG.debug('Copy codechecker run database migration')
     source = os.path.join(repository_root, 'db_migrate')
     target = os.path.join(package_root,
-                          package_layout['codechecker_db_migrate'])
+                          package_layout['run_db_migrate'])
     copy_tree(source, target)
 
     # License.

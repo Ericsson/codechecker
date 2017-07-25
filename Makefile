@@ -32,6 +32,9 @@ thrift: build_dir
 	thrift -r -o $(BUILD_DIR) -I api/ \
 		--gen py --gen js:jquery api/authentication.thrift
 
+	thrift -r -o $(BUILD_DIR) -I api/ \
+		--gen py --gen js:jquery api/products.thrift
+
 package: build_dir gen-docs thrift
 	if [ ! -d "$(BUILD_DIR)/CodeChecker" ]; then \
 		./scripts/build_package.py -r $(ROOT) -o $(BUILD_DIR) -b $(BUILD_DIR); \
