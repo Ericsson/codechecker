@@ -161,11 +161,11 @@ class ThriftClientHelper(object):
         pass
 
     @ThriftClientCall
-    def needFileContent(self, run_id, filepath):
+    def needFileContent(self, filepath, content_hash):
         pass
 
     @ThriftClientCall
-    def addFileContent(self, file_id, file_content, encoding):
+    def addFileContent(self, content_hash, content, encoding):
         pass
 
     @ThriftClientCall
