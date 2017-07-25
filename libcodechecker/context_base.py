@@ -128,9 +128,14 @@ class ContextBase(object):
                             self.pckg_layout['www'])
 
     @property
-    def migration_root(self):
+    def run_migration_root(self):
         return os.path.join(self._package_root,
-                            self.pckg_layout['codechecker_db_migrate'])
+                            self.pckg_layout['run_db_migrate'])
+
+    @property
+    def config_migration_root(self):
+        return os.path.join(self._package_root,
+                            self.pckg_layout['config_db_migrate'])
 
     @property
     def db_username(self):

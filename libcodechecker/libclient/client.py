@@ -7,20 +7,19 @@
 import getpass
 import sys
 
-from Authentication import ttypes as AuthTypes
-
 from thrift.Thrift import TApplicationException
 
-from . import thrift_helper
-from . import authentication_helper
+import shared
+from Authentication import ttypes as AuthTypes
 
 from libcodechecker import session_manager
 from libcodechecker.logger import LoggerFactory
 
-import shared
+from . import thrift_helper
+from . import authentication_helper
 
 LOG = LoggerFactory.get_new_logger('CLIENT')
-SUPPORTED_VERSION = '6.0'
+SUPPORTED_API_VERSION = '6.0'
 
 
 def check_api_version(client):
@@ -29,7 +28,7 @@ def check_api_version(client):
     """
 
     version = client.getAPIVersion()
-    supp_major_version = SUPPORTED_VERSION.split('.')[0]
+    supp_major_version = SUPPORTED_API_VERSION.split('.')[0]
     api_major_version = version.split('.')[0]
 
     # There is NO compatibility between major versions.

@@ -9,7 +9,7 @@ config = context.config
 # Add your model's MetaData object here
 # for 'autogenerate' support.
 try:
-    from libcodechecker.server.run_db_model import Base
+    from libcodechecker.server.config_db_model import Base
 except ImportError:
     # Assume we are in the source directory
     import sys
@@ -17,7 +17,7 @@ except ImportError:
 
     sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
                                                  "..")))
-    from libcodechecker.server.run_db_model import Base
+    from libcodechecker.server.config_db_model import Base
 
 target_metadata = Base.metadata
 
