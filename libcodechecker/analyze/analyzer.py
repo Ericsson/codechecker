@@ -89,7 +89,6 @@ def perform_analysis(args, context, actions, metadata):
     # ctu_in_memory = False
     if hasattr(args, 'ctu_phases'):
         args.ctu_dir = os.path.abspath(args.ctu_dir)
-        args.logfile = os.path.abspath(args.logfile)
         ctu_collect = args.ctu_phases[0]
         ctu_analyze = args.ctu_phases[1]
         ctu_dir = args.ctu_dir

@@ -247,8 +247,7 @@ def __build_clangsa_config_handler(args, context):
     config_handler.system_includes = context.extra_system_includes
     config_handler.includes = context.extra_includes
 
-    # If we are in CTU mode and there will be an analyze pass
-    if hasattr(args, 'ctu_phases') and args.ctu_phases[1]:
+    if hasattr(args, 'ctu_phases'):
         config_handler.ctu_dir = args.ctu_dir
         config_handler.ctu_in_memory = args.ctu_in_memory
         config_handler.log_file = args.logfile

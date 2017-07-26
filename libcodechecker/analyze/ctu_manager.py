@@ -15,6 +15,7 @@ import shutil
 import signal
 import sys
 import tempfile
+import traceback
 
 from libcodechecker.analyze.analyzers import analyzer_base
 from libcodechecker.analyze.analyzers import analyzer_types
@@ -95,7 +96,7 @@ def get_compile_command(action, config, source='', output=''):
     """ Generate a standardized and cleaned compile command serving as a base
     for other operations. """
 
-    cmd = [config.analyzer_binary, '-###']
+    cmd = [config.analyzer_binary]
     cmd.extend(action.compiler_defines)
     cmd.extend(action.compiler_includes)
     if len(config.compiler_resource_dir) > 0:
@@ -124,8 +125,9 @@ def get_triple_arch(action, source, config, env):
 
     cmd = get_compile_command(action, config, source)
     cmd.insert(1, '-###')
-    _, stdout, _ = analyzer_base.SourceAnalyzer.run_proc(cmd, env)
-    last_line = stdout[-1]
+    cmdstr = ' '.join(cmd)
+    _, stdout, stderr = analyzer_base.SourceAnalyzer.run_proc(cmdstr, env)
+    last_line = (stdout + stderr).splitlines()[-1]
     res_cmd = shlex.split(last_line)
     arch = ""
     i = 0
@@ -149,10 +151,11 @@ def generate_ast(triple_arch, action, source, config, env):
     cmd = get_compile_command(action, config, source)
     cmd.extend(['-emit-ast', '-w', '-o', ast_path])
 
-    LOG.debug_analyzer("Generating AST using '%s'" % cmd)
-    ret_code, _, _ = analyzer_base.SourceAnalyzer.run_proc(cmd, env)
+    cmdstr = ' '.join(cmd)
+    LOG.debug_analyzer("Generating AST using '%s'" % cmdstr)
+    ret_code, _, _ = analyzer_base.SourceAnalyzer.run_proc(cmdstr, env)
     if ret_code != 0:
-        LOG.error("Error generating AST using '%s'", cmd)
+        LOG.error("Error generating AST using '%s'", cmdstr)
 
 
 def func_map_list_src_to_ast(func_src_list, triple_arch):
@@ -181,13 +184,14 @@ def map_functions(triple_arch, action, source, config, env, func_map_cmd):
     cmd.insert(1, source)
     cmd.insert(2, '---')
 
-    LOG.debug_analyzer("Generating function map using '%s'" % cmd)
-    ret_code, stdout, _ = analyzer_base.SourceAnalyzer.run_proc(cmd, env)
+    cmdstr = ' '.join(cmd)
+    LOG.debug_analyzer("Generating function map using '%s'" % cmdstr)
+    ret_code, stdout, _ = analyzer_base.SourceAnalyzer.run_proc(cmdstr, env)
     if ret_code != 0:
-        LOG.error("Error generating function map using '%s'", cmd)
+        LOG.error("Error generating function map using '%s'", cmdstr)
         return
 
-    func_src_list = stdout
+    func_src_list = stdout.splitlines()
     func_ast_list = func_map_list_src_to_ast(func_src_list, triple_arch)
     extern_fns_map_folder = os.path.join(config.ctu_dir,
                                          CTU_TEMP_FNMAP_FOLDER)
@@ -203,22 +207,27 @@ def collect_build_action(params):
 
     action, context, analyzer_config_map, skip_handler, func_map_cmd = params
 
-    for source in action.sources:
-        if skip_handler and skip_handler.should_skip(source):
-            continue
-        if action.analyzer_type != analyzer_types.CLANG_SA:
-            continue
-        config = analyzer_config_map.get(analyzer_types.CLANG_SA)
-        analyzer_environment = analyzer_env.get_check_env(
-            context.path_env_extra,
-            context.ld_lib_path_extra)
-        triple_arch = get_triple_arch(action, source, config,
-                                      analyzer_environment)
-        if not config.ctu_in_memory:
-            generate_ast(triple_arch, action, source, config,
-                         analyzer_environment)
-        map_functions(triple_arch, action, source, config,
-                      analyzer_environment, func_map_cmd)
+    try:
+        for source in action.sources:
+            if skip_handler and skip_handler.should_skip(source):
+                continue
+            if action.analyzer_type != analyzer_types.CLANG_SA:
+                continue
+            config = analyzer_config_map.get(analyzer_types.CLANG_SA)
+            analyzer_environment = analyzer_env.get_check_env(
+                context.path_env_extra,
+                context.ld_lib_path_extra)
+            triple_arch = get_triple_arch(action, source, config,
+                                          analyzer_environment)
+            if not config.ctu_in_memory:
+                generate_ast(triple_arch, action, source, config,
+                             analyzer_environment)
+            map_functions(triple_arch, action, source, config,
+                          analyzer_environment, func_map_cmd)
+    except Exception as ex:
+        LOG.debug_analyzer(str(ex))
+        traceback.print_exc(file=sys.stdout)
+        raise
 
 
 def do_ctu_collect(actions, context, analyzer_config_map,
