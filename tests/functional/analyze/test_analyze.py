@@ -5,22 +5,20 @@
 #   License. See LICENSE.TXT for details.
 # -----------------------------------------------------------------------------
 
-""" analyze function test.
-
-WARNING!!!
-This is a generated test skeleton remove the parts not required by the tests.
-WARNING!!!
-
 """
+Test case for the CodeChecker analyze command's direct functionality.
+"""
+
+import json
 import os
 import unittest
 import subprocess
-import json
+import zipfile
 
 from libtest import env
 
 
-class TestSkeleton(unittest.TestCase):
+class TestAnalyze(unittest.TestCase):
 
     _ccClient = None
 
@@ -42,8 +40,7 @@ class TestSkeleton(unittest.TestCase):
 
     def test_failure(self):
         """
-        Test if reports/failed/<failed_file>.error
-        file is created in case of compilation & analysis error
+        Test if reports/failed/<failed_file>.zip file is created
         """
         build_json = os.path.join(self.test_workspace, "build.json")
         reports_dir = os.path.join(self.test_workspace, "reports")
@@ -53,7 +50,7 @@ class TestSkeleton(unittest.TestCase):
 
         source_file = os.path.join(self.test_dir, "failure.c")
         build_log = [{"directory": self.test_workspace,
-                      "command": "gcc -c "+source_file,
+                      "command": "gcc -c " + source_file,
                       "file": source_file
                       }]
 
@@ -69,7 +66,27 @@ class TestSkeleton(unittest.TestCase):
         errcode = process.returncode
         self.assertEquals(errcode, 0)
 
-        # We expect a failure file to be in the failed directory
+        # We expect a failure archive to be in the failed directory.
         failed_files = os.listdir(failed_dir)
         print(failed_files)
         self.assertEquals(len(failed_files), 1)
+        self.assertIn("failure.c", failed_files[0])
+
+        with zipfile.ZipFile(os.path.join(failed_dir, failed_files[0]),
+                             'r') as archive:
+            files = archive.namelist()
+
+            self.assertIn("build-action", files)
+            self.assertIn("analyzer-command", files)
+
+            with archive.open("build-action", 'r') as archived_buildcmd:
+                self.assertEqual(archived_buildcmd.read(),
+                                 "gcc -c " + source_file)
+
+            source_in_archive = os.path.join("sources-root",
+                                             source_file.lstrip('/'))
+            self.assertIn(source_in_archive, files)
+
+            with archive.open(source_in_archive, 'r') as archived_code:
+                with open(source_file, 'r') as source_code:
+                    self.assertEqual(archived_code.read(), source_code.read())

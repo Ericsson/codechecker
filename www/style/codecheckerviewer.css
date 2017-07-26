@@ -201,36 +201,72 @@ html, body {
 }
 
 /* -- Severities -- */
-span[class*="severity-"]::before {
-  content: "\e001";
+.dojoxGridCell.severity {
+  text-align: center;
 }
 
-.customIcon.severity-critical {
-  color: #b32424;
+.icon-severity {
+  font-size: 1em;
+  color: white;
+  display: inline-block;
+  text-align: center;
+  font-family: monospace;
+  width: 16px;
+  height: 16px;
 }
 
-.customIcon.severity-high {
-  color: #f28500;
+.icon-severity-low {
+  background-color: #669603;
 }
 
-.customIcon.severity-medium {
-  color: #d2c20c;
+.icon-severity-low:after {
+  content : 'L';
 }
 
-.customIcon.severity-low {
-  color: #49994a;
+.icon-severity-unspecified {
+  background-color: #666666;
 }
 
-.customIcon.severity-style {
-  color: #9932cc;
+.icon-severity-unspecified:after {
+  content : 'U';
 }
 
-.customIcon.severity-style::before {
-  content: "\e002";
+.icon-severity-style {
+  background-color: #9932cc;
 }
 
-.customIcon.severity-unspecified {
-  color: #5b6169;
+.icon-severity-style:after {
+  content : 'S';
+}
+
+.icon-severity-medium {
+  background-color: #a9d323;
+  color: black;
+}
+
+.icon-severity-medium:after {
+  content : 'M';
+}
+
+.icon-severity-high {
+  background-color: #ffa800;
+}
+
+.icon-severity-high:after {
+  content : 'H';
+}
+
+.icon-severity-critical {
+  background-color: #e92625;
+}
+
+.icon-severity-critical:after {
+  content : 'C';
+}
+
+span[class*="severity-"] {
+  text-transform: capitalize;
+  font-weight: bold;
 }
 
 /* -- */

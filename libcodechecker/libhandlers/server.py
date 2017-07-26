@@ -378,14 +378,15 @@ def __instance_management(args):
         print(output_formatters.twodim_to_str('table', head, rows))
     elif 'stop' in args or 'stop_all' in args:
         for i in instance_manager.list():
+            if i['hostname'] != socket.gethostname():
+                continue
+
             # A STOP only stops the server associated with the given workspace
             # and view-port.
-            if i['hostname'] != socket.gethostname() or (
-                        args.stop and not (i['port'] == args.view_port and
-                                           os.path.abspath(
-                                           i['workspace']) ==
-                                           os.path.abspath(
-                                               args.config_directory))):
+            if 'stop' in args and \
+                not (i['port'] == args.view_port and
+                     os.path.abspath(i['workspace']) ==
+                     os.path.abspath(args.config_directory)):
                 continue
 
             try:
