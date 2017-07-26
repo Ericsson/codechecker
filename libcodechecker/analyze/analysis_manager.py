@@ -15,6 +15,7 @@ import sys
 import traceback
 
 from libcodechecker.analyze import analyzer_env
+from libcodechecker.analyze import ctu_manager
 from libcodechecker.analyze.analyzers import analyzer_types
 from libcodechecker.logger import LoggerFactory
 
@@ -208,6 +209,13 @@ def start_workers(actions, context, analyzer_config_map,
             pool.terminate()
         finally:
             sys.exit(1)
+
+    if ctu_collect:
+        ctu_manager.do_ctu_collect(actions, context, analyzer_config_map,
+                                   jobs, skip_handler,
+                                   ctu_dir, ctu_func_map_cmd)
+        if not ctu_analyze:
+            return
 
     signal.signal(signal.SIGINT, signal_handler)
 

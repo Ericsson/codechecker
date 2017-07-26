@@ -9,6 +9,7 @@ Prepare and start different analysis types
 import copy
 import os
 import shlex
+import shutil
 import subprocess
 import time
 
@@ -76,10 +77,16 @@ def perform_analysis(args, context, actions, metadata):
     Additionally, insert statistical information into the metadata dict.
     """
 
+    analyzers = args.analyzers if 'analyzers' in args \
+        else analyzer_types.supported_analyzers
+    analyzers, _ = analyzer_types.check_supported_analyzers(
+        analyzers, context)
+
     ctu_collect = False
     ctu_analyze = False
     ctu_dir = ''
     ctu_func_map_cmd = ''
+    # ctu_in_memory = False
     if hasattr(args, 'ctu_phases'):
         args.ctu_dir = os.path.abspath(args.ctu_dir)
         args.logfile = os.path.abspath(args.logfile)
@@ -87,11 +94,10 @@ def perform_analysis(args, context, actions, metadata):
         ctu_analyze = args.ctu_phases[1]
         ctu_dir = args.ctu_dir
         ctu_func_map_cmd = args.ctu_func_map_cmd
-
-    analyzers = args.analyzers if 'analyzers' in args \
-        else analyzer_types.supported_analyzers
-    analyzers, _ = analyzer_types.check_supported_analyzers(
-        analyzers, context)
+        # ctu_in_memory = args.ctu_in_memory
+        if analyzer_types.CLANG_SA not in analyzers:
+            LOG.error("CTU can only be used together with the static analyzer")
+            return
 
     actions = prepare_actions(actions, analyzers)
     config_map = analyzer_types.build_config_handlers(args, context, analyzers)
@@ -110,6 +116,12 @@ def perform_analysis(args, context, actions, metadata):
                 continue
             metadata['checkers'][analyzer].append(check)
 
+    if ctu_collect:
+        shutil.rmtree(ctu_dir, ignore_errors=True)
+    elif ctu_analyze and not os.path.exists(ctu_dir):
+        LOG.error("The given <ctu-dir>'" + ctu_dir + "' does not exist")
+        return
+
     # Run analysis.
     LOG.info("Starting static analysis ...")
     start_time = time.time()
@@ -125,3 +137,6 @@ def perform_analysis(args, context, actions, metadata):
 
     metadata['timestamps'] = {'begin': start_time,
                               'end': end_time}
+
+    if ctu_collect and ctu_analyze:
+        shutil.rmtree(ctu_dir, ignore_errors=True)
