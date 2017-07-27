@@ -453,7 +453,7 @@ class PostgreSQLServer(SQLServer):
             self._wait_or_die()
             self._create_database()
             add_version = not self.check_db_version(db_version_info)
-            self._create_or_update_schema()
+            self._create_or_update_schema(use_migration=False)
         elif wait_for_start:
             self._wait_or_die()
             add_version = not self.check_db_version(db_version_info)
