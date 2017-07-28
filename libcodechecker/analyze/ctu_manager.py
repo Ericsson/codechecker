@@ -158,7 +158,7 @@ def generate_ast(triple_arch, action, source, config, env):
         LOG.error("Error generating AST using '%s'", cmdstr)
 
 
-def func_map_list_src_to_ast(func_src_list, triple_arch):
+def func_map_list_src_to_ast(func_src_list, triple_arch, ctu_in_memory):
     """ Turns textual function map list with source files into a
     function map list with ast files. """
 
@@ -167,11 +167,14 @@ def func_map_list_src_to_ast(func_src_list, triple_arch):
         dpos = fn_src_txt.find(" ")
         mangled_name = fn_src_txt[0:dpos]
         path = fn_src_txt[dpos + 1:]
-        # Normalize path on windows as well
-        path = os.path.splitdrive(path)[1]
-        # Make relative path out of absolute
-        path = path[1:] if path[0] == os.sep else path
-        ast_path = os.path.join("ast", triple_arch, path + ".ast")
+        if ctu_in_memory:
+            ast_path = path
+        else:
+            # Normalize path on windows as well
+            path = os.path.splitdrive(path)[1]
+            # Make relative path out of absolute
+            path = path[1:] if path[0] == os.sep else path
+            ast_path = os.path.join("ast", triple_arch, path + ".ast")
         func_ast_list.append(mangled_name + "@" + triple_arch + " " + ast_path)
     return func_ast_list
 
@@ -182,7 +185,7 @@ def map_functions(triple_arch, action, source, config, env, func_map_cmd):
     cmd = get_compile_command(action, config)
     cmd[0] = func_map_cmd
     cmd.insert(1, source)
-    cmd.insert(2, '---')
+    cmd.insert(2, '--')
 
     cmdstr = ' '.join(cmd)
     LOG.debug_analyzer("Generating function map using '%s'" % cmdstr)
@@ -192,7 +195,8 @@ def map_functions(triple_arch, action, source, config, env, func_map_cmd):
         return
 
     func_src_list = stdout.splitlines()
-    func_ast_list = func_map_list_src_to_ast(func_src_list, triple_arch)
+    func_ast_list = func_map_list_src_to_ast(func_src_list, triple_arch,
+                                             config.ctu_in_memory)
     extern_fns_map_folder = os.path.join(config.ctu_dir,
                                          CTU_TEMP_FNMAP_FOLDER)
     if func_ast_list:
