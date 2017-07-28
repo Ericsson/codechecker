@@ -118,7 +118,7 @@ def perform_analysis(args, context, actions, metadata):
     if ctu_collect:
         shutil.rmtree(ctu_dir, ignore_errors=True)
     elif ctu_analyze and not os.path.exists(ctu_dir):
-        LOG.error("The given <ctu-dir>'" + ctu_dir + "' does not exist")
+        LOG.error("The given <ctu-dir> '" + ctu_dir + "' does not exist")
         return
 
     # Run analysis.
