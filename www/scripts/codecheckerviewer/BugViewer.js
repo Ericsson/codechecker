@@ -475,10 +475,10 @@ function (declare, dom, style, fx, Toggler, on, query, Memory, Observable,
         hashHelper.setReport(item.report.reportId);
       }
 
-      if (this.bugHash !== item.report.bugHash)
-        topic.publish('showComments', item.report.bugHash, this.editor);
+      if (this.reportId !== item.report.reportId)
+        topic.publish('showComments', item.report.reportId, this.editor);
 
-      this.bugHash = item.report.bugHash;
+      this.reportId = item.report.reportId;
 
       if (isOtherFile || isOtherReport)
         // TODO: Now arrows are redrawn only if new file is opened. But what if
@@ -849,11 +849,11 @@ function (declare, dom, style, fx, Toggler, on, query, Memory, Observable,
         _subscribeTopics : function () {
           var _that = this;
 
-          topic.subscribe('showComments', function (bugHash, sender) {
+          topic.subscribe('showComments', function (reportId, sender) {
             if (sender !== that.editor)
               return;
 
-            var count = CC_SERVICE.getCommentCount(bugHash);
+            var count = CC_SERVICE.getCommentCount(reportId);
             _that.set('label', 'Comments'
               + '<span class="comment-count">(' + count + ')</span>');
           });

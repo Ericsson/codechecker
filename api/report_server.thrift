@@ -209,15 +209,15 @@ service codeCheckerDBAccess {
                                           throws(1: shared.RequestFailed requestError),
 
   // get comments for a bug
-  CommentDataList getComments(1: string bugHash)
+  CommentDataList getComments(1: i64 reportId)
                               throws(1: shared.RequestFailed requestError),
 
   // count all the comments for one bug
-  i64 getCommentCount(1: string bugHash)
+  i64 getCommentCount(1: i64 reportId)
                       throws(1: shared.RequestFailed requestError),
 
   // add new comment for a bug
-  bool addComment(1: string bugHash,
+  bool addComment(1: i64 reportId,
                   2: CommentData comment)
                   throws(1: shared.RequestFailed requestError),
 
