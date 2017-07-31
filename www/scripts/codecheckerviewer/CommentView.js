@@ -97,8 +97,8 @@ function (declare, dom, style, topic, locale, Memory, Observable, ConfirmDialog,
           var commentData = new CC_OBJECTS.CommentData({
             message   : that._content.get('value')
           });
-          CC_SERVICE.addComment(that.bugHash, commentData);
-          topic.publish('showComments', that.bugHash, that.sender);
+          CC_SERVICE.addComment(that.reportId, commentData);
+          topic.publish('showComments', that.reportId, that.sender);
         }
       });
     },
@@ -163,7 +163,7 @@ function (declare, dom, style, topic, locale, Memory, Observable, ConfirmDialog,
         content   : 'Are you sure you want to delete this?',
         onExecute : function () {
           CC_SERVICE.removeComment(that.cId);
-          topic.publish('showComments', that.bugHash, that.sender);
+          topic.publish('showComments', that.reportId, that.sender);
         }
       });
 
@@ -235,7 +235,7 @@ function (declare, dom, style, topic, locale, Memory, Observable, ConfirmDialog,
     _subscribeTopics : function () {
       var that = this;
 
-      topic.subscribe('showComments', function (bugHash, sender) {
+      topic.subscribe('showComments', function (reportId, sender) {
         if (sender !== that.sender)
           return;
 
@@ -247,21 +247,21 @@ function (declare, dom, style, topic, locale, Memory, Observable, ConfirmDialog,
         //--- Add reply fields and comments ---//
 
         that._reply.addChild(new Reply({
-          class   : 'reply',
-          bugHash : bugHash,
-          sender  : sender
+          class    : 'reply',
+          reportId : reportId,
+          sender   : sender
         }));
 
-        var comments = CC_SERVICE.getComments(bugHash);
+        var comments = CC_SERVICE.getComments(reportId);
         comments.forEach(function (comment) {
           that._comments.addChild(new Comment({
-            class   : 'comment',
-            bugHash : bugHash,
-            cId     : comment.id,
-            author  : comment.author,
-            time    : comment.createdAt,
-            message : comment.message,
-            sender  : sender
+            class    : 'comment',
+            reportId : reportId,
+            cId      : comment.id,
+            author   : comment.author,
+            time     : comment.createdAt,
+            message  : comment.message,
+            sender   : sender
           }));
         });
       });
