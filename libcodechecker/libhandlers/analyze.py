@@ -312,12 +312,14 @@ def main(args):
 
     # Run the analysis.
     args.output_path = os.path.abspath(args.output_path)
-    if os.path.isdir(args.output_path):
-        LOG.info("Previous analysis results in '{0}' have been "
-                 "removed, overwriting with current result".
-                 format(args.output_path))
-        shutil.rmtree(args.output_path)
-    os.makedirs(args.output_path)
+    if 'ctu_phases' not in args or args.ctu_phases[0] or \
+            not args.ctu_phases[0] and not args.ctu_phases[1]:
+        if os.path.isdir(args.output_path):
+            LOG.info("Previous analysis results in '{0}' have been "
+                     "removed, overwriting with current result".
+                     format(args.output_path))
+            shutil.rmtree(args.output_path)
+        os.makedirs(args.output_path)
 
     LOG.debug("Output will be stored to: '" + args.output_path + "'")
 
