@@ -697,27 +697,35 @@ class ThriftRequestHandler(object):
                                               msg)
 
     @timeit
-    def getComments(self, bug_hash):
+    def getComments(self, report_id):
         """
             Return the list of comments for the given bug.
         """
         session = self.__session
         try:
-            result = []
+            report = session.query(Report).get(report_id)
+            if report:
+                result = []
 
-            comments = session.query(Comment) \
-                .filter(Comment.bug_hash == bug_hash) \
-                .order_by(Comment.created_at.desc()) \
-                .all()
+                comments = session.query(Comment) \
+                    .filter(Comment.bug_hash == report.bug_id) \
+                    .order_by(Comment.created_at.desc()) \
+                    .all()
 
-            for comment in comments:
-                result.append(CommentData(
-                    comment.id,
-                    comment.author,
-                    comment.message,
-                    str(comment.created_at)))
+                for comment in comments:
+                    result.append(CommentData(
+                        comment.id,
+                        comment.author,
+                        comment.message,
+                        str(comment.created_at)))
 
-            return result
+                return result
+            else:
+                msg = 'Report id ' + str(report_id) + \
+                      ' was not found in the database.'
+                LOG.error(msg)
+                raise shared.ttypes.RequestFailed(
+                    shared.ttypes.ErrorCode.DATABASE, msg)
 
         except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
             msg = str(alchemy_ex)
@@ -732,15 +740,17 @@ class ThriftRequestHandler(object):
                                               msg)
 
     @timeit
-    def getCommentCount(self, bug_hash):
+    def getCommentCount(self, report_id):
         """
             Return the number of comments for the given bug.
         """
         session = self.__session
         try:
-            commentCount = session.query(Comment) \
-                .filter(Comment.bug_hash == bug_hash) \
-                .count()
+            report = session.query(Report).get(report_id)
+            if report:
+                commentCount = session.query(Comment) \
+                    .filter(Comment.bug_hash == report.bug_id) \
+                    .count()
 
             if commentCount is None:
                 commentCount = 0
@@ -759,21 +769,42 @@ class ThriftRequestHandler(object):
                                               msg)
 
     @timeit
-    def addComment(self, bug_hash, comment_data):
+    def addComment(self, report_id, comment_data):
         """
             Add new comment for the given bug.
         """
         session = self.__session
-        comment = Comment(bug_hash,
-                          'Anonymous',  # TODO: author must be queried from the
-                                        # authenticated session
-                          comment_data.message,
-                          datetime.now())
+        try:
+            report = session.query(Report).get(report_id)
+            if report:
+                comment = Comment(report.bug_id,
+                                  'Anonymous',  # TODO: author must be queried
+                                                # from the authenticated
+                                                # session.
+                                  comment_data.message,
+                                  datetime.now())
 
-        session.add(comment)
-        session.commit()
+                session.add(comment)
+                session.commit()
 
-        return True
+                return True
+            else:
+                msg = 'Report id ' + str(report_id) + \
+                      ' was not found in the database.'
+                LOG.error(msg)
+                raise shared.ttypes.RequestFailed(
+                    shared.ttypes.ErrorCode.DATABASE, msg)
+        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
+            msg = str(alchemy_ex)
+            LOG.error(msg)
+            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
+                                              msg)
+
+        except Exception as ex:
+            msg = str(ex)
+            LOG.error(msg)
+            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.IOERROR,
+                                              msg)
 
     @timeit
     def updateComment(self, comment_id, content):

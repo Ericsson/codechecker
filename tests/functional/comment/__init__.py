@@ -80,6 +80,17 @@ def setup_package():
     print("Starting server to get results")
     _start_server(codechecker_cfg, test_config, False)
 
+    # Check the test project for the first time.
+    test_project_name = project_info['name'] + '_' + uuid.uuid4().hex
+
+    ret = codechecker.check(codechecker_cfg,
+                            test_project_name,
+                            test_project_path)
+    if ret:
+        sys.exit(1)
+    print("Analyzing test project was succcessful.")
+
+    # Check the test project again.
     test_project_name = project_info['name'] + '_' + uuid.uuid4().hex
 
     ret = codechecker.check(codechecker_cfg,

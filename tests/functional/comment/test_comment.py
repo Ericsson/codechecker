@@ -11,8 +11,8 @@ import unittest
 
 from codeCheckerDBAccess.ttypes import CommentData
 
-from libtest.thrift_client_to_db import get_all_run_results
 from libtest import env
+from libtest.thrift_client_to_db import get_all_run_results
 
 
 class TestComment(unittest.TestCase):
@@ -38,19 +38,17 @@ class TestComment(unittest.TestCase):
 
         runs = self._cc_client.getRunData()
 
-        test_runs = [run for run in runs if run.name in run_names]
+        self._test_runs = [run for run in runs if run.name in run_names]
 
-        self.assertEqual(len(test_runs), 1,
+        self.assertEqual(len(self._test_runs), 1,
                          'There should be only one run for this test.')
-        self._runid = test_runs[0].runId
-        self._run_name = test_runs[0].name
 
     def test_comment(self):
         """
         Test commenting of multiple bugs.
         """
 
-        runid = self._runid
+        runid = self._test_runs[0].runId
         logging.debug('Get all run results from the db for runid: ' +
                       str(runid))
 
@@ -61,36 +59,36 @@ class TestComment(unittest.TestCase):
         bug = run_results[0]
 
         # There are no comments available for the first bug
-        comments = self._cc_client.getComments(bug.bugHash)
+        comments = self._cc_client.getComments(bug.reportId)
         self.assertEqual(len(comments), 0)
 
-        num_comment = self._cc_client.getCommentCount(bug.bugHash)
+        num_comment = self._cc_client.getCommentCount(bug.reportId)
         self.assertEqual(num_comment, 0)
 
         # Try to add a new comment for the first bug
         comment1 = CommentData(author='Anonymous', message='First msg')
-        success = self._cc_client.addComment(bug.bugHash, comment1)
+        success = self._cc_client.addComment(bug.reportId, comment1)
         self.assertTrue(success)
         logging.debug('Bug commented successfully')
 
         # Try to add another new comment for the first bug
         comment2 = CommentData(author='Anonymous', message='Second msg')
-        success = self._cc_client.addComment(bug.bugHash, comment2)
+        success = self._cc_client.addComment(bug.reportId, comment2)
         self.assertTrue(success)
         logging.debug('Bug commented successfully')
 
         # Add new comment for the second bug
         bug2 = run_results[1]
         comment3 = CommentData(author='Anonymous', message='Third msg')
-        success = self._cc_client.addComment(bug2.bugHash, comment3)
+        success = self._cc_client.addComment(bug2.reportId, comment3)
         self.assertTrue(success)
         logging.debug('Bug commented successfully')
 
         # There are two comments available for the first bug
-        comments = self._cc_client.getComments(bug.bugHash)
+        comments = self._cc_client.getComments(bug.reportId)
         self.assertEqual(len(comments), 2)
 
-        num_comment = self._cc_client.getCommentCount(bug.bugHash)
+        num_comment = self._cc_client.getCommentCount(bug.reportId)
         self.assertEqual(num_comment, 2)
 
         # Check the order of comments (first comment is the earliest)
@@ -101,10 +99,10 @@ class TestComment(unittest.TestCase):
         self.assertTrue(success)
         logging.debug('Comment removed successfully')
 
-        comments = self._cc_client.getComments(bug.bugHash)
+        comments = self._cc_client.getComments(bug.reportId)
         self.assertEqual(len(comments), 1)
 
-        num_comment = self._cc_client.getCommentCount(bug.bugHash)
+        num_comment = self._cc_client.getCommentCount(bug.reportId)
         self.assertEqual(num_comment, 1)
 
         # Edit the message of the first remaining comment
@@ -113,7 +111,7 @@ class TestComment(unittest.TestCase):
         self.assertTrue(success)
         logging.debug('Comment edited successfully')
 
-        comments = self._cc_client.getComments(bug.bugHash)
+        comments = self._cc_client.getComments(bug.reportId)
         self.assertEqual(len(comments), 1)
         self.assertEqual(comments[0].message, new_msg)
 
@@ -122,8 +120,83 @@ class TestComment(unittest.TestCase):
         self.assertTrue(success)
         logging.debug('Comment removed successfully')
 
-        comments = self._cc_client.getComments(bug.bugHash)
+        comments = self._cc_client.getComments(bug.reportId)
         self.assertEqual(len(comments), 0)
 
-        num_comment = self._cc_client.getCommentCount(bug.bugHash)
+        num_comment = self._cc_client.getCommentCount(bug.reportId)
         self.assertEqual(num_comment, 0)
+
+        # Remove the last comment for the second bug.
+        comments = self._cc_client.getComments(bug2.reportId)
+        self.assertEqual(len(comments), 1)
+
+        success = self._cc_client.removeComment(comments[0].id)
+        self.assertTrue(success)
+        logging.debug('Comment removed successfully')
+
+        comments = self._cc_client.getComments(bug2.reportId)
+        self.assertEqual(len(comments), 0)
+
+        num_comment = self._cc_client.getCommentCount(bug2.reportId)
+        self.assertEqual(num_comment, 0)
+
+        def test_same_bug_hash(self):
+            """
+            Test that different report ID's referring the same bug hash can
+            query each other's comments.
+            """
+
+            # Get run results for the first run.
+            runid_base = self._test_runs[0].runId
+            logging.debug('Get all run results from the db for runid: ' +
+                          str(runid_base))
+
+            run_results_base = get_all_run_results(self._cc_client, runid_base)
+            self.assertIsNotNone(run_results_base)
+            self.assertNotEqual(len(run_results_base), 0)
+
+            bug_base = run_results_base[0]
+
+            # Get run results for the second run.
+            runid_new = self._test_runs[1].runId
+            logging.debug('Get all run results from the db for runid: ' +
+                          str(runid_new))
+
+            run_results_new = get_all_run_results(self._cc_client, runid_new)
+            self.assertIsNotNone(run_results_new)
+            self.assertNotEqual(len(run_results_new), 0)
+
+            bug_new = run_results_new[0]
+
+            # Both bug have the same bug hash.
+            self.assertEqual(bug_base.bugHash, bug_new.bugHash)
+
+            # There are no comments available for the bug.
+            comments = self._cc_client.getComments(bug_base.reportId)
+            self.assertEqual(len(comments), 0)
+
+            comments = self._cc_client.getComments(bug_new.reportId)
+            self.assertEqual(len(comments), 0)
+
+            # Try to add a new comment for the first bug
+            comment = CommentData(author='Anonymous', message='First msg')
+            success = self._cc_client.addComment(bug_base.reportId, comment)
+            self.assertTrue(success)
+            logging.debug('Bug commented successfully')
+
+            comments = self._cc_client.getComments(bug_base.reportId)
+            self.assertEqual(len(comments), 1)
+
+            comments = self._cc_client.getComments(bug_new.reportId)
+            self.assertEqual(len(comments), 1)
+
+            # Remove the comment for the bug.
+            success = self._cc_client.removeComment(comments[0].id)
+            self.assertTrue(success)
+            logging.debug('Comment removed successfully')
+
+            comments = self._cc_client.getComments(bug_base.reportId)
+            self.assertEqual(len(comments), 0)
+
+            comments = self._cc_client.getComments(bug_new.reportId)
+            self.assertEqual(len(comments), 0)
