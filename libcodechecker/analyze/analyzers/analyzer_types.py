@@ -247,8 +247,9 @@ def __build_clangsa_config_handler(args, context):
     config_handler.system_includes = context.extra_system_includes
     config_handler.includes = context.extra_includes
 
-    if hasattr(args, 'ctu_phases'):
-        config_handler.ctu_dir = args.ctu_dir
+    if 'ctu_phases' in args:
+        config_handler.ctu_dir = os.path.join(args.output_path,
+                                              context.ctu_dir)
         config_handler.ctu_in_memory = args.ctu_in_memory
         config_handler.log_file = args.logfile
 

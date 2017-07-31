@@ -8,7 +8,6 @@
 
 from collections import defaultdict
 import glob
-import json
 import multiprocessing
 import os
 import signal
@@ -18,7 +17,6 @@ import zipfile
 
 from libcodechecker import util
 from libcodechecker.analyze import analyzer_env
-from libcodechecker.analyze import ctu_manager
 from libcodechecker.analyze.analyzers import analyzer_types
 from libcodechecker.logger import LoggerFactory
 
@@ -275,8 +273,7 @@ def check(check_data):
 
 
 def start_workers(actions, context, analyzer_config_map,
-                  jobs, output_path, skip_handler, metadata,
-                  ctu_collect, ctu_analyze, ctu_dir, ctu_func_map_cmd):
+                  jobs, output_path, skip_handler, metadata):
     """
     Start the workers in the process pool.
     For every build action there is worker which makes the analysis.
@@ -288,13 +285,6 @@ def start_workers(actions, context, analyzer_config_map,
             pool.terminate()
         finally:
             sys.exit(1)
-
-    if ctu_collect:
-        ctu_manager.do_ctu_collect(actions, context, analyzer_config_map,
-                                   jobs, skip_handler,
-                                   ctu_dir, ctu_func_map_cmd)
-        if not ctu_analyze:
-            return
 
     signal.signal(signal.SIGINT, signal_handler)
 

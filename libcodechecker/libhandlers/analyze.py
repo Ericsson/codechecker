@@ -11,6 +11,7 @@ import argparse
 import json
 import os
 import shutil
+import subprocess
 import sys
 
 from libcodechecker import generic_package_context
@@ -22,7 +23,6 @@ from libcodechecker.logger import add_verbose_arguments
 from libcodechecker.logger import LoggerFactory
 
 LOG = LoggerFactory.get_new_logger('ANALYZE')
-CTU_FUNC_MAP_CMD = 'clang-func-mapping'
 
 
 class OrderedCheckersAction(argparse.Action):
@@ -93,8 +93,13 @@ def add_arguments_to_parser(parser):
     def is_ctu_capable():
         """ Detects if the current clang is CTU compatible. """
 
-        ret = util.call_command([CTU_FUNC_MAP_CMD, '-version'])
-        return ret[1] == 0
+        context = generic_package_context.get_context()
+        ctu_func_map_cmd = context.ctu_func_map_cmd
+        try:
+            version = subprocess.check_output([ctu_func_map_cmd, '-version'])
+        except (subprocess.CalledProcessError, OSError):
+            version = 'ERROR'
+        return version != 'ERROR'
 
     parser.add_argument('logfile',
                         type=str,
@@ -187,54 +192,41 @@ def add_arguments_to_parser(parser):
     if is_ctu_capable():
         ctu_opts = parser.add_argument_group('cross translation unit analysis')
         ctu_mutex_group = ctu_opts.add_mutually_exclusive_group()
-        ctu_mutex_group.add_argument('--ctu',
+        ctu_mutex_group.add_argument('--ctu-all',
                                      action='store_const',
                                      const=[True, True],
                                      dest='ctu_phases',
                                      default=argparse.SUPPRESS,
                                      help="Perform cross translation unit "
                                           "(CTU) analysis (both collect and "
-                                          "analyze phases) using default "
-                                          "<ctu-dir> for temporary output. "
-                                          "At the end of the analysis, the "
-                                          "temporary directory is removed.")
-        ctu_opts.add_argument('--ctu-dir',
-                              metavar='<ctu-dir>',
-                              default=os.path.join(
-                                  util.get_default_workspace(),
-                                  'ctu-dir'),
-                              help="Optional parameter defines the temporary "
-                                   "directory used between CTU phases.")
-        ctu_mutex_group.add_argument('--ctu-collect-only',
+                                          "analyze phases) using the default "
+                                          "CTU directory as output. "
+                                          "At the end of the analysis, this "
+                                          "directory is removed.")
+        ctu_mutex_group.add_argument('--ctu-collect',
                                      action='store_const',
                                      const=[True, False],
                                      dest='ctu_phases',
                                      default=argparse.SUPPRESS,
-                                     help="Perform only the collect phase of "
-                                          "CTU. Keep <ctu-dir> for further "
-                                          "use.")
-        ctu_mutex_group.add_argument('--ctu-analyze-only',
+                                     help="Perform the 1st, collect phase of "
+                                          "CTU. Keep CTU directory for "
+                                          "further use.")
+        ctu_mutex_group.add_argument('--ctu-analyze',
                                      action='store_const',
                                      const=[False, True],
                                      dest='ctu_phases',
                                      default=argparse.SUPPRESS,
-                                     help="Perform only the analyze phase of "
-                                          "CTU. <ctu-dir> should be present "
-                                          "and will not be removed after "
-                                          "analysis.")
-        ctu_opts.add_argument('--on-the-fly',
+                                     help="Perform only the 2nd, analyze "
+                                          "phase of CTU. CTU directory should "
+                                          "be present and will not be removed "
+                                          "after analysis.")
+        ctu_opts.add_argument('--ctu-on-the-fly',
                               action='store_true',
                               dest='ctu_in_memory',
                               default=False,
                               help="Do not create AST dumps in collect phase, "
                                    "recompile external files on the fly "
                                    "(memory intensive).")
-        ctu_opts.add_argument('--use-func-map-cmd',
-                              metavar='<path>',
-                              dest='ctu_func_map_cmd',
-                              default=CTU_FUNC_MAP_CMD,
-                              help="Executable to be used for dumping "
-                                   "function maps from compilation units.")
 
     checkers_opts = parser.add_argument_group(
         "checker configuration",

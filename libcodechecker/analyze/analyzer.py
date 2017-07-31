@@ -16,6 +16,7 @@ import time
 from libcodechecker.logger import LoggerFactory
 from libcodechecker.analyze import analysis_manager
 from libcodechecker.analyze import analyzer_env
+from libcodechecker.analyze import ctu_manager
 from libcodechecker.analyze import skiplist_handler
 from libcodechecker.analyze.analyzers import analyzer_types
 
@@ -85,17 +86,12 @@ def perform_analysis(args, context, actions, metadata):
     ctu_collect = False
     ctu_analyze = False
     ctu_dir = ''
-    ctu_func_map_cmd = ''
-    # ctu_in_memory = False
-    if hasattr(args, 'ctu_phases'):
-        args.ctu_dir = os.path.abspath(args.ctu_dir)
+    if 'ctu_phases' in args:
         ctu_collect = args.ctu_phases[0]
         ctu_analyze = args.ctu_phases[1]
-        ctu_dir = args.ctu_dir
-        ctu_func_map_cmd = args.ctu_func_map_cmd
-        # ctu_in_memory = args.ctu_in_memory
+        ctu_dir = os.path.join(args.output_path, context.ctu_dir)
         if analyzer_types.CLANG_SA not in analyzers:
-            LOG.error("CTU can only be used together with the static analyzer")
+            LOG.error("CTU can only be used with the clang static analyzer.")
             return
 
     actions = prepare_actions(actions, analyzers)
@@ -118,18 +114,21 @@ def perform_analysis(args, context, actions, metadata):
     if ctu_collect:
         shutil.rmtree(ctu_dir, ignore_errors=True)
     elif ctu_analyze and not os.path.exists(ctu_dir):
-        LOG.error("The given <ctu-dir> '" + ctu_dir + "' does not exist")
+        LOG.error("CTU directory:'" + ctu_dir + "' does not exist.")
         return
 
     # Run analysis.
     LOG.info("Starting static analysis ...")
     start_time = time.time()
 
-    analysis_manager.start_workers(actions, context, config_map,
-                                   args.jobs, args.output_path,
-                                   __get_skip_handler(args), metadata,
-                                   ctu_collect, ctu_analyze,
-                                   ctu_dir, ctu_func_map_cmd)
+    if ctu_collect:
+        ctu_manager.do_ctu_collect(actions, context, config_map, args.jobs,
+                                   __get_skip_handler(args), ctu_dir)
+
+    if ctu_analyze or not ctu_analyze and not ctu_collect:
+        analysis_manager.start_workers(actions, context, config_map,
+                                       args.jobs, args.output_path,
+                                       __get_skip_handler(args), metadata)
 
     end_time = time.time()
     LOG.info("Analysis length: " + str(end_time - start_time) + " sec.")

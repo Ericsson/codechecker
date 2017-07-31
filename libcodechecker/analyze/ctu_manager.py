@@ -24,9 +24,6 @@ from libcodechecker.logger import LoggerFactory
 
 LOG = LoggerFactory.get_new_logger('CTU MANAGER')
 
-CTU_FUNCTION_MAP_FILENAME = 'externalFnMap.txt'
-CTU_TEMP_FNMAP_FOLDER = 'tmpExternalFnMaps'
-
 
 def generate_func_map_lines(fnmap_dir):
     """ Iterate over all lines of input files in random order. """
@@ -63,30 +60,30 @@ def create_global_ctu_function_map(func_map_lines):
     return mangled_ast_pairs
 
 
-def write_global_map(ctu_dir, mangled_ast_pairs):
+def write_global_map(ctu_dir, ctu_func_map_file, mangled_ast_pairs):
     """ Write (mangled function name, ast file) pairs into final file. """
 
-    extern_fns_map_file = os.path.join(ctu_dir, CTU_FUNCTION_MAP_FILENAME)
+    extern_fns_map_file = os.path.join(ctu_dir, ctu_func_map_file)
     with open(extern_fns_map_file, 'w') as out_file:
         for mangled_name, ast_file in mangled_ast_pairs:
             out_file.write('%s %s\n' % (mangled_name, ast_file))
 
 
-def merge_ctu_func_maps(ctu_dir):
+def merge_ctu_func_maps(ctu_dir, ctu_func_map_file, ctu_temp_fnmap_folder):
     """ Merge individual function maps into a global one.
 
     As the collect phase runs parallel on multiple threads, all compilation
-    units are separately mapped into a temporary file in CTU_TEMP_FNMAP_FOLDER.
+    units are separately mapped into a temporary file in ctu_temp_fnmap_folder.
     These function maps contain the mangled names of functions and the source
     (AST generated from the source) which had them.
     These files should be merged at the end into a global map file:
-    CTU_FUNCTION_MAP_FILENAME."""
+    ctu_func_map_file."""
 
-    fnmap_dir = os.path.join(ctu_dir, CTU_TEMP_FNMAP_FOLDER)
+    fnmap_dir = os.path.join(ctu_dir, ctu_temp_fnmap_folder)
 
     func_map_lines = generate_func_map_lines(fnmap_dir)
     mangled_ast_pairs = create_global_ctu_function_map(func_map_lines)
-    write_global_map(ctu_dir, mangled_ast_pairs)
+    write_global_map(ctu_dir, ctu_func_map_file, mangled_ast_pairs)
 
     # Remove all temporary files
     shutil.rmtree(fnmap_dir, ignore_errors=True)
@@ -179,7 +176,8 @@ def func_map_list_src_to_ast(func_src_list, triple_arch, ctu_in_memory):
     return func_ast_list
 
 
-def map_functions(triple_arch, action, source, config, env, func_map_cmd):
+def map_functions(triple_arch, action, source, config, env,
+                  func_map_cmd, temp_fnmap_folder):
     """ Generate function map file for the current source. """
 
     cmd = get_compile_command(action, config)
@@ -197,8 +195,7 @@ def map_functions(triple_arch, action, source, config, env, func_map_cmd):
     func_src_list = stdout.splitlines()
     func_ast_list = func_map_list_src_to_ast(func_src_list, triple_arch,
                                              config.ctu_in_memory)
-    extern_fns_map_folder = os.path.join(config.ctu_dir,
-                                         CTU_TEMP_FNMAP_FOLDER)
+    extern_fns_map_folder = os.path.join(config.ctu_dir, temp_fnmap_folder)
     if func_ast_list:
         with tempfile.NamedTemporaryFile(mode='w',
                                          dir=extern_fns_map_folder,
@@ -209,7 +206,7 @@ def map_functions(triple_arch, action, source, config, env, func_map_cmd):
 def collect_build_action(params):
     """ Preprocess sources by generating all data needed by CTU analysis. """
 
-    action, context, analyzer_config_map, skip_handler, func_map_cmd = params
+    action, context, analyzer_config_map, skip_handler = params
 
     try:
         for source in action.sources:
@@ -227,7 +224,8 @@ def collect_build_action(params):
                 generate_ast(triple_arch, action, source, config,
                              analyzer_environment)
             map_functions(triple_arch, action, source, config,
-                          analyzer_environment, func_map_cmd)
+                          analyzer_environment, context.ctu_func_map_cmd,
+                          context.ctu_temp_fnmap_folder)
     except Exception as ex:
         LOG.debug_analyzer(str(ex))
         traceback.print_exc(file=sys.stdout)
@@ -235,7 +233,7 @@ def collect_build_action(params):
 
 
 def do_ctu_collect(actions, context, analyzer_config_map,
-                   jobs, skip_handler, ctu_dir, ctu_func_map_cmd):
+                   jobs, skip_handler, ctu_dir):
     """
     Start the workers for CTU collect phase.
     """
@@ -246,15 +244,14 @@ def do_ctu_collect(actions, context, analyzer_config_map,
         finally:
             sys.exit(1)
 
-    os.makedirs(os.path.join(ctu_dir, CTU_TEMP_FNMAP_FOLDER))
+    os.makedirs(os.path.join(ctu_dir, context.ctu_temp_fnmap_folder))
     signal.signal(signal.SIGINT, signal_handler)
     pool = multiprocessing.Pool(jobs)
     try:
         collect_actions = [(build_action,
                             context,
                             analyzer_config_map,
-                            skip_handler,
-                            ctu_func_map_cmd)
+                            skip_handler)
                            for build_action in actions]
         pool.map_async(collect_build_action, collect_actions).get(float('inf'))
         pool.close()
@@ -264,4 +261,6 @@ def do_ctu_collect(actions, context, analyzer_config_map,
     finally:
         pool.join()
 
-    merge_ctu_func_maps(ctu_dir)
+    merge_ctu_func_maps(ctu_dir,
+                        context.ctu_func_map_file,
+                        context.ctu_temp_fnmap_folder)

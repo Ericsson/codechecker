@@ -147,7 +147,6 @@ class ClangSA(analyzer_base.SourceAnalyzer):
                                          '-Xclang',
                                          'xtu-reparse=' +
                                          os.path.abspath(config.log_file[0])])
-            # TODO Make it work on multiple logfiles
 
             # Set language.
             analyzer_cmd.extend(['-x', self.buildaction.lang])
