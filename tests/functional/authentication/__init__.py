@@ -26,45 +26,6 @@ __STOP_SERVER = multiprocessing.Event()
 TEST_WORKSPACE = None
 
 
-def enable_auth(workspace):
-    """
-    Create a dummy authentication-enabled configuration and
-    an auth-enabled server.
-
-    Running the tests only work if the initial value (in package
-    session_config.json) is FALSE for authentication.enabled.
-    """
-
-    session_config_filename = "session_config.json"
-
-    cc_package = env.codechecker_package()
-    original_auth_cfg = os.path.join(cc_package,
-                                     'config',
-                                     session_config_filename)
-
-    shutil.copy(original_auth_cfg, workspace)
-
-    session_cfg_file = os.path.join(workspace,
-                                    session_config_filename)
-
-    with open(session_cfg_file, 'r+') as scfg:
-        __scfg_original = scfg.read()
-        scfg.seek(0)
-        try:
-            scfg_dict = json.loads(__scfg_original)
-        except ValueError as verr:
-            print(verr)
-            print('Malformed session config json.')
-            sys.exit(1)
-
-        scfg_dict["authentication"]["enabled"] = True
-        scfg_dict["authentication"]["method_dictionary"]["enabled"] = True
-        scfg_dict["authentication"]["method_dictionary"]["auths"] = ["cc:test"]
-
-        json.dump(scfg_dict, scfg, indent=2, sort_keys=True)
-        scfg.truncate()
-
-
 def setup_package():
     """Setup the environment for the tests then start the server."""
 
@@ -111,7 +72,7 @@ def setup_package():
     env.export_test_cfg(TEST_WORKSPACE, test_config)
 
     # Enable authentication and start the CodeChecker server.
-    enable_auth(TEST_WORKSPACE)
+    env.enable_auth(TEST_WORKSPACE)
     print("Starting server to get results")
     _start_server(codechecker_cfg, test_config, False)
 

@@ -58,7 +58,8 @@ enum ErrorCode{
   DATABASE,
   IOERROR,
   GENERAL,
-  PRIVILEGE
+  AUTH_DENIED, //Authentication denied. We do not allow access to the service.
+  UNAUTHORIZED //Authorization denied. User does not have right to perform an action.
 }
 
 //-----------------------------------------------------------------------------
