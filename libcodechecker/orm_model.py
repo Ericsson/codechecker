@@ -116,63 +116,59 @@ class File(Base):
 class BugPathEvent(Base):
     __tablename__ = 'bug_path_events'
 
-    id = Column(Integer, autoincrement=True, primary_key=True)
     line_begin = Column(Integer)
     col_begin = Column(Integer)
     line_end = Column(Integer)
     col_end = Column(Integer)
+
+    order = Column(Integer, primary_key=True)
+
     msg = Column(String)
     file_id = Column(Integer, ForeignKey('files.id', deferrable=True,
                                          initially="DEFERRED",
                                          ondelete='CASCADE'), index=True)
+    report_id = Column(Integer, ForeignKey('reports.id', deferrable=True,
+                                           initially="DEFERRED",
+                                           ondelete='CASCADE'),
+                       primary_key=True)
 
-    next = Column(Integer)
-    prev = Column(Integer)
-
-    def __init__(self, line_begin, col_begin, line_end, col_end, msg, file_id):
+    def __init__(self, line_begin, col_begin, line_end, col_end,
+                 order, msg, file_id, report_id):
         self.line_begin, self.col_begin, self.line_end, self.col_end = \
             line_begin, col_begin, line_end, col_end
-        self.file_id, self.msg = file_id, msg
 
-    def addPrev(self, prev):
-        self.prev = prev
-
-    def addNext(self, next):
-        self.next = next
-
-    def isLast(self):
-        return self.next is None
-
-    def isFirst(self):
-        return self.prev is None
+        self.order = order
+        self.msg = msg
+        self.file_id = file_id
+        self.report_id = report_id
 
 
 class BugReportPoint(Base):
     __tablename__ = 'bug_report_points'
 
-    id = Column(Integer, autoincrement=True, primary_key=True)
     line_begin = Column(Integer)
     col_begin = Column(Integer)
     line_end = Column(Integer)
     col_end = Column(Integer)
+
+    order = Column(Integer, primary_key=True)
+
     file_id = Column(Integer, ForeignKey('files.id', deferrable=True,
                                          initially="DEFERRED",
                                          ondelete='CASCADE'), index=True)
+    report_id = Column(Integer, ForeignKey('reports.id', deferrable=True,
+                                           initially="DEFERRED",
+                                           ondelete='CASCADE'),
+                       primary_key=True)
 
-    # TODO: Add check, the value must be an existing id or null.
-    # Be careful when inserting.
-    next = Column(Integer)
-
-    def __init__(self, line_begin, col_begin, line_end, col_end, file_id):
+    def __init__(self, line_begin, col_begin, line_end, col_end,
+                 order, file_id, report_id):
         self.line_begin, self.col_begin, self.line_end, self.col_end = \
             line_begin, col_begin, line_end, col_end
+
+        self.order = order
         self.file_id = file_id
-
-    def addNext(self, next):
-        self.next = next
-
-    def isLast(self):
-        return self.next is None
+        self.report_id = report_id
 
 
 class Report(Base):
@@ -195,19 +191,6 @@ class Report(Base):
 
     # TODO: multiple messages to multiple source locations?
     checker_message = Column(String)
-    start_bugpoint = Column(Integer,
-                            ForeignKey('bug_report_points.id', deferrable=True,
-                                       initially="DEFERRED",
-                                       ondelete='CASCADE'))
-
-    start_bugevent = Column(Integer,
-                            ForeignKey('bug_path_events.id', deferrable=True,
-                                       initially="DEFERRED",
-                                       ondelete='CASCADE'), index=True)
-    end_bugevent = Column(Integer,
-                          ForeignKey('bug_path_events.id', deferrable=True,
-                                     initially="DEFERRED", ondelete='CASCADE'),
-                          index=True)
     suppressed = Column(Boolean)
 
     # Cascade delete might remove rows SQLAlchemy warns about this
@@ -217,16 +200,12 @@ class Report(Base):
     }
 
     # Priority/severity etc...
-    def __init__(self, run_id, bug_id, file_id, checker_message,
-                 start_bugpoint, start_bugevent, end_bugevent, checker_id,
+    def __init__(self, run_id, bug_id, file_id, checker_message, checker_id,
                  checker_cat, bug_type, severity, suppressed):
         self.run_id = run_id
         self.file_id = file_id
         self.bug_id = bug_id
         self.checker_message = checker_message
-        self.start_bugpoint = start_bugpoint
-        self.start_bugevent = start_bugevent
-        self.end_bugevent = end_bugevent
         self.severity = severity
         self.checker_id = checker_id
         self.checker_cat = checker_cat
@@ -249,7 +228,7 @@ class SuppressBug(Base):
 
     def __init__(self, run_id, hash, file_name, comment):
         self.hash, self.run_id = hash, run_id
-        self.comment = comment
+        self.comment = comment.encode('utf8')
         self.file_name = file_name
 
 

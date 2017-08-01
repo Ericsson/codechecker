@@ -160,8 +160,8 @@ class HashClash(unittest.TestCase):
                                                  run_id1,
                                                  'XXX',
                                                  ((2, 1), (2, 2)))
-            # Same file, same hash and different position
-            self.assertNotEqual(rep_id1, rep_id3)
+            # Same file, same hash and different position in line
+            self.assertEqual(rep_id1, rep_id3)
 
             rep_id4 = self._create_simple_report(file_id2,
                                                  run_id2,
