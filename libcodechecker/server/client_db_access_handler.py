@@ -781,10 +781,10 @@ class ThriftRequestHandler(object):
         try:
             report = session.query(Report).get(report_id)
             if report:
+                user = self.__auth_session.user\
+                    if self.__auth_session else "Anonymous"
                 comment = Comment(report.bug_id,
-                                  'Anonymous',  # TODO: author must be queried
-                                                # from the authenticated
-                                                # session.
+                                  user,
                                   comment_data.message,
                                   datetime.now())
 
@@ -813,12 +813,18 @@ class ThriftRequestHandler(object):
     @timeit
     def updateComment(self, comment_id, content):
         """
-            Update the given comment message with new content.
+            Update the given comment message with new content. We allow
+            comments to be updated by it's original author only, except for
+            Anyonymous comments that can be updated by anybody.
         """
         session = self.__session
+        user = self.__auth_session.user\
+            if self.__auth_session else "Anonymous"
         try:
             comment = session.query(Comment).get(comment_id)
             if comment:
+                if comment.author != 'Anonymous' and comment.author != user:
+                    raise shared.ttypes.ErrorCode.UNAUTHORIZED
                 comment.message = content
                 session.add(comment)
                 session.commit()
@@ -844,12 +850,18 @@ class ThriftRequestHandler(object):
     @timeit
     def removeComment(self, comment_id):
         """
-            Remove the comment.
+            Remove the comment. We allow comments to be removed by it's
+            original author only, except for Anyonymous comments that can be
+            updated by anybody.
         """
+        user = self.__auth_session.user\
+            if self.__auth_session else "Anonymous"
         session = self.__session
         try:
             comment = session.query(Comment).get(comment_id)
             if comment:
+                if comment.author != 'Anonymous' and comment.author != user:
+                    raise shared.ttypes.ErrorCode.UNAUTHORIZED
                 session.delete(comment)
                 session.commit()
                 return True
