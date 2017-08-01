@@ -64,7 +64,7 @@ html, body {
   font-family: monospace;
 }
 
-.deleteButton {
+.del-btn, .diff-btn {
   float: right;
 }
 
