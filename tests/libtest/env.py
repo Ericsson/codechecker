@@ -8,6 +8,7 @@ import os
 import json
 import tempfile
 import shutil
+import sys
 
 from . import get_free_port
 from thrift_client_to_db import get_viewer_client
@@ -156,3 +157,43 @@ def test_env():
     base_env['PATH'] = os.path.join(codechecker_package(), 'bin') + \
         ':' + base_env['PATH']
     return base_env
+
+
+def enable_auth(workspace):
+    """
+    Create a dummy authentication-enabled configuration and
+    an auth-enabled server.
+
+    Running the tests only work if the initial value (in package
+    session_config.json) is FALSE for authentication.enabled.
+    """
+
+    session_config_filename = "session_config.json"
+
+    cc_package = codechecker_package()
+    original_auth_cfg = os.path.join(cc_package,
+                                     'config',
+                                     session_config_filename)
+
+    shutil.copy(original_auth_cfg, workspace)
+
+    session_cfg_file = os.path.join(workspace,
+                                    session_config_filename)
+
+    with open(session_cfg_file, 'r+') as scfg:
+        __scfg_original = scfg.read()
+        scfg.seek(0)
+        try:
+            scfg_dict = json.loads(__scfg_original)
+        except ValueError as verr:
+            print(verr)
+            print('Malformed session config json.')
+            sys.exit(1)
+
+        scfg_dict["authentication"]["enabled"] = True
+        scfg_dict["authentication"]["method_dictionary"]["enabled"] = True
+        scfg_dict["authentication"]["method_dictionary"]["auths"] =\
+            ["cc:test", "john:doe"]
+
+        json.dump(scfg_dict, scfg, indent=2, sort_keys=True)
+        scfg.truncate()

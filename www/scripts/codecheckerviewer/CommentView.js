@@ -137,18 +137,20 @@ function (declare, dom, style, topic, locale, Memory, Observable, ConfirmDialog,
       dom.create('span', { class : 'time', innerHTML: time }, vb);
 
       //--- Comment operations (edit, remove) ---//
+      var user = CC_AUTH_SERVICE.getLoggedInUser();
+      
+      if (this.author == 'Anonymous' || user == this.author) { 
+          var operations = dom.create('div', { class : 'operations'}, header);
+          dom.create('span', {
+              class   : 'customIcon edit',
+              onclick : function () { that.edit(); }
+          }, operations);
 
-      var operations = dom.create('div', { class : 'operations'}, header);
-      dom.create('span', {
-        class   : 'customIcon edit',
-        onclick : function () { that.edit(); }
-      }, operations);
-
-      dom.create('span', {
-        class   : 'customIcon delete',
-        onclick : function () { that.remove(); }
-      }, operations);
-
+          dom.create('span', {
+              class   : 'customIcon delete',
+              onclick : function () { that.remove(); }
+          }, operations);
+      }
       //--- Message section ---//
 
       this._message = new ContentPane({

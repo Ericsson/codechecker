@@ -49,8 +49,13 @@ class ThriftClientHelper(object):
                 if reqfailure.error_code == shared.ttypes.ErrorCode.DATABASE:
                     print('Database error on server')
                     print(str(reqfailure.message))
-                if reqfailure.error_code == shared.ttypes.ErrorCode.PRIVILEGE:
-                    print('Unauthorized access')
+                if reqfailure.error_code ==\
+                        shared.ttypes.ErrorCode.AUTH_DENIED:
+                    print('Authentication denied')
+                    print(str(reqfailure.message))
+                if reqfailure.error_code ==\
+                        shared.ttypes.ErrorCode.UNAUTHORIZED:
+                    print('Unauthorized to access')
                     print(str(reqfailure.message))
                 else:
                     print('API call error: ' + funcName)

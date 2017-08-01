@@ -64,11 +64,11 @@ class ThriftAuthHandler(object):
                 return session.token
             else:
                 raise shared.ttypes.RequestFailed(
-                    shared.ttypes.ErrorCode.PRIVILEGE,
+                    shared.ttypes.ErrorCode.AUTH_DENIED,
                     "Invalid credentials supplied. Refusing authentication!")
 
         raise shared.ttypes.RequestFailed(
-            shared.ttypes.ErrorCode.PRIVILEGE,
+            shared.ttypes.ErrorCode.AUTH_DENIED,
             "Could not negotiate via common authentication method.")
 
     @timeit
