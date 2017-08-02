@@ -35,13 +35,13 @@ from ProductManagement import codeCheckerProductService
 from libcodechecker import session_manager
 from libcodechecker.logger import LoggerFactory
 
-from . import config_database
+from . import database_handler
 from . import instance_manager
-from . import run_database
 from client_auth_handler import ThriftAuthHandler
 from client_db_access_handler import ThriftRequestHandler
-from product_db_access_handler import ThriftProductHandler
 from config_db_model import Product as ORMProduct
+from product_db_access_handler import ThriftProductHandler
+from run_db_model import IDENTIFIER as RUN_META
 
 LOG = LoggerFactory.get_new_logger('DB ACCESS')
 
@@ -368,11 +368,15 @@ class Product(object):
     """
 
     def __init__(self, orm_object, context, check_env):
+        """
+        Set up a new managed product object for the configuration given.
+        """
         self.__orm_object = orm_object
         self.__context = context
         self.__check_env = check_env
-
-        self.connect()
+        self.__engine = None
+        self.__session = None
+        self.__connected = False
 
     @property
     def id(self):
@@ -381,7 +385,7 @@ class Product(object):
     @property
     def endpoint(self):
         """
-        Returns the URL endpoint of the product.
+        Returns the accessible URL endpoint of the product.
         """
         return self.__orm_object.endpoint
 
@@ -431,10 +435,12 @@ class Product(object):
         # We need to connect to the database and perform setting up the
         # schema.
         LOG.debug("Configuring schema and migration...")
-        sql_server = run_database.SQLServer.from_connection_string(
+        sql_server = database_handler.SQLServer.from_connection_string(
             self.__orm_object.connection,
+            RUN_META,
             self.__context.config_migration_root,
-            self.__check_env)
+            interactive=False,
+            env=self.__check_env)
 
         try:
             sql_server.connect(self.__context.run_db_version_info, init=True)
@@ -454,8 +460,13 @@ class Product(object):
             self.__connected = False
 
     def teardown(self):
-        """???"""
-        raise Exception("NYI!")
+        """
+        Disposes the database connection to the product's backend.
+        """
+        if not self.__connected:
+            return
+
+        self.__engine.dispose()
 
 
 class CCSimpleHttpServer(HTTPServer):
@@ -468,7 +479,7 @@ class CCSimpleHttpServer(HTTPServer):
     def __init__(self,
                  server_address,
                  RequestHandlerClass,
-                 product_db_connection_string,
+                 product_db_sql_server,
                  pckg_data,
                  suppress_handler,
                  context,
@@ -490,17 +501,15 @@ class CCSimpleHttpServer(HTTPServer):
 
         # Create a database engine for the configuration database.
         LOG.debug("Creating database engine for CONFIG DATABASE...")
-        self.__engine = config_database.SQLServer.create_engine(
-            product_db_connection_string)
-        self.product_session = scoped_session(sessionmaker())
-        self.product_session.configure(bind=self.__engine)
+        self.__engine = product_db_sql_server.create_engine()
+        self.product_session = sessionmaker(bind=self.__engine)
 
         # Load the initial list of products and create the connections.
         sess = self.product_session()
         products = sess.query(ORMProduct).all()
         for product in products:
             self.add_product(product)
-        self.product_session.remove()
+        sess.close()
 
         self.__request_handlers = ThreadPool(processes=10)
         try:
@@ -537,19 +546,13 @@ class CCSimpleHttpServer(HTTPServer):
         by the server.
         """
         if orm_product.endpoint in self.__products:
-            raise Exception("This product is already connected!")
+            raise Exception("This product is already configured!")
 
-        try:
-            conn = Product(orm_product, self.context, self.check_env)
+        LOG.info("Setting up product '{0}'".format(orm_product.endpoint))
+        conn = Product(orm_product, self.context, self.check_env)
+        self.__products[conn.endpoint] = conn
 
-            LOG.info("Product '{0}' database connection set up..."
-                     .format(orm_product.endpoint))
-            self.__products[conn.endpoint] = conn
-        except Exception as ex:
-            LOG.error("The product '{0}' cannot be connected."
-                      .format(orm_product.endpoint))
-            LOG.error(ex.message)
-            # TODO: Some better error handling here.
+        conn.connect()
 
     def get_product(self, endpoint):
         """
@@ -606,7 +609,7 @@ def start_server(package_data, port, db_conn_string, suppress_handler,
     LOG.info("Webserver quit.")
 
 
-def add_initial_run_database(config_connection, product_connection):
+def add_initial_run_database(config_sql_server, product_connection):
     """
     Create a default run database as SQLite in the config directory,
     and add it to the list of products in the config database specified by
@@ -615,7 +618,7 @@ def add_initial_run_database(config_connection, product_connection):
 
     # Connect to the configuration database
     LOG.debug("Creating database engine for CONFIG DATABASE...")
-    __engine = config_database.SQLServer.create_engine(config_connection)
+    __engine = config_sql_server.create_engine()
     product_session = sessionmaker(bind=__engine)
 
     # Load the initial list of products and create the connections.
@@ -630,6 +633,6 @@ def add_initial_run_database(config_connection, product_connection):
                          "Default product created at server start.")
     sess.add(product)
     sess.commit()
-    product_session.remove()
+    sess.close()
 
     LOG.debug("Default product set up.")

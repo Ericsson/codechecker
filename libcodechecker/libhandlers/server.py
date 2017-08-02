@@ -25,9 +25,13 @@ from libcodechecker.analyze import analyzer_env
 from libcodechecker.logger import LoggerFactory
 from libcodechecker.logger import add_verbose_arguments
 from libcodechecker.server import client_db_access_server
-from libcodechecker.server import config_database
+from libcodechecker.server import database_handler
 from libcodechecker.server import instance_manager
-from libcodechecker.server import run_database
+from libcodechecker.server.config_db_model \
+    import IDENTIFIER as CONFIG_META
+from libcodechecker.server.run_db_model \
+    import IDENTIFIER as RUN_META
+
 
 LOG = LoggerFactory.get_new_logger('SERVER')
 
@@ -430,33 +434,35 @@ def main(args):
                              not os.path.exists(args.sqlite) and \
                              not os.path.exists(default_product_path)
 
-    sql_server = config_database.SQLServer.from_cmdline_args(
-        args, context.config_migration_root, check_env)
+    sql_server = database_handler.SQLServer.from_cmdline_args(
+        vars(args), CONFIG_META, context.config_migration_root,
+        interactive=True, env=check_env)
 
     LOG.debug("Connecting to product configuration database.")
     sql_server.connect(context.product_db_version_info, init=True)
-
-    # Start database viewer.
-    db_connection_string = sql_server.get_connection_string()
 
     if create_default_product:
         # Create a default product and add it to the configuration database.
 
         LOG.debug("Create default product...")
         LOG.debug("Configuring schema and migration...")
-        prod_server = run_database.SQLiteDatabase(
-            default_product_path, context.run_migration_root, check_env)
+
+        prod_server = database_handler.SQLiteDatabase(
+            default_product_path, RUN_META,
+            context.run_migration_root, check_env)
         prod_server.connect(context.run_db_version_info, init=True)
+
         LOG.debug("Connecting database engine for default product")
         product_conn_string = prod_server.get_connection_string()
         LOG.debug("Default database created and connected.")
 
         client_db_access_server.add_initial_run_database(
-            db_connection_string, product_conn_string)
+            sql_server, product_conn_string)
 
         LOG.info("Product 'Default' at '{0}' created and set up."
                  .format(default_product_path))
 
+    # Start database viewer.
     checker_md_docs = os.path.join(context.doc_root, 'checker_md_docs')
     checker_md_docs_map = os.path.join(checker_md_docs,
                                        'checker_doc_map.json')
@@ -472,7 +478,7 @@ def main(args):
     try:
         client_db_access_server.start_server(package_data,
                                              args.view_port,
-                                             db_connection_string,
+                                             sql_server,
                                              suppress_handler,
                                              args.listen_address,
                                              context,

@@ -4,8 +4,9 @@
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
 """
-ORM model.
+SQLAlchemy ORM model for the analysis run storage database.
 """
+
 from __future__ import print_function
 from __future__ import unicode_literals
 
@@ -268,15 +269,8 @@ class ReviewStatus(Base):
     date = Column(DateTime, nullable=False)
 
 
-def CreateSchema(engine):
-    """ Creates the schema if it does not exists.
-        Do not check version or do migration yet. """
-    Base.metadata.create_all(engine)
-
-
-def CreateSession(engine):
-    """ Creates a scoped session factory that can act like a session.
-        The factory uses a thread_local registry, so every thread have
-        its own session. """
-    SessionFactory = scoped_session(sessionmaker(bind=engine))
-    return SessionFactory
+IDENTIFIER = {
+    'identifier': "RunDatabase",
+    'orm_meta': CC_META,
+    'version_class': DBVersion
+}
