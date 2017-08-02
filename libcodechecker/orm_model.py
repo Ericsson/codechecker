@@ -191,7 +191,6 @@ class Report(Base):
 
     # TODO: multiple messages to multiple source locations?
     checker_message = Column(String)
-    suppressed = Column(Boolean)
 
     # Cascade delete might remove rows SQLAlchemy warns about this
     # to remove warnings about already deleted items set this to False.
@@ -201,7 +200,7 @@ class Report(Base):
 
     # Priority/severity etc...
     def __init__(self, run_id, bug_id, file_id, checker_message, checker_id,
-                 checker_cat, bug_type, severity, suppressed):
+                 checker_cat, bug_type, severity):
         self.run_id = run_id
         self.file_id = file_id
         self.bug_id = bug_id
@@ -209,27 +208,7 @@ class Report(Base):
         self.severity = severity
         self.checker_id = checker_id
         self.checker_cat = checker_cat
-        self.suppressed = suppressed
         self.bug_type = bug_type
-
-
-class SuppressBug(Base):
-    __tablename__ = 'suppress_bug'
-
-    id = Column(Integer, autoincrement=True, primary_key=True)
-    hash = Column(String, nullable=False)
-    file_name = Column(String)
-    run_id = Column(Integer,
-                    ForeignKey('runs.id', deferrable=True,
-                               initially="DEFERRED",
-                               ondelete='CASCADE'),
-                    nullable=False)
-    comment = Column(Binary)
-
-    def __init__(self, run_id, hash, file_name, comment):
-        self.hash, self.run_id = hash, run_id
-        self.comment = comment.encode('utf8')
-        self.file_name = file_name
 
 
 class SkipPath(Base):
@@ -264,6 +243,16 @@ class Comment(Base):
         self.author = author
         self.message = message
         self.created_at = created_at
+
+
+class ReviewStatus(Base):
+    __tablename__ = 'review_statuses'
+
+    bug_hash = Column(String, primary_key=True)
+    status = Column(Integer, nullable=False)
+    author = Column(String, nullable=False)
+    message = Column(Binary, nullable=False)
+    date = Column(DateTime, nullable=False)
 
 
 def CreateSchema(engine):
