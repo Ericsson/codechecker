@@ -231,8 +231,7 @@ def store_reports(run_id, file_content, test_conf):
                                        'checker_name',
                                        'checker_cat',
                                        'bug_type',
-                                       Severity.STYLE,
-                                       False)
+                                       Severity.STYLE)
 
 
 def measure(test_conf,

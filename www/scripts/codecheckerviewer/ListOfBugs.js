@@ -6,6 +6,7 @@
 
 define([
   'dojo/_base/declare',
+  'dojo/dom-construct',
   'dojo/Deferred',
   'dojo/data/ObjectStore',
   'dojo/store/api/Store',
@@ -13,14 +14,15 @@ define([
   'dojo/topic',
   'dijit/layout/BorderContainer',
   'dijit/layout/TabContainer',
+  'dijit/Tooltip',
   'dojox/grid/DataGrid',
   'codechecker/hashHelper',
   'codechecker/BugViewer',
   'codechecker/filterHelper',
   'codechecker/util'],
-function (declare, Deferred, ObjectStore, Store, QueryResults, topic,
-  BorderContainer, TabContainer, DataGrid, hashHelper, BugViewer, filterHelper,
-  util) {
+function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
+  BorderContainer, TabContainer, Tooltip, DataGrid, hashHelper, BugViewer,
+  filterHelper, util) {
 
   var filterHook = function(query, isDiff) {
     var length;
@@ -29,8 +31,7 @@ function (declare, Deferred, ObjectStore, Store, QueryResults, topic,
     else {
       var onlyFilter = query.reportFilters[0];
       if (onlyFilter.filepath !== "**" || onlyFilter.checkerId ||
-          onlyFilter.checkerMsg || onlyFilter.severity ||
-          onlyFilter.suppressed)
+          onlyFilter.checkerMsg || onlyFilter.severity)
         length = 1;
       else
         length = null; // null indicates default filters.
@@ -91,6 +92,18 @@ function (declare, Deferred, ObjectStore, Store, QueryResults, topic,
       reportDataList.forEach(function (reportData) {
         reportData.checkedFile = reportData.checkedFile +
           ' @ Line ' + reportData.lastBugPosition.startLine;
+
+        //--- Review status ---//
+
+        var className = util.reviewStatusCssClass(reportData.review.status);
+        var reviewStatus =
+          util.reviewStatusFromCodeToString(reportData.review.status);
+
+        reportData.reviewStatusHtml = '<span title="' + reviewStatus
+          + '" class="customIcon review-status-' + className + '"></span>'
+          + reviewStatus;
+
+        reportData.reviewComment = reportData.review.comment;
       });
 
       return reportDataList;
@@ -204,7 +217,8 @@ function (declare, Deferred, ObjectStore, Store, QueryResults, topic,
         { name : 'Message', field : 'checkerMsg', width : '100%' },
         { name : 'Checker name', field : 'checkerId', cellClasses : 'link', width : '50%' },
         { name : 'Severity', field : 'severity', cellClasses : 'severity', formatter : severityFormatter },
-        { name : 'Suppress', field : 'suppressComment' }
+        { name : 'Review status', field : 'reviewStatusHtml', cellClasses : 'review-status', width : '25%' },
+        { name : 'Review comment', cellClasses : 'review-comment-message compact', field : 'reviewComment', width : '50%' }
       ];
 
       this.focused = true;
@@ -248,6 +262,27 @@ function (declare, Deferred, ObjectStore, Store, QueryResults, topic,
 
         case 'checkerId':
           topic.publish('showDocumentation', item.checkerId);
+          break;
+      }
+    },
+
+    onRowMouseOver : function (evt) {
+      var item = this.getItem(evt.rowIndex);
+      switch (evt.cell.field) {
+        case 'reviewComment':
+          if (item.review.comment) {
+            var content = util.reviewStatusTooltipContent(item.review);
+
+            Tooltip.show(content.outerHTML, evt.target, ['below']);
+          }
+          break;
+      }
+    },
+
+    onCellMouseOut : function (evt) {
+      switch (evt.cell.field) {
+        case 'reviewComment':
+          Tooltip.hide(evt.target);
           break;
       }
     }

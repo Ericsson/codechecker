@@ -5,7 +5,7 @@
 #   License. See LICENSE.TXT for details.
 # -----------------------------------------------------------------------------
 
-"""Setup for the package tests."""
+"""Setup for the test package review_status."""
 
 import multiprocessing
 import os
@@ -15,21 +15,22 @@ import sys
 import time
 import uuid
 
-from libtest import project
 from libtest import codechecker
 from libtest import env
+from libtest import project
 
 # Stopping event for CodeChecker server.
 __STOP_SERVER = multiprocessing.Event()
+
+# Test workspace should be initialized in this module.
 TEST_WORKSPACE = None
 
 
 def setup_package():
-    """Setup the environment for the tests. Check the test project twice,
-    then start the server."""
+    """Setup the environment for testing review_status."""
 
     global TEST_WORKSPACE
-    TEST_WORKSPACE = env.get_workspace('suppress')
+    TEST_WORKSPACE = env.get_workspace('review_status')
 
     os.environ['TEST_WORKSPACE'] = TEST_WORKSPACE
 
@@ -42,12 +43,6 @@ def setup_package():
     project_info = project.get_info(test_project)
 
     test_config['test_project'] = project_info
-
-    # Generate a suppress file for the tests.
-    suppress_file = os.path.join(TEST_WORKSPACE, 'suppress_file')
-    if os.path.isfile(suppress_file):
-        os.remove(suppress_file)
-    _generate_suppress_file(suppress_file)
 
     skip_list_file = None
 
@@ -129,36 +124,3 @@ def _start_server(codechecker_cfg, test_config, auth=False):
 
     # Wait for server to start and connect to database.
     time.sleep(20)
-
-
-def _generate_suppress_file(suppress_file):
-    """
-    Create a dummy suppress file just to check if the old and the new
-    suppress format can be processed.
-    """
-    print("Generating suppress file: " + suppress_file)
-
-    import calendar
-    import hashlib
-    import random
-
-    hash_version = '1'
-    suppress_stuff = []
-    for _ in range(10):
-        curr_time = calendar.timegm(time.gmtime())
-        random_integer = random.randint(1, 9999999)
-        suppress_line = str(curr_time) + str(random_integer)
-        suppress_stuff.append(
-            hashlib.md5(suppress_line).hexdigest() + '#' + hash_version)
-
-    s_file = open(suppress_file, 'w')
-    for k in suppress_stuff:
-        s_file.write(k + '||' + 'idziei éléáálk ~!@#$#%^&*() \n')
-        s_file.write(
-            k + '||' + 'test_~!@#$%^&*.cpp' +
-            '||' + 'idziei éléáálk ~!@#$%^&*(\n')
-        s_file.write(
-            hashlib.md5(suppress_line).hexdigest() + '||' +
-            'test_~!@#$%^&*.cpp' + '||' + 'idziei éléáálk ~!@#$%^&*(\n')
-
-    s_file.close()

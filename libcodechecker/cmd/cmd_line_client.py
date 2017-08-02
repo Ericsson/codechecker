@@ -140,12 +140,7 @@ def handle_list_results(args):
     offset = 0
 
     filters = []
-    if args.suppressed:
-        report_filter = codeCheckerDBAccess.ttypes.ReportFilter(
-            suppressed=True)
-    else:
-        report_filter = codeCheckerDBAccess.ttypes.ReportFilter(
-            suppressed=False)
+    report_filter = codeCheckerDBAccess.ttypes.ReportFilter()
 
     add_filter_conditions(report_filter, args.filter)
     filters.append(report_filter)
@@ -185,9 +180,9 @@ def handle_list_results(args):
 
 
 def handle_diff_results(args):
-    def getDiffResults(getterFn, baseid, newid, suppr):
+    def getDiffResults(getterFn, baseid, newid):
         report_filter = [
-            codeCheckerDBAccess.ttypes.ReportFilter(suppressed=suppr)]
+            codeCheckerDBAccess.ttypes.ReportFilter()]
         add_filter_conditions(report_filter[0], args.filter)
         sort_mode = [(ttypes.SortMode(
             ttypes.SortType.FILENAME,
@@ -240,9 +235,9 @@ def handle_diff_results(args):
         lines = base64.b64decode(source.fileContent).split('\n')
         return "" if len(lines) < lineno else lines[lineno - 1]
 
-    def getDiffReportDir(getterFn, baseid, report_dir, suppr, diff_type):
+    def getDiffReportDir(getterFn, baseid, report_dir, diff_type):
         report_filter = [
-            codeCheckerDBAccess.ttypes.ReportFilter(suppressed=suppr)]
+            codeCheckerDBAccess.ttypes.ReportFilter()]
         add_filter_conditions(report_filter[0], args.filter)
 
         sort_mode = [(ttypes.SortMode(
@@ -358,18 +353,15 @@ def handle_diff_results(args):
         elif 'resolved' in args:
             diff_type = 'resolved'
         results = getDiffReportDir(client.getRunResults, baseid,
-                                   os.path.abspath(args.newname),
-                                   args.suppressed, diff_type)
+                                   os.path.abspath(args.newname), diff_type)
     else:
         if 'new' in args:
-            results = getDiffResults(client.getNewResults,
-                                     baseid, newid, args.suppressed)
+            results = getDiffResults(client.getNewResults, baseid, newid)
         elif 'unresolved' in args:
             results = getDiffResults(client.getUnresolvedResults,
-                                     baseid, newid, args.suppressed)
+                                     baseid, newid)
         elif 'resolved' in args:
-            results = getDiffResults(client.getResolvedResults,
-                                     baseid, newid, args.suppressed)
+            results = getDiffResults(client.getResolvedResults, baseid, newid)
 
     printReports(client, results, args.output_format)
 
@@ -378,12 +370,7 @@ def handle_list_result_types(args):
     client = setup_client(args.host, args.port, '/')
 
     filters = []
-    if args.suppressed:
-        report_filter = codeCheckerDBAccess.ttypes.ReportFilter(
-            suppressed=True)
-    else:
-        report_filter = codeCheckerDBAccess.ttypes.ReportFilter(
-            suppressed=False)
+    report_filter = codeCheckerDBAccess.ttypes.ReportFilter()
 
     add_filter_conditions(report_filter, args.filter)
     filters.append(report_filter)
@@ -468,21 +455,14 @@ def handle_remove_run_results(args):
 
 
 def handle_suppress(args):
-    def update_suppression_comment(run_id, report_id, comment):
-        client.unSuppressBug([run_id], report_id)
-        client.suppressBug([run_id], report_id, comment)
-
     def bug_hash_filter(bug_id, filepath):
         filepath = '%' + filepath
         return [
             codeCheckerDBAccess.ttypes.ReportFilter(bugHash=bug_id,
-                                                    suppressed=True,
                                                     filepath=filepath),
             codeCheckerDBAccess.ttypes.ReportFilter(bugHash=bug_id,
-                                                    suppressed=False,
                                                     filepath=filepath)]
 
-    already_suppressed = "Bug {} in file {} already suppressed. Use '--force'!"
     limit = codeCheckerDBAccess.constants.MAX_QUERY_SIZE
 
     client = setup_client(args.host, args.port, '/')
@@ -490,15 +470,7 @@ def handle_suppress(args):
     run_info = check_run_names(client, [args.name])
     run_id, run_date = run_info.get(args.name)
 
-    if 'output' in args:
-        for suppression in client.getSuppressedBugs(run_id):
-            suppress_file_handler.write_to_suppress_file(
-                args.output,
-                suppression.bug_hash,
-                suppression.file_name,
-                suppression.comment)
-
-    elif 'input' in args:
+    if 'input' in args:
         with open(args.input) as supp_file:
             suppress_data = suppress_file_handler.get_suppress_data(supp_file)
 
@@ -507,30 +479,8 @@ def handle_suppress(args):
                                            bug_hash_filter(bug_id, file_name))
 
             for report in reports:
-                if report.suppressed and 'force' not in args:
-                    print(already_suppressed.format(bug_id, file_name))
-                else:
-                    update_suppression_comment(
-                        run_id, report.reportId, comment)
-
-    elif 'bugid' in args:
-        reports = client.getRunResults(run_id, limit, 0, None,
-                                       bug_hash_filter(args.bugid,
-                                                       args.file if 'file'
-                                                       in args else ""))
-
-        for report in reports:
-            if 'unsuppress' in args:
-                client.unSuppressBug([run_id], report.reportId)
-            elif report.suppressed and 'force' not in args:
-                print(already_suppressed.format(args.bugid,
-                                                args.file if 'file' in args
-                                                else ""))
-            else:
-                update_suppression_comment(run_id,
-                                           report.reportId,
-                                           args.comment if 'comment' in args
-                                           else "")
+                status = shared.ttypes.ReviewStatus.FALSE_POSITIVE
+                client.changeReviewStatus(report.reportId, status, comment)
 
 
 def handle_login(args):

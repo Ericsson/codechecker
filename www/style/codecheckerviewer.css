@@ -11,6 +11,10 @@ html, body {
   font-size: 10pt;
 }
 
+.hide {
+  display: none !important;
+}
+
 #mainLayout {
   height: 100%;
 }
@@ -385,6 +389,19 @@ span[class*="severity-"] {
   color: #7f410c;
 }
 
+/* Avatar */
+.avatar {
+  display: table;
+  color: white;
+  text-align: center;
+  font-weight: bold;
+}
+
+.avatar-content {
+  display: table-cell;
+  vertical-align: middle;
+}
+
 /* Comments */
 .comment-btn {
   float: right;
@@ -424,19 +441,13 @@ span[class*="severity-"] {
 }
 
 .comment .avatar {
-  display: table;
   float: left;
   width: 32px;
   height: 32px;
   margin-right: 5px;
-  color: white;
-  text-align: center;
-  font-weight: bold;
 }
 
 .comment .avatar-content {
-  display: table-cell;
-  vertical-align: middle;
   font-size: 2em;
 }
 
@@ -475,4 +486,68 @@ span[class*="severity-"] {
 
 .comment .customIcon:hover {
   color: #000;
+}
+
+/* Review status */
+.review-comment {
+  margin-left: 5px;
+  cursor: help;
+  color: grey;
+}
+
+.review-comment::before {
+  content: "\e00c";
+}
+
+.review-comment-message.compact {
+  direction: ltr;
+}
+
+.review-status-unreviewed::before {
+  content: "\e017";
+  color: #4b9fd5;
+}
+
+.review-status-confirmed-bug::before {
+  content: "\e019";
+  color: #e92625;
+}
+
+.review-status-false-positive::before {
+  content: "\e01a";
+  color: grey;
+}
+
+.review-status-wont-fix::before {
+  content: "\e018";
+  color: #669603;
+}
+
+.review-comment-tooltip {
+  width: 400px;
+  word-wrap: break-word;
+}
+
+.review-comment-tooltip .header {
+  margin: 5px;
+  padding-bottom: 2px;
+  border-bottom: 1px solid #586069;
+  color: #586069;
+}
+
+.review-comment-tooltip .author {
+  font-weight: bold;
+  padding-right: 5px;
+  color: #007ea7;
+}
+
+.review-comment-tooltip .time {
+  padding-left: 5px;
+}
+
+.review-comment-tooltip .avatar {
+  width: 16px;
+  height: 16px;
+  float: left;
+  margin-right: 5px;
 }

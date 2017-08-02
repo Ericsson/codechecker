@@ -153,15 +153,6 @@ class PlistToDB(ResultHandler):
                                                                 report_hash,
                                                                 checker_name)
 
-            # Check for suppress comment.
-            supp = sp_handler.get_suppressed()
-            if supp:
-                bhash, fname, comment = supp
-                suppress_data = shared.ttypes.SuppressBugData(bhash,
-                                                              fname,
-                                                              comment)
-                client.addSuppressBug(self.__run_id, [suppress_data])
-
             LOG.debug('Storing check results to the database.')
 
             fpath = files[report.main['location']['file']]
@@ -180,11 +171,17 @@ class PlistToDB(ResultHandler):
                                          checker_name,
                                          category,
                                          type,
-                                         severity,
-                                         supp is not None)
+                                         severity)
 
             LOG.debug("Storing done for report " + str(report_id))
             report_ids.append(report_id)
+
+            # Check for suppress comment.
+            supp = sp_handler.get_suppressed()
+            if supp:
+                bhash, fname, comment = supp
+                status = shared.ttypes.ReviewStatus.UNREVIEWED
+                client.changeReviewStatus(report_id, status, comment)
 
     def handle_results(self, client=None):
         """

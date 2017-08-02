@@ -12,10 +12,9 @@ def print_run_results(run_results):
     print('---------------------------------------------------------')
     for run_res in run_results:
         print(('''Checkedfile: {0}\nCheckerid: {1}\nBugHash: {2}\n''' +
-               '''Suppressed: {3}\n--''').format(
+               '''--''').format(
             run_res.checkedFile,
             run_res.checkerId,
-            run_res.bugHash,
-            run_res.suppressed))
+            run_res.bugHash))
     print('Got ' + str(len(run_results)) + ' reports')
     print('---------------------------------------------------------')
