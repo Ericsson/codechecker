@@ -10,6 +10,8 @@ import shlex
 import subprocess
 
 from libcodechecker.analyze.analyzers import analyzer_base
+from libcodechecker.analyze.analyzers import ctu_triple_arch
+from libcodechecker.analyze import analyzer_env
 from libcodechecker.logger import LoggerFactory
 from libcodechecker.util import find_by_regex_in_envpath
 
@@ -138,8 +140,15 @@ class ClangSA(analyzer_base.SourceAnalyzer):
                                          '-Xclang', checker_name])
 
             if config.ctu_dir:
+                env = analyzer_env.get_check_env(config.path_env_extra,
+                                                 config.ld_lib_path_extra)
+                triple_arch = ctu_triple_arch.get_triple_arch(self.buildaction,
+                                                              self.source_file,
+                                                              config, env)
                 analyzer_cmd.extend(['-Xclang', '-analyzer-config',
-                                     '-Xclang', 'xtu-dir=' + config.ctu_dir,
+                                     '-Xclang',
+                                     'xtu-dir=' + os.path.join(config.ctu_dir,
+                                                               triple_arch),
                                      '-Xclang', '-analyzer-config',
                                      '-Xclang', 'reanalyze-xtu-visited=true'])
                 if config.ctu_in_memory:

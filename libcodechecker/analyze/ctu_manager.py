@@ -10,7 +10,6 @@ Arranges the 1st phase of 2 phase executions for CTU
 import glob
 import multiprocessing
 import os
-import shlex
 import shutil
 import signal
 import sys
@@ -19,6 +18,7 @@ import traceback
 
 from libcodechecker.analyze.analyzers import analyzer_base
 from libcodechecker.analyze.analyzers import analyzer_types
+from libcodechecker.analyze.analyzers import ctu_triple_arch
 from libcodechecker.analyze import analyzer_env
 from libcodechecker.logger import LoggerFactory
 
@@ -60,10 +60,10 @@ def create_global_ctu_function_map(func_map_lines):
     return mangled_ast_pairs
 
 
-def write_global_map(ctu_dir, ctu_func_map_file, mangled_ast_pairs):
+def write_global_map(ctu_dir, arch, ctu_func_map_file, mangled_ast_pairs):
     """ Write (mangled function name, ast file) pairs into final file. """
 
-    extern_fns_map_file = os.path.join(ctu_dir, ctu_func_map_file)
+    extern_fns_map_file = os.path.join(ctu_dir, arch, ctu_func_map_file)
     with open(extern_fns_map_file, 'w') as out_file:
         for mangled_name, ast_file in mangled_ast_pairs:
             out_file.write('%s %s\n' % (mangled_name, ast_file))
@@ -79,73 +79,36 @@ def merge_ctu_func_maps(ctu_dir, ctu_func_map_file, ctu_temp_fnmap_folder):
     These files should be merged at the end into a global map file:
     ctu_func_map_file."""
 
-    fnmap_dir = os.path.join(ctu_dir, ctu_temp_fnmap_folder)
+    triple_arches = glob.glob(os.path.join(ctu_dir, '*'))
+    for triple_path in triple_arches:
+        if os.path.isdir(triple_path):
+            triple_arch = os.path.basename(triple_path)
+            fnmap_dir = os.path.join(ctu_dir, triple_arch,
+                                     ctu_temp_fnmap_folder)
 
-    func_map_lines = generate_func_map_lines(fnmap_dir)
-    mangled_ast_pairs = create_global_ctu_function_map(func_map_lines)
-    write_global_map(ctu_dir, ctu_func_map_file, mangled_ast_pairs)
+            func_map_lines = generate_func_map_lines(fnmap_dir)
+            mangled_ast_pairs = create_global_ctu_function_map(func_map_lines)
+            write_global_map(ctu_dir, triple_arch, ctu_func_map_file,
+                             mangled_ast_pairs)
 
-    # Remove all temporary files
-    shutil.rmtree(fnmap_dir, ignore_errors=True)
-
-
-def get_compile_command(action, config, source='', output=''):
-    """ Generate a standardized and cleaned compile command serving as a base
-    for other operations. """
-
-    cmd = [config.analyzer_binary]
-    cmd.extend(action.compiler_defines)
-    cmd.extend(action.compiler_includes)
-    if len(config.compiler_resource_dir) > 0:
-        cmd.extend(['-resource-dir', config.compiler_resource_dir,
-                    '-isystem', config.compiler_resource_dir])
-    cmd.append('-c')
-    if config.compiler_sysroot:
-        cmd.extend(['--sysroot', config.compiler_sysroot])
-    for path in config.system_includes:
-        cmd.extend(['-isystem', path])
-    for path in config.includes:
-        cmd.extend(['-I', path])
-    cmd.extend(['-x', action.lang])
-    cmd.append(config.analyzer_extra_arguments)
-    cmd.extend(action.analyzer_options)
-    if output:
-        cmd.extend(['-o', output])
-    if source:
-        cmd.append(source)
-    return cmd
-
-
-def get_triple_arch(action, source, config, env):
-    """Returns the architecture part of the target triple for the given
-    compilation command. """
-
-    cmd = get_compile_command(action, config, source)
-    cmd.insert(1, '-###')
-    cmdstr = ' '.join(cmd)
-    _, stdout, stderr = analyzer_base.SourceAnalyzer.run_proc(cmdstr, env)
-    last_line = (stdout + stderr).splitlines()[-1]
-    res_cmd = shlex.split(last_line)
-    arch = ""
-    i = 0
-    while i < len(res_cmd) and res_cmd[i] != "-triple":
-        i += 1
-    if i < (len(res_cmd) - 1):
-        arch = res_cmd[i + 1].split("-")[0]
-    return arch
+            # Remove all temporary files
+            shutil.rmtree(fnmap_dir, ignore_errors=True)
 
 
 def generate_ast(triple_arch, action, source, config, env):
     """ Generates ASTs for the current compilation command. """
 
-    ast_joined_path = os.path.join(config.ctu_dir, 'ast', triple_arch,
+    ast_joined_path = os.path.join(config.ctu_dir, triple_arch, 'ast',
                                    os.path.realpath(source)[1:] + '.ast')
     ast_path = os.path.abspath(ast_joined_path)
     ast_dir = os.path.dirname(ast_path)
     if not os.path.isdir(ast_dir):
-        os.makedirs(ast_dir)
+        try:
+            os.makedirs(ast_dir)
+        except OSError:
+            pass
 
-    cmd = get_compile_command(action, config, source)
+    cmd = ctu_triple_arch.get_compile_command(action, config, source)
     cmd.extend(['-emit-ast', '-w', '-o', ast_path])
 
     cmdstr = ' '.join(cmd)
@@ -155,7 +118,7 @@ def generate_ast(triple_arch, action, source, config, env):
         LOG.error("Error generating AST using '%s'", cmdstr)
 
 
-def func_map_list_src_to_ast(func_src_list, triple_arch, ctu_in_memory):
+def func_map_list_src_to_ast(func_src_list, ctu_in_memory):
     """ Turns textual function map list with source files into a
     function map list with ast files. """
 
@@ -171,8 +134,8 @@ def func_map_list_src_to_ast(func_src_list, triple_arch, ctu_in_memory):
             path = os.path.splitdrive(path)[1]
             # Make relative path out of absolute
             path = path[1:] if path[0] == os.sep else path
-            ast_path = os.path.join("ast", triple_arch, path + ".ast")
-        func_ast_list.append(mangled_name + "@" + triple_arch + " " + ast_path)
+            ast_path = os.path.join("ast", path + ".ast")
+        func_ast_list.append(mangled_name + " " + ast_path)
     return func_ast_list
 
 
@@ -180,7 +143,7 @@ def map_functions(triple_arch, action, source, config, env,
                   func_map_cmd, temp_fnmap_folder):
     """ Generate function map file for the current source. """
 
-    cmd = get_compile_command(action, config)
+    cmd = ctu_triple_arch.get_compile_command(action, config)
     cmd[0] = func_map_cmd
     cmd.insert(1, source)
     cmd.insert(2, '--')
@@ -193,9 +156,16 @@ def map_functions(triple_arch, action, source, config, env,
         return
 
     func_src_list = stdout.splitlines()
-    func_ast_list = func_map_list_src_to_ast(func_src_list, triple_arch,
+    func_ast_list = func_map_list_src_to_ast(func_src_list,
                                              config.ctu_in_memory)
-    extern_fns_map_folder = os.path.join(config.ctu_dir, temp_fnmap_folder)
+    extern_fns_map_folder = os.path.join(config.ctu_dir, triple_arch,
+                                         temp_fnmap_folder)
+    if not os.path.isdir(extern_fns_map_folder):
+        try:
+            os.makedirs(extern_fns_map_folder)
+        except OSError:
+            pass
+
     if func_ast_list:
         with tempfile.NamedTemporaryFile(mode='w',
                                          dir=extern_fns_map_folder,
@@ -219,8 +189,9 @@ def collect_build_action(params):
             analyzer_environment = analyzer_env.get_check_env(
                 context.path_env_extra,
                 context.ld_lib_path_extra)
-            triple_arch = get_triple_arch(action, source, config,
-                                          analyzer_environment)
+            triple_arch = ctu_triple_arch.get_triple_arch(action, source,
+                                                          config,
+                                                          analyzer_environment)
             if not config.ctu_in_memory:
                 generate_ast(triple_arch, action, source, config,
                              analyzer_environment)
@@ -248,7 +219,6 @@ def do_ctu_collect(actions, context, analyzer_config_map,
     ctu_temp_fnmap_folder = 'tmpExternalFnMaps'
     ctu_func_map_file = 'externalFnMap.txt'
 
-    os.makedirs(os.path.join(ctu_dir, ctu_temp_fnmap_folder))
     signal.signal(signal.SIGINT, signal_handler)
     pool = multiprocessing.Pool(jobs)
     try:

@@ -252,6 +252,8 @@ def __build_clangsa_config_handler(args, context):
                                               args.ctu_dir)
         config_handler.ctu_in_memory = args.ctu_in_memory
         config_handler.log_file = args.logfile
+        config_handler.path_env_extra = context.path_env_extra
+        config_handler.ld_lib_path_extra = context.ld_lib_path_extra
 
     try:
         with open(args.clangsa_args_cfg_file, 'rb') as sa_cfg:
