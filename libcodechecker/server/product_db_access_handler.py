@@ -7,9 +7,6 @@
 Handle Thrift requests for the product manager service.
 """
 
-import base64
-import os
-
 import sqlalchemy
 
 import shared
@@ -19,7 +16,6 @@ from libcodechecker.logger import LoggerFactory
 from libcodechecker.profiler import timeit
 
 from config_db_model import *
-from run_database import SQLServer
 
 LOG = LoggerFactory.get_new_logger('PRODUCT HANDLER')
 

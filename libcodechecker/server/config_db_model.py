@@ -6,12 +6,12 @@
 """
 SQLAlchemy ORM model for the product configuration database.
 """
+
 from __future__ import print_function
 from __future__ import unicode_literals
 
 from sqlalchemy import *
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import *
 
 CC_META = MetaData(naming_convention={
     "ix": 'ix_%(column_0_label)s',
@@ -85,16 +85,8 @@ class Product(Base):
 #         self.name = name
 #         self.is_group = is_group
 
-
-def CreateSchema(engine):
-    """ Creates the schema if it does not exists.
-        Do not check version or do migration yet. """
-    Base.metadata.create_all(engine)
-
-
-def CreateSession(engine):
-    """ Creates a scoped session factory that can act like a session.
-        The factory uses a thread_local registry, so every thread have
-        its own session. """
-    SessionFactory = scoped_session(sessionmaker(bind=engine))
-    return SessionFactory
+IDENTIFIER = {
+    'identifier': "ConfigDatabase",
+    'orm_meta': CC_META,
+    'version_class': DBVersion
+}
