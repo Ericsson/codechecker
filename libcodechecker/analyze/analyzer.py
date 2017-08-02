@@ -89,7 +89,8 @@ def perform_analysis(args, context, actions, metadata):
     if 'ctu_phases' in args:
         ctu_collect = args.ctu_phases[0]
         ctu_analyze = args.ctu_phases[1]
-        ctu_dir = os.path.join(args.output_path, context.ctu_dir)
+        ctu_dir = os.path.join(args.output_path, 'ctu-dir')
+        args.ctu_dir = ctu_dir
         if analyzer_types.CLANG_SA not in analyzers:
             LOG.error("CTU can only be used with the clang static analyzer.")
             return
@@ -125,7 +126,7 @@ def perform_analysis(args, context, actions, metadata):
         ctu_manager.do_ctu_collect(actions, context, config_map, args.jobs,
                                    __get_skip_handler(args), ctu_dir)
 
-    if ctu_analyze or not ctu_analyze and not ctu_collect:
+    if ctu_analyze or (not ctu_analyze and not ctu_collect):
         analysis_manager.start_workers(actions, context, config_map,
                                        args.jobs, args.output_path,
                                        __get_skip_handler(args), metadata)

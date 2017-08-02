@@ -32,9 +32,6 @@
     "version_file": "config/version.json",
     "checkers_severity_map_file": "config/checker_severity_map.json",
     "gdb_config_file": "config/gdbScript.gdb",
-    "ctu_dir": "ctu-dir",
-    "ctu_func_map_cmd": "clang-func-mapping",
-    "ctu_func_map_file": "externalFnMap.txt",
-    "ctu_temp_fnmap_folder": "tmpExternalFnMaps"
+    "ctu_func_map_cmd": "clang-func-mapping"
   }
 }

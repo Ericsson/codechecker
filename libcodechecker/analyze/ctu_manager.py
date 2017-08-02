@@ -206,7 +206,8 @@ def map_functions(triple_arch, action, source, config, env,
 def collect_build_action(params):
     """ Preprocess sources by generating all data needed by CTU analysis. """
 
-    action, context, analyzer_config_map, skip_handler = params
+    action, context, analyzer_config_map, skip_handler, \
+        ctu_temp_fnmap_folder = params
 
     try:
         for source in action.sources:
@@ -225,7 +226,7 @@ def collect_build_action(params):
                              analyzer_environment)
             map_functions(triple_arch, action, source, config,
                           analyzer_environment, context.ctu_func_map_cmd,
-                          context.ctu_temp_fnmap_folder)
+                          ctu_temp_fnmap_folder)
     except Exception as ex:
         LOG.debug_analyzer(str(ex))
         traceback.print_exc(file=sys.stdout)
@@ -244,14 +245,18 @@ def do_ctu_collect(actions, context, analyzer_config_map,
         finally:
             sys.exit(1)
 
-    os.makedirs(os.path.join(ctu_dir, context.ctu_temp_fnmap_folder))
+    ctu_temp_fnmap_folder = 'tmpExternalFnMaps'
+    ctu_func_map_file = 'externalFnMap.txt'
+
+    os.makedirs(os.path.join(ctu_dir, ctu_temp_fnmap_folder))
     signal.signal(signal.SIGINT, signal_handler)
     pool = multiprocessing.Pool(jobs)
     try:
         collect_actions = [(build_action,
                             context,
                             analyzer_config_map,
-                            skip_handler)
+                            skip_handler,
+                            ctu_temp_fnmap_folder)
                            for build_action in actions]
         pool.map_async(collect_build_action, collect_actions).get(float('inf'))
         pool.close()
@@ -262,5 +267,5 @@ def do_ctu_collect(actions, context, analyzer_config_map,
         pool.join()
 
     merge_ctu_func_maps(ctu_dir,
-                        context.ctu_func_map_file,
-                        context.ctu_temp_fnmap_folder)
+                        ctu_func_map_file,
+                        ctu_temp_fnmap_folder)

@@ -249,7 +249,7 @@ def __build_clangsa_config_handler(args, context):
 
     if 'ctu_phases' in args:
         config_handler.ctu_dir = os.path.join(args.output_path,
-                                              context.ctu_dir)
+                                              args.ctu_dir)
         config_handler.ctu_in_memory = args.ctu_in_memory
         config_handler.log_file = args.logfile
 

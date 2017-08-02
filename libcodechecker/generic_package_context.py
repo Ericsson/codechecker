@@ -245,20 +245,8 @@ class Context(context_base.ContextBase):
         return self.__analyzers
 
     @property
-    def ctu_dir(self):
-        return self.pckg_layout['ctu_dir']
-
-    @property
     def ctu_func_map_cmd(self):
         return self.pckg_layout['ctu_func_map_cmd']
-
-    @property
-    def ctu_func_map_file(self):
-        return self.pckg_layout['ctu_func_map_file']
-
-    @property
-    def ctu_temp_fnmap_folder(self):
-        return self.pckg_layout['ctu_temp_fnmap_folder']
 
 
 def get_context():
