@@ -68,3 +68,10 @@ exception RequestFailed {
   2: string    message
 }
 
+enum ReviewStatus {
+  UNREVIEWED,     // Nobody has seen this bug.
+  CONFIRMED,      // This is really bug.
+  FALSE_POSITIVE, // This is not a bug.
+  WONT_FIX        // This is a bug but we don't want to fix it.
+}
+
