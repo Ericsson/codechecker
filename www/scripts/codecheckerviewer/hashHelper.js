@@ -26,13 +26,32 @@ function (hash, ioQuery) {
       hash(ioQuery.objectToQuery(values));
     },
 
+    removeReport : function (reportId) {
+      if(values.report)
+        delete values.report;
+      hash(ioQuery.objectToQuery(values));
+    },
+
+    setFilter : function (filterGroup) {
+      var filters = filterGroup.getChildren().map(function (filter) {
+        return filter.getValues();
+      });
+      values.filters = JSON.stringify(filters);
+      hash(ioQuery.objectToQuery(values));
+    },
+
     clear : function () {
       values = {};
       hash(ioQuery.objectToQuery(values));
     },
 
     getValues : function () {
-      return ioQuery.queryToObject(hash());
+      values = ioQuery.queryToObject(hash());
+      if ( values.filters ){
+        var text = decodeURIComponent(values.filters);
+        values.filters = JSON.parse(text);
+      }
+      return values
     }
   };
 });
