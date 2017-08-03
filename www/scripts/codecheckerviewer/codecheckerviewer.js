@@ -21,7 +21,7 @@ define([
   'codechecker/util'],
 function (declare, topic, domConstruct, Dialog, DropDownMenu, MenuItem,
   DropDownButton, BorderContainer, ContentPane, TabContainer, hashHelper,
-  ListOfBugs, ListOfRuns, util) {
+  ListOfBugs, ListOfRuns, util, filterHelper) {
 
   return function () {
 
@@ -140,15 +140,16 @@ function (declare, topic, domConstruct, Dialog, DropDownMenu, MenuItem,
         }
 
         var urlValues = hashHelper.getValues();
-
-        if (urlValues.run)
+        if (urlValues.run) {
           topic.publish('openRun',
-            findRunData(parseInt(urlValues.run)));
-        else if (urlValues.baseline && urlValues.newcheck)
+            findRunData(parseInt(urlValues.run)), urlValues.filters);
+        } else if (urlValues.baseline && urlValues.newcheck){
           topic.publish('openDiff', {
             baseline : findRunData(parseInt(urlValues.baseline)),
-            newcheck : findRunData(parseInt(urlValues.newcheck))
-          });
+            newcheck : findRunData(parseInt(urlValues.newcheck)),
+            }, urlValues.filters
+          );
+        }
 
         if (urlValues.report)
           topic.publish('openFile', parseInt(urlValues.report));
@@ -166,11 +167,12 @@ function (declare, topic, domConstruct, Dialog, DropDownMenu, MenuItem,
 
     var runIdToTab = {};
 
-    topic.subscribe('openRun', function (runData) {
+    topic.subscribe('openRun', function (runData, filters) {
       if (!(runData.runId in runIdToTab)) {
         runIdToTab[runData.runId] = new ListOfBugs({
           runData : runData,
           title : runData.name,
+          filters : filters,
           closable : true,
           onClose : function () {
             delete runIdToTab[runData.runId];
@@ -187,13 +189,14 @@ function (declare, topic, domConstruct, Dialog, DropDownMenu, MenuItem,
       runsTab.selectChild(runIdToTab[runData.runId]);
     });
 
-    topic.subscribe('openDiff', function (diff) {
+    topic.subscribe('openDiff', function (diff, filters) {
       var tabId = diff.baseline.runId + ':' + diff.newcheck.runId;
 
       if (!(tabId in runIdToTab)) {
         runIdToTab[tabId] = new ListOfBugs({
           baseline : diff.baseline,
           newcheck : diff.newcheck,
+          filters : filters,
           title : 'Diff of ' + diff.baseline.name + ' and ' + diff.newcheck.name,
           closable : true,
           onClose : function () {
