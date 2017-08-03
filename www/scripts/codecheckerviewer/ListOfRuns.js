@@ -11,12 +11,13 @@ define([
   'dojo/topic',
   'dijit/Dialog',
   'dijit/form/Button',
+  'dijit/form/RadioButton',
   'dijit/form/TextBox',
   'dijit/layout/BorderContainer',
   'dijit/layout/ContentPane',
   'dojox/grid/DataGrid'],
 function (declare, domConstruct, ItemFileWriteStore, topic, Dialog, Button,
-  TextBox, BorderContainer, ContentPane, DataGrid) {
+  RadioButton, TextBox, BorderContainer, ContentPane, DataGrid) {
 
   function prettifyDuration(seconds) {
     var prettyDuration = "--------";
@@ -37,6 +38,39 @@ function (declare, domConstruct, ItemFileWriteStore, topic, Dialog, Button,
     return prettyDuration;
   }
 
+  /**
+   * This function helps to format a data grid cell with two radio buttons.
+   * @param args {runData, listOfRunsGrid} - the value from the data store that
+   * is passed as a parameter to this function.
+   */
+  function diffBtnFormatter(args) {
+    var infoPane = args.listOfRunsGrid.infoPane;
+    var container = new ContentPane({ style : 'padding: 0px' });
+
+    var diffBtnBase = new RadioButton({
+      name    : 'diff-base',
+      checked : infoPane.baseline &&
+                args.runData.runId === infoPane.baseline.runId,
+      onClick : function () {
+        infoPane.setBaseline(args.runData);
+      }
+    });
+
+    var diffBtnNew = new RadioButton({
+      name    : 'diff-new',
+      checked : infoPane.newcheck &&
+                args.runData.runId === infoPane.newcheck.runId,
+      onClick : function () {
+        infoPane.setNewcheck(args.runData);
+      }
+    });
+
+    container.addChild(diffBtnBase);
+    container.addChild(diffBtnNew);
+
+    return container;
+  }
+
   var ListOfRunsGrid = declare(DataGrid, {
     constructor : function () {
       this.store = new ItemFileWriteStore({
@@ -44,7 +78,7 @@ function (declare, domConstruct, ItemFileWriteStore, topic, Dialog, Button,
       });
 
       this.structure = [
-        { name : 'Diff', field : 'diff', styles : 'text-align: center;', type : 'dojox.grid.cells.Bool', editable : true },
+        { name : 'Diff', field : 'diff', styles : 'text-align: center;', formatter : diffBtnFormatter},
         { name : 'Run Id', field : 'runid', styles : 'text-align: center;' },
         { name : 'Name', field : 'name', styles : 'text-align: left;', width : '100%' },
         { name : 'Date', field : 'date', styles : 'text-align: center;', width : '30%' },
@@ -89,53 +123,12 @@ function (declare, domConstruct, ItemFileWriteStore, topic, Dialog, Button,
 
           break;
 
-        case 'diff':
-          if (evt.target.type !== 'checkbox') {
-            item.diff[0] = !item.diff[0];
-            this.update();
-          }
-
-          var items = this.getItemsWhere(function (item) {
-            return item.diff[0];
-          });
-
-          if (item.diff[0])
-            if (items.length === 1)
-              this.infoPane.setBaseline(item.runData[0]);
-            else if (items.length === 2)
-              this.infoPane.setNewcheck(item.runData[0]);
-            else
-              item.diff[0] = false;
-          else
-            if (items.length === 0)
-              this.infoPane.setBaseline(null);
-            else if (items.length === 1) {
-              this.infoPane.setNewcheck(null);
-              this.infoPane.setBaseline(items[0].runData[0]);
-            }
-
-          this.update();
-
-          break;
-
         case 'checkcmd':
           this._dialog.set('content', item.runData[0].runCmd);
           this._dialog.show();
 
           break;
       }
-    },
-
-    getItemsWhere : function (func) {
-      var result = [];
-
-      for (var i = 0; i < this.rowCount; ++i) {
-        var item = this.getItem(i);
-        if (func(item))
-          result.push(item);
-      }
-
-      return result;
     },
 
     /**
@@ -186,7 +179,7 @@ function (declare, domConstruct, ItemFileWriteStore, topic, Dialog, Button,
         runData      : runData,
         checkcmd     : '<span class="link">Show</span>',
         del          : false,
-        diff         : false
+        diff         : { 'runData' : runData, 'listOfRunsGrid' : this }
       });
     },
 
@@ -211,20 +204,32 @@ function (declare, domConstruct, ItemFileWriteStore, topic, Dialog, Button,
 
   var RunsInfoPane = declare(ContentPane, {
     constructor : function () {
-      this.deleteRunIds = [];
-      this.style = 'padding: 2px';
-    },
-
-    postCreate : function () {
       var that = this;
-      this.inherited(arguments);
+
+      this.deleteRunIds = [];
+
+      //--- Text box for searching runs. ---//
+
+      this._runFilter = new TextBox({
+        id          : 'runs-filter',
+        placeHolder : 'Search for runs...',
+        onKeyUp     : function (evt) {
+          clearTimeout(this.timer);
+
+          var filter = this.get('value');
+          this.timer = setTimeout(function () {
+            that.listOfRunsGrid.refreshGrid(filter);
+          }, 500);
+        }
+      });
 
       //--- Diff Button ---//
 
-      this.diffBtn = new Button({
-        label : 'Diff',
+      this._diffBtn = new Button({
+        label    : 'Diff',
+        class    : 'diff-btn',
         disabled : true,
-        onClick : function () {
+        onClick  : function () {
           topic.publish('openDiff', {
             baseline : that.baseline,
             newcheck : that.newcheck
@@ -232,35 +237,13 @@ function (declare, domConstruct, ItemFileWriteStore, topic, Dialog, Button,
         }
       });
 
-      this.addChild(this.diffBtn);
-
-      //--- Baseline and newcheck displays ---//
-
-      var baselineDiv = domConstruct.create('div', {
-        innerHTML : 'Baseline: ',
-        class : 'diffDisplay'
-      });
-
-      var newcheckDiv = domConstruct.create('div', {
-        innerHTML : 'NewCheck: ',
-        class : 'diffDisplay'
-      });
-
-      this.baselineSpan
-        = domConstruct.create('span', { innerHTML : '-' }, baselineDiv);
-      this.newcheckSpan
-        = domConstruct.create('span', { innerHTML : '-' }, newcheckDiv);
-
-      domConstruct.place(baselineDiv, this.domNode);
-      domConstruct.place(newcheckDiv, this.domNode);
-
       //--- Delete Button ---//
 
-      this.deleteBtn = new Button({
-        label : 'Delete',
-        class : 'deleteButton',
+      this._deleteBtn = new Button({
+        label    : 'Delete',
+        class    : 'del-btn',
         disabled : true,
-        onClick : function () {
+        onClick  : function () {
           that.listOfRunsGrid.store.fetch({
             onComplete : function (runs) {
               runs.forEach(function (run) {
@@ -276,8 +259,12 @@ function (declare, domConstruct, ItemFileWriteStore, topic, Dialog, Button,
           that.update();
         }
       });
+    },
 
-      this.addChild(this.deleteBtn);
+    postCreate : function () {
+      this.addChild(this._runFilter);
+      this.addChild(this._deleteBtn);
+      this.addChild(this._diffBtn);
     },
 
     addToDeleteList : function (runId) {
@@ -294,55 +281,33 @@ function (declare, domConstruct, ItemFileWriteStore, topic, Dialog, Button,
     },
 
     setBaseline : function (runData) {
-      if (runData) {
-        this.baselineSpan.innerHTML = runData.runId;
+      if (runData)
         this.baseline = runData;
-      } else {
-        this.baselineSpan.innerHTML = '-';
-        this.baseline = undefined;
-      }
+
       this.update();
     },
 
     setNewcheck : function (runData) {
-      if  (runData) {
-        this.newcheckSpan.innerHTML = runData.runId;
+      if (runData)
         this.newcheck = runData;
-      } else {
-        this.newcheckSpan.innerHTML = '-';
-        this.newcheck = undefined;
-      }
+
       this.update();
     },
 
     update : function () {
-      this.deleteBtn.set('disabled', this.deleteRunIds.length === 0);
-      this.diffBtn.set('disabled',
-        this.baselineSpan.innerHTML === '-' ||
-        this.newcheckSpan.innerHTML === '-')
-    }
-  });
+      //--- Update delete button settings. ---//
 
-  var RunFilter = declare(ContentPane, {
-    constructor : function () {
-      var that = this;
+      this._deleteBtn.set('disabled', this.deleteRunIds.length === 0);
 
-      this._runFilter = new TextBox({
-        id          : 'runs-filter',
-        placeHolder : 'Search for runs...',
-        onKeyUp    : function (evt) {
-          clearTimeout(this.timer);
+      //--- Update diff button settings. ---//
 
-          var filter = this.get('value');
-          this.timer = setTimeout(function () {
-            that.listOfRunsGrid.refreshGrid(filter);
-          }, 500);
-        }
-      });
-    },
+      var activateDiff = this.baseline && this.newcheck &&
+                         this.baseline !== this.newcheck;
 
-    postCreate : function () {
-      this.addChild(this._runFilter);
+      this._diffBtn.set('disabled', !activateDiff);
+      this._diffBtn.set('label', activateDiff
+        ? 'Diff ' + this.baseline.name + ' to ' + this.newcheck.name
+        : 'Diff');
     }
   });
 
@@ -350,13 +315,8 @@ function (declare, domConstruct, ItemFileWriteStore, topic, Dialog, Button,
     postCreate : function () {
       var that = this;
 
-      var filterPane = new RunFilter({
-        id : 'runs-filter-container',
-        region : 'top'
-      });
-
       var runsInfoPane = new RunsInfoPane({
-        region : 'bottom'
+        region : 'top'
       });
 
       var listOfRunsGrid = new ListOfRunsGrid({
@@ -366,9 +326,7 @@ function (declare, domConstruct, ItemFileWriteStore, topic, Dialog, Button,
       });
 
       runsInfoPane.set('listOfRunsGrid', listOfRunsGrid);
-      filterPane.set('listOfRunsGrid', listOfRunsGrid);
 
-      this.addChild(filterPane);
       this.addChild(runsInfoPane);
       this.addChild(listOfRunsGrid);
     },
