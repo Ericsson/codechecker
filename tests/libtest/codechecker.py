@@ -3,13 +3,13 @@
 #   This file is distributed under the University of Illinois Open Source
 #   License. See LICENSE.TXT for details.
 # -----------------------------------------------------------------------------
+import json
 import os
 import shlex
 import subprocess
 import time
 
-from subprocess import CalledProcessError
-
+from subprocess import CalledProcessError, Popen, PIPE, STDOUT
 from . import project
 
 
@@ -29,6 +29,35 @@ def wait_for_postgres_shutdown(workspace):
         max_wait_time -= 1
         if max_wait_time == 0:
             break
+
+
+def login(codechecker_cfg, test_project_path, username, password):
+    """
+    Log in to a server
+
+    """
+    print ("Logging in")
+    login_cmd = ['CodeChecker', 'cmd', 'login',
+                 '-u', username,
+                 '--verbose', 'debug',
+                 '--host', 'localhost',
+                 '--port', str(codechecker_cfg['viewer_port'])]
+    auth_creds = {'client_autologin': True,
+                  "credentials": {"*": username+":"+password}}
+
+    auth_file = os.path.join(test_project_path, ".codechecker.passwords.json")
+    with open(auth_file, 'w') as outfile:
+        json.dump(auth_creds, outfile)
+    try:
+        print(' '.join(login_cmd))
+        out = subprocess.call(shlex.split(' '.join(login_cmd)),
+                              cwd=test_project_path,
+                              env=codechecker_cfg['check_env'])
+        print out
+        return 0
+    except OSError as cerr:
+        print("Failed to call:\n" + ' '.join(cerr))
+        return cerr.returncode
 
 
 def check(codechecker_cfg, test_project_name, test_project_path):

@@ -30,7 +30,21 @@ class TestComment(unittest.TestCase):
         self._testproject_data = env.setup_test_proj_cfg(self._test_workspace)
         self.assertIsNotNone(self._testproject_data)
 
-        self._cc_client = env.setup_viewer_client(self._test_workspace)
+        auth_client = env.setup_auth_client(self._test_workspace)
+
+        sessionToken_cc = auth_client.performLogin("Username:Password",
+                                                   "cc:test")
+        sessionToken_john = auth_client.performLogin("Username:Password",
+                                                     "john:doe")
+        self._cc_client =\
+            env.setup_viewer_client(
+                self._test_workspace,
+                session_token=sessionToken_cc)
+
+        self._cc_client_john =\
+            env.setup_viewer_client(
+                self._test_workspace,
+                session_token=sessionToken_john)
         self.assertIsNotNone(self._cc_client)
 
         # Get the run names which belong to this test
@@ -66,20 +80,20 @@ class TestComment(unittest.TestCase):
         self.assertEqual(num_comment, 0)
 
         # Try to add a new comment for the first bug
-        comment1 = CommentData(author='Anonymous', message='First msg')
+        comment1 = CommentData(author='anybody', message='First msg')
         success = self._cc_client.addComment(bug.reportId, comment1)
         self.assertTrue(success)
         logging.debug('Bug commented successfully')
 
         # Try to add another new comment for the first bug
-        comment2 = CommentData(author='Anonymous', message='Second msg')
+        comment2 = CommentData(author='anybody', message='Second msg')
         success = self._cc_client.addComment(bug.reportId, comment2)
         self.assertTrue(success)
         logging.debug('Bug commented successfully')
 
         # Add new comment for the second bug
         bug2 = run_results[1]
-        comment3 = CommentData(author='Anonymous', message='Third msg')
+        comment3 = CommentData(author='anybody', message='Third msg')
         success = self._cc_client.addComment(bug2.reportId, comment3)
         self.assertTrue(success)
         logging.debug('Bug commented successfully')
@@ -87,6 +101,8 @@ class TestComment(unittest.TestCase):
         # There are two comments available for the first bug
         comments = self._cc_client.getComments(bug.reportId)
         self.assertEqual(len(comments), 2)
+        for c in comments:
+            self.assertEqual(c.author, 'cc')
 
         num_comment = self._cc_client.getCommentCount(bug.reportId)
         self.assertEqual(num_comment, 2)
@@ -95,9 +111,16 @@ class TestComment(unittest.TestCase):
         self.assertGreater(comments[0].createdAt, comments[1].createdAt)
 
         # Remove the first comment
+        print ("removing comment:"+str(comments[0].id))
         success = self._cc_client.removeComment(comments[0].id)
         self.assertTrue(success)
         logging.debug('Comment removed successfully')
+
+        # Remove the second comment as john should be unsuccessful
+        print ("removing comment:"+str(comments[1].id))
+        success = self._cc_client_john.removeComment(comments[1].id)
+        self.assertFalse(success)
+        logging.debug('Comment cannot be removed by another user')
 
         comments = self._cc_client.getComments(bug.reportId)
         self.assertEqual(len(comments), 1)
@@ -110,6 +133,11 @@ class TestComment(unittest.TestCase):
         success = self._cc_client.updateComment(comments[0].id, new_msg)
         self.assertTrue(success)
         logging.debug('Comment edited successfully')
+
+        john_msg = 'John cannot edit'
+        success = self._cc_client_john.updateComment(comments[0].id, john_msg)
+        self.assertFalse(success)
+        logging.debug('Comment cannot be edited by john')
 
         comments = self._cc_client.getComments(bug.reportId)
         self.assertEqual(len(comments), 1)
