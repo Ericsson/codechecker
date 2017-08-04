@@ -48,21 +48,21 @@ function (declare, topic, domConstruct, Dialog, DropDownMenu, MenuItem,
 
     //--- Logo ---//
 
-    var logo = domConstruct.create('div', {
-      id : 'logo',
-      innerHTML : 'CodeChecker'
-    });
+    var logoContainer = domConstruct.create('div', {
+      id : 'logo-container'
+    }, headerPane.domNode);
 
-    var serverVersion = CC_SERVICE.getPackageVersion();
+    var logo = domConstruct.create('span', { id : 'logo' }, logoContainer);
+
+    var logoText = domConstruct.create('div', {
+      id : 'logo-text',
+      innerHTML : 'CodeChecker'
+    }, logoContainer);
 
     var version = domConstruct.create('span', {
-      id : 'version',
-      innerHTML : serverVersion
-    });
-
-    domConstruct.place(version, logo);
-
-    domConstruct.place(logo, headerPane.domNode);
+      id : 'logo-version',
+      innerHTML : CC_SERVICE.getPackageVersion()
+    }, logoText);
 
     var user = CC_AUTH_SERVICE.getLoggedInUser();
     var loginUserSpan = null;
