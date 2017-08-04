@@ -55,14 +55,14 @@ This step can be skipped if you always give the path of CodeChecker command.
 export PATH=~/codechecker_package/CodeChecker/bin:$PATH
 ~~~~~~
 
-Check a test project.
-~~~~~~{.sh}
-CodeChecker check --dbusername test_user --postgresql -n test_project_check -b "cd my_test_project && make clean && make"
-~~~~~~
-
 Start web server to view the results.
 ~~~~~~{.sh}
 CodeChecker server --dbusername test_user --postgresql
+~~~~~~
+
+Check a test project.
+~~~~~~{.sh}
+CodeChecker check --dbusername test_user -n test_project_check -b "cd my_test_project && make clean && make"
 ~~~~~~
 
 View the results with firefox.

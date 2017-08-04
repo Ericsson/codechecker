@@ -640,15 +640,15 @@ def add_arguments_to_parser(parser):
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         description="CodeChecker organises its databases into products. "
                     "Each product has an individually configured database "
-                    "which stores the analysis results. The subcommands "
-                    "under 'CodeChecker cmd products' are used to manage the "
-                    "products configured by the server. Please see the "
-                    "individual subcommands for details.",
+                    "which stores the analysis results. These subcommands "
+                    "are used to manage the products configured by the "
+                    "server. Please see the individual subcommands for "
+                    "details.",
         epilog="Most of these commands require authentication and "
                "appropriate access rights. Please see 'CodeChecker cmd "
                "login' to authenticate.",
         help="Access subcommands related to configuring the products managed "
-             "by this server.")
+             "by a CodeChecker server.")
     __register_products(products)
     __add_common_arguments(products, needs_product_url=None)
 

@@ -10,7 +10,7 @@ Defines a subcommand for CodeChecker which prints version information.
 import argparse
 import json
 
-from codeCheckerDBAccess import constants
+from shared import constants
 
 from libcodechecker import generic_package_context
 from libcodechecker import output_formatters
@@ -66,7 +66,8 @@ def main(args):
         ("Package build date", context.package_build_date),
         ("Git commit ID (hash)", context.package_git_hash),
         ("Git tag information", context.package_git_tag),
-        ("Database schema version", str(context.db_version_info)),
+        ("Configuration schema version", str(context.product_db_version_info)),
+        ("Database schema version", str(context.run_db_version_info)),
         ("Client API version (Thrift)", constants.API_VERSION)
     ]
 
