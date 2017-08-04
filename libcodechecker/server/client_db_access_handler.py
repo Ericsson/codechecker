@@ -41,6 +41,15 @@ from libcodechecker.profiler import timeit
 LOG = LoggerFactory.get_new_logger('ACCESS HANDLER')
 
 
+class CountFilter:
+    FILE = 0
+    CHECKER_MSG = 1
+    CHECKER_NAME = 2
+    SEVERITY = 3
+    REVIEW_STATUS = 4
+    DETECTION_STATUS = 5
+
+
 def conv(text):
     """
     Convert * to % got from clients for the database queries.
@@ -50,26 +59,32 @@ def conv(text):
     return text.replace('*', '%')
 
 
-def process_report_filter_v2(report_filter):
+def process_report_filter_v2(report_filter, count_filter=None):
     """
     Process the new report filter.
+    If the count_filter parameter is set it will ignore that field type of
+    the report_filter.
+    E.g.: If counter_filter is equal with Severity, it will ignore severity
+    field values of the report_filter.
     """
 
     if report_filter is None:
         return text('')
 
     AND = []
-    if report_filter.filepath is not None:
+    if report_filter.filepath is not None and count_filter != CountFilter.FILE:
         OR = [File.filepath.ilike(conv(fp))
               for fp in report_filter.filepath]
         AND.append(or_(*OR))
 
-    if report_filter.checkerMsg is not None:
+    if report_filter.checkerMsg is not None and \
+       count_filter != CountFilter.CHECKER_MSG:
         OR = [Report.checker_message.ilike(conv(cm))
               for cm in report_filter.checkerMsg]
         AND.append(or_(*OR))
 
-    if report_filter.checkerName is not None:
+    if report_filter.checkerName is not None and \
+       count_filter != CountFilter.CHECKER_NAME:
         OR = [Report.checker_id.ilike(conv(cn))
               for cn in report_filter.checkerName]
         AND.append(or_(*OR))
@@ -77,18 +92,27 @@ def process_report_filter_v2(report_filter):
     if report_filter.reportHash is not None:
         AND.append(Report.bug_id.in_(report_filter.reportHash))
 
-    if report_filter.severity is not None:
+    if report_filter.severity is not None and \
+       count_filter != CountFilter.SEVERITY:
         AND.append(Report.severity.in_(report_filter.severity))
 
-    if report_filter.detectionStatus is not None:
+    if report_filter.detectionStatus is not None and \
+       count_filter != CountFilter.DETECTION_STATUS:
         dst = list(map(detection_status_str,
                        report_filter.detectionStatus))
         AND.append(Report.detection_status.in_(dst))
 
-    if report_filter.reviewStatus is not None:
-        rvst = list(map(review_status_str,
-                        report_filter.reviewStatus))
-        AND.append(ReviewStatus.status.in_(rvst))
+    if report_filter.reviewStatus is not None and \
+       count_filter != CountFilter.REVIEW_STATUS:
+        OR = [ReviewStatus.status.in_(
+            list(map(review_status_str, report_filter.reviewStatus)))]
+
+        # No database entry for unreviewed reports
+        if (shared.ttypes.ReviewStatus.UNREVIEWED in
+                report_filter.reviewStatus):
+            OR.append(ReviewStatus.status.is_(None))
+
+        AND.append(or_(*OR))
 
     filter_expr = and_(*AND)
     return filter_expr
@@ -1274,10 +1298,12 @@ class ThriftRequestHandler(object):
         new_run_ids = cmp_data.run_ids
         diff_type = cmp_data.diff_type
 
-        base_line_hashes, new_check_hashes = \
-            self.__get_hashes_for_runs(session,
-                                       base_run_ids,
-                                       new_run_ids)
+        base_line_hashes = self.__get_hashes_for_runs(session, base_run_ids)
+
+        if not new_run_ids:
+            return base_line_hashes, base_run_ids
+
+        new_check_hashes = self.__get_hashes_for_runs(session, new_run_ids)
 
         report_hashes, run_ids = \
             get_diff_hashes_for_query(base_run_ids,
@@ -1309,7 +1335,8 @@ class ThriftRequestHandler(object):
                     # There is no difference.
                     return results
 
-            filter_expression = process_report_filter_v2(report_filter)
+            filter_expression = process_report_filter_v2(
+                report_filter, CountFilter.CHECKER_NAME)
 
             count_expr = func.count(literal_column('*'))
 
@@ -1356,7 +1383,8 @@ class ThriftRequestHandler(object):
                     # There is no difference.
                     return results
 
-            filter_expression = process_report_filter_v2(report_filter)
+            filter_expression = process_report_filter_v2(report_filter,
+                                                         CountFilter.SEVERITY)
 
             count_expr = func.count(literal_column('*'))
 
@@ -1403,7 +1431,8 @@ class ThriftRequestHandler(object):
                     # There is no difference.
                     return results
 
-            filter_expression = process_report_filter_v2(report_filter)
+            filter_expression = process_report_filter_v2(
+                report_filter, CountFilter.CHECKER_MSG)
 
             count_expr = func.count(literal_column('*'))
 
@@ -1450,7 +1479,8 @@ class ThriftRequestHandler(object):
                     # There is no difference.
                     return results
 
-            filter_expression = process_report_filter_v2(report_filter)
+            filter_expression = process_report_filter_v2(
+                report_filter, CountFilter.REVIEW_STATUS)
 
             count_expr = func.count(literal_column('*'))
 
@@ -1506,7 +1536,8 @@ class ThriftRequestHandler(object):
                     # There is no difference.
                     return results
 
-            filter_expression = process_report_filter_v2(report_filter)
+            filter_expression = process_report_filter_v2(report_filter,
+                                                         CountFilter.FILE)
 
             count_expr = func.count(literal_column('*'))
 
@@ -1556,7 +1587,8 @@ class ThriftRequestHandler(object):
                     # There is no difference.
                     return results
 
-            filter_expression = process_report_filter_v2(report_filter)
+            filter_expression = process_report_filter_v2(
+                report_filter, CountFilter.DETECTION_STATUS)
 
             count_expr = func.count(literal_column('*'))
 
@@ -1857,24 +1889,15 @@ class ThriftRequestHandler(object):
         return result
 
     @timeit
-    def __get_hashes_for_runs(self, session, base_run_ids, new_run_ids):
+    def __get_hashes_for_runs(self, session, run_ids):
 
-        LOG.debug('query all baseline hashes')
+        LOG.debug('query all hashes')
         # Keyed tuple list is returned.
         base_line_hashes = session.query(Report.bug_id) \
-            .filter(Report.run_id.in_(base_run_ids)) \
+            .filter(Report.run_id.in_(run_ids)) \
             .all()
 
-        LOG.debug('query all new check hashes')
-        # Keyed tuple list is returned.
-        new_check_hashes = session.query(Report.bug_id) \
-            .filter(Report.run_id.in_(new_run_ids)) \
-            .all()
-
-        base_line_hashes = set([t[0] for t in base_line_hashes])
-        new_check_hashes = set([t[0] for t in new_check_hashes])
-
-        return base_line_hashes, new_check_hashes
+        return set([t[0] for t in base_line_hashes])
 
     # -----------------------------------------------------------------------
     @timeit

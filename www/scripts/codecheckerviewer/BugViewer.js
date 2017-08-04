@@ -480,15 +480,16 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
         that.bugStore.put(item);
       });
 
-      var fileFilter = new CC_OBJECTS.ReportFilter();
-      fileFilter.filepath = getProperFilePath(this.reportData.checkedFile);
+      var fileFilter = new CC_OBJECTS.ReportFilter_v2();
+      fileFilter.filepath = [getProperFilePath(this.reportData.checkedFile)];
 
-      CC_SERVICE.getRunResults(
-        [this.runData.runId],
+      CC_SERVICE.getRunResults_v2(
+        this.runResultParam.runIds,
         CC_OBJECTS.MAX_QUERY_SIZE,
         0,
         [],
-        [fileFilter],
+        fileFilter,
+        this.runResultParam.cmpData,
         function (result) {
           result.forEach(function (report) { that._addReport(report); });
 
@@ -526,7 +527,7 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
       if (isOtherReport) {
         this.editor.set('reportData', item.report);
         this.buttonPane.set('reportData', item.report);
-        hashHelper.setReport(item.report.reportId);
+        hashHelper.setStateValue('report', item.report.reportId);
       }
 
       if (this.reportId !== item.report.reportId)
@@ -564,7 +565,7 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
       } else if (!item.isLeaf) {
         switch (item.kind) {
           case 'severity':
-            return "icon-severity icon-severity-" + item.id;
+            return "customIcon icon-severity-" + item.id;
           case 'bugpath':
             var status =
               util.detectionStatusFromCodeToString(item.report.detectionStatus);
@@ -973,8 +974,7 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
       for (var key in ReviewStatus) {
         var value = ReviewStatus[key];
         reviewStatusOptions.push({
-          label : '<span class="customIcon review-status-'
-                + util.reviewStatusCssClass(value)
+          label : '<span class="customIcon ' + util.reviewStatusCssClass(value)
                 + '"></span>' + util.reviewStatusFromCodeToString(value),
           value : value
         });
@@ -1064,7 +1064,8 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
         runData : this.runData,
         style : 'width: 300px;',
         editor : this._editor,
-        buttonPane : buttonPane
+        buttonPane : buttonPane,
+        runResultParam : this.runResultParam
       });
 
       this.addChild(bugStoreModelTree);
