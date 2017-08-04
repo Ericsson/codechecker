@@ -44,11 +44,12 @@ Main features
 
 
 User Documentation
-------------------------
+------------------
 
+  * [Getting started (How-To with examples)](docs/usage.md)
   * [User guide](docs/user_guide.md)
-  * [CodeChecker getting started (HOWTO)](docs/usage.md)
   * [Requiring credentials to view analysis results](docs/authentication.md)
+  * [Overview about connecting multiple analysis run databases](docs/products.md)
   * [Usage of PostgreSQL database](docs/postgresql_setup.md)
 
 Install
@@ -233,17 +234,16 @@ following debug messages in your log:
 
   
 Developer Documentation
-------------------------
+-----------------------
+
   * [Requirements, external source dependencies](docs/deps.md)
   * [Architecture overview](docs/architecture.md)
   * [Package layout](docs/package_layout.md)
   * [Checker documentation](docs/checker_docs.md)
-  * [Thrift interface](thrift_api/thrift_api.md)
+  * [Thrift interface](api/README.md)
   * [Package and integration tests](tests/readme.md)
   * [Database schema migration](docs/db_schema_guide.md)
   * A high-level overview about the infrastructure is available amongst the [2015Euro LLVM Conference](http://llvm.org/devmtg/2015-04) presentations.<br/>
     **Dániel KRUPP, György ORBÁN, Gábor HORVÁTH and Bence BABATI**:<br/>
     [_Industrial Experiences with the Clang Static Analysis Toolset_](http://llvm.org/devmtg/2015-04/slides/Clang_static_analysis_toolset_final.pdf)
 
-  
-  

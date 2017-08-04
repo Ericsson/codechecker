@@ -116,35 +116,7 @@ def add_arguments_to_parser(parser):
                              "can access the server over the Internet. "
                              "(Equivalent to specifying '--host \"\"'.)")
 
-    # TODO: Refactor the tests so that these arguments can be eliminated.
-    # These values have absolutely no use outside what the automated tests
-    # specify.
-    checksrv = parser.add_argument_group(
-        "analysis result storage server",
-        "(These options have no actual use apart from an internal usage in "
-        "the automated testing of CodeChecker features.)")
-
-    checksrv.add_argument('--check-address',
-                          type=str,
-                          dest="check_address",
-                          default="localhost",
-                          required=False,
-                          help="Set on which IP address or hostname the "
-                               "analysis result server should listen.")
-
-    checksrv.add_argument('--check-port',
-                          type=int,
-                          dest="check_port",
-                          default=argparse.SUPPRESS,
-                          required=None,
-                          help="Also start an analysis result storage server "
-                               "alongside the \"viewer\". This server could "
-                               "be used by remote clients to store new "
-                               "analysis results to the database the viewer "
-                               "server is using. Set on which port the "
-                               "analysis result server should listen.")
-
-    dbmodes = parser.add_argument_group("database arguments")
+    dbmodes = parser.add_argument_group("configuration database arguments")
 
     dbmodes = dbmodes.add_mutually_exclusive_group(required=False)
 
@@ -153,7 +125,7 @@ def add_arguments_to_parser(parser):
                          dest="sqlite",
                          metavar='SQLITE_FILE',
                          default=os.path.join(
-                             util.get_default_workspace(),
+                             '<CONFIG_DIRECTORY>',
                              "config.sqlite"),
                          required=False,
                          help="Path of the SQLite database file to use.")
@@ -313,6 +285,11 @@ def add_arguments_to_parser(parser):
 
         # Workspace should not exist as a Namespace key.
         delattr(args, 'workspace')
+
+        if '<CONFIG_DIRECTORY>' in args.sqlite:
+            # Replace the placeholder variable with the actual value.
+            args.sqlite = args.sqlite.replace('<CONFIG_DIRECTORY>',
+                                              args.config_directory)
 
         if 'postgresql' not in args:
             # Later called database modules need the argument to be actually

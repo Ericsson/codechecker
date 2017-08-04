@@ -63,7 +63,7 @@ Analyze a project with default settings:
 The results can be viewed:
  * In a web browser: http://localhost:8001
  * In the command line:
-    CodeChecker cmd results -p 8001 -n myproject
+    CodeChecker cmd results -n myproject
 
 Example scenario: Analyzing, and printing results to Terminal (no storage)
 --------------------------------------------------------------------------
