@@ -11,12 +11,12 @@ import logging
 import os
 import shlex
 import subprocess
+from subprocess import CalledProcessError
 import unittest
 
-from libtest.thrift_client_to_db import get_all_run_results
 from libtest import env
 from libtest import codechecker
-from subprocess import CalledProcessError
+from libtest.thrift_client_to_db import get_all_run_results
 
 import shared
 
@@ -78,6 +78,7 @@ class TestSuppress(unittest.TestCase):
                        "--suppress", generated_file,
                        "--export-source-suppress"
                        ]
+
         ret = __call(extract_cmd)
         self.assertEqual(ret, 0, "Failed to generate suppress file.")
 

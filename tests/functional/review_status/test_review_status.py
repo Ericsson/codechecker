@@ -11,8 +11,8 @@ import logging
 import os
 import unittest
 
-from libtest.thrift_client_to_db import get_all_run_results
 from libtest import env
+from libtest.thrift_client_to_db import get_all_run_results
 
 import shared
 

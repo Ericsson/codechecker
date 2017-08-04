@@ -7,20 +7,20 @@
 """
 Diff feature tests. Comparing results from two runs.
 """
-import os
-import unittest
-import logging
 
+import logging
+import os
 import re
 import shared
 import subprocess
+import unittest
 
 from codeCheckerDBAccess.ttypes import DiffType
 from codeCheckerDBAccess.ttypes import ReportFilter
 
-from libtest.thrift_client_to_db import get_all_run_results
-from libtest.debug_printer import print_run_results
 from libtest import env
+from libtest.debug_printer import print_run_results
+from libtest.thrift_client_to_db import get_all_run_results
 
 
 def get_severity_level(name):
@@ -70,6 +70,8 @@ class Diff(unittest.TestCase):
         self._report_dir = os.path.join(test_workspace, "reports")
         self._test_config = env.import_test_cfg(test_workspace)
         self._run_names = env.get_run_names(test_workspace)
+
+        self._url = env.parts_to_url(self._test_config['codechecker_cfg'])
 
     def test_get_diff_res_count_new(self):
         """
@@ -244,12 +246,9 @@ class Diff(unittest.TestCase):
         Count the new results with no filter in local compare mode.
         """
         base_run_name = self._run_names[0]
-        vh = self._test_config['codechecker_cfg']['viewer_host']
-        vp = self._test_config['codechecker_cfg']['viewer_port']
         diff_cmd = [self._codechecker_cmd, "cmd", "diff",
                     "--new",
-                    "--host", vh,
-                    "--port", str(vp),
+                    "--url", self._url,
                     "-b", base_run_name,
                     "-n", self._report_dir
                     ]
@@ -269,12 +268,9 @@ class Diff(unittest.TestCase):
         Count the resolved results with no filter in local compare mode.
         """
         base_run_name = self._run_names[0]
-        vh = self._test_config['codechecker_cfg']['viewer_host']
-        vp = self._test_config['codechecker_cfg']['viewer_port']
         diff_cmd = [self._codechecker_cmd, "cmd", "diff",
                     "--resolved",
-                    "--host", vh,
-                    "--port", str(vp),
+                    "--url", self._url,
                     "-b", base_run_name,
                     "-n", self._report_dir
                     ]
@@ -294,12 +290,9 @@ class Diff(unittest.TestCase):
         Count the unresolved results with no filter in local compare mode.
         """
         base_run_name = self._run_names[0]
-        vh = self._test_config['codechecker_cfg']['viewer_host']
-        vp = self._test_config['codechecker_cfg']['viewer_port']
         diff_cmd = [self._codechecker_cmd, "cmd", "diff",
                     "--unresolved",
-                    "--host", vh,
-                    "--port", str(vp),
+                    "--url", self._url,
                     "-b", base_run_name,
                     "-n", self._report_dir
                     ]
