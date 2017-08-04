@@ -11,10 +11,7 @@
 import os
 import shutil
 
-from libtest import codechecker
 from libtest import env
-from libtest import get_free_port
-from libtest import project
 
 
 # Test workspace should be initialized in this module.

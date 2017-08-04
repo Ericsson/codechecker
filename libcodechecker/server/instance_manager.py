@@ -17,12 +17,15 @@ import socket
 import stat
 
 
-def __getInstanceDescriptorPath():
-    return os.path.join(os.path.expanduser("~"), ".codechecker.instances.json")
+def __getInstanceDescriptorPath(folder=None):
+    if not folder:
+        folder = os.path.expanduser("~")
+
+    return os.path.join(folder, ".codechecker.instances.json")
 
 
-def __makeInstanceDescriptorFile():
-    descriptor = __getInstanceDescriptorPath()
+def __makeInstanceDescriptorFile(folder=None):
+    descriptor = __getInstanceDescriptorPath(folder)
     if not os.path.exists(descriptor):
         with open(descriptor, 'w') as f:
             json.dump([], f)
@@ -49,12 +52,12 @@ def __checkInstance(hostname, pid):
         return False
 
 
-def __rewriteInstanceFile(append, remove):
+def __rewriteInstanceFile(append, remove, folder=None):
     """This helper method reads the user's instance descriptor and manages it
     eliminating dead records, appending new ones and reserialising the file."""
 
-    __makeInstanceDescriptorFile()
-    with open(__getInstanceDescriptorPath(), 'r+') as f:
+    __makeInstanceDescriptorFile(folder)
+    with open(__getInstanceDescriptorPath(folder), 'r+') as f:
         portalocker.lock(f, portalocker.LOCK_EX)
 
         # After reading, check every instance if they are still valid and
@@ -77,7 +80,7 @@ def __rewriteInstanceFile(append, remove):
         portalocker.unlock(f)
 
 
-def register(pid, workspace, port):
+def register(pid, workspace, port, folder=None):
     """
     Adds the specified CodeChecker server instance to the user's instance
     descriptor.
@@ -87,24 +90,25 @@ def register(pid, workspace, port):
                             "hostname": socket.gethostname(),
                             "workspace": workspace,
                             "port": port}],
-                          [])
+                          [],
+                          folder)
 
 
-def unregister(pid):
+def unregister(pid, folder=None):
     """
     Removes the specified CodeChecker server instance from the user's instance
     descriptor.
     """
 
-    __rewriteInstanceFile([], [socket.gethostname() + ":" + str(pid)])
+    __rewriteInstanceFile([], [socket.gethostname() + ":" + str(pid)], folder)
 
 
-def list():
+def list(folder=None):
     """Returns the list of running servers for the current user."""
 
     # This method does NOT write the descriptor file.
 
-    descriptor = __getInstanceDescriptorPath()
+    descriptor = __getInstanceDescriptorPath(folder)
     instances = []
     if os.path.exists(descriptor):
         with open(descriptor, 'r') as f:

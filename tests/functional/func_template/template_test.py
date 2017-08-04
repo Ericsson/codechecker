@@ -46,9 +46,6 @@ class TestSkeleton(unittest.TestCase):
         self._cc_client = env.setup_viewer_client(test_workspace)
         self.assertIsNotNone(self._cc_client)
 
-        # Setup a server client to test server API calls.
-        self._report = env.setup_server_client(test_workspace)
-
         # Get the CodeChecker cmd if needed for the tests.
         self._codechecker_cmd = env.codechecker_cmd()
 

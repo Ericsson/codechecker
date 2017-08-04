@@ -4,13 +4,8 @@
 #   This file is distributed under the University of Illinois Open Source
 #   License. See LICENSE.TXT for details.
 # -----------------------------------------------------------------------------
-from time import sleep
-
 """Setup for the test package comment."""
 
-from subprocess import CalledProcessError
-
-import json
 import multiprocessing
 import os
 import shutil
@@ -42,8 +37,6 @@ def setup_package():
 
     test_project_path = project.path(test_project)
 
-    pg_db_config = env.get_postgresql_cfg()
-
     test_config = {}
 
     project_info = project.get_info(test_project)
@@ -54,11 +47,13 @@ def setup_package():
 
     skip_list_file = None
 
-    # Setup environment variabled for test cases.
-    host_port_cfg = env.get_host_port_cfg()
+    # Setup environment variables for the test cases.
+    host_port_cfg = {'viewer_host': 'localhost',
+                     'viewer_port': env.get_free_port(),
+                     'viewer_product': 'comment'}
 
     test_env = env.test_env()
-    test_env["HOME"] = TEST_WORKSPACE
+    test_env['HOME'] = TEST_WORKSPACE
 
     codechecker_cfg = {
         'suppress_file': suppress_file,
@@ -66,14 +61,12 @@ def setup_package():
         'check_env': test_env,
         'workspace': TEST_WORKSPACE,
         'reportdir': os.path.join(TEST_WORKSPACE, 'reports'),
-        'pg_db_config': pg_db_config,
         'checkers': ['-d', 'core.CallAndMessage',
                      '-e', 'core.StackAddressEscape']
     }
 
     codechecker_cfg.update(host_port_cfg)
 
-    test_config['codechecker_cfg'] = codechecker_cfg
     # Start the CodeChecker server.
     print("Starting server to get results")
     env.enable_auth(TEST_WORKSPACE)
@@ -82,6 +75,12 @@ def setup_package():
     codechecker.login(codechecker_cfg, TEST_WORKSPACE,
                       "cc",
                       "test")
+
+    # We still need to create a product on the new server, because
+    # in PostgreSQL mode, the same database is used for configuration
+    # by the newly started instances.
+    codechecker.add_test_package_product(host_port_cfg, TEST_WORKSPACE,
+                                         test_env)
 
     # Check the test project for the first time.
     test_project_name = project_info['name'] + '_' + uuid.uuid4().hex
@@ -108,17 +107,28 @@ def setup_package():
 
 
 def teardown_package():
-    """Stop the CodeChecker server."""
-    __STOP_SERVER.set()
-
+    """Stop the CodeChecker server and clean up after the tests."""
     # TODO: If environment variable is set keep the workspace
     # and print out the path.
     global TEST_WORKSPACE
+
+    check_env = env.import_test_cfg(TEST_WORKSPACE)[
+        'codechecker_cfg']['check_env']
+    codechecker.remove_test_package_product(TEST_WORKSPACE, check_env)
+
+    __STOP_SERVER.set()
+
+    # The custom server stated in a separate home needs to be waited, so it
+    # can properly execute its finalizers.
+    time.sleep(5)
 
     print("Removing: " + TEST_WORKSPACE)
     shutil.rmtree(TEST_WORKSPACE, ignore_errors=True)
 
 
+# This server uses custom server configuration, which is brought up here
+# and torn down by the package itself --- it does not connect to the
+# test run's "master" server.
 def _start_server(codechecker_cfg, test_config, auth=False):
     """Start the CodeChecker server."""
 
@@ -134,7 +144,9 @@ def _start_server(codechecker_cfg, test_config, auth=False):
         if proc.poll() is None:
             proc.terminate()
 
-    server_cmd = codechecker.serv_cmd(codechecker_cfg, test_config)
+    server_cmd = codechecker.serv_cmd(codechecker_cfg['workspace'],
+                                      str(codechecker_cfg['viewer_port']),
+                                      env.get_postgresql_cfg())
 
     server_proc = multiprocessing.Process(
         name='server',

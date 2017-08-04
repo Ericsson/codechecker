@@ -58,7 +58,7 @@ before_install:
 install:
     - pip install nose pep8
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pip install virtualenv; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then psql -c 'create database travis_ci_test;' -U postgres; fi
+    - psql -c 'create database codechecker_config;' -U postgres
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then cat postgres.log; fi
 
 addons:
