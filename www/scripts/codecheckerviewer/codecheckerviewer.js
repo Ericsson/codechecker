@@ -140,23 +140,42 @@ function (declare, topic, domConstruct, Dialog, DropDownMenu, MenuItem,
         }
 
         var urlValues = hashHelper.getValues();
-        if (urlValues.run) {
+        if (urlValues.allReports) {
+          topic.publish('openAllReports');
+        } else if (urlValues.run) {
           topic.publish('openRun',
             findRunData(parseInt(urlValues.run)), urlValues.filters);
-        } else if (urlValues.baseline && urlValues.newcheck){
+        } else if (urlValues.baseline || urlValues.newcheck ||
+          urlValues.difftype) {
           topic.publish('openDiff', {
             baseline : findRunData(parseInt(urlValues.baseline)),
             newcheck : findRunData(parseInt(urlValues.newcheck)),
-            }, urlValues.filters
-          );
+            difftype : urlValues.difftype
+                     ? urlValues.difftype : CC_OBJECTS.DiffType.NEW
+          });
         }
 
         if (urlValues.report)
           topic.publish('openFile', parseInt(urlValues.report));
+      },
+      onShow : function () {
+        if (!this.initalized) {
+          this.initalized = true;
+          return;
+        }
+
+        hashHelper.clear();
       }
     });
 
     runsTab.addChild(listOfRuns);
+
+    var listOfAllReports = new ListOfBugs({
+      title : 'All reports',
+      allReportView : true
+    });
+
+    runsTab.addChild(listOfAllReports);
 
     //--- Init page ---//
 
@@ -177,9 +196,6 @@ function (declare, topic, domConstruct, Dialog, DropDownMenu, MenuItem,
           onClose : function () {
             delete runIdToTab[runData.runId];
             return true;
-          },
-          onShow : function () {
-            hashHelper.setRun(runData.runId);
           }
         });
 
@@ -190,21 +206,20 @@ function (declare, topic, domConstruct, Dialog, DropDownMenu, MenuItem,
     });
 
     topic.subscribe('openDiff', function (diff, filters) {
-      var tabId = diff.baseline.runId + ':' + diff.newcheck.runId;
+      var tabId = (diff.baseline ? diff.baseline.runId : 'All') + ':'
+        + (diff.newcheck ? diff.newcheck.runId : 'All');
 
       if (!(tabId in runIdToTab)) {
         runIdToTab[tabId] = new ListOfBugs({
           baseline : diff.baseline,
           newcheck : diff.newcheck,
-          filters : filters,
-          title : 'Diff of ' + diff.baseline.name + ' and ' + diff.newcheck.name,
+          difftype : diff.difftype,
+          title : 'Diff of ' + (diff.baseline ? diff.baseline.name : 'All')
+            + (diff.newcheck ? ' and ' + diff.newcheck.name : ''),
           closable : true,
           onClose : function () {
             delete runIdToTab[tabId];
             return true;
-          },
-          onShow : function () {
-            hashHelper.setDiff(diff.baseline.runId, diff.newcheck.runId);
           }
         });
 
@@ -222,6 +237,10 @@ function (declare, topic, domConstruct, Dialog, DropDownMenu, MenuItem,
         docDialog.set('content', marked(documentation));
         docDialog.show();
       });
+    });
+
+    topic.subscribe('openAllReports', function () {
+      runsTab.selectChild(listOfAllReports);
     });
   };
 });

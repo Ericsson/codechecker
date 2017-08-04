@@ -16,28 +16,46 @@ define([
   'dijit/layout/TabContainer',
   'dijit/Tooltip',
   'dojox/grid/DataGrid',
-  'codechecker/hashHelper',
   'codechecker/BugViewer',
-  'codechecker/filterHelper',
+  'codechecker/BugFilterView',
+  'codechecker/hashHelper',
   'codechecker/util'],
 function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
-  BorderContainer, TabContainer, Tooltip, DataGrid, hashHelper, BugViewer,
-  filterHelper, util) {
+  BorderContainer, TabContainer, Tooltip, DataGrid, BugViewer, BugFilterView,
+  hashHelper, util) {
 
-  var filterHook = function(query, isDiff) {
-    var length;
-    if (query.reportFilters.length > 1)
-      length = query.reportFilters.length;
-    else {
-      var onlyFilter = query.reportFilters[0];
-      if (onlyFilter.filepath !== "**" || onlyFilter.checkerId ||
-          onlyFilter.checkerMsg || onlyFilter.severity)
-        length = 1;
-      else
-        length = null; // null indicates default filters.
-    }
+  var filterHook = function(filters, isDiff) {
+    var length = 0;
+
+    Object.keys(filters).map(function (key) {
+      if (filters[key])
+        length += filters[key].length;
+    })
 
     topic.publish("hooks/FilteringChanged" + (isDiff ? "Diff" : ""), length);
+  };
+
+  var createRunResultFilterParameter = function (reportFilters) {
+    var cmpData = null;
+    var runIds = null;
+    if (reportFilters.run)
+      runIds = reportFilters.run;
+    else if (reportFilters.baseline || reportFilters.newcheck) {
+      runIds = reportFilters.baseline;
+
+      if (reportFilters.newcheck) {
+        cmpData = new CC_OBJECTS.CompareData();
+        cmpData.run_ids = reportFilters.newcheck;
+        cmpData.diff_type = reportFilters.difftype
+          ? reportFilters.difftype
+          : CC_OBJECTS.DiffType.NEW;
+      }
+    }
+
+    return {
+      runIds  : runIds,
+      cmpData : cmpData
+    };
   };
 
   var BugStore = declare(Store, {
@@ -66,24 +84,26 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
       var that = this;
       var deferred = new Deferred();
 
-      CC_SERVICE.getRunResults(
-        [query.runData.runId],
+      var runResultParam = createRunResultFilterParameter(query.reportFilters);
+
+      CC_SERVICE.getRunResults_v2(
+        runResultParam.runIds,
         CC_OBJECTS.MAX_QUERY_SIZE,
         options.start,
         (options.sort || []).map(this._toSortMode),
         query.reportFilters,
+        runResultParam.cmpData,
         function (reportDataList) {
           if (reportDataList instanceof RequestFailed)
             deferred.reject('Failed to get reports: ' + reportDataList.message);
           else {
             deferred.resolve(that._formatItems(reportDataList));
-            filterHook(query, false);
+            filterHook(query.reportFilters, false);
           }
         });
 
-      deferred.total = CC_SERVICE.getRunResultCount(
-        [query.runData.runId],
-        query.reportFilters);
+      deferred.total = CC_SERVICE.getRunResultCount_v2(runResultParam.runIds,
+        query.reportFilters, runResultParam.cmpData);
 
       return deferred;
     },
@@ -94,6 +114,7 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
           ' @ Line ' + reportData.line;
 
         //--- Review status ---//
+
         var review = reportData.review;
         reportData.reviewStatus = review.status;
         reportData.reviewComment = review.author && review.comment
@@ -126,75 +147,6 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
     }
   });
 
-  var DiffBugStore = declare(BugStore, {
-    query : function (query, options) {
-      var that = this;
-      var deferred = new Deferred();
-
-      switch (query.difftype + '') {
-        default:
-        case 'new':
-          CC_SERVICE.getNewResults(
-            query.baseline.runId,
-            query.newcheck.runId,
-            CC_OBJECTS.MAX_QUERY_SIZE,
-            options.start,
-            (options.sort || []).map(this._toSortMode),
-            query.reportFilters,
-            function (reportDataList) {
-              if (reportDataList instanceof RequestFailed)
-                deferred.reject(
-                  'Failed to get reports: ' + reportDataList.message);
-              else {
-                deferred.resolve(that._formatItems(reportDataList));
-                filterHook(query, true);
-              }
-            });
-          break;
-
-        case 'resolved':
-          CC_SERVICE.getResolvedResults(
-            query.baseline.runId,
-            query.newcheck.runId,
-            CC_OBJECTS.MAX_QUERY_SIZE,
-            options.start,
-            (options.sort || []).map(this._toSortMode),
-            query.reportFilters,
-            function (reportDataList) {
-              if (reportDataList instanceof RequestFailed)
-                deferred.reject(
-                  'Failed to get reports: ' + reportDataList.message);
-              else {
-                deferred.resolve(that._formatItems(reportDataList));
-                filterHook(query, true);
-              }
-            });
-          break;
-
-        case 'unresolved':
-          CC_SERVICE.getUnresolvedResults(
-            query.baseline.runId,
-            query.newcheck.runId,
-            CC_OBJECTS.MAX_QUERY_SIZE,
-            options.start,
-            (options.sort || []).map(this._toSortMode),
-            query.reportFilters,
-            function (reportDataList) {
-              if (reportDataList instanceof RequestFailed)
-                deferred.reject(
-                  'Failed to get reports: ' + reportDataList.message);
-              else {
-                deferred.resolve(that._formatItems(reportDataList));
-                filterHook(query, true);
-              }
-            });
-          break;
-      }
-
-      return deferred;
-    }
-  });
-
   function severityFormatter(severity) {
     // When loaded from URL then report data is originally a number.
     // When loaded by clicking on a table row, then severity is already
@@ -203,7 +155,7 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
       severity = util.severityFromCodeToString(severity);
 
     var title = severity.charAt(0).toUpperCase() + severity.slice(1);
-    return '<span title="' + title  + '" class="icon-severity icon-severity-'
+    return '<span title="' + title  + '" class="customIcon icon-severity-'
       + severity + '"></span>';
   }
 
@@ -220,7 +172,7 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
       util.reviewStatusFromCodeToString(reviewStatus);
 
     return '<span title="' + status
-      + '" class="customIcon review-status-' + className + '"></span>';
+      + '" class="customIcon ' + className + '"></span>';
   }
 
   var ListOfBugsGrid = declare(DataGrid, {
@@ -247,10 +199,7 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
     },
 
     refreshGrid : function (reportFilters) {
-      this.setQuery({
-        runData : this.runData,
-        reportFilters : reportFilters
-      });
+      this.setQuery({ reportFilters : reportFilters });
     },
 
     canSort : function (inSortInfo) {
@@ -274,7 +223,6 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
 
       switch (evt.cell.field) {
         case 'checkedFile':
-          item.runId = this.runData.runId;
           topic.publish('openFile', item, this);
           break;
 
@@ -309,43 +257,6 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
     }
   });
 
-  var ListOfBugsDiffGrid = declare(ListOfBugsGrid, {
-    constructor : function () {
-      this.store = new ObjectStore({ objectStore : new DiffBugStore() });
-    },
-
-    refreshGrid : function (reportFilters, difftype) {
-      this._difftype = difftype || 'new';
-
-      this.setQuery({
-        baseline : this.baseline,
-        newcheck : this.newcheck,
-        reportFilters : reportFilters,
-        difftype : difftype
-      });
-    },
-
-    onRowClick : function (evt) {
-      var item = this.getItem(evt.rowIndex);
-
-      this._lastSelectedRow = evt.rowIndex;
-
-      switch (evt.cell.field) {
-        case 'checkedFile':
-          item.runId
-            = this.difftype === 'new'
-            ? this.newcheck.runId
-            : this.baseline.runId;
-          topic.publish('openFile', item, this);
-          break;
-
-        case 'checkerId':
-          topic.publish('showDocumentation', item.checkerId);
-          break;
-      }
-    }
-  });
-
   return declare(TabContainer, {
     postCreate : function () {
       var that = this;
@@ -354,61 +265,38 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
         title : 'Bug Overview',
         onShow : function () {
           grid.scrollToLastSelected();
-          hashHelper.removeReport();
+          hashHelper.setStateValue('report', null);
         }
       });
 
-      //--- Filter ---//
+      //--- Bug filters ---//
 
-      var filterGroup
-        = this.runData
-        ? new filterHelper.FilterGroup({
-            runId : this.runData.runId,
-            filters : this.filters
-          })
-        : new filterHelper.FilterGroup({
-            baselineId : this.baseline.runId,
-            newcheckId : this.newcheck.runId,
-            filters : this.filters
-          });
+      this._bugFilterView = new BugFilterView({
+        class    : 'bug-filters',
+        region   : 'left',
+        style    : 'width: 300px; padding: 0px;',
+        splitter : true,
+        diffView : this.baseline || this.newcheck || this.difftype,
+        parent   : this,
+        runData  : this.runData,
+        baseline : this.baseline,
+        newcheck : this.newcheck,
+        difftype : this.difftype
+      });
 
-      filterGroup.set('region', 'top');
-      filterGroup.onChange = function (allValues) {
-        hashHelper.setFilter(filterGroup);
-        grid.refreshGrid(
-          filterHelper.filterGroupToReportFilters(filterGroup, allValues),
-          allValues[0].difftype);
-
-        that._difftype = allValues[0].difftype;
-      };
-
-      filterGroup.onAddFilter = function () {
-        content.resize();
-        hashHelper.setFilter(filterGroup);
-       };
-
-      filterGroup.onRemoveFilter = function () {
-        content.resize();
-        hashHelper.setFilter(filterGroup);
-       };
-
-      content.addChild(filterGroup);
+      content.addChild(this._bugFilterView);
 
       //--- Grid ---//
 
-      var grid
-        = this.runData
-        ? new ListOfBugsGrid({
-            region : 'center',
-            runData : this.runData
-          })
-        : new ListOfBugsDiffGrid({
-            region : 'center',
-            baseline : this.baseline,
-            newcheck : this.newcheck
-          });
+      var grid = new ListOfBugsGrid({
+        region : 'center',
+        runData : this.runData,
+        baseline : this.baseline,
+        newcheck : this.newcheck,
+        difftype : this.difftype
+      });
 
-      grid.refreshGrid(filterHelper.filterGroupToReportFilters(filterGroup));
+      grid.refreshGrid(that._bugFilterView.getReportFilters());
       content.addChild(grid);
 
       this.addChild(content);
@@ -420,27 +308,26 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
         if (sender && sender !== grid)
           return;
 
+        if (!that.runData && !that.baseline && !that.allReportView)
+          return;
+
         if (!(reportData instanceof CC_OBJECTS.ReportData))
           reportData = CC_SERVICE.getReport(reportData);
 
         var filename = reportData.checkedFile.substr(
           reportData.checkedFile.lastIndexOf('/') + 1);
 
-        var runData = that.runData;
-
-        if (!runData)
-          runData
-            = filter.getValue('difftype') === 'new'
-            ? that.newcheck
-            : that.baseline;
+        var reportFilters = that._bugFilterView.getReportFilters();
+        var runResultParam = createRunResultFilterParameter(reportFilters);
 
         var bugViewer = new BugViewer({
           title : filename,
           closable : true,
           reportData : reportData,
-          runData : runData,
+          runData : that.runData,
+          runResultParam : runResultParam,
           onShow : function () {
-            hashHelper.setReport(reportData.reportId);
+            hashHelper.setStateValue('report', reportData.reportId);
           }
         });
 
@@ -449,11 +336,43 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
 
         topic.publish('showComments', reportData.reportId, bugViewer._editor);
       });
+
+      this._filterChangeTopic = topic.subscribe('filterchange',
+      function (state) {
+        if (state.parent !== that._bugFilterView)
+          return;
+
+        var reportFilters = that._bugFilterView.getReportFilters();
+        grid.refreshGrid(reportFilters);
+      });
+    },
+
+    onShow : function () {
+      var state  = this._bugFilterView.getState();
+      state.report = null;
+
+      if (this.allReportView)
+        state.allReports = true;
+
+      hashHelper.setStateValues(state);
+
+      //--- Call show method of the selected children ---//
+
+      this.getChildren().forEach(function (child) {
+        if (child.selected)
+          child.onShow();
+      });
+    },
+
+    onHide : function () {
+      if (this.allReportView)
+        hashHelper.setStateValue('allReports', null);
     },
 
     destroy : function () {
       this.inherited(arguments);
       this._openFileTopic.remove();
+      this._filterChangeTopic.remove();
       // Clear URL if list of bugs view is closed.
       hashHelper.clear();
     }
