@@ -244,6 +244,10 @@ class Context(context_base.ContextBase):
     def analyzer_binaries(self):
         return self.__analyzers
 
+    @property
+    def ctu_func_map_cmd(self):
+        return self.pckg_layout['ctu_func_map_cmd']
+
 
 def get_context():
     LOG.debug('Loading package config.')
