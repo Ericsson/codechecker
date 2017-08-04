@@ -11,6 +11,7 @@ import argparse
 import json
 import os
 import shutil
+import subprocess
 import sys
 
 from libcodechecker import generic_package_context
@@ -88,6 +89,17 @@ def add_arguments_to_parser(parser):
     """
     Add the subcommand's arguments to the given argparse.ArgumentParser.
     """
+
+    def is_ctu_capable():
+        """ Detects if the current clang is CTU compatible. """
+
+        context = generic_package_context.get_context()
+        ctu_func_map_cmd = context.ctu_func_map_cmd
+        try:
+            version = subprocess.check_output([ctu_func_map_cmd, '-version'])
+        except (subprocess.CalledProcessError, OSError):
+            version = 'ERROR'
+        return version != 'ERROR'
 
     parser.add_argument('logfile',
                         type=str,
@@ -177,6 +189,45 @@ def add_arguments_to_parser(parser):
                                help="File containing argument which will be "
                                     "forwarded verbatim for Clang-Tidy.")
 
+    if is_ctu_capable():
+        ctu_opts = parser.add_argument_group('cross translation unit analysis')
+        ctu_mutex_group = ctu_opts.add_mutually_exclusive_group()
+        ctu_mutex_group.add_argument('--ctu-all',
+                                     action='store_const',
+                                     const=[True, True],
+                                     dest='ctu_phases',
+                                     default=argparse.SUPPRESS,
+                                     help="Perform cross translation unit "
+                                          "(CTU) analysis (both collect and "
+                                          "analyze phases) using the default "
+                                          "CTU directory as output. "
+                                          "At the end of the analysis, this "
+                                          "directory is removed.")
+        ctu_mutex_group.add_argument('--ctu-collect',
+                                     action='store_const',
+                                     const=[True, False],
+                                     dest='ctu_phases',
+                                     default=argparse.SUPPRESS,
+                                     help="Perform the 1st, collect phase of "
+                                          "CTU. Keep CTU directory for "
+                                          "further use.")
+        ctu_mutex_group.add_argument('--ctu-analyze',
+                                     action='store_const',
+                                     const=[False, True],
+                                     dest='ctu_phases',
+                                     default=argparse.SUPPRESS,
+                                     help="Perform only the 2nd, analyze "
+                                          "phase of CTU. CTU directory should "
+                                          "be present and will not be removed "
+                                          "after analysis.")
+        ctu_opts.add_argument('--ctu-on-the-fly',
+                              action='store_true',
+                              dest='ctu_in_memory',
+                              default=False,
+                              help="Do not create AST dumps in collect phase, "
+                                   "recompile external files on the fly "
+                                   "(memory intensive).")
+
     checkers_opts = parser.add_argument_group(
         "checker configuration",
         "See 'codechecker-checkers' for the list of available checkers. "
@@ -261,12 +312,14 @@ def main(args):
 
     # Run the analysis.
     args.output_path = os.path.abspath(args.output_path)
-    if os.path.isdir(args.output_path):
-        LOG.info("Previous analysis results in '{0}' have been "
-                 "removed, overwriting with current result".
-                 format(args.output_path))
-        shutil.rmtree(args.output_path)
-    os.makedirs(args.output_path)
+    if 'ctu_phases' not in args or args.ctu_phases[0] or \
+            (not args.ctu_phases[0] and not args.ctu_phases[1]):
+        if os.path.isdir(args.output_path):
+            LOG.info("Previous analysis results in '{0}' have been "
+                     "removed, overwriting with current result".
+                     format(args.output_path))
+            shutil.rmtree(args.output_path)
+        os.makedirs(args.output_path)
 
     LOG.debug("Output will be stored to: '" + args.output_path + "'")
 
