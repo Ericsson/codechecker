@@ -150,7 +150,7 @@ output.
                 LOG.debug("Creating arg parser for subcommand " + subcommand)
 
                 try:
-                    libhandlers.add_subcommand(subparsers, subcommand)
+                    libhandlers.add_subcommand(subparsers, str(subcommand))
                 except (IOError, ImportError):
                     LOG.warning("Couldn't import module for subcommand '" +
                                 subcommand + "'... ignoring.")
