@@ -345,7 +345,8 @@ usage: CodeChecker analyze [-h] [-j JOBS] [-i SKIPFILE] [-o OUTPUT_PATH]
                            [--add-compiler-defaults]
                            [--saargs CLANGSA_ARGS_CFG_FILE]
                            [--tidyargs TIDY_ARGS_CFG_FILE]
-                           [-e checker/checker-group]
+                           [--ctu | --ctu-collect | --ctu-analyze]
+                           [--ctu-on-the-fly] [-e checker/checker-group]
                            [-d checker/checker-group] [--enable-all]
                            [--verbose {info,debug,debug_analyzer}]
                            logfile [logfile ...]
@@ -572,6 +573,40 @@ fine-tuned with subsequent `--enable` and `--disable` arguments, for example
 ~~~~
 
 can be used to "further" enable `alpha.` checkers, and disable `misc` ones.
+
+### Cross Translation Unit (CTU) analysis mode
+
+If the `clang` static analyzer binary in your installation supports
+[Cross Translation Unit analysis](http://llvm.org/devmtg/2017-03//2017/02/20/accepted-sessions.html#7),
+CodeChecker can execute the analyzers with this mode enabled.
+
+These options are only visible in `analyze` if CTU support is present. CTU
+mode uses some extra storage space under the specified `--output-dir`.
+
+~~~~~~~~~~~~~~~~~~~~~
+cross translation unit analysis arguments:
+  These arguments are only available if the Clang Static Analyzer supports
+  Cross-TU analysis. By default, no such analysis is ran when 'CodeChecker
+  analyze' is called.
+
+  --ctu, --ctu-all      Perform Cross Translation Unit (CTU) analysis, both
+                        'collect' and 'analyze' phases. In this mode, the
+                        extra files created by 'collect' are cleaned up after
+                        the analysis.
+  --ctu-collect         Perform the first, 'collect' phase of Cross-TU
+                        analysis. This phase generates extra files needed by
+                        CTU analysis, and puts them into '<OUTPUT_DIR>/ctu-
+                        dir'. NOTE: If this argument is present, CodeChecker
+                        will NOT execute the analyzers!
+  --ctu-analyze         Perform the second, 'analyze' phase of Cross-TU
+                        analysis, using already available extra files in
+                        '<OUTPUT_DIR>/ctu-dir'. (These files will not be
+                        cleaned up in this mode.)
+  --ctu-on-the-fly      If specified, the 'collect' phase will not create the
+                        extra AST dumps, but rather analysis will be ran with
+                        an in-memory recompilation of the source files.
+                        (default: False)
+~~~~~~~~~~~~~~~~~~~~~
 
 ## 3. `parse` mode
 
