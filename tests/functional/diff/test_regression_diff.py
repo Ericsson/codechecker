@@ -127,14 +127,14 @@ class Diff(unittest.TestCase):
                                                       DiffType.UNRESOLVED,
                                                       [])
 
-        self.assertEqual(diff_res, 17)
+        self.assertEqual(diff_res, 18)
 
     def test_get_diff_res_count_unresolved_filter(self):
         base_run_id = self._base_runid
         new_run_id = self._new_runid
 
         filter_severity_levels = [{"MEDIUM": 1}, {"LOW": 5},
-                                  {"HIGH": 11}, {"STYLE": 0},
+                                  {"HIGH": 12}, {"STYLE": 0},
                                   {"UNSPECIFIED": 0}, {"CRITICAL": 0}]
 
         for level in filter_severity_levels:
@@ -316,7 +316,7 @@ class Diff(unittest.TestCase):
         count = len(re.findall(r'\[deadcode\.DeadStores\]', out))
         self.assertEqual(count, 5)
         count = len(re.findall(r'\[core\.NullDereference\]', out))
-        self.assertEqual(count, 3)
+        self.assertEqual(count, 4)
         count = len(re.findall(r'\[cplusplus\.NewDelete\]', out))
         self.assertEqual(count, 5)
         count = len(re.findall(r'\[unix\.Malloc\]', out))

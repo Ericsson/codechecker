@@ -157,12 +157,26 @@ def check(check_data):
             # If there is no skiplist handler there was no skip list file
             # in the command line.
             # C++ file skipping is handled here.
-            _, source_file_name = os.path.split(source)
+            source_file_name = os.path.basename(source)
 
             if skip_handler and skip_handler.should_skip(source):
                 LOG.debug_analyzer(source_file_name + ' is skipped')
                 skipped = True
                 continue
+
+            # Escape the spaces in the source path, but make sure not to
+            # over-escape already escaped spaces.
+            if ' ' in source:
+                space_locations = [i for i, c in enumerate(source) if c == ' ']
+                # If a \ is added to the text, the following indexes must be
+                # shifted by one.
+                rolling_offset = 0
+
+                for orig_idx in space_locations:
+                    idx = orig_idx + rolling_offset
+                    if idx != 0 and source[idx - 1] != '\\':
+                        source = source[:idx] + '\ ' + source[idx + 1:]
+                        rolling_offset += 1
 
             # Construct analyzer env.
             analyzer_environment = analyzer_env.get_check_env(
@@ -188,6 +202,12 @@ def check(check_data):
             # Fills up the result handler with the analyzer information.
             source_analyzer.analyze(rh, analyzer_environment)
 
+            # If source file contains escaped spaces ("\ " tokens), then
+            # clangSA writes the plist file with removing this escape
+            # sequence, whereas clang-tidy does not. We rewrite the file
+            # names to contain no escape sequences for every analyzer.
+            result_file = rh.analyzer_result_file.replace(r'\ ', ' ')
+
             if rh.analyzer_returncode == 0:
                 # Analysis was successful processing results.
                 if rh.analyzer_stdout != '':
@@ -199,9 +219,13 @@ def check(check_data):
 
                 # Save some extra information next to the plist, .source
                 # acting as an extra metadata file.
-                result_file = rh.analyzer_result_file
-                with open(rh.analyzer_result_file + ".source", 'w') as orig:
-                    orig.write(rh.analyzed_source_file + "\n")
+                with open(result_file + ".source", 'w') as orig:
+                    orig.write(
+                        rh.analyzed_source_file.replace(r'\ ', ' ') + "\n")
+
+                if os.path.exists(rh.analyzer_result_file) and \
+                        not os.path.exists(result_file):
+                    os.rename(rh.analyzer_result_file, result_file)
 
                 LOG.info("[%d/%d] %s analyzed %s successfully." %
                          (progress_checked_num.value, progress_actions.value,
@@ -213,9 +237,8 @@ def check(check_data):
                     os.makedirs(failed_dir)
                 LOG.debug("Writing error debugging to '" + failed_dir + "'")
 
-                result_file =\
-                    os.path.basename(rh.analyzer_result_file) + '.zip'
-                with zipfile.ZipFile(os.path.join(failed_dir, result_file),
+                zip_file = os.path.basename(result_file) + '.zip'
+                with zipfile.ZipFile(os.path.join(failed_dir, zip_file),
                                      'w') as archive:
                     if len(rh.analyzer_stdout) > 0:
                         LOG.debug("[ZIP] Writing analyzer STDOUT to /stdout")
@@ -253,7 +276,7 @@ def check(check_data):
                                      str(rh.analyzer_returncode))
 
                 LOG.debug("ZIP file written at '" +
-                          os.path.join(failed_dir, result_file) + "'")
+                          os.path.join(failed_dir, zip_file) + "'")
                 LOG.error("Analyzing '" + source_file_name + "' with " +
                           action.analyzer_type + " failed.")
                 if rh.analyzer_stdout != '':

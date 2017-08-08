@@ -73,6 +73,14 @@ class LogParserTest(unittest.TestCase):
         self.assertEqual(build_action.analyzer_options[0],
                          r'-DVARIABLE="\"some value"\"')
 
+        # Test source file with spaces.
+        logfile = os.path.join(self.__test_files, "ldlogger-new-space.json")
+
+        build_action = log_parser.parse_log(logfile)[0]
+
+        self.assertEqual(list(build_action.sources)[0], r'/tmp/a b.cpp')
+        self.assertEqual(build_action.lang, 'c++')
+
     def test_old_intercept_build(self):
         """
         Test log file parsing escape behaviour with clang-5.0 intercept-build.
@@ -90,6 +98,14 @@ class LogParserTest(unittest.TestCase):
         self.assertEqual(len(build_action.analyzer_options), 1)
         self.assertEqual(build_action.analyzer_options[0],
                          r'-DVARIABLE="\"some value"\"')
+
+        # Test source file with spaces.
+        logfile = os.path.join(self.__test_files, "intercept-old-space.json")
+
+        build_action = log_parser.parse_log(logfile)[0]
+
+        self.assertEqual(list(build_action.sources)[0], r'/tmp/a b.cpp')
+        self.assertEqual(build_action.lang, 'c++')
 
     def test_new_intercept_build(self):
         """
@@ -110,3 +126,11 @@ class LogParserTest(unittest.TestCase):
         self.assertEqual(len(build_action.analyzer_options), 1)
         self.assertEqual(build_action.analyzer_options[0],
                          r'-DVARIABLE="\"some value"\"')
+
+        # Test source file with spaces.
+        logfile = os.path.join(self.__test_files, "intercept-new-space.json")
+
+        build_action = log_parser.parse_log(logfile)[0]
+
+        self.assertEqual(list(build_action.sources)[0], r'/tmp/a b.cpp')
+        self.assertEqual(build_action.lang, 'c++')
