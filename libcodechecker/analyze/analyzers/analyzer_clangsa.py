@@ -13,7 +13,7 @@ from libcodechecker.analyze.analyzers import analyzer_base
 from libcodechecker.analyze.analyzers import ctu_triple_arch
 from libcodechecker.analyze import analyzer_env
 from libcodechecker.logger import LoggerFactory
-from libcodechecker.util import find_by_regex_in_envpath
+from libcodechecker.util import get_binary_in_path
 
 LOG = LoggerFactory.get_new_logger('CLANGSA')
 
@@ -187,18 +187,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             return False
 
         # clang, clang-5.0, clang++, clang++-5.1, ...
-        binaries = find_by_regex_in_envpath(
-            r'^clang(\+\+)?(-\d+(\.\d+){0,2})?$', env)
+        clang = get_binary_in_path(r'^clang(\+\+)?(-\d+(\.\d+){0,2})?$', env)
 
-        if len(binaries) == 0:
-            return False
-        elif len(binaries) == 1:
-            # Return the first found (earliest in PATH) binary for the only
-            # found binary name group.
-            return binaries.values()[0][0]
-        else:
-            # Select the "newest" available clang version if there are multiple
-            keys = list(binaries.keys())
-            keys.sort()
-            files = binaries[keys[-1]]
-            return files[-1]
+        LOG.debug("Using '" + clang + "' for ClangSA!")
+        return clang

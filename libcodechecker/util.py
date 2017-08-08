@@ -170,6 +170,30 @@ def find_by_regex_in_envpath(pattern, environment):
     return binaries
 
 
+def get_binary_in_path(pattern, env):
+    """
+    Select the most matching binary for the given pattern in the given
+    environment. Works well for binaries that contain versioning.
+    """
+
+    binaries = find_by_regex_in_envpath(pattern, env)
+
+    if len(binaries) == 0:
+        return False
+    elif len(binaries) == 1:
+        # Return the first found (earliest in PATH) binary for the only
+        # found binary name group.
+        return binaries.values()[0][0]
+    else:
+        # Select the "newest" available clang version if there are multiple.
+        keys = list(binaries.keys())
+        keys.sort()
+        files = binaries[keys[-1]]
+
+        # Return the one earliest in PATH.
+        return files[0]
+
+
 def call_command(command, env=None):
     """ Call an external command and return with (output, return_code)."""
 
