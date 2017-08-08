@@ -13,7 +13,7 @@ import subprocess
 
 from libcodechecker.analyze.analyzers import analyzer_base
 from libcodechecker.logger import LoggerFactory
-from libcodechecker.util import find_by_regex_in_envpath
+from libcodechecker.util import get_binary_in_path
 
 LOG = LoggerFactory.get_new_logger('CLANG TIDY')
 
@@ -132,18 +132,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
             return False
 
         # clang-tidy, clang-tidy-5.0, ...
-        binaries = find_by_regex_in_envpath(r'^clang-tidy(-\d+(\.\d+){0,2})?$',
-                                            env)
+        clangtidy = get_binary_in_path(r'^clang-tidy(-\d+(\.\d+){0,2})?$', env)
 
-        if len(binaries) == 0:
-            return False
-        elif len(binaries) == 1:
-            # Return the first found (earliest in PATH) binary for the only
-            # found binary name group.
-            return binaries.values()[0][0]
-        else:
-            # Select the "newest" available clang version if there are multiple
-            keys = list(binaries.keys())
-            keys.sort()
-            files = binaries[keys[-1]]
-            return files[-1]
+        LOG.debug("Using '" + clangtidy + "' for ClangSA!")
+        return clangtidy
