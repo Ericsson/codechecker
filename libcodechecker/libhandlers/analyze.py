@@ -190,43 +190,58 @@ def add_arguments_to_parser(parser):
                                     "forwarded verbatim for Clang-Tidy.")
 
     if is_ctu_capable():
-        ctu_opts = parser.add_argument_group('cross translation unit analysis')
-        ctu_mutex_group = ctu_opts.add_mutually_exclusive_group()
-        ctu_mutex_group.add_argument('--ctu-all',
-                                     action='store_const',
-                                     const=[True, True],
-                                     dest='ctu_phases',
-                                     default=argparse.SUPPRESS,
-                                     help="Perform cross translation unit "
-                                          "(CTU) analysis (both collect and "
-                                          "analyze phases) using the default "
-                                          "CTU directory as output. "
-                                          "At the end of the analysis, this "
-                                          "directory is removed.")
-        ctu_mutex_group.add_argument('--ctu-collect',
-                                     action='store_const',
-                                     const=[True, False],
-                                     dest='ctu_phases',
-                                     default=argparse.SUPPRESS,
-                                     help="Perform the 1st, collect phase of "
-                                          "CTU. Keep CTU directory for "
-                                          "further use.")
-        ctu_mutex_group.add_argument('--ctu-analyze',
-                                     action='store_const',
-                                     const=[False, True],
-                                     dest='ctu_phases',
-                                     default=argparse.SUPPRESS,
-                                     help="Perform only the 2nd, analyze "
-                                          "phase of CTU. CTU directory should "
-                                          "be present and will not be removed "
-                                          "after analysis.")
+        ctu_opts = parser.add_argument_group(
+            "cross translation unit analysis arguments",
+            "These arguments are only available if the Clang Static Analyzer "
+            "supports Cross-TU analysis. By default, no CTU analysis is ran "
+            "when 'CodeChecker analyze' is called.")
+
+        ctu_modes = ctu_opts.add_mutually_exclusive_group()
+
+        ctu_modes.add_argument('--ctu', '--ctu-all',
+                               action='store_const',
+                               const=[True, True],
+                               dest='ctu_phases',
+                               default=argparse.SUPPRESS,
+                               help="Perform Cross Translation Unit (CTU) "
+                                    "analysis, both 'collect' and 'analyze' "
+                                    "phases. In this mode, the extra files "
+                                    "created by 'collect' are cleaned up "
+                                    "after the analysis.")
+
+        ctu_modes.add_argument('--ctu-collect',
+                               action='store_const',
+                               const=[True, False],
+                               dest='ctu_phases',
+                               default=argparse.SUPPRESS,
+                               help="Perform the first, 'collect' phase of "
+                                    "Cross-TU analysis. This phase generates "
+                                    "extra files needed by CTU analysis, and "
+                                    "puts them into '<OUTPUT_DIR>/ctu-dir'. "
+                                    "NOTE: If this argument is present, "
+                                    "CodeChecker will NOT execute the "
+                                    "analyzers!")
+
+        ctu_modes.add_argument('--ctu-analyze',
+                               action='store_const',
+                               const=[False, True],
+                               dest='ctu_phases',
+                               default=argparse.SUPPRESS,
+                               help="Perform the second, 'analyze' phase of "
+                                    "Cross-TU analysis, using already "
+                                    "available extra files in "
+                                    "'<OUTPUT_DIR>/ctu-dir'. (These files "
+                                    "will not be cleaned up in this mode.)")
+
         ctu_opts.add_argument('--ctu-on-the-fly',
                               action='store_true',
                               dest='ctu_in_memory',
                               default=False,
-                              help="Do not create AST dumps in collect phase, "
-                                   "recompile external files on the fly "
-                                   "(memory intensive).")
+                              help="If specified, the 'collect' phase will "
+                                   "not create the extra AST dumps, but "
+                                   "rather analysis will be ran with an "
+                                   "in-memory recompilation of the source "
+                                   "files.")
 
     checkers_opts = parser.add_argument_group(
         "checker configuration",
