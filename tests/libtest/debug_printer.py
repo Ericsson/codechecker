@@ -11,10 +11,8 @@ def print_run_results(run_results):
 
     print('---------------------------------------------------------')
     for run_res in run_results:
-        print(('''Bugfile: {0} \nStartline: {1} \nCheckedfile: {2}\n''' +
-               '''Checkerid: {3}\nBugHash: {4}\nSuppressed: {5}\n--''').format(
-            run_res.lastBugPosition.filePath,
-            run_res.lastBugPosition.startLine,
+        print(('''Checkedfile: {0}\nCheckerid: {1}\nBugHash: {2}\n''' +
+               '''Suppressed: {3}\n--''').format(
             run_res.checkedFile,
             run_res.checkerId,
             run_res.bugHash,
