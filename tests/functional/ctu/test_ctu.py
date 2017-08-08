@@ -7,6 +7,7 @@
 
 """ CTU function test."""
 import glob
+import json
 import os
 import shutil
 import subprocess
@@ -35,8 +36,16 @@ class TestCtu(unittest.TestCase):
         self.report_dir = os.path.join(self.test_workspace, 'reports')
         os.makedirs(self.report_dir)
         self.test_dir = os.path.join(os.path.dirname(__file__), 'test_files')
+        raw_buildlog = os.path.join(self.test_dir, 'buildlog.json')
+        with open(raw_buildlog) as log_file:
+            build_json = json.load(log_file)
+            for command in build_json:
+                command['directory'] = self.test_dir
         self.ctu_capable = self.__is_ctu_capable()
         os.chdir(self.test_workspace)
+        self.buildlog = os.path.join(self.test_workspace, 'buildlog.json')
+        with open(self.buildlog, 'w') as log_file:
+            json.dump(build_json, log_file)
 
     def tearDown(self):
         """ Tear down workspace."""
@@ -70,20 +79,20 @@ class TestCtu(unittest.TestCase):
 
         self.__test_ctu_analyze(False)
 
-    # def test_ctu_all_reparse(self):
-    #     """ Test full CTU with reparse. """
+    def test_ctu_all_reparse(self):
+        """ Test full CTU with reparse. """
 
-    #     self.__test_ctu_all(True)
+        self.__test_ctu_all(True)
 
-    # def test_ctu_collect_reparse(self):
-    #     """ Test CTU collect phase with reparse. """
+    def test_ctu_collect_reparse(self):
+        """ Test CTU collect phase with reparse. """
 
-    #     self.__test_ctu_collect(True)
+        self.__test_ctu_collect(True)
 
-    # def test_ctu_analyze_reparse(self):
-    #     """ Test CTU analyze phase with reparse. """
+    def test_ctu_analyze_reparse(self):
+        """ Test CTU analyze phase with reparse. """
 
-    #     self.__test_ctu_analyze(True)
+        self.__test_ctu_analyze(True)
 
     def __test_ctu_all(self, reparse):
         """ Test full CTU. """
@@ -117,7 +126,7 @@ class TestCtu(unittest.TestCase):
                '--analyzers', 'clangsa', '--ctu-all']
         if reparse:
             cmd.append('--ctu-on-the-fly')
-        cmd.append('buildlog.json')
+        cmd.append(self.buildlog)
         output = subprocess.check_output(cmd, stderr=subprocess.STDOUT,
                                          cwd=self.test_dir, env=self.env)
         return output
@@ -129,7 +138,7 @@ class TestCtu(unittest.TestCase):
                '--analyzers', 'clangsa', '--ctu-collect']
         if reparse:
             cmd.append('--ctu-on-the-fly')
-        cmd.append('buildlog.json')
+        cmd.append(self.buildlog)
         subprocess.check_output(cmd, stderr=subprocess.STDOUT,
                                 cwd=self.test_dir, env=self.env)
 
@@ -152,7 +161,7 @@ class TestCtu(unittest.TestCase):
                '--analyzers', 'clangsa', '--ctu-analyze']
         if reparse:
             cmd.append('--ctu-on-the-fly')
-        cmd.append('buildlog.json')
+        cmd.append(self.buildlog)
         output = subprocess.check_output(cmd, stderr=subprocess.STDOUT,
                                          cwd=self.test_dir, env=self.env)
         return output
