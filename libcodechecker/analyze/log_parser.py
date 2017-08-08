@@ -227,7 +227,6 @@ def parse_compile_commands_json(logfile, add_compiler_defaults=False):
 # -----------------------------------------------------------------------------
 def parse_log(logfilepath, add_compiler_defaults=False):
     LOG.debug('Parsing log file: ' + logfilepath)
-    actions = []
 
     with open(logfilepath) as logfile:
         try:

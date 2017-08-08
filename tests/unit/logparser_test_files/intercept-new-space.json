@@ -1,0 +1,11 @@
+[
+    {
+        "arguments": [
+            "c++",
+            "-c",
+            "a b.cpp"
+        ],
+        "directory": "/tmp",
+        "file": "a b.cpp"
+    }
+]

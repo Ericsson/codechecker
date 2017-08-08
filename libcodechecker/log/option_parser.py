@@ -472,7 +472,7 @@ def parse_options(args):
     result_map.compiler = shlex.split(args)[0]
     is_source = False
     for source_file in result_map.files:
-        lang = get_language(os.path.splitext(source_file)[1])
+        lang = get_language(os.path.splitext(source_file)[1].rstrip('"'))
         if lang:
             is_source = True
             # If lang is not set already during the argument parsing

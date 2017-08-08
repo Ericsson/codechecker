@@ -1,0 +1,7 @@
+[
+	{
+		"directory": "/tmp",
+		"command": "g++ /tmp/a b.cpp",
+		"file": "/tmp/a b.cpp"
+	}
+]

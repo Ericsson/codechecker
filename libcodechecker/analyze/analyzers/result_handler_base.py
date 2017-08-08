@@ -173,8 +173,7 @@ class ResultHandler(object):
         Result file should be removed by the result handler eventually.
         """
         if not self.__result_file:
-            analyzed_file = self.analyzed_source_file
-            _, analyzed_file_name = os.path.split(analyzed_file)
+            analyzed_file_name = os.path.basename(self.analyzed_source_file)
 
             uid = str(uuid.uuid1()).split('-')[0]
 
