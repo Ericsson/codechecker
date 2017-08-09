@@ -42,6 +42,7 @@ class TestCtu(unittest.TestCase):
             for command in build_json:
                 command['directory'] = self.test_dir
         self.ctu_capable = self.__is_ctu_capable()
+        self.__old_pwd = os.getcwd()
         os.chdir(self.test_workspace)
         self.buildlog = os.path.join(self.test_workspace, 'buildlog.json')
         with open(self.buildlog, 'w') as log_file:
@@ -50,6 +51,7 @@ class TestCtu(unittest.TestCase):
     def tearDown(self):
         """ Tear down workspace."""
 
+        os.chdir(self.__old_pwd)
         shutil.rmtree(self.report_dir, ignore_errors=True)
 
     def test_help(self):

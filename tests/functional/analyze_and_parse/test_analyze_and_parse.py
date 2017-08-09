@@ -38,7 +38,13 @@ class AnalyzeParseTestCase(unittest.TestCase):
             os.path.dirname(__file__), 'test_files')
 
         # Change working dir to testfile dir so CodeChecker can be run easily.
+        cls.__old_pwd = os.getcwd()
         os.chdir(cls.test_dir)
+
+    @classmethod
+    def teardown_class(cls):
+        """Restore environment after tests have ran."""
+        os.chdir(cls.__old_pwd)
 
     def __check_one_file(self, path, mode):
         """
