@@ -127,13 +127,6 @@ function (declare, Button, ContentPane, Filter) {
     filter.addField('text', 'path', 'Path filter');
   }
 
-  function addSuppressionStateField(filter) {
-    filter.addField('select', 'suppression', [
-      { label : 'Unsuppressed', value : 'unsup' },
-      { label : 'Suppressed',   value : 'supp'  }
-    ]);
-  }
-
   function addCheckerIndexField(filter, run1, run2) {
     var callback
       = arguments.length === 2
@@ -215,7 +208,6 @@ function (declare, Button, ContentPane, Filter) {
       var filter = new Filter();
 
       addPathFilterField(filter);
-      addSuppressionStateField(filter);
       addCheckerIndexField(filter, runId);
 
       return filter;
@@ -225,7 +217,6 @@ function (declare, Button, ContentPane, Filter) {
       filter = new Filter();
 
       addPathFilterField(filter);
-      addSuppressionStateField(filter);
       addDiffTypeField(filter);
       addCheckerIndexField(filter, baselineId, newcheckId);
 
@@ -244,7 +235,6 @@ function (declare, Button, ContentPane, Filter) {
         filterValues.checker = '';
 
       reportFilter.filepath = '*' + filterValues.path + '*';
-      reportFilter.suppressed = filterValues.suppression === 'supp';
 
       var index = filterValues.checker.indexOf('#');
       var type = filterValues.checker.substr(0, index);

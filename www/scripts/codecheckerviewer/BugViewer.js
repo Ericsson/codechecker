@@ -1,5 +1,6 @@
 define([
   'dojo/_base/declare',
+  'dojo/dom-class',
   'dojo/dom-construct',
   'dojo/dom-style',
   'dojo/fx',
@@ -16,16 +17,17 @@ define([
   'dijit/layout/BorderContainer',
   'dijit/form/Button',
   'dijit/form/CheckBox',
-  'dijit/form/Textarea',
+  'dijit/form/Select',
+  'dijit/form/SimpleTextarea',
   'dijit/Tooltip',
   'codechecker/CommentView',
   'codechecker/HtmlTree',
   'codechecker/util',
   'codechecker/hashHelper'],
-function (declare, dom, style, fx, Toggler, on, query, Memory, Observable,
-  topic, entities, Dialog, ObjectStoreModel, ContentPane, BorderContainer,
-  Button, CheckBox, Textarea, Tooltip, CommentView, HtmlTree, util,
-  hashHelper) {
+function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
+  Observable, topic, entities, Dialog, ObjectStoreModel, ContentPane,
+  BorderContainer, Button, CheckBox, Select, SimpleTextarea, Tooltip,
+  CommentView, HtmlTree, util, hashHelper) {
 
   function resetJsPlumb(editor) {
     if (editor.jsPlumbInstance)
@@ -404,6 +406,18 @@ function (declare, dom, style, fx, Toggler, on, query, Memory, Observable,
       }, 0);
     },
 
+    /**
+     * We get a reference to the report data field of the actually selected
+     * item. On review status change we update this reference.
+     */
+    onLoad : function () {
+      var items = this.bugStore.query({ parent : this.reportData.reportId });
+      if (items.length) {
+        this.reportData = items[0].report;
+        this.buttonPane.set('reportData', this.reportData);
+      }
+    },
+
     loadBugStoreData : function () {
       var that = this;
 
@@ -421,20 +435,12 @@ function (declare, dom, style, fx, Toggler, on, query, Memory, Observable,
 
       var filepath = getProperFilePath(this.reportData.checkedFile);
 
-      var filter_sup = new CC_OBJECTS.ReportFilter();
-      filter_sup.filepath = filepath;
-      filter_sup.suppressed = true;
-
-      var filter_unsup = new CC_OBJECTS.ReportFilter();
-      filter_unsup.filepath = filepath;
-      filter_unsup.suppressed = false;
-
       CC_SERVICE.getRunResults(
         this.runData.runId,
         CC_OBJECTS.MAX_QUERY_SIZE,
         0,
         [],
-        [filter_sup, filter_unsup],
+        [],
         function (result) {
           result.forEach(function (report) { that._addReport(report); });
 
@@ -710,116 +716,114 @@ function (declare, dom, style, fx, Toggler, on, query, Memory, Observable,
     showRoot : false
   });
 
+  var ChangeReviewStatusDialog = declare(Dialog, {
+    constructor : function () {
+      var that = this;
+
+      this._messageBox = new SimpleTextarea({
+        placeholder : '(Optionally) Explain the status change...'
+      });
+
+      this._changeButton = new Button({
+        label : 'Change',
+        onClick : function () {
+          var message = that._messageBox.get('value');
+          var status = that.reviewStatusSelector.get('value');
+
+          var user = CC_AUTH_SERVICE.getLoggedInUser();
+          if (!user)
+            user = 'Anonymous';
+
+          //--- Update the current report data ---//
+
+          that.buttonPane.reportData.review.comment = message;
+          that.buttonPane.reportData.review.status = status;
+          that.buttonPane.reportData.review.author = user;
+          that.buttonPane.reportData.review.date = new Date();
+
+          that.buttonPane.showOrHideReviewStatusMessageBox(message);
+
+          //--- Change the review status. ---//
+
+          CC_SERVICE.changeReviewStatus(that.buttonPane.reportData.reportId,
+            status, message);
+
+          //--- Remove the default UNREVIEWED option from the select. ---//
+
+          that.reviewStatusSelector.removeOption(
+            ReviewStatus.UNREVIEWED.toString());
+
+          //--- Hide the dialog. ---//
+
+          that.hide();
+        }
+      });
+    },
+
+    onShow : function () {
+      this._messageBox.set('value', '');
+    },
+
+    onCancel : function () {
+      this.reviewStatusSelector.reset();
+    },
+
+    postCreate : function () {
+      this.inherited(arguments);
+
+      this.addChild(this._messageBox);
+      this.addChild(this._changeButton);
+    }
+  });
+
   var ButtonPane = declare(ContentPane, {
     style : 'padding: 2px',
+
+    constructor : function (args) {
+      dojo.safeMixin(this, args);
+
+      var that = this;
+
+      //--- Bug review status ---//
+
+      this._reviewStatusDialog = new ChangeReviewStatusDialog({
+        title      : 'Change review status',
+        reportData : this.reportData,
+        buttonPane : this
+      });
+
+      this._reviewStatusSelector = new Select({
+        class     : 'review-status-options',
+        options   : this._createOptionValues(),
+        value     : that.reportData.review.status,
+        prevValue : that.reportData.review.status,
+        onChange : function () {
+          that._reviewStatusDialog.show();
+        },
+        reset : function () {
+          this.set('value', this.prevValue, false);
+        }
+      });
+
+      this._reviewComment = dom.create('span', {
+        class : 'customIcon review-comment',
+        mouseover : function () {
+          var content = util.reviewStatusTooltipContent(that.reportData.review);
+
+          Tooltip.show(content.outerHTML, this, ['below']);
+        },
+        mouseout : function () {
+          Tooltip.hide(this);
+        }
+      });
+
+      this._reviewStatusDialog.set('reviewStatusSelector',
+        this._reviewStatusSelector);
+    },
 
     postCreate : function () {
       var that = this;
 
-      function setUnsuppressDialogContent() {
-        unsuppressDialog.getChildren().forEach(function (child) {
-          unsuppressDialog.removeChild(child);
-        });
-
-        unsuppressDialog.set('content', dom.create('div', {
-          innerHTML : '<b>Are you sure to unsuppress this bug?</b><br>' +
-            'You can also use command line for unsuppression:<br>' +
-            '<tt>CodeChecker cmd suppress -x ' +
-            ' --bugid ' + that.reportData.bugHash +
-            ' -n ' + that.runData.name +
-            ' --file ' + getProperFilePath(that.reportData.checkedFile) +
-            ' -p ' + location.port +
-            '</tt>' +
-            '<hr>' +
-            that.reportData.suppressComment
-        }));
-
-        unsuppressDialog.addChild(sendUnsuppressButton);
-      }
-
-      function setSuppressDialogContent() {
-        suppressDialog.getChildren().forEach(function (child) {
-          suppressDialog.removeChild(child);
-        });
-
-        suppressDialog.set('content', dom.create('div', {
-          innerHTML : 'You can also use command line for suppression:<br>' +
-            '<tt>CodeChecker cmd suppress ' +
-            ' --bugid ' + that.reportData.bugHash +
-            ' -n ' + that.runData.name +
-            ' -c &lt;comment&gt;' +
-            ' --file ' + getProperFilePath(that.reportData.checkedFile) +
-            ' -p ' + location.port +
-            '</tt><br><b>Comment:</b>'
-        }));
-
-        suppressDialog.addChild(suppressTextarea);
-        suppressDialog.addChild(sendSuppressButton);
-      }
-
-      //--- Bug suppression ---//
-
-      var suppressTextarea = new Textarea();
-      
-      var sendSuppressButton = new Button({
-        label : 'Suppress',
-        onClick : function () {
-          CC_SERVICE.suppressBug(
-            [that.runData.runId],
-            that.reportData.reportId,
-            suppressTextarea.get('value'),
-            function (success) {
-              if (success) {
-                that.reportData.suppressed = true;
-                that.reportData.suppressComment = suppressTextarea.get('value');
-                topic.publish("hooks/bug/Suppressed", that.reportData);
-                setUnsuppressDialogContent();
-                that.removeChild(suppressButton);
-                that.addChild(unsuppressButton, 0);
-                suppressDialog.hide();
-
-              }
-            });
-
-        }
-      });
-
-      var sendUnsuppressButton = new Button({
-        label : 'Unsuppress',
-        onClick : function () {
-          CC_SERVICE.unSuppressBug(
-            [that.runData.runId],
-            that.reportData.reportId,
-            function (success) {
-              that.reportData.suppressed = false;
-              that.reportData.suppressComment = null;
-              topic.publish("hooks/bug/Unsuppressed", that.reportData);
-              that.removeChild(unsuppressButton);
-              that.addChild(suppressButton, 0);
-              unsuppressDialog.hide();
-            });
-        }
-      });
-
-      var suppressDialog = new Dialog({ title : 'Suppress bug' });
-      var unsuppressDialog = new Dialog({ title : 'Unsuppress bug' });
-
-      setSuppressDialogContent();
-      setUnsuppressDialogContent();
-
-      var suppressButton = new Button({
-        label : 'Suppress bug',
-        onClick : function () { suppressDialog.show(); }
-      });
-
-      var unsuppressButton = new Button({
-        label : 'Unsuppress bug',
-        onClick : function () { unsuppressDialog.show(); }
-      });
-
-      this.addChild(
-        this.reportData.suppressed ? unsuppressButton : suppressButton);
-      
       //--- Documentation ---//
 
       this.addChild(new Button({
@@ -828,6 +832,12 @@ function (declare, dom, style, fx, Toggler, on, query, Memory, Observable,
           topic.publish('showDocumentation', that.reportData.checkerId);
         }
       }));
+
+      this.addChild(this._reviewStatusSelector);
+
+      //--- Review status comment message. ---//
+
+      dom.place(this._reviewComment, this.domNode);
 
       //--- Comments ---//
 
@@ -893,6 +903,51 @@ function (declare, dom, style, fx, Toggler, on, query, Memory, Observable,
       });
 
       dom.place(label, this.showArrowCheckbox.domNode, 'after');
+    },
+
+    _createOptionValues : function () {
+      var reviewStatusOptions = [];
+      for (var key in ReviewStatus) {
+        var value = ReviewStatus[key];
+        if (value !== ReviewStatus.UNREVIEWED ||
+            this.reportData.review.status === ReviewStatus.UNREVIEWED)
+        reviewStatusOptions.push({
+          label : '<span class="customIcon review-status-'
+                + util.reviewStatusCssClass(value)
+                + '"></span>' + util.reviewStatusFromCodeToString(value),
+          value : value
+        });
+      }
+      return reviewStatusOptions;
+    },
+
+    /**
+     * This function fires when we set the reportData field of a ButtonPane
+     * object.
+     */
+    _setReportDataAttr : function (report) {
+      this.reportData = report;
+
+      //--- Update the select widget values ---//
+
+      this._reviewStatusSelector.set('options', this._createOptionValues());
+      this._reviewStatusSelector.set('value', report.review.status, false);
+      this._reviewStatusSelector.set('prevValue', report.review.status, false);
+
+      //--- Show or hide review status message box ---//
+
+      this.showOrHideReviewStatusMessageBox(report.review.comment);
+    },
+
+    /**
+     * Show or hide the review status message box if the review status is
+     * unreviewed.
+     */
+    showOrHideReviewStatusMessageBox : function (message) {
+      if (this.reportData.review.status !== ReviewStatus.UNREVIEWED)
+        domClass.remove(this._reviewComment, 'hide');
+      else
+        domClass.add(this._reviewComment, 'hide');
     }
   });
 

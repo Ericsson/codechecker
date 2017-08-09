@@ -125,14 +125,12 @@ class ThriftClientHelper(object):
                            sortType, reportFilters):
         pass
 
-    # -----------------------------------------------------------------------
     @ThriftClientCall
-    def suppressBug(self, runIds, reportId, comment):
+    def changeReviewStatus(self, report_id, status, message):
         pass
 
-    # -----------------------------------------------------------------------
     @ThriftClientCall
-    def unSuppressBug(self, runIds, reportId):
+    def changeReviewStatusByHash(self, bug_hash, status, message):
         pass
 
     # STORAGE RELATED API CALLS
@@ -146,14 +144,6 @@ class ThriftClientHelper(object):
         pass
 
     @ThriftClientCall
-    def addSuppressBug(self, run_id, bugsToSuppress):
-        pass
-
-    @ThriftClientCall
-    def cleanSuppressData(self, run_id):
-        pass
-
-    @ThriftClientCall
     def addSkipPath(self, run_id, paths):
         pass
 
@@ -161,8 +151,7 @@ class ThriftClientHelper(object):
     # =============================================================
     @ThriftClientCall
     def addReport(self, run_id, file_id, bug_hash, checker_message, bugpath,
-                  events, checker_id, checker_cat, bug_type, severity,
-                  suppress):
+                  events, checker_id, checker_cat, bug_type, severity):
         pass
 
     @ThriftClientCall

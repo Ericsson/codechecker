@@ -34,19 +34,25 @@ struct RunData{
 }
 typedef list<RunData> RunDataList
 
+struct ReviewData{
+  1: shared.ReviewStatus  status,
+  2: string               comment,
+  3: string               author,
+  4: string               date
+}
+
 //-----------------------------------------------------------------------------
 struct ReportData{
-  1: string              checkerId,       // the qualified id of the checker that reported this
-  2: string              bugHash,         // This is unique id of the concrete report.
-  3: string              checkedFile,     // this is a filepath
-  4: string              checkerMsg,      // description of the bug report
-  5: i64                 reportId,        // id of the report in the current run in the db
-  6: bool                suppressed,      // true if the bug is suppressed
-  7: i64                 fileId,          // unique id of the file the report refers to
-  8: shared.BugPathEvent lastBugPosition  // This contains the range and message of the last item in the symbolic
-                                          // execution step list.
-  9: shared.Severity     severity         // checker severity
-  10: optional string    suppressComment  // suppress commment if report is suppressed
+  1: string               checkerId,       // the qualified id of the checker that reported this
+  2: string               bugHash,         // This is unique id of the concrete report.
+  3: string               checkedFile,     // this is a filepath
+  4: string               checkerMsg,      // description of the bug report
+  5: i64                  reportId,        // id of the report in the current run in the db
+  6: i64                  fileId,          // unique id of the file the report refers to
+  7: shared.BugPathEvent  lastBugPosition  // This contains the range and message of the last item in the symbolic
+                                           // execution step list.
+  8: shared.Severity      severity         // checker severity
+  9: ReviewData           review           // bug review status informations.
 }
 typedef list<ReportData> ReportDataList
 
@@ -61,8 +67,7 @@ struct ReportFilter{
   3: optional shared.Severity severity,
   4: optional string          checkerId,          // should filter in the fully qualified checker id name such as alpha.core.
                                                   // the analyzed system. Projects can optionally use this concept.
-  5: optional bool            suppressed = false, // if the bug state is suppressed
-  6: optional string          bugHash
+  5: optional string          bugHash
 }
 
 /**
@@ -193,20 +198,11 @@ service codeCheckerDBAccess {
                                    3: optional Encoding encoding)
                                    throws (1: shared.RequestFailed requestError),
 
-  // suppress the bug
-  bool suppressBug(1: list<i64> runIds,
-                   2: i64 reportId,
-                   3: string comment)
-                   throws (1: shared.RequestFailed requestError),
-
-  // unsuppress the bug
-  bool unSuppressBug(1: list<i64> runIds,
-                     2: i64 reportId)
-                     throws (1: shared.RequestFailed requestError),
-
-  // get suppressed bugs in a run
-  shared.SuppressBugList getSuppressedBugs(1: i64 run_id)
-                                          throws(1: shared.RequestFailed requestError),
+  // change review status of a bug.
+  bool changeReviewStatus(1: i64 reportId,
+                          2: shared.ReviewStatus status,
+                          3: string message)
+                          throws (1: shared.RequestFailed requestError),
 
   // get comments for a bug
   CommentDataList getComments(1: i64 reportId)
@@ -322,18 +318,6 @@ service codeCheckerDBAccess {
                      2: shared.CheckerConfigList values)
                      throws (1: shared.RequestFailed requestError),
 
-  bool addSuppressBug(
-                      1: i64 run_id,
-                      2: shared.SuppressBugList bugsToSuppress
-                      )
-                      throws (1: shared.RequestFailed requestError),
-
-  # remove all suppress information from the database
-  bool cleanSuppressData(
-                      1: i64 run_id,
-                      )
-                      throws (1: shared.RequestFailed requestError),
-
   # the map contains a path and a comment (can be empty)
   bool addSkipPath(
                    1: i64 run_id,
@@ -353,8 +337,7 @@ service codeCheckerDBAccess {
                  7: string checker_id,
                  8: string checker_cat,
                  9: string bug_type,
-                 10: shared.Severity severity,
-                 11: bool suppress)
+                 10: shared.Severity severity)
                  throws (1: shared.RequestFailed requestError),
 
 

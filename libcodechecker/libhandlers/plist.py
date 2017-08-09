@@ -340,9 +340,7 @@ def main(args):
                 # command used to do it in the workspace folder.
                 setattr(store_args, 'sqlite',
                         os.path.join(workspace, 'codechecker.sqlite'))
-            args_to_update = ['suppress',
-                              'name'
-                              ]
+            args_to_update = ['name']
             for key in args_to_update:
                 __update_if_key_exists(args, store_args, key)
 

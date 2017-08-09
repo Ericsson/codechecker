@@ -300,14 +300,6 @@ def __register_suppress(parser):
 
     group = parser.add_mutually_exclusive_group(required=True)
 
-    group.add_argument('-e', '--export',
-                       type=str,
-                       dest="output",
-                       metavar='SUPPRESS_FILE',
-                       default=argparse.SUPPRESS,
-                       help="Export into a suppress file from suppressions in "
-                            "the server's database.")
-
     group.add_argument('-i', '--import',
                        type=str,
                        dest="input",
@@ -315,42 +307,6 @@ def __register_suppress(parser):
                        default=argparse.SUPPRESS,
                        help="Import suppression from the suppress file into "
                             "the database.")
-
-    # TODO: This could be a positional argument too later on, so invocation
-    # for a specific bug is:
-    # CodeChecker cmd suppress RUN_NAME BUG_ID -x|-f|--whatever
-    group.add_argument('--bugid',
-                       type=str,
-                       dest="bugid",
-                       default=argparse.SUPPRESS,
-                       help="Manage suppression of the defect report based "
-                            "on its ID.")
-
-    bugid = parser.add_argument_group(
-        "per-report arguments",
-        "Options here are only applicable is '--bugid' is specified!")
-
-    bugid.add_argument('--file',
-                       type=str,
-                       dest="file",
-                       default=argparse.SUPPRESS,
-                       help="Suppress/unsuppress the given report ONLY in the "
-                            "specified file, instead of every occurrence of "
-                            "it.")
-
-    bugid.add_argument('-x', '--unsuppress',
-                       dest="unsuppress",
-                       action='store_true',
-                       default=argparse.SUPPRESS,
-                       help="Unsuppress the specified report. (If not given, "
-                            "default action is to suppress a report.)")
-
-    bugid.add_argument('-c', '--comment',
-                       type=str,
-                       dest="comment",
-                       default=argparse.SUPPRESS,
-                       help="Specify the (optional) comment which explains "
-                            "why the given report is suppressed.")
 
 
 def __register_auth(parser):
@@ -433,10 +389,9 @@ def add_arguments_to_parser(parser):
     suppress = subcommands.add_parser(
         'suppress',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        description="Exports or imports suppressions from a CodeChecker "
-                    "server from/to a suppress file, and is also used (if "
-                    "'--bugid' is specified) to (un)suppress reports.",
-        help="Manage and export/import suppressions of a CodeChecker server.")
+        description="Imports suppressions from a suppress file to a "
+                    "CodeChecker server.",
+        help="Manage and import suppressions of a CodeChecker server.")
     __register_suppress(suppress)
     suppress.set_defaults(func=cmd_line_client.handle_suppress)
     __add_common_arguments(suppress)
