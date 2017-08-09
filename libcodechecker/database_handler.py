@@ -150,8 +150,7 @@ class SQLServer(object):
             return sqlalchemy.create_engine(
                 connection_string,
                 encoding='utf8',
-                connect_args={'timeout': 600,
-                              'check_same_thread': False})
+                connect_args={'timeout': 600})
         else:
             return sqlalchemy.create_engine(connection_string,
                                             encoding='utf8')

@@ -136,40 +136,13 @@ class ThriftClientHelper(object):
     # STORAGE RELATED API CALLS
 
     @ThriftClientCall
-    def addCheckerRun(self, command, name, version, force):
+    def necessaryFileContents(self, file_hashes):
+        pass
+
+    @ThriftClientCall
+    def massStoreRun(self, name, version, zipdir, force):
         pass
 
     @ThriftClientCall
     def replaceConfigInfo(self, run_id, values):
-        pass
-
-    @ThriftClientCall
-    def addSkipPath(self, run_id, paths):
-        pass
-
-    # The next few following functions must be called via the same connection.
-    # =============================================================
-    @ThriftClientCall
-    def addReport(self, run_id, file_id, bug_hash, checker_message, bugpath,
-                  events, checker_id, checker_cat, bug_type, severity):
-        pass
-
-    @ThriftClientCall
-    def needFileContent(self, filepath, content_hash, run_id):
-        pass
-
-    @ThriftClientCall
-    def addFileContent(self, content_hash, content, encoding, run_id):
-        pass
-
-    @ThriftClientCall
-    def finishCheckerRun(self, run_id):
-        pass
-
-    @ThriftClientCall
-    def setRunDuration(self, run_id, duration):
-        pass
-
-    @ThriftClientCall
-    def stopServer(self):
         pass

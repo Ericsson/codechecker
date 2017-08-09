@@ -189,11 +189,11 @@ class Report(Base):
 
     # TODO: multiple messages to multiple source locations?
     checker_message = Column(String)
-    detection_status = Column(String)
-    # detection_status = Column(Enum('new',
-    #                                'unresolved',
-    #                                'resolved',
-    #                                'reopened'))
+    detection_status = Column(Enum('new',
+                                   'unresolved',
+                                   'resolved',
+                                   'reopened',
+                                   name='detection_status'))
 
     # Cascade delete might remove rows SQLAlchemy warns about this
     # to remove warnings about already deleted items set this to False.

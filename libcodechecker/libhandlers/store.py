@@ -9,21 +9,23 @@ database.
 """
 
 import argparse
+import base64
 import functools
+from hashlib import sha256
 import json
-import multiprocessing
 import os
+import shutil
 import sys
 import tempfile
 import traceback
+import zipfile
+import zlib
 
 from libcodechecker import generic_package_context
 from libcodechecker import host_check
 from libcodechecker import util
-from libcodechecker.analyze import skiplist_handler
-from libcodechecker.analyze.analyzers import analyzer_types
+from libcodechecker.analyze import plist_parser
 from libcodechecker.libclient.client import setup_client
-from libcodechecker.log import build_action
 from libcodechecker.logger import add_verbose_arguments
 from libcodechecker.logger import LoggerFactory
 
@@ -91,15 +93,6 @@ def add_arguments_to_parser(parser):
                         help="Specify the format the analysis results were "
                              "created as.")
 
-    parser.add_argument('-j', '--jobs',
-                        type=int,
-                        dest="jobs",
-                        required=False,
-                        default=1,
-                        help="Number of threads to use in storing results. "
-                             "More threads mean faster operation at the cost "
-                             "of using more memory.")
-
     parser.add_argument('-n', '--name',
                         type=str,
                         dest="name",
@@ -162,59 +155,6 @@ def add_arguments_to_parser(parser):
     parser.set_defaults(func=main)
 
 
-@full_traceback
-def consume_plist(item):
-    try:
-        f, context, metadata_dict, compile_cmds, server_data = item
-
-        if 'working_directory' in metadata_dict:
-            os.chdir(metadata_dict['working_directory'])
-
-        buildaction = build_action.BuildAction()
-
-        LOG.debug("Parsing input file '" + f + "'")
-        analyzed_source = 'UNKNOWN'
-        if 'result_source_files' in metadata_dict and\
-                f in metadata_dict['result_source_files']:
-                analyzed_source = metadata_dict['result_source_files'][f]
-
-        if analyzed_source == "UNKNOWN":
-            LOG.info("Storing defects in input file '" + f + "'")
-        else:
-            LOG.info("Storing analysis results for file '" +
-                     analyzed_source + "'")
-
-        LOG.debug("Getting build command for '" + f + "'")
-        buildaction.original_command = compile_cmds.get(analyzed_source,
-                                                        'MISSING')
-
-        if buildaction.original_command == 'MISSING':
-            # Create a "good enough" command based on the plist's name, so
-            # even without a build command, we can still store the results.
-            LOG.warning("Compilation action was not found for file '" +
-                        analyzed_source + "' (input '" + f + "')")
-            LOG.debug("Considering results in input '" + f + "' brand new.")
-            buildaction.original_command = f
-
-        rh = analyzer_types.construct_store_handler(buildaction,
-                                                    context.run_id,
-                                                    context.severity_map)
-
-        rh.analyzer_returncode = 0
-        rh.analyzer_result_file = f
-        rh.analyzer_cmd = ''
-        rh.analyzed_source_file = analyzed_source
-
-        host, port = server_data
-        client = setup_client(host, port, '/')
-        rh.handle_results(client)
-        return 0
-    except Exception as ex:
-        LOG.warning(str(ex))
-        LOG.warning("Failed to process report: " + f)
-        return 1
-
-
 def __get_run_name(input_list):
     """Create a runname for the stored analysis from the input list."""
 
@@ -248,34 +188,76 @@ def res_handler(results):
     LOG.info("Successful " + str(results.count(0)) + "/" + str(len(results)))
 
 
-def process_compile_db(compile_db):
-    """
-    Create a dict where the source file name (absolute path) is the key and
-    the correspoding compilation command is the value.
-    """
-    compile_db = os.path.abspath(compile_db)
-    comp_cmds = {}
+def assemble_zip(inputs, zip_file, client):
+    temp_dir = tempfile.mkdtemp()
 
-    if not os.path.exists(compile_db):
-        LOG.warning("Compilation command file '" + compile_db +
-                    "' is missing.")
-        LOG.warning("Update mode will not work, without compilation "
-                    "command it is not known which file to update.")
-        return comp_cmds
+    report_dir = os.path.join(temp_dir, 'reports')
+    os.makedirs(report_dir)
 
-    with open(compile_db, 'r') as ccdb:
-        comp_cmds = json.load(ccdb)
+    source_dir = os.path.join(temp_dir, 'root')
+    os.makedirs(source_dir)
 
-    processed = {}
-    for cc in comp_cmds:
-        file_path = os.path.join(cc['directory'], cc['file'])
+    file_dict = {}
+
+    def collect_file_hashes_from_plist(plist_file):
         try:
-            # Newer compile command json format.
-            processed[file_path] = str(' '.join(cc['arguments']))
-        except Exception:
-            processed[file_path] = cc['command']
+            files, _ = plist_parser.parse_plist(plist_file)
 
-    return processed
+            for f in files:
+                with open(f) as content:
+                    hasher = sha256()
+                    hasher.update(content.read())
+                    content_hash = hasher.hexdigest()
+                    file_dict[content_hash] = f
+        except Exception as ex:
+            LOG.error('Parsing the plist failed: ' + str(ex))
+
+    try:
+        for input_path in inputs:
+            input_path = os.path.abspath(input_path)
+
+            if os.path.isfile(input_path):
+                if not input_path.endswith(".plist"):
+                    continue
+                shutil.copy(input_path, report_dir)
+                collect_file_hashes_from_plist(input_path)
+            elif os.path.isdir(input_path):
+                _, _, files = next(os.walk(input_path), ([], [], []))
+                for f in files:
+                    plist_file = os.path.join(input_path, f)
+                    shutil.copy(plist_file, report_dir)
+                    if f.endswith(".plist"):
+                        collect_file_hashes_from_plist(plist_file)
+
+        necessary_hashes = client.necessaryFileContents(file_dict.keys())
+        for h, f in file_dict.items():
+            if h in necessary_hashes:
+                target_file = os.path.join(source_dir, f[1:])
+
+                try:
+                    os.makedirs(os.path.dirname(target_file))
+                except os.error:
+                    # Directory already exists.
+                    pass
+
+                shutil.copyfile(f, target_file)
+
+        with zipfile.ZipFile(zip_file, 'w') as zipf:
+            for root, _, files in os.walk(temp_dir):
+                for file in files:
+                    f = os.path.join(root, file)
+                    zipf.write(f, f[len('/tmp'):])
+
+        # Compressing .zip file
+        with open(zip_file, 'rb') as source:
+            compressed = zlib.compress(source.read(),
+                                       zlib.Z_BEST_COMPRESSION)
+
+        with open(zip_file, 'wb') as target:
+            target.write(compressed)
+    finally:
+        shutil.rmtree(temp_dir)
+        pass
 
 
 def main(args):
@@ -310,119 +292,28 @@ def main(args):
         LOG.info("argument --force was specified: the run with name '" +
                  args.name + "' will be deleted.")
 
-    context = generic_package_context.get_context()
-
-    original_cwd = os.getcwd()
-    empty_metadata = {'working_directory': original_cwd}
-
-    check_commands = []
-    check_durations = []
-    skip_handlers = []
-    items = []
-
-    server_data = (args.host, args.port)
-
-    for input_path in args.input:
-        input_path = os.path.abspath(input_path)
-
-        # WARN: analyze command should create this file!
-        cmp_db = os.path.join(input_path, 'compile_cmd.json')
-        compile_commands = process_compile_db(cmp_db)
-
-        LOG.debug("Parsing input argument: '" + input_path + "'")
-
-        if os.path.isfile(input_path):
-            if not input_path.endswith(".plist"):
-                continue
-
-            items.append((input_path,
-                          context,
-                          empty_metadata,
-                          compile_commands,
-                          server_data))
-
-        elif os.path.isdir(input_path):
-            metadata_file = os.path.join(input_path, "metadata.json")
-            if os.path.exists(metadata_file):
-                with open(metadata_file, 'r') as metadata:
-                    metadata_dict = json.load(metadata)
-                    LOG.debug(metadata_dict)
-
-                    if 'command' in metadata_dict:
-                        check_commands.append(metadata_dict['command'])
-                    if 'timestamps' in metadata_dict:
-                        check_durations.append(
-                            float(metadata_dict['timestamps']['end'] -
-                                  metadata_dict['timestamps']['begin']))
-                    if 'skip_data' in metadata_dict:
-                        # Save previously stored skip data for sending to the
-                        # database, to ensure skipped headers are actually
-                        # skipped --- 'analyze' can't do this.
-                        handle, path = tempfile.mkstemp()
-                        with os.fdopen(handle, 'w') as tmpf:
-                            tmpf.write('\n'.join(metadata_dict['skip_data']))
-
-                        skip_handlers.append(
-                            skiplist_handler.SkipListHandler(path))
-                        os.remove(path)
-            else:
-                metadata_dict = empty_metadata
-
-            _, _, files = next(os.walk(input_path), ([], [], []))
-            for f in files:
-                if not f.endswith(".plist"):
-                    continue
-
-                items.append((os.path.join(input_path, f),
-                              context, metadata_dict, compile_commands,
-                              server_data))
-
-    if len(check_commands) == 0:
-        command = ' '.join(sys.argv)
-    elif len(check_commands) == 1:
-        command = ' '.join(check_commands[0])
-    else:
-        command = "multiple analyze calls: " +\
-                  '; '.join([' '.join(com) for com in check_commands])
-
     # setup connection to the remote server
-    client = setup_client(args.host,
-                          args.port, '/')
+    client = setup_client(args.host, args.port, '/')
 
     LOG.debug("Initializing client connecting to " +
               str(args.host) + ":" + str(args.port) + " done.")
-    context.run_id = client.addCheckerRun(command,
-                                          args.name,
-                                          context.version,
-                                          args.force)
 
-    # Send previously collected skip information to the server.
-    LOG.debug("Storing skip information")
-    for skip_handler in skip_handlers:
-        if not client.addSkipPath(context.run_id, skip_handler.get_skiplist()):
-            LOG.debug("Adding skip path failed!")
-
-    # TODO: This is a hotfix for a data race problem in storage.
-    # Currently removal of build actions is based on plist files which lack
-    # build command that is needed for unambiguous deletion.
-    args.jobs = 1
-
-    pool = multiprocessing.Pool(args.jobs)
+    _, zip_file = tempfile.mkstemp('.zip')
 
     try:
-        pool.map_async(consume_plist,
-                       items,
-                       1,
-                       callback=lambda results: res_handler(results)
-                       ).get(float('inf'))
-        pool.close()
+        assemble_zip(args.input, zip_file, client)
+        with open(zip_file, 'rb') as zf:
+            b64zip = base64.b64encode(zf.read())
+
+        context = generic_package_context.get_context()
+
+        client.massStoreRun(args.name,
+                            context.version,
+                            b64zip,
+                            args.force)
+
+        LOG.info("Storage finished successfully.")
+    except Exception as ex:
+        LOG.info("Storage failed: " + str(ex))
     finally:
-        pool.join()
-        os.chdir(original_cwd)
-
-    if len(check_durations) > 0:
-        client.setRunDuration(context.run_id,
-                              # Round the duration to seconds.
-                              int(sum(check_durations)))
-
-    client.finishCheckerRun(context.run_id)
+        os.remove(zip_file)

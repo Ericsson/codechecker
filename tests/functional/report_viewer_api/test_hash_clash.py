@@ -9,7 +9,8 @@
     report_server_api function tests.
 """
 import base64
-from hashlib import sha256
+from collections import defaultdict
+import fileinput
 import os
 import random
 import string
@@ -19,6 +20,7 @@ from contextlib import contextmanager
 from uuid import uuid4
 
 from libtest import env
+from libtest import codechecker
 
 from shared.ttypes import BugPathPos, BugPathEvent, Severity
 from codeCheckerDBAccess.ttypes import Encoding
@@ -33,6 +35,13 @@ def _generate_content(cols, lines):
             content += random.choice(string.letters)
         content += '\n'
     return content
+
+
+def _replace_path(filename, path):
+    with open(filename, 'r') as f:
+        content = f.read().replace('$$$', path)
+    with open(filename, 'w') as f:
+        f.write(content)
 
 
 class HashClash(unittest.TestCase):
@@ -58,78 +67,20 @@ class HashClash(unittest.TestCase):
         self._report = env.setup_viewer_client(test_workspace)
         self.assertIsNotNone(self._report)
 
-    def _create_run(self, name):
-        """Creates a new run using an unique id."""
+        # Store runs to check.
+        self._codechecker_cfg = env.import_codechecker_cfg(test_workspace)
+        test_dir = os.path.join(os.path.dirname(__file__), 'test_files')
 
-        return self._report.addCheckerRun(name,
-                                          name + str(uuid4()),
-                                          'v',
-                                          False)
+        _replace_path(os.path.join(test_dir, 'run.plist'), test_dir)
 
-    def _create_file(self, name, run_id, cols=10, lines=10):
-        """Creates a new file with random content."""
+        codechecker.store(self._codechecker_cfg,
+                          'run',
+                          os.path.join(test_dir))
 
-        path = name + "_" + str(uuid4())
-        content = _generate_content(cols, lines)
-        hasher = sha256()
-        hasher.update(content)
-        content_hash = hasher.hexdigest()
-        need = self._report.needFileContent(path, content_hash, run_id)
-        self.assertTrue(need.needed)
-
-        content = base64.b64encode(content)
-        success = self._report.addFileContent(content_hash, content,
-                                              Encoding.BASE64, run_id)
-        self.assertTrue(success)
-
-        return need.fileId, path
-
-    def _create_simple_report(self, file_id, run_id, bug_hash, position):
-        """Creates a new report with one bug path position and event."""
-
-        bug_path = [BugPathPos(position[0][0],
-                               position[0][1],
-                               position[1][0],
-                               position[1][1],
-                               file_id)]
-        bug_evt = [BugPathEvent(position[0][0],
-                                position[0][1],
-                                position[1][0],
-                                position[1][1],
-                                'evt',
-                                file_id)]
-        return self._report.addReport(run_id,
-                                      file_id,
-                                      bug_hash,
-                                      'test',
-                                      bug_path,
-                                      bug_evt,
-                                      'test_id',
-                                      'test_cat',
-                                      'test_type',
-                                      Severity.UNSPECIFIED)
-
-    @contextmanager
-    def _init_new_test(self, name):
-        """
-        Creates a new run and file.
-
-        Use it in a 'with' statement. At the end of the 'with' statement it
-        calls the finish methods for the run.
-
-        Example:
-            with self._init_new_test('test') as ids:
-                # do stuff
-        """
-
-        run_id = self._create_run(name)
-        file_id, source_file = self._create_file(name, run_id)
-
-        # analyzer type needs to match with the supported analyzer types
-        # clangsa is used for testing
-        analyzer_type = 'clangsa'
-        yield (run_id, file_id, source_file)
-        self._report.finishCheckerRun(run_id)
+    def _reports_for_latest_run(self):
+        runs = self._report.getRunData("")
+        max_run_id = max(map(lambda run: run.runId, runs))
+        return self._report.getRunResults(max_run_id, 100, 0, [], [])
 
     def test_hash_clash(self):
         """Runs the following tests:
@@ -139,54 +90,43 @@ class HashClash(unittest.TestCase):
         - Hash clash in different files.
         - Hash clash in different build actions.
         """
+        reports = self._reports_for_latest_run()
 
-        with self._init_new_test('test1') as ids1:
-            run_id1, file_id1, _ = ids1
-            rep_id1 = self._create_simple_report(file_id1,
-                                                 run_id1,
-                                                 'XXX',
-                                                 ((1, 1), (1, 2)))
-            rep_id2 = self._create_simple_report(file_id1,
-                                                 run_id1,
-                                                 'XXX',
-                                                 ((1, 1), (1, 2)))
-            # Same file, same hash and position
-            self.assertEqual(rep_id1, rep_id2)
+        # The PList file contains six bugs:
+        # 1. A normal bug
+        # 2. Same as the first one (no new report generated)
+        # 3. Same as the first one except for line numbers (no new report
+        #    generated)
+        # 4. Same as the first one except for column numbers (new report
+        #    generated)
+        # 5. Same as the first one except for the file name (no new report
+        #    generated)
+        # 6. Same as the first one except for the checker message (new report
+        #    generated)
 
-            rep_id3 = self._create_simple_report(file_id1,
-                                                 run_id1,
-                                                 'XXX',
-                                                 ((2, 1), (2, 2)))
-            # Same file, same hash and different position in line
-            self.assertEqual(rep_id1, rep_id3)
+        fileid1 = None
+        fileid2 = None
 
-            rep_id6 = self._create_simple_report(file_id1,
-                                                 run_id1,
-                                                 'XXX',
-                                                 ((1, 3), (1, 4)))
+        for report in reports:
+            f = self._report.getSourceFileData(report.fileId,
+                                               False,
+                                               Encoding.BASE64)
 
-            # Same file, same hash and different position in column
-            self.assertNotEqual(rep_id1, rep_id6)
+            if f.filePath.endswith('main.cpp'):
+                fileid1 = f.fileId
+            elif f.filePath.endswith('main2.cpp'):
+                fileid2 = f.fileId
 
-        with self._init_new_test('test2') as ids2:
-            run_id2, file_id2, source_file2 = ids2
-            rep_id4 = self._create_simple_report(file_id2,
-                                                 run_id2,
-                                                 'XXX',
-                                                 ((1, 1), (1, 2)))
-            rep_id5 = self._create_simple_report(file_id2,
-                                                 run_id2,
-                                                 'YYY',
-                                                 ((1, 1), (1, 2)))
-            rep_id7 = self._create_simple_report(file_id1,
-                                                 run_id2,
-                                                 'XXX',
-                                                 ((1, 1), (1, 2)))
-            # Different file, same hash, and position
-            self.assertNotEqual(rep_id1, rep_id4)
-            # Different file, same hash and different position
-            self.assertNotEqual(rep_id3, rep_id4)
-            # Same file and position, different hash
-            self.assertNotEqual(rep_id4, rep_id5)
+        by_file = defaultdict(int)
+        for report in reports:
+            by_file[report.fileId] += 1
 
-            self.assertNotEqual(rep_id1, rep_id7)
+        self.assertEqual(by_file[fileid1], 3)
+        self.assertEqual(by_file[fileid2], 1)
+
+        by_checker_message = defaultdict(int)
+        for report in reports:
+            by_checker_message[report.checkerMsg] += 1
+
+        self.assertEqual(by_checker_message['checker message'], 3)
+        self.assertEqual(by_checker_message['checker message 2'], 1)
