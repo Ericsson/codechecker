@@ -75,3 +75,14 @@ enum ReviewStatus {
   WONT_FIX        // This is a bug but we don't want to fix it.
 }
 
+// DetectionStatus is set by the storage process. When a new bug appears then
+// the status is NEW. If the bug disappears during an update process in a run
+// then it becomes RESOLVED. If a bug remains in an update process then it
+// becomes UNRESOLVED. If a bug was RESOLVED and appears again then it becomes
+// REOPENED until it disappears again.
+enum DetectionStatus {
+  NEW,
+  RESOLVED,
+  UNRESOLVED,
+  REOPENED
+}

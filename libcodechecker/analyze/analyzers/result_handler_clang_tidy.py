@@ -7,8 +7,6 @@
 from libcodechecker.analyze import tidy_output_converter
 from libcodechecker.analyze.analyzers.result_handler_base \
     import ResultHandler
-from libcodechecker.analyze.analyzers.result_handler_plist_to_db \
-    import PlistToDB
 from libcodechecker.analyze.analyzers.result_handler_plist_to_stdout \
     import PlistToStdout
 from libcodechecker.logger import LoggerFactory
@@ -33,22 +31,6 @@ def generate_plist_from_tidy_result(output_file, tidy_stdout):
 class ClangTidyPlistToFile(ResultHandler):
     """
     Create a plist file from clang-tidy results.
-    """
-
-    def postprocess_result(self):
-        """
-        Generate plist file which can be parsed and processed for
-        results which can be stored into the database.
-        """
-        output_file = self.analyzer_result_file
-        LOG.debug_analyzer(self.analyzer_stdout)
-        tidy_stdout = self.analyzer_stdout.splitlines()
-        generate_plist_from_tidy_result(output_file, tidy_stdout)
-
-
-class ClangTidyPlistToDB(PlistToDB):
-    """
-    Store clang tidy plist results to a database.
     """
 
     def postprocess_result(self):

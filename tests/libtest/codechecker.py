@@ -159,6 +159,33 @@ def analyze(codechecker_cfg, test_project_name, test_project_path):
         return cerr.returncode
 
 
+def store(codechecker_cfg, test_project_name, report_path):
+    """
+    Store results from a report dir.
+    """
+
+    store_cmd = ['CodeChecker', 'store',
+                 '--host', 'localhost',
+                 '--port', str(codechecker_cfg['viewer_port']),
+                 '--name', test_project_name,
+                 report_path]
+
+    try:
+        print("STORE:")
+        proc = subprocess.Popen(shlex.split(' '.join(store_cmd)),
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE,
+                                env=codechecker_cfg['check_env'])
+        out, err = proc.communicate()
+        print(out)
+        print(err)
+
+        return 0
+    except CalledProcessError as cerr:
+        print("Failed to call:\n" + ' '.join(cerr.cmd))
+        return cerr.returncode
+
+
 def serv_cmd(codechecker_cfg, test_config):
 
     server_cmd = ['CodeChecker', 'server',

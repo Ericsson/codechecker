@@ -31,7 +31,7 @@ struct RunData{
   6: string         runCmd,       // the used check command
   7: optional bool  can_delete    // true if codeCheckerDBAccess::removeRunResults()
                                   // is allowed on this run (see issue 151)
-  8: map<string, i32> detectionStatusCount
+  8: map<shared.DetectionStatus, i32> detectionStatusCount
                                   // this maps the detection status to its count
 }
 typedef list<RunData> RunDataList
@@ -55,7 +55,7 @@ struct ReportData{
                                           // execution step list.
   8: shared.Severity     severity         // checker severity
   9: ReviewData          review           // bug review status informations.
-  10: string             detectionStatus  // 'new', 'resolved', 'unresolved', 'reopened'
+  10: shared.DetectionStatus detectionStatus  // state of the bug (see the enum constant values)
 }
 typedef list<ReportData> ReportDataList
 
@@ -145,12 +145,6 @@ enum DiffType {
   NEW,
   RESOLVED,
   UNRESOLVED
-}
-
-//-----------------------------------------------------------------------------
-struct NeedFileResult {
-                1: bool needed;
-                2: i64 fileId;
 }
 
 //-----------------------------------------------------------------------------
@@ -306,69 +300,35 @@ service codeCheckerDBAccess {
   // Analysis result storage related API calls.
   //============================================
 
-  // store checker run related data to the database
-  // by default updates the results if name was already found
-  // using the force flag removes existing analysis results for a run
-  i64  addCheckerRun(
-                     1: string command,
-                     2: string name,
-                     3: string version,
-                     4: bool force)
-                     throws (1: shared.RequestFailed requestError),
+  // The client can ask the server whether a file is already stored in the
+  // database. If it is, then it is not necessary to send it in the ZIP file
+  // with massStoreRun() function. This function requires a list of file hashes
+  // (sha256) and returns the ones which are not stored yet.
+  list<string> necessaryFileContents(
+                                     1: list<string> file_hashes)
+                                     throws (1: shared.RequestFailed requestError),
+
+  // This function stores an entire run encapsulated and sent in a ZIP file.
+  // The ZIP file has to be compressed and sent as a base64 encoded string. The
+  // ZIP file must contain exactly one directory which has a "reports" and an
+  // optional "root" sub-folder. The former one is the output of "CodeChecker
+  // analyze" command and the latter one contains the source files on absolute
+  // paths starting as if "root" was the "/" directory. The source files are
+  // not necessary to be wrapped in the ZIP file (see necessaryFileContents()
+  // function).
+  // The "version" parameter is the used CodeChecker version which checked this
+  // run.
+  // The "force" parameter removes existing analysis results for a run.
+  i64 massStoreRun(
+                   1: string run_name,
+                   2: string version,
+                   3: string zipfile,
+                   4: bool force)
+                   throws (1: shared.RequestFailed requestError),
 
   bool replaceConfigInfo(
                      1: i64 run_id,
                      2: shared.CheckerConfigList values)
                      throws (1: shared.RequestFailed requestError),
-
-  # the map contains a path and a comment (can be empty)
-  bool addSkipPath(
-                   1: i64 run_id,
-                   2: map<string, string> paths)
-                   throws (1: shared.RequestFailed requestError),
-
-
-  // The next few following functions must be called via the same connection.
-  // =============================================================
-  i64  addReport(
-                 1: i64 run_id,
-                 2: i64 file_id,
-                 3: string bug_hash,
-                 4: string checker_message,
-                 5: shared.BugPath bugpath,
-                 6: shared.BugPathEvents events,
-                 7: string checker_id,
-                 8: string checker_cat,
-                 9: string bug_type,
-                 10: shared.Severity severity)
-                 throws (1: shared.RequestFailed requestError),
-
-
-  // * If (filepath, content_hash) is in the DB return (existing fileId, false).
-  // * If only the content_hash matches, a (new fileId, false) is returned.
-  // * If the filepath matches, but content_hash not, a (new file_id, true) is returned.
-  // * If none of them matches a (new file_id, true) is returned.
-  NeedFileResult needFileContent(
-                                 1: string filepath,
-                                 2: string content_hash,
-                                 3: i64 run_id)
-                                 throws (1: shared.RequestFailed requestError),
-
-  bool addFileContent(
-                      1: string content_hash,
-                      2: string file_content,
-                      3: optional Encoding encoding,
-                      4: i64 run_id)
-                      throws (1: shared.RequestFailed requestError),
-
-  bool finishCheckerRun(1: i64 run_id)
-                        throws (1: shared.RequestFailed requestError),
-
-  bool setRunDuration(1: i64 run_id,
-                      2: i64 duration)
-                      throws (1: shared.RequestFailed requestError),
-
-  bool stopServer()
-                  throws (1: shared.RequestFailed requestError)
 
 }

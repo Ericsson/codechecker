@@ -15,9 +15,10 @@ define([
   'dijit/form/TextBox',
   'dijit/layout/BorderContainer',
   'dijit/layout/ContentPane',
-  'dojox/grid/DataGrid'],
+  'dojox/grid/DataGrid',
+  'codechecker/util'],
 function (declare, domConstruct, ItemFileWriteStore, topic, Dialog, Button,
-  RadioButton, TextBox, BorderContainer, ContentPane, DataGrid) {
+  RadioButton, TextBox, BorderContainer, ContentPane, DataGrid, util) {
 
   function prettifyDuration(seconds) {
     var prettyDuration = "--------";
@@ -72,12 +73,10 @@ function (declare, domConstruct, ItemFileWriteStore, topic, Dialog, Button,
   }
 
   function prettifyStatus(statusCounts) {
-    var stat = [];
-
-    for (statusCount in statusCounts)
-      stat.push(statusCount + '&nbsp(' + statusCounts[statusCount] + ')');
-
-    return stat.join(', ');
+    return Object.keys(statusCounts).map(function (statusCount) {
+      return util.detectionStatusFromCodeToString(statusCount)
+        + '&nbsp;(' + statusCounts[statusCount] + ')';
+    }).join(', ');
   }
 
   var ListOfRunsGrid = declare(DataGrid, {
@@ -189,12 +188,8 @@ function (declare, domConstruct, ItemFileWriteStore, topic, Dialog, Button,
         runData      : runData,
         checkcmd     : '<span class="link">Show</span>',
         del          : false,
-<<<<<<< HEAD
-        diff         : { 'runData' : runData, 'listOfRunsGrid' : this }
-=======
-        diff         : false,
+        diff         : { 'runData' : runData, 'listOfRunsGrid' : this },
         detectionstatus : prettifyStatus(runData.detectionStatusCount)
->>>>>>> Detection status
       });
     },
 

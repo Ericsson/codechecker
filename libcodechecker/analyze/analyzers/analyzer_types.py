@@ -19,7 +19,6 @@ from libcodechecker.analyze.analyzers import config_handler_clang_tidy
 from libcodechecker.analyze.analyzers import config_handler_clangsa
 from libcodechecker.analyze.analyzers import result_handler_base
 from libcodechecker.analyze.analyzers import result_handler_clang_tidy
-from libcodechecker.analyze.analyzers import result_handler_plist_to_db
 from libcodechecker.analyze.analyzers import result_handler_plist_to_stdout
 from libcodechecker.logger import LoggerFactory
 
@@ -400,18 +399,4 @@ def construct_parse_handler(buildaction,
     res_handler.print_steps = print_steps
     res_handler.severity_map = severity_map
     res_handler.suppress_handler = suppress_handler
-    return res_handler
-
-
-def construct_store_handler(buildaction,
-                            run_id,
-                            severity_map):
-    """
-    Construct a result handler for storing results in a database.
-    """
-    res_handler = result_handler_plist_to_db.PlistToDB(
-        buildaction,
-        None,
-        run_id)
-    res_handler.severity_map = severity_map
     return res_handler

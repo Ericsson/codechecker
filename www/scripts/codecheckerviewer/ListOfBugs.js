@@ -107,6 +107,11 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
           + reviewStatus;
 
         reportData.reviewComment = reportData.review.comment;
+
+        //--- Detection status ---//
+
+        reportData.detectionStatus
+          = util.detectionStatusFromCodeToString(reportData.detectionStatus);
       });
 
       return reportDataList;
@@ -209,8 +214,8 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
         { name : 'Checker name', field : 'checkerId', cellClasses : 'link', width : '50%' },
         { name : 'Severity', field : 'severity' },
         { name : 'Review status', field : 'reviewStatusHtml', cellClasses : 'review-status', width : '25%' },
-        { name : 'Review comment', cellClasses : 'review-comment-message compact', field : 'reviewComment', width : '50%' }
-        { name : 'Detection status', field : 'detectionStatus' },
+        { name : 'Review comment', cellClasses : 'review-comment-message compact', field : 'reviewComment', width : '50%' },
+        { name : 'Detection status', field : 'detectionStatus' }
       ];
 
       this.focused = true;
