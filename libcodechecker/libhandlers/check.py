@@ -453,7 +453,6 @@ def main(args):
             logfile=[logfile],
             output_path=report_dir,
             output_format='plist',
-            clean=args.force,
             jobs=args.jobs,
             add_compiler_defaults=args.add_compiler_defaults
         )
@@ -468,6 +467,10 @@ def main(args):
                           ]
         for key in args_to_update:
             __update_if_key_exists(args, analyze_args, key)
+        if args.force:
+            setattr(analyze_args, 'clean', True)
+
+        analyze_module = __load_module("analyze")
         __update_if_key_exists(args, analyze_args, "verbose")
 
         analyze_module = __load_module("analyze")
@@ -488,7 +491,6 @@ def main(args):
             workspace=args.workspace,
             input=[report_dir],
             input_format='plist',
-            jobs=args.jobs,
             force=args.force,
             host=args.host,
             port=args.port

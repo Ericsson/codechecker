@@ -127,6 +127,29 @@ function (locale, dom, style) {
     },
 
     /**
+     * Converts a Thrift API detection status id to human readable string.
+     *
+     * @param {String|Number} reviewCode Thrift API DetectionStatus id.
+     * @return Human readable review status string.
+     */
+    detectionStatusFromCodeToString : function (detectionStatus) {
+      switch (parseInt(detectionStatus)) {
+        case DetectionStatus.NEW:
+          return 'New';
+        case DetectionStatus.RESOLVED:
+          return 'Resolved';
+        case DetectionStatus.UNRESOLVED:
+          return 'Unresolved';
+        case DetectionStatus.REOPENED:
+          return 'Reopened';
+        default:
+          console.error(
+            'Non existing detection status code: ',
+            detectionStatus);
+      }
+    },
+
+    /**
      * Creates a CSS class for a Thrift API review status id.
      *
      * @param {String|Number} reviewCode Thrift API ReviewStatus id.

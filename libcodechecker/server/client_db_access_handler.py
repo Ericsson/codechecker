@@ -10,10 +10,15 @@ Handle Thrift requests.
 import base64
 import codecs
 from collections import defaultdict
+from collections import OrderedDict
 import datetime
 import os
+import shutil
+import sys
+import tempfile
 import threading
 import time
+import zipfile
 import zlib
 
 import sqlalchemy
@@ -22,6 +27,11 @@ import shared
 from codeCheckerDBAccess import constants
 from codeCheckerDBAccess.ttypes import *
 
+from libcodechecker import generic_package_context
+from libcodechecker import suppress_handler
+# TODO: Cross-subpackage import here.
+from libcodechecker.analyze import plist_parser
+from libcodechecker.analyze import store_handler
 from libcodechecker.logger import LoggerFactory
 from libcodechecker.orm_model import *
 from libcodechecker.profiler import timeit
@@ -95,12 +105,48 @@ def bugreportpoint_db_to_api(brp):
         fileId=brp.file_id)
 
 
+def detection_status_enum(status):
+    if status == 'new':
+        return shared.ttypes.DetectionStatus.NEW
+    elif status == 'resolved':
+        return shared.ttypes.DetectionStatus.RESOLVED
+    elif status == 'unresolved':
+        return shared.ttypes.DetectionStatus.UNRESOLVED
+    elif status == 'reopened':
+        return shared.ttypes.DetectionStatus.REOPENED
+
+
+def unzip(b64zip):
+    """
+    This function unzips the base64 encoded zip file which should contain
+    exactly one directory. This directory is extracted to the /tmp directory.
+    The function returns the name of the extracted directory.
+    """
+
+    _, zip_file = tempfile.mkstemp('.zip')
+
+    with open(zip_file, 'wb') as zip_f:
+        zip_f.write(zlib.decompress(base64.b64decode(b64zip)))
+
+    with zipfile.ZipFile(zip_file, 'r') as zipf:
+        # A not too nice way to find the only directory in the zip archive.
+        first_file = zipf.namelist()[0]
+        zip_dir = first_file[:first_file.find('/')]
+        zipf.extractall('/tmp')
+
+    os.remove(zip_file)
+
+    return os.path.join('/tmp', zip_dir)
+
+
 class StorageSession:
-    '''This class is a singleton which helps to handle a transaction which
+    """
+    This class is a singleton which helps to handle a transaction which
     belong to the checking of an entire run. This class holds the SQLAlchemy
     session for the run being checked and the set of touched reports. This
     latter one is needed so at the end the detection status of the rest reports
-    can be set to "resolved".'''
+    can be set to "resolved".
+    """
 
     class __StorageSession:
         def __init__(self):
@@ -150,6 +196,10 @@ class StorageSession:
             return self.__sessions[run_id]['transaction']
 
         def _timeout_sessions(self):
+            """
+            The storage session times out if no action happens in the
+            transaction belonging to the given run within 10 seconds.
+            """
             for run_id, session in self.__sessions.iteritems():
                 if int(time.time() - session['timer']) > 10:
                     LOG.info('Session timeout for run ' + str(run_id))
@@ -190,10 +240,6 @@ class ThriftRequestHandler(object):
         self.__package_version = package_version
         self.__Session = Session
         self.__storage_session = StorageSession()
-        self.report_ident = sqlalchemy.orm.query.Bundle('report_ident',
-                                                        Report.id,
-                                                        Report.bug_id,
-                                                        Report.run_id)
 
     def __lastBugEventPos(self, report_id):
         """
@@ -207,12 +253,10 @@ class ThriftRequestHandler(object):
             last = session.query(BugPathEvent) \
                 .filter(BugPathEvent.report_id == report_id) \
                 .order_by(BugPathEvent.order.desc()) \
-                .limit(1).all()
+                .limit(1).one_or_none()
 
-            if len(last) < 1:
+            if not last:
                 return None
-
-            last = last[0]
 
             bpe = bugpathevent_db_to_api(last)
             bpe.filePath = session.query(File).get(bpe.fileId).filepath
@@ -255,7 +299,6 @@ class ThriftRequestHandler(object):
     def getRunData(self, run_name_filter):
 
         try:
-            results = []
             session = self.__Session()
 
             # Count the reports subquery.
@@ -281,7 +324,9 @@ class ThriftRequestHandler(object):
 
             status_sum = defaultdict(defaultdict)
             for run_id, status, count in status_q:
-                status_sum[run_id][status] = count
+                status_sum[run_id][detection_status_enum(status)] = count
+
+            results = []
 
             for instance, reportCount in q:
                 if reportCount is None:
@@ -293,7 +338,7 @@ class ThriftRequestHandler(object):
                                        instance.duration,
                                        reportCount,
                                        instance.command,
-                                       None,
+                                       None,  # can_delete
                                        status_sum[instance.id]
                                        ))
             return results
@@ -350,7 +395,7 @@ class ThriftRequestHandler(object):
                 checkerId=report.checker_id,
                 severity=report.severity,
                 review=review_data,
-                detectionStatus=report.detection_status)
+                detectionStatus=detection_status_enum(report.detection_status))
         except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
             msg = str(alchemy_ex)
             LOG.error(msg)
@@ -413,7 +458,8 @@ class ThriftRequestHandler(object):
                                checkerId=report.checker_id,
                                severity=report.severity,
                                review=review_data,
-                               detectionStatus=report.detection_status)
+                               detectionStatus=detection_status_enum(
+                                   report.detection_status))
                 )
 
             return results
@@ -963,9 +1009,6 @@ class ThriftRequestHandler(object):
                 .outerjoin(File, Report.file_id == File.id) \
                 .outerjoin(ReviewStatus,
                            ReviewStatus.bug_hash == Report.bug_id) \
-                .outerjoin(SuppressBug,
-                           and_(SuppressBug.hash == Report.bug_id,
-                                SuppressBug.run_id == run_id)) \
                 .filter(Report.bug_id.in_(diff_hash_list)) \
                 .filter(filter_expression)
 
@@ -999,8 +1042,8 @@ class ThriftRequestHandler(object):
                     checkerId=report.checker_id,
                     severity=report.severity,
                     review=review_data,
-                    detectionStatus=report
-                    .detection_status))
+                    detectionStatus=detection_status_enum(
+                        report.detection_status)))
 
             return results
 
@@ -1215,6 +1258,8 @@ class ThriftRequestHandler(object):
         Count the diff results.
         """
 
+        # TODO This function is similar to getDiffResultTypes. Maybe it is
+        # worth refactoring the common parts.
         try:
             session = self.__Session()
             base_line_hashes, new_check_hashes = \
@@ -1353,101 +1398,167 @@ class ThriftRequestHandler(object):
             session.close()
 
     @timeit
-    def addCheckerRun(self, command, name, version, force):
-        """
-        Store checker run related data to the database.
-        By default updates the results if name already exists.
-        Using the force flag removes existing analysis results for a run.
-        """
+    def necessaryFileContents(self, file_hashes):
         try:
-            LOG.debug("adding checker run")
-
             session = self.__Session()
-            run = session.query(Run).filter(Run.name == name).first()
 
-            if run and self.__storage_session.has_ongoing_run(run.id):
-                raise Exception('Storage of ' + name + ' is already going')
+            q = session.query(FileContent) \
+                .options(sqlalchemy.orm.load_only('content_hash')) \
+                .filter(FileContent.content_hash.in_(file_hashes))
 
-            if run and force:
-                # Clean already collected results.
-                if not run.can_delete:
-                    # Deletion is already in progress.
-                    msg = "Can't delete " + str(run.id)
-                    LOG.debug(msg)
-                    raise shared.ttypes.RequestFailed(
-                        shared.ttypes.ErrorCode.DATABASE,
-                        msg)
+            return list(set(file_hashes) -
+                        set(map(lambda fc: fc.content_hash, q)))
 
-                LOG.info('Removing previous analysis results ...')
-                session.delete(run)
-
-                checker_run = Run(name, version, command)
-                session.add(checker_run)
-                session.flush()
-                run_id = checker_run.id
-
-            elif run:
-                # There is already a run, update the results.
-                run.date = datetime.now()
-                # Increment update counter and the command.
-                run.command = command
-                session.flush()
-                run_id = run.id
-            else:
-                # There is no run create new.
-                checker_run = Run(name, version, command)
-                session.add(checker_run)
-                session.flush()
-                run_id = checker_run.id
-
-            self.__storage_session.start_run_session(run_id, session)
-            return run_id
-        except Exception as ex:
+        finally:
             session.close()
-            raise shared.ttypes.RequestFailed(
-                shared.ttypes.ErrorCode.GENERAL,
-                str(ex))
 
     @timeit
-    def finishCheckerRun(self, run_id):
-        """
-        """
-        try:
-            session = self.__storage_session.get_transaction(run_id)
+    def massStoreRun(self, name, version, b64zip, force):
+        # Unzip sent data.
+        zipdir = unzip(b64zip)
 
-            LOG.debug("Finishing checker run")
-            run = session.query(Run).get(run_id)
-            if not run:
-                self.__storage_session.abort_session(run_id)
-                return False
+        source_root = os.path.join(zipdir, 'root')
+        report_dir = os.path.join(zipdir, 'reports')
+        metadata_file = os.path.join(report_dir, 'metadata.json')
 
-            run.mark_finished()
+        check_commands, check_durations, skip_handlers = \
+            store_handler.metadata_info(metadata_file)
 
-            self.__storage_session.end_run_session(run_id)
+        if len(check_commands) == 0:
+            command = ' '.join(sys.argv)
+        elif len(check_commands) == 1:
+            command = ' '.join(check_commands[0])
+        else:
+            command = "multiple analyze calls: " + \
+                      '; '.join([' '.join(com) for com in check_commands])
 
-            return True
+        # Storing file contents from plist.
+        file_path_to_id = {}
 
-        except Exception as ex:
-            LOG.error(ex)
-            return False
+        _, _, report_files = next(os.walk(report_dir), ([], [], []))
+        for f in report_files:
+            if not f.endswith('.plist'):
+                continue
 
-    @timeit
-    def setRunDuration(self, run_id, duration):
-        """
-        """
-        try:
-            session = self.__storage_session.get_transaction(run_id)
+            LOG.debug("Parsing input file '" + f + "'")
 
-            LOG.debug("setting run duartion")
-            run = session.query(Run).get(run_id)
-            if not run:
-                return False
+            try:
+                files, _ = plist_parser.parse_plist(
+                    os.path.join(report_dir, f))
+            except Exception as ex:
+                LOG.error('Parsing the plist failed: ' + str(ex))
+                continue
 
-            run.duration = duration
-            return True
-        except Exception as ex:
-            LOG.error(ex)
-            return false
+            for file_name in files:
+                zip_file_name = os.path.join(source_root, file_name)
+
+                if not os.path.isfile(zip_file_name):
+                    LOG.debug(file_name + ' not found or already stored.')
+                    continue
+
+                with codecs.open(zip_file_name, 'r', 'UTF-8') as source_file:
+                    file_content = source_file.read()
+                    # TODO: we may not use the file content in the end
+                    # depending on skippaths.
+                    file_content = codecs.encode(file_content, 'utf-8')
+
+                    file_path_to_id[file_name] = \
+                        store_handler.addFileContent(self.__Session(),
+                                                     file_name,
+                                                     file_content,
+                                                     None)
+
+        run_id = store_handler.addCheckerRun(self.__Session(),
+                                             self.__storage_session,
+                                             command,
+                                             name,
+                                             version,
+                                             force)
+
+        # Handle skip list.
+        for skip_handler in skip_handlers:
+            if not store_handler.addSkipPath(self.__storage_session,
+                                             run_id,
+                                             skip_handler.get_skiplist()):
+                LOG.debug("Adding skip path failed!")
+
+        # Processing PList files.
+        _, _, report_files = next(os.walk(report_dir), ([], [], []))
+        for f in report_files:
+            if not f.endswith('.plist'):
+                continue
+
+            LOG.debug("Parsing input file '" + f + "'")
+
+            try:
+                files, reports = plist_parser.parse_plist(
+                    os.path.join(report_dir, f))
+            except Exception as ex:
+                LOG.error('Parsing the plist failed: ' + str(ex))
+                continue
+
+            file_ids = OrderedDict()
+            # Store content of file to the server if needed.
+            for file_name in files:
+                file_ids[file_name] = file_path_to_id[file_name]
+
+            # Store report.
+            for report in reports:
+                last_report_event = report.bug_path[-1]
+                sp_handler = suppress_handler.SourceSuppressHandler(
+                    files[last_report_event['location']['file']],
+                    last_report_event['location']['line'],
+                    report.main['issue_hash_content_of_line_in_context'],
+                    report.main['check_name'])
+
+                supp = sp_handler.get_suppressed()
+                if supp:
+                    bhash, fname, comment = supp
+                    status = shared.ttypes.ReviewStatus.UNREVIEWED
+                    # TODO!!!
+                    # self.changeReviewStatus(report_id)
+
+                LOG.debug("Storing check results to the database.")
+
+                checker_name = report.main['check_name']
+                context = generic_package_context.get_context()
+                severity_name = context.severity_map.get(checker_name,
+                                                         'UNSPECIFIED')
+                severity = \
+                    shared.ttypes.Severity._NAMES_TO_VALUES[severity_name]
+
+                bug_paths, bug_events = \
+                    store_handler.collect_paths_events(report, file_ids)
+
+                LOG.debug("Storing report")
+                report_id = store_handler.addReport(
+                    self.__storage_session,
+                    run_id,
+                    file_ids[files[report.main['location']['file']]],
+                    report.main['issue_hash_content_of_line_in_context'],
+                    report.main['description'],
+                    bug_paths,
+                    bug_events,
+                    checker_name,
+                    report.main['category'],
+                    report.main['type'],
+                    severity)
+
+                LOG.debug("Storing done for report " + str(report_id))
+
+        if len(check_durations) > 0:
+            store_handler.setRunDuration(self.__storage_session,
+                                         run_id,
+                                         # Round the duration to seconds.
+                                         int(sum(check_durations)))
+
+        store_handler.finishCheckerRun(self.__storage_session, run_id)
+
+        # TODO: This directory should be removed even if an exception is thrown
+        # above.
+        shutil.rmtree(zipdir)
+
+        return run_id
 
     @timeit
     def replaceConfigInfo(self, run_id, config_values):
@@ -1475,255 +1586,3 @@ class ThriftRequestHandler(object):
             return False
         finally:
             session.close()
-
-    @timeit
-    def needFileContent(self, filepath, content_hash, run_id):
-        """
-        """
-        session = self.__storage_session.get_transaction(run_id)
-        f = session.query(File) \
-            .filter(and_(File.content_hash == content_hash,
-                         File.filepath == filepath)) \
-            .one_or_none()
-
-        needed = session.query(FileContent).get(content_hash) is None
-
-        if not f or needed:
-            try:
-                if needed:
-                    # Avoid foreign key errors: add empty content.
-                    file_content = FileContent(content_hash, "")
-                    session.add(file_content)
-                f = File(filepath, content_hash)
-                session.add(f)
-                session.flush()
-            except sqlalchemy.exc.IntegrityError:
-                # Other transaction might added the same file in the meantime.
-                session.rollback()
-
-        return NeedFileResult(needed, f.id)
-
-    @timeit
-    def addFileContent(self, content_hash, content, encoding, run_id):
-        """
-        """
-        session = self.__storage_session.get_transaction(run_id)
-        if encoding == Encoding.BASE64:
-            content = base64.b64decode(content)
-
-        compressed_content = zlib.compress(content,
-                                           zlib.Z_BEST_COMPRESSION)
-        try:
-            file_content = session.query(FileContent).get(content_hash)
-            file_content.content = compressed_content
-            session.add(file_content)
-            session.flush()
-        except sqlalchemy.exc.IntegrityError as ex:
-            # Other transaction might added the same content in the meantime.
-            session.rollback()
-            return False
-        return True
-
-    def __is_same_event_path(self, report_id, events, session):
-        """
-        Checks if the given event path is the same as the one in the
-        events argument.
-        """
-        try:
-            q = session.query(BugPathEvent) \
-                .filter(BugPathEvent.report_id == report_id) \
-                .order_by(BugPathEvent.order)
-
-            for i, point2 in enumerate(q):
-                if i == len(events):
-                    return False
-
-                point1 = events[i]
-
-                if point1.startCol != point2.col_begin or \
-                        point1.endCol != point2.col_end or \
-                        point1.msg != point2.msg or \
-                        point1.fileId != point2.file_id:
-                    return False
-
-            return True
-
-        except Exception as ex:
-            raise shared.ttypes.RequestFailed(
-                shared.ttypes.ErrorCode.GENERAL,
-                str(ex))
-
-    @timeit
-    def storeReportInfo(self,
-                        session,
-                        run_id,
-                        file_id,
-                        bug_hash,
-                        msg,
-                        bugpath,
-                        events,
-                        checker_id,
-                        checker_cat,
-                        bug_type,
-                        severity,
-                        detection_status='new'):
-        """
-        """
-        try:
-            LOG.debug("getting source file for report")
-            source_file = session.query(File).get(file_id)
-            _, source_file_name = os.path.split(source_file.filepath)
-
-            LOG.debug("initializing report")
-            report = Report(run_id,
-                            bug_hash,
-                            file_id,
-                            msg,
-                            checker_id,
-                            checker_cat,
-                            bug_type,
-                            severity,
-                            detection_status)
-
-            session.add(report)
-            session.flush()
-
-            LOG.debug("storing bug path")
-            self.__storeBugPath(session, bugpath, report.id)
-            LOG.debug("storing events")
-            self.__storeBugEvents(session, events, report.id)
-
-            return report.id
-        except Exception as ex:
-            raise shared.ttypes.RequestFailed(
-                shared.ttypes.ErrorCode.GENERAL,
-                str(ex))
-
-    @timeit
-    def addReport(self,
-                  run_id,
-                  file_id,
-                  bug_hash,
-                  msg,
-                  bugpath,
-                  events,
-                  checker_id,
-                  checker_cat,
-                  bug_type,
-                  severity):
-        """
-        """
-        try:
-            session = self.__storage_session.get_transaction(run_id)
-
-            checker_id = checker_id or 'NOT FOUND'
-
-            # TODO: performance issues when executing the following query on
-            # large databases?
-            reports = session.query(self.report_ident) \
-                .filter(and_(self.report_ident.c.bug_id == bug_hash,
-                             self.report_ident.c.run_id == run_id))
-            # Check for duplicates by bug hash.
-            LOG.debug("checking duplicates")
-            for possib_dup in reports:
-                LOG.debug("there is a possible duplicate")
-                dup_report_obj = session.query(Report).get(
-                    possib_dup.report_ident.id)
-                # TODO: file_id and path equality check won't be necessary
-                # when path hash is added.
-                if dup_report_obj and \
-                        dup_report_obj.checker_id == checker_id and \
-                        dup_report_obj.file_id == file_id and \
-                        self.__is_same_event_path(
-                            dup_report_obj.id,
-                            events,
-                            session):
-
-                    new_status = None
-
-                    if dup_report_obj.detection_status == 'new' and not \
-                            self.__storage_session.is_touched(
-                                run_id,
-                                dup_report_obj.id):
-                        new_status = 'unresolved'
-                    elif dup_report_obj.detection_status == 'resolved':
-                        new_status = 'reopened'
-
-                    if new_status:
-                        dup_report_obj.detection_status = new_status
-
-                    self.__storage_session.touch_report(
-                        run_id,
-                        dup_report_obj.id)
-
-                    return dup_report_obj.id
-
-            LOG.debug("no duplicate storing report")
-            report_id = self.storeReportInfo(session,
-                                             run_id,
-                                             file_id,
-                                             bug_hash,
-                                             msg,
-                                             bugpath,
-                                             events,
-                                             checker_id,
-                                             checker_cat,
-                                             bug_type,
-                                             severity,
-                                             suppress)
-
-            self.__storage_session.touch_report(run_id, report_id)
-
-            return report_id
-
-        except Exception as ex:
-            raise shared.ttypes.RequestFailed(
-                shared.ttypes.ErrorCode.GENERAL,
-                str(ex))
-
-    def __storeBugEvents(self, session, bugevents, report_id):
-        """
-        """
-        for i, event in enumerate(bugevents):
-            bpe = BugPathEvent(event.startLine,
-                               event.startCol,
-                               event.endLine,
-                               event.endCol,
-                               i,
-                               event.msg,
-                               event.fileId,
-                               report_id)
-            session.add(bpe)
-
-    def __storeBugPath(self, session, bugpath, report_id):
-        for i, piece in enumerate(bugpath):
-            brp = BugReportPoint(piece.startLine,
-                                 piece.startCol,
-                                 piece.endLine,
-                                 piece.endCol,
-                                 i,
-                                 piece.fileId,
-                                 report_id)
-            session.add(brp)
-
-    @timeit
-    def addSkipPath(self, run_id, paths):
-        """
-        """
-        try:
-            session = self.__storage_session.get_transaction(run_id)
-
-            count = session.query(SkipPath) \
-                .filter(SkipPath.run_id == run_id) \
-                .delete()
-            LOG.debug('SkipPath: ' + str(count) + ' removed item.')
-
-            skipPathList = []
-            for path, comment in paths.items():
-                skipPath = SkipPath(run_id, path, comment)
-                skipPathList.append(skipPath)
-            session.bulk_save_objects(skipPathList)
-            return True
-        except Exception as ex:
-            LOG.error(str(ex))
-            return False

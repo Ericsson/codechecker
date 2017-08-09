@@ -24,7 +24,6 @@ except ImportError:
         SimpleHTTPRequestHandler
 
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.orm import scoped_session
 from thrift.transport import TTransport
 from thrift.protocol import TJSONProtocol
 
