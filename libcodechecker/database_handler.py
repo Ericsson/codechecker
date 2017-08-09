@@ -178,10 +178,10 @@ class SQLServer(object):
             # responsibility. Until then, use the default folder now
             # for the new commands who no longer define workspace.
             if 'dbdatadir' in args:
-                workspace = args.dbdatadir
+                data_url = args.dbdatadir
             else:
-                workspace = util.get_default_workspace()
-            data_url = os.path.join(workspace, 'pgsql_data')
+                data_url = os.path.join(util.get_default_workspace(),
+                                        'pgsql_data')
             return PostgreSQLServer(data_url,
                                     migration_root,
                                     args.dbaddress,
@@ -302,10 +302,18 @@ class PostgreSQLServer(SQLServer):
 
         LOG.debug('Initializing database at ' + self.path)
 
-        init_db = ['initdb', '-U', self.user, '-D', self.path, '-E SQL_ASCII']
+        init_db = ['initdb',
+                   '-U', self.user,
+                   '-D', self.path,
+                   '-E', 'SQL_ASCII']
 
         err, code = util.call_command(init_db, self.run_env)
-        # logger -> print error
+
+        if code != 0:
+            LOG.error("Couldn't initialize database. Call to 'initdb' "
+                      "returned {0}.".format(code))
+            LOG.error(err)
+
         return code == 0
 
     def _get_connection_string(self, database):

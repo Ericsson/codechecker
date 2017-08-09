@@ -20,9 +20,13 @@ except ImportError:
 
 import libcodechecker.analyze.tidy_output_converter as tidy_out_conv
 
+OLD_PWD = None
+
 
 def setup_module():
     """Setup the test tidy reprs for the test classes in the module."""
+    global OLD_PWD
+    OLD_PWD = os.getcwd()
     os.chdir(os.path.join(os.path.dirname(__file__), 'tidy_output_test_files'))
 
     # tidy1.out Message/Note representation
@@ -129,6 +133,12 @@ def setup_module():
     TidyPListConverterTestCase.tidy1_repr = tidy1_repr
     TidyPListConverterTestCase.tidy2_repr = tidy2_repr
     TidyPListConverterTestCase.tidy3_repr = tidy3_repr
+
+
+def teardown_module():
+    """Restore environment after tests have ran."""
+    global OLD_PWD
+    os.chdir(OLD_PWD)
 
 
 class TidyOutputParserTestCase(unittest.TestCase):

@@ -36,7 +36,12 @@ class TestAnalyze(unittest.TestCase):
         os.makedirs(self.report_dir)
         self.test_dir = os.path.join(os.path.dirname(__file__), 'test_files')
         # Change working dir to testfile dir so CodeChecker can be run easily.
+        self.__old_pwd = os.getcwd()
         os.chdir(self.test_dir)
+
+    def tearDown(self):
+        """Restore environment after tests have ran."""
+        os.chdir(self.__old_pwd)
 
     def test_failure(self):
         """
