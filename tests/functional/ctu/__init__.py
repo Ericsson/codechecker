@@ -29,6 +29,8 @@ def setup_package():
 def teardown_package():
     """Delete workspace."""
 
+    # TODO: If environment variable is set keep the workspace
+    # and print out the path.
     global TEST_WORKSPACE
 
     print('Removing: ' + TEST_WORKSPACE)
