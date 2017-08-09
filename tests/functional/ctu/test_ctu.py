@@ -4,8 +4,8 @@
 #   This file is distributed under the University of Illinois Open Source
 #   License. See LICENSE.TXT for details.
 # -----------------------------------------------------------------------------
-
 """ CTU function test."""
+
 import glob
 import json
 import os
@@ -15,7 +15,7 @@ import unittest
 
 from libtest import env
 
-NO_CTU_MESSAGE = 'CTU is not supported'
+NO_CTU_MESSAGE = "CTU is not supported"
 
 
 class TestCtu(unittest.TestCase):
@@ -36,12 +36,22 @@ class TestCtu(unittest.TestCase):
         self.report_dir = os.path.join(self.test_workspace, 'reports')
         os.makedirs(self.report_dir)
         self.test_dir = os.path.join(os.path.dirname(__file__), 'test_files')
+
+        # Get if clang is CTU-capable or not.
+        cmd = [self._codechecker_cmd, 'analyze', '-h']
+        output = subprocess.check_output(cmd, stderr=subprocess.STDOUT,
+                                         cwd=self.test_dir, env=self.env)
+        self.ctu_capable = '--ctu-' in output
+        print("'analyze' reported CTU-compatibility? " + str(self.ctu_capable))
+
+        # Fix the "template" build JSONs to contain a proper directory
+        # so the tests work.
         raw_buildlog = os.path.join(self.test_dir, 'buildlog.json')
         with open(raw_buildlog) as log_file:
             build_json = json.load(log_file)
             for command in build_json:
                 command['directory'] = self.test_dir
-        self.ctu_capable = self.__is_ctu_capable()
+
         self.__old_pwd = os.getcwd()
         os.chdir(self.test_workspace)
         self.buildlog = os.path.join(self.test_workspace, 'buildlog.json')
@@ -53,18 +63,6 @@ class TestCtu(unittest.TestCase):
 
         os.chdir(self.__old_pwd)
         shutil.rmtree(self.report_dir, ignore_errors=True)
-
-    def test_help(self):
-        """ Test if help is given on CTU detected. """
-
-        cmd = [self._codechecker_cmd, 'analyze', '-h']
-        output = subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                         cwd=self.test_dir, env=self.env)
-        ctu_in_output_idx = output.find('--ctu-')
-        if self.ctu_capable:
-            self.assertGreater(ctu_in_output_idx, -1)
-        else:
-            self.assertEqual(ctu_in_output_idx, -1)
 
     def test_ctu_all_no_reparse(self):
         """ Test full CTU without reparse. """
@@ -171,26 +169,14 @@ class TestCtu(unittest.TestCase):
     def __check_ctu_analyze(self, output):
         """ Check artifacts of CTU analyze phase. """
 
-        self.assertEqual(output.find('Failed to analyze'), -1)
-        self.assertGreater(output.find('analyzed lib.c successfully'), -1)
-        self.assertGreater(output.find('analyzed main.c successfully'), -1)
+        self.assertNotIn("Failed to analyze", output)
+        self.assertIn("analyzed lib.c successfully", output)
+        self.assertIn("analyzed main.c successfully", output)
 
         cmd = [self._codechecker_cmd, 'parse', self.report_dir]
         output = subprocess.check_output(cmd, stderr=subprocess.STDOUT,
                                          cwd=self.test_dir, env=self.env)
-        self.assertGreater(output.find('no defects while analyzing lib.c'), -1)
-        self.assertGreater(output.find('defect(s) while analyzing main.c'), -1)
-        self.assertGreater(output.find('lib.c:3:'), -1)
-        self.assertGreater(output.find('[core.NullDereference]'), -1)
-
-    def __is_ctu_capable(self):
-        """ Detects CTU capability in current env. """
-
-        ctu_capable = True
-        try:
-            subprocess.check_output(['clang-func-mapping', '-version'],
-                                    stderr=subprocess.STDOUT,
-                                    cwd=self.test_dir)
-        except (OSError, subprocess.CalledProcessError):
-            ctu_capable = False
-        return ctu_capable
+        self.assertIn("no defects while analyzing lib.c", output)
+        self.assertIn("defect(s) while analyzing main.c", output)
+        self.assertIn("lib.c:3:", output)
+        self.assertIn("[core.NullDereference]", output)
