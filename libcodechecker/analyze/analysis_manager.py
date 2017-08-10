@@ -85,6 +85,22 @@ def create_dependencies(action):
     Transforms the given original build 'command' to a command that, when
     executed, is able to generate a dependency list.
     """
+
+    def __eliminate_argument(arg_vect, opt_strings, num_args=0):
+        """
+        This call eliminates the parameters matching the given option strings,
+        along with the number of arguments coming directly after the opt-string
+        from the command.
+        """
+        option_index = next(
+            (i for i, c in enumerate(arg_vect) if c in opt_strings), None)
+
+        if option_index:
+            arg_vect = arg_vect[0:option_index] + \
+                       arg_vect[option_index + num_args + 1:]
+
+        return arg_vect
+
     if 'CC_LOGGER_GCC_LIKE' not in os.environ:
         os.environ['CC_LOGGER_GCC_LIKE'] = 'gcc:g++:clang:clang++:cc:c++'
 
@@ -92,17 +108,31 @@ def create_dependencies(action):
     if any(binary_substring in command[0] for binary_substring
            in os.environ['CC_LOGGER_GCC_LIKE'].split(':')):
         # gcc and clang can generate makefile-style dependency list.
-        command = [command[0], '-E', '-M', '-MQ', '__dummy'] + command[1:]
 
-        option_index = next(
-            (i for i, c in enumerate(command) if c == '-o' or c == '--output'),
-            None)
+        # If an output file is set, the dependency is not written to the
+        # standard output but rather into the given file.
+        # We need to first eliminate the output from the command.
+        command = __eliminate_argument(command, ['-o', '--output'], 1)
 
-        if option_index:
-            # If an output file is set, the dependency is not written to the
-            # standard output but rather into the given file.
-            # We need to first eliminate the output from the command.
-            command = command[0:option_index] + command[option_index+2:]
+        # Remove potential dependency-file-generator options from the string
+        # too. These arguments found in the logged build command would derail
+        # us and generate dependencies, e.g. into the build directory used.
+        command = __eliminate_argument(command, ['-MM'])
+        command = __eliminate_argument(command, ['-MF'], 1)
+        command = __eliminate_argument(command, ['-MP'])
+        command = __eliminate_argument(command, ['-MT'], 1)
+        command = __eliminate_argument(command, ['-MQ'], 1)
+        command = __eliminate_argument(command, ['-MD'])
+        command = __eliminate_argument(command, ['-MMD'])
+
+        # Clang contains some extra options.
+        command = __eliminate_argument(command, ['-MJ'], 1)
+        command = __eliminate_argument(command, ['-MV'])
+
+        # Build out custom invocation for dependency generation.
+        command = [command[0], '-E', '-M', '-MT', '__dummy'] + command[1:]
+
+        LOG.debug("Crafting build dependencies from GCC or Clang!")
 
         output, rc = util.call_command(command, env=os.environ)
         if rc == 0:

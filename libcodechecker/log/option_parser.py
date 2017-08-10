@@ -107,7 +107,14 @@ REPLACE_OPTIONS_MAP = {
 
 IGNORED_OPTION_MAP = {
     '-MT': 1,
+    '-MQ': 1,
     '-MF': 1,
+    '-MJ': 1,
+    '-MM': 0,
+    '-MP': 0,
+    '-MD': 0,
+    '-MV': 0,
+    '-MMD': 0,
     '-fsyntax-only': 0,
     '-save-temps': 0,
     '-install_name': 1,
@@ -123,6 +130,10 @@ IGNORED_OPTION_MAP = {
     '--param': 1,
     '-u': 1,
     '--serialize-diagnostics': 1
+}
+
+IGNORED_OPTION_MAP_REGEX = {
+    '^-g(.+)?$': 0,
 }
 
 # Unknown options by clang, will be skipped.
@@ -435,6 +446,7 @@ def arg_check(it, result):
         append_merged_to_list(LINK_OPTION_MAP_MERGED, result.link_opts),
         skip(LINKER_OPTION_MAP),
         skip(IGNORED_OPTION_MAP),
+        skip(IGNORED_OPTION_MAP_REGEX, True),
         append_to_list_from_file('-filelist', result.files),
         append_to_list({'^[^-].+': 0}, result.files, True)]
 
