@@ -234,6 +234,7 @@ Additional documentation
 ------------------------
 
   * [User guide](docs/user_guide.md)
+  * [CodeChecker getting started](docs/usage.md)
   * [Requirements, external source dependencies](docs/deps.md)
   * [Architecture overview](docs/architecture.md)
   * [Package layout](docs/package_layout.md)

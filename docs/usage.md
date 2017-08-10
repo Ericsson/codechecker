@@ -1,89 +1,125 @@
-# CodeChecker command line examples
-### 1. Quickly check some files and print results in command line
+# CodeChecker HOWTO
+
+This is lazy dog HOWTO to using CodeChecker analysis.
+It invokes Clang Static Analyzer and Clang-Tidy tools to analyze your code.
+
+## Step1: Inegrate CodeChecker into your build system
+Codechecker only analyzes what is also built by your build system. 
+
+1. Select a module to build (open source tmux in this example).
 ```
-CodeChecker quickcheck -b make
+cd tmux
+./configure
+```
+2. Clean that module. e.g. `make clean`
+```
+ make clean
+```
+3. Log your build:
+``` 
+CodeChecker log -b "make" -o compilation.json
+```
+4. Check the contents of compilation.json. If everything goes well it should contain the `gcc` calls.
+```
+cat ./compilation.json
+```
+## Step2: Analyze your code 
+Once the build is logged successfully (and the `compilation.json`) was created, you can analyze your project.
+
+1. Run the analysis: 
+```
+ CodeChecker analyze compilation.json -o ./reports
+```
+2. View the analysis results in the command line
+```
+ CodeChecker parse ./reports
+```
+Hint:
+ You can do the 1st and the 2nd step in one round by execution quickcheck
+ ```
+ cd tmux
+ make clean
+ CodeChecker quickcheck -b "make"
+or to run on 22 thread
+ CodeChecker quickcheck -j22 -b "make clean;make -j22"
 ```
 
-### 2. Check a project, update earlier results  and view results from a browser
-Runs make, logs build, run analyzers and store the results in sqlite db.
-```
-CodeChecker check -b make
-```
-  
-Start webserver, which listens on default port localhost:8001 
-results can be viewed in a browser
-```
-CodeChecker server
-```
-  
-The developer may also suppress false positives
-At the end, the project can be rechecked.
-```
-CodeChecker check make
-```
-### 3. Same as use case 2., but the developer would like to enable alpha checkers and llvm checkers
-```
-CodeChecker check -e alpha -e llvm -b make
-```
-### 4. Same as use case 2., but the developer stores suppressed false positives in a text file that is checked in into version control
-```
-CodeChecker check –u /home/myuser/myproject/suppress.list -b make
-CodeChecker server –u /home/myuser/myproject/suppress.list
+[What to do if the analysis fails (analysis settings for cross-compilation)](/docs/cross-compilation.md)
 
-# Suppress list will be stored in suppress.list.
-# The suppress.list file can be checked in the source control system.
+## Step3: Store analysis results in a CodeChecker DB and visualize results 
+You can store the analysis results in a central database and view the results in a web viewer
+1. Start the CodeChecker server locally on port 8555 (using sqlite db, which is not recommended for multi-user central deployment)
+create a workspace directory, where the database will be stored.
 ```
-### 5. Same as use case 2., but the developer wants to give extra Config to clang-tidy or clang-sa
+ mkdir ./ws
+ CodeChecker server -w ./ws -v 8555
 ```
-CodeChecker check --saargs clangsa.config --tidyargs clang-tidy.config -b make
-
-# The clang-sa and clang-tidy parameters are stored in simple text files. 
-# The format is the same as clang-sa/tidy command line parameters and will
-# be passed to every clang-sa/tidy calls
+2. Store the results in the server under run name "tmux":
 ```
-
-### 6. Asking for command line help for the check subcommand (all other subcommands would be the same: server, checkers,cmd…)
+ CodeChecker store ./reports --host localhost --port 8555 --name tmux
 ```
-CodeChecker check -h
+3. View the results in your web browser
+ http://localhost:8555
+
+## Step4: Fine tune Analysis configuration
+### Ignore modules from your analysis 
+
+You can ignore analysis results for certain files for example 3rd party modules.
+For that use the `-i` parameter of the analyze command:
 ```
-
-
-### 7. Run analysis on 2 versions of the project
-Analyze a large project from a script/Jenkins job periodically. Developers view the results on a central web-server.
-If a hit is false positive, developers can mark it and comment it on the web interface and the suppress hashes are stored in a text file that can be version controlled.
-Different versions of the project can be compared for new/resolved/unresolved bugs. Differences between runs can be viewed in the web browser or from command line (and can be sent in email if needed).
-
-Large projects should use postgresql for performance reasons.
+ -i SKIPFILE, --ignore SKIPFILE, --skip SKIPFILE
+                        Path to the Skipfile dictating which project files
+                        should be omitted from analysis. Please consult the
+                        User guide on how a Skipfile should be laid out.
+```
+For the skip file format see the [user guide](/docs/user_guide.md#skip-file ).
 
 ```
-CodeChecker check -n myproject_v1 –postgresql -b make
-CodeChecker check -n myproject_v2 –postgresql -b make
-
-# Runs analysis, assumes that postgres is available on the default 5432 TCP port, 
-# codechecker db user exists and codechecker db can be created.
-# Please note that this use case is also supported with SQLITE db.
+ CodeChecker analyze -b "make" -i ./skip.file" -o ./reports
 ```
 
-Start the webserver and view the diff between the two results in the web browser
+### Enable/Disable Checkers
+
+You can list the checkers using the following command
 ```
-CodeChecker server –postgresql
-
-firefox localhost:8001
+ CodeChecker checkers --details
 ```
-Start the webserver and view the diff between the two results in command line
+those marked with (+) are enabled by default.
+
+You may want to enable more checkers or disable some of them using the -e, -d switches of the analyze command.
+
+For example to enable alpha checkers additionally to the defaults
 ```
-CodeChecker cmd diff –b myproject_v1 –n myproject_v2 –p 8001 -new
+ CodeChecker analyze -e alpha  -b "make" -i ./skip.file" -o ./reports
+```
 
-# Assumes that the server is started on port 8001
-# then shows the new bugs in myproject_v2 compared to baseline myproject_v1.
+### Identify files that were failed to analyze
+After execution of
+```
+ CodeChecker analyze build.json -o reports
+```
+the failed analysis output is collected into 
+ `./reports/failed`
+directory.
 
-CodeChecker cmd diff –b myproject_v1 –n myproject_v2 –p 8001 -unresolved
+This means that analysis of these files failed and there is no Clang Static Analyzer output for these compilation commands.
 
-# Assumes that the server is started on port 8001
-# then shows the unresolved bugs in myproject_v2 compared to baseline myproject_v1.
+### Showing new bugs in your code after local edit
+Say that you made some local changes in your code (tmux in our example) and you wonder whether you introduced any new bugs.
 
-CodeChecker cmd diff –b myproject_v1 –n myproject_v2 –p 8001 -resolved
+Let's assume that you already stored the tmux analysis results in a CodeChecker server running on `localhost:8555` under run name `tmux` 
+See Step3: `CodeChecker store ./reports --host localhost --port 8555 --name tmux`
 
-# Assumes that the server is started on port 8001
-# then shows the resolved bugs in myproject_v2 compared to baseline myproject_v1.
+1. You make local changes to to tmux
+2. Generate a new log file
+```
+ CodeChecker log -b "make" -o compilation.json
+```
+3. Re-analyze your code
+```
+ CodeChecker analyze compilation.json ./reports
+```
+4. Compare your local analysis to the central one
+```
+ CodeChecker cmd diff -b tmux -n ./reports --new --host localhost --port 8555
 ```
