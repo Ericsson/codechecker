@@ -143,19 +143,61 @@ html, body {
   background-color: #eeb;
 }
 
-.checkMsg {
-  background-color: #eeb;
-  border: 1px solid #aaa;
+.check-msg {
   display: inline-block;
-  padding: 1px 6px;
+  padding: 3px 6px;
   margin: 1px;
   -webkit-border-radius: 5px;
   -moz-border-radius: 5px;
   border-radius: 5px;
 }
 
-.checkMsg .enum {
-  color: gray;
+.tag.fixit {
+  display: inline-block;
+  background-color: #8a6d3b;
+  padding: 2px 5px;
+  color: white;
+  text-transform: uppercase;
+  margin-right: 5px;
+}
+
+.check-msg.info {
+  color: #00546f;
+  background-color: #bfdfe9;
+  border: 1px solid #87a8b3;
+}
+
+.check-msg.error {
+  background-color: #f2dede;
+  color: #a94442;
+  border: 1px solid #ebcccc;
+}
+
+.check-msg.fixit {
+  color: #8a6d3b;
+  background-color: #fcf8e3;
+  border: 1px solid #faebcc;
+}
+
+.checker-enum {
+  color: white;
+  padding: 1px 5px;
+  text-align: center;
+  border-radius: 25px;
+  margin-right: 5px;
+  text-decoration: inherit;
+}
+
+.checker-enum.info {
+  background-color: #427ea9;
+}
+
+.checker-enum.error {
+  background-color: #a94442;
+}
+
+.checker-enum.fixit {
+  background-color: #8a6d3b;
 }
 
 .editorHeader {
