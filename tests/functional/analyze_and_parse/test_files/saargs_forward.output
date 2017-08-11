@@ -1,0 +1,25 @@
+NORMAL#CodeChecker log --output $LOGFILE$ --build "make saargs_forward" --quiet-build
+NORMAL#CodeChecker analyze $LOGFILE$ --output $OUTPUT$ --analyzers clangsa --saargs "saargs_forward.saargs.txt"
+NORMAL#CodeChecker parse $OUTPUT$
+QUICKCHECK#CodeChecker quickcheck --build "make saargs_forward" --quiet-build --analyzers clangsa --saargs "saargs_forward.saargs.txt"
+-----------------------------------------------
+[] - Starting build ...
+[] - Build finished successfully.
+[] - Starting static analysis ...
+[] - [1/1] clangsa analyzed saargs_forward.cpp successfully.
+[] - ----==== Summary ====----
+[] - Total compilation commands: 1
+[] - Successfully analyzed
+[] -   clangsa: 1
+[] - ----=================----
+[] - Analysis finished.
+[] - To view results in the terminal use the "CodeChecker parse" command.
+[] - To store results use the "CodeChecker store" command.
+[] - See --help and the user guide for further options about parsing and storing the reports.
+[] - ----=================----
+saargs_forward.cpp:11:10: Dereference of null pointer (loaded from variable 'ptr') [core.NullDereference]
+  return *ptr;
+         ^
+
+clangsa found 1 defect(s) while analyzing saargs_forward.cpp
+
