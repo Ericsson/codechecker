@@ -322,7 +322,7 @@ def check(check_data):
     except Exception as e:
         LOG.debug_analyzer(str(e))
         traceback.print_exc(file=sys.stdout)
-        return 1, skipped, action.analyzer_type, None
+        return 1, skipped, action, None
 
 
 def start_workers(actions, context, analyzer_config_map,
