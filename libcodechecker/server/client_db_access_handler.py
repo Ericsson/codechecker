@@ -177,7 +177,7 @@ class ThriftRequestHandler(object):
             q = session.query(Run, stmt.c.report_count)
 
             if run_name_filter is not None:
-                q = q.filter(Run.name.like('%' + run_name_filter + '%'))
+                q = q.filter(Run.name.ilike('%' + run_name_filter + '%'))
 
             q = q.outerjoin(stmt, Run.id == stmt.c.run_id) \
                 .order_by(Run.date)
