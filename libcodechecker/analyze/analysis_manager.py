@@ -283,18 +283,33 @@ def check(check_data):
                         dependencies = set(create_dependencies(rh.buildaction))
                     except Exception as ex:
                         LOG.debug("Couldn't create dependencies:")
-                        LOG.debug(ex.message)
-                        archive.writestr("no-sources", ex.message)
+                        LOG.debug(str(ex))
+                        archive.writestr("no-sources", str(ex))
                         dependencies = set()
 
                     for dependent_source in dependencies:
                         LOG.debug("[ZIP] Writing '" + dependent_source + "' "
                                   "to the archive.")
-                        archive.write(
-                            dependent_source,
-                            os.path.join("sources-root",
-                                         dependent_source.lstrip('/')),
-                            zipfile.ZIP_DEFLATED)
+                        archive_path = dependent_source.lstrip('/')
+
+                        try:
+                            archive.write(
+                                dependent_source,
+                                os.path.join("sources-root",
+                                             archive_path),
+                                zipfile.ZIP_DEFLATED)
+                        except Exception as ex:
+                            # In certain cases, the output could contain
+                            # invalid tokens (such as error messages that were
+                            # printed even though the dependency generation
+                            # returned 0).
+                            LOG.debug("[ZIP] Couldn't write, because " +
+                                      str(ex))
+                            archive.writestr(
+                                os.path.join("failed-sources-root",
+                                             archive_path),
+                                "Couldn't write this file, because:\n" +
+                                str(ex))
 
                     LOG.debug("[ZIP] Writing extra information...")
 
