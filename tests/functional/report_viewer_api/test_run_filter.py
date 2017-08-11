@@ -46,6 +46,11 @@ class TestRunFilter(unittest.TestCase):
         self.assertEqual(len(test_runs), 1,
                          "There should be only one run for this test.")
 
+        # Run name filter is case insensitive.
+        test_runs = self.__get_runs('Test_Files_')
+        self.assertEqual(len(test_runs), 1,
+                         "There should be only one run for this test.")
+
         # Filter runs which name contains `files`.
         test_runs = self.__get_runs('files_')
         self.assertEqual(len(test_runs), 1,
