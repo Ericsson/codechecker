@@ -278,7 +278,7 @@ def check(check_data):
                         LOG.debug("[ZIP] Writing analyzer STDERR to /stderr")
                         archive.writestr("stderr", rh.analyzer_stderr)
 
-                    LOG.debug("Generating and writing dependent headers...")
+                    LOG.debug("Generating dependent headers via compiler...")
                     try:
                         dependencies = set(create_dependencies(rh.buildaction))
                     except Exception as ex:
@@ -287,6 +287,28 @@ def check(check_data):
                         archive.writestr("no-sources", str(ex))
                         dependencies = set()
 
+                    LOG.debug("Fetching other dependent files from analyzer "
+                              "output...")
+                    try:
+                        other_files = set()
+                        if len(rh.analyzer_stdout) > 0:
+                            other_files.update(
+                                source_analyzer.get_analyzer_mentioned_files(
+                                    rh.analyzer_stdout))
+
+                        if len(rh.analyzer_stderr) > 0:
+                            other_files.update(
+                                source_analyzer.get_analyzer_mentioned_files(
+                                    rh.analyzer_stderr))
+                    except Exception as ex:
+                        LOG.debug("Couldn't generate list of other files "
+                                  "from analyzer output:")
+                        LOG.debug(str(ex))
+                        other_files = set()
+
+                    dependencies.update(other_files)
+
+                    LOG.debug("Writing dependent files to archive.")
                     for dependent_source in dependencies:
                         LOG.debug("[ZIP] Writing '" + dependent_source + "' "
                                   "to the archive.")
