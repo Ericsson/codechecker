@@ -78,7 +78,7 @@ def setup_package():
     print("Starting server to get results")
     env.enable_auth(TEST_WORKSPACE)
     _start_server(codechecker_cfg, test_config, False)
-    print ("server started")
+    print("server started")
     codechecker.login(codechecker_cfg, TEST_WORKSPACE,
                       "cc",
                       "test")

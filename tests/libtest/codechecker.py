@@ -36,7 +36,7 @@ def login(codechecker_cfg, test_project_path, username, password):
     Log in to a server
 
     """
-    print ("Logging in")
+    print("Logging in")
     login_cmd = ['CodeChecker', 'cmd', 'login',
                  '-u', username,
                  '--verbose', 'debug',

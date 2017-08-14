@@ -94,7 +94,7 @@ class TestCommentUnauth(unittest.TestCase):
             self.assertEqual(c.author, 'Anonymous')
 
         # Remove the first comment
-        print ("removing comment:"+str(comments[0].id))
+        print("removing comment:"+str(comments[0].id))
         success = self._cc_client.removeComment(comments[0].id)
         self.assertTrue(success)
         logging.debug('Comment removed successfully')

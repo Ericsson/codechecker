@@ -111,13 +111,13 @@ class TestComment(unittest.TestCase):
         self.assertGreater(comments[0].createdAt, comments[1].createdAt)
 
         # Remove the first comment
-        print ("removing comment:"+str(comments[0].id))
+        print("removing comment:"+str(comments[0].id))
         success = self._cc_client.removeComment(comments[0].id)
         self.assertTrue(success)
         logging.debug('Comment removed successfully')
 
         # Remove the second comment as john should be unsuccessful
-        print ("removing comment:"+str(comments[1].id))
+        print("removing comment:"+str(comments[1].id))
         success = self._cc_client_john.removeComment(comments[1].id)
         self.assertFalse(success)
         logging.debug('Comment cannot be removed by another user')

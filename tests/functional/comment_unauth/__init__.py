@@ -77,7 +77,7 @@ def setup_package():
     # Start the CodeChecker server.
     print("Starting server to get results")
     _start_server(codechecker_cfg, test_config, False)
-    print ("server started")
+    print("server started")
 
     # Check the test project for the first time.
     test_project_name = project_info['name'] + '_' + uuid.uuid4().hex
