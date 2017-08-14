@@ -452,12 +452,12 @@ def main(args):
                 quiet_build=args.quiet_build,
                 logfile=logfile
             )
-
-            log_module = __load_module("log")
             __update_if_key_exists(args, log_args, "verbose")
 
+            log_module = __load_module("log")
             LOG.debug("Calling LOG with args:")
             LOG.debug(log_args)
+
             log_module.main(log_args)
         elif 'logfile' in args:
             logfile = args.logfile
@@ -479,18 +479,18 @@ def main(args):
         # after the call.
         args_to_update = ['skipfile',
                           'analyzers',
-                          'saargs',
-                          'tidyargs',
+                          'clangsa_args_cfg_file',
+                          'tidy_args_cfg_file',
                           'ordered_checkers'  # enable and disable.
                           ]
         for key in args_to_update:
             __update_if_key_exists(args, analyze_args, key)
-
-        analyze_module = __load_module("analyze")
         __update_if_key_exists(args, analyze_args, "verbose")
 
+        analyze_module = __load_module("analyze")
         LOG.debug("Calling ANALYZE with args:")
         LOG.debug(analyze_args)
+
         analyze_module.main(analyze_args)
 
         # --- Step 3.: Store to database.
@@ -513,26 +513,17 @@ def main(args):
         # Some arguments don't have default values.
         # We can't set these keys to None because it would result in an error
         # after the call.
-        if 'postgresql' in args:
-            __update_if_key_exists(args, store_args, 'postgresql')
-        else:
-            # If we are saving to a SQLite database, the wrapped 'check'
-            # command used to do it in the workspace folder.
-            setattr(store_args, 'sqlite', os.path.join(workspace,
-                                                       "codechecker.sqlite"))
-            setattr(store_args, 'postgresql', False)
-
         args_to_update = ['suppress',
                           'name'
                           ]
         for key in args_to_update:
             __update_if_key_exists(args, store_args, key)
-
-        store_module = __load_module("store")
         __update_if_key_exists(args, store_args, "verbose")
 
+        store_module = __load_module("store")
         LOG.debug("Calling STORE with args:")
         LOG.debug(store_args)
+
         store_module.main(store_args)
 
         # Show a hint for server start.

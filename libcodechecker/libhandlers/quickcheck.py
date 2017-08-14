@@ -319,12 +319,12 @@ def main(args):
                 quiet_build=args.quiet_build,
                 logfile=logfile
             )
-
-            log_module = __load_module("log")
             __update_if_key_exists(args, log_args, "verbose")
 
+            log_module = __load_module("log")
             LOG.debug("Calling LOG with args:")
             LOG.debug(log_args)
+
             log_module.main(log_args)
         elif 'logfile' in args:
             logfile = args.logfile
@@ -346,18 +346,18 @@ def main(args):
         # after the call.
         args_to_update = ['skipfile',
                           'analyzers',
-                          'saargs',
-                          'tidyargs',
+                          'clangsa_args_cfg_file',
+                          'tidy_args_cfg_file',
                           'ordered_checkers'  # enable and disable.
                           ]
         for key in args_to_update:
             __update_if_key_exists(args, analyze_args, key)
-
-        analyze_module = __load_module("analyze")
         __update_if_key_exists(args, analyze_args, "verbose")
 
+        analyze_module = __load_module("analyze")
         LOG.debug("Calling ANALYZE with args:")
         LOG.debug(analyze_args)
+
         analyze_module.main(analyze_args)
 
         # --- Step 3.: Print to stdout.
@@ -368,12 +368,12 @@ def main(args):
         )
         # 'suppress' does not have an argument by default.
         __update_if_key_exists(args, parse_args, "suppress")
-
-        parse_module = __load_module("parse")
         __update_if_key_exists(args, parse_args, "verbose")
 
+        parse_module = __load_module("parse")
         LOG.debug("Calling PARSE with args:")
         LOG.debug(parse_args)
+
         parse_module.main(parse_args)
     except ImportError:
         LOG.error("Quickcheck failed: couldn't import a library.")

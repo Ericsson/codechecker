@@ -10,3 +10,5 @@ simple2:
 	$(CXX) -w simple2.cpp -o /dev/null
 tidy_check:
 	$(CXX) -w tidy_check.cpp -o /dev/null
+saargs_forward:
+	$(CXX) -w -std=c++11 saargs_forward.cpp -o /dev/null
