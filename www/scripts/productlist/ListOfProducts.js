@@ -6,17 +6,72 @@
 
 define([
   'dojo/_base/declare',
+  'dojo/dom-class',
   'dojo/dom-construct',
   'dojo/data/ItemFileWriteStore',
   'dojo/topic',
+  'dojox/grid/DataGrid',
+  'dijit/ConfirmDialog',
   'dijit/form/Button',
   'dijit/form/TextBox',
   'dijit/layout/BorderContainer',
   'dijit/layout/ContentPane',
-  'dojox/grid/DataGrid',
-  'codechecker/util'],
-function (declare, domConstruct, ItemFileWriteStore, topic, Button,
-  TextBox, BorderContainer, ContentPane, DataGrid, util) {
+  'codechecker/util',
+  'products/ProductSettingsView'],
+function (declare, domClass, domConstruct, ItemFileWriteStore, topic,
+  DataGrid, ConfirmDialog, Button, TextBox, BorderContainer, ContentPane,
+  util, ProductSettingsView) {
+
+  //--- Product delete confirmation dialog ---//
+
+  var DeleteProductDialog = declare(ConfirmDialog, {
+    constructor : function () {
+      this._confirmLabel = new ContentPane({
+        class : 'deleteConfirmText',
+        innerHTML : '<span class="warningHeader">You have selected to ' +
+                    'delete a product!</span><br \><br \>' +
+                    "Deleting a product <strong>will</strong> remove " +
+                    "product-specific configuration, such as access " +
+                    "control and authorisation settings, and " +
+                    "<strong>will</strong> disconnect the database from " +
+                    "the server.<br \><br \>Analysis results stored in " +
+                    "the database <strong>will NOT</strong> be lost!"
+      });
+    },
+
+    onCancel : function () {
+      this.productGrid.set('deleteProductID', null);
+    },
+
+    onExecute : function () {
+      var that = this;
+
+      // TODO: Check if the user is superadmin, before calling the API.
+      if (this.productGrid.deleteProductID) {
+        CC_PROD_SERVICE.removeProduct(
+          this.productGrid.deleteProductID,
+          function (success) {
+            that.productGrid.store.fetch({
+              onComplete : function (products) {
+                products.forEach(function (product) {
+                  if (product.id[0] === that.productGrid.deleteProductID)
+                    that.productGrid.store.deleteItem(product);
+                });
+              }
+            });
+          });
+      }
+    },
+
+    postCreate : function () {
+      this.inherited(arguments);
+      this.connect(this.content.cancelButton, "onClick", "onCancel");
+
+      this.addChild(this._confirmLabel);
+    }
+  });
+
+  //--- Product grid ---//
 
   var ListOfProductsGrid = declare(DataGrid, {
     constructor : function () {
@@ -33,18 +88,27 @@ function (declare, domConstruct, ItemFileWriteStore, topic, Button,
         { name : 'Description', field : 'description', styles : 'text-align: left;', width : '70%' }/*,
         { name : 'Last check date', field : 'date', styles : 'text-align: center;', width : '30%' },
         { name : 'Last check bugs', field : 'numberofbugs', styles : 'text-align: center;', width : '20%' },
-        { name : 'Last check duration', field : 'duration', styles : 'text-align: center;' }*/
+        { name : 'Last check duration', field : 'duration', styles : 'text-align: center;' }*/,
+        { name : '&nbsp;', field : 'editIcon', cellClasses : 'status', width : '20px', noresize : true},
+        { name : '&nbsp;', field : 'deleteIcon', cellClasses : 'status', width : '20px', noresize : true}
       ];
 
       this.focused = true;
       this.selectable = true;
       this.keepSelection = true;
       this.escapeHTMLInData = false;
+      this.sortInfo = '+3';
     },
 
     postCreate : function () {
       this.inherited(arguments);
       this._populateProducts();
+    },
+
+    canSort : function (inSortInfo) {
+      var cell = this.getCell(Math.abs(inSortInfo) - 1);
+
+      return cell.field === 'name' || cell.field === 'description';
     },
 
     onRowClick : function (evt) {
@@ -56,19 +120,30 @@ function (declare, domConstruct, ItemFileWriteStore, topic, Button,
             window.open('/' + item.endpoint[0], '_self');
           }
           break;
+        case 'editIcon':
+          // TODO: Check if user has rights to edit, and if admin was toggled.
+          if (this.isAdmin) {
+            this.productSettingsView.set(
+              'title', "Edit product '" + item.endpoint[0] + "'");
+            this.productSettingsView.set('settingsMode', 'edit');
+            this.productSettingsView.setProductConfig(new PROD_OBJECTS.ProductConfiguration());
+            this.productSettingsView.set('successCallback', function () {
+              // Reapply the product list filtering.
+              this.infoPane._executeFilter(
+                this.infoPane._productFilter.get('value'));
+            });
+
+            this.productSettingsView.show();
+          }
+          break;
+        case 'deleteIcon':
+          // TODO: Check if user is superuser to delete.
+          if (this.isAdmin) {
+            this.set('deleteProductID', item.id[0]);
+            this.confirmDeleteDialog.show();
+          }
+          break;
       }
-    },
-
-    getItemsWhere : function (func) {
-      var result = [];
-
-      for (var i = 0; i < this.rowCount; ++i) {
-        var item = this.getItem(i);
-        if (func(item))
-          result.push(item);
-      }
-
-      return result;
     },
 
     _addProductData : function (item) {
@@ -89,12 +164,12 @@ function (declare, domConstruct, ItemFileWriteStore, topic, Button,
           + name + '</span>';
 
         if (!item.connected) {
-          statusIcon = '<abbr class="customIcon product-error"></abbr>';
+          statusIcon = '<span class="customIcon product-error"></span>';
           description = '<span class="product-description-error database">'
             + 'The database connection for this product could not be made!'
             + '</span><br />' + description;
         } else if (!item.accessible) {
-          statusIcon = '<abbr class="customIcon product-noaccess"></abbr>';
+          statusIcon = '<span class="customIcon product-noaccess"></span>';
           description = '<span class="product-description-error access">'
             + 'You do not have access to this product!'
             + '</span><br />' + description;
@@ -106,11 +181,14 @@ function (declare, domConstruct, ItemFileWriteStore, topic, Button,
       this.store.newItem({
         status : statusIcon,
         icon : icon,
+        id : item.id,
         endpoint : item.endpoint,
         name : name,
         description : description,
         connected : item.connected,
-        accessible : item.accessible
+        accessible : item.accessible,
+        editIcon : '',
+        deleteIcon : ''
       });
     },
 
@@ -124,6 +202,8 @@ function (declare, domConstruct, ItemFileWriteStore, topic, Button,
         productList.forEach(function (item) {
           that._addProductData(item);
         });
+
+        that.onLoaded(productList);
       });
     },
 
@@ -136,8 +216,8 @@ function (declare, domConstruct, ItemFileWriteStore, topic, Button,
 
       this.store.fetch({
         onComplete : function (products) {
-          products.forEach(function (products) {
-            that.store.deleteItem(products);
+          products.forEach(function (product) {
+            that.store.deleteItem(product);
           });
           that.store.save();
         }
@@ -148,56 +228,142 @@ function (declare, domConstruct, ItemFileWriteStore, topic, Button,
         productDataList.forEach(function (item) {
           that._addProductData(item);
         });
+
+        that.onLoaded(productDataList);
       });
     },
 
-    onLoaded : function (productDataList) {}
+    toggleAdminButtons : function (isAdmin) {
+      this.set('isAdmin', isAdmin);
+      var that = this;
+
+      this.store.fetch({
+        onComplete : function (products) {
+          products.forEach(function (product) {
+            if (isAdmin) {
+              that.store.setValue(product, 'editIcon',
+                '<span class="customIcon product-edit"></span>');
+              that.store.setValue(product, 'deleteIcon',
+                '<span class="customIcon product-delete"></span>');
+            } else {
+              that.store.setValue(product, 'editIcon', '');
+              that.store.setValue(product, 'deleteIcon', '');
+            }
+          });
+        }
+      });
+    },
+
+    onLoaded : function (productDataList) {
+      this.toggleAdminButtons(this.isAdmin);
+      this.sort();
+    }
   });
 
-  var ProductFilter = declare(ContentPane, {
+  //--- Grid top bar ---//
+
+  var ProductInfoPane = declare(ContentPane, {
+    _executeFilter : function (filter) {
+      var that = this;
+
+      clearTimeout(this._timer);
+      this._timer = setTimeout(function () {
+        that.listOfProductsGrid.refreshGrid(filter);
+      }, 500);
+    },
+
     constructor : function () {
       var that = this;
 
+      //--- Product filter ---//
+
       this._productFilter = new TextBox({
-        id          : 'products-filter',
         placeHolder : 'Search for products...',
         onKeyUp    : function (evt) {
-          clearTimeout(this.timer);
+          that._executeFilter(this.get('value'));
+        }
+      });
 
-          var filter = this.get('value');
-          this.timer = setTimeout(function () {
-            that.listOfProductsGrid.refreshGrid(filter);
-          }, 500);
+      //--- New product Button ---//
+
+      this._newBtn = new Button({
+        label    : 'Create new product',
+        class    : 'new-btn',
+        onClick  : function () {
+          that.productSettingsView.set('title', "Add new product");
+          that.productSettingsView.set('settingsMode', 'add');
+          that.productSettingsView.set('successCallback', function () {
+            // Reapply the product list filtering.
+            that._executeFilter(that._productFilter.get('value'));
+          });
+
+          that.productSettingsView.show();
         }
       });
     },
 
     postCreate : function () {
       this.addChild(this._productFilter);
+      this.addChild(this._newBtn);
+
+      // By default, the create button should be invisible.
+      domClass.add(this._newBtn.domNode, 'invisible');
+    },
+
+    toggleAdminButtons : function (isAdmin) {
+      this.set('isAdmin', isAdmin);
+
+      if (!isAdmin)
+        domClass.add(this._newBtn.domNode, 'invisible');
+      else
+        domClass.remove(this._newBtn.domNode, 'invisible');
     }
   });
 
+  //--- Main view ---//
+
   return declare(BorderContainer, {
     postCreate : function () {
-      var that = this;
-
-      var filterPane = new ProductFilter({
-        id : 'products-filter-container',
+      var infoPane = new ProductInfoPane({
         region : 'top'
       });
 
+      this.set('infoPane', infoPane);
+
       var listOfProductsGrid = new ListOfProductsGrid({
         id : 'productGrid',
-        region : 'center',
-        onLoaded : that.onLoaded
+        region : 'center'
+      });
+      
+      this.set('listOfProductsGrid', listOfProductsGrid);
+      infoPane.set('listOfProductsGrid', listOfProductsGrid);
+      listOfProductsGrid.set('infoPane', infoPane);
+
+      this.addChild(infoPane);
+      this.addChild(listOfProductsGrid);
+
+      //--- Initialise auxiliary GUI elements ---//
+
+      var confirmDeleteDialog = new DeleteProductDialog({
+        title       : 'Confirm deletion of product',
+        productGrid : listOfProductsGrid
       });
 
-      filterPane.set('listOfProductsGrid', listOfProductsGrid);
+      listOfProductsGrid.set('confirmDeleteDialog', confirmDeleteDialog);
 
-      this.addChild(filterPane);
-      this.addChild(listOfProductsGrid);
+      var productSettingsView = new ProductSettingsView({
+        title       : 'Product settings',
+        productGrid : listOfProductsGrid,
+        style       : 'width: 650px'
+      });
+
+      infoPane.set('productSettingsView', productSettingsView);
+      listOfProductsGrid.set('productSettingsView', productSettingsView);
     },
 
-    onLoaded : function (productDataList) {}
+    setAdmin : function (isAdmin) {
+      this.infoPane.toggleAdminButtons(isAdmin);
+      this.listOfProductsGrid.toggleAdminButtons(isAdmin);
+    }
   });
 });

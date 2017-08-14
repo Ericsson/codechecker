@@ -863,3 +863,49 @@ span[class*="severity-"] {
   direction: ltr;
 }
 
+/*** Message box pane ***/
+
+.mbox {
+  border-color: black;
+  border-style: solid;
+  border-width: 1px 1px 1px 4px;
+  margin-bottom: 12px;
+}
+
+.mbox .heading {
+  display: block;
+  font-weight: bold;
+  font-size: 14px;
+  padding-bottom: 8px;
+}
+
+.mbox .icon {
+  display: inline-block;
+  float: left;
+  font-family: 'codechecker', Sans-Serif !important;
+  font-size: 16px;
+  margin-right: 12px;
+}
+
+.mbox .icon:before {
+  content: "\e00c";
+}
+
+/* Error message box. */
+
+.mbox.mbox-error {
+  border-color: #e92625;
+}
+
+.mbox.mbox-error .heading {
+  color: #e92625;
+}
+
+.mbox.mbox-error .icon {
+  color: #e92625;
+}
+
+.mbox.mbox-error .icon:before {
+  content: "\e015";
+}
+
