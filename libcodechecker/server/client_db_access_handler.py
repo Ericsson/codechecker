@@ -558,7 +558,9 @@ class ThriftRequestHandler(object):
             comment = session.query(Comment).get(comment_id)
             if comment:
                 if comment.author != 'Anonymous' and comment.author != user:
-                    raise shared.ttypes.ErrorCode.UNAUTHORIZED
+                    raise shared.ttypes.RequestFailed(
+                        shared.ttypes.ErrorCode.UNAUTHORIZED,
+                        'Unathorized comment modification!')
                 comment.message = content
                 session.add(comment)
                 session.commit()
@@ -595,7 +597,9 @@ class ThriftRequestHandler(object):
             comment = session.query(Comment).get(comment_id)
             if comment:
                 if comment.author != 'Anonymous' and comment.author != user:
-                    raise shared.ttypes.ErrorCode.UNAUTHORIZED
+                    raise shared.ttypes.RequestFailed(
+                        shared.ttypes.ErrorCode.UNAUTHORIZED,
+                        'Unathorized comment modification!')
                 session.delete(comment)
                 session.commit()
                 return True
