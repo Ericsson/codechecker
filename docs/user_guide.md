@@ -343,6 +343,7 @@ usage: CodeChecker analyze [-h] [-j JOBS] [-i SKIPFILE] [-o OUTPUT_PATH]
                            [-t {plist}] [-n NAME]
                            [--analyzers ANALYZER [ANALYZER ...]]
                            [--add-compiler-defaults]
+                           [--capture-analysis-output]
                            [--saargs CLANGSA_ARGS_CFG_FILE]
                            [--tidyargs TIDY_ARGS_CFG_FILE]
                            [--ctu | --ctu-collect | --ctu-analyze]
@@ -422,6 +423,10 @@ analyzer arguments:
                         compilers themselves, and use them with Clang. This is
                         used when the compiler on the system is special, e.g.
                         when doing cross-compilation. (default: False)
+  --capture-analysis-output
+                        Store standard output and standard error of
+                        successful analyzer invocations into the
+                        '<OUTPUT_DIR>/success' directory.
   --saargs CLANGSA_ARGS_CFG_FILE
                         File containing argument which will be forwarded
                         verbatim for the Clang Static Analyzer.

@@ -32,7 +32,7 @@ class TestAnalyze(unittest.TestCase):
 
         # Get the CodeChecker cmd if needed for the tests.
         self._codechecker_cmd = env.codechecker_cmd()
-        self.report_dir = os.path.join(self.test_workspace, 'reports')
+        self.report_dir = os.path.join(self.test_workspace, "reports")
         self.test_dir = os.path.join(os.path.dirname(__file__), 'test_files')
         # Change working dir to testfile dir so CodeChecker can be run easily.
         self.__old_pwd = os.getcwd()
@@ -41,6 +41,42 @@ class TestAnalyze(unittest.TestCase):
     def tearDown(self):
         """Restore environment after tests have ran."""
         os.chdir(self.__old_pwd)
+
+    def test_capture_analysis_output(self):
+        """
+        Test if reports/success/<output_file>.[stdout,stderr].txt
+        files are created
+        """
+        build_json = os.path.join(self.test_workspace, "build_success.json")
+        success_dir = os.path.join(self.report_dir, "success")
+        analyze_cmd = [self._codechecker_cmd, "analyze", build_json,
+                       "--analyzers", "clangsa", "-o", self.report_dir,
+                       "--capture-analysis-output"]
+
+        source_file = os.path.join(self.test_dir, "success.c")
+        build_log = [{"directory": self.test_workspace,
+                      "command": "gcc -c " + source_file,
+                      "file": source_file
+                      }]
+
+        with open(build_json, 'w') as outfile:
+            json.dump(build_log, outfile)
+
+        print(analyze_cmd)
+        process = subprocess.Popen(
+                    analyze_cmd, stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE, cwd=self.test_dir)
+        out, err = process.communicate()
+        print(out+err)
+        errcode = process.returncode
+        self.assertEquals(errcode, 0)
+
+        # We expect the sucess stderr file in the success directory.
+        success_files = os.listdir(success_dir)
+        print(success_files)
+        self.assertEquals(len(success_files), 1)
+        self.assertIn("success.c", success_files[0])
+        os.remove(os.path.join(success_dir, success_files[0]))
 
     def test_failure(self):
         """

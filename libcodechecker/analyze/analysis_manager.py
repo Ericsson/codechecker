@@ -173,7 +173,7 @@ def check(check_data):
     """
 
     action, context, analyzer_config_map, \
-        output_dir, skip_handler = check_data
+        output_dir, skip_handler, capture_analysis_output = check_data
 
     skipped = False
     try:
@@ -237,13 +237,27 @@ def check(check_data):
             # sequence, whereas clang-tidy does not. We rewrite the file
             # names to contain no escape sequences for every analyzer.
             result_file = rh.analyzer_result_file.replace(r'\ ', ' ')
+            result_base = os.path.basename(result_file)
 
             if rh.analyzer_returncode == 0:
                 # Analysis was successful processing results.
-                if rh.analyzer_stdout != '':
+                if (capture_analysis_output):
+                    success_dir = os.path.join(output_dir, "success")
+                    if not os.path.exists(success_dir):
+                        os.makedirs(success_dir)
+                if len(rh.analyzer_stdout) > 0:
                     LOG.debug_analyzer('\n' + rh.analyzer_stdout)
-                if rh.analyzer_stderr != '':
+                    if (capture_analysis_output):
+                        with open(os.path.join(success_dir, result_base) +
+                                  ".stdout.txt", 'w') as outf:
+                            outf.write(rh.analyzer_stdout)
+                if len(rh.analyzer_stderr) > 0:
                     LOG.debug_analyzer('\n' + rh.analyzer_stderr)
+                    if (capture_analysis_output):
+                        with open(os.path.join(success_dir, result_base) +
+                                  ".stderr.txt", 'w') as outf:
+                            outf.write(rh.analyzer_stderr)
+
                 rh.postprocess_result()
                 # Generated reports will be handled separately at store.
 
@@ -267,7 +281,7 @@ def check(check_data):
                     os.makedirs(failed_dir)
                 LOG.debug("Writing error debugging to '" + failed_dir + "'")
 
-                zip_file = os.path.basename(result_file) + '.zip'
+                zip_file = result_base + '.zip'
                 with zipfile.ZipFile(os.path.join(failed_dir, zip_file),
                                      'w') as archive:
                     if len(rh.analyzer_stdout) > 0:
@@ -363,7 +377,8 @@ def check(check_data):
 
 
 def start_workers(actions, context, analyzer_config_map,
-                  jobs, output_path, skip_handler, metadata):
+                  jobs, output_path, skip_handler, metadata,
+                  capture_analysis_output):
     """
     Start the workers in the process pool.
     For every build action there is worker which makes the analysis.
@@ -397,7 +412,8 @@ def start_workers(actions, context, analyzer_config_map,
                              context,
                              analyzer_config_map,
                              output_path,
-                             skip_handler)
+                             skip_handler,
+                             capture_analysis_output)
                             for build_action in actions]
 
         pool.map_async(check,
