@@ -74,11 +74,11 @@ class OutputParser(object):
     # Regex for parsing a clang-tidy message.
     message_line_re = re.compile(
         # File path followed by a ':'.
-        '^(?P<path>[\S]+):'
+        '^(?P<path>[\S ]+?):'
         # Line number followed by a ':'.
-        '(?P<line>\d+):'
+        '(?P<line>\d+?):'
         # Column number followed by a ':' and a space.
-        '(?P<column>\d+):\ '
+        '(?P<column>\d+?):\ '
         # Severity followed by a ':'.
         '(?P<severity>\w+):'
         # Checker message.
@@ -89,11 +89,11 @@ class OutputParser(object):
     # Matches a note.
     note_line_re = re.compile(
         # File path followed by a ':'.
-        '^(?P<path>[\S]+):'
+        '^(?P<path>[\S ]+?):'
         # Line number followed by a ':'.
-        '(?P<line>\d+):'
+        '(?P<line>\d+?):'
         # Column number followed by a ':' and a space.
-        '(?P<column>\d+):\ '
+        '(?P<column>\d+?):\ '
         # Severity == note.
         'note:'
         # Checker message.

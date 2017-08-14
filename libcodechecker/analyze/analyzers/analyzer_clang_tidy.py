@@ -117,6 +117,31 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
             LOG.error(ex)
             return []
 
+    def get_analyzer_mentioned_files(self, output):
+        """
+        Parse Clang-Tidy's output to generate a list of files that were
+        mentioned in the standard output or standard error.
+        """
+
+        # A line mentioning a file in Clang-Tidy's output looks like this:
+        # /home/.../.cpp:L:C: warning: foobar.
+        regex = re.compile(
+            # File path followed by a ':'.
+            '^(?P<path>[\S ]+?):'
+            # Line number followed by a ':'.
+            '(?P<line>\d+?):'
+            # Column number followed by a ':' and a space.
+            '(?P<column>\d+?):\ ')
+
+        paths = []
+
+        for line in output.splitlines():
+            match = re.match(regex, line)
+            if match:
+                paths.append(match.group('path'))
+
+        return set(paths)
+
     @classmethod
     def resolve_missing_binary(cls, configured_binary, env):
         """

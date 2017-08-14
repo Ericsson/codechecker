@@ -69,6 +69,15 @@ class SourceAnalyzer(object):
         """
         pass
 
+    @abstractmethod
+    def get_analyzer_mentioned_files(self, output):
+        """
+        Return a collection of files that were mentioned by the analyzer in
+        its standard outputs, which should be analyzer_stdout or
+        analyzer_stderr from a result handler.
+        """
+        pass
+
     def analyze(self, res_handler, env=None):
         """
         Run the analyzer.

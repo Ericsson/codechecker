@@ -85,6 +85,22 @@ def create_dependencies(action):
     Transforms the given original build 'command' to a command that, when
     executed, is able to generate a dependency list.
     """
+
+    def __eliminate_argument(arg_vect, opt_strings, num_args=0):
+        """
+        This call eliminates the parameters matching the given option strings,
+        along with the number of arguments coming directly after the opt-string
+        from the command.
+        """
+        option_index = next(
+            (i for i, c in enumerate(arg_vect) if c in opt_strings), None)
+
+        if option_index:
+            arg_vect = arg_vect[0:option_index] + \
+                       arg_vect[option_index + num_args + 1:]
+
+        return arg_vect
+
     if 'CC_LOGGER_GCC_LIKE' not in os.environ:
         os.environ['CC_LOGGER_GCC_LIKE'] = 'gcc:g++:clang:clang++:cc:c++'
 
@@ -92,17 +108,31 @@ def create_dependencies(action):
     if any(binary_substring in command[0] for binary_substring
            in os.environ['CC_LOGGER_GCC_LIKE'].split(':')):
         # gcc and clang can generate makefile-style dependency list.
-        command = [command[0], '-E', '-M', '-MQ', '__dummy'] + command[1:]
 
-        option_index = next(
-            (i for i, c in enumerate(command) if c == '-o' or c == '--output'),
-            None)
+        # If an output file is set, the dependency is not written to the
+        # standard output but rather into the given file.
+        # We need to first eliminate the output from the command.
+        command = __eliminate_argument(command, ['-o', '--output'], 1)
 
-        if option_index:
-            # If an output file is set, the dependency is not written to the
-            # standard output but rather into the given file.
-            # We need to first eliminate the output from the command.
-            command = command[0:option_index] + command[option_index+2:]
+        # Remove potential dependency-file-generator options from the string
+        # too. These arguments found in the logged build command would derail
+        # us and generate dependencies, e.g. into the build directory used.
+        command = __eliminate_argument(command, ['-MM'])
+        command = __eliminate_argument(command, ['-MF'], 1)
+        command = __eliminate_argument(command, ['-MP'])
+        command = __eliminate_argument(command, ['-MT'], 1)
+        command = __eliminate_argument(command, ['-MQ'], 1)
+        command = __eliminate_argument(command, ['-MD'])
+        command = __eliminate_argument(command, ['-MMD'])
+
+        # Clang contains some extra options.
+        command = __eliminate_argument(command, ['-MJ'], 1)
+        command = __eliminate_argument(command, ['-MV'])
+
+        # Build out custom invocation for dependency generation.
+        command = [command[0], '-E', '-M', '-MT', '__dummy'] + command[1:]
+
+        LOG.debug("Crafting build dependencies from GCC or Clang!")
 
         output, rc = util.call_command(command, env=os.environ)
         if rc == 0:
@@ -248,23 +278,60 @@ def check(check_data):
                         LOG.debug("[ZIP] Writing analyzer STDERR to /stderr")
                         archive.writestr("stderr", rh.analyzer_stderr)
 
-                    LOG.debug("Generating and writing dependent headers...")
+                    LOG.debug("Generating dependent headers via compiler...")
                     try:
                         dependencies = set(create_dependencies(rh.buildaction))
                     except Exception as ex:
                         LOG.debug("Couldn't create dependencies:")
-                        LOG.debug(ex.message)
-                        archive.writestr("no-sources", ex.message)
+                        LOG.debug(str(ex))
+                        archive.writestr("no-sources", str(ex))
                         dependencies = set()
 
+                    LOG.debug("Fetching other dependent files from analyzer "
+                              "output...")
+                    try:
+                        other_files = set()
+                        if len(rh.analyzer_stdout) > 0:
+                            other_files.update(
+                                source_analyzer.get_analyzer_mentioned_files(
+                                    rh.analyzer_stdout))
+
+                        if len(rh.analyzer_stderr) > 0:
+                            other_files.update(
+                                source_analyzer.get_analyzer_mentioned_files(
+                                    rh.analyzer_stderr))
+                    except Exception as ex:
+                        LOG.debug("Couldn't generate list of other files "
+                                  "from analyzer output:")
+                        LOG.debug(str(ex))
+                        other_files = set()
+
+                    dependencies.update(other_files)
+
+                    LOG.debug("Writing dependent files to archive.")
                     for dependent_source in dependencies:
                         LOG.debug("[ZIP] Writing '" + dependent_source + "' "
                                   "to the archive.")
-                        archive.write(
-                            dependent_source,
-                            os.path.join("sources-root",
-                                         dependent_source.lstrip('/')),
-                            zipfile.ZIP_DEFLATED)
+                        archive_path = dependent_source.lstrip('/')
+
+                        try:
+                            archive.write(
+                                dependent_source,
+                                os.path.join("sources-root",
+                                             archive_path),
+                                zipfile.ZIP_DEFLATED)
+                        except Exception as ex:
+                            # In certain cases, the output could contain
+                            # invalid tokens (such as error messages that were
+                            # printed even though the dependency generation
+                            # returned 0).
+                            LOG.debug("[ZIP] Couldn't write, because " +
+                                      str(ex))
+                            archive.writestr(
+                                os.path.join("failed-sources-root",
+                                             archive_path),
+                                "Couldn't write this file, because:\n" +
+                                str(ex))
 
                     LOG.debug("[ZIP] Writing extra information...")
 
@@ -292,7 +359,7 @@ def check(check_data):
     except Exception as e:
         LOG.debug_analyzer(str(e))
         traceback.print_exc(file=sys.stdout)
-        return 1, skipped, action.analyzer_type, None
+        return 1, skipped, action, None
 
 
 def start_workers(actions, context, analyzer_config_map,

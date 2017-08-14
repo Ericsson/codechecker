@@ -27,6 +27,9 @@ def setup_package():
     global TEST_WORKSPACE
     TEST_WORKSPACE = env.get_workspace('analyze')
 
+    report_dir = os.path.join(TEST_WORKSPACE, 'reports')
+    os.makedirs(report_dir)
+
     os.environ['TEST_WORKSPACE'] = TEST_WORKSPACE
 
 
