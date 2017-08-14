@@ -278,6 +278,50 @@ function (locale, dom, style) {
      */
     atou : function(b64) {
       return decodeURIComponent(escape(window.atob(b64)));
+    },
+
+    /**
+     * Calls a Thrift API (in '-gen js:jquery' mode!) function in an
+     * asynchronous manner with user-specified error handling.
+     *
+     * This function accepts AT LEAST 4 arguments, as follows:
+     *
+     *  1. {Thrift}   The actual Thrift API client's object.
+     *  2. {string}   The name of the function to call.
+     *  *  {anything} (Optional) The API function's argument list.
+     *  3. {function} Callback to execute when the call successfully returns.
+     *  4. {function} Callback to execute when an Exception is thrown
+     *    by the server. This function gets a single Object which
+     *    corresponds to the exception received.
+     */
+    asyncAPICallWithExceptionHandling : function () {
+      if (arguments.length === 4)
+        throw "Service object, API function name, success callback and "  +
+              "error handler must be given. Use standard call syntax if " +
+              "you don't want async error handling.";
+
+      var apiService = arguments[0];
+      var apiFuncName = arguments[1];
+
+
+      // The rest of the arguments are actual arguments.
+      var args = [];
+      for (var i = 0; i < arguments.length - 4; ++i) {
+        args.push(arguments[i + 2]);
+      }
+      // The success callback is always the last argument to the client.
+      args.push(arguments[arguments.length - 2]);
+
+      var errorHandler = arguments[arguments.length - 1];
+
+      var apiFunc = apiService[apiFuncName];
+      apiFunc.apply(apiService, args).error(
+        function (jqRequest, status, exc) {
+          if (status === "parsererror")
+            // Only fire handler if Thrift threw an Exception, not if, e.g.
+            // a network error has occurred.
+            errorHandler(exc);
+      });
     }
   };
 });

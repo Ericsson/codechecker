@@ -1,7 +1,15 @@
 
 /* Do not use this stylesheet without codecheckerviewer.css! */
 
+.invisible {
+  visibility: hidden !important;
+}
+
 /*** Product grid ***/
+
+.new-btn {
+  float: right;
+}
 
 #productGrid .dojoxGridCell {
   border: 0;
@@ -71,4 +79,70 @@ span.product-avatar {
 
 .customIcon.product-error:before {
   content: "\e015";
+}
+
+.customIcon.product-edit {
+  color: #5b6169;
+}
+
+.customIcon.product-edit:before {
+  content: "\e012";
+}
+
+.customIcon.product-delete {
+  color: #d63434;
+}
+
+.customIcon.product-delete:before {
+  content: "\e013";
+}
+
+/*** Product delete confirmation dialog ***/
+
+.deleteConfirmText {
+  font-size: 16px;
+}
+
+.deleteConfirmText .warningHeader {
+  color: #b32424;
+  font-weight: bold;
+  font-size: 18px;
+}
+
+/*** Product configuration dialog ***/
+
+.formElement {
+  display: block;
+  margin: 2px;
+  padding: 4px;
+}
+
+.formElement .formLabel {
+  display: inline-block;
+  margin-left: 5px;
+  padding-right: 6px;
+  width: 200px;
+}
+
+.formElement .formLabel.bold {
+  font-weight: bold;
+}
+
+.formElement .formInput {
+  width: 350px;
+}
+
+.formElement textarea.formInput {
+  width: 346px;
+}
+
+.formElement input {
+  display: inline-block;
+}
+
+.submit-btn {
+  float: right;
+  margin-top: 5px;
+  margin-right: 8px;
+  margin-bottom: 8px;
 }

@@ -69,14 +69,23 @@ function (declare, topic, domConstruct, Button, BorderContainer,
 
     //--- Admin button ---//
 
+    layout.set('isAdmin', false);
+
     // TODO: Show admin button only if superuser.
-    /* var menuButton = new Button({
-      class : 'mainMenuButton',
-      label : 'Administration',
+    var menuButton = new Button({
+      class : 'mainMenuButton adminButton',
+      label : "Show administration",
       onClick : function () {
-        window.open('/Administration', '_self');
+        // TODO: Query if user can be superadmin and only allow this if so.
+
+        var isAdmin = !layout.get('isAdmin');
+
+        layout.set('isAdmin', isAdmin);
+        listOfProducts.setAdmin(isAdmin);
+        this.set('label',
+                 (isAdmin ? 'Hide' : 'Show') + ' administration');
       }
-    }); */
+    });
 
     var headerMenu = domConstruct.create('div', {
         id : 'header-menu'
@@ -85,13 +94,15 @@ function (declare, topic, domConstruct, Button, BorderContainer,
     if (loginUserSpan != null)
         domConstruct.place(loginUserSpan, headerMenu);
 
-    /* domConstruct.place(menuButton.domNode, headerMenu); */
+    domConstruct.place(menuButton.domNode, headerMenu);
 
     domConstruct.place(headerMenu, headerPane.domNode);
 
     //--- Center panel ---//
 
-    var listOfProducts = new ListOfProducts();
+    var listOfProducts = new ListOfProducts({
+      title : 'Products'
+    });
 
     productsPane.addChild(listOfProducts);
 
