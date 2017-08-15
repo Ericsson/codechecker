@@ -174,6 +174,16 @@ def add_arguments_to_parser(parser):
                                     "compiler on the system is special, e.g. "
                                     "when doing cross-compilation.")
 
+    analyzer_opts.add_argument('--capture-analysis-output',
+                               dest='capture_analysis_output',
+                               action='store_true',
+                               default=argparse.SUPPRESS,
+                               required=False,
+                               help="Store standard output and standard error "
+                                    "of successful analyzer invocations "
+                                    "into the '<OUTPUT_DIR>/success' "
+                                    "directory.")
+
     analyzer_opts.add_argument('--saargs',
                                dest="clangsa_args_cfg_file",
                                required=False,

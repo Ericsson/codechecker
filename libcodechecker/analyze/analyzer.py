@@ -129,7 +129,9 @@ def perform_analysis(args, context, actions, metadata):
     if ctu_analyze or (not ctu_analyze and not ctu_collect):
         analysis_manager.start_workers(actions, context, config_map,
                                        args.jobs, args.output_path,
-                                       __get_skip_handler(args), metadata)
+                                       __get_skip_handler(args),
+                                       metadata,
+                                       'capture_analysis_output' in args)
 
     end_time = time.time()
     LOG.info("Analysis length: " + str(end_time - start_time) + " sec.")
