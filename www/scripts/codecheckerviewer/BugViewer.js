@@ -43,7 +43,7 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
       Container : jsPlumbParentElement,
       Anchor : ['Perimeter', { shape : 'Ellipse' }],
       Endpoint : ['Dot', { radius : 1 }],
-      PaintStyle : { strokeStyle : 'blue', lineWidth : 1 },
+      PaintStyle : { strokeStyle : '#a94442', lineWidth : 2 },
       ConnectionsDetachable : false,
       ConnectionOverlays : [['Arrow',
         { location : 1, length : 10, width : 8 }]]
@@ -76,6 +76,31 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
       endPos = filepath.length;
 
     return filepath.substr(0, endPos);
+  }
+
+  /**
+   * Creates a bug step enumeration icon.
+   * @param value {integer} - Content of the enumeration icon.
+   * @param type {error|fixit|info} - Class type of the enumeration icon.
+   */
+  function createBugStepEnumeration(value, type) {
+    return dom.create('span', {
+      class : 'checker-enum ' + type,
+      innerHTML : value
+    });
+  }
+
+  /**
+   * Parsing the bug step message and replace the `(fixit)` string with an icon.
+   */
+  function parseBugStepMsg(message) {
+    var ret = message;
+
+    if (message.indexOf('(fixit)') > -1)
+      ret = '<span class="tag fixit">fixit</span>'
+        + message.replace(' (fixit)', '');
+
+    return ret;
   }
 
   var Editor = declare(ContentPane, {
@@ -151,13 +176,20 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
       var that = this;
 
       bubbles.forEach(function (bubble, i) {
-        var left = that.codeMirror.defaultCharWidth() * bubble.startCol + 'px';
-        var enumeration = '<span class="enum">(' + (i + 1) + ')</span> ';
+        var isResult = i === bubbles.length - 1;
 
+        var left = that.codeMirror.defaultCharWidth() * bubble.startCol + 'px';
+
+        var enumType = isResult
+          ? 'error' : bubble.msg.indexOf(' (fixit)') > -1
+          ? 'fixit' : 'info';
+
+        var enumeration = createBugStepEnumeration(i + 1, enumType).outerHTML;
         var element = dom.create('div', {
           style : 'margin-left: ' + left,
-          class : 'checkMsg',
-          innerHTML : enumeration + entities.encode(bubble.msg)
+          class : 'check-msg ' + enumType,
+          innerHTML : (bubbles.length !== 1 ? enumeration : '')
+                    + parseBugStepMsg(entities.encode(bubble.msg))
         });
 
         that._lineWidgets.push(that.codeMirror.addLineWidget(
@@ -639,14 +671,25 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
 
       var that = this;
       reportDetails.pathEvents.forEach(function (step, index) {
+        var isResult = index == reportDetails.pathEvents.length - 1;
+
         var filename = step.filePath.replace(/^.*(\\|\/|\:)/, '');
         var highlightData = that._highlightStep(highlightStack, step);
 
-        var name = (areThereMultipleFiles ? '{FILENAME}:' : 'Line ');
-        name += step.startLine + ' &ndash; ' + entities.encode(step.msg);
+        var enumType = isResult
+          ? 'error' : step.msg.indexOf(' (fixit)') > -1
+          ? 'fixit' : 'info';
+
+        var enumeration =
+          createBugStepEnumeration(index + 1, enumType).outerHTML;
+
+        var name = enumeration
+          + (areThereMultipleFiles ? '{FILENAME}:' : 'L')
+          + step.startLine + ' &ndash; '
+          + parseBugStepMsg(entities.encode(step.msg));
 
         var kind = 'event';
-        if (index == reportDetails.pathEvents.length - 1) {
+        if (isResult) {
           // The final line in the BugPath is the result once again
           name = '<i><u>' + name + '</u></i>';
           kind = 'result';
@@ -690,7 +733,7 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
 
       this.bugStore.put({
         id : report.reportId + '',
-        name : 'Line ' + report.lastBugPosition.startLine
+        name : 'L' + report.lastBugPosition.startLine
              + ' &ndash; ' + report.checkerId,
         parent : util.severityFromCodeToString(report.severity),
         report : report,
