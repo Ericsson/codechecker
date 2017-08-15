@@ -340,13 +340,28 @@ def start_server(package_data, port, db_conn_string, suppress_handler,
                                      context.db_version_info,
                                      session_manager.SessionManager())
 
-    instance_manager.register(os.getpid(),
-                              os.path.abspath(context.codechecker_workspace),
-                              port)
+    try:
+        instance_manager.register(os.getpid(),
+                                  os.path.abspath(
+                                      context.codechecker_workspace),
+                                  port)
+    except IOError as ex:
+        LOG.debug(ex.strerror)
 
     LOG.info("Server waiting for client requests on [{0}:{1}]"
              .format(listen_address, str(port)))
 
-    atexit.register(instance_manager.unregister, os.getpid())
+    def unregister_handler(pid):
+        """
+        Handle errors during instance unregistration.
+        The workspace might be removed so updating the
+        config content might fail.
+        """
+        try:
+            instance_manager.unregister(pid)
+        except IOError as ex:
+            LOG.debug(ex.strerror)
+
+    atexit.register(unregister_handler, os.getpid())
     http_server.serve_forever()
     LOG.info("Webserver quit.")

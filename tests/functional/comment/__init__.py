@@ -116,7 +116,7 @@ def teardown_package():
     global TEST_WORKSPACE
 
     print("Removing: " + TEST_WORKSPACE)
-    shutil.rmtree(TEST_WORKSPACE)
+    shutil.rmtree(TEST_WORKSPACE, ignore_errors=True)
 
 
 def _start_server(codechecker_cfg, test_config, auth=False):
