@@ -29,7 +29,7 @@ function (domConstruct, declare, TextBox, Select, ContentPane, util) {
      * the content should be an array of { label : ..., value : ... } objects or
      * a function returning such an array. 
      */
-    addField : function (type, name, content) {
+    addField : function (type, name, content, value) {
       var that = this;
 
       switch (type) {
@@ -38,6 +38,7 @@ function (domConstruct, declare, TextBox, Select, ContentPane, util) {
             placeHolder : content,
             name : name,
             class : 'filterText',
+            value : value,
             onKeyPress : function (evt) {
               if (!that._changeHappened()) return;
 
@@ -68,7 +69,6 @@ function (domConstruct, declare, TextBox, Select, ContentPane, util) {
             that._replaceOptions(field);
           } else {
             field.set('options', content);
-            field.reset();
             that._previousValues[field.get('name')] = field.get('value');
           }
 
@@ -136,14 +136,20 @@ function (domConstruct, declare, TextBox, Select, ContentPane, util) {
       select.set('options', [{ label : 'Loading...', value : '_loading_' }]);
       select.set('disabled', true);
       this.setDisabledAll(true);
-      select.reset();
 
       select.contentCallback(function (opts) {
         select.set('options', opts);
         select.set('disabled', false);
         that.setDisabledAll(false);
-        select.reset();
-        that._previousValues[select.get('name')] = select.get('value');
+
+        opts.forEach(function(opt) {
+          if (opt.selected) {
+            that._previousValues[select.get('name')] = opt.value;
+          }
+        });
+
+        select.reset()
+        select.set('value', that._previousValues[select.get('name')]);
       });
     },
 

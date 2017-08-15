@@ -322,7 +322,10 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
 
       var content = new BorderContainer({
         title : 'Bug Overview',
-        onShow : function () { grid.scrollToLastSelected(); }
+        onShow : function () {
+          grid.scrollToLastSelected();
+          hashHelper.removeReport();
+        }
       });
 
       //--- Filter ---//
@@ -330,22 +333,34 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
       var filterGroup
         = this.runData
         ? new filterHelper.FilterGroup({
-            runId : this.runData.runId
+            runId : this.runData.runId,
+            filters : this.filters
           })
         : new filterHelper.FilterGroup({
             baselineId : this.baseline.runId,
-            newcheckId : this.newcheck.runId
+            newcheckId : this.newcheck.runId,
+            filters : this.filters
           });
 
       filterGroup.set('region', 'top');
       filterGroup.onChange = function (allValues) {
+        hashHelper.setFilter(filterGroup);
         grid.refreshGrid(
-          filterHelper.filterGroupToReportFilters(filterGroup),
+          filterHelper.filterGroupToReportFilters(filterGroup, allValues),
           allValues[0].difftype);
+
         that._difftype = allValues[0].difftype;
       };
-      filterGroup.onAddFilter = function () { content.resize(); };
-      filterGroup.onRemoveFilter = function () { content.resize(); };
+
+      filterGroup.onAddFilter = function () {
+        content.resize();
+        hashHelper.setFilter(filterGroup);
+       };
+
+      filterGroup.onRemoveFilter = function () {
+        content.resize();
+        hashHelper.setFilter(filterGroup);
+       };
 
       content.addChild(filterGroup);
 
@@ -409,6 +424,8 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
     destroy : function () {
       this.inherited(arguments);
       this._openFileTopic.remove();
+      // Clear URL if list of bugs view is closed.
+      hashHelper.clear();
     }
   });
 });
