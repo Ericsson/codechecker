@@ -433,14 +433,15 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
         that.bugStore.put(item);
       });
 
-      var filepath = getProperFilePath(this.reportData.checkedFile);
+      var fileFilter = new CC_OBJECTS.ReportFilter();
+      fileFilter.filepath = getProperFilePath(this.reportData.checkedFile);
 
       CC_SERVICE.getRunResults(
         this.runData.runId,
         CC_OBJECTS.MAX_QUERY_SIZE,
         0,
         [],
-        [],
+        [fileFilter],
         function (result) {
           result.forEach(function (report) { that._addReport(report); });
 
