@@ -407,8 +407,6 @@ class ThriftRequestHandler(object):
                 if review_status is None:
                     review_status = ReviewStatus()
                     review_status.bug_hash = report.bug_id
-                elif status == shared.ttypes.ReviewStatus.UNREVIEWED:
-                    return False
 
                 user = self.__auth_session.user \
                     if self.__auth_session else "Anonymous"
