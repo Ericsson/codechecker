@@ -1084,3 +1084,90 @@ span[class*="severity-"] {
 .select-menu-item .yesterday {
   float: left;
 }
+
+/* Doxygen */
+
+.doxgen .github {
+  padding: 5px;
+  font-size: 1.2em;
+  background-color: #f1f7fb;
+  border: 1px solid #d2e6f9;
+}
+
+.doxgen div {
+  font: 400 14px/22px Roboto,sans-serif;
+}
+
+.doxgen .title {
+  font: 400 14px/28px Roboto,sans-serif;
+  font-size: 150%;
+  font-weight: 700;
+  margin: 10px 2px;
+}
+
+.doxgen h1 {
+  background-color: #007ea7;
+  font-weight: normal;
+  text-shadow: 0 -1px rgba(0,0,0,0.6);
+  line-height: 40px;
+  border: 1px solid #fff;
+  padding: 5px 15px;
+  color: white;
+  border-radius: 0 10px 0 10px;
+  text-transform: capitalize;
+}
+
+.doxgen h2 {
+  margin: 1em 0 0.5em 0;
+  text-shadow: 0 -1px rgba(0,0,0,0.4);
+  line-height: 40px;
+  color: #007ea7;
+  text-transform: capitalize;
+  border-bottom: 1px solid rgba(53,86,129, 0.3);
+}
+
+.doxgen h3 {
+  margin: 1em 0 0.5em 0;
+  color: #007ea7;
+  text-transform: capitalize;
+}
+
+.doxgen a {
+  color: #3D578C;
+  font-weight: 400;
+  text-decoration: none;
+}
+
+.doxgen div.toc {
+  padding: 14px 25px;
+  background-color: #F4F6FA;
+  border: 1px solid #D8DFEE;
+  border-radius: 7px 7px 7px 7px;
+  float: right;
+  height: auto;
+  width: 200px;
+}
+
+.doxgen div.toc ul {
+  list-style: none outside none;
+  border: medium none;
+  padding: 0px;
+}
+
+.doxgen div.toc li {
+  font: 10px/1.2 Verdana,DejaVu Sans,Geneva,sans-serif;
+  margin-top: 5px;
+  padding-left: 10px;
+  padding-top: 2px;
+}
+
+.doxgen div.toc h3 {
+  font: bold 12px/1.2 Arial,FreeSans,sans-serif;
+  color: #4665A2;
+  border-bottom: 0 none;
+  margin: 0;
+}
+
+.doxgen .image {
+  text-align: center;
+}

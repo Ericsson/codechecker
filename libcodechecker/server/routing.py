@@ -19,7 +19,8 @@ NON_PRODUCT_ENDPOINTS = ['products.html',
                          'fonts',
                          'images',
                          'scripts',
-                         'style'
+                         'style',
+                         'userguide'
                          ]
 
 # A list of top-level path elements in requests (such as Thrift endpoints)

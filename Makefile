@@ -29,7 +29,10 @@ thrift: build_dir
 
 	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C api/
 
-package: build_dir gen-docs thrift
+userguide: build_dir
+	$(MAKE) -C www/userguide
+
+package: build_dir gen-docs thrift userguide
 	if [ ! -d "$(BUILD_DIR)/CodeChecker" ]; then \
 		./scripts/build_package.py -r $(ROOT) -o $(BUILD_DIR) -b $(BUILD_DIR); \
 	fi
@@ -56,7 +59,7 @@ clean_venv_dev:
 
 clean: clean_package clean_vendor
 
-clean_package:
+clean_package: clean_userguide
 	rm -rf $(BUILD_DIR)
 	rm -rf gen-docs
 	find . -name "*.pyc" -delete
@@ -69,3 +72,6 @@ clean_vendor:
 	rm -rf vendor/jsplumb
 	rm -rf vendor/marked
 	rm -rf vendor/thrift
+
+clean_userguide:
+	rm -rf www/userguide/gen-docs

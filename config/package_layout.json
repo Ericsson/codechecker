@@ -6,6 +6,7 @@
     "plugin": "plugin",
     "www": "www",
     "docs": "www/docs",
+    "userguide": "www/userguide",
     "checker_md_docs": "www/docs/checker_md_docs",
     "web_client": "www/scripts/codechecker-api",
     "web_client_plugins": "www/scripts/plugins",
