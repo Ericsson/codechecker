@@ -123,7 +123,8 @@ int main()
         runs = self._cc_client.getRunData(None)
         run_id = max(map(lambda run: run.runId, runs))
 
-        reports = self._cc_client.getRunResults(run_id, 100, 0, {}, {})
+        reports = self._cc_client.getRunResults([run_id], 100, 0, [], [])
+        print(reports)
         self.assertEqual(len(reports), 2)
         self.assertTrue(all(map(
             lambda r: r.detectionStatus == shared.ttypes.DetectionStatus.NEW,
@@ -131,7 +132,7 @@ int main()
 
         # Check the second file version
         self._create_source_file(2)
-        reports = self._cc_client.getRunResults(run_id, 100, 0, {}, {})
+        reports = self._cc_client.getRunResults([run_id], 100, 0, [], [])
         for report in reports:
             if report.detectionStatus == \
                     shared.ttypes.DetectionStatus.UNRESOLVED:
@@ -147,7 +148,7 @@ int main()
 
         # Check the third file version
         self._create_source_file(3)
-        reports = self._cc_client.getRunResults(run_id, 100, 0, {}, {})
+        reports = self._cc_client.getRunResults([run_id], 100, 0, [], [])
         for report in reports:
             if report.detectionStatus == \
                     shared.ttypes.DetectionStatus.RESOLVED:
@@ -167,7 +168,7 @@ int main()
 
         # Check the second file version again
         self._create_source_file(2)
-        reports = self._cc_client.getRunResults(run_id, 100, 0, {}, {})
+        reports = self._cc_client.getRunResults([run_id], 100, 0, [], [])
         for report in reports:
             if report.detectionStatus == \
                     shared.ttypes.DetectionStatus.UNRESOLVED:
@@ -185,7 +186,7 @@ int main()
 
         # Check the fourth file version
         self._create_source_file(4)
-        reports = self._cc_client.getRunResults(run_id, 100, 0, {}, {})
+        reports = self._cc_client.getRunResults([run_id], 100, 0, [], [])
         for report in reports:
             if report.detectionStatus == \
                     shared.ttypes.DetectionStatus.UNRESOLVED:

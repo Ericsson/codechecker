@@ -49,9 +49,6 @@ class RunResults(unittest.TestCase):
 
         test_runs = [run for run in runs if run.name in run_names]
 
-        self.assertEqual(len(test_runs), 1,
-                         "There should be only one run for this test.")
-
         self._runid = test_runs[0].runId
 
     def test_get_run_results_no_filter(self):
@@ -60,7 +57,7 @@ class RunResults(unittest.TestCase):
         logging.debug('Get all run results from the db for runid: ' +
                       str(runid))
 
-        run_result_count = self._cc_client.getRunResultCount(runid, [])
+        run_result_count = self._cc_client.getRunResultCount([runid], [])
         self.assertTrue(run_result_count)
 
         run_results = get_all_run_results(self._cc_client, runid)
@@ -77,7 +74,7 @@ class RunResults(unittest.TestCase):
         logging.debug('Get all run results from the db for runid: ' +
                       str(runid))
 
-        run_result_count = self._cc_client.getRunResultCount(runid, [])
+        run_result_count = self._cc_client.getRunResultCount([runid], [])
         self.assertTrue(run_result_count)
 
         run_results = get_all_run_results(self._cc_client, runid)
@@ -112,7 +109,7 @@ class RunResults(unittest.TestCase):
         runid = self._runid
         simple_filters = [ReportFilter(checkerId='*', filepath='*.c*')]
 
-        run_result_count = self._cc_client.getRunResultCount(runid,
+        run_result_count = self._cc_client.getRunResultCount([runid],
                                                              simple_filters)
         self.assertTrue(run_result_count)
 
@@ -161,7 +158,7 @@ class RunResults(unittest.TestCase):
         sort_mode2 = SortMode(SortType.FILENAME, Order.ASC)
         sort_types = [sort_mode1, sort_mode2]
 
-        run_result_count = self._cc_client.getRunResultCount(runid, [])
+        run_result_count = self._cc_client.getRunResultCount([runid], [])
         self.assertTrue(run_result_count)
 
         run_results = get_all_run_results(self._cc_client,
@@ -191,7 +188,7 @@ class RunResults(unittest.TestCase):
         sortMode2 = SortMode(SortType.CHECKER_NAME, Order.ASC)
         sort_types = [sortMode1, sortMode2]
 
-        run_result_count = self._cc_client.getRunResultCount(runid, [])
+        run_result_count = self._cc_client.getRunResultCount([runid], [])
         self.assertTrue(run_result_count)
 
         run_results = get_all_run_results(self._cc_client,
