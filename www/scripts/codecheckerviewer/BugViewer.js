@@ -785,17 +785,12 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
           that.buttonPane.reportData.review.author = user;
           that.buttonPane.reportData.review.date = new Date();
 
-          that.buttonPane.showOrHideReviewStatusMessageBox(message);
+          that.buttonPane.showReviewStatusMessageBox(message);
 
           //--- Change the review status. ---//
 
           CC_SERVICE.changeReviewStatus(that.buttonPane.reportData.reportId,
             status, message);
-
-          //--- Remove the default UNREVIEWED option from the select. ---//
-
-          that.reviewStatusSelector.removeOption(
-            ReviewStatus.UNREVIEWED.toString());
 
           //--- Hide the dialog. ---//
 
@@ -953,8 +948,6 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
       var reviewStatusOptions = [];
       for (var key in ReviewStatus) {
         var value = ReviewStatus[key];
-        if (value !== ReviewStatus.UNREVIEWED ||
-            this.reportData.review.status === ReviewStatus.UNREVIEWED)
         reviewStatusOptions.push({
           label : '<span class="customIcon review-status-'
                 + util.reviewStatusCssClass(value)
@@ -980,18 +973,15 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
 
       //--- Show or hide review status message box ---//
 
-      this.showOrHideReviewStatusMessageBox(report.review.comment);
+      this.showReviewStatusMessageBox(report.review.comment);
     },
 
     /**
      * Show or hide the review status message box if the review status is
      * unreviewed.
      */
-    showOrHideReviewStatusMessageBox : function (message) {
-      if (this.reportData.review.status !== ReviewStatus.UNREVIEWED)
-        domClass.remove(this._reviewComment, 'hide');
-      else
-        domClass.add(this._reviewComment, 'hide');
+    showReviewStatusMessageBox : function (message) {
+        domClass.toggle(this._reviewComment, 'hide', !this.reportData.review.author);
     }
   });
 
