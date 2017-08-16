@@ -146,12 +146,12 @@ def handle_list_results(args):
     filters.append(report_filter)
 
     all_results = []
-    results = client.getRunResults(run_id, limit, offset, None, filters)
+    results = client.getRunResults([run_id], limit, offset, None, filters)
 
     while results:
         all_results.extend(results)
         offset += limit
-        results = client.getRunResults(run_id, limit, offset, None,
+        results = client.getRunResults([run_id], limit, offset, None,
                                        filters)
 
     if args.output_format == 'json':
@@ -352,7 +352,7 @@ def handle_diff_results(args):
             diff_type = 'unresolved'
         elif 'resolved' in args:
             diff_type = 'resolved'
-        results = getDiffReportDir(client.getRunResults, baseid,
+        results = getDiffReportDir(client.getRunResults, [baseid],
                                    os.path.abspath(args.newname), diff_type)
     else:
         if 'new' in args:
@@ -475,7 +475,7 @@ def handle_suppress(args):
             suppress_data = suppress_file_handler.get_suppress_data(supp_file)
 
         for bug_id, file_name, comment in suppress_data:
-            reports = client.getRunResults(run_id, limit, 0, None,
+            reports = client.getRunResults([run_id], limit, 0, None,
                                            bug_hash_filter(bug_id, file_name))
 
             for report in reports:

@@ -22,6 +22,7 @@ import zipfile
 import zlib
 
 import sqlalchemy
+from sqlalchemy import func
 
 import shared
 from codeCheckerDBAccess import constants
@@ -46,6 +47,76 @@ def conv(text):
     if text is None:
         return '%'
     return text.replace('*', '%')
+
+
+def process_report_filter_v2(report_filter):
+    """
+    Process the new report filter.
+    """
+
+    if report_filter is None:
+        return text('')
+
+    AND = []
+    if report_filter.filepath is not None:
+        OR = [File.filepath.ilike(conv(fp))
+              for fp in report_filter.filepath]
+        AND.append(or_(*OR))
+
+    if report_filter.checkerMsg is not None:
+        OR = [Report.checker_message.ilike(conv(cm))
+              for cm in report_filter.checkerMsg]
+        AND.append(or_(*OR))
+
+    if report_filter.checkerName is not None:
+        OR = [Report.checker_id.ilike(conv(cn))
+              for cn in report_filter.checkerName]
+        AND.append(or_(*OR))
+
+    if report_filter.reportHash is not None:
+        AND.append(Report.bug_id.in_(report_filter.reportHash))
+
+    if report_filter.severity is not None:
+        AND.append(Report.severity.in_(report_filter.severity))
+
+    if report_filter.detectionStatus is not None:
+        dst = list(map(detection_status_str,
+                       report_filter.detectionStatus))
+        AND.append(Report.detection_status.in_(dst))
+
+    if report_filter.reviewStatus is not None:
+        rvst = list(map(review_status_str,
+                        report_filter.reviewStatus))
+        AND.append(ReviewStatus.status.in_(rvst))
+
+    filter_expr = and_(*AND)
+    return filter_expr
+
+
+def get_diff_hashes_for_query(base_run_ids, base_line_hashes, new_run_ids,
+                              new_check_hashes, diff_type):
+    """
+    Get the report hash list for the result comparison.
+
+    Returns the list of hashes (NEW, RESOLVED, UNRESOLVED) and
+    the run ids which should be queried for the reports.
+    """
+    if diff_type == DiffType.NEW:
+        df = [] + list(new_check_hashes.difference(base_line_hashes))
+        return df, new_run_ids
+
+    elif diff_type == DiffType.RESOLVED:
+        df = [] + list(base_line_hashes.difference(new_check_hashes))
+        return df, base_run_ids
+
+    elif diff_type == DiffType.UNRESOLVED:
+        df = [] + list(base_line_hashes.intersection(new_check_hashes))
+        return df, new_run_ids
+    else:
+        msg = 'Unsupported diff type: ' + str(diff_type)
+        LOG.error(msg)
+        raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
+                                          msg)
 
 
 def construct_report_filter(report_filters):
@@ -74,15 +145,20 @@ def construct_report_filter(report_filters):
             AND.append(File.filepath.ilike(
                 conv(report_filter.filepath)))
         if report_filter.severity is not None:
-            # severity value can be 0
+            # Severity level enum value can be 0.
+            # Watch out how it is used in the if statements!
             AND.append(Report.severity == report_filter.severity)
         if report_filter.bugHash:
             AND.append(Report.bug_id == report_filter.bugHash)
+        if report_filter.status is not None:
+            # Report status enum value can be 0.
+            # Watch out how it is used in the if statements!
+            AND.append(ReviewStatus.status ==
+                       review_status_str(report_filter.status))
 
         OR.append(and_(*AND))
 
     filter_expression = or_(*OR)
-
     return filter_expression
 
 
@@ -114,6 +190,17 @@ def detection_status_enum(status):
         return shared.ttypes.DetectionStatus.UNRESOLVED
     elif status == 'reopened':
         return shared.ttypes.DetectionStatus.REOPENED
+
+
+def detection_status_str(status):
+    if status == shared.ttypes.DetectionStatus.NEW:
+        return 'new'
+    elif status == shared.ttypes.DetectionStatus.RESOLVED:
+        return 'resolved'
+    elif status == shared.ttypes.DetectionStatus.UNRESOLVED:
+        return 'unresolved'
+    elif status == shared.ttypes.DetectionStatus.REOPENED:
+        return 'reopened'
 
 
 def review_status_str(status):
@@ -433,7 +520,9 @@ class ThriftRequestHandler(object):
                 msg)
 
     @timeit
-    def getRunResults(self, run_id, limit, offset, sort_types, report_filters):
+    def getRunResults(self, run_ids, limit, offset, sort_types,
+                      report_filters):
+
         max_query_limit = constants.MAX_QUERY_SIZE
         if limit > max_query_limit:
             LOG.debug('Query limit ' + str(limit) +
@@ -446,11 +535,10 @@ class ThriftRequestHandler(object):
 
         try:
             session = self.__Session()
-
             q = session.query(Report,
                               File,
                               ReviewStatus) \
-                .filter(Report.run_id == run_id) \
+                .filter(Report.run_id.in_(run_ids)) \
                 .outerjoin(File, Report.file_id == File.id) \
                 .outerjoin(ReviewStatus,
                            ReviewStatus.bug_hash == Report.bug_id) \
@@ -498,11 +586,132 @@ class ThriftRequestHandler(object):
             LOG.error(msg)
             raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
                                               msg)
+
+    @timeit
+    def getRunResults_v2(self, run_ids, limit, offset, sort_types,
+                         report_filter, cmp_data):
+
+        max_query_limit = constants.MAX_QUERY_SIZE
+        if limit > max_query_limit:
+            LOG.debug('Query limit ' + str(limit) +
+                      ' was larger than max query limit ' +
+                      str(max_query_limit) + ', setting limit to ' +
+                      str(max_query_limit))
+            limit = max_query_limit
+
+        session = self.__Session()
+
+        filter_expression = process_report_filter_v2(report_filter)
+
+        try:
+
+            results = []
+
+            if cmp_data:
+                diff_hashes, run_ids = self._cmp_helper(session,
+                                                        run_ids,
+                                                        cmp_data)
+                if not diff_hashes:
+                    # There is no difference.
+                    return results
+
+            q = session.query(Report,
+                              File,
+                              ReviewStatus) \
+                .filter(Report.run_id.in_(run_ids)) \
+                .outerjoin(File, Report.file_id == File.id) \
+                .outerjoin(ReviewStatus,
+                           ReviewStatus.bug_hash == Report.bug_id) \
+                .filter(filter_expression)
+
+            q = self.__sortResultsQuery(q, sort_types)
+
+            if cmp_data:
+                q = q.filter(Report.bug_id.in_(diff_hashes))
+
+            for report, source_file, review_status in \
+                    q.limit(limit).offset(offset):
+
+                if review_status:
+                    review_data = ReviewData(
+                        status=review_status_enum(review_status.status),
+                        comment=review_status.message,
+                        author=review_status.author,
+                        date=str(review_status.date))
+                else:
+                    review_data = ReviewData(
+                        status=shared.ttypes.ReviewStatus.UNREVIEWED,
+                        comment=None,
+                        author=None,
+                        date=None)
+
+                results.append(
+                    ReportData(bugHash=report.bug_id,
+                               checkedFile=source_file.filepath,
+                               checkerMsg=report.checker_message,
+                               reportId=report.id,
+                               fileId=source_file.id,
+                               lastBugPosition=self.__lastBugEventPos(
+                                   report.id),
+                               checkerId=report.checker_id,
+                               severity=report.severity,
+                               review=review_data,
+                               detectionStatus=detection_status_enum(
+                                   report.detection_status))
+                )
+
+            return results
+
+        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
+            msg = str(alchemy_ex)
+            LOG.error(msg)
+            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
+                                              msg)
         finally:
             session.close()
 
     @timeit
-    def getRunResultCount(self, run_id, report_filters):
+    def getRunResultCount_v2(self, run_ids, report_filter, cmp_data):
+
+        session = self.__Session()
+
+        try:
+
+            filter_expression = process_report_filter_v2(report_filter)
+
+            if cmp_data:
+                diff_hashes, run_ids = self._cmp_helper(session,
+                                                        run_ids,
+                                                        cmp_data)
+                if not diff_hashes:
+                    # There is no difference.
+                    return 0
+
+            q = session.query(Report) \
+                .filter(Report.run_id.in_(run_ids)) \
+                .outerjoin(File, Report.file_id == File.id) \
+                .outerjoin(ReviewStatus,
+                           ReviewStatus.bug_hash == Report.bug_id) \
+                .filter(filter_expression)
+
+            if cmp_data:
+                q = q.filter(Report.bug_id.in_(diff_hashes))
+
+            reportCount = q.count()
+
+            if reportCount is None:
+                reportCount = 0
+
+            return reportCount
+
+        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
+            msg = str(alchemy_ex)
+            LOG.error(msg)
+            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
+                                              msg)
+
+    @timeit
+    def getRunResultCount(self, run_ids, report_filters):
 
         filter_expression = construct_report_filter(report_filters)
 
@@ -510,8 +719,10 @@ class ThriftRequestHandler(object):
             session = self.__Session()
 
             reportCount = session.query(Report) \
-                .filter(Report.run_id == run_id) \
+                .filter(Report.run_id.in_(run_ids)) \
                 .outerjoin(File, Report.file_id == File.id) \
+                .outerjoin(ReviewStatus,
+                           ReviewStatus.bug_hash == Report.bug_id) \
                 .filter(filter_expression) \
                 .count()
 
@@ -956,7 +1167,10 @@ class ThriftRequestHandler(object):
 
             q = session.query(Report) \
                 .filter(Report.run_id == run_id) \
-                .outerjoin(File, Report.file_id == File.id) \
+                .outerjoin(File,
+                           Report.file_id == File.id) \
+                .outerjoin(ReviewStatus,
+                           ReviewStatus.bug_hash == Report.bug_id) \
                 .order_by(Report.checker_id) \
                 .filter(filter_expression) \
                 .all()
@@ -988,7 +1202,271 @@ class ThriftRequestHandler(object):
         finally:
             session.close()
 
-    # -----------------------------------------------------------------------
+    def _cmp_helper(self, session, run_ids, cmp_data):
+        """
+        Get the report hashes for all of the runs.
+        Return the hash list which should be queried
+        in the returned run id list.
+        """
+        base_run_ids = run_ids
+        new_run_ids = cmp_data.run_ids
+        diff_type = cmp_data.diff_type
+
+        base_line_hashes, new_check_hashes = \
+            self.__get_hashes_for_runs(session,
+                                       base_run_ids,
+                                       new_run_ids)
+
+        report_hashes, run_ids = \
+            get_diff_hashes_for_query(base_run_ids,
+                                      base_line_hashes,
+                                      new_run_ids,
+                                      new_check_hashes,
+                                      diff_type)
+        return report_hashes, run_ids
+
+    @timeit
+    def getCheckerCounts(self, run_ids, report_filter, cmp_data):
+        results = {}
+        session = self.__Session()
+        try:
+
+            if cmp_data:
+                diff_hashes, run_ids = self._cmp_helper(session,
+                                                        run_ids,
+                                                        cmp_data)
+                if not diff_hashes:
+                    # There is no difference.
+                    return results
+
+            filter_expression = process_report_filter_v2(report_filter)
+
+            count_expr = func.count(literal_column('*'))
+
+            q = session.query(Report.checker_id, count_expr) \
+                .filter(Report.run_id.in_(run_ids)) \
+                .outerjoin(File,
+                           Report.file_id == File.id) \
+                .outerjoin(ReviewStatus,
+                           ReviewStatus.bug_hash == Report.bug_id) \
+                .filter(filter_expression) \
+
+            if cmp_data:
+                q = q.filter(Report.bug_id.in_(diff_hashes))
+
+            checker_ids = q.group_by(Report.checker_id).all()
+
+            results = dict(checker_ids)
+
+        except Exception as ex:
+            LOG.error(ex)
+        finally:
+            return results
+
+    @timeit
+    def getSeverityCounts(self, run_ids, report_filter, cmp_data):
+        results = {}
+        session = self.__Session()
+        try:
+
+            if cmp_data:
+                diff_hashes, run_ids = self._cmp_helper(session,
+                                                        run_ids,
+                                                        cmp_data)
+                if not diff_hashes:
+                    # There is no difference.
+                    return results
+
+            filter_expression = process_report_filter_v2(report_filter)
+
+            count_expr = func.count(literal_column('*'))
+
+            q = session.query(Report.severity, count_expr) \
+                .filter(Report.run_id.in_(run_ids)) \
+                .outerjoin(File,
+                           Report.file_id == File.id) \
+                .outerjoin(ReviewStatus,
+                           ReviewStatus.bug_hash == Report.bug_id) \
+                .filter(filter_expression) \
+
+            if cmp_data:
+                q = q.filter(Report.bug_id.in_(diff_hashes))
+
+            checker_ids = q.group_by(Report.severity).all()
+
+            results = dict(checker_ids)
+
+        except Exception as ex:
+            LOG.error(ex)
+        finally:
+            return results
+
+    @timeit
+    def getCheckerMsgCounts(self, run_ids, report_filter, cmp_data):
+        results = {}
+        session = self.__Session()
+        try:
+
+            if cmp_data:
+                diff_hashes, run_ids = self._cmp_helper(session,
+                                                        run_ids,
+                                                        cmp_data)
+                if not diff_hashes:
+                    # There is no difference.
+                    return results
+
+            filter_expression = process_report_filter_v2(report_filter)
+
+            count_expr = func.count(literal_column('*'))
+
+            q = session.query(Report.checker_message, count_expr) \
+                .filter(Report.run_id.in_(run_ids)) \
+                .outerjoin(File,
+                           Report.file_id == File.id) \
+                .outerjoin(ReviewStatus,
+                           ReviewStatus.bug_hash == Report.bug_id) \
+                .filter(filter_expression) \
+
+            if cmp_data:
+                q = q.filter(Report.bug_id.in_(diff_hashes))
+
+            checker_ids = q.group_by(Report.checker_message).all()
+
+            results = dict(checker_ids)
+
+        except Exception as ex:
+            LOG.error(ex)
+        finally:
+            return results
+
+    @timeit
+    def getReviewStatusCounts(self, run_ids, report_filter, cmp_data):
+        results = defaultdict(int)
+        session = self.__Session()
+        try:
+
+            if cmp_data:
+                diff_hashes, run_ids = self._cmp_helper(session,
+                                                        run_ids,
+                                                        cmp_data)
+                if not diff_hashes:
+                    # There is no difference.
+                    return results
+
+            filter_expression = process_report_filter_v2(report_filter)
+
+            count_expr = func.count(literal_column('*'))
+
+            q = session.query(func.max(Report.id),
+                              ReviewStatus.status,
+                              count_expr) \
+                .filter(Report.run_id.in_(run_ids)) \
+                .outerjoin(File,
+                           Report.file_id == File.id) \
+                .outerjoin(ReviewStatus,
+                           ReviewStatus.bug_hash == Report.bug_id) \
+                .filter(filter_expression) \
+
+            if cmp_data:
+                q = q.filter(Report.bug_id.in_(diff_hashes))
+
+            review_statuses = q.group_by(ReviewStatus.status).all()
+
+            for _, rev_status, count in review_statuses:
+                if rev_status is None:
+                    # If no review status is set count it as unreviewed.
+                    rev_status = shared.ttypes.ReviewStatus.UNREVIEWED
+                    results[rev_status] += count
+                else:
+                    rev_status = review_status_enum(rev_status)
+                    results[rev_status] += count
+
+        except Exception as ex:
+            LOG.error(ex)
+        finally:
+            return results
+
+    @timeit
+    def getFileCounts(self, run_ids, report_filter, cmp_data):
+        results = {}
+        session = self.__Session()
+        try:
+
+            if cmp_data:
+                diff_hashes, run_ids = self._cmp_helper(session,
+                                                        run_ids,
+                                                        cmp_data)
+                if not diff_hashes:
+                    # There is no difference.
+                    return results
+
+            filter_expression = process_report_filter_v2(report_filter)
+
+            count_expr = func.count(literal_column('*'))
+
+            q = session.query(func.max(Report.id),
+                              File.filepath,
+                              count_expr) \
+                .filter(Report.run_id.in_(run_ids)) \
+                .outerjoin(File,
+                           Report.file_id == File.id) \
+                .outerjoin(ReviewStatus,
+                           ReviewStatus.bug_hash == Report.bug_id) \
+                .filter(filter_expression) \
+
+            if cmp_data:
+                q = q.filter(Report.bug_id.in_(diff_hashes))
+
+            file_paths = q.group_by(File.filepath).all()
+
+            for _, fp, count in file_paths:
+                results[fp] = count
+
+        except Exception as ex:
+            LOG.error(ex)
+        finally:
+            return results
+
+    @timeit
+    def getDetectionStatusCounts(self, run_ids, report_filter, cmp_data):
+        results = {}
+        session = self.__Session()
+        try:
+
+            if cmp_data:
+                diff_hashes, run_ids = self._cmp_helper(session,
+                                                        run_ids,
+                                                        cmp_data)
+                if not diff_hashes:
+                    # There is no difference.
+                    return results
+
+            filter_expression = process_report_filter_v2(report_filter)
+
+            count_expr = func.count(literal_column('*'))
+
+            q = session.query(Report.detection_status,
+                              count_expr) \
+                .filter(Report.run_id.in_(run_ids)) \
+                .outerjoin(File,
+                           Report.file_id == File.id) \
+                .outerjoin(ReviewStatus,
+                           ReviewStatus.bug_hash == Report.bug_id) \
+                .filter(filter_expression) \
+
+            if cmp_data:
+                q = q.filter(Report.bug_id.in_(diff_hashes))
+
+            detection_stats = q.group_by(Report.detection_status).all()
+
+            results = dict(detection_stats)
+            results = {detection_status_enum(k): v for k, v in results.items()}
+
+        except Exception as ex:
+            LOG.error(ex)
+        finally:
+            return results
+
     @timeit
     def __get_hashes_for_diff(self, session, base_run_id, new_run_id):
 
@@ -1073,6 +1551,77 @@ class ThriftRequestHandler(object):
                     review=review_data,
                     detectionStatus=detection_status_enum(
                         report.detection_status)))
+
+            return results
+
+        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
+            msg = str(alchemy_ex)
+            LOG.error(msg)
+            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
+                                              msg)
+
+    # -----------------------------------------------------------------------
+    @timeit
+    def __queryDiffResults_v2(self,
+                              session,
+                              diff_hash_list,
+                              run_ids,
+                              limit,
+                              offset,
+                              sort_types=None,
+                              report_filters=None):
+
+        max_query_limit = constants.MAX_QUERY_SIZE
+        if limit > max_query_limit:
+            LOG.debug('Query limit ' + str(limit) +
+                      ' was larger than max query limit ' +
+                      str(max_query_limit) + ', setting limit to ' +
+                      str(max_query_limit))
+            limit = max_query_limit
+
+        filter_expression = construct_report_filter(report_filters)
+
+        try:
+            q = session.query(Report,
+                              File,
+                              ReviewStatus) \
+                .filter(Report.run_id.in_(run_ids)) \
+                .outerjoin(File, Report.file_id == File.id) \
+                .outerjoin(ReviewStatus,
+                           ReviewStatus.bug_hash == Report.bug_id) \
+                .filter(Report.bug_id.in_(diff_hash_list)) \
+                .filter(filter_expression)
+
+            q = self.__sortResultsQuery(q, sort_types)
+
+            results = []
+
+            for report, source_file, review_status \
+                    in q.limit(limit).offset(offset):
+
+                if review_status:
+                    review_data = ReviewData(
+                        status=review_status.status,
+                        comment=review_status.message,
+                        author=review_status.author,
+                        date=str(review_status.date))
+                else:
+                    review_data = ReviewData(
+                        status=shared.ttypes.ReviewStatus.UNREVIEWED,
+                        comment=None,
+                        author=None,
+                        date=None)
+
+                results.append(ReportData(
+                    bugHash=report.bug_id,
+                    checkedFile=source_file.filepath,
+                    checkerMsg=report.checker_message,
+                    reportId=report.id,
+                    fileId=source_file.id,
+                    lastBugPosition=self.__lastBugEventPos(report.id),
+                    checkerId=report.checker_id,
+                    severity=report.severity,
+                    review=review_data))
 
             return results
 
@@ -1187,6 +1736,26 @@ class ThriftRequestHandler(object):
                                          sort_types,
                                          report_filters)
         return result
+
+    @timeit
+    def __get_hashes_for_runs(self, session, base_run_ids, new_run_ids):
+
+        LOG.debug('query all baseline hashes')
+        # Keyed tuple list is returned.
+        base_line_hashes = session.query(Report.bug_id) \
+            .filter(Report.run_id.in_(base_run_ids)) \
+            .all()
+
+        LOG.debug('query all new check hashes')
+        # Keyed tuple list is returned.
+        new_check_hashes = session.query(Report.bug_id) \
+            .filter(Report.run_id.in_(new_run_ids)) \
+            .all()
+
+        base_line_hashes = set([t[0] for t in base_line_hashes])
+        new_check_hashes = set([t[0] for t in new_check_hashes])
+
+        return base_line_hashes, new_check_hashes
 
     # -----------------------------------------------------------------------
     @timeit
@@ -1331,7 +1900,6 @@ class ThriftRequestHandler(object):
         finally:
             session.close()
 
-    # -----------------------------------------------------------------------
     def __queryDiffResultTypes(self,
                                session,
                                diff_hash_list,

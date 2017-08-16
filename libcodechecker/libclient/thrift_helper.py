@@ -82,7 +82,7 @@ class ThriftClientHelper(object):
         pass
 
     @ThriftClientCall
-    def getRunResults(self, runId, limit, offset, sortType, reportFilters):
+    def getRunResults(self, runIds, limit, offset, sortType, reportFilters):
         pass
 
     @ThriftClientCall
@@ -90,7 +90,7 @@ class ThriftClientHelper(object):
         pass
 
     @ThriftClientCall
-    def getRunResultCount(self, runId, reportFilters):
+    def getRunResultCount(self, runIds, reportFilters):
         pass
 
     @ThriftClientCall
@@ -131,6 +131,39 @@ class ThriftClientHelper(object):
 
     @ThriftClientCall
     def changeReviewStatusByHash(self, bug_hash, status, message):
+        pass
+
+    @ThriftClientCall
+    def getRunResults_v2(self, runIds, limit, offset, sortType, reportFilter,
+                         cmpData):
+        pass
+
+    @ThriftClientCall
+    def getRunResultCount_v2(self, runIds, reportFilter, cmpData):
+        pass
+
+    @ThriftClientCall
+    def getSeverityCounts(self, runIds, reportFilter, cmpData):
+        pass
+
+    @ThriftClientCall
+    def getCheckerMsgCounts(self, runIds, reportFilter, cmpData):
+        pass
+
+    @ThriftClientCall
+    def getReviewStatusCounts(self, runIds, reportFilter, cmpData):
+        pass
+
+    @ThriftClientCall
+    def getDetectionStatusCounts(self, runIds, reportFilter, cmpData):
+        pass
+
+    @ThriftClientCall
+    def getFileCounts(self, runIds, reportFilter, cmpData):
+        pass
+
+    @ThriftClientCall
+    def getCheckerCounts(self, base_run_ids, reportFilter, cmpData):
         pass
 
     # STORAGE RELATED API CALLS

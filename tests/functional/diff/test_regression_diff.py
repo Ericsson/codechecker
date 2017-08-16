@@ -106,7 +106,7 @@ class Diff(unittest.TestCase):
         base_run_id = self._base_runid
         new_run_id = self._new_runid
 
-        base_count = self._cc_client.getRunResultCount(base_run_id, [])
+        base_count = self._cc_client.getRunResultCount([base_run_id], [])
         logging.debug("Base run id: %d", base_run_id)
         logging.debug("Base count: %d", base_count)
 
@@ -114,7 +114,7 @@ class Diff(unittest.TestCase):
 
         print_run_results(base_run_res)
 
-        new_count = self._cc_client.getRunResultCount(new_run_id, [])
+        new_count = self._cc_client.getRunResultCount([new_run_id], [])
         logging.debug("New run id: %d", new_run_id)
         logging.debug("New count: %d", new_count)
 

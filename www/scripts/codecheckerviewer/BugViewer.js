@@ -475,7 +475,7 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
       fileFilter.filepath = getProperFilePath(this.reportData.checkedFile);
 
       CC_SERVICE.getRunResults(
-        this.runData.runId,
+        [this.runData.runId],
         CC_OBJECTS.MAX_QUERY_SIZE,
         0,
         [],

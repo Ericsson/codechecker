@@ -61,6 +61,7 @@ typedef list<ReportData> ReportDataList
 
 //-----------------------------------------------------------------------------
 /**
+ * TODO: DEPRECATED
  * Members of this struct are interpreted in "AND" relation with each other.
  * So they need to match a single report at the same time.
  */
@@ -70,13 +71,30 @@ struct ReportFilter{
   3: optional shared.Severity severity,
   4: optional string          checkerId,          // should filter in the fully qualified checker id name such as alpha.core.
                                                   // the analyzed system. Projects can optionally use this concept.
-  5: optional string          bugHash
+  5: optional string          bugHash,
+  6: optional shared.ReviewStatus status
 }
 
 /**
+ * TODO: DEPRECATED
  * If there is a list of ReportFilter, there is an OR relation between the list members.
  */
 typedef list<ReportFilter> ReportFilterList
+
+
+/**
+ * Members of this struct are interpreted in "OR" relation with each other.
+ * Between the members there is "AND" relation.
+ */
+struct ReportFilter_v2{
+  1: list<string>                 filepath,
+  2: list<string>                 checkerMsg,
+  3: list<string>                 checkerName,
+  4: list<string>                 reportHash,
+  5: list<shared.Severity>        severity,
+  6: list<shared.ReviewStatus>    reviewStatus,
+  7: list<shared.DetectionStatus> detectionStatus
+}
 
 //-----------------------------------------------------------------------------
 struct ReportDetails{
@@ -158,6 +176,20 @@ struct CommentData {
 }
 typedef list<CommentData> CommentDataList
 
+
+# CompareData is used as an optinal argument for multiple API calls.
+# If not set the API calls will just simply filter or query the
+# database for results or metrics.
+# If set the API calls can be used in a compare mode where
+# the results or metrics will be compared to the values set in the CompareData.
+# In compare mode the baseline run ids should be set on the API
+# (to what the results/metrics will be copared to) and the new run ids and the
+# diff type should be set in the CompareData type.
+struct CompareData {
+  1: list<i64> run_ids,
+  2: DiffType diff_type,
+}
+
 //-----------------------------------------------------------------------------
 service codeCheckerDBAccess {
 
@@ -169,20 +201,40 @@ service codeCheckerDBAccess {
                        1: i64 reportId)
                        throws (1: shared.RequestFailed requestError),
 
-  // get the results for one runId
+  // TODO: DEPRECATED v2 filter should be used with the new api
+  // get the results for some runIds
   ReportDataList getRunResults(
-                               1: i64 runId,
+                               1: list<i64> runIds,
                                2: i64 limit,
                                3: i64 offset,
                                4: list<SortMode> sortType,
                                5: ReportFilterList reportFilters)
                                throws (1: shared.RequestFailed requestError),
 
-  // count all the results for one run
+  // Get the results for some runIds
+  // can be used in diff mode if cmpData is set.
+  ReportDataList getRunResults_v2(
+                               1: list<i64> runIds,
+                               2: i64 limit,
+                               3: i64 offset,
+                               4: list<SortMode> sortType,
+                               5: ReportFilter_v2 reportFilter,
+                               6: CompareData cmpData)
+                               throws (1: shared.RequestFailed requestError),
+
+  // TODO: DEPRECATED v2 filter should be used with the new api
+  // count all the results some runIds
   i64 getRunResultCount(
-                        1: i64 runId,
+                        1: list<i64> runIds,
                         2: ReportFilterList reportFilters)
                         throws (1: shared.RequestFailed requestError),
+
+  // count all the results some runIds
+  i64 getRunResultCount_v2(
+                           1: list<i64> runIds,
+                           2: ReportFilter_v2 reportFilter,
+                           3: CompareData cmpData)
+                           throws (1: shared.RequestFailed requestError),
 
   // gives back the all marked region and message for a report
   ReportDetails getReportDetails(
@@ -229,6 +281,7 @@ service codeCheckerDBAccess {
   string getCheckerDoc(1: string checkerId)
                        throws (1: shared.RequestFailed requestError),
 
+  // TODO: DEPRECATED getRunResults_v2 should be used
   // compare the results of two runs
   ReportDataList getNewResults(1: i64 base_run_id,
                                2: i64 new_run_id,
@@ -238,6 +291,7 @@ service codeCheckerDBAccess {
                                6: ReportFilterList reportFilters )
                                throws (1: shared.RequestFailed requestError),
 
+  // TODO: DEPRECATED getRunResults_v2 should be used
   ReportDataList getResolvedResults(1: i64 base_run_id,
                                     2: i64 new_run_id,
                                     3: i64 limit,
@@ -246,6 +300,7 @@ service codeCheckerDBAccess {
                                     6: ReportFilterList reportFilters )
                                     throws (1: shared.RequestFailed requestError),
 
+  // TODO: DEPRECATED getRunResults_v2 should be used
   ReportDataList getUnresolvedResults(1: i64 base_run_id,
                                       2: i64 new_run_id,
                                       3: i64 limit,
@@ -262,6 +317,7 @@ service codeCheckerDBAccess {
   SkipPathDataList getSkipPaths(1: i64 runId)
                                 throws (1: shared.RequestFailed requestError),
 
+  // TODO: DEPRECATED should be removed
   // get all the results for one runId
   // count all results for a checker
   ReportDataTypeCountList getRunResultTypes(1: i64 runId,
@@ -283,6 +339,7 @@ service codeCheckerDBAccess {
   string getSuppressFile()
                         throws (1: shared.RequestFailed requestError),
 
+  // TODO: DEPRECATED getRunResultCount should be used.
   // count the diff results
   i64 getDiffResultCount(1: i64 base_run_id,
                          2: i64 new_run_id,
@@ -290,12 +347,44 @@ service codeCheckerDBAccess {
                          4: ReportFilterList reportFilters)
                          throws (1: shared.RequestFailed requestError),
 
+  // TODO: DEPRECATED the new counter api should be used!
   // count all the diff results for each checker
   ReportDataTypeCountList getDiffResultTypes(1: i64 base_run_id,
                                              2: i64 new_run_id,
                                              3: DiffType diff_type,
                                              4: ReportFilterList reportFilters)
                                              throws (1: shared.RequestFailed requestError),
+
+  map<shared.Severity, i64> getSeverityCounts(1: list<i64> runIds,
+                                              2: ReportFilter_v2 reportFilter,
+                                              3: CompareData cmpData)
+                                              throws (1: shared.RequestFailed requestError),
+
+  map<string, i64> getCheckerMsgCounts(1: list<i64> runIds,
+                                       2: ReportFilter_v2 reportFilter,
+                                       3: CompareData cmpData)
+                                       throws (1: shared.RequestFailed requestError),
+
+  map<shared.ReviewStatus, i64> getReviewStatusCounts(1: list<i64> runIds,
+                                                      2: ReportFilter_v2 reportFilter,
+                                                      3: CompareData cmpData)
+                                                      throws (1: shared.RequestFailed requestError),
+
+  map<shared.DetectionStatus, i64> getDetectionStatusCounts(1: list<i64> runIds,
+                                                            2: ReportFilter_v2 reportFilter,
+                                                            3: CompareData cmpData)
+                                                            throws (1: shared.RequestFailed requestError),
+
+  map<string, i64> getFileCounts(1: list<i64> runIds,
+                                 2: ReportFilter_v2 reportFilter,
+                                 3: CompareData cmpData)
+                                 throws (1: shared.RequestFailed requestError),
+
+
+  map<string, i64> getCheckerCounts(1: list<i64> runIds,
+                                    2: ReportFilter_v2 reportFilter,
+                                    3: CompareData cmpData)
+                                    throws (1: shared.RequestFailed requestError),
 
 
   //============================================

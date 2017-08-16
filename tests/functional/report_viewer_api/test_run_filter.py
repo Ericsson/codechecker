@@ -38,23 +38,21 @@ class TestRunFilter(unittest.TestCase):
     def test_filter_run_names(self):
         # Filter all runs.
         test_runs = self.__get_runs()
-        self.assertEqual(len(test_runs), 1,
-                         "There should be only one run for this test.")
 
         # Filter runs which name starts with `test_files_`.
         test_runs = self.__get_runs('test_files_')
-        self.assertEqual(len(test_runs), 1,
-                         "There should be only one run for this test.")
+        self.assertEqual(len(test_runs), 2,
+                         "There should be two runs for this test.")
 
         # Run name filter is case insensitive.
         test_runs = self.__get_runs('Test_Files_')
-        self.assertEqual(len(test_runs), 1,
-                         "There should be only one run for this test.")
+        self.assertEqual(len(test_runs), 2,
+                         "There should be two runs for this test.")
 
         # Filter runs which name contains `files`.
         test_runs = self.__get_runs('files_')
-        self.assertEqual(len(test_runs), 1,
-                         "There should be no run for this test.")
+        self.assertEqual(len(test_runs), 2,
+                         "There should be two runs for this test.")
 
         # Filter non existing run.
         test_runs = self.__get_runs('non_existing_run_name')
