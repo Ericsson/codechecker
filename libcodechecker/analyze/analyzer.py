@@ -18,9 +18,10 @@ import time
 from libcodechecker.logger import get_logger
 from libcodechecker.analyze import analysis_manager
 from libcodechecker.analyze import analyzer_env
-from libcodechecker.analyze import ctu_manager
+from libcodechecker.analyze import pre_analysis_manager
 from libcodechecker.analyze import skiplist_handler
 from libcodechecker.analyze.analyzers import analyzer_types
+
 
 LOG = get_logger('analyzer')
 
@@ -120,6 +121,12 @@ def perform_analysis(args, context, actions, metadata):
             LOG.error("CTU can only be used with the clang static analyzer.")
             return
 
+    if 'stats_enabled' in args and args.stats_enabled:
+        if analyzer_types.CLANG_SA not in analyzers:
+            LOG.debug("Statistics can only be used with "
+                      "the Clang Static Analyzer.")
+            return
+
     actions = prepare_actions(actions, analyzers)
     config_map = analyzer_types.build_config_handlers(args, context, analyzers)
 
@@ -143,8 +150,6 @@ def perform_analysis(args, context, actions, metadata):
         LOG.error("CTU directory:'" + ctu_dir + "' does not exist.")
         return
 
-    # Run analysis.
-    LOG.info("Starting static analysis ...")
     start_time = time.time()
 
     # Use Manager to create data objects which can be
@@ -152,16 +157,49 @@ def perform_analysis(args, context, actions, metadata):
     manager = Manager()
 
     config_map = manager.dict(config_map)
-
-    if ctu_collect:
-        ctu_manager.do_ctu_collect(actions, context, config_map, args.jobs,
-                                   __get_skip_handler(args), ctu_dir)
-
     actions_map = create_actions_map(actions, manager)
+
+    # Setting to not None value will enable statistical analysis features.
+    statistics_data = None
+
+    if 'stats_enabled' in args and args.stats_enabled:
+        statistics_data = manager.dict({
+            'stats_out_dir': os.path.join(args.output_path, "stats")})
+
+    if 'stats_output' in args and args.stats_output:
+        statistics_data = manager.dict({'stats_out_dir':
+                                        args.stats_output})
+
+    if ctu_collect or statistics_data:
+        ctu_data = None
+        if ctu_collect or ctu_analyze:
+            ctu_data = manager.dict({'ctu_dir': ctu_dir,
+                                     'ctu_func_map_file': 'externalFnMap.txt',
+                                     'ctu_temp_fnmap_folder':
+                                     'tmpExternalFnMaps'})
+
+        pre_analyze = [a for a in actions
+                       if a.analyzer_type == analyzer_types.CLANG_SA]
+        pre_analysis_manager.run_pre_analysis(pre_analyze,
+                                              context,
+                                              config_map,
+                                              args.jobs,
+                                              __get_skip_handler(args),
+                                              ctu_data,
+                                              statistics_data)
+
+    if 'stats_output' in args and args.stats_output:
+        return
+
+    if 'stats_dir' in args and args.stats_dir:
+        statistics_data = manager.dict({'stats_out_dir': args.stats_dir})
 
     ctu_reanalyze_on_failure = 'ctu_reanalyze_on_failure' in args and \
         args.ctu_reanalyze_on_failure
-    if ctu_analyze or (not ctu_analyze and not ctu_collect):
+
+    if ctu_analyze or statistics_data or (not ctu_analyze and not ctu_collect):
+
+        LOG.info("Starting static analysis ...")
         analysis_manager.start_workers(actions_map, actions, context,
                                        config_map, args.jobs,
                                        args.output_path,
@@ -171,7 +209,15 @@ def perform_analysis(args, context, actions, metadata):
                                        'capture_analysis_output' in args,
                                        args.timeout if 'timeout' in args
                                        else None,
-                                       ctu_reanalyze_on_failure)
+                                       ctu_reanalyze_on_failure,
+                                       statistics_data)
+        LOG.info("Analysis finished.")
+        LOG.info("To view results in the terminal use the "
+                 "\"CodeChecker parse\" command.")
+        LOG.info("To store results use the \"CodeChecker store\" command.")
+        LOG.info("See --help and the user guide for further options about"
+                 " parsing and storing the reports.")
+        LOG.info("----=================----")
 
     end_time = time.time()
     LOG.info("Analysis length: " + str(end_time - start_time) + " sec.")

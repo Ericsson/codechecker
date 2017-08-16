@@ -557,6 +557,14 @@ def get_last_mod_time(file_path):
         return None
 
 
+def escape_source_path(source):
+    """
+    Escape the spaces in the source path, but make sure not to
+    over-escape already escaped spaces.
+    """
+    return '\ '.join(source.replace('\ ', ' ').split(' '))
+
+
 def trim_path_prefixes(path, prefixes):
     """
     Removes the longest matching leading path from the file path.

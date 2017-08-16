@@ -21,6 +21,7 @@ Table of Contents
       * [Checker profiles](#checker-profiles)
       * [`--enable-all`](#enable-all)
     * [Cross Translation Unit (CTU) analysis mode](#ctu)
+    * [Statistical analysis mode](#statistical)
   * [`parse`](#parse)
     * [Suppression in the source code](#suppression-code)
       * [Supported formats](#supported-formats)
@@ -241,6 +242,15 @@ cross translation unit analysis arguments:
   --ctu-collect
   --ctu-analyze
   --ctu-on-the-fly
+
+statistical analysis arguments:
+  These arguments are only available if the Clang Static Analyzer supports
+  Statistical analysis. By default, no Statistical analysis is run when 'CodeChecker
+  analyze' is called.
+
+  --stats
+  --stats-collect
+  --stats-use
 
 checker configuration:
 
@@ -679,6 +689,39 @@ cross translation unit analysis arguments:
   --ctu-on-the-fly      If specified, the 'collect' phase will not create the
                         extra AST dumps, but rather analysis will be run with
                         an in-memory recompilation of the source files.
+~~~~~~~~~~~~~~~~~~~~~
+
+### <a name="statistical"></a> Statistical analysis mode
+
+If the `clang` static analyzer binary in your installation supports
+statistical checkers CodeChecker can execute the analyzers
+with this mode enabled.
+
+These options are only visible in `analyze` if the experimental
+statistical analysis support is present.
+
+~~~~~~~~~~~~~~~~~~~~~
+
+EXPERIMENTAL statistics analysis feature arguments:
+  These arguments are only available if the Clang Static Analyzer supports
+  Statistics-based analysis (e.g. statisticsCollector.ReturnValueCheck,
+  statisticsCollector.SpecialReturnValue checkers are available).
+
+  --stats-collect STATS_OUTPUT, --stats-collect STATS_OUTPUT
+                        EXPERIMENTAL feature. Perform the first, 'collect'
+                        phase of Statistical analysis. This phase generates
+                        extra files needed by statistics analysis, and puts
+                        them into '<STATS_OUTPUT>'. NOTE: If this argument is
+                        present, CodeChecker will NOT execute the analyzers!
+  --stats-use STATS_DIR, --stats-use STATS_DIR
+                        EXPERIMENTAL feature. Use the previously generated
+                        statistics results for the analysis from the given
+                        '<STATS_DIR>'.
+  --stats               EXPERIMENTAL feature. Perform both phases of
+                        Statistical analysis. This phase generates extra files
+                        needed by statistics analysis and enables the
+                        statistical checkers. No need to enable them
+                        explicitly.
 ~~~~~~~~~~~~~~~~~~~~~
 
 ## <a name="parse"></a> 3. `parse` mode

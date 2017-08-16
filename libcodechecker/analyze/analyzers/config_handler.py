@@ -87,6 +87,10 @@ class AnalyzerConfigHandler(object):
             if ch_name.startswith(checker_name):
                 _, description = values
                 self.__available_checkers[ch_name] = (True, description)
+            # FIXME use regex to match checker names.
+            if ch_name.endswith(checker_name):
+                _, description = values
+                self.__available_checkers[ch_name] = (True, description)
 
     def disable_checker(self, checker_name, description=None):
         """

@@ -5,10 +5,13 @@
 # -------------------------------------------------------------------------
 
 import os
+import re
 import subprocess
 
 from libcodechecker import generic_package_context
 from libcodechecker.logger import get_logger
+from libcodechecker.analyze import analyzer_env
+from libcodechecker.analyze.analyzers import analyzer_types
 
 LOG = get_logger('system')
 
@@ -23,6 +26,35 @@ def is_ctu_capable():
     except (subprocess.CalledProcessError, OSError):
         version = 'ERROR'
     return version != 'ERROR'
+
+
+def is_statistics_capable():
+    """ Detects if the current clang is Statistics compatible. """
+    context = generic_package_context.get_context()
+
+    analyzer = "clangsa"
+    enabled_analyzers = [analyzer]
+    cfg_handlers = analyzer_types.build_config_handlers({},
+                                                        context,
+                                                        enabled_analyzers)
+
+    clangsa_cfg = cfg_handlers[analyzer]
+    analyzer = analyzer_types.construct_analyzer_type(analyzer,
+                                                      clangsa_cfg,
+                                                      None)
+
+    check_env = analyzer_env.get_check_env(context.path_env_extra,
+                                           context.ld_lib_path_extra)
+
+    checkers = analyzer.get_analyzer_checkers(clangsa_cfg, check_env)
+
+    stat_checkers_pattern = re.compile(r'.+statisticscollector.+')
+
+    for checker_name, _ in checkers:
+        if stat_checkers_pattern.match(checker_name):
+            return True
+
+    return False
 
 
 def check_zlib():
