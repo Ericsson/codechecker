@@ -89,6 +89,11 @@ def add_arguments_to_parser(parser):
     Add the subcommand's arguments to the given argparse.ArgumentParser.
     """
 
+    def is_statistics_capable():
+        """ Detects if the current clang is Statistics compatible. """
+        # FIXME: Implement this function
+        return True
+
     parser.add_argument('logfile',
                         type=str,
                         nargs='+',
@@ -206,6 +211,28 @@ def add_arguments_to_parser(parser):
                                help="File containing argument which will be "
                                     "forwarded verbatim for Clang-Tidy.")
 
+    if is_statistics_capable():
+        stat_opts = parser.add_argument_group(
+            "statistics analysis arguments",
+            "These arguments are only available if the Clang Static Analyzer "
+            "supports Statistics-based analysis "
+            "(e.g. statisticsCollector.ReturnValueCheck,"
+            "statisticsCollector.SpecialReturnValue checkers are available).")
+        stat_modes = stat_opts.add_argument_group()
+        stat_modes.add_argument('--collect-stats', '--collect-stats',
+                                action='store_true',
+                                default=False,
+                                dest='collect_stats',
+                                help="Perform the first, 'collect' phase of "
+                                     "Statistical analysis. This phase"
+                                     "generates extra files needed by "
+                                     "statistics analysis, and "
+                                     "puts them into "
+                                     "'<OUTPUT_DIR>/statistics'."
+                                     " NOTE: If this argument is present, "
+                                     "CodeChecker will NOT execute the "
+                                     "analyzers!")
+
     if host_check.is_ctu_capable():
         ctu_opts = parser.add_argument_group(
             "cross translation unit analysis arguments",
@@ -214,7 +241,6 @@ def add_arguments_to_parser(parser):
             "when 'CodeChecker analyze' is called.")
 
         ctu_modes = ctu_opts.add_mutually_exclusive_group()
-
         ctu_modes.add_argument('--ctu', '--ctu-all',
                                action='store_const',
                                const=[True, True],
