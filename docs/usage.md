@@ -23,6 +23,20 @@ CodeChecker log -b "make" -o compilation.json
 ```
 cat ./compilation.json
 ```
+
+**What to do if the `compilation.json` is empty?**
+* Make sure that your build system actually invoked the compiler (e.g. `gcc`,`g++`). 
+  In case your software was built once (and the binaries are already generated),
+  the compiler will not be invoked. In this case do a build cleanup (e.g. `make clean`) and 
+  retry to log your build.
+  
+* Make sure that the `CC_LOGGER_GCC_LIKE` environment variable is set correctly and contains your compilers. 
+  For detailed description see the [user guide](/docs/user_guide.md#1-log-mode).
+
+* MacOS users need `intercept-build` to be available on the system, 
+  and in most cases, _System Integrity Protection_ needs to be turned off. 
+  See the [README](/README.md#mac-os-x) for details.
+
 ## Step2: Analyze your code 
 Once the build is logged successfully (and the `compilation.json`) was created, you can analyze your project.
 
