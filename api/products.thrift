@@ -67,10 +67,17 @@ service codeCheckerProductService {
   Product getCurrentProduct()
                             throws (1: shared.RequestFailed requestError),
 
-  // *** Handling the add-modify-remove of products registered *** //
+  // *** Handling the add-modify-remove of registered products *** //
+
+  ProductConfiguration getProductConfiguration(1: i64 productId)
+                                               throws (1: shared.RequestFailed requestError),
 
   bool addProduct(1: ProductConfiguration product)
                   throws (1: shared.RequestFailed requestError),
+
+  bool editProduct(1: i64 productId,
+                   2: ProductConfiguration newConfiguration)
+                   throws (1: shared.RequestFailed requestError),
 
   bool removeProduct(1: i64 productId)
                      throws (1: shared.RequestFailed requestError)

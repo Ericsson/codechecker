@@ -326,21 +326,10 @@ def add_test_package_product(server_data, test_folder, check_env=None):
     # If tests are running on postgres, we need to create a database.
     pg_config = env.get_postgresql_cfg()
     if pg_config:
-        pg_config['dbname'] = server_data['viewer_product']
-
-        psql_command = ['psql',
-                        '-h', pg_config['dbaddress'],
-                        '-p', str(pg_config['dbport']),
-                        '-d', 'postgres',
-                        '-c', "CREATE DATABASE \"" + pg_config['dbname'] + "\""
-                        ]
-        if 'dbusername' in pg_config:
-            psql_command += ['-U', pg_config['dbusername']]
-
-        print(psql_command)
-        subprocess.call(psql_command, env=check_env)
+        env.add_database(server_data['viewer_product'], check_env)
 
         add_command.append('--postgresql')
+        pg_config['dbname'] = server_data['viewer_product']
         add_command += _pg_db_config_to_cmdline_params(pg_config)
     else:
         # SQLite databases are put under the workspace of the appropriate test.
@@ -374,20 +363,10 @@ def remove_test_package_product(test_folder, check_env=None):
     subprocess.call(del_command, env=check_env)
 
     # If tests are running on postgres, we need to delete the database.
-    pg_config = env.get_postgresql_cfg()
-    if pg_config:
-        pg_config['dbname'] = server_data['viewer_product']
-
-        psql_command = ['psql',
-                        '-h', pg_config['dbaddress'],
-                        '-p', str(pg_config['dbport']),
-                        '-d', 'postgres',
-                        '-c', "DROP DATABASE \"" + pg_config['dbname'] + "\""]
-        if 'dbusername' in pg_config:
-            psql_command += ['-U', pg_config['dbusername']]
-
-        print(psql_command)
-        subprocess.call(psql_command, env=check_env)
+    # SQLite databases are deleted automatically as part of the
+    # workspace removal.
+    if env.get_postgresql_cfg():
+        env.del_database(server_data['viewer_product'], check_env)
 
 
 def _pg_db_config_to_cmdline_params(pg_db_config):

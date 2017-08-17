@@ -1,14 +1,14 @@
 Product management
 ==================
 
-![Web interface showing product list](docs/images/products.png)
+![Web interface showing product list](/docs/images/products.png)
 
 The product system allows a single CodeChecker server to serve multiple
 separate result databases, named "products", under the same IP address and
 authentication domain.
 
 `CodeChecker server` takes database arguments to initialize a connection to a
-**configuration** database. (See the [User guide](docs/user_guide.md) for
+**configuration** database. (See the [User guide](/docs/user_guide.md) for
 details.) This configuration database contains which products are managed by
 the server, and contain various other metadata.
 
@@ -38,7 +38,7 @@ as PostgreSQL is advanced usage, must be configured manually.
 
 # Managing products through the command-line tool, `CodeChecker cmd`
 
-Please see the [User guide](docs/user_guide.md) for overview on the `cmd`
+Please see the [User guide](/docs/user_guide.md) for overview on the `cmd`
 command.
 
 The `products` subcommand of `CodeChecker cmd` group the actions related to
@@ -174,3 +174,25 @@ positional arguments:
 optional arguments:
   -h, --help            show this help message and exit
 ~~~~~~~~~~~~~~~~~~~~~
+
+# Managing products through the web interface
+
+!["Add new product" dialog](/docs/images/newproduct.png)
+
+After enabling the administrative actions in the top right corner, click
+*Add new product*, then fill the form presented. The values that need to be
+filled here are the same as the arguments for `CodeChecker cmd products add`.
+
+If the product creation is successful, the window will disappear and the
+product will appear in the product list.
+
+![The added product appeared in the list](/docs/images/productconfigicons.png)
+
+Editing a product is done through the pencil icon, which is visible when
+administrative actions are enabled. This window lets you edit the product's
+configuration.
+
+Products can be deleted by clicking on the red trash bin. Deleting a product
+corresponds to `CodeChecker cmd products del <product endpoint>`, and as such,
+the product is only unmounted from the server (losing access control data and
+connection), but **no analysis results are deleted**.

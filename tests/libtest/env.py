@@ -9,10 +9,12 @@ import json
 import tempfile
 import shutil
 import socket
+import subprocess
 import sys
 
-from thrift_client_to_db import get_viewer_client
 from thrift_client_to_db import get_auth_client
+from thrift_client_to_db import get_product_client
+from thrift_client_to_db import get_viewer_client
 
 from functional import PKG_ROOT
 from functional import REPO_ROOT
@@ -48,6 +50,52 @@ def get_postgresql_cfg():
         return pg_db_config
     else:
         return None
+
+
+def add_database(dbname, env=None):
+    """
+    Creates a new database with a given name.
+    This has no effect outside PostgreSQL mode. (SQLite databases are
+    created automatically by Python.)
+    """
+
+    pg_config = get_postgresql_cfg()
+    if pg_config:
+        pg_config['dbname'] = dbname
+
+        psql_command = ['psql',
+                        '-h', pg_config['dbaddress'],
+                        '-p', str(pg_config['dbport']),
+                        '-d', 'postgres',
+                        '-c', "CREATE DATABASE \"" + pg_config['dbname'] + "\""
+                        ]
+        if 'dbusername' in pg_config:
+            psql_command += ['-U', pg_config['dbusername']]
+
+        print(psql_command)
+        subprocess.call(psql_command, env=env)
+
+
+def del_database(dbname, env=None):
+    """
+    Deletes the given database.
+    This has no effect outside PostgreSQL mode.
+    """
+
+    pg_config = get_postgresql_cfg()
+    if pg_config:
+        pg_config['dbname'] = dbname
+
+        psql_command = ['psql',
+                        '-h', pg_config['dbaddress'],
+                        '-p', str(pg_config['dbport']),
+                        '-d', 'postgres',
+                        '-c', "DROP DATABASE \"" + pg_config['dbname'] + "\""]
+        if 'dbusername' in pg_config:
+            psql_command += ['-U', pg_config['dbusername']]
+
+        print(psql_command)
+        subprocess.call(psql_command, env=env)
 
 
 def clang_to_test():
@@ -86,6 +134,22 @@ def setup_auth_client(workspace,
                            uri=uri,
                            auto_handle_connection=auto_handle_connection,
                            session_token=session_token)
+
+
+def setup_product_client(workspace,
+                         uri='/Products',
+                         auto_handle_connection=True,
+                         session_token=None):
+
+    codechecker_cfg = import_test_cfg(workspace)['codechecker_cfg']
+    port = codechecker_cfg['viewer_port']
+    host = codechecker_cfg['viewer_host']
+
+    return get_product_client(port=port,
+                              host=host,
+                              uri=uri,
+                              auto_handle_connection=auto_handle_connection,
+                              session_token=session_token)
 
 
 def repository_root():

@@ -1,0 +1,18 @@
+{
+    "name": "single_bug",
+    "clean_cmd": "make clean",
+    "build_cmd": "make",
+    "clang_stable": {
+        "bugs": [
+            { "file": "divide_zero.cpp", "line": 12, "checker": "core.DivideZero", "hash": "0db7fdfc2bc9d487ca571fbbb68029cc" },
+            { "file": "divide_zero.cpp", "line": 17, "checker": "core.DivideZero", "hash": "5c5190f9153be2ea5e0b523a1af5faa1" },
+            { "file": "divide_zero.cpp", "line": 12, "checker": "deadcode.DeadStores", "hash": "2bd08e713b88b6ae4da2671b87870a62" },
+            { "file": "divide_zero.cpp", "line": 17, "checker": "deadcode.DeadStores", "hash": "c71054be96fe0483cebf5bdda7ae07d5" }
+        ],
+        "filter_severity_levels": [{"MEDIUM": 0}, {"LOW": 2}, {"HIGH": 2}, {"STYLE": 0}, {"UNSPECIFIED": 0}, {"CRITICAL": 0}],
+        "filter_checker_id": [{"*unix*": 0}, {"core*": 2}, {"*DeadStores": 2}],
+        "filter_filepath": [{"*divide*": 4}],
+        "filter_filepath_case_insensitive": [{"*divide*": 4}, {"*dIvIdE*": 4}, {"*DIVIDE_zero*": 4}, {"*zeRO*": 4}],
+        "diff_res_types_filter": [{"core.DivideZero": 2},  {"deadcode.DeadStores": 2}]
+    }
+}

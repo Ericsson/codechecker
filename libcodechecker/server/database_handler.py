@@ -152,17 +152,12 @@ class SQLServer(object):
         return engine
 
     @staticmethod
-    def from_connection_string(connection_string, model_meta, migration_root,
-                               interactive=False, env=None):
+    def connection_string_to_args(connection_string):
         """
-        Normally only this method is called form outside of this module in
-        order to instance the proper server implementation.
+        Convert the given connection string to an argument dict.
 
-        Parameters:
-            args: the command line arguments from CodeChecker.py
-            model_meta: the meta identifier of the database model to use
-            migration_root: path to the database migration scripts
-            env: a run environment dictionary.
+        !CAREFUL! This dict MIGHT contain a database password which SHOULD NOT
+        be given to users!
         """
 
         url = make_url(connection_string)
@@ -180,6 +175,23 @@ class SQLServer(object):
             args['postgresql'] = False
             args['sqlite'] = url.database
 
+        return args
+
+    @staticmethod
+    def from_connection_string(connection_string, model_meta, migration_root,
+                               interactive=False, env=None):
+        """
+        Normally only this method is called form outside of this module in
+        order to instance the proper server implementation.
+
+        Parameters:
+            args: the dict of database arguments
+            model_meta: the meta identifier of the database model to use
+            migration_root: path to the database migration scripts
+            env: a run environment dictionary.
+        """
+
+        args = SQLServer.connection_string_to_args(connection_string)
         return SQLServer.from_cmdline_args(args, model_meta, migration_root,
                                            interactive, env)
 
