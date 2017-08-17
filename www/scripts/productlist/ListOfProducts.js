@@ -123,15 +123,18 @@ function (declare, domClass, domConstruct, ItemFileWriteStore, topic,
         case 'editIcon':
           // TODO: Check if user has rights to edit, and if admin was toggled.
           if (this.isAdmin) {
+            var that = this;
+            var configuration = PROD_SERVICE.getProductConfiguration(item.id[0]);
+
             this.productSettingsView.set(
               'title', "Edit product '" + item.endpoint[0] + "'");
             this.productSettingsView.set('settingsMode', 'edit');
-            this.productSettingsView.setProductConfig(new PROD_OBJECTS.ProductConfiguration());
             this.productSettingsView.set('successCallback', function () {
               // Reapply the product list filtering.
-              this.infoPane._executeFilter(
-                this.infoPane._productFilter.get('value'));
+              that.infoPane._executeFilter(
+                that.infoPane._productFilter.get('value'));
             });
+            this.productSettingsView.setProductConfig(configuration);
 
             this.productSettingsView.show();
           }

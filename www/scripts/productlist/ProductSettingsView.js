@@ -154,6 +154,7 @@ function (declare, domAttr, domClass, domConstruct, Dialog, Button,
       //--- Buttons ---//
       this._btnSubmit  = new Button({
         class   : 'submit-btn',
+        label   : "Add",
         onClick : function () {
           that._hideError();
 
@@ -161,10 +162,8 @@ function (declare, domAttr, domClass, domConstruct, Dialog, Button,
             return;
 
           // TODO: Check if user is superuser before calling the API.
-
-          if (this.get('settingsMode') === 'add') {
-            var product = that._createProductAPIObj();
-
+          var product = that._createProductAPIObj();
+          if (that.get('settingsMode') === 'add') {
             util.asyncAPICallWithExceptionHandling(
               PROD_SERVICE,
               'addProduct',
@@ -178,11 +177,28 @@ function (declare, domAttr, domClass, domConstruct, Dialog, Button,
                 }
               },
               function (exc) {
-                that._showError(exc.message);
+                that._showError("Adding the product failed!", exc.message);
               }
             )
-          } else if (this.get('settingsMode') === 'edit') {
-            console.log("editing product!");
+          } else if (that.get('settingsMode') === 'edit') {
+            util.asyncAPICallWithExceptionHandling(
+              PROD_SERVICE,
+              'editProduct',
+              that.productConfig['_id'],
+              product,
+              function (success) {
+                if (success) {
+                  that.hide();
+                  if (that.successCallback !== undefined)
+                    that.successCallback(success);
+                  that._resetDialog();
+                }
+              },
+              function (exc) {
+                console.log(exc);
+                that._showError("Saving new settings failed!", exc.message);
+              }
+            )
           }
         }
       });
@@ -218,7 +234,6 @@ function (declare, domAttr, domClass, domConstruct, Dialog, Button,
         dbConnection.host = "";
         dbConnection.port = 0;
         dbConnection.username_b64 = "";
-        dbConnection.password_b64 = "";
         dbConnection.database = args['database/name'];
       } else if (engine === 'postgresql') {
         dbConnection.host = args['database/host'];
@@ -286,8 +301,8 @@ function (declare, domAttr, domClass, domConstruct, Dialog, Button,
       }
     },
 
-    _showError : function (errorMsg) {
-      this._error.show("Adding the product failed!", errorMsg);
+    _showError : function (header, errorMsg) {
+      this._error.show(header, errorMsg);
     },
 
     _hideError : function () {
@@ -343,6 +358,7 @@ function (declare, domAttr, domClass, domConstruct, Dialog, Button,
       this._setDbEngine(null);
       this.set('title', '');
       this.set('settingsMode', null);
+      this._txtDbPass.set('placeholder', '');
       this._btnSubmit.set('label', "Add");
       this.set('successCallback', undefined);
       this._resetProductConfig();
@@ -415,7 +431,43 @@ function (declare, domAttr, domClass, domConstruct, Dialog, Button,
      */
     setProductConfig : function (productAPIObj) {
       this._btnSubmit.set('label', "Save");
-      console.log(productAPIObj);
+      this._txtDbPass.set('placeholder', "(Won't be changed.)");
+
+      var that = this;
+      var setCfg = function (element, key, value) {
+        that._setConfigValue(key, value);
+        element.set('value', value);
+      };
+
+      this._setConfigValue('_id', productAPIObj.id);
+
+      setCfg(this._txtProdEndpoint, 'endpoint', productAPIObj.endpoint);
+      setCfg(this._txtProdName, 'name',
+             util.atou(productAPIObj.displayedName_b64));
+
+      if (productAPIObj.description_b64)
+        setCfg(this._txtProdDescr, 'description',
+               util.atou(productAPIObj.description_b64));
+
+      var connection = productAPIObj.connection;
+      this._setDbEngine(connection.engine);
+      if (connection.engine === 'sqlite') {
+        this._btnSqlite.set('checked', true);
+
+        setCfg(this._txtDbName, 'database/name', connection.database);
+      } else if (productAPIObj.connection.engine === 'postgresql') {
+        this._btnPostgres.set('checked', true);
+
+        setCfg(this._txtDbHost, 'database/host', connection.host);
+        setCfg(this._txtDbPort, 'database/port', connection.port);
+        setCfg(this._txtDbUser, 'database/username',
+               util.atou(connection.username_b64));
+        setCfg(this._txtDbName, 'database/name', connection.database);
+        // The password field defaults to "not changed" as we are NOT
+        // showing the password.
+      }
+
+      this._validate();
     },
 
     onCancel : function () {

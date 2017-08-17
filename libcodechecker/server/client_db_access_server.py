@@ -302,7 +302,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
                 # The current request came through a product route, and not
                 # to the main endpoint.
                 product = self.server.get_product(product_name)
-                if not product.connected:
+                if product and not product.connected:
                     # If the product is not connected, try reconnecting...
                     LOG.debug("Request's product '{0}' is not connected! "
                               "Attempting reconnect...".format(product_name))
@@ -314,6 +314,11 @@ class RequestHandler(SimpleHTTPRequestHandler):
                             500, "Product '{0}' database connection failed!"
                                  .format(product_name))
                         return
+                elif not product:
+                    self.send_error(
+                        404, "The product {0} does not exist."
+                             .format(product_name))
+                    return
 
                 session_makers['run_db'] = product.session_factory
 
