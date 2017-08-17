@@ -175,52 +175,56 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
     addBubbles : function (bubbles) {
       var that = this;
 
-      bubbles.forEach(function (bubble, i) {
-        var isResult = i === bubbles.length - 1;
+      that.codeMirror.operation(function () {
+        bubbles.forEach(function (bubble, i) {
+          var isResult = i === bubbles.length - 1;
 
-        var left = that.codeMirror.defaultCharWidth() * bubble.startCol + 'px';
+          var left = that.codeMirror.defaultCharWidth() * bubble.startCol + 'px';
 
-        var enumType = isResult
-          ? 'error' : bubble.msg.indexOf(' (fixit)') > -1
-          ? 'fixit' : 'info';
+          var enumType = isResult
+            ? 'error' : bubble.msg.indexOf(' (fixit)') > -1
+            ? 'fixit' : 'info';
 
-        var enumeration = createBugStepEnumeration(i + 1, enumType).outerHTML;
-        var element = dom.create('div', {
-          style : 'margin-left: ' + left,
-          class : 'check-msg ' + enumType,
-          innerHTML : (bubbles.length !== 1 ? enumeration : '')
-                    + parseBugStepMsg(entities.encode(bubble.msg))
+          var enumeration = createBugStepEnumeration(i + 1, enumType).outerHTML;
+          var element = dom.create('div', {
+            style : 'margin-left: ' + left,
+            class : 'check-msg ' + enumType,
+            innerHTML : (bubbles.length !== 1 ? enumeration : '')
+                      + parseBugStepMsg(entities.encode(bubble.msg))
+          });
+
+          that._lineWidgets.push(that.codeMirror.addLineWidget(
+            bubble.startLine - 1, element));
         });
-
-        that._lineWidgets.push(that.codeMirror.addLineWidget(
-          bubble.startLine - 1, element));
       });
     },
 
     addOtherFileBubbles : function (path) {
       var that = this;
 
-      for (var i = 1; i < path.length; ++i) {
-        if (path[i].fileId !== this.sourceFileData.fileId &&
-            path[i].fileId !== path[i - 1].fileId) {
-          var element = dom.create('div', {
-            class : 'otherFileMsg',
-            innerHTML : 'bugpath in:<br>' + path[i].filePath.split('/').pop(),
-            onclick : (function (i) {
-              return function () {
-                that.set(
-                  'sourceFileData',
-                  CC_SERVICE.getSourceFileData(path[i].fileId, true));
-                that.drawBugPath();
-                that.jumpTo(path[i].startLine, path[i].startCol);
-              };
-            })(i)
-          });
+      that.codeMirror.operation(function () {
+        for (var i = 1; i < path.length; ++i) {
+          if (path[i].fileId !== that.sourceFileData.fileId &&
+              path[i].fileId !== path[i - 1].fileId) {
+            var element = dom.create('div', {
+              class : 'otherFileMsg',
+              innerHTML : 'bugpath in:<br>' + path[i].filePath.split('/').pop(),
+              onclick : (function (i) {
+                return function () {
+                  that.set(
+                    'sourceFileData',
+                    CC_SERVICE.getSourceFileData(path[i].fileId, true));
+                  that.drawBugPath();
+                  that.jumpTo(path[i].startLine, path[i].startCol);
+                };
+              })(i)
+            });
 
-          this._lineWidgets.push(this.codeMirror.addLineWidget(
-            path[i - 1].startLine - 1, element));
+            that._lineWidgets.push(that.codeMirror.addLineWidget(
+              path[i - 1].startLine - 1, element));
+          }
         }
-      }
+      });
     },
 
     clearBubbles : function () {
@@ -231,11 +235,13 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
     addLines : function (points) {
       var that = this;
 
-      points.forEach(function (p, i) {
-        that._lineMarks.push(that.codeMirror.doc.markText(
-          { line : p.startLine - 1, ch : p.startCol + 1 },
-          { line : p.endLine - 1,   ch : p.endCol       },
-          { className : 'checkerstep' }));
+      that.codeMirror.operation(function () {
+        points.forEach(function (p, i) {
+          that._lineMarks.push(that.codeMirror.doc.markText(
+            { line : p.startLine - 1, ch : p.startCol + 1 },
+            { line : p.endLine - 1,   ch : p.endCol       },
+            { className : 'checkerstep' }));
+        });
       });
 
       var range = this.codeMirror.getViewport();
