@@ -72,16 +72,17 @@ class TestReviewStatus(unittest.TestCase):
         self.assertEqual(report.review.status, status)
 
         # Try to change review status back to unreviewed.
+        status = shared.ttypes.ReviewStatus.UNREVIEWED
         success = self._cc_client.changeReviewStatus(
             bug.reportId,
-            shared.ttypes.ReviewStatus.UNREVIEWED,
+            status,
             u'')
 
-        self.assertFalse(success)
-        logging.debug("Bug review status didn't changed")
+        self.assertTrue(success)
+        logging.debug("Bug review status changed successfully")
 
         report = self._cc_client.getReport(bug.reportId)
-        self.assertEqual(report.review.comment, review_comment)
+        self.assertEqual(report.review.comment, '')
         self.assertEqual(report.review.status, status)
 
         # Change review status to false positive.
