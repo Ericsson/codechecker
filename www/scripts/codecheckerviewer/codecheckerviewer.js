@@ -123,7 +123,7 @@ function (declare, topic, domConstruct, Dialog, DropDownMenu, MenuItem,
     }));
 
     var menuButton = new DropDownButton({
-      class : 'mainMenuButton',
+      class : 'main-menu-button',
       iconClass : 'dijitIconFunction',
       dropDown : menuItems
     });
@@ -131,7 +131,7 @@ function (declare, topic, domConstruct, Dialog, DropDownMenu, MenuItem,
     //--- Back button to product list ---//
 
     var productListButton = new Button({
-      class : 'mainMenuButton',
+      class : 'main-menu-button',
       label : 'Back to product list',
       onClick : function () {
         // Use explicit URL here, as '/' could redirect back to this product

@@ -30,6 +30,8 @@ function (declare, topic, domConstruct, Button, BorderContainer,
         new Thrift.TJSONProtocol(
           new Thrift.Transport("/Authentication")));
 
+    AUTH_OBJECTS = codeCheckerAuthentication;
+
     //----------------------------- Main layout ------------------------------//
 
     var layout = new BorderContainer({ id : 'mainLayout' });
@@ -69,32 +71,44 @@ function (declare, topic, domConstruct, Button, BorderContainer,
 
     //--- Admin button ---//
 
-    layout.set('isAdmin', false);
+    layout.set('adminLevel', 0);
 
-    // TODO: Show admin button only if superuser.
+    var isSuperuser = CC_AUTH_SERVICE.hasPermission(
+      CC_AUTH_OBJECTS.Permission.SUPERUSER, "");
+
+    var isAdminOfAnyProduct = CC_PROD_SERVICE.isAdministratorOfAnyProduct();
+
     var menuButton = new Button({
-      class : 'mainMenuButton adminButton',
+      class : 'main-menu-button admin-button',
       label : "Show administration",
       onClick : function () {
-        // TODO: Query if user can be superadmin and only allow this if so.
+        var adminLevel = layout.get('adminLevel');
 
-        var isAdmin = !layout.get('isAdmin');
+        if (adminLevel)
+          adminLevel = 0;
+        else {
+          if (isAdminOfAnyProduct)
+            adminLevel = 1;
+          if (isSuperuser)
+            adminLevel = 2;
+        }
 
-        layout.set('isAdmin', isAdmin);
-        listOfProducts.setAdmin(isAdmin);
+        layout.set('adminLevel', adminLevel);
+        listOfProducts.setAdmin(adminLevel);
         this.set('label',
-                 (isAdmin ? 'Hide' : 'Show') + ' administration');
+                 (adminLevel > 0 ? 'Hide' : 'Show') + ' administration');
       }
     });
 
     var headerMenu = domConstruct.create('div', {
         id : 'header-menu'
-      });
+    });
 
     if (loginUserSpan != null)
         domConstruct.place(loginUserSpan, headerMenu);
 
-    domConstruct.place(menuButton.domNode, headerMenu);
+    if (isSuperuser || isAdminOfAnyProduct)
+      domConstruct.place(menuButton.domNode, headerMenu);
 
     domConstruct.place(headerMenu, headerPane.domNode);
 

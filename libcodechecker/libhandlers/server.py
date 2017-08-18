@@ -176,6 +176,38 @@ def add_arguments_to_parser(parser):
                        required=False,
                        help="Name of the database to use.")
 
+    root_account = parser.add_argument_group(
+        "root account arguments",
+        "Servers automatically create a root user to access the server's "
+        "configuration via the clients. This user is created at first start "
+        "and saved in the CONFIG_DIRECTORY, and the credentials are printed "
+        "to the server's standard output. The plaintext credentials are "
+        "NEVER accessible again.")
+
+    root_account.add_argument('--reset-root',
+                              dest="reset_root",
+                              action='store_true',
+                              default=argparse.SUPPRESS,
+                              required=False,
+                              help="Force the server to recreate the master "
+                                   "superuser (root) account name and "
+                                   "password. The previous credentials will "
+                                   "be invalidated, and the new ones will be "
+                                   "printed to the standard output.")
+
+    root_account.add_argument('--force-authentication',
+                              dest="force_auth",
+                              action='store_true',
+                              default=argparse.SUPPRESS,
+                              required=False,
+                              help="Force the server to run in "
+                                   "authentication requiring mode, despite "
+                                   "the configuration value in "
+                                   "'session_config.json'. This is needed "
+                                   "if you need to edit the product "
+                                   "configuration of a server that would not "
+                                   "require authentication otherwise.")
+
     instance_mgmnt = parser.add_argument_group("running server management")
 
     instance_mgmnt = instance_mgmnt. \
@@ -392,6 +424,15 @@ def main(args):
     suppress_handler = generic_package_suppress_handler. \
         GenericSuppressHandler(None, False)
 
+    if 'reset_root' in args:
+        os.remove(os.path.join(args.config_directory, 'root.user'))
+        LOG.info("Master superuser (root) credentials invalidated and "
+                 "deleted. New ones will be generated...")
+
+    if 'force_auth' in args:
+        LOG.info("'--force-authentication' was passed as a command-line "
+                 "option. The server will ask for users to authenticate!")
+
     context = generic_package_context.get_context()
     context.codechecker_workspace = args.config_directory
     session_manager.SessionManager.CodeChecker_Workspace = \
@@ -457,6 +498,7 @@ def main(args):
                                              sql_server,
                                              suppress_handler,
                                              args.listen_address,
+                                             'force_auth' in args,
                                              context,
                                              check_env)
     except socket.error as err:

@@ -11,9 +11,12 @@ import atexit
 import base64
 import datetime
 import errno
+from hashlib import sha256
 from multiprocessing.pool import ThreadPool
 import os
 import posixpath
+from random import sample
+import stat
 import socket
 import urllib
 import urlparse
@@ -35,9 +38,11 @@ from ProductManagement import codeCheckerProductService
 
 from libcodechecker import session_manager
 from libcodechecker.logger import LoggerFactory
+from libcodechecker.util import get_tmp_dir_hash
 
 from . import database_handler
 from . import instance_manager
+from . import permissions
 from client_auth_handler import ThriftAuthHandler
 from client_db_access_handler import ThriftRequestHandler
 from config_db_model import Product as ORMProduct
@@ -117,8 +122,6 @@ class RequestHandler(SimpleHTTPRequestHandler):
             # an authentication request.
             authHeader = self.headers.getheader("Authorization")
             if authHeader is not None and authHeader.startswith("Basic "):
-                LOG.info("Client from " + client_host + ":" +
-                         str(client_port) + " attempted authorization.")
                 authString = base64.decodestring(
                     self.headers.getheader("Authorization").
                     replace("Basic ", ""))
@@ -126,10 +129,6 @@ class RequestHandler(SimpleHTTPRequestHandler):
                 session = self.server.manager.create_or_get_session(
                     authString)
                 if session:
-                    LOG.info("Client from " + client_host + ":" +
-                             str(client_port) +
-                             " successfully logged in as user " +
-                             session.user)
                     return session
 
         # Else, access is still not granted.
@@ -162,11 +161,13 @@ class RequestHandler(SimpleHTTPRequestHandler):
         Handles the webbrowser access (GET requests).
         """
 
-        LOG.info("{0}:{1} -- GET {2}".format(self.client_address[0],
-                                             str(self.client_address[1]),
-                                             self.path))
-
         auth_session = self.__check_auth_in_request()
+        LOG.info("{0}:{1} -- [{2}] GET {3}"
+                 .format(self.client_address[0],
+                         str(self.client_address[1]),
+                         auth_session.user if auth_session else "Anonymous",
+                         self.path))
+
         if self.server.manager.isEnabled() and not auth_session:
             realm = self.server.manager.getRealm()["realm"]
             error_body = self.server.manager.getRealm()["error"]
@@ -254,9 +255,12 @@ class RequestHandler(SimpleHTTPRequestHandler):
         """
 
         client_host, client_port = self.client_address
-        LOG.info("{0}:{1} -- POST {2}".format(client_host,
-                                              str(client_port),
-                                              self.path))
+        auth_session = self.__check_auth_in_request()
+        LOG.info("{0}:{1} -- [{2}] POST {3}"
+                 .format(client_host,
+                         str(client_port),
+                         auth_session.user if auth_session else "Anonymous",
+                         self.path))
 
         # Create new thrift handler.
         checker_md_docs = self.server.checker_md_docs
@@ -277,7 +281,6 @@ class RequestHandler(SimpleHTTPRequestHandler):
         iprot = input_protocol_factory.getProtocol(itrans)
         oprot = output_protocol_factory.getProtocol(otrans)
 
-        auth_session = self.__check_auth_in_request()
         if self.server.manager.isEnabled() and self.path != '/Authentication' \
                 and not auth_session:
             # Bail out if the user is not authenticated...
@@ -297,7 +300,6 @@ class RequestHandler(SimpleHTTPRequestHandler):
                                                  "", 1)
 
             product = None
-            session_makers = {}
             if product_name:
                 # The current request came through a product route, and not
                 # to the main endpoint.
@@ -320,20 +322,16 @@ class RequestHandler(SimpleHTTPRequestHandler):
                              .format(product_name))
                     return
 
-                session_makers['run_db'] = product.session_factory
-
             if request_endpoint == '/Authentication':
                 auth_handler = ThriftAuthHandler(self.server.manager,
-                                                 auth_session)
+                                                 auth_session,
+                                                 self.server.product_session)
                 processor = codeCheckerAuthentication.Processor(auth_handler)
             elif request_endpoint == '/Products':
-                # The product server needs its own endpoint to the
-                # configuration database.
-                session_makers['product_db'] = self.server.product_session
-
                 prod_handler = ThriftProductHandler(
                     self.server,
-                    session_makers['product_db'],
+                    auth_session,
+                    self.server.product_session,
                     product,
                     version)
                 processor = codeCheckerProductService.Processor(prod_handler)
@@ -346,7 +344,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
                     return
 
                 acc_handler = ThriftRequestHandler(
-                    session_makers['run_db'],
+                    product.session_factory,
                     auth_session,
                     checker_md_docs,
                     checker_md_docs_map,
@@ -416,7 +414,10 @@ class Product(object):
         """
         Set up a new managed product object for the configuration given.
         """
-        self.__orm_object = orm_object
+        self.__id = orm_object.id
+        self.__endpoint = orm_object.endpoint
+        self.__connection_string = orm_object.connection
+        self.__display_name = orm_object.display_name
         self.__context = context
         self.__check_env = check_env
         self.__engine = None
@@ -427,21 +428,21 @@ class Product(object):
 
     @property
     def id(self):
-        return self.__orm_object.id
+        return self.__id
 
     @property
     def endpoint(self):
         """
         Returns the accessible URL endpoint of the product.
         """
-        return self.__orm_object.endpoint
+        return self.__endpoint
 
     @property
     def name(self):
         """
         Returns the display name of the product.
         """
-        return self.__orm_object.display_name
+        return self.__display_name
 
     @property
     def session_factory(self):
@@ -482,13 +483,13 @@ class Product(object):
             return
 
         LOG.debug("Connecting database for product '{0}'".
-                  format(self.__orm_object.endpoint))
+                  format(self.endpoint))
 
         # We need to connect to the database and perform setting up the
         # schema.
         LOG.debug("Configuring schema and migration...")
         sql_server = database_handler.SQLServer.from_connection_string(
-            self.__orm_object.connection,
+            self.__connection_string,
             RUN_META,
             self.__context.config_migration_root,
             interactive=False,
@@ -507,7 +508,7 @@ class Product(object):
             LOG.debug("Database connected.")
         except Exception as ex:
             LOG.error("The database for product '{0}' cannot be connected to."
-                      .format(self.__orm_object.endpoint))
+                      .format(self.endpoint))
             LOG.error(ex.message)
             self.__connected = False
             self.__last_connect_attempt = (datetime.datetime.now(), ex.message)
@@ -562,11 +563,19 @@ class CCSimpleHttpServer(HTTPServer):
         self.__engine = product_db_sql_server.create_engine()
         self.product_session = sessionmaker(bind=self.__engine)
 
-        # Load the initial list of products and create the connections.
+        # Load the initial list of products and set up the server.
         sess = self.product_session()
+        permissions.initialise_defaults('SYSTEM', {
+            'config_db_session': sess
+        })
         products = sess.query(ORMProduct).all()
         for product in products:
             self.add_product(product)
+            permissions.initialise_defaults('PRODUCT', {
+                'config_db_session': sess,
+                'productID': product.id
+            })
+        sess.commit()
         sess.close()
 
         self.__request_handlers = ThreadPool(processes=10)
@@ -638,8 +647,45 @@ class CCSimpleHttpServer(HTTPServer):
         del self.__products[endpoint]
 
 
+def __make_root_file(root_file):
+    """
+    Generate a root username and password SHA. This hash is saved to the
+    given file path, and is also returned.
+    """
+
+    LOG.debug("Generating initial superuser (root) credentials...")
+
+    username = ''.join(sample("ABCDEFGHIJKLMNOPQRSTUVWXYZ", 6))
+    password = get_tmp_dir_hash()[:8]
+
+    LOG.info("A NEW superuser credential was generated for the server. "
+             "This information IS SAVED, thus subsequent server starts "
+             "WILL use these credentials. You WILL NOT get to see "
+             "the credentials again, so MAKE SURE YOU REMEMBER THIS "
+             "LOGIN!")
+
+    # Highlight the message a bit more, as the server owner configuring the
+    # server must know this root access initially.
+    credential_msg = "The superuser's username is '{0}' with the " \
+                     "password '{1}'".format(username, password)
+    LOG.info("-" * len(credential_msg))
+    LOG.info(credential_msg)
+    LOG.info("-" * len(credential_msg))
+
+    sha = sha256(username + ':' + password).hexdigest()
+    with open(root_file, 'w') as f:
+        LOG.debug("Save root SHA256 '{0}'".format(sha))
+        f.write(sha)
+
+    # This file should be only readable by the process owner, and noone else.
+    os.chmod(root_file, stat.S_IRUSR)
+
+    return sha
+
+
 def start_server(config_directory, package_data, port, db_conn_string,
-                 suppress_handler, listen_address, context, check_env):
+                 suppress_handler, listen_address, force_auth, context,
+                 check_env):
     """
     Start http server to handle web client and thrift requests.
     """
@@ -650,6 +696,22 @@ def start_server(config_directory, package_data, port, db_conn_string,
 
     server_addr = (listen_address, port)
 
+    root_file = os.path.join(config_directory, 'root.user')
+    if not os.path.exists(root_file):
+        LOG.warning("Server started without 'root.user' present in "
+                    "CONFIG_DIRECTORY!")
+        root_sha = __make_root_file(root_file)
+    else:
+        LOG.debug("Root file was found. Loading...")
+        try:
+            with open(root_file, 'r') as f:
+                root_sha = f.read()
+            LOG.debug("Root digest is '{0}'".format(root_sha))
+        except:
+            LOG.info("Cannot open root file '{0}' even though it exists"
+                     .format(root_file))
+            root_sha = __make_root_file(root_file)
+
     http_server = CCSimpleHttpServer(server_addr,
                                      RequestHandler,
                                      config_directory,
@@ -658,7 +720,9 @@ def start_server(config_directory, package_data, port, db_conn_string,
                                      suppress_handler,
                                      context,
                                      check_env,
-                                     session_manager.SessionManager())
+                                     session_manager.SessionManager(
+                                         root_sha, force_auth)
+                                     )
 
     try:
         instance_manager.register(os.getpid(),

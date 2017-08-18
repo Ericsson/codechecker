@@ -12,15 +12,71 @@ define([
   'dojo/topic',
   'dojox/grid/DataGrid',
   'dijit/ConfirmDialog',
+  'dijit/Dialog',
   'dijit/form/Button',
   'dijit/form/TextBox',
   'dijit/layout/BorderContainer',
   'dijit/layout/ContentPane',
   'codechecker/util',
+  'products/PermissionList',
   'products/ProductSettingsView'],
 function (declare, domClass, domConstruct, ItemFileWriteStore, topic,
-  DataGrid, ConfirmDialog, Button, TextBox, BorderContainer, ContentPane,
-  util, ProductSettingsView) {
+  DataGrid, ConfirmDialog, Dialog, Button, TextBox, BorderContainer,
+  ContentPane, util, PermissionList, ProductSettingsView) {
+
+  //--- Global (server-wide) permission configuration dialog ---//
+
+  var SystemPermissionsDialog = declare(ConfirmDialog, {
+    constructor : function () {
+      this.permissionView = new PermissionList();
+
+      this._dialog = new Dialog({
+        title : "Some permission changes failed to be saved."
+      });
+    },
+
+    onExecute : function () {
+      var errors = [];
+      var permDiff = this.permissionView.getPermissionDifference();
+      permDiff.forEach(function (record) {
+       try {
+          if (record.action === 'ADD')
+            CC_AUTH_SERVICE.addPermission(
+              record.permission, record.name, record.isGroup, "");
+          else if (record.action === 'REMOVE')
+            CC_AUTH_SERVICE.removePermission(
+              record.permission, record.name, record.isGroup, "");
+        }
+        catch (exc) {
+          errors.push(record);
+        }
+      });
+
+      if (errors.length > 0) {
+        var text = "<ul>";
+        errors.forEach(function(record) {
+          var permissionName = util.enumValueToKey(CC_AUTH_OBJECTS.Permission,
+                                                   record.permission);
+          text += '<li><strong>' + (record.action === 'ADD' ? "Add" : "Remove") +
+                  '</strong> permission <strong>' + permissionName +
+                  '</strong> of ' + (record.isGroup ? "group" : "user") +
+                  ' <strong>' + record.name + '</strong>.</li>\n';
+        });
+        text += '</ul>';
+        this._dialog.set('content', text);
+        this._dialog.show();
+      }
+    },
+
+    populatePermissions : function() {
+      this.permissionView.populatePermissions('SYSTEM', {});
+    },
+
+    postCreate : function () {
+      this.inherited(arguments);
+      this.addChild(this.permissionView);
+    }
+  });
 
   //--- Product delete confirmation dialog ---//
 
@@ -46,7 +102,6 @@ function (declare, domClass, domConstruct, ItemFileWriteStore, topic,
     onExecute : function () {
       var that = this;
 
-      // TODO: Check if the user is superadmin, before calling the API.
       if (this.productGrid.deleteProductID) {
         CC_PROD_SERVICE.removeProduct(
           this.productGrid.deleteProductID,
@@ -121,27 +176,24 @@ function (declare, domClass, domConstruct, ItemFileWriteStore, topic,
           }
           break;
         case 'editIcon':
-          // TODO: Check if user has rights to edit, and if admin was toggled.
-          if (this.isAdmin) {
+          if (this.adminLevel >= 1 && item.administrating[0]) {
+            // User needs to have at least PRODUCT_ADMIN level and the admin
+            // options turned on, and must also be an admin of the product
+            // clicked.
             var that = this;
-            var configuration = PROD_SERVICE.getProductConfiguration(item.id[0]);
-
-            this.productSettingsView.set(
-              'title', "Edit product '" + item.endpoint[0] + "'");
-            this.productSettingsView.set('settingsMode', 'edit');
-            this.productSettingsView.set('successCallback', function () {
-              // Reapply the product list filtering.
-              that.infoPane._executeFilter(
-                that.infoPane._productFilter.get('value'));
+            that.productSettingsView.setMode(
+              that.get('adminLevel'), 'edit', item.id[0],
+              function () {
+                // Reapply the product list filtering.
+                that.infoPane._executeFilter(
+                  that.infoPane._productFilter.get('value'));
             });
-            this.productSettingsView.setProductConfig(configuration);
 
             this.productSettingsView.show();
           }
           break;
         case 'deleteIcon':
-          // TODO: Check if user is superuser to delete.
-          if (this.isAdmin) {
+          if (this.adminLevel >= 2) { // at least SUPERUSER
             this.set('deleteProductID', item.id[0]);
             this.confirmDeleteDialog.show();
           }
@@ -190,6 +242,7 @@ function (declare, domClass, domConstruct, ItemFileWriteStore, topic,
         description : description,
         connected : item.connected,
         accessible : item.accessible,
+        administrating : item.administrating,
         editIcon : '',
         deleteIcon : ''
       });
@@ -236,29 +289,31 @@ function (declare, domClass, domConstruct, ItemFileWriteStore, topic,
       });
     },
 
-    toggleAdminButtons : function (isAdmin) {
-      this.set('isAdmin', isAdmin);
+    toggleAdminButtons : function (adminLevel) {
+      this.set('adminLevel', adminLevel);
       var that = this;
 
       this.store.fetch({
         onComplete : function (products) {
           products.forEach(function (product) {
-            if (isAdmin) {
+            if (adminLevel >= 1 && product.administrating[0])
               that.store.setValue(product, 'editIcon',
                 '<span class="customIcon product-edit"></span>');
+            else
+              that.store.setValue(product, 'editIcon', '');
+
+            if (adminLevel >= 2)
               that.store.setValue(product, 'deleteIcon',
                 '<span class="customIcon product-delete"></span>');
-            } else {
-              that.store.setValue(product, 'editIcon', '');
+            else
               that.store.setValue(product, 'deleteIcon', '');
-            }
           });
         }
       });
     },
 
     onLoaded : function (productDataList) {
-      this.toggleAdminButtons(this.isAdmin);
+      this.toggleAdminButtons(this.adminLevel);
       this.sort();
     }
   });
@@ -287,19 +342,32 @@ function (declare, domClass, domConstruct, ItemFileWriteStore, topic,
         }
       });
 
-      //--- New product Button ---//
+      //--- Edit permissions button ---//
+
+      this._sysPermsBtn = new Button({
+        label    : 'Edit global permissions',
+        class    : 'system-perms-btn',
+        onClick  : function () {
+          that.systemPermissionsDialog.populatePermissions();
+          that.systemPermissionsDialog.show();
+        }
+      });
+
+      //--- New product button ---//
 
       this._newBtn = new Button({
         label    : 'Create new product',
         class    : 'new-btn',
         onClick  : function () {
-          that.productSettingsView.set('title', "Add new product");
-          that.productSettingsView.set('settingsMode', 'add');
-          that.productSettingsView.set('successCallback', function () {
-            // Reapply the product list filtering.
-            that._executeFilter(that._productFilter.get('value'));
-          });
+          that.productSettingsView.setMode(
+            that.get('adminLevel'), 'add', null,
+            function () {
+              // Reapply the product list filtering.
+              that._executeFilter(that._productFilter.get('value'));
 
+              // When a product is successfully added, hide the dialog.
+              that.productSettingsView.hide();
+          });
           that.productSettingsView.show();
         }
       });
@@ -308,18 +376,19 @@ function (declare, domClass, domConstruct, ItemFileWriteStore, topic,
     postCreate : function () {
       this.addChild(this._productFilter);
       this.addChild(this._newBtn);
+      this.addChild(this._sysPermsBtn);
 
-      // By default, the create button should be invisible.
+      // By default, the administrative buttons should be invisible.
       domClass.add(this._newBtn.domNode, 'invisible');
+      domClass.add(this._sysPermsBtn.domNode, 'invisible');
     },
 
-    toggleAdminButtons : function (isAdmin) {
-      this.set('isAdmin', isAdmin);
+    toggleAdminButtons : function (adminLevel) {
+      this.set('adminLevel', adminLevel);
 
-      if (!isAdmin)
-        domClass.add(this._newBtn.domNode, 'invisible');
-      else
-        domClass.remove(this._newBtn.domNode, 'invisible');
+      // Permissions and new product can only be clicked if SUPERUSER.
+      domClass.toggle(this._sysPermsBtn.domNode, 'invisible', adminLevel < 2);
+      domClass.toggle(this._newBtn.domNode, 'invisible', adminLevel < 2);
     }
   });
 
@@ -356,17 +425,22 @@ function (declare, domClass, domConstruct, ItemFileWriteStore, topic,
 
       var productSettingsView = new ProductSettingsView({
         title       : 'Product settings',
-        productGrid : listOfProductsGrid,
-        style       : 'width: 650px'
+        productGrid : listOfProductsGrid
       });
 
       infoPane.set('productSettingsView', productSettingsView);
       listOfProductsGrid.set('productSettingsView', productSettingsView);
+
+      var systemPermissionsDialog = new SystemPermissionsDialog({
+        title  : 'Global permissions'
+      });
+
+      infoPane.set('systemPermissionsDialog', systemPermissionsDialog);
     },
 
-    setAdmin : function (isAdmin) {
-      this.infoPane.toggleAdminButtons(isAdmin);
-      this.listOfProductsGrid.toggleAdminButtons(isAdmin);
+    setAdmin : function (adminLevel) {
+      this.infoPane.toggleAdminButtons(adminLevel);
+      this.listOfProductsGrid.toggleAdminButtons(adminLevel);
     }
   });
 });

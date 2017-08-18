@@ -7,22 +7,22 @@
 Handle Thrift requests for authentication.
 """
 
+import json
+
+import sqlalchemy
+
 import shared
 from Authentication.ttypes import *
 
 from libcodechecker.logger import LoggerFactory
 from libcodechecker.profiler import timeit
+from libcodechecker.server import permissions
+from libcodechecker.server.permissions \
+    import handler_from_scope_params as make_handler
+from libcodechecker.server.permissions \
+    import require_manager, require_permission
 
 LOG = LoggerFactory.get_new_logger('AUTH HANDLER')
-
-
-def conv(text):
-    """
-    Convert * to % got from clients for the database queries.
-    """
-    if text is None:
-        return '%'
-    return text.replace('*', '%')
 
 
 class ThriftAuthHandler(object):
@@ -30,9 +30,12 @@ class ThriftAuthHandler(object):
     Handle Thrift authentication requests.
     """
 
-    def __init__(self, manager, auth_session):
+    def __init__(self, manager, auth_session, config_database):
         self.__manager = manager
         self.__auth_session = auth_session
+        self.__config_db = config_database
+
+    # ============= Authentication and session handling =============
 
     @timeit
     def getAuthParameters(self):
@@ -77,3 +80,215 @@ class ThriftAuthHandler(object):
         if self.__auth_session:
             token = self.__auth_session.token
         return self.__manager.invalidate(token)
+
+    # ============= Authorization, permission management =============
+
+    def __unpack_extra_params(self, extra_params, session=None):
+        """
+        Helper function to unpack the extra_params JSON string to a dict.
+
+        If specified, add the config_db_session to this dict too.
+        """
+
+        if extra_params and extra_params != "":
+            params = json.loads(extra_params)
+        else:
+            params = {}
+
+        if session:
+            params['config_db_session'] = session
+
+        return params
+
+    def __create_permission_args(self, perm_enum, extra_params_string,
+                                 session):
+        """
+        Helper function to transform the permission-specific values from the
+        API into the appropriate Python constructs needed by the permission
+        library.
+        """
+
+        perm = permissions.permission_from_api_enum(perm_enum)
+        params = self.__unpack_extra_params(extra_params_string, session)
+        return perm, params
+
+    @timeit
+    def getPermissions(self, scope):
+        """
+        Returns all the defined permissions in the given permission scope.
+        """
+
+        return [permissions.api_enum_for_permission(p)
+                for p in permissions.get_permissions(scope)]
+
+    @timeit
+    def getPermissionsForUser(self, scope, extra_params, perm_filter):
+        """
+        Returns the permissions in the given permission scope and with the
+        given scope-specific extra_params for the current logged in user,
+        based on the permission filters.
+
+        Filters in the perm_filter struct are joined in an AND clause.
+        """
+
+        if perm_filter is None or not any(perm_filter.__dict__.values()):
+            # If no filtering is needed, this function behaves identically
+            # to getPermissions().
+            return self.getPermissions(scope)
+
+        try:
+            session = self.__config_db()
+
+            # The database connection must always be passed to the permission
+            # handler.
+            params = self.__unpack_extra_params(extra_params, session)
+
+            perms = []
+            for perm in permissions.get_permissions(scope):
+                should_return = True
+                handler = make_handler(perm, params)
+
+                if should_return and perm_filter.given:
+                    should_return = handler.has_permission(self.__auth_session)
+
+                if should_return and perm_filter.canManage:
+                    # If the user has any of the permissions that are
+                    # authorised to manage the currently iterated permission,
+                    # the filter passes.
+                    should_return = require_manager(
+                         perm, params, self.__auth_session)
+
+                if should_return:
+                    perms.append(perm)
+
+            return [permissions.api_enum_for_permission(p)
+                    for p in perms]
+
+        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
+            msg = str(alchemy_ex)
+            LOG.error(msg)
+            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
+                                              msg)
+        finally:
+            session.close()
+
+    @timeit
+    def getAuthorisedNames(self, permission, extra_params):
+        """
+        Returns the users and groups who were EXPLICITLY granted a particular
+        permission.
+        """
+
+        try:
+            session = self.__config_db()
+            perm, params = self.__create_permission_args(
+                permission, extra_params, session)
+
+            if not require_manager(perm, params, self.__auth_session):
+                raise shared.ttypes.RequestFailed(
+                    shared.ttypes.ErrorCode.UNAUTHORIZED,
+                    "You can not manage the permission '{0}'"
+                    .format(perm.name))
+
+            handler = make_handler(perm, params)
+            users, groups = handler.list_permitted()
+
+            # The special default permission marker is an internal value.
+            users = filter(lambda user: user != '*', users)
+
+            return AuthorisationList(users, groups)
+
+        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
+            msg = str(alchemy_ex)
+            LOG.error(msg)
+            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
+                                              msg)
+        finally:
+            session.close()
+
+    @timeit
+    def addPermission(self, permission, auth_name, is_group, extra_params):
+        """
+        Adds the given permission to the user or group named auth_name.
+        """
+
+        try:
+            session = self.__config_db()
+            perm, params = self.__create_permission_args(
+                permission, extra_params, session)
+
+            if not require_manager(perm, params, self.__auth_session):
+                raise shared.ttypes.RequestFailed(
+                    shared.ttypes.ErrorCode.UNAUTHORIZED,
+                    "You can not manage the permission '{0}'"
+                    .format(perm.name))
+
+            handler = make_handler(perm, params)
+            handler.add_permission(auth_name, is_group)
+
+            session.commit()
+            return True
+
+        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
+            msg = str(alchemy_ex)
+            LOG.error(msg)
+            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
+                                              msg)
+        finally:
+            session.close()
+
+    @timeit
+    def removePermission(self, permission, auth_name, is_group, extra_params):
+        """
+        Removes the given permission from the user or group auth_name.
+        """
+
+        try:
+            session = self.__config_db()
+            perm, params = self.__create_permission_args(
+                permission, extra_params, session)
+
+            if not require_manager(perm, params, self.__auth_session):
+                raise shared.ttypes.RequestFailed(
+                    shared.ttypes.ErrorCode.UNAUTHORIZED,
+                    "You can not manage the permission '{0}'"
+                    .format(perm.name))
+
+            handler = make_handler(perm, params)
+            handler.remove_permission(auth_name, is_group)
+
+            session.commit()
+            return True
+
+        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
+            msg = str(alchemy_ex)
+            LOG.error(msg)
+            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
+                                              msg)
+        finally:
+            session.close()
+
+    @timeit
+    def hasPermission(self, permission, extra_params):
+        """
+        Returns whether or not the current logged-in user (or guest, if
+        authentication is disabled) is granted the given permission.
+
+        This method observes permission inheritance.
+        """
+
+        try:
+            session = self.__config_db()
+            perm, params = self.__create_permission_args(
+                permission, extra_params, session)
+
+            handler = make_handler(perm, params)
+            return handler.has_permission(self.__auth_session)
+
+        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
+            msg = str(alchemy_ex)
+            LOG.error(msg)
+            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
+                                              msg)
+        finally:
+            session.close()

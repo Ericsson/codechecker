@@ -909,3 +909,21 @@ span[class*="severity-"] {
   content: "\e015";
 }
 
+/* Success message box. */
+
+.mbox.mbox-success {
+  border-color: #669603;
+}
+
+.mbox.mbox-success .heading {
+  color: #669603;
+}
+
+.mbox.mbox-success .icon {
+  color: #669603;
+}
+
+.mbox.mbox-success .icon:before {
+  content: "\e01d";
+}
+

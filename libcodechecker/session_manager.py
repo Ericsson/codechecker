@@ -57,12 +57,20 @@ class _Session(object):
         return hashlib.sha256(auth_string + "@" +
                               _Session.__initial_salt).hexdigest()
 
-    def __init__(self, token, phash, user, authenticated):
-        self.authenticated = authenticated
-        self.user = user
+    def __init__(self, token, phash, username, groups, is_root=False):
+        self.last_access = datetime.now()
         self.token = token
         self.persistent_hash = phash
-        self.last_access = datetime.now()
+        self.user = username
+        self.groups = groups
+
+        self.__root = is_root
+
+    @property
+    def is_root(self):
+        """Returns whether or not the Session was created with the master
+        superuser (root) credentials."""
+        return self.__root
 
     def still_valid(self, do_revalidate=False):
         """Returns if the session is still valid, and optionally revalidates
@@ -152,7 +160,7 @@ class SessionManager:
     __valid_sessions = []
     __logins_since_prune = 0
 
-    def __init__(self):
+    def __init__(self, root_sha, force_auth=False):
         LOG.debug('Loading session config')
 
         # Check whether workspace's configuration exists.
@@ -168,10 +176,18 @@ class SessionManager:
 
         LOG.debug(session_cfg_file)
 
+        # Create the default settings and then load the file from the disk.
         scfg_dict = {'authentication': {'enabled': False}}
         scfg_dict.update(load_session_cfg(session_cfg_file))
 
         self.__auth_config = scfg_dict["authentication"]
+
+        if force_auth:
+            LOG.debug("Authentication was force-enabled.")
+            self.__auth_config['enabled'] = True
+
+        # Save the root SHA into the configuration (but only in memory!)
+        self.__auth_config['method_root'] = root_sha
 
         # If no methods are configured as enabled, disable authentication.
         if scfg_dict["authentication"].get("enabled"):
@@ -203,10 +219,16 @@ class SessionManager:
 
             #
             if not found_auth_method:
-                LOG.warning("Authentication is enabled but no valid "
-                            "authentication backends are configured... "
-                            "Falling back to no authentication.")
-                self.__auth_config["enabled"] = False
+                if force_auth:
+                    LOG.warning("Authentication was manually enabled, but no "
+                                "valid authentication backends are "
+                                "configured... The server will only allow "
+                                "the master superuser (root) access.")
+                else:
+                    LOG.warning("Authentication is enabled but no valid "
+                                "authentication backends are configured... "
+                                "Falling back to no authentication.")
+                    self.__auth_config["enabled"] = False
 
         session_lifetimes["soft"] = \
             self.__auth_config.get("soft_expire") or 60
@@ -233,6 +255,14 @@ class SessionManager:
         return method not in unsupported_methods and \
             "method_" + method in self.__auth_config and \
             self.__auth_config["method_" + method].get("enabled")
+
+    def __try_auth_root(self, auth_string):
+        """
+        Try to authenticate the user against the root username:password's hash.
+        """
+        return "method_root" in self.__auth_config and \
+            hashlib.sha256(auth_string).hexdigest() == \
+            self.__auth_config["method_root"]
 
     def __try_auth_dictionary(self, auth_string):
         return self.__is_method_enabled("dictionary") and \
@@ -263,7 +293,8 @@ class SessionManager:
                     return True
         return False
 
-    def get_user_name(self, auth_string):
+    @staticmethod
+    def get_user_name(auth_string):
         return auth_string.split(":")[0]
 
     def create_or_get_session(self, auth_string):
@@ -280,7 +311,8 @@ class SessionManager:
                 self.__auth_config["logins_until_cleanup"]:
             self.__cleanup_sessions()
 
-        if self.__handle_validation(auth_string):
+        is_root = self.__try_auth_root(auth_string)
+        if is_root or self.__handle_validation(auth_string):
             # If the session is still valid and credentials
             # are resent return old token.
             session_already = next(
@@ -297,10 +329,14 @@ class SessionManager:
                 # TODO: Use a more secure way for token generation?
                 token = uuid.UUID(bytes=os.urandom(16)).__str__().replace("-",
                                                                           "")
-                user_name = self.get_user_name(auth_string)
+                user_name = SessionManager.get_user_name(auth_string)
+
+                # TODO: Fetch the groups for the user and store them.
+                groups = []
+
                 session = _Session(token,
                                    _Session.calc_persistency_hash(auth_string),
-                                   user_name, True)
+                                   user_name, groups, is_root)
                 SessionManager.__valid_sessions.append(session)
 
             return session
