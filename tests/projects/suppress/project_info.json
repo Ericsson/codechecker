@@ -1,0 +1,5 @@
+{
+    "name": "suppress",
+    "clean_cmd": "rm a.out",
+    "build_cmd": "g++ suppress.cpp"
+}
