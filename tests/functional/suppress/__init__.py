@@ -33,13 +33,18 @@ def setup_package():
 
     os.environ['TEST_WORKSPACE'] = TEST_WORKSPACE
 
-    test_project = 'cpp'
+    test_project = 'suppress'
 
     pg_db_config = env.get_postgresql_cfg()
 
     test_config = {}
 
     project_info = project.get_info(test_project)
+
+    test_proj_path = os.path.join(TEST_WORKSPACE, "test_proj")
+    shutil.copytree(project.path(test_project), test_proj_path)
+
+    project_info['project_path'] = test_proj_path
 
     test_config['test_project'] = project_info
 
@@ -49,8 +54,6 @@ def setup_package():
         os.remove(suppress_file)
     _generate_suppress_file(suppress_file)
 
-    skip_list_file = None
-
     # Get port numbers for the tests.
     host_port_cfg = env.get_host_port_cfg()
 
@@ -58,7 +61,7 @@ def setup_package():
 
     codechecker_cfg = {
         'suppress_file': None,
-        'skip_list_file': skip_list_file,
+        'skip_list_file': None,
         'check_env': test_env,
         'workspace': TEST_WORKSPACE,
         'pg_db_config': pg_db_config,

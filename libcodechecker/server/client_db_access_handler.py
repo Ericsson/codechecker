@@ -877,8 +877,6 @@ class ThriftRequestHandler(object):
             LOG.error(msg)
             raise shared.ttypes.RequestFailed(
                 shared.ttypes.ErrorCode.DATABASE, msg)
-        finally:
-            session.close()
 
     @timeit
     def changeReviewStatus(self, report_id, status, message):
