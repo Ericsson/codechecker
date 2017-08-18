@@ -1,7 +1,0 @@
-[
-	{
-		"directory": ".",
-		"command": "g++ suppress.cpp",
-		"file": "suppress.cpp"
-	}
-]
