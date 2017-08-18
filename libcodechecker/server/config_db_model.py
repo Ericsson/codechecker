@@ -9,9 +9,12 @@ SQLAlchemy ORM model for the product configuration database.
 
 from __future__ import print_function
 from __future__ import unicode_literals
+import sys
 
 from sqlalchemy import *
 from sqlalchemy.ext.declarative import declarative_base
+
+from . import permissions
 
 CC_META = MetaData(naming_convention={
     "ix": 'ix_%(column_0_label)s',
@@ -36,27 +39,11 @@ class DBVersion(Base):
         self.minor = minor
 
 
-# class Superuser(Base):
-#     __tablename__ = 'superusers'
-#
-#     id = Column(Integer, autoincrement=True, primary_key=True)
-#     name = Column(String, nullable=False)
-#     is_group = Column(Boolean, nullable=False)
-#
-#     def __init__(self, name, is_group):
-#         self.name = name
-#         self.is_group = is_group
-
-
 class Product(Base):
     __tablename__ = 'products'
 
-    __table_args__ = (
-        UniqueConstraint('endpoint'),
-    )
-
     id = Column(Integer, autoincrement=True, primary_key=True)
-    endpoint = Column(String, nullable=False)
+    endpoint = Column(String, nullable=False, unique=True)
     connection = Column(String, nullable=False)
     display_name = Column(String, nullable=False)
     description = Column(Text)
@@ -68,23 +55,56 @@ class Product(Base):
         self.description = description
 
 
-# class ProductAdmin(Base):
-#     __tablename__ = 'product_admins'
-#
-#     id = Column(Integer, autoincrement=True, primary_key=True)
-#     product_id = Column(Integer,
-#                         ForeignKey('products.id',
-#                                    deferrable=False,
-#                                    initially='IMMEDIATE',
-#                                    ondelete='CASCADE'),
-#                         nullable=False)
-#     name = Column(String, nullable=False)
-#     is_group = Column(Boolean, nullable=False)
-#
-#     def __init__(self, product_id, name, is_group):
-#         self.product_id = product_id
-#         self.name = name
-#         self.is_group = is_group
+def __get_permission_names(scope=None):
+    """
+    Returns a list of strings which contains permission names.
+
+    This function is used internally to set up the permission database.
+
+    :param scope: One of the Permission class strings (e.g. 'SYSTEM'), which
+      if given, filters the returned list of permissions to only definitions
+      of the given scope.
+    """
+
+    return [perm.name for perm in permissions.get_permissions(scope)]
+
+
+class SystemPermission(Base):
+    __tablename__ = 'permissions_system'
+
+    id = Column(Integer, autoincrement=True, primary_key=True)
+    permission = Column(Enum(
+        *sys.modules[__name__].__dict__['__get_permission_names']('SYSTEM'),
+        name='sys_perms'))
+    name = Column(String, nullable=False)
+    is_group = Column(Boolean, nullable=False)
+
+    def __init__(self, permission, name, is_group=False):
+        self.permission = permission
+        self.name = name
+        self.is_group = is_group
+
+
+class ProductPermission(Base):
+    __tablename__ = 'permissions_product'
+
+    id = Column(Integer, autoincrement=True, primary_key=True)
+    permission = Column(Enum(
+        *sys.modules[__name__].__dict__['__get_permission_names']('PRODUCT'),
+        name='product_perms'))
+    product_id = Column(Integer, ForeignKey('products.id',
+                                            deferrable=False,
+                                            initially='IMMEDIATE',
+                                            ondelete='CASCADE'),
+                        nullable=False)
+    name = Column(String, nullable=False)
+    is_group = Column(Boolean, nullable=False)
+
+    def __init__(self, permission, product_id, name, is_group=False):
+        self.permission = permission
+        self.product_id = product_id
+        self.name = name
+        self.is_group = is_group
 
 IDENTIFIER = {
     'identifier': "ConfigDatabase",

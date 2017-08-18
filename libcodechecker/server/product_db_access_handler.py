@@ -18,6 +18,7 @@ from ProductManagement import ttypes
 
 from libcodechecker.logger import LoggerFactory
 from libcodechecker.profiler import timeit
+from libcodechecker.server import permissions
 
 from config_db_model import *
 from database_handler import SQLServer
@@ -32,14 +33,50 @@ class ThriftProductHandler(object):
 
     def __init__(self,
                  server,
+                 auth_session,
                  config_session,
                  routed_product,
                  package_version):
 
         self.__server = server
+        self.__auth_session = auth_session
         self.__package_version = package_version
         self.__session = config_session
         self.__product = routed_product
+
+        self.__permission_args = {
+            'productID': routed_product.id if routed_product else None
+        }
+
+    def __require_permission(self, required, args=None):
+        """
+        Helper method to raise an UNAUTHORIZED exception if the user does not
+        have any of the given permissions.
+        """
+
+        try:
+            if args is None:
+                args = dict(self.__permission_args)
+                session = self.__session()
+                args['config_db_session'] = session
+
+            if not any([permissions.require_permission(
+                            perm, args, self.__auth_session)
+                        for perm in required]):
+                raise shared.ttypes.RequestFailed(
+                    shared.ttypes.ErrorCode.UNAUTHORIZED,
+                    "You are not authorized to execute this action.")
+            else:
+                return True
+
+        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
+            msg = str(alchemy_ex)
+            LOG.error(msg)
+            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
+                                              msg)
+        finally:
+            if session:
+                session.close()
 
     @timeit
     def getAPIVersion(self):
@@ -48,6 +85,30 @@ class ThriftProductHandler(object):
     @timeit
     def getPackageVersion(self):
         return self.__package_version
+
+    @timeit
+    def isAdministratorOfAnyProduct(self):
+        try:
+            session = self.__session()
+            prods = session.query(Product).all()
+
+            for prod in prods:
+                args = {'config_db_session': session,
+                        'productID': prod.id}
+                if permissions.require_permission(
+                        permissions.PRODUCT_ADMIN,
+                        args, self.__auth_session):
+                    return True
+
+            return False
+
+        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
+            msg = str(alchemy_ex)
+            LOG.error(msg)
+            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
+                                              msg)
+        finally:
+            session.close()
 
     @timeit
     def getProducts(self, product_endpoint_filter, product_name_filter):
@@ -96,13 +157,21 @@ class ThriftProductHandler(object):
                 descr = base64.b64encode(prod.description.encode('utf-8')) \
                     if prod.description else None
 
+                args = {'config_db_session': session,
+                        'productID': prod.id}
+                product_access = permissions.require_permission(
+                    permissions.PRODUCT_ACCESS, args, self.__auth_session)
+                product_admin = permissions.require_permission(
+                    permissions.PRODUCT_ADMIN, args, self.__auth_session)
+
                 result.append(ttypes.Product(
                     id=prod.id,
                     endpoint=prod.endpoint,
                     displayedName_b64=name,
                     description_b64=descr,
                     connected=server_product.connected,
-                    accessible=True))
+                    accessible=product_access,
+                    administrating=product_admin))
 
             return result
 
@@ -151,13 +220,21 @@ class ThriftProductHandler(object):
             descr = base64.b64encode(prod.description.encode('utf-8')) \
                 if prod.description else None
 
+            args = {'config_db_session': session,
+                    'productID': prod.id}
+            product_access = permissions.require_permission(
+                permissions.PRODUCT_ACCESS, args, self.__auth_session)
+            product_admin = permissions.require_permission(
+                permissions.PRODUCT_ADMIN, args, self.__auth_session)
+
             return ttypes.Product(
                 id=prod.id,
                 endpoint=prod.endpoint,
                 displayedName_b64=name,
                 description_b64=descr,
                 connected=server_product.connected,
-                accessible=True)
+                accessible=product_access,
+                administrating=product_admin)
 
         except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
             msg = str(alchemy_ex)
@@ -233,6 +310,7 @@ class ThriftProductHandler(object):
         """
         Add the given product to the products configured by the server.
         """
+        # self.__require_permission([permissions.SUPERUSER])
 
         session = None
         LOG.info("User requested add product '{0}'".format(product.endpoint))
@@ -319,6 +397,13 @@ class ThriftProductHandler(object):
             LOG.debug("Product database successfully connected to.")
             session = self.__session()
             session.add(orm_prod)
+            session.flush()
+
+            # Create the default permissions for the product
+            permissions.initialise_defaults('PRODUCT', {
+                'config_db_session': session,
+                'productID': orm_prod.id
+            })
             session.commit()
             LOG.debug("Product configuration added to database successfully.")
 
@@ -349,7 +434,6 @@ class ThriftProductHandler(object):
         Edit the given product's properties to the one specified by
         new_configuration.
         """
-
         try:
             session = self.__session()
             product = session.query(Product).get(product_id)
@@ -358,6 +442,14 @@ class ThriftProductHandler(object):
                 LOG.error(msg)
                 raise shared.ttypes.RequestFailed(
                     shared.ttypes.ErrorCode.DATABASE, msg)
+
+            # Editing the metadata of the product, such as display name and
+            # description is available for product admins.
+
+            # Because this query doesn't come through a product endpoint,
+            # __init__ sets the value in the extra_args to None.
+            self.__permission_args['productID'] = product.id
+            self.__require_permission([permissions.PRODUCT_ADMIN])
 
             LOG.info("User requested edit product '{0}'"
                      .format(product.endpoint))

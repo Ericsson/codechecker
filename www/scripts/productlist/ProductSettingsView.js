@@ -17,57 +17,98 @@ define([
   'dijit/form/TextBox',
   'dijit/form/ValidationTextBox',
   'dijit/layout/ContentPane',
+  'dijit/layout/TabContainer',
   'codechecker/MessagePane',
-  'codechecker/util'],
+  'codechecker/util',
+  'products/PermissionList'],
 function (declare, domAttr, domClass, domConstruct, Dialog, Button,
   NumberTextBox, RadioButton, SimpleTextarea, TextBox, ValidationTextBox,
-  ContentPane, MessagePane, util) {
+  ContentPane, TabContainer, MessagePane, util, PermissionList) {
 
-  return declare(Dialog, {
+  /**
+   * This dict sets for which database engine which configuration fields
+   * should be visible.
+   */
+  var FIELD_SHOW_RULES = {
+    null       : ['dbengine'],
+    sqlite     : ['dbengine', 'dbname'],
+    postgresql : ['dbengine', 'dbhost', 'dbport',
+                  'dbuser', 'dbpass', 'dbname']
+  };
+
+  /**
+   * This dict sets for which database engine, which field should have
+   * customized values (such as placeholder and label text).
+   *
+   * Please make sure to fill the values accordingly, as the existence
+   * and validity of a key for the given input element is NOT checked.
+   *
+   * Setting the values here for a field that is not marked as shown in
+   * FIELD_SHOW_RULES is superfluous.
+   */
+  var FIELD_PRESENTATION_RULES = {
+    null       : {},
+    sqlite     : {
+      dbname : {
+        label       : "Database file",
+        placeholder : "(If relative, to CONFIG_DIRECTORY)"
+      }
+    },
+    postgresql : {
+      dbname : {
+        label       : "Database name",
+        placeholder : "Database must exist!"
+      }
+    }
+  };
+
+  /**
+   * This dict sets for which admin level which fields should be enabled.
+   */
+  var FIELD_RANK_SHOW_RULES = {
+    0 : ['submit'],
+    /* PRODUCT_ADMIN */ 1 : ['name', 'description'],
+    /* SUPERUSER */     2 : ['endpoint', 'dbengine', 'dbhost', 'dbport',
+                             'dbuser', 'dbpass', 'dbname']
+  };
+
+  var ProductMetadataPane = declare(ContentPane, {
     constructor : function () {
       var that = this;
 
-      this._error = new MessagePane({
-        class   : 'mbox mbox-error'
+      this._mbox = new MessagePane({
+        class   : 'mbox'
       });
+
+      function setOrDeleteConfigValue() {
+        if (this.value === "")
+          that._deleteConfigValue(this.name);
+        else
+          that._setConfigValue(this.name, this.value);
+      }
 
       //--- Product data ---//
 
       this._txtProdEndpoint = new ValidationTextBox({
-        class       : 'formInput',
+        class       : 'form-input',
         name        : 'endpoint',
         placeholder : "Unique identifier for product!",
         required    : true,
-        onChange : function () {
-          if (this.value === "")
-            that._deleteConfigValue('endpoint');
-          else
-            that._setConfigValue('endpoint', this.value);
-        }
+        onChange    : setOrDeleteConfigValue
       });
 
       this._txtProdName = new TextBox({
-        class       : 'formInput',
+        class       : 'form-input',
         name        : 'name',
         placeholder : '(Optional)',
-        onChange : function () {
-          if (this.value === "")
-            that._deleteConfigValue('name');
-          else
-            that._setConfigValue('name', this.value);
-        }
+        onChange    : setOrDeleteConfigValue
       });
 
       this._txtProdDescr = new SimpleTextarea({
-        class       : 'formInput',
+        class       : 'form-input',
         name        : 'description',
         placeholder : '(Optional)',
-        onChange : function () {
-          if (this.value === "")
-            that._deleteConfigValue('description');
-          else
-            that._setConfigValue('description', this.value);
-        }
+        onChange    : setOrDeleteConfigValue
       });
 
       //--- Database connection type buttons ---//
@@ -91,20 +132,15 @@ function (declare, domAttr, domClass, domConstruct, Dialog, Button,
       //--- Database connection text boxes ---//
 
       this._txtDbHost = new TextBox({
-        class    : 'formInput',
-        name     : 'dbhost',
+        class    : 'form-input',
+        name     : 'database/host',
         value    : 'localhost',
-        onChange : function () {
-          if (this.value === "")
-            that._deleteConfigValue('database/host');
-          else
-            that._setConfigValue('database/host', this.value);
-        }
+        onChange : setOrDeleteConfigValue
       });
 
       this._txtDbPort = new NumberTextBox({
-        class       : 'formInput',
-        name        : 'dbport',
+        class       : 'form-input',
+        name        : 'database/port',
         value       : 5432,
         constraints : {
           fractional : false,
@@ -118,87 +154,61 @@ function (declare, domAttr, domClass, domConstruct, Dialog, Button,
       });
 
       this._txtDbUser = new TextBox({
-        class       : 'formInput',
-        name        : 'dbuser',
-        onChange    : function () {
-          if (this.value === "")
-            that._deleteConfigValue('database/username');
-          else
-            that._setConfigValue('database/username', this.value);
-        }
+        class       : 'form-input',
+        name        : 'database/username',
+        onChange    : setOrDeleteConfigValue
       });
 
       this._txtDbPass = new TextBox({
-        class    : 'formInput',
-        name     : 'dbport',
+        class    : 'form-input',
+        name     : 'database/password',
         type     : 'password',
-        onChange : function () {
-          if (this.value === "")
-            that._deleteConfigValue('database/password');
-          else
-            that._setConfigValue('database/password', this.value);
-        }
+        onChange : setOrDeleteConfigValue
       });
 
       this._txtDbName = new TextBox({
-        class    : 'formInput',
-        name     : 'dbname',
-        onChange : function () {
-          if (this.value === "")
-            that._deleteConfigValue('database/name');
-          else
-            that._setConfigValue('database/name', this.value);
-        }
+        class    : 'form-input',
+        name     : 'database/name',
+        onChange : setOrDeleteConfigValue
       });
 
       //--- Buttons ---//
+
       this._btnSubmit  = new Button({
         class   : 'submit-btn',
         label   : "Add",
         onClick : function () {
-          that._hideError();
+          that._mbox.hide();
 
           if (!that._validate())
             return;
 
-          // TODO: Check if user is superuser before calling the API.
           var product = that._createProductAPIObj();
           if (that.get('settingsMode') === 'add') {
-            util.asyncAPICallWithExceptionHandling(
-              PROD_SERVICE,
-              'addProduct',
-              product,
-              function (success) {
-                if (success) {
-                  that.hide();
+            CC_PROD_SERVICE.addProduct(product, function(success) {
+              if (success)
                   if (that.successCallback !== undefined)
                     that.successCallback(success);
-                  that._resetDialog();
-                }
-              },
-              function (exc) {
-                that._showError("Adding the product failed!", exc.message);
-              }
-            )
+            }).error(function (jsReq, status, exc) {
+              if (status === "parsererror")
+                that._showMessageBox('error',
+                  "Adding the product failed!", exc.message);
+            });
           } else if (that.get('settingsMode') === 'edit') {
-            util.asyncAPICallWithExceptionHandling(
-              PROD_SERVICE,
-              'editProduct',
-              that.productConfig['_id'],
-              product,
-              function (success) {
+            CC_PROD_SERVICE.editProduct(that.productConfig['_id'], product,
+              function(success) {
                 if (success) {
-                  that.hide();
                   if (that.successCallback !== undefined)
                     that.successCallback(success);
-                  that._resetDialog();
+
+                  that._showMessageBox('success',
+                    "Successfully edited the product settings!", "");
                 }
-              },
-              function (exc) {
-                console.log(exc);
-                that._showError("Saving new settings failed!", exc.message);
-              }
-            )
+            }).error(function (jsReq, status, exc) {
+              if (status === "parsererror")
+                that._showMessageBox('error',
+                  "Saving new settings failed!", exc.message);
+            });
           }
         }
       });
@@ -265,48 +275,10 @@ function (declare, domAttr, domClass, domConstruct, Dialog, Button,
       return product;
     },
 
-    /**
-     * This dict sets for which database engine which configuration fields
-     * should be visible.
-     */
-    FIELD_SHOW_RULES : {
-      null       : [],
-      sqlite     : ['dbname'],
-      postgresql : ['dbhost', 'dbport', 'dbuser', 'dbpass', 'dbname']
-    },
-
-    /**
-     * This dict sets for which database engine, which field should have
-     * customized values (such as placeholder and label text).
-     *
-     * Please make sure to fill the values accordingly, as the existence
-     * and validity of a key for the given input element is NOT checked.
-     *
-     * Setting the values here for a field that is not marked as shown in
-     * FIELD_SHOW_RULES is superfluous.
-     */
-    FIELD_PRESENTATION_RULES : {
-      null       : {},
-      sqlite     : {
-        dbname : {
-          label       : "Database file",
-          placeholder : "(If relative, to CONFIG_DIRECTORY)"
-        }
-      },
-      postgresql : {
-        dbname : {
-          label       : "Database name",
-          placeholder : "Database must exist!"
-        }
-      }
-    },
-
-    _showError : function (header, errorMsg) {
-      this._error.show(header, errorMsg);
-    },
-
-    _hideError : function () {
-      this._error.hide();
+    _showMessageBox : function (mode, header, text) {
+      domClass.toggle(this._mbox.domNode, "mbox-error", mode === 'error');
+      domClass.toggle(this._mbox.domNode, "mbox-success", mode === 'success');
+      this._mbox.show(header, text);
     },
 
     _placeFormElement : function (element, key, label) {
@@ -324,14 +296,12 @@ function (declare, domAttr, domClass, domConstruct, Dialog, Button,
         var labelNode = domConstruct.create('label', {
           class     : 'formLabel bold',
           innerHTML : label + ': '
-        });
+        }, container);
 
         if (key) {
           domAttr.set(labelNode, 'for', key);
           this._formElements[key]['label'] = labelNode;
         }
-
-        domConstruct.place(labelNode, container);
       }
 
       domConstruct.place(element.domNode, container);
@@ -354,9 +324,8 @@ function (declare, domAttr, domClass, domConstruct, Dialog, Button,
       return valid;
     },
 
-    _resetDialog : function() {
+    resetForm : function() {
       this._setDbEngine(null);
-      this.set('title', '');
       this.set('settingsMode', null);
       this._txtDbPass.set('placeholder', '');
       this._btnSubmit.set('label', "Add");
@@ -365,10 +334,15 @@ function (declare, domAttr, domClass, domConstruct, Dialog, Button,
       this._btnSqlite.reset();
       this._btnPostgres.reset();
 
-      for (var key in this._formElements)
-        if (typeof this._formElements[key]['element'].reset === "function")
-          this._formElements[key]['element'].reset();
-      this._hideError();
+      for (var key in this._formElements) {
+        if ('element' in this._formElements[key]) {
+          if (typeof this._formElements[key]['element'].reset === "function")
+            this._formElements[key]['element'].reset();
+
+          this._formElements[key]['element'].set('disabled', false);
+        }
+      }
+      this._mbox.hide();
     },
 
     _setDbEngine : function (engine) {
@@ -382,11 +356,11 @@ function (declare, domAttr, domClass, domConstruct, Dialog, Button,
           // Show the database configuration option based on the engine.
           // If engine is null, it will hide everything. Otherwise, it will
           // automatically hide the fields that are not marked to show.
-          var show = this.FIELD_SHOW_RULES[engine].indexOf(key) > -1;
+          var show = FIELD_SHOW_RULES[engine].indexOf(key) > -1;
           domClass.toggle(this._formElements[key]['container'], 'hide', !show);
 
-          if (key in this.FIELD_PRESENTATION_RULES[engine]) {
-            var rule = this.FIELD_PRESENTATION_RULES[engine][key];
+          if (key in FIELD_PRESENTATION_RULES[engine]) {
+            var rule = FIELD_PRESENTATION_RULES[engine][key];
 
             for (var ruleKey in rule) {
               if (ruleKey === 'label') {
@@ -470,8 +444,32 @@ function (declare, domAttr, domClass, domConstruct, Dialog, Button,
       this._validate();
     },
 
-    onCancel : function () {
-      this._resetDialog();
+    /**
+     * Set the editable fields on the form based on the admin level of the
+     * user.
+     */
+    setAdminLevel : function (adminLevel) {
+      var that = this;
+
+      this._btnSqlite.set('disabled', adminLevel < 2);
+      this._btnPostgres.set('disabled', adminLevel < 2);
+
+      function shouldEnable(key) {
+        for (var i = 0; i <= adminLevel; ++i)
+          if (FIELD_RANK_SHOW_RULES[i].includes(key))
+            return true;
+
+        return false;
+      }
+
+      for (var key in this._formElements) {
+        domClass.toggle(this._formElements[key]['container'], 'invisible',
+          !shouldEnable(key));
+
+        if (this._formElements[key]['element'])
+          this._formElements[key]['element'].set(
+            'disabled', !shouldEnable(key));
+      }
     },
 
     postCreate : function () {
@@ -480,8 +478,8 @@ function (declare, domAttr, domClass, domConstruct, Dialog, Button,
       this._resetProductConfig();
       this.set('_formElements', {});
 
-      this.addChild(this._error);
-      this._hideError();
+      this.addChild(this._mbox);
+      this._mbox.hide();
 
       //--- Set up the form ---//
 
@@ -496,6 +494,9 @@ function (declare, domAttr, domClass, domConstruct, Dialog, Button,
       var dbEngineContainer = domConstruct.create('div', {
         class : 'formElement'
       }, this.containerNode);
+      this._formElements['dbengine'] = {
+        container : dbEngineContainer
+      };
 
       domConstruct.create('span', {
         class     : 'formLabel bold',
@@ -534,6 +535,147 @@ function (declare, domAttr, domClass, domConstruct, Dialog, Button,
       // By default, don't show the database fine-tuning options.
       this._setDbEngine(null);
       this._validate();
+    }
+  });
+
+  var ProductPermissionsPane = declare(ContentPane, {
+    constructor : function () {
+      var that = this;
+
+      this.permissionView = new PermissionList();
+
+      this._mbox = new MessagePane({
+        class   : 'mbox'
+      });
+
+      this._btnSave  = new Button({
+        class   : 'submit-btn',
+        label   : "Save",
+        onClick : function () {
+          that._mbox.hide();
+
+          var errors = [];
+          var permDiff = that.permissionView.getPermissionDifference();
+          var extraParams = that.permissionView.get('extraParamsJSON');
+          permDiff.forEach(function (record) {
+           try {
+              if (record.action === 'ADD')
+                CC_AUTH_SERVICE.addPermission(
+                  record.permission, record.name, record.isGroup, extraParams);
+              else if (record.action === 'REMOVE')
+                CC_AUTH_SERVICE.removePermission(
+                  record.permission, record.name, record.isGroup, extraParams);
+            }
+            catch (exc) {
+              errors.push(record);
+            }
+          });
+
+          if (errors.length > 0) {
+            var text = "<ul>";
+            errors.forEach(function(record) {
+              var permissionName = util.enumValueToKey(
+                CC_AUTH_OBJECTS.Permission, record.permission);
+              text += '<li><strong>' + (record.action === 'ADD'
+                                        ? "Add" : "Remove") +
+                      '</strong> permission <strong>' + permissionName +
+                      '</strong> of ' + (record.isGroup ? "group" : "user") +
+                      ' <strong>' + record.name + '</strong>.</li>\n';
+            });
+            text += '</ul>';
+
+
+            that._showMessageBox(
+              'error',
+              "Some permission changes could not be saved",
+              text);
+          } else {
+            that._showMessageBox(
+              'success',
+              "Permission changes saved successfully!",
+              "");
+          }
+        }
+      });
+    },
+
+    _showMessageBox : function (mode, header, text) {
+      domClass.toggle(this._mbox.domNode, "mbox-error", mode === 'error');
+      domClass.toggle(this._mbox.domNode, "mbox-success", mode === 'success');
+      this._mbox.show(header, text);
+    },
+
+    populatePermissions : function(productID) {
+      this._mbox.hide();
+
+      this.permissionView.populatePermissions('PRODUCT', {
+        productID : productID
+      });
+    },
+
+    postCreate : function () {
+      this.inherited(arguments);
+
+      this.addChild(this._mbox);
+      this._mbox.hide();
+
+      this.addChild(this.permissionView);
+      this.addChild(this._btnSave);
+    }
+  });
+
+  return declare(Dialog, {
+    constructor : function () {
+      this._tabWrapper = new ContentPane({
+        style : 'width: 650px; height: 450px'
+      });
+
+      this._tabView = new TabContainer();
+
+      this._metadataPane = new ProductMetadataPane({
+        title    : "Product settings",
+        closable : false
+      });
+
+      this._permissionPane = new ProductPermissionsPane({
+        title    : "Permissions",
+        closable : false
+      });
+    },
+
+    postCreate : function () {
+      this.inherited(arguments);
+
+      this._tabView.addChild(this._metadataPane);
+      this._tabView.addChild(this._permissionPane);
+
+      this._tabWrapper.addChild(this._tabView);
+      this.addChild(this._tabWrapper);
+    },
+
+    onHide : function () {
+      this._metadataPane.resetForm();
+    },
+
+    setMode : function (adminLevel, mode, productID, successCallback) {
+      this._tabView.selectChild(this._metadataPane);
+
+      this._metadataPane.setAdminLevel(adminLevel);
+      this._metadataPane.set('successCallback', successCallback);
+
+      if (mode === 'add') {
+        this.set('title', "Add new product");
+        this._metadataPane.set('settingsMode', 'add');
+        this._permissionPane.set('disabled', true);
+      } else if (mode === 'edit') {
+        var configuration = CC_PROD_SERVICE.getProductConfiguration(productID);
+        this.set(
+          'title', "Edit product '" + configuration.endpoint + "'");
+        this._metadataPane.setProductConfig(configuration);
+        this._metadataPane.set('settingsMode', 'edit');
+        this._permissionPane.set('disabled', false);
+        this._permissionPane.populatePermissions(productID);
+      }
     }
   });
 });

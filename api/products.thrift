@@ -10,14 +10,6 @@ namespace py ProductManagement
 namespace js codeCheckerProductManagement
 
 
-/*
-struct PrivilegeRecord {
-  1: string   name,
-  2: bool     isGroup
-}
-typedef list<PrivilegeRecord> PrivilegeRecords
-*/
-
 struct DatabaseConnection {
   1:          string engine,         // The database engine, such as "sqlite" or "postgresql".
   2:          string host,
@@ -44,7 +36,8 @@ struct Product {
   3: string displayedName_b64,
   4: string description_b64,
   5: bool   connected,         // Indicates that the server could set up the database connection properly.
-  6: bool   accessible         // Indicates whether the current user can access this product.
+  6: bool   accessible,        // Indicates whether the current user can access this product.
+  7: bool   administrating     // Indicates that the current user can administrate the product.
 }
 typedef list<Product> Products
 
@@ -57,6 +50,11 @@ service codeCheckerProductService {
   string getPackageVersion(),
 
   // *** Handling of product lists and metadata querying *** //
+
+  // Returns true if the current user is a PRODUCT_ADMIN of any product
+  // on the server.
+  bool isAdministratorOfAnyProduct()
+                                   throws (1: shared.RequestFailed requestError),
 
   // Get the list of product that matches the display name and endpoint
   // filters specified.

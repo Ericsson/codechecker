@@ -1,4 +1,3 @@
-
 /* Do not use this stylesheet without codecheckerviewer.css! */
 
 .invisible {
@@ -8,6 +7,10 @@
 /*** Product grid ***/
 
 .new-btn {
+  float: right;
+}
+
+.system-perms-btn {
   float: right;
 }
 
@@ -89,12 +92,22 @@ span.product-avatar {
   content: "\e012";
 }
 
+.customIcon.product-edit:hover {
+  color: #373c44;
+  cursor: pointer;
+}
+
 .customIcon.product-delete {
   color: #d63434;
 }
 
 .customIcon.product-delete:before {
   content: "\e013";
+}
+
+.customIcon.product-delete:hover {
+  color: #ff0000;
+  cursor: pointer;
 }
 
 /*** Product delete confirmation dialog ***/
@@ -128,11 +141,11 @@ span.product-avatar {
   font-weight: bold;
 }
 
-.formElement .formInput {
+.formElement .form-input {
   width: 350px;
 }
 
-.formElement textarea.formInput {
+.formElement textarea.form-input {
   width: 346px;
 }
 
@@ -145,4 +158,45 @@ span.product-avatar {
   margin-top: 5px;
   margin-right: 8px;
   margin-bottom: 8px;
+}
+
+/*** Permission list panel ***/
+
+/*.formElement select.permission-options {
+  width: 300px;
+}*/
+
+.formElement .halflistContainer {
+  display: inline-block;
+  margin-right: 16px;
+  width: 45%;
+}
+
+.formElement .permission-list {
+  height: 150px;
+  width: 100%;
+}
+
+.formElement .permission-list .dojoxCheckedMultiSelectWrapper {
+  height: 100%;
+  width: 100%;
+  padding-right: initial;
+}
+
+.formElement .halflistContainer.users {
+  margin-right: 32px;
+}
+
+.under-multiselect {
+  margin-top: 8px;
+}
+
+.form-input.under-multiselect {
+  width: 75%;
+  margin-left: 6px;
+}
+
+.add-btn {
+  float: right;
+  margin-top: 6px;
 }
