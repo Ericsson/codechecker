@@ -183,11 +183,16 @@ function (declare, Deferred, ObjectStore, Store, QueryResults, topic,
     }
   });
 
-  function severityFormatter(id) {
-    var severityStr = util.severityFromCodeToString(id);
-    var title = severityStr.charAt(0).toUpperCase() + severityStr.slice(1);
+  function severityFormatter(severity) {
+    // When loaded from URL then report data is originally a number.
+    // When loaded by clicking on a table row, then severity is already
+    // changed to its string representation.
+    if (typeof severity === 'number')
+      severity = util.severityFromCodeToString(severity);
+
+    var title = severity.charAt(0).toUpperCase() + severity.slice(1);
     return '<span title="' + title  + '" class="icon-severity icon-severity-'
-      + severityStr + '"></span>';
+      + severity + '"></span>';
   }
 
   var ListOfBugsGrid = declare(DataGrid, {
