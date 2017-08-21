@@ -1,5 +1,5 @@
 {
     "name": "simple",
-    "clean_cmd": "rm a.out",
-    "build_cmd": "g++ main.cpp"
+    "clean_cmd": "make clean",
+    "build_cmd": "make"
 }
