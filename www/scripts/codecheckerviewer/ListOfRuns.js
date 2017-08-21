@@ -74,8 +74,12 @@ function (declare, domConstruct, ItemFileWriteStore, topic, Dialog, Button,
 
   function prettifyStatus(statusCounts) {
     return Object.keys(statusCounts).map(function (statusCount) {
-      return util.detectionStatusFromCodeToString(statusCount)
-        + '&nbsp;(' + statusCounts[statusCount] + ')';
+      var status = util.detectionStatusFromCodeToString(statusCount);
+
+      return '<div class="detection-status-wrapper" title="' + status + '">'
+        +'<i class="customIcon detection-status-' + status.toLowerCase()
+        + '"></i><span class="num">(' + statusCounts[statusCount]
+        + ')</span></div>';
     }).join(', ');
   }
 

@@ -253,7 +253,11 @@ class ReviewStatus(Base):
     __tablename__ = 'review_statuses'
 
     bug_hash = Column(String, primary_key=True)
-    status = Column(Integer, nullable=False)
+    status = Column(Enum('unreviewed',
+                         'confirmed',
+                         'false_positive',
+                         'wont_fix',
+                         name='review_status'), nullable=False)
     author = Column(String, nullable=False)
     message = Column(Binary, nullable=False)
     date = Column(DateTime, nullable=False)
