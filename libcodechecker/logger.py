@@ -60,10 +60,42 @@ class CustomFormatter(logging.Formatter):
     or CRITICAL.
     """
 
-    info_fmt = '[%(asctime)s] - %(message)s'
-    error_fmt = '[%(levelname)s] [%(asctime)s] - %(message)s'
-    debug_fmt = '[%(asctime)s] [%(process)d] <%(thread)d> - ' \
-        '%(filename)s:%(lineno)d %(funcName)s() - %(message)s'
+    # Short format strings where only the time and the message is printed.
+    format_string_short = {
+        'info_fmt':  '[%(asctime)s] - %(message)s',
+        'error_fmt': '[%(levelname)s] [%(asctime)s] - %(message)s',
+        'debug_fmt': '[%(asctime)s] {%(name)s} [%(process)d] <%(thread)d> - '
+                     '%(filename)s:%(lineno)d %(funcName)s() - %(message)s'
+    }
+
+    # In a more verbose mode (such as --verbose debug), the error messages
+    # should also be a bit more verbose.
+    format_strings_verbose = {
+        'info_fmt': '[%(asctime)s] {%(name)s} - '
+                    '%(filename)s:%(lineno)d %(funcName)s() - %(message)s',
+        'error_fmt': '[%(levelname)s] [%(asctime)s] {%(name)s} - '
+                     '%(filename)s:%(lineno)d %(funcName)s() - %(message)s',
+        'debug_fmt': '[%(asctime)s] {%(name)s} [%(process)d] <%(thread)d> - '
+                     '%(filename)s:%(lineno)d %(funcName)s() - %(message)s'
+    }
+
+    # This sets to which --verbose (loglevel), what verbosity strings should
+    # be used by the loggers.
+    formatter_map = {
+        logging.DEBUG: format_strings_verbose,
+        logging.DEBUG_ANALYZER: format_strings_verbose,
+        logging.INFO: format_string_short,
+        logging.ERROR: format_string_short,
+        logging.WARNING: format_string_short,
+        logging.CRITICAL: format_string_short
+    }
+
+    def __init__(self):
+        self.level = logging.INFO
+        super(CustomFormatter, self).__init__()
+
+    def set_level(self, new_level):
+        self.level = new_level
 
     def formatTime(self, record, datefmt=None):
         if LoggerFactory.log_level == logging.DEBUG or \
@@ -77,19 +109,22 @@ class CustomFormatter(logging.Formatter):
         # Save the original format
         format_orig = self._fmt
 
-        # Replace the original format
+        # Get a format based on the most verbose loglevel set by the user.
+        format_strings = CustomFormatter.formatter_map[self.level]
+
+        # Replace the original format.
         if record.levelno == logging.DEBUG:
-            self._fmt = CustomFormatter.debug_fmt
+            self._fmt = format_strings['debug_fmt']
         if record.levelno == logging.DEBUG_ANALYZER:
-            self._fmt = CustomFormatter.debug_fmt
+            self._fmt = format_strings['debug_fmt']
         elif record.levelno == logging.INFO:
-            self._fmt = CustomFormatter.info_fmt
+            self._fmt = format_strings['info_fmt']
         elif record.levelno == logging.ERROR:
-            self._fmt = CustomFormatter.error_fmt
+            self._fmt = format_strings['error_fmt']
         elif record.levelno == logging.WARNING:
-            self._fmt = CustomFormatter.error_fmt
+            self._fmt = format_strings['error_fmt']
         elif record.levelno == logging.CRITICAL:
-            self._fmt = CustomFormatter.error_fmt
+            self._fmt = format_strings['error_fmt']
 
         result = logging.Formatter.format(self, record)
 
@@ -105,8 +140,10 @@ class LoggerFactory(object):
     short_format_handler = logging.StreamHandler(stream=sys.stdout)
     long_format_handler = logging.StreamHandler(stream=sys.stdout)
 
-    short_format_handler.setFormatter(CustomFormatter())
-    long_format_handler.setFormatter(CustomFormatter())
+    custom_formatter = CustomFormatter()
+
+    short_format_handler.setFormatter(custom_formatter)
+    long_format_handler.setFormatter(custom_formatter)
 
     handlers = {
         logging.INFO: short_format_handler,
@@ -124,12 +161,14 @@ class LoggerFactory(object):
 
         if level == 'debug':
             cls.log_level = logging.DEBUG
-        elif level == 'info':
-            cls.log_level = logging.INFO
         elif level == 'debug_analyzer':
             cls.log_level = logging.DEBUG_ANALYZER
+        elif level == 'info':
+            cls.log_level = logging.INFO
         else:
             cls.log_level = logging.INFO
+
+        cls.custom_formatter.set_level(cls.log_level)
 
         cls.short_format_handler.setLevel(cls.log_level)
         cls.long_format_handler.setLevel(cls.log_level)
@@ -140,7 +179,7 @@ class LoggerFactory(object):
 
     @classmethod
     def get_new_logger(cls, logger_name):
-        logger = logging.getLogger('[' + logger_name + ']')
+        logger = logging.getLogger(logger_name)
 
         logger.setLevel(cls.log_level)
         logger.addHandler(cls.handlers[cls.log_level])

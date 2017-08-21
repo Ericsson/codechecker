@@ -330,7 +330,7 @@ def main(args):
     if len(actions) == 0:
         LOG.info("None of the specified build log files contained "
                  "valid compilation commands. No analysis needed...")
-        return
+        sys.exit(1)
 
     if 'enable_all' in args:
         LOG.info("'--enable-all' was supplied for this analysis.")
