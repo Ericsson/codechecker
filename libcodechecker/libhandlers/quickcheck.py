@@ -350,8 +350,6 @@ def main(args):
             input_format='plist',
             print_steps=args.print_steps
         )
-
-        parse_module = __load_module("parse")
         __update_if_key_exists(args, parse_args, "verbose")
 
         parse_module = __load_module("parse")

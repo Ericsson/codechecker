@@ -310,12 +310,12 @@ service codeCheckerDBAccess {
 
   // This function stores an entire run encapsulated and sent in a ZIP file.
   // The ZIP file has to be compressed and sent as a base64 encoded string. The
-  // ZIP file must contain exactly one directory which has a "reports" and an
-  // optional "root" sub-folder. The former one is the output of "CodeChecker
-  // analyze" command and the latter one contains the source files on absolute
-  // paths starting as if "root" was the "/" directory. The source files are
-  // not necessary to be wrapped in the ZIP file (see necessaryFileContents()
-  // function).
+  // ZIP file must contain a "reports" and an optional "root" sub-folder.
+  // The former one is the output of 'CodeChecker analyze' command and the
+  // latter one contains the source files on absolute paths starting as if
+  // "root" was the "/" directory. The source files are not necessary to be
+  // wrapped in the ZIP file (see necessaryFileContents() function).
+  //
   // The "version" parameter is the used CodeChecker version which checked this
   // run.
   // The "force" parameter removes existing analysis results for a run.

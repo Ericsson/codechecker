@@ -8,21 +8,18 @@
 """
     report_server_api function tests.
 """
-import base64
+
 from collections import defaultdict
-import fileinput
 import os
 import random
+import shutil
 import string
 import unittest
-
-from contextlib import contextmanager
 from uuid import uuid4
 
 from libtest import env
 from libtest import codechecker
 
-from shared.ttypes import BugPathPos, BugPathEvent, Severity
 from codeCheckerDBAccess.ttypes import Encoding
 
 
@@ -37,10 +34,10 @@ def _generate_content(cols, lines):
     return content
 
 
-def _replace_path(filename, path):
-    with open(filename, 'r') as f:
+def _replace_path(file_path, path):
+    with open(file_path, 'r') as f:
         content = f.read().replace('$$$', path)
-    with open(filename, 'w') as f:
+    with open(file_path, 'w') as f:
         f.write(content)
 
 
@@ -69,16 +66,21 @@ class HashClash(unittest.TestCase):
 
         # Store runs to check.
         self._codechecker_cfg = env.import_codechecker_cfg(test_workspace)
-        test_dir = os.path.join(os.path.dirname(__file__), 'test_files')
 
-        _replace_path(os.path.join(test_dir, 'run.plist'), test_dir)
+        source_dir = os.path.join(os.path.dirname(__file__), 'test_files')
+        self._test_dir = os.path.join(test_workspace, 'test_files')
+
+        shutil.copytree(source_dir, self._test_dir)
+
+        _replace_path(os.path.join(self._test_dir, 'run.plist'),
+                      self._test_dir)
 
         codechecker.store(self._codechecker_cfg,
-                          'run',
-                          os.path.join(test_dir))
+                          'test_hash_clash_' + uuid4().hex,
+                          self._test_dir)
 
     def _reports_for_latest_run(self):
-        runs = self._report.getRunData("")
+        runs = self._report.getRunData(None)
         max_run_id = max(map(lambda run: run.runId, runs))
         return self._report.getRunResults(max_run_id, 100, 0, [], [])
 

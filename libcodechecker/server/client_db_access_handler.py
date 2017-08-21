@@ -118,25 +118,30 @@ def detection_status_enum(status):
 
 def unzip(b64zip):
     """
-    This function unzips the base64 encoded zip file which should contain
-    exactly one directory. This directory is extracted to the /tmp directory.
-    The function returns the name of the extracted directory.
+    This function unzips the base64 encoded zip file. This zip is extracted
+    to a temporary directory and the ZIP is then deleted. The function returns
+    the name of the extracted directory.
     """
 
     _, zip_file = tempfile.mkstemp('.zip')
+    temp_dir = tempfile.mkdtemp()
+    LOG.debug("Unzipping mass storage ZIP '{0}' to '{1}'..."
+              .format(zip_file, temp_dir))
 
     with open(zip_file, 'wb') as zip_f:
         zip_f.write(zlib.decompress(base64.b64decode(b64zip)))
 
     with zipfile.ZipFile(zip_file, 'r') as zipf:
-        # A not too nice way to find the only directory in the zip archive.
-        first_file = zipf.namelist()[0]
-        zip_dir = first_file[:first_file.find('/')]
-        zipf.extractall('/tmp')
+        try:
+            zipf.extractall(temp_dir)
+        except:
+            LOG.error("Failed to extract received ZIP.")
+            import traceback
+            traceback.print_exc()
+            raise
 
     os.remove(zip_file)
-
-    return os.path.join('/tmp', zip_dir)
+    return temp_dir
 
 
 class StorageSession:
@@ -1415,10 +1420,12 @@ class ThriftRequestHandler(object):
     @timeit
     def massStoreRun(self, name, version, b64zip, force):
         # Unzip sent data.
-        zipdir = unzip(b64zip)
+        zip_dir = unzip(b64zip)
 
-        source_root = os.path.join(zipdir, 'root')
-        report_dir = os.path.join(zipdir, 'reports')
+        LOG.debug("Using unzipped folder '{0}'".format(zip_dir))
+
+        source_root = os.path.join(zip_dir, 'root')
+        report_dir = os.path.join(zip_dir, 'reports')
         metadata_file = os.path.join(report_dir, 'metadata.json')
 
         check_commands, check_durations, skip_handlers = \
@@ -1556,7 +1563,7 @@ class ThriftRequestHandler(object):
 
         # TODO: This directory should be removed even if an exception is thrown
         # above.
-        shutil.rmtree(zipdir)
+        shutil.rmtree(zip_dir)
 
         return run_id
 
