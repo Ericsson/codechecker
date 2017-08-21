@@ -92,4 +92,4 @@ def _start_server(codechecker_cfg, test_config, auth=False):
     server_proc.start()
 
     # Wait for server to start and connect to database.
-    time.sleep(10)
+    time.sleep(20)
