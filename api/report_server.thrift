@@ -96,7 +96,9 @@ struct ReportFileData{
 enum SortType {
   FILENAME,
   CHECKER_NAME,
-  SEVERITY
+  SEVERITY,
+  REVIEW_STATUS,
+  DETECTION_STATUS
 }
 
 //-----------------------------------------------------------------------------

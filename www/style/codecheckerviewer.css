@@ -531,6 +531,10 @@ span[class*="severity-"] {
 }
 
 /* Review status */
+.dojoxGridCell.review-status {
+  text-align: center;
+}
+
 .review-comment {
   margin-left: 5px;
   cursor: help;
@@ -592,4 +596,46 @@ span[class*="severity-"] {
   height: 16px;
   float: left;
   margin-right: 5px;
+}
+
+/* Detection status */
+
+.dojoxGridCell.detection-status {
+  text-align: center;
+}
+
+.detection-status-wrapper {
+  display: inline-block;
+}
+
+.detection-status-wrapper .customIcon {
+  padding-right: 0px;
+}
+
+.detection-status-wrapper .num {
+  color: #767676;
+  padding-left: 2px;
+}
+
+/* Detection status icons */
+
+.detection-status-new::before {
+  content: "\e01f";
+  color: #ec7672;
+
+}
+
+.detection-status-unresolved::before {
+  content: "\e001";
+  color: #007ea7;
+}
+
+.detection-status-resolved::before {
+  content: "\e01d";
+  color: #669603;
+}
+
+.detection-status-reopened::before {
+  content: "\e009";
+  color: #ff0000;
 }
