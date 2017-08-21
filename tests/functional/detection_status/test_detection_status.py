@@ -48,12 +48,15 @@ class TestDetectionStatus(unittest.TestCase):
         self._source_file = "main.cpp"
 
         # Init project dir.
+        makefile = "all:\n\t$(CXX) -c main.cpp -o /dev/null\n"
         project_info = {
             "name": "hello",
             "clean_cmd": "",
-            "build_cmd": "g++ main.cpp"
+            "build_cmd": "make"
         }
 
+        with open(os.path.join(self._test_dir, 'Makefile'), 'w') as f:
+            f.write(makefile)
         with open(os.path.join(self._test_dir, 'project_info.json'), 'w') as f:
             json.dump(project_info, f)
 
@@ -117,7 +120,7 @@ int main()
         # Check the first file version
         self._create_source_file(1)
 
-        runs = self._cc_client.getRunData("")
+        runs = self._cc_client.getRunData(None)
         run_id = max(map(lambda run: run.runId, runs))
 
         reports = self._cc_client.getRunResults(run_id, 100, 0, {}, {})

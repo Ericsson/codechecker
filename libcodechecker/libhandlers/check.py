@@ -469,8 +469,6 @@ def main(args):
             __update_if_key_exists(args, analyze_args, key)
         if args.force:
             setattr(analyze_args, 'clean', True)
-
-        analyze_module = __load_module("analyze")
         __update_if_key_exists(args, analyze_args, "verbose")
 
         analyze_module = __load_module("analyze")
@@ -488,7 +486,6 @@ def main(args):
         # database. When changing this behavior, the workspace argument should
         # be removed from here.
         store_args = argparse.Namespace(
-            workspace=args.workspace,
             input=[report_dir],
             input_format='plist',
             force=args.force,

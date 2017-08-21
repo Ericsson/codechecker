@@ -4,6 +4,7 @@
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
 
+import base64
 from hashlib import sha256
 import json
 import os

@@ -10,6 +10,7 @@ database.
 
 import argparse
 import base64
+import errno
 import functools
 from hashlib import sha256
 import json
@@ -190,6 +191,7 @@ def res_handler(results):
 
 def assemble_zip(inputs, zip_file, client):
     temp_dir = tempfile.mkdtemp()
+    LOG.debug("Assembling ZIP contents in '{0}':".format(temp_dir))
 
     report_dir = os.path.join(temp_dir, 'reports')
     os.makedirs(report_dir)
@@ -216,15 +218,23 @@ def assemble_zip(inputs, zip_file, client):
         for input_path in inputs:
             input_path = os.path.abspath(input_path)
 
+            if not os.path.exists(input_path):
+                raise OSError(errno.ENOENT,
+                              "Input path does not exist", input_path)
+
             if os.path.isfile(input_path):
                 if not input_path.endswith(".plist"):
                     continue
+                LOG.debug("Copying plist '{0}' to ZIP assembly dir..."
+                          .format(input_path))
                 shutil.copy(input_path, report_dir)
                 collect_file_hashes_from_plist(input_path)
             elif os.path.isdir(input_path):
                 _, _, files = next(os.walk(input_path), ([], [], []))
                 for f in files:
                     plist_file = os.path.join(input_path, f)
+                    LOG.debug("Copying file '{0}' to ZIP assembly dir..."
+                              .format(plist_file))
                     shutil.copy(plist_file, report_dir)
                     if f.endswith(".plist"):
                         collect_file_hashes_from_plist(plist_file)
@@ -232,7 +242,7 @@ def assemble_zip(inputs, zip_file, client):
         necessary_hashes = client.necessaryFileContents(file_dict.keys())
         for h, f in file_dict.items():
             if h in necessary_hashes:
-                target_file = os.path.join(source_dir, f[1:])
+                target_file = os.path.join(source_dir, f.lstrip('/'))
 
                 try:
                     os.makedirs(os.path.dirname(target_file))
@@ -240,13 +250,17 @@ def assemble_zip(inputs, zip_file, client):
                     # Directory already exists.
                     pass
 
+                LOG.debug("File contents for '{0}' needed by the server"
+                          .format(f))
                 shutil.copyfile(f, target_file)
 
         with zipfile.ZipFile(zip_file, 'w') as zipf:
             for root, _, files in os.walk(temp_dir):
                 for file in files:
                     f = os.path.join(root, file)
-                    zipf.write(f, f[len('/tmp'):])
+                    LOG.debug("[ZIP] Writing file '{0}' into mass store ZIP."
+                              .format(f))
+                    zipf.write(f, f.replace(temp_dir, ''))
 
         # Compressing .zip file
         with open(zip_file, 'rb') as source:
@@ -255,9 +269,10 @@ def assemble_zip(inputs, zip_file, client):
 
         with open(zip_file, 'wb') as target:
             target.write(compressed)
+
+        LOG.debug("[ZIP] Mass store zip written at '{0}'".format(zip_file))
     finally:
         shutil.rmtree(temp_dir)
-        pass
 
 
 def main(args):
@@ -299,6 +314,7 @@ def main(args):
               str(args.host) + ":" + str(args.port) + " done.")
 
     _, zip_file = tempfile.mkstemp('.zip')
+    LOG.debug("Will write mass store ZIP to '{0}'...".format(zip_file))
 
     try:
         assemble_zip(args.input, zip_file, client)
