@@ -57,10 +57,10 @@
     "clangsa": 1,
     "clang-tidy": 1},
   "command": [
-    "/home/etibbru/CodeChecker/CodeChecker/build/CodeChecker/cc_bin/CodeChecker.py",
+    "/home/user/CodeChecker/bin/CodeChecker.py",
     "analyze",
-    "asd.json"],
+    "test_hash_clash.json"],
   "failed": {},
-  "working_directory": "/home/etibbru/CodeCompass/projects/hello",
+  "working_directory": "$$$",
   "timestamps": {"begin": 1502964665.566252, "end": 1502964665.777198},
-  "output_path": "/home/etibbru/.codechecker/reports"}
+  "output_path": "$$$"}

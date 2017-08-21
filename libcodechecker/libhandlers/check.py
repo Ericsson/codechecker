@@ -469,8 +469,6 @@ def main(args):
             __update_if_key_exists(args, analyze_args, key)
         if args.force:
             setattr(analyze_args, 'clean', True)
-
-        analyze_module = __load_module("analyze")
         __update_if_key_exists(args, analyze_args, "verbose")
 
         analyze_module = __load_module("analyze")
