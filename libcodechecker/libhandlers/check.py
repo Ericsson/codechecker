@@ -488,7 +488,6 @@ def main(args):
         # database. When changing this behavior, the workspace argument should
         # be removed from here.
         store_args = argparse.Namespace(
-            workspace=args.workspace,
             input=[report_dir],
             input_format='plist',
             force=args.force,
