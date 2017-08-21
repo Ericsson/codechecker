@@ -116,6 +116,28 @@ def detection_status_enum(status):
         return shared.ttypes.DetectionStatus.REOPENED
 
 
+def review_status_str(status):
+    if status == shared.ttypes.ReviewStatus.UNREVIEWED:
+        return 'unreviewed'
+    elif status == shared.ttypes.ReviewStatus.CONFIRMED:
+        return 'confirmed'
+    elif status == shared.ttypes.ReviewStatus.FALSE_POSITIVE:
+        return 'false_positive'
+    elif status == shared.ttypes.ReviewStatus.WONT_FIX:
+        return 'wont_fix'
+
+
+def review_status_enum(status):
+    if status == 'unreviewed':
+        return shared.ttypes.ReviewStatus.UNREVIEWED
+    elif status == 'confirmed':
+        return shared.ttypes.ReviewStatus.CONFIRMED
+    elif status == 'false_positive':
+        return shared.ttypes.ReviewStatus.FALSE_POSITIVE
+    elif status == 'wont_fix':
+        return shared.ttypes.ReviewStatus.WONT_FIX
+
+
 def unzip(b64zip):
     """
     This function unzips the base64 encoded zip file. This zip is extracted
@@ -284,7 +306,9 @@ class ThriftRequestHandler(object):
         # Get a list of sort_types which will be a nested ORDER BY.
         sort_type_map = {SortType.FILENAME: [File.filepath],
                          SortType.CHECKER_NAME: [Report.checker_id],
-                         SortType.SEVERITY: [Report.severity]}
+                         SortType.SEVERITY: [Report.severity],
+                         SortType.REVIEW_STATUS: [ReviewStatus.status],
+                         SortType.DETECTION_STATUS: [Report.detection_status]}
 
         # Mapping the SQLAlchemy functions.
         order_type_map = {Order.ASC: asc, Order.DESC: desc}
@@ -379,7 +403,7 @@ class ThriftRequestHandler(object):
 
             if review_status:
                 review_data = ReviewData(
-                    status=review_status.status,
+                    status=review_status_enum(review_status.status),
                     comment=review_status.message,
                     author=review_status.author,
                     date=str(review_status.date))
@@ -441,7 +465,7 @@ class ThriftRequestHandler(object):
 
                 if review_status:
                     review_data = ReviewData(
-                        status=review_status.status,
+                        status=review_status_enum(review_status.status),
                         comment=review_status.message,
                         author=review_status.author,
                         date=str(review_status.date))
@@ -578,7 +602,7 @@ class ThriftRequestHandler(object):
                 user = self.__auth_session.user \
                     if self.__auth_session else "Anonymous"
 
-                review_status.status = status
+                review_status.status = review_status_str(status)
                 review_status.author = user
                 review_status.message = message
                 review_status.date = datetime.now()
@@ -1026,7 +1050,7 @@ class ThriftRequestHandler(object):
 
                 if review_status:
                     review_data = ReviewData(
-                        status=review_status.status,
+                        status=review_status_enum(review_status.status),
                         comment=review_status.message,
                         author=review_status.author,
                         date=str(review_status.date))

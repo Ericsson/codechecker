@@ -94,21 +94,11 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
           ' @ Line ' + reportData.lastBugPosition.startLine;
 
         //--- Review status ---//
-
-        var className = util.reviewStatusCssClass(reportData.review.status);
-        var reviewStatus =
-          util.reviewStatusFromCodeToString(reportData.review.status);
-
-        reportData.reviewStatusHtml = '<span title="' + reviewStatus
-          + '" class="customIcon review-status-' + className + '"></span>'
-          + reviewStatus;
-
-        reportData.reviewComment = reportData.review.comment;
-
-        //--- Detection status ---//
-
-        reportData.detectionStatus
-          = util.detectionStatusFromCodeToString(reportData.detectionStatus);
+        var review = reportData.review;
+        reportData.reviewStatus = review.status;
+        reportData.reviewComment = review.author && review.comment
+          ? review.comment
+          : review.author ? '-' : '';
       });
 
       return reportDataList;
@@ -122,6 +112,10 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
         ? CC_OBJECTS.SortType.FILENAME
         : sort.attribute === 'checkerId'
         ? CC_OBJECTS.SortType.CHECKER_NAME
+        : sort.attribute === 'detectionStatus'
+        ? CC_OBJECTS.SortType.DETECTION_STATUS
+        : sort.attribute === 'reviewStatus'
+        ? CC_OBJECTS.SortType.REVIEW_STATUS
         : CC_OBJECTS.SortType.SEVERITY;
       sortMode.ord
         = sort.descending
@@ -213,6 +207,22 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
       + severity + '"></span>';
   }
 
+  function detectionStatusFormatter(detectionStatus) {
+    var status = util.detectionStatusFromCodeToString(detectionStatus);
+
+    return '<span title="' + status  + '" class="customIcon detection-status-'
+      + status.toLowerCase() + '"></span>';
+  }
+
+  function reviewStatusFormatter(reviewStatus) {
+    var className = util.reviewStatusCssClass(reviewStatus);
+    var status =
+      util.reviewStatusFromCodeToString(reviewStatus);
+
+    return '<span title="' + status
+      + '" class="customIcon review-status-' + className + '"></span>';
+  }
+
   var ListOfBugsGrid = declare(DataGrid, {
     constructor : function () {
       var width = (100 / 5).toString() + '%';
@@ -221,10 +231,10 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
         { name : 'File', field : 'checkedFile', cellClasses : 'link compact', width : '100%' },
         { name : 'Message', field : 'checkerMsg', width : '100%' },
         { name : 'Checker name', field : 'checkerId', cellClasses : 'link', width : '50%' },
-        { name : 'Severity', field : 'severity', cellClasses : 'severity', formatter : severityFormatter },
-        { name : 'Review status', field : 'reviewStatusHtml', cellClasses : 'review-status', width : '25%' },
+        { name : 'Severity', field : 'severity', cellClasses : 'severity', width : '15%', formatter : severityFormatter },
+        { name : 'Review status', field : 'reviewStatus', cellClasses : 'review-status', width : '15%', formatter : reviewStatusFormatter },
         { name : 'Review comment', cellClasses : 'review-comment-message compact', field : 'reviewComment', width : '50%' },
-        { name : 'Detection status', field : 'detectionStatus' }
+        { name : 'Detection status', field : 'detectionStatus', cellClasses : 'detection-status', width : '15%', formatter : detectionStatusFormatter }
       ];
 
       this.focused = true;
@@ -249,6 +259,7 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
       return cell.field === 'checkedFile' ||
              cell.field === 'checkerId'   ||
              cell.field === 'severity'    ||
+             cell.field === 'reviewStatus' ||
              cell.field === 'detectionStatus';
     },
 
@@ -274,10 +285,13 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
     },
 
     onRowMouseOver : function (evt) {
+      if (!evt.cell)
+        return;
+
       var item = this.getItem(evt.rowIndex);
       switch (evt.cell.field) {
         case 'reviewComment':
-          if (item.review.comment) {
+          if (item.review.author) {
             var content = util.reviewStatusTooltipContent(item.review);
 
             Tooltip.show(content.outerHTML, evt.target, ['below']);
