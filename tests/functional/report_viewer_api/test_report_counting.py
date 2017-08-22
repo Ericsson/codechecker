@@ -118,9 +118,10 @@ class TestReportFilter(unittest.TestCase):
         checker_counts = self._cc_client.getCheckerCounts([runid],
                                                           None,
                                                           None)
+        checkers_dict = dict((res.name, res.count) for res in checker_counts)
 
         self.assertGreaterEqual(len(checker_counts), len(self.run1_checkers))
-        self.assertDictContainsSubset(self.run1_checkers, checker_counts)
+        self.assertDictContainsSubset(self.run1_checkers, checkers_dict)
 
     def test_run1_core_checkers(self):
         """
@@ -131,11 +132,13 @@ class TestReportFilter(unittest.TestCase):
         checker_counts = self._cc_client.getCheckerCounts([runid],
                                                           core_filter,
                                                           None)
+        checkers_dict = dict((res.name, res.count) for res in checker_counts)
+
         core_checkers = {k: v for k, v in self.run1_checkers.items()
                          if "core." in k}
 
         self.assertGreaterEqual(len(checker_counts), len(core_checkers))
-        self.assertDictContainsSubset(core_checkers, checker_counts)
+        self.assertDictContainsSubset(core_checkers, checkers_dict)
 
     def test_run2_all_checkers(self):
         """
@@ -145,9 +148,10 @@ class TestReportFilter(unittest.TestCase):
         checker_counts = self._cc_client.getCheckerCounts([runid],
                                                           None,
                                                           None)
+        checkers_dict = dict((res.name, res.count) for res in checker_counts)
 
         self.assertGreaterEqual(len(checker_counts), len(self.run2_checkers))
-        self.assertDictContainsSubset(self.run2_checkers, checker_counts)
+        self.assertDictContainsSubset(self.run2_checkers, checkers_dict)
 
     def test_run1_run2_all_checkers(self):
         """
@@ -156,13 +160,14 @@ class TestReportFilter(unittest.TestCase):
         checker_counts = self._cc_client.getCheckerCounts(self._runids,
                                                           None,
                                                           None)
+        checkers_dict = dict((res.name, res.count) for res in checker_counts)
 
         r1_checkers = Counter(self.run1_checkers)
         r2_checkers = Counter(self.run2_checkers)
         all_checkers = dict(r1_checkers + r2_checkers)
 
         self.assertEqual(len(checker_counts), len(all_checkers))
-        self.assertDictEqual(checker_counts, all_checkers)
+        self.assertDictEqual(checkers_dict, all_checkers)
 
     def test_run1_run2_core_checkers(self):
         """
@@ -172,6 +177,7 @@ class TestReportFilter(unittest.TestCase):
         checker_counts = self._cc_client.getCheckerCounts(self._runids,
                                                           core_filter,
                                                           None)
+        checkers_dict = dict((res.name, res.count) for res in checker_counts)
 
         core_checkers_r1 = {k: v for k, v in self.run1_checkers.items()
                             if "core." in k}
@@ -184,7 +190,7 @@ class TestReportFilter(unittest.TestCase):
         all_core = dict(r1_core + r2_core)
 
         self.assertGreaterEqual(len(checker_counts), len(all_core))
-        self.assertDictContainsSubset(all_core, checker_counts)
+        self.assertDictContainsSubset(all_core, checkers_dict)
 
     def test_run1_all_severity(self):
         """
@@ -457,6 +463,8 @@ class TestReportFilter(unittest.TestCase):
         new_reports = self._cc_client.getCheckerCounts([runid],
                                                        new_filter,
                                                        None)
+        checkers_dict = dict((res.name, res.count) for res in new_reports)
+
         new = {'core.CallAndMessage': 5,
                'core.StackAddressEscape': 3,
                'cplusplus.NewDelete': 5,
@@ -464,7 +472,7 @@ class TestReportFilter(unittest.TestCase):
                'core.DivideZero': 5,
                'deadcode.DeadStores': 5,
                'unix.Malloc': 1}
-        self.assertDictEqual(new, new_reports)
+        self.assertDictEqual(new, checkers_dict)
 
     def test_run1_detection_status_resolved(self):
         """
@@ -477,7 +485,9 @@ class TestReportFilter(unittest.TestCase):
         resolved_reports = self._cc_client.getCheckerCounts([runid],
                                                             resolved_filter,
                                                             None)
-        self.assertDictEqual({}, resolved_reports)
+        checkers_dict = dict((res.name, res.count) for res in resolved_reports)
+
+        self.assertDictEqual({}, checkers_dict)
 
     def test_run1_detection_status_unresolved(self):
         """
@@ -491,7 +501,10 @@ class TestReportFilter(unittest.TestCase):
             self._cc_client.getCheckerCounts([runid],
                                              unresolved_filter,
                                              None)
-        self.assertDictEqual({}, unresolved_reports)
+        checkers_dict = dict((res.name, res.count)
+                             for res in unresolved_reports)
+
+        self.assertDictEqual({}, checkers_dict)
 
     def test_run1_detection_status_repoened(self):
         """
@@ -504,7 +517,8 @@ class TestReportFilter(unittest.TestCase):
         reopened_reports = self._cc_client.getCheckerCounts([runid],
                                                             reopen_filter,
                                                             None)
-        self.assertDictEqual({}, reopened_reports)
+        checkers_dict = dict((res.name, res.count) for res in reopened_reports)
+        self.assertDictEqual({}, checkers_dict)
 
     def test_all_run_report_counts(self):
         """

@@ -247,10 +247,11 @@ class Diff(unittest.TestCase):
         diff_res = self._cc_client.getCheckerCounts([base_run_id],
                                                     None,
                                                     cmp_data)
+        diff_dict = dict((res.name, res.count) for res in diff_res)
 
         # core.CallAndMessage is the new checker.
         test_res = {"core.CallAndMessage": 5}
-        self.assertDictEqual(diff_res, test_res)
+        self.assertDictEqual(diff_dict, test_res)
 
     def test_get_diff_checker_counts_core_new(self):
         """
@@ -265,9 +266,11 @@ class Diff(unittest.TestCase):
         diff_res = self._cc_client.getCheckerCounts([base_run_id],
                                                     report_filter,
                                                     cmp_data)
+        diff_dict = dict((res.name, res.count) for res in diff_res)
+
         # core.CallAndMessage is the new checker.
         test_res = {"core.CallAndMessage": 5}
-        self.assertDictEqual(diff_res, test_res)
+        self.assertDictEqual(diff_dict, test_res)
 
     def test_get_diff_checker_counts_unix_resolved(self):
         """
@@ -282,9 +285,11 @@ class Diff(unittest.TestCase):
         diff_res = self._cc_client.getCheckerCounts([base_run_id],
                                                     report_filter,
                                                     cmp_data)
+        diff_dict = dict((res.name, res.count) for res in diff_res)
+
         # Resolved core checkers.
         test_res = {'core.StackAddressEscape': 3}
-        self.assertDictEqual(diff_res, test_res)
+        self.assertDictEqual(diff_dict, test_res)
 
     def test_get_diff_checker_counts_core_unresolved(self):
         """
@@ -299,9 +304,11 @@ class Diff(unittest.TestCase):
         diff_res = self._cc_client.getCheckerCounts([base_run_id],
                                                     report_filter,
                                                     cmp_data)
+        diff_dict = dict((res.name, res.count) for res in diff_res)
+
         # Unresolved core checkers.
         test_res = {'core.NullDereference': 4, 'core.DivideZero': 5}
-        self.assertDictContainsSubset(test_res, diff_res)
+        self.assertDictContainsSubset(test_res, diff_dict)
 
     def test_get_diff_checker_counts_all_unresolved(self):
         """
@@ -316,6 +323,8 @@ class Diff(unittest.TestCase):
         diff_res = self._cc_client.getCheckerCounts([base_run_id],
                                                     None,
                                                     cmp_data)
+        diff_dict = dict((res.name, res.count) for res in diff_res)
+
         # All unresolved checkers.
         test_res = {'core.DivideZero': 5,
                     'core.NullDereference': 4,
@@ -323,7 +332,7 @@ class Diff(unittest.TestCase):
                     'deadcode.DeadStores': 5,
                     'unix.Malloc': 1}
 
-        self.assertDictContainsSubset(diff_res, test_res)
+        self.assertDictContainsSubset(diff_dict, test_res)
 
     def test_get_diff_severity_counts_all_unresolved(self):
         """
@@ -423,8 +432,10 @@ class Diff(unittest.TestCase):
         diff_res = self._cc_client.getCheckerCounts([base_run_id],
                                                     None,
                                                     cmp_data)
+        diff_dict = dict((res.name, res.count) for res in diff_res)
+
         test_res = {'core.StackAddressEscape': 3}
-        self.assertDictEqual(diff_res, test_res)
+        self.assertDictEqual(diff_dict, test_res)
 
     def test_get_diff_res_types_unresolved(self):
         """
@@ -444,13 +455,14 @@ class Diff(unittest.TestCase):
             self._cc_client.getCheckerCounts([base_run_id],
                                              None,
                                              cmp_data)
+        diff_dict = dict((res.name, res.count) for res in diff_res)
 
         test_res = {'cplusplus.NewDelete': 5,
                     'deadcode.DeadStores': 5,
                     'unix.Malloc': 1,
                     'core.NullDereference': 4,
                     'core.DivideZero': 5}
-        self.assertDictEqual(diff_res, test_res)
+        self.assertDictEqual(diff_dict, test_res)
 
     def test_get_diff_res_types_unresolved_filter(self):
         """
@@ -472,9 +484,10 @@ class Diff(unittest.TestCase):
                     self._cc_client.getCheckerCounts([base_run_id],
                                                      checker_filter,
                                                      cmp_data)
+                diff_dict = dict((res.name, res.count) for res in diff_res)
 
                 # There should be only one result for each checker name.
-                self.assertEqual(test_result_count, diff_res[checker_name])
+                self.assertEqual(test_result_count, diff_dict[checker_name])
 
     def test_local_compare_res_count_new(self):
         """

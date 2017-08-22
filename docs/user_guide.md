@@ -1275,7 +1275,7 @@ usage: CodeChecker cmd sum [-h] (-n RUN_NAME [RUN_NAME ...] | -a) [-s]
                            [-o {plaintext,rows,table,csv,json}]
                            [--verbose {info,debug,debug_analyzer}]
 
-Show the count of checker reports per checker for some analysis runs.
+Show checker statistics for some analysis runs.
 
 optional arguments:
   -h, --help            show this help message and exit

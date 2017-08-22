@@ -1380,7 +1380,7 @@ class ThriftRequestHandler(object):
           will be used as a baseline excluding the runs in compare data.
         """
         self.__require_access()
-        results = {}
+        results = []
         session = self.__Session()
         try:
 
@@ -1400,7 +1400,9 @@ class ThriftRequestHandler(object):
 
             count_expr = func.count(literal_column('*'))
 
-            q = session.query(Report.checker_id, count_expr) \
+            q = session.query(Report.checker_id,
+                              Report.severity,
+                              count_expr) \
                 .filter(Report.run_id.in_(run_ids)) \
                 .outerjoin(File,
                            Report.file_id == File.id) \
@@ -1411,9 +1413,13 @@ class ThriftRequestHandler(object):
             if cmp_data:
                 q = q.filter(Report.bug_id.in_(diff_hashes))
 
-            checker_ids = q.group_by(Report.checker_id).all()
+            q = q.group_by(Report.checker_id, Report.severity).all()
 
-            results = dict(checker_ids)
+            for name, severity, count in q:
+                checker_count = CheckerCount(name=name,
+                                             severity=severity,
+                                             count=count)
+                results.append(checker_count)
 
         except Exception as ex:
             LOG.error(ex)

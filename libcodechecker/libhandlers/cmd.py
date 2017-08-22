@@ -592,9 +592,8 @@ def add_arguments_to_parser(parser):
     sum_p = subcommands.add_parser(
         'sum',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        description="Show the count of checker reports per checker for some "
-                    "analysis runs.",
-        help="Show number of reports per checker.")
+        description="Show checker statistics for some analysis runs.",
+        help="Show statistics of checkers.")
     __register_sum(sum_p)
     sum_p.set_defaults(func=cmd_line_client.handle_list_result_types)
     __add_common_arguments(sum_p, has_matrix_output=True)

@@ -356,13 +356,19 @@ def handle_diff_results(args):
 
 
 def handle_list_result_types(args):
+    def getStatistics(client, run_ids, field, values):
+        report_filter = ttypes.ReportFilter_v2()
+        setattr(report_filter, field, values)
+        checkers = client.getCheckerCounts(run_ids,
+                                           report_filter,
+                                           None)
+
+        return dict((res.name, res.count) for res in checkers)
+
+    def checkerCount(dict, key):
+        return dict[key] if key in dict else 0
+
     client = setup_client(args.product_url)
-
-    filters = []
-    report_filter = ttypes.ReportFilter()
-
-    add_filter_conditions(report_filter, args.filter)
-    filters.append(report_filter)
 
     if 'all_results' in args:
         items = check_run_names(client, None).items()
@@ -372,28 +378,62 @@ def handle_list_result_types(args):
         for name in args.names:
             items.append((name, run_info.get(name)))
 
-    results_collector = []
-    for name, run_info in items:
-        run_id, run_date = run_info
-        results = client.getRunResultTypes(run_id, filters)
+    run_ids = [item[1][0] for item in items]
 
-        if args.output_format == 'json':
-            for res in results:
-                res.severity =\
-                    shared.ttypes.Severity._VALUES_TO_NAMES[res.severity]
-            results_collector.append({name: results})
-        else:  # plaintext, csv
-            print("Run '" + name + "', executed at '" + run_date + "'")
-            rows = []
-            header = ['Checker', 'Severity', 'Count']
-            for res in results:
-                sev = shared.ttypes.Severity._VALUES_TO_NAMES[res.severity]
-                rows.append((res.checkerId, sev, str(res.count)))
+    all_checkers_report_filter = ttypes.ReportFilter_v2()
+    all_checkers = client.getCheckerCounts(run_ids, all_checkers_report_filter,
+                                           None)
+    all_checkers_dict = dict((res.name, res) for res in all_checkers)
 
-            print(twodim_to_str(args.output_format, header, rows))
+    unrev_checkers = getStatistics(client, run_ids, 'reviewStatus',
+                                   [shared.ttypes.ReviewStatus.UNREVIEWED])
+
+    confirmed_checkers = getStatistics(client, run_ids, 'reviewStatus',
+                                       [shared.ttypes.ReviewStatus.CONFIRMED])
+
+    false_checkers = getStatistics(client, run_ids, 'reviewStatus',
+                                   [shared.ttypes.ReviewStatus.FALSE_POSITIVE])
+
+    wontfix_checkers = getStatistics(client, run_ids, 'reviewStatus',
+                                     [shared.ttypes.ReviewStatus.WONT_FIX])
+
+    resolved_checkers = getStatistics(client, run_ids, 'detectionStatus',
+                                      [shared.ttypes.DetectionStatus.RESOLVED])
+
+    all_results = []
+    for key, checker_data in sorted(all_checkers_dict.items(),
+                                    key=lambda x: x[1].severity,
+                                    reverse=True):
+        all_results.append(dict(
+            checker=key,
+            severity=shared.ttypes.Severity._VALUES_TO_NAMES[
+                checker_data.severity],
+            reports=checker_data.count,
+            unreviewed=checkerCount(unrev_checkers, key),
+            confirmed=checkerCount(confirmed_checkers, key),
+            false_positive=checkerCount(false_checkers, key),
+            wont_fix=checkerCount(wontfix_checkers, key),
+            resolved=checkerCount(resolved_checkers, key),
+         ))
 
     if args.output_format == 'json':
-        print(CmdLineOutputEncoder().encode(results_collector))
+        print(CmdLineOutputEncoder().encode(all_results))
+    else:
+        header = ['Checker', 'Severity', 'All reports', 'Resolved',
+                  'Unreviewed', 'Confirmed', 'False positive', "Won't fix"]
+
+        rows = []
+        for stat in all_results:
+            rows.append((stat['checker'],
+                         stat['severity'],
+                         str(stat['reports']),
+                         str(stat['resolved']),
+                         str(stat['unreviewed']),
+                         str(stat['confirmed']),
+                         str(stat['false_positive']),
+                         str(stat['wont_fix'])))
+
+        print(twodim_to_str(args.output_format, header, rows))
 
 
 def handle_remove_run_results(args):
