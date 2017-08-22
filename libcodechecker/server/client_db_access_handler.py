@@ -1487,7 +1487,8 @@ class ThriftRequestHandler(object):
                     LOG.debug(file_name + ' not found or already stored.')
                     continue
 
-                with codecs.open(zip_file_name, 'r', 'UTF-8') as source_file:
+                with codecs.open(zip_file_name, 'r',
+                                 'UTF-8', 'replace') as source_file:
                     file_content = source_file.read()
                     # TODO: we may not use the file content in the end
                     # depending on skippaths.
