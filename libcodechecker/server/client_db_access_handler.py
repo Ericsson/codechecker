@@ -12,6 +12,7 @@ import codecs
 from collections import defaultdict
 from collections import OrderedDict
 import datetime
+import json
 import os
 import shutil
 import sys
@@ -222,6 +223,9 @@ class StorageSession:
             self.__sessions[run_id]['timer'] = time.time()
             return self.__sessions[run_id]['transaction']
 
+        # FIXME: do we need this guard at all?
+        # Storage is performed locally on the server
+        # so why would it timeout?
         def _timeout_sessions(self):
             """
             The storage session times out if no action happens in the
@@ -1427,7 +1431,7 @@ class ThriftRequestHandler(object):
             session.close()
 
     @timeit
-    def necessaryFileContents(self, file_hashes):
+    def getMissingContentHashes(self, file_hashes):
         try:
             session = self.__Session()
 
@@ -1451,6 +1455,10 @@ class ThriftRequestHandler(object):
         source_root = os.path.join(zip_dir, 'root')
         report_dir = os.path.join(zip_dir, 'reports')
         metadata_file = os.path.join(report_dir, 'metadata.json')
+        content_hash_file = os.path.join(zip_dir, 'content_hashes.json')
+
+        with open(content_hash_file) as chash_file:
+            filename2hash = json.load(chash_file)
 
         check_commands, check_durations, skip_handlers = \
             store_handler.metadata_info(metadata_file)
@@ -1481,13 +1489,31 @@ class ThriftRequestHandler(object):
                 continue
 
             for file_name in files:
-                zip_file_name = os.path.join(source_root, file_name)
+                source_file_name = os.path.join(source_root,
+                                                file_name.strip("/"))
+                LOG.debug("Storing source file:"+source_file_name)
 
-                if not os.path.isfile(zip_file_name):
+                if not os.path.isfile(source_file_name):
+                    # The file was not in the ZIP file,
+                    # because we already have the content.
+                    # Let's check if we already have a
+                    # file record in the database or we need to
+                    # add one.
+
                     LOG.debug(file_name + ' not found or already stored.')
+                    fid = store_handler.addFileRecord(self.__Session(),
+                                                      file_name,
+                                                      filename2hash[file_name])
+                    if not fid:
+                        LOG.error("File ID for " + source_file_name +
+                                  "is not found in the DB with content hash " +
+                                  filename2hash[file_name] +
+                                  ". Missing from ZIP?")
+                    file_path_to_id[file_name] = fid
+                    LOG.debug(str(fid) + " fileid found")
                     continue
 
-                with codecs.open(zip_file_name, 'r',
+                with codecs.open(source_file_name, 'r',
                                  'UTF-8', 'replace') as source_file:
                     file_content = source_file.read()
                     # TODO: we may not use the file content in the end
@@ -1523,6 +1549,9 @@ class ThriftRequestHandler(object):
             LOG.debug("Parsing input file '" + f + "'")
 
             try:
+                # FIXME: We are parsing the plists for the
+                # second time here. Use re-use the
+                # previous results.
                 files, reports = plist_parser.parse_plist(
                     os.path.join(report_dir, f))
             except Exception as ex:

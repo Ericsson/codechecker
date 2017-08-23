@@ -184,12 +184,14 @@ def is_same_event_path(report_id, events, session):
 
             point1 = events[i]
 
-            file1path = session.query(File).get(point1.fileId).filepath
-            file2path = session.query(File).get(point2.file_id).filepath
+            file1name = os.path.basename(session.query(File).
+                                         get(point1.fileId).filepath)
+            file2name = os.path.basename(session.query(File).
+                                         get(point2.file_id).filepath)
 
             if point1.startCol != point2.col_begin or \
                     point1.endCol != point2.col_end or \
-                    file1path != file2path or \
+                    file1name != file2name or \
                     point1.msg != point2.msg:
                 return False
 
@@ -492,6 +494,41 @@ def addFileContent(session, filepath, content, encoding):
                             File.filepath == filepath) \
                     .one_or_none()
 
+        return file_record.id
+    finally:
+        session.close()
+
+
+def addFileRecord(session, filepath, content_hash):
+    """
+    Add the necessary file record pointing to an already existing content.
+    Returns the added file record id or None, if the content_hash is not found.
+
+    This function must not be called between addCheckerRun() and
+    finishCheckerRun() functions when SQLite database is used! addCheckerRun()
+    function opens a transaction which is closed by finishCheckerRun() and
+    since SQLite doesn't support parallel transactions, this API call will
+    wait until the other transactions finish. In the meantime the run adding
+    transaction times out.
+    """
+    try:
+        file_record = session.query(File) \
+            .filter(File.content_hash == content_hash,
+                    File.filepath == filepath) \
+            .one_or_none()
+        if file_record:
+            return file_record.id
+        try:
+            file_record = File(filepath, content_hash)
+            session.add(file_record)
+            session.commit()
+        except sqlalchemy.exc.IntegrityError as ex:
+            # Other transaction might have added the same file in the
+            # meantime.
+            session.rollback()
+            file_record = session.query(File) \
+                .filter(File.content_hash == content_hash,
+                        File.filepath == filepath).one_or_none()
         return file_record.id
     finally:
         session.close()

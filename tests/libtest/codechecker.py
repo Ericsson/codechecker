@@ -199,6 +199,7 @@ def serv_cmd(codechecker_cfg, test_config):
                        '--port',
                        str(codechecker_cfg['viewer_port'])
                        ])
+    # server_cmd.extend(['--verbose', 'debug'])
 
     psql_cfg = codechecker_cfg.get('pg_db_config')
     if psql_cfg:
