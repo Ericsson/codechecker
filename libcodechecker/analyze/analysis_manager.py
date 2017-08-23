@@ -106,7 +106,7 @@ def create_dependencies(action):
 
         if option_index:
             arg_vect = arg_vect[0:option_index] + \
-                       arg_vect[option_index + num_args + 1:]
+                arg_vect[option_index + num_args + 1:]
 
         return arg_vect
 

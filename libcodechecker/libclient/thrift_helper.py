@@ -169,7 +169,7 @@ class ThriftClientHelper(object):
     # STORAGE RELATED API CALLS
 
     @ThriftClientCall
-    def necessaryFileContents(self, file_hashes):
+    def getMissingContentHashes(self, file_hashes):
         pass
 
     @ThriftClientCall
