@@ -222,6 +222,8 @@ class RequestHandler(SimpleHTTPRequestHandler):
             return
 
         except Exception as exn:
+            import traceback
+            traceback.print_exc()
             LOG.error(str(exn))
             self.send_error(404, "Request failed.")
             return
