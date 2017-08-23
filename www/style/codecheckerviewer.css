@@ -338,12 +338,8 @@ span[class*="severity-"] {
 
 /* -- */
 
-.customIcon.pathClosed:before {
-  content: "\e003";
-}
-
-.customIcon.pathOpened:before {
-  content: "\e004";
+.customIcon.pathOpened {
+  opacity: 0.7;
 }
 
 .customIcon.result:before {
