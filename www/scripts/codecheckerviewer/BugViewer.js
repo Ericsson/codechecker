@@ -161,6 +161,10 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
       var reportDetails = CC_SERVICE.getReportDetails(this.reportData.reportId);
 
       var points = reportDetails.executionPath.filter(filterFunction);
+      reportDetails.pathEvents.map(function (evt, index) {
+        evt.bugEventNumber = index + 1;
+      });
+
       var bubbles = reportDetails.pathEvents.filter(filterFunction);
 
       // This is needed because CodeChecker gives different positions.
@@ -185,7 +189,9 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
             ? 'error' : bubble.msg.indexOf(' (fixit)') > -1
             ? 'fixit' : 'info';
 
-          var enumeration = createBugStepEnumeration(i + 1, enumType).outerHTML;
+          var enumeration =
+            createBugStepEnumeration(bubble.bugEventNumber, enumType).outerHTML;
+
           var element = dom.create('div', {
             style : 'margin-left: ' + left,
             class : 'check-msg ' + enumType,
