@@ -550,8 +550,11 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
           case 'severity':
             return "icon-severity icon-severity-" + item.id;
           case 'bugpath':
-            return (opened ? "customIcon pathOpened"
-                           : "customIcon pathClosed");
+            var status =
+              util.detectionStatusFromCodeToString(item.report.detectionStatus);
+
+            return 'customIcon detection-status-' + status.toLowerCase() + ' '
+              + (opened ? 'pathOpened' : 'pathClosed');
           default:
             return (opened ? "dijitFolderOpened" : "dijitFolderClosed");
         }
