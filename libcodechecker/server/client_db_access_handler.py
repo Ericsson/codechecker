@@ -675,8 +675,49 @@ class ThriftRequestHandler(object):
             session.close()
 
     @timeit
-    def getRunResultCount_v2(self, run_ids, report_filter, cmp_data):
+    def getRunReportCounts(self, run_ids, report_filter):
+        """
+          Count the results separately for multiple runs.
+          If an empty run id list is provided the report
+          counts will be calculated for all of the available runs.
+        """
 
+        results = []
+        session = self.__Session()
+        try:
+            if not run_ids:
+                res = session.query(Run.id).all()
+                run_ids = [r[0] for r in res]
+
+            filter_expression = process_report_filter_v2(report_filter)
+
+            count_expr = func.count(literal_column('*'))
+
+            q = session.query(func.max(Report.id), Run, count_expr) \
+                .filter(Report.run_id.in_(run_ids)) \
+                .outerjoin(File, Report.file_id == File.id) \
+                .outerjoin(ReviewStatus,
+                           ReviewStatus.bug_hash == Report.bug_id) \
+                .outerjoin(Run,
+                           Report.run_id == Run.id) \
+                .filter(filter_expression).group_by(Run.id).all()
+
+            for _, run, count in q:
+                report_count = RunReportCount(runId=run.id,
+                                              name=run.name,
+                                              reportCount=count)
+                results.append(report_count)
+
+        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
+            msg = str(alchemy_ex)
+            LOG.error(msg)
+            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
+                                              msg)
+        finally:
+            return results
+
+    @timeit
+    def getRunResultCount_v2(self, run_ids, report_filter, cmp_data):
         session = self.__Session()
 
         try:
