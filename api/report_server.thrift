@@ -36,6 +36,13 @@ struct RunData{
 }
 typedef list<RunData> RunDataList
 
+struct RunReportCount{
+  1: i64            runId,        // unique id of the run
+  2: string         name,         // human readable name of the run
+  3: i64            reportCount
+}
+typedef list<RunReportCount> RunReportCounts
+
 struct ReviewData{
   1: shared.ReviewStatus  status,
   2: string               comment,
@@ -229,7 +236,15 @@ service codeCheckerDBAccess {
                         2: ReportFilterList reportFilters)
                         throws (1: shared.RequestFailed requestError),
 
-  // count all the results some runIds
+  // Count the results separately for multiple runs.
+  // If an empty run id list is provided the report
+  // counts will be calculated for all of the available runs.
+  RunReportCounts getRunReportCounts(
+                                   1: list<i64> runIds,
+                                   2: ReportFilter_v2 reportFilter)
+                                   throws (1: shared.RequestFailed requestError),
+
+  // Count all the results some runIds can be used for diff counting.
   i64 getRunResultCount_v2(
                            1: list<i64> runIds,
                            2: ReportFilter_v2 reportFilter,
