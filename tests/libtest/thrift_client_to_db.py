@@ -180,11 +180,37 @@ def get_all_run_results(client, run_id, sort_mode=[], filters=[]):
     query_limit = client.max_query_size
     results = []
     while True:
-        partial_res = client.getRunResults(run_id,
+        partial_res = client.getRunResults([run_id],
                                            query_limit,
                                            offset,
                                            sort_mode,
                                            filters)
+
+        offset += len(partial_res)
+        if len(partial_res) == 0:
+            break
+        results.extend(partial_res)
+
+    return results
+
+
+def get_all_run_results_v2(client, run_id, sort_mode=[], filters=None):
+    """
+    Get all the results for a run.
+    Query limit limits the number of results can be got from the
+    server in one API call.
+    """
+
+    offset = 0
+    query_limit = client.max_query_size
+    results = []
+    while True:
+        partial_res = client.getRunResults_v2([run_id],
+                                              query_limit,
+                                              offset,
+                                              sort_mode,
+                                              filters,
+                                              None)
 
         offset += len(partial_res)
         if len(partial_res) == 0:

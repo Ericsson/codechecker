@@ -87,7 +87,24 @@ def setup_package():
         sys.exit(1)
     print("Analyzing the test project was successful.")
 
-    codechecker_cfg['run_names'] = [test_project_name]
+    test_project_name_new = project_info['name'] + '_' + uuid.uuid4().hex
+
+    # Let's run the second analysis with different
+    # checkers to have some real difference.
+    codechecker_cfg['checkers'] = ['-e', 'core.CallAndMessage',
+                                   '-d', 'core.StackAddressEscape',
+                                   '-d', 'unix.Malloc'
+                                   ]
+    ret = codechecker.check(codechecker_cfg,
+                            test_project_name_new,
+                            project.path(test_project))
+
+    if ret:
+        sys.exit(1)
+    print("Second analysis of the test project was successful.")
+
+    codechecker_cfg['run_names'] = [test_project_name,
+                                    test_project_name_new]
 
     test_config['codechecker_cfg'] = codechecker_cfg
 

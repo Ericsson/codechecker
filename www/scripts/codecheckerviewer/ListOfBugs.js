@@ -67,7 +67,7 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
       var deferred = new Deferred();
 
       CC_SERVICE.getRunResults(
-        query.runData.runId,
+        [query.runData.runId],
         CC_OBJECTS.MAX_QUERY_SIZE,
         options.start,
         (options.sort || []).map(this._toSortMode),
@@ -82,7 +82,7 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
         });
 
       deferred.total = CC_SERVICE.getRunResultCount(
-        query.runData.runId,
+        [query.runData.runId],
         query.reportFilters);
 
       return deferred;
