@@ -395,9 +395,9 @@ service codeCheckerDBAccess {
   // database. If it is, then it is not necessary to send it in the ZIP file
   // with massStoreRun() function. This function requires a list of file hashes
   // (sha256) and returns the ones which are not stored yet.
-  list<string> necessaryFileContents(
-                                     1: list<string> file_hashes)
-                                     throws (1: shared.RequestFailed requestError),
+  list<string> getMissingContentHashes(
+                                       1: list<string> file_hashes)
+                                       throws (1: shared.RequestFailed requestError),
 
   // This function stores an entire run encapsulated and sent in a ZIP file.
   // The ZIP file has to be compressed and sent as a base64 encoded string. The
@@ -405,7 +405,7 @@ service codeCheckerDBAccess {
   // The former one is the output of 'CodeChecker analyze' command and the
   // latter one contains the source files on absolute paths starting as if
   // "root" was the "/" directory. The source files are not necessary to be
-  // wrapped in the ZIP file (see necessaryFileContents() function).
+  // wrapped in the ZIP file (see getMissingContentHashes() function).
   //
   // The "version" parameter is the used CodeChecker version which checked this
   // run.

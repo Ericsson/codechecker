@@ -199,7 +199,10 @@ def assemble_zip(inputs, zip_file, client):
     source_dir = os.path.join(temp_dir, 'root')
     os.makedirs(source_dir)
 
-    file_dict = {}
+    hash_to_file = {}
+    # There can be files with same hash,
+    # but different path.
+    file_to_hash = {}
 
     def collect_file_hashes_from_plist(plist_file):
         try:
@@ -210,7 +213,8 @@ def assemble_zip(inputs, zip_file, client):
                     hasher = sha256()
                     hasher.update(content.read())
                     content_hash = hasher.hexdigest()
-                    file_dict[content_hash] = f
+                    hash_to_file[content_hash] = f
+                    file_to_hash[f] = content_hash
         except Exception as ex:
             LOG.error('Parsing the plist failed: ' + str(ex))
 
@@ -239,8 +243,8 @@ def assemble_zip(inputs, zip_file, client):
                     if f.endswith(".plist"):
                         collect_file_hashes_from_plist(plist_file)
 
-        necessary_hashes = client.necessaryFileContents(file_dict.keys())
-        for h, f in file_dict.items():
+        necessary_hashes = client.getMissingContentHashes(hash_to_file.keys())
+        for f, h in file_to_hash.items():
             if h in necessary_hashes:
                 target_file = os.path.join(source_dir, f.lstrip('/'))
 
@@ -254,10 +258,15 @@ def assemble_zip(inputs, zip_file, client):
                           .format(f))
                 shutil.copyfile(f, target_file)
 
+        hashes_fname = "content_hashes.json"
+        hashes_fpath = os.path.join(temp_dir, hashes_fname)
+        with open(hashes_fpath, "w") as f:
+            json.dump(file_to_hash, f)
+
         with zipfile.ZipFile(zip_file, 'w') as zipf:
             for root, _, files in os.walk(temp_dir):
-                for file in files:
-                    f = os.path.join(root, file)
+                for sf in files:
+                    f = os.path.join(root, sf)
                     LOG.debug("[ZIP] Writing file '{0}' into mass store ZIP."
                               .format(f))
                     zipf.write(f, f.replace(temp_dir, ''))
