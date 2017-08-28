@@ -415,6 +415,21 @@ class ThriftRequestHandler(object):
 
         return query
 
+    def __get_run_ids_to_query(self, session, cmp_data=None):
+        """
+        Return run id list for the queries.
+        If compare data is set remove those run ids from the returned list.
+        The returned run id list can be used as a baseline for comparisons.
+        """
+        res = session.query(Run.id).all()
+        run_ids = [r[0] for r in res]
+        if cmp_data:
+            all_rids = set(run_ids)
+            cmp_rids = set(cmp_data.run_ids)
+            run_ids = list(all_rids.difference(cmp_rids))
+
+        return run_ids
+
     @timeit
     def getRunData(self, run_name_filter):
 
@@ -611,6 +626,9 @@ class ThriftRequestHandler(object):
 
             results = []
 
+            if not run_ids:
+                run_ids = self.__get_run_ids_to_query(session, cmp_data)
+
             if cmp_data:
                 diff_hashes, run_ids = self._cmp_helper(session,
                                                         run_ids,
@@ -686,8 +704,7 @@ class ThriftRequestHandler(object):
         session = self.__Session()
         try:
             if not run_ids:
-                res = session.query(Run.id).all()
-                run_ids = [r[0] for r in res]
+                run_ids = self.__get_run_ids_to_query(session)
 
             filter_expression = process_report_filter_v2(report_filter)
 
@@ -723,6 +740,9 @@ class ThriftRequestHandler(object):
         try:
 
             filter_expression = process_report_filter_v2(report_filter)
+
+            if not run_ids:
+                run_ids = self.__get_run_ids_to_query(session, cmp_data)
 
             if cmp_data:
                 diff_hashes, run_ids = self._cmp_helper(session,
@@ -1272,9 +1292,17 @@ class ThriftRequestHandler(object):
 
     @timeit
     def getCheckerCounts(self, run_ids, report_filter, cmp_data):
+        """
+          If the run id list is empty the metrics will be counted
+          for all of the runs and in compare mode all of the runs
+          will be used as a baseline excluding the runs in compare data.
+        """
         results = {}
         session = self.__Session()
         try:
+
+            if not run_ids:
+                run_ids = self.__get_run_ids_to_query(session, cmp_data)
 
             if cmp_data:
                 diff_hashes, run_ids = self._cmp_helper(session,
@@ -1310,9 +1338,17 @@ class ThriftRequestHandler(object):
 
     @timeit
     def getSeverityCounts(self, run_ids, report_filter, cmp_data):
+        """
+          If the run id list is empty the metrics will be counted
+          for all of the runs and in compare mode all of the runs
+          will be used as a baseline excluding the runs in compare data.
+        """
         results = {}
         session = self.__Session()
         try:
+
+            if not run_ids:
+                run_ids = self.__get_run_ids_to_query(session, cmp_data)
 
             if cmp_data:
                 diff_hashes, run_ids = self._cmp_helper(session,
@@ -1348,9 +1384,17 @@ class ThriftRequestHandler(object):
 
     @timeit
     def getCheckerMsgCounts(self, run_ids, report_filter, cmp_data):
+        """
+          If the run id list is empty the metrics will be counted
+          for all of the runs and in compare mode all of the runs
+          will be used as a baseline excluding the runs in compare data.
+        """
         results = {}
         session = self.__Session()
         try:
+
+            if not run_ids:
+                run_ids = self.__get_run_ids_to_query(session, cmp_data)
 
             if cmp_data:
                 diff_hashes, run_ids = self._cmp_helper(session,
@@ -1386,9 +1430,17 @@ class ThriftRequestHandler(object):
 
     @timeit
     def getReviewStatusCounts(self, run_ids, report_filter, cmp_data):
+        """
+          If the run id list is empty the metrics will be counted
+          for all of the runs and in compare mode all of the runs
+          will be used as a baseline excluding the runs in compare data.
+        """
         results = defaultdict(int)
         session = self.__Session()
         try:
+
+            if not run_ids:
+                run_ids = self.__get_run_ids_to_query(session, cmp_data)
 
             if cmp_data:
                 diff_hashes, run_ids = self._cmp_helper(session,
@@ -1433,9 +1485,17 @@ class ThriftRequestHandler(object):
 
     @timeit
     def getFileCounts(self, run_ids, report_filter, cmp_data):
+        """
+          If the run id list is empty the metrics will be counted
+          for all of the runs and in compare mode all of the runs
+          will be used as a baseline excluding the runs in compare data.
+        """
         results = {}
         session = self.__Session()
         try:
+
+            if not run_ids:
+                run_ids = self.__get_run_ids_to_query(session, cmp_data)
 
             if cmp_data:
                 diff_hashes, run_ids = self._cmp_helper(session,
@@ -1474,9 +1534,17 @@ class ThriftRequestHandler(object):
 
     @timeit
     def getDetectionStatusCounts(self, run_ids, report_filter, cmp_data):
+        """
+          If the run id list is empty the metrics will be counted
+          for all of the runs and in compare mode all of the runs
+          will be used as a baseline excluding the runs in compare data.
+        """
         results = {}
         session = self.__Session()
         try:
+
+            if not run_ids:
+                run_ids = self.__get_run_ids_to_query(session, cmp_data)
 
             if cmp_data:
                 diff_hashes, run_ids = self._cmp_helper(session,

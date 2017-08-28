@@ -88,6 +88,22 @@ class Diff(unittest.TestCase):
         # 5 new core.CallAndMessage issues.
         self.assertEqual(diff_res, 5)
 
+    def test_get_diff_res_count_new_no_base(self):
+        """
+        Count the new results with no filter and no baseline
+        run ids.
+        """
+        new_run_id = self._new_runid
+
+        cmp_data = CompareData(run_ids=[new_run_id],
+                               diff_type=DiffType.NEW)
+
+        diff_res = self._cc_client.getRunResultCount_v2([],
+                                                        None,
+                                                        cmp_data)
+        # 5 new core.CallAndMessage issues.
+        self.assertEqual(diff_res, 5)
+
     def test_get_diff_results_new(self):
         """
         Get the new results with no filter.
