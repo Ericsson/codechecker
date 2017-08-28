@@ -583,3 +583,29 @@ class TestReportFilter(unittest.TestCase):
                                                             reopen_filter,
                                                             None)
         self.assertDictEqual({}, reopened_reports)
+
+    def test_all_run_report_counts(self):
+        """
+        Count the reports for all the runs.
+
+        Run name is randomly generated for all of the test runs.
+        """
+
+        runs = self._cc_client.getRunData('')
+
+        separate_report_counts = 0
+        for run in runs:
+            run_report_count = self._cc_client.getRunReportCounts(
+                [run.runId], None)
+            # Should return the count for only one run.
+            self.assertEqual(len(run_report_count), 1)
+            separate_report_counts += run_report_count[0].reportCount
+
+        all_report_counts = 0
+        report_counts = \
+            self._cc_client.getRunReportCounts([], None)
+
+        for rc in report_counts:
+            all_report_counts += rc.reportCount
+
+        self.assertEqual(separate_report_counts, all_report_counts)
