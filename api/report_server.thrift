@@ -58,11 +58,11 @@ struct ReportData{
   4: string              checkerMsg,      // description of the bug report
   5: i64                 reportId,        // id of the report in the current run in the db
   6: i64                 fileId,          // unique id of the file the report refers to
-  7: shared.BugPathEvent lastBugPosition  // This contains the range and message of the last item in the symbolic
-                                          // execution step list.
-  8: shared.Severity     severity         // checker severity
-  9: ReviewData          review           // bug review status informations.
-  10: shared.DetectionStatus detectionStatus  // state of the bug (see the enum constant values)
+  7: i64                 line,            // line number or the reports main section (not part of the path)
+  8: i64                 column,          // column number of the report main section (not part of the path)
+  9: shared.Severity     severity         // checker severity
+  10: ReviewData          review           // bug review status informations.
+  11: shared.DetectionStatus detectionStatus  // state of the bug (see the enum constant values)
 }
 typedef list<ReportData> ReportDataList
 

@@ -165,7 +165,7 @@ def handle_list_results(args):
 
         rows = []
         for res in all_results:
-            bug_line = res.lastBugPosition.startLine
+            bug_line = res.line
             checked_file = res.checkedFile + ' @ ' + str(bug_line)
             sev = shared.ttypes.Severity._VALUES_TO_NAMES[res.severity]
 
@@ -312,8 +312,8 @@ def handle_diff_results(args):
                     getLineFromFile(report.main['location']['file_name'],
                                     bug_line)
             else:
-                bug_line = report.lastBugPosition.startLine
-                bug_col = report.lastBugPosition.startCol
+                bug_line = report.line
+                bug_col = report.column
                 sev = \
                     shared.ttypes.Severity._VALUES_TO_NAMES[report.severity]
                 checked_file = report.checkedFile + ':' + str(bug_line) +\
