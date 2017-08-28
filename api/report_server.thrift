@@ -370,32 +370,49 @@ service codeCheckerDBAccess {
                                              4: ReportFilterList reportFilters)
                                              throws (1: shared.RequestFailed requestError),
 
+  // If the run id list is empty the metrics will be counted
+  // for all of the runs and in compare mode all of the runs
+  // will be used as a baseline excluding the runs in compare data.
   map<shared.Severity, i64> getSeverityCounts(1: list<i64> runIds,
                                               2: ReportFilter_v2 reportFilter,
                                               3: CompareData cmpData)
                                               throws (1: shared.RequestFailed requestError),
 
+  // If the run id list is empty the metrics will be counted
+  // for all of the runs and in compare mode all of the runs
+  // will be used as a baseline excluding the runs in compare data.
   map<string, i64> getCheckerMsgCounts(1: list<i64> runIds,
                                        2: ReportFilter_v2 reportFilter,
                                        3: CompareData cmpData)
                                        throws (1: shared.RequestFailed requestError),
 
+  // If the run id list is empty the metrics will be counted
+  // for all of the runs and in compare mode all of the runs
+  // will be used as a baseline excluding the runs in compare data.
   map<shared.ReviewStatus, i64> getReviewStatusCounts(1: list<i64> runIds,
                                                       2: ReportFilter_v2 reportFilter,
                                                       3: CompareData cmpData)
                                                       throws (1: shared.RequestFailed requestError),
 
+  // If the run id list is empty the metrics will be counted
+  // for all of the runs and in compare mode all of the runs
+  // will be used as a baseline excluding the runs in compare data.
   map<shared.DetectionStatus, i64> getDetectionStatusCounts(1: list<i64> runIds,
                                                             2: ReportFilter_v2 reportFilter,
                                                             3: CompareData cmpData)
                                                             throws (1: shared.RequestFailed requestError),
 
+  // If the run id list is empty the metrics will be counted
+  // for all of the runs and in compare mode all of the runs
+  // will be used as a baseline excluding the runs in compare data.
   map<string, i64> getFileCounts(1: list<i64> runIds,
                                  2: ReportFilter_v2 reportFilter,
                                  3: CompareData cmpData)
                                  throws (1: shared.RequestFailed requestError),
 
-
+  // If the run id list is empty the metrics will be counted
+  // for all of the runs and in compare mode all of the runs
+  // will be used as a baseline excluding the runs in compare data.
   map<string, i64> getCheckerCounts(1: list<i64> runIds,
                                     2: ReportFilter_v2 reportFilter,
                                     3: CompareData cmpData)
