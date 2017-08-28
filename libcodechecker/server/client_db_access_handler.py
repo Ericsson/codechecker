@@ -359,36 +359,6 @@ class ThriftRequestHandler(object):
         self.__Session = Session
         self.__storage_session = StorageSession()
 
-    def __lastBugEventPos(self, report_id):
-        """
-        This function returns the last BugPathEvent object position which
-        belongs to the given report. If no such event is found then None
-        returns.
-        """
-        try:
-            session = self.__Session()
-
-            last = session.query(BugPathEvent) \
-                .filter(BugPathEvent.report_id == report_id) \
-                .order_by(BugPathEvent.order.desc()) \
-                .limit(1).one_or_none()
-
-            if not last:
-                return None
-
-            bpe = bugpathevent_db_to_api(last)
-            bpe.filePath = session.query(File).get(bpe.fileId).filepath
-
-            return bpe
-        except sqlalchemy.exc.SQLAlchemyError as ex:
-            msg = str(ex)
-            LOG.error(msg)
-            raise shared.ttypes.RequestFailed(
-                shared.ttypes.ErrorCode.DATABASE,
-                msg)
-        finally:
-            session.close()
-
     def __sortResultsQuery(self, query, sort_types=None):
         """
         Helper method for __queryDiffResults and queryResults to apply sorting.
@@ -526,7 +496,8 @@ class ThriftRequestHandler(object):
                 checkerMsg=report.checker_message,
                 reportId=report.id,
                 fileId=source_file.id,
-                lastBugPosition=self.__lastBugEventPos(report.id),
+                line=report.line,
+                column=report.column,
                 checkerId=report.checker_id,
                 severity=report.severity,
                 review=review_data,
@@ -589,8 +560,8 @@ class ThriftRequestHandler(object):
                                checkerMsg=report.checker_message,
                                reportId=report.id,
                                fileId=source_file.id,
-                               lastBugPosition=self.__lastBugEventPos(
-                                   report.id),
+                               line=report.line,
+                               column=report.column,
                                checkerId=report.checker_id,
                                severity=report.severity,
                                review=review_data,
@@ -673,8 +644,8 @@ class ThriftRequestHandler(object):
                                checkerMsg=report.checker_message,
                                reportId=report.id,
                                fileId=source_file.id,
-                               lastBugPosition=self.__lastBugEventPos(
-                                   report.id),
+                               line=report.line,
+                               column=report.column,
                                checkerId=report.checker_id,
                                severity=report.severity,
                                review=review_data,
@@ -1658,7 +1629,8 @@ class ThriftRequestHandler(object):
                     checkerMsg=report.checker_message,
                     reportId=report.id,
                     fileId=source_file.id,
-                    lastBugPosition=self.__lastBugEventPos(report.id),
+                    line=report.line,
+                    column=report.column,
                     checkerId=report.checker_id,
                     severity=report.severity,
                     review=review_data,
@@ -1731,7 +1703,8 @@ class ThriftRequestHandler(object):
                     checkerMsg=report.checker_message,
                     reportId=report.id,
                     fileId=source_file.id,
-                    lastBugPosition=self.__lastBugEventPos(report.id),
+                    line=report.line,
+                    column=report.column,
                     checkerId=report.checker_id,
                     severity=report.severity,
                     review=review_data))
@@ -2273,13 +2246,10 @@ class ThriftRequestHandler(object):
                     self.__storage_session,
                     run_id,
                     file_ids[files[report.main['location']['file']]],
-                    report.main['issue_hash_content_of_line_in_context'],
-                    report.main['description'],
+                    report.main,
                     bug_paths,
                     bug_events,
                     checker_name,
-                    report.main['category'],
-                    report.main['type'],
                     severity)
 
                 LOG.debug("Storing done for report " + str(report_id))

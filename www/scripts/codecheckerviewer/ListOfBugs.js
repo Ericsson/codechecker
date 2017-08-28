@@ -91,7 +91,7 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
     _formatItems : function (reportDataList) {
       reportDataList.forEach(function (reportData) {
         reportData.checkedFile = reportData.checkedFile +
-          ' @ Line ' + reportData.lastBugPosition.startLine;
+          ' @ Line ' + reportData.line;
 
         //--- Review status ---//
         var review = reportData.review;

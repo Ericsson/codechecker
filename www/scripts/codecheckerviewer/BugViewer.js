@@ -307,7 +307,7 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
       this.sourceFileData = sourceFileData;
       this.set('content', sourceFileData.fileContent);
       this.set('filepath', sourceFileData.filePath);
-      this.jumpTo(this.reportData.lastBugPosition.startLine, 0);
+      this.jumpTo(this.reportData.line, 0);
     },
 
     _refresh : function () {
@@ -446,7 +446,10 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
       var that = this;
 
       setTimeout(function () {
-        that.editor.highlightBugPathEvent(that.reportData.lastBugPosition);
+        that.editor.highlightBugPathEvent({
+          startLine : that.reportData.line, startCol : that.reportData.column,
+          endLine   : that.reportData.line, endCol   : that.reportData.column
+        });
       }, 0);
     },
 
@@ -508,8 +511,8 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
         var column = item.bugPathEvent.startCol;
       } else {
         var fileId = item.report.fileId;
-        var line = item.report.lastBugPosition.startLine;
-        var column = item.report.lastBugPosition.startCol;
+        var line = item.report.line;
+        var column = item.report.column;
       }
 
       var isOtherFile = fileId !== this.editor.get('sourceFileData').fileId;
@@ -539,13 +542,20 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
 
       this.editor.jumpTo(line, column);
 
+      var eventToMark;
       if (item.bugPathEvent) {
-        this.editor.highlightBugPathEvent(item.bugPathEvent);
-        topic.publish("hooks/bugpath/EventClicked", {
-          id    : item.id.split('_')[1],
-          event : item.bugPathEvent
-        });
+        eventToMark = item.bugPathEvent;
+      }else{
+        eventToMark = {
+            startLine : item.report.line, startCol : item.report.column,
+            endLine   : item.report.line, endCol   : item.report.column
+        };
       }
+      this.editor.highlightBugPathEvent(eventToMark);
+      topic.publish("hooks/bugpath/EventClicked", {
+        id    : item.id.split('_')[1],
+        event : item.bugPathEvent
+      });
     },
 
     getIconClass : function(item, opened) {
@@ -748,7 +758,7 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
 
       this.bugStore.put({
         id : report.reportId + '',
-        name : 'L' + report.lastBugPosition.startLine
+        name : 'L' + report.line
              + ' &ndash; ' + report.checkerId,
         parent : util.severityFromCodeToString(report.severity),
         report : report,
@@ -760,7 +770,6 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
         id : report.reportId + '_0',
         name : '<b><u>' + entities.encode(report.checkerMsg) + '</u></b>',
         parent : report.reportId + '',
-        bugPathEvent : report.lastBugPosition,
         report : report,
         isLeaf : true,
         kind : 'msg'
