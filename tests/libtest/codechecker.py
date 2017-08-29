@@ -174,6 +174,10 @@ def check(codechecker_cfg, test_project_name, test_project_path):
                  '--url', env.parts_to_url(codechecker_cfg),
                  '--verbose', 'debug']
 
+    tag = codechecker_cfg.get('tag')
+    if tag:
+        store_cmd.extend(['--tag', tag])
+
     try:
         print("RUNNING STORE")
         print(' '.join(store_cmd))

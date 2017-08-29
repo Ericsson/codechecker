@@ -18,11 +18,12 @@ define([
   'dojox/grid/DataGrid',
   'codechecker/BugViewer',
   'codechecker/BugFilterView',
+  'codechecker/RunHistory',
   'codechecker/hashHelper',
   'codechecker/util'],
 function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
   BorderContainer, TabContainer, Tooltip, DataGrid, BugViewer, BugFilterView,
-  hashHelper, util) {
+  RunHistory, hashHelper, util) {
 
   var filterHook = function(filters, isDiff) {
     var length = 0;
@@ -241,7 +242,6 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
         case 'reviewComment':
           if (item.reviewData.author) {
             var content = util.reviewStatusTooltipContent(item.reviewData);
-
             Tooltip.show(content.outerHTML, evt.target, ['below']);
           }
           break;
@@ -301,6 +301,28 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
 
       this.addChild(content);
 
+      //--- Run history ---//
+
+      var runHistory = new RunHistory({
+        title : 'Run history',
+        runData : this.runData,
+        bugOverView : content,
+        bugFilterView : this._bugFilterView,
+        parent : this,
+        onShow : function () {
+          hashHelper.setStateValue('tab', 'runHistory');
+        },
+        onHide : function () {
+          hashHelper.setStateValue('tab', null);
+        }
+      });
+
+      this.addChild(runHistory);
+
+      var urlState = hashHelper.getValues();
+      if (urlState.tab && urlState.tab === 'runHistory')
+        this.selectChild(runHistory);
+
       //--- Events ---//
 
       this._openFileTopic = topic.subscribe('openFile',
@@ -330,6 +352,10 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
           runResultParam : runResultParam,
           onShow : function () {
             hashHelper.setStateValue('report', reportData.reportId);
+          },
+          onClose : function () {
+            that.selectChild(content);
+            return true;
           }
         });
 
@@ -350,7 +376,7 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
     },
 
     onShow : function () {
-      var state  = this._bugFilterView.getState();
+      var state  = this._bugFilterView.getUrlState();
       state.report = null;
 
       if (this.allReportView)

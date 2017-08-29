@@ -10,6 +10,10 @@ define([
   'dojo/dom-style',
   'dojo/json'],
 function (locale, dom, style, json) {
+  var MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+
   return {
     /**
      * This function returns the first element of the given array for which the
@@ -298,6 +302,45 @@ function (locale, dom, style, json) {
      */
     createPermissionParams : function (values) {
       return json.stringify(values);
+    },
+
+    /**
+     * Get string representation of the month.
+     * @param {number} month - The month (from 0-11).
+     */
+    getMonthName : function (month) {
+      return MONTH_NAMES[month];
+    },
+
+    /**
+     * Format a date to an AM/PM format.
+     * @param {Date} date - date which will be converted.
+     */
+    formatDateAMPM : function (date) {
+      var hours = date.getHours();
+      var minutes = date.getMinutes();
+      var ampm = hours >= 12 ? 'PM' : 'AM';
+
+      hours = hours % 12;
+      hours = hours ? hours : 12;
+      minutes = minutes < 10 ? '0' + minutes : minutes;
+
+      return hours + ':' + minutes + ' ' + ampm;
+    },
+
+    /**
+     * Converts a date to an UTC format timestamp.
+     * @param {Date} date - date which will be converted.
+     */
+    dateToUTCTime : function (date) {
+      return Date.UTC(
+        date.getUTCFullYear(),
+        date.getUTCMonth(),
+        date.getUTCDate(),
+        date.getUTCHours(),
+        date.getUTCMinutes(),
+        date.getUTCSeconds(),
+        date.getUTCMilliseconds());
     }
   };
 });

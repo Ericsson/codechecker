@@ -45,6 +45,8 @@ def setup_package():
 
     skip_list_file = None
 
+    tag = 'v1.0'
+
     test_env = env.test_env(TEST_WORKSPACE)
 
     codechecker_cfg = {
@@ -52,7 +54,8 @@ def setup_package():
         'skip_list_file': skip_list_file,
         'check_env': test_env,
         'workspace': TEST_WORKSPACE,
-        'checkers': []
+        'checkers': [],
+        'tag': tag
     }
 
     ret = project.clean(test_project)
@@ -86,6 +89,7 @@ def setup_package():
                                    '-d', 'core.StackAddressEscape',
                                    '-d', 'unix.Malloc'
                                    ]
+    codechecker_cfg['tag'] = None
     ret = codechecker.check(codechecker_cfg,
                             test_project_name_new,
                             project.path(test_project))
