@@ -10,10 +10,12 @@ Test product management related features.
 """
 
 import base64
+from copy import deepcopy
 import os
 import unittest
 
 from shared.ttypes import RequestFailed
+from ProductManagement.ttypes import ProductConfiguration, DatabaseConnection
 
 from libtest import env
 
@@ -65,6 +67,55 @@ class TestProducts(unittest.TestCase):
         self.assertEqual(len(test_runs), 1,
                          "There should be only one run for this test.")
         self._runid = test_runs[0].runId
+
+    def test_add_invalid_product(self):
+        """
+        Test the server prohibiting the addition of bogus product configs.
+        """
+        error = base64.b64encode("bogus")
+        product_cfg = ProductConfiguration(
+            displayedName_b64=error,
+            description_b64=error
+        )
+
+        # Test setting up product with valid endpoint but no database
+        # connection.
+        with self.assertRaises(RequestFailed):
+            cfg = deepcopy(product_cfg)
+            cfg.endpoint = "valid"
+            self._root_client.addProduct(cfg)
+
+        # Test some invalid strings based on pattern.
+        dbc = DatabaseConnection(
+            engine='sqlite',
+            host='',
+            port=0,
+            username_b64='',
+            password_b64='',
+            database="valid.sqlite"
+        )
+        product_cfg.connection = dbc
+
+        with self.assertRaises(RequestFailed):
+            product_cfg.endpoint = "_INVALID"
+            self._root_client.addProduct(product_cfg)
+
+        with self.assertRaises(RequestFailed):
+            product_cfg.endpoint = "0foobar"
+            self._root_client.addProduct(product_cfg)
+
+        with self.assertRaises(RequestFailed):
+            product_cfg.endpoint = "$$$$$$$"
+            self._root_client.addProduct(product_cfg)
+
+        # Test some forbidden URI parts.
+        with self.assertRaises(RequestFailed):
+            product_cfg.endpoint = "index.html"
+            self._root_client.addProduct(product_cfg)
+
+        with self.assertRaises(RequestFailed):
+            product_cfg.endpoint = "CodeCheckerService"
+            self._root_client.addProduct(product_cfg)
 
     def test_get_product_data(self):
         """
@@ -231,7 +282,7 @@ class TestProducts(unittest.TestCase):
         config = self._pr_client.getProductConfiguration(product_id)
 
         old_endpoint = config.endpoint
-        new_endpoint = "edited-endpoint"
+        new_endpoint = "edited_endpoint"
 
         # Save a new endpoint.
         config.endpoint = new_endpoint

@@ -83,22 +83,44 @@ class ThriftAuthHelper():
 
         return wrapper
 
-    # -----------------------------------------------------------------------
+    # ============= Authentication and session handling =============
     @ThriftClientCall
     def getAuthParameters(self):
         pass
 
-    # -----------------------------------------------------------------------
     @ThriftClientCall
     def getAcceptedAuthMethods(self):
         pass
 
-    # -----------------------------------------------------------------------
     @ThriftClientCall
     def performLogin(self, auth_method, auth_string):
         pass
 
-    # -----------------------------------------------------------------------
     @ThriftClientCall
     def destroySession(self):
+        pass
+
+    # ============= Authorization, permission management =============
+    @ThriftClientCall
+    def getPermissions(self, scope):
+        pass
+
+    @ThriftClientCall
+    def getPermissionsForUser(self, scope, extra_params, filter):
+        pass
+
+    @ThriftClientCall
+    def getAuthorisedNames(self, permission, extra_params):
+        pass
+
+    @ThriftClientCall
+    def addPermission(self, permission, auth_name, is_group, extra_params):
+        pass
+
+    @ThriftClientCall
+    def removePermission(self, permission, auth_name, is_group, extra_params):
+        pass
+
+    @ThriftClientCall
+    def hasPermission(self, permission, extra_params):
         pass

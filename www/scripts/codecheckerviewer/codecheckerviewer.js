@@ -38,6 +38,8 @@ function (declare, topic, domConstruct, Dialog, DropDownMenu, MenuItem,
         new Thrift.TJSONProtocol(
           new Thrift.Transport("/Authentication")));
 
+    CC_AUTH_OBJECTS = codeCheckerAuthentication;
+
     CC_PROD_SERVICE =
       new codeCheckerProductManagement.codeCheckerProductServiceClient(
         new Thrift.Protocol(new Thrift.Transport("Products")));
@@ -68,12 +70,12 @@ function (declare, topic, domConstruct, Dialog, DropDownMenu, MenuItem,
 
     var logoText = domConstruct.create('div', {
       id : 'logo-text',
-      innerHTML : 'CodeChecker - ' + currentProductName
+      innerHTML : 'CodeChecker ' + CC_SERVICE.getPackageVersion()
     }, logoContainer);
 
-    var version = domConstruct.create('span', {
-      id : 'logo-version',
-      innerHTML : CC_SERVICE.getPackageVersion()
+    var title = domConstruct.create('span', {
+      id : 'logo-title',
+      innerHTML : currentProductName
     }, logoText);
 
     var user = CC_AUTH_SERVICE.getLoggedInUser();

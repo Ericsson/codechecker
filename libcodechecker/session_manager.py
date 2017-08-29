@@ -255,20 +255,14 @@ class SessionManager:
         This validation object contains two keys: username and groups.
         """
         validation = self.__try_auth_dictionary(auth_string)
-        LOG.error("DICT")
-        LOG.error(validation)
         if validation:
             return validation
 
         validation = self.__try_auth_pam(auth_string)
-        LOG.error("PAM")
-        LOG.error(validation)
         if validation:
             return validation
 
         validation = self.__try_auth_ldap(auth_string)
-        LOG.error("LDAP")
-        LOG.error(validation)
         if validation:
             return validation
 

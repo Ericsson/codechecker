@@ -30,7 +30,7 @@ function (declare, topic, domConstruct, Button, BorderContainer,
         new Thrift.TJSONProtocol(
           new Thrift.Transport("/Authentication")));
 
-    AUTH_OBJECTS = codeCheckerAuthentication;
+    CC_AUTH_OBJECTS = codeCheckerAuthentication;
 
     //----------------------------- Main layout ------------------------------//
 
@@ -52,12 +52,12 @@ function (declare, topic, domConstruct, Button, BorderContainer,
 
     var logoText = domConstruct.create('div', {
       id : 'logo-text',
-      innerHTML : 'CodeChecker - Products on this server'
+      innerHTML : 'CodeChecker ' + CC_PROD_SERVICE.getPackageVersion()
     }, logoContainer);
 
-    var version = domConstruct.create('span', {
-      id : 'logo-version',
-      innerHTML : CC_PROD_SERVICE.getPackageVersion()
+    var title = domConstruct.create('span', {
+      id : 'logo-title',
+      innerHTML : "Products on this server"
     }, logoText);
 
     var user = CC_AUTH_SERVICE.getLoggedInUser();

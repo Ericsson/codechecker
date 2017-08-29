@@ -22,11 +22,13 @@ import traceback
 import zipfile
 import zlib
 
+from Authentication.ttypes import Permission
+
 from libcodechecker import generic_package_context
 from libcodechecker import host_check
 from libcodechecker import util
 from libcodechecker.analyze import plist_parser
-from libcodechecker.libclient.client import setup_client
+from libcodechecker.libclient import client as libclient
 from libcodechecker.logger import add_verbose_arguments
 from libcodechecker.logger import LoggerFactory
 from libcodechecker.util import split_product_url
@@ -146,7 +148,7 @@ def add_arguments_to_parser(parser):
                              required=False,
                              help="The URL of the product to store the "
                                   "results for, in the format of "
-                                  "host:port/ProductName.")
+                                  "'host:port/Endpoint'.")
 
     add_verbose_arguments(parser)
     parser.set_defaults(func=main)
@@ -312,10 +314,25 @@ def main(args):
         LOG.info("argument --force was specified: the run with name '" +
                  args.name + "' will be deleted.")
 
-    # Setup connection to the remote server.
-    client = setup_client(args.product_url)
-
     host, port, product_name = split_product_url(args.product_url)
+
+    # Before any transmission happens, check if we have the PRODUCT_STORE
+    # permission to prevent a possibly long ZIP operation only to get an
+    # error later on.
+    product_client = libclient.setup_product_client(host, port, product_name)
+    product_id = product_client.getCurrentProduct().id
+
+    auth_client, _ = libclient.setup_auth_client(host, port)
+    has_perm = libclient.check_permission(
+        auth_client, Permission.PRODUCT_STORE, {'productID': product_id})
+    if not has_perm:
+        LOG.error("You are not authorised to store analysis results in "
+                  "product '{0}'".format(product_name))
+        sys.exit(1)
+
+    # Setup connection to the remote server.
+    client = libclient.setup_client(args.product_url)
+
     LOG.debug("Initializing client connecting to {0}:{1}/{2} done."
               .format(host, port, product_name))
 

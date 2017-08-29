@@ -18,10 +18,11 @@ from ProductManagement import ttypes
 
 from libcodechecker.logger import LoggerFactory
 from libcodechecker.profiler import timeit
-from libcodechecker.server import permissions
 
+from . import permissions
 from config_db_model import *
 from database_handler import SQLServer
+from routing import is_valid_product_endpoint
 
 LOG = LoggerFactory.get_new_logger('PRODUCT HANDLER')
 
@@ -66,8 +67,8 @@ class ThriftProductHandler(object):
                 raise shared.ttypes.RequestFailed(
                     shared.ttypes.ErrorCode.UNAUTHORIZED,
                     "You are not authorized to execute this action.")
-            else:
-                return True
+
+            return True
 
         except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
             msg = str(alchemy_ex)
@@ -315,6 +316,12 @@ class ThriftProductHandler(object):
         session = None
         LOG.info("User requested add product '{0}'".format(product.endpoint))
 
+        if not is_valid_product_endpoint(product.endpoint):
+            msg = "The specified endpoint is invalid."
+            LOG.error(msg)
+            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.GENERAL,
+                                              msg)
+
         dbc = product.connection
         if not dbc:
             msg = "Product cannot be added without a database configuration!"
@@ -462,6 +469,12 @@ class ThriftProductHandler(object):
                     shared.ttypes.ErrorCode.GENERAL, msg)
 
             if new_config.endpoint != product.endpoint:
+                if not is_valid_product_endpoint(new_config.endpoint):
+                    msg = "The endpoint to move the product to is invalid."
+                    LOG.error(msg)
+                    raise shared.ttypes.RequestFailed(
+                        shared.ttypes.ErrorCode.GENERAL, msg)
+
                 if self.__server.get_product(new_config.endpoint):
                     msg = "A product endpoint '/{0}' is already configured!" \
                           .format(product.endpoint)

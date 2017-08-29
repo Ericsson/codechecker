@@ -91,7 +91,10 @@ service codeCheckerAuthentication {
     3: PermissionFilter filter)
     throws (1: shared.RequestFailed requestError),
 
-  // Returns the list of users with the given permission.
+  // Returns the list of users and groups with the given permission.
+  //
+  // This call does NOT honour permission inheritance and only return users
+  // and groups whom are DIRECTLY granted the permission.
   //
   // This call is only applicable, if the CURRENTLY LOGGED IN USER has access
   // to manage the given permission.
@@ -100,12 +103,14 @@ service codeCheckerAuthentication {
     2: string     extraParams)
     throws (1: shared.RequestFailed requestError),
 
+  // PERMISSION: Have at least one of the managers of permission argument.
   bool addPermission(1: Permission permission,
                      2: string     authName,
                      3: bool       isGroup,
                      4: string     extraParams)
                      throws (1: shared.RequestFailed requestError),
 
+  // PERMISSION: Have at least one of the managers of permission argument.
   bool removePermission(1: Permission permission,
                         2: string     authName,
                         3: bool       isGroup,
@@ -114,7 +119,8 @@ service codeCheckerAuthentication {
 
   // Returns whether or not the CURRENTLY LOGGED IN USER is authorised with
   // the given permission. Works even if authentication is disabled on the
-  // server, based on the permission's default values.
+  // server, based on the permission's default values. This API call honours
+  // permission inheritance.
   bool hasPermission(1: Permission permission,
                      2: string     extraParams)
                      throws (1: shared.RequestFailed requestError)

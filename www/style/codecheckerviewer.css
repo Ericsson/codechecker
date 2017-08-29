@@ -26,7 +26,7 @@ html, body {
 
 #logo-container {
   font-family: 'Raleway', sans-serif;
-  font-size: 20pt;
+  font-size: 22pt;
   color: white;
 }
 
@@ -44,10 +44,10 @@ html, body {
   vertical-align: middle;
 }
 
-#logo-version {
-  font-family: 'Source Code Pro', monospace;
-  font-size: 16pt;
-  padding-left: 16px;
+#logo-title {
+  font-family: Arial, sans serif;
+  font-size: 18pt;
+  padding-left: 32px;
   color: white;
 }
 

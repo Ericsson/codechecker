@@ -244,4 +244,5 @@ Additional documentation
   * [Database schema migration](docs/db_schema_guide.md)
   * [Usage of PostgreSQL database](docs/postgresql_setup.md)
   * [Requiring credentials to view analysis results (Authentication)](docs/authentication.md)
+  * [Permission management](docs/permissions.md)
   * [Connecting multiple separate defect databases on the same server (Products)](docs/products.md)

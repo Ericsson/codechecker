@@ -773,7 +773,7 @@ server arguments:
   must exist prior to the 'store' command being ran.
 
   --url PRODUCT_URL     The URL of the product to store the results for, in
-                        the format of host:port/ProductName. (default:
+                        the format of 'host:port/Endpoint'. (default:
                         localhost:8001/Default)
 
 The results can be viewed by connecting to such a server in a Web browser or
@@ -975,6 +975,7 @@ usage: CodeChecker server [-h] [-w WORKSPACE] [-f CONFIG_DIRECTORY]
                           [--sqlite SQLITE_FILE | --postgresql]
                           [--dbaddress DBADDRESS] [--dbport DBPORT]
                           [--dbusername DBUSERNAME] [--dbname DBNAME]
+                          [--reset-root] [--force-authentication]
                           [-l | -s | --stop-all]
                           [--verbose {info,debug,debug_analyzer}]
 
@@ -1075,6 +1076,28 @@ configuration file is found, a product named `Default`, using `Default.sqlite`
 in the configuration directory is automatically created. Please see
 [Product management](docs/products.md) for details on how to configure products.
 
+### Master superuser and authentication forcing
+
+~~~~~~~~~~~~~~~~~~~~~
+root account arguments:
+  Servers automatically create a root user to access the server's
+  configuration via the clients. This user is created at first start and
+  saved in the CONFIG_DIRECTORY, and the credentials are printed to the
+  server's standard output. The plaintext credentials are NEVER accessible
+  again.
+
+  --reset-root          Force the server to recreate the master superuser
+                        (root) account name and password. The previous
+                        credentials will be invalidated, and the new ones will
+                        be printed to the standard output.
+  --force-authentication
+                        Force the server to run in authentication requiring
+                        mode, despite the configuration value in
+                        'session_config.json'. This is needed if you need to
+                        edit the product configuration of a server that would
+                        not require authentication otherwise.
+~~~~~~~~~~~~~~~~~~~~~
+
 ### Managing running servers
 
 ~~~~~~~~~~~~~~~~~~~~~
@@ -1161,7 +1184,7 @@ common arguments:
                         connect to. (default: localhost)
   -p PORT, --port PORT  The port the server is running on. (default: 8001)
   --url PRODUCT_URL     The URL of the product to store the results for, in
-                        the format of host:port/ProductName. (default:
+                        the format of 'host:port/Endpoint'. (default:
                         localhost:8001/Default)
   -o {plaintext,rows,table,csv,json}, --output {plaintext,rows,table,csv,json}
                         The output format to use in showing the data.

@@ -200,15 +200,18 @@ struct CompareData {
 service codeCheckerDBAccess {
 
   // get the run Ids and dates from the database to select one run
+  // PERMISSION: PRODUCT_ACCESS
   RunDataList getRunData(1: string runNameFilter)
                          throws (1: shared.RequestFailed requestError),
 
+  // PERMISSION: PRODUCT_ACCESS
   ReportData getReport(
                        1: i64 reportId)
                        throws (1: shared.RequestFailed requestError),
 
   // TODO: DEPRECATED v2 filter should be used with the new api
   // get the results for some runIds
+  // PERMISSION: PRODUCT_ACCESS
   ReportDataList getRunResults(
                                1: list<i64> runIds,
                                2: i64 limit,
@@ -219,6 +222,7 @@ service codeCheckerDBAccess {
 
   // Get the results for some runIds
   // can be used in diff mode if cmpData is set.
+  // PERMISSION: PRODUCT_ACCESS
   ReportDataList getRunResults_v2(
                                1: list<i64> runIds,
                                2: i64 limit,
@@ -230,6 +234,7 @@ service codeCheckerDBAccess {
 
   // TODO: DEPRECATED v2 filter should be used with the new api
   // count all the results some runIds
+  // PERMISSION: PRODUCT_ACCESS
   i64 getRunResultCount(
                         1: list<i64> runIds,
                         2: ReportFilterList reportFilters)
@@ -238,12 +243,14 @@ service codeCheckerDBAccess {
   // Count the results separately for multiple runs.
   // If an empty run id list is provided the report
   // counts will be calculated for all of the available runs.
+  // PERMISSION: PRODUCT_ACCESS
   RunReportCounts getRunReportCounts(
                                    1: list<i64> runIds,
                                    2: ReportFilter_v2 reportFilter)
                                    throws (1: shared.RequestFailed requestError),
 
   // Count all the results some runIds can be used for diff counting.
+  // PERMISSION: PRODUCT_ACCESS
   i64 getRunResultCount_v2(
                            1: list<i64> runIds,
                            2: ReportFilter_v2 reportFilter,
@@ -251,12 +258,14 @@ service codeCheckerDBAccess {
                            throws (1: shared.RequestFailed requestError),
 
   // gives back the all marked region and message for a report
+  // PERMISSION: PRODUCT_ACCESS
   ReportDetails getReportDetails(
                                  1: i64 reportId)
                                  throws (1: shared.RequestFailed requestError),
 
   // get file information, if fileContent is true the content of the source
   // file will be also returned
+  // PERMISSION: PRODUCT_ACCESS
   SourceFileData getSourceFileData(
                                    1: i64 fileId,
                                    2: bool fileContent,
@@ -264,30 +273,36 @@ service codeCheckerDBAccess {
                                    throws (1: shared.RequestFailed requestError),
 
   // change review status of a bug.
+  // PERMISSION: PRODUCT_ACCESS or PRODUCT_STORE
   bool changeReviewStatus(1: i64 reportId,
                           2: shared.ReviewStatus status,
                           3: string message)
                           throws (1: shared.RequestFailed requestError),
 
   // get comments for a bug
+  // PERMISSION: PRODUCT_ACCESS
   CommentDataList getComments(1: i64 reportId)
                               throws(1: shared.RequestFailed requestError),
 
   // count all the comments for one bug
+  // PERMISSION: PRODUCT_ACCESS
   i64 getCommentCount(1: i64 reportId)
                       throws(1: shared.RequestFailed requestError),
 
   // add new comment for a bug
+  // PERMISSION: PRODUCT_ACCESS
   bool addComment(1: i64 reportId,
                   2: CommentData comment)
                   throws(1: shared.RequestFailed requestError),
 
   // update a comment
+  // PERMISSION: PRODUCT_ACCESS
   bool updateComment(1: i64 commentId,
                      2: string newMessage)
                      throws(1: shared.RequestFailed requestError),
 
   // remove a comment
+  // PERMISSION: PRODUCT_ACCESS
   bool removeComment(1: i64 commentId)
                      throws(1: shared.RequestFailed requestError),
 
@@ -297,6 +312,7 @@ service codeCheckerDBAccess {
 
   // TODO: DEPRECATED getRunResults_v2 should be used
   // compare the results of two runs
+  // PERMISSION: PRODUCT_ACCESS
   ReportDataList getNewResults(1: i64 base_run_id,
                                2: i64 new_run_id,
                                3: i64 limit,
@@ -306,6 +322,7 @@ service codeCheckerDBAccess {
                                throws (1: shared.RequestFailed requestError),
 
   // TODO: DEPRECATED getRunResults_v2 should be used
+  // PERMISSION: PRODUCT_ACCESS
   ReportDataList getResolvedResults(1: i64 base_run_id,
                                     2: i64 new_run_id,
                                     3: i64 limit,
@@ -315,6 +332,7 @@ service codeCheckerDBAccess {
                                     throws (1: shared.RequestFailed requestError),
 
   // TODO: DEPRECATED getRunResults_v2 should be used
+  // PERMISSION: PRODUCT_ACCESS
   ReportDataList getUnresolvedResults(1: i64 base_run_id,
                                       2: i64 new_run_id,
                                       3: i64 limit,
@@ -324,16 +342,19 @@ service codeCheckerDBAccess {
                                       throws (1: shared.RequestFailed requestError),
 
   // get the checker configuration values
+  // PERMISSION: PRODUCT_ACCESS or PRODUCT_STORE
   shared.CheckerConfigList getCheckerConfigs(1: i64 runId)
                                              throws (1: shared.RequestFailed requestError),
 
   // get the skip list of paths
+  // PERMISSION: PRODUCT_ACCESS
   SkipPathDataList getSkipPaths(1: i64 runId)
                                 throws (1: shared.RequestFailed requestError),
 
   // TODO: DEPRECATED should be removed
   // get all the results for one runId
   // count all results for a checker
+  // PERMISSION: PRODUCT_ACCESS
   ReportDataTypeCountList getRunResultTypes(1: i64 runId,
                                             2: ReportFilterList reportFilters)
                                             throws (1: shared.RequestFailed requestError),
@@ -345,16 +366,19 @@ service codeCheckerDBAccess {
   string getPackageVersion();
 
   // remove bug results from the database
+  // PERMISSION: PRODUCT_STORE
   bool removeRunResults(1: list<i64> runIds)
                         throws (1: shared.RequestFailed requestError),
 
   // get the suppress file path set by the command line
   // returns empty string if not set
+  // PERMISSION: PRODUCT_ACCESS
   string getSuppressFile()
                         throws (1: shared.RequestFailed requestError),
 
   // TODO: DEPRECATED getRunResultCount should be used.
   // count the diff results
+  // PERMISSION: PRODUCT_ACCESS
   i64 getDiffResultCount(1: i64 base_run_id,
                          2: i64 new_run_id,
                          3: DiffType diff_type,
@@ -363,6 +387,7 @@ service codeCheckerDBAccess {
 
   // TODO: DEPRECATED the new counter api should be used!
   // count all the diff results for each checker
+  // PERMISSION: PRODUCT_ACCESS
   ReportDataTypeCountList getDiffResultTypes(1: i64 base_run_id,
                                              2: i64 new_run_id,
                                              3: DiffType diff_type,
@@ -372,6 +397,7 @@ service codeCheckerDBAccess {
   // If the run id list is empty the metrics will be counted
   // for all of the runs and in compare mode all of the runs
   // will be used as a baseline excluding the runs in compare data.
+  // PERMISSION: PRODUCT_ACCESS
   map<shared.Severity, i64> getSeverityCounts(1: list<i64> runIds,
                                               2: ReportFilter_v2 reportFilter,
                                               3: CompareData cmpData)
@@ -380,6 +406,7 @@ service codeCheckerDBAccess {
   // If the run id list is empty the metrics will be counted
   // for all of the runs and in compare mode all of the runs
   // will be used as a baseline excluding the runs in compare data.
+  // PERMISSION: PRODUCT_ACCESS
   map<string, i64> getCheckerMsgCounts(1: list<i64> runIds,
                                        2: ReportFilter_v2 reportFilter,
                                        3: CompareData cmpData)
@@ -388,6 +415,7 @@ service codeCheckerDBAccess {
   // If the run id list is empty the metrics will be counted
   // for all of the runs and in compare mode all of the runs
   // will be used as a baseline excluding the runs in compare data.
+  // PERMISSION: PRODUCT_ACCESS
   map<shared.ReviewStatus, i64> getReviewStatusCounts(1: list<i64> runIds,
                                                       2: ReportFilter_v2 reportFilter,
                                                       3: CompareData cmpData)
@@ -396,6 +424,7 @@ service codeCheckerDBAccess {
   // If the run id list is empty the metrics will be counted
   // for all of the runs and in compare mode all of the runs
   // will be used as a baseline excluding the runs in compare data.
+  // PERMISSION: PRODUCT_ACCESS
   map<shared.DetectionStatus, i64> getDetectionStatusCounts(1: list<i64> runIds,
                                                             2: ReportFilter_v2 reportFilter,
                                                             3: CompareData cmpData)
@@ -404,6 +433,7 @@ service codeCheckerDBAccess {
   // If the run id list is empty the metrics will be counted
   // for all of the runs and in compare mode all of the runs
   // will be used as a baseline excluding the runs in compare data.
+  // PERMISSION: PRODUCT_ACCESS
   map<string, i64> getFileCounts(1: list<i64> runIds,
                                  2: ReportFilter_v2 reportFilter,
                                  3: CompareData cmpData)
@@ -412,6 +442,7 @@ service codeCheckerDBAccess {
   // If the run id list is empty the metrics will be counted
   // for all of the runs and in compare mode all of the runs
   // will be used as a baseline excluding the runs in compare data.
+  // PERMISSION: PRODUCT_ACCESS
   map<string, i64> getCheckerCounts(1: list<i64> runIds,
                                     2: ReportFilter_v2 reportFilter,
                                     3: CompareData cmpData)
@@ -426,6 +457,7 @@ service codeCheckerDBAccess {
   // database. If it is, then it is not necessary to send it in the ZIP file
   // with massStoreRun() function. This function requires a list of file hashes
   // (sha256) and returns the ones which are not stored yet.
+  // PERMISSION: PRODUCT_STORE
   list<string> getMissingContentHashes(
                                        1: list<string> file_hashes)
                                        throws (1: shared.RequestFailed requestError),
@@ -441,6 +473,7 @@ service codeCheckerDBAccess {
   // The "version" parameter is the used CodeChecker version which checked this
   // run.
   // The "force" parameter removes existing analysis results for a run.
+  // PERMISSION: PRODUCT_STORE
   i64 massStoreRun(
                    1: string run_name,
                    2: string version,
@@ -448,6 +481,7 @@ service codeCheckerDBAccess {
                    4: bool force)
                    throws (1: shared.RequestFailed requestError),
 
+  // PERMISSION: PRODUCT_STORE
   bool replaceConfigInfo(
                      1: i64 run_id,
                      2: shared.CheckerConfigList values)

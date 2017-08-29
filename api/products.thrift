@@ -70,13 +70,17 @@ service codeCheckerProductService {
   ProductConfiguration getProductConfiguration(1: i64 productId)
                                                throws (1: shared.RequestFailed requestError),
 
+  // PERMISSION: SUPERUSER
   bool addProduct(1: ProductConfiguration product)
                   throws (1: shared.RequestFailed requestError),
 
+  // PERMISSION: PRODUCT_ADMIN (for basic metadata editing),
+  //             SUPERUSER     (for connection configuration editing)
   bool editProduct(1: i64 productId,
                    2: ProductConfiguration newConfiguration)
                    throws (1: shared.RequestFailed requestError),
 
+  // PERMISSION: SUPERUSER
   bool removeProduct(1: i64 productId)
                      throws (1: shared.RequestFailed requestError)
 

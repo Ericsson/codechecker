@@ -7,8 +7,9 @@
 define([
   'dojo/date/locale',
   'dojo/dom-construct',
-  'dojo/dom-style'],
-function (locale, dom, style) {
+  'dojo/dom-style',
+  'dojo/json'],
+function (locale, dom, style, json) {
   return {
     /**
      * This function returns the first element of the given array for which the
