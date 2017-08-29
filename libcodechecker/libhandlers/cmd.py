@@ -85,7 +85,7 @@ def __add_common_arguments(parser,
                                   required=False,
                                   help="The URL of the product to store the "
                                        "results for, in the format of "
-                                       "host:port/ProductName.")
+                                       "'host:port/Endpoint'.")
     else:
         # Command connects to a server directly.
         common_group.add_argument('--host',

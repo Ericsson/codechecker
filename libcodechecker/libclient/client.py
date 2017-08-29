@@ -5,6 +5,7 @@
 # -------------------------------------------------------------------------
 
 import getpass
+import json
 import sys
 
 from thrift.Thrift import TApplicationException
@@ -35,6 +36,40 @@ def check_api_version(client):
 
     # There is NO compatibility between major versions.
     return supp_major_version == api_major_version
+
+
+def setup_auth_client(host, port, session_token=None):
+    """
+    Setup the Thrift authentication client. Returns the client object and the
+    session token for the session.
+    """
+
+    if not session_token:
+        manager = session_manager.SessionManager_Client()
+        session_token = manager.getToken(host, port)
+        session_token_new = perform_auth_for_handler(manager, host,
+                                                     port, session_token)
+        if session_token_new:
+            session_token = session_token_new
+
+    client = authentication_helper.ThriftAuthHelper(host, port,
+                                                    '/Authentication',
+                                                    session_token)
+
+    return client, session_token
+
+
+def setup_auth_client_from_url(product_url, session_token=None):
+    """
+    Setup a Thrift authentication client to the server pointed by the given
+    product URL.
+    """
+    try:
+        host, port, _ = split_product_url(product_url)
+        return setup_auth_client(host, port, session_token)
+    except:
+        LOG.error("Malformed product URL was provided.")
+        sys.exit(2)  # 2 for argument error.
 
 
 def handle_auth(host, port, username, login=False):
@@ -151,13 +186,7 @@ def setup_product_client(host, port, product_name=None):
     Setup the Thrift client for the product management endpoint.
     """
 
-    # Check if the user has authenticated.
-    manager = session_manager.SessionManager_Client()
-    session_token = manager.getToken(host, port)
-    session_token_new = perform_auth_for_handler(manager, host,
-                                                 port, session_token)
-    if session_token_new:
-        session_token = session_token_new
+    _, session_token = setup_auth_client(host, port)
 
     if not product_name:
         # Attach to the server-wide product service.
@@ -197,13 +226,7 @@ def setup_client(product_url):
         LOG.error("Malformed product URL was provided.")
         sys.exit(2)  # 2 for argument error.
 
-    # Check if the user has authenticated.
-    manager = session_manager.SessionManager_Client()
-    session_token = manager.getToken(host, port)
-    session_token_new = perform_auth_for_handler(manager, host,
-                                                 port, session_token)
-    if session_token_new:
-        session_token = session_token_new
+    _, session_token = setup_auth_client(host, port)
 
     # Check if the product exists.
     product_client = setup_product_client(host, port,
@@ -238,3 +261,28 @@ def setup_client(product_url):
         sys.exit(1)
 
     return client
+
+
+def check_permission(auth_client, permission_enum, extra_params):
+    """
+    Returns whether or not the current client has the given permission.
+
+    :param auth_client:     The auth_client usually created by
+      setup_auth_client() via which the communication with the server will
+      take place.
+    :param permission_enum: The Thrift API enum value of the permission. Refer
+      to the Authentication API on which permissions exist.
+    :param extra_params:    The extra arguments based on the required
+      permission's scope (refer to the API documentation) as a Python dict.
+    :return: boolean
+    """
+
+    # Encode the extra_params into a string over the API.
+    args_string = json.dumps(extra_params)
+
+    try:
+        return auth_client.hasPermission(permission_enum, args_string)
+    except Exception as e:
+        LOG.error("Failed to query the permission.")
+        LOG.error(e.message)
+        return False

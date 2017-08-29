@@ -600,10 +600,15 @@ def require_manager(permission, extra_params, user):
 # ---------------------------------------------------------------------------
 
 # Define the permissions available.
+# Please refer to the user guide and the API documentation on which actions
+# require which permission in particular.
 
-# The superuser has every permission
+# -- System-level permissions --
+
 SUPERUSER = _create_permission(SystemPermission, 'SUPERUSER',
                                default_enable=False)
+
+# -- Product-level permissions --
 
 PRODUCT_ADMIN = _create_permission(ProductPermission, 'PRODUCT_ADMIN',
                                    default_enable=False,

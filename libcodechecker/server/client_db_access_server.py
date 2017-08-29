@@ -19,7 +19,6 @@ from random import sample
 import stat
 import socket
 import urllib
-import urlparse
 
 try:
     from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
@@ -43,6 +42,7 @@ from libcodechecker.util import get_tmp_dir_hash
 from . import database_handler
 from . import instance_manager
 from . import permissions
+from . import routing
 from client_auth_handler import ThriftAuthHandler
 from client_db_access_handler import ThriftRequestHandler
 from config_db_model import Product as ORMProduct
@@ -50,23 +50,6 @@ from product_db_access_handler import ThriftProductHandler
 from run_db_model import IDENTIFIER as RUN_META
 
 LOG = LoggerFactory.get_new_logger('DB ACCESS')
-
-# A list of top-level path elements under the webserver root
-# which should not be considered as a product route.
-NON_PRODUCT_NAMES = ['products.html',
-                     'index.html',
-                     'fonts',
-                     'images',
-                     'scripts',
-                     'style'
-                     ]
-
-# A list of top-level path elements in requests (such as Thrift endpoints)
-# which should not be considered as a product route.
-NON_PRODUCT_NAMES += ['Authentication',
-                      'Products',
-                      'CodeCheckerService'
-                      ]
 
 
 class RequestHandler(SimpleHTTPRequestHandler):
@@ -140,22 +123,6 @@ class RequestHandler(SimpleHTTPRequestHandler):
 
         return success
 
-    def __get_product_name(self):
-        """
-        Get product name from the request's URI.
-        """
-
-        # A standard request from a browser looks like:
-        # http://localhost:8001/[product-name]/#{request-parts}
-        # where the parts are, e.g.: run=[run_id]&report=[report_id]
-        #
-        # Rewrite the "product-name" so that the web-server deploys the
-        # viewer client from the www/ folder.
-
-        # The split array looks like ['', 'product-name', ...].
-        first_part = urlparse.urlparse(self.path).path.split('/', 2)[1]
-        return first_part if first_part not in NON_PRODUCT_NAMES else None
-
     def do_GET(self):
         """
         Handles the webbrowser access (GET requests).
@@ -182,7 +149,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
             self.wfile.write(error_body)
             return
         else:
-            product_name = self.__get_product_name()
+            product_name = routing.get_product_name(self.path)
 
             if product_name is not None and product_name != '':
                 if not self.server.get_product(product_name):
@@ -295,7 +262,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
 
         # Authentication is handled, we may now respond to the user.
         try:
-            product_name = self.__get_product_name()
+            product_name = routing.get_product_name(self.path)
             request_endpoint = self.path.replace("/{0}".format(product_name),
                                                  "", 1)
 
@@ -325,13 +292,13 @@ class RequestHandler(SimpleHTTPRequestHandler):
             if request_endpoint == '/Authentication':
                 auth_handler = ThriftAuthHandler(self.server.manager,
                                                  auth_session,
-                                                 self.server.product_session)
+                                                 self.server.config_session)
                 processor = codeCheckerAuthentication.Processor(auth_handler)
             elif request_endpoint == '/Products':
                 prod_handler = ThriftProductHandler(
                     self.server,
                     auth_session,
-                    self.server.product_session,
+                    self.server.config_session,
                     product,
                     version)
                 processor = codeCheckerProductService.Processor(prod_handler)
@@ -345,11 +312,12 @@ class RequestHandler(SimpleHTTPRequestHandler):
 
                 acc_handler = ThriftRequestHandler(
                     product.session_factory,
+                    product,
                     auth_session,
+                    self.server.config_session,
                     checker_md_docs,
                     checker_md_docs_map,
                     suppress_handler,
-                    self.server.context.run_db_version_info,
                     version)
                 processor = codeCheckerDBAccess.Processor(acc_handler)
             else:
@@ -561,10 +529,10 @@ class CCSimpleHttpServer(HTTPServer):
         # Create a database engine for the configuration database.
         LOG.debug("Creating database engine for CONFIG DATABASE...")
         self.__engine = product_db_sql_server.create_engine()
-        self.product_session = sessionmaker(bind=self.__engine)
+        self.config_session = sessionmaker(bind=self.__engine)
 
         # Load the initial list of products and set up the server.
-        sess = self.product_session()
+        sess = self.config_session()
         permissions.initialise_defaults('SYSTEM', {
             'config_db_session': sess
         })

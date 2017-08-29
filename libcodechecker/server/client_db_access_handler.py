@@ -37,6 +37,7 @@ from libcodechecker.analyze import store_handler
 from libcodechecker.logger import LoggerFactory
 from libcodechecker.profiler import timeit
 
+from . import permissions
 from run_db_model import *
 
 LOG = LoggerFactory.get_new_logger('RUN ACCESS HANDLER')
@@ -369,20 +370,65 @@ class ThriftRequestHandler(object):
 
     def __init__(self,
                  Session,
+                 product,
                  auth_session,
+                 config_database,
                  checker_md_docs,
                  checker_md_docs_map,
                  suppress_handler,
-                 db_version_info,
                  package_version):
 
+        if not product:
+            raise ValueError("Cannot initialize request handler without "
+                             "a product to serve.")
+
+        self.__product = product
         self.__auth_session = auth_session
+        self.__config_database = config_database
         self.__checker_md_docs = checker_md_docs
         self.__checker_doc_map = checker_md_docs_map
         self.__suppress_handler = suppress_handler
         self.__package_version = package_version
         self.__Session = Session
         self.__storage_session = StorageSession()
+
+        self.__permission_args = {
+            'productID': product.id
+        }
+
+    def __require_permission(self, required):
+        """
+        Helper method to raise an UNAUTHORIZED exception if the user does not
+        have any of the given permissions.
+        """
+
+        try:
+            session = self.__config_database()
+            args = dict(self.__permission_args)
+            args['config_db_session'] = session
+
+            if not any([permissions.require_permission(
+                            perm, args, self.__auth_session)
+                        for perm in required]):
+                raise shared.ttypes.RequestFailed(
+                    shared.ttypes.ErrorCode.UNAUTHORIZED,
+                    "You are not authorized to execute this action.")
+
+            return True
+
+        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
+            msg = str(alchemy_ex)
+            LOG.error(msg)
+            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
+                                              msg)
+        finally:
+            session.close()
+
+    def __require_access(self):
+        self.__require_permission([permissions.PRODUCT_ACCESS])
+
+    def __require_store(self):
+        self.__require_permission([permissions.PRODUCT_STORE])
 
     def __sortResultsQuery(self, query, sort_types=None):
         """
@@ -427,7 +473,7 @@ class ThriftRequestHandler(object):
 
     @timeit
     def getRunData(self, run_name_filter):
-
+        self.__require_access()
         try:
             session = self.__Session()
 
@@ -483,6 +529,7 @@ class ThriftRequestHandler(object):
 
     @timeit
     def getReport(self, reportId):
+        self.__require_access()
         try:
             session = self.__Session()
 
@@ -539,7 +586,7 @@ class ThriftRequestHandler(object):
     @timeit
     def getRunResults(self, run_ids, limit, offset, sort_types,
                       report_filters):
-
+        self.__require_access()
         max_query_limit = constants.MAX_QUERY_SIZE
         if limit > max_query_limit:
             LOG.debug('Query limit ' + str(limit) +
@@ -609,7 +656,7 @@ class ThriftRequestHandler(object):
     @timeit
     def getRunResults_v2(self, run_ids, limit, offset, sort_types,
                          report_filter, cmp_data):
-
+        self.__require_access()
         max_query_limit = constants.MAX_QUERY_SIZE
         if limit > max_query_limit:
             LOG.debug('Query limit ' + str(limit) +
@@ -699,7 +746,7 @@ class ThriftRequestHandler(object):
           If an empty run id list is provided the report
           counts will be calculated for all of the available runs.
         """
-
+        self.__require_access()
         results = []
         session = self.__Session()
         try:
@@ -736,6 +783,7 @@ class ThriftRequestHandler(object):
 
     @timeit
     def getRunResultCount_v2(self, run_ids, report_filter, cmp_data):
+        self.__require_access()
         session = self.__Session()
 
         try:
@@ -781,7 +829,7 @@ class ThriftRequestHandler(object):
 
     @timeit
     def getRunResultCount(self, run_ids, report_filters):
-
+        self.__require_access()
         filter_expression = construct_report_filter(report_filters)
 
         try:
@@ -829,7 +877,7 @@ class ThriftRequestHandler(object):
         Parameters:
          - reportId
         """
-
+        self.__require_access()
         try:
             session = self.__Session()
 
@@ -871,6 +919,8 @@ class ThriftRequestHandler(object):
         a session parameter which represents a database transaction. This is
         needed because during storage a specific session object has to be used.
         """
+        self.__require_permission([permissions.PRODUCT_ACCESS,
+                                   permissions.PRODUCT_STORE])
         try:
             report = session.query(Report).get(report_id)
             if report:
@@ -922,6 +972,7 @@ class ThriftRequestHandler(object):
         """
             Return the list of comments for the given bug.
         """
+        self.__require_access()
         try:
             session = self.__Session()
             report = session.query(Report).get(report_id)
@@ -967,6 +1018,7 @@ class ThriftRequestHandler(object):
         """
             Return the number of comments for the given bug.
         """
+        self.__require_access()
         try:
             session = self.__Session()
             report = session.query(Report).get(report_id)
@@ -998,6 +1050,7 @@ class ThriftRequestHandler(object):
         """
             Add new comment for the given bug.
         """
+        self.__require_access()
         session = self.__Session()
         try:
             report = session.query(Report).get(report_id)
@@ -1040,6 +1093,7 @@ class ThriftRequestHandler(object):
             comments to be updated by it's original author only, except for
             Anyonymous comments that can be updated by anybody.
         """
+        self.__require_access()
         try:
             session = self.__Session()
 
@@ -1083,6 +1137,7 @@ class ThriftRequestHandler(object):
             original author only, except for Anyonymous comments that can be
             updated by anybody.
         """
+        self.__require_access()
         try:
             session = self.__Session()
 
@@ -1157,6 +1212,8 @@ class ThriftRequestHandler(object):
         Parameters:
          - run_id
         """
+        self.__require_permission([permissions.PRODUCT_ACCESS,
+                                   permissions.PRODUCT_STORE])
         try:
             session = self.__Session()
 
@@ -1182,6 +1239,7 @@ class ThriftRequestHandler(object):
 
     @timeit
     def getSkipPaths(self, run_id):
+        self.__require_access()
         try:
             session = self.__Session()
 
@@ -1213,6 +1271,7 @@ class ThriftRequestHandler(object):
          - fileContent
          - enum Encoding
         """
+        self.__require_access()
         try:
             session = self.__Session()
             sourcefile = session.query(File).get(fileId)
@@ -1246,7 +1305,7 @@ class ThriftRequestHandler(object):
 
     @timeit
     def getRunResultTypes(self, run_id, report_filters):
-
+        self.__require_access()
         try:
             session = self.__Session()
 
@@ -1321,6 +1380,7 @@ class ThriftRequestHandler(object):
           for all of the runs and in compare mode all of the runs
           will be used as a baseline excluding the runs in compare data.
         """
+        self.__require_access()
         results = {}
         session = self.__Session()
         try:
@@ -1369,6 +1429,7 @@ class ThriftRequestHandler(object):
           for all of the runs and in compare mode all of the runs
           will be used as a baseline excluding the runs in compare data.
         """
+        self.__require_access()
         results = {}
         session = self.__Session()
         try:
@@ -1417,6 +1478,7 @@ class ThriftRequestHandler(object):
           for all of the runs and in compare mode all of the runs
           will be used as a baseline excluding the runs in compare data.
         """
+        self.__require_access()
         results = {}
         session = self.__Session()
         try:
@@ -1465,6 +1527,7 @@ class ThriftRequestHandler(object):
           for all of the runs and in compare mode all of the runs
           will be used as a baseline excluding the runs in compare data.
         """
+        self.__require_access()
         results = defaultdict(int)
         session = self.__Session()
         try:
@@ -1522,6 +1585,7 @@ class ThriftRequestHandler(object):
           for all of the runs and in compare mode all of the runs
           will be used as a baseline excluding the runs in compare data.
         """
+        self.__require_access()
         results = {}
         session = self.__Session()
         try:
@@ -1573,6 +1637,7 @@ class ThriftRequestHandler(object):
           for all of the runs and in compare mode all of the runs
           will be used as a baseline excluding the runs in compare data.
         """
+        self.__require_access()
         results = {}
         session = self.__Session()
         try:
@@ -1791,7 +1856,7 @@ class ThriftRequestHandler(object):
                       offset,
                       sort_types=None,
                       report_filters=None):
-
+        self.__require_access()
         session = self.__Session()
 
         base_line_hashes, new_check_hashes = \
@@ -1828,7 +1893,7 @@ class ThriftRequestHandler(object):
                            offset,
                            sort_types=None,
                            report_filters=None):
-
+        self.__require_access()
         session = self.__Session()
         base_line_hashes, new_check_hashes = \
             self.__get_hashes_for_diff(session,
@@ -1863,7 +1928,7 @@ class ThriftRequestHandler(object):
                              offset,
                              sort_types=None,
                              report_filters=None):
-
+        self.__require_access()
         session = self.__Session()
         base_line_hashes, new_check_hashes = \
             self.__get_hashes_for_diff(session,
@@ -1914,7 +1979,7 @@ class ThriftRequestHandler(object):
     # -----------------------------------------------------------------------
     @timeit
     def removeRunResults(self, run_ids):
-
+        self.__require_store()
         session = self.__Session()
 
         runs_to_delete = []
@@ -1952,6 +2017,7 @@ class ThriftRequestHandler(object):
         """
         Return the suppress file path or empty string if not set.
         """
+        self.__require_access()
         suppress_file = self.__suppress_handler.suppress_file
         if suppress_file:
             return suppress_file
@@ -1998,7 +2064,7 @@ class ThriftRequestHandler(object):
         """
         Count the diff results.
         """
-
+        self.__require_access()
         # TODO This function is similar to getDiffResultTypes. Maybe it is
         # worth refactoring the common parts.
         try:
@@ -2094,7 +2160,7 @@ class ThriftRequestHandler(object):
                            new_run_id,
                            diff_type,
                            report_filters):
-
+        self.__require_access()
         try:
             session = self.__Session()
             base_line_hashes, new_check_hashes = \
@@ -2139,6 +2205,7 @@ class ThriftRequestHandler(object):
 
     @timeit
     def getMissingContentHashes(self, file_hashes):
+        self.__require_store()
         try:
             session = self.__Session()
 
@@ -2154,6 +2221,7 @@ class ThriftRequestHandler(object):
 
     @timeit
     def massStoreRun(self, name, version, b64zip, force):
+        self.__require_store()
         # Unzip sent data.
         zip_dir = unzip(b64zip)
 
@@ -2332,6 +2400,7 @@ class ThriftRequestHandler(object):
         Removes all the previously stored config information and stores the
         new values.
         """
+        self.__require_store()
         try:
             session = self.__Session()
             LOG.debug("Replacing config info")

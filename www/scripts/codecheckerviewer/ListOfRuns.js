@@ -92,6 +92,7 @@ function (declare, domConstruct, ItemFileWriteStore, topic, Dialog, Button,
 
     postCreate : function () {
       this.inherited(arguments);
+      this.layout.setColumnVisibility(8, this.get('showDelete'));
       this._populateRuns();
     },
 
@@ -261,7 +262,8 @@ function (declare, domConstruct, ItemFileWriteStore, topic, Dialog, Button,
 
     postCreate : function () {
       this.addChild(this._runFilter);
-      this.addChild(this._deleteBtn);
+      if (this.get('showDelete'))
+        this.addChild(this._deleteBtn);
       this.addChild(this._diffBtn);
     },
 
@@ -313,14 +315,21 @@ function (declare, domConstruct, ItemFileWriteStore, topic, Dialog, Button,
     postCreate : function () {
       var that = this;
 
+      var showDelete = CC_AUTH_SERVICE.hasPermission(
+        CC_AUTH_OBJECTS.Permission.PRODUCT_STORE, util.createPermissionParams({
+          productID : CURRENT_PRODUCT.id
+        }));
+
       var runsInfoPane = new RunsInfoPane({
-        region : 'top'
+        region : 'top',
+        showDelete : showDelete
       });
 
       var listOfRunsGrid = new ListOfRunsGrid({
         region : 'center',
         infoPane : runsInfoPane,
-        onLoaded : that.onLoaded
+        onLoaded : that.onLoaded,
+        showDelete : showDelete
       });
 
       runsInfoPane.set('listOfRunsGrid', listOfRunsGrid);

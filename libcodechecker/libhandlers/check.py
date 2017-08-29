@@ -321,7 +321,7 @@ def add_arguments_to_parser(parser):
                              required=False,
                              help="The URL of the product to store the "
                                   "results for, in the format of "
-                                  "host:port/ProductName.")
+                                  "'host:port/Endpoint'.")
 
     # TODO: These arguments have been retroactively removed from 'store'
     # and are deprecated here. They should be completely removed.

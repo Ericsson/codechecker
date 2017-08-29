@@ -10,7 +10,6 @@ define([
   'dojo/dom-class',
   'dojo/dom-construct',
   'dojo/data/ItemFileWriteStore',
-  'dojo/json',
   'dojo/store/Memory',
   'dojo/store/Observable',
   'dijit/Dialog',
@@ -22,7 +21,7 @@ define([
   'codechecker/MessagePane',
   'codechecker/util'],
 function (declare, domAttr, domClass, domConstruct, ItemFileWriteStore,
-  json, Memory, Observable, Dialog, Button, Select, TextBox,
+  Memory, Observable, Dialog, Button, Select, TextBox,
   CheckedMultiSelect, ContentPane, MessagePane, util) {
 
   return declare(ContentPane, {
@@ -196,9 +195,9 @@ function (declare, domAttr, domClass, domConstruct, ItemFileWriteStore,
       this.set('scope', scope);
       this.set('extraParams', extraParams);
 
-      // The scope-specific extra parameters are trasmitted over the wire as
+      // The scope-specific extra parameters are transmitted over the wire as
       // a JSON-encoded string inside the Thrift object.
-      this.set('extraParamsJSON', json.stringify(extraParams));
+      this.set('extraParamsJSON', util.createPermissionParams(extraParams));
 
       this._permissionStore.query().forEach(function (permItem) {
         that._permissionStore.remove(permItem.id);
