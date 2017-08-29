@@ -106,66 +106,6 @@ class TestReportFilter(unittest.TestCase):
              'has a space.cpp': 1
              }
 
-        self.run1_checker_msg = \
-            {"Argument to 'delete' is the address of the local variable 'i', "
-             "which is not memory allocated by 'new'": 1,
-             'Called function pointer is null (null dereference)': 1,
-             "Value stored to 'k' during its initialization is never read": 1,
-             "Dereference of null pointer (loaded from variable 'p')": 2,
-             'Division by zero': 3,
-             'Use of memory after it is freed': 2,
-             "Array access (from variable 'p') results in a null pointer "
-             "dereference": 1,
-             "Address of stack memory associated with local variable 'y' is "
-             "still referred to by the global variable 'x' upon returning to "
-             "the caller.  This will be a dangling reference": 1,
-             "Address of stack memory associated with local variable 'str' is "
-             "still referred to by the global variable 'p' upon returning to "
-             "the caller.  This will be a dangling reference": 1,
-             'Called function pointer is an uninitalized pointer value': 1,
-             'Called C++ object pointer is null': 1,
-             'Address of stack memory allocated by call to alloca() on line '
-             '18 returned to caller': 1,
-             'Called C++ object pointer is uninitialized': 1,
-             "Argument to 'delete[]' is offset by 4 bytes from the start of "
-             "memory allocated by 'new[]'": 1,
-             'Attempt to free released memory': 1,
-             "Access to field 'x' results in a dereference of a null pointer "
-             "(loaded from variable 'pc')": 1,
-             "Passed-by-value struct argument contains uninitialized data "
-             "(e.g., field: 'x')": 1,
-             'Memory allocated by alloca() should not be deallocated': 1,
-             "Value stored to 'y' during its initialization is never read": 1,
-             "Value stored to 'x' during its initialization is never read": 3}
-
-        self.run2_checker_msg = \
-            {"Argument to 'delete' is the address of the local variable "
-             "'i', which is not memory allocated by 'new'": 1,
-             'Called function pointer is null (null dereference)': 1,
-             "Value stored to 'k' during its initialization is "
-             "never read": 1,
-             "Dereference of null pointer (loaded from variable 'p')": 2,
-             'Division by zero': 3,
-             'Use of memory after it is freed': 2,
-             'Called C++ object pointer is null': 1,
-             "Value stored to 'y' during its initialization is "
-             "never read": 1,
-             'Called function pointer is an uninitalized pointer '
-             'value': 1,
-             "Array access (from variable 'p') results in a null "
-             "pointer dereference": 1,
-             "Passed-by-value struct argument contains uninitialized "
-             "data (e.g., field: 'x')": 1,
-             'Called C++ object pointer is uninitialized': 1,
-             "Argument to 'delete[]' is offset by 4 bytes from the start "
-             "of memory allocated by 'new[]'": 1,
-             'Attempt to free released memory': 1,
-             "Access to field 'x' results in a dereference of a null "
-             "pointer (loaded from variable 'pc')": 1,
-             'Memory allocated by alloca() should not be deallocated': 1,
-             "Value stored to 'x' during its initialization "
-             "is never read": 3}
-
     def test_run1_all_checkers(self):
         """
         Get all the checker counts for run1.
@@ -354,48 +294,27 @@ class TestReportFilter(unittest.TestCase):
         self.assertEqual(len(res), len(test_res))
         self.assertDictEqual(res, test_res)
 
-    def test_run1_all_checker_msg(self):
-        """
-        Get all the file checker messages for for run1.
-        """
-        runid = self._runids[0]
-        msg_counts = self._cc_client.getCheckerMsgCounts([runid],
-                                                         None,
-                                                         None)
-
-        print(msg_counts)
-        self.assertEqual(len(msg_counts), len(self.run1_checker_msg))
-        self.assertDictEqual(msg_counts, self.run1_checker_msg)
-
-    def test_run2_all_checker_msg(self):
-        """
-        Get all the file checker messages for for run2.
-        """
-        runid = self._runids[1]
-        msg_counts = self._cc_client.getCheckerMsgCounts([runid],
-                                                         None,
-                                                         None)
-
-        self.assertEqual(len(msg_counts), len(self.run2_checker_msg))
-        self.assertDictEqual(msg_counts, self.run2_checker_msg)
-
     def test_run1_run2_all_checker_msg(self):
         """
         Get all the file checker messages for run1 and run2.
         """
-        file_counts = self._cc_client.getCheckerMsgCounts(self._runids,
-                                                          None,
-                                                          None)
-        res = {get_filename(k): v for k, v in file_counts.items()}
+        run1_msgs = self._cc_client.getCheckerMsgCounts([self._runids[0]],
+                                                        None,
+                                                        None)
 
-        r1_checker_msg = Counter(self.run1_checker_msg)
-        r2_checker_msg = Counter(self.run2_checker_msg)
+        run2_msgs = self._cc_client.getCheckerMsgCounts([self._runids[1]],
+                                                        None,
+                                                        None)
+
+        run1_run2_msgs = self._cc_client.getCheckerMsgCounts(self._runids,
+                                                             None,
+                                                             None)
+
+        r1_checker_msg = Counter(run1_msgs)
+        r2_checker_msg = Counter(run2_msgs)
         all_checker_msg = dict(r1_checker_msg + r2_checker_msg)
 
-        print(res)
-
-        self.assertEqual(len(res), len(all_checker_msg))
-        self.assertDictEqual(res, all_checker_msg)
+        self.assertDictEqual(run1_run2_msgs, all_checker_msg)
 
     def test_run1_all_review_status(self):
         """
