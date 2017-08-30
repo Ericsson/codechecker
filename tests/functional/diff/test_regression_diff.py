@@ -129,14 +129,14 @@ class Diff(unittest.TestCase):
                                                       DiffType.UNRESOLVED,
                                                       [])
 
-        self.assertEqual(diff_res, 18)
+        self.assertEqual(diff_res, 20)
 
     def test_get_diff_res_count_unresolved_filter(self):
         base_run_id = self._base_runid
         new_run_id = self._new_runid
 
         filter_severity_levels = [{"MEDIUM": 1}, {"LOW": 5},
-                                  {"HIGH": 12}, {"STYLE": 0},
+                                  {"HIGH": 14}, {"STYLE": 0},
                                   {"UNSPECIFIED": 0}, {"CRITICAL": 0}]
 
         for level in filter_severity_levels:
@@ -212,7 +212,7 @@ class Diff(unittest.TestCase):
 
     def test_get_diff_res_types_unresolved_filter(self):
         """
-        Test diff result types for unresolved results with checker name filter
+        test diff result types for unresolved results with checker name filter
         on the api.
         """
         base_run_id = self._base_runid
@@ -305,7 +305,7 @@ class Diff(unittest.TestCase):
 
         # # 3 disappeared core.StackAddressEscape issues
         count = len(re.findall(r'\[core\.DivideZero\]', out))
-        self.assertEqual(count, 3)
+        self.assertEqual(count, 5)
         count = len(re.findall(r'\[deadcode\.DeadStores\]', out))
         self.assertEqual(count, 5)
         count = len(re.findall(r'\[core\.NullDereference\]', out))
@@ -314,5 +314,3 @@ class Diff(unittest.TestCase):
         self.assertEqual(count, 5)
         count = len(re.findall(r'\[unix\.Malloc\]', out))
         self.assertEqual(count, 1)
-        count = len(re.findall(r'\[core.DivideZero\]', out))
-        self.assertEqual(count, 3)

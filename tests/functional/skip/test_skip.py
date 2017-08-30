@@ -61,23 +61,22 @@ class TestSkip(unittest.TestCase):
         run_results = get_all_run_results(self._cc_client, runid)
         self.assertIsNotNone(run_results)
 
-        skipped_file = "file_to_be_skipped.cpp"
+        skipped_files = ["file_to_be_skipped.cpp", "skip.h"]
 
         test_proj_res = self._testproject_data[self._clang_to_test]['bugs']
-        skipped = [x for x in test_proj_res if x['file'] == skipped_file]
+        skipped = [x for x in test_proj_res if x['file'] in skipped_files]
+
         print("Analysis:")
         for res in run_results:
             print(res)
 
-        print("Test config results:")
+        print("\nTest config results:")
         for res in test_proj_res:
             print(res)
 
-        print("Test config skipped results:")
+        print("\nTest config skipped results:")
         for res in skipped:
             print(res)
-
-        self.assertEqual(len(run_results), len(test_proj_res) - len(skipped))
 
         missing_results = find_all(run_results, test_proj_res)
 
@@ -89,8 +88,10 @@ class TestSkip(unittest.TestCase):
 
         if missing_results:
             for bug in missing_results:
-                self.assertEqual(bug['file'], skipped_file)
+                self.assertIn(bug['file'], skipped_files)
         else:
             self.assertTrue(True,
                             "There should be missing results because"
                             "using skip")
+
+        self.assertEqual(len(run_results), len(test_proj_res) - len(skipped))

@@ -17,6 +17,7 @@ import zipfile
 
 from libcodechecker import util
 from libcodechecker.analyze import analyzer_env
+from libcodechecker.analyze import plist_parser
 from libcodechecker.analyze.analyzers import analyzer_types
 from libcodechecker.logger import LoggerFactory
 
@@ -295,6 +296,13 @@ def check(check_data):
                     err_file = os.path.join(failed_dir, result_base + '.zip')
                     if os.path.exists(err_file):
                         os.remove(err_file)
+
+                if skip_handler:
+                    # We need to check the plist content because skipping
+                    # reports in headers can be done only this way.
+                    plist_parser.skip_report_from_plist(result_file,
+                                                        skip_handler)
+
             else:
                 # If the analysis has failed, we help debugging.
                 if not os.path.exists(failed_dir):
@@ -399,7 +407,7 @@ def check(check_data):
     except Exception as e:
         LOG.debug_analyzer(str(e))
         traceback.print_exc(file=sys.stdout)
-        return 1, skipped, reanalyzed, action, None
+        return 1, skipped, reanalyzed, action.analyzer_type, None
 
 
 def start_workers(actions, context, analyzer_config_map,

@@ -184,3 +184,130 @@ def parse_plist(path):
         LOG.error(ex)
     finally:
         return files, reports
+
+
+def fids_in_range(rng):
+    """
+    Get the file ids from a range.
+    """
+    fids = []
+    for r in rng:
+        for l in r:
+            fids.append(l['file'])
+    return fids
+
+
+def fids_in_edge(edges):
+    """
+    Get the file ids from an edge.
+    """
+    fids = []
+    for e in edges:
+        start = e['start']
+        end = e['end']
+        for l in start:
+            fids.append(l['file'])
+        for l in end:
+            fids.append(l['file'])
+    return fids
+
+
+def fids_in_path(report_data, file_ids_to_remove):
+    """
+    Skip diagnostic sections and collect file ids in
+    report paths for the remaining diagnostic sections.
+    """
+    all_fids = []
+
+    kept_diagnostics = []
+
+    for diag in report_data['diagnostics']:
+
+        if diag['location']['file'] in file_ids_to_remove:
+            continue
+
+        kept_diagnostics.append(diag)
+
+        for pe in diag['path']:
+            path_fids = []
+            try:
+                fids = fids_in_range(pe['ranges'])
+                path_fids.extend(fids)
+            except KeyError:
+                pass
+
+            try:
+                fid = pe['location']['file']
+                path_fids.append(fid)
+            except KeyError:
+                pass
+
+            try:
+                fids = fids_in_edge(pe['edges'])
+                path_fids.extend(fids)
+            except KeyError:
+                pass
+
+            all_fids.extend(path_fids)
+
+    return all_fids, kept_diagnostics
+
+
+def remove_report_from_plist(plist_content, skip_handler):
+    """
+    Parse the original plist content provided by the analyzer
+    and return a new plist content where reports were removed
+    if they should be skipped.
+    """
+    new_data = {}
+    try:
+        report_data = plistlib.readPlistFromString(plist_content)
+    except ExpatError as ex:
+        LOG.error("Failed to parse plist content, "
+                  "keeping the original version")
+        LOG.error(plist_content)
+        LOG.error(ex)
+        return plist_content
+
+    file_ids_to_remove = []
+
+    try:
+        for i, f in enumerate(report_data['files']):
+            if skip_handler.should_skip(f):
+                file_ids_to_remove.append(i)
+
+        fids, kept_diagnostics = fids_in_path(report_data, file_ids_to_remove)
+        report_data['diagnostics'] = kept_diagnostics
+
+        remove_file = True
+        for f in file_ids_to_remove:
+            if f in fids:
+                remove_file = False
+                break
+
+        if remove_file:
+            kept_files = [f for i, f in enumerate(report_data['files'])
+                          if i not in file_ids_to_remove]
+            report_data['files'] = kept_files
+
+        new_data = report_data
+        res = plistlib.writePlistToString(new_data)
+        return res
+
+    except KeyError:
+        LOG.error("Failed to modify plist content, "
+                  "keeping the original version")
+        return plist_content
+
+
+def skip_report_from_plist(plist_file, skip_handler):
+    """
+    Rewrites the provided plist file where reports
+    were removed if they should be skipped.
+    """
+    with open(plist_file, 'r+') as plist:
+        new_plist_content = remove_report_from_plist(plist.read(),
+                                                     skip_handler)
+        plist.seek(0)
+        plist.write(new_plist_content)
+        plist.truncate()
