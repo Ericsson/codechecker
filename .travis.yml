@@ -21,45 +21,45 @@ matrix:
       dist: trusty
       python: "2.7"
       env: DATABASE=psql_pg8000
-    - os: osx
-      osx_image: xcode8
-      sudo: false
-      language: generic
-      env: DATABASE=sqlite
-    - os: osx
-      osx_image: xcode8
-      sudo: false
-      language: generic
-      env: DATABASE=psql_psycopg2
-    - os: osx
-      osx_image: xcode8
-      sudo: false
-      language: generic
-      env: DATABASE=psql_pg8000
+#    - os: osx
+#      osx_image: xcode8
+#      sudo: false
+#      language: generic
+#      env: DATABASE=sqlite
+#    - os: osx
+#      osx_image: xcode8
+#      sudo: false
+#      language: generic
+#      env: DATABASE=psql_psycopg2
+#    - os: osx
+#      osx_image: xcode8
+#      sudo: false
+#      language: generic
+#      env: DATABASE=psql_pg8000
 
-before_install:
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then git clone https://github.com/llvm-mirror/clang.git ~/llvm --branch master --single-branch --depth 1; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then curl http://releases.llvm.org/3.8.0/clang+llvm-3.8.0-x86_64-apple-darwin.tar.xz -O; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update;               fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install homebrew/versions/thrift090;                fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PATH=/usr/local/Cellar/thrift@0.90/0.9.0/bin:$PATH; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then which thrift;                fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install doxygen;               fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then tar xf clang+llvm-3.8.0-x86_64-apple-darwin.tar.xz -C ~/; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PATH=~/clang+llvm-3.8.0-x86_64-apple-darwin/bin/:$PATH; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PYTHONPATH=~/llvm/tools/scan-build-py/; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PATH=~/llvm/tools/scan-build-py/bin:$PATH; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then chmod a+x ~/llvm/tools/scan-build-py/bin/intercept-build; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PG_DATA=$(brew --prefix)/var/postgres; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pg_ctl -w start -l postgres.log --pgdata ${PG_DATA}; cat postgres.log; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then cat postgres.log; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then createuser -s postgres; fi
+#before_install:
+#    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then git clone https://github.com/llvm-mirror/clang.git ~/llvm --branch master --single-branch --depth 1; fi
+#    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then curl http://releases.llvm.org/3.8.0/clang+llvm-3.8.0-x86_64-apple-darwin.tar.xz -O; fi
+#    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update;               fi
+#    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install homebrew/versions/thrift090;                fi
+#    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PATH=/usr/local/Cellar/thrift@0.90/0.9.0/bin:$PATH; fi
+#    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then which thrift;                fi
+#    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install doxygen;               fi
+#    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then tar xf clang+llvm-3.8.0-x86_64-apple-darwin.tar.xz -C ~/; fi
+#    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PATH=~/clang+llvm-3.8.0-x86_64-apple-darwin/bin/:$PATH; fi
+#    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PYTHONPATH=~/llvm/tools/scan-build-py/; fi
+#    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PATH=~/llvm/tools/scan-build-py/bin:$PATH; fi
+#    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then chmod a+x ~/llvm/tools/scan-build-py/bin/intercept-build; fi
+#    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PG_DATA=$(brew --prefix)/var/postgres; fi
+#    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pg_ctl -w start -l postgres.log --pgdata ${PG_DATA}; cat postgres.log; fi
+#    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then cat postgres.log; fi
+#    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then createuser -s postgres; fi
 
 install:
     - pip install nose pep8
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pip install virtualenv; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then psql -c 'create database travis_ci_test;' -U postgres; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then cat postgres.log; fi
+#    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pip install virtualenv; fi
+#    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then psql -c 'create database travis_ci_test;' -U postgres; fi
+#    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then cat postgres.log; fi
 
 addons:
     apt:
