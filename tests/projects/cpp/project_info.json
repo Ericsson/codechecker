@@ -29,13 +29,15 @@
             { "file": "null_dereference.cpp", "line": 29, "checker": "deadcode.DeadStores", "hash": "98db15ea41ba255ba5e98d5ed35b5037" },
             { "file": "stack_address_escape.cpp", "line": 15, "checker": "core.StackAddressEscape", "hash": "a785826f20c20d703c98eacb6f014bc0" },
             { "file": "stack_address_escape.cpp", "line": 18, "checker": "core.StackAddressEscape", "hash": "79838e6f63246dda474910da1d37ae32" },
-            { "file": "stack_address_escape.cpp", "line": 25, "checker": "core.StackAddressEscape", "hash": "d8284a4775702c394deb2b9f6ae7c2fd" }
+            { "file": "stack_address_escape.cpp", "line": 25, "checker": "core.StackAddressEscape", "hash": "d8284a4775702c394deb2b9f6ae7c2fd" },
+            { "file": "skip_header.cpp", "line": 15, "checker": "core.DivideZero", "hash": "6323bb2b22ffeff5c265eb14ae402d29" },
+            { "file": "skip.h", "line": 8, "checker": "core.DivideZero", "hash": "269d82a20d38f23bbf730a2cf1d1668b" }
         ],
-        "filter_severity_levels": [{"MEDIUM": 1}, {"LOW": 5}, {"HIGH": 20}, {"STYLE": 0}, {"UNSPECIFIED": 0}, {"CRITICAL": 0}],
-        "filter_checker_id": [{"*unix*": 1}, {"core*": 15}, {"*DeadStores": 5}],
+        "filter_severity_levels": [{"MEDIUM": 1}, {"LOW": 5}, {"HIGH": 22}, {"STYLE": 0}, {"UNSPECIFIED": 0}, {"CRITICAL": 0}],
+        "filter_checker_id": [{"*unix*": 1}, {"core*": 17}, {"*DeadStores": 5}],
         "filter_filepath": [{"*null*": 5}],
         "filter_filepath_case_insensitive": [{"*null*": 5}, {"*nULl*": 5}, {"*NULL*": 5}, {"*Null*": 5}],
-        "filter_review_status": [{"UNREVIEWED": 0}, {"CONFIRMED": 26}, {"FALSE_POSITIVE": 0}, {"WONT_FIX": 0}],
+        "filter_review_status": [{"UNREVIEWED": 0}, {"CONFIRMED": 28}, {"FALSE_POSITIVE": 0}, {"WONT_FIX": 0}],
         "diff_res_types_filter": [{"deadcode.DeadStores": 5},  {"cplusplus.NewDelete": 5}, {"unix.Malloc": 1}]
     }
 }

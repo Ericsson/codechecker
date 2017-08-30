@@ -58,7 +58,7 @@ class TestReportFilter(unittest.TestCase):
 
         self.run1_checkers = \
             {'core.CallAndMessage': 5,
-             'core.DivideZero': 3,
+             'core.DivideZero': 5,
              'core.NullDereference': 4,
              'core.StackAddressEscape': 3,
              'cplusplus.NewDelete': 5,
@@ -67,7 +67,7 @@ class TestReportFilter(unittest.TestCase):
 
         self.run2_checkers = \
             {'core.CallAndMessage': 5,
-             'core.DivideZero': 3,
+             'core.DivideZero': 5,
              'core.NullDereference': 4,
              'cplusplus.NewDelete': 5,
              'deadcode.DeadStores': 5,
@@ -75,17 +75,17 @@ class TestReportFilter(unittest.TestCase):
 
         self.run1_sev_counts = {Severity.MEDIUM: 1,
                                 Severity.LOW: 5,
-                                Severity.HIGH: 20}
+                                Severity.HIGH: 22}
 
         self.run2_sev_counts = {Severity.MEDIUM: 1,
                                 Severity.LOW: 5,
-                                Severity.HIGH: 17}
+                                Severity.HIGH: 19}
 
         self.run1_detection_counts = \
-            {DetectionStatus.NEW: 26}
+            {DetectionStatus.NEW: 28}
 
         self.run2_detection_counts = \
-            {DetectionStatus.NEW: 23}
+            {DetectionStatus.NEW: 25}
 
         self.run1_files = \
             {'file_to_be_skipped.cpp': 2,
@@ -94,7 +94,9 @@ class TestReportFilter(unittest.TestCase):
              'stack_address_escape.cpp': 3,
              'call_and_message.cpp': 5,
              'divide_zero.cpp': 4,
-             'has a space.cpp': 1
+             'has a space.cpp': 1,
+             'skip_header.cpp': 1,
+             'skip.h': 1
              }
 
         self.run2_files = \
@@ -103,7 +105,9 @@ class TestReportFilter(unittest.TestCase):
              'divide_zero.cpp': 4,
              'null_dereference.cpp': 5,
              'file_to_be_skipped.cpp': 2,
-             'has a space.cpp': 1
+             'has a space.cpp': 1,
+             'skip_header.cpp': 1,
+             'skip.h': 1
              }
 
     def test_run1_all_checkers(self):
@@ -346,7 +350,7 @@ class TestReportFilter(unittest.TestCase):
 
         # Unset statuses cout as unreviewed.
         review_status = {ReviewStatus.CONFIRMED: 5,
-                         ReviewStatus.UNREVIEWED: 11,
+                         ReviewStatus.UNREVIEWED: 13,
                          ReviewStatus.FALSE_POSITIVE: 5,
                          ReviewStatus.WONT_FIX: 5}
 
@@ -457,7 +461,7 @@ class TestReportFilter(unittest.TestCase):
                'core.StackAddressEscape': 3,
                'cplusplus.NewDelete': 5,
                'core.NullDereference': 4,
-               'core.DivideZero': 3,
+               'core.DivideZero': 5,
                'deadcode.DeadStores': 5,
                'unix.Malloc': 1}
         self.assertDictEqual(new, new_reports)

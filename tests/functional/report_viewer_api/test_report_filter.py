@@ -185,7 +185,7 @@ class TestReportFilter(unittest.TestCase):
 
         run_result_count = self._cc_client.getRunResultCount(self._runids, [])
 
-        self.assertEqual(run_result_count, 49)
+        self.assertEqual(run_result_count, 53)
 
         run_results = self._cc_client.getRunResults(
             self._runids, run_result_count, 0, [], [])
