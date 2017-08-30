@@ -203,47 +203,6 @@ def is_same_event_path(report_id, events, session):
             str(ex))
 
 
-def storeReportInfo(session,
-                    run_id,
-                    file_id,
-                    bug_hash,
-                    msg,
-                    bugpath,
-                    events,
-                    checker_id,
-                    checker_cat,
-                    bug_type,
-                    severity,
-                    detection_status='new'):
-    """
-    """
-    try:
-        LOG.debug("initializing report")
-        report = Report(run_id,
-                        bug_hash,
-                        file_id,
-                        msg,
-                        checker_id,
-                        checker_cat,
-                        bug_type,
-                        severity,
-                        detection_status)
-
-        session.add(report)
-        session.flush()
-
-        LOG.debug("storing bug path")
-        store_bug_path(session, bugpath, report.id)
-        LOG.debug("storing events")
-        store_bug_events(session, events, report.id)
-
-        return report.id
-    except Exception as ex:
-        raise shared.ttypes.RequestFailed(
-            shared.ttypes.ErrorCode.GENERAL,
-            str(ex))
-
-
 def addCheckerRun(session, storage_session, command, name, version, force):
     """
     Store checker run related data to the database.
@@ -343,18 +302,22 @@ def setRunDuration(storage_session, run_id, duration):
 def addReport(storage_session,
               run_id,
               file_id,
-              bug_hash,
-              msg,
+              main_section,
               bugpath,
               events,
               checker_id,
-              checker_cat,
-              bug_type,
               severity):
     """
     """
     try:
         session = storage_session.get_transaction(run_id)
+
+        bug_hash = main_section['issue_hash_content_of_line_in_context']
+        msg = main_section['description']
+        checker_cat = main_section['category']
+        bug_type = main_section['type']
+        line_num = main_section['location']['line']
+        column = main_section['location']['col']
 
         checker_id = checker_id or 'NOT FOUND'
 
@@ -399,21 +362,29 @@ def addReport(storage_session,
                 return report.id
 
         LOG.debug("no duplicate storing report")
-        report_id = storeReportInfo(session,
-                                    run_id,
-                                    file_id,
-                                    bug_hash,
-                                    msg,
-                                    bugpath,
-                                    events,
-                                    checker_id,
-                                    checker_cat,
-                                    bug_type,
-                                    severity)
+        report = Report(run_id,
+                        bug_hash,
+                        file_id,
+                        msg,
+                        checker_id,
+                        checker_cat,
+                        bug_type,
+                        line_num,
+                        column,
+                        severity,
+                        "new")
 
-        storage_session.touch_report(run_id, report_id)
+        session.add(report)
+        session.flush()
 
-        return report_id
+        LOG.debug("storing bug path")
+        store_bug_path(session, bugpath, report.id)
+        LOG.debug("storing events")
+        store_bug_events(session, events, report.id)
+
+        storage_session.touch_report(run_id, report.id)
+
+        return report.id
 
     except Exception as ex:
         raise shared.ttypes.RequestFailed(

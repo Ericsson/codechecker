@@ -186,6 +186,8 @@ class Report(Base):
     checker_cat = Column(String)
     bug_type = Column(String)
     severity = Column(Integer)
+    line = Column(Integer)
+    column = Column(Integer)
 
     # TODO: multiple messages to multiple source locations?
     checker_message = Column(String)
@@ -203,7 +205,8 @@ class Report(Base):
 
     # Priority/severity etc...
     def __init__(self, run_id, bug_id, file_id, checker_message, checker_id,
-                 checker_cat, bug_type, severity, detection_status):
+                 checker_cat, bug_type, line, column, severity,
+                 detection_status):
         self.run_id = run_id
         self.file_id = file_id
         self.bug_id = bug_id
@@ -213,6 +216,8 @@ class Report(Base):
         self.checker_cat = checker_cat
         self.bug_type = bug_type
         self.detection_status = detection_status
+        self.line = line
+        self.column = column
 
 
 class SkipPath(Base):

@@ -15,7 +15,7 @@ def compare_res_with_bug(run_res, bug):
     """
     same = False
     same = run_res.checkedFile.endswith(bug['file']) and \
-        run_res.lastBugPosition.startLine == bug['line'] and \
+        run_res.line == bug['line'] and \
         run_res.checkerId == bug['checker'] and \
         run_res.bugHash == bug['hash']
     return same
