@@ -47,7 +47,7 @@ def setup_package():
 
     skip_list_file = None
 
-    test_env = env.test_env()
+    test_env = env.test_env(TEST_WORKSPACE)
 
     codechecker_cfg = {
         'suppress_file': suppress_file,

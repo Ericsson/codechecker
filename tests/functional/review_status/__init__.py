@@ -28,7 +28,7 @@ def setup_package():
 
     os.environ['TEST_WORKSPACE'] = TEST_WORKSPACE
 
-    test_project = 'cpp'
+    test_project = 'single_bug'
 
     test_config = {}
 
@@ -38,7 +38,7 @@ def setup_package():
 
     skip_list_file = None
 
-    test_env = env.test_env()
+    test_env = env.test_env(TEST_WORKSPACE)
 
     codechecker_cfg = {
         'suppress_file': None,

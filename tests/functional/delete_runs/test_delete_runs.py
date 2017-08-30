@@ -19,8 +19,8 @@ from datetime import datetime
 from libtest import env
 
 
-def run_cmd(cmd):
-    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+def run_cmd(cmd, env):
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, env=env)
     proc.communicate()
     return proc.returncode
 
@@ -48,6 +48,8 @@ class TestCmdLineDeletion(unittest.TestCase):
 
         # Get the CodeChecker cmd if needed for the tests.
         self._codechecker_cmd = env.codechecker_cmd()
+
+        self._test_config = env.import_test_cfg(test_workspace)
 
     def test_multiple_deletion(self):
         """
@@ -81,7 +83,7 @@ class TestCmdLineDeletion(unittest.TestCase):
                    'cmd', 'del',
                    '--all-after-run', run2_name,
                    '--url', self.server_url]
-        run_cmd(del_cmd)
+        run_cmd(del_cmd, env=self._test_config['codechecker_cfg']['check_env'])
 
         self.assertTrue(all_exists(
             [project_name + '_' + str(i) for i in range(0, 3)]))
@@ -106,7 +108,7 @@ class TestCmdLineDeletion(unittest.TestCase):
                    'cmd', 'del',
                    '--all-before-time', date_run2,
                    '--url', self.server_url]
-        run_cmd(del_cmd)
+        run_cmd(del_cmd, env=self._test_config['codechecker_cfg']['check_env'])
 
         self.assertTrue(all_exists(
             [project_name + '_' + str(2)]))
@@ -119,7 +121,7 @@ class TestCmdLineDeletion(unittest.TestCase):
                    'cmd', 'del',
                    '--name', run2_name,
                    '--url', self.server_url]
-        run_cmd(del_cmd)
+        run_cmd(del_cmd, env=self._test_config['codechecker_cfg']['check_env'])
 
         self.assertTrue(none_exists(
             [project_name + '_' + str(i) for i in range(0, 5)]))

@@ -4,11 +4,13 @@
 #   License. See LICENSE.TXT for details.
 # -----------------------------------------------------------------------------
 
+from hashlib import sha256
 import os
 import json
 import tempfile
 import shutil
 import socket
+import stat
 import subprocess
 import sys
 
@@ -112,6 +114,12 @@ def setup_viewer_client(workspace,
     host = codechecker_cfg['viewer_host']
     product = codechecker_cfg['viewer_product']
 
+    if session_token is None:
+        session_token = get_session_token(workspace)
+
+    if session_token == '_PROHIBIT':
+        session_token = None
+
     return get_viewer_client(host=host,
                              port=port,
                              product=product,
@@ -129,6 +137,12 @@ def setup_auth_client(workspace,
     port = codechecker_cfg['viewer_port']
     host = codechecker_cfg['viewer_host']
 
+    if session_token is None:
+        session_token = get_session_token(workspace)
+
+    if session_token == '_PROHIBIT':
+        session_token = None
+
     return get_auth_client(port=port,
                            host=host,
                            uri=uri,
@@ -144,6 +158,12 @@ def setup_product_client(workspace,
     codechecker_cfg = import_test_cfg(workspace)['codechecker_cfg']
     port = codechecker_cfg['viewer_port']
     host = codechecker_cfg['viewer_host']
+
+    if session_token is None:
+        session_token = get_session_token(workspace)
+
+    if session_token == '_PROHIBIT':
+        session_token = None
 
     return get_product_client(port=port,
                               host=host,
@@ -229,10 +249,11 @@ def codechecker_env():
     return checker_env
 
 
-def test_env():
+def test_env(test_workspace):
     base_env = os.environ.copy()
     base_env['PATH'] = os.path.join(codechecker_package(), 'bin') + \
         ':' + base_env['PATH']
+    base_env['HOME'] = test_workspace
     return base_env
 
 
@@ -274,3 +295,30 @@ def enable_auth(workspace):
 
         json.dump(scfg_dict, scfg, indent=2, sort_keys=True)
         scfg.truncate()
+
+    # Create a root user.
+    root_file = os.path.join(workspace, 'root.user')
+    with open(root_file, 'w') as rootf:
+        rootf.write(sha256("root:root").hexdigest())
+    os.chmod(root_file, stat.S_IRUSR | stat.S_IWUSR)
+
+
+def get_session_token(test_folder):
+    """
+    Retrieve the session token for the server in the test workspace.
+    This function assumes that only one entry exists in the session file.
+    """
+
+    try:
+        server_data = import_test_cfg(test_folder)['codechecker_cfg']
+        session_file = os.path.join(test_folder, '.codechecker.session.json')
+        with open(session_file, 'r') as sess_file:
+            sess_dict = json.load(sess_file)
+
+        host_port_key = server_data['viewer_host'] + ':' + \
+            str(server_data['viewer_port'])
+        return sess_dict['tokens'][host_port_key]
+    except (IOError, KeyError) as err:
+        print("Could not load session for session getter because " +
+              err.message)
+        return None

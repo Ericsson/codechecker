@@ -51,7 +51,7 @@ def setup_package():
     test_config['test_project'] = project_info
 
     # Get an environment which should be used by the tests.
-    test_env = env.test_env()
+    test_env = env.test_env(TEST_WORKSPACE)
 
     # Create a basic CodeChecker config for the tests, this should
     # be imported by the tests and they should only depend on these

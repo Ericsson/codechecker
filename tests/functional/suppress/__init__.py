@@ -45,7 +45,7 @@ def setup_package():
         os.remove(suppress_file)
     _generate_suppress_file(suppress_file)
 
-    test_env = env.test_env()
+    test_env = env.test_env(TEST_WORKSPACE)
 
     codechecker_cfg = {
         'suppress_file': None,

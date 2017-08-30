@@ -57,11 +57,12 @@ class TestSuppress(unittest.TestCase):
         def __call(command):
             try:
                 print(' '.join(command))
-                proc = subprocess.Popen(shlex.split(' '.join(command)),
-                                        cwd=self._test_project_path,
-                                        stdout=subprocess.PIPE,
-                                        stderr=subprocess.PIPE,
-                                        env=env.test_env())
+                proc = subprocess.Popen(
+                    shlex.split(' '.join(command)),
+                    cwd=self._test_project_path,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    env=env.test_env(self._test_workspace))
                 out, err = proc.communicate()
                 print(out)
                 print(err)

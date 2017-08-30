@@ -310,7 +310,7 @@ class ThriftProductHandler(object):
         """
         Add the given product to the products configured by the server.
         """
-        # self.__require_permission([permissions.SUPERUSER])
+        self.__require_permission([permissions.SUPERUSER])
 
         session = None
         LOG.info("User requested add product '{0}'".format(product.endpoint))
@@ -532,6 +532,10 @@ class ThriftProductHandler(object):
             old_endpoint = product.endpoint
 
             if product_needs_reconnect:
+                # Changing values that alter connection-specific data
+                # should only be available for superusers!
+                self.__require_permission([permissions.SUPERUSER])
+
                 # Test if the new database settings are correct or not.
                 dummy_endpoint = new_config.endpoint + '_' + ''.join(
                     random.sample(new_config.endpoint,
@@ -603,6 +607,7 @@ class ThriftProductHandler(object):
         """
         Disconnect the product specified by the ID from the server.
         """
+        self.__require_permission([permissions.SUPERUSER])
 
         try:
             session = self.__session()

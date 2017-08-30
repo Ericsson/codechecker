@@ -254,8 +254,9 @@ class Diff(unittest.TestCase):
                     ]
         print(diff_cmd)
         process = subprocess.Popen(
-            diff_cmd, stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE, cwd=os.environ['TEST_WORKSPACE'])
+            diff_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            env=self._test_config['codechecker_cfg']['check_env'],
+            cwd=os.environ['TEST_WORKSPACE'])
         out, err = process.communicate()
         print(out+err)
 
@@ -276,8 +277,9 @@ class Diff(unittest.TestCase):
                     ]
         print(diff_cmd)
         process = subprocess.Popen(
-            diff_cmd, stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE, cwd=os.environ['TEST_WORKSPACE'])
+            diff_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            env=self._test_config['codechecker_cfg']['check_env'],
+            cwd=os.environ['TEST_WORKSPACE'])
         out, err = process.communicate()
         print(out+err)
 
@@ -298,8 +300,9 @@ class Diff(unittest.TestCase):
                     ]
         print(diff_cmd)
         process = subprocess.Popen(
-            diff_cmd, stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE, cwd=os.environ['TEST_WORKSPACE'])
+            diff_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            env=self._test_config['codechecker_cfg']['check_env'],
+            cwd=os.environ['TEST_WORKSPACE'])
         out, err = process.communicate()
         print(out+err)
 

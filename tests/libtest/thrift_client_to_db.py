@@ -31,15 +31,27 @@ class ThriftAPIHelper(object):
             res = func(*args, **kwargs)
 
         except shared.ttypes.RequestFailed as reqfailure:
-            if reqfailure.error_code == shared.ttypes.ErrorCode.DATABASE:
-
-                print('Database error')
+            if reqfailure.error_code == shared.ttypes.ErrorCode.GENERAL:
+                print('Request failed')
+                print(str(reqfailure.message))
+            elif reqfailure.error_code == shared.ttypes.ErrorCode.IOERROR:
+                print('Server reported I/O error')
+                print(str(reqfailure.message))
+            elif reqfailure.error_code == shared.ttypes.ErrorCode.DATABASE:
+                print('Database error on server')
+                print(str(reqfailure.message))
+            elif reqfailure.error_code == shared.ttypes.ErrorCode.AUTH_DENIED:
+                print('Authentication denied')
+                print(str(reqfailure.message))
+            elif reqfailure.error_code == shared.ttypes.ErrorCode.UNAUTHORIZED:
+                print('Unauthorized to access')
                 print(str(reqfailure.message))
             else:
-                print('Other error')
+                print('API call error ' + reqfailure.error_code +
+                      ': ' + func_name)
                 print(str(reqfailure))
 
-            return None
+            raise
 
         except socket.error as serr:
             err_cause = os.strerror(serr.errno)

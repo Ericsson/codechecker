@@ -28,11 +28,12 @@ UNIT_TEST_CMD = nosetests $(NOSECFG) tests/unit
 
 CODECHECKER_CMD = $(BUILD_DIR)/CodeChecker/bin/CodeChecker
 SHUTDOWN_SERVER_CMD = echo "Shutting down server..."; \
-    ${CODECHECKER_CMD} server -l; \
-    ${CODECHECKER_CMD} server --config-directory $(BUILD_DIR)/workspace \
-    --port `cat "$(BUILD_DIR)/workspace/serverport"` --stop; \
+    HOME="$(BUILD_DIR)/workspace" ${CODECHECKER_CMD} server -l; \
+    HOME="$(BUILD_DIR)/workspace" ${CODECHECKER_CMD} server \
+			--config-directory $(BUILD_DIR)/workspace \
+	    --port `cat "$(BUILD_DIR)/workspace/serverport"` --stop; \
     rm -f "$(BUILD_DIR)/workspace/serverport"; \
-    ${CODECHECKER_CMD} server -l
+    HOME="$(BUILD_DIR)/workspace" ${CODECHECKER_CMD} server -l
 
 # Preserve the error or no error status of the previous command but always
 # be able to shut down servers.

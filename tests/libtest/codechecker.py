@@ -3,9 +3,11 @@
 #   This file is distributed under the University of Illinois Open Source
 #   License. See LICENSE.TXT for details.
 # -----------------------------------------------------------------------------
+
 import json
 import os
 import shlex
+import stat
 import subprocess
 from subprocess import CalledProcessError
 import time
@@ -62,6 +64,8 @@ def login(codechecker_cfg, test_project_path, username, password):
         json.dump(auth_creds, outfile)
         print("Added '" + username + ':' + password + "' to credentials file.")
 
+    os.chmod(auth_file, stat.S_IRUSR | stat.S_IWUSR)
+
     try:
         print(' '.join(login_cmd))
         out = subprocess.call(shlex.split(' '.join(login_cmd)),
@@ -70,8 +74,9 @@ def login(codechecker_cfg, test_project_path, username, password):
         print out
         return 0
     except OSError as cerr:
-        print("Failed to call:\n" + ' '.join(cerr))
-        return cerr.returncode
+        print("Failed to call:\n" + ' '.join(login_cmd))
+        print(str(cerr.errno) + ' ' + cerr.message)
+        return cerr.errno
 
 
 def logout(codechecker_cfg, test_project_path):
@@ -93,11 +98,15 @@ def logout(codechecker_cfg, test_project_path):
         with open(auth_file, 'r') as infile:
             auth_creds = json.load(infile)
 
-        del auth_creds['credentials']['localhost:' + port]
+        try:
+            del auth_creds['credentials']['localhost:' + port]
 
-        with open(auth_file, 'w') as outfile:
-            json.dump(auth_creds, outfile)
-            print("Removed credentials from 'localhost:" + port + "'.")
+            with open(auth_file, 'w') as outfile:
+                json.dump(auth_creds, outfile)
+                print("Removed credentials from 'localhost:" + port + "'.")
+        except KeyError:
+            print("Didn't remove any credentials as none were present. "
+                  "Did you login()?")
     else:
         print("Credentials file did not exist. Did you login()?")
 
@@ -109,8 +118,9 @@ def logout(codechecker_cfg, test_project_path):
         print out
         return 0
     except OSError as cerr:
-        print("Failed to call:\n" + ' '.join(cerr))
-        return cerr.returncode
+        print("Failed to call:\n" + ' '.join(logout_cmd))
+        print(str(cerr.errno) + ' ' + cerr.message)
+        return cerr.errno
 
 
 def check(codechecker_cfg, test_project_name, test_project_path):
@@ -252,7 +262,7 @@ def serv_cmd(config_dir, port, pg_config=None):
     else:
         server_cmd += ['--sqlite', os.path.join(config_dir, 'config.sqlite')]
 
-    print(server_cmd)
+    print(' '.join(server_cmd))
 
     return server_cmd
 
@@ -269,6 +279,9 @@ def start_or_get_server():
         with open(portfile, 'r') as f:
             port = int(f.read())
     else:
+        # Set up the root user and the authentication for the server.
+        env.enable_auth(config_dir)
+
         port = env.get_free_port()
         print("Setting up CodeChecker server in " + config_dir + " :" +
               str(port))
@@ -281,7 +294,7 @@ def start_or_get_server():
         server_cmd = serv_cmd(config_dir, port, pg_config)
 
         print("Starting server...")
-        subprocess.Popen(server_cmd, env=env.test_env())
+        subprocess.Popen(server_cmd, env=env.test_env(config_dir))
 
         # Wait for server to start and connect to database.
         # We give a bit of grace period here as a separate subcommand needs to
@@ -295,10 +308,12 @@ def start_or_get_server():
             # default product, so we now manually have to create it.
             print("PostgreSQL server does not create 'Default' product...")
             print("Creating it now!")
+            default_path = os.path.join(config_dir, 'Default')
+            os.makedirs(default_path)
             add_test_package_product({'viewer_host': 'localhost',
                                       'viewer_port': port,
                                       'viewer_product': 'Default'},
-                                     'Default')
+                                     default_path)
     return {
         'viewer_host': 'localhost',
         'viewer_port': port
@@ -314,7 +329,13 @@ def add_test_package_product(server_data, test_folder, check_env=None):
     """
 
     if not check_env:
-        check_env = env.test_env()
+        check_env = env.test_env(test_folder)
+
+    codechecker_cfg = {'check_env': check_env}
+    codechecker_cfg.update(server_data)
+
+    # Clean the previous session if any exists.
+    logout(codechecker_cfg, test_folder)
 
     add_command = ['CodeChecker', 'cmd', 'products', 'add',
                    server_data['viewer_product'],
@@ -336,10 +357,20 @@ def add_test_package_product(server_data, test_folder, check_env=None):
         add_command += ['--sqlite',
                         os.path.join(test_folder, 'data.sqlite')]
 
-    print(add_command)
+    print(' '.join(add_command))
 
+    # Authenticate as SUPERUSER to be able to create the product.
+    login(codechecker_cfg, test_folder, "root", "root")
     # The schema creation is a synchronous call.
-    subprocess.call(add_command, env=check_env)
+    returncode = subprocess.call(add_command, env=check_env)
+    logout(codechecker_cfg, test_folder)
+
+    # After login as SUPERUSER, continue running the test as a normal user.
+    # login() saves the relevant administrative file
+    login(codechecker_cfg, test_folder, "cc", "test")
+
+    if returncode:
+        raise Exception("Failed to add the product to the test server!")
 
 
 def remove_test_package_product(test_folder, check_env=None):
@@ -349,24 +380,37 @@ def remove_test_package_product(test_folder, check_env=None):
     """
 
     if not check_env:
-        check_env = env.test_env()
+        check_env = env.test_env(test_folder)
 
     server_data = env.import_test_cfg(test_folder)['codechecker_cfg']
     print(server_data)
+
+    if 'check_env' not in server_data:
+        server_data['check_env'] = check_env
+
+    # Clean the previous session if any exists.
+    logout(server_data, test_folder)
 
     del_command = ['CodeChecker', 'cmd', 'products', 'del',
                    server_data['viewer_product'],
                    '--host', server_data['viewer_host'],
                    '--port', str(server_data['viewer_port'])]
 
-    print(del_command)
-    subprocess.call(del_command, env=check_env)
+    print(' '.join(del_command))
+
+    # Authenticate as SUPERUSER to be able to create the product.
+    login(server_data, test_folder, "root", "root")
+    returncode = subprocess.call(del_command, env=check_env)
+    logout(server_data, test_folder)
 
     # If tests are running on postgres, we need to delete the database.
     # SQLite databases are deleted automatically as part of the
     # workspace removal.
     if env.get_postgresql_cfg():
         env.del_database(server_data['viewer_product'], check_env)
+
+    if returncode:
+        raise Exception("Failed to remove the product from the test server!")
 
 
 def _pg_db_config_to_cmdline_params(pg_db_config):

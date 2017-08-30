@@ -34,8 +34,7 @@ def setup_package():
 
     test_config = {}
 
-    test_env = env.test_env()
-    test_env['HOME'] = TEST_WORKSPACE
+    test_env = env.test_env(TEST_WORKSPACE)
 
     # Setup environment variables for the test cases.
     host_port_cfg = {'viewer_host': 'localhost',
