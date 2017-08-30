@@ -9,6 +9,7 @@ import logging
 import os
 import unittest
 
+from shared.ttypes import RequestFailed
 from codeCheckerDBAccess.ttypes import CommentData
 
 from libtest import env
@@ -30,7 +31,8 @@ class TestComment(unittest.TestCase):
         self._testproject_data = env.setup_test_proj_cfg(self._test_workspace)
         self.assertIsNotNone(self._testproject_data)
 
-        auth_client = env.setup_auth_client(self._test_workspace)
+        auth_client = env.setup_auth_client(self._test_workspace,
+                                            session_token='_PROHIBIT')
 
         sessionToken_cc = auth_client.performLogin("Username:Password",
                                                    "cc:test")
@@ -118,9 +120,9 @@ class TestComment(unittest.TestCase):
 
         # Remove the second comment as john should be unsuccessful
         print("removing comment:"+str(comments[1].id))
-        success = self._cc_client_john.removeComment(comments[1].id)
-        self.assertFalse(success)
-        logging.debug('Comment cannot be removed by another user')
+        with self.assertRaises(RequestFailed):
+            self._cc_client_john.removeComment(comments[1].id)
+            logging.debug('Comment was removed by another user')
 
         comments = self._cc_client.getComments(bug.reportId)
         self.assertEqual(len(comments), 1)
@@ -135,9 +137,9 @@ class TestComment(unittest.TestCase):
         logging.debug('Comment edited successfully')
 
         john_msg = 'John cannot edit'
-        success = self._cc_client_john.updateComment(comments[0].id, john_msg)
-        self.assertFalse(success)
-        logging.debug('Comment cannot be edited by john')
+        with self.assertRaises(RequestFailed):
+            self._cc_client_john.updateComment(comments[0].id, john_msg)
+            logging.debug('Comment was edited by john')
 
         comments = self._cc_client.getComments(bug.reportId)
         self.assertEqual(len(comments), 1)

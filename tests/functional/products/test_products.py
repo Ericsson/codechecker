@@ -13,6 +13,8 @@ import base64
 import os
 import unittest
 
+from shared.ttypes import RequestFailed
+
 from libtest import env
 
 
@@ -37,8 +39,21 @@ class TestProducts(unittest.TestCase):
         self._cc_client = env.setup_viewer_client(self.test_workspace)
         self.assertIsNotNone(self._cc_client)
 
+        # Setup an authentication client for creating sessions.
+        self._auth_client = env.setup_auth_client(self.test_workspace,
+                                                  session_token='_PROHIBIT')
+
+        # Create a SUPERUSER login.
+        root_token = self._auth_client.performLogin("Username:Password",
+                                                    "root:root")
+
         # Setup a product client to test product API calls.
         self._pr_client = env.setup_product_client(self.test_workspace)
+        self.assertIsNotNone(self._pr_client)
+
+        # Setup a product client to test product API calls which requires root.
+        self._root_client = env.setup_product_client(self.test_workspace,
+                                                     session_token=root_token)
         self.assertIsNotNone(self._pr_client)
 
         # Get the run names which belong to this test.
@@ -117,7 +132,11 @@ class TestProducts(unittest.TestCase):
 
         new_name = base64.b64encode("edited product name")
         config.displayedName_b64 = new_name
-        self.assertTrue(self._pr_client.editProduct(product_id, config),
+        with self.assertRaises(RequestFailed):
+            self._pr_client.editProduct(product_id, config)
+            print("Product was edited through non-superuser!")
+
+        self.assertTrue(self._root_client.editProduct(product_id, config),
                         "Product edit didn't conclude.")
 
         config = self._pr_client.getProductConfiguration(product_id)
@@ -129,7 +148,7 @@ class TestProducts(unittest.TestCase):
 
         # Restore the configuration of the product.
         config.displayedName_b64 = old_name
-        self.assertTrue(self._pr_client.editProduct(product_id, config),
+        self.assertTrue(self._root_client.editProduct(product_id, config),
                         "Product config restore didn't conclude.")
 
         config = self._pr_client.getProductConfiguration(product_id)
@@ -139,6 +158,8 @@ class TestProducts(unittest.TestCase):
     def test_editing_reconnect(self):
         """
         Test if the product can successfully be set to connect to another db.
+
+        This requires a SUPERUSER.
         """
 
         pr_client = env.setup_product_client(
@@ -161,7 +182,7 @@ class TestProducts(unittest.TestCase):
                              config.connection.engine)
 
         config.connection.database = new_db_name
-        self.assertTrue(self._pr_client.editProduct(product_id, config),
+        self.assertTrue(self._root_client.editProduct(product_id, config),
                         "Product edit didn't conclude.")
 
         # Check if the configuration now uses the new values.
@@ -180,7 +201,7 @@ class TestProducts(unittest.TestCase):
 
         # Connect back to the old database.
         config.connection.database = old_db_name
-        self.assertTrue(self._pr_client.editProduct(product_id, config),
+        self.assertTrue(self._root_client.editProduct(product_id, config),
                         "Product configuration restore didn't conclude.")
 
         config = self._pr_client.getProductConfiguration(product_id)
@@ -214,7 +235,7 @@ class TestProducts(unittest.TestCase):
 
         # Save a new endpoint.
         config.endpoint = new_endpoint
-        self.assertTrue(self._pr_client.editProduct(product_id, config),
+        self.assertTrue(self._root_client.editProduct(product_id, config),
                         "Product edit didn't conclude.")
 
         # Check if the configuration now uses the new values.
@@ -228,17 +249,19 @@ class TestProducts(unittest.TestCase):
 
         # The new product should connect and have the data.
         codechecker_cfg = self.test_cfg['codechecker_cfg']
+        token = self._auth_client.performLogin("Username:Password", "cc:test")
         new_client = env.get_viewer_client(
             host=codechecker_cfg['viewer_host'],
             port=codechecker_cfg['viewer_port'],
             product=new_endpoint,  # Use the new product URL.
-            endpoint='/CodeCheckerService')
+            endpoint='/CodeCheckerService',
+            session_token=token)
         self.assertEqual(len(new_client.getRunData(None)), 1,
                          "The new product did not serve the stored data.")
 
         # Set back to the old endpoint.
         config.endpoint = old_endpoint
-        self.assertTrue(self._pr_client.editProduct(product_id, config),
+        self.assertTrue(self._root_client.editProduct(product_id, config),
                         "Product configuration restore didn't conclude.")
 
         config = self._pr_client.getProductConfiguration(product_id)

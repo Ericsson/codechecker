@@ -31,7 +31,7 @@ def setup_package():
     codechecker_cfg = {
         'suppress_file': None,
         'skip_list_file': None,
-        'check_env': env.test_env(),
+        'check_env': env.test_env(TEST_WORKSPACE),
         'workspace': TEST_WORKSPACE,
         'checkers': [],
         'test_project': 'hello'

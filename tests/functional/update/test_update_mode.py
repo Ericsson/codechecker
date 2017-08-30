@@ -6,6 +6,7 @@
 # -----------------------------------------------------------------------------
 
 import os
+import sys
 import unittest
 
 from libtest import env

@@ -54,7 +54,7 @@ def setup_package():
     skip_list_file = None
 
     # Get an environment which should be used by the tests.
-    test_env = env.test_env()
+    test_env = env.test_env(TEST_WORKSPACE)
 
     # Create a basic CodeChecker config for the tests, this should
     # be imported by the tests and they should only depend on these

@@ -32,29 +32,16 @@ def setup_package():
 
     os.environ['TEST_WORKSPACE'] = TEST_WORKSPACE
 
-    test_project = 'cpp'
-
     test_config = {}
-
-    project_info = project.get_info(test_project)
-
-    test_config['test_project'] = project_info
-
-    suppress_file = None
-
-    skip_list_file = None
 
     # Setup environment variables for the test cases.
     host_port_cfg = {'viewer_host': 'localhost',
                      'viewer_port': env.get_free_port(),
                      'viewer_product': 'authentication'}
 
-    test_env = env.test_env()
-    test_env['HOME'] = TEST_WORKSPACE
+    test_env = env.test_env(TEST_WORKSPACE)
 
     codechecker_cfg = {
-        'suppress_file': suppress_file,
-        'skip_list_file': skip_list_file,
         'check_env': test_env,
         'workspace': TEST_WORKSPACE,
         'checkers': []
@@ -83,8 +70,6 @@ def teardown_package():
 
     # Removing the product through this server requires credentials.
     codechecker_cfg = env.import_test_cfg(TEST_WORKSPACE)['codechecker_cfg']
-    codechecker.login(codechecker_cfg,
-                      TEST_WORKSPACE, "cc", "test")
     codechecker.remove_test_package_product(TEST_WORKSPACE,
                                             codechecker_cfg['check_env'])
 

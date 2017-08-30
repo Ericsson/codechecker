@@ -6,20 +6,14 @@
 # -----------------------------------------------------------------------------
 """Setup for the test package comment."""
 
-import multiprocessing
 import os
 import shutil
-import subprocess
 import sys
-import time
 import uuid
 
 from libtest import codechecker
 from libtest import env
 from libtest import project
-
-# Stopping event for CodeChecker server.
-__STOP_SERVER = multiprocessing.Event()
 
 # Test workspace should be initialized in this module.
 TEST_WORKSPACE = None
@@ -47,13 +41,7 @@ def setup_package():
 
     skip_list_file = None
 
-    # Setup environment variables for the test cases.
-    host_port_cfg = {'viewer_host': 'localhost',
-                     'viewer_port': env.get_free_port(),
-                     'viewer_product': 'comment'}
-
-    test_env = env.test_env()
-    test_env['HOME'] = TEST_WORKSPACE
+    test_env = env.test_env(TEST_WORKSPACE)
 
     codechecker_cfg = {
         'suppress_file': suppress_file,
@@ -65,22 +53,15 @@ def setup_package():
                      '-e', 'core.StackAddressEscape']
     }
 
-    codechecker_cfg.update(host_port_cfg)
+    # Start or connect to the running CodeChecker server and get connection
+    # details.
+    print("This test uses a CodeChecker server... connecting...")
+    server_access = codechecker.start_or_get_server()
+    server_access['viewer_product'] = 'comment'
+    codechecker.add_test_package_product(server_access, TEST_WORKSPACE)
 
-    # Start the CodeChecker server.
-    print("Starting server to get results")
-    env.enable_auth(TEST_WORKSPACE)
-    _start_server(codechecker_cfg, test_config, False)
-    print("server started")
-    codechecker.login(codechecker_cfg, TEST_WORKSPACE,
-                      "cc",
-                      "test")
-
-    # We still need to create a product on the new server, because
-    # in PostgreSQL mode, the same database is used for configuration
-    # by the newly started instances.
-    codechecker.add_test_package_product(host_port_cfg, TEST_WORKSPACE,
-                                         test_env)
+    # Extend the checker configuration with the server access.
+    codechecker_cfg.update(server_access)
 
     # Check the test project for the first time.
     test_project_name = project_info['name'] + '_' + uuid.uuid4().hex
@@ -107,7 +88,8 @@ def setup_package():
 
 
 def teardown_package():
-    """Stop the CodeChecker server and clean up after the tests."""
+    """Clean up after the test."""
+
     # TODO: If environment variable is set keep the workspace
     # and print out the path.
     global TEST_WORKSPACE
@@ -116,44 +98,5 @@ def teardown_package():
         'codechecker_cfg']['check_env']
     codechecker.remove_test_package_product(TEST_WORKSPACE, check_env)
 
-    __STOP_SERVER.set()
-
-    # The custom server stated in a separate home needs to be waited, so it
-    # can properly execute its finalizers.
-    time.sleep(5)
-
     print("Removing: " + TEST_WORKSPACE)
     shutil.rmtree(TEST_WORKSPACE, ignore_errors=True)
-
-
-# This server uses custom server configuration, which is brought up here
-# and torn down by the package itself --- it does not connect to the
-# test run's "master" server.
-def _start_server(codechecker_cfg, test_config, auth=False):
-    """Start the CodeChecker server."""
-
-    def start_server_proc(event, server_cmd, checking_env):
-        """Target function for starting the CodeChecker server."""
-
-        proc = subprocess.Popen(server_cmd, env=checking_env)
-
-        # Blocking termination until event is set.
-        event.wait()
-
-        # If proc is still running, stop it.
-        if proc.poll() is None:
-            proc.terminate()
-
-    server_cmd = codechecker.serv_cmd(codechecker_cfg['workspace'],
-                                      str(codechecker_cfg['viewer_port']),
-                                      env.get_postgresql_cfg())
-
-    server_proc = multiprocessing.Process(
-        name='server',
-        target=start_server_proc,
-        args=(__STOP_SERVER, server_cmd, codechecker_cfg['check_env']))
-
-    server_proc.start()
-
-    # Wait for server to start and connect to database.
-    time.sleep(20)

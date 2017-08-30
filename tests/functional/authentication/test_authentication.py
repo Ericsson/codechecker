@@ -7,12 +7,13 @@
 """
 Authentication tests.
 """
-import json
 import os
 import subprocess
 import unittest
 
 from thrift.protocol.TProtocol import TProtocolException
+
+from shared.ttypes import RequestFailed
 
 from libtest import codechecker
 from libtest import env
@@ -39,7 +40,8 @@ class DictAuth(unittest.TestCase):
         but an authenticating one is not.
         """
 
-        auth_client = env.setup_auth_client(self._test_workspace)
+        auth_client = env.setup_auth_client(self._test_workspace,
+                                            session_token='_PROHIBIT')
         handshake = auth_client.getAuthParameters()
         self.assertTrue(handshake.requiresAuthentication,
                         "Privileged server " +
@@ -47,23 +49,14 @@ class DictAuth(unittest.TestCase):
         self.assertFalse(handshake.sessionStillActive, "Empty session was " +
                          "reported to be still active.")
 
-        sessionToken = auth_client.performLogin("Username:Password",
-                                                "invalid:invalid")
-        self.assertIsNone(sessionToken, "Invalid credentials gave us a token!")
+        with self.assertRaises(RequestFailed):
+            auth_client.performLogin("Username:Password", "invalid:invalid")
+            print("Invalid credentials gave us a token!")
 
         # A non-authenticated session should return an empty user.
         user = auth_client.getLoggedInUser()
         self.assertEqual(user, "")
 
-        self.sessionToken = auth_client.performLogin("Username:Password",
-                                                     "cc:test")
-        self.assertIsNotNone(self.sessionToken,
-                             "Valid credentials didn't give us a token!")
-
-        # We need to run an authentication on the command-line, so that the
-        # product-adding feature is accessible by us.
-        codechecker.login(self._test_cfg['codechecker_cfg'],
-                          self._test_workspace, "cc", "test")
         # We still need to create a product on the new server, because
         # in PostgreSQL mode, the same database is used for configuration
         # by the newly started instance of this test suite too.
@@ -72,6 +65,11 @@ class DictAuth(unittest.TestCase):
             self._test_workspace,
             # Use the test's home directory to find the session token file.
             self._test_cfg['codechecker_cfg']['check_env'])
+
+        self.sessionToken = auth_client.performLogin("Username:Password",
+                                                     "cc:test")
+        self.assertIsNotNone(self.sessionToken,
+                             "Valid credentials didn't give us a token!")
 
         handshake = auth_client.getAuthParameters()
         self.assertTrue(handshake.requiresAuthentication,
@@ -102,16 +100,11 @@ class DictAuth(unittest.TestCase):
         codechecker.logout(self._test_cfg['codechecker_cfg'],
                            self._test_workspace)
 
-        try:
+        with self.assertRaises(TProtocolException):
+            # The server reports a HTTP 401 error which is not a valid
+            # Thrift response. But if it does so, it passes the test!
             client.getAPIVersion()
-            success = False
-        except TProtocolException:
-            # The server reports a HTTP 401 error which
-            # is not a valid Thrift response.
-            # But if it does so, it passes the test!
-            success = True
-        self.assertTrue(success,
-                        "Privileged client allowed access after logout.")
+            print("Privileged client allowed access after logout.")
 
         handshake = auth_client.getAuthParameters()
         self.assertFalse(handshake.sessionStillActive,
