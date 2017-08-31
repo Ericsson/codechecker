@@ -508,6 +508,8 @@ class ThriftRequestHandler(object):
             raise shared.ttypes.RequestFailed(
                 shared.ttypes.ErrorCode.DATABASE,
                 msg)
+        finally:
+            session.close()
 
     @timeit
     def getRunResults(self, run_ids, limit, offset, sort_types,
@@ -576,6 +578,8 @@ class ThriftRequestHandler(object):
             LOG.error(msg)
             raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
                                               msg)
+        finally:
+            session.close()
 
     @timeit
     def getRunResults_v2(self, run_ids, limit, offset, sort_types,
@@ -702,6 +706,7 @@ class ThriftRequestHandler(object):
             raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
                                               msg)
         finally:
+            session.close()
             return results
 
     @timeit
@@ -745,6 +750,9 @@ class ThriftRequestHandler(object):
             LOG.error(msg)
             raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
                                               msg)
+
+        finally:
+            session.close()
 
     @timeit
     def getRunResultCount(self, run_ids, report_filters):
@@ -869,6 +877,8 @@ class ThriftRequestHandler(object):
             LOG.error(msg)
             raise shared.ttypes.RequestFailed(
                 shared.ttypes.ErrorCode.DATABASE, msg)
+        finally:
+            session.close()
 
     @timeit
     def getComments(self, report_id):
@@ -983,6 +993,8 @@ class ThriftRequestHandler(object):
             LOG.error(msg)
             raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.IOERROR,
                                               msg)
+        finally:
+            session.close()
 
     @timeit
     def updateComment(self, comment_id, content):
@@ -1100,6 +1112,8 @@ class ThriftRequestHandler(object):
             LOG.error(msg)
             raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.IOERROR,
                                               msg)
+        finally:
+            session.close()
 
     def getCheckerConfigs(self, run_id):
         """
@@ -1305,6 +1319,7 @@ class ThriftRequestHandler(object):
         except Exception as ex:
             LOG.error(ex)
         finally:
+            session.close()
             return results
 
     @timeit
@@ -1351,6 +1366,7 @@ class ThriftRequestHandler(object):
         except Exception as ex:
             LOG.error(ex)
         finally:
+            session.close()
             return results
 
     @timeit
@@ -1397,6 +1413,7 @@ class ThriftRequestHandler(object):
         except Exception as ex:
             LOG.error(ex)
         finally:
+            session.close()
             return results
 
     @timeit
@@ -1452,6 +1469,7 @@ class ThriftRequestHandler(object):
         except Exception as ex:
             LOG.error(ex)
         finally:
+            session.close()
             return results
 
     @timeit
@@ -1501,6 +1519,7 @@ class ThriftRequestHandler(object):
         except Exception as ex:
             LOG.error(ex)
         finally:
+            session.close()
             return results
 
     @timeit
@@ -1549,6 +1568,7 @@ class ThriftRequestHandler(object):
         except Exception as ex:
             LOG.error(ex)
         finally:
+            session.close()
             return results
 
     @timeit
@@ -1821,6 +1841,7 @@ class ThriftRequestHandler(object):
                                          offset,
                                          sort_types,
                                          report_filters)
+        session.close()
         return result
 
     @timeit
