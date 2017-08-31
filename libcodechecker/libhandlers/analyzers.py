@@ -48,7 +48,7 @@ def add_arguments_to_parser(parser):
     parser.add_argument('--all',
                         dest="all",
                         action='store_true',
-                        default=False,
+                        default=argparse.SUPPRESS,
                         required=False,
                         help="Show all supported analyzers, not just the "
                              "available ones.")
@@ -56,7 +56,7 @@ def add_arguments_to_parser(parser):
     parser.add_argument('--details',
                         dest="details",
                         action='store_true',
-                        default=False,
+                        default=argparse.SUPPRESS,
                         required=False,
                         help="Show details about the analyzers, not just "
                              "their names.")
@@ -84,19 +84,19 @@ def main(args):
             context)
 
     if args.output_format not in ['csv', 'json']:
-        if not args.details:
+        if 'details' not in args:
             header = ['Name']
         else:
             header = ['Name', 'Path', 'Version']
     else:
-        if not args.details:
+        if 'details' not in args:
             header = ['name']
         else:
             header = ['name', 'path', 'version_string']
 
     rows = []
     for analyzer in working:
-        if not args.details:
+        if 'details' not in args:
             rows.append([analyzer])
         else:
             binary = context.analyzer_binaries.get(analyzer)
@@ -110,9 +110,9 @@ def main(args):
                          binary,
                          version])
 
-    if args.all:
+    if 'all' in args:
         for analyzer, err_reason in errored:
-            if not args.details:
+            if 'details' not in args:
                 rows.append([analyzer])
             else:
                 rows.append([analyzer,

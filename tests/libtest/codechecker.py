@@ -40,8 +40,7 @@ def login(codechecker_cfg, test_project_path, username, password):
     """
     print("Logging in")
     port = str(codechecker_cfg['viewer_port'])
-    login_cmd = ['CodeChecker', 'cmd', 'login',
-                 '-u', username,
+    login_cmd = ['CodeChecker', 'cmd', 'login', username,
                  '--verbose', 'debug',
                  '--host', 'localhost',
                  '--port', port]
@@ -134,9 +133,8 @@ def check(codechecker_cfg, test_project_name, test_project_path):
 
     build_cmd = project.get_build_cmd(test_project_path)
 
-    check_cmd = ['CodeChecker', 'check',
+    check_cmd = ['CodeChecker', 'check', test_project_name,
                  '-w', codechecker_cfg['workspace'],
-                 '-n', test_project_name,
                  '-b', "'" + build_cmd + "'",
                  '--analyzers', 'clangsa',
                  '--quiet-build', '--verbose', 'debug']

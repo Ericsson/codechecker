@@ -107,23 +107,9 @@ def add_arguments_to_parser(parser):
                              "the '--name' parameter given to 'codechecker-"
                              "analyze' will be used, if exists.")
 
-    # Upcoming feature planned for v6.0. Argument name and help RESERVED.
-    # parser.add_argument('--group', '--group-name',
-    #                    type=str,
-    #                    dest="group_name",
-    #                    required=False,
-    #                    default=argparse.SUPPRESS,
-    #                    help="Specify the \"analysis group\" the results "
-    #                         "stored will belong to. An analysis group "
-    #                         "consists of multiple analyses whose reports "
-    #                         "are showed together in a common view -- e.g. "
-    #                         "a project's view for every subproject analysed "
-    #                         "separately, or all analyses of a user or a "
-    #                         "team.")
-
     parser.add_argument('-f', '--force',
                         dest="force",
-                        default=False,
+                        default=argparse.SUPPRESS,
                         action='store_true',
                         required=False,
                         help="Delete analysis results stored in the database "
@@ -310,7 +296,7 @@ def main(args):
 
     LOG.info("Storing analysis results for run '" + args.name + "'")
 
-    if args.force:
+    if 'force' in args:
         LOG.info("argument --force was specified: the run with name '" +
                  args.name + "' will be deleted.")
 
@@ -349,7 +335,7 @@ def main(args):
         client.massStoreRun(args.name,
                             context.version,
                             b64zip,
-                            args.force)
+                            'force' in args)
 
         LOG.info("Storage finished successfully.")
     except Exception as ex:

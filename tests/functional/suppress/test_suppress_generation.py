@@ -109,8 +109,8 @@ class TestSuppress(unittest.TestCase):
 
         # Check the stored suppress comment
         status = shared.ttypes.ReviewStatus.FALSE_POSITIVE
-        self.assertEqual(report.review.comment, 'deliberate segfault!')
-        self.assertEqual(report.review.status, status)
+        self.assertEqual(report.reviewData.comment, 'deliberate segfault!')
+        self.assertEqual(report.reviewData.status, status)
 
         # Change review status to confirmed bug.
         review_comment = 'This is really a bug'
@@ -144,5 +144,5 @@ class TestSuppress(unittest.TestCase):
 
         # The stored suppress comment for the same bughash is the same.
         status = shared.ttypes.ReviewStatus.FALSE_POSITIVE
-        self.assertEqual(report.review.comment, 'deliberate segfault!')
-        self.assertEqual(report.review.status, status)
+        self.assertEqual(report.reviewData.comment, 'deliberate segfault!')
+        self.assertEqual(report.reviewData.status, status)

@@ -205,7 +205,7 @@ background process. By default it will listen on `localhost:8001`.
 
 Analyze your project with the check command:
 
-    CodeChecker check -n test-check -b "cd ~/your-project && make clean && make"
+    CodeChecker check test-check -b "cd ~/your-project && make clean && make"
 
 ### View results
 

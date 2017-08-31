@@ -140,30 +140,6 @@ def add_arguments_to_parser(parser):
     Add the subcommand's arguments to the given argparse.ArgumentParser.
     """
 
-    # Some arguments were deprecated already in 'CodeChecker check'.
-    parser.add_argument('--keep-tmp',
-                        action=DeprecatedOptionAction)
-
-    parser.add_argument('-c', '--clean',
-                        action=DeprecatedOptionAction)
-
-    parser.add_argument('--update',
-                        action=DeprecatedOptionAction)
-
-    # In 'store', --name is not a required argument by argparse, as 'analyze'
-    # can prepare a name, which is read after 'store' is started.
-    # If the name is missing, the user is explicitly warned.
-    # TODO: This should be an optional argument here too.
-    parser.add_argument('-n', '--name',
-                        type=str,
-                        dest="name",
-                        required=True,
-                        default=argparse.SUPPRESS,
-                        help="The name of the analysis run to use in storing "
-                             "the reports to the database. If not specified, "
-                             "the '--name' parameter given to 'codechecker-"
-                             "analyze' will be used, if exists.")
-
     # TODO: Workspace is no longer a concept in the new subcommands.
     parser.add_argument('-w', '--workspace',
                         type=str,
@@ -175,7 +151,7 @@ def add_arguments_to_parser(parser):
 
     parser.add_argument('-f', '--force',
                         dest="force",
-                        default=False,
+                        default=argparse.SUPPRESS,
                         action='store_true',
                         required=False,
                         help="Delete analysis results stored in the database "
@@ -229,8 +205,7 @@ def add_arguments_to_parser(parser):
                                     "More threads mean faster analysis at "
                                     "the cost of using more memory.")
 
-    # TODO: Analyze knows '--ignore' also for this.
-    analyzer_opts.add_argument('-i', '--skip',
+    analyzer_opts.add_argument('-i', '--ignore', '--skip',
                                dest="skipfile",
                                required=False,
                                default=argparse.SUPPRESS,
@@ -254,8 +229,8 @@ def add_arguments_to_parser(parser):
 
     analyzer_opts.add_argument('--add-compiler-defaults',
                                action='store_true',
-                               default=False,
                                required=False,
+                               default=argparse.SUPPRESS,
                                help="Retrieve compiler-specific configuration "
                                     "from the compilers themselves, and use "
                                     "them with Clang. This is used when the "
@@ -323,57 +298,11 @@ def add_arguments_to_parser(parser):
                                   "results for, in the format of "
                                   "'host:port/Endpoint'.")
 
-    # TODO: These arguments have been retroactively removed from 'store'
-    # and are deprecated here. They should be completely removed.
-    dbmodes = parser.add_argument_group("database arguments")
-    dbmodes = dbmodes.add_mutually_exclusive_group(required=False)
-    db_deprec = "Database connectivity has been removed from 'check'. " \
-                "Please specify a CodeChecker server address via --host "   \
-                "and --port instead!"
-
-    # SQLite is the default, and for 'check', it was deprecated.
-    # TODO: In 'store', --sqlite has been replaced as an option to specify the
-    # .sqlite file, essentially replacing the concept of 'workspace'.
-    dbmodes.add_argument('--sqlite',
-                         kill_if_used=True,
-                         error_string=db_deprec,
-                         action=DeprecatedOptionAction)
-
-    dbmodes.add_argument('--postgresql',
-                         kill_if_used=True,
-                         error_string=db_deprec,
-                         action=DeprecatedOptionAction)
-
-    pgsql = parser.add_argument_group("PostgreSQL arguments",
-                                      "Values of these arguments are ignored, "
-                                      "unless '--postgresql' is specified!")
-
-    # WARNING: '--dbaddress' default value influences workspace creation
-    # in SQLite.
-    # TODO: These are '--db-something' in 'store', not '--dbsomething'.
-    pgsql.add_argument('--dbaddress',
-                       nargs=1,
-                       kill_if_used=True,
-                       error_string=db_deprec,
-                       action=DeprecatedOptionAction)
-
-    pgsql.add_argument('--dbport',
-                       nargs=1,
-                       kill_if_used=True,
-                       error_string=db_deprec,
-                       action=DeprecatedOptionAction)
-
-    pgsql.add_argument('--dbusername',
-                       nargs=1,
-                       kill_if_used=True,
-                       error_string=db_deprec,
-                       action=DeprecatedOptionAction)
-
-    pgsql.add_argument('--dbname',
-                       nargs=1,
-                       kill_if_used=True,
-                       error_string=db_deprec,
-                       action=DeprecatedOptionAction)
+    server_args.add_argument(type=str,
+                             dest="name",
+                             metavar='RUN_NAME',
+                             help="The name of the analysis run to use in "
+                             "storing the reports to the database.")
 
     add_verbose_arguments(parser)
 
@@ -449,21 +378,21 @@ def main(args):
             logfile=[logfile],
             output_path=report_dir,
             output_format='plist',
-            jobs=args.jobs,
-            add_compiler_defaults=args.add_compiler_defaults
+            jobs=args.jobs
         )
         # Some arguments don't have default values.
         # We can't set these keys to None because it would result in an error
         # after the call.
         args_to_update = ['skipfile',
                           'analyzers',
+                          'add_compiler_defaults',
                           'clangsa_args_cfg_file',
                           'tidy_args_cfg_file',
                           'ordered_checkers'  # enable and disable.
                           ]
         for key in args_to_update:
             __update_if_key_exists(args, analyze_args, key)
-        if args.force:
+        if 'force' in args:
             setattr(analyze_args, 'clean', True)
         __update_if_key_exists(args, analyze_args, "verbose")
 
@@ -484,13 +413,13 @@ def main(args):
         store_args = argparse.Namespace(
             input=[report_dir],
             input_format='plist',
-            force=args.force,
             product_url=args.product_url
         )
         # Some arguments don't have default values.
         # We can't set these keys to None because it would result in an error
         # after the call.
-        args_to_update = ['name']
+        args_to_update = ['name',
+                          'force']
         for key in args_to_update:
             __update_if_key_exists(args, store_args, key)
         __update_if_key_exists(args, store_args, "verbose")

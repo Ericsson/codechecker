@@ -14,6 +14,7 @@ import random
 import sqlalchemy
 
 import shared
+from shared.constants import API_VERSION
 from ProductManagement import ttypes
 
 from libcodechecker.logger import LoggerFactory
@@ -81,7 +82,7 @@ class ThriftProductHandler(object):
 
     @timeit
     def getAPIVersion(self):
-        return shared.constants.API_VERSION
+        return API_VERSION
 
     @timeit
     def getPackageVersion(self):

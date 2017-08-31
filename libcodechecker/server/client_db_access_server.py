@@ -49,7 +49,7 @@ from config_db_model import Product as ORMProduct
 from product_db_access_handler import ThriftProductHandler
 from run_db_model import IDENTIFIER as RUN_META
 
-LOG = LoggerFactory.get_new_logger('DB ACCESS')
+LOG = LoggerFactory.get_new_logger('SERVER')
 
 
 class RequestHandler(SimpleHTTPRequestHandler):

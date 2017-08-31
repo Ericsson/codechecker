@@ -115,7 +115,7 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
 
         //--- Review status ---//
 
-        var review = reportData.review;
+        var review = reportData.reviewData;
         reportData.reviewStatus = review.status;
         reportData.reviewComment = review.author && review.comment
           ? review.comment

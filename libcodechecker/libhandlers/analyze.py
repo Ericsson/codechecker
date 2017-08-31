@@ -176,8 +176,8 @@ def add_arguments_to_parser(parser):
 
     analyzer_opts.add_argument('--add-compiler-defaults',
                                action='store_true',
-                               default=False,
                                required=False,
+                               default=argparse.SUPPRESS,
                                help="Retrieve compiler-specific configuration "
                                     "from the compilers themselves, and use "
                                     "them with Clang. This is used when the "
@@ -256,7 +256,7 @@ def add_arguments_to_parser(parser):
         ctu_opts.add_argument('--ctu-on-the-fly',
                               action='store_true',
                               dest='ctu_in_memory',
-                              default=False,
+                              default=argparse.SUPPRESS,
                               help="If specified, the 'collect' phase will "
                                    "not create the extra AST dumps, but "
                                    "rather analysis will be ran with an "
@@ -335,7 +335,7 @@ def main(args):
             continue
 
         actions += log_parser.parse_log(log_file,
-                                        args.add_compiler_defaults)
+                                        'add_compiler_defaults' in args)
 
     if len(actions) == 0:
         LOG.info("None of the specified build log files contained "

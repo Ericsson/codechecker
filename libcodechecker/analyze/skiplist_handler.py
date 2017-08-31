@@ -11,7 +11,7 @@ import re
 
 from libcodechecker.logger import LoggerFactory
 
-LOG = LoggerFactory.get_new_logger('SKIPLIST_HANDLER')
+LOG = LoggerFactory.get_new_logger('SKIPLIST HANDLER')
 
 
 class SkipListHandler(object):

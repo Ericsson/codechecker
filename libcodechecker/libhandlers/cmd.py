@@ -143,13 +143,9 @@ def __register_results(parser):
     Add argparse subcommand parser for the "list analysis results" action.
     """
 
-    # TODO: Turn this into a positional argument!
-    # (So the most basic invocation is 'CodeChecker cmd runs my_analysis_run'.)
-    parser.add_argument('-n', '--name',
-                        type=str,
+    parser.add_argument(type=str,
                         dest="name",
                         metavar='RUN_NAME',
-                        required=True,
                         help="Name of the analysis run to show result "
                              "summaries of. Use 'CodeChecker cmd runs' to "
                              "get the available runs.")
@@ -162,7 +158,6 @@ def __register_diff(parser):
     Add argparse subcommand parser for the "diff results" action.
     """
 
-    # TODO: Turn -b and -n into positional arguments: 'diff base new --blabla'.
     parser.add_argument('-b', '--basename',
                         type=str,
                         dest="basename",
@@ -222,7 +217,6 @@ def __register_sum(parser):
 
     name_group = parser.add_mutually_exclusive_group(required=True)
 
-    # TODO: Turn this into a positional argument too.
     name_group.add_argument('-n', '--name',
                             type=str,
                             nargs='+',
@@ -247,6 +241,7 @@ def __register_delete(parser):
     """
 
     group = parser.add_mutually_exclusive_group(required=True)
+
     group.add_argument('-n', '--name',
                        type=str,
                        nargs='+',
@@ -302,12 +297,9 @@ def __register_suppress(parser):
     Add argparse subcommand parser for the "suppress file management" action.
     """
 
-    # TODO: Turn this into a positional argument too.
-    parser.add_argument('-n', '--name',
-                        type=str,
+    parser.add_argument(type=str,
                         dest="name",
                         metavar='RUN_NAME',
-                        required=True,
                         default=argparse.SUPPRESS,
                         help="Name of the analysis run to suppress or "
                              "unsuppress a report in.")
@@ -553,11 +545,10 @@ def __register_login(parser):
     Add argparse subcommand parser for the "handle authentication" action.
     """
 
-    # TODO: Turn this into a positional argument. An optional one, because -d.
-    parser.add_argument('-u', '--username',
-                        type=str,
+    parser.add_argument(type=str,
                         dest="username",
-                        required=False,
+                        metavar='USERNAME',
+                        nargs='?',
                         default=getpass.getuser(),
                         help="The username to authenticate with.")
 

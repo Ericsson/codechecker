@@ -10,24 +10,18 @@ Main CodeChecker script.
 from __future__ import print_function
 
 import argparse
-from argparse import ArgumentDefaultsHelpFormatter as ADHF
 import json
 import os
 import signal
 import sys
 
-import shared
+from shared.ttypes import RequestFailed
 
-from libcodechecker import arg_handler
 from libcodechecker import libhandlers
-from libcodechecker import logger
-from libcodechecker.analyze.analyzers import analyzer_types
 from libcodechecker.logger import LoggerFactory
 
 
 LOG = LoggerFactory.get_new_logger('MAIN')
-
-analyzers = ' '.join(list(analyzer_types.supported_analyzers))
 
 
 def main(subcommands=None):
@@ -74,46 +68,6 @@ output.
 
         subparsers = parser.add_subparsers(help='commands')
 
-        # TODO: Delete these once a later version rolls.
-        old_subcommands = []
-
-        def _warn_deprecated_command(cmd_name):
-            # Write to stderr so the output is not captured by pipes, e.g.
-            # with the "checkers" command, the "-" in the new command's name
-            # would mess up pipe usage.
-            err_msg = "[WARNING] The called command 'CodeChecker {0}' is " \
-                      "DEPRECATED since version A.B. A new version is "    \
-                      "available as 'codechecker-{0}'.\nThe DEPRECATED "   \
-                      "command will be REPLACED when version X.Y is "      \
-                      "released.\nPlease see 'codechecker-{0} --help' on " \
-                      "details how to run the new version.\n".format(cmd_name)
-
-            # This warning is implemented for showing later on, once old
-            # behaviour commands are deprecated. We don't warn between 5.8 and
-            # 6.0 for now.
-            # sys.stderr.write(err_msg)
-
-        # --------------------------------------
-        # Checkers parser.
-        checker_p = subparsers.add_parser('checkers',
-                                          formatter_class=ADHF,
-                                          help='List the available checkers '
-                                               'for the supported analyzers '
-                                               'and show their default status '
-                                               '(+ for being enabled, '
-                                               '- for being disabled by '
-                                               'default).')
-        old_subcommands.append('checkers')
-
-        checker_p.add_argument('--analyzers', nargs='+',
-                               dest="analyzers", required=False,
-                               help='Select which analyzer checkers '
-                               'should be listed.\nCurrently supported '
-                               'analyzers:\n' + analyzers)
-
-        logger.add_verbose_arguments(checker_p)
-        checker_p.set_defaults(func=arg_handler.handle_list_checkers)
-
         if subcommands:
             # Try to check if the user has already given us a subcommand to
             # execute. If so, don't load every available parts of CodeChecker
@@ -124,29 +78,10 @@ output.
                     LOG.debug("Supplied an existing, valid subcommand: " +
                               first_command)
 
-                    if 'CC_FROM_LEGACY_INVOKE' not in os.environ:
-                        # Consider only the given command as an available one.
-                        subcommands = [first_command]
-                    else:
-                        if first_command in old_subcommands:
-                            # Certain commands as of now have a 'new' and an
-                            # 'old' invocation and execution. In case of an
-                            # 'old' invocation is passed ('CodeChecker
-                            # command'), do NOT load the 'new' argument parser
-                            # and executed method.
-                            #
-                            # TODO: Delete this once the new commands are
-                            # fleshed out and old are deprecated later on.
-                            _warn_deprecated_command(first_command)
-                            subcommands = []
+                    # Consider only the given command as an available one.
+                    subcommands = [first_command]
 
             for subcommand in subcommands:
-                if 'CC_FROM_LEGACY_INVOKE' in os.environ and \
-                        subcommand in old_subcommands:
-                    # Make sure 'old' commands have a priority in the listing
-                    # when '--help' is queried.
-                    continue
-
                 LOG.debug("Creating arg parser for subcommand " + subcommand)
 
                 try:
@@ -162,18 +97,14 @@ output.
             LoggerFactory.set_log_level(args.verbose)
         args.func(args)
 
-        if 'CC_FROM_LEGACY_INVOKE' in os.environ and \
-                first_command and first_command in old_subcommands:
-            _warn_deprecated_command(first_command)
-
     except KeyboardInterrupt as kb_err:
         LOG.info(str(kb_err))
         LOG.info("Interrupted by user...")
         sys.exit(1)
 
-    except shared.ttypes.RequestFailed as thrift_ex:
+    except RequestFailed as thrift_ex:
         LOG.info("Server error.")
-        LOG.info("Error code: " + str(thrift_ex.error_code))
+        LOG.info("Error code: " + str(thrift_ex.errorCode))
         LOG.info("Error message: " + str(thrift_ex.message))
         sys.exit(1)
 

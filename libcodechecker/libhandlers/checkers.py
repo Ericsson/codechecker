@@ -46,7 +46,7 @@ def get_argparser_ctor_args():
 
         # Help is shown when the "parent" CodeChecker command lists the
         # individual subcommands.
-        'help': "List the checkers available in code analysis."
+        'help': "List the checkers available for code analysis."
     }
 
 
@@ -67,7 +67,7 @@ def add_arguments_to_parser(parser):
 
     parser.add_argument('--details',
                         dest='details',
-                        default=False,
+                        default=argparse.SUPPRESS,
                         action='store_true',
                         required=False,
                         help="Show details about the checker, such as "
@@ -77,13 +77,13 @@ def add_arguments_to_parser(parser):
 
     filters.add_argument('--only-enabled',
                          dest='only_enabled',
-                         default=False,
+                         default=argparse.SUPPRESS,
                          action='store_true',
                          help="Show only the enabled checkers.")
 
     filters.add_argument('--only-disabled',
                          dest='only_disabled',
-                         default=False,
+                         default=argparse.SUPPRESS,
                          action='store_true',
                          help="Show only the disabled checkers.")
 
@@ -121,7 +121,7 @@ def main(args):
                                                                working)
 
     # Use good looking different headers based on format.
-    if not args.details:
+    if 'details' not in args:
         if args.output_format not in ['csv', 'json']:
             header = ['Name']
         else:
@@ -151,15 +151,15 @@ def main(args):
         for checker_name, value in config_handler.checks().items():
             enabled, description = value
 
-            if enabled and args.only_disabled:
+            if enabled and 'only_disabled' in args:
                 continue
-            elif not enabled and args.only_enabled:
+            elif not enabled and 'only_enabled' in args:
                 continue
 
             if args.output_format != 'json':
                 enabled = '+' if enabled else '-'
 
-            if not args.details:
+            if 'details' not in args:
                 rows.append([checker_name])
             else:
                 severity = context.severity_map.get(checker_name,

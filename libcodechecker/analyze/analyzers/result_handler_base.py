@@ -10,7 +10,7 @@ import os
 
 from libcodechecker.logger import LoggerFactory
 
-LOG = LoggerFactory.get_new_logger('RESULT_HANDLER_BASE')
+LOG = LoggerFactory.get_new_logger('RESULT HANDLER (BASE)')
 
 
 class ResultHandler(object):

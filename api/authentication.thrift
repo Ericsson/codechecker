@@ -53,8 +53,8 @@ service codeCheckerAuthentication {
   list<string> getAcceptedAuthMethods(),
 
   // handles creating a session token for the user
-  string performLogin(1: string auth_method,
-                      2: string auth_string)
+  string performLogin(1: string authMethod,
+                      2: string authString)
                       throws (1: shared.RequestFailed requestError),
 
   // performs logout action for the user (must be called from the corresponding valid session)
