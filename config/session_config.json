@@ -8,7 +8,8 @@
     "logins_until_cleanup" : 30,
     "method_dictionary": {
       "enabled" : false,
-      "auths" : []
+      "auths" : [],
+      "groups" : {}
     },
     "method_ldap": {
       "enabled" : false,

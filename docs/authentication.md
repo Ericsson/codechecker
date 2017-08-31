@@ -64,13 +64,20 @@ The `authentication.method_dictionary` contains a plaintext `username:password`
 credentials for authentication. If the user's login matches any of the
 credentials listed, the user will be authenticated.
 
+Groups are configured in a map which maps to each username the list of groups
+the user belongs to.
+
 ~~~{.json}
 "method_dictionary": {
   "enabled" : true,
   "auths" : [
       "global:admin",
       "test:test"
-  ]
+  ],
+  "groups" : {
+      "global" : ["admin", "guest"],
+      "test" : ["guest"]
+  }
 }
 ~~~
 
