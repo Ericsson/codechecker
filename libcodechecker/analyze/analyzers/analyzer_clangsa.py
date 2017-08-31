@@ -219,7 +219,9 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             return False
 
         # clang, clang-5.0, clang++, clang++-5.1, ...
-        clang = get_binary_in_path(r'^clang(\+\+)?(-\d+(\.\d+){0,2})?$', env)
+        clang = get_binary_in_path(['clang', 'clang++'],
+                                   r'^clang(\+\+)?(-\d+(\.\d+){0,2})?$',
+                                   env)
 
         LOG.debug("Using '" + clang + "' for ClangSA!")
         return clang
