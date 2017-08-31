@@ -839,14 +839,14 @@ class ThriftRequestHandler(object):
         finally:
             session.close()
 
-    @timeit
-    def changeReviewStatus(self, report_id, status, message):
+    def _setReviewStatus(self, report_id, status, message, session):
         """
-        Change review status of the bug by report id.
+        This function sets the review status of the given report. This is the
+        implementation of changeReviewStatus(), but it is also extended with
+        a session parameter which represents a database transaction. This is
+        needed because during storage a specific session object has to be used.
         """
         try:
-            session = self.__Session()
-
             report = session.query(Report).get(report_id)
             if report:
                 review_status = session.query(ReviewStatus).get(report.bug_id)
@@ -863,7 +863,7 @@ class ThriftRequestHandler(object):
                 review_status.date = datetime.now()
 
                 session.add(review_status)
-                session.commit()
+                session.flush()
 
                 return True
             else:
@@ -877,8 +877,20 @@ class ThriftRequestHandler(object):
             LOG.error(msg)
             raise shared.ttypes.RequestFailed(
                 shared.ttypes.ErrorCode.DATABASE, msg)
+
+    @timeit
+    def changeReviewStatus(self, report_id, status, message):
+        """
+        Change review status of the bug by report id.
+        """
+        try:
+            session = self.__Session()
+            res = self._setReviewStatus(report_id, status, message, session)
+            session.commit()
         finally:
             session.close()
+
+        return res
 
     @timeit
     def getComments(self, report_id):
@@ -2204,6 +2216,8 @@ class ThriftRequestHandler(object):
                                              version,
                                              force)
 
+        session = self.__storage_session.get_transaction(run_id)
+
         # Handle skip list.
         for skip_handler in skip_handlers:
             if not store_handler.addSkipPath(self.__storage_session,
@@ -2236,20 +2250,6 @@ class ThriftRequestHandler(object):
 
             # Store report.
             for report in reports:
-                last_report_event = report.bug_path[-1]
-                sp_handler = suppress_handler.SourceSuppressHandler(
-                    files[last_report_event['location']['file']],
-                    last_report_event['location']['line'],
-                    report.main['issue_hash_content_of_line_in_context'],
-                    report.main['check_name'])
-
-                supp = sp_handler.get_suppressed()
-                if supp:
-                    bhash, fname, comment = supp
-                    status = shared.ttypes.ReviewStatus.UNREVIEWED
-                    # TODO!!!
-                    # self.changeReviewStatus(report_id)
-
                 LOG.debug("Storing check results to the database.")
 
                 checker_name = report.main['check_name']
@@ -2272,6 +2272,19 @@ class ThriftRequestHandler(object):
                     bug_events,
                     checker_name,
                     severity)
+
+                last_report_event = report.bug_path[-1]
+                sp_handler = suppress_handler.SourceSuppressHandler(
+                    files[last_report_event['location']['file']],
+                    last_report_event['location']['line'],
+                    report.main['issue_hash_content_of_line_in_context'],
+                    report.main['check_name'])
+
+                supp = sp_handler.get_suppressed()
+                if supp:
+                    bhash, fname, comment = supp
+                    status = shared.ttypes.ReviewStatus.FALSE_POSITIVE
+                    self._setReviewStatus(report_id, status, comment, session)
 
                 LOG.debug("Storing done for report " + str(report_id))
 
