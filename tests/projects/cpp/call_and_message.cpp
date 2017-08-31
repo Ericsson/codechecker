@@ -16,6 +16,7 @@ void f(struct S s);
 
 void test1() {
   struct S s;
+  // insert_suppress_here
   f(s); // warn: passed-by-value arg contain uninitialized data
 }
 

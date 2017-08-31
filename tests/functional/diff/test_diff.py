@@ -506,9 +506,10 @@ class Diff(unittest.TestCase):
         out, err = process.communicate()
         print(out+err)
 
-        # 5 new core.CallAndMessage issues.
+        # 4 new core.CallAndMessage issues.
+        # 1 is suppressed in code
         count = len(re.findall(r'\[core\.CallAndMessage\]', out))
-        self.assertEqual(count, 5)
+        self.assertEqual(count, 4)
 
     def test_local_compare_res_count_resovled(self):
         """
