@@ -170,13 +170,13 @@ def find_by_regex_in_envpath(pattern, environment):
     return binaries
 
 
-def get_binary_in_path(pattern, env):
+def get_binary_in_path(basename_list, versioning_pattern, env):
     """
     Select the most matching binary for the given pattern in the given
     environment. Works well for binaries that contain versioning.
     """
 
-    binaries = find_by_regex_in_envpath(pattern, env)
+    binaries = find_by_regex_in_envpath(versioning_pattern, env)
 
     if len(binaries) == 0:
         return False
@@ -185,10 +185,20 @@ def get_binary_in_path(pattern, env):
         # found binary name group.
         return binaries.values()[0][0]
     else:
-        # Select the "newest" available clang version if there are multiple.
         keys = list(binaries.keys())
         keys.sort()
-        files = binaries[keys[-1]]
+
+        # If one of the base names match, select that version.
+        for base_key in basename_list:
+            # Cannot use set here as it would destroy precendence.
+            if base_key in keys:
+                files = binaries[base_key]
+                break
+
+        if not files:
+            # Select the "newest" available version if there are multiple and
+            # none of the base names matched.
+            files = binaries[keys[-1]]
 
         # Return the one earliest in PATH.
         return files[0]

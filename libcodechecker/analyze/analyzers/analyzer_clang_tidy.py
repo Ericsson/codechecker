@@ -157,7 +157,9 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
             return False
 
         # clang-tidy, clang-tidy-5.0, ...
-        clangtidy = get_binary_in_path(r'^clang-tidy(-\d+(\.\d+){0,2})?$', env)
+        clangtidy = get_binary_in_path(['clang-tidy'],
+                                       r'^clang-tidy(-\d+(\.\d+){0,2})?$',
+                                       env)
 
         LOG.debug("Using '" + clangtidy + "' for ClangSA!")
         return clangtidy
