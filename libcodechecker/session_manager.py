@@ -245,11 +245,34 @@ class SessionManager:
         }
 
     def __handle_validation(self, auth_string):
-        """Validate an oncoming authorization request
-        against some authority controller."""
-        return self.__try_auth_dictionary(auth_string) \
-            or self.__try_auth_pam(auth_string) \
-            or self.__try_auth_ldap(auth_string)
+        """
+        Validate an oncoming authorization request
+        against some authority controller.
+
+        Returns False if no validation was done, or a validation object
+        if the user was successfully authenticated.
+
+        This validation object contains two keys: username and groups.
+        """
+        validation = self.__try_auth_dictionary(auth_string)
+        LOG.error("DICT")
+        LOG.error(validation)
+        if validation:
+            return validation
+
+        validation = self.__try_auth_pam(auth_string)
+        LOG.error("PAM")
+        LOG.error(validation)
+        if validation:
+            return validation
+
+        validation = self.__try_auth_ldap(auth_string)
+        LOG.error("LDAP")
+        LOG.error(validation)
+        if validation:
+            return validation
+
+        return False
 
     def __is_method_enabled(self, method):
         return method not in unsupported_methods and \
@@ -260,14 +283,42 @@ class SessionManager:
         """
         Try to authenticate the user against the root username:password's hash.
         """
-        return "method_root" in self.__auth_config and \
-            hashlib.sha256(auth_string).hexdigest() == \
-            self.__auth_config["method_root"]
+        if "method_root" in self.__auth_config and \
+                hashlib.sha256(auth_string).hexdigest() == \
+                self.__auth_config["method_root"]:
+            return {
+                'username': SessionManager.get_user_name(auth_string),
+                'groups': [],
+                'root': True
+            }
+
+        return False
 
     def __try_auth_dictionary(self, auth_string):
-        return self.__is_method_enabled("dictionary") and \
-            auth_string in \
-            self.__auth_config.get("method_dictionary").get("auths")
+        """
+        Try to authenticate the user against the hardcoded credential list.
+
+        Returns a validation object if successful, which contains the users'
+        groups.
+        """
+        method_config = self.__auth_config.get("method_dictionary")
+        if not method_config:
+            return False
+
+        valid = self.__is_method_enabled("dictionary") and \
+            auth_string in method_config.get("auths")
+        if not valid:
+            return False
+
+        username = SessionManager.get_user_name(auth_string)
+        group_list = method_config['groups'][username] if \
+            'groups' in method_config and \
+            username in method_config['groups'] else []
+
+        return {
+            'username': username,
+            'groups': group_list
+        }
 
     def __try_auth_pam(self, auth_string):
         """
@@ -275,8 +326,12 @@ class SessionManager:
         """
         if self.__is_method_enabled("pam"):
             username, password = auth_string.split(":")
-            return cc_pam.auth_user(self.__auth_config["method_pam"],
-                                    username, password)
+            if cc_pam.auth_user(self.__auth_config["method_pam"],
+                                username, password):
+                # PAM does not hold a group membership list we can reliably
+                # query.
+                return {'username': username}
+
         return False
 
     def __try_auth_ldap(self, auth_string):
@@ -290,7 +345,9 @@ class SessionManager:
                 .get("authorities")
             for ldap_conf in ldap_authorities:
                 if cc_ldap.auth_user(ldap_conf, username, password):
-                    return True
+                    # TODO: Fetch the LDAP groups of user.
+                    return {'username': username, 'groups': []}
+
         return False
 
     @staticmethod
@@ -311,8 +368,11 @@ class SessionManager:
                 self.__auth_config["logins_until_cleanup"]:
             self.__cleanup_sessions()
 
-        is_root = self.__try_auth_root(auth_string)
-        if is_root or self.__handle_validation(auth_string):
+        validation = self.__try_auth_root(auth_string)
+        if not validation:
+            validation = self.__handle_validation(auth_string)
+
+        if validation:
             # If the session is still valid and credentials
             # are resent return old token.
             session_already = next(
@@ -329,10 +389,10 @@ class SessionManager:
                 # TODO: Use a more secure way for token generation?
                 token = uuid.UUID(bytes=os.urandom(16)).__str__().replace("-",
                                                                           "")
-                user_name = SessionManager.get_user_name(auth_string)
 
-                # TODO: Fetch the groups for the user and store them.
-                groups = []
+                user_name = validation['username']
+                groups = validation.get("groups", [])
+                is_root = validation.get('root', False)
 
                 session = _Session(token,
                                    _Session.calc_persistency_hash(auth_string),
@@ -340,8 +400,8 @@ class SessionManager:
                 SessionManager.__valid_sessions.append(session)
 
             return session
-        else:
-            return None
+
+        return None
 
     def is_valid(self, token, access=False):
         """Validates a given token (cookie) against
