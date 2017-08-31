@@ -28,6 +28,9 @@ def metadata_info(metadata_file):
     check_commands = []
     check_durations = []
 
+    if not os.path.isfile(metadata_file):
+        return check_commands, check_durations
+
     with open(metadata_file, 'r') as metadata:
         metadata_dict = json.load(metadata)
 
