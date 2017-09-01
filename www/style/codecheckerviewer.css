@@ -260,7 +260,8 @@ html, body {
   width: 16px;
   height: 16px;
   font-size: 1.125em;
-  padding-right: 4px;
+  text-align: center;
+  margin-right: 4px;
 }
 
 .customIcon.spacer::before {
@@ -270,16 +271,6 @@ html, body {
 /* -- Severities -- */
 .dojoxGridCell.severity {
   text-align: center;
-}
-
-.icon-severity {
-  font-size: 1em;
-  color: white;
-  display: inline-block;
-  text-align: center;
-  font-family: monospace;
-  width: 16px;
-  height: 16px;
 }
 
 .icon-severity-low {
@@ -332,8 +323,11 @@ html, body {
 }
 
 span[class*="severity-"] {
+  line-height: normal;
   text-transform: capitalize;
+  font-size: 1em;
   font-weight: bold;
+  color: white;
 }
 
 /* -- */
@@ -425,6 +419,10 @@ span[class*="severity-"] {
 
 .customIcon.assume_switch {
   color: #7f410c;
+}
+
+.customIcon.bug:before {
+  content: "\e001";
 }
 
 /* Avatar */
@@ -635,3 +633,233 @@ span[class*="severity-"] {
   content: "\e009";
   color: #ff0000;
 }
+
+/* Bug filters */
+
+.bug-filters .dijitContentPane {
+  padding: 0px;
+}
+
+.bug-filters > .dijitContentPane {
+  padding: 5px;
+  border-bottom: 1px solid rgba(86, 96, 105, 0.23);
+}
+
+.bug-filters > .dijitContentPane:last-child {
+  border-bottom: none
+}
+
+/* Clear all button */
+
+.bug-filters .clear-all-btn > .dijitButtonNode {
+  background-color: #fff;
+  background-image: none;
+}
+
+.bug-filters .clear-all-btn:hover > .dijitButtonNode {
+  background-color: #007ea7;
+  color: white;
+}
+
+/* All report counter */
+
+.bug-filters .report-count-wrapper {
+  float: right;
+  padding: 5px;
+}
+
+.bug-filters .report-count-wrapper .bug {
+  color: #ec7672;
+}
+
+.bug-filters .report-count-wrapper .count {
+  color: #878d96;
+}
+
+/* Report filter group */
+
+.bug-filters .header {
+  clear: both;
+}
+
+.bug-filters .title {
+  font-weight: bold;
+}
+
+/* Report filter operations */
+
+.bug-filters .options {
+  position: absolute;
+  right: 5px;
+}
+
+.bug-filters .remove {
+  position: absolute;
+  right: 0px;
+  top: 0px;
+  padding: 5px 5px 5px 10px;
+  margin: 0px;
+  visibility: hidden;
+  cursor: pointer;
+  text-align: center;
+}
+
+.bug-filters .remove::before {
+  content: "\e01e";
+  color: #cb2431;
+}
+
+.bug-filters .select-menu-item:hover .remove {
+  visibility: visible;
+  background-color: #d6eaf1;
+}
+
+.bug-filters .select-menu-item:hover .count {
+  display: none;
+}
+
+.bug-filters .edit::before {
+  content: "\e01c";
+  color: #878d96;
+}
+
+.bug-filters .clean,
+.bug-filters .edit{
+  cursor: pointer;
+}
+
+.bug-filters .clean::before {
+  content: "\e013";
+  color: #878d96;
+}
+
+/* Report filter tooltip */
+
+.select-menu-filter {
+  margin-bottom: 10px;
+  width: 100%;
+}
+
+.select-menu-list {
+  min-width: 300px;
+  max-width: 500px;
+  max-height: 300px;
+}
+
+.select-menu-list.dijitContentPane {
+  padding: 0px;
+}
+
+.select-menu-list .select-menu-item .customIcon.selected:before {
+  content: "\e01d";
+  color: #28a745;
+}
+
+.select-menu-list .select-menu-item .customIcon.selected {
+  visibility: hidden;
+  margin-right: 5px;
+  float: left;
+}
+
+.select-menu-list .select-menu-item.selected .customIcon.selected {
+  visibility: visible;
+}
+
+.select-menu-list .select-menu-item {
+  margin: 0px;
+  overflow: hidden;
+  color: inherit;
+  cursor: pointer;
+  border: none;
+  border-bottom: 1px solid #eaecef;
+  background-color: white;
+}
+
+.select-menu-list .select-menu-item:hover {
+  background-color: #f1f1f1;
+}
+
+.select-menu-list .select-menu-item.no-item:hover {
+  background-color: inherit;
+  cursor: not-allowed;
+  border: 0px;
+}
+
+.select-menu-list .select-menu-item.selected {
+  background-color: #eef9fd;
+}
+
+/* Report filter items */
+
+.select-menu-item {
+  display: block;
+  overflow: hidden;
+  color: #292b2c;
+  border: 1px solid #cee0e6;
+  position: relative;
+  margin: 2px;
+  background-color: #f1fbff;
+  cursor: pointer;
+}
+
+.select-menu-item.dijitContentPane,
+.select-menu-list .select-menu-item {
+  padding: 5px 0px 5px 10px;
+}
+
+.select-menu-item:hover {
+  background-color: #d6eaf1;
+}
+
+.bug-filters .select-menu-item.none {
+  border: none;
+  background-color: inherit;
+  cursor: inherit;
+}
+
+.bug-filters .select-menu-item.none:hover {
+  background-color: inherit;
+}
+
+.select-menu-item .customIcon {
+  vertical-align: text-top;
+}
+
+.select-menu-item .label{
+  display: inline-block;
+  max-width: 80%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  direction: ltr;
+}
+
+.select-menu-item .count {
+  min-width: 16px;
+  height: 16px;
+  color: #878d96;
+  padding: 5px 5px 5px 10px;
+  position: absolute;
+  right: 0;
+  top: 0px;
+  text-align: center;
+}
+
+.select-menu-item.disabled {
+  cursor: not-allowed;
+}
+
+.bug-filters .select-menu-item.disabled:hover .count {
+  display: inherit;
+}
+
+/* File filter */
+
+.file .select-menu-item .label {
+  direction: rtl;
+}
+
+.file .select-menu-item.none .label {
+  direction: ltr;
+}
+

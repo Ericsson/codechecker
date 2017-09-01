@@ -115,8 +115,8 @@ class TestReportFilter(unittest.TestCase):
                                                           None,
                                                           None)
 
-        self.assertEqual(len(checker_counts), len(self.run1_checkers))
-        self.assertDictEqual(checker_counts, self.run1_checkers)
+        self.assertGreaterEqual(len(checker_counts), len(self.run1_checkers))
+        self.assertDictContainsSubset(self.run1_checkers, checker_counts)
 
     def test_run1_core_checkers(self):
         """
@@ -130,8 +130,8 @@ class TestReportFilter(unittest.TestCase):
         core_checkers = {k: v for k, v in self.run1_checkers.items()
                          if "core." in k}
 
-        self.assertEqual(len(checker_counts), len(core_checkers))
-        self.assertDictEqual(checker_counts, core_checkers)
+        self.assertGreaterEqual(len(checker_counts), len(core_checkers))
+        self.assertDictContainsSubset(core_checkers, checker_counts)
 
     def test_run2_all_checkers(self):
         """
@@ -142,9 +142,8 @@ class TestReportFilter(unittest.TestCase):
                                                           None,
                                                           None)
 
-        print(checker_counts)
-        self.assertEqual(len(checker_counts), len(self.run2_checkers))
-        self.assertDictEqual(checker_counts, self.run2_checkers)
+        self.assertGreaterEqual(len(checker_counts), len(self.run2_checkers))
+        self.assertDictContainsSubset(self.run2_checkers, checker_counts)
 
     def test_run1_run2_all_checkers(self):
         """
@@ -180,8 +179,8 @@ class TestReportFilter(unittest.TestCase):
         r2_core = Counter(core_checkers_r2)
         all_core = dict(r1_core + r2_core)
 
-        self.assertEqual(len(checker_counts), len(all_core))
-        self.assertDictEqual(checker_counts, all_core)
+        self.assertGreaterEqual(len(checker_counts), len(all_core))
+        self.assertDictContainsSubset(all_core, checker_counts)
 
     def test_run1_all_severity(self):
         """
@@ -291,8 +290,8 @@ class TestReportFilter(unittest.TestCase):
         test_res = dict(Counter(null_r1) + Counter(null_r2) +
                         Counter(stack_r1) + Counter(stack_r2))
 
-        self.assertEqual(len(res), len(test_res))
-        self.assertDictEqual(res, test_res)
+        self.assertGreaterEqual(len(res), len(test_res))
+        self.assertDictContainsSubset(test_res, res)
 
     def test_run1_run2_all_checker_msg(self):
         """
@@ -325,7 +324,7 @@ class TestReportFilter(unittest.TestCase):
         report_count = self._cc_client.getRunResultCount([runid], [])
 
         report_ids = [x.reportId for x in self._cc_client.getRunResults(
-                      [runid], report_count, 0, [], [])]
+            [runid], report_count, 0, [], [])]
 
         for rid in report_ids[:5]:
             self._cc_client.changeReviewStatus(rid,
@@ -402,7 +401,7 @@ class TestReportFilter(unittest.TestCase):
                                                               None)
 
         self.assertDictEqual(rv_counts_all,
-                             dict(Counter(rv_counts_1)+Counter(rv_counts_2)))
+                             dict(Counter(rv_counts_1) + Counter(rv_counts_2)))
 
     def test_run1_all_detection_stats(self):
         """
@@ -450,7 +449,7 @@ class TestReportFilter(unittest.TestCase):
         """
         runid = self._runids[0]
         new_filter = ReportFilter_v2(
-                detectionStatus=[shared.ttypes.DetectionStatus.NEW])
+            detectionStatus=[shared.ttypes.DetectionStatus.NEW])
         new_reports = self._cc_client.getCheckerCounts([runid],
                                                        new_filter,
                                                        None)
@@ -470,7 +469,7 @@ class TestReportFilter(unittest.TestCase):
 
         runid = self._runids[0]
         resolved_filter = ReportFilter_v2(
-                detectionStatus=[shared.ttypes.DetectionStatus.RESOLVED])
+            detectionStatus=[shared.ttypes.DetectionStatus.RESOLVED])
         resolved_reports = self._cc_client.getCheckerCounts([runid],
                                                             resolved_filter,
                                                             None)
@@ -483,7 +482,7 @@ class TestReportFilter(unittest.TestCase):
 
         runid = self._runids[0]
         unresolved_filter = ReportFilter_v2(
-                detectionStatus=[shared.ttypes.DetectionStatus.UNRESOLVED])
+            detectionStatus=[shared.ttypes.DetectionStatus.UNRESOLVED])
         unresolved_reports = \
             self._cc_client.getCheckerCounts([runid],
                                              unresolved_filter,
@@ -497,7 +496,7 @@ class TestReportFilter(unittest.TestCase):
 
         runid = self._runids[0]
         reopen_filter = ReportFilter_v2(
-                detectionStatus=[shared.ttypes.DetectionStatus.REOPENED])
+            detectionStatus=[shared.ttypes.DetectionStatus.REOPENED])
         reopened_reports = self._cc_client.getCheckerCounts([runid],
                                                             reopen_filter,
                                                             None)

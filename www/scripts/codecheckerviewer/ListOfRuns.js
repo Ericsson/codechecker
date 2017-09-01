@@ -203,7 +203,10 @@ function (declare, domConstruct, ItemFileWriteStore, topic, Dialog, Button,
       CC_SERVICE.getRunData(runNameFilter, function (runDataList) {
         that._sortRunData(runDataList);
 
-        that.onLoaded(runDataList);
+        // In Firefox the onLoaded function called immediately before topics
+        // have been registered.
+        setTimeout(function () { that.onLoaded(runDataList); }, 0);
+
         topic.publish("hooks/RunsListed", runDataList.length);
 
         runDataList.forEach(function (item) {

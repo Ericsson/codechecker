@@ -36,6 +36,18 @@ function (locale, dom, style) {
     },
 
     /**
+     * Removes duplications from the given array.
+     */
+    arrayUnique : function (arr) {
+      for (var i = 0; i < arr.length; ++i)
+        for(var j = i + 1; j < arr.length; ++j)
+          if (arr[i] === arr[j])
+            arr.splice(j--, 1);
+
+      return arr;
+    },
+
+    /**
      * Converts a Thrift API severity id to human readable string.
      *
      * @param {String|Number} severityCode Thrift API Severity id
@@ -157,7 +169,8 @@ function (locale, dom, style) {
      */
     reviewStatusCssClass : function (reviewCode) {
       var status = this.reviewStatusFromCodeToString(reviewCode);
-      return status.replace(/[^a-zA-Z ]/g, "").toLowerCase().replace(' ', '-');
+      return 'review-status-'
+        + status.replace(/[^a-zA-Z ]/g, "").toLowerCase().replace(' ', '-');
     },
 
     /**
