@@ -50,11 +50,13 @@ class ThriftAuthHelper():
                 if reqfailure.error_code == shared.ttypes.ErrorCode.DATABASE:
                     print('Database error on server')
                     print(str(reqfailure.message))
-                if reqfailure.error_code ==\
+                elif reqfailure.error_code ==\
                         shared.ttypes.ErrorCode.AUTH_DENIED:
+                    print('Authentication denied.')
                     raise reqfailure
-                if reqfailure.error_code ==\
+                elif reqfailure.error_code ==\
                         shared.ttypes.ErrorCode.UNAUTHORIZED:
+                    print('Unauthorised.')
                     raise reqfailure
                 else:
                     print('Other error')

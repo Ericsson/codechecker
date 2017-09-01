@@ -34,8 +34,9 @@ class TestCmdLineDeletion(unittest.TestCase):
         test_class = self.__class__.__name__
         print('Running ' + test_class + ' tests in ' + test_workspace)
 
-        self._cc_port = env.import_test_cfg(test_workspace)[
-            'codechecker_cfg']['viewer_port']
+        codechecker_cfg = env.import_test_cfg(test_workspace)[
+            'codechecker_cfg']
+        self.server_url = env.parts_to_url(codechecker_cfg)
 
         # Get the test project configuration from the prepared test workspace.
         self._testproject_data = env.setup_test_proj_cfg(test_workspace)
@@ -79,7 +80,7 @@ class TestCmdLineDeletion(unittest.TestCase):
         del_cmd = [self._codechecker_cmd,
                    'cmd', 'del',
                    '--all-after-run', run2_name,
-                   '-p', str(self._cc_port)]
+                   '--url', self.server_url]
         run_cmd(del_cmd)
 
         self.assertTrue(all_exists(
@@ -104,7 +105,7 @@ class TestCmdLineDeletion(unittest.TestCase):
         del_cmd = [self._codechecker_cmd,
                    'cmd', 'del',
                    '--all-before-time', date_run2,
-                   '-p', str(self._cc_port)]
+                   '--url', self.server_url]
         run_cmd(del_cmd)
 
         self.assertTrue(all_exists(
@@ -117,7 +118,7 @@ class TestCmdLineDeletion(unittest.TestCase):
         del_cmd = [self._codechecker_cmd,
                    'cmd', 'del',
                    '--name', run2_name,
-                   '-p', str(self._cc_port)]
+                   '--url', self.server_url]
         run_cmd(del_cmd)
 
         self.assertTrue(none_exists(

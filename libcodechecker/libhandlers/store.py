@@ -29,6 +29,7 @@ from libcodechecker.analyze import plist_parser
 from libcodechecker.libclient.client import setup_client
 from libcodechecker.logger import add_verbose_arguments
 from libcodechecker.logger import LoggerFactory
+from libcodechecker.util import split_product_url
 
 
 LOG = LoggerFactory.get_new_logger('STORE')
@@ -134,23 +135,18 @@ def add_arguments_to_parser(parser):
     server_args = parser.add_argument_group(
         "server arguments",
         "Specifies a 'CodeChecker server' instance which will be used to "
-        "store the results. This server must be running and listening prior "
-        "to the 'store' command being ran.")
+        "store the results. This server must be running and listening, and "
+        "the given product must exist prior to the 'store' command being ran.")
 
-    server_args.add_argument('--host',
+    server_args.add_argument('--url',
                              type=str,
-                             dest="host",
+                             metavar='PRODUCT_URL',
+                             dest="product_url",
+                             default="localhost:8001/Default",
                              required=False,
-                             default="localhost",
-                             help="The IP address or hostname of the "
-                                  "CodeChecker server.")
-
-    server_args.add_argument('-p', '--port',
-                             type=int,
-                             dest="port",
-                             required=False,
-                             default=8001,
-                             help="The port of the server to use for storing.")
+                             help="The URL of the product to store the "
+                                  "results for, in the format of "
+                                  "host:port/ProductName.")
 
     add_verbose_arguments(parser)
     parser.set_defaults(func=main)
@@ -316,11 +312,12 @@ def main(args):
         LOG.info("argument --force was specified: the run with name '" +
                  args.name + "' will be deleted.")
 
-    # setup connection to the remote server
-    client = setup_client(args.host, args.port, '/')
+    # Setup connection to the remote server.
+    client = setup_client(args.product_url)
 
-    LOG.debug("Initializing client connecting to " +
-              str(args.host) + ":" + str(args.port) + " done.")
+    host, port, product_name = split_product_url(args.product_url)
+    LOG.debug("Initializing client connecting to {0}:{1}/{2} done."
+              .format(host, port, product_name))
 
     _, zip_file = tempfile.mkstemp('.zip')
     LOG.debug("Will write mass store ZIP to '{0}'...".format(zip_file))

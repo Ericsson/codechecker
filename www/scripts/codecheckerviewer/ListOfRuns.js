@@ -20,25 +20,6 @@ define([
 function (declare, domConstruct, ItemFileWriteStore, topic, Dialog, Button,
   RadioButton, TextBox, BorderContainer, ContentPane, DataGrid, util) {
 
-  function prettifyDuration(seconds) {
-    var prettyDuration = "--------";
-
-    if (seconds >= 0) {
-      var durHours = Math.floor(seconds / 3600);
-      var durMins  = Math.floor(seconds / 60) - durHours * 60;
-      var durSecs  = seconds - durMins * 60 - durHours * 3600;
-
-      var prettyDurHours = (durHours < 10 ? '0' : '') + durHours;
-      var prettyDurMins  = (durMins  < 10 ? '0' : '') + durMins;
-      var prettyDurSecs  = (durSecs  < 10 ? '0' : '') + durSecs;
-
-      prettyDuration
-        = prettyDurHours + ':' + prettyDurMins + ':' + prettyDurSecs;
-    }
-
-    return prettyDuration;
-  }
-
   /**
    * This function helps to format a data grid cell with two radio buttons.
    * @param args {runData, listOfRunsGrid} - the value from the data store that
@@ -188,7 +169,7 @@ function (declare, domConstruct, ItemFileWriteStore, topic, Dialog, Button,
         name         : '<span class="link">' + runData.name + '</span>',
         date         : currItemDate[0] + ' ' + currItemDate[1],
         numberofbugs : runData.resultCount,
-        duration     : prettifyDuration(runData.duration),
+        duration     : util.prettifyDuration(runData.duration),
         runData      : runData,
         checkcmd     : '<span class="link">Show</span>',
         del          : false,

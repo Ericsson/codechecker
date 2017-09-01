@@ -22,11 +22,16 @@ from libcodechecker import output_formatters
 from libcodechecker import session_manager
 from libcodechecker import util
 from libcodechecker.analyze import analyzer_env
-from libcodechecker.database_handler import SQLServer
-from libcodechecker.logger import add_verbose_arguments
 from libcodechecker.logger import LoggerFactory
+from libcodechecker.logger import add_verbose_arguments
 from libcodechecker.server import client_db_access_server
+from libcodechecker.server import database_handler
 from libcodechecker.server import instance_manager
+from libcodechecker.server.config_db_model \
+    import IDENTIFIER as CONFIG_META
+from libcodechecker.server.run_db_model \
+    import IDENTIFIER as RUN_META
+
 
 LOG = LoggerFactory.get_new_logger('SERVER')
 
@@ -111,35 +116,7 @@ def add_arguments_to_parser(parser):
                              "can access the server over the Internet. "
                              "(Equivalent to specifying '--host \"\"'.)")
 
-    # TODO: Refactor the tests so that these arguments can be eliminated.
-    # These values have absolutely no use outside what the automated tests
-    # specify.
-    checksrv = parser.add_argument_group(
-        "analysis result storage server",
-        "(These options have no actual use apart from an internal usage in "
-        "the automated testing of CodeChecker features.)")
-
-    checksrv.add_argument('--check-address',
-                          type=str,
-                          dest="check_address",
-                          default="localhost",
-                          required=False,
-                          help="Set on which IP address or hostname the "
-                               "analysis result server should listen.")
-
-    checksrv.add_argument('--check-port',
-                          type=int,
-                          dest="check_port",
-                          default=argparse.SUPPRESS,
-                          required=None,
-                          help="Also start an analysis result storage server "
-                               "alongside the \"viewer\". This server could "
-                               "be used by remote clients to store new "
-                               "analysis results to the database the viewer "
-                               "server is using. Set on which port the "
-                               "analysis result server should listen.")
-
-    dbmodes = parser.add_argument_group("database arguments")
+    dbmodes = parser.add_argument_group("configuration database arguments")
 
     dbmodes = dbmodes.add_mutually_exclusive_group(required=False)
 
@@ -148,8 +125,8 @@ def add_arguments_to_parser(parser):
                          dest="sqlite",
                          metavar='SQLITE_FILE',
                          default=os.path.join(
-                             util.get_default_workspace(),
-                             "codechecker.sqlite"),
+                             '<CONFIG_DIRECTORY>',
+                             "config.sqlite"),
                          required=False,
                          help="Path of the SQLite database file to use.")
 
@@ -167,8 +144,6 @@ def add_arguments_to_parser(parser):
                                       "Values of these arguments are ignored, "
                                       "unless '--postgresql' is specified!")
 
-    # WARNING: '--dbaddress' default value influences workspace creation
-    # in SQLite.
     # TODO: --dbSOMETHING arguments are kept to not break interface from
     # old command. Database using commands such as "CodeChecker store" no
     # longer supports these --- it would be ideal to break and remove args
@@ -197,7 +172,7 @@ def add_arguments_to_parser(parser):
     pgsql.add_argument('--dbname', '--db-name',
                        type=str,
                        dest="dbname",
-                       default="codechecker",
+                       default="config",
                        required=False,
                        help="Name of the database to use.")
 
@@ -299,17 +274,22 @@ def add_arguments_to_parser(parser):
             parser.error("argument --config-directory: not allowed with "
                          "argument --workspace")
 
-        # If workspace is specified, sqlite is workspace/codechecker.sqlite
+        # If workspace is specified, sqlite is workspace/config.sqlite
         # and config_directory is the workspace directory.
         if len(arg_match(['--workspace', '-w'])) > 0:
             args.config_directory = args.workspace
             args.sqlite = os.path.join(args.workspace,
-                                       'codechecker.sqlite')
+                                       'config.sqlite')
             setattr(args, 'dbdatadir', os.path.join(args.workspace,
                                                     'pgsql_data'))
 
         # Workspace should not exist as a Namespace key.
         delattr(args, 'workspace')
+
+        if '<CONFIG_DIRECTORY>' in args.sqlite:
+            # Replace the placeholder variable with the actual value.
+            args.sqlite = args.sqlite.replace('<CONFIG_DIRECTORY>',
+                                              args.config_directory)
 
         if 'postgresql' not in args:
             # Later called database modules need the argument to be actually
@@ -421,17 +401,43 @@ def main(args):
     check_env = analyzer_env.get_check_env(context.path_env_extra,
                                            context.ld_lib_path_extra)
 
-    sql_server = SQLServer.from_cmdline_args(args,
-                                             context.migration_root,
-                                             check_env)
+    # Create the main database link from the arguments passed over the
+    # command line.
+    default_product_path = os.path.join(args.config_directory,
+                                        'Default.sqlite')
+    create_default_product = 'sqlite' in args and \
+                             not os.path.exists(args.sqlite) and \
+                             not os.path.exists(default_product_path)
 
-    LOG.debug("Starting database server.")
-    sql_server.start(context.db_version_info, wait_for_start=True,
-                     init=True)
+    sql_server = database_handler.SQLServer.from_cmdline_args(
+        vars(args), CONFIG_META, context.config_migration_root,
+        interactive=True, env=check_env)
+
+    LOG.debug("Connecting to product configuration database.")
+    sql_server.connect(context.product_db_version_info, init=True)
+
+    if create_default_product:
+        # Create a default product and add it to the configuration database.
+
+        LOG.debug("Create default product...")
+        LOG.debug("Configuring schema and migration...")
+
+        prod_server = database_handler.SQLiteDatabase(
+            default_product_path, RUN_META,
+            context.run_migration_root, check_env)
+        prod_server.connect(context.run_db_version_info, init=True)
+
+        LOG.debug("Connecting database engine for default product")
+        product_conn_string = prod_server.get_connection_string()
+        LOG.debug("Default database created and connected.")
+
+        client_db_access_server.add_initial_run_database(
+            sql_server, product_conn_string)
+
+        LOG.info("Product 'Default' at '{0}' created and set up."
+                 .format(default_product_path))
 
     # Start database viewer.
-    db_connection_string = sql_server.get_connection_string()
-
     checker_md_docs = os.path.join(context.doc_root, 'checker_md_docs')
     checker_md_docs_map = os.path.join(checker_md_docs,
                                        'checker_doc_map.json')
@@ -445,12 +451,14 @@ def main(args):
                     'version': context.package_git_tag}
 
     try:
-        client_db_access_server.start_server(package_data,
+        client_db_access_server.start_server(args.config_directory,
+                                             package_data,
                                              args.view_port,
-                                             db_connection_string,
+                                             sql_server,
                                              suppress_handler,
                                              args.listen_address,
-                                             context)
+                                             context,
+                                             check_env)
     except socket.error as err:
         if err.errno == errno.EADDRINUSE:
             LOG.error("Server can't be started, maybe the given port number "

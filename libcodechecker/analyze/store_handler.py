@@ -18,7 +18,8 @@ from codeCheckerDBAccess.ttypes import *
 
 from libcodechecker.analyze import skiplist_handler
 from libcodechecker.logger import LoggerFactory
-from libcodechecker.orm_model import *
+# TODO: This is a cross-subpackage import.
+from libcodechecker.server.run_db_model import *
 
 LOG = LoggerFactory.get_new_logger('STORE HANDLER')
 

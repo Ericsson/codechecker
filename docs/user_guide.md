@@ -8,14 +8,16 @@ Running CodeChecker is via its main invocation script, `CodeChecker`:
 
 ~~~~~~~~~~~~~~~~~~~~~
 usage: CodeChecker [-h]
-                   {checkers,analyze,analyzers,check,cmd,log,parse,plist,quickcheck,server,store,version}
+                   {checkers,analyze,analyzers,check,cmd,log,parse,plist,
+                   quickcheck,server,store,version}
                    ...
 
 Run the CodeChecker sourcecode analyzer framework.
 Please specify a subcommand to access individual features.
 
 positional arguments:
-  {checkers,analyze,analyzers,check,cmd,log,parse,plist,quickcheck,server,store,version}
+  {checkers,analyze,analyzers,check,cmd,log,parse,plist,quickcheck,server,
+  store,version}
                         commands
     checkers            List the available checkers for the supported
                         analyzers and show their default status (+ for being
@@ -55,7 +57,7 @@ Analyze a project with default settings:
 The results can be viewed:
  * In a web browser: http://localhost:8001
  * In the command line:
-    CodeChecker cmd results -p 8001 -n myproject
+    CodeChecker cmd results -n myproject
 
 Example scenario: Analyzing, and printing results to Terminal (no storage)
 --------------------------------------------------------------------------
@@ -69,8 +71,13 @@ output.
 ## Default configuration
 
 Used ports:
+
 * `5432` - PostgreSQL
-* `8001` - CodeChecker result viewer
+* `8001` - CodeChecker server
+
+The server listens only on the local machine.
+
+The initial product is called `Default`.
 
 # Easy analysis wrappers
 
@@ -130,7 +137,7 @@ usage: CodeChecker check [-h] [--keep-tmp] [-c] [--update] -n NAME
                          [--saargs CLANGSA_ARGS_CFG_FILE]
                          [--tidyargs TIDY_ARGS_CFG_FILE]
                          [-e checker/checker-group] [-d checker/checker-group]
-                         [--host HOST] [-p PORT]
+                         [--url PRODUCT_URL]
                          [--verbose {info,debug,debug_analyzer}]
 
 Run analysis for a project with storing results in the database. Check only
@@ -173,8 +180,7 @@ checker configuration:
 
 server arguments:
 
-  --host HOST
-  -p PORT, --port PORT
+  --url PRODUCT_URL
 ~~~~~~~~~~~~~~~~~~~~~
 
 ## Quickcheck
@@ -713,6 +719,8 @@ void test() {
                         Write suppress data from the suppression annotations
                         found in the source files that were analyzed earlier
                         that created the results.
+~~~~~~~~~~~~~~~~~~~~~
+
 ~~~~
 CodeChecker parse ./my_plists --suppress generated.suppress --export-source-suppress
 ~~~~
@@ -727,8 +735,8 @@ a database.
 to the database.
 
 ~~~~~~~~~~~~~~~~~~~~~
-usage: CodeChecker store [-h] [-t {plist}] [-j JOBS] [-n NAME]
-                         [-f] [--host HOST] [-p PORT]
+usage: CodeChecker store [-h] [-t {plist}] [-n NAME] [-f]
+                         [--url PRODUCT_URL]
                          [--verbose {info,debug,debug_analyzer}]
                          [file/folder [file/folder ...]]
 
@@ -745,9 +753,6 @@ optional arguments:
   -t {plist}, --type {plist}, --input-format {plist}
                         Specify the format the analysis results were created
                         as. (default: plist)
-  -j JOBS, --jobs JOBS  Number of threads to use in storing results. More
-                        threads mean faster operation at the cost of using
-                        more memory. (default: 1)
   -n NAME, --name NAME  The name of the analysis run to use in storing the
                         reports to the database. If not specified, the '--
                         name' parameter given to 'codechecker-analyze' will be
@@ -764,13 +769,12 @@ optional arguments:
 
 server arguments:
   Specifies a 'CodeChecker server' instance which will be used to store the
-  results. This server must be running and listening prior to the 'store'
-  command being ran.
+  results. This server must be running and listening, and the given product
+  must exist prior to the 'store' command being ran.
 
-  --host HOST           The IP address or hostname of the CodeChecker server.
-                        (default: localhost)
-  -p PORT, --port PORT  The port of the server to use for storing. (default:
-                        8001)
+  --url PRODUCT_URL     The URL of the product to store the results for, in
+                        the format of host:port/ProductName. (default:
+                        localhost:8001/Default)
 
 The results can be viewed by connecting to such a server in a Web browser or
 via 'CodeChecker cmd'.
@@ -823,13 +827,13 @@ CodeChecker server -w ~/codechecker_wp --dbname myProjectdb --dbport 5432 --dbad
 The checking process can be started separately on the same machine
 
 ~~~~~~~~~~~~~~~~~~~~~
-CodeChecker check  -w ~/codechecker_wp -n myProject -b "make -j 4" --host localhost --port 8001
+CodeChecker check  -w ~/codechecker_wp -n myProject -b "make -j 4" --url localhost:8001/Default
 ~~~~~~~~~~~~~~~~~~~~~
 
 or on a different machine
 
 ~~~~~~~~~~~~~~~~~~~~~
-CodeChecker check  -w ~/codechecker_wp -n myProject -b "make -j 4" --host 192.168.1.1 --dbport 8001
+CodeChecker check  -w ~/codechecker_wp -n myProject -b "make -j 4" --url 192.168.1.1:8001/Default
 ~~~~~~~~~~~~~~~~~~~~~
 
 
@@ -849,7 +853,7 @@ Start CodeChecker server locally which connects to a remote database (which is s
 Start the checking as explained previously.
 
 ~~~~~~~~~~~~~~~~~~~~~
-CodeChecker check -w ~/codechecker_wp -n myProject -b "make -j 4" --host 192.168.1.2 --port 8001
+CodeChecker check -w ~/codechecker_wp -n myProject -b "make -j 4" --url 192.168.1.2:8001/Default
 ~~~~~~~~~~~~~~~~~~~~~
 
 ## 5. `checkers` mode
@@ -1004,9 +1008,9 @@ optional arguments:
   --verbose {info,debug,debug_analyzer}
                         Set verbosity level. (default: info)
 
-database arguments:
+configuration database arguments:
   --sqlite SQLITE_FILE  Path of the SQLite database file to use. (default:
-                        /home/<username>/.codechecker/codechecker.sqlite)
+                        <CONFIG_DIRECTORY>/config.sqlite)
   --postgresql          Specifies that a PostgreSQL database is to be used
                         instead of SQLite. See the "PostgreSQL arguments"
                         section on how to configure the database connection.
@@ -1021,7 +1025,7 @@ PostgreSQL arguments:
   --dbusername DBUSERNAME, --db-username DBUSERNAME
                         Username to use for connection. (default: codechecker)
   --dbname DBNAME, --db-name DBNAME
-                        Name of the database to use. (default: codechecker)
+                        Name of the database to use. (default: config)
 ~~~~~~~~~~~~~~~~~~~~~
 
 To start a server with default configuration, simply execute
@@ -1053,8 +1057,9 @@ The `--sqlite` (or `--postgresql` and the various `--db-` arguments) can be
 used to specify where the database, containing the analysis reports is.
 
 `--config-directory` specifies where the server configuration files, such as
-[authentication config](docs/authentication.md) is. E.g., one can start two
-servers with two different databases, but with the same configuration:
+[authentication config](docs/authentication.md) is. For example, one can start
+two servers with two different product layout, but with the same authorisation
+configuration:
 
 ~~~~~~~~~~~~~~~~~~~~~
 CodeChecker server --sqlite ~/major_bugs.sqlite -f ~/.codechecker -p 8001
@@ -1063,7 +1068,12 @@ CodeChecker server --sqlite ~/minor_bugs.sqlite -f ~/.codechecker -p 8002
 
 The `--workspace` argument can be used to _shortcut_ this specification: by
 default, the configuration directory is the _workspace_ itself, and therein
-resides the `codechecker.sqlite` file, containing the analysis reports.
+resides the `config.sqlite` file, containing the product configuration.
+
+If the server is started in `--sqlite` mode and fresh, that is, no product
+configuration file is found, a product named `Default`, using `Default.sqlite`
+in the configuration directory is automatically created. Please see
+[Product management](docs/products.md) for details on how to configure products.
 
 ### Managing running servers
 
@@ -1104,7 +1114,8 @@ Most of the features available in a Web browser opening the analysis result
 viewer server on its port is available in the `cmd` tool.
 
 ~~~~~~~~~~~~~~~~~~~~~
-usage: CodeChecker cmd [-h] {runs,results,diff,sum,del,suppress,login} ...
+usage: CodeChecker cmd [-h]
+                       {runs,results,diff,sum,del,suppress,products,login} ...
 
 The command-line client is used to connect to a running 'CodeChecker server'
 (either remote or local) and quickly inspect analysis results, such as runs,
@@ -1115,7 +1126,7 @@ optional arguments:
   -h, --help            show this help message and exit
 
 available actions:
-  {runs,results,diff,sum,del,login}
+  {runs,results,diff,sum,del,suppress,products,login}
     runs                List the available analysis runs.
     results             List analysis result (finding) summary for a given
                         run.
@@ -1124,13 +1135,22 @@ available actions:
     del                 Delete analysis runs.
     suppress            Manage and export/import suppressions of a CodeChecker
                         server.
+    products            Access subcommands related to configuring the products
+                        managed by a CodeChecker server.
     login               Authenticate into CodeChecker servers that require
                         privileges.
 ~~~~~~~~~~~~~~~~~~~~~
 
 The operations available in `cmd` **always** require a running CodeChecker
 viewer server (i.e. a server started by `CodeChecker server`), and the
-connection details (`--host` and `--port`) to access the server.
+connection details to access the server. These details either take an URL form
+(`--url hostname:port/Productname`) if the command accesses analysis results
+in a given product, or a `--host` and `--port` pair, if the command manages
+the server.
+
+A server started by default settings (`CodeChecker server`, see above)
+automatically configure the product `Default` under `localhost:8001/Default`,
+thus the `--url` parameter can be omitted.
 
 Most result-giving commands also take an `--output` format parameter. If this
 is set to `json`, a more detailed output is given, in JSON format.
@@ -1140,6 +1160,9 @@ common arguments:
   --host HOST           The address of the CodeChecker viewer server to
                         connect to. (default: localhost)
   -p PORT, --port PORT  The port the server is running on. (default: 8001)
+  --url PRODUCT_URL     The URL of the product to store the results for, in
+                        the format of host:port/ProductName. (default:
+                        localhost:8001/Default)
   -o {plaintext,rows,table,csv,json}, --output {plaintext,rows,table,csv,json}
                         The output format to use in showing the data.
                         (default: plaintext)
@@ -1150,7 +1173,7 @@ common arguments:
 ### List runs (`runs`)
 
 ~~~~~~~~~~~~~~~~~~~~~
-usage: CodeChecker cmd runs [-h] [--host HOST] [-p PORT]
+usage: CodeChecker cmd runs [-h] [--url PRODUCT_URL]
                             [-o {plaintext,rows,table,csv,json}]
                             [--verbose {info,debug,debug_analyzer}]
 
@@ -1164,7 +1187,7 @@ name, summary.
 
 ~~~~~~~~~~~~~~~~~~~~~
 usage: CodeChecker cmd results [-h] -n RUN_NAME [-s] [--filter FILTER]
-                               [--host HOST] [-p PORT]
+                               [--url PRODUCT_URL]
                                [-o {plaintext,rows,table,csv,json}]
                                [--verbose {info,debug,debug_analyzer}]
 
@@ -1190,8 +1213,9 @@ from the comparison of two runs.
 
 ~~~~~~~~~~~~~~~~~~~~~
 usage: CodeChecker cmd diff [-h] -b BASE_RUN -n NEW_RUN [-s] [--filter FILTER]
-                            (--new | --resolved | --unresolved) [--host HOST]
-                            [-p PORT] [-o {plaintext,rows,table,csv,json}]
+                            (--new | --resolved | --unresolved)
+                            [--url PRODUCT_URL]
+                            [-o {plaintext,rows,table,csv,json}]
                             [--verbose {info,debug,debug_analyzer}]
 
 Compare two analysis runs to show the results that differ between the two.
@@ -1244,7 +1268,7 @@ CodeChecker cmd diff -p 8001 --basename my_project --newname my_new_checkin --ne
 
 ~~~~~~~~~~~~~~~~~~~~~
 usage: CodeChecker cmd sum [-h] (-n RUN_NAME [RUN_NAME ...] | -a) [-s]
-                           [--filter FILTER] [--host HOST] [-p PORT]
+                           [--filter FILTER] [--url PRODUCT_URL]
                            [-o {plaintext,rows,table,csv,json}]
                            [--verbose {info,debug,debug_analyzer}]
 
@@ -1272,7 +1296,7 @@ usage: CodeChecker cmd del [-h]
                             --all-after-run RUN_NAME |
                             --all-after-time TIMESTAMP |
                             --all-before-time TIMESTAMP)
-                           [--host HOST] [-p PORT]
+                           [--url PRODUCT_URL]
                            [--verbose {info,debug,debug_analyzer}]
 
 Remove analysis runs from the server based on some criteria. NOTE! When a run
@@ -1344,6 +1368,10 @@ server arguments:
 
 `--import` **appends** the suppressions found in the given suppress file to
 the database on the server.
+
+### Manage product configuration of a server (`products`)
+
+Please see [Product management](docs/products.md) for details.
 
 ### Authenticate to the server (`login`)
 

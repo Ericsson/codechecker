@@ -7,20 +7,12 @@
 
 """Setup for the package tests."""
 
-import copy
-import json
 import multiprocessing
 import os
-import shlex
 import shutil
 import subprocess
-import sys
 import time
-import uuid
-from subprocess import CalledProcessError
 
-from libtest import get_free_port
-from libtest import project
 from libtest import codechecker
 from libtest import env
 
@@ -42,29 +34,36 @@ def setup_package():
 
     test_config = {}
 
-    # Setup environment varaibled for the test cases.
-    host_port_cfg = env.get_host_port_cfg()
+    test_env = env.test_env()
+    test_env['HOME'] = TEST_WORKSPACE
+
+    # Setup environment variables for the test cases.
+    host_port_cfg = {'viewer_host': 'localhost',
+                     'viewer_port': env.get_free_port()}
 
     codechecker_cfg = {
         'workspace': TEST_WORKSPACE,
+        'check_env': test_env,
         'run_names': [],
         'checkers': []
     }
-
     codechecker_cfg.update(host_port_cfg)
-
     test_config['codechecker_1'] = codechecker_cfg
 
     # We need a second server
     codechecker_cfg = {
         'workspace': TEST_WORKSPACE,
+        'check_env': test_env,
         'run_names': [],
         'checkers': []
     }
-    host_port_cfg = env.get_host_port_cfg()
+    host_port_cfg = {'viewer_host': 'localhost',
+                     'viewer_port': env.get_free_port()}
+
     if host_port_cfg['viewer_port'] == \
             test_config['codechecker_1']['viewer_port']:
         host_port_cfg['viewer_port'] = int(host_port_cfg['viewer_port']) + 1
+
     codechecker_cfg.update(host_port_cfg)
     test_config['codechecker_2'] = codechecker_cfg
 
@@ -91,7 +90,10 @@ def teardown_package():
     shutil.rmtree(TEST_WORKSPACE)
 
 
-def start_server(codechecker_cfg, test_config, event):
+# This server uses multiple custom servers, which are brought up here
+# and torn down by the package itself --- it does not connect to the
+# test run's "master" server.
+def start_server(codechecker_cfg, event):
     """Start the CodeChecker server."""
     def start_server_proc(event, server_cmd, checking_env):
         """Target function for starting the CodeChecker server."""
@@ -104,13 +106,16 @@ def start_server(codechecker_cfg, test_config, event):
         if proc.poll() is None:
             proc.terminate()
 
-    server_cmd = codechecker.serv_cmd(codechecker_cfg, test_config)
+    server_cmd = codechecker.serv_cmd(codechecker_cfg['workspace'],
+                                      str(codechecker_cfg['viewer_port']),
+                                      None)
 
     server_proc = multiprocessing.Process(
         name='server',
         target=start_server_proc,
-        args=(event, server_cmd, env.test_env()))
+        args=(event, server_cmd, codechecker_cfg['check_env']))
 
     server_proc.start()
+
     # Wait for server to start and connect to database.
-    time.sleep(15)
+    time.sleep(5)

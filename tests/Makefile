@@ -25,13 +25,29 @@ pep8:
 	pep8 bin libcodechecker scripts tests
 
 UNIT_TEST_CMD = nosetests $(NOSECFG) tests/unit
+
+CODECHECKER_CMD = $(BUILD_DIR)/CodeChecker/bin/CodeChecker
+SHUTDOWN_SERVER_CMD = echo "Shutting down server..."; \
+    ${CODECHECKER_CMD} server -l; \
+    ${CODECHECKER_CMD} server --config-directory $(BUILD_DIR)/workspace \
+    --port `cat "$(BUILD_DIR)/workspace/serverport"` --stop; \
+    rm -f "$(BUILD_DIR)/workspace/serverport"; \
+    ${CODECHECKER_CMD} server -l
+
+# Preserve the error or no error status of the previous command but always
+# be able to shut down servers.
+EXIT_HAPPY = { ${SHUTDOWN_SERVER_CMD}; exit 0; }
+EXIT_ERROR = { ${SHUTDOWN_SERVER_CMD}; exit 1; }
+
 FUNCTIONAL_TEST_CMD = $(REPO_ROOT) $(CLANG_VERSION) $(TEST_PROJECT) \
-		nosetests $(NOSECFG) tests/functional
+		nosetests $(NOSECFG) tests/functional \
+		&& ${EXIT_HAPPY} || ${EXIT_ERROR}
 
 run_test: package venv_dev
 	$(ACTIVATE_DEV_VENV) && \
 		$(REPO_ROOT) $(CLANG_VERSION) $(TEST_PROJECT) \
-		nosetests $(NOSECFG) ${TEST}
+		nosetests $(NOSECFG) ${TEST} \
+		&& ${EXIT_HAPPY} || ${EXIT_ERROR}
 
 test_unit: venv_dev
 	$(ACTIVATE_DEV_VENV) && $(UNIT_TEST_CMD)

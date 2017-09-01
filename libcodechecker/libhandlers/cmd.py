@@ -11,9 +11,11 @@ analysis reports found on a running viewer 'server' from a command-line.
 import argparse
 import getpass
 import datetime
+import sys
 
 from libcodechecker import output_formatters
 from libcodechecker.cmd import cmd_line_client
+from libcodechecker.cmd import product_client
 from libcodechecker.logger import add_verbose_arguments
 from libcodechecker.logger import LoggerFactory
 
@@ -60,27 +62,46 @@ def get_argparser_ctor_args():
     }
 
 
-def __add_common_arguments(parser, has_matrix_output=False):
+def __add_common_arguments(parser,
+                           needs_product_url=True,
+                           has_matrix_output=False):
     """
     Add some common arguments, like server address and verbosity, to parser.
     """
 
     common_group = parser.add_argument_group('common arguments')
 
-    common_group.add_argument('--host',
-                              type=str,
-                              dest="host",
-                              default="localhost",
-                              required=False,
-                              help="The address of the CodeChecker viewer "
-                                   "server to connect to.")
+    if needs_product_url is None:
+        # Explicitly not add anything, the command does not connect to a
+        # server.
+        pass
+    elif needs_product_url:
+        # Command connects to a product on a server.
+        common_group.add_argument('--url',
+                                  type=str,
+                                  metavar='PRODUCT_URL',
+                                  dest="product_url",
+                                  default="localhost:8001/Default",
+                                  required=False,
+                                  help="The URL of the product to store the "
+                                       "results for, in the format of "
+                                       "host:port/ProductName.")
+    else:
+        # Command connects to a server directly.
+        common_group.add_argument('--host',
+                                  type=str,
+                                  dest="host",
+                                  default="localhost",
+                                  required=False,
+                                  help="The address of the CodeChecker "
+                                       "server to connect to.")
 
-    common_group.add_argument('-p', '--port',
-                              type=int,
-                              dest="port",
-                              default=8001,
-                              required=False,
-                              help="The port the server is running on.")
+        common_group.add_argument('-p', '--port',
+                                  type=int,
+                                  dest="port",
+                                  default=8001,
+                                  required=False,
+                                  help="The port the server is running on.")
 
     if has_matrix_output:
         common_group.add_argument('-o', '--output',
@@ -309,7 +330,225 @@ def __register_suppress(parser):
                             "the database.")
 
 
-def __register_auth(parser):
+def __register_products(parser):
+    """
+    Add argparse subcommand parser for the "product management" action.
+    """
+
+    def __register_add(parser):
+        """
+        Add argparse subcommand parser for the "add new product" action.
+        """
+        parser.add_argument("endpoint",
+                            type=str,
+                            metavar='ENDPOINT',
+                            default=argparse.SUPPRESS,
+                            help="The URL endpoint where clients can access "
+                                 "the analysis results for this product.")
+
+        parser.add_argument('-n', '--name',
+                            type=str,
+                            dest="display_name",
+                            default=argparse.SUPPRESS,
+                            required=False,
+                            help="A custom display name for the product, "
+                                 "which will be shown in the viewer. This "
+                                 "is purely for decoration and user "
+                                 "experience, program calls use the "
+                                 "<ENDPOINT>.")
+
+        parser.add_argument('--description',
+                            type=str,
+                            dest="description",
+                            default=argparse.SUPPRESS,
+                            required=False,
+                            help="A custom textual description to be shown "
+                                 "alongside the product.")
+
+        dbmodes = parser.add_argument_group(
+            "database arguments",
+            "NOTE: These database arguments are relative to the server "
+            "machine, as it is the server which will make the database "
+            "connection.")
+
+        dbmodes = dbmodes.add_mutually_exclusive_group(required=False)
+
+        SQLITE_PRODUCT_ENDPOINT_DEFAULT_VAR = '<ENDPOINT>.sqlite'
+        dbmodes.add_argument('--sqlite',
+                             type=str,
+                             dest="sqlite",
+                             metavar='SQLITE_FILE',
+                             default=SQLITE_PRODUCT_ENDPOINT_DEFAULT_VAR,
+                             required=False,
+                             help="Path of the SQLite database file to use. "
+                                  "Not absolute paths will be relative to "
+                                  "the server's <CONFIG_DIRECTORY>.")
+
+        dbmodes.add_argument('--postgresql',
+                             dest="postgresql",
+                             action='store_true',
+                             required=False,
+                             default=argparse.SUPPRESS,
+                             help="Specifies that a PostgreSQL database is "
+                                  "to be used instead of SQLite. See the "
+                                  "\"PostgreSQL arguments\" section on how "
+                                  "to configure the database connection.")
+
+        PGSQL_PRODUCT_ENDPOINT_DEFAULT_VAR = '<ENDPOINT>'
+        pgsql = parser.add_argument_group(
+            "PostgreSQL arguments",
+            "Values of these arguments are ignored, unless '--postgresql' is "
+            "specified! The database specified here must exist, and be "
+            "connectible by the server.")
+
+        # TODO: --dbSOMETHING arguments are kept to not break interface from
+        # old command. Database using commands such as "CodeChecker store" no
+        # longer supports these --- it would be ideal to break and remove args
+        # with this style and only keep --db-SOMETHING.
+        pgsql.add_argument('--dbaddress', '--db-host',
+                           type=str,
+                           dest="dbaddress",
+                           default="localhost",
+                           required=False,
+                           help="Database server address.")
+
+        pgsql.add_argument('--dbport', '--db-port',
+                           type=int,
+                           dest="dbport",
+                           default=5432,
+                           required=False,
+                           help="Database server port.")
+
+        pgsql.add_argument('--dbusername', '--db-username',
+                           type=str,
+                           dest="dbusername",
+                           default=PGSQL_PRODUCT_ENDPOINT_DEFAULT_VAR,
+                           required=False,
+                           help="Username to use for connection.")
+
+        pgsql.add_argument('--dbpassword', '--db-password',
+                           type=str,
+                           dest="dbpassword",
+                           default="",
+                           required=False,
+                           help="Password to use for authenticating the "
+                                "connection.")
+
+        pgsql.add_argument('--dbname', '--db-name',
+                           type=str,
+                           dest="dbname",
+                           default=PGSQL_PRODUCT_ENDPOINT_DEFAULT_VAR,
+                           required=False,
+                           help="Name of the database to use.")
+
+        def __handle(args):
+            """Custom handler for 'add' so custom error messages can be
+            printed without having to capture 'parser' in main."""
+
+            def arg_match(options):
+                """Checks and selects the option string specified in 'options'
+                that are present in the invocation argv."""
+                matched_args = []
+                for option in options:
+                    if any([arg if option.startswith(arg) else None
+                            for arg in sys.argv[1:]]):
+                        matched_args.append(option)
+                        continue
+
+                return matched_args
+
+            # See if there is a "PostgreSQL argument" specified in the
+            # invocation without '--postgresql' being there. There is no way
+            # to distinguish a default argument and a deliberately specified
+            # argument without inspecting sys.argv.
+            options = ['--dbaddress', '--dbport', '--dbusername', '--dbname',
+                       '--db-host', '--db-port', '--db-username', '--db-name']
+            psql_args_matching = arg_match(options)
+            if any(psql_args_matching) and \
+                    'postgresql' not in args:
+                first_matching_arg = next(iter([match for match
+                                                in psql_args_matching]))
+                parser.error("argument {0}: not allowed without argument "
+                             "--postgresql".format(first_matching_arg))
+                # parser.error() terminates with return code 2.
+
+            # Some arguments get a dynamic default value that depends on the
+            # value of another argument.
+            if args.sqlite == SQLITE_PRODUCT_ENDPOINT_DEFAULT_VAR:
+                args.sqlite = args.endpoint + '.sqlite'
+
+            if args.dbusername == PGSQL_PRODUCT_ENDPOINT_DEFAULT_VAR:
+                args.dbusername = args.endpoint
+
+            if args.dbname == PGSQL_PRODUCT_ENDPOINT_DEFAULT_VAR:
+                args.dbname = args.endpoint
+
+            if 'postgresql' not in args:
+                # The --db-SOMETHING arguments are irrelevant if --postgresql
+                # is not used.
+                delattr(args, 'dbaddress')
+                delattr(args, 'dbport')
+                delattr(args, 'dbusername')
+                delattr(args, 'dbpassword')
+                delattr(args, 'dbname')
+            else:
+                # If --postgresql is given, --sqlite is useless.
+                delattr(args, 'sqlite')
+
+            # If everything is fine, do call the handler for the subcommand.
+            product_client.handle_add_product(args)
+
+        parser.set_defaults(func=__handle)
+
+    def __register_del(parser):
+        """
+        Add argparse subcommand parser for the "delete product" action.
+        """
+        parser.add_argument("endpoint",
+                            type=str,
+                            metavar='ENDPOINT',
+                            default=argparse.SUPPRESS,
+                            help="The URL endpoint where clients can access "
+                                 "the analysis results for the product.")
+
+    subcommands = parser.add_subparsers(title='available actions')
+
+    # Create handlers for individual subcommands.
+    list_p = subcommands.add_parser(
+        'list',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description="List the name and basic information about products "
+                    "added to the server.",
+        help="List products available on the server.")
+    list_p.set_defaults(func=product_client.handle_list_products)
+    __add_common_arguments(list_p,
+                           needs_product_url=False, has_matrix_output=True)
+
+    add = subcommands.add_parser(
+        'add',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description="Create a new product to be managed by the server by "
+                    "providing the product's details and database connection.",
+        help="Register a new product to the server.")
+    __register_add(add)
+    __add_common_arguments(add, needs_product_url=False)
+
+    del_p = subcommands.add_parser(
+        'del',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description="Removes the specified product from the list of products "
+                    "managed by the server. NOTE: This only removes the "
+                    "association and disconnects the server from the "
+                    "database -- NO actual ANALYSIS DATA is REMOVED. "
+                    "Configuration, such as access control, however, WILL BE "
+                    "LOST!",
+        help="Delete a product from the server's products.")
+    __register_del(del_p)
+    del_p.set_defaults(func=product_client.handle_del_product)
+    __add_common_arguments(del_p, needs_product_url=False)
+
+
+def __register_login(parser):
     """
     Add argparse subcommand parser for the "handle authentication" action.
     """
@@ -396,6 +635,23 @@ def add_arguments_to_parser(parser):
     suppress.set_defaults(func=cmd_line_client.handle_suppress)
     __add_common_arguments(suppress)
 
+    products = subcommands.add_parser(
+        'products',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description="CodeChecker organises its databases into products. "
+                    "Each product has an individually configured database "
+                    "which stores the analysis results. These subcommands "
+                    "are used to manage the products configured by the "
+                    "server. Please see the individual subcommands for "
+                    "details.",
+        epilog="Most of these commands require authentication and "
+               "appropriate access rights. Please see 'CodeChecker cmd "
+               "login' to authenticate.",
+        help="Access subcommands related to configuring the products managed "
+             "by a CodeChecker server.")
+    __register_products(products)
+    __add_common_arguments(products, needs_product_url=None)
+
     login = subcommands.add_parser(
         'login',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -405,9 +661,9 @@ def add_arguments_to_parser(parser):
                     "action is used to perform an authentication in the "
                     "command-line.",
         help="Authenticate into CodeChecker servers that require privileges.")
-    __register_auth(login)
+    __register_login(login)
     login.set_defaults(func=cmd_line_client.handle_login)
-    __add_common_arguments(login)
+    __add_common_arguments(login, needs_product_url=False)
 
 # 'cmd' does not have a main() method in itself, as individual subcommands are
 # handled later on separately.

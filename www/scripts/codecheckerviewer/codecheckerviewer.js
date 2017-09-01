@@ -11,6 +11,7 @@ define([
   'dijit/Dialog',
   'dijit/DropDownMenu',
   'dijit/MenuItem',
+  'dijit/form/Button',
   'dijit/form/DropDownButton',
   'dijit/layout/BorderContainer',
   'dijit/layout/ContentPane',
@@ -20,8 +21,8 @@ define([
   'codechecker/ListOfRuns',
   'codechecker/util'],
 function (declare, topic, domConstruct, Dialog, DropDownMenu, MenuItem,
-  DropDownButton, BorderContainer, ContentPane, TabContainer, hashHelper,
-  ListOfBugs, ListOfRuns, util, filterHelper) {
+  Button, DropDownButton, BorderContainer, ContentPane, TabContainer,
+  hashHelper, ListOfBugs, ListOfRuns, util) {
 
   return function () {
 
@@ -29,12 +30,19 @@ function (declare, topic, domConstruct, Dialog, DropDownMenu, MenuItem,
 
     CC_SERVICE = new codeCheckerDBAccess.codeCheckerDBAccessClient(
       new Thrift.Protocol(new Thrift.Transport("CodeCheckerService")));
-    CC_AUTH_SERVICE =
+
+    CC_OBJECTS = codeCheckerDBAccess;
+
+    AUTH_SERVICE =
       new codeCheckerAuthentication.codeCheckerAuthenticationClient(
         new Thrift.TJSONProtocol(
           new Thrift.Transport("/Authentication")));
 
-    CC_OBJECTS = codeCheckerDBAccess;
+    PROD_SERVICE =
+      new codeCheckerProductManagement.codeCheckerProductServiceClient(
+        new Thrift.Protocol(new Thrift.Transport("Products")));
+
+    PROD_OBJECTS = codeCheckerProductManagement;
 
     //----------------------------- Main layout ------------------------------//
 
@@ -48,6 +56,10 @@ function (declare, topic, domConstruct, Dialog, DropDownMenu, MenuItem,
 
     //--- Logo ---//
 
+    var currentProduct = PROD_SERVICE.getCurrentProduct();
+    var currentProductName = util.atou(currentProduct.displayedName_b64);
+    document.title = currentProductName + ' - CodeChecker';
+
     var logoContainer = domConstruct.create('div', {
       id : 'logo-container'
     }, headerPane.domNode);
@@ -56,7 +68,7 @@ function (declare, topic, domConstruct, Dialog, DropDownMenu, MenuItem,
 
     var logoText = domConstruct.create('div', {
       id : 'logo-text',
-      innerHTML : 'CodeChecker'
+      innerHTML : 'CodeChecker - ' + currentProductName
     }, logoContainer);
 
     var version = domConstruct.create('span', {
@@ -64,7 +76,7 @@ function (declare, topic, domConstruct, Dialog, DropDownMenu, MenuItem,
       innerHTML : CC_SERVICE.getPackageVersion()
     }, logoText);
 
-    var user = CC_AUTH_SERVICE.getLoggedInUser();
+    var user = AUTH_SERVICE.getLoggedInUser();
     var loginUserSpan = null;
     if (user.length > 0) {
       loginUserSpan = domConstruct.create('span', {
@@ -73,7 +85,7 @@ function (declare, topic, domConstruct, Dialog, DropDownMenu, MenuItem,
       });
     }
 
-      //--- Menu button ---//
+    //--- Menu button ---//
 
     var credits = new Dialog({
       title : 'Credits',
@@ -116,6 +128,18 @@ function (declare, topic, domConstruct, Dialog, DropDownMenu, MenuItem,
       dropDown : menuItems
     });
 
+    //--- Back button to product list ---//
+
+    var productListButton = new Button({
+      class : 'mainMenuButton',
+      label : 'Back to product list',
+      onClick : function () {
+        // Use explicit URL here, as '/' could redirect back to this product
+        // if there is only one product.
+        window.open('/products.html', '_self');
+      }
+    });
+
     var headerMenu = domConstruct.create('div', {
         id : 'header-menu'
       });
@@ -123,8 +147,9 @@ function (declare, topic, domConstruct, Dialog, DropDownMenu, MenuItem,
     if (loginUserSpan != null)
         domConstruct.place(loginUserSpan, headerMenu);
 
-    domConstruct.place(menuButton.domNode, headerMenu);
+    domConstruct.place(productListButton.domNode, headerMenu);
 
+    domConstruct.place(menuButton.domNode, headerMenu);
 
     domConstruct.place(headerMenu, headerPane.domNode);
 

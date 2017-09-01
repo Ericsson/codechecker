@@ -9,3 +9,8 @@ See [report_server.thrift](https://raw.githubusercontent.com/Ericsson/codechecke
 ## Authentication system API
 The authentication layer is used for supporting privileged-access only access.
 See [authentication.thrift](https://raw.githubusercontent.com/Ericsson/codechecker/master/thrift_api/authentication.thrift)
+
+## Product management system API
+The product management layer is responsible for handling requests about the
+different products and their configuration. See
+[products.thrift](https://raw.githubusercontent.com/Ericsson/codechecker/master/thrift_api/products.thrift)

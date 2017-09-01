@@ -7,26 +7,19 @@
 
 """Setup for the package tests."""
 
-import multiprocessing
 import os
 import shutil
-import subprocess
-import sys
-import time
 import uuid
 
-from libtest import project
 from libtest import codechecker
 from libtest import env
+from libtest import project
 
-# Stopping event for CodeChecker server.
-__STOP_SERVER = multiprocessing.Event()
 TEST_WORKSPACE = None
 
 
 def setup_package():
-    """Setup the environment for the tests. Check the test project twice,
-    then start the server."""
+    """Setup the environment for the tests."""
 
     global TEST_WORKSPACE
     TEST_WORKSPACE = env.get_workspace('suppress')
@@ -34,8 +27,6 @@ def setup_package():
     os.environ['TEST_WORKSPACE'] = TEST_WORKSPACE
 
     test_project = 'suppress'
-
-    pg_db_config = env.get_postgresql_cfg()
 
     test_config = {}
 
@@ -54,9 +45,6 @@ def setup_package():
         os.remove(suppress_file)
     _generate_suppress_file(suppress_file)
 
-    # Get port numbers for the tests.
-    host_port_cfg = env.get_host_port_cfg()
-
     test_env = env.test_env()
 
     codechecker_cfg = {
@@ -64,19 +52,22 @@ def setup_package():
         'skip_list_file': None,
         'check_env': test_env,
         'workspace': TEST_WORKSPACE,
-        'pg_db_config': pg_db_config,
         'checkers': []
     }
-
-    codechecker_cfg.update(host_port_cfg)
 
     ret = project.clean(test_project, test_env)
     if ret:
         sys.exit(ret)
 
-    # Start the CodeChecker server.
-    print("Starting server to get results")
-    _start_server(codechecker_cfg, test_config, False)
+    # Start or connect to the running CodeChecker server and get connection
+    # details.
+    print("This test uses a CodeChecker server... connecting...")
+    server_access = codechecker.start_or_get_server()
+    server_access['viewer_product'] = 'suppress'
+    codechecker.add_test_package_product(server_access, TEST_WORKSPACE)
+
+    # Extend the checker configuration with the server access.
+    codechecker_cfg.update(server_access)
 
     test_project_name = project_info['name'] + '_' + uuid.uuid4().hex
 
@@ -96,42 +87,18 @@ def setup_package():
 
 
 def teardown_package():
-    """Stop the CodeChecker server."""
-    __STOP_SERVER.set()
+    """Clean up after the test."""
 
-    # TODO: if environment variable is set keep the workspace
-    # and print out the path
+    # TODO: If environment variable is set keep the workspace
+    # and print out the path.
     global TEST_WORKSPACE
+
+    check_env = env.import_test_cfg(TEST_WORKSPACE)[
+        'codechecker_cfg']['check_env']
+    codechecker.remove_test_package_product(TEST_WORKSPACE, check_env)
 
     print("Removing: " + TEST_WORKSPACE)
     shutil.rmtree(TEST_WORKSPACE)
-
-
-def _start_server(codechecker_cfg, test_config, auth=False):
-    """Start the CodeChecker server."""
-
-    def start_server_proc(event, server_cmd, checking_env):
-        """Target function for starting the CodeChecker server."""
-        proc = subprocess.Popen(server_cmd, env=checking_env)
-
-        # Blocking termination until event is set.
-        event.wait()
-
-        # If proc is still running, stop it.
-        if proc.poll() is None:
-            proc.terminate()
-
-    server_cmd = codechecker.serv_cmd(codechecker_cfg, test_config)
-
-    server_proc = multiprocessing.Process(
-        name='server',
-        target=start_server_proc,
-        args=(__STOP_SERVER, server_cmd, codechecker_cfg['check_env']))
-
-    server_proc.start()
-
-    # Wait for server to start and connect to database.
-    time.sleep(20)
 
 
 def _generate_suppress_file(suppress_file):
@@ -144,6 +111,7 @@ def _generate_suppress_file(suppress_file):
     import calendar
     import hashlib
     import random
+    import time
 
     hash_version = '1'
     suppress_stuff = []

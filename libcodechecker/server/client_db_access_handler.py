@@ -35,10 +35,11 @@ from libcodechecker import suppress_handler
 from libcodechecker.analyze import plist_parser
 from libcodechecker.analyze import store_handler
 from libcodechecker.logger import LoggerFactory
-from libcodechecker.orm_model import *
 from libcodechecker.profiler import timeit
 
-LOG = LoggerFactory.get_new_logger('ACCESS HANDLER')
+from run_db_model import *
+
+LOG = LoggerFactory.get_new_logger('RUN ACCESS HANDLER')
 
 
 class CountFilter:
@@ -1903,7 +1904,7 @@ class ThriftRequestHandler(object):
     @timeit
     def getAPIVersion(self):
         # Returns the thrift api version.
-        return constants.API_VERSION
+        return shared.constants.API_VERSION
 
     # -----------------------------------------------------------------------
     @timeit

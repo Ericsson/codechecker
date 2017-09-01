@@ -46,7 +46,8 @@ class Context(context_base.ContextBase):
         self.__package_root = package_root
 
         self.__package_version = None
-        self.__db_version_info = None
+        self.__product_db_version_info = None
+        self.__run_db_version_info = None
         self.__package_build_date = None
         self.__package_git_hash = None
         self.__analyzers = {}
@@ -82,14 +83,18 @@ class Context(context_base.ContextBase):
             package_git_hash = vfile_data['git_hash']
             package_git_tag = vfile_data['git_describe']['tag']
             package_git_dirtytag = vfile_data['git_describe']['dirty']
-            database_version = vfile_data['db_version']
+            product_database_version = vfile_data['product_db_version']
+            run_database_version = vfile_data['run_db_version']
 
             self.__package_version = package_version['major'] + '.' + \
                 package_version['minor'] + '.' + \
                 package_version['revision']
-            self.__db_version_info = db_version.DBVersionInfo(
-                database_version['major'],
-                database_version['minor'])
+            self.__product_db_version_info = db_version.DBVersionInfo(
+                product_database_version['major'],
+                product_database_version['minor'])
+            self.__run_db_version_info = db_version.DBVersionInfo(
+                run_database_version['major'],
+                run_database_version['minor'])
 
             self.__package_build_date = package_build_date
             self.__package_git_hash = package_git_hash
@@ -154,8 +159,12 @@ class Context(context_base.ContextBase):
         return self.__package_git_tag
 
     @property
-    def db_version_info(self):
-        return self.__db_version_info
+    def product_db_version_info(self):
+        return self.__product_db_version_info
+
+    @property
+    def run_db_version_info(self):
+        return self.__run_db_version_info
 
     @property
     def version_file(self):

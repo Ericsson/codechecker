@@ -8,15 +8,28 @@ import os
 import json
 import tempfile
 import shutil
+import socket
 import sys
 
-from . import get_free_port
 from thrift_client_to_db import get_viewer_client
-from thrift_client_to_db import get_server_client
 from thrift_client_to_db import get_auth_client
 
 from functional import PKG_ROOT
 from functional import REPO_ROOT
+
+
+def get_free_port():
+    """
+    Get a free port from the OS.
+    """
+    # TODO: Prone to errors if the OS assigns port to someone else before use.
+
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.bind(('', 0))
+    free_port = s.getsockname()[1]
+    s.close()
+
+    return free_port
 
 
 def get_postgresql_cfg():
@@ -26,10 +39,10 @@ def get_postgresql_cfg():
     """
     use_postgresql = os.environ.get('TEST_USE_POSTGRESQL', '') == 'true'
     if use_postgresql:
-        pg_db_config = {}
-        pg_db_config['dbaddress'] = 'localhost'
-        pg_db_config['dbname'] = 'testDb'
-        pg_db_config['dbport'] = os.environ.get('TEST_DBPORT', get_free_port())
+        pg_db_config = {'dbaddress': 'localhost',
+                        'dbport': os.environ.get('TEST_DBPORT'),
+                        'dbname': 'codechecker_config'
+                        }
         if os.environ.get('TEST_DBUSERNAME', False):
             pg_db_config['dbusername'] = os.environ['TEST_DBUSERNAME']
         return pg_db_config
@@ -37,40 +50,26 @@ def get_postgresql_cfg():
         return None
 
 
-def get_host_port_cfg():
-
-    test_config = {
-        'server_port': get_free_port(),
-        'server_host': 'localhost',
-        'viewer_port': get_free_port(),
-        'viewer_host': 'localhost',
-    }
-    return test_config
-
-
 def clang_to_test():
     return "clang_"+os.environ.get('TEST_CLANG_VERSION', 'stable')
 
 
 def setup_viewer_client(workspace,
-                        uri='/',
+                        endpoint='/CodeCheckerService',
                         auto_handle_connection=True,
                         session_token=None):
-    # read port and host from the test config file
-    port = import_test_cfg(workspace)['codechecker_cfg']['viewer_port']
-    host = import_test_cfg(workspace)['codechecker_cfg']['viewer_host']
+    # Read port and host from the test config file.
+    codechecker_cfg = import_test_cfg(workspace)['codechecker_cfg']
+    port = codechecker_cfg['viewer_port']
+    host = codechecker_cfg['viewer_host']
+    product = codechecker_cfg['viewer_product']
 
-    return get_viewer_client(port=port,
-                             host=host,
-                             uri=uri,
+    return get_viewer_client(host=host,
+                             port=port,
+                             product=product,
+                             endpoint=endpoint,
                              auto_handle_connection=auto_handle_connection,
                              session_token=session_token)
-
-
-def setup_server_client(workspace):
-    port = import_test_cfg(workspace)['codechecker_cfg']['server_port']
-    host = import_test_cfg(workspace)['codechecker_cfg']['server_host']
-    return get_server_client(port, host)
 
 
 def setup_auth_client(workspace,
@@ -78,8 +77,9 @@ def setup_auth_client(workspace,
                       auto_handle_connection=True,
                       session_token=None):
 
-    port = import_test_cfg(workspace)['codechecker_cfg']['viewer_port']
-    host = import_test_cfg(workspace)['codechecker_cfg']['viewer_host']
+    codechecker_cfg = import_test_cfg(workspace)['codechecker_cfg']
+    port = codechecker_cfg['viewer_port']
+    host = codechecker_cfg['viewer_host']
 
     return get_auth_client(port=port,
                            host=host,
@@ -108,12 +108,25 @@ def get_run_names(workspace):
     return import_test_cfg(workspace)['codechecker_cfg']['run_names']
 
 
+def parts_to_url(codechecker_cfg):
+    """
+    Creates a product URL string from the test configuration dict.
+    """
+    return codechecker_cfg['viewer_host'] + ':' + \
+        str(codechecker_cfg['viewer_port']) + '/' + \
+        codechecker_cfg['viewer_product']
+
+
 def get_workspace(test_id='test'):
     tmp_dir = os.path.join(REPO_ROOT, 'build')
     base_dir = os.path.join(tmp_dir, 'workspace')
     if not os.path.exists(base_dir):
         os.makedirs(base_dir)
-    return tempfile.mkdtemp(prefix=test_id+"-", dir=base_dir)
+
+    if test_id:
+        return tempfile.mkdtemp(prefix=test_id+"-", dir=base_dir)
+    else:
+        return base_dir
 
 
 def clean_wp(workspace):

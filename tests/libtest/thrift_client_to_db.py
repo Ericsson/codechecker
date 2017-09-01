@@ -11,10 +11,8 @@ from functools import partial
 
 import shared
 
-from thrift.protocol import TBinaryProtocol
 from thrift.protocol import TJSONProtocol
 from thrift.transport import THttpClient
-from thrift.transport import TSocket
 from thrift.transport import TTransport
 
 
@@ -81,30 +79,18 @@ class ThriftAPIHelper(object):
         self._transport.close()
 
 
-class CCReportHelper(ThriftAPIHelper):
-
-    def __init__(self, host, port, auto_handle_connection=True):
-        # import only if necessary; some tests may not add this to PYTHONPATH
-        from DBThriftAPI import CheckerReport
-
-        transport = TTransport.TBufferedTransport(TSocket.TSocket(host, port))
-        protocol = TBinaryProtocol.TBinaryProtocol(transport)
-        client = CheckerReport.Client(protocol)
-        super(CCReportHelper, self).__init__(transport, client,
-                                             auto_handle_connection)
-
-
 class CCViewerHelper(ThriftAPIHelper):
 
-    def __init__(self, host, port, uri, auto_handle_connection=True,
-                 session_token=None):
-        # import only if necessary; some tests may not add this to PYTHONPATH
+    def __init__(self, host, port, product, endpoint,
+                 auto_handle_connection=True, session_token=None):
+        # Import only if necessary; some tests may not add this to PYTHONPATH.
         from libcodechecker import session_manager
         from codeCheckerDBAccess import codeCheckerDBAccess
         from codeCheckerDBAccess.constants import MAX_QUERY_SIZE
 
         self.max_query_size = MAX_QUERY_SIZE
-        transport = THttpClient.THttpClient(host, port, uri)
+        transport = THttpClient.THttpClient(host, port,
+                                            '/' + product + endpoint)
         protocol = TJSONProtocol.TJSONProtocol(transport)
         client = codeCheckerDBAccess.Client(protocol)
         if session_token:
@@ -151,7 +137,7 @@ class CCAuthHelper(ThriftAPIHelper):
 
     def __init__(self, host, port, uri, auto_handle_connection=True,
                  session_token=None):
-        # import only if necessary; some tests may not add this to PYTHONPATH
+        # Import only if necessary; some tests may not add this to PYTHONPATH.
         from libcodechecker import session_manager
         from Authentication import codeCheckerAuthentication
 
@@ -164,6 +150,28 @@ class CCAuthHelper(ThriftAPIHelper):
             transport.setCustomHeaders(headers)
         super(CCAuthHelper, self).__init__(transport,
                                            client, auto_handle_connection)
+
+    def __getattr__(self, attr):
+        return partial(self._thrift_client_call, attr)
+
+
+class CCProductHelper(ThriftAPIHelper):
+
+    def __init__(self, host, port, uri, auto_handle_connection=True,
+                 session_token=None):
+        # Import only if necessary; some tests may not add this to PYTHONPATH.
+        from libcodechecker import session_manager
+        from ProductManagement import codeCheckerProductService
+
+        transport = THttpClient.THttpClient(host, port, uri)
+        protocol = TJSONProtocol.TJSONProtocol(transport)
+        client = codeCheckerProductService.Client(protocol)
+        if session_token:
+            headers = {'Cookie': session_manager.SESSION_COOKIE_NAME +
+                       "=" + session_token}
+            transport.setCustomHeaders(headers)
+        super(CCProductHelper, self).__init__(transport,
+                                              client, auto_handle_connection)
 
     def __getattr__(self, attr):
         return partial(self._thrift_client_call, attr)
@@ -220,19 +228,15 @@ def get_all_run_results_v2(client, run_id, sort_mode=[], filters=None):
     return results
 
 
-def get_viewer_client(port, host='localhost', uri='/',
+def get_viewer_client(product, port, host='localhost',
+                      endpoint='/CodeCheckerService',
                       auto_handle_connection=True,
                       session_token=None):
 
-    return CCViewerHelper(host,
-                          port,
-                          uri,
+    return CCViewerHelper(host, port, product,
+                          endpoint,
                           auto_handle_connection,
                           session_token)
-
-
-def get_server_client(port, host='localhost'):
-    return CCReportHelper(host, port)
 
 
 def get_auth_client(port, host='localhost', uri='/Authentication',
@@ -240,3 +244,10 @@ def get_auth_client(port, host='localhost', uri='/Authentication',
     return CCAuthHelper(host, port, uri,
                         auto_handle_connection,
                         session_token)
+
+
+def get_product_client(port, host='localhost', uri='/Products',
+                       auto_handle_connection=True, session_token=None):
+    return CCProductHelper(host, port, uri,
+                           auto_handle_connection,
+                           session_token)

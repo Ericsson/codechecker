@@ -14,6 +14,7 @@ import unittest
 
 from thrift.protocol.TProtocol import TProtocolException
 
+from libtest import codechecker
 from libtest import env
 
 
@@ -30,11 +31,7 @@ class DictAuth(unittest.TestCase):
         test_class = self.__class__.__name__
         print('Running ' + test_class + ' tests in ' + self._test_workspace)
 
-        tcfg = os.path.join(self._test_workspace, 'test_config.json')
-        with open(tcfg, 'r') as cfg:
-            t = json.load(cfg)
-            self._host = t['codechecker_cfg']['viewer_host']
-            self._port = t['codechecker_cfg']['viewer_port']
+        self._test_cfg = env.import_test_cfg(self._test_workspace)
 
     def test_privileged_access(self):
         """
@@ -63,6 +60,19 @@ class DictAuth(unittest.TestCase):
         self.assertIsNotNone(self.sessionToken,
                              "Valid credentials didn't give us a token!")
 
+        # We need to run an authentication on the command-line, so that the
+        # product-adding feature is accessible by us.
+        codechecker.login(self._test_cfg['codechecker_cfg'],
+                          self._test_workspace, "cc", "test")
+        # We still need to create a product on the new server, because
+        # in PostgreSQL mode, the same database is used for configuration
+        # by the newly started instance of this test suite too.
+        codechecker.add_test_package_product(
+            self._test_cfg['codechecker_cfg'],
+            self._test_workspace,
+            # Use the test's home directory to find the session token file.
+            self._test_cfg['codechecker_cfg']['check_env'])
+
         handshake = auth_client.getAuthParameters()
         self.assertTrue(handshake.requiresAuthentication,
                         "Privileged server " +
@@ -87,6 +97,10 @@ class DictAuth(unittest.TestCase):
         result = auth_client.destroySession()
 
         self.assertTrue(result, "Server did not allow us to destroy session.")
+
+        # Kill the session token that was created by login() too.
+        codechecker.logout(self._test_cfg['codechecker_cfg'],
+                           self._test_workspace)
 
         try:
             client.getAPIVersion()
@@ -114,8 +128,11 @@ class DictAuth(unittest.TestCase):
         test_dir = os.path.dirname(os.path.realpath(__file__))
         report_file = os.path.join(test_dir, 'clang-5.0-trunk.plist')
 
+        codechecker_cfg = self._test_cfg['codechecker_cfg']
+
         store_cmd = [env.codechecker_cmd(), 'store', '--name', 'auth',
-                     '--host', str(self._host), '--port', str(self._port),
+                     # Use the 'Default' product.
+                     '--url', env.parts_to_url(codechecker_cfg),
                      report_file]
 
         with self.assertRaises(subprocess.CalledProcessError):
