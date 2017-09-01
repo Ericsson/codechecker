@@ -191,12 +191,9 @@ int main()
             if report.detectionStatus == \
                     shared.ttypes.DetectionStatus.UNRESOLVED:
                 self.assertIn(report.bugHash,
-                              ['cbd629ba2ee25c41cdbf5e2e336b1b1c'])
-            elif report.detectionStatus == \
-                    shared.ttypes.DetectionStatus.REOPENED:
-                self.assertIn(report.bugHash,
                               ['209be2f6905590d99853ce01d52a78e0',
-                               'e8f47588c8095f02a53e338984ce52ba'])
+                               'e8f47588c8095f02a53e338984ce52ba',
+                               'cbd629ba2ee25c41cdbf5e2e336b1b1c'])
             elif report.detectionStatus == \
                     shared.ttypes.DetectionStatus.RESOLVED:
                 self.assertIn(report.bugHash,
