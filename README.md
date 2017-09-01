@@ -43,11 +43,13 @@ Main features
     plugin](http://github.com/Ericsson/CodeCheckerEclipsePlugin)
 
 
-A high-level overview about the infrastructure is available amongst the [2015
-Euro LLVM Conference](http://llvm.org/devmtg/2015-04) presentations.<br/>
-**Dániel KRUPP, György ORBÁN, Gábor HORVÁTH and Bence BABATI**:<br/>
-[_Industrial Experiences with the Clang Static Analysis
-Toolset_](http://llvm.org/devmtg/2015-04/slides/Clang_static_analysis_toolset_final.pdf)
+User Documentation
+------------------------
+
+  * [User guide](docs/user_guide.md)
+  * [CodeChecker getting started (HOWTO)](docs/usage.md)
+  * [Requiring credentials to view analysis results](docs/authentication.md)
+  * [Usage of PostgreSQL database](docs/postgresql_setup.md)
 
 Install
 -------
@@ -229,12 +231,9 @@ following debug messages in your log:
    method is applied for Clang-Tidy results too, because Clang-Tidy does not
    support bug identifier hash generation currently.
 
-
-Additional documentation
+  
+Developer Documentation
 ------------------------
-
-  * [User guide](docs/user_guide.md)
-  * [CodeChecker getting started](docs/usage.md)
   * [Requirements, external source dependencies](docs/deps.md)
   * [Architecture overview](docs/architecture.md)
   * [Package layout](docs/package_layout.md)
@@ -242,5 +241,9 @@ Additional documentation
   * [Thrift interface](thrift_api/thrift_api.md)
   * [Package and integration tests](tests/readme.md)
   * [Database schema migration](docs/db_schema_guide.md)
-  * [Usage of PostgreSQL database](docs/postgresql_setup.md)
-  * [Requiring credentials to view analysis results](docs/authentication.md)
+  * A high-level overview about the infrastructure is available amongst the [2015Euro LLVM Conference](http://llvm.org/devmtg/2015-04) presentations.<br/>
+    **Dániel KRUPP, György ORBÁN, Gábor HORVÁTH and Bence BABATI**:<br/>
+    [_Industrial Experiences with the Clang Static Analysis Toolset_](http://llvm.org/devmtg/2015-04/slides/Clang_static_analysis_toolset_final.pdf)
+
+  
+  
