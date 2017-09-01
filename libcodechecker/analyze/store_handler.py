@@ -338,15 +338,15 @@ def addReport(storage_session,
 
                 if report.detection_status == 'new' and not \
                         storage_session.is_touched(run_id, report.id) or \
-                        report.detection_status == 'unresolved':
+                        report.detection_status == 'unresolved' or \
+                        report.detection_status == 'reopened':
                     new_status = 'unresolved'
                     report.file_id = file_id
                     change_path_and_events(session,
                                            report.id,
                                            bugpath,
                                            events)
-                elif report.detection_status == 'resolved' or \
-                        report.detection_status == 'reopened':
+                elif report.detection_status == 'resolved':
                     new_status = 'reopened'
                     report.file_id = file_id
                     change_path_and_events(session,
