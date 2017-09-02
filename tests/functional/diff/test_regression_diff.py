@@ -15,8 +15,8 @@ import shared
 import subprocess
 import unittest
 
-from codeCheckerDBAccess.ttypes import DiffType
-from codeCheckerDBAccess.ttypes import ReportFilter
+from codeCheckerDBAccess_v6.ttypes import DiffType
+from codeCheckerDBAccess_v6.ttypes import ReportFilter
 
 from libtest import env
 from libtest.debug_printer import print_run_results

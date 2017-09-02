@@ -1,0 +1,4 @@
+ifndef BUILD_DIR
+$(warning Need to set BUILD_DIR to build Thrift API!)
+$(error   Use the top-level Makefile to build!)
+endif

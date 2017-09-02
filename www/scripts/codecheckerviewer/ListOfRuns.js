@@ -316,7 +316,7 @@ function (declare, domConstruct, ItemFileWriteStore, topic, Dialog, Button,
       var that = this;
 
       var showDelete = CC_AUTH_SERVICE.hasPermission(
-        CC_AUTH_OBJECTS.Permission.PRODUCT_STORE, util.createPermissionParams({
+        Permission.PRODUCT_STORE, util.createPermissionParams({
           productID : CURRENT_PRODUCT.id
         }));
 

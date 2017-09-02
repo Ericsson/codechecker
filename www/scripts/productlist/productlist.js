@@ -20,17 +20,18 @@ function (declare, topic, domConstruct, Button, BorderContainer,
     //---------------------------- Global objects ----------------------------//
 
     CC_PROD_SERVICE =
-      new codeCheckerProductManagement.codeCheckerProductServiceClient(
-        new Thrift.Protocol(new Thrift.Transport("Products")));
+      new codeCheckerProductManagement_v6.codeCheckerProductServiceClient(
+        new Thrift.Protocol(new Thrift.Transport(
+          "v" + CC_API_VERSION + "/Products")));
 
-    CC_PROD_OBJECTS = codeCheckerProductManagement;
+    CC_PROD_OBJECTS = codeCheckerProductManagement_v6;
 
     CC_AUTH_SERVICE =
-      new codeCheckerAuthentication.codeCheckerAuthenticationClient(
+      new codeCheckerAuthentication_v6.codeCheckerAuthenticationClient(
         new Thrift.TJSONProtocol(
-          new Thrift.Transport("/Authentication")));
+          new Thrift.Transport("/v" + CC_API_VERSION + "/Authentication")));
 
-    CC_AUTH_OBJECTS = codeCheckerAuthentication;
+    CC_AUTH_OBJECTS = codeCheckerAuthentication_v6;
 
     //----------------------------- Main layout ------------------------------//
 
@@ -74,7 +75,7 @@ function (declare, topic, domConstruct, Button, BorderContainer,
     layout.set('adminLevel', 0);
 
     var isSuperuser = CC_AUTH_SERVICE.hasPermission(
-      CC_AUTH_OBJECTS.Permission.SUPERUSER, "");
+      Permission.SUPERUSER, "");
 
     var isAdminOfAnyProduct = CC_PROD_SERVICE.isAdministratorOfAnyProduct();
 

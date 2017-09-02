@@ -25,9 +25,8 @@ import sqlalchemy
 from sqlalchemy import func
 
 import shared
-from shared.constants import API_VERSION
-from codeCheckerDBAccess import constants
-from codeCheckerDBAccess.ttypes import *
+from codeCheckerDBAccess_v6 import constants
+from codeCheckerDBAccess_v6.ttypes import *
 
 from libcodechecker import generic_package_context
 from libcodechecker import suppress_handler
@@ -1967,12 +1966,6 @@ class ThriftRequestHandler(object):
             .all()
 
         return set([t[0] for t in base_line_hashes])
-
-    # -----------------------------------------------------------------------
-    @timeit
-    def getAPIVersion(self):
-        # Returns the thrift api version.
-        return API_VERSION
 
     # -----------------------------------------------------------------------
     @timeit

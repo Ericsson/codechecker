@@ -11,11 +11,11 @@ import os
 import re
 import unittest
 
-from codeCheckerDBAccess.ttypes import Encoding
-from codeCheckerDBAccess.ttypes import Order
-from codeCheckerDBAccess.ttypes import ReportFilter
-from codeCheckerDBAccess.ttypes import SortMode
-from codeCheckerDBAccess.ttypes import SortType
+from codeCheckerDBAccess_v6.ttypes import Encoding
+from codeCheckerDBAccess_v6.ttypes import Order
+from codeCheckerDBAccess_v6.ttypes import ReportFilter
+from codeCheckerDBAccess_v6.ttypes import SortMode
+from codeCheckerDBAccess_v6.ttypes import SortType
 
 from libtest.debug_printer import print_run_results
 from libtest.thrift_client_to_db import get_all_run_results

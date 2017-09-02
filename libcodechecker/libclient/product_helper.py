@@ -13,7 +13,7 @@ from thrift.protocol import TJSONProtocol
 from thrift.protocol.TProtocol import TProtocolException
 
 import shared
-from ProductManagement import codeCheckerProductService
+from ProductManagement_v6 import codeCheckerProductService
 
 from libcodechecker import session_manager
 
@@ -78,10 +78,6 @@ class ThriftProductHelper(object):
         return wrapper
 
     # -----------------------------------------------------------------------
-    @ThriftClientCall
-    def getAPIVersion(self):
-        pass
-
     @ThriftClientCall
     def getPackageVersion(self):
         pass

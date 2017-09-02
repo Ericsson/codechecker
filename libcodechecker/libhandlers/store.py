@@ -22,7 +22,7 @@ import traceback
 import zipfile
 import zlib
 
-from Authentication.ttypes import Permission
+from shared.ttypes import Permission
 
 from libcodechecker import generic_package_context
 from libcodechecker import host_check

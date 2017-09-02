@@ -11,31 +11,32 @@ import sys
 from thrift.Thrift import TApplicationException
 
 import shared
-from Authentication import ttypes as AuthTypes
+from Authentication_v6 import ttypes as AuthTypes
 
 from libcodechecker import session_manager
 from libcodechecker.logger import LoggerFactory
 from libcodechecker.util import split_product_url
+from libcodechecker.version import CLIENT_API
 
 from . import authentication_helper
 from . import thrift_helper
 from . import product_helper
 
 LOG = LoggerFactory.get_new_logger('CLIENT')
-SUPPORTED_API_VERSION = '6.0'
 
 
-def check_api_version(client):
+def check_api_version(auth_client):
     """
     Check if server API is supported by the client.
     """
 
-    version = client.getAPIVersion()
-    supp_major_version = SUPPORTED_API_VERSION.split('.')[0]
-    api_major_version = version.split('.')[0]
-
-    # There is NO compatibility between major versions.
-    return supp_major_version == api_major_version
+    try:
+        auth_client.checkAPIVersion()
+    except shared.ttypes.RequestFailed as reqfail:
+        LOG.critical("The server uses a newer version of the API which is "
+                     "incompatible with this client. Please update client.")
+        LOG.debug(reqfail.message)
+        sys.exit(1)
 
 
 def setup_auth_client(host, port, session_token=None):
@@ -52,9 +53,9 @@ def setup_auth_client(host, port, session_token=None):
         if session_token_new:
             session_token = session_token_new
 
-    client = authentication_helper.ThriftAuthHelper(host, port,
-                                                    '/Authentication',
-                                                    session_token)
+    client = authentication_helper.ThriftAuthHelper(
+        host, port, '/v' + CLIENT_API + '/Authentication', session_token)
+    check_api_version(client)
 
     return client, session_token
 
@@ -75,10 +76,9 @@ def setup_auth_client_from_url(product_url, session_token=None):
 def handle_auth(host, port, username, login=False):
     session = session_manager.SessionManager_Client()
     auth_token = session.getToken(host, port)
-    auth_client = authentication_helper.ThriftAuthHelper(host,
-                                                         port,
-                                                         '/Authentication',
-                                                         auth_token)
+    auth_client = authentication_helper.ThriftAuthHelper(
+        host, port, '/v' + CLIENT_API + '/Authentication', auth_token)
+    check_api_version(auth_client)
 
     if not login:
         logout_done = auth_client.destroySession()
@@ -140,10 +140,10 @@ def handle_auth(host, port, username, login=False):
 def perform_auth_for_handler(manager, host, port, session_token):
     # Before actually communicating with the server,
     # we need to check authentication first.
-    auth_client = authentication_helper.ThriftAuthHelper(host,
-                                                         port,
-                                                         '/Authentication',
-                                                         session_token)
+    auth_client = authentication_helper.ThriftAuthHelper(
+        host, port, '/v' + CLIENT_API + '/Authentication', session_token)
+    check_api_version(auth_client)
+
     try:
         auth_response = auth_client.getAuthParameters()
     except TApplicationException as tex:
@@ -191,26 +191,23 @@ def setup_product_client(host, port, product_name=None):
     if not product_name:
         # Attach to the server-wide product service.
         product_client = product_helper.ThriftProductHelper(
-            host, port, "/Products", session_token)
+            host, port, '/v' + CLIENT_API + '/Products', session_token)
     else:
         # Attach to the product service and provide a product name
         # as "viewpoint" from which the product service is called.
         product_client = product_helper.ThriftProductHelper(
-            host, port, "/" + product_name + "/Products", session_token)
+            host, port,
+            '/' + product_name + '/v' + CLIENT_API + '/Products',
+            session_token)
 
         # However, in this case, the specified product might not be existing,
         # which makes subsequent calls to this API crash (server sends
         # HTTP 500 Internal Server Error error page).
-        if not product_client.getAPIVersion():
+        if not product_client.getPackageVersion():
             LOG.error("The product '{0}' cannot be communicated with. It "
                       "either doesn't exist, or the server's configuration "
                       "is bogus.".format(product_name))
             sys.exit(1)
-
-    if not check_api_version(product_client):
-        LOG.critical("The server uses a newer version of the API which is "
-                     "incompatible with this client. Please update client.")
-        sys.exit(1)
 
     return product_client
 
@@ -252,13 +249,9 @@ def setup_client(product_url):
         sys.exit(1)
 
     client = thrift_helper.ThriftClientHelper(
-        host, port, "/" + product_name + "/CodeCheckerService", session_token)
-
-    # Test if client can work with the server's API.
-    if not check_api_version(client):
-        LOG.critical("The server uses a newer version of the API which is "
-                     "incompatible with this client. Please update client.")
-        sys.exit(1)
+        host, port,
+        '/' + product_name + '/v' + CLIENT_API + '/CodeCheckerService',
+        session_token)
 
     return client
 

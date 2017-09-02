@@ -81,10 +81,10 @@ class DictAuth(unittest.TestCase):
         client = env.setup_viewer_client(self._test_workspace,
                                          session_token=self.sessionToken)
 
-        self.assertIsNotNone(client.getAPIVersion(),
+        self.assertIsNotNone(client.getPackageVersion(),
                              "Privileged server didn't respond properly.")
 
-        authd_auth_client =\
+        authd_auth_client = \
             env.setup_auth_client(self._test_workspace,
                                   session_token=self.sessionToken)
         user = authd_auth_client.getLoggedInUser()
@@ -103,7 +103,7 @@ class DictAuth(unittest.TestCase):
         with self.assertRaises(TProtocolException):
             # The server reports a HTTP 401 error which is not a valid
             # Thrift response. But if it does so, it passes the test!
-            client.getAPIVersion()
+            client.getPackageVersion()
             print("Privileged client allowed access after logout.")
 
         handshake = auth_client.getAuthParameters()

@@ -11,7 +11,7 @@ import os
 import unittest
 
 import shared
-from codeCheckerDBAccess.ttypes import Encoding
+from codeCheckerDBAccess_v6.ttypes import Encoding
 
 from libtest import codechecker
 from libtest import env

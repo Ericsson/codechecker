@@ -489,14 +489,25 @@ def build_package(repository_root, build_package_config, env=None):
             else:
                 LOG.info('Skipping ld logger from package')
 
-    generated_py_files = os.path.join(build_dir, 'gen-py')
-    generated_js_files = os.path.join(build_dir, 'gen-js')
-
+    # Copy Python API stubs.
+    generated_api_root = os.path.join(build_dir, 'thrift')
     target = os.path.join(package_root, package_layout['gencodechecker'])
-    copy_tree(generated_py_files, target)
 
+    # TODO: If we are ever to build separate CodeChecker packages, one package
+    # that does not contain the 'server' command need not have every API
+    # built into it.
+    api_dirs = next(os.walk(generated_api_root), ([], [], []))[1]
+    api_dirs.sort()
+    for api_dir in api_dirs:
+        api_dir = os.path.join(generated_api_root, api_dir, 'gen-py')
+        LOG.debug("Copying Python Thrift API " + api_dir + " to output!")
+        copy_tree(api_dir, target)
+
+    # Copy JavaScript API stubs.
+    # The web viewer needs only the latest version
     target = os.path.join(package_root, package_layout['web_client'])
-    copy_tree(generated_js_files, target)
+    copy_tree(os.path.join(generated_api_root, api_dirs[-1], 'gen-js'),
+              target)
 
     # CodeChecker library files.
     source = os.path.join(repository_root, 'libcodechecker')

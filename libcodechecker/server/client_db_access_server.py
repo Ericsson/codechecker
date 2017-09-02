@@ -31,9 +31,10 @@ from sqlalchemy.orm import sessionmaker
 from thrift.protocol import TJSONProtocol
 from thrift.transport import TTransport
 
-from Authentication import codeCheckerAuthentication
-from codeCheckerDBAccess import codeCheckerDBAccess
-from ProductManagement import codeCheckerProductService
+from shared.ttypes import ErrorCode, RequestFailed
+from Authentication_v6 import codeCheckerAuthentication as AuthAPI_v6
+from codeCheckerDBAccess_v6 import codeCheckerDBAccess as ReportAPI_v6
+from ProductManagement_v6 import codeCheckerProductService as ProductAPI_v6
 
 from libcodechecker import session_manager
 from libcodechecker.logger import LoggerFactory
@@ -43,10 +44,12 @@ from . import database_handler
 from . import instance_manager
 from . import permissions
 from . import routing
-from client_auth_handler import ThriftAuthHandler
-from client_db_access_handler import ThriftRequestHandler
+from bad_api_version_handler import ThriftAPIMismatchHandler as BadAPIHandler
+from client_auth_handler import ThriftAuthHandler as AuthHandler_v6
+from client_db_access_handler import ThriftRequestHandler as ReportHandler_v6
 from config_db_model import Product as ORMProduct
-from product_db_access_handler import ThriftProductHandler
+from product_db_access_handler import ThriftProductHandler \
+    as ProductHandler_v6
 from run_db_model import IDENTIFIER as RUN_META
 
 LOG = LoggerFactory.get_new_logger('SERVER')
@@ -149,31 +152,34 @@ class RequestHandler(SimpleHTTPRequestHandler):
             self.wfile.write(error_body)
             return
         else:
-            product_name = routing.get_product_name(self.path)
+            product_endpoint, path = \
+                routing.split_client_GET_request(self.path)
 
-            if product_name is not None and product_name != '':
-                if not self.server.get_product(product_name):
-                    LOG.info("Product named '{0}' does not exist."
-                             .format(product_name))
+            if product_endpoint is not None and product_endpoint != '':
+                if not self.server.get_product(product_endpoint):
+                    LOG.info("Product endpoint '{0}' does not exist."
+                             .format(product_endpoint))
                     self.send_error(
                         404,
-                        "The product {0} does not exist.".format(product_name))
+                        "The product {0} does not exist."
+                        .format(product_endpoint))
                     return
 
-                if product_name + '/' not in self.path:
+                if path == '' and not self.path.endswith('/'):
                     # /prod must be routed to /prod/index.html first, so later
                     # queries for web resources are '/prod/style...' as
                     # opposed to '/style...', which would result in "style"
                     # being considered product name.
                     LOG.debug("Redirecting user from /{0} to /{0}/index.html"
-                              .format(product_name))
+                              .format(product_endpoint))
 
                     # WARN: Browsers cache '308 Permanent Redirect' responses,
                     # in the event of debugging this, use Private Browsing!
                     self.send_response(308)
                     self.send_header("Location",
-                                     self.path.replace(product_name,
-                                                       product_name + '/', 1))
+                                     self.path.replace(product_endpoint,
+                                                       product_endpoint + '/',
+                                                       1))
                     self.end_headers()
                     return
                 else:
@@ -182,7 +188,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
                     # /prod/styles/(...) -> /styles/(...)
                     LOG.debug("Product routing before " + self.path)
                     self.path = self.path.replace(
-                        "{0}/".format(product_name), "", 1)
+                        "{0}/".format(product_endpoint), "", 1)
                     LOG.debug("Product routing after: " + self.path)
             else:
                 if self.path in ['/', '/index.html']:
@@ -248,8 +254,9 @@ class RequestHandler(SimpleHTTPRequestHandler):
         iprot = input_protocol_factory.getProtocol(itrans)
         oprot = output_protocol_factory.getProtocol(otrans)
 
-        if self.server.manager.isEnabled() and self.path != '/Authentication' \
-                and not auth_session:
+        if self.server.manager.isEnabled() and \
+                not self.path.endswith('/Authentication') and \
+                not auth_session:
             # Bail out if the user is not authenticated...
             # This response has the possibility of melting down Thrift clients,
             # but the user is expected to properly authenticate first.
@@ -262,68 +269,95 @@ class RequestHandler(SimpleHTTPRequestHandler):
 
         # Authentication is handled, we may now respond to the user.
         try:
-            product_name = routing.get_product_name(self.path)
-            request_endpoint = self.path.replace("/{0}".format(product_name),
-                                                 "", 1)
+            product_endpoint, api_ver, request_endpoint = \
+                routing.split_client_POST_request(self.path)
 
             product = None
-            if product_name:
+            if product_endpoint:
                 # The current request came through a product route, and not
                 # to the main endpoint.
-                product = self.server.get_product(product_name)
+                product = self.server.get_product(product_endpoint)
                 if product and not product.connected:
                     # If the product is not connected, try reconnecting...
                     LOG.debug("Request's product '{0}' is not connected! "
-                              "Attempting reconnect...".format(product_name))
+                              "Attempting reconnect..."
+                              .format(product_endpoint))
                     product.connect()
 
                     if not product.connected:
                         # If the reconnection fails, send an error to the user.
+                        LOG.debug("Product reconnection failed.")
                         self.send_error(  # 500 Internal Server Error
                             500, "Product '{0}' database connection failed!"
-                                 .format(product_name))
+                                 .format(product_endpoint))
                         return
                 elif not product:
+                    LOG.debug("Requested product does not exist.")
                     self.send_error(
                         404, "The product {0} does not exist."
-                             .format(product_name))
+                             .format(product_endpoint))
                     return
 
-            if request_endpoint == '/Authentication':
-                auth_handler = ThriftAuthHandler(self.server.manager,
-                                                 auth_session,
-                                                 self.server.config_session)
-                processor = codeCheckerAuthentication.Processor(auth_handler)
-            elif request_endpoint == '/Products':
-                prod_handler = ThriftProductHandler(
-                    self.server,
-                    auth_session,
-                    self.server.config_session,
-                    product,
-                    version)
-                processor = codeCheckerProductService.Processor(prod_handler)
-            elif request_endpoint == '/CodeCheckerService':
-                # This endpoint is a product's report_server.
-                if not product:
-                    self.send_error(  # 404 Not Found
-                        404, "The specified product '{0}' does not exist!"
-                             .format(product_name))
-                    return
+            version_supported = routing.is_supported_version(api_ver)
+            if version_supported:
+                major_version, _ = version_supported
 
-                acc_handler = ThriftRequestHandler(
-                    product.session_factory,
-                    product,
-                    auth_session,
-                    self.server.config_session,
-                    checker_md_docs,
-                    checker_md_docs_map,
-                    suppress_handler,
-                    version)
-                processor = codeCheckerDBAccess.Processor(acc_handler)
+                if major_version == 6:
+                    if request_endpoint == 'Authentication':
+                        auth_handler = AuthHandler_v6(
+                            self.server.manager,
+                            auth_session,
+                            self.server.config_session)
+                        processor = AuthAPI_v6.Processor(auth_handler)
+                    elif request_endpoint == 'Products':
+                        prod_handler = ProductHandler_v6(
+                            self.server,
+                            auth_session,
+                            self.server.config_session,
+                            product,
+                            version)
+                        processor = ProductAPI_v6.Processor(prod_handler)
+                    elif request_endpoint == 'CodeCheckerService':
+                        # This endpoint is a product's report_server.
+                        if not product:
+                            LOG.debug("Requested CodeCheckerService on a "
+                                      "nonexistent product.")
+                            self.send_error(  # 404 Not Found
+                                404,
+                                "The specified product '{0}' does not exist!"
+                                .format(product_endpoint))
+                            return
+
+                        acc_handler = ReportHandler_v6(
+                            product.session_factory,
+                            product,
+                            auth_session,
+                            self.server.config_session,
+                            checker_md_docs,
+                            checker_md_docs_map,
+                            suppress_handler,
+                            version)
+                        processor = ReportAPI_v6.Processor(acc_handler)
+                    else:
+                        LOG.debug("This API endpoint does not exist.")
+                        self.send_error(404,  # 404 Not Fount
+                                        "No API endpoint named '{0}'."
+                                        .format(self.path))
+                        return
             else:
-                self.send_error(404,  # 404 Not Fount
-                                "No endpoint named '{0}'.".format(self.path))
-                return
+                if request_endpoint == 'Authentication':
+                    # API-version checking is supported on the auth endpoint.
+                    handler = BadAPIHandler(api_ver)
+                    processor = AuthAPI_v6.Processor(handler)
+                else:
+                    # Send a custom, but valid Thrift error message to the
+                    # client requesting this action.
+                    LOG.debug("API version v{0} not supported by server."
+                              .format(api_ver))
+                    self.send_error(400,  # 400 Bad Request
+                                    "This API version 'v{0}' is not supported."
+                                    .format(api_ver))
+                    return
 
             processor.process(iprot, oprot)
             result = otrans.getvalue()

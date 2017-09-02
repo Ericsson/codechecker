@@ -29,23 +29,25 @@ function (declare, topic, domConstruct, Dialog, DropDownMenu, MenuItem,
 
     //---------------------------- Global objects ----------------------------//
 
-    CC_SERVICE = new codeCheckerDBAccess.codeCheckerDBAccessClient(
-      new Thrift.Protocol(new Thrift.Transport("CodeCheckerService")));
+    CC_SERVICE = new codeCheckerDBAccess_v6.codeCheckerDBAccessClient(
+      new Thrift.Protocol(new Thrift.Transport(
+        "v" + CC_API_VERSION + "/CodeCheckerService")));
 
-    CC_OBJECTS = codeCheckerDBAccess;
+    CC_OBJECTS = codeCheckerDBAccess_v6;
 
     CC_AUTH_SERVICE =
-      new codeCheckerAuthentication.codeCheckerAuthenticationClient(
+      new codeCheckerAuthentication_v6.codeCheckerAuthenticationClient(
         new Thrift.TJSONProtocol(
-          new Thrift.Transport("/Authentication")));
+          new Thrift.Transport("/v" + CC_API_VERSION + "/Authentication")));
 
-    CC_AUTH_OBJECTS = codeCheckerAuthentication;
+    CC_AUTH_OBJECTS = codeCheckerAuthentication_v6;
 
     CC_PROD_SERVICE =
-      new codeCheckerProductManagement.codeCheckerProductServiceClient(
-        new Thrift.Protocol(new Thrift.Transport("Products")));
+      new codeCheckerProductManagement_v6.codeCheckerProductServiceClient(
+        new Thrift.Protocol(new Thrift.Transport(
+          "v" + CC_API_VERSION + "/Products")));
 
-    CC_PROD_OBJECTS = codeCheckerProductManagement;
+    CC_PROD_OBJECTS = codeCheckerProductManagement_v6;
 
     //----------------------------- Main layout ------------------------------//
 

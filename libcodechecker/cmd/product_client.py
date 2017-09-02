@@ -10,7 +10,7 @@ Argument handlers for the 'CodeChecker cmd product' subcommands.
 import base64
 import sys
 
-from ProductManagement.ttypes import *
+from ProductManagement_v6.ttypes import *
 
 from libcodechecker.libclient.client import setup_product_client
 from libcodechecker.logger import LoggerFactory

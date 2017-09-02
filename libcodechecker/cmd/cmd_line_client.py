@@ -11,7 +11,8 @@ import os
 import sys
 
 import shared
-from codeCheckerDBAccess import constants, ttypes
+import codeCheckerDBAccess_v6 as codeCheckerDBAccess
+from codeCheckerDBAccess_v6 import constants, ttypes
 
 from libcodechecker import suppress_file_handler
 from libcodechecker.analyze import plist_parser

@@ -12,7 +12,7 @@ import json
 import sqlalchemy
 
 import shared
-from Authentication.ttypes import *
+from Authentication_v6.ttypes import *
 
 from libcodechecker.logger import LoggerFactory
 from libcodechecker.profiler import timeit
@@ -34,6 +34,12 @@ class ThriftAuthHandler(object):
         self.__manager = manager
         self.__auth_session = auth_session
         self.__config_db = config_database
+
+    @timeit
+    def checkAPIVersion(self):
+        # This is a deliberate empty call which if succeeds, marks for the
+        # client that the server accepted the connection proper.
+        pass
 
     # ============= Authentication and session handling =============
 

@@ -242,7 +242,7 @@ Developer Documentation
   * [Package layout](docs/package_layout.md)
   * [Checker documentation](docs/checker_docs.md)
   * [Thrift interface](api/README.md)
-  * [Package and integration tests](tests/readme.md)
+  * [Package and integration tests](tests/README.md)
   * [Database schema migration](docs/db_schema_guide.md)
   * A high-level overview about the infrastructure is available amongst the [2015Euro LLVM Conference](http://llvm.org/devmtg/2015-04) presentations.<br/>
     **Dániel KRUPP, György ORBÁN, Gábor HORVÁTH and Bence BABATI**:<br/>
