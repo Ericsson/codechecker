@@ -223,5 +223,6 @@ class ClangSA(analyzer_base.SourceAnalyzer):
                                    r'^clang(\+\+)?(-\d+(\.\d+){0,2})?$',
                                    env)
 
-        LOG.debug("Using '" + clang + "' for ClangSA!")
+        if clang:
+            LOG.debug("Using '" + clang + "' for ClangSA!")
         return clang

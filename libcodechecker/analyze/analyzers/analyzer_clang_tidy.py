@@ -161,5 +161,6 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
                                        r'^clang-tidy(-\d+(\.\d+){0,2})?$',
                                        env)
 
-        LOG.debug("Using '" + clangtidy + "' for ClangSA!")
+        if clangtidy:
+            LOG.debug("Using '" + clangtidy + "' for Clang-tidy!")
         return clangtidy
