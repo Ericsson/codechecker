@@ -159,7 +159,7 @@ class Diff(unittest.TestCase):
                                                     [],
                                                     None,
                                                     cmp_data)
-        self.assertEqual(len(diff_res), 18)
+        self.assertEqual(len(diff_res), 20)
 
     def test_get_diff_res_count_resolved(self):
         """
@@ -211,14 +211,14 @@ class Diff(unittest.TestCase):
                                                         None,
                                                         cmp_data)
 
-        self.assertEqual(diff_res, 18)
+        self.assertEqual(diff_res, 20)
 
     def test_get_diff_res_count_unresolved_filter(self):
         base_run_id = self._base_runid
         new_run_id = self._new_runid
 
         filter_severity_levels = [{"MEDIUM": 1}, {"LOW": 5},
-                                  {"HIGH": 12}, {"STYLE": 0},
+                                  {"HIGH": 14}, {"STYLE": 0},
                                   {"UNSPECIFIED": 0}, {"CRITICAL": 0}]
 
         cmp_data = CompareData(run_ids=[new_run_id],
@@ -300,7 +300,7 @@ class Diff(unittest.TestCase):
                                                     report_filter,
                                                     cmp_data)
         # Unresolved core checkers.
-        test_res = {'core.NullDereference': 4, 'core.DivideZero': 3}
+        test_res = {'core.NullDereference': 4, 'core.DivideZero': 5}
         self.assertDictContainsSubset(test_res, diff_res)
 
     def test_get_diff_checker_counts_all_unresolved(self):
@@ -317,7 +317,7 @@ class Diff(unittest.TestCase):
                                                     None,
                                                     cmp_data)
         # All unresolved checkers.
-        test_res = {'core.DivideZero': 3,
+        test_res = {'core.DivideZero': 5,
                     'core.NullDereference': 4,
                     'cplusplus.NewDelete': 5,
                     'deadcode.DeadStores': 5,
@@ -338,7 +338,7 @@ class Diff(unittest.TestCase):
         sev_res = self._cc_client.getSeverityCounts([base_run_id],
                                                     None,
                                                     cmp_data)
-        test_res = {shared.ttypes.Severity.HIGH: 12,
+        test_res = {shared.ttypes.Severity.HIGH: 14,
                     shared.ttypes.Severity.LOW: 5,
                     shared.ttypes.Severity.MEDIUM: 1}
         self.assertDictEqual(sev_res, test_res)
@@ -390,7 +390,7 @@ class Diff(unittest.TestCase):
                                                     None,
                                                     cmp_data)
 
-        test_res = {shared.ttypes.ReviewStatus.UNREVIEWED: 18}
+        test_res = {shared.ttypes.ReviewStatus.UNREVIEWED: 20}
         self.assertDictEqual(res, test_res)
 
     def test_get_diff_res_review_status_counts(self):
@@ -449,7 +449,7 @@ class Diff(unittest.TestCase):
                     'deadcode.DeadStores': 5,
                     'unix.Malloc': 1,
                     'core.NullDereference': 4,
-                    'core.DivideZero': 3}
+                    'core.DivideZero': 5}
         self.assertDictEqual(diff_res, test_res)
 
     def test_get_diff_res_types_unresolved_filter(self):
@@ -540,7 +540,7 @@ class Diff(unittest.TestCase):
 
         # # 3 disappeared core.StackAddressEscape issues
         count = len(re.findall(r'\[core\.DivideZero\]', out))
-        self.assertEqual(count, 3)
+        self.assertEqual(count, 5)
         count = len(re.findall(r'\[deadcode\.DeadStores\]', out))
         self.assertEqual(count, 5)
         count = len(re.findall(r'\[core\.NullDereference\]', out))
@@ -549,5 +549,3 @@ class Diff(unittest.TestCase):
         self.assertEqual(count, 5)
         count = len(re.findall(r'\[unix\.Malloc\]', out))
         self.assertEqual(count, 1)
-        count = len(re.findall(r'\[core.DivideZero\]', out))
-        self.assertEqual(count, 3)

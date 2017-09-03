@@ -6,6 +6,7 @@ all:
 	$(CXX) -c new_delete.cpp
 	$(CXX) -c null_dereference.cpp
 	$(CXX) -c stack_address_escape.cpp
+	$(CXX) -c skip_header.cpp
 clean:
 	rm -f call_and_message.o
 	rm -f divide_zero.o

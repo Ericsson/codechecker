@@ -108,7 +108,8 @@ def _generate_skip_list_file(skip_list_file):
     """
     skip_list_content = ["-*randtable.c", "-*blocksort.c", "-*huffman.c",
                          "-*decompress.c", "-*crctable.c",
-                         "-*file_to_be_skipped.cpp"]
+                         "-*file_to_be_skipped.cpp",
+                         "-*skip.h"]
     print('Skip list file content: ' + skip_list_file)
     print('\n'.join(skip_list_content))
 
