@@ -19,13 +19,13 @@ function (declare, topic, domConstruct, Button, BorderContainer,
 
     //---------------------------- Global objects ----------------------------//
 
-    PROD_SERVICE =
+    CC_PROD_SERVICE =
       new codeCheckerProductManagement.codeCheckerProductServiceClient(
         new Thrift.Protocol(new Thrift.Transport("Products")));
 
-    PROD_OBJECTS = codeCheckerProductManagement;
+    CC_PROD_OBJECTS = codeCheckerProductManagement;
 
-    AUTH_SERVICE =
+    CC_AUTH_SERVICE =
       new codeCheckerAuthentication.codeCheckerAuthenticationClient(
         new Thrift.TJSONProtocol(
           new Thrift.Transport("/Authentication")));
@@ -55,10 +55,10 @@ function (declare, topic, domConstruct, Button, BorderContainer,
 
     var version = domConstruct.create('span', {
       id : 'logo-version',
-      innerHTML : PROD_SERVICE.getPackageVersion()
+      innerHTML : CC_PROD_SERVICE.getPackageVersion()
     }, logoText);
 
-    var user = AUTH_SERVICE.getLoggedInUser();
+    var user = CC_AUTH_SERVICE.getLoggedInUser();
     var loginUserSpan = null;
     if (user.length > 0) {
       loginUserSpan = domConstruct.create('span', {
