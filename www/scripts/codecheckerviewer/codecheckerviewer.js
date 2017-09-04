@@ -33,16 +33,16 @@ function (declare, topic, domConstruct, Dialog, DropDownMenu, MenuItem,
 
     CC_OBJECTS = codeCheckerDBAccess;
 
-    AUTH_SERVICE =
+    CC_AUTH_SERVICE =
       new codeCheckerAuthentication.codeCheckerAuthenticationClient(
         new Thrift.TJSONProtocol(
           new Thrift.Transport("/Authentication")));
 
-    PROD_SERVICE =
+    CC_PROD_SERVICE =
       new codeCheckerProductManagement.codeCheckerProductServiceClient(
         new Thrift.Protocol(new Thrift.Transport("Products")));
 
-    PROD_OBJECTS = codeCheckerProductManagement;
+    CC_PROD_OBJECTS = codeCheckerProductManagement;
 
     //----------------------------- Main layout ------------------------------//
 
@@ -56,7 +56,7 @@ function (declare, topic, domConstruct, Dialog, DropDownMenu, MenuItem,
 
     //--- Logo ---//
 
-    var currentProduct = PROD_SERVICE.getCurrentProduct();
+    var currentProduct = CC_PROD_SERVICE.getCurrentProduct();
     var currentProductName = util.atou(currentProduct.displayedName_b64);
     document.title = currentProductName + ' - CodeChecker';
 
@@ -76,7 +76,7 @@ function (declare, topic, domConstruct, Dialog, DropDownMenu, MenuItem,
       innerHTML : CC_SERVICE.getPackageVersion()
     }, logoText);
 
-    var user = AUTH_SERVICE.getLoggedInUser();
+    var user = CC_AUTH_SERVICE.getLoggedInUser();
     var loginUserSpan = null;
     if (user.length > 0) {
       loginUserSpan = domConstruct.create('span', {
