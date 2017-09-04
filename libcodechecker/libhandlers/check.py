@@ -431,11 +431,12 @@ def main(args):
         store_module.main(store_args)
 
         # Show a hint for server start.
-        host, port, product_url = split_product_url(args.product_url)
+        protocol, host, port, product_url = split_product_url(args.product_url)
         LOG.info("To view results, open the CodeChecker server "
-                 "'http://{0}:{1}/{2}' in your browser".format(host,
-                                                               port,
-                                                               product_url))
+                 "'{0}://{1}:{2}/{3}' in your browser".format(protocol,
+                                                              host,
+                                                              port,
+                                                              product_url))
     except ImportError:
         LOG.error("Check failed: couldn't import a library.")
     except Exception as ex:

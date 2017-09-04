@@ -300,7 +300,7 @@ def main(args):
         LOG.info("argument --force was specified: the run with name '" +
                  args.name + "' will be deleted.")
 
-    host, port, product_name = split_product_url(args.product_url)
+    _, host, port, product_name = split_product_url(args.product_url)
 
     # Before any transmission happens, check if we have the PRODUCT_STORE
     # permission to prevent a possibly long ZIP operation only to get an

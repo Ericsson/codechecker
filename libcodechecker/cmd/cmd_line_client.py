@@ -20,6 +20,7 @@ from libcodechecker.libclient.client import setup_client
 from libcodechecker.logger import LoggerFactory
 from libcodechecker.output_formatters import twodim_to_str
 from libcodechecker.report import Report
+from libcodechecker.util import split_server_url
 
 LOG = LoggerFactory.get_new_logger('CMD')
 
@@ -470,5 +471,6 @@ def handle_suppress(args):
 
 
 def handle_login(args):
-    handle_auth(args.host, args.port, args.username,
+    _, host, port = split_server_url(args.server_url)
+    handle_auth(host, port, args.username,
                 login='logout' not in args)

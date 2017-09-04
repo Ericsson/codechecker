@@ -1146,8 +1146,8 @@ The operations available in `cmd` **always** require a running CodeChecker
 viewer server (i.e. a server started by `CodeChecker server`), and the
 connection details to access the server. These details either take an URL form
 (`--url hostname:port/Productname`) if the command accesses analysis results
-in a given product, or a `--host` and `--port` pair, if the command manages
-the server.
+in a given product, or a server URL (`--url hostname:port`), if the command
+manages the server.
 
 A server started by default settings (`CodeChecker server`, see above)
 automatically configure the product `Default` under `localhost:8001/Default`,
@@ -1160,10 +1160,11 @@ is set to `json`, a more detailed output is given, in JSON format.
 common arguments:
   --host HOST           The address of the CodeChecker viewer server to
                         connect to. (default: localhost)
-  -p PORT, --port PORT  The port the server is running on. (default: 8001)
-  --url PRODUCT_URL     The URL of the product to store the results for, in
-                        the format of 'host:port/Endpoint'. (default:
-                        localhost:8001/Default)
+  --url SERVER_URL      The URL of the server to access, in the format of
+                        'host:port/Endpoint'. (default: localhost:8001)
+  --url PRODUCT_URL     The URL of the product which will be accessed by the
+                        client, in the format of 'host:port/Endpoint'.
+                        (default: localhost:8001/Default)
   -o {plaintext,rows,table,csv,json}, --output {plaintext,rows,table,csv,json}
                         The output format to use in showing the data.
                         (default: plaintext)
@@ -1331,8 +1332,7 @@ optional arguments:
 ### Manage and export/import suppressions (`suppress`)
 
 ~~~~~~~~~~~~~~~~~~~~~
-usage: CodeChecker cmd suppress [-h] [-f] -i SUPPRESS_FILE
-                                [--host HOST] [-p PORT]
+usage: CodeChecker cmd suppress [-h] [-f] -i SUPPRESS_FILE [--url PRODUCT_URL]
                                 [--verbose {info,debug,debug_analyzer}]
                                 RUN_NAME
 
@@ -1348,17 +1348,6 @@ optional arguments:
   -i SUPPRESS_FILE, --import SUPPRESS_FILE
                         Import suppression from the suppress file into the
                         database.
-server arguments:
-  Specifies a 'CodeChecker server' instance which will be used to store the
-  results. This server must be running and listening prior to the 'store'
-  command being ran.
-
-  --host HOST           The IP address or hostname of the CodeChecker server.
-                        (default: localhost)
-  -p PORT, --port PORT  The port of the server to use for storing. (default:
-                        8001)
-  --verbose {info,debug,debug_analyzer}
-                      Set verbosity level. (default: info)
 ~~~~~~~~~~~~~~~~~~~~~
 
 #### Import suppressions between server and suppress file
@@ -1380,7 +1369,7 @@ Please see [Product management](docs/products.md) for details.
 ### Authenticate to the server (`login`)
 
 ~~~~~~~~~~~~~~~~~~~~~
-usage: CodeChecker cmd login [-h] [-d] [--host HOST] [-p PORT]
+usage: CodeChecker cmd login [-h] [-d] [--url SERVER_URL]
                              [--verbose {info,debug,debug_analyzer}]
                              [USERNAME]
 
@@ -1397,9 +1386,6 @@ optional arguments:
                         Send a logout request to end your privileged session.
 
 common arguments:
-  --host HOST           The address of the CodeChecker viewer server to
-                        connect to. (default: localhost)
-  -p PORT, --port PORT  The port the server is running on. (default: 8001)
   --verbose {info,debug,debug_analyzer}
                         Set verbosity level. (default: info)
 ~~~~~~~~~~~~~~~~~~~~~

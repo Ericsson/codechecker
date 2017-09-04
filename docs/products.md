@@ -42,9 +42,9 @@ Please see the [User guide](/docs/user_guide.md) for overview on the `cmd`
 command.
 
 The `products` subcommand of `CodeChecker cmd` group the actions related to
-product configuration. All these commands take a server `--host` and `--port`
-as their argument, as the commands control a server, and not an individual
-product endpoint.
+product configuration. All these commands take a server URL (e.g.
+`http://localhost:8001`) as their argument, as the commands control a server,
+and not an individual product endpoint.
 
 ~~~~~~~~~~~~~~~~~~~~~
 usage: CodeChecker cmd products [-h] [--verbose {info,debug,debug_analyzer}]

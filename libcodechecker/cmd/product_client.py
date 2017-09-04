@@ -15,6 +15,7 @@ from ProductManagement.ttypes import *
 from libcodechecker.libclient.client import setup_product_client
 from libcodechecker.logger import LoggerFactory
 from libcodechecker.output_formatters import twodim_to_str
+from libcodechecker.util import split_server_url
 
 from cmd_line_client import CmdLineOutputEncoder
 
@@ -22,7 +23,8 @@ LOG = LoggerFactory.get_new_logger('CMD')
 
 
 def handle_list_products(args):
-    client = setup_product_client(args.host, args.port)
+    _, host, port = split_server_url(args.server_url)
+    client = setup_product_client(host, port)
     products = client.getProducts(None, None)
 
     if args.output_format == 'json':
@@ -47,7 +49,8 @@ def handle_list_products(args):
 
 
 def handle_add_product(args):
-    client = setup_product_client(args.host, args.port)
+    _, host, port = split_server_url(args.server_url)
+    client = setup_product_client(host, port)
 
     # Put together the database connection's descriptor.
     if 'postgresql' in args:
@@ -95,7 +98,8 @@ def handle_add_product(args):
 
 
 def handle_del_product(args):
-    client = setup_product_client(args.host, args.port)
+    _, host, port = split_server_url(args.server_url)
+    client = setup_product_client(host, port)
 
     # Endpoints substring-match.
     products = client.getProducts(args.endpoint, None)

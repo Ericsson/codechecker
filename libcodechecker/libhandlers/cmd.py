@@ -83,25 +83,19 @@ def __add_common_arguments(parser,
                                   dest="product_url",
                                   default="localhost:8001/Default",
                                   required=False,
-                                  help="The URL of the product to store the "
-                                       "results for, in the format of "
-                                       "'host:port/Endpoint'.")
+                                  help="The URL of the product which will be "
+                                       "accessed by the client, in the "
+                                       "format of 'host:port/Endpoint'.")
     else:
         # Command connects to a server directly.
-        common_group.add_argument('--host',
+        common_group.add_argument('--url',
                                   type=str,
-                                  dest="host",
-                                  default="localhost",
+                                  metavar='SERVER_URL',
+                                  dest="server_url",
+                                  default="localhost:8001",
                                   required=False,
-                                  help="The address of the CodeChecker "
-                                       "server to connect to.")
-
-        common_group.add_argument('-p', '--port',
-                                  type=int,
-                                  dest="port",
-                                  default=8001,
-                                  required=False,
-                                  help="The port the server is running on.")
+                                  help="The URL of the server to access, "
+                                       "in the format of 'host:port'.")
 
     if has_matrix_output:
         common_group.add_argument('-o', '--output',

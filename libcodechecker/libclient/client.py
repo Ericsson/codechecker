@@ -65,7 +65,7 @@ def setup_auth_client_from_url(product_url, session_token=None):
     product URL.
     """
     try:
-        host, port, _ = split_product_url(product_url)
+        _, host, port, _ = split_product_url(product_url)
         return setup_auth_client(host, port, session_token)
     except:
         LOG.error("Malformed product URL was provided.")
@@ -221,7 +221,7 @@ def setup_client(product_url):
     """
 
     try:
-        host, port, product_name = split_product_url(product_url)
+        _, host, port, product_name = split_product_url(product_url)
     except:
         LOG.error("Malformed product URL was provided.")
         sys.exit(2)  # 2 for argument error.

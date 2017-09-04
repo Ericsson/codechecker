@@ -247,22 +247,87 @@ def get_default_workspace():
     return workspace
 
 
+def split_server_url(url):
+    """
+    Splits the given CodeChecker server URL into its parts.
+
+    The format of a valid URL is:
+      protocol://host:port/
+    where
+      * Protocol: HTTP or HTTPS
+      * Host: The server's host name or IP address
+      * Port: The server's port number
+
+    As a shortcut, the following formats are also valid:
+      hostname           (means: http://hostname:8001)
+    """
+
+    LOG.debug("Parsing server url '{0}'".format(url))
+
+    protocol = 'http'
+    if url.startswith('http'):
+        parts = url.split('://', 1)
+        protocol = parts[0]
+        url = url.replace(parts[0] + '://', '')
+
+    url = url.lstrip('/').rstrip('/')
+
+    # A valid server_url looks like this: 'http://localhost:8001/'.
+    host, port = 'localhost', 8001
+    try:
+        parts = url.split("/")
+
+        if len(parts) == 1:
+            # Something is either a hostname, or a host:port.
+            server_addr = parts[0].split(":")
+            if len(server_addr) == 2:
+                host, port = server_addr[0], int(server_addr[1])
+            elif len(server_addr) == 1:
+                host = server_addr[0]
+            else:
+                raise ValueError("The server's address is not in a valid "
+                                 "'host:port' format!")
+        else:
+            raise ValueError("Server URL can not contain extra '/' chars.")
+    except:
+        LOG.error("The specified server URL is invalid.")
+        raise
+
+    LOG.debug("Result: With '{0}' on server '{1}:{2}'"
+              .format(protocol, host, port))
+
+    return protocol, host, port
+
+
 def split_product_url(url):
     """
-    Sets up a Thrift CodeCheckerService client for the given product URL.
+    Splits the given CodeChecker server's product-specific URL into its parts.
+
+    The format of a valid URL is:
+      protocol://host:port/ProductEndpoint
+    where
+      * Protocol: HTTP or HTTPS
+      * Host: The server's host name or IP address
+      * Port: The server's port number
+      * ProductEndpoint: The product's unique endpoint folder under the server.
+
+    As a shortcut, the following formats are also valid:
+      ProductEndpoint           (means: http://localhost:8001/ProductEndpoint)
+      hostname/ProductEndpoint  (means: http://hostname:8001/ProductEndpoint)
     """
+
     LOG.debug("Parsing product url '{0}'".format(url))
-    if url.startswith("http"):
-        url = url.replace("http://", "").replace("https://", "")
 
-    if url.endswith("/"):
-        url = url.rstrip("/")
+    protocol = 'http'
+    if url.startswith('http'):
+        parts = url.split('://', 1)
+        protocol = parts[0]
+        url = url.replace(parts[0] + '://', '')
 
-    if url.startswith("/"):
-        url = url.lstrip("/")
+    url = url.lstrip('/').rstrip('/')
 
-    # A valid product_url looks like this: 'localhost:8001/Product'.
-    host, port, product_name = "localhost", 8001, "Default"
+    # A valid product_url looks like this: 'http://localhost:8001/Product'.
+    host, port, product_name = 'localhost', 8001, 'Default'
     try:
         parts = url.split("/")
 
@@ -293,7 +358,7 @@ def split_product_url(url):
         LOG.error("The specified product URL is invalid.")
         raise
 
-    LOG.debug("Result: On server '{0}:{1}', product '{2}'"
-              .format(host, port, product_name))
+    LOG.debug("Result: With '{0}' on server '{1}:{2}', product '{3}'"
+              .format(protocol, host, port, product_name))
 
-    return host, port, product_name
+    return protocol, host, port, product_name
