@@ -411,6 +411,9 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
       this.bugStore = new Observable(new Memory({
         data : [{ id : 'root' }],
         getChildren : function (node) {
+          if (node.getChildren)
+            return node.getChildren(node);
+
           return this.query({ parent : node.id });
         }
       }));
@@ -669,8 +672,19 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
     },
 
     _formatReportDetails : function (report, reportDetails) {
+      var res = [];
+
+      res.push({
+        id : report.reportId + '_0',
+        name : '<b><u>' + entities.encode(report.checkerMsg) + '</u></b>',
+        parent : report.reportId + '',
+        report : report,
+        isLeaf : true,
+        kind : 'msg'
+      });
+
       if (reportDetails.pathEvents.length <= 1)
-        return;
+        return res;
 
       var filePaths = [];
       var areThereMultipleFiles = false;
@@ -739,7 +753,7 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
           name = name.replace('{FILENAME}', filename);
         }
 
-        that.bugStore.put({
+        res.push({
           id : report.reportId + '_' + (index + 1),
           name : name,
           tooltip : tooltip,
@@ -751,7 +765,9 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
           kind : kind,
           report : report
         });
-      })
+      });
+
+      return res;
     },
 
     _addReport : function (report) {
@@ -764,20 +780,11 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
         parent : util.severityFromCodeToString(report.severity),
         report : report,
         isLeaf : false,
-        kind : 'bugpath'
-      });
-
-      this.bugStore.put({
-        id : report.reportId + '_0',
-        name : '<b><u>' + entities.encode(report.checkerMsg) + '</u></b>',
-        parent : report.reportId + '',
-        report : report,
-        isLeaf : true,
-        kind : 'msg'
-      });
-
-      CC_SERVICE.getReportDetails(report.reportId, function (reportDetails) {
-        that._formatReportDetails(report, reportDetails);
+        kind : 'bugpath',
+        getChildren : function (node) {
+          var reportDetails = CC_SERVICE.getReportDetails(report.reportId);
+          return that._formatReportDetails(report, reportDetails);
+        }
       });
     },
 
