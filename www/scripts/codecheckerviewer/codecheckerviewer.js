@@ -56,8 +56,8 @@ function (declare, topic, domConstruct, Dialog, DropDownMenu, MenuItem,
 
     //--- Logo ---//
 
-    var currentProduct = CC_PROD_SERVICE.getCurrentProduct();
-    var currentProductName = util.atou(currentProduct.displayedName_b64);
+    CURRENT_PRODUCT = CC_PROD_SERVICE.getCurrentProduct();
+    var currentProductName = util.atou(CURRENT_PRODUCT.displayedName_b64);
     document.title = currentProductName + ' - CodeChecker';
 
     var logoContainer = domConstruct.create('div', {
