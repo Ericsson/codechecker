@@ -117,7 +117,8 @@ function (declare, domConstruct, ItemFileWriteStore, topic, Button,
     _populateProducts : function (productNameFilter) {
       var that = this;
 
-      PROD_SERVICE.getProducts(null, productNameFilter, function (productList) {
+      CC_PROD_SERVICE.getProducts(null, productNameFilter,
+      function (productList) {
         that.onLoaded(productList);
 
         productList.forEach(function (item) {
@@ -142,7 +143,8 @@ function (declare, domConstruct, ItemFileWriteStore, topic, Button,
         }
       });
 
-      PROD_SERVICE.getProducts(null, productNameFilter, function (productDataList) {
+      CC_PROD_SERVICE.getProducts(null, productNameFilter,
+      function (productDataList) {
         productDataList.forEach(function (item) {
           that._addProductData(item);
         });
