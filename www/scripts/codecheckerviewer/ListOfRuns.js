@@ -139,7 +139,7 @@ function (declare, domConstruct, ItemFileWriteStore, topic, Dialog, Button,
      * This function refreshes grid with available run data based on text run
      * name filter.
      */
-    refreshGrid : function (runNameFilter) {
+    refreshGrid : function (runFilter) {
       var that = this;
 
       this.store.fetch({
@@ -151,7 +151,7 @@ function (declare, domConstruct, ItemFileWriteStore, topic, Dialog, Button,
         }
       });
 
-      CC_SERVICE.getRunData(runNameFilter, function (runDataList) {
+      CC_SERVICE.getRunData(runFilter, function (runDataList) {
         that._sortRunData(runDataList);
         runDataList.forEach(function (item) {
           that._addRunData(item);
@@ -179,10 +179,10 @@ function (declare, domConstruct, ItemFileWriteStore, topic, Dialog, Button,
       });
     },
 
-    _populateRuns : function (runNameFilter) {
+    _populateRuns : function (runFilter) {
       var that = this;
 
-      CC_SERVICE.getRunData(runNameFilter, function (runDataList) {
+      CC_SERVICE.getRunData(runFilter, function (runDataList) {
         that._sortRunData(runDataList);
 
         // In Firefox the onLoaded function called immediately before topics
@@ -215,9 +215,11 @@ function (declare, domConstruct, ItemFileWriteStore, topic, Dialog, Button,
         onKeyUp     : function (evt) {
           clearTimeout(this.timer);
 
-          var filter = this.get('value');
+          var runNameFilter = this.get('value');
           this.timer = setTimeout(function () {
-            that.listOfRunsGrid.refreshGrid(filter);
+            var runFilter = new CC_OBJECTS.RunFilter();
+            runFilter.name = runNameFilter;
+            that.listOfRunsGrid.refreshGrid(runFilter);
           }, 500);
         }
       });

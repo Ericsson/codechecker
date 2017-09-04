@@ -471,7 +471,7 @@ class ThriftRequestHandler(object):
         return run_ids
 
     @timeit
-    def getRunData(self, run_name_filter):
+    def getRunData(self, run_filter):
         self.__require_access()
         try:
             session = self.__Session()
@@ -485,8 +485,11 @@ class ThriftRequestHandler(object):
 
             q = session.query(Run, stmt.c.report_count)
 
-            if run_name_filter is not None:
-                q = q.filter(Run.name.ilike('%' + run_name_filter + '%'))
+            if run_filter is not None:
+                if run_filter.runIds is not None:
+                    q = q.filter(Run.id.in_(run_filter.runIds))
+                if run_filter.name is not None:
+                    q = q.filter(Run.name.ilike('%' + run_filter.name + '%'))
 
             q = q.outerjoin(stmt, Run.id == stmt.c.run_id) \
                 .order_by(Run.date)
@@ -561,6 +564,7 @@ class ThriftRequestHandler(object):
                     date=None)
 
             return ReportData(
+                runId=report.run_id,
                 bugHash=report.bug_id,
                 checkedFile=source_file.filepath,
                 checkerMsg=report.checker_message,
@@ -627,7 +631,8 @@ class ThriftRequestHandler(object):
                         date=None)
 
                 results.append(
-                    ReportData(bugHash=report.bug_id,
+                    ReportData(runId=report.run_id,
+                               bugHash=report.bug_id,
                                checkedFile=source_file.filepath,
                                checkerMsg=report.checker_message,
                                reportId=report.id,
@@ -713,7 +718,8 @@ class ThriftRequestHandler(object):
                         date=None)
 
                 results.append(
-                    ReportData(bugHash=report.bug_id,
+                    ReportData(runId=report.run_id,
+                               bugHash=report.bug_id,
                                checkedFile=source_file.filepath,
                                checkerMsg=report.checker_message,
                                reportId=report.id,
@@ -1756,6 +1762,7 @@ class ThriftRequestHandler(object):
                         date=None)
 
                 results.append(ReportData(
+                    runId=report.run_id,
                     bugHash=report.bug_id,
                     checkedFile=source_file.filepath,
                     checkerMsg=report.checker_message,
@@ -1830,6 +1837,7 @@ class ThriftRequestHandler(object):
                         date=None)
 
                 results.append(ReportData(
+                    runId=report.run_id,
                     bugHash=report.bug_id,
                     checkedFile=source_file.filepath,
                     checkerMsg=report.checker_message,

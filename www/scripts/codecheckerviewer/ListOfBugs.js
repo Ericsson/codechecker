@@ -223,7 +223,7 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
 
       switch (evt.cell.field) {
         case 'checkedFile':
-          topic.publish('openFile', item, this);
+          topic.publish('openFile', item, this.runData, this);
           break;
 
         case 'checkerId':
@@ -304,7 +304,7 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
       //--- Events ---//
 
       this._openFileTopic = topic.subscribe('openFile',
-      function (reportData, sender) {
+      function (reportData, runData, sender) {
         if (sender && sender !== grid)
           return;
 
@@ -319,12 +319,14 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
 
         var reportFilters = that._bugFilterView.getReportFilters();
         var runResultParam = createRunResultFilterParameter(reportFilters);
+        if (runData)
+          runResultParam.runIds = [runData.runId];
 
         var bugViewer = new BugViewer({
           title : filename,
           closable : true,
           reportData : reportData,
-          runData : that.runData,
+          runData : runData ? runData : that.runData,
           runResultParam : runResultParam,
           onShow : function () {
             hashHelper.setStateValue('report', reportData.reportId);

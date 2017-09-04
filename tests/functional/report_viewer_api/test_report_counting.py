@@ -527,7 +527,7 @@ class TestReportFilter(unittest.TestCase):
         Run name is randomly generated for all of the test runs.
         """
 
-        runs = self._cc_client.getRunData('')
+        runs = self._cc_client.getRunData(None)
 
         separate_report_counts = 0
         for run in runs:

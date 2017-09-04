@@ -114,8 +114,73 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
     postCreate : function () {
       var that = this;
 
-      this.filepath = dom.create('div', { class : 'editorHeader' });
-      dom.place(this.filepath, this.domNode);
+      this.header = dom.create('div', { class : 'editorHeader' }, this.domNode);
+      this.filepath = dom.create('div', { class : 'filepath' }, this.header);
+      this.sameReportSelectorWrapper = dom.create('div', {
+        class : 'same-report-selector-wrapper'
+      }, this.header);
+
+      this.sameReportSelectorLabel = dom.create('span', {
+        class : 'same-report-selector-label',
+        innerHTML : 'Also found in:'
+      }, this.sameReportSelectorWrapper);
+
+      var sameReportSelector =
+        dom.create('div', null, this.sameReportSelectorWrapper);
+
+      this._sameReportSelector = new Select({
+        class : 'same-report-selector',
+        onChange : function (reportId) {
+          topic.publish('openFile', reportId, this.reportIdToRun[reportId]);
+        },
+
+        refreshOptions : function (runData, reportData) {
+          var self = this;
+
+          //--- Get same reports by bughash in all reports ---//
+
+          var reportFilter = new CC_OBJECTS.ReportFilter_v2();
+          reportFilter.reportHash = [reportData.bugHash];
+
+          var sortMode = new CC_OBJECTS.SortMode();
+          sortMode.type = CC_OBJECTS.SortType.FILENAME;
+          sortMode.ord = CC_OBJECTS.Order.ASC;
+
+          var res = CC_SERVICE.getRunResults_v2(
+            null,
+            CC_OBJECTS.MAX_QUERY_SIZE,
+            0,
+            [sortMode],
+            reportFilter, null);
+
+          var runFilter = new CC_OBJECTS.RunFilter();
+          runFilter.runIds = res.map(function (report) { return report.runId; });
+
+          var runDataSet = CC_SERVICE.getRunData(runFilter);
+
+          this.reportIdToRun = {};
+          var options = res.map(function (reportData) {
+            var filename = reportData.checkedFile.replace(/^.*[\\\/]/, '');
+            var run = runDataSet.filter(function (r) {
+              return r.runId === reportData.runId;
+            })[0];
+
+            self.reportIdToRun[reportData.reportId] = run;
+
+            return {
+              label : run.name + ':' + filename + ':' + reportData.line,
+              value : reportData.reportId
+            };
+          });
+
+          this.set('options', options);
+          this.set('value', reportData.reportId, false);
+        }
+      }, sameReportSelector);
+
+      //--- Same reports by bughash selector ---//
+
+      this._sameReportSelector.refreshOptions(this.runData, this.reportData);
 
       this.codeMirror = new CodeMirror(this.domNode, {
         matchBrackets : true,
@@ -314,7 +379,7 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
       var that = this;
       setTimeout(function () {
         var fullHeight = parseInt(style.getComputedStyle(that.domNode).height);
-        var headerHeight = getFullHeight(that.filepath);
+        var headerHeight = getFullHeight(that.header);
 
         that.codeMirror.setSize('100%', (fullHeight - headerHeight) + 'px');
         that.codeMirror.refresh();
@@ -862,6 +927,7 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
 
     constructor : function (args) {
       dojo.safeMixin(this, args);
+
 
       var that = this;
 

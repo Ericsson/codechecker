@@ -201,9 +201,20 @@ html, body {
 }
 
 .editorHeader {
-  padding: 4px;
+  padding: 5px;
   border-bottom: 1px solid lightgrey;
   font-family: monospace;
+}
+
+.editorHeader .same-report-selector-wrapper {
+  position: absolute;
+  top: 0;
+  right: 0;
+  margin: 2px;
+}
+
+.editorHeader .same-report-selector-label {
+  margin-right: 5px;
 }
 
 .buildActionInfo dt {

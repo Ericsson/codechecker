@@ -81,7 +81,7 @@ function (declare, ItemFileWriteStore, Deferred, all, Memory, Observable,
     loadRunStoreData : function () {
       var that = this;
 
-      CC_SERVICE.getRunData('', function (runs) {
+      CC_SERVICE.getRunData(null, function (runs) {
         runs.sort(function (a, b) {
           if (a.name > b.name) return 1;
           if (a.name < b.name) return -1;
