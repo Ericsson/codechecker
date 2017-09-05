@@ -53,9 +53,17 @@ def metadata_info(metadata_file):
     return check_commands, check_durations, skip_handlers
 
 
-def collect_paths_events(report, file_ids):
-    files = file_ids.keys()
+def collect_paths_events(report, file_ids, files):
+    """
+    This function creates the BugPathPos and BugPathEvent objects which belong
+    to a report.
 
+    report -- A report object from the parsed plist file.
+    file_ids -- A dictionary which maps the file paths to file IDs in the
+                database.
+    files -- A list containing the file paths from the parsed plist file. The
+             order of this list must be the same as in the plist file.
+    """
     bug_paths = []
     bug_events = []
 
