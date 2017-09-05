@@ -10,7 +10,6 @@ Handle Thrift requests.
 import base64
 import codecs
 from collections import defaultdict
-from collections import OrderedDict
 import datetime
 import json
 import os
@@ -2335,7 +2334,7 @@ class ThriftRequestHandler(object):
                 LOG.error('Parsing the plist failed: ' + str(ex))
                 continue
 
-            file_ids = OrderedDict()
+            file_ids = {}
             # Store content of file to the server if needed.
             for file_name in files:
                 file_ids[file_name] = file_path_to_id[file_name]
@@ -2352,7 +2351,7 @@ class ThriftRequestHandler(object):
                     shared.ttypes.Severity._NAMES_TO_VALUES[severity_name]
 
                 bug_paths, bug_events = \
-                    store_handler.collect_paths_events(report, file_ids)
+                    store_handler.collect_paths_events(report, file_ids, files)
 
                 LOG.debug("Storing report")
                 report_id = store_handler.addReport(
