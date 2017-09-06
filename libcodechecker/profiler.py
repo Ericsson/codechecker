@@ -19,6 +19,23 @@ from libcodechecker.logger import LoggerFactory
 LOG = LoggerFactory.get_new_logger('PROFILER')
 
 
+class Timer(object):
+    """
+    Simple timer context manager
+    to measure code block execution time.
+    """
+    def __init__(self, block_name=''):
+        self.block_name = block_name
+
+    def __enter__(self):
+        self.before = datetime.datetime.now()
+
+    def __exit__(self, type, value, traceback):
+        after = datetime.datetime.now()
+        time_diff = after - self.before
+        LOG.debug(self.block_name + " " + str(time_diff.total_seconds())+'s')
+
+
 def timeit(function):
     """
     Decorator to measure function call time.
@@ -34,8 +51,7 @@ def timeit(function):
         res = function(*args, **kwargs)
         after = datetime.now()
         timediff = after - before
-        diff = timediff.microseconds/1000
-        LOG.debug('['+str(diff)+'ms] ' + func_name)
+        LOG.debug('['+str(timediff.total_seconds())+'s] ' + func_name)
         return res
 
     def release_wrapper(*args, **kwargs):
