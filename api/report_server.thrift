@@ -20,58 +20,53 @@ namespace cpp cc.service.codechecker
 const i64 MAX_QUERY_SIZE = 500
 //=================================================
 
-//-----------------------------------------------------------------------------
-struct RunData{
-  1: i64            runId,        // unique id of the run
-  2: string         runDate,      // date of the run
-  3: string         name,         // human readable name of the run
-  4: i64            duration,     // duration of the run; -1 if not finished
-  5: i64            resultCount,  // number of results in the run
-  6: string         runCmd,       // the used check command
-  7: optional bool  can_delete    // true if codeCheckerDBAccess::removeRunResults()
-                                  // is allowed on this run (see issue 151)
-  8: map<shared.DetectionStatus, i32> detectionStatusCount
-                                  // this maps the detection status to its count
+struct RunData {
+  1: i64            runId,        // Unique id of the run.
+  2: string         runDate,      // Date of the run last updated.
+  3: string         name,         // Human-given identifier.
+  4: i64            duration,     // Duration of the run (-1 if not finished).
+  5: i64            resultCount,  // Number of results in the run.
+  6: string         runCmd,       // The used check command.
+  // This maps the detection status to its count
+  7: map<shared.DetectionStatus, i32> detectionStatusCount
 }
 typedef list<RunData> RunDataList
 
-struct RunReportCount{
+struct RunReportCount {
   1: i64            runId,        // unique id of the run
   2: string         name,         // human readable name of the run
   3: i64            reportCount
 }
 typedef list<RunReportCount> RunReportCounts
 
-struct ReviewData{
+struct ReviewData {
   1: shared.ReviewStatus  status,
   2: string               comment,
   3: string               author,
   4: string               date
 }
 
-//-----------------------------------------------------------------------------
-struct ReportData{
-  1: string              checkerId,       // the qualified id of the checker that reported this
-  2: string              bugHash,         // This is unique id of the concrete report.
-  3: string              checkedFile,     // this is a filepath
-  4: string              checkerMsg,      // description of the bug report
-  5: i64                 reportId,        // id of the report in the current run in the db
-  6: i64                 fileId,          // unique id of the file the report refers to
-  7: i64                 line,            // line number or the reports main section (not part of the path)
-  8: i64                 column,          // column number of the report main section (not part of the path)
-  9: shared.Severity     severity         // checker severity
-  10: ReviewData          review           // bug review status informations.
-  11: shared.DetectionStatus detectionStatus  // state of the bug (see the enum constant values)
+struct ReportData {
+  1: string                  checkerId,       // The qualified name of the checker that reported this.
+  2: string                  bugHash,         // This is unique id of the concrete report.
+  3: string                  checkedFile,     // This is a filepath, the original main file the analyzer was called with.
+  4: string                  checkerMsg,      // Description of the bug report.
+  5: i64                     reportId,        // id of the report in the current run in the db.
+  6: i64                     fileId,          // Unique id of the file the report refers to.
+  7: i64                     line,            // line number or the reports main section (not part of the path).
+  8: i64                     column,          // column number of the report main section (not part of the path).
+  9: shared.Severity         severity         // Checker severity.
+  10: ReviewData             reviewData       // Bug review status information.
+  11: shared.DetectionStatus detectionStatus  // State of the bug (see the enum constant values).
 }
 typedef list<ReportData> ReportDataList
 
-//-----------------------------------------------------------------------------
 /**
  * TODO: DEPRECATED
  * Members of this struct are interpreted in "AND" relation with each other.
  * So they need to match a single report at the same time.
  */
-struct ReportFilter{
+struct ReportFilter {
   1: optional string          filepath,           // In the filters a single wildcard can be be used: *
   2: optional string          checkerMsg,
   3: optional shared.Severity severity,
@@ -92,7 +87,7 @@ typedef list<ReportFilter> ReportFilterList
  * Members of this struct are interpreted in "OR" relation with each other.
  * Between the members there is "AND" relation.
  */
-struct ReportFilter_v2{
+struct ReportFilter_v2 {
   1: list<string>                 filepath,
   2: list<string>                 checkerMsg,
   3: list<string>                 checkerName,
@@ -102,20 +97,17 @@ struct ReportFilter_v2{
   7: list<shared.DetectionStatus> detectionStatus
 }
 
-//-----------------------------------------------------------------------------
 struct ReportDetails{
   1: shared.BugPathEvents pathEvents,
   2: shared.BugPath       executionPath
 }
 
-//-----------------------------------------------------------------------------
 // TODO: This type is unused.
-struct ReportFileData{
+struct ReportFileData {
   1: i64    reportFileId,
   2: string reportFileContent
 }
 
-//-----------------------------------------------------------------------------
 // default sorting of the results
 enum SortType {
   FILENAME,
@@ -125,47 +117,40 @@ enum SortType {
   DETECTION_STATUS
 }
 
-//-----------------------------------------------------------------------------
 enum Encoding {
   DEFAULT,
   BASE64
 }
 
-//-----------------------------------------------------------------------------
-struct SourceFileData{
+struct SourceFileData {
   1: i64             fileId,
   2: string          filePath,
   3: optional string fileContent
 }
 
-//-----------------------------------------------------------------------------
 enum Order {
   ASC,
   DESC
 }
 
-//-----------------------------------------------------------------------------
-struct SortMode{
+struct SortMode {
   1: SortType type,
   2: Order    ord
 }
 
-//-----------------------------------------------------------------------------
-struct ReportDataTypeCount{
+struct ReportDataTypeCount {
   1: string          checkerId,
   2: shared.Severity severity,
   3: i64             count
 }
 typedef list<ReportDataTypeCount> ReportDataTypeCountList
 
-//-----------------------------------------------------------------------------
-struct SkipPathData{
+struct SkipPathData {
   1: string  path,
   2: string  comment
 }
 typedef list<SkipPathData> SkipPathDataList
 
-//-----------------------------------------------------------------------------
 // diff result types
 enum DiffType {
   NEW,
@@ -173,9 +158,8 @@ enum DiffType {
   UNRESOLVED
 }
 
-//-----------------------------------------------------------------------------
 struct CommentData {
-  1: i64 id,
+  1: i64    id,
   2: string author,
   3: string message,
   4: string createdAt
@@ -183,20 +167,19 @@ struct CommentData {
 typedef list<CommentData> CommentDataList
 
 
-# CompareData is used as an optinal argument for multiple API calls.
-# If not set the API calls will just simply filter or query the
-# database for results or metrics.
-# If set the API calls can be used in a compare mode where
-# the results or metrics will be compared to the values set in the CompareData.
-# In compare mode the baseline run ids should be set on the API
-# (to what the results/metrics will be copared to) and the new run ids and the
-# diff type should be set in the CompareData type.
+// CompareData is used as an optinal argument for multiple API calls.
+// If not set the API calls will just simply filter or query the
+// database for results or metrics.
+// If set the API calls can be used in a compare mode where
+// the results or metrics will be compared to the values set in the CompareData.
+// In compare mode the baseline run ids should be set on the API
+// (to what the results/metrics will be copared to) and the new run ids and the
+// diff type should be set in the CompareData type.
 struct CompareData {
-  1: list<i64> run_ids,
-  2: DiffType diff_type,
+  1: list<i64> runIds,
+  2: DiffType  diffType
 }
 
-//-----------------------------------------------------------------------------
 service codeCheckerDBAccess {
 
   // get the run Ids and dates from the database to select one run
@@ -459,7 +442,7 @@ service codeCheckerDBAccess {
   // (sha256) and returns the ones which are not stored yet.
   // PERMISSION: PRODUCT_STORE
   list<string> getMissingContentHashes(
-                                       1: list<string> file_hashes)
+                                       1: list<string> fileHashes)
                                        throws (1: shared.RequestFailed requestError),
 
   // This function stores an entire run encapsulated and sent in a ZIP file.
@@ -475,15 +458,15 @@ service codeCheckerDBAccess {
   // The "force" parameter removes existing analysis results for a run.
   // PERMISSION: PRODUCT_STORE
   i64 massStoreRun(
-                   1: string run_name,
+                   1: string runName,
                    2: string version,
                    3: string zipfile,
-                   4: bool force)
+                   4: bool   force)
                    throws (1: shared.RequestFailed requestError),
 
   // PERMISSION: PRODUCT_STORE
   bool replaceConfigInfo(
-                     1: i64 run_id,
+                     1: i64 runId,
                      2: shared.CheckerConfigList values)
                      throws (1: shared.RequestFailed requestError),
 

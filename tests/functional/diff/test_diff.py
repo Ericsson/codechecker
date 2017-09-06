@@ -81,8 +81,8 @@ class Diff(unittest.TestCase):
         base_run_id = self._base_runid
         new_run_id = self._new_runid
 
-        cmp_data = CompareData(run_ids=[new_run_id],
-                               diff_type=DiffType.NEW)
+        cmp_data = CompareData(runIds=[new_run_id],
+                               diffType=DiffType.NEW)
 
         diff_res = self._cc_client.getRunResultCount_v2([base_run_id],
                                                         None,
@@ -97,8 +97,8 @@ class Diff(unittest.TestCase):
         """
         new_run_id = self._new_runid
 
-        cmp_data = CompareData(run_ids=[new_run_id],
-                               diff_type=DiffType.NEW)
+        cmp_data = CompareData(runIds=[new_run_id],
+                               diffType=DiffType.NEW)
 
         diff_res = self._cc_client.getRunResultCount_v2([],
                                                         None,
@@ -113,8 +113,8 @@ class Diff(unittest.TestCase):
         base_run_id = self._base_runid
         new_run_id = self._new_runid
 
-        cmp_data = CompareData(run_ids=[new_run_id],
-                               diff_type=DiffType.NEW)
+        cmp_data = CompareData(runIds=[new_run_id],
+                               diffType=DiffType.NEW)
 
         diff_res = self._cc_client.getRunResults_v2([base_run_id],
                                                     500,
@@ -132,8 +132,8 @@ class Diff(unittest.TestCase):
         base_run_id = self._base_runid
         new_run_id = self._new_runid
 
-        cmp_data = CompareData(run_ids=[new_run_id],
-                               diff_type=DiffType.RESOLVED)
+        cmp_data = CompareData(runIds=[new_run_id],
+                               diffType=DiffType.RESOLVED)
 
         diff_res = self._cc_client.getRunResults_v2([base_run_id],
                                                     500,
@@ -150,8 +150,8 @@ class Diff(unittest.TestCase):
         base_run_id = self._base_runid
         new_run_id = self._new_runid
 
-        cmp_data = CompareData(run_ids=[new_run_id],
-                               diff_type=DiffType.UNRESOLVED)
+        cmp_data = CompareData(runIds=[new_run_id],
+                               diffType=DiffType.UNRESOLVED)
 
         diff_res = self._cc_client.getRunResults_v2([base_run_id],
                                                     500,
@@ -168,8 +168,8 @@ class Diff(unittest.TestCase):
         base_run_id = self._base_runid
         new_run_id = self._new_runid
 
-        cmp_data = CompareData(run_ids=[new_run_id],
-                               diff_type=DiffType.RESOLVED)
+        cmp_data = CompareData(runIds=[new_run_id],
+                               diffType=DiffType.RESOLVED)
 
         diff_res = self._cc_client.getRunResultCount_v2([base_run_id],
                                                         None,
@@ -204,8 +204,8 @@ class Diff(unittest.TestCase):
 
         print_run_results(new_run_res)
 
-        cmp_data = CompareData(run_ids=[new_run_id],
-                               diff_type=DiffType.UNRESOLVED)
+        cmp_data = CompareData(runIds=[new_run_id],
+                               diffType=DiffType.UNRESOLVED)
 
         diff_res = self._cc_client.getRunResultCount_v2([base_run_id],
                                                         None,
@@ -221,8 +221,8 @@ class Diff(unittest.TestCase):
                                   {"HIGH": 14}, {"STYLE": 0},
                                   {"UNSPECIFIED": 0}, {"CRITICAL": 0}]
 
-        cmp_data = CompareData(run_ids=[new_run_id],
-                               diff_type=DiffType.UNRESOLVED)
+        cmp_data = CompareData(runIds=[new_run_id],
+                               diffType=DiffType.UNRESOLVED)
 
         for level in filter_severity_levels:
             for severity_level, test_result_count in level.items():
@@ -241,8 +241,8 @@ class Diff(unittest.TestCase):
         base_run_id = self._base_runid
         new_run_id = self._new_runid
 
-        cmp_data = CompareData(run_ids=[new_run_id],
-                               diff_type=DiffType.NEW)
+        cmp_data = CompareData(runIds=[new_run_id],
+                               diffType=DiffType.NEW)
 
         diff_res = self._cc_client.getCheckerCounts([base_run_id],
                                                     None,
@@ -259,8 +259,8 @@ class Diff(unittest.TestCase):
         base_run_id = self._base_runid
         new_run_id = self._new_runid
 
-        cmp_data = CompareData(run_ids=[new_run_id],
-                               diff_type=DiffType.NEW)
+        cmp_data = CompareData(runIds=[new_run_id],
+                               diffType=DiffType.NEW)
         report_filter = ReportFilter_v2(checkerName=["*core*"])
         diff_res = self._cc_client.getCheckerCounts([base_run_id],
                                                     report_filter,
@@ -277,8 +277,8 @@ class Diff(unittest.TestCase):
         new_run_id = self._new_runid
 
         report_filter = ReportFilter_v2(checkerName=["*core*"])
-        cmp_data = CompareData(run_ids=[new_run_id],
-                               diff_type=DiffType.RESOLVED)
+        cmp_data = CompareData(runIds=[new_run_id],
+                               diffType=DiffType.RESOLVED)
         diff_res = self._cc_client.getCheckerCounts([base_run_id],
                                                     report_filter,
                                                     cmp_data)
@@ -294,8 +294,8 @@ class Diff(unittest.TestCase):
         new_run_id = self._new_runid
 
         report_filter = ReportFilter_v2(checkerName=["*core*"])
-        cmp_data = CompareData(run_ids=[new_run_id],
-                               diff_type=DiffType.UNRESOLVED)
+        cmp_data = CompareData(runIds=[new_run_id],
+                               diffType=DiffType.UNRESOLVED)
         diff_res = self._cc_client.getCheckerCounts([base_run_id],
                                                     report_filter,
                                                     cmp_data)
@@ -310,8 +310,8 @@ class Diff(unittest.TestCase):
         base_run_id = self._base_runid
         new_run_id = self._new_runid
 
-        cmp_data = CompareData(run_ids=[new_run_id],
-                               diff_type=DiffType.UNRESOLVED)
+        cmp_data = CompareData(runIds=[new_run_id],
+                               diffType=DiffType.UNRESOLVED)
 
         diff_res = self._cc_client.getCheckerCounts([base_run_id],
                                                     None,
@@ -332,8 +332,8 @@ class Diff(unittest.TestCase):
         base_run_id = self._base_runid
         new_run_id = self._new_runid
 
-        cmp_data = CompareData(run_ids=[new_run_id],
-                               diff_type=DiffType.UNRESOLVED)
+        cmp_data = CompareData(runIds=[new_run_id],
+                               diffType=DiffType.UNRESOLVED)
 
         sev_res = self._cc_client.getSeverityCounts([base_run_id],
                                                     None,
@@ -350,8 +350,8 @@ class Diff(unittest.TestCase):
         base_run_id = self._base_runid
         new_run_id = self._new_runid
 
-        cmp_data = CompareData(run_ids=[new_run_id],
-                               diff_type=DiffType.NEW)
+        cmp_data = CompareData(runIds=[new_run_id],
+                               diffType=DiffType.NEW)
 
         sev_res = self._cc_client.getSeverityCounts([base_run_id],
                                                     None,
@@ -366,8 +366,8 @@ class Diff(unittest.TestCase):
         base_run_id = self._base_runid
         new_run_id = self._new_runid
 
-        cmp_data = CompareData(run_ids=[new_run_id],
-                               diff_type=DiffType.NEW)
+        cmp_data = CompareData(runIds=[new_run_id],
+                               diffType=DiffType.NEW)
 
         res = self._cc_client.getReviewStatusCounts([base_run_id],
                                                     None,
@@ -383,8 +383,8 @@ class Diff(unittest.TestCase):
         base_run_id = self._base_runid
         new_run_id = self._new_runid
 
-        cmp_data = CompareData(run_ids=[new_run_id],
-                               diff_type=DiffType.UNRESOLVED)
+        cmp_data = CompareData(runIds=[new_run_id],
+                               diffType=DiffType.UNRESOLVED)
 
         res = self._cc_client.getReviewStatusCounts([base_run_id],
                                                     None,
@@ -400,8 +400,8 @@ class Diff(unittest.TestCase):
         base_run_id = self._base_runid
         new_run_id = self._new_runid
 
-        cmp_data = CompareData(run_ids=[new_run_id],
-                               diff_type=DiffType.RESOLVED)
+        cmp_data = CompareData(runIds=[new_run_id],
+                               diffType=DiffType.RESOLVED)
 
         res = self._cc_client.getReviewStatusCounts([base_run_id],
                                                     None,
@@ -417,8 +417,8 @@ class Diff(unittest.TestCase):
         base_run_id = self._base_runid
         new_run_id = self._new_runid
 
-        cmp_data = CompareData(run_ids=[new_run_id],
-                               diff_type=DiffType.RESOLVED)
+        cmp_data = CompareData(runIds=[new_run_id],
+                               diffType=DiffType.RESOLVED)
 
         diff_res = self._cc_client.getCheckerCounts([base_run_id],
                                                     None,
@@ -437,8 +437,8 @@ class Diff(unittest.TestCase):
         diff_res_types_filter = self._testproject_data[self._clang_to_test][
             'diff_res_types_filter']
 
-        cmp_data = CompareData(run_ids=[new_run_id],
-                               diff_type=DiffType.UNRESOLVED)
+        cmp_data = CompareData(runIds=[new_run_id],
+                               diffType=DiffType.UNRESOLVED)
 
         diff_res = \
             self._cc_client.getCheckerCounts([base_run_id],
@@ -462,8 +462,8 @@ class Diff(unittest.TestCase):
         diff_res_types_filter = self._testproject_data[self._clang_to_test][
             'diff_res_types_filter']
 
-        cmp_data = CompareData(run_ids=[new_run_id],
-                               diff_type=DiffType.UNRESOLVED)
+        cmp_data = CompareData(runIds=[new_run_id],
+                               diffType=DiffType.UNRESOLVED)
 
         for level in diff_res_types_filter:
             for checker_name, test_result_count in level.items():

@@ -23,7 +23,7 @@ import re
 
 from libcodechecker.logger import LoggerFactory
 
-LOG = LoggerFactory.get_new_logger('SUPPRESS_FILE_HANDLER')
+LOG = LoggerFactory.get_new_logger('SUPPRESS FILE HANDLER')
 
 COMMENT_SEPARATOR = '||'
 HASH_TYPE_SEPARATOR = '#'

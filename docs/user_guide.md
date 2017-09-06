@@ -16,31 +16,28 @@ Run the CodeChecker sourcecode analyzer framework.
 Please specify a subcommand to access individual features.
 
 positional arguments:
-  {checkers,analyze,analyzers,check,cmd,log,parse,plist,quickcheck,server,
-  store,version}
+  {analyze,analyzers,check,checkers,cmd,log,parse,quickcheck,server,store,version}
                         commands
-    checkers            List the available checkers for the supported
-                        analyzers and show their default status (+ for being
-                        enabled, - for being disabled by default).
+
     analyze             Execute the supported code analyzers for the files
                         recorded in a JSON Compilation Database.
     analyzers           List supported and available analyzers.
     check               Perform analysis on a project and store results to
                         database.
+    checkers            List the checkers available for code analysis.
     cmd                 View analysis results on a running server from the
                         command line.
     log                 Run a build command and collect the executed
                         compilation commands, storing them in a JSON file.
     parse               Print analysis summary and results in a human-readable
                         format.
-    plist               Use plist files in a given directory to pretty-print
-                        or store the results.
     quickcheck          Perform analysis on a project and print results to
                         standard output.
     server              Start and manage the CodeChecker Web server.
     store               Save analysis results to a database.
     version             Print the version of CodeChecker package that is being
                         used.
+
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -52,7 +49,7 @@ after the analysis is done:
     CodeChecker server
 
 Analyze a project with default settings:
-    CodeChecker check -b "cd ~/myproject && make" -n myproject
+    CodeChecker check -b "cd ~/myproject && make" myproject
 
 The results can be viewed:
  * In a web browser: http://localhost:8001
@@ -100,7 +97,7 @@ To analyse your project by doing a build and reporting every
 found issue in the built files, execute:
 
 ~~~~~~~~~~~~~~~~~~~~~
-CodeChecker check --build "make" --name "run_name"
+CodeChecker check --build "make" "run_name"
 ~~~~~~~~~~~~~~~~~~~~~
 
 Please make sure your build command actually compiles (builds) the source
@@ -111,7 +108,7 @@ If you have an already existing JSON Compilation Commands file, you can also
 supply it to `check`:
 
 ~~~~~~~~~~~~~~~~~~~~~
-CodeChecker check --logfile ./my-build.json --name "run_name"
+CodeChecker check --logfile ./my-build.json "run_name"
 ~~~~~~~~~~~~~~~~~~~~~
 
 `check` is a wrapper over the following calls:
@@ -129,9 +126,8 @@ Please see the individual help for `log`, `analyze` and `store` (below in this
 _User guide_) for information about the arguments of `check`.
 
 ~~~~~~~~~~~~~~~~~~~~~
-usage: CodeChecker check [-h] [--keep-tmp] [-c] [--update] -n NAME
-                         [-w WORKSPACE] [-f] [-q] (-b COMMAND | -l LOGFILE)
-                         [-j JOBS] [-i SKIPFILE]
+usage: CodeChecker check [-h] [-w WORKSPACE] [-f] [-q]
+                         (-b COMMAND | -l LOGFILE) [-j JOBS] [-i SKIPFILE]
                          [--analyzers ANALYZER [ANALYZER ...]]
                          [--add-compiler-defaults]
                          [--saargs CLANGSA_ARGS_CFG_FILE]
@@ -139,6 +135,7 @@ usage: CodeChecker check [-h] [--keep-tmp] [-c] [--update] -n NAME
                          [-e checker/checker-group] [-d checker/checker-group]
                          [--url PRODUCT_URL]
                          [--verbose {info,debug,debug_analyzer}]
+                         RUN_NAME
 
 Run analysis for a project with storing results in the database. Check only
 needs a build command or an already existing logfile and performs every step
@@ -146,10 +143,6 @@ of doing the analysis in batch.
 
 optional arguments:
   -h, --help            show this help message and exit
-  --keep-tmp
-  -c , --clean
-  --update
-  -n NAME, --name NAME
   -w WORKSPACE, --workspace WORKSPACE
                         Directory where CodeChecker can store analysis related
                         data, such as intermediate result files and the
@@ -181,6 +174,8 @@ checker configuration:
 server arguments:
 
   --url PRODUCT_URL
+  RUN_NAME              The name of the analysis run to use in storing the
+                        reports to the database.
 ~~~~~~~~~~~~~~~~~~~~~
 
 ## Quickcheck
@@ -233,7 +228,7 @@ usage: CodeChecker quickcheck [-h] [-q] (-b COMMAND | -l LOGFILE)
                               [--saargs CLANGSA_ARGS_CFG_FILE]
                               [--tidyargs TIDY_ARGS_CFG_FILE]
                               [-e checker/checker-group]
-                              [-d checker/checker-group] [-s]
+                              [-d checker/checker-group] [--print-steps]
                               [--verbose {info,debug,debug_analyzer}]
 
 Run analysis for a project with printing results immediately on the standard
@@ -254,7 +249,7 @@ log arguments:
 analyzer arguments:
 
   -j JOBS, --jobs JOBS
-  -i SKIPFILE, --skip SKIPFILE
+  -i SKIPFILE, --ignore SKIPFILE, --skip SKIPFILE
   --analyzers ANALYZER [ANALYZER ...]
   --add-compiler-defaults
   --saargs CLANGSA_ARGS_CFG_FILE
@@ -267,7 +262,7 @@ checker configuration:
 
 output arguments:
 
-  -s, --steps, --print-steps
+  --print-steps
 ~~~~~~~~~~~~~~~~~~~~~
 
 # Available CodeChecker commands
@@ -299,7 +294,7 @@ optional arguments:
                         more complex command, or the call of a custom script
                         file is also supported.
   -q, --quiet-build     Do not print the output of the build tool into the
-                        output of this command. (default: False)
+                        output of this command.
   --verbose {info,debug,debug_analyzer}
                         Set verbosity level. (default: info)
 ~~~~~~~~~~~~~~~~~~~~~
@@ -344,7 +339,7 @@ below:
 
 ~~~~~~~~~~~~~~~~~~~~~
 usage: CodeChecker analyze [-h] [-j JOBS] [-i SKIPFILE] [-o OUTPUT_PATH]
-                           [-t {plist}] [-n NAME]
+                           [-t {plist}] [-c] [-n NAME]
                            [--analyzers ANALYZER [ANALYZER ...]]
                            [--add-compiler-defaults]
                            [--capture-analysis-output]
@@ -380,6 +375,10 @@ optional arguments:
   -t {plist}, --type {plist}, --output-format {plist}
                         Specify the format the analysis results should use.
                         (default: plist)
+  -c, --clean           Delete analysis reports stored in the output
+                        directory. (By default, CodeChecker would keep reports
+                        and overwrites only those files that were update by
+                        the current build command).
   -n NAME, --name NAME  Annotate the ran analysis with a custom name in the
                         created metadata file.
   --verbose {info,debug,debug_analyzer}
@@ -426,11 +425,11 @@ analyzer arguments:
                         Retrieve compiler-specific configuration from the
                         compilers themselves, and use them with Clang. This is
                         used when the compiler on the system is special, e.g.
-                        when doing cross-compilation. (default: False)
+                        when doing cross-compilation.
   --capture-analysis-output
-                        Store standard output and standard error of
-                        successful analyzer invocations into the
-                        '<OUTPUT_DIR>/success' directory.
+                        Store standard output and standard error of successful
+                        analyzer invocations into the '<OUTPUT_DIR>/success'
+                        directory.
   --saargs CLANGSA_ARGS_CFG_FILE
                         File containing argument which will be forwarded
                         verbatim for the Clang Static Analyzer.
@@ -614,7 +613,6 @@ cross translation unit analysis arguments:
   --ctu-on-the-fly      If specified, the 'collect' phase will not create the
                         extra AST dumps, but rather analysis will be ran with
                         an in-memory recompilation of the source files.
-                        (default: False)
 ~~~~~~~~~~~~~~~~~~~~~
 
 ## 3. `parse` mode
@@ -656,7 +654,7 @@ optional arguments:
                         that created the results. The suppression information
                         will be written to the parameter of '--suppress'.
   --print-steps         Print the steps the analyzers took in finding the
-                        reported defect. (default: False)
+                        reported defect.
   --verbose {info,debug,debug_analyzer}
                         Set verbosity level. (default: info)
 ~~~~~~~~~~~~~~~~~~~~~
@@ -763,7 +761,7 @@ optional arguments:
                         CodeChecker would keep reports that were coming from
                         files not affected by the analysis, and only
                         incrementally update defect reports for source files
-                        that were analysed.) (default: False)
+                        that were analysed.)
   --verbose {info,debug,debug_analyzer}
                         Set verbosity level. (default: info)
 
@@ -827,13 +825,13 @@ CodeChecker server -w ~/codechecker_wp --dbname myProjectdb --dbport 5432 --dbad
 The checking process can be started separately on the same machine
 
 ~~~~~~~~~~~~~~~~~~~~~
-CodeChecker check  -w ~/codechecker_wp -n myProject -b "make -j 4" --url localhost:8001/Default
+CodeChecker check  -w ~/codechecker_wp myProject -b "make -j 4" --url localhost:8001/Default
 ~~~~~~~~~~~~~~~~~~~~~
 
 or on a different machine
 
 ~~~~~~~~~~~~~~~~~~~~~
-CodeChecker check  -w ~/codechecker_wp -n myProject -b "make -j 4" --url 192.168.1.1:8001/Default
+CodeChecker check  -w ~/codechecker_wp myProject -b "make -j 4" --url 192.168.1.1:8001/Default
 ~~~~~~~~~~~~~~~~~~~~~
 
 
@@ -853,7 +851,7 @@ Start CodeChecker server locally which connects to a remote database (which is s
 Start the checking as explained previously.
 
 ~~~~~~~~~~~~~~~~~~~~~
-CodeChecker check -w ~/codechecker_wp -n myProject -b "make -j 4" --url 192.168.1.2:8001/Default
+CodeChecker check -w ~/codechecker_wp myProject -b "make -j 4" --url 192.168.1.2:8001/Default
 ~~~~~~~~~~~~~~~~~~~~~
 
 ## 5. `checkers` mode
@@ -861,32 +859,11 @@ CodeChecker check -w ~/codechecker_wp -n myProject -b "make -j 4" --url 192.168.
 List the checkers available in the installed analyzers which can be used when
 performing an analysis.
 
-### Old `CodeChecker checkers` command
-
-The ```+``` (or ```-```) sign before a name of a checker shows whether the
-checker is enabled (or disabled) by default.
-
-~~~~~~~~~~~~~~~~~~~~~
-usage: CodeChecker checkers [-h] [--analyzers ANALYZERS [ANALYZERS ...]]
-                            [--verbose {info,debug,debug_analyzer}]
-
-optional arguments:
-  -h, --help            show this help message and exit
-  --analyzers ANALYZERS [ANALYZERS ...]
-                        Select which analyzer checkers should be listed.
-                        Currently supported analyzers: clangsa clang-tidy
-                        (default: None)
-  --verbose {info,debug,debug_analyzer}
-                        Set verbosity level. (default: info)
-~~~~~~~~~~~~~~~~~~~~~
-
-### New `codechecker-checkers` command
-
-By default, `codechecker-checkers` will list all checkers, one per each row,
+By default, `CodeChecker checkers` will list all checkers, one per each row,
 providing a quick overview on which checkers are available in the analyzers.
 
 ~~~~~~~~~~~~~~~~~~~~~
-usage: codechecker-checkers [-h] [--analyzers ANALYZER [ANALYZER ...]]
+usage: CodeChecker checkers [-h] [--analyzers ANALYZER [ANALYZER ...]]
                             [--details] [--only-enabled | --only-disabled]
                             [-o {rows,table,csv,json}]
                             [--verbose {info,debug,debug_analyzer}]
@@ -899,9 +876,9 @@ optional arguments:
   --analyzers ANALYZER [ANALYZER ...]
                         Show checkers only from the analyzers specified.
   --details             Show details about the checker, such as description,
-                        if available. (default: False)
-  --only-enabled        Show only the enabled checkers. (default: False)
-  --only-disabled       Show only the disabled checkers. (default: False)
+                        if available.
+  --only-enabled        Show only the enabled checkers.
+  --only-disabled       Show only the disabled checkers.
   -o {rows,table,csv,json}, --output {rows,table,csv,json}
                         The format to list the applicable checkers as.
                         (default: rows)
@@ -934,7 +911,8 @@ By default, this command only lists the names of the available analyzers (with
 respect to the environment CodeChecker is ran in).
 
 ~~~~~~~~~~~~~~~~~~~~~
-usage: CodeChecker analyzers [-h] [-a] [--details] [-o {rows,table,csv,json}]
+usage: CodeChecker analyzers [-h] [--all] [--details]
+                             [-o {rows,table,csv,json}]
                              [--verbose {info,debug,debug_analyzer}]
 
 Get the list of available and supported analyzers, querying their version and
@@ -942,10 +920,10 @@ actual binary executed.
 
 optional arguments:
   -h, --help            show this help message and exit
-  -a, --all             Show all supported analyzers, not just the available
-                        ones. (default: False)
+  --all                 Show all supported analyzers, not just the available
+                        ones.
   --details             Show details about the analyzers, not just their
-                        names. (default: False)
+                        names.
   -o {rows,table,csv,json}, --output {rows,table,csv,json}
                         Specify the format of the output list. (default: rows)
   --verbose {info,debug,debug_analyzer}
@@ -1209,19 +1187,20 @@ Prints basic information about analysis results, such as location, checker
 name, summary.
 
 ~~~~~~~~~~~~~~~~~~~~~
-usage: CodeChecker cmd results [-h] -n RUN_NAME [-s] [--filter FILTER]
+usage: CodeChecker cmd results [-h] RUN_NAME [-s] [--filter FILTER]
                                [--url PRODUCT_URL]
                                [-o {plaintext,rows,table,csv,json}]
                                [--verbose {info,debug,debug_analyzer}]
+                               RUN_NAME
 
 Show the individual analysis reports' summary.
 
+positional arguments:
+  RUN_NAME              Name of the analysis run to show result summaries of.
+                        Use 'CodeChecker cmd runs' to get the available runs.
+
 optional arguments:
   -h, --help            show this help message and exit
-  -n RUN_NAME, --name RUN_NAME
-                        Name of the analysis run to show result summaries of.
-                        Use 'CodeChecker cmd runs' to get the available runs.
-                        (default: None)
   -s, --suppressed      Filter results to only show suppressed entries.
                         (default: False)
   --filter FILTER       Filter results. The filter string has the following
@@ -1352,17 +1331,19 @@ optional arguments:
 ### Manage and export/import suppressions (`suppress`)
 
 ~~~~~~~~~~~~~~~~~~~~~
-usage: CodeChecker cmd suppress [-h] -n RUN_NAME [-f] -i SUPPRESS_FILE
+usage: CodeChecker cmd suppress [-h] [-f] -i SUPPRESS_FILE
                                 [--host HOST] [-p PORT]
                                 [--verbose {info,debug,debug_analyzer}]
+                                RUN_NAME
 
 Imports suppressions from a suppress file to a CodeChecker server.
 
+positional arguments:
+  RUN_NAME              Name of the analysis run to suppress or unsuppress a
+                        report in.
+
 optional arguments:
   -h, --help            show this help message and exit
-  -n RUN_NAME, --name RUN_NAME
-                        Name of the analysis run to suppress or unsuppress a
-                        report in.
   -f, --force           Enable suppression of already suppressed reports.
   -i SUPPRESS_FILE, --import SUPPRESS_FILE
                         Import suppression from the suppress file into the
@@ -1399,19 +1380,28 @@ Please see [Product management](docs/products.md) for details.
 ### Authenticate to the server (`login`)
 
 ~~~~~~~~~~~~~~~~~~~~~
-usage: CodeChecker cmd login [-h] [-u USERNAME] [-d] [--host HOST] [-p PORT]
+usage: CodeChecker cmd login [-h] [-d] [--host HOST] [-p PORT]
                              [--verbose {info,debug,debug_analyzer}]
+                             [USERNAME]
 
 Certain CodeChecker servers can require elevated privileges to access analysis
 results. In such cases it is mandatory to authenticate to the server. This
 action is used to perform an authentication in the command-line.
 
+positional arguments:
+  USERNAME              The username to authenticate with. (default: <username>)
+
 optional arguments:
   -h, --help            show this help message and exit
-  -u USERNAME, --username USERNAME
-                        The username to authenticate with. (default: <username>)
   -d, --deactivate, --logout
                         Send a logout request to end your privileged session.
+
+common arguments:
+  --host HOST           The address of the CodeChecker viewer server to
+                        connect to. (default: localhost)
+  -p PORT, --port PORT  The port the server is running on. (default: 8001)
+  --verbose {info,debug,debug_analyzer}
+                        Set verbosity level. (default: info)
 ~~~~~~~~~~~~~~~~~~~~~
 
 If a server [requires privileged access](docs/authentication.md), you must
@@ -1458,10 +1448,10 @@ CodeChecker server is listening on codechecker.central port 8001.
 
 ~~~~~~~~~~~~~~~~~~~~~
 # On host1 we check module1
-CodeChecker check -w /tmp/codechecker_ws -b "cd module_1;make" --port 8001 --host codechecker.central -n distributed_run
+CodeChecker check -w /tmp/codechecker_ws -b "cd module_1;make" --port 8001 --host codechecker.central distributed_run
 
 # On host2 we check module2
-CodeChecker check -w /tmp/codechecker_ws -b "cd module_2;make" --port 8001 --host codechecker.central -n disributed_run
+CodeChecker check -w /tmp/codechecker_ws -b "cd module_2;make" --port 8001 --host codechecker.central disributed_run
 ~~~~~~~~~~~~~~~~~~~~~
 
 ### PostgreSQL authentication (optional)
@@ -1480,14 +1470,14 @@ are `debug`, `debug_analyzer` and `info`. Default is `info`.
 `debug_analyzer` switches analyzer related logs on:
 
 ~~~~~~~~~~~~~~~~~~~~~
-CodeChecker check -n <name> -b <build_command> --verbose debug_analyzer
+CodeChecker check <name> -b <build_command> --verbose debug_analyzer
 ~~~~~~~~~~~~~~~~~~~~~
 
 Turning on CodeChecker debug level logging is possible for the most
 subcommands:
 
 ~~~~~~~~~~~~~~~~~~~~~
-CodeChecker check -n <name> -b <build_command> --verbose debug
+CodeChecker check <name> -b <build_command> --verbose debug
 CodeChecker server -v <view_port> --verbose debug
 ~~~~~~~~~~~~~~~~~~~~~
 

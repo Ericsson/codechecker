@@ -13,7 +13,7 @@ import sys
 
 from libcodechecker.logger import LoggerFactory
 
-LOG = LoggerFactory.get_new_logger('ANALYZER_BASE')
+LOG = LoggerFactory.get_new_logger('ANALYZER (BASE)')
 
 
 class SourceAnalyzer(object):

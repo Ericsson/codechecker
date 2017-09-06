@@ -100,6 +100,7 @@ def add_arguments_to_parser(parser):
                         dest="print_steps",
                         action="store_true",
                         required=False,
+                        default=argparse.SUPPRESS,
                         help="Print the steps the analyzers took in finding "
                              "the reported defect.")
 
@@ -189,7 +190,8 @@ def main(args):
         LOG.debug("Parsing input argument: '" + input_path + "'")
 
         if os.path.isfile(input_path):
-            parse(input_path, context, {}, suppress_handler, args.print_steps)
+            parse(input_path, context, {}, suppress_handler,
+                  'print_steps' in args)
         elif os.path.isdir(input_path):
             metadata_file = os.path.join(input_path, "metadata.json")
             metadata_dict = {}
@@ -204,6 +206,6 @@ def main(args):
             _, _, files = next(os.walk(input_path), ([], [], []))
             for f in files:
                 parse(os.path.join(input_path, f), context, metadata_dict,
-                      suppress_handler, args.print_steps)
+                      suppress_handler, 'print_steps' in args)
 
     os.chdir(original_cwd)

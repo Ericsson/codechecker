@@ -222,7 +222,7 @@ class Report(Base):
 
 
 class SkipPath(Base):
-    __tablename__ = 'skip_path'
+    __tablename__ = 'skip_paths'
 
     id = Column(Integer, autoincrement=True, primary_key=True)
     path = Column(String)

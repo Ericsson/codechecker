@@ -812,10 +812,10 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
 
           //--- Update the current report data ---//
 
-          that.buttonPane.reportData.review.comment = message;
-          that.buttonPane.reportData.review.status = status;
-          that.buttonPane.reportData.review.author = user;
-          that.buttonPane.reportData.review.date = new Date();
+          that.buttonPane.reportData.reviewData.comment = message;
+          that.buttonPane.reportData.reviewData.status = status;
+          that.buttonPane.reportData.reviewData.author = user;
+          that.buttonPane.reportData.reviewData.date = new Date();
 
           that.buttonPane.showReviewStatusMessageBox(message);
 
@@ -866,8 +866,8 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
       this._reviewStatusSelector = new Select({
         class     : 'review-status-options',
         options   : this._createOptionValues(),
-        value     : that.reportData.review.status,
-        prevValue : that.reportData.review.status,
+        value     : that.reportData.reviewData.status,
+        prevValue : that.reportData.reviewData.status,
         onChange : function () {
           that._reviewStatusDialog.show();
         },
@@ -879,7 +879,8 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
       this._reviewComment = dom.create('span', {
         class : 'customIcon review-comment',
         mouseover : function () {
-          var content = util.reviewStatusTooltipContent(that.reportData.review);
+          var content = util.reviewStatusTooltipContent(
+            that.reportData.reviewData);
 
           Tooltip.show(content.outerHTML, this, ['below']);
         },
@@ -999,12 +1000,14 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
       //--- Update the select widget values ---//
 
       this._reviewStatusSelector.set('options', this._createOptionValues());
-      this._reviewStatusSelector.set('value', report.review.status, false);
-      this._reviewStatusSelector.set('prevValue', report.review.status, false);
+      this._reviewStatusSelector.set('value',
+        report.reviewData.status, false);
+      this._reviewStatusSelector.set('prevValue',
+        report.reviewData.status, false);
 
       //--- Show or hide review status message box ---//
 
-      this.showReviewStatusMessageBox(report.review.comment);
+      this.showReviewStatusMessageBox(report.reviewData.comment);
     },
 
     /**
@@ -1012,7 +1015,8 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
      * unreviewed.
      */
     showReviewStatusMessageBox : function (message) {
-        domClass.toggle(this._reviewComment, 'hide', !this.reportData.review.author);
+        domClass.toggle(this._reviewComment, 'hide',
+          !this.reportData.reviewData.author);
     }
   });
 

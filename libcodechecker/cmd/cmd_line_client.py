@@ -11,8 +11,7 @@ import os
 import sys
 
 import shared
-import codeCheckerDBAccess
-from codeCheckerDBAccess import ttypes
+from codeCheckerDBAccess import constants, ttypes
 
 from libcodechecker import suppress_file_handler
 from libcodechecker.analyze import plist_parser
@@ -125,11 +124,11 @@ def handle_list_results(args):
 
     run_id, _ = run_info.get(args.name)
 
-    limit = codeCheckerDBAccess.constants.MAX_QUERY_SIZE
+    limit = constants.MAX_QUERY_SIZE
     offset = 0
 
     filters = []
-    report_filter = codeCheckerDBAccess.ttypes.ReportFilter()
+    report_filter = ttypes.ReportFilter()
 
     add_filter_conditions(report_filter, args.filter)
     filters.append(report_filter)
@@ -171,12 +170,12 @@ def handle_list_results(args):
 def handle_diff_results(args):
     def getDiffResults(getterFn, baseid, newid):
         report_filter = [
-            codeCheckerDBAccess.ttypes.ReportFilter()]
+            ttypes.ReportFilter()]
         add_filter_conditions(report_filter[0], args.filter)
         sort_mode = [(ttypes.SortMode(
             ttypes.SortType.FILENAME,
             ttypes.Order.ASC))]
-        limit = codeCheckerDBAccess.constants.MAX_QUERY_SIZE
+        limit = constants.MAX_QUERY_SIZE
         offset = 0
 
         all_results = []
@@ -226,13 +225,13 @@ def handle_diff_results(args):
 
     def getDiffReportDir(getterFn, baseid, report_dir, diff_type):
         report_filter = [
-            codeCheckerDBAccess.ttypes.ReportFilter()]
+            ttypes.ReportFilter()]
         add_filter_conditions(report_filter[0], args.filter)
 
         sort_mode = [(ttypes.SortMode(
             ttypes.SortType.FILENAME,
             ttypes.Order.ASC))]
-        limit = codeCheckerDBAccess.constants.MAX_QUERY_SIZE
+        limit = constants.MAX_QUERY_SIZE
         offset = 0
 
         base_results = []
@@ -359,7 +358,7 @@ def handle_list_result_types(args):
     client = setup_client(args.product_url)
 
     filters = []
-    report_filter = codeCheckerDBAccess.ttypes.ReportFilter()
+    report_filter = ttypes.ReportFilter()
 
     add_filter_conditions(report_filter, args.filter)
     filters.append(report_filter)
@@ -447,12 +446,10 @@ def handle_suppress(args):
     def bug_hash_filter(bug_id, filepath):
         filepath = '%' + filepath
         return [
-            codeCheckerDBAccess.ttypes.ReportFilter(bugHash=bug_id,
-                                                    filepath=filepath),
-            codeCheckerDBAccess.ttypes.ReportFilter(bugHash=bug_id,
-                                                    filepath=filepath)]
+            ttypes.ReportFilter(bugHash=bug_id, filepath=filepath),
+            ttypes.ReportFilter(bugHash=bug_id, filepath=filepath)]
 
-    limit = codeCheckerDBAccess.constants.MAX_QUERY_SIZE
+    limit = constants.MAX_QUERY_SIZE
 
     client = setup_client(args.product_url)
 

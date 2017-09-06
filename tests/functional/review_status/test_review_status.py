@@ -68,8 +68,8 @@ class TestReviewStatus(unittest.TestCase):
         logging.debug('Bug review status changed successfully')
 
         report = self._cc_client.getReport(bug.reportId)
-        self.assertEqual(report.review.comment, review_comment)
-        self.assertEqual(report.review.status, status)
+        self.assertEqual(report.reviewData.comment, review_comment)
+        self.assertEqual(report.reviewData.status, status)
 
         # Try to change review status back to unreviewed.
         status = shared.ttypes.ReviewStatus.UNREVIEWED
@@ -82,8 +82,8 @@ class TestReviewStatus(unittest.TestCase):
         logging.debug("Bug review status changed successfully")
 
         report = self._cc_client.getReport(bug.reportId)
-        self.assertEqual(report.review.comment, '')
-        self.assertEqual(report.review.status, status)
+        self.assertEqual(report.reviewData.comment, '')
+        self.assertEqual(report.reviewData.status, status)
 
         # Change review status to false positive.
         review_comment = 'This is not a bug'
@@ -95,8 +95,8 @@ class TestReviewStatus(unittest.TestCase):
         logging.debug('Bug review status changed successfully')
 
         report = self._cc_client.getReport(bug.reportId)
-        self.assertEqual(report.review.comment, review_comment)
-        self.assertEqual(report.review.status, status)
+        self.assertEqual(report.reviewData.comment, review_comment)
+        self.assertEqual(report.reviewData.status, status)
 
         # Change review status to won't fix.
         review_comment = u''
@@ -108,5 +108,5 @@ class TestReviewStatus(unittest.TestCase):
         logging.debug('Bug review status changed successfully')
 
         report = self._cc_client.getReport(bug.reportId)
-        self.assertEqual(report.review.comment, review_comment)
-        self.assertEqual(report.review.status, status)
+        self.assertEqual(report.reviewData.comment, review_comment)
+        self.assertEqual(report.reviewData.status, status)

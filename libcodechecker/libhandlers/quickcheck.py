@@ -129,9 +129,6 @@ def add_arguments_to_parser(parser):
     Add the subcommand's arguments to the given argparse.ArgumentParser.
     """
 
-    parser.add_argument('--keep-tmp',
-                        action=DeprecatedOptionAction)
-
     log_args = parser.add_argument_group(
         "log arguments",
         "Specify how the build information database should be obtained. You "
@@ -141,8 +138,8 @@ def add_arguments_to_parser(parser):
     log_args.add_argument('-q', '--quiet-build',
                           dest="quiet_build",
                           action='store_true',
-                          default=False,
                           required=False,
+                          default=argparse.SUPPRESS,
                           help="Do not print the output of the build tool "
                                "into the output of this command.")
 
@@ -152,7 +149,6 @@ def add_arguments_to_parser(parser):
                           type=str,
                           dest="command",
                           default=argparse.SUPPRESS,
-                          required=False,
                           help="Execute and record a build command. Build "
                                "commands can be simple calls to 'g++' or "
                                "'clang++' or 'make', but a more complex "
@@ -162,6 +158,7 @@ def add_arguments_to_parser(parser):
     log_args.add_argument('-l', '--logfile',
                           type=str,
                           dest="logfile",
+                          default=argparse.SUPPRESS,
                           help="Use an already existing JSON compilation "
                                "command database file specified at this path.")
 
@@ -175,8 +172,7 @@ def add_arguments_to_parser(parser):
                                     "More threads mean faster analysis at "
                                     "the cost of using more memory.")
 
-    # TODO: Analyze knows '--ignore' also for this.
-    analyzer_opts.add_argument('-i', '--skip',
+    analyzer_opts.add_argument('-i', '--ignore', '--skip',
                                dest="skipfile",
                                required=False,
                                default=argparse.SUPPRESS,
@@ -200,8 +196,8 @@ def add_arguments_to_parser(parser):
 
     analyzer_opts.add_argument('--add-compiler-defaults',
                                action='store_true',
-                               default=False,
                                required=False,
+                               default=argparse.SUPPRESS,
                                help="Retrieve compiler-specific configuration "
                                     "from the analyzers themselves, and use "
                                     "them with Clang. This is used when the "
@@ -256,11 +252,11 @@ def add_arguments_to_parser(parser):
 
     output_opts = parser.add_argument_group("output arguments")
 
-    # TODO: Parse does not know '-s' or '--steps' for this.
-    output_opts.add_argument('-s', '--steps', '--print-steps',
+    output_opts.add_argument('--print-steps',
                              dest="print_steps",
                              action="store_true",
                              required=False,
+                             default=argparse.SUPPRESS,
                              help="Print the steps the analyzers took in "
                                   "finding the reported defect.")
 
@@ -299,9 +295,9 @@ def main(args):
             # Translate the argument list between quickcheck and log.
             log_args = argparse.Namespace(
                 command=args.command,
-                quiet_build=args.quiet_build,
                 logfile=logfile
             )
+            __update_if_key_exists(args, log_args, "quiet_build")
             __update_if_key_exists(args, log_args, "verbose")
 
             log_module = __load_module("log")
@@ -322,14 +318,14 @@ def main(args):
             output_path=workspace,
             output_format='plist',
             clean=True,
-            jobs=args.jobs,
-            add_compiler_defaults=args.add_compiler_defaults
+            jobs=args.jobs
         )
         # Some arguments don't have default values.
         # We can't set these keys to None because it would result in an error
         # after the call.
         args_to_update = ['skipfile',
                           'analyzers',
+                          'add_compiler_defaults',
                           'clangsa_args_cfg_file',
                           'tidy_args_cfg_file',
                           'ordered_checkers'  # enable and disable.
@@ -347,9 +343,9 @@ def main(args):
         # --- Step 3.: Print to stdout.
         parse_args = argparse.Namespace(
             input=[workspace],
-            input_format='plist',
-            print_steps=args.print_steps
+            input_format='plist'
         )
+        __update_if_key_exists(args, parse_args, "print_steps")
         __update_if_key_exists(args, parse_args, "verbose")
 
         parse_module = __load_module("parse")

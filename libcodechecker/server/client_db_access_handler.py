@@ -25,6 +25,7 @@ import sqlalchemy
 from sqlalchemy import func
 
 import shared
+from shared.constants import API_VERSION
 from codeCheckerDBAccess import constants
 from codeCheckerDBAccess.ttypes import *
 
@@ -465,7 +466,7 @@ class ThriftRequestHandler(object):
         run_ids = [r[0] for r in res]
         if cmp_data:
             all_rids = set(run_ids)
-            cmp_rids = set(cmp_data.run_ids)
+            cmp_rids = set(cmp_data.runIds)
             run_ids = list(all_rids.difference(cmp_rids))
 
         return run_ids
@@ -513,7 +514,6 @@ class ThriftRequestHandler(object):
                                        instance.duration,
                                        reportCount,
                                        instance.command,
-                                       None,  # can_delete
                                        status_sum[instance.id]
                                        ))
             return results
@@ -571,7 +571,7 @@ class ThriftRequestHandler(object):
                 column=report.column,
                 checkerId=report.checker_id,
                 severity=report.severity,
-                review=review_data,
+                reviewData=review_data,
                 detectionStatus=detection_status_enum(report.detection_status))
         except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
             msg = str(alchemy_ex)
@@ -637,7 +637,7 @@ class ThriftRequestHandler(object):
                                column=report.column,
                                checkerId=report.checker_id,
                                severity=report.severity,
-                               review=review_data,
+                               reviewData=review_data,
                                detectionStatus=detection_status_enum(
                                    report.detection_status))
                 )
@@ -723,7 +723,7 @@ class ThriftRequestHandler(object):
                                column=report.column,
                                checkerId=report.checker_id,
                                severity=report.severity,
-                               review=review_data,
+                               reviewData=review_data,
                                detectionStatus=detection_status_enum(
                                    report.detection_status))
                 )
@@ -1354,8 +1354,8 @@ class ThriftRequestHandler(object):
         in the returned run id list.
         """
         base_run_ids = run_ids
-        new_run_ids = cmp_data.run_ids
-        diff_type = cmp_data.diff_type
+        new_run_ids = cmp_data.runIds
+        diff_type = cmp_data.diffType
 
         base_line_hashes = self.__get_hashes_for_runs(session, base_run_ids)
 
@@ -1762,7 +1762,7 @@ class ThriftRequestHandler(object):
                     column=report.column,
                     checkerId=report.checker_id,
                     severity=report.severity,
-                    review=review_data,
+                    reviewData=review_data,
                     detectionStatus=detection_status_enum(
                         report.detection_status)))
 
@@ -1836,7 +1836,7 @@ class ThriftRequestHandler(object):
                     column=report.column,
                     checkerId=report.checker_id,
                     severity=report.severity,
-                    review=review_data))
+                    reviewData=review_data))
 
             return results
 
@@ -1968,7 +1968,7 @@ class ThriftRequestHandler(object):
     @timeit
     def getAPIVersion(self):
         # Returns the thrift api version.
-        return shared.constants.API_VERSION
+        return API_VERSION
 
     # -----------------------------------------------------------------------
     @timeit

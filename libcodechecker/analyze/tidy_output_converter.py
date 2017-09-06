@@ -16,7 +16,7 @@ import re
 
 from libcodechecker.logger import LoggerFactory
 
-LOG = LoggerFactory.get_new_logger('TIDY_OUTPUT_HANDLER')
+LOG = LoggerFactory.get_new_logger('TIDY OUTPUT CONVERTER')
 
 
 class Note(object):

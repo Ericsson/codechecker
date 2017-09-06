@@ -11,7 +11,7 @@ from libcodechecker.analyze.analyzers.result_handler_plist_to_stdout \
     import PlistToStdout
 from libcodechecker.logger import LoggerFactory
 
-LOG = LoggerFactory.get_new_logger('CLANG_TIDY_RESULT_HANDLER')
+LOG = LoggerFactory.get_new_logger('CLANG-TIDY RESULT HANDLER')
 
 
 def generate_plist_from_tidy_result(output_file, tidy_stdout):

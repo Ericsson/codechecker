@@ -72,7 +72,7 @@ def add_arguments_to_parser(parser):
     parser.add_argument('-q', '--quiet-build',
                         dest="quiet_build",
                         action='store_true',
-                        default=False,
+                        default=argparse.SUPPRESS,
                         required=False,
                         help="Do not print the output of the build tool into "
                              "the output of this command.")
@@ -94,4 +94,4 @@ def main(args):
     build_manager.perform_build_command(args.logfile,
                                         args.command,
                                         context,
-                                        silent=args.quiet_build)
+                                        silent='quiet_build' in args)

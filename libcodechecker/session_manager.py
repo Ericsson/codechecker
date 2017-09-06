@@ -443,12 +443,6 @@ class SessionManager_Client:
                                         ".codechecker.passwords.json")
         LOG.debug(session_cfg_file)
 
-        if not os.path.exists(session_cfg_file):
-            # Filenames were different pre-5.8.
-            old_file = os.path.join(user_home, ".codechecker_passwords.json")
-            if os.path.exists(old_file):
-                shutil.move(old_file, session_cfg_file)
-
         scfg_dict = load_session_cfg(session_cfg_file)
 
         if not scfg_dict.get("credentials"):
@@ -461,15 +455,6 @@ class SessionManager_Client:
         # Check and load token storage for user
         self.token_file = os.path.join(user_home, ".codechecker.session.json")
         LOG.debug(self.token_file)
-
-        if not os.path.exists(self.token_file):
-            # Filenames were different pre-5.8.
-            old_file = os.path.join(user_home,
-                                    ".codechecker_{0}.session.json".format(
-                                        getpass.getuser()
-                                    ))
-            if os.path.exists(old_file):
-                shutil.move(old_file, self.token_file)
 
         if os.path.exists(self.token_file):
             with open(self.token_file, 'r') as f:

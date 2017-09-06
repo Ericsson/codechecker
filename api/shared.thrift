@@ -6,7 +6,6 @@
 
 const string API_VERSION = '6.0'
 
-//-----------------------------------------------------------------------------
 struct BugPathEvent {
   1: i64    startLine,
   2: i64    startCol,
@@ -18,7 +17,6 @@ struct BugPathEvent {
 }
 typedef list<BugPathEvent> BugPathEvents
 
-//-----------------------------------------------------------------------------
 struct BugPathPos {
   1: i64    startLine,
   2: i64    startCol,
@@ -29,23 +27,21 @@ struct BugPathPos {
 }
 typedef list<BugPathPos> BugPath
 
-//-----------------------------------------------------------------------------
+// TODO: This seems to be unused?
 struct SuppressBugData {
-  1: string bug_hash,
-  2: string file_name,
+  1: string bugHash,
+  2: string fileName,
   3: string comment
 }
 typedef list<SuppressBugData> SuppressBugList
 
-//-----------------------------------------------------------------------------
 struct ConfigValue {
-  1: string checker_name,
+  1: string checkerName,
   2: string attribute,
   3: string value
 }
 typedef list<ConfigValue> CheckerConfigList
 
-//-----------------------------------------------------------------------------
 enum Severity{
   UNSPECIFIED   = 0,
   STYLE         = 10,
@@ -55,18 +51,16 @@ enum Severity{
   CRITICAL      = 50
 }
 
-//-----------------------------------------------------------------------------
 enum ErrorCode{
   DATABASE,
   IOERROR,
   GENERAL,
-  AUTH_DENIED, //Authentication denied. We do not allow access to the service.
-  UNAUTHORIZED //Authorization denied. User does not have right to perform an action.
+  AUTH_DENIED, // Authentication denied - We do not allow access to the service.
+  UNAUTHORIZED // User does not have the rights to perform the action.
 }
 
-//-----------------------------------------------------------------------------
 exception RequestFailed {
-  1: ErrorCode error_code,
+  1: ErrorCode errorCode,
   2: string    message
 }
 
