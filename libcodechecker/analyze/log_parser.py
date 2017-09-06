@@ -55,78 +55,52 @@ def get_compiler_includes(compiler, extra_opts=None):
             if line.startswith(end_mark):
                 do_append = False
             if do_append:
-                include_paths.append("-I"+line)
+                include_paths.append("-I" + line)
             if line.startswith(start_mark):
                 do_append = True
 
     except OSError as oerr:
-        LOG.error("Cannot find include paths:" + oerr.strerror+"\n")
+        LOG.error("Cannot find include paths: " + oerr.strerror + "\n")
     return include_paths
 
 
-# Certain includes are defined by GCC to a GCC internal "macro" never exported
-# by the compiler, such as
-# #define __has_include(STR) __has_include__(STR)
-# which causes Clang to fail in certain cross-compiler and cross-architecture
-# setups due to blabla__ not being defined by Clang in a way GCC does it.
-#
-# Thus, we ignore these "defines" and let Clang fall back to its own
-# __has_include definition. List taken from the "extension" list of Clang and
-# the GCC extension list referenced therein:
-# https://clang.llvm.org/docs/LanguageExtensions.html
-IGNORED_DEFINES = frozenset(
-    ['__has_include'])  # Matches __has_include and __has_include_next.
-
-
-def get_compiler_defines(compiler, extra_opts=None):
+def get_compiler_target(compiler):
     """
-    Returns a list of default defines of the given compiler.
-    """
-    if extra_opts is None:
-        extra_opts = []
+    Returns the target triple of the given compiler as a string.
 
-    cmd = compiler + " " + ' '.join(extra_opts) + " -dM -E -"
-    LOG.debug("Retrieving default defines via '" + cmd + "'")
-    defines = []
+    If the compiler is not a version of GCC, an empty string is returned.
+    Compilers other than GCC might have default targets differing from
+    the build target.
+    """
+    target_label = "Target:"
+    target = ""
+
+    gcc_label = "gcc"
+    gcc = False
+
+    cmd = compiler + ' -v'
+    LOG.debug("Retrieving target platform information via '" + cmd + "'")
+
     try:
-        with open(os.devnull, 'r') as FNULL:
-            proc = subprocess.Popen(shlex.split(cmd),
-                                    stdin=FNULL,
-                                    stdout=subprocess.PIPE,
-                                    stderr=subprocess.PIPE)
-            out, err = proc.communicate("")
-            for line in out.splitlines(True):
-                LOG.debug("define: " + line)
-                define = line.strip().split(" ")[1:]
+        proc = subprocess.Popen(shlex.split(cmd),
+                                stdin=subprocess.PIPE,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE)
 
-                variable = define[0]
-                value = ' '.join(define[1:])
+        _, err = proc.communicate("")
+        for line in err.splitlines(True):
+            line = line.strip().split()
+            if line[0] == target_label:
+                target = line[1]
+            if line[0] == gcc_label:
+                gcc = True
+        if not gcc:
+            target = ""
 
-                if any(ignored_def in variable
-                       for ignored_def in IGNORED_DEFINES):
-                    LOG.debug("Refusing to pass-through define {}={}, it is "
-                              "ignored.".format(variable, value))
-                    continue
-
-                if value:
-                    if '"' in value:
-                        # Certain defines might contain string literals, such
-                        # as
-                        #   #define __VERSION__ "5.4.0 20160609"
-                        # which causes a problem when manually defining as
-                        # Clang will not understand '-D__VERSION__=""...""'
-                        # (note double quote) and instead attempt to use it as
-                        # a folder...
-                        value = value.replace('"', r'\"')
-
-                    d = "-D{0}=\"{1}\"".format(variable, value)
-                else:
-                    d = "-D{0}".format(variable)
-
-                defines.append(d)
     except OSError as oerr:
-        LOG.error("Cannot find defines:" + oerr.strerror+"\n")
-    return defines
+        LOG.error("Cannot find compiler target: " + oerr.strerror + "\n")
+
+    return target
 
 
 # -----------------------------------------------------------------------------
@@ -140,8 +114,8 @@ def parse_compile_commands_json(logfile, add_compiler_defaults=False):
     logfile.seek(0)
     data = json.load(logfile)
 
-    compiler_defines = {}
     compiler_includes = {}
+    compiler_target = ''
 
     counter = 0
     for entry in data:
@@ -186,7 +160,7 @@ def parse_compile_commands_json(logfile, add_compiler_defaults=False):
 
         # Store the compiler built in include paths and defines.
         if add_compiler_defaults and results.compiler:
-            if not (results.compiler in compiler_defines):
+            if not (results.compiler in compiler_includes):
                 # Fetch defaults from the compiler,
                 # make sure we use the correct architecture.
                 extra_opts = []
@@ -196,12 +170,13 @@ def parse_compile_commands_json(logfile, add_compiler_defaults=False):
                         if re.match(pattern, comp_opt):
                             extra_opts.append(comp_opt)
 
-                compiler_defines[results.compiler] = \
-                    get_compiler_defines(results.compiler, extra_opts)
                 compiler_includes[results.compiler] = \
                     get_compiler_includes(results.compiler, extra_opts)
-            action.compiler_defines = compiler_defines[results.compiler]
+                compiler_target = get_compiler_target(results.compiler)
             action.compiler_includes = compiler_includes[results.compiler]
+
+            if compiler_target != "":
+                action.analyzer_options.append("--target=" + compiler_target)
 
         if results.action == option_parser.ActionType.COMPILE or \
            results.action == option_parser.ActionType.LINK:
