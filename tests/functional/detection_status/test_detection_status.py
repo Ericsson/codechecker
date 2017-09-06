@@ -11,6 +11,7 @@ import os
 import unittest
 
 import shared
+from codeCheckerDBAccess.ttypes import Encoding
 
 from libtest import codechecker
 from libtest import env
@@ -60,19 +61,11 @@ class TestDetectionStatus(unittest.TestCase):
         with open(os.path.join(self._test_dir, 'project_info.json'), 'w') as f:
             json.dump(project_info, f)
 
-    def tearDown(self):
-        """Restore environment after tests have ran."""
-        os.chdir(self.__old_pwd)
-
-    def _create_source_file(self, version):
-        if version == 1:
-            source = """
+        self.sources = ["""
 int main()
 {
   int i = 1 / 0;
-}"""
-        elif version == 2:
-            source = """
+}""", """
 int main()
 {
   int i = 1 / 0;
@@ -80,9 +73,7 @@ int main()
   int* p = 0;
 
   i = *p + 42;
-}"""
-        elif version == 3:
-            source = """
+}""", """
 int main()
 {
   int i = 1 / 2;
@@ -90,9 +81,7 @@ int main()
   int* p = 0;
 
   i = *p + 42;
-}"""
-        elif version == 4:
-            source = """
+}""", """
 
 
 int main()
@@ -102,10 +91,15 @@ int main()
   int* p = 0;
 
   i = *p + 42;
-}"""
+}"""]
 
+    def tearDown(self):
+        """Restore environment after tests have ran."""
+        os.chdir(self.__old_pwd)
+
+    def _create_source_file(self, version):
         with open(os.path.join(self._test_dir, self._source_file), 'w') as f:
-            f.write(source)
+            f.write(self.sources[version])
 
         codechecker.check(self._codechecker_cfg,
                           'hello',
@@ -118,7 +112,7 @@ int main()
         """
 
         # Check the first file version
-        self._create_source_file(1)
+        self._create_source_file(0)
 
         runs = self._cc_client.getRunData(None)
         run_id = max(map(lambda run: run.runId, runs))
@@ -131,7 +125,7 @@ int main()
             reports)))
 
         # Check the second file version
-        self._create_source_file(2)
+        self._create_source_file(1)
         reports = self._cc_client.getRunResults([run_id], 100, 0, [], [])
         for report in reports:
             if report.detectionStatus == \
@@ -147,7 +141,7 @@ int main()
                 self.assertTrue(False)
 
         # Check the third file version
-        self._create_source_file(3)
+        self._create_source_file(2)
         reports = self._cc_client.getRunResults([run_id], 100, 0, [], [])
         for report in reports:
             if report.detectionStatus == \
@@ -155,6 +149,17 @@ int main()
                 self.assertIn(report.bugHash,
                               ['209be2f6905590d99853ce01d52a78e0',
                                'e8f47588c8095f02a53e338984ce52ba'])
+
+                file_content = self._cc_client.getSourceFileData(
+                    report.fileId,
+                    True,
+                    Encoding.DEFAULT).fileContent
+
+                self.assertEqual(
+                    file_content,
+                    self.sources[1],
+                    "Resolved bugs should be shown with the old file content.")
+
             elif report.detectionStatus == \
                     shared.ttypes.DetectionStatus.NEW:
                 self.assertIn(report.bugHash,
@@ -163,11 +168,23 @@ int main()
                     shared.ttypes.DetectionStatus.UNRESOLVED:
                 self.assertIn(report.bugHash,
                               ['cbd629ba2ee25c41cdbf5e2e336b1b1c'])
+
+                file_content = self._cc_client.getSourceFileData(
+                    report.fileId,
+                    True,
+                    Encoding.DEFAULT).fileContent
+
+                self.assertEqual(
+                    file_content,
+                    self.sources[2],
+                    "Unresolved bug should be shown with the new file "
+                    "content.")
+
             else:
                 self.assertTrue(False)
 
         # Check the second file version again
-        self._create_source_file(2)
+        self._create_source_file(1)
         reports = self._cc_client.getRunResults([run_id], 100, 0, [], [])
         for report in reports:
             if report.detectionStatus == \
@@ -185,7 +202,7 @@ int main()
                               ['ac147b31a745d91be093bd70bbc5567c'])
 
         # Check the fourth file version
-        self._create_source_file(4)
+        self._create_source_file(3)
         reports = self._cc_client.getRunResults([run_id], 100, 0, [], [])
         for report in reports:
             if report.detectionStatus == \
@@ -194,6 +211,17 @@ int main()
                               ['209be2f6905590d99853ce01d52a78e0',
                                'e8f47588c8095f02a53e338984ce52ba',
                                'cbd629ba2ee25c41cdbf5e2e336b1b1c'])
+
+                file_content = self._cc_client.getSourceFileData(
+                    report.fileId,
+                    True,
+                    Encoding.DEFAULT).fileContent
+
+                self.assertEqual(
+                    file_content,
+                    self.sources[3],
+                    "Reopened bugs should be shown with the new file content.")
+
             elif report.detectionStatus == \
                     shared.ttypes.DetectionStatus.RESOLVED:
                 self.assertIn(report.bugHash,
