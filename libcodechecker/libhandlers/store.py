@@ -340,5 +340,6 @@ def main(args):
         LOG.info("Storage finished successfully.")
     except Exception as ex:
         LOG.info("Storage failed: " + str(ex))
+        sys.exit(1)
     finally:
         os.remove(zip_file)
