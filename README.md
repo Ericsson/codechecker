@@ -194,18 +194,27 @@ export PATH=~/{user path}/build/bin:$PATH
 
 ### Check the test project
 
-Check your project using SQLite database. The database will be placed in your
-workspace directory (`~/.codechecker` by default), which can be provided via
-the `-w` flag.
+
+Analyze your project with the `check` command:
+
+    CodeChecker check -b "cd ~/your-project && make clean && make" -o ~/results
+
+`check` will print an overview of the issues found in your project by the
+analyzers.
 
 Start a CodeChecker web and storage server in another terminal or as a
 background process. By default it will listen on `localhost:8001`.
 
+The SQLite database containing the reports will be placed in your workspace
+directory (`~/.codechecker` by default), which can be provided via the `-w`
+flag.
+
     CodeChecker server
 
-Analyze your project with the check command:
+Store your analysis reports onto the server to be able to use the Web Viewer.
 
-    CodeChecker check test-check -b "cd ~/your-project && make clean && make"
+    CodeChecker store ~/results -n my-project
+
 
 ### View results
 

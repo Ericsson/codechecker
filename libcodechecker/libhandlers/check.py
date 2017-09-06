@@ -4,21 +4,19 @@
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
 """
-Check implements a wrapper over 'log' + 'analyze' + 'store', essentially
-giving an easy way to perform analysis from a log command and push them to a
-remove CodeChecker server.
+Check implements a wrapper over 'log' + 'analyze' + 'parse', essentially
+giving an easy way to perform analysis from a log command and print results to
+stdout.
 """
 
 import argparse
 import os
-import sys
 
 from libcodechecker import libhandlers
-from libcodechecker import util
 from libcodechecker.analyze.analyzers import analyzer_types
 from libcodechecker.logger import add_verbose_arguments
 from libcodechecker.logger import LoggerFactory
-from libcodechecker.util import split_product_url
+from libcodechecker.util import get_default_workspace
 
 LOG = LoggerFactory.get_new_logger('CHECK')
 
@@ -53,50 +51,6 @@ class OrderedCheckersAction(argparse.Action):
         namespace.ordered_checkers = ordered_checkers
 
 
-class DeprecatedOptionAction(argparse.Action):
-    """
-    Deprecated argument action.
-    """
-
-    def __init__(self,
-                 option_strings,
-                 dest,
-                 nargs=0,
-                 const=None,
-                 default=None,
-                 type=None,
-                 choices=None,
-                 required=False,
-                 help=None,
-                 metavar=None,
-                 kill_if_used=False,
-                 error_string=None):
-        super(DeprecatedOptionAction, self). \
-            __init__(option_strings,
-                     dest,
-                     const='deprecated_option',
-                     default=argparse.SUPPRESS,
-                     type=None,
-                     nargs=nargs,
-                     choices=None,
-                     required=False,
-                     help="(Usage of this argument is DEPRECATED and has no "
-                          "effect!)",
-                     metavar='')
-        self.__error_string = error_string
-        self.__kill_if_used = kill_if_used
-
-    def __call__(self, parser, namespace, value=None, option_string=None):
-        if not self.__error_string:
-            LOG.warning("Deprecated command line option used: '" +
-                        option_string + "'")
-        else:
-            LOG.warning(self.__error_string)
-
-        if self.__kill_if_used:
-            setattr(namespace, '_deprecated', True)
-
-
 def get_argparser_ctor_args():
     """
     This method returns a dict containing the kwargs for constructing an
@@ -108,30 +62,30 @@ def get_argparser_ctor_args():
         'formatter_class': argparse.ArgumentDefaultsHelpFormatter,
 
         # Description is shown when the command's help is queried directly
-        'description': "Run analysis for a project with storing results "
-                       "in the database. Check only needs a build command or "
-                       "an already existing logfile and performs every step "
-                       "of doing the analysis in batch.",
+        'description': "Run analysis for a project with printing results "
+                       "immediately on the standard output. Check only "
+                       "needs a build command or an already existing logfile "
+                       "and performs every step of doing the analysis in "
+                       "batch.",
 
         # Epilogue is shown after the arguments when the help is queried
         # directly.
         'epilog': "If you wish to reuse the logfile resulting from executing "
                   "the build, see 'codechecker-log'. To keep analysis "
                   "results for later, see and use 'codechecker-analyze'. "
-                  "To store previously saved analysis results in a database, "
-                  "see 'codechecker-store'. 'CodeChecker check' exposes a "
-                  "wrapper calling these three commands in succession. Please "
-                  "make sure your build command actually builds the files -- "
-                  "it is advised to execute builds on empty trees, aka. after "
-                  "a 'make clean', as CodeChecker only analyzes files that "
-                  "had been used by the build system. Analysis results can be "
-                  "viewed by connecting to the server which was used in "
-                  "storing the results from a Web browser, or via "
-                  "'CodeChecker cmd'.",
+                  "To print human-readable output from previously saved "
+                  "analysis results, see 'codechecker-parse'. 'CodeChecker "
+                  "check' exposes a wrapper calling these three commands "
+                  "in succession. Please make sure your build command "
+                  "actually builds the files -- it is advised to execute "
+                  "builds on empty trees, aka. after a 'make clean', as "
+                  "CodeChecker only analyzes files that had been used by the "
+                  "build system.",
 
         # Help is shown when the "parent" CodeChecker command lists the
         # individual subcommands.
-        'help': "Perform analysis on a project and store results to database."
+        'help': "Perform analysis on a project and print results to standard "
+                "output."
     }
 
 
@@ -140,14 +94,21 @@ def add_arguments_to_parser(parser):
     Add the subcommand's arguments to the given argparse.ArgumentParser.
     """
 
-    # TODO: Workspace is no longer a concept in the new subcommands.
-    parser.add_argument('-w', '--workspace',
-                        type=str,
-                        default=util.get_default_workspace(),
-                        dest="workspace",
-                        help="Directory where CodeChecker can store analysis "
-                             "related data, such as intermediate result files "
-                             "and the database.")
+    parser.add_argument('-o', '--output',
+                        dest="output_dir",
+                        required=False,
+                        default=os.path.join(get_default_workspace(),
+                                             'reports'),
+                        help="Store the analysis output in the given folder.")
+
+    parser.add_argument('-q', '--quiet',
+                        dest="quiet",
+                        action='store_true',
+                        required=False,
+                        default=argparse.SUPPRESS,
+                        help="If specified, the build tool's and the "
+                             "analyzers' output will not be printed to the "
+                             "standard output.")
 
     parser.add_argument('-f', '--force',
                         dest="force",
@@ -168,21 +129,12 @@ def add_arguments_to_parser(parser):
         "need to specify either an already existing log file, or a build "
         "command which will be used to generate a log file on the fly.")
 
-    log_args.add_argument('-q', '--quiet-build',
-                          dest="quiet_build",
-                          action='store_true',
-                          default=False,
-                          required=False,
-                          help="Do not print the output of the build tool "
-                               "into the output of this command.")
-
     log_args = log_args.add_mutually_exclusive_group(required=True)
 
     log_args.add_argument('-b', '--build',
                           type=str,
                           dest="command",
                           default=argparse.SUPPRESS,
-                          required=False,
                           help="Execute and record a build command. Build "
                                "commands can be simple calls to 'g++' or "
                                "'clang++' or 'make', but a more complex "
@@ -192,6 +144,7 @@ def add_arguments_to_parser(parser):
     log_args.add_argument('-l', '--logfile',
                           type=str,
                           dest="logfile",
+                          default=argparse.SUPPRESS,
                           help="Use an already existing JSON compilation "
                                "command database file specified at this path.")
 
@@ -232,11 +185,12 @@ def add_arguments_to_parser(parser):
                                required=False,
                                default=argparse.SUPPRESS,
                                help="Retrieve compiler-specific configuration "
-                                    "from the compilers themselves, and use "
+                                    "from the analyzers themselves, and use "
                                     "them with Clang. This is used when the "
                                     "compiler on the system is special, e.g. "
                                     "when doing cross-compilation.")
 
+    # TODO: One day, get rid of these. See Issue #36, #427.
     analyzer_opts.add_argument('--saargs',
                                dest="clangsa_args_cfg_file",
                                required=False,
@@ -282,48 +236,23 @@ def add_arguments_to_parser(parser):
                                     "to BE PROHIBITED from use in the "
                                     "analysis.")
 
-    server_args = parser.add_argument_group(
-        "server arguments",
-        "Specifies a 'CodeChecker server' instance which will be used to "
-        "store the results. This server must be running and listening, and "
-        "the given product must exist prior to the 'check' command being ran.")
+    output_opts = parser.add_argument_group("output arguments")
 
-    server_args.add_argument('--url',
-                             type=str,
-                             metavar='PRODUCT_URL',
-                             dest="product_url",
-                             default="localhost:8001/Default",
+    output_opts.add_argument('--print-steps',
+                             dest="print_steps",
+                             action="store_true",
                              required=False,
-                             help="The URL of the product to store the "
-                                  "results for, in the format of "
-                                  "'host:port/Endpoint'.")
-
-    server_args.add_argument(type=str,
-                             dest="name",
-                             metavar='RUN_NAME',
-                             help="The name of the analysis run to use in "
-                             "storing the reports to the database.")
+                             default=argparse.SUPPRESS,
+                             help="Print the steps the analyzers took in "
+                                  "finding the reported defect.")
 
     add_verbose_arguments(parser)
-
-    def __kill_deprec(args):
-        if '_deprecated' in args:
-            LOG.warning("A deprecated argument was passed to the "
-                        "commandline. This argument has no effect anymore, "
-                        "and the behaviour has changed.")
-            LOG.error("Execution halted: CodeChecker would work in an "
-                      "unexpected way with this argument passed.")
-            sys.exit(2)  # argparse kills with error code 2.
-
-        # Call the main process if everything matches.
-        main(args)
-
-    parser.set_defaults(func=__kill_deprec)
+    parser.set_defaults(func=main)
 
 
 def main(args):
     """
-    Execute a wrapper over log-analyze-store, aka 'check'.
+    Execute a wrapper over log-analyze-parse, aka 'check'.
     """
 
     def __load_module(name):
@@ -342,26 +271,25 @@ def main(args):
         if key in source:
             setattr(target, key, getattr(source, key))
 
-    workspace = os.path.abspath(args.workspace)
-    report_dir = os.path.join(workspace, "reports")
-    if not os.path.isdir(report_dir):
-        os.makedirs(report_dir)
+    output_dir = os.path.abspath(args.output_dir)
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
 
     logfile = None
     try:
         # --- Step 1.: Perform logging if build command was specified.
         if 'command' in args:
-            logfile = os.path.join(workspace, "compile_cmd.json")
+            logfile = os.path.join(output_dir, 'compile_cmd.json')
 
-            # Translate the argument list between quickcheck and log.
+            # Translate the argument list between check and log.
             log_args = argparse.Namespace(
                 command=args.command,
-                quiet_build=args.quiet_build,
                 logfile=logfile
             )
-            __update_if_key_exists(args, log_args, "verbose")
+            __update_if_key_exists(args, log_args, 'quiet')
+            __update_if_key_exists(args, log_args, 'verbose')
 
-            log_module = __load_module("log")
+            log_module = __load_module('log')
             LOG.debug("Calling LOG with args:")
             LOG.debug(log_args)
 
@@ -376,75 +304,51 @@ def main(args):
 
         analyze_args = argparse.Namespace(
             logfile=[logfile],
-            output_path=report_dir,
+            output_path=output_dir,
             output_format='plist',
             jobs=args.jobs
         )
         # Some arguments don't have default values.
         # We can't set these keys to None because it would result in an error
         # after the call.
-        args_to_update = ['skipfile',
+        args_to_update = ['quiet',
+                          'skipfile',
                           'analyzers',
                           'add_compiler_defaults',
                           'clangsa_args_cfg_file',
                           'tidy_args_cfg_file',
-                          'ordered_checkers'  # enable and disable.
+                          'ordered_checkers'  # --enable and --disable.
                           ]
         for key in args_to_update:
             __update_if_key_exists(args, analyze_args, key)
         if 'force' in args:
             setattr(analyze_args, 'clean', True)
-        __update_if_key_exists(args, analyze_args, "verbose")
+        __update_if_key_exists(args, analyze_args, 'verbose')
 
-        analyze_module = __load_module("analyze")
+        analyze_module = __load_module('analyze')
         LOG.debug("Calling ANALYZE with args:")
         LOG.debug(analyze_args)
 
         analyze_module.main(analyze_args)
 
-        # --- Step 3.: Store to database.
-        # TODO: The store command supposes that in case of PostgreSQL a
-        # database instance is already running. The "CodeChecker check" command
-        # is able to start its own instance in the given workdir, so we pass
-        # this argument to the argument list. Although this is not used by
-        # store command at all, the SQL utility is still able to start the
-        # database. When changing this behavior, the workspace argument should
-        # be removed from here.
-        store_args = argparse.Namespace(
-            input=[report_dir],
-            input_format='plist',
-            product_url=args.product_url
+        # --- Step 3.: Print to stdout.
+        parse_args = argparse.Namespace(
+            input=[output_dir],
+            input_format='plist'
         )
-        # Some arguments don't have default values.
-        # We can't set these keys to None because it would result in an error
-        # after the call.
-        args_to_update = ['name',
-                          'force']
-        for key in args_to_update:
-            __update_if_key_exists(args, store_args, key)
-        __update_if_key_exists(args, store_args, "verbose")
+        __update_if_key_exists(args, parse_args, 'print_steps')
+        __update_if_key_exists(args, parse_args, 'verbose')
 
-        store_module = __load_module("store")
-        LOG.debug("Calling STORE with args:")
-        LOG.debug(store_args)
+        parse_module = __load_module('parse')
+        LOG.debug("Calling PARSE with args:")
+        LOG.debug(parse_args)
 
-        store_module.main(store_args)
-
-        # Show a hint for server start.
-        protocol, host, port, product_url = split_product_url(args.product_url)
-        LOG.info("To view results, open the CodeChecker server "
-                 "'{0}://{1}:{2}/{3}' in your browser".format(protocol,
-                                                              host,
-                                                              port,
-                                                              product_url))
+        parse_module.main(parse_args)
     except ImportError:
         LOG.error("Check failed: couldn't import a library.")
     except Exception as ex:
         LOG.error("Running check failed. " + ex.message)
-    finally:
-        if 'command' in args and logfile:
-            # Only remove the build.json if it was on-the-fly created by us!
-            LOG.debug("Cleaning up build.json ...")
-            os.remove(logfile)
+        import traceback
+        traceback.print_exc()
 
     LOG.debug("Check finished.")

@@ -52,19 +52,22 @@ after the analysis is done:
     CodeChecker server
 
 Analyze a project with default settings:
-    CodeChecker check -b "cd ~/myproject && make" -n myproject
+    CodeChecker check -b "cd ~/myproject && make" -o "~/results"
+
+Store the analyzer results to the server:
+    CodeChecker store "~/results" -n myproject
 
 The results can be viewed:
  * In a web browser: http://localhost:8001
  * In the command line:
-    CodeChecker cmd results -n myproject
+    CodeChecker cmd results myproject
 
 Example scenario: Analyzing, and printing results to Terminal (no storage)
 --------------------------------------------------------------------------
 In this case, no database is used, and the results are printed on the standard
 output.
 
-    CodeChecker quickcheck -b "cd ~/myproject && make\"""")
+    CodeChecker check -b "cd ~/myproject && make\"""")
 
         subparsers = parser.add_subparsers(help='commands')
 

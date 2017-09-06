@@ -183,7 +183,8 @@ def check(check_data):
     """
 
     action, context, analyzer_config_map, \
-        output_dir, skip_handler, capture_analysis_output = check_data
+        output_dir, skip_handler, quiet_output_on_stdout, \
+        capture_analysis_output = check_data
 
     skipped = False
     reanalyzed = False
@@ -257,19 +258,25 @@ def check(check_data):
 
             if rh.analyzer_returncode == 0:
                 # Analysis was successful processing results.
-                if (capture_analysis_output):
+                if capture_analysis_output:
                     success_dir = os.path.join(output_dir, "success")
                     if not os.path.exists(success_dir):
                         os.makedirs(success_dir)
+
                 if len(rh.analyzer_stdout) > 0:
-                    LOG.debug_analyzer('\n' + rh.analyzer_stdout)
-                    if (capture_analysis_output):
+                    if not quiet_output_on_stdout:
+                        LOG.debug_analyzer('\n' + rh.analyzer_stdout)
+
+                    if capture_analysis_output:
                         with open(os.path.join(success_dir, result_base) +
                                   ".stdout.txt", 'w') as outf:
                             outf.write(rh.analyzer_stdout)
+
                 if len(rh.analyzer_stderr) > 0:
-                    LOG.debug_analyzer('\n' + rh.analyzer_stderr)
-                    if (capture_analysis_output):
+                    if not quiet_output_on_stdout:
+                        LOG.debug_analyzer('\n' + rh.analyzer_stderr)
+
+                    if capture_analysis_output:
                         with open(os.path.join(success_dir, result_base) +
                                   ".stderr.txt", 'w') as outf:
                             outf.write(rh.analyzer_stderr)
@@ -388,9 +395,9 @@ def check(check_data):
                           os.path.join(failed_dir, zip_file) + "'")
                 LOG.error("Analyzing '" + source_file_name + "' with " +
                           action.analyzer_type + " failed.")
-                if rh.analyzer_stdout != '':
+                if rh.analyzer_stdout != '' and not quiet_output_on_stdout:
                     LOG.error(rh.analyzer_stdout)
-                if rh.analyzer_stderr != '':
+                if rh.analyzer_stderr != '' and not quiet_output_on_stdout:
                     LOG.error(rh.analyzer_stderr)
                 return_codes = rh.analyzer_returncode
 
@@ -412,7 +419,7 @@ def check(check_data):
 
 def start_workers(actions, context, analyzer_config_map,
                   jobs, output_path, skip_handler, metadata,
-                  capture_analysis_output):
+                  quiet_analyze, capture_analysis_output):
     """
     Start the workers in the process pool.
     For every build action there is worker which makes the analysis.
@@ -447,6 +454,7 @@ def start_workers(actions, context, analyzer_config_map,
                              analyzer_config_map,
                              output_path,
                              skip_handler,
+                             quiet_analyze,
                              capture_analysis_output)
                             for build_action in actions]
 

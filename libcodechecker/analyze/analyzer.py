@@ -131,6 +131,7 @@ def perform_analysis(args, context, actions, metadata):
                                        args.jobs, args.output_path,
                                        __get_skip_handler(args),
                                        metadata,
+                                       'quiet' in args,
                                        'capture_analysis_output' in args)
 
     end_time = time.time()

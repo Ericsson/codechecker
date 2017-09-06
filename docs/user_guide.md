@@ -8,22 +8,21 @@ Running CodeChecker is via its main invocation script, `CodeChecker`:
 
 ~~~~~~~~~~~~~~~~~~~~~
 usage: CodeChecker [-h]
-                   {checkers,analyze,analyzers,check,cmd,log,parse,plist,
-                   quickcheck,server,store,version}
+                   {analyze,analyzers,check,checkers,cmd,log,parse,server,store,version}
                    ...
 
 Run the CodeChecker sourcecode analyzer framework.
 Please specify a subcommand to access individual features.
 
 positional arguments:
-  {analyze,analyzers,check,checkers,cmd,log,parse,quickcheck,server,store,version}
+  {analyze,analyzers,check,checkers,cmd,log,parse,server,store,version}
                         commands
 
     analyze             Execute the supported code analyzers for the files
                         recorded in a JSON Compilation Database.
     analyzers           List supported and available analyzers.
-    check               Perform analysis on a project and store results to
-                        database.
+    check               Perform analysis on a project and print results to
+                        standard output.
     checkers            List the checkers available for code analysis.
     cmd                 View analysis results on a running server from the
                         command line.
@@ -31,13 +30,10 @@ positional arguments:
                         compilation commands, storing them in a JSON file.
     parse               Print analysis summary and results in a human-readable
                         format.
-    quickcheck          Perform analysis on a project and print results to
-                        standard output.
     server              Start and manage the CodeChecker Web server.
     store               Save analysis results to a database.
     version             Print the version of CodeChecker package that is being
                         used.
-
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -49,19 +45,22 @@ after the analysis is done:
     CodeChecker server
 
 Analyze a project with default settings:
-    CodeChecker check -b "cd ~/myproject && make" myproject
+    CodeChecker check -b "cd ~/myproject && make" -o "~/results"
+
+Store the analyzer results to the server:
+    CodeChecker store "~/results" -n myproject
 
 The results can be viewed:
  * In a web browser: http://localhost:8001
  * In the command line:
-    CodeChecker cmd results -n myproject
+    CodeChecker cmd results myproject
 
 Example scenario: Analyzing, and printing results to Terminal (no storage)
 --------------------------------------------------------------------------
 In this case, no database is used, and the results are printed on the standard
 output.
 
-    CodeChecker quickcheck -b "cd ~/myproject && make"
+    CodeChecker check -b "cd ~/myproject && make"
 ~~~~~~~~~~~~~~~~~~~~~
 
 
@@ -79,25 +78,20 @@ The initial product is called `Default`.
 # Easy analysis wrappers
 
 CodeChecker provides, along with the more fine-tuneable commands, some easy
-out-of-the-box invocations to ensure the most user-friendly operation. These
-two modes are called **check** and **quickcheck**.
+out-of-the-box invocations to ensure the most user-friendly operation, the
+**check** mode.
 
-## Check
+## `check`
 
-`check` is the basic, most used and most important command used in
-_CodeChecker_. It analyzes your project and stores the reported code defects
-in a database, which can be viewed in a Web Browser later on (via `CodeChecker
-server`), the server should be started before the `check` command is executed:
+It is possible to easily analyse the project for defects without keeping the
+temporary analysis files and without using any database to store the reports
+in, but instead printing the found issues to the standard output.
 
-~~~~~~~~~~~~~~~~~~~~~
-CodeChecker server
-~~~~~~~~~~~~~~~~~~~~~
-
-To analyse your project by doing a build and reporting every
-found issue in the built files, execute:
+To analyse your project by doing a build and reporting every found issue in the
+built files, execute
 
 ~~~~~~~~~~~~~~~~~~~~~
-CodeChecker check --build "make" "run_name"
+CodeChecker check --build "make"
 ~~~~~~~~~~~~~~~~~~~~~
 
 Please make sure your build command actually compiles (builds) the source
@@ -108,111 +102,20 @@ If you have an already existing JSON Compilation Commands file, you can also
 supply it to `check`:
 
 ~~~~~~~~~~~~~~~~~~~~~
-CodeChecker check --logfile ./my-build.json "run_name"
-~~~~~~~~~~~~~~~~~~~~~
-
-`check` is a wrapper over the following calls:
-
- * If `--build` is specified, the build is executed as if `CodeChecker log`
-   were invoked.
- * The resulting logfile, or a `--logfile` specified is used for `CodeChecker
-   analyze`
- * The analysis results are feeded for `CodeChecker store`.
-
-After the results has been stored in the database, the temporary files
-used for the analysis are cleaned up.
-
-Please see the individual help for `log`, `analyze` and `store` (below in this
-_User guide_) for information about the arguments of `check`.
-
-~~~~~~~~~~~~~~~~~~~~~
-usage: CodeChecker check [-h] [-w WORKSPACE] [-f] [-q]
-                         (-b COMMAND | -l LOGFILE) [-j JOBS] [-i SKIPFILE]
-                         [--analyzers ANALYZER [ANALYZER ...]]
-                         [--add-compiler-defaults]
-                         [--saargs CLANGSA_ARGS_CFG_FILE]
-                         [--tidyargs TIDY_ARGS_CFG_FILE]
-                         [-e checker/checker-group] [-d checker/checker-group]
-                         [--url PRODUCT_URL]
-                         [--verbose {info,debug,debug_analyzer}]
-                         RUN_NAME
-
-Run analysis for a project with storing results in the database. Check only
-needs a build command or an already existing logfile and performs every step
-of doing the analysis in batch.
-
-optional arguments:
-  -h, --help            show this help message and exit
-  -w WORKSPACE, --workspace WORKSPACE
-                        Directory where CodeChecker can store analysis related
-                        data, such as intermediate result files and the
-                        database. (default: /home/<username>/.codechecker)
-  -f, --force
-  --verbose {info,debug,debug_analyzer}
-                        Set verbosity level. (default: info)
-
-log arguments:
-
-  -q, --quiet-build
-  -b COMMAND, --build COMMAND
-  -l LOGFILE, --logfile LOGFILE
-
-analyzer arguments:
-
-  -j JOBS, --jobs JOBS
-  -i SKIPFILE, --skip SKIPFILE
-  --analyzers ANALYZER [ANALYZER ...]
-  --add-compiler-defaults
-  --saargs CLANGSA_ARGS_CFG_FILE
-  --tidyargs TIDY_ARGS_CFG_FILE
-
-checker configuration:
-
-  -e checker/checker-group, --enable checker/checker-group
-  -d checker/checker-group, --disable checker/checker-group
-
-server arguments:
-
-  --url PRODUCT_URL
-  RUN_NAME              The name of the analysis run to use in storing the
-                        reports to the database.
-~~~~~~~~~~~~~~~~~~~~~
-
-## Quickcheck
-
-It is possible to easily analyse the project for defects without keeping the
-temporary analysis files and without using any database to store the reports
-in, but instead printing the found issues to the standard output.
-
-To analyse your project by doing a build and reporting every found issue in the
-built files, execute
-
-~~~~~~~~~~~~~~~~~~~~~
-CodeChecker quickcheck --build "make"
-~~~~~~~~~~~~~~~~~~~~~
-
-Please make sure your build command actually compiles (builds) the source
-files you intend to analyse, as CodeChecker only analyzes files that had been
-used by the build system.
-
-If you have an already existing JSON Compilation Commands file, you can also
-supply it to `quickcheck`:
-
-~~~~~~~~~~~~~~~~~~~~~
-CodeChecker quickcheck --logfile ./my-build.json
+CodeChecker check --logfile ./my-build.json
 ~~~~~~~~~~~~~~~~~~~~~
 
 By default, only the report's main messages are printed. To print the
 individual steps the analysers took in discovering the issue, specify
 `--steps`.
 
-`quickcheck` is a wrapper over the following calls:
+`check` is a wrapper over the following calls:
 
  * If `--build` is specified, the build is executed as if `CodeChecker log`
    were invoked.
  * The resulting logfile, or a `--logfile` specified is used for `CodeChecker
-   analyze`
- * The analysis results are feeded for `CodeChecker parse`.
+   analyze`, which will put analysis reports into `--output`.
+ * The analysis results are fed for `CodeChecker parse`.
 
 After the results has been printed to the standard output, the temporary files
 used for the analysis are cleaned up.
@@ -221,28 +124,39 @@ Please see the individual help for `log`, `analyze` and `parse` (below in this
 _User guide_) for information about the arguments of `quickcheck`.
 
 ~~~~~~~~~~~~~~~~~~~~~
-usage: CodeChecker quickcheck [-h] [-q] (-b COMMAND | -l LOGFILE)
-                              [-j JOBS] [-i SKIPFILE]
-                              [--analyzers ANALYZER [ANALYZER ...]]
-                              [--add-compiler-defaults]
-                              [--saargs CLANGSA_ARGS_CFG_FILE]
-                              [--tidyargs TIDY_ARGS_CFG_FILE]
-                              [-e checker/checker-group]
-                              [-d checker/checker-group] [--print-steps]
-                              [--verbose {info,debug,debug_analyzer}]
+usage: CodeChecker check [-h] [-o OUTPUT_DIR] [-q] [-f]
+                         (-b COMMAND | -l LOGFILE) [-j JOBS] [-i SKIPFILE]
+                         [--analyzers ANALYZER [ANALYZER ...]]
+                         [--add-compiler-defaults]
+                         [--saargs CLANGSA_ARGS_CFG_FILE]
+                         [--tidyargs TIDY_ARGS_CFG_FILE]
+                         [-e checker/checker-group] [-d checker/checker-group]
+                         [--print-steps]
+                         [--verbose {info,debug,debug_analyzer}]
 
 Run analysis for a project with printing results immediately on the standard
-output. Quickcheck only needs a build command or an already existing logfile
-and performs every step of doing the analysis in batch.
+output. Check only needs a build command or an already existing logfile and
+performs every step of doing the analysis in batch.
 
 optional arguments:
   -h, --help            show this help message and exit
+  -o OUTPUT_DIR, --output OUTPUT_DIR
+                        Store the analysis output in the given folder.
+                        (default: /home/<username>/.codechecker/reports)
+  -q, --quiet           If specified, the build tool's and the analyzers'
+                        output will not be printed to the standard output.
+  -f, --force           Delete analysis results stored in the database for the
+                        current analysis run's name and store only the results
+                        reported in the 'input' files. (By default,
+                        CodeChecker would keep reports that were coming from
+                        files not affected by the analysis, and only
+                        incrementally update defect reports for source files
+                        that were analysed.)
   --verbose {info,debug,debug_analyzer}
                         Set verbosity level. (default: info)
 
 log arguments:
 
-  -q, --quiet-build
   -b COMMAND, --build COMMAND
   -l LOGFILE, --logfile LOGFILE
 
@@ -261,7 +175,6 @@ checker configuration:
   -d checker/checker-group, --disable checker/checker-group
 
 output arguments:
-
   --print-steps
 ~~~~~~~~~~~~~~~~~~~~~
 
@@ -293,7 +206,7 @@ optional arguments:
                         simple calls to 'g++' or 'clang++' or 'make', but a
                         more complex command, or the call of a custom script
                         file is also supported.
-  -q, --quiet-build     Do not print the output of the build tool into the
+  -q, --quiet           Do not print the output of the build tool into the
                         output of this command.
   --verbose {info,debug,debug_analyzer}
                         Set verbosity level. (default: info)
@@ -338,15 +251,14 @@ CodeChecker analyze ../codechecker_myProject_build.log -o my_plists
 below:
 
 ~~~~~~~~~~~~~~~~~~~~~
-usage: CodeChecker analyze [-h] [-j JOBS] [-i SKIPFILE] [-o OUTPUT_PATH]
-                           [-t {plist}] [-c] [-n NAME]
+usage: CodeChecker analyze [-h] [-j JOBS] [-i SKIPFILE] -o OUTPUT_PATH
+                           [-t {plist}] [-q] [-c] [-n NAME]
                            [--analyzers ANALYZER [ANALYZER ...]]
                            [--add-compiler-defaults]
                            [--capture-analysis-output]
                            [--saargs CLANGSA_ARGS_CFG_FILE]
                            [--tidyargs TIDY_ARGS_CFG_FILE]
-                           [--ctu | --ctu-collect | --ctu-analyze]
-                           [--ctu-on-the-fly] [-e checker/checker-group]
+                           [-e checker/checker-group]
                            [-d checker/checker-group] [--enable-all]
                            [--verbose {info,debug,debug_analyzer}]
                            logfile [logfile ...]
@@ -371,10 +283,11 @@ optional arguments:
                         User guide on how a Skipfile should be laid out.
   -o OUTPUT_PATH, --output OUTPUT_PATH
                         Store the analysis output in the given folder.
-                        (default: /home/<username>/.codechecker/reports)
   -t {plist}, --type {plist}, --output-format {plist}
                         Specify the format the analysis results should use.
                         (default: plist)
+  -q, --quiet           Do not print the output or error of the analyzers to
+                        the standard output of CodeChecker.
   -c, --clean           Delete analysis reports stored in the output
                         directory. (By default, CodeChecker would keep reports
                         and overwrites only those files that were update by
@@ -790,8 +703,7 @@ then the results of the analysis can be stored with this command:
 CodeChecker store ./my_plists -n my_project
 ~~~~
 
-
-### Using SQLite for database:
+### Using SQLite for database
 
 CodeChecker can also use SQLite for storing the results. In this case the
 SQLite database will be created in the workspace directory.
@@ -802,57 +714,9 @@ If `--postgresql` is not given then SQLite is used by default in
 which case `--dbport`, `--dbaddress`, `--dbname`, and
 `--dbusername` command line arguments are ignored.
 
-#### Note:
-Schema migration is not supported with SQLite. This means if you upgrade your
-CodeChecker to a newer version, you might need to re-check your project.
-
-### Various deployment possibilities
-
-The CodeChecker server should be started on a separate machine.
-In that case multiple clients can use the same database to store new results or view old ones.
-
-
-#### Codechecker server and database on the same machine
-
-Codechecker server and the database are running on the same machine but the database server is started manually.
-In this case the database handler and the database can be started manually by running the server command.
-The workspace needs to be provided for both the server and the check commands.
-
-~~~~~~~~~~~~~~~~~~~~~
-CodeChecker server -w ~/codechecker_wp --dbname myProjectdb --dbport 5432 --dbaddress localhost --view-port 8001
-~~~~~~~~~~~~~~~~~~~~~
-
-The checking process can be started separately on the same machine
-
-~~~~~~~~~~~~~~~~~~~~~
-CodeChecker check  -w ~/codechecker_wp myProject -b "make -j 4" --url localhost:8001/Default
-~~~~~~~~~~~~~~~~~~~~~
-
-or on a different machine
-
-~~~~~~~~~~~~~~~~~~~~~
-CodeChecker check  -w ~/codechecker_wp myProject -b "make -j 4" --url 192.168.1.1:8001/Default
-~~~~~~~~~~~~~~~~~~~~~
-
-
-#### Codechecker server and database are on different machines
-
-It is possible that the CodeChecker server and the PostgreSQL database that contains the analysis results are on different machines. To setup PostgreSQL see later section.
-
-In this case the CodeChecker server can be started using the following command:
-
-~~~~~~~~~~~~~~~~~~~~~
-CodeChecker server --dbname myProjectdb --dbport 5432 --dbaddress 192.168.1.2 --view-port 8001
-~~~~~~~~~~~~~~~~~~~~~
-
-Start CodeChecker server locally which connects to a remote database (which is started separately). Workspace is not required in this case.
-
-
-Start the checking as explained previously.
-
-~~~~~~~~~~~~~~~~~~~~~
-CodeChecker check -w ~/codechecker_wp myProject -b "make -j 4" --url 192.168.1.2:8001/Default
-~~~~~~~~~~~~~~~~~~~~~
+**NOTE!** Schema migration is not supported with SQLite. This means if you
+upgrade your CodeChecker to a newer version, you might need to re-check your
+project.
 
 ## 5. `checkers` mode
 

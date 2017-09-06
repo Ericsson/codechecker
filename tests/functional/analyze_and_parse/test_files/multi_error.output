@@ -1,7 +1,7 @@
-NORMAL#CodeChecker log --output $LOGFILE$ --build "make multi_error" --quiet-build
+NORMAL#CodeChecker log --output $LOGFILE$ --build "make multi_error" --quiet
 NORMAL#CodeChecker analyze $LOGFILE$ --output $OUTPUT$ --analyzers clangsa
 NORMAL#CodeChecker parse $OUTPUT$
-QUICKCHECK#CodeChecker quickcheck --build "make multi_error" --quiet-build --analyzers clangsa
+CHECK#CodeChecker check --build "make multi_error" --output $OUTPUT$ --quiet --analyzers clangsa
 -----------------------------------------------
 [] - Starting build ...
 [] - Build finished successfully.

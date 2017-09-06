@@ -48,14 +48,15 @@ Once the build is logged successfully (and the `compilation.json`) was created, 
 ```
  CodeChecker parse ./reports
 ```
+
 Hint:
- You can do the 1st and the 2nd step in one round by execution quickcheck
+ You can do the 1st and the 2nd step in one round by executing `check`
  ```
  cd tmux
  make clean
- CodeChecker quickcheck -b "make"
+ CodeChecker check -b "make"
 or to run on 22 thread
- CodeChecker quickcheck -j22 -b "make clean;make -j22"
+ CodeChecker check -j22 -b "make clean;make -j22"
 ```
 
 [What to do if the analysis fails (analysis settings for cross-compilation)](/docs/cross-compilation.md)

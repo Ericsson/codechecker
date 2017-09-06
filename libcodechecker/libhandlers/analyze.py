@@ -129,9 +129,7 @@ def add_arguments_to_parser(parser):
 
     parser.add_argument('-o', '--output',
                         dest="output_path",
-                        required=False,
-                        default=os.path.join(util.get_default_workspace(),
-                                             'reports'),
+                        required=True,
                         help="Store the analysis output in the given folder.")
 
     parser.add_argument('-t', '--type', '--output-format',
@@ -141,6 +139,15 @@ def add_arguments_to_parser(parser):
                         default='plist',
                         help="Specify the format the analysis results should "
                              "use.")
+
+    parser.add_argument('-q', '--quiet',
+                        dest="quiet",
+                        action='store_true',
+                        default=argparse.SUPPRESS,
+                        required=False,
+                        help="Do not print the output or error of the "
+                             "analyzers to the standard output of "
+                             "CodeChecker.")
 
     parser.add_argument('-c', '--clean',
                         dest="clean",
@@ -405,7 +412,9 @@ def main(args):
     try:
         source = os.path.abspath(args.logfile[0])
         target = os.path.abspath(compile_cmd_json)
-        shutil.copyfile(source, target)
+
+        if source != target:
+            shutil.copyfile(source, target)
     except shutil.Error as serr:
         LOG.debug("Compile command json file is the same")
     except Exception as ex:
