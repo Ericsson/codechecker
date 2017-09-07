@@ -788,12 +788,16 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
 
           CC_SERVICE.getCheckerCounts(runs.baseline, reportFilter,
             runs.newcheck, function (res) {
-            deferred.resolve(Object.keys(res).sort(alphabetical)
-            .map(function (checker) {
+            deferred.resolve(res.sort(function (a, b) {
+              if (a.name < b.name) return -1;
+              if (a.name > b.name) return 1;
+
+              return 0;
+            }).map(function (checker) {
               return {
-                label : checker,
-                value : checker,
-                count : res[checker],
+                label : checker.name,
+                value : checker.name,
+                count : checker.count,
               };
             }));
           });

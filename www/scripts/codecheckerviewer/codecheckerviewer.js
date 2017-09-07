@@ -16,13 +16,14 @@ define([
   'dijit/layout/BorderContainer',
   'dijit/layout/ContentPane',
   'dijit/layout/TabContainer',
+  'codechecker/CheckerStatistics',
   'codechecker/hashHelper',
   'codechecker/ListOfBugs',
   'codechecker/ListOfRuns',
   'codechecker/util'],
 function (declare, topic, domConstruct, Dialog, DropDownMenu, MenuItem,
   Button, DropDownButton, BorderContainer, ContentPane, TabContainer,
-  hashHelper, ListOfBugs, ListOfRuns, util) {
+  CheckerStatistics, hashHelper, ListOfBugs, ListOfRuns, util) {
 
   return function () {
 
@@ -179,8 +180,11 @@ function (declare, topic, domConstruct, Dialog, DropDownMenu, MenuItem,
         }
 
         var urlValues = hashHelper.getValues();
+
         if (urlValues.allReports) {
-          topic.publish('openAllReports');
+          topic.publish('tab/allReports')
+        } else if (urlValues.checkerStatistics) {
+          topic.publish('tab/checkerStatistics')
         } else if (urlValues.run) {
           topic.publish('openRun',
             findRunData(parseInt(urlValues.run)), urlValues.filters);
@@ -208,6 +212,25 @@ function (declare, topic, domConstruct, Dialog, DropDownMenu, MenuItem,
     });
 
     runsTab.addChild(listOfRuns);
+
+    //--- Check static tab ---//
+
+    var checkerStatisticsTab = new CheckerStatistics({
+      title : 'Checker statistics',
+      onShow : function () {
+        var state = {
+          'checkerStatistics' : true,
+          'run' : this._filterPane.selectedRuns
+        };
+
+        hashHelper.setStateValues(state);
+      },
+
+      onHide : function () {
+        hashHelper.setStateValue('checkerStatistics', null);
+      }
+    });
+    runsTab.addChild(checkerStatisticsTab);
 
     var listOfAllReports = new ListOfBugs({
       title : 'All reports',
@@ -278,8 +301,12 @@ function (declare, topic, domConstruct, Dialog, DropDownMenu, MenuItem,
       });
     });
 
-    topic.subscribe('openAllReports', function () {
+    topic.subscribe('tab/allReports', function () {
       runsTab.selectChild(listOfAllReports);
+    });
+
+    topic.subscribe('tab/checkerStatistics', function () {
+      runsTab.selectChild(checkerStatisticsTab);
     });
   };
 });

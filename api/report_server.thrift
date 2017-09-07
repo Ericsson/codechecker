@@ -39,6 +39,13 @@ struct RunReportCount {
 }
 typedef list<RunReportCount> RunReportCounts
 
+struct CheckerCount {
+  1: string             name,     // Name of the checker.
+  2: shared.Severity    severity, // Severity level of the checker.
+  3: i64                count     // Number of reports.
+}
+typedef list<CheckerCount> CheckerCounts
+
 struct ReviewData {
   1: shared.ReviewStatus  status,
   2: string               comment,
@@ -426,10 +433,10 @@ service codeCheckerDBAccess {
   // for all of the runs and in compare mode all of the runs
   // will be used as a baseline excluding the runs in compare data.
   // PERMISSION: PRODUCT_ACCESS
-  map<string, i64> getCheckerCounts(1: list<i64> runIds,
-                                    2: ReportFilter_v2 reportFilter,
-                                    3: CompareData cmpData)
-                                    throws (1: shared.RequestFailed requestError),
+  CheckerCounts getCheckerCounts(1: list<i64> runIds,
+                                 2: ReportFilter_v2 reportFilter,
+                                 3: CompareData cmpData)
+                                 throws (1: shared.RequestFailed requestError),
 
 
   //============================================
