@@ -438,9 +438,12 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
         this.reportData.severity
           = util.severityFromCodeToString(this.reportData.severity);
 
+      var isResolved =
+        this.reportData.detectionStatus === DetectionStatus.RESOLVED;
+
       this.set('path', [
         'root',
-        this.reportData.severity,
+        isResolved ? 'resolved' : this.reportData.severity,
         this.reportData.reportId + '',
         this.reportData.reportId + '_0'
       ]);
@@ -478,7 +481,8 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
         { id : 'medium',      name : 'Medium',      parent : 'root', isLeaf : false, kind : 'severity' },
         { id : 'low',         name : 'Low',         parent : 'root', isLeaf : false, kind : 'severity' },
         { id : 'style',       name : 'Style',       parent : 'root', isLeaf : false, kind : 'severity' },
-        { id : 'unspecified', name : 'Unspecified', parent : 'root', isLeaf : false, kind : 'severity' }
+        { id : 'unspecified', name : 'Unspecified', parent : 'root', isLeaf : false, kind : 'severity' },
+        { id : 'resolved'   , name : 'Resolved'   , parent : 'root', isLeaf : false, kind : 'resolved' }
       ].forEach(function (item) {
         that.bugStore.put(item);
       });
@@ -569,6 +573,8 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
         switch (item.kind) {
           case 'severity':
             return "customIcon icon-severity-" + item.id;
+          case 'resolved':
+            return 'customIcon detection-status-resolved';
           case 'bugpath':
             var status =
               util.detectionStatusFromCodeToString(item.report.detectionStatus);
@@ -773,11 +779,15 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
     _addReport : function (report) {
       var that = this;
 
+      var parent = report.detectionStatus === DetectionStatus.RESOLVED
+        ? 'resolved'
+        : util.severityFromCodeToString(report.severity);
+
       this.bugStore.put({
         id : report.reportId + '',
         name : 'L' + report.line
              + ' &ndash; ' + report.checkerId,
-        parent : util.severityFromCodeToString(report.severity),
+        parent : parent,
         report : report,
         isLeaf : false,
         kind : 'bugpath',
