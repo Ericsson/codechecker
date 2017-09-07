@@ -9,11 +9,12 @@
 import unittest
 
 from libcodechecker.util import split_product_url
+from libcodechecker.util import split_server_url
 
 
 class product_urlTest(unittest.TestCase):
     """
-    Testing the product URL splitter.
+    Testing the product and server URL splitter.
     """
 
     def testFullURL(self):
@@ -24,7 +25,8 @@ class product_urlTest(unittest.TestCase):
             url = ''.join([protocol + "://" if protocol else "",
                            host, ":", str(port), "/", name])
 
-            shost, sport, sname = split_product_url(url)
+            sprotocol, shost, sport, sname = split_product_url(url)
+            self.assertEqual(sprotocol, protocol if protocol else "http")
             self.assertEqual(shost, host)
             self.assertEqual(sport, port)
             self.assertEqual(sname, name)
@@ -41,7 +43,8 @@ class product_urlTest(unittest.TestCase):
         def test(name, protocol=None):
             url = ''.join([protocol + "://" if protocol else "", name])
 
-            shost, sport, sname = split_product_url(url)
+            sprotocol, shost, sport, sname = split_product_url(url)
+            self.assertEqual(sprotocol, protocol if protocol else "http")
             self.assertEqual(shost, "localhost")
             self.assertEqual(sport, 8001)
             self.assertEqual(sname, name)
@@ -59,7 +62,8 @@ class product_urlTest(unittest.TestCase):
             url = ''.join([protocol + "://" if protocol else "",
                            host, "/", name])
 
-            shost, sport, sname = split_product_url(url)
+            sprotocol, shost, sport, sname = split_product_url(url)
+            self.assertEqual(sprotocol, protocol if protocol else "http")
             self.assertEqual(shost, host)
             self.assertEqual(sport, 8001)
             self.assertEqual(sname, name)
@@ -87,3 +91,53 @@ class product_urlTest(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             split_product_url("localhost:12PortIsANumber34/Foo")
+
+    def testFullServerURL(self):
+        """
+        Whole server URL understanding.
+        """
+        def test(host, port, protocol=None):
+            url = ''.join([protocol + "://" if protocol else "",
+                           host, ":", str(port)])
+
+            sprotocol, shost, sport, = split_server_url(url)
+            self.assertEqual(sprotocol, protocol if protocol else "http")
+            self.assertEqual(shost, host)
+            self.assertEqual(sport, port)
+
+        test("localhost", 8001)
+        test("localhost", 8002)
+        test("1hostname.can.begin.with.digits", 9999)
+        test("another.server", 80, "http")
+        test("very-secure.another.server", 443, 'https')
+
+    def testHostname(self):
+        """
+        Understanding only a hostname specified for server URLs.
+        """
+        def test(host, protocol=None):
+            url = ''.join([protocol + "://" if protocol else "", host])
+
+            sprotocol, shost, sport = split_server_url(url)
+            self.assertEqual(sprotocol, protocol if protocol else "http")
+            self.assertEqual(shost, host)
+            self.assertEqual(sport, 8001)
+
+        test("codechecker")
+        test("codechecker", "http")
+        test("codechecker.local")
+        test("www.example.org", "https")
+
+    def testBadServerURLs(self):
+        """
+        Parser throws on bad server URLs?
+        """
+
+        with self.assertRaises(ValueError):
+            split_server_url("42server/containsAProductEndpoint")
+
+        with self.assertRaises(ValueError):
+            split_server_url("in:valid:format")
+
+        with self.assertRaises(ValueError):
+            split_server_url("localhost:12PortIsANumber34")

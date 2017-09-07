@@ -42,8 +42,7 @@ def login(codechecker_cfg, test_project_path, username, password):
     port = str(codechecker_cfg['viewer_port'])
     login_cmd = ['CodeChecker', 'cmd', 'login', username,
                  '--verbose', 'debug',
-                 '--host', 'localhost',
-                 '--port', port]
+                 '--url', 'localhost:' + port]
 
     auth_creds = {'client_autologin': True,
                   'credentials': {}}
@@ -88,8 +87,7 @@ def logout(codechecker_cfg, test_project_path):
     logout_cmd = ['CodeChecker', 'cmd', 'login',
                   '--logout',
                   '--verbose', 'debug',
-                  '--host', 'localhost',
-                  '--port', port]
+                  '--url', 'localhost:' + port]
 
     auth_file = os.path.join(test_project_path, ".codechecker.passwords.json")
     if os.path.exists(auth_file):
@@ -337,8 +335,8 @@ def add_test_package_product(server_data, test_folder, check_env=None):
 
     add_command = ['CodeChecker', 'cmd', 'products', 'add',
                    server_data['viewer_product'],
-                   '--host', server_data['viewer_host'],
-                   '--port', str(server_data['viewer_port']),
+                   '--url', server_data['viewer_host'] + ':' +
+                   str(server_data['viewer_port']),
                    '--name', os.path.basename(test_folder),
                    '--description', "Automatically created product for test."]
 
@@ -391,8 +389,8 @@ def remove_test_package_product(test_folder, check_env=None):
 
     del_command = ['CodeChecker', 'cmd', 'products', 'del',
                    server_data['viewer_product'],
-                   '--host', server_data['viewer_host'],
-                   '--port', str(server_data['viewer_port'])]
+                   '--url', server_data['viewer_host'] + ':' +
+                   str(server_data['viewer_port'])]
 
     print(' '.join(del_command))
 
