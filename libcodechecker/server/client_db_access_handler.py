@@ -1203,8 +1203,6 @@ class ThriftRequestHandler(object):
             LOG.error(msg)
             raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.IOERROR,
                                               msg)
-        finally:
-            session.close()
 
     def getCheckerConfigs(self, run_id):
         """
