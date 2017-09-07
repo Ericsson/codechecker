@@ -40,22 +40,21 @@ matrix:
 before_install:
     # Download macOS specific extra dependencies.
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then git clone https://github.com/llvm-mirror/clang.git ~/llvm --branch master --single-branch --depth 1; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then curl http://releases.llvm.org/3.8.0/clang+llvm-3.8.0-x86_64-apple-darwin.tar.xz -O; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then curl http://releases.llvm.org/3.9.0/clang+llvm-3.9.0-x86_64-apple-darwin.tar.xz -O; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update;               fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install homebrew/versions/thrift090;                fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PATH=/usr/local/Cellar/thrift@0.90/0.9.0/bin:$PATH; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then which thrift;                fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install doxygen;               fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then tar xf clang+llvm-3.8.0-x86_64-apple-darwin.tar.xz -C ~/; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PATH=~/clang+llvm-3.8.0-x86_64-apple-darwin/bin/:$PATH; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then tar xf clang+llvm-3.9.0-x86_64-apple-darwin.tar.xz -C ~/; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PATH=~/clang+llvm-3.9.0-x86_64-apple-darwin/bin/:$PATH; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PYTHONPATH=~/llvm/tools/scan-build-py/; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PATH=~/llvm/tools/scan-build-py/bin:$PATH; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then chmod a+x ~/llvm/tools/scan-build-py/bin/intercept-build; fi
 
     # Set the proper Clang versions early in the PATH.
     - export PATH=$HOME:$PATH
-    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then which clang-3.8; ln -s $(which clang-3.8) $HOME/clang; fi
-    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then which clang-tidy-3.8; ln -s $(which clang-tidy-3.8) $HOME/clang-tidy; fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then which clang; which clang-tidy; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then which clang; ln -s $(which clang) $HOME/clang; fi
 
     # PostgreSQL is not started automatically on macOS.
@@ -73,12 +72,8 @@ install:
 addons:
     apt:
         sources:
-            - llvm-toolchain-precise
-            - llvm-toolchain-precise-3.8
             - ubuntu-toolchain-r-test
         packages:
-            - clang-3.8
-            - clang-tidy-3.8
             - doxygen
             - gcc-multilib
             - libc6-dev-i386
