@@ -1,7 +1,7 @@
-NORMAL#CodeChecker log --output $LOGFILE$ --build "make simple1" --quiet-build
+NORMAL#CodeChecker log --output $LOGFILE$ --build "make simple1" --quiet
 NORMAL#CodeChecker analyze $LOGFILE$ --output $OUTPUT$ --analyzers clangsa
 NORMAL#CodeChecker parse $OUTPUT$ --print-steps
-QUICKCHECK#CodeChecker quickcheck --build "make simple1" --quiet-build --analyzers clangsa --print-steps
+CHECK#CodeChecker check --build "make simple1" --output $OUTPUT$ --quiet --analyzers clangsa --print-steps
 --------------------------------------------------------------------------------
 [] - Starting build ...
 [] - Build finished successfully.

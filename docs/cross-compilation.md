@@ -15,7 +15,7 @@ powerpc64-linux-g++ -c -o /home/<username>/mylib_ppc64_linux/commonhandler.cpp
 ```
 when we try to analyze this file with Clang Static Analyzer with the same command line options like
 ``` 
- CodeChecker quickcheck -b "powerpc64-linux-g++ -c -o /home/<username>/mylib_ppc64_linux/commonhandler.cpp" --analyzers clangsa --verbose debug
+ CodeChecker check -b "powerpc64-linux-g++ -c -o /home/<username>/mylib_ppc64_linux/commonhandler.cpp" --analyzers clangsa --verbose debug
 ```
 we get the following error:
 ```
@@ -33,7 +33,7 @@ You can pass any parameters to clang using `--saargs` parameter.
 For example the error above can be solved for Clang Static Analyzer analysis like
 
 ```
- CodeChecker quickcheck -b "powerpc64-linux-g++ -c -o 
+ CodeChecker check -b "powerpc64-linux-g++ -c -o
  /home/<username>/mylib_ppc64_linux/commonhandler.cpp" --analyzers clangsa --saargs ./saargs.txt
 ```
 
@@ -60,7 +60,7 @@ tidyargs.txt:
 
 So the full analysis command will be
 ```
- CodeChecker quickcheck -b "powerpc64-linux-g++ -c -o 
+ CodeChecker check -b "powerpc64-linux-g++ -c -o
  /home/<username>/mylib_ppc64_linux/commonhandler.cpp" --saargs ./saargs.txt --tidyargs ./tidyargs.txt
 ```
 

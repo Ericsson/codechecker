@@ -122,22 +122,25 @@ def logout(codechecker_cfg, test_project_path):
 
 def check(codechecker_cfg, test_project_name, test_project_path):
     """
-    Check a test project.
+    Check a test project and store the results into the database.
 
     :checkers parameter should be a list of enabled or disabled checkers
     Example: ['-d', 'deadcode.DeadStores']
 
     """
 
+    output_dir = codechecker_cfg['reportdir'] \
+        if 'reportdir' in codechecker_cfg \
+        else os.path.join(codechecker_cfg['workspace'], 'reports')
+
     build_cmd = project.get_build_cmd(test_project_path)
 
-    check_cmd = ['CodeChecker', 'check', test_project_name,
-                 '-w', codechecker_cfg['workspace'],
+    check_cmd = ['CodeChecker', 'check',
+                 '-o', output_dir,
                  '-b', "'" + build_cmd + "'",
                  '--analyzers', 'clangsa',
-                 '--quiet-build', '--verbose', 'debug']
-
-    check_cmd.extend(['--url', env.parts_to_url(codechecker_cfg)])
+                 '--quiet',
+                 '--verbose', 'debug']
 
     suppress_file = codechecker_cfg.get('suppress_file')
     if suppress_file:
@@ -154,8 +157,25 @@ def check(codechecker_cfg, test_project_name, test_project_path):
     check_cmd.extend(codechecker_cfg['checkers'])
 
     try:
+        print("RUNNING CHECK")
         print(' '.join(check_cmd))
         proc = subprocess.call(shlex.split(' '.join(check_cmd)),
+                               cwd=test_project_path,
+                               env=codechecker_cfg['check_env'])
+
+    except CalledProcessError as cerr:
+        print("Failed to call:\n" + ' '.join(cerr.cmd))
+        return cerr.returncode
+
+    store_cmd = ['CodeChecker', 'store', '-n', test_project_name,
+                 output_dir,
+                 '--url', env.parts_to_url(codechecker_cfg),
+                 '--verbose', 'debug']
+
+    try:
+        print("RUNNING STORE")
+        print(' '.join(store_cmd))
+        proc = subprocess.call(shlex.split(' '.join(store_cmd)),
                                cwd=test_project_path,
                                env=codechecker_cfg['check_env'])
         return 0

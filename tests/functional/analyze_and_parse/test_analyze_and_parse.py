@@ -28,8 +28,8 @@ class AnalyzeParseTestCase(unittest.TestCase):
         test_workspace = os.environ['TEST_WORKSPACE']
         cls.test_workspaces = {'NORMAL': os.path.join(test_workspace,
                                                       'NORMAL'),
-                               'QUICKCHECK': os.path.join(test_workspace,
-                                                          'QUICKCHECK')}
+                               'CHECK': os.path.join(test_workspace,
+                                                     'CHECK')}
 
         # Get an environment with CodeChecker command in it.
         cls.env = env.codechecker_env()
@@ -119,11 +119,15 @@ class AnalyzeParseTestCase(unittest.TestCase):
             return cerr.returncode
 
     def test_analyze_and_parse_files(self):
-        """Iterate over the test directory and run all tests in it."""
+        """
+        Iterate over the test directory and run all tests in it.
+        """
         for ofile in glob.glob(os.path.join(self.test_dir, '*.output')):
             self.assertEqual(self.__check_one_file(ofile, 'NORMAL'), 0)
 
-    def test_quickcheck_files(self):
-        """Iterate over the test directory and run all quickcheck tests."""
+    def test_check_files(self):
+        """
+        Iterate over the test directory and run all check (wrapper) tests.
+        """
         for ofile in glob.glob(os.path.join(self.test_dir, '*.output')):
-            self.assertEqual(self.__check_one_file(ofile, 'QUICKCHECK'), 0)
+            self.assertEqual(self.__check_one_file(ofile, 'CHECK'), 0)

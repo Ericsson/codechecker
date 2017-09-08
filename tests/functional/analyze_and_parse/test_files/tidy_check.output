@@ -1,7 +1,7 @@
-NORMAL#CodeChecker log --output $LOGFILE$ --build "make tidy_check" --quiet-build
+NORMAL#CodeChecker log --output $LOGFILE$ --build "make tidy_check" --quiet
 NORMAL#CodeChecker analyze $LOGFILE$ --output $OUTPUT$ --analyzers clang-tidy --disable misc --enable misc-assert-side-effect
 NORMAL#CodeChecker parse $OUTPUT$
-QUICKCHECK#CodeChecker quickcheck --build "make tidy_check" --quiet-build --analyzers clang-tidy --disable misc --enable misc-assert-side-effect
+CHECK#CodeChecker check --build "make tidy_check" --output $OUTPUT$ --quiet --analyzers clang-tidy --disable misc --enable misc-assert-side-effect
 --------------------------------------------------------------------------------
 [] - Starting build ...
 [] - Build finished successfully.

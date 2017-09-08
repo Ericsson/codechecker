@@ -1,7 +1,7 @@
-NORMAL#CodeChecker log --output $LOGFILE$ --build "make saargs_forward" --quiet-build
+NORMAL#CodeChecker log --output $LOGFILE$ --build "make saargs_forward" --quiet
 NORMAL#CodeChecker analyze $LOGFILE$ --output $OUTPUT$ --analyzers clangsa --saargs "saargs_forward.saargs.txt"
 NORMAL#CodeChecker parse $OUTPUT$
-QUICKCHECK#CodeChecker quickcheck --build "make saargs_forward" --quiet-build --analyzers clangsa --saargs "saargs_forward.saargs.txt"
+CHECK#CodeChecker check --build "make saargs_forward" --output $OUTPUT$ --quiet --analyzers clangsa --saargs "saargs_forward.saargs.txt"
 -----------------------------------------------
 [] - Starting build ...
 [] - Build finished successfully.
