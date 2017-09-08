@@ -2269,6 +2269,7 @@ class ThriftRequestHandler(object):
             for file_name in files:
                 source_file_name = os.path.join(source_root,
                                                 file_name.strip("/"))
+                source_file_name = os.path.realpath(source_file_name)
                 LOG.debug("Storing source file:"+source_file_name)
 
                 if not os.path.isfile(source_file_name):
