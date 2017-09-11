@@ -30,10 +30,7 @@ With the newer clang releases more information is available in the plist files.
 
 """
 
-import json
-import os
 import plistlib
-import re
 import sys
 import traceback
 from xml.parsers.expat import ExpatError
@@ -46,55 +43,6 @@ from libcodechecker.report import generate_report_hash
 LOG = LoggerFactory.get_new_logger('PLIST_PARSER')
 
 
-def levenshtein(a, b):  # http://hetland.org/coding/python/levenshtein.py
-    """"Calculates the Levenshtein distance between a and b."""
-    n, m = len(a), len(b)
-    if n > m:
-        # Make sure n <= m, to use O(min(n,m)) space.
-        a, b = b, a
-        n, m = m, n
-
-    current = range(n+1)
-    for i in range(1, m+1):
-        previous, current = current, [i]+[0]*n
-        for j in range(1, n+1):
-            add, delete = previous[j]+1, current[j-1]+1
-            change = previous[j-1]
-            if a[j-1] != b[i-1]:
-                change = change + 1
-            current[j] = min(add, delete, change)
-
-    return current[n]
-
-
-def checker_name_from_description(current_msg):
-    """
-    Try to find out the checker name based on the description
-    provided by a checker.
-    """
-
-    # Clean message from variable and class name.
-    clean_msg = re.sub(r"'.*?'", '', current_msg)
-
-    closest_msg = ''
-    min_dist = len(clean_msg) // 4
-
-    message_map_path = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)),
-        'checker_message_map.json')
-
-    with open(message_map_path) as map_file:
-        checker_message_map = json.load(map_file)
-
-    for msg in checker_message_map.keys():
-        tmp_dist = levenshtein(clean_msg, msg)
-        if tmp_dist < min_dist:
-            closest_msg = msg
-            min_dist = tmp_dist
-
-    return checker_message_map[closest_msg]
-
-
 def get_checker_name(diagnostic):
     """
     Check if checker name is available in the report.
@@ -102,11 +50,9 @@ def get_checker_name(diagnostic):
     """
     checker_name = diagnostic.get('check_name')
     if not checker_name:
-        LOG.debug("Check name wasn't found in the plist file. "
-                  "Read the user guide!")
-        desc = diagnostic.get('description', '')
-        checker_name = checker_name_from_description(desc)
-        LOG.debug('Guessed check name: ' + checker_name)
+        LOG.info("Check name wasn't found in the plist file. "
+                 "Read the user guide!")
+        checker_name = "unknown"
     return checker_name
 
 
