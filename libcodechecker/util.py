@@ -300,6 +300,11 @@ def split_server_url(url):
     return protocol, host, port
 
 
+def create_product_url(protocol, host, port, endpoint):
+    url = protocol+"://"+host+":"+str(port)+endpoint
+    return url
+
+
 def split_product_url(url):
     """
     Splits the given CodeChecker server's product-specific URL into its parts.

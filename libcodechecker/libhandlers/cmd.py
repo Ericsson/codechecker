@@ -85,7 +85,8 @@ def __add_common_arguments(parser,
                                   required=False,
                                   help="The URL of the product which will be "
                                        "accessed by the client, in the "
-                                       "format of 'host:port/Endpoint'.")
+                                       "format of"
+                                       " '[http[s]://]host:port/Endpoint'.")
     else:
         # Command connects to a server directly.
         common_group.add_argument('--url',
@@ -95,7 +96,8 @@ def __add_common_arguments(parser,
                                   default="localhost:8001",
                                   required=False,
                                   help="The URL of the server to access, "
-                                       "in the format of 'host:port'.")
+                                       "in the format of"
+                                       " '[http[s]://]host:port'.")
 
     if has_matrix_output:
         common_group.add_argument('-o', '--output',

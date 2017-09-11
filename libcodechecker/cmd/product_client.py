@@ -23,8 +23,8 @@ LOG = LoggerFactory.get_new_logger('CMD')
 
 
 def handle_list_products(args):
-    _, host, port = split_server_url(args.server_url)
-    client = setup_product_client(host, port)
+    protocol, host, port = split_server_url(args.server_url)
+    client = setup_product_client(protocol, host, port)
     products = client.getProducts(None, None)
 
     if args.output_format == 'json':
@@ -49,8 +49,8 @@ def handle_list_products(args):
 
 
 def handle_add_product(args):
-    _, host, port = split_server_url(args.server_url)
-    client = setup_product_client(host, port)
+    protocol, host, port = split_server_url(args.server_url)
+    client = setup_product_client(protocol, host, port)
 
     # Put together the database connection's descriptor.
     if 'postgresql' in args:
@@ -98,8 +98,8 @@ def handle_add_product(args):
 
 
 def handle_del_product(args):
-    _, host, port = split_server_url(args.server_url)
-    client = setup_product_client(host, port)
+    protocol, host, port = split_server_url(args.server_url)
+    client = setup_product_client(protocol, host, port)
 
     # Endpoints substring-match.
     products = client.getProducts(args.endpoint, None)

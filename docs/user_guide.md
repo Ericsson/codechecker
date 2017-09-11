@@ -178,6 +178,31 @@ output arguments:
   --print-steps
 ~~~~~~~~~~~~~~~~~~~~~
 
+## PRODUCT_URL format
+
+Several sub-commands (`store`, `cmd`)  need exact specification of the server, port, access protocol
+and storage area (aka product endpoint) where to store to and query from the analysis results.
+CodeChecker uses the `PRODUCT_URL` format to specify an exact storage endpoint:
+`[http[s]]://]host:port/ProductEndpoint`
+
+The first part is the access protocol being `http` or secure `https` 
+(if ommitted, the default is `http`), the second part is the host and TCP port where 
+the codechecker server is listening on, and the last part is `ProductEndpoint`, which
+is a specific/separate storage area for the product being analyzed.
+Please note that `ProductEndpoint` must be created first on the server before
+it could be used.
+
+For example 
+`https://codechecker.server:5001/MyProduct`
+specifies that there is a listening server on host `codechecker.server` on
+port `5001` which is to be accessed by `https` protocol and which has a 
+product endpoint `MyProduct`.
+
+`CodeChecker store ./my-reports --url https://codechecker.server:5001/MyProduct -n myrun`
+will store analysis reports from the `my-reports` folder into the above specified 
+location in a run called `myrun`.
+     
+     
 # Available CodeChecker commands
 
 ## 1. `log` mode
@@ -684,8 +709,9 @@ server arguments:
   must exist prior to the 'store' command being ran.
 
   --url PRODUCT_URL     The URL of the product to store the results for, in
-                        the format of 'host:port/Endpoint'. (default:
+                        the format of '[http[s]://]host:port/Endpoint'. (default:
                         localhost:8001/Default)
+
 
 The results can be viewed by connecting to such a server in a Web browser or
 via 'CodeChecker cmd'.
@@ -836,7 +862,8 @@ optional arguments:
   -f CONFIG_DIRECTORY, --config-directory CONFIG_DIRECTORY
                         Directory where CodeChecker server should read server-
                         specific configuration (such as authentication
-                        settings) from. (default: /home/<username>/.codechecker)
+                        settings, and SSL certificates) from. 
+                        (default: /home/<username>/.codechecker)
   --host LISTEN_ADDRESS
                         The IP address or hostname of the server on which it
                         should listen for connections. (default: localhost)
@@ -940,6 +967,18 @@ root account arguments:
                         not require authentication otherwise.
 ~~~~~~~~~~~~~~~~~~~~~
 
+### Enfore secure socket (SSL)
+
+You can enforce SSL security on your listening socket. In this case all clients must
+access your server using the `https://host:port` URL format.
+
+To enable SSL simply place an SSL certificate to `<CONFIG_DIRECTORY>/cert.pem`
+and the corresponding private key to `<CONFIG_DIRECTORY>/key.pem`.
+You can generate these certificates for example 
+using the [openssl tool](https://www.openssl.org/).
+When the server finds these files upon start-up, 
+SSL will be automatically enabled. 
+
 ### Managing running servers
 
 ~~~~~~~~~~~~~~~~~~~~~
@@ -1025,9 +1064,9 @@ common arguments:
   --host HOST           The address of the CodeChecker viewer server to
                         connect to. (default: localhost)
   --url SERVER_URL      The URL of the server to access, in the format of
-                        'host:port/Endpoint'. (default: localhost:8001)
+                        '[http[s]://]host:port/Endpoint'. (default: localhost:8001)
   --url PRODUCT_URL     The URL of the product which will be accessed by the
-                        client, in the format of 'host:port/Endpoint'.
+                        client, in the format of '[http[s]://]host:port/Endpoint'.
                         (default: localhost:8001/Default)
   -o {plaintext,rows,table,csv,json}, --output {plaintext,rows,table,csv,json}
                         The output format to use in showing the data.

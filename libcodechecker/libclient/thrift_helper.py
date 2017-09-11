@@ -15,14 +15,16 @@ import shared
 from codeCheckerDBAccess_v6 import codeCheckerDBAccess
 
 from libcodechecker import session_manager
+from libcodechecker import util
 
 
 class ThriftClientHelper(object):
 
-    def __init__(self, host, port, uri, session_token=None):
+    def __init__(self, protocol, host, port, uri, session_token=None):
         self.__host = host
         self.__port = port
-        self.transport = THttpClient.THttpClient(self.__host, self.__port, uri)
+        url = util.create_product_url(protocol, host, port, uri)
+        self.transport = THttpClient.THttpClient(url)
         self.protocol = TJSONProtocol.TJSONProtocol(self.transport)
         self.client = codeCheckerDBAccess.Client(self.protocol)
 

@@ -107,7 +107,7 @@ def clang_to_test():
 def setup_viewer_client(workspace,
                         endpoint='/CodeCheckerService',
                         auto_handle_connection=True,
-                        session_token=None):
+                        session_token=None, proto='http'):
     # Read port and host from the test config file.
     codechecker_cfg = import_test_cfg(workspace)['codechecker_cfg']
     port = codechecker_cfg['viewer_port']
@@ -125,13 +125,14 @@ def setup_viewer_client(workspace,
                              product=product,
                              endpoint=endpoint,
                              auto_handle_connection=auto_handle_connection,
-                             session_token=session_token)
+                             session_token=session_token,
+                             protocol=proto)
 
 
 def setup_auth_client(workspace,
                       uri='/Authentication',
                       auto_handle_connection=True,
-                      session_token=None):
+                      session_token=None, proto='http'):
 
     codechecker_cfg = import_test_cfg(workspace)['codechecker_cfg']
     port = codechecker_cfg['viewer_port']
@@ -147,14 +148,14 @@ def setup_auth_client(workspace,
                            host=host,
                            uri=uri,
                            auto_handle_connection=auto_handle_connection,
-                           session_token=session_token)
+                           session_token=session_token, protocol=proto)
 
 
 def setup_product_client(workspace,
                          product=None,
                          uri='/Products',
                          auto_handle_connection=True,
-                         session_token=None):
+                         session_token=None, proto='http'):
 
     codechecker_cfg = import_test_cfg(workspace)['codechecker_cfg']
     port = codechecker_cfg['viewer_port']
@@ -171,7 +172,7 @@ def setup_product_client(workspace,
                               product=product,
                               uri=uri,
                               auto_handle_connection=auto_handle_connection,
-                              session_token=session_token)
+                              session_token=session_token, protocol=proto)
 
 
 def repository_root():
@@ -303,6 +304,26 @@ def enable_auth(workspace):
     with open(root_file, 'w') as rootf:
         rootf.write(sha256("root:root").hexdigest())
     os.chmod(root_file, stat.S_IRUSR | stat.S_IWUSR)
+
+
+def enable_ssl(workspace):
+    """
+    Create a dummy ssl-enabled server config.
+    """
+
+    repo_root = repository_root()
+    ssl_cert = os.path.join(repo_root,
+                            'tests',
+                            'ssl_example_cert',
+                            'cert.pem')
+    ssl_key = os.path.join(repo_root,
+                           'tests',
+                           'ssl_example_cert',
+                           'key.pem')
+
+    shutil.copy(ssl_cert, workspace)
+    shutil.copy(ssl_key, workspace)
+    print ("copied "+ssl_cert+" to "+workspace)
 
 
 def get_session_token(test_folder):
