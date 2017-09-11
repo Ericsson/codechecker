@@ -11,7 +11,7 @@ import unittest
 
 import shared
 from shared.ttypes import ReviewStatus
-from codeCheckerDBAccess.ttypes import ReportFilter
+from codeCheckerDBAccess_v6.ttypes import ReportFilter
 
 from libtest import env
 

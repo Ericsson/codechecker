@@ -14,7 +14,7 @@ from thrift.protocol import TJSONProtocol
 from thrift.protocol.TProtocol import TProtocolException
 
 import shared
-from Authentication import codeCheckerAuthentication
+from Authentication_v6 import codeCheckerAuthentication
 
 from libcodechecker import session_manager
 
@@ -58,6 +58,9 @@ class ThriftAuthHelper():
                         shared.ttypes.ErrorCode.UNAUTHORIZED:
                     print('Unauthorised.')
                     raise reqfailure
+                elif reqfailure.error_code == \
+                        shared.ttypes.ErrorCode.API_MISMATCH:
+                    raise
                 else:
                     print('Other error')
                     print(str(reqfailure))
@@ -66,6 +69,8 @@ class ThriftAuthHelper():
             except TProtocolException as ex:
                 print("Connection failed to {0}:{1}"
                       .format(self.__host, self.__port))
+                import traceback
+                traceback.print_exc()
                 sys.exit(1)
             except socket.error as serr:
                 errCause = os.strerror(serr.errno)
@@ -82,6 +87,10 @@ class ThriftAuthHelper():
             return res
 
         return wrapper
+
+    @ThriftClientCall
+    def checkAPIVersion(self):
+        pass
 
     # ============= Authentication and session handling =============
     @ThriftClientCall

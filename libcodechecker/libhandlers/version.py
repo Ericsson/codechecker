@@ -10,10 +10,9 @@ Defines a subcommand for CodeChecker which prints version information.
 import argparse
 import json
 
-from shared import constants
-
 from libcodechecker import generic_package_context
 from libcodechecker import output_formatters
+from libcodechecker import version
 from libcodechecker.logger import add_verbose_arguments
 
 
@@ -61,14 +60,21 @@ def main(args):
 
     context = generic_package_context.get_context()
 
+    server_versions = ['{0}.{1}'.format(major, minor) for
+                       major, minor in version.SUPPORTED_VERSIONS.items()]
+
+    if args.output_format != 'json':
+        server_versions = ', '.join(server_versions)
+
     rows = [
         ("Base package version", context.version),
         ("Package build date", context.package_build_date),
         ("Git commit ID (hash)", context.package_git_hash),
         ("Git tag information", context.package_git_tag),
-        ("Configuration schema version", str(context.product_db_version_info)),
-        ("Database schema version", str(context.run_db_version_info)),
-        ("Client API version (Thrift)", constants.API_VERSION)
+        ("Configuration schema", str(context.product_db_version_info)),
+        ("Database schema", str(context.run_db_version_info)),
+        ("Server supported API (Thrift)", server_versions),
+        ("Client API (Thrift)", version.CLIENT_API)
     ]
 
     if args.output_format != "json":

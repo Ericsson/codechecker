@@ -6,30 +6,12 @@
 
 include "shared.thrift"
 
-namespace py Authentication
-namespace js codeCheckerAuthentication
+namespace py Authentication_v6
+namespace js codeCheckerAuthentication_v6
 
 struct HandshakeInformation {
   1: bool requiresAuthentication,       // true if the server has a privileged zone --- the state of having a valid access is not considered here
   2: bool sessionStillActive            // whether the session in which the HandshakeInformation is returned is a valid one
-}
-
-/**
- * The following permission scopes exist.
- *
- * SYSTEM: These permissions are global to the running CodeChecker server.
- *   In this case, the 'extraParams' field is empty.
- *
- * PRODUCT: These permissions are configured per-product.
- *   The extra data field looks like the following object:
- *     { i64 productID }
-*/
-enum Permission {
-  SUPERUSER        = 1,         // scope: SYSTEM
-
-  PRODUCT_ADMIN    = 16,        // scope: PRODUCT
-  PRODUCT_ACCESS   = 17,        // scope: PRODUCT
-  PRODUCT_STORE    = 18         // scope: PRODUCT
 }
 
 struct AuthorisationList {
@@ -45,9 +27,18 @@ struct PermissionFilter {
 }
 
 service codeCheckerAuthentication {
+
+  // This method is a dummy stub requiring no permissions. When a server is
+  // first accessed, the client should check if the server supports it.
+  // This method's call succeeds (and is a no-op), if the server allows the
+  // client's API to connect. Otherwise, the RequestFailed exception is thrown.
+  void checkAPIVersion()
+                       throws (1: shared.RequestFailed requestError),
+
   // ============= Authentication and session handling =============
   // get basic authentication information from the server
   HandshakeInformation getAuthParameters(),
+
 
   // retrieves a list of accepted authentication methods from the server
   list<string> getAcceptedAuthMethods(),
@@ -71,7 +62,7 @@ service codeCheckerAuthentication {
   // Returns the list of permissions.
   // scope acts as a filter for which scope's permissions to list. Refer to
   // the documentation in api/shared.thrift for the list of valid scopes.
-  list<Permission> getPermissions(1: string scope),
+  list<shared.Permission> getPermissions(1: string scope),
 
 
   // ----------------------------------------------------------------
@@ -85,7 +76,7 @@ service codeCheckerAuthentication {
   // criteria.
   // If no criteria are given, this behaves identically to
   // getPermissions(scope).
-  list<Permission> getPermissionsForUser(
+  list<shared.Permission> getPermissionsForUser(
     1: string           scope,
     2: string           extraParams,
     3: PermissionFilter filter)
@@ -99,30 +90,30 @@ service codeCheckerAuthentication {
   // This call is only applicable, if the CURRENTLY LOGGED IN USER has access
   // to manage the given permission.
   AuthorisationList getAuthorisedNames(
-    1: Permission permission,
-    2: string     extraParams)
+    1: shared.Permission permission,
+    2: string            extraParams)
     throws (1: shared.RequestFailed requestError),
 
   // PERMISSION: Have at least one of the managers of permission argument.
-  bool addPermission(1: Permission permission,
-                     2: string     authName,
-                     3: bool       isGroup,
-                     4: string     extraParams)
+  bool addPermission(1: shared.Permission permission,
+                     2: string            authName,
+                     3: bool              isGroup,
+                     4: string            extraParams)
                      throws (1: shared.RequestFailed requestError),
 
   // PERMISSION: Have at least one of the managers of permission argument.
-  bool removePermission(1: Permission permission,
-                        2: string     authName,
-                        3: bool       isGroup,
-                        4: string     extraParams)
+  bool removePermission(1: shared.Permission permission,
+                        2: string            authName,
+                        3: bool              isGroup,
+                        4: string            extraParams)
                         throws (1: shared.RequestFailed requestError),
 
   // Returns whether or not the CURRENTLY LOGGED IN USER is authorised with
   // the given permission. Works even if authentication is disabled on the
   // server, based on the permission's default values. This API call honours
   // permission inheritance.
-  bool hasPermission(1: Permission permission,
-                     2: string     extraParams)
+  bool hasPermission(1: shared.Permission permission,
+                     2: string            extraParams)
                      throws (1: shared.RequestFailed requestError)
 
 }

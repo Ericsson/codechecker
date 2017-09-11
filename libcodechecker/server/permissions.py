@@ -14,7 +14,7 @@ from abc import abstractmethod
 
 from sqlalchemy import and_
 
-from Authentication.ttypes import Permission as PermissionEnum
+from shared.ttypes import Permission as PermissionEnum
 
 from libcodechecker.logger import LoggerFactory
 

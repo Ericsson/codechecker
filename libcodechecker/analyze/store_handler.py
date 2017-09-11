@@ -14,7 +14,7 @@ import zlib
 import sqlalchemy
 
 import shared
-from codeCheckerDBAccess.ttypes import *
+from codeCheckerDBAccess_v6.ttypes import *
 
 from libcodechecker.analyze import skiplist_handler
 from libcodechecker.logger import LoggerFactory

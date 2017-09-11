@@ -23,17 +23,11 @@ gen-docs: build_dir
 
 thrift: build_dir
 
-	if [ -d "$(BUILD_DIR)/gen-py" ]; then rm -rf $(BUILD_DIR)/gen-py; fi
-	if [ -d "$(BUILD_DIR)/gen-js" ]; then rm -rf $(BUILD_DIR)/gen-js; fi
+	if [ -d "$(BUILD_DIR)/thrift" ]; then rm -rf $(BUILD_DIR)/thrift; fi
 
-	thrift -r -o $(BUILD_DIR) -I api/ \
-		--gen py --gen js:jquery api/report_server.thrift
+	mkdir $(BUILD_DIR)/thrift
 
-	thrift -r -o $(BUILD_DIR) -I api/ \
-		--gen py --gen js:jquery api/authentication.thrift
-
-	thrift -r -o $(BUILD_DIR) -I api/ \
-		--gen py --gen js:jquery api/products.thrift
+	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C api/
 
 package: build_dir gen-docs thrift
 	if [ ! -d "$(BUILD_DIR)/CodeChecker" ]; then \
@@ -65,6 +59,7 @@ clean: clean_package clean_vendor
 clean_package:
 	rm -rf $(BUILD_DIR)
 	rm -rf gen-docs
+	find . -name "*.pyc" -delete
 
 clean_vendor:
 	rm -rf vendor/codemirror

@@ -4,17 +4,10 @@
 //   License. See LICENSE.TXT for details.
 // -------------------------------------------------------------------------
 
-// =================================================
-//  !!! Update version information if api changes!!!
-// =================================================
-//  backward incompatible changes should increase major version
-//  other changes should only increase minor version
-
 include "shared.thrift"
 
-namespace py codeCheckerDBAccess
-namespace js codeCheckerDBAccess
-namespace cpp cc.service.codechecker
+namespace py codeCheckerDBAccess_v6
+namespace js codeCheckerDBAccess_v6
 
 //=================================================
 const i64 MAX_QUERY_SIZE = 500
@@ -348,9 +341,6 @@ service codeCheckerDBAccess {
   ReportDataTypeCountList getRunResultTypes(1: i64 runId,
                                             2: ReportFilterList reportFilters)
                                             throws (1: shared.RequestFailed requestError),
-
-  // returns the database access handler api version
-  string getAPIVersion();
 
   // returns the CodeChecker version that is running on the server
   string getPackageVersion();

@@ -15,7 +15,8 @@ import os
 import unittest
 
 from shared.ttypes import RequestFailed
-from ProductManagement.ttypes import ProductConfiguration, DatabaseConnection
+from ProductManagement_v6.ttypes import ProductConfiguration
+from ProductManagement_v6.ttypes import DatabaseConnection
 
 from libtest import env
 
@@ -125,7 +126,7 @@ class TestProducts(unittest.TestCase):
         # First, test calling the API through a product endpoint and not the
         # global endpoint. Also retrieve product ID this way.
         pr_client = env.setup_product_client(
-            self.test_workspace, '/{0}/Products'.format(self.product_name))
+            self.test_workspace, product=self.product_name)
         self.assertIsNotNone(pr_client, "Couldn't set up client")
 
         # This returns a USERSPACE product data.
@@ -175,7 +176,7 @@ class TestProducts(unittest.TestCase):
         """
 
         pr_client = env.setup_product_client(
-            self.test_workspace, '/{0}/Products'.format(self.product_name))
+            self.test_workspace, product=self.product_name)
         product_id = pr_client.getCurrentProduct().id
         config = self._pr_client.getProductConfiguration(product_id)
 
@@ -214,7 +215,7 @@ class TestProducts(unittest.TestCase):
         """
 
         pr_client = env.setup_product_client(
-            self.test_workspace, '/{0}/Products'.format(self.product_name))
+            self.test_workspace, product=self.product_name)
         product_id = pr_client.getCurrentProduct().id
         config = self._pr_client.getProductConfiguration(product_id)
 
@@ -277,7 +278,7 @@ class TestProducts(unittest.TestCase):
         """
 
         pr_client = env.setup_product_client(
-            self.test_workspace, '/{0}/Products'.format(self.product_name))
+            self.test_workspace, product=self.product_name)
         product_id = pr_client.getCurrentProduct().id
         config = self._pr_client.getProductConfiguration(product_id)
 

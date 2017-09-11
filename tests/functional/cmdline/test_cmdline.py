@@ -37,6 +37,12 @@ class TestCmdline(unittest.TestCase):
         main_help = [env.codechecker_cmd(), '--help']
         assert_equals(0, run_cmd(main_help))
 
+    def test_version_help(self):
+        """ Test the 'version' subcommand. """
+
+        version_help = [env.codechecker_cmd(), 'version', '--help']
+        assert_equals(0, run_cmd(version_help))
+
     def test_check_help(self):
         """ Get help for check subcmd. """
 

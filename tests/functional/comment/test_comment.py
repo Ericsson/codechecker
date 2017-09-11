@@ -10,7 +10,7 @@ import os
 import unittest
 
 from shared.ttypes import RequestFailed
-from codeCheckerDBAccess.ttypes import CommentData
+from codeCheckerDBAccess_v6.ttypes import CommentData
 
 from libtest import env
 from libtest.thrift_client_to_db import get_all_run_results

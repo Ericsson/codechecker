@@ -6,8 +6,8 @@
 
 include "shared.thrift"
 
-namespace py ProductManagement
-namespace js codeCheckerProductManagement
+namespace py ProductManagement_v6
+namespace js codeCheckerProductManagement_v6
 
 
 struct DatabaseConnection {
@@ -42,9 +42,6 @@ struct Product {
 typedef list<Product> Products
 
 service codeCheckerProductService {
-
-  // Return the product management API version.
-  string getAPIVersion(),
 
   // Returns the CodeChecker version that is running on the server.
   string getPackageVersion(),

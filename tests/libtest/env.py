@@ -151,6 +151,7 @@ def setup_auth_client(workspace,
 
 
 def setup_product_client(workspace,
+                         product=None,
                          uri='/Products',
                          auto_handle_connection=True,
                          session_token=None):
@@ -167,6 +168,7 @@ def setup_product_client(workspace,
 
     return get_product_client(port=port,
                               host=host,
+                              product=product,
                               uri=uri,
                               auto_handle_connection=auto_handle_connection,
                               session_token=session_token)

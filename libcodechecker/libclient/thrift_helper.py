@@ -12,7 +12,7 @@ from thrift.protocol import TJSONProtocol
 from thrift.protocol.TProtocol import TProtocolException
 
 import shared
-from codeCheckerDBAccess import codeCheckerDBAccess
+from codeCheckerDBAccess_v6 import codeCheckerDBAccess
 
 from libcodechecker import session_manager
 
@@ -94,10 +94,6 @@ class ThriftClientHelper(object):
 
     @ThriftClientCall
     def getRunResultTypes(self, runId, reportFilters):
-        pass
-
-    @ThriftClientCall
-    def getAPIVersion(self):
         pass
 
     @ThriftClientCall

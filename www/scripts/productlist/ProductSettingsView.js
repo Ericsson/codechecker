@@ -574,8 +574,8 @@ function (declare, domAttr, domClass, domConstruct, Dialog, Button,
           if (errors.length > 0) {
             var text = "<ul>";
             errors.forEach(function(record) {
-              var permissionName = util.enumValueToKey(
-                CC_AUTH_OBJECTS.Permission, record.permission);
+              var permissionName = util.enumValueToKey(Permission,
+                                                       record.permission);
               text += '<li><strong>' + (record.action === 'ADD'
                                         ? "Add" : "Remove") +
                       '</strong> permission <strong>' + permissionName +

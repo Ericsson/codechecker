@@ -248,7 +248,7 @@ function (declare, domAttr, domClass, domConstruct, ItemFileWriteStore,
 
       permissions.forEach(function(enumValue) {
         optionsToAdd.push({
-          label : util.enumValueToKey(CC_AUTH_OBJECTS.Permission, enumValue),
+          label : util.enumValueToKey(Permission, enumValue),
           value : enumValue
         });
 
