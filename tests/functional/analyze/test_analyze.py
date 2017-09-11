@@ -19,7 +19,6 @@ from libtest import env
 
 
 class TestAnalyze(unittest.TestCase):
-
     _ccClient = None
 
     def setUp(self):
@@ -114,10 +113,10 @@ class TestAnalyze(unittest.TestCase):
 
         print(analyze_cmd)
         process = subprocess.Popen(
-                    analyze_cmd, stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE, cwd=self.test_dir)
+            analyze_cmd, stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE, cwd=self.test_dir)
         out, err = process.communicate()
-        print(out+err)
+        print(out + err)
         errcode = process.returncode
         self.assertEquals(errcode, 0)
 
@@ -210,10 +209,10 @@ class TestAnalyze(unittest.TestCase):
 
         print(analyze_cmd)
         process = subprocess.Popen(
-                    analyze_cmd, stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE, cwd=self.test_dir)
+            analyze_cmd, stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE, cwd=self.test_dir)
         out, err = process.communicate()
-        print(out+err)
+        print(out + err)
         errcode = process.returncode
         self.assertEquals(errcode, 0)
 
@@ -236,7 +235,8 @@ class TestAnalyze(unittest.TestCase):
 
         # Create a compilation database.
         build_log = [{"directory": self.test_workspace,
-                      "command": "gcc -c "+source_file,
+                      "command": "gcc -c -fno-merge-const-bfstores " + \
+                                 source_file,
                       "file": source_file
                       }]
 
