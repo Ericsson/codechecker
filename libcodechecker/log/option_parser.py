@@ -129,7 +129,8 @@ IGNORED_OPTION_MAP = {
     '-sectorder': 3,
     '--param': 1,
     '-u': 1,
-    '--serialize-diagnostics': 1
+    '--serialize-diagnostics': 1,
+    '-fno-merge-const-bfstores': 0
 }
 
 IGNORED_OPTION_MAP_REGEX = {
