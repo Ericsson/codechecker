@@ -23,10 +23,12 @@ class OptionParserTest(unittest.TestCase):
         Test the build command of a simple file.
         """
         source_files = ["main.cpp"]
-        build_cmd = "g++ -o main " + ' '.join(source_files)
+        build_cmd = "g++ -o main -fno-merge-const-bfstores " +\
+                    ' '.join(source_files)
 
         res = option_parser.parse_options(build_cmd)
         print(res)
+        self.assertFalse("-fno-merge-const-bfstores" in res.compile_opts)
         self.assertTrue(set(source_files) == set(res.files))
         self.assertTrue(ActionType.COMPILE, res.action)
         self.assertEquals(0, len(res.compile_opts))

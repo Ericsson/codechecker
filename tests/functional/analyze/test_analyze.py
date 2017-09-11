@@ -235,8 +235,7 @@ class TestAnalyze(unittest.TestCase):
 
         # Create a compilation database.
         build_log = [{"directory": self.test_workspace,
-                      "command": "gcc -c -fno-merge-const-bfstores " + \
-                                 source_file,
+                      "command": "gcc -c " + source_file,
                       "file": source_file
                       }]
 
