@@ -13,7 +13,6 @@ class BuildAction(object):
         self._id = build_action_id
         self._analyzer_options = []
         self._compiler_includes = []
-        self._compiler_defines = []
         self._analyzer_type = -1
         self._original_command = ''
         self._directory = ''
@@ -60,14 +59,6 @@ class BuildAction(object):
     @compiler_includes.setter
     def compiler_includes(self, value):
         self._compiler_includes = value
-
-    @property
-    def compiler_defines(self):
-        return self._compiler_defines
-
-    @compiler_defines.setter
-    def compiler_defines(self, value):
-        self._compiler_defines = value
 
     @property
     def analyzer_options(self):

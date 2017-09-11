@@ -88,9 +88,6 @@ class ClangSA(analyzer_base.SourceAnalyzer):
 
             analyzer_cmd = [config.analyzer_binary]
 
-            analyzer_cmd.extend(self.buildaction.compiler_defines)
-            analyzer_cmd.extend(self.buildaction.compiler_includes)
-
             if len(config.compiler_resource_dir) > 0:
                 analyzer_cmd.extend(['-resource-dir',
                                      config.compiler_resource_dir,
@@ -163,6 +160,8 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             analyzer_cmd.append(config.analyzer_extra_arguments)
 
             analyzer_cmd.extend(self.buildaction.analyzer_options)
+
+            analyzer_cmd.extend(self.buildaction.compiler_includes)
 
             analyzer_cmd.append(self.source_file)
 

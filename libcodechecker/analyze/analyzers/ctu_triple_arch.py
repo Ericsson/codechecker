@@ -17,7 +17,6 @@ def get_compile_command(action, config, source='', output=''):
     for other operations. """
 
     cmd = [config.analyzer_binary]
-    cmd.extend(action.compiler_defines)
     cmd.extend(action.compiler_includes)
     if len(config.compiler_resource_dir) > 0:
         cmd.extend(['-resource-dir', config.compiler_resource_dir,
