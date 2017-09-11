@@ -189,6 +189,7 @@ def get_binary_in_path(basename_list, versioning_pattern, env):
         keys.sort()
 
         # If one of the base names match, select that version.
+        files = None
         for base_key in basename_list:
             # Cannot use set here as it would destroy precendence.
             if base_key in keys:

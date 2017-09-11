@@ -5,7 +5,7 @@
     "clang_stable": {
         "bugs": [
             { "file": "call_and_message.cpp", "line": 19, "checker": "core.CallAndMessage", "hash": "3fbecc0c445a2d45d94eab4ac921ff8b" },
-            { "file": "call_and_message.cpp", "line": 24, "checker": "core.CallAndMessage", "hash": "b867ce71d1acd1f107c74a60d3488630" },
+            { "file": "call_and_message.cpp", "line": 24, "checker": "core.CallAndMessage", "hash": "d2f5e4582550c02937c549aff599fe95" },
             { "file": "call_and_message.cpp", "line": 30, "checker": "core.CallAndMessage", "hash": "8d46ddba240e5dedcc46eb8d685f72c7" },
             { "file": "call_and_message.cpp", "line": 40, "checker": "core.CallAndMessage", "hash": "238003a99eb9995e520a5b67e81fea8d" },
             { "file": "call_and_message.cpp", "line": 45, "checker": "core.CallAndMessage", "hash": "c17c89738f50c7b8ae6833223354a855" },
