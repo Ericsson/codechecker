@@ -129,8 +129,7 @@ IGNORED_OPTION_MAP = {
     '-sectorder': 3,
     '--param': 1,
     '-u': 1,
-    '--serialize-diagnostics': 1,
-    '-fno-merge-const-bfstores': 0
+    '--serialize-diagnostics': 1
 }
 
 IGNORED_OPTION_MAP_REGEX = {
@@ -176,7 +175,8 @@ UNKNOWN_OPTIONS_MAP_REGEX = {
     '^-mfix-cortex-m3-ldrd$': 0,
     '^-mmultiple$': 0,
     '^-mthumb-interwork$': 0,
-    '^-mupdate$': 0
+    '^-mupdate$': 0,
+    '^-fno-merge-const-bfstores$': 0
 }
 
 
