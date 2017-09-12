@@ -40,7 +40,7 @@ function (hash, ioQuery, topic, util) {
      * url will contain #key1=value1&key2=value2 hash.
      * @param obj {Object} - Key-value pairs.
      */
-    setStateValues : function (obj) {
+    setStateValues : function (obj, preventUpdateUrl) {
       var changed = false;
 
       for (key in obj) {
@@ -59,16 +59,21 @@ function (hash, ioQuery, topic, util) {
         changed = true;
       }
 
-      if (changed)
+      if (changed && !preventUpdateUrl)
         hash(ioQuery.objectToQuery(state));
+    },
+
+    resetStateValues : function (obj) {
+      state = {};
+      this.setStateValues(obj, false)
     },
 
     /**
      * Modifies the given value of the state and updates the url.
      * @see setStateValues
      */
-    setStateValue : function (key, value) {
-      this.setStateValues({ [key] : value });
+    setStateValue : function (key, value, preventUpdateUrl) {
+      this.setStateValues({ [key] : value }, preventUpdateUrl);
     }
   };
 

@@ -101,7 +101,7 @@ class ThriftClientHelper(object):
         return wrapper
 
     @ThriftClientCall
-    def getRunData(self, runNameFilter):
+    def getRunData(self, run_name_filter):
         pass
 
     @ThriftClientCall

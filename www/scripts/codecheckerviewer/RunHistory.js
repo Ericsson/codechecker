@@ -60,6 +60,7 @@ function (declare, dom, topic, ContentPane, util) {
             onclick : function () {
               var state = that.bugFilterView.clearAll();
               state.run = [data.runId];
+              state.subtab = null;
 
               if (!data.versionTag) {
                 state[detectionStatusFilter.class] = [
@@ -73,9 +74,9 @@ function (declare, dom, topic, ContentPane, util) {
 
               topic.publish('filterchange', {
                 parent : that.bugOverView,
-                changed : state
+                changed : state,
+                subtab : null
               });
-              that.parent.selectChild(that.bugOverView);
             }
           }, content);
 

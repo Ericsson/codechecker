@@ -161,7 +161,7 @@ typedef list<ReportData> ReportDataList
 
 /**
  * Members of this struct are interpreted in "OR" relation with each other.
- * Between the members there is "AND" relation.
+ * Between the elements of the list there is "AND" relation.
  */
 struct ReportFilter {
   1: list<string>          filepath,
@@ -173,7 +173,8 @@ struct ReportFilter {
   7: list<DetectionStatus> detectionStatus,
   8: list<string>          runHistoryTag,
   9: optional i64          firstDetectionDate,
-  10: optional i64         fixDate
+  10: optional i64         fixDate,
+  11: optional bool        isUnique
 }
 
 struct RunReportCount {
@@ -200,10 +201,13 @@ typedef list<CommentData> CommentDataList
 
 /**
  * Members of this struct are interpreted in "AND" relation with each other.
+ * Between the list elements there is "OR" relation.
+ * If exactMatch field is True it will use exact match for run names.
  */
 struct RunFilter {
-  1: list<i64> runIds,
-  2: string    name
+  1: list<i64>    ids,        // IDs of the runs.
+  2: list<string> names,      // Part of the run name.
+  3: bool         exactMatch  // If it's True it will use an exact match for run names.
 }
 
 // CompareData is used as an optinal argument for multiple API calls.

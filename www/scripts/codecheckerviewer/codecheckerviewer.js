@@ -25,6 +25,53 @@ function (declare, topic, domConstruct, Dialog, DropDownMenu, MenuItem,
   Button, DropDownButton, BorderContainer, ContentPane, TabContainer,
   CheckerStatistics, hashHelper, ListOfBugs, ListOfRuns, util) {
 
+  var runDataList = null;
+
+  function findRunData(runId) {
+    return util.findInArray(runDataList, function (runData) {
+      return runData.runId === runId;
+    });
+  }
+
+  function initMainTabs() {
+    var state = hashHelper.getValues();
+
+    switch (state.tab) {
+      case undefined:
+        topic.publish('tab/listOfRuns');
+        return;
+      case 'statistics':
+        topic.publish('tab/checkerStatistics');
+        return;
+      case 'allReports':
+        topic.publish('tab/allReports');
+        return;
+    }
+  }
+
+  function initByUrl() {
+    var state = hashHelper.getValues();
+
+    initMainTabs();
+
+    if (state.tab !== 'allReports' && state.run) {
+      topic.publish('openRun', findRunData(parseInt(state.run)));
+    } else if (state.baseline || state.newcheck || state.difftype) {
+      topic.publish('openDiff', {
+        baseline : findRunData(parseInt(state.baseline)),
+        newcheck : findRunData(parseInt(state.newcheck)),
+        difftype : state.difftype ? state.difftype : CC_OBJECTS.DiffType.NEW
+      });
+    }
+
+    if (state.report || state.reportHash) {
+      var report = state.report ? parseInt(state.report) : null;
+      var reportHash = state.reportHash ? state.reportHash : null;
+      topic.publish('openFile', report, null, reportHash);
+    }
+
+  }
+
   return function () {
 
     //---------------------------- Global objects ----------------------------//
@@ -174,34 +221,9 @@ function (declare, topic, domConstruct, Dialog, DropDownMenu, MenuItem,
 
     var listOfRuns = new ListOfRuns({
       title : 'List of runs',
-      onLoaded : function (runDataList) {
-        function findRunData(runId) {
-          return util.findInArray(runDataList, function (runData) {
-            return runData.runId === runId;
-          });
-        }
-
-        var urlValues = hashHelper.getValues();
-
-        if (urlValues.allReports) {
-          topic.publish('tab/allReports')
-        } else if (urlValues.checkerStatistics) {
-          topic.publish('tab/checkerStatistics')
-        } else if (urlValues.run) {
-          topic.publish('openRun',
-            findRunData(parseInt(urlValues.run)), urlValues.filters);
-        } else if (urlValues.baseline || urlValues.newcheck ||
-          urlValues.difftype) {
-          topic.publish('openDiff', {
-            baseline : findRunData(parseInt(urlValues.baseline)),
-            newcheck : findRunData(parseInt(urlValues.newcheck)),
-            difftype : urlValues.difftype
-                     ? urlValues.difftype : CC_OBJECTS.DiffType.NEW
-          });
-        }
-
-        if (urlValues.report)
-          topic.publish('openFile', parseInt(urlValues.report));
+      onLoaded : function (runDataParam) {
+        runDataList = runDataParam;
+        initByUrl();
       },
       onShow : function () {
         if (!this.initalized) {
@@ -220,16 +242,10 @@ function (declare, topic, domConstruct, Dialog, DropDownMenu, MenuItem,
     var checkerStatisticsTab = new CheckerStatistics({
       title : 'Checker statistics',
       onShow : function () {
-        var state = {
-          'checkerStatistics' : true,
+        hashHelper.resetStateValues({
+          'tab' : 'statistics',
           'run' : this._filterPane.selectedRuns
-        };
-
-        hashHelper.setStateValues(state);
-      },
-
-      onHide : function () {
-        hashHelper.setStateValue('checkerStatistics', null);
+        });
       }
     });
     runsTab.addChild(checkerStatisticsTab);
@@ -309,6 +325,16 @@ function (declare, topic, domConstruct, Dialog, DropDownMenu, MenuItem,
 
     topic.subscribe('tab/checkerStatistics', function () {
       runsTab.selectChild(checkerStatisticsTab);
+    });
+
+    topic.subscribe('tab/listOfRuns', function () {
+      runsTab.selectChild(listOfRuns);
+    });
+
+    //--- Handle main tabs ---//
+
+    topic.subscribe('/dojo/hashchange', function (url) {
+      initMainTabs();
     });
   };
 });

@@ -6,6 +6,7 @@
 # -----------------------------------------------------------------------------
 
 from collections import Counter
+from collections import defaultdict
 import os
 import unittest
 
@@ -55,34 +56,34 @@ class TestReportFilter(unittest.TestCase):
 
         self.run1_checkers = \
             {'core.CallAndMessage': 5,
-             'core.DivideZero': 5,
+             'core.DivideZero': 10,
              'core.NullDereference': 4,
              'core.StackAddressEscape': 3,
              'cplusplus.NewDelete': 5,
-             'deadcode.DeadStores': 5,
+             'deadcode.DeadStores': 6,
              'unix.Malloc': 1}
 
         self.run2_checkers = \
             {'core.CallAndMessage': 5,
-             'core.DivideZero': 5,
+             'core.DivideZero': 10,
              'core.NullDereference': 4,
              'cplusplus.NewDelete': 5,
-             'deadcode.DeadStores': 5,
+             'deadcode.DeadStores': 6,
              'unix.MismatchedDeallocator': 1}
 
         self.run1_sev_counts = {Severity.MEDIUM: 1,
-                                Severity.LOW: 5,
-                                Severity.HIGH: 22}
+                                Severity.LOW: 6,
+                                Severity.HIGH: 27}
 
         self.run2_sev_counts = {Severity.MEDIUM: 1,
-                                Severity.LOW: 5,
-                                Severity.HIGH: 19}
+                                Severity.LOW: 6,
+                                Severity.HIGH: 24}
 
         self.run1_detection_counts = \
-            {DetectionStatus.NEW: 28}
+            {DetectionStatus.NEW: 34}
 
         self.run2_detection_counts = \
-            {DetectionStatus.NEW: 25}
+            {DetectionStatus.NEW: 31}
 
         self.run1_files = \
             {'file_to_be_skipped.cpp': 2,
@@ -91,20 +92,26 @@ class TestReportFilter(unittest.TestCase):
              'stack_address_escape.cpp': 3,
              'call_and_message.cpp': 5,
              'divide_zero.cpp': 4,
+             'divide_zero_duplicate.cpp': 2,
              'has a space.cpp': 1,
              'skip_header.cpp': 1,
-             'skip.h': 1
+             'skip.h': 1,
+             'path_begin.cpp': 2,
+             'path_end.h': 2
              }
 
         self.run2_files = \
             {'call_and_message.cpp': 5,
              'new_delete.cpp': 6,
              'divide_zero.cpp': 4,
+             'divide_zero_duplicate.cpp': 2,
              'null_dereference.cpp': 5,
              'file_to_be_skipped.cpp': 2,
              'has a space.cpp': 1,
              'skip_header.cpp': 1,
-             'skip.h': 1
+             'skip.h': 1,
+             'path_begin.cpp': 2,
+             'path_end.h': 2
              }
 
     def test_run1_all_checkers(self):
@@ -332,37 +339,43 @@ class TestReportFilter(unittest.TestCase):
                                                          None,
                                                          None)
 
-        report_ids = [x.reportId for x in self._cc_client.getRunResults(
-            [runid], report_count, 0, [], None, None)]
+        reports = self._cc_client.getRunResults(
+            [runid], report_count, 0, [], None, None)
 
-        for rid in report_ids[:5]:
-            self._cc_client.changeReviewStatus(rid,
+        reporthash_reports_count = dict(Counter([r.bugHash for r in reports]))
+
+        bug_hashes = set()
+        unique_reports = [bug_hashes.add(x.bugHash) or (x.reportId, x.bugHash)
+                          for x in reports if x.bugHash not in bug_hashes]
+
+        # Set report status of all reports to unreviewed.
+        for report in reports:
+            self._cc_client.changeReviewStatus(report.reportId,
                                                ReviewStatus.UNREVIEWED,
-                                               'comment')
-        for rid in report_ids[5:10]:
-            self._cc_client.changeReviewStatus(rid,
-                                               ReviewStatus.CONFIRMED,
-                                               'comment')
+                                               '')
 
-        for rid in report_ids[10:15]:
-            self._cc_client.changeReviewStatus(rid,
-                                               ReviewStatus.FALSE_POSITIVE,
-                                               'comment')
-        for rid in report_ids[15:20]:
-            self._cc_client.changeReviewStatus(rid,
-                                               ReviewStatus.INTENTIONAL,
-                                               'comment')
+        review_status = defaultdict(int)
+        review_status[ReviewStatus.UNREVIEWED] = len(reports)
 
-        # Unset statuses cout as unreviewed.
-        review_status = {ReviewStatus.CONFIRMED: 5,
-                         ReviewStatus.UNREVIEWED: 13,
-                         ReviewStatus.FALSE_POSITIVE: 5,
-                         ReviewStatus.INTENTIONAL: 5}
+        for i, status in enumerate([ReviewStatus.CONFIRMED,
+                                    ReviewStatus.FALSE_POSITIVE,
+                                    ReviewStatus.INTENTIONAL]):
+            start_range = i * 5
+            end_range = (i + 1) * 5
+            for report in unique_reports[start_range:end_range]:
+                self._cc_client.changeReviewStatus(report[0],
+                                                   status,
+                                                   'comment')
+                review_status[status] += \
+                    reporthash_reports_count[report[1]]
+
+            review_status[ReviewStatus.UNREVIEWED] -= review_status[status]
 
         rv_counts = self._cc_client.getReviewStatusCounts([runid], None, None)
 
-        self.assertEqual(len(rv_counts), len(review_status))
-        self.assertDictEqual(rv_counts, review_status)
+        review_status_dict = dict(review_status)
+        self.assertEqual(len(rv_counts), len(review_status_dict))
+        self.assertDictEqual(rv_counts, review_status_dict)
 
     def test_run1_run2_all_review_status(self):
         """
@@ -381,6 +394,12 @@ class TestReportFilter(unittest.TestCase):
                                                        [],
                                                        None,
                                                        None)]
+
+        # Set report status of all reports to unreviewed.
+        for rid in report_ids:
+            self._cc_client.changeReviewStatus(rid,
+                                               ReviewStatus.UNREVIEWED,
+                                               '')
 
         for rid in report_ids[:5]:
             self._cc_client.changeReviewStatus(rid,
@@ -471,8 +490,8 @@ class TestReportFilter(unittest.TestCase):
                'core.StackAddressEscape': 3,
                'cplusplus.NewDelete': 5,
                'core.NullDereference': 4,
-               'core.DivideZero': 5,
-               'deadcode.DeadStores': 5,
+               'core.DivideZero': 10,
+               'deadcode.DeadStores': 6,
                'unix.Malloc': 1}
         self.assertDictEqual(new, checkers_dict)
 

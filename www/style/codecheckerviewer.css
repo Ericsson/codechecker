@@ -660,6 +660,12 @@ span[class*="severity-"] {
   border-bottom: none
 }
 
+.bug-filters .top-bar {
+  display: block;
+  overflow: hidden;
+  margin-top: 5px;
+}
+
 /* Clear all button */
 
 .bug-filters .clear-all-btn > .dijitButtonNode {
@@ -670,6 +676,16 @@ span[class*="severity-"] {
 .bug-filters .clear-all-btn:hover > .dijitButtonNode {
   background-color: #007ea7;
   color: white;
+}
+
+/* Unique reports checkbox */
+
+.bug-filters .is-unique {
+  margin-left: 10px;
+  display: inline-block;
+  border: none;
+  padding: 0px;
+  vertical-align: middle;
 }
 
 /* All report counter */

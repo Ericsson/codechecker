@@ -25,6 +25,34 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
   BorderContainer, TabContainer, Tooltip, DataGrid, BugViewer, BugFilterView,
   RunHistory, hashHelper, util) {
 
+  function getRunData(runId) {
+    var runFilter = new CC_OBJECTS.RunFilter();
+    runFilter.ids = [runId];
+    runFilter.exactMatch = true;
+
+    var runData = CC_SERVICE.getRunData(runFilter);
+    return runData.length ? runData[0] : null;
+  }
+
+  function initByUrl(grid) {
+    var state = hashHelper.getValues();
+
+    switch (state.subtab) {
+      case undefined:
+        topic.publish('subtab/bugOverview');
+        return;
+      case 'runHistory':
+        topic.publish('subtab/runHistory');
+        return;
+      default:
+        topic.publish('openFile',
+          state.report !== undefined ? state.report : null,
+          state.run !== undefined ? getRunData(parseInt(state.run)) : null,
+          state.reportHash !== undefined ? state.reportHash : null,
+          grid);
+    }
+  }
+
   var filterHook = function(filters, isDiff) {
     var length = 0;
 
@@ -111,8 +139,9 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
 
     _formatItems : function (reportDataList) {
       reportDataList.forEach(function (reportData) {
-        reportData.checkedFile = reportData.checkedFile +
-          ' @ Line ' + reportData.line;
+        if (reportData.line)
+          reportData.checkedFile = reportData.checkedFile +
+            ' @ Line ' + reportData.line;
 
         //--- Review status ---//
 
@@ -161,10 +190,14 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
   }
 
   function detectionStatusFormatter(detectionStatus) {
-    var status = util.detectionStatusFromCodeToString(detectionStatus);
+    if (detectionStatus !== null) {
+      var status = util.detectionStatusFromCodeToString(detectionStatus);
 
-    return '<span title="' + status  + '" class="customIcon detection-status-'
-      + status.toLowerCase() + '"></span>';
+      return '<span title="' + status  + '" class="customIcon detection-status-'
+        + status.toLowerCase() + '"></span>';
+    }
+
+    return 'N/A';
   }
 
   function reviewStatusFormatter(reviewStatus) {
@@ -176,13 +209,17 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
       + '" class="customIcon ' + className + '"></span>';
   }
 
+  function checkerMessageFormatter(msg) {
+    return msg !== null ? msg : 'N/A';
+  }
+
   var ListOfBugsGrid = declare(DataGrid, {
     constructor : function () {
       var width = (100 / 5).toString() + '%';
 
       this.structure = [
         { name : 'File', field : 'checkedFile', cellClasses : 'link compact', width : '100%' },
-        { name : 'Message', field : 'checkerMsg', width : '100%' },
+        { name : 'Message', field : 'checkerMsg', width : '100%', formatter : checkerMessageFormatter },
         { name : 'Checker name', field : 'checkerId', cellClasses : 'link', width : '50%' },
         { name : 'Severity', field : 'severity', cellClasses : 'severity', width : '15%', formatter : severityFormatter },
         { name : 'Review status', field : 'reviewStatus', cellClasses : 'review-status', width : '15%', formatter : reviewStatusFormatter },
@@ -224,7 +261,7 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
 
       switch (evt.cell.field) {
         case 'checkedFile':
-          topic.publish('openFile', item, this.runData, this);
+          topic.publish('openFile', item, this.runData, item.bugHash, this);
           break;
 
         case 'checkerId':
@@ -258,14 +295,35 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
   });
 
   return declare(TabContainer, {
-    postCreate : function () {
+    constructor : function (args) {
+      dojo.safeMixin(this, args);
+
       var that = this;
 
-      var content = new BorderContainer({
+      //--- Grid ---//
+
+      this._grid = new ListOfBugsGrid({
+        region : 'center',
+        runData : this.runData,
+        baseline : this.baseline,
+        newcheck : this.newcheck,
+        difftype : this.difftype
+      });
+
+      this._bugOverview = new BorderContainer({
         title : 'Bug Overview',
         onShow : function () {
-          grid.scrollToLastSelected();
-          hashHelper.setStateValue('report', null);
+          if (!this.initalized) {
+            this.initalized = true;
+            return;
+          }
+
+          that._grid.scrollToLastSelected();
+          hashHelper.setStateValues({
+            'report' : null,
+            'reportHash' : null,
+            'subtab' : null
+          });
         }
       });
 
@@ -284,65 +342,94 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
         difftype : this.difftype
       });
 
-      content.addChild(this._bugFilterView);
-
-      //--- Grid ---//
-
-      var grid = new ListOfBugsGrid({
-        region : 'center',
-        runData : this.runData,
-        baseline : this.baseline,
-        newcheck : this.newcheck,
-        difftype : this.difftype
-      });
-
-      grid.refreshGrid(that._bugFilterView.getReportFilters());
-      content.addChild(grid);
-
-      this.addChild(content);
-
       //--- Run history ---//
 
-      var runHistory = new RunHistory({
+      this._runHistory = new RunHistory({
         title : 'Run history',
         runData : this.runData,
-        bugOverView : content,
+        bugOverView : this._bugOverview,
         bugFilterView : this._bugFilterView,
         parent : this,
         onShow : function () {
-          hashHelper.setStateValue('tab', 'runHistory');
-        },
-        onHide : function () {
-          hashHelper.setStateValue('tab', null);
+          hashHelper.setStateValue('subtab', 'runHistory');
         }
       });
 
-      this.addChild(runHistory);
+      this._bugViewerIdToTab = {};
+      this._tab = null;
 
-      var urlState = hashHelper.getValues();
-      if (urlState.tab && urlState.tab === 'runHistory')
-        this.selectChild(runHistory);
+      this._subscribeTopics();
+    },
 
-      //--- Events ---//
+    postCreate : function () {
+      var that = this;
+
+      this._bugOverview.addChild(this._bugFilterView);
+      this._grid.refreshGrid(that._bugFilterView.getReportFilters());
+
+      this._bugOverview.addChild(this._grid);
+      this.addChild(this._bugOverview);
+
+      this.addChild(this._runHistory);
+
+      initByUrl(this._grid);
+    },
+
+    _subscribeTopics : function () {
+      var that = this;
+
+      this._runHistoryTopic = topic.subscribe('subtab/runHistory', function () {
+        that.selectChild(that._runHistory);
+      });
+
+      this._bugOverviewTopic = topic.subscribe('subtab/bugOverview', function () {
+        that.selectChild(that._bugOverview);
+      });
+
+      this._hashChangeTopic = topic.subscribe('/dojo/hashchange',
+      function (url) {
+        var state = hashHelper.getState();
+        if (this._tab === state.tab)
+          initByUrl(that._grid);
+      });
 
       this._openFileTopic = topic.subscribe('openFile',
-      function (reportData, runData, sender) {
-        if (sender && sender !== grid)
+      function (reportData, runData, reportHash, sender) {
+        if (sender && sender !== that._grid)
           return;
 
-        if (!that.runData && !that.baseline && !that.allReportView)
+        if (!that.runData && !that.baseline && !reportHash && !that.allReportView)
           return;
 
-        if (!(reportData instanceof CC_OBJECTS.ReportData))
+        if (reportData !== null && !(reportData instanceof CC_OBJECTS.ReportData))
           reportData = CC_SERVICE.getReport(reportData);
 
-        var filename = reportData.checkedFile.substr(
-          reportData.checkedFile.lastIndexOf('/') + 1);
+        var getAndUseReportHash = reportHash && (!reportData ||
+          reportData.reportId === null || reportData.bugHash !== reportHash);
 
         var reportFilters = that._bugFilterView.getReportFilters();
         var runResultParam = createRunResultFilterParameter(reportFilters);
-        if (runData)
-          runResultParam.runIds = [runData.runId];
+
+        if (getAndUseReportHash) {
+          // Get all reports by report hash
+          var reportFilter = new CC_OBJECTS.ReportFilter();
+          reportFilter.reportHash = [reportHash];
+          reportFilter.isUnique = false;
+
+          reports = CC_SERVICE.getRunResults(null, CC_OBJECTS.MAX_QUERY_SIZE,
+            0, null, reportFilter, null);
+          reportData = reports[0];
+          runData = getRunData(reportData.runId);
+          runResultParam.runIds = [reportData.runId];
+        }
+
+        if (that._bugViewerIdToTab[reportData.reportId]) {
+          that.selectChild(that._bugViewerIdToTab[reportData.reportId]);
+          return;
+        }
+
+        var filename = reportData.checkedFile.substr(
+          reportData.checkedFile.lastIndexOf('/') + 1);
 
         var bugViewer = new BugViewer({
           title : filename,
@@ -351,13 +438,23 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
           runData : runData ? runData : that.runData,
           runResultParam : runResultParam,
           onShow : function () {
-            hashHelper.setStateValue('report', reportData.reportId);
+            hashHelper.setStateValues({
+              'reportHash' : reportData.bugHash,
+              'report' : reportData.reportId,
+              'subtab' : reportData.reportId
+            });
+
+            if (!getAndUseReportHash)
+              hashHelper.setStateValue('report', reportData.reportId);
           },
           onClose : function () {
-            that.selectChild(content);
+            delete that._bugViewerIdToTab[reportData.reportId];
+            topic.publish('subtab/bugOverview');
+
             return true;
           }
         });
+        that._bugViewerIdToTab[reportData.reportId] = bugViewer;
 
         that.addChild(bugViewer);
         that.selectChild(bugViewer);
@@ -371,18 +468,28 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
           return;
 
         var reportFilters = that._bugFilterView.getReportFilters();
-        grid.refreshGrid(reportFilters);
+        that._grid.refreshGrid(reportFilters);
       });
     },
 
     onShow : function () {
       var state  = this._bugFilterView.getUrlState();
-      state.report = null;
-
       if (this.allReportView)
-        state.allReports = true;
+        state.tab = 'allReports';
+      else
+        state.tab = state.run || state.baseline + '_' + state.newcheck;
 
-      hashHelper.setStateValues(state);
+      this._tab  = state.tab;
+
+      if (!this.initalized) {
+        this.initalized = true;
+
+        var urlState = hashHelper.getState();
+        if (urlState.tab === state.tab)
+          return;
+      }
+
+      hashHelper.setStateValues(state, true);
 
       //--- Call show method of the selected children ---//
 
@@ -392,15 +499,14 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
       });
     },
 
-    onHide : function () {
-      if (this.allReportView)
-        hashHelper.setStateValue('allReports', null);
-    },
-
     destroy : function () {
       this.inherited(arguments);
       this._openFileTopic.remove();
       this._filterChangeTopic.remove();
+      this._hashChangeTopic.remove();
+      this._bugOverviewTopic.remove();
+      this._runHistoryTopic.remove();
+
       // Clear URL if list of bugs view is closed.
       hashHelper.clear();
     }

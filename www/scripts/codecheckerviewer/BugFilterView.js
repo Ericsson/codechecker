@@ -13,6 +13,7 @@ define([
   'dojo/topic',
   'dojox/widget/Standby',
   'dijit/form/Button',
+  'dijit/form/CheckBox',
   'dijit/form/DateTextBox',
   'dijit/form/TextBox',
   'dijit/form/TimeTextBox',
@@ -22,8 +23,8 @@ define([
   'codechecker/hashHelper',
   'codechecker/util'],
 function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
-  DateTextBox, TextBox, TimeTextBox, popup, TooltipDialog, ContentPane,
-  hashHelper, util) {
+  CheckBox, DateTextBox, TextBox, TimeTextBox, popup, TooltipDialog,
+  ContentPane, hashHelper, util) {
 
   function alphabetical(a, b) {
     if (a < b) return -1;
@@ -267,7 +268,9 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
      * Let's ReviewStatus = {UNREVIEWED = 0;}. If the value parameter is
      * `unreviewed` it returns with the 0.
      */
-    stateDecoder : function (value) { return value; },
+    stateDecoder : function (value) {
+      return isNaN(value) ? value : parseFloat(value);
+    },
 
     /**
      * Returns human readable url state object by calling the state converter
@@ -297,6 +300,11 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
      * Returns true if there is any item which is newly selected.
      */
     setState : function (state) { return false; },
+
+    /**
+     * Deselecting items which are selected but not in the state parameter.
+     */
+    deselectByState : function (state) {},
 
     loading : function () {
       this._standBy.show();
@@ -415,6 +423,23 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
       return changed;
     },
 
+    deselectByState : function (state) {
+      var that = this;
+
+      var urlFilterState = state[this.class] ? state[this.class] : [];
+      if (!(urlFilterState instanceof Array))
+        urlFilterState = [urlFilterState];
+
+      var filterState = this.getState()[this.class];
+      if (filterState)
+        filterState.forEach(function (s) {
+          var value = that.stateConverter(s);
+          if (urlFilterState.indexOf(value.toString()) === -1) {
+            that.deselectItem(s, true);
+          }
+        });
+    },
+
     getState : function () {
       var state = Object.keys(this._selectedFilterItems).map(function (key) {
         return isNaN(key) ? key : parseFloat(key);
@@ -452,6 +477,9 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
       var that = this;
 
       var item = this.getItem(value);
+
+      if (this.disableMultipleOption && this._selectedValuesCount)
+        return;
 
       // If already selected, update the report counter of the filter:
       // if there isn't any item with this value from the server,
@@ -703,7 +731,7 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
         if (!this._fromTime.get('displayedValue').length) {
           var zero = new Date();
           zero.setHours(0,0,0,0);
-          this._fromTime.set('value', zero);
+          this._fromTime.set('value', zero, false);
         }
 
         var prevDate = this.getPrevDateTime(this._fromDate, this._fromTime);
@@ -712,7 +740,7 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
 
         if (!prevDate || prevDate.getTime() !== date.getTime()) {
           this._fromDate.set('value', date , false);
-          this._fromTime.set('value', date, false);
+          this._fromTime.set('value', date);
 
           changed = true;
         }
@@ -720,7 +748,7 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
         if (!this._toTime.get('displayedValue').length) {
           var zero = new Date();
           zero.setHours(23,59,59,0);
-          this._toTime.set('value', zero);
+          this._toTime.set('value', zero, false);
         }
 
         var prevDate = this.getPrevDateTime(this._toDate, this._toTime);
@@ -729,7 +757,7 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
 
         if (!prevDate || prevDate.getTime() !== date.getTime()) {
           this._toDate.set('value', date, false);
-          this._toTime.set('value', date, false);
+          this._toTime.set('value', date);
 
           changed = true;
         }
@@ -751,6 +779,22 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
         changed = this.selectItem('fixDate', to) || changed;
 
       return changed;
+    },
+
+    deselectByState : function (state) {
+      var that = this;
+
+      var filterState = this.getState();
+
+      if (!state[this._fromDate.class] && filterState[this._fromDate.class]) {
+        this._fromDate.set('value', null , false);
+        this._fromTime.set('value', null, false);
+      }
+
+      if (!state[this._toDate.class] && filterState[this._toDate.class]) {
+        this._toDate.set('value', null , false);
+        this._toTime.set('value', null, false);
+      }
     },
 
     stateDecoder : function (str) {
@@ -800,6 +844,78 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
     }
   });
 
+  var UniqueCheckBox = declare(FilterBase, {
+    constructor : function () {
+      var that = this;
+
+      this._defaultValue = true; // Enabled by default.
+      this._isUnique = this._defaultValue;
+
+      this._uniqueCheckBox = new CheckBox({
+        checked : this._defaultValue,
+        onChange : function (changed) {
+          that._isUnique = changed;
+
+          topic.publish('filterchange', {
+            parent : that.parent,
+            changed : that.getUrlState()
+          });
+        }
+      });
+
+      this._uniqueCheckBoxLabel = dom.create('label', {
+        for : this._uniqueCheckBox.get('id'),
+        innerHTML : 'Unique reports'
+      });
+    },
+
+    postCreate : function () {
+      this.inherited(arguments);
+      dom.empty(this.domNode);
+
+      this.addChild(this._uniqueCheckBox);
+      dom.place(this._uniqueCheckBoxLabel,
+        this._uniqueCheckBox.domNode, 'after');
+    },
+
+    selectItem : function (key, value) {},
+
+    setState : function (state) {
+      var changed = false;
+
+      var newState = state[this.class] === 'off' ? false : true;
+      if (this._isUnique !== newState) {
+        this._isUnique = newState;
+        this._uniqueCheckBox.set('checked', this._isUnique, false);
+        changed = true
+      }
+
+      return changed;
+    },
+
+    deselectByState : function (state) {
+      this.setState(state);
+      this._uniqueCheckBox.set('checked', this._isUnique);
+    },
+
+    getUrlState : function () {
+      return {
+        [this.class] : this._isUnique ? 'on' : 'off'
+      };
+    },
+
+    getState : function () {
+      return {
+        [this.class] : this._isUnique
+      };
+    },
+
+    clearAll : function () {
+      this._isUnique = this._defaultValue;
+      this._uniqueCheckBox.set('checked', this._isUnique, false);
+    }
+  });
+
   return declare(ContentPane, {
     constructor : function (args) {
       dojo.safeMixin(this, args);
@@ -807,6 +923,9 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
       var that = this;
 
       this._filters = [];
+      this._isUnique = true;
+
+      this._topBarPane = dom.create('div', { class : 'top-bar'});
 
       //--- Clear all filter button ---//
 
@@ -827,9 +946,20 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
         }
       });
 
+      this._uniqueReportsCheckBox = new UniqueCheckBox({
+        class : 'is-unique',
+        parent   : this,
+        getItems : function () {
+          var deferred = new Deferred();
+          deferred.resolve([]);
+          return deferred;
+        }
+      });
+      this._filters.push(this._uniqueReportsCheckBox);
+
       this._reportCountWrapper = dom.create('span', {
         class : 'report-count-wrapper'
-      });
+      }, this._topBarPane);
 
       this._reportCountIcon = dom.create('span', {
         class : 'customIcon bug'
@@ -1003,7 +1133,7 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
         parent   : this,
         stateConverter : function (value) {
           return util.enumValueToKey(
-            CC_OBJECTS.ReviewStatus, value).toLowerCase()
+            CC_OBJECTS.ReviewStatus, value).toLowerCase();
         },
         stateDecoder : function (key) {
           return CC_OBJECTS.ReviewStatus[key.toUpperCase()];
@@ -1041,7 +1171,7 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
         parent   : this,
         stateConverter : function (value) {
           return util.enumValueToKey(
-            CC_OBJECTS.DetectionStatus, value).toLowerCase()
+            CC_OBJECTS.DetectionStatus, value).toLowerCase();
         },
         stateDecoder : function (key) {
           return CC_OBJECTS.DetectionStatus[key.toUpperCase()];
@@ -1293,7 +1423,7 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
 
       var state = hashHelper.getState();
 
-      if (this.runData || this.diffView || state.allReports) {
+      if (this.runData || this.diffView || state.tab === 'allReports') {
         if (this.runData && !state.run)
           state.run = this.runData.runId;
         else if ((this.baseline && !state.baseline) ||
@@ -1302,14 +1432,17 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
             state.baseline = this.baseline.runId;
           if (this.newcheck)
             state.newcheck = this.newcheck.runId;
+          state.difftype = this.difftype || CC_OBJECTS.DiffType.NEW;
         }
       } else {
         //--- All report tab case ---//
 
-        if (state.report === undefined)
+        if (state.report === undefined && state.reportHash === undefined) {
           state = {};
-        else
-          hashHelper.setStateValue('allReports', true);
+        } else {
+          hashHelper.setStateValue('tab', 'allReports');
+          topic.publish('tab/allReports');
+        }
       }
 
       this.refreshFilters(state, true);
@@ -1365,11 +1498,13 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
     postCreate : function () {
       var that = this;
 
-      this.addChild(this._clearAllButton);
-      dom.place(this._reportCountWrapper, this.domNode);
+      dom.place(this._clearAllButton.domNode, this._topBarPane);
+      dom.place(this._uniqueReportsCheckBox.domNode, this._topBarPane)
+      dom.place(this._topBarPane, this.domNode);
 
       this._filters.forEach(function (filter) {
-        that.addChild(filter);
+        if (that._uniqueReportsCheckBox.class !== filter.class)
+          that.addChild(filter);
       });
     },
 
@@ -1400,28 +1535,44 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
     },
 
     /**
+     * Returns CamelCased version of the parameter.
+     */
+    getReportFilterName : function (key) {
+      return key.split('-').map(function (str, ind) {
+        if (ind === 0)
+          return str;
+
+        return str.charAt(0).toUpperCase() + str.slice(1);
+      }).join('');
+    },
+
+    /**
      * Creates report filters for the selected filter.
      */
     getReportFilters : function () {
+      var that = this;
+
       var reportFilter = new CC_OBJECTS.ReportFilter();
+      reportFilter.isUnique = this._isUnique;
 
       this._filters.forEach(function (filter) {
         var state = filter.getState();
         Object.keys(state).forEach(function (key) {
-          // The report filter name comes from the actual filter state.
-          // It converts the state key to camelCased.
-          var reportFilterName = key.split('-').map(function (str, ind) {
-            if (ind === 0)
-              return str;
-
-            return str.charAt(0).toUpperCase() + str.slice(1);
-          }).join('');
-
+          var reportFilterName = that.getReportFilterName(key);
           reportFilter[reportFilterName] = state[key];
         });
       });
 
       return reportFilter;
+    },
+
+    /**
+     * Deselecting items which are not active by the URL state.
+     */
+    deselectByState : function (state) {
+      this._filters.forEach(function (filter) {
+        filter.deselectByState(state);
+      });
     },
 
     /**
@@ -1497,8 +1648,11 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
       // the filter by the url state.
       that._hashChangeTopic = topic.subscribe('/dojo/hashchange',
       function (url) {
-        if (!that.hashChangeInProgress && that.parent.selected)
-          that.refreshFilters(hashHelper.getState());
+        if (!that.hashChangeInProgress && that.parent.selected) {
+          var state = hashHelper.getState();
+          that.deselectByState(state);
+          that.refreshFilters(state);
+        }
 
         that.hashChangeInProgress = false;
       });

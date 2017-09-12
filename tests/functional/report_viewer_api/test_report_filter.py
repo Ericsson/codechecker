@@ -201,7 +201,7 @@ class TestReportFilter(unittest.TestCase):
                                                              None,
                                                              None)
 
-        self.assertEqual(run_result_count, 53)
+        self.assertEqual(run_result_count, 65)
 
         run_results = self._cc_client.getRunResults(self._runids,
                                                     run_result_count,
@@ -258,3 +258,52 @@ class TestReportFilter(unittest.TestCase):
 
                 self.assertIsNotNone(run_results)
                 self.assertEqual(test_result_count, len(run_results))
+
+    def test_filter_unique(self):
+        """
+         Get all results by unique and non unique filter and check the results.
+        """
+
+        sort_types = None
+        simple_filter = ReportFilter()
+        unique_filter = ReportFilter(isUnique=True)
+
+        # Get unique results.
+        run_results = self._cc_client.getRunResults(
+            None, 500, 0, sort_types, unique_filter, None)
+        unique_result_count = self._cc_client.getRunResultCount(
+            None, unique_filter, None)
+        unique_bughash = set([res.bugHash for res in run_results])
+
+        # Get simple results.
+        run_results = self._cc_client.getRunResults(
+            None, 500, 0, sort_types, simple_filter, None)
+        simple_result_count = self._cc_client.getRunResultCount(
+            None, simple_filter, None)
+        simple_bughash = set([res.bugHash for res in run_results])
+
+        diff_hashes = list(simple_bughash.difference(unique_bughash))
+        self.assertEqual(0, len(diff_hashes))
+        self.assertGreaterEqual(simple_result_count, unique_result_count)
+
+    def test_uniqueing_compared_to_test_config(self):
+        """
+         In the test config there are all of the reports without
+        uniqueing. This test checks if the uniqueing works for the
+        getRunResultCount api call.
+        """
+        runid = self._runids[0]
+
+        bugs = self._testproject_data[self._clang_to_test]['bugs']
+
+        unique_filter = ReportFilter(isUnique=True)
+        run_result_count = self._cc_client.getRunResultCount([runid],
+                                                             unique_filter,
+                                                             None)
+
+        unique_bugs = set()
+        # Uniqueing is done based on file name, line number, and hash.
+        for b in bugs:
+            unique_bugs.add((b['file'], b['checker'], b['hash']))
+
+        self.assertEqual(len(unique_bugs), run_result_count)
