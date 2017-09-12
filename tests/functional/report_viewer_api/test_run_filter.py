@@ -10,6 +10,8 @@ import unittest
 
 from libtest import env
 
+from codeCheckerDBAccess_v6.ttypes import RunFilter
+
 
 class TestRunFilter(unittest.TestCase):
 
@@ -31,7 +33,8 @@ class TestRunFilter(unittest.TestCase):
 
     def __get_runs(self, run_name_filter=None):
         """ Helper function to get all run names which belong to this test"""
-        runs = self._cc_client.getRunData(run_name_filter)
+        run_filter = RunFilter(name=run_name_filter)
+        runs = self._cc_client.getRunData(run_filter)
 
         return [run for run in runs if run.name in self._run_names]
 

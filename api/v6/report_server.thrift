@@ -25,6 +25,14 @@ struct RunData {
 }
 typedef list<RunData> RunDataList
 
+/**
+ * Members of this struct are interpreted in "AND" relation with each other.
+ */
+struct RunFilter {
+  1: list<i64> runIds,
+  2: string    name
+}
+
 struct RunReportCount {
   1: i64            runId,        // unique id of the run
   2: string         name,         // human readable name of the run
@@ -47,17 +55,18 @@ struct ReviewData {
 }
 
 struct ReportData {
-  1: string                  checkerId,       // The qualified name of the checker that reported this.
-  2: string                  bugHash,         // This is unique id of the concrete report.
-  3: string                  checkedFile,     // This is a filepath, the original main file the analyzer was called with.
-  4: string                  checkerMsg,      // Description of the bug report.
-  5: i64                     reportId,        // id of the report in the current run in the db.
-  6: i64                     fileId,          // Unique id of the file the report refers to.
-  7: i64                     line,            // line number or the reports main section (not part of the path).
-  8: i64                     column,          // column number of the report main section (not part of the path).
-  9: shared.Severity         severity         // Checker severity.
-  10: ReviewData             reviewData       // Bug review status information.
-  11: shared.DetectionStatus detectionStatus  // State of the bug (see the enum constant values).
+  1: i64                     runId,           // Unique id of the run.
+  2: string                  checkerId,       // The qualified name of the checker that reported this.
+  3: string                  bugHash,         // This is unique id of the concrete report.
+  4: string                  checkedFile,     // This is a filepath, the original main file the analyzer was called with.
+  5: string                  checkerMsg,      // Description of the bug report.
+  6: i64                     reportId,        // id of the report in the current run in the db.
+  7: i64                     fileId,          // Unique id of the file the report refers to.
+  8: i64                     line,            // line number or the reports main section (not part of the path).
+  9: i64                     column,          // column number of the report main section (not part of the path).
+  10: shared.Severity        severity         // Checker severity.
+  11: ReviewData             reviewData       // Bug review status information.
+  12: shared.DetectionStatus detectionStatus  // State of the bug (see the enum constant values).
 }
 typedef list<ReportData> ReportDataList
 
@@ -182,9 +191,9 @@ struct CompareData {
 
 service codeCheckerDBAccess {
 
-  // get the run Ids and dates from the database to select one run
+  // Gives back all analyzed runs.
   // PERMISSION: PRODUCT_ACCESS
-  RunDataList getRunData(1: string runNameFilter)
+  RunDataList getRunData(1: RunFilter runFilter)
                          throws (1: shared.RequestFailed requestError),
 
   // PERMISSION: PRODUCT_ACCESS
