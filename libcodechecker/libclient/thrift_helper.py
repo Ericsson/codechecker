@@ -60,10 +60,13 @@ class ThriftClientHelper(object):
                     print('API call error: ' + funcName)
                     print(str(reqfailure))
 
+                raise
+
             except TProtocolException as ex:
                 print("Connection failed to {0}:{1}"
                       .format(self.__host, self.__port))
                 print("Check if your CodeChecker server is running.")
+                sys.exit(1)
             except socket.error as serr:
                 print("Connection failed to {0}:{1}"
                       .format(self.__host, self.__port))
@@ -71,6 +74,7 @@ class ThriftClientHelper(object):
                 print(errCause)
                 print(str(serr))
                 print("Check if your CodeChecker server is running.")
+                sys.exit(1)
             finally:
                 self.transport.close()
 
