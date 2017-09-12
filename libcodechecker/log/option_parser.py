@@ -176,7 +176,9 @@ UNKNOWN_OPTIONS_MAP_REGEX = {
     '^-mmultiple$': 0,
     '^-mthumb-interwork$': 0,
     '^-mupdate$': 0,
-    '^-fno-merge-const-bfstores$': 0
+    '^-fno-merge-const-bfstores$': 0,
+    '^-fno-ipa-sra$': 0,
+    '^-mno-thumb-interwork$': 0
 }
 
 
