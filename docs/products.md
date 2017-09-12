@@ -17,10 +17,11 @@ database is an isolated storage of results, completely separate, and can be
 added and removed from a server on the fly.
 
 Command-line tools that are used to access analysis data take an `--url
-PRODUCT_URL` parameter, which specifies the server host, port, and the
-product's unique endpoint in the following format: `localhost:8001/Default`,
-where `Default` is the product's endpoint. See the User guide for further
-details.
+PRODUCT_URL` parameter, which specifies the access protocol, 
+server host, port, and the product's unique endpoint 
+in the following format: `[http[s]://]localhost:8001/Default`,
+where `Default` is the product's endpoint. See the [User Guide](/docs/user_guide.md#product_url-format) 
+for further details.
 
 The Web application separates products based on their unique endpoint. The
 home page of the server is the product list, shown above.

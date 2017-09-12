@@ -69,10 +69,19 @@ create a workspace directory, where the database will be stored.
  mkdir ./ws
  CodeChecker server -w ./ws -v 8555
 ```
-2. Store the results in the server under run name "tmux":
+A default product called `Default` will be automatically created where you can store your results.
+
+2. Store the results in the server under run name "tmux" (in the `Default` product):
 ```
- CodeChecker store ./reports --host localhost --port 8555 --name tmux
+ CodeChecker store ./reports --name tmux --url http://localhost:8555/Default 
 ```
+
+The URL is in `PRODUCT_URL` format:
+`[http[s]://]host:port/ProductEndpoint`
+Please note that if you start the server is secure mode (with SSL) you will need to use the `https` protocol prefix.
+The default protocol is `http`.
+See  [user guide](/docs/user_guide.md#product_url-format ) for detailed description of the `PRODUCT_URL` format.
+
 3. View the results in your web browser
  http://localhost:8555
 

@@ -18,6 +18,7 @@ import posixpath
 from random import sample
 import stat
 import socket
+import ssl
 import urllib
 
 try:
@@ -585,6 +586,22 @@ class CCSimpleHttpServer(HTTPServer):
             HTTPServer.__init__(self, server_address,
                                 RequestHandlerClass,
                                 bind_and_activate=True)
+            ssl_key_file = os.path.join(config_directory, "key.pem")
+            ssl_cert_file = os.path.join(config_directory, "cert.pem")
+            if os.path.isfile(ssl_key_file) and os.path.isfile(ssl_cert_file):
+                LOG.info("Initiating SSL. Server listening on secure socket.")
+                LOG.debug("Using cert file:"+ssl_cert_file)
+                LOG.debug("Using key file:"+ssl_key_file)
+                self.socket = ssl.wrap_socket(self.socket, server_side=True,
+                                              keyfile=ssl_key_file,
+                                              certfile=ssl_cert_file)
+
+            else:
+                LOG.info("SSL key or cert files not found. Cert: " +
+                         ssl_cert_file +
+                         "\n Key: " + ssl_key_file)
+                LOG.info("Falling back to simple, insecure HTTP.")
+
         except Exception as e:
             LOG.error("Couldn't start the server: " + e.__str__())
             raise

@@ -39,7 +39,7 @@ def check_api_version(auth_client):
         sys.exit(1)
 
 
-def setup_auth_client(host, port, session_token=None):
+def setup_auth_client(protocol, host, port, session_token=None):
     """
     Setup the Thrift authentication client. Returns the client object and the
     session token for the session.
@@ -48,13 +48,17 @@ def setup_auth_client(host, port, session_token=None):
     if not session_token:
         manager = session_manager.SessionManager_Client()
         session_token = manager.getToken(host, port)
-        session_token_new = perform_auth_for_handler(manager, host,
-                                                     port, session_token)
+        session_token_new = perform_auth_for_handler(protocol,
+                                                     manager, host,
+                                                     port,
+                                                     session_token)
         if session_token_new:
             session_token = session_token_new
 
-    client = authentication_helper.ThriftAuthHelper(
-        host, port, '/v' + CLIENT_API + '/Authentication', session_token)
+    client = authentication_helper.ThriftAuthHelper(protocol, host, port,
+                                                    '/v' + CLIENT_API +
+                                                    '/Authentication',
+                                                    session_token)
     check_api_version(client)
 
     return client, session_token
@@ -66,18 +70,22 @@ def setup_auth_client_from_url(product_url, session_token=None):
     product URL.
     """
     try:
-        _, host, port, _ = split_product_url(product_url)
-        return setup_auth_client(host, port, session_token)
+        protocol, host, port, _ = split_product_url(product_url)
+        return setup_auth_client(protocol, host, port, session_token)
     except:
         LOG.error("Malformed product URL was provided.")
         sys.exit(2)  # 2 for argument error.
 
 
-def handle_auth(host, port, username, login=False):
+def handle_auth(protocol, host, port, username, login=False):
     session = session_manager.SessionManager_Client()
     auth_token = session.getToken(host, port)
-    auth_client = authentication_helper.ThriftAuthHelper(
-        host, port, '/v' + CLIENT_API + '/Authentication', auth_token)
+    auth_client = authentication_helper.ThriftAuthHelper(protocol, host,
+                                                         port,
+                                                         '/v' +
+                                                         CLIENT_API +
+                                                         '/Authentication',
+                                                         auth_token)
     check_api_version(auth_client)
 
     if not login:
@@ -137,11 +145,17 @@ def handle_auth(host, port, username, login=False):
         sys.exit(1)
 
 
-def perform_auth_for_handler(manager, host, port, session_token):
+def perform_auth_for_handler(protocol, manager, host, port,
+                             session_token):
     # Before actually communicating with the server,
     # we need to check authentication first.
-    auth_client = authentication_helper.ThriftAuthHelper(
-        host, port, '/v' + CLIENT_API + '/Authentication', session_token)
+    auth_client = authentication_helper.ThriftAuthHelper(protocol,
+                                                         host,
+                                                         port,
+                                                         '/v' +
+                                                         CLIENT_API +
+                                                         '/Authentication',
+                                                         session_token)
     check_api_version(auth_client)
 
     try:
@@ -181,22 +195,23 @@ def perform_auth_for_handler(manager, host, port, session_token):
             sys.exit(1)
 
 
-def setup_product_client(host, port, product_name=None):
+def setup_product_client(protocol, host, port, product_name=None):
     """
     Setup the Thrift client for the product management endpoint.
     """
 
-    _, session_token = setup_auth_client(host, port)
+    _, session_token = setup_auth_client(protocol, host, port)
 
     if not product_name:
         # Attach to the server-wide product service.
         product_client = product_helper.ThriftProductHelper(
-            host, port, '/v' + CLIENT_API + '/Products', session_token)
+            protocol, host, port, '/v' + CLIENT_API + '/Products',
+            session_token)
     else:
         # Attach to the product service and provide a product name
         # as "viewpoint" from which the product service is called.
         product_client = product_helper.ThriftProductHelper(
-            host, port,
+            protocol, host, port,
             '/' + product_name + '/v' + CLIENT_API + '/Products',
             session_token)
 
@@ -218,15 +233,15 @@ def setup_client(product_url):
     """
 
     try:
-        _, host, port, product_name = split_product_url(product_url)
+        protocol, host, port, product_name = split_product_url(product_url)
     except:
         LOG.error("Malformed product URL was provided.")
         sys.exit(2)  # 2 for argument error.
 
-    _, session_token = setup_auth_client(host, port)
+    _, session_token = setup_auth_client(protocol, host, port)
 
     # Check if the product exists.
-    product_client = setup_product_client(host, port,
+    product_client = setup_product_client(protocol, host, port,
                                           product_name=None)
     product = product_client.getProducts(product_name, None)
     product_error_str = None
@@ -249,7 +264,7 @@ def setup_client(product_url):
         sys.exit(1)
 
     client = thrift_helper.ThriftClientHelper(
-        host, port,
+        protocol, host, port,
         '/' + product_name + '/v' + CLIENT_API + '/CodeCheckerService',
         session_token)
 

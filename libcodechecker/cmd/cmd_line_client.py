@@ -512,6 +512,6 @@ def handle_suppress(args):
 
 
 def handle_login(args):
-    _, host, port = split_server_url(args.server_url)
-    handle_auth(host, port, args.username,
+    protocol, host, port = split_server_url(args.server_url)
+    handle_auth(protocol, host, port, args.username,
                 login='logout' not in args)

@@ -5,6 +5,7 @@
 # -----------------------------------------------------------------------------
 
 import json
+from libcodechecker import util
 import os
 import shlex
 import stat
@@ -34,7 +35,8 @@ def wait_for_postgres_shutdown(workspace):
             break
 
 
-def login(codechecker_cfg, test_project_path, username, password):
+def login(codechecker_cfg, test_project_path, username, password,
+          protocol='http'):
     """
     Perform a command-line login to the server.
     """
@@ -42,7 +44,7 @@ def login(codechecker_cfg, test_project_path, username, password):
     port = str(codechecker_cfg['viewer_port'])
     login_cmd = ['CodeChecker', 'cmd', 'login', username,
                  '--verbose', 'debug',
-                 '--url', 'localhost:' + port]
+                 '--url', protocol + '://' + 'localhost:' + port]
 
     auth_creds = {'client_autologin': True,
                   'credentials': {}}
@@ -77,7 +79,7 @@ def login(codechecker_cfg, test_project_path, username, password):
         return cerr.errno
 
 
-def logout(codechecker_cfg, test_project_path):
+def logout(codechecker_cfg, test_project_path, protocol='http'):
     """
     Perform a command-line logout from a server. This method also clears the
     credentials assigned to the server.
@@ -87,7 +89,7 @@ def logout(codechecker_cfg, test_project_path):
     logout_cmd = ['CodeChecker', 'cmd', 'login',
                   '--logout',
                   '--verbose', 'debug',
-                  '--url', 'localhost:' + port]
+                  '--url', protocol + '://'+'localhost:' + port]
 
     auth_file = os.path.join(test_project_path, ".codechecker.passwords.json")
     if os.path.exists(auth_file):
@@ -336,7 +338,8 @@ def start_or_get_server():
     }
 
 
-def add_test_package_product(server_data, test_folder, check_env=None):
+def add_test_package_product(server_data, test_folder, check_env=None,
+                             protocol='http'):
     """
     Add a product for a test suite to the server provided by server_data.
     Server must be running before called.
@@ -351,12 +354,15 @@ def add_test_package_product(server_data, test_folder, check_env=None):
     codechecker_cfg.update(server_data)
 
     # Clean the previous session if any exists.
-    logout(codechecker_cfg, test_folder)
+    logout(codechecker_cfg, test_folder, protocol)
+
+    url = util.create_product_url(protocol, server_data['viewer_host'],
+                                  str(server_data['viewer_port']),
+                                  '')
 
     add_command = ['CodeChecker', 'cmd', 'products', 'add',
                    server_data['viewer_product'],
-                   '--url', server_data['viewer_host'] + ':' +
-                   str(server_data['viewer_port']),
+                   '--url', url,
                    '--name', os.path.basename(test_folder),
                    '--description', "Automatically created product for test."]
 
@@ -376,20 +382,20 @@ def add_test_package_product(server_data, test_folder, check_env=None):
     print(' '.join(add_command))
 
     # Authenticate as SUPERUSER to be able to create the product.
-    login(codechecker_cfg, test_folder, "root", "root")
+    login(codechecker_cfg, test_folder, "root", "root", protocol)
     # The schema creation is a synchronous call.
     returncode = subprocess.call(add_command, env=check_env)
-    logout(codechecker_cfg, test_folder)
+    logout(codechecker_cfg, test_folder, protocol)
 
     # After login as SUPERUSER, continue running the test as a normal user.
     # login() saves the relevant administrative file
-    login(codechecker_cfg, test_folder, "cc", "test")
+    login(codechecker_cfg, test_folder, "cc", "test", protocol)
 
     if returncode:
         raise Exception("Failed to add the product to the test server!")
 
 
-def remove_test_package_product(test_folder, check_env=None):
+def remove_test_package_product(test_folder, check_env=None, protocol='http'):
     """
     Remove the product associated with the given test folder.
     The folder must exist, as the server configuration is read from the folder.
@@ -405,19 +411,20 @@ def remove_test_package_product(test_folder, check_env=None):
         server_data['check_env'] = check_env
 
     # Clean the previous session if any exists.
-    logout(server_data, test_folder)
-
+    logout(server_data, test_folder, protocol)
+    url = util.create_product_url(protocol, server_data['viewer_host'],
+                                  str(server_data['viewer_port']),
+                                  '')
     del_command = ['CodeChecker', 'cmd', 'products', 'del',
                    server_data['viewer_product'],
-                   '--url', server_data['viewer_host'] + ':' +
-                   str(server_data['viewer_port'])]
+                   '--url', url]
 
     print(' '.join(del_command))
 
     # Authenticate as SUPERUSER to be able to create the product.
-    login(server_data, test_folder, "root", "root")
+    login(server_data, test_folder, "root", "root", protocol)
     returncode = subprocess.call(del_command, env=check_env)
-    logout(server_data, test_folder)
+    logout(server_data, test_folder, protocol)
 
     # If tests are running on postgres, we need to delete the database.
     # SQLite databases are deleted automatically as part of the

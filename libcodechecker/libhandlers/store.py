@@ -134,7 +134,7 @@ def add_arguments_to_parser(parser):
                              required=False,
                              help="The URL of the product to store the "
                                   "results for, in the format of "
-                                  "'host:port/Endpoint'.")
+                                  "'[http[s]://]host:port/Endpoint'.")
 
     add_verbose_arguments(parser)
     parser.set_defaults(func=main)
@@ -300,15 +300,16 @@ def main(args):
         LOG.info("argument --force was specified: the run with name '" +
                  args.name + "' will be deleted.")
 
-    _, host, port, product_name = split_product_url(args.product_url)
+    protocol, host, port, product_name = split_product_url(args.product_url)
 
     # Before any transmission happens, check if we have the PRODUCT_STORE
     # permission to prevent a possibly long ZIP operation only to get an
     # error later on.
-    product_client = libclient.setup_product_client(host, port, product_name)
+    product_client = libclient.setup_product_client(protocol,
+                                                    host, port, product_name)
     product_id = product_client.getCurrentProduct().id
 
-    auth_client, _ = libclient.setup_auth_client(host, port)
+    auth_client, _ = libclient.setup_auth_client(protocol, host, port)
     has_perm = libclient.check_permission(
         auth_client, Permission.PRODUCT_STORE, {'productID': product_id})
     if not has_perm:
