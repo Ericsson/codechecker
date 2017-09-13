@@ -339,8 +339,8 @@ class SessionManager:
                 .get("authorities")
             for ldap_conf in ldap_authorities:
                 if cc_ldap.auth_user(ldap_conf, username, password):
-                    # TODO: Fetch the LDAP groups of user.
-                    return {'username': username, 'groups': []}
+                    groups = cc_ldap.get_groups(ldap_conf, username, password)
+                    return {'username': username, 'groups': groups}
 
         return False
 

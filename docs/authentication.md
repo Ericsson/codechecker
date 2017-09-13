@@ -191,19 +191,17 @@ servers as it can elongate the authentication process.
 
  * `groupPattern`
 
-   Group query pattern used. Must be a valid LDAP query expression.
-
- * `groupMemberPattern`
-
-  Group member pattern will be combined with the group patten to query user
-  for ldap group membership. `$USERDN$` will be automatically replaced by the
-  queried user account DN.
-
-  Example configuration: `(member=$USERDN$)`
+   Group query pattern used LDAP query expression to find the group objects
+   a user is a member of. It must contain a `$USERDN$` pattern. 
+   `$USERDN$` will be automatically replaced by the queried user account DN.
+   
+ * `groupNameAttr`
+ 	
+   The attribute of the group object which contains the name of the group. 
 
  * `groupScope`
 
-  Scope of the search performed. (Valid values are: `base`, `one`, `subtree`)
+   Scope of the search performed. (Valid values are: `base`, `one`, `subtree`)
 
 ~~~{.json}
 "method_ldap": {
@@ -220,8 +218,8 @@ servers as it can elongate the authentication process.
       "accountPattern" : "(&(objectClass=person)(sAMAccountName=$USN$))",
       "groupBase" : null,
       "groupScope" : "subtree",
-      "groupPattern" : "(&(objectClass=group)(name=mygroup))",
-      "groupMemberPattern" : "(member=$USERDN$)"
+      "groupPattern" : "(&(objectClass=group)(member=$USERDN$))",
+      "groupNameAttr" : "sAMAccountName"
     },
     {
       "connection_url" : "ldaps://secure.internal.example.org:636",
@@ -235,7 +233,7 @@ servers as it can elongate the authentication process.
       "groupBase" : null,
       "groupScope" : "subtree",
       "groupPattern" : null,
-      "groupMemberPattern" : null
+      "groupNameAttr" : null
     }
   ]
 }

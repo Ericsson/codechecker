@@ -26,7 +26,7 @@ In the configuration `null` means it is not configured.
       "groupBase" : null,
       "groupScope" : "subtree",
       "groupPattern" : null,
-      "groupMemberPattern" : null
+      "groupNameAttr" : null
     }
   ]
 },
@@ -71,13 +71,14 @@ Example configuration: *(&(objectClass=person)(sAMAccountName=$USN$))*
 Root tree containing all the groups.
 
 `groupPattern`
-Group query pattern used. Must be a valid LDAP query expression.
 
-`groupMemberPattern`
-Group member pattern will be combined with the group patten to query user for
-ldap group membership.
-$USERDN$ will be automatically replaced by the queried user account DN.
-Example configuration: *(member=$USERDN$)*
+Group query pattern used LDAP query expression to find the group objects
+a user is a member of. It must contain a `$USERDN$` pattern.
+`$USERDN$` will be automatically replaced by the queried user account DN.
+
+`groupNameAttr`
+
+The attribute of the group object which contains the name of the group.
 
 `groupScope`
 Scope of the search performed. (Valid values are: base, one, subtree)
@@ -209,18 +210,18 @@ class LDAPConnection(object):
 
         self.connection = ldap.initialize(ldap_server)
 
-        LOG.error('Binding to LDAP server with user: ' + who if who else '')
+        LOG.debug('Binding to LDAP server with user: ' + who if who else '')
 
         with ldap_error_handler():
             if who is None or cred is None:
                 # Try anonymous bind.
                 res = self.connection.simple_bind_s()
-                LOG.error(res)
+                LOG.debug(res)
             else:
                 # Bind with the given credentials
-                LOG.error(who)
+                LOG.debug(who)
                 res = self.connection.simple_bind_s(who, cred)
-                LOG.error(res)
+                LOG.debug(res)
 
     def __enter__(self):
         return self.connection
@@ -273,7 +274,6 @@ def auth_user(ldap_config, username=None, credentials=None):
     if not service_user:
         service_user = username
         service_cred = credentials
-
     with LDAPConnection(ldap_config, service_user, service_cred) as connection:
 
         user_dn = get_user_dn(connection,
@@ -288,17 +288,51 @@ def auth_user(ldap_config, username=None, credentials=None):
                 LOG.error('Anonymous bind might not be enabled.')
             LOG.error('Configured username: ' + service_user)
             return False
-
     # bind with the users dn to check group membership
     with LDAPConnection(ldap_config, user_dn, credentials) as connection:
+        return True
+    LOG.info("User:" + username + " cannot be authenticated.")
+    return False
+
+
+def get_groups(ldap_config, username, credentials):
+
+    account_base = ldap_config.get('accountBase')
+    if account_base is None:
+        LOG.error('Account base needs to be configured to query users')
+        return False
+
+    account_pattern = ldap_config.get('accountPattern')
+    if account_pattern is None:
+        LOG.error('No account pattern is defined to search for users.')
+        LOG.error('Please configure one.')
+        return False
+
+    account_pattern = account_pattern.replace('$USN$', username)
+
+    account_scope = ldap_config.get('accountScope', '')
+    account_scope = get_ldap_query_scope(account_scope)
+
+    service_user = ldap_config.get('username')
+    service_cred = ldap_config.get('password')
+    if not service_user:
+        service_user = username
+        service_cred = credentials
+
+    LOG.debug("creating LDAP connection. service user" + service_user)
+    with LDAPConnection(ldap_config, service_user, service_cred) as connection:
+        user_dn = get_user_dn(connection,
+                              account_base,
+                              account_pattern,
+                              account_scope)
 
         group_pattern = ldap_config.get('groupPattern', '')
         if user_dn and group_pattern == '':
             # User found and there is no group membership pattern to check.
-            return True
+            return []
+        group_pattern = group_pattern.replace('$USERDN$', user_dn)
 
         LOG.debug('Checking for group membership.')
-        LOG.debug(group_pattern)
 
         group_scope = ldap_config.get('groupScope', '')
         group_scope = get_ldap_query_scope(group_scope)
@@ -307,17 +341,36 @@ def auth_user(ldap_config, username=None, credentials=None):
         if group_base is None:
             LOG.error('Group base needs to be configured to'
                       'query ldap groups.')
-            return False
+            return []
 
-        member_pattern = ldap_config.get('groupMemberPattern')
-        if member_pattern is None or member_pattern == '':
-            member_pattern = '(member=$USERDN$)'
+        group_name_attr = ldap_config.get('groupNameAttr')
+        if group_name_attr is None:
+            LOG.error('groupNameAttr needs to be configured to'
+                      'query ldap groups.'
+                      'Its value must be the name'
+                      'attribute of the group.')
+            return []
 
-        member_pattern = member_pattern.replace('$USERDN$', user_dn)
-        member_query = '(& ' + group_pattern + member_pattern + ')'
+        # Attribute name must be ascii encoded
+        group_name_attr = group_name_attr.encode('ascii',
+                                                 'ignore')
+        attr_list = [group_name_attr]
 
-        is_member = check_group_membership(connection,
-                                           group_base,
-                                           member_query,
-                                           group_scope)
-        return is_member
+        LOG.debug("Performing LDAP search for group:" + group_pattern +
+                  "Group Name Attr:" + group_name_attr)
+
+        groups = []
+        with ldap_error_handler():
+            group_result = connection.search_s(group_base,
+                                               group_scope,
+                                               group_pattern,
+                                               attr_list)
+            if group_result:
+                for g in group_result:
+                    groups.append(g[1][group_name_attr][0])
+
+        LOG.debug("groups:")
+        LOG.debug(groups)
+        return groups
+    LOG.error("Cannot get ldap groups for user:"+username)
+    return []
