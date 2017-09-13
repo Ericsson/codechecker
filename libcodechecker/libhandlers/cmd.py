@@ -131,7 +131,10 @@ def __add_filtering_arguments(parser):
                         default="::",
                         help="Filter results. The filter string has the "
                              "following format: "
-                             "<severity>:<checker_name>:<file_path>")
+                             "[<SEVERITIES>]:[<CHECKER_NAMES>]:[<FILE_PATHS>] "
+                             "where severites, checker_names, "
+                             "file_paths should be a comma separated list, "
+                             "e.g.: \"high,medium:unix,core:*.cpp,*.h\"")
 
 
 def __register_results(parser):

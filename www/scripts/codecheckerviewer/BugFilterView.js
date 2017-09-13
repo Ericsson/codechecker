@@ -591,7 +591,7 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
                 cmpData.diff_type = CC_OBJECTS.DiffType[key];
               }
 
-              CC_SERVICE.getRunResultCount_v2(runIds, reportFilter, cmpData,
+              CC_SERVICE.getRunResultCount(runIds, reportFilter, cmpData,
               function (res) {
                 d.resolve({ [key] : res});
               });
@@ -928,7 +928,7 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
      * Creates report filters for the selected filter.
      */
     getReportFilters : function () {
-      var reportFilter = new CC_OBJECTS.ReportFilter_v2();
+      var reportFilter = new CC_OBJECTS.ReportFilter();
 
       this._filters.forEach(function (filter) {
         var state = filter.getState();
@@ -998,7 +998,7 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
       var runs = that.getRunIds();
       var reportFilter = this.getReportFilters();
 
-      CC_SERVICE.getRunResultCount_v2(runs.baseline, reportFilter,
+      CC_SERVICE.getRunResultCount(runs.baseline, reportFilter,
       runs.newcheck, function (count) {
         that._reportCount.innerHTML = count;
       });

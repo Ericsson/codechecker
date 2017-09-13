@@ -1105,11 +1105,14 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
-  -s, --suppressed      Filter results to only show suppressed entries.
-                        (default: False)
+  -s, --suppressed      Show only suppressed results instead of only
+                        unsuppressed ones. (default: False)
   --filter FILTER       Filter results. The filter string has the following
-                        format: <severity>:<checker_name>:<file_path>
-                        (default: ::)
+                        format:
+                        [<SEVERITIES>]:[<CHECKER_NAMES>]:[<FILE_PATHS>] where
+                        severites, checker_names, file_paths should be a comma
+                        separated list, e.g.:
+                        "high,medium:unix,core:*.cpp,*.h" (default: ::)
 ~~~~~~~~~~~~~~~~~~~~~
 
 ### Show differences between two runs (`diff`)
@@ -1141,8 +1144,11 @@ optional arguments:
   -s, --suppressed      Filter results to only show suppressed entries.
                         (default: False)
   --filter FILTER       Filter results. The filter string has the following
-                        format: <severity>:<checker_name>:<file_path>
-                        (default: ::)
+                        format:
+                        [<SEVERITIES>]:[<CHECKER_NAMES>]:[<FILE_PATHS>] where
+                        severites, checker_names, file_paths should be a comma
+                        separated list, e.g.:
+                        "high,medium:unix,core:*.cpp,*.h" (default: ::)
 
 comparison modes:
   --new                 Show results that didn't exist in the 'base' but
@@ -1189,8 +1195,11 @@ optional arguments:
   -s, --suppressed      Filter results to only show suppressed entries.
                         (default: False)
   --filter FILTER       Filter results. The filter string has the following
-                        format: <severity>:<checker_name>:<file_path>
-                        (default: ::)
+                        format:
+                        [<SEVERITIES>]:[<CHECKER_NAMES>]:[<FILE_PATHS>] where
+                        severites, checker_names, file_paths should be a comma
+                        separated list, e.g.:
+                        "high,medium:unix,core:*.cpp,*.h" (default: ::)
 ~~~~~~~~~~~~~~~~~~~~~
 
 ### Remove analysis runs (`del`)

@@ -17,11 +17,11 @@ import unittest
 import shared
 from codeCheckerDBAccess_v6.ttypes import DiffType
 from codeCheckerDBAccess_v6.ttypes import CompareData
-from codeCheckerDBAccess_v6.ttypes import ReportFilter_v2
+from codeCheckerDBAccess_v6.ttypes import ReportFilter
 
 from libtest import env
 from libtest.debug_printer import print_run_results
-from libtest.thrift_client_to_db import get_all_run_results_v2
+from libtest.thrift_client_to_db import get_all_run_results
 
 
 def get_severity_level(name):
@@ -84,9 +84,9 @@ class Diff(unittest.TestCase):
         cmp_data = CompareData(runIds=[new_run_id],
                                diffType=DiffType.NEW)
 
-        diff_res = self._cc_client.getRunResultCount_v2([base_run_id],
-                                                        None,
-                                                        cmp_data)
+        diff_res = self._cc_client.getRunResultCount([base_run_id],
+                                                     None,
+                                                     cmp_data)
         # 5 new core.CallAndMessage issues.
         self.assertEqual(diff_res, 5)
 
@@ -100,9 +100,9 @@ class Diff(unittest.TestCase):
         cmp_data = CompareData(runIds=[new_run_id],
                                diffType=DiffType.NEW)
 
-        diff_res = self._cc_client.getRunResultCount_v2([],
-                                                        None,
-                                                        cmp_data)
+        diff_res = self._cc_client.getRunResultCount([],
+                                                     None,
+                                                     cmp_data)
         # 5 new core.CallAndMessage issues.
         self.assertEqual(diff_res, 5)
 
@@ -116,12 +116,12 @@ class Diff(unittest.TestCase):
         cmp_data = CompareData(runIds=[new_run_id],
                                diffType=DiffType.NEW)
 
-        diff_res = self._cc_client.getRunResults_v2([base_run_id],
-                                                    500,
-                                                    0,
-                                                    [],
-                                                    None,
-                                                    cmp_data)
+        diff_res = self._cc_client.getRunResults([base_run_id],
+                                                 500,
+                                                 0,
+                                                 [],
+                                                 None,
+                                                 cmp_data)
         # 5 new core.CallAndMessage issues.
         self.assertEqual(len(diff_res), 5)
 
@@ -135,12 +135,12 @@ class Diff(unittest.TestCase):
         cmp_data = CompareData(runIds=[new_run_id],
                                diffType=DiffType.RESOLVED)
 
-        diff_res = self._cc_client.getRunResults_v2([base_run_id],
-                                                    500,
-                                                    0,
-                                                    [],
-                                                    None,
-                                                    cmp_data)
+        diff_res = self._cc_client.getRunResults([base_run_id],
+                                                 500,
+                                                 0,
+                                                 [],
+                                                 None,
+                                                 cmp_data)
         self.assertEqual(len(diff_res), 3)
 
     def test_get_diff_results_unresolved(self):
@@ -153,12 +153,12 @@ class Diff(unittest.TestCase):
         cmp_data = CompareData(runIds=[new_run_id],
                                diffType=DiffType.UNRESOLVED)
 
-        diff_res = self._cc_client.getRunResults_v2([base_run_id],
-                                                    500,
-                                                    0,
-                                                    [],
-                                                    None,
-                                                    cmp_data)
+        diff_res = self._cc_client.getRunResults([base_run_id],
+                                                 500,
+                                                 0,
+                                                 [],
+                                                 None,
+                                                 cmp_data)
         self.assertEqual(len(diff_res), 20)
 
     def test_get_diff_res_count_resolved(self):
@@ -171,9 +171,9 @@ class Diff(unittest.TestCase):
         cmp_data = CompareData(runIds=[new_run_id],
                                diffType=DiffType.RESOLVED)
 
-        diff_res = self._cc_client.getRunResultCount_v2([base_run_id],
-                                                        None,
-                                                        cmp_data)
+        diff_res = self._cc_client.getRunResultCount([base_run_id],
+                                                     None,
+                                                     cmp_data)
         # 3 disappeared core.StackAddressEscape issues.
         self.assertEqual(diff_res, 3)
 
@@ -184,32 +184,32 @@ class Diff(unittest.TestCase):
         base_run_id = self._base_runid
         new_run_id = self._new_runid
 
-        base_count = self._cc_client.getRunResultCount_v2([base_run_id],
-                                                          None,
-                                                          None)
+        base_count = self._cc_client.getRunResultCount([base_run_id],
+                                                       None,
+                                                       None)
         logging.debug("Base run id: %d", base_run_id)
         logging.debug("Base count: %d", base_count)
 
-        base_run_res = get_all_run_results_v2(self._cc_client, base_run_id)
+        base_run_res = get_all_run_results(self._cc_client, base_run_id)
 
         print_run_results(base_run_res)
 
-        new_count = self._cc_client.getRunResultCount_v2([new_run_id],
-                                                         None,
-                                                         None)
+        new_count = self._cc_client.getRunResultCount([new_run_id],
+                                                      None,
+                                                      None)
         logging.debug("New run id: %d", new_run_id)
         logging.debug("New count: %d", new_count)
 
-        new_run_res = get_all_run_results_v2(self._cc_client, new_run_id)
+        new_run_res = get_all_run_results(self._cc_client, new_run_id)
 
         print_run_results(new_run_res)
 
         cmp_data = CompareData(runIds=[new_run_id],
                                diffType=DiffType.UNRESOLVED)
 
-        diff_res = self._cc_client.getRunResultCount_v2([base_run_id],
-                                                        None,
-                                                        cmp_data)
+        diff_res = self._cc_client.getRunResultCount([base_run_id],
+                                                     None,
+                                                     cmp_data)
 
         self.assertEqual(diff_res, 20)
 
@@ -227,9 +227,9 @@ class Diff(unittest.TestCase):
         for level in filter_severity_levels:
             for severity_level, test_result_count in level.items():
                 sev = get_severity_level(severity_level)
-                sev_filter = ReportFilter_v2(severity=[sev])
+                sev_filter = ReportFilter(severity=[sev])
 
-                diff_result_count = self._cc_client.getRunResultCount_v2(
+                diff_result_count = self._cc_client.getRunResultCount(
                     [base_run_id], sev_filter, cmp_data)
 
                 self.assertEqual(test_result_count, diff_result_count)
@@ -262,7 +262,7 @@ class Diff(unittest.TestCase):
 
         cmp_data = CompareData(runIds=[new_run_id],
                                diffType=DiffType.NEW)
-        report_filter = ReportFilter_v2(checkerName=["*core*"])
+        report_filter = ReportFilter(checkerName=["*core*"])
         diff_res = self._cc_client.getCheckerCounts([base_run_id],
                                                     report_filter,
                                                     cmp_data)
@@ -279,7 +279,7 @@ class Diff(unittest.TestCase):
         base_run_id = self._base_runid
         new_run_id = self._new_runid
 
-        report_filter = ReportFilter_v2(checkerName=["*core*"])
+        report_filter = ReportFilter(checkerName=["*core*"])
         cmp_data = CompareData(runIds=[new_run_id],
                                diffType=DiffType.RESOLVED)
         diff_res = self._cc_client.getCheckerCounts([base_run_id],
@@ -298,7 +298,7 @@ class Diff(unittest.TestCase):
         base_run_id = self._base_runid
         new_run_id = self._new_runid
 
-        report_filter = ReportFilter_v2(checkerName=["*core*"])
+        report_filter = ReportFilter(checkerName=["*core*"])
         cmp_data = CompareData(runIds=[new_run_id],
                                diffType=DiffType.UNRESOLVED)
         diff_res = self._cc_client.getCheckerCounts([base_run_id],
@@ -479,7 +479,7 @@ class Diff(unittest.TestCase):
 
         for level in diff_res_types_filter:
             for checker_name, test_result_count in level.items():
-                checker_filter = ReportFilter_v2(checkerName=[checker_name])
+                checker_filter = ReportFilter(checkerName=[checker_name])
                 diff_res = \
                     self._cc_client.getCheckerCounts([base_run_id],
                                                      checker_filter,

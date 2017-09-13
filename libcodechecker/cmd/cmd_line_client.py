@@ -85,23 +85,27 @@ def add_filter_conditions(report_filter, filter_str):
 
     if filter_str.count(':') != 2:
         LOG.error("Filter string has to contain two colons (e.g. "
-                  "\":unix:*.cpp\").")
+                  "\"high,medium:unix,core:*.cpp\").")
         sys.exit(1)
 
-    severity, checker, path = map(lambda x: x.strip(), filter_str.split(':'))
+    severities, checkers, paths = map(lambda x: x.strip(),
+                                      filter_str.split(':'))
 
-    if severity:
-        report_filter.severity\
-            = Severity._NAMES_TO_VALUES[severity.upper()]
-    if checker:
-        report_filter.checkerId = '*' + checker + '*'
-    if path:
-        report_filter.filepath = path
-
+    if severities:
+        report_filter.severity = map(
+                lambda x: Severity._NAMES_TO_VALUES[x.upper()],
+                severities.split(','))
+    if checkers:
+        report_filter.checkerName = map(lambda x: '*' + x + '*',
+                                        checkers.split(','))
+    if paths:
+        report_filter.filepath = map(lambda x: '*' + x + '*',
+                                     paths.split(','))
 
 # ---------------------------------------------------------------------------
 # Argument handlers for the 'CodeChecker cmd' subcommands.
 # ---------------------------------------------------------------------------
+
 
 def handle_list_runs(args):
     client = setup_client(args.product_url)
@@ -132,20 +136,19 @@ def handle_list_results(args):
     limit = constants.MAX_QUERY_SIZE
     offset = 0
 
-    filters = []
     report_filter = ttypes.ReportFilter()
 
     add_filter_conditions(report_filter, args.filter)
-    filters.append(report_filter)
 
     all_results = []
-    results = client.getRunResults([run_id], limit, offset, None, filters)
+    results = client.getRunResults([run_id], limit, offset, None,
+                                   report_filter, None)
 
     while results:
         all_results.extend(results)
         offset += limit
         results = client.getRunResults([run_id], limit, offset, None,
-                                       filters)
+                                       report_filter, None)
 
     if args.output_format == 'json':
         print(CmdLineOutputEncoder().encode(all_results))
@@ -173,10 +176,11 @@ def handle_list_results(args):
 
 
 def handle_diff_results(args):
-    def getDiffResults(getterFn, baseid, newid):
-        report_filter = [
-            ttypes.ReportFilter()]
-        add_filter_conditions(report_filter[0], args.filter)
+
+    def getDiffResults(client, baseid, cmp_data):
+
+        report_filter = ttypes.ReportFilter()
+        add_filter_conditions(report_filter, args.filter)
         sort_mode = [(ttypes.SortMode(
             ttypes.SortType.FILENAME,
             ttypes.Order.ASC))]
@@ -184,14 +188,22 @@ def handle_diff_results(args):
         offset = 0
 
         all_results = []
-        results = getterFn(baseid, newid, limit, offset, sort_mode,
-                           report_filter)
+        results = client.getRunResults([baseid],
+                                       limit,
+                                       offset,
+                                       sort_mode,
+                                       report_filter,
+                                       cmp_data)
 
         while results:
             all_results.extend(results)
             offset += limit
-            results = getterFn(baseid, newid, limit, offset, sort_mode,
-                               report_filter)
+            results = client.getRunResults([baseid],
+                                           limit,
+                                           offset,
+                                           sort_mode,
+                                           report_filter,
+                                           cmp_data)
         return all_results
 
     def getReportDirResults(reportdir):
@@ -228,10 +240,10 @@ def handle_diff_results(args):
         lines = base64.b64decode(source.fileContent).split('\n')
         return "" if len(lines) < lineno else lines[lineno - 1]
 
-    def getDiffReportDir(getterFn, baseid, report_dir, diff_type):
-        report_filter = [
-            ttypes.ReportFilter()]
-        add_filter_conditions(report_filter[0], args.filter)
+    def getDiffReportDir(client, baseid, report_dir, diff_type):
+
+        report_filter = ttypes.ReportFilter()
+        add_filter_conditions(report_filter, args.filter)
 
         sort_mode = [(ttypes.SortMode(
             ttypes.SortType.FILENAME,
@@ -240,13 +252,21 @@ def handle_diff_results(args):
         offset = 0
 
         base_results = []
-        results = getterFn(baseid, limit, offset, sort_mode,
-                           report_filter)
+        results = client.getRunResults([baseid],
+                                       limit,
+                                       offset,
+                                       sort_mode,
+                                       report_filter,
+                                       None)
         while results:
             base_results.extend(results)
             offset += limit
-            results = getterFn(baseid, limit, offset, sort_mode,
-                               report_filter)
+            results = client.getRunResults([baseid],
+                                           limit,
+                                           offset,
+                                           sort_mode,
+                                           report_filter,
+                                           None)
         base_hashes = {}
         for res in base_results:
             base_hashes[res.bugHash] = res
@@ -344,23 +364,26 @@ def handle_diff_results(args):
             diff_type = 'unresolved'
         elif 'resolved' in args:
             diff_type = 'resolved'
-        results = getDiffReportDir(client.getRunResults, [baseid],
-                                   os.path.abspath(args.newname), diff_type)
+        results = getDiffReportDir(client, baseid,
+                                   os.path.abspath(args.newname),
+                                   diff_type)
     else:
+        cmp_data = ttypes.CompareData(runIds=[newid])
         if 'new' in args:
-            results = getDiffResults(client.getNewResults, baseid, newid)
+            cmp_data.diffType = ttypes.DiffType.NEW
         elif 'unresolved' in args:
-            results = getDiffResults(client.getUnresolvedResults,
-                                     baseid, newid)
+            cmp_data.diffType = ttypes.DiffType.UNRESOLVED
         elif 'resolved' in args:
-            results = getDiffResults(client.getResolvedResults, baseid, newid)
+            cmp_data.diffType = ttypes.DiffType.RESOLVED
+
+        results = getDiffResults(client, baseid, cmp_data)
 
     printReports(client, results, args.output_format)
 
 
 def handle_list_result_types(args):
     def getStatistics(client, run_ids, field, values):
-        report_filter = ttypes.ReportFilter_v2()
+        report_filter = ttypes.ReportFilter()
         setattr(report_filter, field, values)
         checkers = client.getCheckerCounts(run_ids,
                                            report_filter,
@@ -383,7 +406,7 @@ def handle_list_result_types(args):
 
     run_ids = [item[1][0] for item in items]
 
-    all_checkers_report_filter = ttypes.ReportFilter_v2()
+    all_checkers_report_filter = ttypes.ReportFilter()
     all_checkers = client.getCheckerCounts(run_ids, all_checkers_report_filter,
                                            None)
     all_checkers_dict = dict((res.name, res) for res in all_checkers)

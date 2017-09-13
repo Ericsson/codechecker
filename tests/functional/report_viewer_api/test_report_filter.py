@@ -60,14 +60,16 @@ class TestReportFilter(unittest.TestCase):
         simple_filters = None
 
         run_result_count = self._cc_client.getRunResultCount([runid],
-                                                             simple_filters)
+                                                             simple_filters,
+                                                             None)
         self.assertIsNotNone(run_result_count)
 
         run_results = self._cc_client.getRunResults([runid],
                                                     run_result_count,
                                                     0,
                                                     sort_types,
-                                                    simple_filters)
+                                                    simple_filters,
+                                                    None)
         self.assertIsNotNone(run_results)
         self.assertEqual(run_result_count, len(run_results))
 
@@ -75,17 +77,19 @@ class TestReportFilter(unittest.TestCase):
         """ Filter value is empty list should return all results."""
         runid = self._runids[0]
         sort_types = None
-        simple_filters = []
 
+        f = ReportFilter()
         run_result_count = self._cc_client.getRunResultCount([runid],
-                                                             simple_filters)
+                                                             f,
+                                                             None)
         self.assertIsNotNone(run_result_count)
 
         run_results = self._cc_client.getRunResults([runid],
                                                     run_result_count,
                                                     0,
                                                     sort_types,
-                                                    simple_filters)
+                                                    f,
+                                                    None)
         self.assertIsNotNone(run_results)
         self.assertEqual(run_result_count, len(run_results))
 
@@ -102,12 +106,12 @@ class TestReportFilter(unittest.TestCase):
                               ' test result count: ' + str(test_result_count))
                 sort_types = None
                 sev = get_severity_level(severity_level)
-                simple_filters = [ReportFilter(severity=sev)]
+                sev_f = ReportFilter(severity=[sev])
 
                 run_result_count = self._cc_client.getRunResultCount(
-                    [runid], simple_filters)
+                    [runid], sev_f, None)
                 run_results = self._cc_client.getRunResults(
-                    [runid], run_result_count, 0, sort_types, simple_filters)
+                    [runid], run_result_count, 0, sort_types, sev_f, None)
                 self.assertIsNotNone(run_results)
                 self.assertEqual(test_result_count, len(run_results))
 
@@ -123,13 +127,16 @@ class TestReportFilter(unittest.TestCase):
                 logging.debug('Checker id filter ' + checker_id_filter +
                               ' test result count: ' + str(test_result_count))
                 sort_types = None
-                simple_filters = [ReportFilter(checkerId=checker_id_filter)]
+                cid_f = ReportFilter(checkerName=[checker_id_filter])
 
-                run_results = self._cc_client.getRunResults(
-                    [runid], 500, 0, sort_types, simple_filters)
+                run_results = self._cc_client.getRunResults([runid],
+                                                            500,
+                                                            0,
+                                                            sort_types,
+                                                            cid_f,
+                                                            None)
                 for r in run_results:
                     print(r)
-                    print("")
                 self.assertIsNotNone(run_results)
                 self.assertEqual(test_result_count, len(run_results))
 
@@ -146,12 +153,16 @@ class TestReportFilter(unittest.TestCase):
                               ' test result count: ' + str(test_result_count))
 
                 sort_types = None
-                simple_filters = [ReportFilter(filepath=filepath_filter)]
+                fp_f = ReportFilter(filepath=[filepath_filter])
 
                 run_result_count = self._cc_client.getRunResultCount(
-                    [runid], simple_filters)
-                run_results = self._cc_client.getRunResults(
-                    [runid], run_result_count, 0, sort_types, simple_filters)
+                    [runid], fp_f, None)
+                run_results = self._cc_client.getRunResults([runid],
+                                                            run_result_count,
+                                                            0,
+                                                            sort_types,
+                                                            fp_f,
+                                                            None)
                 self.assertIsNotNone(run_results)
                 self.assertEqual(test_result_count, len(run_results))
 
@@ -168,12 +179,16 @@ class TestReportFilter(unittest.TestCase):
                               ' test result count: ' + str(test_result_count))
 
                 sort_types = None
-                simple_filters = [ReportFilter(filepath=filepath_filter)]
+                fp_f = ReportFilter(filepath=[filepath_filter])
 
                 run_result_count = self._cc_client.getRunResultCount(
-                    [runid], simple_filters)
-                run_results = self._cc_client.getRunResults(
-                    [runid], run_result_count, 0, sort_types, simple_filters)
+                    [runid], fp_f, None)
+                run_results = self._cc_client.getRunResults([runid],
+                                                            run_result_count,
+                                                            0,
+                                                            sort_types,
+                                                            fp_f,
+                                                            None)
                 self.assertIsNotNone(run_results)
                 self.assertEqual(test_result_count, len(run_results))
 
@@ -183,12 +198,18 @@ class TestReportFilter(unittest.TestCase):
             Without any filtering.
         """
 
-        run_result_count = self._cc_client.getRunResultCount(self._runids, [])
+        run_result_count = self._cc_client.getRunResultCount(self._runids,
+                                                             None,
+                                                             None)
 
         self.assertEqual(run_result_count, 53)
 
-        run_results = self._cc_client.getRunResults(
-            self._runids, run_result_count, 0, [], [])
+        run_results = self._cc_client.getRunResults(self._runids,
+                                                    run_result_count,
+                                                    0,
+                                                    [],
+                                                    None,
+                                                    None)
 
         self.assertIsNotNone(run_results)
         self.assertEqual(run_result_count, len(run_results))
@@ -200,31 +221,41 @@ class TestReportFilter(unittest.TestCase):
         severity_test_data = self._testproject_data[self._clang_to_test][
             'filter_review_status']
 
-        run_result_count = self._cc_client.getRunResultCount([runid], [])
-        run_results = self._cc_client.getRunResults(
-            [runid], run_result_count, 0, [], [])
+        run_result_count = self._cc_client.getRunResultCount([runid],
+                                                             None,
+                                                             None)
+        run_results = self._cc_client.getRunResults([runid],
+                                                    run_result_count,
+                                                    0,
+                                                    [],
+                                                    None,
+                                                    None)
 
         report_ids = [r.reportId for r in run_results]
 
         # Set all review statuses in case some other tests changed them.
         for rid in report_ids:
-            res = self._cc_client.changeReviewStatus(rid,
-                                                     ReviewStatus.CONFIRMED,
-                                                     '')
-            if not res:
-                print("Failed to change review status for " + str(rid))
+            self._cc_client.changeReviewStatus(rid,
+                                               ReviewStatus.CONFIRMED,
+                                               '')
 
         for level in severity_test_data:
             for review_status, test_result_count in level.items():
+                logging.debug('Review status ' + review_status +
+                              ' test result count: ' + str(test_result_count))
                 sort_types = None
                 status = get_status(review_status)
-                simple_filters = [ReportFilter(status=status)]
+                s_f = ReportFilter(reviewStatus=[status])
 
                 run_result_count = self._cc_client.getRunResultCount(
-                    [runid], simple_filters)
+                    [runid], s_f, None)
 
-                run_results = self._cc_client.getRunResults(
-                    [runid], run_result_count, 0, sort_types, simple_filters)
+                run_results = self._cc_client.getRunResults([runid],
+                                                            run_result_count,
+                                                            0,
+                                                            sort_types,
+                                                            s_f,
+                                                            None)
 
                 self.assertIsNotNone(run_results)
                 self.assertEqual(test_result_count, len(run_results))
