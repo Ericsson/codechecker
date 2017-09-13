@@ -27,7 +27,7 @@ COMPILE_OPTS_FWD_TO_DEFAULTS_GETTER = frozenset(
      '^-std=.*'])
 
 
-def get_compiler_includes(compiler, extra_opts=None):
+def get_compiler_includes(compiler, lang, compile_opts, extra_opts=None):
     """
     Returns a list of default includes of the given compiler.
     """
@@ -37,8 +37,15 @@ def get_compiler_includes(compiler, extra_opts=None):
     if extra_opts is None:
         extra_opts = []
 
-    # What if not c++?
-    cmd = compiler + " " + ' '.join(extra_opts) + " -E -x c++ - -v "
+    # The first sysroot flag found among the compilation options is added
+    # to the command below to give a more precise default include list.
+    # Absence of any sysroot flags results in an empty string.
+    sysroot = next(
+        (item for item in compile_opts if item.startswith("--sysroot=")), "")
+
+    cmd = compiler + " " + ' '.join(extra_opts) + " -E -x " + lang + \
+        " " + sysroot + " - -v "
+
     LOG.debug("Retrieving default includes via '" + cmd + "'")
     include_paths = []
     try:
@@ -171,7 +178,8 @@ def parse_compile_commands_json(logfile, add_compiler_defaults=False):
                             extra_opts.append(comp_opt)
 
                 compiler_includes[results.compiler] = \
-                    get_compiler_includes(results.compiler, extra_opts)
+                    get_compiler_includes(results.compiler, results.lang,
+                                          results.compile_opts, extra_opts)
                 compiler_target = get_compiler_target(results.compiler)
             action.compiler_includes = compiler_includes[results.compiler]
 
