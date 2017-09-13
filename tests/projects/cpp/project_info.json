@@ -37,7 +37,7 @@
         "filter_checker_id": [{"*unix*": 1}, {"core*": 17}, {"*DeadStores": 5}],
         "filter_filepath": [{"*null*": 5}],
         "filter_filepath_case_insensitive": [{"*null*": 5}, {"*nULl*": 5}, {"*NULL*": 5}, {"*Null*": 5}],
-        "filter_review_status": [{"UNREVIEWED": 0}, {"CONFIRMED": 28}, {"FALSE_POSITIVE": 0}, {"WONT_FIX": 0}],
+        "filter_review_status": [{"UNREVIEWED": 0}, {"CONFIRMED": 28}, {"FALSE_POSITIVE": 0}, {"INTENTIONAL": 0}],
         "diff_res_types_filter": [{"deadcode.DeadStores": 5},  {"cplusplus.NewDelete": 5}, {"unix.Malloc": 1}]
     }
 }

@@ -113,7 +113,7 @@ function (declare, ItemFileWriteStore, Deferred, all, Memory, Observable,
         { name : '<span class="customIcon review-status-unreviewed"></span> Unreviewed', field : 'unreviewed', width : '20%'},
         { name : '<span class="customIcon review-status-confirmed-bug"></span>Confirmed bug', field : 'confirmed', width : '20%'},
         { name : '<span class="customIcon review-status-false-positive"></span> False positive', field : 'falsePositive', width : '20%'},
-        { name : "<span class= \"customIcon review-status-wont-fix\"></span>Won't fix", field : 'wontFix', width : '20%'}
+        { name : "<span class= \"customIcon review-status-intentional\"></span>Intentional", field : 'intentional', width : '20%'}
       ];
 
       this.focused = true;
@@ -152,7 +152,7 @@ function (declare, ItemFileWriteStore, Deferred, all, Memory, Observable,
         {field : 'reviewStatus', values : [ReviewStatus.UNREVIEWED]},
         {field : 'reviewStatus', values : [ReviewStatus.CONFIRMED]},
         {field : 'reviewStatus', values : [ReviewStatus.FALSE_POSITIVE]},
-        {field : 'reviewStatus', values : [ReviewStatus.WONT_FIX]},
+        {field : 'reviewStatus', values : [ReviewStatus.INTENTIONAL]},
         {field : 'detectionStatus', values : [DetectionStatus.RESOLVED]}
       ].map(function (q) {
         var that = this;
@@ -184,7 +184,7 @@ function (declare, ItemFileWriteStore, Deferred, all, Memory, Observable,
             unreviewed    : res[1][key] !== undefined ? res[1][key].count : '',
             confirmed     : res[2][key] !== undefined ? res[2][key].count : '',
             falsePositive : res[3][key] !== undefined ? res[3][key].count : '',
-            wontFix       : res[4][key] !== undefined ? res[4][key].count : '',
+            intentional   : res[4][key] !== undefined ? res[4][key].count : '',
             resolved      : res[5][key] !== undefined ? res[5][key].count : ''
           });
         });

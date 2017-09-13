@@ -262,7 +262,7 @@ class ReviewStatus(Base):
     status = Column(Enum('unreviewed',
                          'confirmed',
                          'false_positive',
-                         'wont_fix',
+                         'intentional',
                          name='review_status'), nullable=False)
     author = Column(String, nullable=False)
     message = Column(Binary, nullable=False)

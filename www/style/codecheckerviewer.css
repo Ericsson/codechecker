@@ -569,7 +569,7 @@ span[class*="severity-"] {
   color: grey;
 }
 
-.review-status-wont-fix::before {
+.review-status-intentional::before {
   content: "\e018";
   color: #669603;
 }

@@ -171,8 +171,8 @@ function (locale, dom, style, json) {
           return 'Confirmed bug';
         case ReviewStatus.FALSE_POSITIVE:
           return 'False positive';
-        case ReviewStatus.WONT_FIX:
-          return "Won't fix";
+        case ReviewStatus.INTENTIONAL:
+          return "Intentional";
         default:
           console.error('Non existing review status code: ', reviewCode);
       }
