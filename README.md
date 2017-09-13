@@ -224,20 +224,14 @@ you should be greeted with a web application showing you the analysis results.
 Important limitations with older Clang versions
 -----------------------------------------------
 
-CodeChecker requires some features from LLVM/Clang to work properly which are
-not available in the `3.6` or earlier releases.
+Clang `3.6` or earlier releases are NOT supported due to CodeChecker relying on
+features not available in those releases.
 
-If your installed Clang does not support these features you will see the
-following debug messages in your log:
-
-> Check name wasn't found in the plist file.
-
- * Use clang `>= 3.7` or trunk `r228624` &mdash; otherwise CodeChecker makes
-   a guess based on the report message.
+If you have Clang `3.7` installed you might see the following warning message:
 
 > Hash value wasn't found in the plist file.
 
- * Use clang `>= 3.8` or trunk `r251011` &mdash; otherwise CodeChecker
+ * Use Clang `>= 3.8` or trunk `r251011` &mdash; otherwise CodeChecker
    generates a simple hash based on the filename and the line content. This
    method is applied for Clang-Tidy results too, because Clang-Tidy does not
    support bug identifier hash generation currently.
