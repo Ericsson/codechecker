@@ -351,14 +351,14 @@ class TestReportFilter(unittest.TestCase):
                                                'comment')
         for rid in report_ids[15:20]:
             self._cc_client.changeReviewStatus(rid,
-                                               ReviewStatus.WONT_FIX,
+                                               ReviewStatus.INTENTIONAL,
                                                'comment')
 
         # Unset statuses cout as unreviewed.
         review_status = {ReviewStatus.CONFIRMED: 5,
                          ReviewStatus.UNREVIEWED: 13,
                          ReviewStatus.FALSE_POSITIVE: 5,
-                         ReviewStatus.WONT_FIX: 5}
+                         ReviewStatus.INTENTIONAL: 5}
 
         rv_counts = self._cc_client.getReviewStatusCounts([runid], None, None)
 
@@ -395,7 +395,7 @@ class TestReportFilter(unittest.TestCase):
                                                'comment')
         for rid in report_ids[15:20]:
             self._cc_client.changeReviewStatus(rid,
-                                               ReviewStatus.WONT_FIX,
+                                               ReviewStatus.INTENTIONAL,
                                                'comment')
 
         rv_counts_1 = self._cc_client.getReviewStatusCounts([self._runids[0]],

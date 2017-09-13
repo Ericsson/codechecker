@@ -107,7 +107,7 @@ class CCViewerHelper(ThriftAPIHelper):
         url = util.create_product_url(protocol, host, port,
                                       '/' + product + '/v' +
                                       VERSION + endpoint)
-        print ("Setup viewer client: "+url)
+        print("Setup viewer client: "+url)
         transport = THttpClient.THttpClient(url)
         protocol = TJSONProtocol.TJSONProtocol(transport)
         client = codeCheckerDBAccess.Client(protocol)

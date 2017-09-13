@@ -67,7 +67,7 @@ enum ReviewStatus {
   UNREVIEWED,     // Nobody has seen this bug.
   CONFIRMED,      // This is really bug.
   FALSE_POSITIVE, // This is not a bug.
-  WONT_FIX        // This is a bug but we don't want to fix it.
+  INTENTIONAL     // This is a bug but we don't want to fix it intentionally.
 }
 
 // DetectionStatus is set by the storage process. When a new bug appears then

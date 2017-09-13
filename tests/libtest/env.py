@@ -323,7 +323,7 @@ def enable_ssl(workspace):
 
     shutil.copy(ssl_cert, workspace)
     shutil.copy(ssl_key, workspace)
-    print ("copied "+ssl_cert+" to "+workspace)
+    print("copied "+ssl_cert+" to "+workspace)
 
 
 def get_session_token(test_folder):

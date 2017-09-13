@@ -98,9 +98,9 @@ class TestReviewStatus(unittest.TestCase):
         self.assertEqual(report.reviewData.comment, review_comment)
         self.assertEqual(report.reviewData.status, status)
 
-        # Change review status to won't fix.
+        # Change review status to intentional.
         review_comment = u''
-        status = shared.ttypes.ReviewStatus.WONT_FIX
+        status = shared.ttypes.ReviewStatus.INTENTIONAL
         success = self._cc_client.changeReviewStatus(
             bug.reportId, status, review_comment)
 

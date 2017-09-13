@@ -10,7 +10,10 @@ import json
 import os
 import sys
 
-import shared
+from shared.ttypes import ReviewStatus
+from shared.ttypes import DetectionStatus
+from shared.ttypes import Severity
+
 import codeCheckerDBAccess_v6 as codeCheckerDBAccess
 from codeCheckerDBAccess_v6 import constants, ttypes
 
@@ -89,7 +92,7 @@ def add_filter_conditions(report_filter, filter_str):
 
     if severity:
         report_filter.severity\
-            = shared.ttypes.Severity._NAMES_TO_VALUES[severity.upper()]
+            = Severity._NAMES_TO_VALUES[severity.upper()]
     if checker:
         report_filter.checkerId = '*' + checker + '*'
     if path:
@@ -157,7 +160,7 @@ def handle_list_results(args):
         for res in all_results:
             bug_line = res.line
             checked_file = res.checkedFile + ' @ ' + str(bug_line)
-            sev = shared.ttypes.Severity._VALUES_TO_NAMES[res.severity]
+            sev = Severity._VALUES_TO_NAMES[res.severity]
 
             if args.suppressed:
                 rows.append((checked_file, res.checkerId, sev,
@@ -304,8 +307,7 @@ def handle_diff_results(args):
             else:
                 bug_line = report.line
                 bug_col = report.column
-                sev = \
-                    shared.ttypes.Severity._VALUES_TO_NAMES[report.severity]
+                sev = Severity._VALUES_TO_NAMES[report.severity]
                 checked_file = report.checkedFile + ':' + str(bug_line) +\
                     ":" + str(bug_col)
                 source_line =\
@@ -387,19 +389,19 @@ def handle_list_result_types(args):
     all_checkers_dict = dict((res.name, res) for res in all_checkers)
 
     unrev_checkers = getStatistics(client, run_ids, 'reviewStatus',
-                                   [shared.ttypes.ReviewStatus.UNREVIEWED])
+                                   [ReviewStatus.UNREVIEWED])
 
     confirmed_checkers = getStatistics(client, run_ids, 'reviewStatus',
-                                       [shared.ttypes.ReviewStatus.CONFIRMED])
+                                       [ReviewStatus.CONFIRMED])
 
     false_checkers = getStatistics(client, run_ids, 'reviewStatus',
-                                   [shared.ttypes.ReviewStatus.FALSE_POSITIVE])
+                                   [ReviewStatus.FALSE_POSITIVE])
 
-    wontfix_checkers = getStatistics(client, run_ids, 'reviewStatus',
-                                     [shared.ttypes.ReviewStatus.WONT_FIX])
+    intentional_checkers = getStatistics(client, run_ids, 'reviewStatus',
+                                         [ReviewStatus.INTENTIONAL])
 
     resolved_checkers = getStatistics(client, run_ids, 'detectionStatus',
-                                      [shared.ttypes.DetectionStatus.RESOLVED])
+                                      [DetectionStatus.RESOLVED])
 
     all_results = []
     for key, checker_data in sorted(all_checkers_dict.items(),
@@ -407,13 +409,12 @@ def handle_list_result_types(args):
                                     reverse=True):
         all_results.append(dict(
             checker=key,
-            severity=shared.ttypes.Severity._VALUES_TO_NAMES[
-                checker_data.severity],
+            severity=Severity._VALUES_TO_NAMES[checker_data.severity],
             reports=checker_data.count,
             unreviewed=checkerCount(unrev_checkers, key),
             confirmed=checkerCount(confirmed_checkers, key),
             false_positive=checkerCount(false_checkers, key),
-            wont_fix=checkerCount(wontfix_checkers, key),
+            intentional=checkerCount(intentional_checkers, key),
             resolved=checkerCount(resolved_checkers, key),
          ))
 
@@ -421,7 +422,7 @@ def handle_list_result_types(args):
         print(CmdLineOutputEncoder().encode(all_results))
     else:
         header = ['Checker', 'Severity', 'All reports', 'Resolved',
-                  'Unreviewed', 'Confirmed', 'False positive', "Won't fix"]
+                  'Unreviewed', 'Confirmed', 'False positive', "Intentional"]
 
         rows = []
         for stat in all_results:
@@ -432,7 +433,7 @@ def handle_list_result_types(args):
                          str(stat['unreviewed']),
                          str(stat['confirmed']),
                          str(stat['false_positive']),
-                         str(stat['wont_fix'])))
+                         str(stat['intentional'])))
 
         print(twodim_to_str(args.output_format, header, rows))
 
@@ -507,7 +508,7 @@ def handle_suppress(args):
                                            bug_hash_filter(bug_id, file_name))
 
             for report in reports:
-                status = shared.ttypes.ReviewStatus.FALSE_POSITIVE
+                status = ReviewStatus.FALSE_POSITIVE
                 client.changeReviewStatus(report.reportId, status, comment)
 
 

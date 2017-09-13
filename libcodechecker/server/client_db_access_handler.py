@@ -236,8 +236,8 @@ def review_status_str(status):
         return 'confirmed'
     elif status == shared.ttypes.ReviewStatus.FALSE_POSITIVE:
         return 'false_positive'
-    elif status == shared.ttypes.ReviewStatus.WONT_FIX:
-        return 'wont_fix'
+    elif status == shared.ttypes.ReviewStatus.INTENTIONAL:
+        return 'intentional'
 
 
 def review_status_enum(status):
@@ -247,8 +247,8 @@ def review_status_enum(status):
         return shared.ttypes.ReviewStatus.CONFIRMED
     elif status == 'false_positive':
         return shared.ttypes.ReviewStatus.FALSE_POSITIVE
-    elif status == 'wont_fix':
-        return shared.ttypes.ReviewStatus.WONT_FIX
+    elif status == 'intentional':
+        return shared.ttypes.ReviewStatus.INTENTIONAL
 
 
 def unzip(b64zip):
