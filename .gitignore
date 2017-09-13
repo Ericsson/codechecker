@@ -27,3 +27,6 @@ tests/projects/objc/DeallocUseAfterFreeErrors
 
 # idea files
 .idea/
+
+# vim temporary swap for open files
+*.swp
