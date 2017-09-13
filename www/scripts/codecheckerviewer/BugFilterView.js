@@ -587,8 +587,8 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
               var cmpData = null;
               if (reportFilter.newcheck) {
                 cmpData = new CC_OBJECTS.CompareData();
-                cmpData.run_ids = reportFilter.newcheck;
-                cmpData.diff_type = CC_OBJECTS.DiffType[key];
+                cmpData.runIds = reportFilter.newcheck;
+                cmpData.diffType = CC_OBJECTS.DiffType[key];
               }
 
               CC_SERVICE.getRunResultCount_v2(runIds, reportFilter, cmpData,
@@ -884,8 +884,8 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
         var cmpData = null;
         if (newCheckIds) {
           var cmpData = new CC_OBJECTS.CompareData();
-          cmpData.run_ids = newCheckIds;
-          cmpData.diff_type = diffType ? diffType[0] : CC_OBJECTS.DiffType.NEW;
+          cmpData.runIds = newCheckIds;
+          cmpData.diffType = diffType ? diffType[0] : CC_OBJECTS.DiffType.NEW;
         }
 
         return {
