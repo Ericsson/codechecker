@@ -61,7 +61,7 @@ class ThriftAuthHelper():
                         shared.ttypes.ErrorCode.UNAUTHORIZED:
                     print('Unauthorised.')
                     raise reqfailure
-                elif reqfailure.error_code == \
+                elif reqfailure.errorCode == \
                         shared.ttypes.ErrorCode.API_MISMATCH:
                     raise
                 else:
