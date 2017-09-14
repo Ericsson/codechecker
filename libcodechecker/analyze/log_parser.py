@@ -62,7 +62,7 @@ def get_compiler_includes(compiler, lang, compile_opts, extra_opts=None):
             if line.startswith(end_mark):
                 do_append = False
             if do_append:
-                include_paths.append("-I" + line)
+                include_paths.append("-isystem " + line)
             if line.startswith(start_mark):
                 do_append = True
 

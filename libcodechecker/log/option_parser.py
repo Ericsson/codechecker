@@ -52,7 +52,8 @@ COMPILE_OPTION_MAP_REGEX = {
     '^-f.*': 0,
     '-m.*': 0,
     '^-Wno-.*': 0,
-    '^-m(32|64)$': 0
+    '^-m(32|64)$': 0,
+    '^--sysroot=': 0
 }
 
 # Linker options.
