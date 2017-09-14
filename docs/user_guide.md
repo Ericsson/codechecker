@@ -711,8 +711,8 @@ server arguments:
   must exist prior to the 'store' command being ran.
 
   --url PRODUCT_URL     The URL of the product to store the results for, in
-                        the format of '[http[s]://]host:port/Endpoint'. (default:
-                        localhost:8001/Default)
+                        the format of '[http[s]://]host:port/Endpoint'.
+                        (default: localhost:8001/Default)
 
 
 The results can be viewed by connecting to such a server in a Web browser or
@@ -1066,9 +1066,10 @@ common arguments:
   --host HOST           The address of the CodeChecker viewer server to
                         connect to. (default: localhost)
   --url SERVER_URL      The URL of the server to access, in the format of
-                        '[http[s]://]host:port/Endpoint'. (default: localhost:8001)
+                        '[http[s]://]host:port'. (default: localhost:8001)
   --url PRODUCT_URL     The URL of the product which will be accessed by the
-                        client, in the format of '[http[s]://]host:port/Endpoint'.
+                        client, in the format of
+                        '[http[s]://]host:port/Endpoint'.
                         (default: localhost:8001/Default)
   -o {plaintext,rows,table,csv,json}, --output {plaintext,rows,table,csv,json}
                         The output format to use in showing the data.
