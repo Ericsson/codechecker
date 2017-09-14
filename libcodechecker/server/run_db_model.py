@@ -66,6 +66,29 @@ class Run(Base):
         self.duration = ceil((datetime.now() - self.date).total_seconds())
 
 
+class RunHistory(Base):
+    __tablename__ = 'run_histories'
+
+    id = Column(Integer, autoincrement=True, primary_key=True)
+    run_id = Column(Integer,
+                    ForeignKey('runs.id', deferrable=True,
+                               initially="DEFERRED", ondelete='CASCADE'),
+                    index=True)
+    version_tag = Column(String)
+    user = Column(String, nullable=False)
+    time = Column(DateTime, nullable=False)
+
+    run = relationship(Run, uselist=False)
+
+    __table_args__ = (UniqueConstraint('run_id', 'version_tag'),)
+
+    def __init__(self, run_id, version_tag, user, time):
+        self.run_id = run_id
+        self.version_tag = version_tag
+        self.user = user
+        self.time = time
+
+
 class FileContent(Base):
     __tablename__ = 'file_contents'
 
@@ -178,6 +201,9 @@ class Report(Base):
                                    'reopened',
                                    name='detection_status'))
 
+    detected_at = Column(DateTime, nullable=False)
+    fixed_at = Column(DateTime)
+
     # Cascade delete might remove rows SQLAlchemy warns about this
     # to remove warnings about already deleted items set this to False.
     __mapper_args__ = {
@@ -187,7 +213,7 @@ class Report(Base):
     # Priority/severity etc...
     def __init__(self, run_id, bug_id, file_id, checker_message, checker_id,
                  checker_cat, bug_type, line, column, severity,
-                 detection_status):
+                 detection_status, detection_date):
         self.run_id = run_id
         self.file_id = file_id
         self.bug_id = bug_id
@@ -199,6 +225,7 @@ class Report(Base):
         self.detection_status = detection_status
         self.line = line
         self.column = column
+        self.detected_at = detection_date
 
 
 class Comment(Base):

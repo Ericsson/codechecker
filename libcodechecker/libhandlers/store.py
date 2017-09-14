@@ -107,6 +107,14 @@ def add_arguments_to_parser(parser):
                              "the '--name' parameter given to 'codechecker-"
                              "analyze' will be used, if exists.")
 
+    parser.add_argument('--tag',
+                        type=str,
+                        dest="tag",
+                        required=False,
+                        default=argparse.SUPPRESS,
+                        help="A uniques identifier for this individual store "
+                             "of results in the run's history.")
+
     parser.add_argument('-f', '--force',
                         dest="force",
                         default=argparse.SUPPRESS,
@@ -334,6 +342,7 @@ def main(args):
         context = generic_package_context.get_context()
 
         client.massStoreRun(args.name,
+                            args.tag if 'tag' in args else None,
                             context.version,
                             b64zip,
                             'force' in args)

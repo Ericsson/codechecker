@@ -120,6 +120,22 @@ struct RunData {
 }
 typedef list<RunData> RunDataList
 
+struct RunHistoryData {
+  1: i64       runId,       // Unique id of the run.
+  2: string    runName,     // Name of the run.
+  3: string    versionTag,  // Version tag of the report.
+  4: string    user,        // User name who analysed the run.
+  5: string    time         // Date time when the run was analysed.
+}
+typedef list<RunHistoryData> RunHistoryDataList
+
+struct RunTagCount {
+  1: string          time,   // Date time of the last run.
+  2: string          name,   // Name of the tag.
+  3: i64             count   // Count of the reports.
+}
+typedef list<RunTagCount> RunTagCounts
+
 struct ReviewData {
   1: ReviewStatus  status,
   2: string        comment,
@@ -154,7 +170,10 @@ struct ReportFilter {
   4: list<string>          reportHash,
   5: list<Severity>        severity,
   6: list<ReviewStatus>    reviewStatus,
-  7: list<DetectionStatus> detectionStatus
+  7: list<DetectionStatus> detectionStatus,
+  8: list<string>          runHistoryTag,
+  9: optional i64          firstDetectionDate,
+  10: optional i64         fixDate
 }
 
 struct RunReportCount {
@@ -207,6 +226,15 @@ service codeCheckerDBAccess {
   // PERMISSION: PRODUCT_ACCESS
   RunDataList getRunData(1: RunFilter runFilter)
                          throws (1: shared.RequestFailed requestError),
+
+  // Get run history for runs.
+  // If an empty run id list is provided the history
+  // will be returned for all the available runs ordered by run history date.
+  // PERMISSION: PRODUCT_ACCESS
+  RunHistoryDataList getRunHistory(1: list<i64> runIds,
+                                   2: i64       limit,
+                                   3: i64       offset)
+                                   throws (1: shared.RequestFailed requestError),
 
   // PERMISSION: PRODUCT_ACCESS
   ReportData getReport(1: i64 reportId)
@@ -359,6 +387,14 @@ service codeCheckerDBAccess {
                                  3: CompareData  cmpData)
                                  throws (1: shared.RequestFailed requestError),
 
+  // If the run id list is empty the metrics will be counted
+  // for all of the runs and in compare mode all of the runs
+  // will be used as a baseline excluding the runs in compare data.
+  // PERMISSION: PRODUCT_ACCESS
+  RunTagCounts getRunHistoryTagCounts(1: list<i64>    runIds,
+                                      2: ReportFilter reportFilter,
+                                      3: CompareData  cmpData)
+                                      throws (1: shared.RequestFailed requestError),
 
   //============================================
   // Analysis result storage related API calls.
@@ -385,9 +421,10 @@ service codeCheckerDBAccess {
   // The "force" parameter removes existing analysis results for a run.
   // PERMISSION: PRODUCT_STORE
   i64 massStoreRun(1: string runName,
-                   2: string version,
-                   3: string zipfile,
-                   4: bool   force)
-                   throws (1: shared.RequestFailed requestError)
+                   2: string tag,
+                   3: string version,
+                   4: string zipfile,
+                   5: bool   force)
+                   throws (1: shared.RequestFailed requestError),
 
 }

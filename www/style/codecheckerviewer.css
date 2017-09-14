@@ -834,6 +834,7 @@ span[class*="severity-"] {
 
 .select-menu-item .customIcon {
   vertical-align: text-top;
+  float: left;
 }
 
 .select-menu-item .label{
@@ -866,12 +867,36 @@ span[class*="severity-"] {
 
 /* File filter */
 
-.file .select-menu-item .label {
+.filepath .select-menu-item .label {
   direction: rtl;
 }
 
-.file .select-menu-item.none .label {
+.filepath .select-menu-item.none .label {
   direction: ltr;
+}
+
+/* Date filter */
+.bug-filters .date-wrapper {
+  margin-top: 5px;
+  overflow: hidden;
+}
+
+.bug-filters .date-wrapper > div {
+  width: 45%;
+}
+
+.bug-filters .first-detection-date,
+.bug-filters .fix-date {
+  float: left;
+}
+
+.bug-filters .first-detection-time,
+.bug-filters .fix-time {
+  float: right;
+}
+
+.select-menu-item .tag {
+  color: #007ea7;
 }
 
 /*** Message box pane ***/
@@ -938,3 +963,100 @@ span[class*="severity-"] {
   content: "\e01d";
 }
 
+/* Run history */
+.history-group {
+  margin-bottom: 10px;
+  border: 1px solid #e1e4e8;
+  border-radius: 5px;
+}
+
+.history-group .header {
+  font-size: 1.5em;
+  font-weight: bold;
+  color: #000;
+  font-family: Arial, sans serif;
+  display: inline-block;
+  padding: 10px;
+}
+
+.history-group .content {
+  padding: 10px;
+}
+
+.history {
+  padding: 5px;
+  border-bottom: 1px solid #e1e4e8;
+}
+
+.history:hover {
+  cursor: pointer;
+  background-color: #f5fdff;
+}
+
+.history:last-child {
+  border-bottom: none;
+}
+
+.history .time {
+  font-weight: bold;
+  margin-right: 10px;
+}
+
+.history .run-name-wrapper,
+.history .tag-wrapper,
+.history .user-wrapper {
+  margin-left: 5px;
+}
+
+.history .customIcon {
+  color: #73a7b9;
+}
+
+.customIcon.run-name:before {
+  content: "\e024";
+}
+
+.customIcon.tag:before {
+  content: "\e020";
+}
+
+.customIcon.run:before {
+  content: "\e021";
+}
+
+.customIcon.user:before {
+  content: "\e022";
+}
+
+.customIcon.today:before {
+  content : "T"
+}
+
+.text-icon {
+  line-height: normal;
+  text-transform: capitalize;
+  font-size: 1em;
+  font-weight: bold;
+}
+
+.customIcon.today {
+  background-color: #ee8985;
+  color: white;
+  font-weight: bold;
+
+}
+
+.customIcon.yesterday:before {
+  content : "Y"
+}
+
+.customIcon.yesterday {
+  background-color: #007ea7;
+  color: white;
+  font-weight: bold;
+}
+
+.select-menu-item .today,
+.select-menu-item .yesterday {
+  float: left;
+}

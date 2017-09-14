@@ -13,14 +13,17 @@ define([
   'dojo/topic',
   'dojox/widget/Standby',
   'dijit/form/Button',
+  'dijit/form/DateTextBox',
   'dijit/form/TextBox',
+  'dijit/form/TimeTextBox',
   'dijit/popup',
   'dijit/TooltipDialog',
   'dijit/layout/ContentPane',
   'codechecker/hashHelper',
   'codechecker/util'],
 function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
-  TextBox, popup, TooltipDialog, ContentPane, hashHelper, util) {
+  DateTextBox, TextBox, TimeTextBox, popup, TooltipDialog, ContentPane,
+  hashHelper, util) {
 
   function alphabetical(a, b) {
     if (a < b) return -1;
@@ -43,7 +46,8 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
 
       if (this.iconClass)
         var label = dom.create('span', {
-          class : this.iconClass
+          class : this.iconClass,
+          style : this.iconStyle
         }, this.domNode);
 
       this._labelWrapper = dom.create('span', {
@@ -89,7 +93,7 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
         class : 'select-menu-list ' + that.class
       });
 
-      if (this.search.enable)
+      if (this.search && this.search.enable)
         this._searchBox = new TextBox({
           placeholder : this.search.placeHolder,
           class       : 'select-menu-filter',
@@ -106,7 +110,7 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
     },
 
     postCreate : function () {
-      if (this.search.enable)
+      if (this.search && this.search.enable)
         this.addChild(this._searchBox);
 
       dom.place(this._selectMenuList, this.domNode);
@@ -164,12 +168,16 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
 
         var content = '<span class="customIcon selected"></span>'
           + (item.iconClass
-             ? '<span class="' + item.iconClass + '"></span>'
+             ? '<span class="' + item.iconClass + '" style="' +
+               (item.iconStyle ? item.iconStyle : '') + '"></span>'
              : '')
-          + '<span class="label">' + item.label + '</span>'
-          + '<span class="count">' + item.count + '</span>';
+          + '<span class="label">' + item.label + '</span>';
 
-        var selected = item.value in that.reportFilter._selectedFilterItems;
+        if (item.count !== undefined)
+          content += '<span class="count">' + item.count + '</span>';
+
+        var selected = that.reportFilter._selectedFilterItems &&
+          item.value in that.reportFilter._selectedFilterItems;
 
         var disabled = skippedList.indexOf(item.value.toString()) !== -1;
 
@@ -182,16 +190,17 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
           onclick   : function () {
             if (that.disableMultipleOption) {
               that.reportFilter.clearAll();
-              that.reportFilter.selectItem(item.value);
+              that.reportFilter.selectItem(that.class, item.value);
               that._render();
               return;
             }
 
-            if (item.value in that.reportFilter._selectedFilterItems) {
+            if (that.reportFilter._selectedFilterItems
+              && item.value in that.reportFilter._selectedFilterItems) {
               that.reportFilter.deselectItem(item.value);
               domClass.remove(this, 'selected');
             } else {
-              that.reportFilter.selectItem(item.value);
+              that.reportFilter.selectItem(that.class, item.value);
               domClass.add(this, 'selected');
             }
 
@@ -209,49 +218,7 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
     }
   });
 
-  /**
-   * Base class of filters.
-   * @property title {string} - Title of the filter.
-   * @property enableSearch {bool} - Enable search field and the user can query
-   * the filter options.
-   * @property filterLabel {string} - This text appears in the search field.
-   * @function getItems {array} Returns an array of Object which can be
-   * selected. The property of an item object can be the following:
-   *   @property Object.label {string} - A filter item label which will be
-   *   shown in the gui as the filter selection value (required).
-   *   @property Object.value {number|boolean} - Filter item value which
-   *   uniqually identifies a filter item (required).
-   *   @property Object.iconClass {string} - Class names for an icon which will
-   *   be shown in the gui beside the label.
-   */
   var FilterBase = declare(ContentPane, {
-
-    constructor : function (args) {
-      dojo.safeMixin(this, args);
-
-      var that = this;
-
-      this._selectedFilterItems = {}; // Selected filters values.
-      this._selectedValuesCount = 0; // Selected filters count.
-
-      this._selectedFilters = new ContentPane({ class : 'items' });
-
-      this._noFilterItem = new SelectedFilterItem({
-        class         : 'select-menu-item none',
-        label         : 'No filter'
-      });
-
-      this._filterTooltip = new FilterTooltip({
-        class : this.class,
-        search : {
-          enable : this.enableSearch,
-          placeHolder : this.filterLabel
-        },
-        disableMultipleOption : this.disableMultipleOption,
-        reportFilter : this
-      })
-    },
-
     postCreate : function () {
       var that = this;
 
@@ -274,10 +241,133 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
 
             topic.publish('filterchange', {
               parent : that.parent,
-              changed : {[that.class] : that.getState()}
+              changed : that.getUrlState()
             });
           }
         }, this._options);
+
+      //--- Loading widget ---//
+
+      this._standBy = new Standby({
+        target : this.domNode,
+        color : '#ffffff'
+      });
+      this.addChild(this._standBy);
+    },
+
+    /**
+     * Converts an item value to human readable format.
+     * Let's ReviewStatus = {UNREVIEWED = 0;}. If the value parameter is 0 then
+     * it returns with the `unreviewed` string.
+     */
+    stateConverter : function (value) { return value; },
+
+    /**
+     * Get value of the human readable string value of the item.
+     * Let's ReviewStatus = {UNREVIEWED = 0;}. If the value parameter is
+     * `unreviewed` it returns with the 0.
+     */
+    stateDecoder : function (value) { return value; },
+
+    /**
+     * Returns human readable url state object by calling the state converter
+     * function.
+     */
+    getUrlState : function () {
+      var that = this;
+
+      var state = this.getState();
+      if (state[this.class])
+        state[this.class] = state[this.class].map(function (value) {
+          return that.stateConverter(value);
+        });
+
+      return state;
+    },
+
+    /**
+     * Returns the current state of the filter as key-value pair object. The key
+     * will be the filter class name and the value will be the selected item
+     * values. If no filter item is selected the value will be null.
+     */
+    getState : function () { return { [this.class] : null }; },
+
+    /**
+     * Set filter state from the parameter state object.
+     * Returns true if there is any item which is newly selected.
+     */
+    setState : function (state) { return false; },
+
+    loading : function () {
+      this._standBy.show();
+    },
+
+    loaded : function () {
+      this._standBy.hide();
+    },
+
+    /**
+     * Clears all selected items.
+     */
+    clearAll : function () {},
+
+    destroy : function () {
+      this.inherited(arguments);
+
+      this._standBy.destroyRecursive();
+    },
+
+    getSkippedValues : function () { return []; }
+  });
+
+  /**
+   * Base class of filters.
+   * @property title {string} - Title of the filter.
+   * @property enableSearch {bool} - Enable search field and the user can query
+   * the filter options.
+   * @property filterLabel {string} - This text appears in the search field.
+   * @function getItems {array} Returns an array of Object which can be
+   * selected. The property of an item object can be the following:
+   *   @property Object.label {string} - A filter item label which will be
+   *   shown in the gui as the filter selection value (required).
+   *   @property Object.value {number|boolean} - Filter item value which
+   *   uniqually identifies a filter item (required).
+   *   @property Object.iconClass {string} - Class names for an icon which will
+   *   be shown in the gui beside the label.
+   */
+  var SelectFilter = declare(FilterBase, {
+
+    constructor : function (args) {
+      dojo.safeMixin(this, args);
+      this.inherited(arguments);
+
+      var that = this;
+
+      this._selectedFilterItems = {}; // Selected filters values.
+      this._selectedValuesCount = 0; // Selected filters count.
+
+      this._selectedFilters = new ContentPane({ class : 'items' });
+
+      this._noFilterItem = new SelectedFilterItem({
+        class         : 'select-menu-item none',
+        label         : 'No filter'
+      });
+
+      this._filterTooltip = new FilterTooltip({
+        class : this.class,
+        search : {
+          enable : this.enableSearch,
+          placeHolder : this.filterLabel
+        },
+        disableMultipleOption : this.disableMultipleOption,
+        reportFilter : this
+      });
+    },
+
+    postCreate : function () {
+      this.inherited(arguments);
+
+      var that = this;
 
       this._edit = dom.create('span', {
         class : 'customIcon edit',
@@ -295,26 +385,42 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
       //--- No filter enabled ---//
 
       this._selectedFilters.addChild(this._noFilterItem);
-
-      //--- Loading widget ---//
-
-      this._standBy = new Standby({
-        target : this.domNode,
-        color : '#ffffff'
-      });
-      this.addChild(this._standBy);
     },
 
-    /**
-     * Return the current state of the filter as an array. If no filter item is
-     * selected it returns null.
-     */
-    getState : function () {
-      var state = Object.keys(this._selectedFilterItems).map(function (key) {
-        return isNaN(key) ? key : parseInt(key);
+    setState : function (state) {
+      var that = this;
+
+      var changed = false;
+      var filterState = state[this.class]
+        ? state[this.class]
+        : [];
+
+      if (!(filterState instanceof Array))
+        filterState = [filterState];
+
+      filterState.forEach(function (value) {
+        var value = that.stateDecoder(value);
+
+        if (value === null) {
+          changed = true;
+          return;
+        }
+
+        if (!that._selectedFilterItems[value]) {
+          that._selectedFilterItems[value] = null;
+          changed = true;
+        }
       });
 
-      return state.length ? state : null;
+      return changed;
+    },
+
+    getState : function () {
+      var state = Object.keys(this._selectedFilterItems).map(function (key) {
+        return isNaN(key) ? key : parseFloat(key);
+      });
+
+      return  { [this.class] : state.length ? state : null };
     },
 
     /**
@@ -338,10 +444,11 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
 
     /**
      * Select a filter item by value.
+     * @param key {string} - The name of the selected filter item.
      * @param value {integer|string} - Value of the selected item.
      * @param preventFilterChange - If true it prevents the filter change event.
      */
-    selectItem : function (value, preventFilterChange) {
+    selectItem : function (key, value, preventFilterChange) {
       var that = this;
 
       var item = this.getItem(value);
@@ -363,7 +470,6 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
         }
       }
 
-
       //--- Remove the No Filter item ---//
 
       if (!this._selectedValuesCount) {
@@ -377,6 +483,7 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
         class : 'select-menu-item ' + (disableRemove ? 'disabled' : ''),
         label : item.label,
         iconClass : item.iconClass,
+        iconStyle : item.iconStyle,
         value : value,
         count : item.count,
         item  : item,
@@ -396,7 +503,7 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
       if (!preventFilterChange)
         topic.publish('filterchange', {
           parent : this.parent,
-          changed : {[this.class] : this.getState()}
+          changed : this.getUrlState()
         });
     },
 
@@ -426,38 +533,271 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
       if (!preventFilterChange) {
         topic.publish('filterchange', {
           parent : this.parent,
-          changed : {[this.class] : this.getState()}
+          changed : this.getUrlState()
         });
       }
     },
 
-    /**
-     * Clears all selected items.
-     */
     clearAll : function () {
       for (key in this._selectedFilterItems) {
         var item = this._selectedFilterItems[key];
 
         if (item)
           this.deselectItem(item.value, true);
+        else
+          delete this._selectedFilterItems[key];
       }
+    }
+  });
+
+  var DateFilter = declare(FilterBase, {
+    constructor : function () {
+      var that = this;
+
+      this._fromDate = new DateTextBox({
+        class : 'first-detection-date',
+        placeholder : 'Detection date...',
+        constraints : { datePattern : 'yyyy-MM-dd' },
+        promptMessage : 'yyyy-MM-dd',
+        invalidMessage: 'Invalid date format. Use yyyy-MM-dd',
+        onChange : function (state) {
+          that.onTimeChange();
+        }
+      });
+
+      this._fromTime = new TimeTextBox({
+        class : 'first-detection-time',
+        constraints: {
+          timePattern: 'HH:mm:ss'
+        },
+        onChange : function () {
+          if (that._fromDate.get('value'))
+            that.onTimeChange();
+        }
+      });
+
+      this._toDate = new DateTextBox({
+        class : 'fix-date',
+        placeholder : 'Fixed date...',
+        constraints : { datePattern : 'yyyy-MM-dd' },
+        promptMessage : 'yyyy-MM-dd',
+        invalidMessage: 'Invalid date format. Use yyyy-MM-dd',
+        onChange : function (state) {
+          that.onTimeChange();
+        }
+      });
+
+      this._toTime = new TimeTextBox({
+        class : 'fix-time',
+        constraints: {
+          timePattern: 'HH:mm:ss'
+        },
+        onChange : function () {
+          if (that._toDate.get('value'))
+            that.onTimeChange();
+        }
+      });
+
+      this._filterTooltip = new FilterTooltip({
+        class : this.class,
+        reportFilter : this
+      });
     },
 
-    loading : function () {
-      this._standBy.show();
-    },
-
-    loaded : function () {
-      this._standBy.hide();
-    },
-
-    destroy : function () {
+    postCreate : function () {
       this.inherited(arguments);
 
-      this._standBy.destroyRecursive();
+      var that = this;
+
+      this._edit = dom.create('span', {
+        class : 'customIcon edit',
+        onclick : function () {
+          that._filterTooltip.show();
+        }
+      }, this._options);
+
+      this._filterTooltip.set('around', this._edit);
+
+      var fromDateWrapper =
+        dom.create('div', { class : 'date-wrapper' }, this.domNode);
+
+      dom.place(this._fromDate.domNode, fromDateWrapper);
+      dom.place(this._fromTime.domNode, fromDateWrapper);
+
+      var toDateWrapper =
+        dom.create('div', { class : 'date-wrapper' }, this.domNode);
+
+      dom.place(this._toDate.domNode, toDateWrapper);
+      dom.place(this._toTime.domNode, toDateWrapper);
     },
 
-    getSkippedValues : function () { return []; }
+    _updateConstrains : function () {
+      this._toDate.constraints.min = this._fromDate.get('value');
+      this._fromDate.constraints.max = new Date();
+    },
+
+    onTimeChange : function () {
+      topic.publish('filterchange', {
+        parent : this.parent,
+        changed : this.getUrlState()
+      });
+    },
+
+    setToday : function () {
+      this._fromDate.set('value', new Date(), false);
+      var zero = new Date();
+      zero.setHours(0,0,0,0);
+      this._fromTime.set('value', zero);
+
+      this._toDate.set('value', new Date(), false);
+      var midnight = new Date();
+      zero.setHours(23,59,59,0);
+      this._toTime.set('value', zero);
+
+      this.onTimeChange();
+    },
+
+    setYesterday : function () {
+      var yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      yesterday.setHours(0,0,0,0);
+
+      this._fromDate.set('value', yesterday, false);
+      this._fromTime.set('value', yesterday);
+
+      var yesterdayMidnight = yesterday;
+      yesterdayMidnight.setHours(23,59,59,0);
+
+      this._toDate.set('value', yesterdayMidnight, false);
+      this._toTime.set('value', yesterdayMidnight);
+
+      this.onTimeChange();
+    },
+
+    getPrevDateTime : function (date, time) {
+      var prevDate = date.get('value');
+      var prevTime = time.get('value');
+
+      if (!prevDate)
+        return null;
+
+      if (prevTime) {
+        prevDate.setHours(prevTime.getHours());
+        prevDate.setMinutes(prevTime.getMinutes());
+        prevDate.setSeconds(prevTime.getSeconds());
+      }
+
+      return prevDate;
+    },
+
+    selectItem : function (key, value) {
+      var changed = false;
+
+      if (value === 'today') {
+        this.setToday();
+        changed = true;
+      } else if (value === 'yesterday') {
+        this.setYesterday();
+        changed = true;
+      } else if (key === 'firstDetectionDate') {
+        if (!this._fromTime.get('displayedValue').length) {
+          var zero = new Date();
+          zero.setHours(0,0,0,0);
+          this._fromTime.set('value', zero);
+        }
+
+        var prevDate = this.getPrevDateTime(this._fromDate, this._fromTime);
+        var date = new Date(value);
+        date.setMilliseconds(0);
+
+        if (!prevDate || prevDate.getTime() !== date.getTime()) {
+          this._fromDate.set('value', date , false);
+          this._fromTime.set('value', date, false);
+
+          changed = true;
+        }
+      } else if (key === 'fixDate') {
+        if (!this._toTime.get('displayedValue').length) {
+          var zero = new Date();
+          zero.setHours(23,59,59,0);
+          this._toTime.set('value', zero);
+        }
+
+        var prevDate = this.getPrevDateTime(this._toDate, this._toTime);
+        var date = new Date(value);
+        date.setMilliseconds(0);
+
+        if (!prevDate || prevDate.getTime() !== date.getTime()) {
+          this._toDate.set('value', date, false);
+          this._toTime.set('value', date, false);
+
+          changed = true;
+        }
+      }
+
+      this._updateConstrains();
+      return changed;
+    },
+
+    setState : function (state) {
+      var changed = false;
+      var from = state[this._fromDate.class];
+      var to   = state[this._toDate.class];
+
+      if (from)
+        changed = this.selectItem('firstDetectionDate', from) || changed;
+
+      if (to)
+        changed = this.selectItem('fixDate', to) || changed;
+
+      return changed;
+    },
+
+    stateDecoder : function (str) {
+      return new Date(str);
+    },
+
+    getUrlState : function () {
+      var state = {};
+
+      var from = this._fromDate.get('displayedValue');
+      var fromTime = this._fromTime.get('displayedValue');
+
+      var to = this._toDate.get('displayedValue');
+      var toTime = this._toTime.get('displayedValue')
+
+      if (from)
+        state[this._fromDate.class] = from + ' ' + fromTime;
+
+      if (to)
+        state[this._toDate.class] = to + ' ' + toTime;
+
+      return state;
+    },
+
+    getState : function () {
+      var urlState = this.getUrlState();
+
+      var state = {};
+      var from = new Date(urlState[this._fromDate.class]);
+      var to   = new Date(urlState[this._toDate.class]);
+
+      if (!isNaN(from))
+        state[this._fromDate.class] = util.dateToUTCTime(from) / 1000;
+
+      if (!isNaN(to))
+        state[this._toDate.class] = util.dateToUTCTime(to) / 1000;
+
+      return state;
+    },
+
+    clearAll : function () {
+      this._fromDate.set('value', null, false);
+      this._fromTime.set('value', null, false);
+
+      this._toDate.set('value', null, false);
+      this._toTime.set('value', null, false);
+    }
   });
 
   return declare(ContentPane, {
@@ -468,7 +808,7 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
 
       this._filters = [];
 
-      //--- Cleare all filter button ---//
+      //--- Clear all filter button ---//
 
       this._clearAllButton = new Button({
         class   : 'clear-all-btn',
@@ -476,15 +816,13 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
         onClick : function () {
           //--- Clear selected items ---//
 
-          this.filters.forEach(function (filter) {
-            filter.clearAll();
-          });
+          that.clearAll();
 
           //--- Remove states from the url ---//
 
           topic.publish('filterchange', {
             parent : that,
-            changed : that.getState()
+            changed : that.getUrlState()
           });
         }
       });
@@ -505,15 +843,14 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
       //--- Normal or Diff view filters ---//
 
       if (this.baseline || this.newcheck || this.difftype) {
-        this._runNameBaseFilter = new FilterBase({
+        this._runNameBaseFilter = new SelectFilter({
           class    : 'baseline',
-          reportFilterName : 'baseline',
           title    : 'Baseline',
           parent   : this,
           getSkippedValues : function () {
             return Object.keys(this.runNameNewCheckFilter._selectedFilterItems);
           },
-          getItems : function (query) {
+          getItems : function () {
             var deferred = new Deferred();
 
             var reportFilter = that.getReportFilters();
@@ -535,15 +872,14 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
         });
         this._filters.push(this._runNameBaseFilter);
 
-        this._runNameNewCheckFilter = new FilterBase({
+        this._runNameNewCheckFilter = new SelectFilter({
           class    : 'newcheck',
-          reportFilterName : 'newcheck',
           title    : 'Newcheck',
           parent   : this,
           getSkippedValues : function () {
             return Object.keys(that._runNameBaseFilter._selectedFilterItems);
           },
-          getItems : function (query) {
+          getItems : function () {
             var deferred = new Deferred();
 
             var reportFilter = that.getReportFilters();
@@ -568,14 +904,14 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
         this._runNameBaseFilter.set('runNameNewCheckFilter',
           this._runNameNewCheckFilter);
 
-        this._diffTypeFilter = new FilterBase({
+        this._diffTypeFilter = new SelectFilter({
           class    : 'difftype',
-          reportFilterName : 'difftype',
           title    : 'Diff type',
           parent   : this,
           defaultValues : [CC_OBJECTS.DiffType.NEW],
           disableMultipleOption : true,
-          getItems : function (query) {
+
+          getItems : function () {
             var deferred = new Deferred();
 
             var reportFilter = that.getReportFilters();
@@ -616,12 +952,11 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
         });
         this._filters.push(this._diffTypeFilter);
       } else {
-        this._runNameFilter = new FilterBase({
+        this._runNameFilter = new SelectFilter({
           class    : 'run',
-          reportFilterName : 'run',
           title    : 'Run name',
           parent   : this,
-          getItems : function (query) {
+          getItems : function () {
             var deferred = new Deferred();
 
             var reportFilter = that.getReportFilters();
@@ -646,11 +981,16 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
 
       //--- Review status filter ---//
 
-      this._reviewStatusFilter = new FilterBase({
+      this._reviewStatusFilter = new SelectFilter({
         class : 'review-status',
-        reportFilterName : 'reviewStatus',
         title : 'Review status',
         parent   : this,
+        stateConverter : function (value) {
+          return util.enumValueToKey(ReviewStatus, value).toLowerCase()
+        },
+        stateDecoder : function (key) {
+          return ReviewStatus[key.toUpperCase()];
+        },
         getItems : function () {
           var deferred = new Deferred();
 
@@ -678,11 +1018,16 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
 
       //--- Detection status filter ---//
 
-      this._detectionStatusFilter = new FilterBase({
+      this._detectionStatusFilter = new SelectFilter({
         class : 'detection-status',
-        reportFilterName : 'detectionStatus',
         title : 'Detection status',
         parent   : this,
+        stateConverter : function (value) {
+          return util.enumValueToKey(DetectionStatus, value).toLowerCase()
+        },
+        stateDecoder : function (key) {
+          return DetectionStatus[key.toUpperCase()];
+        },
         getItems : function () {
           var deferred = new Deferred();
 
@@ -710,11 +1055,16 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
 
       //--- Severity filter ---//
 
-      this._severityFilter = new FilterBase({
+      this._severityFilter = new SelectFilter({
         class : 'severity',
-        reportFilterName : 'severity',
         title : 'Severity',
         parent   : this,
+        stateConverter : function (value) {
+          return util.enumValueToKey(Severity, value).toLowerCase()
+        },
+        stateDecoder : function (key) {
+          return Severity[key.toUpperCase()];
+        },
         getItems : function () {
           var deferred = new Deferred();
 
@@ -742,16 +1092,95 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
       });
       this._filters.push(this._severityFilter);
 
+      //--- Run history tags filter ---//
+
+      this._runHistoryTagFilter = new SelectFilter({
+        class : 'run-history-tag',
+        title : 'Run tag',
+        parent   : this,
+        enableSearch : true,
+        filterLabel : 'Search for run tags...',
+        createItem : function (runHistoryTagCount) {
+          return runHistoryTagCount.map(function (tag) {
+            return {
+              label : tag.name,
+              value : tag.time,
+              count : tag.count,
+              iconClass : 'customIcon tag',
+              iconStyle : 'color: ' + util.strToColor(tag.name)
+            };
+          });
+        },
+        stateConverter : function (value) {
+          var item = this._items.filter(function (item) {
+            return item.value === value;
+          });
+
+          return item.length ? item[0].label : null;
+        },
+        stateDecoder : function (key) {
+          // If no item is available, get items from the server to decode URL
+          // value.
+          if (!this._items) {
+            var runs = that.getRunIds();
+            var reportFilter = that.getReportFilters();
+
+            var res = CC_SERVICE.getRunHistoryTagCounts(
+              runs.baseline, reportFilter, runs.newcheck);
+            this._items = this.createItem(res);
+          }
+
+          var item = this._items.filter(function (item) {
+            return item.label === key;
+          });
+
+          return item.length ? item[0].value : null;
+        },
+        getItems : function () {
+          var self = this;
+          var deferred = new Deferred();
+
+          var runs = that.getRunIds();
+          var reportFilter = that.getReportFilters();
+
+          CC_SERVICE.getRunHistoryTagCounts(runs.baseline, reportFilter,
+          runs.newcheck, function (res) {
+            deferred.resolve(self.createItem(res));
+          });
+
+          return deferred;
+        }
+      });
+      this._filters.push(this._runHistoryTagFilter);
+
+      //--- Detection date filter ---//
+
+      this._detectionDateFilter = new DateFilter({
+        class    : 'detection-date',
+        title    : 'Detection date',
+        parent   : this,
+        getItems : function () {
+          var deferred = new Deferred();
+
+          deferred.resolve([
+            { label : 'Today', value : 'today', iconClass : 'customIcon text-icon today' },
+            { label : 'Yesterday', value : 'yesterday', iconClass : 'customIcon text-icon yesterday' }
+          ]);
+
+          return deferred;
+        }
+      });
+      this._filters.push(this._detectionDateFilter);
+
       //--- File path filter ---//
 
-      this._fileFilter = new FilterBase({
-        class : 'file',
-        reportFilterName : 'filepath',
+      this._fileFilter = new SelectFilter({
+        class : 'filepath',
         title : 'File',
         parent   : this,
         enableSearch : true,
         filterLabel : 'Search for files...',
-        getItems : function (query) {
+        getItems : function () {
           var deferred = new Deferred();
 
           var runs = that.getRunIds();
@@ -776,14 +1205,13 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
 
       //--- Checker name filter ---//
 
-      this._checkerNameFilter = new FilterBase({
-        class : 'checker',
-        reportFilterName : 'checkerName',
+      this._checkerNameFilter = new SelectFilter({
+        class : 'checker-name',
         title : 'Checker name',
         parent   : this,
         enableSearch : true,
         filterLabel : 'Search for checker names...',
-        getItems : function (query) {
+        getItems : function () {
           var deferred = new Deferred();
 
           var runs = that.getRunIds();
@@ -812,14 +1240,13 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
 
       //--- Checker message filter ---//
 
-      this._checkerMessageFilter = new FilterBase({
+      this._checkerMessageFilter = new SelectFilter({
         class : 'checker-msg',
-        reportFilterName : 'checkerMsg',
         title : 'Checker message',
         parent   : this,
         enableSearch : true,
         filterLabel : 'Search for checker messages...',
-        getItems : function (query) {
+        getItems : function () {
           var deferred = new Deferred();
 
           var runs = that.getRunIds();
@@ -872,6 +1299,19 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
       this._subscribeTopics();
     },
 
+    clearAll : function () {
+      var state = this.getState();
+      Object.keys(state).forEach(function (key) {
+        state[key] = null;
+      });
+
+      this._filters.forEach(function (filter) {
+        filter.clearAll();
+      });
+
+      return state;
+    },
+
     /**
      * Returns run informations for normal and diff view.
      * @property baseline In normal view it will contain the run ids. Otherwise
@@ -881,8 +1321,9 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
      */
     getRunIds : function () {
       if (this.diffView) {
-        var diffType = this._diffTypeFilter.getState();
-        var newCheckIds = this._runNameNewCheckFilter.getState();
+        var diffType = this._diffTypeFilter.getState()[this._diffTypeFilter.class];
+        var newCheckIds =
+          this._runNameNewCheckFilter.getState()[this._runNameNewCheckFilter.class];
 
         var cmpData = null;
         if (newCheckIds) {
@@ -892,12 +1333,12 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
         }
 
         return {
-          baseline : this._runNameBaseFilter.getState(),
+          baseline : this._runNameBaseFilter.getState()[this._runNameBaseFilter.class],
           newcheck : cmpData
         };
       } else {
         return {
-          baseline : this._runNameFilter.getState(),
+          baseline : this._runNameFilter.getState()[this._runNameFilter.class],
           newcheck : null
         };
       }
@@ -921,7 +1362,20 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
       var state = {};
 
       this._filters.forEach(function (filter) {
-        state[filter.class] = filter.getState();
+        Object.assign(state, filter.getState());
+      });
+
+      return state;
+    },
+
+    /**
+     * Return the current URL state of the filters as an object.
+     */
+    getUrlState : function () {
+      var state = {};
+
+      this._filters.forEach(function (filter) {
+        Object.assign(state, filter.getUrlState());
       });
 
       return state;
@@ -935,8 +1389,18 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
 
       this._filters.forEach(function (filter) {
         var state = filter.getState();
-        if (state)
-          reportFilter[filter.reportFilterName] = state;
+        Object.keys(state).forEach(function (key) {
+          // The report filter name comes from the actual filter state.
+          // It converts the state key to camelCased.
+          var reportFilterName = key.split('-').map(function (str, ind) {
+            if (ind === 0)
+              return str;
+
+            return str.charAt(0).toUpperCase() + str.slice(1);
+          }).join('');
+
+          reportFilter[reportFilterName] = state[key];
+        });
       });
 
       return reportFilter;
@@ -950,16 +1414,7 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
 
       var changed = false || force;
       this._filters.forEach(function (filter) {
-        var filterState = state[filter.class] ? state[filter.class] : [];
-        if (!(filterState instanceof Array))
-          filterState = [filterState];
-
-        filterState.forEach(function (value) {
-          if (!filter._selectedFilterItems[value]) {
-            filter._selectedFilterItems[value] = null;
-            changed = true;
-          }
-        });
+        changed = filter.setState(state) || changed;
       });
 
       if (!changed)
@@ -968,22 +1423,29 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
       var finished = 0;
       this._filters.forEach(function (filter) {
         filter.loading();
-        var filterState = filter.getState();
 
         filter.getItems().then(function (items) {
           filter._items = items;
 
-          if (filterState)
-            filterState.forEach(function (item) {
-              filter.selectItem(item, true);
-            });
+          filter.setState(state);
+          var filterState = filter.getState();
+
+          Object.keys(filterState).forEach(function (key) {
+            if (filterState[key]) {
+              if (!Array.isArray(filterState[key]))
+                filterState[key] = [filterState[key]];
+
+              filterState[key].forEach(function (item) {
+                filter.selectItem(key, item, true);
+              });
+            }
+          });
 
           //--- Load default values for the first time ---//
 
-          if (!filter.initalized && filter.defaultValues
-            && !filter.getState()) {
+          if (!filter.initalized && filter.defaultValues) {
             filter.defaultValues.forEach(function (value) {
-              filter.selectItem(value, true);
+              filter.selectItem(filter.class, value, true);
             });
             filter.initalized = true;
           }
@@ -1028,7 +1490,7 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
       function (state) {
         if (that.parent.selected) {
           that.hashChangeInProgress = true;
-          that.refreshFilters(that.getState(), true);
+          that.refreshFilters(state.changed, true);
           hashHelper.setStateValues(state.changed);
         }
       });

@@ -671,7 +671,7 @@ a database.
 to the database.
 
 ~~~~~~~~~~~~~~~~~~~~~
-usage: CodeChecker store [-h] [-t {plist}] [-n NAME] [-f]
+usage: CodeChecker store [-h] [-t {plist}] [-n NAME] [--tag TAG] [-f]
                          [--url PRODUCT_URL]
                          [--verbose {info,debug,debug_analyzer}]
                          [file/folder [file/folder ...]]
@@ -693,6 +693,8 @@ optional arguments:
                         reports to the database. If not specified, the '--
                         name' parameter given to 'codechecker-analyze' will be
                         used, if exists.
+  --tag TAG             A unique identifier for this individual store of results
+                        in the run's history.
   -f, --force           Delete analysis results stored in the database for the
                         current analysis run's name and store only the results
                         reported in the 'input' files. (By default,

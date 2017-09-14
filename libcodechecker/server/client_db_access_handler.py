@@ -8,9 +8,10 @@ Handle Thrift requests.
 """
 
 import base64
+import calendar
 import codecs
 from collections import defaultdict
-import datetime
+from datetime import datetime, timedelta
 import json
 import os
 import shutil
@@ -49,6 +50,7 @@ class CountFilter:
     SEVERITY = 3
     REVIEW_STATUS = 4
     DETECTION_STATUS = 5
+    RUN_HISTORY_TAG = 6
 
 
 def conv(text):
@@ -113,6 +115,38 @@ def process_report_filter_v2(report_filter, count_filter=None):
                 report_filter.reviewStatus):
             OR.append(ReviewStatus.status.is_(None))
 
+        AND.append(or_(*OR))
+
+    detection_status = report_filter.detectionStatus
+    if report_filter.firstDetectionDate is not None:
+        date = datetime.fromtimestamp(report_filter.firstDetectionDate)
+
+        OR = []
+        if detection_status is not None and len(detection_status) == 1 and \
+           shared.ttypes.DetectionStatus.RESOLVED in detection_status:
+            OR.append(Report.fixed_at >= date)
+        else:
+            OR.append(Report.detected_at >= date)
+        AND.append(or_(*OR))
+
+    if report_filter.fixDate is not None:
+        date = datetime.fromtimestamp(report_filter.fixDate)
+
+        OR = []
+        if detection_status is not None and len(detection_status) == 1 and \
+           shared.ttypes.DetectionStatus.RESOLVED in detection_status:
+            OR.append(Report.fixed_at < date)
+        else:
+            OR.append(Report.detected_at < date)
+        AND.append(or_(*OR))
+
+    if report_filter.runHistoryTag is not None and \
+       count_filter != CountFilter.RUN_HISTORY_TAG:
+        OR = []
+        for history_date in report_filter.runHistoryTag:
+            date = datetime.strptime(history_date,
+                                     '%Y-%m-%d %H:%M:%S.%f')
+            OR.append(Report.detected_at <= date)
         AND.append(or_(*OR))
 
     filter_expr = and_(*AND)
@@ -256,7 +290,7 @@ class StorageSession:
                 'transaction': transaction,
                 'timer': time.time()}
 
-        def end_run_session(self, run_id):
+        def end_run_session(self, run_id, run_history_time):
             this_session = self.__sessions[run_id]
             transaction = this_session['transaction']
 
@@ -265,7 +299,8 @@ class StorageSession:
             transaction.query(Report) \
                 .filter(Report.run_id == run_id,
                         Report.id.notin_(this_session['touched_reports'])) \
-                .update({Report.detection_status: 'resolved'},
+                .update({Report.detection_status: 'resolved',
+                         Report.fixed_at: run_history_time},
                         synchronize_session='fetch')
 
             transaction.commit()
@@ -477,6 +512,38 @@ class ThriftRequestHandler(object):
                                        ))
             return results
 
+        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
+            msg = str(alchemy_ex)
+            LOG.error(msg)
+            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
+                                              msg)
+        finally:
+            session.close()
+
+    @timeit
+    def getRunHistory(self, run_ids, limit, offset):
+        self.__require_access()
+        try:
+            session = self.__Session()
+
+            if not run_ids:
+                run_ids = self.__get_run_ids_to_query(session, None)
+
+            res = session.query(RunHistory) \
+                .filter(RunHistory.run_id.in_(run_ids)) \
+                .order_by(RunHistory.time.desc()) \
+                .limit(limit) \
+                .offset(offset)
+
+            results = []
+            for history in res:
+                results.append(RunHistoryData(runId=history.run.id,
+                                              runName=history.run.name,
+                                              versionTag=history.version_tag,
+                                              user=history.user,
+                                              time=str(history.time)))
+
+            return results
         except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
             msg = str(alchemy_ex)
             LOG.error(msg)
@@ -1395,6 +1462,69 @@ class ThriftRequestHandler(object):
             return results
 
     @timeit
+    def getRunHistoryTagCounts(self, run_ids, report_filter, cmp_data):
+        """
+          If the run id list is empty the metrics will be counted
+          for all of the runs and in compare mode all of the runs
+          will be used as a baseline excluding the runs in compare data.
+        """
+        self.__require_access()
+        results = []
+        session = self.__Session()
+        try:
+
+            if not run_ids:
+                run_ids = self.__get_run_ids_to_query(session, cmp_data)
+
+            if cmp_data:
+                diff_hashes, run_ids = self._cmp_helper(session,
+                                                        run_ids,
+                                                        cmp_data)
+                if not diff_hashes:
+                    # There is no difference.
+                    return results
+
+            filter_expression = process_report_filter_v2(
+                report_filter, CountFilter.RUN_HISTORY_TAG)
+
+            count_expr = func.count(literal_column('*'))
+
+            q = session.query(func.max(Report.id),
+                              Run.name,
+                              RunHistory.time,
+                              RunHistory.version_tag,
+                              count_expr) \
+                .filter(Report.run_id.in_(run_ids)) \
+                .outerjoin(Run,
+                           Run.id == Report.run_id) \
+                .outerjoin(File,
+                           Report.file_id == File.id) \
+                .outerjoin(RunHistory,
+                           RunHistory.run_id == Report.run_id) \
+                .outerjoin(ReviewStatus,
+                           ReviewStatus.bug_hash == Report.bug_id) \
+                .filter(filter_expression) \
+
+            if cmp_data:
+                q = q.filter(Report.bug_id.in_(diff_hashes))
+
+            history_tags = q.group_by(Run.name,
+                                      RunHistory.time,
+                                      RunHistory.version_tag).all()
+
+            for _, run_name, time, tag, count in history_tags:
+                if tag:
+                    results.append(RunTagCount(time=str(time),
+                                               name=run_name + ':' + tag,
+                                               count=count))
+
+        except Exception as ex:
+            LOG.error(ex)
+        finally:
+            session.close()
+            return results
+
+    @timeit
     def getDetectionStatusCounts(self, run_ids, report_filter, cmp_data):
         """
           If the run id list is empty the metrics will be counted
@@ -1525,8 +1655,9 @@ class ThriftRequestHandler(object):
             session.close()
 
     @timeit
-    def massStoreRun(self, name, version, b64zip, force):
+    def massStoreRun(self, name, tag, version, b64zip, force):
         self.__require_store()
+
         # Unzip sent data.
         zip_dir = unzip(b64zip)
 
@@ -1605,10 +1736,17 @@ class ThriftRequestHandler(object):
                                                      file_content,
                                                      None)
 
+        user = self.__auth_session.user \
+            if self.__auth_session else 'Anonymous'
+
+        run_history_time = datetime.now()
         run_id = store_handler.addCheckerRun(self.__Session(),
                                              self.__storage_session,
                                              command,
                                              name,
+                                             tag,
+                                             user,
+                                             run_history_time,
                                              version,
                                              force)
 
@@ -1660,7 +1798,8 @@ class ThriftRequestHandler(object):
                     bug_paths,
                     bug_events,
                     checker_name,
-                    severity)
+                    severity,
+                    run_history_time)
 
                 last_report_event = report.bug_path[-1]
                 sp_handler = suppress_handler.SourceSuppressHandler(
@@ -1683,7 +1822,8 @@ class ThriftRequestHandler(object):
                                          # Round the duration to seconds.
                                          int(sum(check_durations)))
 
-        store_handler.finishCheckerRun(self.__storage_session, run_id)
+        store_handler.finishCheckerRun(self.__storage_session, run_id,
+                                       run_history_time)
 
         # TODO: This directory should be removed even if an exception is thrown
         # above.

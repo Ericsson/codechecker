@@ -200,7 +200,8 @@ def is_same_event_path(report_id, events, session):
             str(ex))
 
 
-def addCheckerRun(session, storage_session, command, name, version, force):
+def addCheckerRun(session, storage_session, command, name, tag, username,
+                  run_history_time, version, force):
     """
     Store checker run related data to the database.
     By default updates the results if name already exists.
@@ -246,6 +247,22 @@ def addCheckerRun(session, storage_session, command, name, version, force):
             session.flush()
             run_id = checker_run.id
 
+        # Add run to the history.
+        LOG.debug("adding run to the history")
+
+        if tag is not None:
+            version_tag = session.query(RunHistory) \
+                .filter(RunHistory.run_id == run_id,
+                        RunHistory.version_tag == tag) \
+                .one_or_none()
+
+            if version_tag:
+                raise Exception('Tag ' + tag + ' is already used in this run')
+
+        run_history = RunHistory(run_id, tag, username, run_history_time)
+        session.add(run_history)
+        session.flush()
+
         storage_session.start_run_session(run_id, session)
         return run_id
     except Exception as ex:
@@ -255,7 +272,7 @@ def addCheckerRun(session, storage_session, command, name, version, force):
             str(ex))
 
 
-def finishCheckerRun(storage_session, run_id):
+def finishCheckerRun(storage_session, run_id, run_history_time):
     """
     """
     try:
@@ -269,7 +286,7 @@ def finishCheckerRun(storage_session, run_id):
 
         run.mark_finished()
 
-        storage_session.end_run_session(run_id)
+        storage_session.end_run_session(run_id, run_history_time)
 
         return True
 
@@ -303,7 +320,8 @@ def addReport(storage_session,
               bugpath,
               events,
               checker_id,
-              severity):
+              severity,
+              detection_time):
     """
     """
     try:
@@ -346,6 +364,7 @@ def addReport(storage_session,
                 elif report.detection_status == 'resolved':
                     new_status = 'reopened'
                     report.file_id = file_id
+                    report.fixed_at = None
                     change_path_and_events(session,
                                            report.id,
                                            bugpath,
@@ -369,7 +388,8 @@ def addReport(storage_session,
                         line_num,
                         column,
                         severity,
-                        "new")
+                        "new",
+                        detection_time)
 
         session.add(report)
         session.flush()
