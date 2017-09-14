@@ -25,8 +25,8 @@
           "accountPattern" : "(&(objectClass=person)(sAMAccountName=$USN$))",
           "groupBase" : null,
           "groupScope" : "subtree",
-          "groupPattern" : "(&(objectClass=group)(name=$GRP$))",
-          "groupMemberPattern" : "(member=$USERDN$)"
+          "groupPattern" : "(&(objectClass=group)(member=$USERDN$))",
+          "groupNameAttr" : "sAMAccountName"
         }
       ]
     },

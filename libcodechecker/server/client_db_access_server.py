@@ -61,6 +61,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
     Handle thrift and browser requests
     Simply modified and extended version of SimpleHTTPRequestHandler
     """
+    auth_token = None
 
     def __init__(self, request, client_address, server):
         BaseHTTPRequestHandler.__init__(self,
@@ -127,6 +128,19 @@ class RequestHandler(SimpleHTTPRequestHandler):
 
         return success
 
+    def end_headers(self):
+        # Sending the authentication cookie
+        # in every response if any.
+        # This will update the the session cookie
+        # on the clients to the newest.
+        if self.auth_token:
+            self.send_header(
+                "Set-Cookie",
+                "{0}={1}; Path=/".format(
+                    session_manager.SESSION_COOKIE_NAME,
+                    self.auth_token))
+        SimpleHTTPRequestHandler.end_headers(self)
+
     def do_GET(self):
         """
         Handles the webbrowser access (GET requests).
@@ -153,6 +167,8 @@ class RequestHandler(SimpleHTTPRequestHandler):
             self.wfile.write(error_body)
             return
         else:
+            if auth_session is not None:
+                self.auth_token = auth_session.token
             product_endpoint, path = \
                 routing.split_client_GET_request(self.path)
 
@@ -213,13 +229,6 @@ class RequestHandler(SimpleHTTPRequestHandler):
                     LOG.debug("Serving resource '{0}'".format(self.path))
 
                 self.send_response(200)  # 200 OK
-                if auth_session is not None:
-                    # Browsers get a standard cookie for session.
-                    self.send_header(
-                        "Set-Cookie",
-                        "{0}={1}; Path=/".format(
-                            session_manager.SESSION_COOKIE_NAME,
-                            auth_session.token))
 
             SimpleHTTPRequestHandler.do_GET(self)
 
