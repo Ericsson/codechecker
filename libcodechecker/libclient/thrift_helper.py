@@ -105,10 +105,6 @@ class ThriftClientHelper(object):
         pass
 
     @ThriftClientCall
-    def getRunResults(self, runIds, limit, offset, sortType, reportFilters):
-        pass
-
-    @ThriftClientCall
     def getSourceFileData(self, fileId, fileContent, encoding):
         pass
 
@@ -128,7 +124,6 @@ class ThriftClientHelper(object):
     def getSuppressedBugs(self, run_id):
         pass
 
-    # -----------------------------------------------------------------------
     @ThriftClientCall
     def getNewResults(self, base_run_id, new_run_id, limit, offset, sortType,
                       reportFilters):

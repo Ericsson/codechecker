@@ -9,7 +9,6 @@ Database connection handling to a database backend.
 
 from abc import ABCMeta, abstractmethod
 import os
-import threading
 
 from alembic import command, config
 from alembic.util import CommandError

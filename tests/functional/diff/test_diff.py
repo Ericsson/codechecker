@@ -14,7 +14,6 @@ import re
 import subprocess
 import unittest
 
-import shared
 from codeCheckerDBAccess_v6.ttypes import *
 
 from libtest import env
@@ -443,9 +442,6 @@ class Diff(unittest.TestCase):
         """
         base_run_id = self._base_runid
         new_run_id = self._new_runid
-
-        diff_res_types_filter = self._testproject_data[self._clang_to_test][
-            'diff_res_types_filter']
 
         cmp_data = CompareData(runIds=[new_run_id],
                                diffType=DiffType.UNRESOLVED)

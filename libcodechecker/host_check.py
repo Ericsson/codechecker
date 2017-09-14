@@ -11,7 +11,6 @@ from libcodechecker.logger import LoggerFactory
 LOG = LoggerFactory.get_new_logger('HOST CHECK')
 
 
-# -----------------------------------------------------------------------------
 def check_zlib():
     """ Check if zlib compression is available.
     If wrong libraries are installed on the host machine it is
@@ -29,7 +28,6 @@ def check_zlib():
         return False
 
 
-# -----------------------------------------------------------------------------
 def get_postgresql_driver_name():
     try:
         driver = os.getenv('CODECHECKER_DB_DRIVER')
@@ -48,7 +46,6 @@ def get_postgresql_driver_name():
         raise
 
 
-# -----------------------------------------------------------------------------
 def check_postgresql_driver():
     try:
         get_postgresql_driver_name()
@@ -58,7 +55,6 @@ def check_postgresql_driver():
         return False
 
 
-# -----------------------------------------------------------------------------
 def check_sql_driver(check_postgresql):
     if check_postgresql:
         try:

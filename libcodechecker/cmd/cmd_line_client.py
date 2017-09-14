@@ -323,7 +323,7 @@ def handle_diff_results(args):
         if output_format == 'json':
             output = []
             for report in reports:
-                if type(report) is Report:
+                if isinstance(report, Report):
                     output.append(report.main)
                 else:
                     output.append(report)
@@ -540,7 +540,7 @@ def handle_suppress(args):
     client = setup_client(args.product_url)
 
     run_info = check_run_names(client, [args.name])
-    run_id, run_date = run_info.get(args.name)
+    run_id, _ = run_info.get(args.name)
 
     if 'input' in args:
         with open(args.input) as supp_file:
@@ -548,7 +548,8 @@ def handle_suppress(args):
 
         for bug_id, file_name, comment in suppress_data:
             reports = client.getRunResults([run_id], limit, 0, None,
-                                           bug_hash_filter(bug_id, file_name))
+                                           bug_hash_filter(bug_id, file_name),
+                                           None)
 
             for report in reports:
                 status = ttypes.ReviewStatus.FALSE_POSITIVE

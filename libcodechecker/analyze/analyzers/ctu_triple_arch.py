@@ -22,12 +22,6 @@ def get_compile_command(action, config, source='', output=''):
         cmd.extend(['-resource-dir', config.compiler_resource_dir,
                     '-isystem', config.compiler_resource_dir])
     cmd.append('-c')
-    if config.compiler_sysroot:
-        cmd.extend(['--sysroot', config.compiler_sysroot])
-    for path in config.system_includes:
-        cmd.extend(['-isystem', path])
-    for path in config.includes:
-        cmd.extend(['-I', path])
     cmd.extend(['-x', action.lang])
     cmd.append(config.analyzer_extra_arguments)
     cmd.extend(action.analyzer_options)

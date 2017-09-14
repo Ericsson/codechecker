@@ -71,7 +71,7 @@ def login(codechecker_cfg, test_project_path, username, password,
         out = subprocess.call(shlex.split(' '.join(login_cmd)),
                               cwd=test_project_path,
                               env=codechecker_cfg['check_env'])
-        print out
+        print(out)
         return 0
     except OSError as cerr:
         print("Failed to call:\n" + ' '.join(login_cmd))
@@ -114,7 +114,7 @@ def logout(codechecker_cfg, test_project_path, protocol='http'):
         out = subprocess.call(shlex.split(' '.join(logout_cmd)),
                               cwd=test_project_path,
                               env=codechecker_cfg['check_env'])
-        print out
+        print(out)
         return 0
     except OSError as cerr:
         print("Failed to call:\n" + ' '.join(logout_cmd))
@@ -161,9 +161,9 @@ def check(codechecker_cfg, test_project_name, test_project_path):
     try:
         print("RUNNING CHECK")
         print(' '.join(check_cmd))
-        proc = subprocess.call(shlex.split(' '.join(check_cmd)),
-                               cwd=test_project_path,
-                               env=codechecker_cfg['check_env'])
+        subprocess.call(shlex.split(' '.join(check_cmd)),
+                        cwd=test_project_path,
+                        env=codechecker_cfg['check_env'])
 
     except CalledProcessError as cerr:
         print("Failed to call:\n" + ' '.join(cerr.cmd))
@@ -181,9 +181,9 @@ def check(codechecker_cfg, test_project_name, test_project_path):
     try:
         print("RUNNING STORE")
         print(' '.join(store_cmd))
-        proc = subprocess.call(shlex.split(' '.join(store_cmd)),
-                               cwd=test_project_path,
-                               env=codechecker_cfg['check_env'])
+        subprocess.call(shlex.split(' '.join(store_cmd)),
+                        cwd=test_project_path,
+                        env=codechecker_cfg['check_env'])
         return 0
 
     except CalledProcessError as cerr:

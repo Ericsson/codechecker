@@ -53,14 +53,3 @@ class SkipListHandler(object):
                 sign = line[0]
                 return sign == '-'
         return False
-
-    def get_skiplist(self):
-        """
-        Read skip file and return with its content in a list.
-        """
-
-        skiplist_with_comment = {}
-        for line, rexpr in self.__skip:
-            skiplist_with_comment[line] = ''
-
-        return skiplist_with_comment

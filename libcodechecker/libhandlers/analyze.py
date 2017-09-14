@@ -15,7 +15,6 @@ import subprocess
 import sys
 
 from libcodechecker import generic_package_context
-from libcodechecker import util
 from libcodechecker.analyze import log_parser
 from libcodechecker.analyze import analyzer
 from libcodechecker.analyze.analyzers import analyzer_types

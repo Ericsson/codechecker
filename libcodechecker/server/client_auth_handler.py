@@ -288,8 +288,8 @@ class ThriftAuthHandler(object):
             perm, params = self.__create_permission_args(
                 permission, extra_params, session)
 
-            return permissions.require_permission(perm, params,
-                                                  self.__auth_session)
+            return require_permission(perm, params,
+                                      self.__auth_session)
 
         except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
             msg = str(alchemy_ex)

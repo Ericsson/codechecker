@@ -8,7 +8,6 @@ import base64
 from hashlib import sha256
 import json
 import os
-import tempfile
 import zlib
 
 import sqlalchemy
@@ -16,7 +15,6 @@ import sqlalchemy
 import shared
 from codeCheckerDBAccess_v6 import ttypes
 
-from libcodechecker.analyze import skiplist_handler
 from libcodechecker.logger import LoggerFactory
 # TODO: This is a cross-subpackage import.
 from libcodechecker.server.run_db_model import *

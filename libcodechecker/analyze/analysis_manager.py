@@ -37,7 +37,7 @@ def worker_result_handler(results, metadata, output_path):
     skipped_num = 0
     reanalyzed_num = 0
 
-    for res, skipped, reanalyzed, analyzer_type, result_file in results:
+    for res, skipped, reanalyzed, analyzer_type, _ in results:
         if skipped:
             skipped_num += 1
         elif reanalyzed:
@@ -82,7 +82,7 @@ def worker_result_handler(results, metadata, output_path):
         os.remove(f)
 
     for f in glob.glob(os.path.join(output_path, 'failed', "*.error")):
-        (err_file, ext) = os.path.splitext(f)
+        err_file, _ = os.path.splitext(f)
         plist_file = os.path.basename(err_file) + ".plist"
         plist_file = os.path.join(output_path, plist_file)
         metadata['result_source_files'].pop(plist_file, None)

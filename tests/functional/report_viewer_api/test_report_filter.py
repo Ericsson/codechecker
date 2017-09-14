@@ -9,7 +9,6 @@ import logging
 import os
 import unittest
 
-import shared
 from codeCheckerDBAccess_v6.ttypes import *
 
 from libtest import env

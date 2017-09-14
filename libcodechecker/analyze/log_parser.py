@@ -54,7 +54,7 @@ def get_compiler_includes(compiler, lang, compile_opts, extra_opts=None):
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE)
 
-        out, err = proc.communicate("")
+        _, err = proc.communicate("")
 
         do_append = False
         for line in err.splitlines(True):
@@ -110,7 +110,6 @@ def get_compiler_target(compiler):
     return target
 
 
-# -----------------------------------------------------------------------------
 def parse_compile_commands_json(logfile, add_compiler_defaults=False):
     import json
     LOG.debug('parse_compile_commands_json: ' + str(add_compiler_defaults))
@@ -201,13 +200,12 @@ def parse_compile_commands_json(logfile, add_compiler_defaults=False):
         del action
         counter += 1
 
-    for ba_hash, ba in filtered_build_actions.items():
+    for _, ba in filtered_build_actions.items():
         actions.append(ba)
 
     return actions
 
 
-# -----------------------------------------------------------------------------
 def parse_log(logfilepath, add_compiler_defaults=False):
     LOG.debug('Parsing log file: ' + logfilepath)
 

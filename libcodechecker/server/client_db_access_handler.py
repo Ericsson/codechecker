@@ -8,10 +8,9 @@ Handle Thrift requests.
 """
 
 import base64
-import calendar
 import codecs
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime
 import json
 import os
 import shutil
@@ -1841,7 +1840,7 @@ class ThriftRequestHandler(object):
 
                 supp = sp_handler.get_suppressed()
                 if supp:
-                    bhash, fname, comment = supp
+                    _, _, comment = supp
                     status = ttypes.ReviewStatus.FALSE_POSITIVE
                     self._setReviewStatus(report_id, status, comment, session)
 

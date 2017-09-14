@@ -1384,10 +1384,3 @@ CodeChecker server -v <view_port> --verbose debug
 
 If debug logging is enabled and PostgreSQL database is used, PostgreSQL logs
 are written to `postgresql.log` in the workspace directory.
-
-Turn on SQL_ALCHEMY debug logging via the export below before calling
-CodeChecker:
-
-~~~~~~~~~~~~~~~~~~~~~
-export CODECHECKER_ALCHEMY_LOG=True
-~~~~~~~~~~~~~~~~~~~~~

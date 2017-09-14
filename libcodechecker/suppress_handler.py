@@ -199,7 +199,7 @@ class SourceSuppressHandler(object):
         if self.__checker_name in suppress_checkers or \
            suppress_checkers == {'all'}:
 
-            file_path, file_name = os.path.split(self.__source_file)
+            file_name = os.path.basename(self.__source_file)
 
             to_suppress = (self.__hash_value,
                            file_name,

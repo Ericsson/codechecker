@@ -73,14 +73,14 @@ class ClangSA(analyzer_base.SourceAnalyzer):
 
         return self.checkers
 
-    def construct_analyzer_cmd(self, res_handler):
+    def construct_analyzer_cmd(self, result_handler):
         """
         Called by the analyzer method.
         Construct the analyzer command.
         """
         try:
             # Get an output file from the result handler.
-            analyzer_output_file = res_handler.analyzer_result_file
+            analyzer_output_file = result_handler.analyzer_result_file
 
             # Get the checkers list from the config_handler.
             # Checker order matters.
@@ -114,15 +114,6 @@ class ClangSA(analyzer_base.SourceAnalyzer):
                                  '-Xclang',
                                  '-analyzer-output=' + analyzer_mode])
 
-            if config.compiler_sysroot:
-                analyzer_cmd.extend(['--sysroot', config.compiler_sysroot])
-
-            for path in config.system_includes:
-                analyzer_cmd.extend(['-isystem', path])
-
-            for path in config.includes:
-                analyzer_cmd.extend(['-I', path])
-
             analyzer_cmd.extend(['-o', analyzer_output_file])
 
             # Config handler stores which checkers are enabled or disabled.
@@ -145,9 +136,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
                 analyzer_cmd.extend(['-Xclang', '-analyzer-config',
                                      '-Xclang',
                                      'xtu-dir=' + os.path.join(config.ctu_dir,
-                                                               triple_arch),
-                                     '-Xclang', '-analyzer-config',
-                                     '-Xclang', 'reanalyze-xtu-visited=true'])
+                                                               triple_arch)])
                 if config.ctu_in_memory:
                     analyzer_cmd.extend(['-Xclang', '-analyzer-config',
                                          '-Xclang',
