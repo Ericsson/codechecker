@@ -6,6 +6,7 @@
 
 import os
 import socket
+import sys
 
 from thrift.transport import THttpClient
 from thrift.protocol import TJSONProtocol
@@ -16,6 +17,10 @@ from codeCheckerDBAccess_v6 import codeCheckerDBAccess
 
 from libcodechecker import session_manager
 from libcodechecker import util
+from libcodechecker.logger import LoggerFactory
+
+
+LOG = LoggerFactory.get_new_logger('THRIFT HELPER')
 
 
 class ThriftClientHelper(object):
@@ -65,9 +70,22 @@ class ThriftClientHelper(object):
                 raise
 
             except TProtocolException as ex:
-                print("Connection failed to {0}:{1}"
+                if ex.type == TProtocolException.UNKNOWN:
+                    LOG.debug('Unknown thrift error')
+                elif ex.type == TProtocolException.INVALID_DATA:
+                    LOG.debug('Thrift invalid data error.')
+                elif ex.type == TProtocolException.NEGATIVE_SIZE:
+                    LOG.debug('Thrift negative size error.')
+                elif ex.type == TProtocolException.SIZE_LIMIT:
+                    LOG.debug('Thrift size limit error.')
+                elif ex.type == TProtocolException.BAD_VERSION:
+                    LOG.debug('Thrift bad version error.')
+                LOG.debug(funcName)
+                LOG.debug(args)
+                LOG.debug(kwargs)
+                LOG.debug(ex.message)
+                print("Request failed to {0}:{1}"
                       .format(self.__host, self.__port))
-                print("Check if your CodeChecker server is running.")
                 sys.exit(1)
             except socket.error as serr:
                 print("Connection failed to {0}:{1}"
@@ -135,12 +153,12 @@ class ThriftClientHelper(object):
         pass
 
     @ThriftClientCall
-    def getRunResults_v2(self, runIds, limit, offset, sortType, reportFilter,
-                         cmpData):
+    def getRunResults(self, runIds, limit, offset, sortType, reportFilter,
+                      cmpData):
         pass
 
     @ThriftClientCall
-    def getRunResultCount_v2(self, runIds, reportFilter, cmpData):
+    def getRunResultCount(self, runIds, reportFilter, cmpData):
         pass
 
     @ThriftClientCall

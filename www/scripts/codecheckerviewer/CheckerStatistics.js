@@ -159,7 +159,7 @@ function (declare, ItemFileWriteStore, Deferred, all, Memory, Observable,
 
         var deferred = new Deferred();
 
-        var reportFilter = new CC_OBJECTS.ReportFilter_v2();
+        var reportFilter = new CC_OBJECTS.ReportFilter();
 
         if (q.field)
           reportFilter[q.field] = q.values;

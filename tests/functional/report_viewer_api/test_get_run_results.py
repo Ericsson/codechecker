@@ -57,7 +57,9 @@ class RunResults(unittest.TestCase):
         logging.debug('Get all run results from the db for runid: ' +
                       str(runid))
 
-        run_result_count = self._cc_client.getRunResultCount([runid], [])
+        run_result_count = self._cc_client.getRunResultCount([runid],
+                                                             None,
+                                                             None)
         self.assertTrue(run_result_count)
 
         run_results = get_all_run_results(self._cc_client, runid)
@@ -74,7 +76,9 @@ class RunResults(unittest.TestCase):
         logging.debug('Get all run results from the db for runid: ' +
                       str(runid))
 
-        run_result_count = self._cc_client.getRunResultCount([runid], [])
+        run_result_count = self._cc_client.getRunResultCount([runid],
+                                                             None,
+                                                             None)
         self.assertTrue(run_result_count)
 
         run_results = get_all_run_results(self._cc_client, runid)
@@ -107,15 +111,17 @@ class RunResults(unittest.TestCase):
         """
 
         runid = self._runid
-        simple_filters = [ReportFilter(checkerId='*', filepath='*.c*')]
+        report_filter = ReportFilter(checkerName=['*'], filepath=['*.c*'])
 
         run_result_count = self._cc_client.getRunResultCount([runid],
-                                                             simple_filters)
+                                                             report_filter,
+                                                             None)
         self.assertTrue(run_result_count)
 
         run_results = get_all_run_results(self._cc_client,
                                           runid,
-                                          filters=simple_filters)
+                                          [],
+                                          report_filter)
         self.assertIsNotNone(run_results)
 
         for run_res in run_results:
@@ -158,13 +164,15 @@ class RunResults(unittest.TestCase):
         sort_mode2 = SortMode(SortType.FILENAME, Order.ASC)
         sort_types = [sort_mode1, sort_mode2]
 
-        run_result_count = self._cc_client.getRunResultCount([runid], [])
+        run_result_count = self._cc_client.getRunResultCount([runid],
+                                                             None,
+                                                             None)
         self.assertTrue(run_result_count)
 
         run_results = get_all_run_results(self._cc_client,
                                           runid,
                                           sort_types,
-                                          [])
+                                          None)
         self.assertIsNotNone(run_results)
 
         for i in range(run_result_count - 1):
@@ -188,13 +196,15 @@ class RunResults(unittest.TestCase):
         sortMode2 = SortMode(SortType.CHECKER_NAME, Order.ASC)
         sort_types = [sortMode1, sortMode2]
 
-        run_result_count = self._cc_client.getRunResultCount([runid], [])
+        run_result_count = self._cc_client.getRunResultCount([runid],
+                                                             None,
+                                                             None)
         self.assertTrue(run_result_count)
 
         run_results = get_all_run_results(self._cc_client,
                                           runid,
                                           sort_types,
-                                          [])
+                                          None)
         self.assertIsNotNone(run_results)
 
         print_run_results(run_results)

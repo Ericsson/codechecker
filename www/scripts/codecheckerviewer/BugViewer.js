@@ -139,14 +139,14 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
 
           //--- Get same reports by bughash in all reports ---//
 
-          var reportFilter = new CC_OBJECTS.ReportFilter_v2();
+          var reportFilter = new CC_OBJECTS.ReportFilter();
           reportFilter.reportHash = [reportData.bugHash];
 
           var sortMode = new CC_OBJECTS.SortMode();
           sortMode.type = CC_OBJECTS.SortType.FILENAME;
           sortMode.ord = CC_OBJECTS.Order.ASC;
 
-          var res = CC_SERVICE.getRunResults_v2(
+          var res = CC_SERVICE.getRunResults(
             null,
             CC_OBJECTS.MAX_QUERY_SIZE,
             0,
@@ -552,10 +552,10 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
         that.bugStore.put(item);
       });
 
-      var fileFilter = new CC_OBJECTS.ReportFilter_v2();
+      var fileFilter = new CC_OBJECTS.ReportFilter();
       fileFilter.filepath = [getProperFilePath(this.reportData.checkedFile)];
 
-      CC_SERVICE.getRunResults_v2(
+      CC_SERVICE.getRunResults(
         this.runResultParam.runIds,
         CC_OBJECTS.MAX_QUERY_SIZE,
         0,

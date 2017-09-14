@@ -86,7 +86,7 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
 
       var runResultParam = createRunResultFilterParameter(query.reportFilters);
 
-      CC_SERVICE.getRunResults_v2(
+      CC_SERVICE.getRunResults(
         runResultParam.runIds,
         CC_OBJECTS.MAX_QUERY_SIZE,
         options.start,
@@ -102,7 +102,7 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
           }
         });
 
-      deferred.total = CC_SERVICE.getRunResultCount_v2(runResultParam.runIds,
+      deferred.total = CC_SERVICE.getRunResultCount(runResultParam.runIds,
         query.reportFilters, runResultParam.cmpData);
 
       return deferred;

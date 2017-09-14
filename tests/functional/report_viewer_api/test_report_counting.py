@@ -13,7 +13,7 @@ import shared
 from shared.ttypes import ReviewStatus
 from shared.ttypes import Severity
 from shared.ttypes import DetectionStatus
-from codeCheckerDBAccess_v6.ttypes import ReportFilter_v2
+from codeCheckerDBAccess_v6.ttypes import ReportFilter
 
 from libtest import env
 
@@ -128,7 +128,7 @@ class TestReportFilter(unittest.TestCase):
         Get all the core checker counts for run1.
         """
         runid = self._runids[0]
-        core_filter = ReportFilter_v2(checkerName=["core*"])
+        core_filter = ReportFilter(checkerName=["core*"])
         checker_counts = self._cc_client.getCheckerCounts([runid],
                                                           core_filter,
                                                           None)
@@ -173,7 +173,7 @@ class TestReportFilter(unittest.TestCase):
         """
         Get all the core checker counts for run1 and run2.
         """
-        core_filter = ReportFilter_v2(checkerName=["core*"])
+        core_filter = ReportFilter(checkerName=["core*"])
         checker_counts = self._cc_client.getCheckerCounts(self._runids,
                                                           core_filter,
                                                           None)
@@ -276,7 +276,7 @@ class TestReportFilter(unittest.TestCase):
         """
         Get all the core checker counts for run1 and run2.
         """
-        null_stack_filter = ReportFilter_v2(
+        null_stack_filter = ReportFilter(
             filepath=["*null_dereference.cpp", "*stack_address_escape.cpp"])
 
         file_counts = self._cc_client.getFileCounts(self._runids,
@@ -331,10 +331,12 @@ class TestReportFilter(unittest.TestCase):
         """
         runid = self._runids[0]
 
-        report_count = self._cc_client.getRunResultCount([runid], [])
+        report_count = self._cc_client.getRunResultCount([runid],
+                                                         None,
+                                                         None)
 
         report_ids = [x.reportId for x in self._cc_client.getRunResults(
-            [runid], report_count, 0, [], [])]
+            [runid], report_count, 0, [], None, None)]
 
         for rid in report_ids[:5]:
             self._cc_client.changeReviewStatus(rid,
@@ -371,14 +373,17 @@ class TestReportFilter(unittest.TestCase):
         """
         runid = self._runids[0]
 
-        report_count = self._cc_client.getRunResultCount([runid], [])
+        report_count = self._cc_client.getRunResultCount([runid],
+                                                         None,
+                                                         None)
 
         report_ids = [x.reportId for x
                       in self._cc_client.getRunResults([runid],
                                                        report_count,
                                                        0,
                                                        [],
-                                                       [])]
+                                                       None,
+                                                       None)]
 
         for rid in report_ids[:5]:
             self._cc_client.changeReviewStatus(rid,
@@ -458,7 +463,7 @@ class TestReportFilter(unittest.TestCase):
         Get all the new checker counts for run1.
         """
         runid = self._runids[0]
-        new_filter = ReportFilter_v2(
+        new_filter = ReportFilter(
             detectionStatus=[shared.ttypes.DetectionStatus.NEW])
         new_reports = self._cc_client.getCheckerCounts([runid],
                                                        new_filter,
@@ -480,7 +485,7 @@ class TestReportFilter(unittest.TestCase):
         """
 
         runid = self._runids[0]
-        resolved_filter = ReportFilter_v2(
+        resolved_filter = ReportFilter(
             detectionStatus=[shared.ttypes.DetectionStatus.RESOLVED])
         resolved_reports = self._cc_client.getCheckerCounts([runid],
                                                             resolved_filter,
@@ -495,7 +500,7 @@ class TestReportFilter(unittest.TestCase):
         """
 
         runid = self._runids[0]
-        unresolved_filter = ReportFilter_v2(
+        unresolved_filter = ReportFilter(
             detectionStatus=[shared.ttypes.DetectionStatus.UNRESOLVED])
         unresolved_reports = \
             self._cc_client.getCheckerCounts([runid],
@@ -512,7 +517,7 @@ class TestReportFilter(unittest.TestCase):
         """
 
         runid = self._runids[0]
-        reopen_filter = ReportFilter_v2(
+        reopen_filter = ReportFilter(
             detectionStatus=[shared.ttypes.DetectionStatus.REOPENED])
         reopened_reports = self._cc_client.getCheckerCounts([runid],
                                                             reopen_filter,
