@@ -276,20 +276,17 @@ def split_server_url(url):
     # A valid server_url looks like this: 'http://localhost:8001/'.
     host, port = 'localhost', 8001
     try:
-        parts = url.split("/")
+        parts = url.split('/', 1)
 
-        if len(parts) == 1:
-            # Something is either a hostname, or a host:port.
-            server_addr = parts[0].split(":")
-            if len(server_addr) == 2:
-                host, port = server_addr[0], int(server_addr[1])
-            elif len(server_addr) == 1:
-                host = server_addr[0]
-            else:
-                raise ValueError("The server's address is not in a valid "
-                                 "'host:port' format!")
+        # Something is either a hostname, or a host:port.
+        server_addr = parts[0].split(":")
+        if len(server_addr) == 2:
+            host, port = server_addr[0], int(server_addr[1])
+        elif len(server_addr) == 1:
+            host = server_addr[0]
         else:
-            raise ValueError("Server URL can not contain extra '/' chars.")
+            raise ValueError("The server's address is not in a valid "
+                             "'host:port' format!")
     except:
         LOG.error("The specified server URL is invalid.")
         raise
@@ -301,8 +298,7 @@ def split_server_url(url):
 
 
 def create_product_url(protocol, host, port, endpoint):
-    url = protocol+"://"+host+":"+str(port)+endpoint
-    return url
+    return "{0}://{1}:{2}{3}".format(protocol, host, str(port), endpoint)
 
 
 def split_product_url(url):

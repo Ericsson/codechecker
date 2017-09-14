@@ -100,7 +100,7 @@ class product_urlTest(unittest.TestCase):
             url = ''.join([protocol + "://" if protocol else "",
                            host, ":", str(port)])
 
-            sprotocol, shost, sport, = split_server_url(url)
+            sprotocol, shost, sport = split_server_url(url)
             self.assertEqual(sprotocol, protocol if protocol else "http")
             self.assertEqual(shost, host)
             self.assertEqual(sport, port)
@@ -110,6 +110,12 @@ class product_urlTest(unittest.TestCase):
         test("1hostname.can.begin.with.digits", 9999)
         test("another.server", 80, "http")
         test("very-secure.another.server", 443, 'https')
+
+        sprotocol, shost, sport = \
+            split_server_url('https://someserver:1234/Product')
+        self.assertEqual(sprotocol, 'https')
+        self.assertEqual(shost, 'someserver')
+        self.assertEqual(sport, 1234)
 
     def testHostname(self):
         """
@@ -132,9 +138,6 @@ class product_urlTest(unittest.TestCase):
         """
         Parser throws on bad server URLs?
         """
-
-        with self.assertRaises(ValueError):
-            split_server_url("42server/containsAProductEndpoint")
 
         with self.assertRaises(ValueError):
             split_server_url("in:valid:format")
