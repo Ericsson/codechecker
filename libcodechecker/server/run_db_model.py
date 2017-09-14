@@ -221,24 +221,6 @@ class Report(Base):
         self.column = column
 
 
-class SkipPath(Base):
-    __tablename__ = 'skip_paths'
-
-    id = Column(Integer, autoincrement=True, primary_key=True)
-    path = Column(String)
-    run_id = Column(Integer,
-                    ForeignKey('runs.id', deferrable=True,
-                               initially="DEFERRED",
-                               ondelete='CASCADE'),
-                    nullable=False)
-    comment = Column(Binary)
-
-    def __init__(self, run_id, path, comment):
-        self.path = path
-        self.run_id = run_id
-        self.comment = comment
-
-
 class Comment(Base):
     __tablename__ = 'comments'
 
