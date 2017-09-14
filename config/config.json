@@ -32,11 +32,11 @@
           {"security.insecureAPI.vfork" : true }
       ],
       "clang-tidy_checkers" : [
+          {"bugprone-suspicious-memset-usage" : true },
           {"clang-diagnostic-" : true },
           {"cert-fio38-c" : true },
           {"cert-dcl58-cpp" : true },
           {"google-global-names-in-headers" : true },
-          {"google-runtime-memset" : true },
           {"misc-assert-side-effect" : true },
           {"misc-dangling-handle" : true },
           {"misc-inaccurate-erase" : true },
