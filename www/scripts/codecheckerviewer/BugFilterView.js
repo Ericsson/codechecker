@@ -939,10 +939,26 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
               deferred.resolve(Object.keys(CC_OBJECTS.DiffType)
               .map(function (key, index) {
                 var value = CC_OBJECTS.DiffType[key];
+
+                var label;
+                switch (key) {
+                  case 'NEW':
+                    label = 'Only in Newcheck (New)';
+                    break;
+
+                  case 'RESOLVED':
+                    label = 'Only in Baseline (Resolved)';
+                    break;
+
+                  case 'UNRESOLVED':
+                    label = 'Both in Baseline and Newcheck (Unresolved)';
+                    break;
+                }
+
                 return {
-                  label     : key.charAt(0) + key.slice(1).toLowerCase(),
-                  value     : value,
-                  count     : res[index][key]
+                  label : label,
+                  value : value,
+                  count : res[index][key]
                 };
               }));
             });
@@ -986,10 +1002,11 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
         title : 'Review status',
         parent   : this,
         stateConverter : function (value) {
-          return util.enumValueToKey(ReviewStatus, value).toLowerCase()
+          return util.enumValueToKey(
+            CC_OBJECTS.ReviewStatus, value).toLowerCase()
         },
         stateDecoder : function (key) {
-          return ReviewStatus[key.toUpperCase()];
+          return CC_OBJECTS.ReviewStatus[key.toUpperCase()];
         },
         getItems : function () {
           var deferred = new Deferred();
@@ -1023,10 +1040,11 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
         title : 'Detection status',
         parent   : this,
         stateConverter : function (value) {
-          return util.enumValueToKey(DetectionStatus, value).toLowerCase()
+          return util.enumValueToKey(
+            CC_OBJECTS.DetectionStatus, value).toLowerCase()
         },
         stateDecoder : function (key) {
-          return DetectionStatus[key.toUpperCase()];
+          return CC_OBJECTS.DetectionStatus[key.toUpperCase()];
         },
         getItems : function () {
           var deferred = new Deferred();
@@ -1060,10 +1078,10 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
         title : 'Severity',
         parent   : this,
         stateConverter : function (value) {
-          return util.enumValueToKey(Severity, value).toLowerCase()
+          return util.enumValueToKey(CC_OBJECTS.Severity, value).toLowerCase()
         },
         stateDecoder : function (key) {
-          return Severity[key.toUpperCase()];
+          return CC_OBJECTS.Severity[key.toUpperCase()];
         },
         getItems : function () {
           var deferred = new Deferred();
