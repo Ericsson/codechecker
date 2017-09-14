@@ -1240,32 +1240,6 @@ class ThriftRequestHandler(object):
             session.close()
 
     @timeit
-    def getSkipPaths(self, run_id):
-        self.__require_access()
-        try:
-            session = self.__Session()
-
-            suppressed_paths = session.query(SkipPath) \
-                .filter(SkipPath.run_id == run_id) \
-                .all()
-
-            results = []
-            for sp in suppressed_paths:
-                encoded_path = sp.path
-                encoded_comment = sp.comment
-                results.append(SkipPathData(encoded_path, encoded_comment))
-
-            return results
-
-        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
-            msg = str(alchemy_ex)
-            LOG.error(msg)
-            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
-                                              msg)
-        finally:
-            session.close()
-
-    @timeit
     def getSourceFileData(self, fileId, fileContent, encoding):
         """
         Parameters:
@@ -2239,7 +2213,7 @@ class ThriftRequestHandler(object):
         with open(content_hash_file) as chash_file:
             filename2hash = json.load(chash_file)
 
-        check_commands, check_durations, skip_handlers = \
+        check_commands, check_durations = \
             store_handler.metadata_info(metadata_file)
 
         if len(check_commands) == 0:
@@ -2296,8 +2270,6 @@ class ThriftRequestHandler(object):
                 with codecs.open(source_file_name, 'r',
                                  'UTF-8', 'replace') as source_file:
                     file_content = source_file.read()
-                    # TODO: we may not use the file content in the end
-                    # depending on skippaths.
                     file_content = codecs.encode(file_content, 'utf-8')
 
                     file_path_to_id[file_name] = \
@@ -2314,13 +2286,6 @@ class ThriftRequestHandler(object):
                                              force)
 
         session = self.__storage_session.get_transaction(run_id)
-
-        # Handle skip list.
-        for skip_handler in skip_handlers:
-            if not store_handler.addSkipPath(self.__storage_session,
-                                             run_id,
-                                             skip_handler.get_skiplist()):
-                LOG.debug("Adding skip path failed!")
 
         # Processing PList files.
         _, _, report_files = next(os.walk(report_dir), ([], [], []))

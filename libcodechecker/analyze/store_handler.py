@@ -27,7 +27,6 @@ LOG = LoggerFactory.get_new_logger('STORE HANDLER')
 def metadata_info(metadata_file):
     check_commands = []
     check_durations = []
-    skip_handlers = []
 
     with open(metadata_file, 'r') as metadata:
         metadata_dict = json.load(metadata)
@@ -38,19 +37,8 @@ def metadata_info(metadata_file):
         check_durations.append(
             float(metadata_dict['timestamps']['end'] -
                   metadata_dict['timestamps']['begin']))
-    if 'skip_data' in metadata_dict:
-        # Save previously stored skip data for sending to the
-        # database, to ensure skipped headers are actually
-        # skipped --- 'analyze' can't do this.
-        handle, path = tempfile.mkstemp()
-        with os.fdopen(handle, 'w') as tmpf:
-            tmpf.write('\n'.join(metadata_dict['skip_data']))
 
-        skip_handlers.append(
-            skiplist_handler.SkipListHandler(path))
-        os.remove(path)
-
-    return check_commands, check_durations, skip_handlers
+    return check_commands, check_durations
 
 
 def collect_paths_events(report, file_ids, files):
@@ -399,28 +387,6 @@ def addReport(storage_session,
         raise shared.ttypes.RequestFailed(
             shared.ttypes.ErrorCode.GENERAL,
             str(ex))
-
-
-def addSkipPath(storage_session, run_id, paths):
-    """
-    """
-    try:
-        session = storage_session.get_transaction(run_id)
-
-        count = session.query(SkipPath) \
-            .filter(SkipPath.run_id == run_id) \
-            .delete()
-        LOG.debug('SkipPath: ' + str(count) + ' removed item.')
-
-        skipPathList = []
-        for path, comment in paths.items():
-            skipPath = SkipPath(run_id, path, comment)
-            skipPathList.append(skipPath)
-        session.bulk_save_objects(skipPathList)
-        return True
-    except Exception as ex:
-        LOG.error(str(ex))
-        return False
 
 
 def addFileContent(session, filepath, content, encoding):
