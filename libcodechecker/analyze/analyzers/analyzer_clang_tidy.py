@@ -111,6 +111,8 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
 
             analyzer_cmd.extend(self.buildaction.analyzer_options)
 
+            analyzer_cmd.extend(self.buildaction.compiler_includes)
+
             return analyzer_cmd
 
         except Exception as ex:
