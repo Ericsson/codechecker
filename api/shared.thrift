@@ -33,13 +33,6 @@ struct SuppressBugData {
 }
 typedef list<SuppressBugData> SuppressBugList
 
-struct ConfigValue {
-  1: string checkerName,
-  2: string attribute,
-  3: string value
-}
-typedef list<ConfigValue> CheckerConfigList
-
 enum Severity{
   UNSPECIFIED   = 0,
   STYLE         = 10,

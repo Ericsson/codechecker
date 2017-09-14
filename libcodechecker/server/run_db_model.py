@@ -57,10 +57,6 @@ class Run(Base):
     can_delete = Column(Boolean, nullable=False, server_default=true(),
                         default=True)
 
-    # Relationships (One to Many).
-    configlist = relationship('Config', cascade="all, delete-orphan",
-                              passive_deletes=True)
-
     def __init__(self, name, version, command):
         self.date, self.name, self.version, self.command = \
             datetime.now(), name, version, command
@@ -68,22 +64,6 @@ class Run(Base):
 
     def mark_finished(self):
         self.duration = ceil((datetime.now() - self.date).total_seconds())
-
-
-class Config(Base):
-    __tablename__ = 'configs'
-
-    run_id = Column(Integer,
-                    ForeignKey('runs.id', deferrable=True,
-                               initially="DEFERRED", ondelete='CASCADE'),
-                    primary_key=True)
-    checker_name = Column(String, primary_key=True)
-    attribute = Column(String, primary_key=True)
-    value = Column(String, primary_key=True)
-
-    def __init__(self, run_id, checker_name, attribute, value):
-        self.attribute, self.value = attribute, value
-        self.checker_name, self.run_id = checker_name, run_id
 
 
 class FileContent(Base):

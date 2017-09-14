@@ -1066,36 +1066,6 @@ class ThriftRequestHandler(object):
             raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.IOERROR,
                                               msg)
 
-    def getCheckerConfigs(self, run_id):
-        """
-        Parameters:
-         - run_id
-        """
-        self.__require_permission([permissions.PRODUCT_ACCESS,
-                                   permissions.PRODUCT_STORE])
-        try:
-            session = self.__Session()
-
-            configs = session.query(Config) \
-                .filter(Config.run_id == run_id) \
-                .all()
-
-            configs = [(c.checker_name, c.attribute, c.value)
-                       for c in configs]
-            res = []
-            for cName, attribute, value in configs:
-                res.append(shared.ttypes.ConfigValue(cName, attribute, value))
-
-            return res
-
-        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
-            msg = str(alchemy_ex)
-            LOG.error(msg)
-            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
-                                              msg)
-        finally:
-            session.close()
-
     @timeit
     def getSkipPaths(self, run_id):
         self.__require_access()
@@ -1755,31 +1725,3 @@ class ThriftRequestHandler(object):
         shutil.rmtree(zip_dir)
 
         return run_id
-
-    @timeit
-    def replaceConfigInfo(self, run_id, config_values):
-        """
-        Removes all the previously stored config information and stores the
-        new values.
-        """
-        self.__require_store()
-        try:
-            session = self.__Session()
-            LOG.debug("Replacing config info")
-            count = session.query(Config) \
-                .filter(Config.run_id == run_id) \
-                .delete()
-            LOG.debug('Config: ' + str(count) + ' removed item.')
-
-            configs = [Config(
-                run_id, info.checker_name, info.attribute, info.value) for
-                info in config_values]
-            session.bulk_save_objects(configs)
-            session.commit()
-            return True
-
-        except Exception as ex:
-            LOG.error(ex)
-            return False
-        finally:
-            session.close()

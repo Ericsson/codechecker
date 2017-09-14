@@ -194,7 +194,3 @@ class ThriftClientHelper(object):
     @ThriftClientCall
     def massStoreRun(self, name, version, zipdir, force):
         pass
-
-    @ThriftClientCall
-    def replaceConfigInfo(self, run_id, values):
-        pass
