@@ -31,16 +31,20 @@ Main features
   * Subsequent analysis runs **only check** and update results for **modified
     files** without analysing the _entire_ project (depends on build toolchain
     support!)
+  * See the list of bugs that has been introduced since your last analyzer
+    execution
   * Suppression of known false positive results, either in configuration file
     or via annotation in source code, along with exclusion of entire source
     paths from analysis
-  * `quickcheck` mode shows analysis results on standard output
+  * Results can be shared with fellow developers, the **comments** and
+    **review** system helps communication of code defects
+  * Can show analysis results on standard output
   * Easily implementable [Thrift](http://thrift.apache.org)-based
     server-client communication used for storing and querying of discovered
     defects
   * Support for multiple bug visualisation frontends, such as the web
-    application, a [command-line tool](docs/usage.md) and an [Eclipse
-    plugin](http://github.com/Ericsson/CodeCheckerEclipsePlugin)
+    application, a [command-line tool](docs/usage.md) and an
+    [Eclipse plugin](http://github.com/Ericsson/CodeCheckerEclipsePlugin)
 
 
 User Documentation
@@ -63,8 +67,8 @@ following commands are used to bootstrap CodeChecker on Ubuntu 16.04.1 LTS:
 
 ~~~{.sh}
 # Install mandatory dependencies for a development and analysis environment
-# NOTE: clang-3.8 can be replaced by any later versions of LLVM/Clang
-sudo apt-get install clang-3.8 build-essential curl doxygen gcc-multilib \
+# NOTE: clang-3.9 can be replaced by any later versions of LLVM/Clang
+sudo apt-get install clang-3.9 build-essential curl doxygen gcc-multilib \
   git python-virtualenv python-dev thrift-compiler
 
 # Check out CodeChecker
@@ -185,11 +189,11 @@ export PATH=~/codechecker/build/CodeChecker/bin:$PATH
 
 # Path of `scan-build.py` (intercept-build)
 # NOTE: SKIP this line if you don't want to use intercept-build
-export PATH=~/{user path}/llvm/tools/clang/tools/scan-build-py/bin:$PATH
+export PATH=~/<user path>/llvm/tools/clang/tools/scan-build-py/bin:$PATH
 
 # Path of the built LLVM/Clang
 # NOTE: SKIP this line if clang is available in your PATH as an installed Linux package
-export PATH=~/{user path}/build/bin:$PATH
+export PATH=~/<user path>/build/bin:$PATH
 ~~~
 
 ### Check the test project
@@ -224,8 +228,8 @@ you should be greeted with a web application showing you the analysis results.
 Important limitations with older Clang versions
 -----------------------------------------------
 
-Clang `3.6` or earlier releases are NOT supported due to CodeChecker relying on
-features not available in those releases.
+Clang `3.6` or earlier releases are **NOT** supported due to CodeChecker
+relying on features not available in those releases.
 
 If you have Clang `3.7` installed you might see the following warning message:
 
@@ -236,7 +240,6 @@ If you have Clang `3.7` installed you might see the following warning message:
    method is applied for Clang-Tidy results too, because Clang-Tidy does not
    support bug identifier hash generation currently.
 
-  
 Developer Documentation
 -----------------------
 
@@ -247,7 +250,8 @@ Developer Documentation
   * [Thrift interface](api/README.md)
   * [Package and integration tests](tests/README.md)
   * [Database schema migration](docs/db_schema_guide.md)
-  * A high-level overview about the infrastructure is available amongst the [2015Euro LLVM Conference](http://llvm.org/devmtg/2015-04) presentations.<br/>
+  * A high-level overview about the infrastructure is available amongst the
+    [2015Euro LLVM Conference](http://llvm.org/devmtg/2015-04) presentations.<br/>
     **Dániel KRUPP, György ORBÁN, Gábor HORVÁTH and Bence BABATI**:<br/>
     [_Industrial Experiences with the Clang Static Analysis Toolset_](http://llvm.org/devmtg/2015-04/slides/Clang_static_analysis_toolset_final.pdf)
 
