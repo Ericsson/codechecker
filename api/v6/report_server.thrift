@@ -262,11 +262,6 @@ service codeCheckerDBAccess {
   string getCheckerDoc(1: string checkerId)
                        throws (1: shared.RequestFailed requestError),
 
-  // get the checker configuration values
-  // PERMISSION: PRODUCT_ACCESS or PRODUCT_STORE
-  shared.CheckerConfigList getCheckerConfigs(1: i64 runId)
-                                             throws (1: shared.RequestFailed requestError),
-
   // get the skip list of paths
   // PERMISSION: PRODUCT_ACCESS
   SkipPathDataList getSkipPaths(1: i64 runId)
@@ -373,11 +368,5 @@ service codeCheckerDBAccess {
                    3: string zipfile,
                    4: bool   force)
                    throws (1: shared.RequestFailed requestError),
-
-  // PERMISSION: PRODUCT_STORE
-  bool replaceConfigInfo(
-                     1: i64 runId,
-                     2: shared.CheckerConfigList values)
-                     throws (1: shared.RequestFailed requestError),
 
 }
