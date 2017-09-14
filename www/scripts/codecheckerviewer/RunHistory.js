@@ -63,9 +63,9 @@ function (declare, dom, topic, ContentPane, util) {
 
               if (!data.versionTag) {
                 state[detectionStatusFilter.class] = [
-                  detectionStatusFilter.stateConverter(DetectionStatus.NEW),
-                  detectionStatusFilter.stateConverter(DetectionStatus.UNRESOLVED),
-                  detectionStatusFilter.stateConverter(DetectionStatus.REOPENED)];
+                  detectionStatusFilter.stateConverter(CC_OBJECTS.DetectionStatus.NEW),
+                  detectionStatusFilter.stateConverter(CC_OBJECTS.DetectionStatus.UNRESOLVED),
+                  detectionStatusFilter.stateConverter(CC_OBJECTS.DetectionStatus.REOPENED)];
                 state[dateFilter._toDate.class] = that._formatDate(date);
               } else {
                 state['run-history-tag'] = data.runName + ':' + data.versionTag;
