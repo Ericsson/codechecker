@@ -178,7 +178,10 @@ UNKNOWN_OPTIONS_MAP_REGEX = {
     '^-mupdate$': 0,
     '^-fno-merge-const-bfstores$': 0,
     '^-fno-ipa-sra$': 0,
-    '^-mno-thumb-interwork$': 0
+    '^-mno-thumb-interwork$': 0,
+    # This is not unknown but we want to preserve asserts to improve the
+    # quality of analysis.
+    '^-DNDEBUG$': 0
 }
 
 
