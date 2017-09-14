@@ -239,8 +239,8 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
       var item = this.getItem(evt.rowIndex);
       switch (evt.cell.field) {
         case 'reviewComment':
-          if (item.review.author) {
-            var content = util.reviewStatusTooltipContent(item.review);
+          if (item.reviewData.author) {
+            var content = util.reviewStatusTooltipContent(item.reviewData);
 
             Tooltip.show(content.outerHTML, evt.target, ['below']);
           }

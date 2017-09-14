@@ -58,8 +58,8 @@ function (locale, dom, style, json) {
       if (severityCode === 'all')
         return 'All';
 
-      for (var key in Severity)
-        if (Severity[key] === parseInt(severityCode))
+      for (var key in CC_OBJECTS.Severity)
+        if (CC_OBJECTS.Severity[key] === parseInt(severityCode))
           return key.toLowerCase();
     },
 
@@ -165,13 +165,13 @@ function (locale, dom, style, json) {
      */
     reviewStatusFromCodeToString : function (reviewCode) {
       switch (parseInt(reviewCode)) {
-        case ReviewStatus.UNREVIEWED:
+        case CC_OBJECTS.ReviewStatus.UNREVIEWED:
           return 'Unreviewed';
-        case ReviewStatus.CONFIRMED:
+        case CC_OBJECTS.ReviewStatus.CONFIRMED:
           return 'Confirmed bug';
-        case ReviewStatus.FALSE_POSITIVE:
+        case CC_OBJECTS.ReviewStatus.FALSE_POSITIVE:
           return 'False positive';
-        case ReviewStatus.INTENTIONAL:
+        case CC_OBJECTS.ReviewStatus.INTENTIONAL:
           return "Intentional";
         default:
           console.error('Non existing review status code: ', reviewCode);
@@ -186,13 +186,13 @@ function (locale, dom, style, json) {
      */
     detectionStatusFromCodeToString : function (detectionStatus) {
       switch (parseInt(detectionStatus)) {
-        case DetectionStatus.NEW:
+        case CC_OBJECTS.DetectionStatus.NEW:
           return 'New';
-        case DetectionStatus.RESOLVED:
+        case CC_OBJECTS.DetectionStatus.RESOLVED:
           return 'Resolved';
-        case DetectionStatus.UNRESOLVED:
+        case CC_OBJECTS.DetectionStatus.UNRESOLVED:
           return 'Unresolved';
-        case DetectionStatus.REOPENED:
+        case CC_OBJECTS.DetectionStatus.REOPENED:
           return 'Reopened';
         default:
           console.error(

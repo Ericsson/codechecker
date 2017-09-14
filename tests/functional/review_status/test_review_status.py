@@ -11,10 +11,10 @@ import logging
 import os
 import unittest
 
+from codeCheckerDBAccess_v6.ttypes import *
+
 from libtest import env
 from libtest.thrift_client_to_db import get_all_run_results
-
-import shared
 
 
 class TestReviewStatus(unittest.TestCase):
@@ -60,7 +60,7 @@ class TestReviewStatus(unittest.TestCase):
 
         # Change review status to confirmed bug.
         review_comment = 'This is really a bug'
-        status = shared.ttypes.ReviewStatus.CONFIRMED
+        status = ReviewStatus.CONFIRMED
         success = self._cc_client.changeReviewStatus(
             bug.reportId, status, review_comment)
 
@@ -72,7 +72,7 @@ class TestReviewStatus(unittest.TestCase):
         self.assertEqual(report.reviewData.status, status)
 
         # Try to change review status back to unreviewed.
-        status = shared.ttypes.ReviewStatus.UNREVIEWED
+        status = ReviewStatus.UNREVIEWED
         success = self._cc_client.changeReviewStatus(
             bug.reportId,
             status,
@@ -87,7 +87,7 @@ class TestReviewStatus(unittest.TestCase):
 
         # Change review status to false positive.
         review_comment = 'This is not a bug'
-        status = shared.ttypes.ReviewStatus.FALSE_POSITIVE
+        status = ReviewStatus.FALSE_POSITIVE
         success = self._cc_client.changeReviewStatus(
             bug.reportId, status, review_comment)
 
@@ -100,7 +100,7 @@ class TestReviewStatus(unittest.TestCase):
 
         # Change review status to intentional.
         review_comment = u''
-        status = shared.ttypes.ReviewStatus.INTENTIONAL
+        status = ReviewStatus.INTENTIONAL
         success = self._cc_client.changeReviewStatus(
             bug.reportId, status, review_comment)
 

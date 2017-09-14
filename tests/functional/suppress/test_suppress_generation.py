@@ -14,11 +14,11 @@ import subprocess
 from subprocess import CalledProcessError
 import unittest
 
+from codeCheckerDBAccess_v6.ttypes import *
+
 from libtest import env
 from libtest import codechecker
 from libtest.thrift_client_to_db import get_all_run_results
-
-import shared
 
 
 class TestSuppress(unittest.TestCase):
@@ -108,13 +108,13 @@ class TestSuppress(unittest.TestCase):
         report = self._cc_client.getReport(bug.reportId)
 
         # Check the stored suppress comment
-        status = shared.ttypes.ReviewStatus.FALSE_POSITIVE
+        status = ReviewStatus.FALSE_POSITIVE
         self.assertEqual(report.reviewData.comment, 'deliberate segfault!')
         self.assertEqual(report.reviewData.status, status)
 
         # Change review status to confirmed bug.
         review_comment = 'This is really a bug'
-        status = shared.ttypes.ReviewStatus.CONFIRMED
+        status = ReviewStatus.CONFIRMED
         success = self._cc_client.changeReviewStatus(
             bug.reportId, status, review_comment)
 
@@ -143,6 +143,6 @@ class TestSuppress(unittest.TestCase):
         report = self._cc_client.getReport(bug.reportId)
 
         # The stored suppress comment for the same bughash is the same.
-        status = shared.ttypes.ReviewStatus.FALSE_POSITIVE
+        status = ReviewStatus.FALSE_POSITIVE
         self.assertEqual(report.reviewData.comment, 'deliberate segfault!')
         self.assertEqual(report.reviewData.status, status)

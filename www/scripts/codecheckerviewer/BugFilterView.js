@@ -523,7 +523,7 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
                 return {
                   label : runReportCount.name,
                   value : runReportCount.runId,
-                  count : runReportCount.reportCount,
+                  count : runReportCount.reportCount
                 };
               }));
             });
@@ -553,7 +553,7 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
                 return {
                   label : runReportCount.name,
                   value : runReportCount.runId,
-                  count : runReportCount.reportCount,
+                  count : runReportCount.reportCount
                 };
               }));
             });
@@ -631,7 +631,7 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
                 return {
                   label : runReportCount.name,
                   value : runReportCount.runId,
-                  count : runReportCount.reportCount,
+                  count : runReportCount.reportCount
                 };
               }));
             });
@@ -659,14 +659,15 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
 
           CC_SERVICE.getReviewStatusCounts(runs.baseline, reportFilter,
             runs.newcheck, function (res) {
-            deferred.resolve(Object.keys(ReviewStatus).map(function (key) {
-              var value = ReviewStatus[key];
-              return {
-                label     : util.reviewStatusFromCodeToString(value),
-                value     : value,
-                count     : res[value] !== undefined ? res[value] : 0,
-                iconClass : 'customIcon ' + util.reviewStatusCssClass(value)
-              };
+            deferred.resolve(Object.keys(CC_OBJECTS.ReviewStatus).map(
+              function (key) {
+                var value = CC_OBJECTS.ReviewStatus[key];
+                return {
+                  label     : util.reviewStatusFromCodeToString(value),
+                  value     : value,
+                  count     : res[value] !== undefined ? res[value] : 0,
+                  iconClass : 'customIcon ' + util.reviewStatusCssClass(value)
+                };
             }));
           });
 
@@ -690,14 +691,15 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
 
           CC_SERVICE.getDetectionStatusCounts(runs.baseline, reportFilter,
             runs.newcheck, function (res) {
-            deferred.resolve(Object.keys(DetectionStatus).map(function (key) {
-              var value = DetectionStatus[key];
-              return {
-                label     : util.detectionStatusFromCodeToString(value),
-                value     : value,
-                count     : res[value] !== undefined ? res[value] : 0,
-                iconClass : 'customIcon detection-status-' + key.toLowerCase()
-              };
+            deferred.resolve(Object.keys(CC_OBJECTS.DetectionStatus).map(
+              function (key) {
+                var value = CC_OBJECTS.DetectionStatus[key];
+                return {
+                  label     : util.detectionStatusFromCodeToString(value),
+                  value     : value,
+                  count     : res[value] !== undefined ? res[value] : 0,
+                  iconClass : 'customIcon detection-status-' + key.toLowerCase()
+                };
             }));
           });
 
@@ -721,10 +723,11 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
 
           CC_SERVICE.getSeverityCounts(runs.baseline, reportFilter,
             runs.newcheck, function (res) {
-            deferred.resolve(Object.keys(Severity).sort(function (a, b) {
-              return Severity[a] < Severity[b];
+            deferred.resolve(Object.keys(CC_OBJECTS.Severity).sort(
+              function (a, b) {
+                return CC_OBJECTS.Severity[a] < CC_OBJECTS.Severity[b];
               }).map(function (key) {
-                var value = Severity[key];
+                var value = CC_OBJECTS.Severity[key];
                 return {
                   label     : key[0] + key.slice(1).toLowerCase(),
                   value     : value,
@@ -761,7 +764,7 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
               return {
                 label : '&lrm;' + file,
                 value : file,
-                count : res[file],
+                count : res[file]
               };
             }));
           });
@@ -797,7 +800,7 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
               return {
                 label : checker.name,
                 value : checker.name,
-                count : checker.count,
+                count : checker.count
               };
             }));
           });
@@ -829,7 +832,7 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
               return {
                 label : msg,
                 value : msg,
-                count : res[msg],
+                count : res[msg]
               };
             }));
           });

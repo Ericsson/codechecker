@@ -15,9 +15,7 @@ import subprocess
 import unittest
 
 import shared
-from codeCheckerDBAccess_v6.ttypes import DiffType
-from codeCheckerDBAccess_v6.ttypes import CompareData
-from codeCheckerDBAccess_v6.ttypes import ReportFilter
+from codeCheckerDBAccess_v6.ttypes import *
 
 from libtest import env
 from libtest.debug_printer import print_run_results
@@ -28,7 +26,7 @@ def get_severity_level(name):
     """
     Convert severity level from the name to value.
     """
-    return shared.ttypes.Severity._NAMES_TO_VALUES[name]
+    return Severity._NAMES_TO_VALUES[name]
 
 
 class Diff(unittest.TestCase):
@@ -347,9 +345,9 @@ class Diff(unittest.TestCase):
         sev_res = self._cc_client.getSeverityCounts([base_run_id],
                                                     None,
                                                     cmp_data)
-        test_res = {shared.ttypes.Severity.HIGH: 14,
-                    shared.ttypes.Severity.LOW: 5,
-                    shared.ttypes.Severity.MEDIUM: 1}
+        test_res = {Severity.HIGH: 14,
+                    Severity.LOW: 5,
+                    Severity.MEDIUM: 1}
         self.assertDictEqual(sev_res, test_res)
 
     def test_get_diff_severity_counts_all_new(self):
@@ -365,7 +363,7 @@ class Diff(unittest.TestCase):
         sev_res = self._cc_client.getSeverityCounts([base_run_id],
                                                     None,
                                                     cmp_data)
-        test_res = {shared.ttypes.Severity.HIGH: 5}
+        test_res = {Severity.HIGH: 5}
         self.assertDictEqual(sev_res, test_res)
 
     def test_get_diff_new_review_status_counts(self):
@@ -382,7 +380,7 @@ class Diff(unittest.TestCase):
                                                     None,
                                                     cmp_data)
 
-        test_res = {shared.ttypes.ReviewStatus.UNREVIEWED: 5}
+        test_res = {ReviewStatus.UNREVIEWED: 5}
         self.assertDictEqual(res, test_res)
 
     def test_get_diff_unres_review_status_counts(self):
@@ -399,7 +397,7 @@ class Diff(unittest.TestCase):
                                                     None,
                                                     cmp_data)
 
-        test_res = {shared.ttypes.ReviewStatus.UNREVIEWED: 20}
+        test_res = {ReviewStatus.UNREVIEWED: 20}
         self.assertDictEqual(res, test_res)
 
     def test_get_diff_res_review_status_counts(self):
@@ -416,7 +414,7 @@ class Diff(unittest.TestCase):
                                                     None,
                                                     cmp_data)
 
-        test_res = {shared.ttypes.ReviewStatus.UNREVIEWED: 3}
+        test_res = {ReviewStatus.UNREVIEWED: 3}
         self.assertDictEqual(res, test_res)
 
     def test_get_diff_res_types_resolved(self):

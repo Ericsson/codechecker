@@ -4,45 +4,7 @@
 //   License. See LICENSE.TXT for details.
 // -------------------------------------------------------------------------
 
-struct BugPathEvent {
-  1: i64    startLine,
-  2: i64    startCol,
-  3: i64    endLine,
-  4: i64    endCol,
-  5: string msg,
-  6: i64    fileId
-  7: string filePath
-}
-typedef list<BugPathEvent> BugPathEvents
-
-struct BugPathPos {
-  1: i64    startLine,
-  2: i64    startCol,
-  3: i64    endLine,
-  4: i64    endCol,
-  5: i64    fileId
-  6: string filePath
-}
-typedef list<BugPathPos> BugPath
-
-// TODO: This seems to be unused?
-struct SuppressBugData {
-  1: string bugHash,
-  2: string fileName,
-  3: string comment
-}
-typedef list<SuppressBugData> SuppressBugList
-
-enum Severity{
-  UNSPECIFIED   = 0,
-  STYLE         = 10,
-  LOW           = 20,
-  MEDIUM        = 30,
-  HIGH          = 40,
-  CRITICAL      = 50
-}
-
-enum ErrorCode{
+enum ErrorCode {
   DATABASE,
   IOERROR,
   GENERAL,
@@ -54,25 +16,6 @@ enum ErrorCode{
 exception RequestFailed {
   1: ErrorCode errorCode,
   2: string    message
-}
-
-enum ReviewStatus {
-  UNREVIEWED,     // Nobody has seen this bug.
-  CONFIRMED,      // This is really bug.
-  FALSE_POSITIVE, // This is not a bug.
-  INTENTIONAL     // This is a bug but we don't want to fix it intentionally.
-}
-
-// DetectionStatus is set by the storage process. When a new bug appears then
-// the status is NEW. If the bug disappears during an update process in a run
-// then it becomes RESOLVED. If a bug remains in an update process then it
-// becomes UNRESOLVED. If a bug was RESOLVED and appears again then it becomes
-// REOPENED until it disappears again.
-enum DetectionStatus {
-  NEW,
-  RESOLVED,
-  UNRESOLVED,
-  REOPENED
 }
 
 /**

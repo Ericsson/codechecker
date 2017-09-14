@@ -10,20 +10,19 @@ import os
 import unittest
 
 import shared
-from shared.ttypes import ReviewStatus
-from codeCheckerDBAccess_v6.ttypes import ReportFilter
+from codeCheckerDBAccess_v6.ttypes import *
 
 from libtest import env
 
 
 def get_severity_level(name):
     """ Convert severity name to value. """
-    return shared.ttypes.Severity._NAMES_TO_VALUES[name]
+    return Severity._NAMES_TO_VALUES[name]
 
 
 def get_status(name):
     """ Convert review status name to value. """
-    return shared.ttypes.ReviewStatus._NAMES_TO_VALUES[name]
+    return ReviewStatus._NAMES_TO_VALUES[name]
 
 
 class TestReportFilter(unittest.TestCase):

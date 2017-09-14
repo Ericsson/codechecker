@@ -504,7 +504,7 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
           = util.severityFromCodeToString(this.reportData.severity);
 
       var isResolved =
-        this.reportData.detectionStatus === DetectionStatus.RESOLVED;
+        this.reportData.detectionStatus === CC_OBJECTS.DetectionStatus.RESOLVED;
 
       this.set('path', [
         'root',
@@ -844,7 +844,7 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
     _addReport : function (report) {
       var that = this;
 
-      var parent = report.detectionStatus === DetectionStatus.RESOLVED
+      var parent = report.detectionStatus === CC_OBJECTS.DetectionStatus.RESOLVED
         ? 'resolved'
         : util.severityFromCodeToString(report.severity);
 
@@ -1055,8 +1055,8 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
 
     _createOptionValues : function () {
       var reviewStatusOptions = [];
-      for (var key in ReviewStatus) {
-        var value = ReviewStatus[key];
+      for (var key in CC_OBJECTS.ReviewStatus) {
+        var value = CC_OBJECTS.ReviewStatus[key];
         reviewStatusOptions.push({
           label : '<span class="customIcon ' + util.reviewStatusCssClass(value)
                 + '"></span>' + util.reviewStatusFromCodeToString(value),

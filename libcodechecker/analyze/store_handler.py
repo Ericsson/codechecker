@@ -14,7 +14,7 @@ import zlib
 import sqlalchemy
 
 import shared
-from codeCheckerDBAccess_v6.ttypes import *
+from codeCheckerDBAccess_v6 import ttypes
 
 from libcodechecker.analyze import skiplist_handler
 from libcodechecker.logger import LoggerFactory
@@ -73,7 +73,7 @@ def collect_paths_events(report, file_ids, files):
         start2_line = start_range[1]['line']
         start2_col = start_range[1]['col']
         source_file_path = files[start_range[1]['file']]
-        bug_paths.append(shared.ttypes.BugPathPos(
+        bug_paths.append(ttypes.BugPathPos(
             start1_line,
             start1_col,
             start2_line,
@@ -88,7 +88,7 @@ def collect_paths_events(report, file_ids, files):
             end2_line = end_range[1]['line']
             end2_col = end_range[1]['col']
             source_file_path = files[end_range[1]['file']]
-            bug_paths.append(shared.ttypes.BugPathPos(
+            bug_paths.append(ttypes.BugPathPos(
                 end1_line,
                 end1_col,
                 end2_line,
@@ -100,7 +100,7 @@ def collect_paths_events(report, file_ids, files):
 
     for event in events:
         file_path = files[event['location']['file']]
-        bug_events.append(shared.ttypes.BugPathEvent(
+        bug_events.append(ttypes.BugPathEvent(
             event['location']['line'],
             event['location']['col'],
             event['location']['line'],
@@ -402,7 +402,7 @@ def addFileContent(session, filepath, content, encoding):
     transaction times out.
     """
     try:
-        if encoding == Encoding.BASE64:
+        if encoding == ttypes.Encoding.BASE64:
             content = base64.b64decode(content)
 
         hasher = sha256()

@@ -10,19 +10,16 @@ import datetime
 import json
 import logging
 import multiprocessing
+from multiprocessing import Process, Value, Lock, Manager
 import os
 import sys
+from StringIO import StringIO
 import time
+from uuid import uuid4
 import zlib
 
+from codeCheckerDBAccess_v6.ttypes import *
 
-from StringIO import StringIO
-from multiprocessing import Process, Value, Lock, Manager
-from uuid import uuid4
-
-from shared.ttypes import BugPathPos
-from shared.ttypes import BugPathEvent
-from shared.ttypes import Severity
 from libtest.thrift_client_to_db import CCReportHelper, CCViewerHelper
 from libtest.thrift_client_to_db import get_all_run_results
 

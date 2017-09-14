@@ -4,14 +4,13 @@
 #   This file is distributed under the University of Illinois Open Source
 #   License. See LICENSE.TXT for details.
 # -----------------------------------------------------------------------------
-
 """ detection_status function test. """
+
 import json
 import os
 import unittest
 
-import shared
-from codeCheckerDBAccess_v6.ttypes import Encoding
+from codeCheckerDBAccess_v6.ttypes import *
 
 from libtest import codechecker
 from libtest import env
@@ -126,7 +125,7 @@ int main()
         print(reports)
         self.assertEqual(len(reports), 2)
         self.assertTrue(all(map(
-            lambda r: r.detectionStatus == shared.ttypes.DetectionStatus.NEW,
+            lambda r: r.detectionStatus == DetectionStatus.NEW,
             reports)))
 
         # Check the second file version
@@ -138,13 +137,11 @@ int main()
                                                 None,
                                                 None)
         for report in reports:
-            if report.detectionStatus == \
-                    shared.ttypes.DetectionStatus.UNRESOLVED:
+            if report.detectionStatus == DetectionStatus.UNRESOLVED:
                 self.assertIn(report.bugHash,
                               ['209be2f6905590d99853ce01d52a78e0',
                                'e8f47588c8095f02a53e338984ce52ba'])
-            elif report.detectionStatus == \
-                    shared.ttypes.DetectionStatus.NEW:
+            elif report.detectionStatus == DetectionStatus.NEW:
                 self.assertIn(report.bugHash,
                               ['cbd629ba2ee25c41cdbf5e2e336b1b1c'])
             else:
@@ -159,8 +156,7 @@ int main()
                                                 None,
                                                 None)
         for report in reports:
-            if report.detectionStatus == \
-                    shared.ttypes.DetectionStatus.RESOLVED:
+            if report.detectionStatus == DetectionStatus.RESOLVED:
                 self.assertIn(report.bugHash,
                               ['209be2f6905590d99853ce01d52a78e0',
                                'e8f47588c8095f02a53e338984ce52ba'])
@@ -175,12 +171,10 @@ int main()
                     self.sources[1],
                     "Resolved bugs should be shown with the old file content.")
 
-            elif report.detectionStatus == \
-                    shared.ttypes.DetectionStatus.NEW:
+            elif report.detectionStatus == DetectionStatus.NEW:
                 self.assertIn(report.bugHash,
                               ['ac147b31a745d91be093bd70bbc5567c'])
-            elif report.detectionStatus == \
-                    shared.ttypes.DetectionStatus.UNRESOLVED:
+            elif report.detectionStatus == DetectionStatus.UNRESOLVED:
                 self.assertIn(report.bugHash,
                               ['cbd629ba2ee25c41cdbf5e2e336b1b1c'])
 
@@ -207,17 +201,14 @@ int main()
                                                 None,
                                                 None)
         for report in reports:
-            if report.detectionStatus == \
-                    shared.ttypes.DetectionStatus.UNRESOLVED:
+            if report.detectionStatus == DetectionStatus.UNRESOLVED:
                 self.assertIn(report.bugHash,
                               ['cbd629ba2ee25c41cdbf5e2e336b1b1c'])
-            elif report.detectionStatus == \
-                    shared.ttypes.DetectionStatus.REOPENED:
+            elif report.detectionStatus == DetectionStatus.REOPENED:
                 self.assertIn(report.bugHash,
                               ['209be2f6905590d99853ce01d52a78e0',
                                'e8f47588c8095f02a53e338984ce52ba'])
-            elif report.detectionStatus == \
-                    shared.ttypes.DetectionStatus.RESOLVED:
+            elif report.detectionStatus == DetectionStatus.RESOLVED:
                 self.assertIn(report.bugHash,
                               ['ac147b31a745d91be093bd70bbc5567c'])
 
@@ -230,8 +221,7 @@ int main()
                                                 None,
                                                 None)
         for report in reports:
-            if report.detectionStatus == \
-                    shared.ttypes.DetectionStatus.UNRESOLVED:
+            if report.detectionStatus == DetectionStatus.UNRESOLVED:
                 self.assertIn(report.bugHash,
                               ['209be2f6905590d99853ce01d52a78e0',
                                'e8f47588c8095f02a53e338984ce52ba',
@@ -247,7 +237,6 @@ int main()
                     self.sources[3],
                     "Reopened bugs should be shown with the new file content.")
 
-            elif report.detectionStatus == \
-                    shared.ttypes.DetectionStatus.RESOLVED:
+            elif report.detectionStatus == DetectionStatus.RESOLVED:
                 self.assertIn(report.bugHash,
                               ['ac147b31a745d91be093bd70bbc5567c'])
