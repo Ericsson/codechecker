@@ -255,5 +255,5 @@
   "readability-redundant-string-init":                          "STYLE",
   "readability-simplify-boolean-expr":                          "MEDIUM",
   "readability-static-definition-in-anonymous-namespace":       "STYLE",
-  "readability-uniqueptr-delete-release":                       "STYLE",
+  "readability-uniqueptr-delete-release":                       "STYLE"
 }
