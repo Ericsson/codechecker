@@ -45,8 +45,8 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
 
       if (reportFilters.newcheck) {
         cmpData = new CC_OBJECTS.CompareData();
-        cmpData.run_ids = reportFilters.newcheck;
-        cmpData.diff_type = reportFilters.difftype
+        cmpData.runIds = reportFilters.newcheck;
+        cmpData.diffType = reportFilters.difftype
           ? reportFilters.difftype
           : CC_OBJECTS.DiffType.NEW;
       }
