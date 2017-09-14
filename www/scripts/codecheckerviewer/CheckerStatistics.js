@@ -149,11 +149,11 @@ function (declare, ItemFileWriteStore, Deferred, all, Memory, Observable,
 
       var query = [
         {},
-        {field : 'reviewStatus', values : [ReviewStatus.UNREVIEWED]},
-        {field : 'reviewStatus', values : [ReviewStatus.CONFIRMED]},
-        {field : 'reviewStatus', values : [ReviewStatus.FALSE_POSITIVE]},
-        {field : 'reviewStatus', values : [ReviewStatus.INTENTIONAL]},
-        {field : 'detectionStatus', values : [DetectionStatus.RESOLVED]}
+        {field : 'reviewStatus', values : [CC_OBJECTS.ReviewStatus.UNREVIEWED]},
+        {field : 'reviewStatus', values : [CC_OBJECTS.ReviewStatus.CONFIRMED]},
+        {field : 'reviewStatus', values : [CC_OBJECTS.ReviewStatus.FALSE_POSITIVE]},
+        {field : 'reviewStatus', values : [CC_OBJECTS.ReviewStatus.INTENTIONAL]},
+        {field : 'detectionStatus', values : [CC_OBJECTS.DetectionStatus.RESOLVED]}
       ].map(function (q) {
         var that = this;
 

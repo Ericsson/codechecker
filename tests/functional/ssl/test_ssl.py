@@ -5,7 +5,7 @@
 #   License. See LICENSE.TXT for details.
 # -----------------------------------------------------------------------------
 """
-Authentication tests.
+SSL test.
 """
 import os
 import subprocess
@@ -21,7 +21,7 @@ from libtest import env
 
 class TestSSL(unittest.TestCase):
     """
-    Dictionary based authentication tests.
+    Test SSL layering on the server.
     """
 
     def setUp(self):

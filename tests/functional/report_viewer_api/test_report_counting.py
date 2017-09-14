@@ -10,17 +10,14 @@ import os
 import unittest
 
 import shared
-from shared.ttypes import ReviewStatus
-from shared.ttypes import Severity
-from shared.ttypes import DetectionStatus
-from codeCheckerDBAccess_v6.ttypes import ReportFilter
+from codeCheckerDBAccess_v6.ttypes import *
 
 from libtest import env
 
 
 def get_severity_level(name):
     """ Convert severity name to value. """
-    return shared.ttypes.Severity._NAMES_TO_VALUES[name]
+    return Severity._NAMES_TO_VALUES[name]
 
 
 def get_filename(path):
@@ -464,7 +461,7 @@ class TestReportFilter(unittest.TestCase):
         """
         runid = self._runids[0]
         new_filter = ReportFilter(
-            detectionStatus=[shared.ttypes.DetectionStatus.NEW])
+            detectionStatus=[DetectionStatus.NEW])
         new_reports = self._cc_client.getCheckerCounts([runid],
                                                        new_filter,
                                                        None)
@@ -486,7 +483,7 @@ class TestReportFilter(unittest.TestCase):
 
         runid = self._runids[0]
         resolved_filter = ReportFilter(
-            detectionStatus=[shared.ttypes.DetectionStatus.RESOLVED])
+            detectionStatus=[DetectionStatus.RESOLVED])
         resolved_reports = self._cc_client.getCheckerCounts([runid],
                                                             resolved_filter,
                                                             None)
@@ -501,7 +498,7 @@ class TestReportFilter(unittest.TestCase):
 
         runid = self._runids[0]
         unresolved_filter = ReportFilter(
-            detectionStatus=[shared.ttypes.DetectionStatus.UNRESOLVED])
+            detectionStatus=[DetectionStatus.UNRESOLVED])
         unresolved_reports = \
             self._cc_client.getCheckerCounts([runid],
                                              unresolved_filter,
@@ -518,7 +515,7 @@ class TestReportFilter(unittest.TestCase):
 
         runid = self._runids[0]
         reopen_filter = ReportFilter(
-            detectionStatus=[shared.ttypes.DetectionStatus.REOPENED])
+            detectionStatus=[DetectionStatus.REOPENED])
         reopened_reports = self._cc_client.getCheckerCounts([runid],
                                                             reopen_filter,
                                                             None)

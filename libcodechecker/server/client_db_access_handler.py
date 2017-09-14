@@ -25,7 +25,7 @@ import sqlalchemy
 from sqlalchemy import func
 
 import shared
-from codeCheckerDBAccess_v6 import constants
+from codeCheckerDBAccess_v6 import constants, ttypes
 from codeCheckerDBAccess_v6.ttypes import *
 
 from libcodechecker import generic_package_context
@@ -109,7 +109,7 @@ def process_report_filter_v2(report_filter, count_filter=None):
             list(map(review_status_str, report_filter.reviewStatus)))]
 
         # No database entry for unreviewed reports
-        if (shared.ttypes.ReviewStatus.UNREVIEWED in
+        if (ttypes.ReviewStatus.UNREVIEWED in
                 report_filter.reviewStatus):
             OR.append(ReviewStatus.status.is_(None))
 
@@ -146,7 +146,7 @@ def get_diff_hashes_for_query(base_run_ids, base_line_hashes, new_run_ids,
 
 
 def bugpathevent_db_to_api(bpe):
-    return shared.ttypes.BugPathEvent(
+    return ttypes.BugPathEvent(
         startLine=bpe.line_begin,
         startCol=bpe.col_begin,
         endLine=bpe.line_end,
@@ -156,7 +156,7 @@ def bugpathevent_db_to_api(bpe):
 
 
 def bugreportpoint_db_to_api(brp):
-    return shared.ttypes.BugPathPos(
+    return BugPathPos(
         startLine=brp.line_begin,
         startCol=brp.col_begin,
         endLine=brp.line_end,
@@ -166,46 +166,46 @@ def bugreportpoint_db_to_api(brp):
 
 def detection_status_enum(status):
     if status == 'new':
-        return shared.ttypes.DetectionStatus.NEW
+        return DetectionStatus.NEW
     elif status == 'resolved':
-        return shared.ttypes.DetectionStatus.RESOLVED
+        return DetectionStatus.RESOLVED
     elif status == 'unresolved':
-        return shared.ttypes.DetectionStatus.UNRESOLVED
+        return DetectionStatus.UNRESOLVED
     elif status == 'reopened':
-        return shared.ttypes.DetectionStatus.REOPENED
+        return DetectionStatus.REOPENED
 
 
 def detection_status_str(status):
-    if status == shared.ttypes.DetectionStatus.NEW:
+    if status == DetectionStatus.NEW:
         return 'new'
-    elif status == shared.ttypes.DetectionStatus.RESOLVED:
+    elif status == DetectionStatus.RESOLVED:
         return 'resolved'
-    elif status == shared.ttypes.DetectionStatus.UNRESOLVED:
+    elif status == DetectionStatus.UNRESOLVED:
         return 'unresolved'
-    elif status == shared.ttypes.DetectionStatus.REOPENED:
+    elif status == DetectionStatus.REOPENED:
         return 'reopened'
 
 
 def review_status_str(status):
-    if status == shared.ttypes.ReviewStatus.UNREVIEWED:
+    if status == ttypes.ReviewStatus.UNREVIEWED:
         return 'unreviewed'
-    elif status == shared.ttypes.ReviewStatus.CONFIRMED:
+    elif status == ttypes.ReviewStatus.CONFIRMED:
         return 'confirmed'
-    elif status == shared.ttypes.ReviewStatus.FALSE_POSITIVE:
+    elif status == ttypes.ReviewStatus.FALSE_POSITIVE:
         return 'false_positive'
-    elif status == shared.ttypes.ReviewStatus.INTENTIONAL:
+    elif status == ttypes.ReviewStatus.INTENTIONAL:
         return 'intentional'
 
 
 def review_status_enum(status):
     if status == 'unreviewed':
-        return shared.ttypes.ReviewStatus.UNREVIEWED
+        return ttypes.ReviewStatus.UNREVIEWED
     elif status == 'confirmed':
-        return shared.ttypes.ReviewStatus.CONFIRMED
+        return ttypes.ReviewStatus.CONFIRMED
     elif status == 'false_positive':
-        return shared.ttypes.ReviewStatus.FALSE_POSITIVE
+        return ttypes.ReviewStatus.FALSE_POSITIVE
     elif status == 'intentional':
-        return shared.ttypes.ReviewStatus.INTENTIONAL
+        return ttypes.ReviewStatus.INTENTIONAL
 
 
 def unzip(b64zip):
@@ -515,7 +515,7 @@ class ThriftRequestHandler(object):
                     date=str(review_status.date))
             else:
                 review_data = ReviewData(
-                    status=shared.ttypes.ReviewStatus.UNREVIEWED,
+                    status=ttypes.ReviewStatus.UNREVIEWED,
                     comment=None,
                     author=None,
                     date=None)
@@ -598,7 +598,7 @@ class ThriftRequestHandler(object):
                         date=str(review_status.date))
                 else:
                     review_data = ReviewData(
-                        status=shared.ttypes.ReviewStatus.UNREVIEWED,
+                        status=ttypes.ReviewStatus.UNREVIEWED,
                         comment=None,
                         author=None,
                         date=None)
@@ -1330,7 +1330,7 @@ class ThriftRequestHandler(object):
             for _, rev_status, count in review_statuses:
                 if rev_status is None:
                     # If no review status is set count it as unreviewed.
-                    rev_status = shared.ttypes.ReviewStatus.UNREVIEWED
+                    rev_status = ttypes.ReviewStatus.UNREVIEWED
                     results[rev_status] += count
                 else:
                     rev_status = review_status_enum(rev_status)
@@ -1646,7 +1646,7 @@ class ThriftRequestHandler(object):
                 severity_name = context.severity_map.get(checker_name,
                                                          'UNSPECIFIED')
                 severity = \
-                    shared.ttypes.Severity._NAMES_TO_VALUES[severity_name]
+                    Severity._NAMES_TO_VALUES[severity_name]
 
                 bug_paths, bug_events = \
                     store_handler.collect_paths_events(report, file_ids, files)
@@ -1672,7 +1672,7 @@ class ThriftRequestHandler(object):
                 supp = sp_handler.get_suppressed()
                 if supp:
                     bhash, fname, comment = supp
-                    status = shared.ttypes.ReviewStatus.FALSE_POSITIVE
+                    status = ttypes.ReviewStatus.FALSE_POSITIVE
                     self._setReviewStatus(report_id, status, comment, session)
 
                 LOG.debug("Storing done for report " + str(report_id))

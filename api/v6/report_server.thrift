@@ -9,93 +9,60 @@ include "shared.thrift"
 namespace py codeCheckerDBAccess_v6
 namespace js codeCheckerDBAccess_v6
 
-//=================================================
 const i64 MAX_QUERY_SIZE = 500
-//=================================================
 
-struct RunData {
-  1: i64            runId,        // Unique id of the run.
-  2: string         runDate,      // Date of the run last updated.
-  3: string         name,         // Human-given identifier.
-  4: i64            duration,     // Duration of the run (-1 if not finished).
-  5: i64            resultCount,  // Number of results in the run.
-  6: string         runCmd,       // The used check command.
-  // This maps the detection status to its count
-  7: map<shared.DetectionStatus, i32> detectionStatusCount
-}
-typedef list<RunData> RunDataList
 
 /**
- * Members of this struct are interpreted in "AND" relation with each other.
+ * Detection status is an automated system which assigns a value to every
+ * report during the storage process.
  */
-struct RunFilter {
-  1: list<i64> runIds,
-  2: string    name
+enum DetectionStatus {
+  NEW,         // The report appeared amongst the analysis results in the latest store.
+  RESOLVED,    // The report has disappeared at the latest store.
+  UNRESOLVED,  // The report has been seen multiple times in the previous stores, and it is still visible (not fixed).
+  REOPENED     // The report has been RESOLVED in the past, but for some reason, appeared again.
 }
 
-struct RunReportCount {
-  1: i64            runId,        // unique id of the run
-  2: string         name,         // human readable name of the run
-  3: i64            reportCount
-}
-typedef list<RunReportCount> RunReportCounts
-
-struct CheckerCount {
-  1: string             name,     // Name of the checker.
-  2: shared.Severity    severity, // Severity level of the checker.
-  3: i64                count     // Number of reports.
-}
-typedef list<CheckerCount> CheckerCounts
-
-struct ReviewData {
-  1: shared.ReviewStatus  status,
-  2: string               comment,
-  3: string               author,
-  4: string               date
+enum DiffType {
+  NEW,        // New (right) - Base (left)
+  RESOLVED,   // Base (left) - New (right)
+  UNRESOLVED  // Intersection of Base (left) and New (right)
 }
 
-struct ReportData {
-  1: i64                     runId,           // Unique id of the run.
-  2: string                  checkerId,       // The qualified name of the checker that reported this.
-  3: string                  bugHash,         // This is unique id of the concrete report.
-  4: string                  checkedFile,     // This is a filepath, the original main file the analyzer was called with.
-  5: string                  checkerMsg,      // Description of the bug report.
-  6: i64                     reportId,        // id of the report in the current run in the db.
-  7: i64                     fileId,          // Unique id of the file the report refers to.
-  8: i64                     line,            // line number or the reports main section (not part of the path).
-  9: i64                     column,          // column number of the report main section (not part of the path).
-  10: shared.Severity        severity         // Checker severity.
-  11: ReviewData             reviewData       // Bug review status information.
-  12: shared.DetectionStatus detectionStatus  // State of the bug (see the enum constant values).
+enum Encoding {
+  DEFAULT,
+  BASE64
 }
-typedef list<ReportData> ReportDataList
+
+enum Order {
+  ASC,
+  DESC
+}
 
 /**
- * Members of this struct are interpreted in "OR" relation with each other.
- * Between the members there is "AND" relation.
+ * Review status is a feature which allows a user to assign one of these
+ * statuses to a particular Report.
  */
-struct ReportFilter {
-  1: list<string>                 filepath,
-  2: list<string>                 checkerMsg,
-  3: list<string>                 checkerName,
-  4: list<string>                 reportHash,
-  5: list<shared.Severity>        severity,
-  6: list<shared.ReviewStatus>    reviewStatus,
-  7: list<shared.DetectionStatus> detectionStatus
+enum ReviewStatus {
+  UNREVIEWED,     // The report was not assigned a review (default).
+  CONFIRMED,      // A user confirmed that this is a valid bug report.
+  FALSE_POSITIVE, // A user confirmed that the bug is a false positive.
+  INTENTIONAL     // A user confirmed that the bug is intentionally in the code.
 }
 
-struct ReportDetails{
-  1: shared.BugPathEvents pathEvents,
-  2: shared.BugPath       executionPath
+/**
+ * The severity of the reported issue. This list is generated from CodeChecker's
+ * database on analyzer checkers.
+ */
+enum Severity {
+  UNSPECIFIED   = 0,
+  STYLE         = 10,
+  LOW           = 20,
+  MEDIUM        = 30,
+  HIGH          = 40,
+  CRITICAL      = 50
 }
 
-// TODO: This type is unused.
-struct ReportFileData {
-  1: i64    reportFileId,
-  2: string reportFileContent
-}
-
-// default sorting of the results
 enum SortType {
   FILENAME,
   CHECKER_NAME,
@@ -104,10 +71,6 @@ enum SortType {
   DETECTION_STATUS
 }
 
-enum Encoding {
-  DEFAULT,
-  BASE64
-}
 
 struct SourceFileData {
   1: i64             fileId,
@@ -115,44 +78,114 @@ struct SourceFileData {
   3: optional string fileContent
 }
 
-enum Order {
-  ASC,
-  DESC
-}
-
 struct SortMode {
   1: SortType type,
   2: Order    ord
 }
 
-struct ReportDataTypeCount {
-  1: string          checkerId,
-  2: shared.Severity severity,
-  3: i64             count
+struct BugPathEvent {
+  1: i64    startLine,
+  2: i64    startCol,
+  3: i64    endLine,
+  4: i64    endCol,
+  5: string msg,
+  6: i64    fileId
+  7: string filePath
 }
-typedef list<ReportDataTypeCount> ReportDataTypeCountList
+typedef list<BugPathEvent> BugPathEvents
 
-struct SkipPathData {
-  1: string  path,
-  2: string  comment
+struct BugPathPos {
+  1: i64    startLine,
+  2: i64    startCol,
+  3: i64    endLine,
+  4: i64    endCol,
+  5: i64    fileId
+  6: string filePath
 }
-typedef list<SkipPathData> SkipPathDataList
+typedef list<BugPathPos> BugPath
 
-// diff result types
-enum DiffType {
-  NEW,
-  RESOLVED,
-  UNRESOLVED
+struct ReportDetails {
+  1: BugPathEvents pathEvents,
+  2: BugPath       executionPath
 }
+
+struct RunData {
+  1: i64                       runId,        // Unique id of the run.
+  2: string                    runDate,      // Date of the run last updated.
+  3: string                    name,         // Human-given identifier.
+  4: i64                       duration,     // Duration of the run (-1 if not finished).
+  5: i64                       resultCount,  // Number of results in the run.
+  6: string                    runCmd,       // The used check command.
+  7: map<DetectionStatus, i32> detectionStatusCount // Number of reports with a particular detection status.
+}
+typedef list<RunData> RunDataList
+
+struct ReviewData {
+  1: ReviewStatus  status,
+  2: string        comment,
+  3: string        author,
+  4: string        date
+}
+
+struct ReportData {
+  1: i64              runId,           // Unique id of the run.
+  2: string           checkerId,       // The qualified name of the checker that reported this.
+  3: string           bugHash,         // This is unique id of the concrete report.
+  4: string           checkedFile,     // This is a filepath, the original main file the analyzer was called with.
+  5: string           checkerMsg,      // Description of the bug report.
+  6: i64              reportId,        // id of the report in the current run in the db.
+  7: i64              fileId,          // Unique id of the file the report refers to.
+  8: i64              line,            // line number or the reports main section (not part of the path).
+  9: i64              column,          // column number of the report main section (not part of the path).
+  10: Severity        severity,        // Checker severity.
+  11: ReviewData      reviewData,      // Bug review status information.
+  12: DetectionStatus detectionStatus  // State of the bug (see the enum constant values).
+}
+typedef list<ReportData> ReportDataList
+
+/**
+ * Members of this struct are interpreted in "OR" relation with each other.
+ * Between the members there is "AND" relation.
+ */
+struct ReportFilter {
+  1: list<string>          filepath,
+  2: list<string>          checkerMsg,
+  3: list<string>          checkerName,
+  4: list<string>          reportHash,
+  5: list<Severity>        severity,
+  6: list<ReviewStatus>    reviewStatus,
+  7: list<DetectionStatus> detectionStatus
+}
+
+struct RunReportCount {
+  1: i64            runId,        // Unique ID of the run.
+  2: string         name,         // Human readable name of the run.
+  3: i64            reportCount
+}
+typedef list<RunReportCount> RunReportCounts
+
+struct CheckerCount {
+  1: string      name,     // Name of the checker.
+  2: Severity    severity, // Severity level of the checker.
+  3: i64         count     // Number of reports.
+}
+typedef list<CheckerCount> CheckerCounts
 
 struct CommentData {
-  1: i64    id,
-  2: string author,
-  3: string message,
-  4: string createdAt
+  1: i64     id,
+  2: string  author,
+  3: string  message,
+  4: string  createdAt
 }
 typedef list<CommentData> CommentDataList
 
+/**
+ * Members of this struct are interpreted in "AND" relation with each other.
+ */
+struct RunFilter {
+  1: list<i64> runIds,
+  2: string    name
+}
 
 // CompareData is used as an optinal argument for multiple API calls.
 // If not set the API calls will just simply filter or query the
@@ -167,6 +200,7 @@ struct CompareData {
   2: DiffType  diffType
 }
 
+
 service codeCheckerDBAccess {
 
   // Gives back all analyzed runs.
@@ -175,20 +209,18 @@ service codeCheckerDBAccess {
                          throws (1: shared.RequestFailed requestError),
 
   // PERMISSION: PRODUCT_ACCESS
-  ReportData getReport(
-                       1: i64 reportId)
+  ReportData getReport(1: i64 reportId)
                        throws (1: shared.RequestFailed requestError),
 
   // Get the results for some runIds
   // can be used in diff mode if cmpData is set.
   // PERMISSION: PRODUCT_ACCESS
-  ReportDataList getRunResults(
-                               1: list<i64> runIds,
-                               2: i64 limit,
-                               3: i64 offset,
+  ReportDataList getRunResults(1: list<i64>      runIds,
+                               2: i64            limit,
+                               3: i64            offset,
                                4: list<SortMode> sortType,
-                               5: ReportFilter reportFilter,
-                               6: CompareData cmpData)
+                               5: ReportFilter   reportFilter,
+                               6: CompareData    cmpData)
                                throws (1: shared.RequestFailed requestError),
 
 
@@ -196,39 +228,35 @@ service codeCheckerDBAccess {
   // If an empty run id list is provided the report
   // counts will be calculated for all of the available runs.
   // PERMISSION: PRODUCT_ACCESS
-  RunReportCounts getRunReportCounts(
-                                   1: list<i64> runIds,
-                                   2: ReportFilter reportFilter)
-                                   throws (1: shared.RequestFailed requestError),
+  RunReportCounts getRunReportCounts(1: list<i64>    runIds,
+                                     2: ReportFilter reportFilter)
+                                     throws (1: shared.RequestFailed requestError),
 
   // Count all the results some runIds can be used for diff counting.
   // PERMISSION: PRODUCT_ACCESS
-  i64 getRunResultCount(
-                        1: list<i64> runIds,
+  i64 getRunResultCount(1: list<i64>    runIds,
                         2: ReportFilter reportFilter,
-                        3: CompareData cmpData)
+                        3: CompareData  cmpData)
                         throws (1: shared.RequestFailed requestError),
 
   // gives back the all marked region and message for a report
   // PERMISSION: PRODUCT_ACCESS
-  ReportDetails getReportDetails(
-                                 1: i64 reportId)
+  ReportDetails getReportDetails(1: i64 reportId)
                                  throws (1: shared.RequestFailed requestError),
 
   // get file information, if fileContent is true the content of the source
   // file will be also returned
   // PERMISSION: PRODUCT_ACCESS
-  SourceFileData getSourceFileData(
-                                   1: i64 fileId,
-                                   2: bool fileContent,
+  SourceFileData getSourceFileData(1: i64      fileId,
+                                   2: bool     fileContent,
                                    3: Encoding encoding)
                                    throws (1: shared.RequestFailed requestError),
 
   // change review status of a bug.
   // PERMISSION: PRODUCT_ACCESS or PRODUCT_STORE
-  bool changeReviewStatus(1: i64 reportId,
-                          2: shared.ReviewStatus status,
-                          3: string message)
+  bool changeReviewStatus(1: i64          reportId,
+                          2: ReviewStatus status,
+                          3: string       message)
                           throws (1: shared.RequestFailed requestError),
 
   // get comments for a bug
@@ -262,11 +290,6 @@ service codeCheckerDBAccess {
   string getCheckerDoc(1: string checkerId)
                        throws (1: shared.RequestFailed requestError),
 
-  // get the skip list of paths
-  // PERMISSION: PRODUCT_ACCESS
-  SkipPathDataList getSkipPaths(1: i64 runId)
-                                throws (1: shared.RequestFailed requestError),
-
   // returns the CodeChecker version that is running on the server
   string getPackageVersion();
 
@@ -286,54 +309,54 @@ service codeCheckerDBAccess {
   // for all of the runs and in compare mode all of the runs
   // will be used as a baseline excluding the runs in compare data.
   // PERMISSION: PRODUCT_ACCESS
-  map<shared.Severity, i64> getSeverityCounts(1: list<i64> runIds,
-                                              2: ReportFilter reportFilter,
-                                              3: CompareData cmpData)
-                                              throws (1: shared.RequestFailed requestError),
-
-  // If the run id list is empty the metrics will be counted
-  // for all of the runs and in compare mode all of the runs
-  // will be used as a baseline excluding the runs in compare data.
-  // PERMISSION: PRODUCT_ACCESS
-  map<string, i64> getCheckerMsgCounts(1: list<i64> runIds,
+  map<Severity, i64> getSeverityCounts(1: list<i64>    runIds,
                                        2: ReportFilter reportFilter,
-                                       3: CompareData cmpData)
+                                       3: CompareData  cmpData)
                                        throws (1: shared.RequestFailed requestError),
 
   // If the run id list is empty the metrics will be counted
   // for all of the runs and in compare mode all of the runs
   // will be used as a baseline excluding the runs in compare data.
   // PERMISSION: PRODUCT_ACCESS
-  map<shared.ReviewStatus, i64> getReviewStatusCounts(1: list<i64> runIds,
-                                                      2: ReportFilter reportFilter,
-                                                      3: CompareData cmpData)
-                                                      throws (1: shared.RequestFailed requestError),
+  map<string, i64> getCheckerMsgCounts(1: list<i64>    runIds,
+                                       2: ReportFilter reportFilter,
+                                       3: CompareData  cmpData)
+                                       throws (1: shared.RequestFailed requestError),
 
   // If the run id list is empty the metrics will be counted
   // for all of the runs and in compare mode all of the runs
   // will be used as a baseline excluding the runs in compare data.
   // PERMISSION: PRODUCT_ACCESS
-  map<shared.DetectionStatus, i64> getDetectionStatusCounts(1: list<i64> runIds,
-                                                            2: ReportFilter reportFilter,
-                                                            3: CompareData cmpData)
-                                                            throws (1: shared.RequestFailed requestError),
+  map<ReviewStatus, i64> getReviewStatusCounts(1: list<i64>    runIds,
+                                               2: ReportFilter reportFilter,
+                                               3: CompareData  cmpData)
+                                               throws (1: shared.RequestFailed requestError),
 
   // If the run id list is empty the metrics will be counted
   // for all of the runs and in compare mode all of the runs
   // will be used as a baseline excluding the runs in compare data.
   // PERMISSION: PRODUCT_ACCESS
-  map<string, i64> getFileCounts(1: list<i64> runIds,
+  map<DetectionStatus, i64> getDetectionStatusCounts(1: list<i64>    runIds,
+                                                     2: ReportFilter reportFilter,
+                                                     3: CompareData  cmpData)
+                                                     throws (1: shared.RequestFailed requestError),
+
+  // If the run id list is empty the metrics will be counted
+  // for all of the runs and in compare mode all of the runs
+  // will be used as a baseline excluding the runs in compare data.
+  // PERMISSION: PRODUCT_ACCESS
+  map<string, i64> getFileCounts(1: list<i64>    runIds,
                                  2: ReportFilter reportFilter,
-                                 3: CompareData cmpData)
+                                 3: CompareData  cmpData)
                                  throws (1: shared.RequestFailed requestError),
 
   // If the run id list is empty the metrics will be counted
   // for all of the runs and in compare mode all of the runs
   // will be used as a baseline excluding the runs in compare data.
   // PERMISSION: PRODUCT_ACCESS
-  CheckerCounts getCheckerCounts(1: list<i64> runIds,
+  CheckerCounts getCheckerCounts(1: list<i64>    runIds,
                                  2: ReportFilter reportFilter,
-                                 3: CompareData cmpData)
+                                 3: CompareData  cmpData)
                                  throws (1: shared.RequestFailed requestError),
 
 
@@ -346,8 +369,7 @@ service codeCheckerDBAccess {
   // with massStoreRun() function. This function requires a list of file hashes
   // (sha256) and returns the ones which are not stored yet.
   // PERMISSION: PRODUCT_STORE
-  list<string> getMissingContentHashes(
-                                       1: list<string> fileHashes)
+  list<string> getMissingContentHashes(1: list<string> fileHashes)
                                        throws (1: shared.RequestFailed requestError),
 
   // This function stores an entire run encapsulated and sent in a ZIP file.
@@ -362,11 +384,10 @@ service codeCheckerDBAccess {
   // run.
   // The "force" parameter removes existing analysis results for a run.
   // PERMISSION: PRODUCT_STORE
-  i64 massStoreRun(
-                   1: string runName,
+  i64 massStoreRun(1: string runName,
                    2: string version,
                    3: string zipfile,
                    4: bool   force)
-                   throws (1: shared.RequestFailed requestError),
+                   throws (1: shared.RequestFailed requestError)
 
 }
