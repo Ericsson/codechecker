@@ -34,6 +34,7 @@ def setup_package():
         'check_env': env.test_env(TEST_WORKSPACE),
         'workspace': TEST_WORKSPACE,
         'checkers': [],
+        'reportdir': os.path.join(TEST_WORKSPACE, 'reports'),
         'test_project': 'hello'
     }
 

@@ -240,3 +240,38 @@ int main()
             elif report.detectionStatus == DetectionStatus.RESOLVED:
                 self.assertIn(report.bugHash,
                               ['ac147b31a745d91be093bd70bbc5567c'])
+
+    def test_z_check_without_metadata(self):
+        """
+        This test checks whether the storage works without a metadata.json.
+        The name of the test contains a "z" character at the beginning. The
+        test run in alphabetical order and it is necessary to run previous
+        tests before this one.
+        """
+        runs = self._cc_client.getRunData(None)
+        run_id = max(map(lambda run: run.runId, runs))
+
+        codechecker.analyze(self._codechecker_cfg,
+                            'hello',
+                            self._test_dir)
+
+        try:
+            # Test storage without metadata.json.
+            os.remove(os.path.join(self._codechecker_cfg['reportdir'],
+                                   'metadata.json'))
+        except OSError:
+            # metadata.json already removed.
+            pass
+
+        codechecker.store(self._codechecker_cfg,
+                          'hello',
+                          self._codechecker_cfg['reportdir'])
+
+        reports = self._cc_client.getRunResults([run_id],
+                                                100,
+                                                0,
+                                                [],
+                                                None,
+                                                None)
+
+        self.assertEqual(len(reports), 4)
