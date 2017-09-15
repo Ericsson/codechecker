@@ -130,7 +130,7 @@ usage: CodeChecker check [-h] [-o OUTPUT_DIR] [-q] [-f]
                          [--add-compiler-defaults]
                          [--saargs CLANGSA_ARGS_CFG_FILE]
                          [--tidyargs TIDY_ARGS_CFG_FILE]
-                         [-e checker/checker-group] [-d checker/checker-group]
+                         [-e checker/group/profile] [-d checker/group/profile]
                          [--print-steps]
                          [--verbose {info,debug,debug_analyzer}]
 
@@ -171,8 +171,8 @@ analyzer arguments:
 
 checker configuration:
 
-  -e checker/checker-group, --enable checker/checker-group
-  -d checker/checker-group, --disable checker/checker-group
+  -e checker/group/profile, --enable checker/group/profile
+  -d checker/group/profile, --disable checker/group/profile
 
 output arguments:
   --print-steps
@@ -291,8 +291,8 @@ usage: CodeChecker analyze [-h] [-j JOBS] [-i SKIPFILE] -o OUTPUT_PATH
                            [--capture-analysis-output]
                            [--saargs CLANGSA_ARGS_CFG_FILE]
                            [--tidyargs TIDY_ARGS_CFG_FILE]
-                           [-e checker/checker-group]
-                           [-d checker/checker-group] [--enable-all]
+                           [-e checker/group/profile]
+                           [-d checker/group/profile] [--enable-all]
                            [--verbose {info,debug,debug_analyzer}]
                            logfile [logfile ...]
 
@@ -476,12 +476,12 @@ available checkers in the binaries installed on your system.
 ~~~~~~~~~~~~~~~~~~~~~
 checker configuration:
 
-  -e checker/checker-group, --enable checker/checker-group
-                        Set a checker (or checker group) to BE USED in the
-                        analysis.
-  -d checker/checker-group, --disable checker/checker-group
-                        Set a checker (or checker group) to BE PROHIBITED from
-                        use in the analysis.
+  -e checker/group/profile, --enable checker/group/profile
+                        Set a checker (or checker group or checker profile)
+                        to BE USED in the analysis.
+  -d checker/group/profile, --disable checker/group/profile
+                        Set a checker (or checker group or checker profile)
+                        to BE PROHIBITED from use in the analysis.
   --enable-all          Force the running analyzers to use almost every
                         checker available. The checker groups 'alpha.',
                         'debug.' and 'osx.' (on Linux) are NOT enabled
@@ -492,20 +492,36 @@ checker configuration:
                         WISELY AND AT YOUR OWN RISK!
 ~~~~~~~~~~~~~~~~~~~~~
 
-Both `--enable` and `--disable` take individual checkers or checker groups as
-their argument and there can be any number of such flags specified.
-
-For example
+Both `--enable` and `--disable` take individual checkers, checker groups or
+checker profiles as their argument and there can be any number of such flags
+specified. Flag order is important, subsequent options **overwrite** previously
+specified ones. For example
 
 ~~~
---enable core --disable core.uninitialized --enable core.uninitialized.Assign
+--enable extreme --disable core.uninitialized --enable core.uninitialized.Assign
 ~~~
 
-will enable every `core` checker which is not `core.uninitialized`, but
-`core.uninitialized.Assign` will also be enabled.
+will enable every checker of the `extreme` profile that do not belong to the
+ `core.uninitialized` group, with the exception of `core.uninitialized.Assign`,
+which will be enabled after all.
 
 Disabling certain checkers - such as the `core` group - is unsupported by
 the LLVM/Clang community, and thus discouraged.
+
+
+#### Checker profiles
+
+Checker profiles describe custom sets of enabled checks which can be specified
+in the `{INSTALL_DIR}/config/config.json` file. Three built-in options are
+available grouping checkers by their quality (measured by their false positive
+rate): `default`, `sensitive` and `extreme`. Detailed information about profiles
+can be retrieved by the `CodeChecker checkers` command.
+
+Note: `list` is a reserved keyword used to show all the available profiles and
+thus should not be used as a profile name. Profile names should also be
+different from checker(-group) names as they are enabled using the same syntax
+and coinciding names could cause unintended behavior.
+
 
 #### `--enable-all`
 
@@ -775,7 +791,8 @@ providing a quick overview on which checkers are available in the analyzers.
 
 ~~~~~~~~~~~~~~~~~~~~~
 usage: CodeChecker checkers [-h] [--analyzers ANALYZER [ANALYZER ...]]
-                            [--details] [--only-enabled | --only-disabled]
+                            [--details] [--profile {PROFILE/list}]
+                            [--only-enabled | --only-disabled]
                             [-o {rows,table,csv,json}]
                             [--verbose {info,debug,debug_analyzer}]
 
@@ -788,6 +805,10 @@ optional arguments:
                         Show checkers only from the analyzers specified.
   --details             Show details about the checker, such as description,
                         if available.
+  --profile {PROFILE/list}
+                        List checkers enabled by the selected profile.
+                        'list' is a special option showing details about
+                        profiles collectively.
   --only-enabled        Show only the enabled checkers.
   --only-disabled       Show only the disabled checkers.
   -o {rows,table,csv,json}, --output {rows,table,csv,json}
