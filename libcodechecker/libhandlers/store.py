@@ -201,12 +201,17 @@ def assemble_zip(inputs, zip_file, client):
             files, _ = plist_parser.parse_plist(plist_file)
 
             for f in files:
+                if not os.path.isfile(f):
+                    return False
+
                 with open(f) as content:
                     hasher = sha256()
                     hasher.update(content.read())
                     content_hash = hasher.hexdigest()
                     hash_to_file[content_hash] = f
                     file_to_hash[f] = content_hash
+
+            return True
         except Exception as ex:
             LOG.error('Parsing the plist failed: ' + str(ex))
 
@@ -219,21 +224,22 @@ def assemble_zip(inputs, zip_file, client):
                               "Input path does not exist", input_path)
 
             if os.path.isfile(input_path):
-                if not input_path.endswith(".plist"):
-                    continue
-                LOG.debug("Copying plist '{0}' to ZIP assembly dir..."
-                          .format(input_path))
-                shutil.copy(input_path, report_dir)
-                collect_file_hashes_from_plist(input_path)
-            elif os.path.isdir(input_path):
+                files = [input_path]
+            else:
                 _, _, files = next(os.walk(input_path), ([], [], []))
-                for f in files:
-                    plist_file = os.path.join(input_path, f)
-                    LOG.debug("Copying file '{0}' to ZIP assembly dir..."
-                              .format(plist_file))
-                    shutil.copy(plist_file, report_dir)
-                    if f.endswith(".plist"):
-                        collect_file_hashes_from_plist(plist_file)
+
+            for f in files:
+                plist_file = os.path.join(input_path, f)
+                if f.endswith(".plist"):
+                    if collect_file_hashes_from_plist(plist_file):
+                        LOG.debug(
+                            "Copying file '{0}' to ZIP assembly dir..."
+                            .format(plist_file))
+                        shutil.copy(plist_file, report_dir)
+                    else:
+                        LOG.warning("Skipping '{0}' because it contains "
+                                    "a missing source file."
+                                    .format(plist_file))
 
         necessary_hashes = client.getMissingContentHashes(hash_to_file.keys())
         for f, h in file_to_hash.items():
