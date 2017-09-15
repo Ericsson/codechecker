@@ -12,6 +12,7 @@ import sys
 
 from codeCheckerDBAccess_v6 import constants, ttypes
 
+from libcodechecker import suppress_handler
 from libcodechecker import suppress_file_handler
 from libcodechecker.analyze import plist_parser
 from libcodechecker.libclient.client import handle_auth
@@ -20,6 +21,7 @@ from libcodechecker.logger import LoggerFactory
 from libcodechecker.output_formatters import twodim_to_str
 from libcodechecker.report import Report
 from libcodechecker.util import split_server_url
+
 
 LOG = LoggerFactory.get_new_logger('CMD')
 
@@ -269,28 +271,51 @@ def handle_diff_results(args):
         filtered_reports = []
         new_results = getReportDirResults(report_dir)
         new_hashes = {}
+        suppressed_in_code = []
+
         for rep in new_results:
             bughash = rep.main['issue_hash_content_of_line_in_context']
+            source_file = rep.main['location']['file_name']
+            bug_line = rep.main['location']['line']
             new_hashes[bughash] = rep
+            sp_handler = suppress_handler.SourceSuppressHandler(
+                    source_file,
+                    bug_line,
+                    bughash,
+                    rep.main['check_name'])
+            if sp_handler.get_suppressed():
+                suppressed_in_code.append(bughash)
+                LOG.debug("Bug " + bughash +
+                          "is suppressed in code. file:" + source_file +
+                          "Line "+str(bug_line))
+
         if diff_type == 'new':
             # Shows new reports from the report dir
-            # which are not present in the baseline (server).
+            # which are not present in the baseline (server)
+            # and not suppressed in the code.
             for result in new_results:
                 if not (result.main['issue_hash_content_of_line_in_context']
-                        in base_hashes):
+                        in base_hashes) and\
+                   not (result.main['issue_hash_content_of_line_in_context']
+                        in suppressed_in_code):
                     filtered_reports.append(result)
         elif diff_type == 'resolved':
             # Show bugs in the baseline (server)
-            # which are not present in the report dir.
+            # which are not present in the report dir
+            # or suppressed.
             for result in base_results:
-                if not (result.bugHash in new_hashes):
+                if not (result.bugHash in new_hashes) or\
+                        (result.bugHash in suppressed_in_code):
                     filtered_reports.append(result)
         elif diff_type == 'unresolved':
             # Shows bugs in the report dir
-            # which are also present in the baseline (server).
+            # that are not suppressed and
+            # which are also present in the baseline (server)
+
             for result in new_results:
                 new_hash = result.main['issue_hash_content_of_line_in_context']
-                if new_hash in base_hashes:
+                if new_hash in base_hashes and\
+                        not (new_hash in suppressed_in_code):
                     filtered_reports.append(result)
         return filtered_reports
 

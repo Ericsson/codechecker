@@ -7,6 +7,7 @@
 
 """Setup for the package tests."""
 
+from distutils import dir_util
 import os
 import shutil
 import sys
@@ -16,9 +17,17 @@ from libtest import codechecker
 from libtest import env
 from libtest import project
 
-
 # Test workspace used to diff tests.
 TEST_WORKSPACE = None
+
+
+def insert_suppression(source_file_name):
+    with open(source_file_name, 'r') as f:
+        content = f.read()
+    content = content.replace("insert_suppress_here",
+                              "codechecker_suppress [all] test suppression!")
+    with open(source_file_name, 'w') as f:
+        f.write(content)
 
 
 def setup_package():
@@ -35,6 +44,10 @@ def setup_package():
     test_project = 'cpp'
 
     test_project_path = project.path(test_project)
+    test_project_path_altered = os.path.join(TEST_WORKSPACE, "cpp_copy")
+    # We create a copy of the test project which we will change
+    # to simulate code editing.
+    dir_util.copy_tree(test_project_path, test_project_path_altered)
 
     test_config = {}
 
@@ -97,16 +110,22 @@ def setup_package():
                                    ]
     ret = codechecker.check(codechecker_cfg,
                             test_project_name_new,
-                            test_project_path)
+                            test_project_path_altered)
     if ret:
         sys.exit(1)
     print("Second analysis of the test project was successful.")
+
+    # Insert a real suppression into the code
+
+    altered_file = os.path.join(test_project_path_altered,
+                                "call_and_message.cpp")
+    insert_suppression(altered_file)
 
     # Run the second analysis results
     # into a report directory
     ret = codechecker.analyze(codechecker_cfg,
                               test_project_name_new,
-                              test_project_path)
+                              test_project_path_altered)
     if ret:
         sys.exit(1)
     print("CodeChecker analyze of test project was successful.")
