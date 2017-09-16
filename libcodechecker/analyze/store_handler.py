@@ -343,44 +343,76 @@ def addReport(storage_session,
         # large databases?
         reports = session.query(Report) \
             .filter(Report.bug_id == bug_hash, Report.run_id == run_id)
-        # Check for duplicates by bug hash.
-        LOG.debug("checking duplicates")
+
+        # Detection status for the newly stored reports.
+        new_report_status = 'new'
+
+        # Report id for a duplicate report, if it was already stored in
+        # the database. Bug hash and report path should match.
+        duplicate_report_id = None
+
+        if reports:
+            LOG.debug("There are reports with the same hash.")
+
         for report in reports:
-            LOG.debug("there is a possible duplicate")
-            # TODO: file_id and path equality check won't be necessary
-            # when path hash is added.
-            if report.checker_id == checker_id and \
-                    is_same_event_path(report.id, events, session):
 
-                new_status = None
-
-                if report.detection_status == 'new' and not \
-                        storage_session.is_touched(run_id, report.id) or \
-                        report.detection_status == 'unresolved' or \
-                        report.detection_status == 'reopened':
-                    new_status = 'unresolved'
+            detection_status_for_hash = \
+                    storage_session.get_detection_status(run_id,
+                                                         report.bug_id)
+            if not detection_status_for_hash:
+                # Calculate the detection status for a report
+                # not processed in the current storage session yet.
+                if report.detection_status == 'new':
+                    report.detection_status = 'unresolved'
                     report.file_id = file_id
-                    change_path_and_events(session,
-                                           report.id,
-                                           bugpath,
-                                           events)
+
+                elif report.detection_status == 'unresolved':
+                    report.detection_status = 'unresolved'
+                    report.file_id = file_id
+
+                elif report.detection_status == 'reopened':
+                    report.detection_status = 'unresolved'
+                    report.file_id = file_id
+
                 elif report.detection_status == 'resolved':
-                    new_status = 'reopened'
+                    report.detection_status = 'reopened'
                     report.file_id = file_id
                     report.fixed_at = None
-                    change_path_and_events(session,
-                                           report.id,
-                                           bugpath,
-                                           events)
+            else:
+                # There is already a set status for this hash in this
+                # storage session, use it for the reports with the same
+                # hash.
+                report.detection_status = detection_status_for_hash
 
-                if new_status:
-                    report.detection_status = new_status
+            # Update the stored path in the database
+            # if the same bug path was found.
+            if report.checker_id == checker_id and \
+                    is_same_event_path(report.id, events, session):
+                change_path_and_events(session,
+                                       report.id,
+                                       bugpath,
+                                       events)
 
-                storage_session.touch_report(run_id, report.id)
+                # The bug hash and the path is the same, this is a
+                # duplicate.
+                duplicate_report_id = report.id
+            else:
+                # Only hash is the same but not a path duplicate
+                # report was found, will be stored as a new report
+                # but the already available detection status will be used.
+                new_report_status = report.detection_status
 
-                return report.id
+            # We found the hash during this storage session, mark it
+            # so the detection status won't be set to resolved
+            # at the end of the storage session.
+            storage_session.save_detection_status(run_id,
+                                                  report.bug_id,
+                                                  report.detection_status)
 
-        LOG.debug("no duplicate storing report")
+        if duplicate_report_id:
+            return duplicate_report_id
+
+        LOG.debug("No stored report was found with the same hash or path.")
         report = Report(run_id,
                         bug_hash,
                         file_id,
@@ -391,7 +423,7 @@ def addReport(storage_session,
                         line_num,
                         column,
                         severity,
-                        "new",
+                        new_report_status,
                         detection_time)
 
         session.add(report)
@@ -402,7 +434,9 @@ def addReport(storage_session,
         LOG.debug("storing events")
         store_bug_events(session, events, report.id)
 
-        storage_session.touch_report(run_id, report.id)
+        storage_session.save_detection_status(run_id,
+                                              report.bug_id,
+                                              new_report_status)
 
         return report.id
 
