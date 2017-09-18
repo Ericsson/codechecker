@@ -96,7 +96,7 @@ class SQLServer(object):
             LOG.error(str(alch_err))
             raise
         except CommandError as cerr:
-            LOG.error("Database schema and CodeChecker is incompatible."
+            LOG.error("Database schema and CodeChecker is incompatible. "
                       "Please update CodeChecker.")
             LOG.debug(str(cerr))
             raise
@@ -402,7 +402,7 @@ class PostgreSQLServer(SQLServer):
         add_version = False
         if init:
             add_version = not self.check_db_version(db_version_info)
-            self._create_or_update_schema(use_migration=False)
+            self._create_or_update_schema(use_migration=True)
 
         if add_version:
             self._add_version(db_version_info)
@@ -439,7 +439,7 @@ class SQLiteDatabase(SQLServer):
     def connect(self, db_version_info, init=False):
         if init:
             add_version = not self.check_db_version(db_version_info)
-            self._create_or_update_schema(use_migration=False)
+            self._create_or_update_schema(use_migration=True)
             if add_version:
                 self._add_version(db_version_info)
 
