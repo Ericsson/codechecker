@@ -331,7 +331,11 @@ def start_or_get_server():
             print("PostgreSQL server does not create 'Default' product...")
             print("Creating it now!")
             default_path = os.path.join(config_dir, 'Default')
-            os.makedirs(default_path)
+            try:
+                os.makedirs(default_path)
+            except OSError:
+                pass  # Directory already exists.
+
             add_test_package_product({'viewer_host': 'localhost',
                                       'viewer_port': port,
                                       'viewer_product': 'Default'},
