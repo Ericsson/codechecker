@@ -689,11 +689,11 @@ class ThriftRequestHandler(object):
             # initial ORDER BY expressions problem.
             if is_unique:
                 q = q.order_by(Report.bug_id,
-                           Report.checker_id,
-                           Report.checker_message,
-                           Report.severity,
-                           File.filename,
-                           ReviewStatus.status)
+                               Report.checker_id,
+                               Report.checker_message,
+                               Report.severity,
+                               File.filename,
+                               ReviewStatus.status)
 
             if cmp_data:
                 q = q.filter(Report.bug_id.in_(diff_hashes))
