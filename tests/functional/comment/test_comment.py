@@ -93,8 +93,12 @@ class TestComment(unittest.TestCase):
         self.assertTrue(success)
         logging.debug('Bug commented successfully')
 
-        # Add new comment for the second bug
-        bug2 = run_results[1]
+        # Add new comment for a second bug with a different hash!
+        bug2 = None
+        for b in run_results:
+            if b.bugHash != bug.bugHash:
+                bug2 = b
+
         comment3 = CommentData(author='anybody', message='Third msg')
         success = self._cc_client.addComment(bug2.reportId, comment3)
         self.assertTrue(success)
