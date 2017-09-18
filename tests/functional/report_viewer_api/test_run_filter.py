@@ -33,14 +33,18 @@ class TestRunFilter(unittest.TestCase):
 
     def __get_runs(self, run_name_filter=None):
         """ Helper function to get all run names which belong to this test"""
-        run_filter = RunFilter(name=run_name_filter)
-        runs = self._cc_client.getRunData(run_filter)
+        run_filter = RunFilter()
+        if run_name_filter is not None:
+            run_filter.names = [run_name_filter]
 
+        runs = self._cc_client.getRunData(run_filter)
         return [run for run in runs if run.name in self._run_names]
 
     def test_filter_run_names(self):
         # Filter all runs.
         test_runs = self.__get_runs()
+        self.assertEqual(len(test_runs), 2,
+                         "There should be two runs for this test.")
 
         # Filter runs which name starts with `test_files_`.
         test_runs = self.__get_runs('test_files_')

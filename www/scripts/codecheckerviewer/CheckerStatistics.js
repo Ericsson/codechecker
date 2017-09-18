@@ -69,7 +69,7 @@ function (declare, ItemFileWriteStore, Deferred, all, Memory, Observable,
       this.addChild(this._runFilter);
 
       var state = hashHelper.getValues();
-      if (state.run)
+      if (state.tab === 'statistics' && state.run)
         this.selectedRuns = state.run instanceof Array
           ? state.run.map(function (run) { return parseInt(run); })
           : [parseInt(state.run)];
@@ -160,6 +160,7 @@ function (declare, ItemFileWriteStore, Deferred, all, Memory, Observable,
         var deferred = new Deferred();
 
         var reportFilter = new CC_OBJECTS.ReportFilter();
+        reportFilter.isUnique = true;
 
         if (q.field)
           reportFilter[q.field] = q.values;

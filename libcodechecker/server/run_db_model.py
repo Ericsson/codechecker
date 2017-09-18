@@ -12,6 +12,7 @@ from __future__ import unicode_literals
 
 from datetime import datetime
 from math import ceil
+import os
 
 from sqlalchemy import *
 from sqlalchemy.ext.declarative import declarative_base
@@ -103,7 +104,8 @@ class File(Base):
     __tablename__ = 'files'
 
     id = Column(Integer, autoincrement=True, primary_key=True)
-    filepath = Column(String)
+    filepath = Column(String, nullable=False)
+    filename = Column(String, nullable=False)
     content_hash = Column(String,
                           ForeignKey('file_contents.content_hash',
                                      deferrable=True,
@@ -112,7 +114,9 @@ class File(Base):
     __table_args__ = (UniqueConstraint('filepath', 'content_hash'),)
 
     def __init__(self, filepath, content_hash):
-        self.filepath, self.content_hash = filepath, content_hash
+        self.filepath = filepath
+        self.filename = os.path.basename(filepath)
+        self.content_hash = content_hash
 
 
 class BugPathEvent(Base):

@@ -179,6 +179,39 @@ def get_diff_hashes_for_query(base_run_ids, base_line_hashes, new_run_ids,
                                           msg)
 
 
+def get_run_result_query_helper(session, run_ids, report_filter, is_unique,
+                                is_count=False):
+    filter_expression = process_report_filter_v2(report_filter)
+
+    if is_unique:
+        q = session.query(Report.bug_id,
+                          Report.checker_id,
+                          Report.checker_message,
+                          Report.severity,
+                          File.filename,
+                          ReviewStatus) \
+            .distinct(Report.bug_id,
+                      Report.checker_id,
+                      Report.checker_message,
+                      Report.severity,
+                      File.filename,
+                      ReviewStatus.status)
+    elif is_count:
+        q = session.query(Report)
+    else:
+        q = session.query(Report,
+                          File,
+                          ReviewStatus)
+
+    q = q.filter(Report.run_id.in_(run_ids)) \
+        .outerjoin(File, Report.file_id == File.id) \
+        .outerjoin(ReviewStatus,
+                   ReviewStatus.bug_hash == Report.bug_id) \
+        .filter(filter_expression)
+
+    return q
+
+
 def bugpathevent_db_to_api(bpe):
     return ttypes.BugPathEvent(
         startLine=bpe.line_begin,
@@ -268,6 +301,23 @@ def unzip(b64zip):
 
     os.remove(zip_file)
     return temp_dir
+
+
+def create_review_data(review_status):
+    if review_status:
+        return ReviewData(status=review_status_enum(review_status.status),
+                          comment=review_status.message,
+                          author=review_status.author,
+                          date=str(review_status.date))
+    else:
+        return ReviewData(status=ttypes.ReviewStatus.UNREVIEWED)
+
+
+def create_count_expression(report_filter):
+    if report_filter is not None and report_filter.isUnique:
+        return func.count(Report.bug_id.distinct())
+    else:
+        return func.count(literal_column('*'))
 
 
 class StorageSession:
@@ -478,10 +528,15 @@ class ThriftRequestHandler(object):
             q = session.query(Run, stmt.c.report_count)
 
             if run_filter is not None:
-                if run_filter.runIds is not None:
-                    q = q.filter(Run.id.in_(run_filter.runIds))
-                if run_filter.name is not None:
-                    q = q.filter(Run.name.ilike('%' + run_filter.name + '%'))
+                if run_filter.ids is not None:
+                    q = q.filter(Run.id.in_(run_filter.ids))
+                if run_filter.names is not None:
+                    if run_filter.exactMatch:
+                        q = q.filter(Run.name.in_(run_filter.names))
+                    else:
+                        OR = [Run.name.ilike('%' + name + '%') for
+                              name in run_filter.names]
+                        q = q.filter(or_(*OR))
 
             q = q.outerjoin(stmt, Run.id == stmt.c.run_id) \
                 .order_by(Run.date)
@@ -573,20 +628,6 @@ class ThriftRequestHandler(object):
                     "Report " + str(reportId) + " not found!")
 
             report, source_file, review_status = result
-
-            if review_status:
-                review_data = ReviewData(
-                    status=review_status_enum(review_status.status),
-                    comment=review_status.message,
-                    author=review_status.author,
-                    date=str(review_status.date))
-            else:
-                review_data = ReviewData(
-                    status=ttypes.ReviewStatus.UNREVIEWED,
-                    comment=None,
-                    author=None,
-                    date=None)
-
             return ReportData(
                 runId=report.run_id,
                 bugHash=report.bug_id,
@@ -598,7 +639,7 @@ class ThriftRequestHandler(object):
                 column=report.column,
                 checkerId=report.checker_id,
                 severity=report.severity,
-                reviewData=review_data,
+                reviewData=create_review_data(review_status),
                 detectionStatus=detection_status_enum(report.detection_status))
         except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
             msg = str(alchemy_ex)
@@ -623,8 +664,6 @@ class ThriftRequestHandler(object):
 
         session = self.__Session()
 
-        filter_expression = process_report_filter_v2(report_filter)
-
         try:
 
             results = []
@@ -640,51 +679,59 @@ class ThriftRequestHandler(object):
                     # There is no difference.
                     return results
 
-            q = session.query(Report,
-                              File,
-                              ReviewStatus) \
-                .filter(Report.run_id.in_(run_ids)) \
-                .outerjoin(File, Report.file_id == File.id) \
-                .outerjoin(ReviewStatus,
-                           ReviewStatus.bug_hash == Report.bug_id) \
-                .filter(filter_expression)
+            is_unique = report_filter is not None and report_filter.isUnique
+            q = get_run_result_query_helper(session, run_ids, report_filter,
+                                            is_unique)
 
             q = self.__sortResultsQuery(q, sort_types)
+
+            # This is needed to resolved pgsql DISTINCT expressions must match
+            # initial ORDER BY expressions problem.
+            if is_unique:
+                q = q.order_by(Report.bug_id,
+                           Report.checker_id,
+                           Report.checker_message,
+                           Report.severity,
+                           File.filename,
+                           ReviewStatus.status)
 
             if cmp_data:
                 q = q.filter(Report.bug_id.in_(diff_hashes))
 
-            for report, source_file, review_status in \
-                    q.limit(limit).offset(offset):
+            if is_unique:
+                for report_hash, checker, checker_msg, severity,\
+                    path, review_status in \
+                        q.limit(limit).offset(offset):
 
-                if review_status:
-                    review_data = ReviewData(
-                        status=review_status_enum(review_status.status),
-                        comment=review_status.message,
-                        author=review_status.author,
-                        date=str(review_status.date))
-                else:
-                    review_data = ReviewData(
-                        status=ttypes.ReviewStatus.UNREVIEWED,
-                        comment=None,
-                        author=None,
-                        date=None)
+                    review_data = create_review_data(review_status)
+                    results.append(
+                        ReportData(bugHash=report_hash,
+                                   checkedFile=path,
+                                   checkerMsg=checker_msg,
+                                   checkerId=checker,
+                                   severity=severity,
+                                   reviewData=review_data)
+                    )
+            else:
+                for report, source_file, review_status in \
+                        q.limit(limit).offset(offset):
 
-                results.append(
-                    ReportData(runId=report.run_id,
-                               bugHash=report.bug_id,
-                               checkedFile=source_file.filepath,
-                               checkerMsg=report.checker_message,
-                               reportId=report.id,
-                               fileId=source_file.id,
-                               line=report.line,
-                               column=report.column,
-                               checkerId=report.checker_id,
-                               severity=report.severity,
-                               reviewData=review_data,
-                               detectionStatus=detection_status_enum(
-                                   report.detection_status))
-                )
+                    review_data = create_review_data(review_status)
+                    results.append(
+                        ReportData(runId=report.run_id,
+                                   bugHash=report.bug_id,
+                                   checkedFile=source_file.filepath,
+                                   checkerMsg=report.checker_message,
+                                   reportId=report.id,
+                                   fileId=source_file.id,
+                                   line=report.line,
+                                   column=report.column,
+                                   checkerId=report.checker_id,
+                                   severity=report.severity,
+                                   reviewData=review_data,
+                                   detectionStatus=detection_status_enum(
+                                       report.detection_status))
+                    )
 
             return results
 
@@ -745,8 +792,6 @@ class ThriftRequestHandler(object):
 
         try:
 
-            filter_expression = process_report_filter_v2(report_filter)
-
             if not run_ids:
                 run_ids = self.__get_run_ids_to_query(session, cmp_data)
 
@@ -758,12 +803,9 @@ class ThriftRequestHandler(object):
                     # There is no difference.
                     return 0
 
-            q = session.query(Report) \
-                .filter(Report.run_id.in_(run_ids)) \
-                .outerjoin(File, Report.file_id == File.id) \
-                .outerjoin(ReviewStatus,
-                           ReviewStatus.bug_hash == Report.bug_id) \
-                .filter(filter_expression)
+            is_unique = report_filter is not None and report_filter.isUnique
+            q = get_run_result_query_helper(session, run_ids, report_filter,
+                                            is_unique, True)
 
             if cmp_data:
                 q = q.filter(Report.bug_id.in_(diff_hashes))
@@ -1224,7 +1266,7 @@ class ThriftRequestHandler(object):
             filter_expression = process_report_filter_v2(
                 report_filter, CountFilter.CHECKER_NAME)
 
-            count_expr = func.count(literal_column('*'))
+            count_expr = create_count_expression(report_filter)
 
             q = session.query(Report.checker_id,
                               Report.severity,
@@ -1279,7 +1321,7 @@ class ThriftRequestHandler(object):
             filter_expression = process_report_filter_v2(report_filter,
                                                          CountFilter.SEVERITY)
 
-            count_expr = func.count(literal_column('*'))
+            count_expr = create_count_expression(report_filter)
 
             q = session.query(Report.severity, count_expr) \
                 .filter(Report.run_id.in_(run_ids)) \
@@ -1328,7 +1370,7 @@ class ThriftRequestHandler(object):
             filter_expression = process_report_filter_v2(
                 report_filter, CountFilter.CHECKER_MSG)
 
-            count_expr = func.count(literal_column('*'))
+            count_expr = create_count_expression(report_filter)
 
             q = session.query(Report.checker_message, count_expr) \
                 .filter(Report.run_id.in_(run_ids)) \
@@ -1377,7 +1419,7 @@ class ThriftRequestHandler(object):
             filter_expression = process_report_filter_v2(
                 report_filter, CountFilter.REVIEW_STATUS)
 
-            count_expr = func.count(literal_column('*'))
+            count_expr = create_count_expression(report_filter)
 
             q = session.query(func.max(Report.id),
                               ReviewStatus.status,
@@ -1435,7 +1477,7 @@ class ThriftRequestHandler(object):
             filter_expression = process_report_filter_v2(report_filter,
                                                          CountFilter.FILE)
 
-            count_expr = func.count(literal_column('*'))
+            count_expr = create_count_expression(report_filter)
 
             q = session.query(func.max(Report.id),
                               File.filepath,
@@ -1487,7 +1529,7 @@ class ThriftRequestHandler(object):
             filter_expression = process_report_filter_v2(
                 report_filter, CountFilter.RUN_HISTORY_TAG)
 
-            count_expr = func.count(literal_column('*'))
+            count_expr = create_count_expression(report_filter)
 
             q = session.query(func.max(Report.id),
                               Run.name,

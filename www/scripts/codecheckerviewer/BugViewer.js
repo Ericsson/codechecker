@@ -134,7 +134,7 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
           topic.publish('openFile', reportId, this.reportIdToRun[reportId]);
         },
 
-        refreshOptions : function (runData, reportData) {
+        refreshOptions : function (reportData) {
           var self = this;
 
           //--- Get same reports by bughash in all reports ---//
@@ -154,7 +154,7 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
             reportFilter, null);
 
           var runFilter = new CC_OBJECTS.RunFilter();
-          runFilter.runIds = res.map(function (report) { return report.runId; });
+          runFilter.ids = res.map(function (report) { return report.runId; });
 
           var runDataSet = CC_SERVICE.getRunData(runFilter);
 
@@ -180,7 +180,7 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
 
       //--- Same reports by bughash selector ---//
 
-      this._sameReportSelector.refreshOptions(this.runData, this.reportData);
+      this._sameReportSelector.refreshOptions(this.reportData);
 
       this.codeMirror = new CodeMirror(this.domNode, {
         matchBrackets : true,
@@ -470,7 +470,9 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
   });
 
   var BugStoreModelTree = declare(HtmlTree, {
-    constructor : function () {
+    constructor : function (args) {
+      dojo.safeMixin(this, args);
+
       var that = this;
 
       this.bugStore = new Observable(new Memory({
@@ -559,7 +561,7 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
         this.runResultParam.runIds,
         CC_OBJECTS.MAX_QUERY_SIZE,
         0,
-        [],
+        null,
         fileFilter,
         this.runResultParam.cmpData,
         function (result) {
@@ -629,6 +631,10 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
         id    : item.id.split('_')[1],
         event : item.bugPathEvent
       });
+
+      //--- Same reports by bughash selector ---//
+
+      this.editor._sameReportSelector.refreshOptions(item.report);
     },
 
     getIconClass : function(item, opened) {

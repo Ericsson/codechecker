@@ -157,7 +157,7 @@ class Diff(unittest.TestCase):
                                                  [],
                                                  None,
                                                  cmp_data)
-        self.assertEqual(len(diff_res), 20)
+        self.assertEqual(len(diff_res), 26)
 
     def test_get_diff_res_count_resolved(self):
         """
@@ -209,14 +209,14 @@ class Diff(unittest.TestCase):
                                                      None,
                                                      cmp_data)
 
-        self.assertEqual(diff_res, 20)
+        self.assertEqual(diff_res, 26)
 
     def test_get_diff_res_count_unresolved_filter(self):
         base_run_id = self._base_runid
         new_run_id = self._new_runid
 
-        filter_severity_levels = [{"MEDIUM": 1}, {"LOW": 5},
-                                  {"HIGH": 14}, {"STYLE": 0},
+        filter_severity_levels = [{"MEDIUM": 1}, {"LOW": 6},
+                                  {"HIGH": 19}, {"STYLE": 0},
                                   {"UNSPECIFIED": 0}, {"CRITICAL": 0}]
 
         cmp_data = CompareData(runIds=[new_run_id],
@@ -305,7 +305,7 @@ class Diff(unittest.TestCase):
         diff_dict = dict((res.name, res.count) for res in diff_res)
 
         # Unresolved core checkers.
-        test_res = {'core.NullDereference': 4, 'core.DivideZero': 5}
+        test_res = {'core.NullDereference': 4, 'core.DivideZero': 10}
         self.assertDictContainsSubset(test_res, diff_dict)
 
     def test_get_diff_checker_counts_all_unresolved(self):
@@ -324,12 +324,13 @@ class Diff(unittest.TestCase):
         diff_dict = dict((res.name, res.count) for res in diff_res)
 
         # All unresolved checkers.
-        test_res = {'core.DivideZero': 5,
+        test_res = {'core.DivideZero': 10,
                     'core.NullDereference': 4,
                     'cplusplus.NewDelete': 5,
-                    'deadcode.DeadStores': 5,
+                    'deadcode.DeadStores': 6,
                     'unix.Malloc': 1}
 
+        print(test_res)
         self.assertDictContainsSubset(diff_dict, test_res)
 
     def test_get_diff_severity_counts_all_unresolved(self):
@@ -345,8 +346,8 @@ class Diff(unittest.TestCase):
         sev_res = self._cc_client.getSeverityCounts([base_run_id],
                                                     None,
                                                     cmp_data)
-        test_res = {Severity.HIGH: 14,
-                    Severity.LOW: 5,
+        test_res = {Severity.HIGH: 19,
+                    Severity.LOW: 6,
                     Severity.MEDIUM: 1}
         self.assertDictEqual(sev_res, test_res)
 
@@ -397,7 +398,7 @@ class Diff(unittest.TestCase):
                                                     None,
                                                     cmp_data)
 
-        test_res = {ReviewStatus.UNREVIEWED: 20}
+        test_res = {ReviewStatus.UNREVIEWED: 26}
         self.assertDictEqual(res, test_res)
 
     def test_get_diff_res_review_status_counts(self):
@@ -456,10 +457,10 @@ class Diff(unittest.TestCase):
         diff_dict = dict((res.name, res.count) for res in diff_res)
 
         test_res = {'cplusplus.NewDelete': 5,
-                    'deadcode.DeadStores': 5,
+                    'deadcode.DeadStores': 6,
                     'unix.Malloc': 1,
                     'core.NullDereference': 4,
-                    'core.DivideZero': 5}
+                    'core.DivideZero': 10}
         self.assertDictEqual(diff_dict, test_res)
 
     def test_get_diff_res_types_unresolved_filter(self):
@@ -555,9 +556,9 @@ class Diff(unittest.TestCase):
 
         # # 3 disappeared core.StackAddressEscape issues
         count = len(re.findall(r'\[core\.DivideZero\]', out))
-        self.assertEqual(count, 5)
+        self.assertEqual(count, 10)
         count = len(re.findall(r'\[deadcode\.DeadStores\]', out))
-        self.assertEqual(count, 5)
+        self.assertEqual(count, 6)
         count = len(re.findall(r'\[core\.NullDereference\]', out))
         self.assertEqual(count, 4)
         count = len(re.findall(r'\[cplusplus\.NewDelete\]', out))
