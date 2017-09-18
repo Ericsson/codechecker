@@ -426,9 +426,13 @@ def main(args):
         GenericSuppressHandler(None, False)
 
     if 'reset_root' in args:
-        os.remove(os.path.join(args.config_directory, 'root.user'))
-        LOG.info("Master superuser (root) credentials invalidated and "
-                 "deleted. New ones will be generated...")
+        try:
+            os.remove(os.path.join(args.config_directory, 'root.user'))
+            LOG.info("Master superuser (root) credentials invalidated and "
+                     "deleted. New ones will be generated...")
+        except OSError:
+            # File doesn't exist.
+            pass
 
     if 'force_auth' in args:
         LOG.info("'--force-authentication' was passed as a command-line "
