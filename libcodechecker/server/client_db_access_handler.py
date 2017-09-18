@@ -683,8 +683,6 @@ class ThriftRequestHandler(object):
             q = get_run_result_query_helper(session, run_ids, report_filter,
                                             is_unique)
 
-            q = self.__sortResultsQuery(q, sort_types)
-
             # This is needed to resolved pgsql DISTINCT expressions must match
             # initial ORDER BY expressions problem.
             if is_unique:
@@ -694,6 +692,8 @@ class ThriftRequestHandler(object):
                                Report.severity,
                                File.filename,
                                ReviewStatus.status)
+
+            q = self.__sortResultsQuery(q, sort_types)
 
             if cmp_data:
                 q = q.filter(Report.bug_id.in_(diff_hashes))
