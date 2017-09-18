@@ -14,6 +14,8 @@ except ImportError:
     # Assume we are in the source directory
     import sys
     import os
+    sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
+                                                 "../build/thrift/v6/gen-py")))
 
     sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
                                                  "..")))

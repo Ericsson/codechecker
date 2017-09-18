@@ -737,7 +737,7 @@ def build_package(repository_root, build_package_config, env=None):
 
     # CodeChecker db migrate.
     LOG.debug('Copy codechecker config database migration')
-    source = os.path.join(repository_root, 'product_db_migrate')
+    source = os.path.join(repository_root, 'config_db_migrate')
     target = os.path.join(package_root,
                           package_layout['config_db_migrate'])
     copy_tree(source, target)

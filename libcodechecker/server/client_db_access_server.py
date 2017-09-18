@@ -503,7 +503,7 @@ class Product(object):
         sql_server = database_handler.SQLServer.from_connection_string(
             self.__connection_string,
             RUN_META,
-            self.__context.config_migration_root,
+            self.__context.run_migration_root,
             interactive=False,
             env=self.__check_env)
 
