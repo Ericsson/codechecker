@@ -182,15 +182,6 @@ def res_handler(results):
 
 
 def assemble_zip(inputs, zip_file, client):
-    temp_dir = tempfile.mkdtemp()
-    LOG.debug("Assembling ZIP contents in '{0}':".format(temp_dir))
-
-    report_dir = os.path.join(temp_dir, 'reports')
-    os.makedirs(report_dir)
-
-    source_dir = os.path.join(temp_dir, 'root')
-    os.makedirs(source_dir)
-
     hash_to_file = {}
     # There can be files with same hash,
     # but different path.
@@ -215,7 +206,7 @@ def assemble_zip(inputs, zip_file, client):
         except Exception as ex:
             LOG.error('Parsing the plist failed: ' + str(ex))
 
-    try:
+    with zipfile.ZipFile(zip_file, 'a') as zipf:
         for input_path in inputs:
             input_path = os.path.abspath(input_path)
 
@@ -235,7 +226,7 @@ def assemble_zip(inputs, zip_file, client):
                         LOG.debug(
                             "Copying file '{0}' to ZIP assembly dir..."
                             .format(plist_file))
-                        shutil.copy(plist_file, report_dir)
+                        zipf.write(plist_file, os.path.join('reports', f))
                     else:
                         LOG.warning("Skipping '{0}' because it contains "
                                     "a missing source file."
@@ -244,42 +235,22 @@ def assemble_zip(inputs, zip_file, client):
         necessary_hashes = client.getMissingContentHashes(hash_to_file.keys())
         for f, h in file_to_hash.items():
             if h in necessary_hashes:
-                target_file = os.path.join(source_dir, f.lstrip('/'))
-
-                try:
-                    os.makedirs(os.path.dirname(target_file))
-                except os.error:
-                    # Directory already exists.
-                    pass
-
                 LOG.debug("File contents for '{0}' needed by the server"
                           .format(f))
-                shutil.copyfile(f, target_file)
 
-        hashes_fname = "content_hashes.json"
-        hashes_fpath = os.path.join(temp_dir, hashes_fname)
-        with open(hashes_fpath, "w") as f:
-            json.dump(file_to_hash, f)
+                zipf.write(f, os.path.join('root', f.lstrip('/')))
 
-        with zipfile.ZipFile(zip_file, 'w') as zipf:
-            for root, _, files in os.walk(temp_dir):
-                for sf in files:
-                    f = os.path.join(root, sf)
-                    LOG.debug("[ZIP] Writing file '{0}' into mass store ZIP."
-                              .format(f))
-                    zipf.write(f, f.replace(temp_dir, ''))
+        zipf.writestr('content_hashes.json', json.dumps(file_to_hash))
 
-        # Compressing .zip file
-        with open(zip_file, 'rb') as source:
-            compressed = zlib.compress(source.read(),
-                                       zlib.Z_BEST_COMPRESSION)
+    # Compressing .zip file
+    with open(zip_file, 'rb') as source:
+        compressed = zlib.compress(source.read(),
+                                   zlib.Z_BEST_COMPRESSION)
 
-        with open(zip_file, 'wb') as target:
-            target.write(compressed)
+    with open(zip_file, 'wb') as target:
+        target.write(compressed)
 
-        LOG.debug("[ZIP] Mass store zip written at '{0}'".format(zip_file))
-    finally:
-        shutil.rmtree(temp_dir)
+    LOG.debug("[ZIP] Mass store zip written at '{0}'".format(zip_file))
 
 
 def main(args):
