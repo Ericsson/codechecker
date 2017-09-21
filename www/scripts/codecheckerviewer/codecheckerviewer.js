@@ -33,7 +33,7 @@ function (declare, topic, domConstruct, Dialog, DropDownMenu, MenuItem,
     });
   }
 
-  function initMainTabs() {
+  function initByUrl() {
     var state = hashHelper.getValues();
 
     switch (state.tab) {
@@ -45,14 +45,8 @@ function (declare, topic, domConstruct, Dialog, DropDownMenu, MenuItem,
         return;
       case 'allReports':
         topic.publish('tab/allReports');
-        return;
+        break;
     }
-  }
-
-  function initByUrl() {
-    var state = hashHelper.getValues();
-
-    initMainTabs();
 
     if (state.tab !== 'allReports' && state.run) {
       topic.publish('openRun', findRunData(parseInt(state.run)));
@@ -63,13 +57,6 @@ function (declare, topic, domConstruct, Dialog, DropDownMenu, MenuItem,
         difftype : state.difftype ? state.difftype : CC_OBJECTS.DiffType.NEW
       });
     }
-
-    if (state.report || state.reportHash) {
-      var report = state.report ? parseInt(state.report) : null;
-      var reportHash = state.reportHash ? state.reportHash : null;
-      topic.publish('openFile', report, null, reportHash);
-    }
-
   }
 
   return function () {
@@ -334,7 +321,7 @@ function (declare, topic, domConstruct, Dialog, DropDownMenu, MenuItem,
     //--- Handle main tabs ---//
 
     topic.subscribe('/dojo/hashchange', function (url) {
-      initMainTabs();
+      initByUrl();
     });
   };
 });
