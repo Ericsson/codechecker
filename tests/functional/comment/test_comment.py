@@ -56,8 +56,8 @@ class TestComment(unittest.TestCase):
 
         self._test_runs = [run for run in runs if run.name in run_names]
 
-        self.assertEqual(len(self._test_runs), 1,
-                         'There should be only one run for this test.')
+        self.assertEqual(len(self._test_runs), 2,
+                         'There should be two runs for this test.')
 
     def test_comment(self):
         """
@@ -174,63 +174,63 @@ class TestComment(unittest.TestCase):
         num_comment = self._cc_client.getCommentCount(bug2.reportId)
         self.assertEqual(num_comment, 0)
 
-        def test_same_bug_hash(self):
-            """
-            Test that different report ID's referring the same bug hash can
-            query each other's comments.
-            """
+    def test_same_bug_hash(self):
+        """
+        Test that different report ID's referring the same bug hash can
+        query each other's comments.
+        """
 
-            # Get run results for the first run.
-            runid_base = self._test_runs[0].runId
-            logging.debug('Get all run results from the db for runid: ' +
-                          str(runid_base))
+        # Get run results for the first run.
+        runid_base = self._test_runs[0].runId
+        logging.debug('Get all run results from the db for runid: ' +
+                      str(runid_base))
 
-            run_results_base = get_all_run_results(self._cc_client, runid_base)
-            self.assertIsNotNone(run_results_base)
-            self.assertNotEqual(len(run_results_base), 0)
+        run_results_base = get_all_run_results(self._cc_client, runid_base)
+        self.assertIsNotNone(run_results_base)
+        self.assertNotEqual(len(run_results_base), 0)
 
-            bug_base = run_results_base[0]
+        bug_base = run_results_base[0]
 
-            # Get run results for the second run.
-            runid_new = self._test_runs[1].runId
-            logging.debug('Get all run results from the db for runid: ' +
-                          str(runid_new))
+        # Get run results for the second run.
+        runid_new = self._test_runs[1].runId
+        logging.debug('Get all run results from the db for runid: ' +
+                      str(runid_new))
 
-            run_results_new = get_all_run_results(self._cc_client, runid_new)
-            self.assertIsNotNone(run_results_new)
-            self.assertNotEqual(len(run_results_new), 0)
+        run_results_new = get_all_run_results(self._cc_client, runid_new)
+        self.assertIsNotNone(run_results_new)
+        self.assertNotEqual(len(run_results_new), 0)
 
-            bug_new = run_results_new[0]
+        bug_new = run_results_new[0]
 
-            # Both bug have the same bug hash.
-            self.assertEqual(bug_base.bugHash, bug_new.bugHash)
+        # Both bug have the same bug hash.
+        self.assertEqual(bug_base.bugHash, bug_new.bugHash)
 
-            # There are no comments available for the bug.
-            comments = self._cc_client.getComments(bug_base.reportId)
-            self.assertEqual(len(comments), 0)
+        # There are no comments available for the bug.
+        comments = self._cc_client.getComments(bug_base.reportId)
+        self.assertEqual(len(comments), 0)
 
-            comments = self._cc_client.getComments(bug_new.reportId)
-            self.assertEqual(len(comments), 0)
+        comments = self._cc_client.getComments(bug_new.reportId)
+        self.assertEqual(len(comments), 0)
 
-            # Try to add a new comment for the first bug
-            comment = CommentData(author='Anonymous', message='First msg')
-            success = self._cc_client.addComment(bug_base.reportId, comment)
-            self.assertTrue(success)
-            logging.debug('Bug commented successfully')
+        # Try to add a new comment for the first bug
+        comment = CommentData(author='Anonymous', message='First msg')
+        success = self._cc_client.addComment(bug_base.reportId, comment)
+        self.assertTrue(success)
+        logging.debug('Bug commented successfully')
 
-            comments = self._cc_client.getComments(bug_base.reportId)
-            self.assertEqual(len(comments), 1)
+        comments = self._cc_client.getComments(bug_base.reportId)
+        self.assertEqual(len(comments), 1)
 
-            comments = self._cc_client.getComments(bug_new.reportId)
-            self.assertEqual(len(comments), 1)
+        comments = self._cc_client.getComments(bug_new.reportId)
+        self.assertEqual(len(comments), 1)
 
-            # Remove the comment for the bug.
-            success = self._cc_client.removeComment(comments[0].id)
-            self.assertTrue(success)
-            logging.debug('Comment removed successfully')
+        # Remove the comment for the bug.
+        success = self._cc_client.removeComment(comments[0].id)
+        self.assertTrue(success)
+        logging.debug('Comment removed successfully')
 
-            comments = self._cc_client.getComments(bug_base.reportId)
-            self.assertEqual(len(comments), 0)
+        comments = self._cc_client.getComments(bug_base.reportId)
+        self.assertEqual(len(comments), 0)
 
-            comments = self._cc_client.getComments(bug_new.reportId)
-            self.assertEqual(len(comments), 0)
+        comments = self._cc_client.getComments(bug_new.reportId)
+        self.assertEqual(len(comments), 0)
