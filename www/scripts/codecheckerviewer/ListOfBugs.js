@@ -351,7 +351,12 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
         bugFilterView : this._bugFilterView,
         parent : this,
         onShow : function () {
-          hashHelper.setStateValue('subtab', 'runHistory');
+          var state = hashHelper.getState();
+
+          hashHelper.resetStateValues({
+            'tab' : state.tab,
+            'subtab' : 'runHistory'
+          });
         }
       });
 
@@ -389,7 +394,7 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
       this._hashChangeTopic = topic.subscribe('/dojo/hashchange',
       function (url) {
         var state = hashHelper.getState();
-        if (this._tab === state.tab)
+        if (that._tab === state.tab)
           initByUrl(that._grid);
       });
 
@@ -477,7 +482,9 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
       if (this.allReportView)
         state.tab = 'allReports';
       else
-        state.tab = state.run || state.baseline + '_' + state.newcheck;
+        state.tab = this.runData
+          ? this.runData.name
+          : this.baseline.name + '_' + this.newcheck.name;
 
       this._tab  = state.tab;
 
