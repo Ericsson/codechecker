@@ -64,7 +64,20 @@ def setup_package():
     codechecker_cfg.update(server_access)
 
     # Check the test project for the first time.
+    test_project_names = []
     test_project_name = project_info['name'] + '_' + uuid.uuid4().hex
+    test_project_names.append(test_project_name)
+
+    ret = codechecker.check(codechecker_cfg,
+                            test_project_name,
+                            test_project_path)
+    if ret:
+        sys.exit(1)
+    print("Analyzing test project was successful.")
+
+    # Check the test project again.
+    test_project_name = project_info['name'] + '_' + uuid.uuid4().hex
+    test_project_names.append(test_project_name)
 
     ret = codechecker.check(codechecker_cfg,
                             test_project_name,
@@ -73,16 +86,7 @@ def setup_package():
         sys.exit(1)
     print("Analyzing test project was succcessful.")
 
-    # Check the test project again.
-    test_project_name = project_info['name'] + '_' + uuid.uuid4().hex
-    ret = codechecker.check(codechecker_cfg,
-                            test_project_name,
-                            test_project_path)
-    if ret:
-        sys.exit(1)
-    print("Analyzing test project was successful.")
-
-    codechecker_cfg['run_names'] = [test_project_name]
+    codechecker_cfg['run_names'] = test_project_names
     test_config['codechecker_cfg'] = codechecker_cfg
     env.export_test_cfg(TEST_WORKSPACE, test_config)
 
