@@ -204,6 +204,11 @@ def remove_report_from_plist(plist_content, skip_handler):
     Parse the original plist content provided by the analyzer
     and return a new plist content where reports were removed
     if they should be skipped.
+
+    WARN !!!!
+    If the 'files' array in the plist is modified all of the
+    diagnostic section (control, event ...) nodes should be
+    re indexed to use the proper file array indexes!!!
     """
     new_data = {}
     try:
@@ -230,11 +235,6 @@ def remove_report_from_plist(plist_content, skip_handler):
             if f in fids:
                 remove_file = False
                 break
-
-        if remove_file:
-            kept_files = [f for i, f in enumerate(report_data['files'])
-                          if i not in file_ids_to_remove]
-            report_data['files'] = kept_files
 
         new_data = report_data
         res = plistlib.writePlistToString(new_data)
