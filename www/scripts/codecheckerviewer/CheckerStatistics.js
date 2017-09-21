@@ -11,20 +11,29 @@ define([
   'dojo/promise/all',
   'dojo/store/Memory',
   'dojo/store/Observable',
+  'dojo/topic',
   'dojox/form/CheckedMultiSelect',
   'dojox/grid/DataGrid',
   'dijit/layout/ContentPane',
   'codechecker/hashHelper',
   'codechecker/util'],
 function (declare, ItemFileWriteStore, Deferred, all, Memory, Observable,
-  CheckedMultiSelect, DataGrid, ContentPane, hashHelper, util) {
+  topic, CheckedMultiSelect, DataGrid, ContentPane, hashHelper, util) {
 
-  function severityFormatter (severity) {
+  function severityFormatter(severity) {
     var severity = util.severityFromCodeToString(severity);
 
     var title = severity.charAt(0).toUpperCase() + severity.slice(1);
     return '<span title="' + title  + '" class="customIcon icon-severity-'
-      + severity + '"></span>';
+      + severity + '" style="cursor: pointer;"></span>';
+  }
+
+  function checkerNameFormatter(checkerName) {
+    return '<span class="link">' + checkerName + '</span>';
+  }
+
+  function numberFormatter(num) {
+    return !num ? '' : '<span class="link">' + num + '</span>';
   }
 
   var RunFilter = declare(CheckedMultiSelect, {
@@ -100,20 +109,22 @@ function (declare, ItemFileWriteStore, Deferred, all, Memory, Observable,
   });
 
   var CheckerStatistics = declare(DataGrid, {
-    constructor : function () {
+    constructor : function (args) {
+      dojo.safeMixin(this, args);
+
       this.store = new ItemFileWriteStore({
         data : { identifier : 'id', items : [] }
       });
 
       this.structure = [
-        { name : 'Checker', field : 'checker', width : '100%'},
+        { name : 'Checker', field : 'checker', width : '100%', formatter : checkerNameFormatter},
         { name : 'Severity', field : 'severity', styles : 'text-align: center;', width : '15%', formatter : severityFormatter},
-        { name : '<span class="customIcon detection-status-unresolved"></span> All reports', field : 'reports', width : '20%'},
-        { name : '<span class="customIcon detection-status-resolved"></span> Resolved', field : 'resolved', width : '20%'},
-        { name : '<span class="customIcon review-status-unreviewed"></span> Unreviewed', field : 'unreviewed', width : '20%'},
-        { name : '<span class="customIcon review-status-confirmed-bug"></span>Confirmed bug', field : 'confirmed', width : '20%'},
-        { name : '<span class="customIcon review-status-false-positive"></span> False positive', field : 'falsePositive', width : '20%'},
-        { name : "<span class= \"customIcon review-status-intentional\"></span>Intentional", field : 'intentional', width : '20%'}
+        { name : '<span class="customIcon detection-status-unresolved"></span> All reports', field : 'reports', width : '20%', formatter : numberFormatter},
+        { name : '<span class="customIcon detection-status-resolved"></span> Resolved', field : 'resolved', width : '20%', formatter : numberFormatter},
+        { name : '<span class="customIcon review-status-unreviewed"></span> Unreviewed', field : 'unreviewed', width : '20%', formatter : numberFormatter},
+        { name : '<span class="customIcon review-status-confirmed-bug"></span>Confirmed bug', field : 'confirmed', width : '20%', formatter : numberFormatter},
+        { name : '<span class="customIcon review-status-false-positive"></span> False positive', field : 'falsePositive', width : '20%', formatter : numberFormatter},
+        { name : "<span class= \"customIcon review-status-intentional\"></span>Intentional", field : 'intentional', width : '20%', formatter : numberFormatter}
       ];
 
       this.focused = true;
@@ -127,6 +138,83 @@ function (declare, ItemFileWriteStore, Deferred, all, Memory, Observable,
       this.inherited(arguments);
 
       this._populateStatistics();
+    },
+
+    onRowClick : function (evt) {
+      var that = this;
+      var item = this.getItem(evt.rowIndex);
+
+      var runNameFilter = that.bugFilterView._runNameFilter;
+      var checkerNameFilter = that.bugFilterView._checkerNameFilter;
+      var reviewStatusFilter = that.bugFilterView._reviewStatusFilter;
+      var detectionStatusFilter = that.bugFilterView._detectionStatusFilter;
+      var severityFilter = that.bugFilterView._severityFilter;
+
+      var state = that.bugFilterView.clearAll();
+      state[checkerNameFilter.class] = item.checker;
+      state[runNameFilter.class] = this.filterPane.selectedRuns;
+
+      switch (evt.cell.field) {
+        case 'checker':
+          state[reviewStatusFilter.class] =
+          Object.keys(CC_OBJECTS.ReviewStatus).map(function (key) {
+            return reviewStatusFilter.stateConverter(
+              CC_OBJECTS.ReviewStatus[key]);
+          });
+
+          state[detectionStatusFilter.class] =
+          Object.keys(CC_OBJECTS.DetectionStatus).map(function (key) {
+            return detectionStatusFilter.stateConverter(
+              CC_OBJECTS.DetectionStatus[key]);
+          });
+          break;
+        case 'severity':
+          state[severityFilter.class] =
+            severityFilter.stateConverter(item.severity[0]);
+          break;
+        case 'reports':
+          // Show all reports
+          break;
+        case 'resolved':
+          if (!item.resolved[0]) return;
+
+          state[detectionStatusFilter.class] =
+          detectionStatusFilter.stateConverter(
+            CC_OBJECTS.DetectionStatus.RESOLVED);
+          break;
+        case 'unreviewed':
+          if (!item.unreviewed[0]) return;
+
+          state[reviewStatusFilter.class] = reviewStatusFilter.stateConverter(
+            CC_OBJECTS.ReviewStatus.UNREVIEWED);
+          break;
+        case 'confirmed':
+          if (!item.confirmed[0]) return;
+
+          state[reviewStatusFilter.class] = reviewStatusFilter.stateConverter(
+            CC_OBJECTS.ReviewStatus.CONFIRMED);
+          break;
+        case 'falsePositive':
+          if (!item.falsePositive[0]) return;
+
+          state[reviewStatusFilter.class] = reviewStatusFilter.stateConverter(
+            CC_OBJECTS.ReviewStatus.FALSE_POSITIVE);
+          break;
+        case 'intentional':
+          if (!item.intentional[0]) return;
+
+          state[reviewStatusFilter.class] = reviewStatusFilter.stateConverter(
+            CC_OBJECTS.ReviewStatus.INTENTIONAL);
+          break;
+        default:
+          return;
+      }
+
+      topic.publish('tab/allReports');
+      topic.publish('filterchange', {
+        parent : that.bugFilterView,
+        changed : state
+      });
     },
 
     refreshGrid : function (runIds) {
@@ -181,12 +269,12 @@ function (declare, ItemFileWriteStore, Deferred, all, Memory, Observable,
             id            : key,
             checker       : key,
             severity      : checkers[key].severity,
-            reports       : checkers[key].count ? checkers[key].count : '',
-            unreviewed    : res[1][key] !== undefined ? res[1][key].count : '',
-            confirmed     : res[2][key] !== undefined ? res[2][key].count : '',
-            falsePositive : res[3][key] !== undefined ? res[3][key].count : '',
-            intentional   : res[4][key] !== undefined ? res[4][key].count : '',
-            resolved      : res[5][key] !== undefined ? res[5][key].count : ''
+            reports       : checkers[key].count,
+            unreviewed    : res[1][key] !== undefined ? res[1][key].count : 0,
+            confirmed     : res[2][key] !== undefined ? res[2][key].count : 0,
+            falsePositive : res[3][key] !== undefined ? res[3][key].count : 0,
+            intentional   : res[4][key] !== undefined ? res[4][key].count : 0,
+            resolved      : res[5][key] !== undefined ? res[5][key].count : 0
           });
         });
         that.sort();
@@ -195,12 +283,18 @@ function (declare, ItemFileWriteStore, Deferred, all, Memory, Observable,
   });
 
   return declare(ContentPane, {
-    constructor : function () {
-      this._checkerStatistics = new CheckerStatistics();
+    constructor : function (args) {
+      dojo.safeMixin(this, args);
+
+      this._checkerStatistics = new CheckerStatistics({
+        bugFilterView : this.listOfAllReports._bugFilterView
+      });
 
       this._filterPane = new FilterPane({
         dataGrid : this._checkerStatistics
       });
+
+      this._checkerStatistics.set('filterPane', this._filterPane);
     },
 
     postCreate : function () {
