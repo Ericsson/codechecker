@@ -116,7 +116,8 @@ struct RunData {
   4: i64                       duration,     // Duration of the run (-1 if not finished).
   5: i64                       resultCount,  // Number of results in the run.
   6: string                    runCmd,       // The used check command.
-  7: map<DetectionStatus, i32> detectionStatusCount // Number of reports with a particular detection status.
+  7: map<DetectionStatus, i32> detectionStatusCount, // Number of reports with a particular detection status.
+  8: string                    versionTag    // Version tag of the latest run.
 }
 typedef list<RunData> RunDataList
 

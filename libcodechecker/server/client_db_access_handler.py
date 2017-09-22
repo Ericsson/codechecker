@@ -528,7 +528,18 @@ class ThriftRequestHandler(object):
                 .group_by(Report.run_id) \
                 .subquery()
 
-            q = session.query(Run, stmt.c.report_count)
+            tag_q = session.query(RunHistory.run_id,
+                                  func.max(RunHistory.id).label(
+                                      'run_history_id'),
+                                  func.max(RunHistory.time).label(
+                                      'run_history_time')) \
+                .filter(RunHistory.version_tag.isnot(None)) \
+                .group_by(RunHistory.run_id) \
+                .subquery()
+
+            q = session.query(Run,
+                              RunHistory.version_tag,
+                              stmt.c.report_count)
 
             if run_filter is not None:
                 if run_filter.ids is not None:
@@ -542,6 +553,12 @@ class ThriftRequestHandler(object):
                         q = q.filter(or_(*OR))
 
             q = q.outerjoin(stmt, Run.id == stmt.c.run_id) \
+                .outerjoin(tag_q, Run.id == tag_q.c.run_id) \
+                .outerjoin(RunHistory,
+                           RunHistory.id == tag_q.c.run_history_id) \
+                .group_by(Run.id,
+                          RunHistory.version_tag,
+                          stmt.c.report_count) \
                 .order_by(Run.date)
 
             status_q = session.query(Report.run_id,
@@ -556,7 +573,7 @@ class ThriftRequestHandler(object):
 
             results = []
 
-            for instance, reportCount in q:
+            for instance, version_tag, reportCount in q:
                 if reportCount is None:
                     reportCount = 0
 
@@ -566,8 +583,8 @@ class ThriftRequestHandler(object):
                                        instance.duration,
                                        reportCount,
                                        instance.command,
-                                       status_sum[instance.id]
-                                       ))
+                                       status_sum[instance.id],
+                                       version_tag))
             return results
 
         except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
