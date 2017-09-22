@@ -72,7 +72,6 @@ function (declare, domConstruct, ItemFileWriteStore, topic, Dialog, Button,
 
       this.structure = [
         { name : 'Diff', field : 'diff', styles : 'text-align: center;', formatter : diffBtnFormatter},
-        { name : 'Run Id', field : 'runid', styles : 'text-align: center;' },
         { name : 'Name', field : 'name', styles : 'text-align: left;', width : '100%' },
         { name : 'Date', field : 'date', styles : 'text-align: center;', width : '30%' },
         { name : 'Number of bugs', field : 'numberofbugs', styles : 'text-align: center;', width : '20%' },
@@ -92,7 +91,7 @@ function (declare, domConstruct, ItemFileWriteStore, topic, Dialog, Button,
 
     postCreate : function () {
       this.inherited(arguments);
-      this.layout.setColumnVisibility(8, this.get('showDelete'));
+      this.layout.setColumnVisibility(7, this.get('showDelete'));
       this._populateRuns();
     },
 
