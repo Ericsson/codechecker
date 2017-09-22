@@ -119,7 +119,7 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
         runResultParam.runIds,
         CC_OBJECTS.MAX_QUERY_SIZE,
         options.start,
-        (options.sort || []).map(this._toSortMode),
+        options.sort ? options.sort.map(this._toSortMode) : null,
         query.reportFilters,
         runResultParam.cmpData,
         function (reportDataList) {
