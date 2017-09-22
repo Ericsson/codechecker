@@ -224,10 +224,16 @@ function (declare, topic, domConstruct, Dialog, DropDownMenu, MenuItem,
 
     runsTab.addChild(listOfRuns);
 
+    var listOfAllReports = new ListOfBugs({
+      title : 'All reports',
+      allReportView : true
+    });
+
     //--- Check static tab ---//
 
     var checkerStatisticsTab = new CheckerStatistics({
       title : 'Checker statistics',
+      listOfAllReports : listOfAllReports,
       onShow : function () {
         hashHelper.resetStateValues({
           'tab' : 'statistics',
@@ -236,12 +242,6 @@ function (declare, topic, domConstruct, Dialog, DropDownMenu, MenuItem,
       }
     });
     runsTab.addChild(checkerStatisticsTab);
-
-    var listOfAllReports = new ListOfBugs({
-      title : 'All reports',
-      allReportView : true
-    });
-
     runsTab.addChild(listOfAllReports);
 
     //--- Init page ---//
