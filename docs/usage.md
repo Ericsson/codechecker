@@ -83,7 +83,7 @@ The default protocol is `http`.
 See  [user guide](/docs/user_guide.md#product_url-format ) for detailed description of the `PRODUCT_URL` format.
 
 3. View the results in your web browser
- http://localhost:8555
+ http://localhost:8555/Default
 
 ## Step4: Fine tune Analysis configuration
 ### Ignore modules from your analysis 
@@ -169,18 +169,18 @@ For example to analyze `tmux` project daily.
 ```
 3. Store the analysis results into the central database.
 ```
- CodeChecker store ./reports --host codechecker.central --port 8555 --name tmux_master_2017_08_28
+ CodeChecker store ./reports --url http://localhost:8555/Default --name tmux_master_2017_08_28
 ```
 
 and the next day repeat **Step 1** to **Step 4** and store the results under run name `tmux_master_2017_08_29`.
 
 Then you can query newly introduced bugs in the following way.
 ```
- CodeChecker cmd diff -b tmux_master_2017_08_28 -n tmux_master_2017_08_29  --new --host codechecker.central --port 8555
+ CodeChecker cmd diff -b tmux_master_2017_08_28 -n tmux_master_2017_08_29 --new --url http://localhost:8555/Default
 ```
 If you would like to generate a report page out of this using a script, you can get the results in `json` format too:
 ```
- CodeChecker cmd diff -b tmux_master_2017_08_28 -n tmux_master_2017_08_29  --new --host codechecker.central --port 8555 -o json
+ CodeChecker cmd diff -b tmux_master_2017_08_28 -n tmux_master_2017_08_29 --new --url http://localhost:8555/Default -o json
 ```
 
 *Note:* Don't forget to delete old runs you don't need to save database space.
@@ -213,7 +213,7 @@ Let's assume that the working directory is `tmux` containing John Doe's modifica
 ```
 3. Check for new bugs in the run
 ```
- CodeChecker cmd diff -b tmux_master -n ./reports-john-doe --new --host codechecker.central --port 8555
+ CodeChecker cmd diff -b tmux_master -n ./reports-john-doe --new --url http://localhost:8555/Default
 ```
 
 If new bugs were found, reject the commit and send an email with the new bugs to John.
@@ -224,7 +224,7 @@ If no new bugs were found:
 	
 5. Update the analysis results according to the new code version:
 ```
- CodeChecker store ./reports-john-doe --host codechecker.central --port 8555 --name tmux_master
+ CodeChecker store ./reports-john-doe --url http://localhost:8555/Default --name tmux_master
 ```
 
 If John finds a false positive report in his code and so the CI loop would prevent the merge of his pull request,
@@ -255,6 +255,6 @@ is store already under run name ``tmux_master``.
 ```
 4. Compare your local analysis to the central one
 ```
- CodeChecker cmd diff -b tmux_master -n ./reports --new --host codechecker.central --port 8555
+ CodeChecker cmd diff -b tmux_master -n ./reports --new --url http://localhost:8555/Default
 ```
 
