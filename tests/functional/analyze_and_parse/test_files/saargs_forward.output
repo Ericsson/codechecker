@@ -17,7 +17,7 @@ CHECK#CodeChecker check --build "make saargs_forward" --output $OUTPUT$ --quiet 
 [] - To store results use the "CodeChecker store" command.
 [] - See --help and the user guide for further options about parsing and storing the reports.
 [] - ----=================----
-saargs_forward.cpp:11:10: Dereference of null pointer (loaded from variable 'ptr') [core.NullDereference]
+[HIGH] saargs_forward.cpp:11:10: Dereference of null pointer (loaded from variable 'ptr') [core.NullDereference]
   return *ptr;
          ^
 

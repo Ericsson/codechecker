@@ -17,7 +17,7 @@ CHECK#CodeChecker check --build "make simple2" --output $OUTPUT$ --quiet --analy
 [] - To store results use the "CodeChecker store" command.
 [] - See --help and the user guide for further options about parsing and storing the reports.
 [] - ----=================----
-simple2.cpp:17:14: Division by zero [core.DivideZero]
+[HIGH] simple2.cpp:17:14: Division by zero [core.DivideZero]
   return 2015 / x;
               ^
   Steps:
