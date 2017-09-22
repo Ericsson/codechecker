@@ -471,7 +471,7 @@ class ThriftRequestHandler(object):
     def __require_store(self):
         self.__require_permission([permissions.PRODUCT_STORE])
 
-    def __sortResultsQuery(self, query, sort_types=None):
+    def __sortResultsQuery(self, query, sort_types=None, is_unique=False):
         """
         Helper method for __queryDiffResults and queryResults to apply sorting.
         """
@@ -483,11 +483,15 @@ class ThriftRequestHandler(object):
                          SortType.REVIEW_STATUS: [ReviewStatus.status],
                          SortType.DETECTION_STATUS: [Report.detection_status]}
 
+        if is_unique:
+            sort_type_map[SortType.FILENAME] = [File.filename]
+            sort_type_map[SortType.DETECTION_STATUS] = []
+
         # Mapping the SQLAlchemy functions.
         order_type_map = {Order.ASC: asc, Order.DESC: desc}
 
         if sort_types is None:
-            sort_types = [SortMode(SortType.FILENAME, Order.ASC)]
+            sort_types = [SortMode(SortType.SEVERITY, Order.DESC)]
 
         for sort in sort_types:
             sorttypes = sort_type_map.get(sort.type)
@@ -683,6 +687,8 @@ class ThriftRequestHandler(object):
             q = get_run_result_query_helper(session, run_ids, report_filter,
                                             is_unique)
 
+            q = self.__sortResultsQuery(q, sort_types, is_unique)
+
             # This is needed to resolved pgsql DISTINCT expressions must match
             # initial ORDER BY expressions problem.
             if is_unique:
@@ -692,8 +698,6 @@ class ThriftRequestHandler(object):
                                Report.severity,
                                File.filename,
                                ReviewStatus.status)
-
-            q = self.__sortResultsQuery(q, sort_types)
 
             if cmp_data:
                 q = q.filter(Report.bug_id.in_(diff_hashes))
