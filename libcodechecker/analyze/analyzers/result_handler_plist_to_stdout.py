@@ -5,6 +5,7 @@
 # -------------------------------------------------------------------------
 
 from abc import ABCMeta
+from collections import defaultdict
 import linecache
 import math
 import os
@@ -76,7 +77,11 @@ class PlistToStdout(ResultHandler):
                                      loc['col'],
                                      event['message'])
 
-    def __print_bugs(self, reports, files):
+    def __print_bugs(self, reports, files, report_stats):
+
+        severity_stats = defaultdict(int)
+        file_stats = defaultdict(int)
+        report_count = defaultdict(int)
 
         report_num = len(reports)
         if report_num > 0:
@@ -123,8 +128,11 @@ class PlistToStdout(ResultHandler):
 
                 continue
 
+            file_stats[f_path] += 1
             severity = self.severity_map.get(checker_name,
                                              'UNSPECIFIED')
+            severity_stats[severity] += 1
+            report_count["report_count"] += 1
 
             self.__output.write(self.__format_bug_event(checker_name,
                                                         severity,
@@ -161,8 +169,14 @@ class PlistToStdout(ResultHandler):
                 'Found %d defect(s) while analyzing%s\n\n' %
                 (non_suppressed, basefile_print))
 
+        report_stats["severity"] = severity_stats
+        report_stats["files"] = file_stats
+        report_stats["reports"] = report_count
+
     def handle_results(self, client=None):
         plist = self.analyzer_result_file
+
+        report_stats = {}
 
         try:
             files, reports = plist_parser.parse_plist(plist)
@@ -178,7 +192,7 @@ class PlistToStdout(ResultHandler):
                 # No lock when consuming plist.
                 if self.__lock:
                     self.__lock.acquire()
-                self.__print_bugs(reports, files)
+                self.__print_bugs(reports, files, report_stats)
             finally:
                 if self.__lock:
                     self.__lock.release()
@@ -186,7 +200,7 @@ class PlistToStdout(ResultHandler):
             self.__output.write('Analyzing %s with %s failed.\n' %
                                 (os.path.basename(self.analyzed_source_file),
                                  self.buildaction.analyzer_type))
-        return err_code
+        return report_stats
 
     def postprocess_result(self):
         """

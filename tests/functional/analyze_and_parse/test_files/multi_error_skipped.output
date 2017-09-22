@@ -15,3 +15,8 @@ CHECK#CodeChecker check --build "make multi_error" --output $OUTPUT$ --quiet --a
 [] - To store results use the "CodeChecker store" command.
 [] - See --help and the user guide for further options about parsing and storing the reports.
 [] - ----=================----
+
+----==== Summary ====----
+----=================----
+Total number of reports: 0
+----=================----

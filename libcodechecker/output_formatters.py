@@ -8,17 +8,20 @@ Contains functions to format and pretty-print data from two-dimensional arrays.
 """
 
 import json
+from operator import itemgetter
 
 # The supported formats the users should specify. (This is not an exhaustive
 # list of ALL formats available.)
 USER_FORMATS = ['rows', 'table', 'csv', 'json']
 
 
-def twodim_to_str(format, keys, rows):
+def twodim_to_str(format, keys, rows, sortby_column_number=None, rev=False):
     """
     Converts the given two-dimensional array (with the specified keys)
     to the given format.
     """
+    if sortby_column_number is not None:
+        rows.sort(key=itemgetter(sortby_column_number), reverse=rev)
 
     all_rows = rows
     if keys is not None and len(keys) > 0:
@@ -87,7 +90,7 @@ def twodim_to_table(lines, separate_head=True):
     # Count the column width.
     widths = []
     for line in lines:
-        for i, size in enumerate([len(x) for x in line]):
+        for i, size in enumerate([len(str(x)) for x in line]):
             while i >= len(widths):
                 widths.append(0)
             if size > widths[i]:

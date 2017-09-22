@@ -27,3 +27,19 @@ CHECK#CodeChecker check --build "make multi_error" --output $OUTPUT$ --quiet --a
 
 Found 2 defect(s) while analyzing multi_error.cpp
 
+
+----==== Summary ====----
+------------------------------
+Filename        | Report count
+------------------------------
+multi_error.cpp |            2
+------------------------------
+-----------------------
+Severity | Report count
+-----------------------
+HIGH     |            1
+LOW      |            1
+-----------------------
+----=================----
+Total number of reports: 2
+----=================----
