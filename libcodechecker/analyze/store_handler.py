@@ -254,13 +254,15 @@ def addCheckerRun(session, storage_session, command, name, tag, username,
         LOG.debug("adding run to the history")
 
         if tag is not None:
-            version_tag = session.query(RunHistory) \
+            run_history = session.query(RunHistory) \
                 .filter(RunHistory.run_id == run_id,
                         RunHistory.version_tag == tag) \
                 .one_or_none()
 
-            if version_tag:
-                raise Exception('Tag ' + tag + ' is already used in this run')
+            if run_history:
+                run_history.version_tag = None
+                session.add(run_history)
+                session.flush()
 
         run_history = RunHistory(run_id, tag, username, run_history_time)
         session.add(run_history)
