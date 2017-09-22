@@ -17,7 +17,7 @@ CHECK#CodeChecker check --build "make tidy_check" --output $OUTPUT$ --quiet --an
 [] - To store results use the "CodeChecker store" command.
 [] - See --help and the user guide for further options about parsing and storing the reports.
 [] - ----=================----
-tidy_check.cpp:5:5: found assert() with side effect [misc-assert-side-effect]
+[MEDIUM] tidy_check.cpp:5:5: found assert() with side effect [misc-assert-side-effect]
     assert(++i);
     ^
 

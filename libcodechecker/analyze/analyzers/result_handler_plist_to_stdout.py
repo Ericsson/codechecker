@@ -59,16 +59,17 @@ class PlistToStdout(ResultHandler):
         return '%s%s^' % (line.replace('\t', '  '), marker_line)
 
     @staticmethod
-    def __format_bug_event(name, event, source_file):
+    def __format_bug_event(name, severity, event, source_file):
 
         loc = event['location']
         fname = os.path.basename(source_file)
         if name:
-            return '%s:%d:%d: %s [%s]' % (fname,
-                                          loc['line'],
-                                          loc['col'],
-                                          event['message'],
-                                          name)
+            return '[%s] %s:%d:%d: %s [%s]' % (severity,
+                                               fname,
+                                               loc['line'],
+                                               loc['col'],
+                                               event['message'],
+                                               name)
         else:
             return '%s:%d:%d: %s' % (fname,
                                      loc['line'],
@@ -123,7 +124,11 @@ class PlistToStdout(ResultHandler):
 
                 continue
 
+            severity = self.severity_map.get(checker_name,
+                                             'UNSPECIFIED')
+
             self.__output.write(self.__format_bug_event(checker_name,
+                                                        severity,
                                                         last_report_event,
                                                         source_file))
             self.__output.write('\n')
@@ -135,7 +140,9 @@ class PlistToStdout(ResultHandler):
                 for index, event in enumerate(events):
                     self.__output.write(index_format % (index + 1))
                     source_file = files[event['location']['file']]
-                    self.__output.write(self.__format_bug_event(None, event,
+                    self.__output.write(self.__format_bug_event(None,
+                                                                None,
+                                                                event,
                                                                 source_file))
                     self.__output.write('\n')
             self.__output.write('\n')
