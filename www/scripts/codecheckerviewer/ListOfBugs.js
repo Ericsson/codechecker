@@ -360,7 +360,7 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
         }
       });
 
-      this._bugViewerIdToTab = {};
+      this._bugViewerHashToTab = {};
       this._tab = null;
 
       this._subscribeTopics();
@@ -412,9 +412,6 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
         var getAndUseReportHash = reportHash && (!reportData ||
           reportData.reportId === null || reportData.bugHash !== reportHash);
 
-        var reportFilters = that._bugFilterView.getReportFilters();
-        var runResultParam = createRunResultFilterParameter(reportFilters);
-
         if (getAndUseReportHash) {
           // Get all reports by report hash
           var reportFilter = new CC_OBJECTS.ReportFilter();
@@ -425,13 +422,11 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
             0, null, reportFilter, null);
           reportData = reports[0];
           runData = getRunData(reportData.runId);
-          runResultParam.runIds = [reportData.runId];
         }
 
-        if (that._bugViewerIdToTab[reportData.reportId]) {
-          that.selectChild(that._bugViewerIdToTab[reportData.reportId]);
-          return;
-        }
+        var reportFilters = that._bugFilterView.getReportFilters();
+        var runResultParam = createRunResultFilterParameter(reportFilters);
+        runResultParam.runIds = [reportData.runId];
 
         var filename = reportData.checkedFile.substr(
           reportData.checkedFile.lastIndexOf('/') + 1);
@@ -453,16 +448,20 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
               hashHelper.setStateValue('report', reportData.reportId);
           },
           onClose : function () {
-            delete that._bugViewerIdToTab[reportData.reportId];
+            delete that._bugViewerHashToTab[reportData.bugHash];
             topic.publish('subtab/bugOverview');
 
             return true;
           }
         });
-        that._bugViewerIdToTab[reportData.reportId] = bugViewer;
-
         that.addChild(bugViewer);
         that.selectChild(bugViewer);
+
+        // Remove the old child with the same report hash if it's exists
+        if (that._bugViewerHashToTab[reportData.bugHash])
+          that.removeChild(that._bugViewerHashToTab[reportData.bugHash]);
+
+        that._bugViewerHashToTab[reportData.bugHash] = bugViewer;
 
         topic.publish('showComments', reportData.reportId, bugViewer._editor);
       });
