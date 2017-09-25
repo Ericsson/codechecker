@@ -1731,56 +1731,41 @@ class ThriftRequestHandler(object):
         # Storing file contents from plist.
         file_path_to_id = {}
 
-        _, _, report_files = next(os.walk(report_dir), ([], [], []))
-        for f in report_files:
-            if not f.endswith('.plist'):
+        for file_name, file_hash in filename2hash.items():
+            source_file_name = os.path.join(source_root,
+                                            file_name.strip("/"))
+            source_file_name = os.path.realpath(source_file_name)
+            LOG.debug("Storing source file: " + source_file_name)
+
+            if not os.path.isfile(source_file_name):
+                # The file was not in the ZIP file, because we already have the
+                # content. Let's check if we already have a file record in the
+                # database or we need to add one.
+
+                LOG.debug(file_name + ' not found or already stored.')
+                fid = store_handler.addFileRecord(self.__Session(),
+                                                  file_name,
+                                                  file_hash)
+                if not fid:
+                    LOG.error("File ID for " + source_file_name +
+                              " is not found in the DB with content hash " +
+                              file_hash +
+                              ". Missing from ZIP?")
+                file_path_to_id[file_name] = fid
+                LOG.debug(str(fid) + " fileid found")
                 continue
 
-            LOG.debug("Parsing input file '" + f + "'")
+            with codecs.open(source_file_name, 'r',
+                             'UTF-8', 'replace') as source_file:
+                file_content = source_file.read()
+                file_content = codecs.encode(file_content, 'utf-8')
 
-            try:
-                files, _ = plist_parser.parse_plist(
-                    os.path.join(report_dir, f))
-            except Exception as ex:
-                LOG.error('Parsing the plist failed: ' + str(ex))
-                continue
-
-            for file_name in files:
-                source_file_name = os.path.join(source_root,
-                                                file_name.strip("/"))
-                source_file_name = os.path.realpath(source_file_name)
-                LOG.debug("Storing source file:"+source_file_name)
-
-                if not os.path.isfile(source_file_name):
-                    # The file was not in the ZIP file,
-                    # because we already have the content.
-                    # Let's check if we already have a
-                    # file record in the database or we need to
-                    # add one.
-
-                    LOG.debug(file_name + ' not found or already stored.')
-                    fid = store_handler.addFileRecord(self.__Session(),
-                                                      file_name,
-                                                      filename2hash[file_name])
-                    if not fid:
-                        LOG.error("File ID for " + source_file_name +
-                                  "is not found in the DB with content hash " +
-                                  filename2hash[file_name] +
-                                  ". Missing from ZIP?")
-                    file_path_to_id[file_name] = fid
-                    LOG.debug(str(fid) + " fileid found")
-                    continue
-
-                with codecs.open(source_file_name, 'r',
-                                 'UTF-8', 'replace') as source_file:
-                    file_content = source_file.read()
-                    file_content = codecs.encode(file_content, 'utf-8')
-
-                    file_path_to_id[file_name] = \
-                        store_handler.addFileContent(self.__Session(),
-                                                     file_name,
-                                                     file_content,
-                                                     None)
+                file_path_to_id[file_name] = \
+                    store_handler.addFileContent(self.__Session(),
+                                                 file_name,
+                                                 file_content,
+                                                 file_hash,
+                                                 None)
 
         user = self.__auth_session.user \
             if self.__auth_session else 'Anonymous'

@@ -414,10 +414,12 @@ def addReport(storage_session,
             str(ex))
 
 
-def addFileContent(session, filepath, content, encoding):
+def addFileContent(session, filepath, content, content_hash, encoding):
     """
     Add the necessary file contents. If the file is already stored in the
-    database then its ID returns.
+    database then its ID returns. If content_hash in None then this function
+    calculates the content hash. Or if is available at the caller and is
+    provided then it will not be calculated again.
 
     This function must not be called between addCheckerRun() and
     finishCheckerRun() functions when SQLite database is used! addCheckerRun()
@@ -430,9 +432,10 @@ def addFileContent(session, filepath, content, encoding):
         if encoding == ttypes.Encoding.BASE64:
             content = base64.b64decode(content)
 
-        hasher = sha256()
-        hasher.update(content)
-        content_hash = hasher.hexdigest()
+        if not content_hash:
+            hasher = sha256()
+            hasher.update(content)
+            content_hash = hasher.hexdigest()
 
         file_content = session.query(FileContent).get(content_hash)
         if not file_content:
