@@ -347,7 +347,6 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
 
     constructor : function (args) {
       dojo.safeMixin(this, args);
-      this.inherited(arguments);
 
       var that = this;
 
@@ -916,6 +915,58 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
     }
   });
 
+  var RunFilterBase = declare(SelectFilter, {
+    enableSearch : true,
+    filterLabel  : 'Search for run names...',
+
+    getItems : function () {
+      var self = this;
+      var deferred = new Deferred();
+
+      var reportFilter = this.parent.getReportFilters();
+      CC_SERVICE.getRunReportCounts(null, reportFilter, function (res) {
+        deferred.resolve(self.createItem(res));
+      });
+
+      return deferred;
+    },
+    createItem : function (runReportCounts) {
+      return runReportCounts.map(function (run) {
+          return {
+            label : run.name,
+            value : run.runId,
+            count : run.reportCount
+          };
+        });
+    },
+    stateConverter : function (value) {
+      var item = this._items.filter(function (item) {
+        return item.value === value;
+      });
+
+      return item.length ? item[0].label : null;
+    },
+    stateDecoder : function (key) {
+      // If no item is available, get items from the server to decode URL
+      // value.
+      if (!this._items) {
+        var runs = this.parent.getRunIds();
+        var reportFilter = this.parent.getReportFilters();
+
+        var res =
+          CC_SERVICE.getRunReportCounts(runs.baseline, reportFilter);
+
+        this._items = this.createItem(res);
+      }
+
+      var item = this._items.filter(function (item) {
+        return item.label === key;
+      });
+
+      return item.length ? item[0].value : null;
+    }
+  });
+
   return declare(ContentPane, {
     constructor : function (args) {
       dojo.safeMixin(this, args);
@@ -972,62 +1023,43 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
 
       //--- Normal or Diff view filters ---//
 
-      if (this.baseline || this.newcheck || this.difftype) {
-        this._runNameBaseFilter = new SelectFilter({
+      if (this.diffView) {
+        this._runNameBaseFilter = new RunFilterBase({
           class    : 'baseline',
           title    : 'Baseline',
           parent   : this,
           getSkippedValues : function () {
             return Object.keys(this.runNameNewCheckFilter._selectedFilterItems);
-          },
-          getItems : function () {
-            var deferred = new Deferred();
-
-            var reportFilter = that.getReportFilters();
-            CC_SERVICE.getRunReportCounts(null, reportFilter,
-            function (res) {
-              deferred.resolve(res.map(function (runReportCount) {
-                return {
-                  label : runReportCount.name,
-                  value : runReportCount.runId,
-                  count : runReportCount.reportCount
-                };
-              }));
-            });
-
-            return deferred;
-          },
-          enableSearch : true,
-          filterLabel  : 'Search for run names...'
+          }
         });
         this._filters.push(this._runNameBaseFilter);
 
-        this._runNameNewCheckFilter = new SelectFilter({
+        this._runNameNewCheckFilter = new RunFilterBase({
           class    : 'newcheck',
           title    : 'Newcheck',
           parent   : this,
           getSkippedValues : function () {
             return Object.keys(that._runNameBaseFilter._selectedFilterItems);
           },
-          getItems : function () {
-            var deferred = new Deferred();
+          stateDecoder : function (key) {
+            // If no item is available, get items from the server to decode URL
+            // value.
+            if (!this._items) {
+              var runs = this.parent.getRunIds();
+              var reportFilter = this.parent.getReportFilters();
 
-            var reportFilter = that.getReportFilters();
-            CC_SERVICE.getRunReportCounts(null, reportFilter,
-            function (res) {
-              deferred.resolve(res.map(function (runReportCount) {
-                return {
-                  label : runReportCount.name,
-                  value : runReportCount.runId,
-                  count : runReportCount.reportCount
-                };
-              }));
+              var res =
+                CC_SERVICE.getRunReportCounts(runs.newcheck, reportFilter);
+
+              this._items = this.createItem(res);
+            }
+
+            var item = this._items.filter(function (item) {
+              return item.label === key;
             });
 
-            return deferred;
-          },
-          enableSearch : true,
-          filterLabel  : 'Search for run names...'
+            return item.length ? item[0].value : null;
+          }
         });
         this._filters.push(this._runNameNewCheckFilter);
 
@@ -1098,29 +1130,10 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
         });
         this._filters.push(this._diffTypeFilter);
       } else {
-        this._runNameFilter = new SelectFilter({
+        this._runNameFilter = new RunFilterBase({
           class    : 'run',
           title    : 'Run name',
-          parent   : this,
-          getItems : function () {
-            var deferred = new Deferred();
-
-            var reportFilter = that.getReportFilters();
-            CC_SERVICE.getRunReportCounts(null, reportFilter,
-            function (res) {
-              deferred.resolve(res.map(function (runReportCount) {
-                return {
-                  label : runReportCount.name,
-                  value : runReportCount.runId,
-                  count : runReportCount.reportCount
-                };
-              }));
-            });
-
-            return deferred;
-          },
-          enableSearch : true,
-          filterLabel  : 'Search for run names...'
+          parent   : this
         });
         this._filters.push(this._runNameFilter);
       }
@@ -1423,26 +1436,21 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
 
       var state = hashHelper.getState();
 
-      if (this.runData || this.diffView || state.tab === 'allReports') {
-        if (this.runData && !state.run)
-          state.run = this.runData.runId;
-        else if ((this.baseline && !state.baseline) ||
-          (this.newcheck && !state.newcheck)) {
-          if (this.baseline)
-            state.baseline = this.baseline.runId;
-          if (this.newcheck)
-            state.newcheck = this.newcheck.runId;
-          state.difftype = this.difftype || CC_OBJECTS.DiffType.NEW;
+      if (state.tab === undefined || state.tab === this.parent.tab) {
+        if (this.runData || this.diffView || state.tab === 'allReports') {
+          if (this.runData && !state.run)
+            state.run = this.runData.name;
+          else if ((this.baseline && !state.baseline) ||
+            (this.newcheck && !state.newcheck)) {
+            if (this.baseline)
+              state.baseline = this.baseline.name;
+            if (this.newcheck)
+              state.newcheck = this.newcheck.name;
+            state.difftype = this.difftype || CC_OBJECTS.DiffType.NEW;
+          }
         }
       } else {
-        //--- All report tab case ---//
-
-        if (state.report === undefined && state.reportHash === undefined) {
-          state = {};
-        } else {
-          hashHelper.setStateValue('tab', 'allReports');
-          topic.publish('tab/allReports');
-        }
+        state = {};
       }
 
       this.refreshFilters(state, true);
@@ -1669,16 +1677,10 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
     },
 
     _updateTitle : function () {
-      if (this.runData) {
-        var items = this._runNameFilter.getSelectedItem();
+      if (this.allReportView)
+        return;
 
-        if (!items.length)
-          this.parent.set('title', 'All reports');
-        else if (items.length === 1)
-          this.parent.set('title', items[0] ? items[0].label : 'Unknown run');
-        else
-          this.parent.set('title', 'Multiple runs');
-      } else if (this.baseline || this.newchek) {
+      if (this.diffView) {
         var baseline = this._runNameBaseFilter.getSelectedItem();
         var newcheck = this._runNameNewCheckFilter.getSelectedItem();
 
@@ -1689,6 +1691,15 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
         else {
           this.parent.set('title', 'Diff of multiple runs');
         }
+      } else {
+        var items = this._runNameFilter.getSelectedItem();
+
+        if (!items.length)
+          this.parent.set('title', 'All reports');
+        else if (items.length === 1)
+          this.parent.set('title', items[0] ? items[0].label : 'Unknown run');
+        else
+          this.parent.set('title', 'Multiple runs');
       }
     },
 

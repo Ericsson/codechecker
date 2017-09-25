@@ -39,6 +39,7 @@ function (declare, ItemFileWriteStore, Deferred, all, Memory, Observable,
   var RunFilter = declare(CheckedMultiSelect, {
     _updateSelection: function() {
       this.inherited(arguments);
+
       if(this.dropDown && this.dropDownButton){
         var label = '';
 
@@ -66,7 +67,14 @@ function (declare, ItemFileWriteStore, Deferred, all, Memory, Observable,
         dropDown  : true,
         onChange  : function (state) {
           that.selectedRuns = state;
-          that.dataGrid.refreshGrid(state);
+
+          var runIds = [];
+          this.store.query({}).forEach(function (item) {
+            if (state.indexOf(item.label) !== -1)
+              runIds.push(item.value);
+          });
+
+          that.dataGrid.refreshGrid(runIds);
           hashHelper.setStateValue('run', state);
         }
       });
@@ -80,8 +88,8 @@ function (declare, ItemFileWriteStore, Deferred, all, Memory, Observable,
       var state = hashHelper.getValues();
       if (state.tab === 'statistics' && state.run)
         this.selectedRuns = state.run instanceof Array
-          ? state.run.map(function (run) { return parseInt(run); })
-          : [parseInt(state.run)];
+          ? state.run.map(function (run) { return run; })
+          : [state.run];
 
       this.loadRunStoreData();
     },
@@ -97,7 +105,11 @@ function (declare, ItemFileWriteStore, Deferred, all, Memory, Observable,
 
           return 0;
         }).forEach(function (run) {
-          that._runStore.put({id : run.runId, label : run.name});
+          that._runStore.put({
+            id : run.name,
+            label : run.name,
+            value : run.runId
+          });
         });
 
         if (!that.selectedRuns)

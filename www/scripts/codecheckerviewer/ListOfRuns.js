@@ -101,7 +101,7 @@ function (declare, domConstruct, ItemFileWriteStore, topic, Dialog, Button,
 
       switch (evt.cell.field) {
         case 'name':
-          topic.publish('openRun', item.runData[0]);
+          topic.publish('openRun', { runData : item.runData[0] });
           break;
 
         case 'del':
@@ -194,6 +194,8 @@ function (declare, domConstruct, ItemFileWriteStore, topic, Dialog, Button,
           topic.publish("hooks/run/Observed", item);
           that._addRunData(item);
         });
+
+        that.render();
       });
     },
 

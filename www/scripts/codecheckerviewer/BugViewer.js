@@ -131,7 +131,8 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
       this._sameReportSelector = new Select({
         class : 'same-report-selector',
         onChange : function (reportId) {
-          topic.publish('openFile', reportId, this.reportIdToRun[reportId]);
+          topic.publish('openFile', reportId, this.reportIdToRun[reportId],
+            null, that.listOfBugsGrid);
         },
 
         refreshOptions : function (reportData) {
@@ -1113,7 +1114,8 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
       this._editor = new Editor({
         region : 'center',
         reportData : this.reportData,
-        runData : this.runData
+        runData : this.runData,
+        listOfBugsGrid : this.listOfBugsGrid
       });
 
       CC_SERVICE.getSourceFileData(this.reportData.fileId, true, null,
