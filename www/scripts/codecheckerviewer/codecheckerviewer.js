@@ -27,9 +27,9 @@ function (declare, topic, domConstruct, Dialog, DropDownMenu, MenuItem,
 
   var runDataList = null;
 
-  function findRunData(runId) {
+  function findRunData(runName) {
     return util.findInArray(runDataList, function (runData) {
-      return runData.runId === runId;
+      return runData.name === runName;
     });
   }
 
@@ -38,23 +38,33 @@ function (declare, topic, domConstruct, Dialog, DropDownMenu, MenuItem,
 
     switch (state.tab) {
       case undefined:
-        topic.publish('tab/listOfRuns');
+        if (state.run || state.baseline || state.newcheck || state.difftype ||
+          state.reportHash || state.report)
+          topic.publish('tab/allReports');
+        else
+          topic.publish('tab/listOfRuns');
         return;
       case 'statistics':
         topic.publish('tab/checkerStatistics');
         return;
       case 'allReports':
         topic.publish('tab/allReports');
-        break;
+        return;
     }
 
-    if (state.tab !== 'allReports' && state.run) {
-      topic.publish('openRun', findRunData(parseInt(state.run)));
-    } else if (state.baseline || state.newcheck || state.difftype) {
+    var runs = state.tab.split('_diff_');
+    if (runs.length == 2) {
       topic.publish('openDiff', {
-        baseline : findRunData(parseInt(state.baseline)),
-        newcheck : findRunData(parseInt(state.newcheck)),
+        tabData  : { baseline : findRunData(runs[0]),
+                     newcheck : findRunData(runs[1]) },
+        baseline : findRunData(state.baseline),
+        newcheck : findRunData(state.newcheck),
         difftype : state.difftype ? state.difftype : CC_OBJECTS.DiffType.NEW
+      });
+    } else {
+      topic.publish('openRun', {
+        tabData : findRunData(runs[0]),
+        runData : findRunData(state.run)
       });
     }
   }
@@ -226,7 +236,8 @@ function (declare, topic, domConstruct, Dialog, DropDownMenu, MenuItem,
 
     var listOfAllReports = new ListOfBugs({
       title : 'All reports',
-      allReportView : true
+      allReportView : true,
+      tab : 'allReports'
     });
 
     //--- Check static tab ---//
@@ -253,37 +264,44 @@ function (declare, topic, domConstruct, Dialog, DropDownMenu, MenuItem,
 
     var runIdToTab = {};
 
-    topic.subscribe('openRun', function (runData, filters) {
-      if (!(runData.runId in runIdToTab)) {
-        runIdToTab[runData.runId] = new ListOfBugs({
-          runData : runData,
-          title : runData.name,
-          filters : filters,
+    topic.subscribe('openRun', function (param) {
+      var tabData = param.tabData ? param.tabData : param.runData;
+
+      if (!(tabData.runId in runIdToTab)) {
+        runIdToTab[tabData.runId] = new ListOfBugs({
+          runData : param.runData,
+          title : tabData.name,
           closable : true,
+          tab : tabData.name,
           onClose : function () {
-            delete runIdToTab[runData.runId];
+            delete runIdToTab[tabData.runId];
             return true;
           }
         });
 
-        runsTab.addChild(runIdToTab[runData.runId]);
+        runsTab.addChild(runIdToTab[tabData.runId]);
       }
 
-      runsTab.selectChild(runIdToTab[runData.runId]);
+      runsTab.selectChild(runIdToTab[tabData.runId]);
     });
 
-    topic.subscribe('openDiff', function (diff, filters) {
-      var tabId = (diff.baseline ? diff.baseline.runId : 'All') + ':'
-        + (diff.newcheck ? diff.newcheck.runId : 'All');
+    topic.subscribe('openDiff', function (diff) {
+      var tabData = diff.tabData ? diff.tabData : { baseline : diff.baseline,
+                                                    newcheck : diff.newcheck };
+      var tabId = tabData.baseline.name + '_diff_'
+        +  tabData.newcheck.name;
 
       if (!(tabId in runIdToTab)) {
         runIdToTab[tabId] = new ListOfBugs({
           baseline : diff.baseline,
           newcheck : diff.newcheck,
           difftype : diff.difftype,
-          title : 'Diff of ' + (diff.baseline ? diff.baseline.name : 'All')
-            + (diff.newcheck ? ' and ' + diff.newcheck.name : ''),
+          title : 'Diff of '
+            + (tabData.baseline ? tabData.baseline.name : 'All')
+            + (tabData.newcheck ? ' and ' + tabData.newcheck.name : ''),
           closable : true,
+          tab : tabId,
+          diffView : true,
           onClose : function () {
             delete runIdToTab[tabId];
             return true;

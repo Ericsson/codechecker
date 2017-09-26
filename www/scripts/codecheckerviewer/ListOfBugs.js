@@ -25,17 +25,42 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
   BorderContainer, TabContainer, Tooltip, DataGrid, BugViewer, BugFilterView,
   RunHistory, hashHelper, util) {
 
-  function getRunData(runId) {
+  function getRunData(runIds, runNames) {
     var runFilter = new CC_OBJECTS.RunFilter();
-    runFilter.ids = [runId];
-    runFilter.exactMatch = true;
+
+      if (runIds) {
+        if (!(runIds instanceof Array))
+          runIds = [runIds];
+
+        runFilter.ids = runIds;
+      }
+
+      if (runNames) {
+        if (!(runNames instanceof Array))
+          runNames = [runNames];
+
+        runFilter.names = runNames;
+        runFilter.exactMatch = true;
+      }
 
     var runData = CC_SERVICE.getRunData(runFilter);
     return runData.length ? runData[0] : null;
   }
 
-  function initByUrl(grid) {
+  function initByUrl(grid, tab) {
     var state = hashHelper.getValues();
+
+    if ((state.tab === undefined && tab !== 'allReports') && tab !== state.tab)
+      return;
+
+    if (state.report !== undefined || state.reportHash !== undefined) {
+      topic.publish('openFile',
+        state.report !== undefined ? state.report : null,
+        state.run !== undefined ? getRunData(null, state.run) : null,
+        state.reportHash !== undefined ? state.reportHash : null,
+        grid);
+      return;
+    }
 
     switch (state.subtab) {
       case undefined:
@@ -44,12 +69,6 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
       case 'runHistory':
         topic.publish('subtab/runHistory');
         return;
-      default:
-        topic.publish('openFile',
-          state.report !== undefined ? state.report : null,
-          state.run !== undefined ? getRunData(parseInt(state.run)) : null,
-          state.reportHash !== undefined ? state.reportHash : null,
-          grid);
     }
   }
 
@@ -334,12 +353,13 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
         region   : 'left',
         style    : 'width: 300px; padding: 0px;',
         splitter : true,
-        diffView : this.baseline || this.newcheck || this.difftype,
+        diffView : this.diffView,
         parent   : this,
         runData  : this.runData,
         baseline : this.baseline,
         newcheck : this.newcheck,
-        difftype : this.difftype
+        difftype : this.difftype,
+        allReportView : this.allReportView
       });
 
       //--- Run history ---//
@@ -353,7 +373,7 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
         onShow : function () {
           var state = hashHelper.getState();
 
-          hashHelper.resetStateValues({
+          hashHelper.setStateValues({
             'tab' : state.tab,
             'subtab' : 'runHistory'
           });
@@ -361,7 +381,6 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
       });
 
       this._bugViewerHashToTab = {};
-      this._tab = null;
 
       this._subscribeTopics();
     },
@@ -377,7 +396,7 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
 
       this.addChild(this._runHistory);
 
-      initByUrl(this._grid);
+      initByUrl(this._grid, that.tab);
     },
 
     _subscribeTopics : function () {
@@ -393,9 +412,7 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
 
       this._hashChangeTopic = topic.subscribe('/dojo/hashchange',
       function (url) {
-        var state = hashHelper.getState();
-        if (that._tab === state.tab)
-          initByUrl(that._grid);
+        initByUrl(that._grid, that.tab);
       });
 
       this._openFileTopic = topic.subscribe('openFile',
@@ -409,6 +426,11 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
         if (reportData !== null && !(reportData instanceof CC_OBJECTS.ReportData))
           reportData = CC_SERVICE.getReport(reportData);
 
+        if (this.reportData && this.reportData.reportId === reportData.reportId)
+          return;
+
+        this.reportData = reportData;
+
         var getAndUseReportHash = reportHash && (!reportData ||
           reportData.reportId === null || reportData.bugHash !== reportHash);
 
@@ -421,6 +443,7 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
           reports = CC_SERVICE.getRunResults(null, CC_OBJECTS.MAX_QUERY_SIZE,
             0, null, reportFilter, null);
           reportData = reports[0];
+
           runData = getRunData(reportData.runId);
         }
 
@@ -437,6 +460,7 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
           reportData : reportData,
           runData : runData ? runData : that.runData,
           runResultParam : runResultParam,
+          listOfBugsGrid : that._grid,
           onShow : function () {
             hashHelper.setStateValues({
               'reportHash' : reportData.bugHash,
@@ -478,14 +502,7 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
 
     onShow : function () {
       var state  = this._bugFilterView.getUrlState();
-      if (this.allReportView)
-        state.tab = 'allReports';
-      else
-        state.tab = this.runData
-          ? this.runData.name
-          : this.baseline.name + '_' + this.newcheck.name;
-
-      this._tab  = state.tab;
+      state.tab  = this.tab;
 
       if (!this.initalized) {
         this.initalized = true;

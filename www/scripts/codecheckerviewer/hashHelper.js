@@ -65,7 +65,7 @@ function (hash, ioQuery, topic, util) {
 
     resetStateValues : function (obj) {
       state = {};
-      this.setStateValues(obj, false)
+      this.setStateValues(obj, false);
     },
 
     /**

@@ -59,7 +59,7 @@ function (declare, dom, topic, ContentPane, util) {
             class : 'history',
             onclick : function () {
               var state = that.bugFilterView.clearAll();
-              state.run = [data.runId];
+              state.run = [data.runName];
               state.subtab = null;
 
               if (!data.versionTag) {
