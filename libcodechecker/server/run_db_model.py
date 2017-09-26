@@ -64,7 +64,8 @@ class Run(Base):
         self.duration = -1
 
     def mark_finished(self):
-        self.duration = ceil((datetime.now() - self.date).total_seconds())
+        if self.duration == -1:
+            self.duration = ceil((datetime.now() - self.date).total_seconds())
 
 
 class RunHistory(Base):
