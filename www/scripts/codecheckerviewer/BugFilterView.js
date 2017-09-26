@@ -306,6 +306,14 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
      */
     deselectByState : function (state) {},
 
+    /**
+     * Returns the default values of the filter as key-value pair object.
+     * The key identifies the filter and the value is a list of converted
+     * human readable values.
+     * @see stateConverter
+     */
+    defaultValues : function () { return {}; },
+
     loading : function () {
       this._standBy.show();
     },
@@ -1038,7 +1046,9 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
           class    : 'difftype',
           title    : 'Diff type',
           parent   : this,
-          defaultValues : [CC_OBJECTS.DiffType.NEW],
+          defaultValues : function () {
+            return { [this.class] : [CC_OBJECTS.DiffType.NEW] };
+          },
           disableMultipleOption : true,
 
           getItems : function () {
@@ -1529,6 +1539,17 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
 
       this._filters.forEach(function (filter) {
         Object.assign(state, filter.getUrlState());
+
+        //--- Load default values for the first time ---//
+
+        if (!filter.initalized && filter.defaultValues) {
+          var defaultValues = filter.defaultValues();
+          for (var key in defaultValues) {
+            if (state[key] === null)
+              state[key] = defaultValues[key];
+          }
+          filter.initalized = true;
+        }
       });
 
       return state;
@@ -1609,15 +1630,6 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
               });
             }
           });
-
-          //--- Load default values for the first time ---//
-
-          if (!filter.initalized && filter.defaultValues) {
-            filter.defaultValues.forEach(function (value) {
-              filter.selectItem(filter.class, value, true);
-            });
-            filter.initalized = true;
-          }
 
           filter.loaded();
           ++finished;
