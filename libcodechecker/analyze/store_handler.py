@@ -239,8 +239,8 @@ def addCheckerRun(session, storage_session, command, name, tag, username,
         elif run:
             # There is already a run, update the results.
             run.date = datetime.now()
-            # Increment update counter and the command.
             run.command = command
+            run.duration = -1
             session.flush()
             run_id = run.id
         else:

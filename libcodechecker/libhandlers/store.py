@@ -231,6 +231,8 @@ def assemble_zip(inputs, zip_file, client):
                         LOG.warning("Skipping '{0}' because it contains "
                                     "a missing source file."
                                     .format(plist_file))
+                elif f == 'metadata.json':
+                    zipf.write(plist_file, os.path.join('reports', f))
 
         necessary_hashes = client.getMissingContentHashes(hash_to_file.keys())
         for f, h in file_to_hash.items():
