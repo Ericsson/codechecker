@@ -9,7 +9,6 @@ with a particular CodeChecker server.
 """
 
 from datetime import datetime
-import getpass
 import hashlib
 import json
 import os

@@ -12,7 +12,6 @@ from libcodechecker.logger import LoggerFactory
 LOG = LoggerFactory.get_new_logger('ENV')
 
 
-# -----------------------------------------------------------------------------
 def get_log_env(logfile, context, original_env):
     """
     Environment for logging. With the ld logger.
@@ -38,7 +37,6 @@ def get_log_env(logfile, context, original_env):
     return new_env
 
 
-# -----------------------------------------------------------------------------
 def get_check_env(path_env_extra, ld_lib_path_extra):
     """
     Extending the checker environment.

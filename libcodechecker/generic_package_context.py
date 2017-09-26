@@ -8,7 +8,6 @@ import json
 import os
 import sys
 
-from libcodechecker import context_base
 from libcodechecker import db_version
 from libcodechecker import logger
 # TODO: Refers subpackage library
@@ -18,32 +17,20 @@ LOG = logger.LoggerFactory.get_new_logger('CONTEXT')
 
 
 # -----------------------------------------------------------------------------
-class Context(context_base.ContextBase):
+class Context(object):
     """ Generic package specific context. """
 
-    __instance = None
-
-    logger_bin = None
-    logger_file = None
-    logger_compilers = None
-    ld_preload = None
-    __package_version = None
-    __package_root = None
-
     def __init__(self, package_root, pckg_layout, cfg_dict):
-
         env_vars = cfg_dict['environment_variables']
-        variables = cfg_dict['package_variables']
         self.__checker_config = cfg_dict['checker_config']
 
-        # Base class constructor gets the common environment variables.
-        super(Context, self).__init__()
-        super(Context, self).load_data(env_vars, pckg_layout, variables)
+        # Get the common environment variables.
+        self.pckg_layout = pckg_layout
+        self.env_vars = env_vars
 
-        # Get package specific environment variables.
-        self.set_env(env_vars)
-
-        self.__package_root = package_root
+        self._package_root = package_root
+        self._codechecker_workspace = None
+        self._severity_map = dict()
 
         self.__package_version = None
         self.__product_db_version_info = None
@@ -52,16 +39,31 @@ class Context(context_base.ContextBase):
         self.__package_git_hash = None
         self.__analyzers = {}
 
+        self.logger_bin = None
+        self.logger_file = None
+        self.logger_compilers = None
+
+        # Get package specific environment variables.
+        self.set_env(env_vars)
+
         self.__set_version()
         self.__populate_analyzers()
-
-        Context.__instance = self
 
     def set_env(self, env_vars):
         """
         Get the environment variables.
         """
-        super(Context, self).set_env(env_vars)
+        self._package_root = os.environ.get(env_vars['env_package_root'])
+
+        self._codechecker_workspace = os.environ.get('codechecker_workspace')
+
+        try:
+            with open(self.checkers_severity_map_file) as severity_file:
+                self._severity_map = json.load(severity_file)
+        except (IOError, ValueError):
+            LOG.warning("{0} doesn't exist or not JSON format. Severity "
+                        "levels will not be available!"
+                        .format(self.checkers_severity_map_file))
 
         # Get generic package specific environment variables.
         self.logger_bin = os.environ.get(env_vars['cc_logger_bin'])
@@ -133,7 +135,7 @@ class Context(context_base.ContextBase):
                     self.__analyzers[name] = value
                 elif os.path.dirname(value):
                     # Check if it is a package relative path.
-                    self.__analyzers[name] = os.path.join(self.__package_root,
+                    self.__analyzers[name] = os.path.join(self._package_root,
                                                           value)
                 else:
                     self.__analyzers[name] = value
@@ -168,7 +170,7 @@ class Context(context_base.ContextBase):
 
     @property
     def version_file(self):
-        return os.path.join(self.__package_root,
+        return os.path.join(self._package_root,
                             self.pckg_layout['version_file'])
 
     @property
@@ -202,15 +204,6 @@ class Context(context_base.ContextBase):
         return self.pckg_layout['ld_logger_lib_name']
 
     @property
-    def dumps_dir_name(self):
-        return self.variables['path_dumps_name']
-
-    @property
-    def pg_data_dir(self):
-        return os.path.join(self.codechecker_workspace,
-                            self.pgsql_data_dir_name)
-
-    @property
     def compiler_resource_dir(self):
         resource_dir = self.pckg_layout.get('compiler_resource_dir')
         if not resource_dir:
@@ -219,7 +212,7 @@ class Context(context_base.ContextBase):
             if os.path.isabs(resource_dir):
                 return resource_dir
             else:
-                return os.path.join(self.__package_root, resource_dir)
+                return os.path.join(self._package_root, resource_dir)
 
     @property
     def path_env_extra(self):
@@ -232,7 +225,7 @@ class Context(context_base.ContextBase):
                 if os.path.isabs(path):
                     paths.append(path)
                 else:
-                    paths.append(os.path.join(self.__package_root, path))
+                    paths.append(os.path.join(self._package_root, path))
             return paths
 
     @property
@@ -246,7 +239,7 @@ class Context(context_base.ContextBase):
                 if os.path.isabs(path):
                     ld_paths.append(path)
                 else:
-                    ld_paths.append(os.path.join(self.__package_root, path))
+                    ld_paths.append(os.path.join(self._package_root, path))
             return ld_paths
 
     @property
@@ -260,10 +253,69 @@ class Context(context_base.ContextBase):
         if os.path.dirname(ctu_func_mapping):
             # If it is a relative path, it is by definition relative to
             # the package_root, just like how analyzers are set up.
-            ctu_func_mapping = os.path.join(self.__package_root,
+            ctu_func_mapping = os.path.join(self._package_root,
                                             ctu_func_mapping)
 
         return ctu_func_mapping
+
+    @property
+    def package_root(self):
+        return self._package_root
+
+    @property
+    def checker_plugin(self):
+        return os.path.join(self._package_root,
+                            self.pckg_layout['plugin'])
+
+    @property
+    def gdb_config_file(self):
+        return os.path.join(self._package_root,
+                            self.pckg_layout['gdb_config_file'])
+
+    @property
+    def checkers_severity_map_file(self):
+        return os.path.join(self._package_root,
+                            self.pckg_layout['checkers_severity_map_file'])
+
+    @property
+    def doc_root(self):
+        return os.path.join(self._package_root,
+                            self.pckg_layout['docs'])
+
+    @property
+    def www_root(self):
+        return os.path.join(self._package_root,
+                            self.pckg_layout['www'])
+
+    @property
+    def run_migration_root(self):
+        return os.path.join(self._package_root,
+                            self.pckg_layout['run_db_migrate'])
+
+    @property
+    def config_migration_root(self):
+        return os.path.join(self._package_root,
+                            self.pckg_layout['config_db_migrate'])
+
+    @property
+    def db_username(self):
+        return self._db_username
+
+    @db_username.setter
+    def db_username(self, value):
+        self._db_username = value
+
+    @property
+    def codechecker_workspace(self):
+        return self._codechecker_workspace
+
+    @codechecker_workspace.setter
+    def codechecker_workspace(self, value):
+        self._codechecker_workspace = value
+
+    @property
+    def severity_map(self):
+        return self._severity_map
 
 
 def get_context():

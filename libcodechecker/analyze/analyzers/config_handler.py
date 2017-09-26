@@ -23,10 +23,7 @@ class AnalyzerConfigHandler(object):
 
         self.__analyzer_binary = None
         self.__analyzer_plugins_dir = None
-        self.__compiler_sysroot = None
         self.__compiler_resource_dir = ''
-        self.__sys_inc = []
-        self.__includes = []
         self.__analyzer_extra_arguments = ''
 
         # The key is the checker name, the value is a tuple.
@@ -107,20 +104,6 @@ class AnalyzerConfigHandler(object):
         return self.__available_checkers
 
     @property
-    def compiler_sysroot(self):
-        """
-        Get compiler sysroot.
-        """
-        return self.__compiler_sysroot
-
-    @compiler_sysroot.setter
-    def compiler_sysroot(self, compiler_sysroot):
-        """
-        Set compiler sysroot.
-        """
-        self.__compiler_sysroot = compiler_sysroot
-
-    @property
     def compiler_resource_dir(self):
         """
         Get compiler resource directories.
@@ -133,44 +116,6 @@ class AnalyzerConfigHandler(object):
         Set compiler resource directories.
         """
         self.__compiler_resource_dir = resource_dir
-
-    @property
-    def system_includes(self):
-        """
-        """
-        return self.__sys_inc
-
-    @system_includes.setter
-    def system_includes(self, includes):
-        """
-        """
-        self.__sys_inc = includes
-
-    def add_system_includes(self, sys_inc):
-        """
-        Add additional system includes if needed.
-        """
-        self.__sys_inc.append(sys_inc)
-
-    @property
-    def includes(self):
-        """
-        Add additional includes if needed.
-        """
-        return self.__includes
-
-    @includes.setter
-    def includes(self, includes):
-        """
-        Add additional includes if needed.
-        """
-        self.__includes = includes
-
-    def add_includes(self, inc):
-        """
-        Add additional include paths.
-        """
-        self.__includes.append(inc)
 
     @property
     def analyzer_extra_arguments(self):

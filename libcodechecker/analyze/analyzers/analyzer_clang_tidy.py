@@ -97,15 +97,6 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
                                      '-isystem',
                                      config.compiler_resource_dir])
 
-            if config.compiler_sysroot:
-                analyzer_cmd.extend(['--sysroot', config.compiler_sysroot])
-
-            for path in config.system_includes:
-                analyzer_cmd.extend(['-isystem', path])
-
-            for path in config.includes:
-                analyzer_cmd.extend(['-I', path])
-
             # Set language.
             analyzer_cmd.extend(['-x', self.buildaction.lang])
 

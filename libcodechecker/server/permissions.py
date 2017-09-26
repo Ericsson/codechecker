@@ -77,10 +77,8 @@ class Permission(object):
             self.inherited_from = inherited_from
             self.managed_by = managed_by
 
-    """
-    Contains the list of arguments required by __call__ to initialise a
-    permission handler.
-    """
+    # Contains the list of arguments required by __call__ to initialise a
+    # permission handler.
     # (Unfortunately, inspect.getargspec() doesn't seem to work when
     # called from the API handler.)
     CALL_ARGS = []
@@ -492,7 +490,7 @@ def get_permissions(scope=None):
     ret = []
     for _, perm in sorted(__API_TO_PERM.items()):
         if scope is not None and \
-                type(perm) is not PERMISSION_SCOPES[scope]:
+                not isinstance(perm, PERMISSION_SCOPES[scope]):
             continue
         ret.append(perm)
     return ret
@@ -598,12 +596,12 @@ def require_manager(permission, extra_params, user):
     return False
 
 # ---------------------------------------------------------------------------
-
 # Define the permissions available.
 # Please refer to the user guide and the API documentation on which actions
 # require which permission in particular.
 
 # -- System-level permissions --
+
 
 SUPERUSER = _create_permission(SystemPermission, 'SUPERUSER',
                                default_enable=False)

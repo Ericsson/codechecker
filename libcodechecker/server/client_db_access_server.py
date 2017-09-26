@@ -32,7 +32,6 @@ from sqlalchemy.orm import sessionmaker
 from thrift.protocol import TJSONProtocol
 from thrift.transport import TTransport
 
-from shared.ttypes import ErrorCode, RequestFailed
 from Authentication_v6 import codeCheckerAuthentication as AuthAPI_v6
 from codeCheckerDBAccess_v6 import codeCheckerDBAccess as ReportAPI_v6
 from ProductManagement_v6 import codeCheckerProductService as ProductAPI_v6

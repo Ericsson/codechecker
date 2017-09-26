@@ -66,10 +66,9 @@ class BuildCmdTestNose(unittest.TestCase):
         Generate a compile command json file.
         """
 
-        compile_cmd = {}
-        compile_cmd["directory"] = self.tmp_dir
-        compile_cmd["command"] = buildcmd + " -c " + self.src_file_path
-        compile_cmd["file"] = self.src_file_path
+        compile_cmd = {"directory": self.tmp_dir,
+                       "command": buildcmd + " -c " + self.src_file_path,
+                       "file": self.src_file_path}
 
         compile_cmds = [compile_cmd]
         return json.dumps(compile_cmds)

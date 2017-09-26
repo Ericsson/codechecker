@@ -81,7 +81,7 @@ class PlistToStdout(ResultHandler):
         report_num = len(reports)
         if report_num > 0:
             index_format = '    %%%dd, ' % \
-                int(math.floor(math.log10(report_num)) + 1)
+                           int(math.floor(math.log10(report_num)) + 1)
 
         non_suppressed = 0
         for report in reports:
@@ -91,9 +91,8 @@ class PlistToStdout(ResultHandler):
                     self.skiplist_handler.should_skip(f_path):
                 LOG.debug(report + ' is skipped (in ' + f_path + ")")
                 continue
-
-            bug = {'hash_value':
-                   report.main['issue_hash_content_of_line_in_context'],
+            hash_value = report.main['issue_hash_content_of_line_in_context']
+            bug = {'hash_value': hash_value,
                    'file_path': f_path
                    }
             if self.suppress_handler and \
@@ -177,10 +176,12 @@ class PlistToStdout(ResultHandler):
         if err_code == 0:
             try:
                 # No lock when consuming plist.
-                self.__lock.acquire() if self.__lock else None
+                if self.__lock:
+                    self.__lock.acquire()
                 self.__print_bugs(reports, files)
             finally:
-                self.__lock.release() if self.__lock else None
+                if self.__lock:
+                    self.__lock.release()
         else:
             self.__output.write('Analyzing %s with %s failed.\n' %
                                 (os.path.basename(self.analyzed_source_file),

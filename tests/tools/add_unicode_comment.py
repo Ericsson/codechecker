@@ -64,7 +64,7 @@ def addCommentToFile(filePath):
 
 
 def addCommentToDirectory(dirPath):
-    for root, subFolders, files in os.walk(dirPath):
+    for root, _, files in os.walk(dirPath):
         for fileName in files:
             if not re.match(r'.*(\.c|\.h|\.cpp|\.hpp|\.cxx|\.hxx)$', fileName):
                 continue

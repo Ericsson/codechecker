@@ -30,38 +30,6 @@ CLANG_TIDY = 'clang-tidy'
 supported_analyzers = {CLANG_SA, CLANG_TIDY}
 
 
-def is_sa_checker_name(checker_name):
-    """
-    Match for Clang Static analyzer names like:
-    - unix
-    - unix.Malloc
-    - security.insecureAPI
-    - security.insecureAPI.gets
-    """
-    # No '-' is allowed in the checker name.
-    sa_checker_name = r'^[^-]+$'
-    ptn = re.compile(sa_checker_name)
-
-    return ptn.match(checker_name) is not None
-
-
-def is_tidy_checker_name(checker_name):
-    """
-    Match for Clang Tidy analyzer names like:
-        -*
-        modernize-*
-        clang-diagnostic-*
-        cert-fio38-c
-        google-global-names-in-headers
-    """
-    # Must contain at least one '-'.
-    tidy_checker_name = r'^(?=.*[\-]).+$'
-
-    ptn = re.compile(tidy_checker_name)
-
-    return ptn.match(checker_name) is not None
-
-
 def check_supported_analyzers(analyzers, context):
     """
     Checks the given analyzers in the current context for their executability
@@ -242,9 +210,6 @@ def __build_clangsa_config_handler(args, context):
     config_handler.analyzer_plugins_dir = context.checker_plugin
     config_handler.analyzer_binary = context.analyzer_binaries.get(CLANG_SA)
     config_handler.compiler_resource_dir = context.compiler_resource_dir
-    config_handler.compiler_sysroot = context.compiler_sysroot
-    config_handler.system_includes = context.extra_system_includes
-    config_handler.includes = context.extra_includes
 
     if 'ctu_phases' in args:
         config_handler.ctu_dir = os.path.join(args.output_path,
@@ -301,9 +266,6 @@ def __build_clang_tidy_config_handler(args, context):
     config_handler = config_handler_clang_tidy.ClangTidyConfigHandler()
     config_handler.analyzer_binary = context.analyzer_binaries.get(CLANG_TIDY)
     config_handler.compiler_resource_dir = context.compiler_resource_dir
-    config_handler.compiler_sysroot = context.compiler_sysroot
-    config_handler.system_includes = context.extra_system_includes
-    config_handler.includes = context.extra_includes
 
     try:
         with open(args.tidy_args_cfg_file, 'rb') as tidy_cfg:
@@ -382,7 +344,6 @@ def construct_analyze_handler(buildaction,
     if buildaction.analyzer_type == CLANG_SA:
         res_handler = result_handler_base.ResultHandler(buildaction,
                                                         report_output)
-
     elif buildaction.analyzer_type == CLANG_TIDY:
         res_handler = result_handler_clang_tidy.ClangTidyPlistToFile(
             buildaction, report_output)
