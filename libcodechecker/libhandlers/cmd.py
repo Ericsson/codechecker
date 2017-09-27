@@ -165,7 +165,11 @@ def __register_diff(parser):
                         default=argparse.SUPPRESS,
                         help="The 'base' (left) side of the difference: this "
                              "analysis run is used as the initial state in "
-                             "the comparison.")
+                             "the comparison. The basename can be a Python "
+                             "regex which is meant to cover the whole run "
+                             "name. So if you have run_1_a_name, run_2_b_name "
+                             "and run_2_c_name then run_.*_[ab]_name selects "
+                             "the first two.")
 
     parser.add_argument('-n', '--newname',
                         type=str,

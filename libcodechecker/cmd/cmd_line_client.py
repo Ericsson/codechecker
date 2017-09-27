@@ -8,6 +8,7 @@ import base64
 from datetime import datetime
 import json
 import os
+import re
 import sys
 
 from codeCheckerDBAccess_v6 import constants, ttypes
@@ -33,25 +34,14 @@ class CmdLineOutputEncoder(json.JSONEncoder):
         return d
 
 
-def get_run_ids(client):
-    """
-    Returns a map for run names and run_ids.
-    """
-
-    runs = client.getRunData(None)
-
-    run_data = {}
-    for run in runs:
-        run_data[run.name] = (run.runId, run.runDate)
-
-    return run_data
-
-
 def check_run_names(client, check_names):
     """
-    Check if the given names are valid runs on the server.
+    Check if the given names are valid runs on the server. If any of the names
+    is not found then the script finishes. Otherwise a dictionary returns which
+    maps run names to runs. The dictionary contains only the runs in
+    check_names or all runs if check_names is empty or None.
     """
-    run_info = get_run_ids(client)
+    run_info = {run.name: run for run in client.getRunData(None)}
 
     if not check_names:
         return run_info
@@ -128,7 +118,7 @@ def handle_list_results(args):
 
     run_info = check_run_names(client, [args.name])
 
-    run_id, _ = run_info.get(args.name)
+    run = run_info.get(args.name)
 
     limit = constants.MAX_QUERY_SIZE
     offset = 0
@@ -138,13 +128,13 @@ def handle_list_results(args):
     add_filter_conditions(report_filter, args.filter)
 
     all_results = []
-    results = client.getRunResults([run_id], limit, offset, None,
+    results = client.getRunResults([run.runId], limit, offset, None,
                                    report_filter, None)
 
     while results:
         all_results.extend(results)
         offset += limit
-        results = client.getRunResults([run_id], limit, offset, None,
+        results = client.getRunResults([run.runId], limit, offset, None,
                                        report_filter, None)
 
     if args.output_format == 'json':
@@ -174,7 +164,7 @@ def handle_list_results(args):
 
 def handle_diff_results(args):
 
-    def getDiffResults(client, baseid, cmp_data):
+    def getDiffResults(client, baseids, cmp_data):
 
         report_filter = ttypes.ReportFilter()
         add_filter_conditions(report_filter, args.filter)
@@ -185,7 +175,7 @@ def handle_diff_results(args):
         offset = 0
 
         all_results = []
-        results = client.getRunResults([baseid],
+        results = client.getRunResults(baseids,
                                        limit,
                                        offset,
                                        sort_mode,
@@ -195,7 +185,7 @@ def handle_diff_results(args):
         while results:
             all_results.extend(results)
             offset += limit
-            results = client.getRunResults([baseid],
+            results = client.getRunResults(baseids,
                                            limit,
                                            offset,
                                            sort_mode,
@@ -237,7 +227,7 @@ def handle_diff_results(args):
         lines = base64.b64decode(source.fileContent).split('\n')
         return "" if len(lines) < lineno else lines[lineno - 1]
 
-    def getDiffReportDir(client, baseid, report_dir, diff_type):
+    def getDiffReportDir(client, baseids, report_dir, diff_type):
 
         report_filter = ttypes.ReportFilter()
         add_filter_conditions(report_filter, args.filter)
@@ -249,7 +239,7 @@ def handle_diff_results(args):
         offset = 0
 
         base_results = []
-        results = client.getRunResults([baseid],
+        results = client.getRunResults(baseids,
                                        limit,
                                        offset,
                                        sort_mode,
@@ -258,7 +248,7 @@ def handle_diff_results(args):
         while results:
             base_results.extend(results)
             offset += limit
-            results = client.getRunResults([baseid],
+            results = client.getRunResults(baseids,
                                            limit,
                                            offset,
                                            sort_mode,
@@ -367,16 +357,29 @@ def handle_diff_results(args):
 
     report_dir_mode = False
     if os.path.isdir(args.newname):
-        # If newname is a valid directory
-        # we assume that it is a report dir
-        # and we are in local compare mode.
-        run_info = check_run_names(client, [args.basename])
+        # If newname is a valid directory we assume that it is a report dir and
+        # we are in local compare mode.
         report_dir_mode = True
     else:
-        run_info = check_run_names(client, [args.basename, args.newname])
-        newid = run_info[args.newname][0]
+        run_info = check_run_names(client, [args.newname])
+        newid = run_info[args.newname].runId
 
-    baseid = run_info[args.basename][0]
+    try:
+        basename_regex = '^' + args.basename + '$'
+        base_runs = filter(lambda run: re.match(basename_regex, run.name),
+                           client.getRunData(None))
+        base_ids = map(lambda run: run.runId, base_runs)
+    except re.error:
+        LOG.error('Invalid regex format in ' + args.basename)
+        sys.exit(1)
+
+    if len(base_ids) == 0:
+        LOG.warning("No run names match the given pattern: " + args.basename)
+        sys.exit(1)
+
+    LOG.info("Matching against runs: " +
+             ', '.join(map(lambda run: run.name, base_runs)))
+
     results = []
     if report_dir_mode:
         diff_type = 'new'
@@ -384,7 +387,7 @@ def handle_diff_results(args):
             diff_type = 'unresolved'
         elif 'resolved' in args:
             diff_type = 'resolved'
-        results = getDiffReportDir(client, baseid,
+        results = getDiffReportDir(client, base_ids,
                                    os.path.abspath(args.newname),
                                    diff_type)
     else:
@@ -396,7 +399,7 @@ def handle_diff_results(args):
         elif 'resolved' in args:
             cmp_data.diffType = ttypes.DiffType.RESOLVED
 
-        results = getDiffResults(client, baseid, cmp_data)
+        results = getDiffResults(client, base_ids, cmp_data)
 
     printReports(client, results, args.output_format)
 
@@ -417,14 +420,11 @@ def handle_list_result_types(args):
     client = setup_client(args.product_url)
 
     if 'all_results' in args:
-        items = check_run_names(client, None).items()
+        items = check_run_names(client, None)
     else:
-        items = []
-        run_info = check_run_names(client, args.names)
-        for name in args.names:
-            items.append((name, run_info.get(name)))
+        items = check_run_names(client, args.names)
 
-    run_ids = [item[1][0] for item in items]
+    run_ids = map(lambda _, run: run.runId, items)
 
     all_checkers_report_filter = ttypes.ReportFilter()
     all_checkers = client.getCheckerCounts(run_ids, all_checkers_report_filter,
@@ -494,20 +494,20 @@ def handle_remove_run_results(args):
 
         return d1 > d2
 
-    run_info = get_run_ids(client)
-
     if 'name' in args:
         check_run_names(client, args.name)
 
         def condition(name, runid, date):
             return name in args.name
-    elif 'all_after_run' in args and args.all_after_run in run_info:
-        run_date = run_info[args.all_after_run][1]
+    elif 'all_after_run' in args:
+        run_info = check_run_names(client, [args.all_after_run])
+        run_date = run_info[args.all_after_run].runDate
 
         def condition(name, runid, date):
             return is_later(date, run_date)
-    elif 'all_before_run' in args and args.all_before_run in run_info:
-        run_date = run_info[args.all_before_run][1]
+    elif 'all_before_run' in args:
+        run_info = check_run_names(client, [args.all_before_run])
+        run_date = run_info[args.all_before_run].runDate
 
         def condition(name, runid, date):
             return is_later(run_date, date)
@@ -521,9 +521,9 @@ def handle_remove_run_results(args):
         def condition(name, runid, date):
             return False
 
-    client.removeRunResults([runid for (name, (runid, date))
-                            in run_info.items()
-                            if condition(name, runid, date)])
+    client.removeRunResults([run.runId for run
+                            in client.getRunData(None)
+                            if condition(run.name, run.runId, run.runDate)])
 
     LOG.info("Done.")
 
@@ -540,14 +540,14 @@ def handle_suppress(args):
     client = setup_client(args.product_url)
 
     run_info = check_run_names(client, [args.name])
-    run_id, _ = run_info.get(args.name)
+    run = run_info.get(args.name)
 
     if 'input' in args:
         with open(args.input) as supp_file:
             suppress_data = suppress_file_handler.get_suppress_data(supp_file)
 
         for bug_id, file_name, comment in suppress_data:
-            reports = client.getRunResults([run_id], limit, 0, None,
+            reports = client.getRunResults([run.runId], limit, 0, None,
                                            bug_hash_filter(bug_id, file_name),
                                            None)
 

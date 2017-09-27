@@ -561,3 +561,38 @@ class Diff(unittest.TestCase):
         self.assertEqual(count, 5)
         count = len(re.findall(r'\[unix\.Malloc\]', out))
         self.assertEqual(count, 1)
+
+    def test_local_compare_res_count_unresovled_regex(self):
+        """
+        Count the unresolved results with no filter in local compare mode.
+        """
+        base_run_name = self._run_names[0]
+
+        # Change test_files_blablabla to test_.*_blablabla
+        base_run_name = base_run_name.replace('files', '.*')
+
+        diff_cmd = [self._codechecker_cmd, "cmd", "diff",
+                    "--unresolved",
+                    "--url", self._url,
+                    "-b", base_run_name,
+                    "-n", self._report_dir
+                    ]
+        print(diff_cmd)
+        process = subprocess.Popen(
+            diff_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            env=self._test_config['codechecker_cfg']['check_env'],
+            cwd=os.environ['TEST_WORKSPACE'])
+        out, err = process.communicate()
+        print(out+err)
+
+        # # 3 disappeared core.StackAddressEscape issues
+        count = len(re.findall(r'\[core\.DivideZero\]', out))
+        self.assertEqual(count, 10)
+        count = len(re.findall(r'\[deadcode\.DeadStores\]', out))
+        self.assertEqual(count, 6)
+        count = len(re.findall(r'\[core\.NullDereference\]', out))
+        self.assertEqual(count, 4)
+        count = len(re.findall(r'\[cplusplus\.NewDelete\]', out))
+        self.assertEqual(count, 5)
+        count = len(re.findall(r'\[unix\.Malloc\]', out))
+        self.assertEqual(count, 1)
