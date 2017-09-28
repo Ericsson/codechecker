@@ -115,7 +115,10 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
       var that = this;
 
       this.header = dom.create('div', { class : 'editorHeader' }, this.domNode);
-      this.filepath = dom.create('div', { class : 'filepath' }, this.header);
+      this.filepath = dom.create('div', {
+        class : 'filepath compact'
+      }, this.header);
+
       this.sameReportSelectorWrapper = dom.create('div', {
         class : 'same-report-selector-wrapper'
       }, this.header);

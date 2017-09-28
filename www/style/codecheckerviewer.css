@@ -201,16 +201,24 @@ html, body {
 }
 
 .editorHeader {
-  padding: 5px;
   border-bottom: 1px solid lightgrey;
   font-family: monospace;
+  width: 100%;
+  white-space: nowrap;
+  display: flex;
+  justify-content: space-between;
+  height: 26px;
+}
+
+.editorHeader .filepath {
+  display: inline-block;
+  padding: 4px;
 }
 
 .editorHeader .same-report-selector-wrapper {
-  position: absolute;
-  top: 0;
-  right: 0;
-  margin: 2px;
+  white-space: nowrap;
+  display: inline-block;
+  padding: 2px 2px 2px 10px;
 }
 
 .editorHeader .same-report-selector-label {
