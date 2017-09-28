@@ -605,7 +605,10 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
       if (isOtherReport) {
         this.editor.set('reportData', item.report);
         this.buttonPane.set('reportData', item.report);
-        hashHelper.setStateValue('report', item.report.reportId);
+        hashHelper.setStateValues({
+          'report': item.report.reportId,
+          'reportHash': item.report.bugHash
+        });
       }
 
       if (this.reportId !== item.report.reportId)
@@ -937,7 +940,6 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
 
     constructor : function (args) {
       dojo.safeMixin(this, args);
-
 
       var that = this;
 
