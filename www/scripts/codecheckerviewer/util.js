@@ -233,6 +233,24 @@ function (locale, dom, style, json) {
     },
 
     /**
+     * Creates a version tag for the given run.
+     * @param runName {string} - Name of the run.
+     * @param tag {string} - Tag of the run.
+     */
+    createRunTag : function (runName, tag) {
+      if (!tag) return;
+
+      var tagWrapper = dom.create('span', { class : 'tag-wrapper', title: 'Version tag' });
+      dom.create('span', {
+        class : 'customIcon tag',
+        style : 'color:' + this.strToColor(runName + ':' + tag)
+      }, tagWrapper);
+      dom.create('span', { class : 'tag', innerHTML : tag }, tagWrapper);
+
+      return tagWrapper;
+    },
+
+    /**
      * Creates a dom element for review status tooltip.
      * param review {Object} Thrift ReviewData object.
      */

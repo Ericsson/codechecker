@@ -87,12 +87,8 @@ function (declare, dom, topic, ContentPane, util) {
           dom.create('span', { class : 'run-name', innerHTML : data.runName }, runNameWrapper);
 
           if (data.versionTag) {
-            var tagWrapper = dom.create('span', { class : 'tag-wrapper', title: 'Version tag' }, history);
-            dom.create('span', {
-              class : 'customIcon tag',
-              style : 'color:' + util.strToColor(data.runName + ':' + data.versionTag)
-            }, tagWrapper);
-            dom.create('span', { class : 'tag', innerHTML : data.versionTag }, tagWrapper);
+            var runTag = util.createRunTag(data.runName, data.versionTag);
+            dom.place(runTag, history);
           }
 
           var userWrapper = dom.create('span', {class : 'user-wrapper', title: 'User name' }, history);

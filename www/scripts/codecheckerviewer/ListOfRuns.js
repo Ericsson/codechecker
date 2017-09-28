@@ -64,6 +64,11 @@ function (declare, domConstruct, ItemFileWriteStore, topic, Dialog, Button,
     }).join(', ');
   }
 
+  function versionTagFormatter(param) {
+    var versionTag = util.createRunTag(param.runName, param.versionTag);
+    return versionTag ? versionTag.outerHTML : '';
+  }
+
   var ListOfRunsGrid = declare(DataGrid, {
     constructor : function () {
       this.store = new ItemFileWriteStore({
@@ -73,11 +78,12 @@ function (declare, domConstruct, ItemFileWriteStore, topic, Dialog, Button,
       this.structure = [
         { name : 'Diff', field : 'diff', styles : 'text-align: center;', formatter : diffBtnFormatter},
         { name : 'Name', field : 'name', styles : 'text-align: left;', width : '100%' },
-        { name : 'Date', field : 'date', styles : 'text-align: center;', width : '30%' },
         { name : 'Number of bugs', field : 'numberofbugs', styles : 'text-align: center;', width : '20%' },
+        { name : 'Date', field : 'date', styles : 'text-align: center;', width : '30%' },
         { name : 'Duration', field : 'duration', styles : 'text-align: center;' },
         { name : 'Check command', field : 'checkcmd', styles : 'text-align: center;' },
         { name : 'Detection status', field : 'detectionstatus', styles : 'text-align: center;', width : '30%' },
+        { name : 'Version tag', field : 'versionTag', formatter : versionTagFormatter },
         { name : 'Delete', field : 'del', styles : 'text-align: center;', type : 'dojox.grid.cells.Bool', editable : true }
       ];
 
@@ -167,6 +173,8 @@ function (declare, domConstruct, ItemFileWriteStore, topic, Dialog, Button,
         id           : runData.runId,
         runid        : runData.runId,
         name         : '<span class="link">' + runData.name + '</span>',
+        versionTag   : { runName : runData.name,
+                         versionTag : runData.versionTag },
         date         : currItemDate[0] + ' ' + currItemDate[1],
         numberofbugs : runData.resultCount,
         duration     : util.prettifyDuration(runData.duration),
