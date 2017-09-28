@@ -50,7 +50,7 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
   function initByUrl(grid, tab) {
     var state = hashHelper.getValues();
 
-    if ((state.tab === undefined && tab !== 'allReports') && tab !== state.tab)
+    if (!(state.tab === undefined && tab === 'allReports') && tab !== state.tab)
       return;
 
     if (state.report !== undefined || state.reportHash !== undefined) {
@@ -396,7 +396,7 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
 
       this.addChild(this._runHistory);
 
-      initByUrl(this._grid, that.tab);
+      initByUrl(this._grid, this.tab);
     },
 
     _subscribeTopics : function () {
@@ -412,7 +412,9 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
 
       this._hashChangeTopic = topic.subscribe('/dojo/hashchange',
       function (url) {
-        initByUrl(that._grid, that.tab);
+        var state = hashHelper.getState();
+        if (state.subtab !== that.subtab)
+          initByUrl(that._grid, that.tab);
       });
 
       this._openFileTopic = topic.subscribe('openFile',
@@ -426,10 +428,7 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
         if (reportData !== null && !(reportData instanceof CC_OBJECTS.ReportData))
           reportData = CC_SERVICE.getReport(reportData);
 
-        if (this.reportData && this.reportData.reportId === reportData.reportId)
-          return;
 
-        this.reportData = reportData;
 
         var getAndUseReportHash = reportHash && (!reportData ||
           reportData.reportId === null || reportData.bugHash !== reportHash);
@@ -446,6 +445,11 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
 
           runData = getRunData(reportData.runId);
         }
+
+        if (this.reportData && this.reportData.reportId === reportData.reportId)
+          return;
+
+        this.reportData = reportData;
 
         var reportFilters = that._bugFilterView.getReportFilters();
         var runResultParam = createRunResultFilterParameter(reportFilters);
@@ -465,11 +469,9 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
             hashHelper.setStateValues({
               'reportHash' : reportData.bugHash,
               'report' : reportData.reportId,
-              'subtab' : reportData.reportId
+              'subtab' : reportData.bugHash
             });
-
-            if (!getAndUseReportHash)
-              hashHelper.setStateValue('report', reportData.reportId);
+            that.subtab = reportData.bugHash;
           },
           onClose : function () {
             delete that._bugViewerHashToTab[reportData.bugHash];
