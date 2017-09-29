@@ -929,7 +929,7 @@ The `--sqlite` (or `--postgresql` and the various `--db-` arguments) can be
 used to specify where the database, containing the analysis reports is.
 
 `--config-directory` specifies where the server configuration files, such as
-[authentication config](docs/authentication.md) is. For example, one can start
+[authentication config](authentication.md) is. For example, one can start
 two servers with two different product layout, but with the same authorisation
 configuration:
 
@@ -945,7 +945,7 @@ resides the `config.sqlite` file, containing the product configuration.
 If the server is started in `--sqlite` mode and fresh, that is, no product
 configuration file is found, a product named `Default`, using `Default.sqlite`
 in the configuration directory is automatically created. Please see
-[Product management](docs/products.md) for details on how to configure products.
+[Product management](products.md) for details on how to configure products.
 
 ### Master superuser and authentication forcing
 
@@ -1137,7 +1137,10 @@ optional arguments:
   -b BASE_RUN, --basename BASE_RUN
                         The 'base' (left) side of the difference: this
                         analysis run is used as the initial state in the
-                        comparison.
+                        comparison. The basename can be a Python regex which
+                        is meant to cover the whole run name. So if you have
+                        run_1_a_name, run_2_b_name and run_2_c_name then
+                        run_.*_[ab]_name selects the first two.
   -n NEW_RUN, --newname NEW_RUN
                         The 'new' (right) side of the difference: this
                         analysis run is compared to the -b/--basename run.
@@ -1178,6 +1181,11 @@ be compared to each other:
 ~~~~~~~~~~~~~~~~~~~~~
 CodeChecker cmd diff -p 8001 --basename my_project --newname my_new_checkin --new
 ~~~~~~~~~~~~~~~~~~~~~
+
+There is opportunity to compare a run to multiple baselines. You can simply
+provide a regular expression by `-b` flag which covers the required run names.
+The Python regex syntax has to be used:
+https://docs.python.org/2/library/re.html#regular-expression-syntax.
 
 ### Show summarised count of results (`sum`)
 
@@ -1279,7 +1287,7 @@ the database on the server.
 
 ### Manage product configuration of a server (`products`)
 
-Please see [Product management](docs/products.md) for details.
+Please see [Product management](products.md) for details.
 
 ### Authenticate to the server (`login`)
 
@@ -1305,7 +1313,7 @@ common arguments:
                         Set verbosity level. (default: info)
 ~~~~~~~~~~~~~~~~~~~~~
 
-If a server [requires privileged access](docs/authentication.md), you must
+If a server [requires privileged access](authentication.md), you must
 log in before you can access the data on the particular server. Once
 authenticated, your session is available for some time and `CodeChecker cmd`
 can be used normally.
