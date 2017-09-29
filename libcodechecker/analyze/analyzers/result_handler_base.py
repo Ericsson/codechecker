@@ -23,8 +23,7 @@ class ResultHandler(object):
     The result handler can handle multiple results if there
     are more than one analyzed source file in one buildaction.
 
-    handle_results() handles the results of a static analysis tool processed on
-    a build action.
+    handle_results() handles the results and returns report statistics.
 
     For each build action
     - postprocess_result and handle_results can be called multiple times
@@ -213,6 +212,6 @@ class ResultHandler(object):
 
     def handle_results(self, client):
         """
-        Handle the results.
+        Handle the results and return report statistics.
         """
         pass

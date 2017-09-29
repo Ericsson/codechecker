@@ -23,3 +23,18 @@ CHECK#CodeChecker check --build "make tidy_check" --output $OUTPUT$ --quiet --an
 
 Found 1 defect(s) while analyzing tidy_check.cpp
 
+
+----==== Summary ====----
+-----------------------------
+Filename       | Report count
+-----------------------------
+tidy_check.cpp |            1
+-----------------------------
+-----------------------
+Severity | Report count
+-----------------------
+MEDIUM   |            1
+-----------------------
+----=================----
+Total number of reports: 1
+----=================----

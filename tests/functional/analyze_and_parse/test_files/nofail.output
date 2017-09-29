@@ -18,3 +18,8 @@ CHECK#CodeChecker check --build "make nofail" --output $OUTPUT$ --quiet --analyz
 [] - See --help and the user guide for further options about parsing and storing the reports.
 [] - ----=================----
 Found no defects while analyzing nofail.cpp
+
+----==== Summary ====----
+----=================----
+Total number of reports: 0
+----=================----

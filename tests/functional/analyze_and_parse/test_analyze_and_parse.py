@@ -110,6 +110,10 @@ class AnalyzeParseTestCase(unittest.TestCase):
                             in skip_prefixes]):
                     post_processed_output.append(line)
 
+            print(''.join(post_processed_output))
+            print("------------------------")
+            print(correct_output)
+
             print("Test output file: " + path)
             self.assertEqual(''.join(post_processed_output), correct_output)
             return 0

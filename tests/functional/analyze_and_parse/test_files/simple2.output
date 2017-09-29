@@ -23,3 +23,18 @@ CHECK#CodeChecker check --build "make simple2" --output $OUTPUT$ --quiet --analy
 
 Found 1 defect(s) while analyzing simple2.cpp
 
+
+----==== Summary ====----
+--------------------------
+Filename    | Report count
+--------------------------
+simple2.cpp |            1
+--------------------------
+-----------------------
+Severity | Report count
+-----------------------
+HIGH     |            1
+-----------------------
+----=================----
+Total number of reports: 1
+----=================----

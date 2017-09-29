@@ -23,3 +23,18 @@ CHECK#CodeChecker check --build "make saargs_forward" --output $OUTPUT$ --quiet 
 
 Found 1 defect(s) while analyzing saargs_forward.cpp
 
+
+----==== Summary ====----
+---------------------------------
+Filename           | Report count
+---------------------------------
+saargs_forward.cpp |            1
+---------------------------------
+-----------------------
+Severity | Report count
+-----------------------
+HIGH     |            1
+-----------------------
+----=================----
+Total number of reports: 1
+----=================----

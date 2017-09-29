@@ -8,6 +8,7 @@ Defines the CodeChecker action for parsing a set of analysis results into a
 human-readable format.
 """
 
+from collections import Counter
 import argparse
 import json
 import os
@@ -21,6 +22,8 @@ from libcodechecker.analyze.analyzers import analyzer_types
 from libcodechecker.log import build_action
 from libcodechecker.logger import add_verbose_arguments
 from libcodechecker.logger import LoggerFactory
+
+from libcodechecker.output_formatters import twodim_to_str
 
 LOG = LoggerFactory.get_new_logger('PARSE')
 
@@ -112,11 +115,13 @@ def parse(f, context, metadata_dict, suppress_handler, steps):
     """
     Prints the results in the given file to the standard output in a human-
     readable format.
+
+    Returns the report statistics collected by the result handler.
     """
 
     if not f.endswith(".plist"):
         LOG.info("Skipping input file '" + f + "' as it is not a plist.")
-        return
+        return {}
 
     LOG.debug("Parsing input file '" + f + "'")
 
@@ -140,7 +145,7 @@ def parse(f, context, metadata_dict, suppress_handler, steps):
     else:
         rh.analyzed_source_file = "UNKNOWN"
 
-    rh.handle_results()
+    return rh.handle_results()
 
 
 def main(args):
@@ -185,13 +190,19 @@ def main(args):
         sys.exit(2)
 
     for input_path in args.input:
+
         input_path = os.path.abspath(input_path)
         os.chdir(original_cwd)
         LOG.debug("Parsing input argument: '" + input_path + "'")
 
+        severity_stats = Counter({})
+        file_stats = Counter({})
+        report_count = Counter({})
+
+        files = []
         if os.path.isfile(input_path):
-            parse(input_path, context, {}, suppress_handler,
-                  'print_steps' in args)
+            files.append(input_path)
+
         elif os.path.isdir(input_path):
             metadata_file = os.path.join(input_path, "metadata.json")
             metadata_dict = {}
@@ -203,9 +214,40 @@ def main(args):
                 if 'working_directory' in metadata_dict:
                     os.chdir(metadata_dict['working_directory'])
 
-            _, _, files = next(os.walk(input_path), ([], [], []))
-            for f in files:
-                parse(os.path.join(input_path, f), context, metadata_dict,
-                      suppress_handler, 'print_steps' in args)
+            _, _, file_names = next(os.walk(input_path), ([], [], []))
+            files = [os.path.join(input_path, file_name) for file_name
+                     in file_names]
+
+        for file_path in files:
+            report_stats = parse(file_path,
+                                 context,
+                                 metadata_dict,
+                                 suppress_handler,
+                                 'print_steps' in args)
+
+            severity_stats.update(Counter(report_stats.get('severity',
+                                          {})))
+            file_stats.update(Counter(report_stats.get('files', {})))
+            report_count.update(Counter(report_stats.get('reports', {})))
+
+        print("\n----==== Summary ====----")
+
+        if file_stats:
+            vals = [[os.path.basename(k), v] for k, v in
+                    dict(file_stats).items()]
+            keys = ['Filename', 'Report count']
+            table = twodim_to_str('table', keys, vals, 1, True)
+            print(table)
+
+        if severity_stats:
+            vals = [[k, v] for k, v in dict(severity_stats).items()]
+            keys = ['Severity', 'Report count']
+            table = twodim_to_str('table', keys, vals, 1, True)
+            print(table)
+
+        report_count = dict(report_count).get("report_count", 0)
+        print("----=================----")
+        print("Total number of reports: {}".format(report_count))
+        print("----=================----")
 
     os.chdir(original_cwd)
