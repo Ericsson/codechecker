@@ -3,8 +3,8 @@
 This is lazy dog HOWTO to using CodeChecker analysis.
 It invokes Clang Static Analyzer and Clang-Tidy tools to analyze your code.
 
-## Step1: Inegrate CodeChecker into your build system
-Codechecker only analyzes what is also built by your build system. 
+## Step 1: Integrate CodeChecker into your build system
+CodeChecker only analyzes what is also built by your build system.
 
 1. Select a module to build (open source tmux in this example).
 ```
@@ -37,7 +37,7 @@ cat ./compilation.json
   and in most cases, _System Integrity Protection_ needs to be turned off. 
   See the [README](/README.md#mac-os-x) for details.
 
-## Step2: Analyze your code 
+## Step 2: Analyze your code
 Once the build is logged successfully (and the `compilation.json`) was created, you can analyze your project.
 
 1. Run the analysis: 
@@ -55,15 +55,15 @@ Hint:
  cd tmux
  make clean
  CodeChecker check -b "make"
-or to run on 22 thread
+or to run on 22 threads
  CodeChecker check -j22 -b "make clean;make -j22"
 ```
 
 [What to do if the analysis fails (analysis settings for cross-compilation)](/docs/cross-compilation.md)
 
-## Step3: Store analysis results in a CodeChecker DB and visualize results 
+## Step 3: Store analysis results in a CodeChecker DB and visualize results
 You can store the analysis results in a central database and view the results in a web viewer
-1. Start the CodeChecker server locally on port 8555 (using sqlite db, which is not recommended for multi-user central deployment)
+1. Start the CodeChecker server locally on port 8555 (using SQLite DB, which is not recommended for multi-user central deployment)
 create a workspace directory, where the database will be stored.
 ```
  mkdir ./ws
@@ -78,14 +78,14 @@ A default product called `Default` will be automatically created where you can s
 
 The URL is in `PRODUCT_URL` format:
 `[http[s]://]host:port/ProductEndpoint`
-Please note that if you start the server is secure mode (with SSL) you will need to use the `https` protocol prefix.
+Please note that if you start the server in secure mode (with SSL) you will need to use the `https` protocol prefix.
 The default protocol is `http`.
-See  [user guide](/docs/user_guide.md#product_url-format ) for detailed description of the `PRODUCT_URL` format.
+See [user guide](/docs/user_guide.md#product_url-format) for detailed description of the `PRODUCT_URL` format.
 
 3. View the results in your web browser
  http://localhost:8555/Default
 
-## Step4: Fine tune Analysis configuration
+## Step 4: Fine tune Analysis configuration
 ### Ignore modules from your analysis 
 
 You can ignore analysis results for certain files for example 3rd party modules.
@@ -96,7 +96,7 @@ For that use the `-i` parameter of the analyze command:
                         should be omitted from analysis. Please consult the
                         User guide on how a Skipfile should be laid out.
 ```
-For the skip file format see the [user guide](/docs/user_guide.md#skip-file ).
+For the skip file format see the [user guide](/docs/user_guide.md#skip-file).
 
 ```
  CodeChecker analyze -b "make" -i ./skip.file" -o ./reports
@@ -117,7 +117,7 @@ For example to enable alpha checkers additionally to the defaults
  CodeChecker analyze -e alpha  -b "make" -i ./skip.file" -o ./reports
 ```
 
-### Identify files that were failed to analyze
+### Identify files that failed analysis
 After execution of
 ```
  CodeChecker analyze build.json -o reports
@@ -129,7 +129,7 @@ directory.
 This means that analysis of these files failed and there is no Clang Static Analyzer output for these compilation commands.
 
 
-## Step5: Integrate CodeChecker into your CI loop
+## Step 5: Integrate CodeChecker into your CI loop
 
 This section describes a recommended "way of working" about how CodeChecker is designed to be used
 in a CI environment to
@@ -172,7 +172,7 @@ For example to analyze `tmux` project daily.
  CodeChecker store ./reports --url http://localhost:8555/Default --name tmux_master_2017_08_28
 ```
 
-and the next day repeat **Step 1** to **Step 4** and store the results under run name `tmux_master_2017_08_29`.
+and the next day repeat the steps above but store the results under run name `tmux_master_2017_08_29`.
 
 Then you can query newly introduced bugs in the following way.
 ```
@@ -188,7 +188,7 @@ If you would like to generate a report page out of this using a script, you can 
 ### Storing the results of each commit and guarding the introduction of new bugs
 Let us assume that at each commit you would like to keep your analysis 
 results up-to-date and send an alert email to the programmer if a new
-bug is to be introduced in a "pull request". 
+bug is introduced in a "pull request".
 Also when there is a new bug in the uploaded code, reject the "pull request".
 
 A single run should be used to store the analysis results of module on a specific branch: 
@@ -228,7 +228,7 @@ If no new bugs were found:
 ```
 
 If John finds a false positive report in his code and so the CI loop would prevent the merge of his pull request,
-he can suppress the false positive by amending the following suppression commend in his code a line above the bug
+he can suppress the false positive by amending the following suppression comment in his code a line above the bug
 ```
 // codechecker_suppress [core.NullDereference] suppress all checker results
   x = 1; // warn
@@ -242,9 +242,9 @@ Each bug has a unique hash identifier that is independent of the line number, th
 This way, newly introduced bugs can be detected compared to a central CodeChecker report database.  
 
 Let's assume that you are working on the master branch and the analysis of the master branch
-is store already under run name ``tmux_master``.
+is already stored under run name ``tmux_master``.
 
-1. You make local changes to to tmux
+1. You make local changes to tmux
 2. Generate a new log file
 ```
  CodeChecker log -b "make" -o compilation.json
