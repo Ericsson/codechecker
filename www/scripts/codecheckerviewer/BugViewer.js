@@ -134,13 +134,10 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
       this._sameReportSelector = new Select({
         class : 'same-report-selector',
         onChange : function (reportId) {
-          topic.publish('openFile', reportId, this.reportIdToRun[reportId],
-            null, that.listOfBugsGrid);
+          topic.publish('openFile', reportId, null, that.listOfBugsGrid);
         },
 
         refreshOptions : function (reportData) {
-          var self = this;
-
           //--- Get same reports by bughash in all reports ---//
 
           var reportFilter = new CC_OBJECTS.ReportFilter();
@@ -162,14 +159,11 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
 
           var runDataSet = CC_SERVICE.getRunData(runFilter);
 
-          this.reportIdToRun = {};
           var options = res.map(function (reportData) {
             var filename = reportData.checkedFile.replace(/^.*[\\\/]/, '');
             var run = runDataSet.filter(function (r) {
               return r.runId === reportData.runId;
             })[0];
-
-            self.reportIdToRun[reportData.reportId] = run;
 
             return {
               label : run.name + ':' + filename + ':' + reportData.line,
@@ -1119,7 +1113,6 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
       this._editor = new Editor({
         region : 'center',
         reportData : this.reportData,
-        runData : this.runData,
         listOfBugsGrid : this.listOfBugsGrid
       });
 
@@ -1147,7 +1140,6 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
       var buttonPane = new ButtonPane({
         region      : 'top',
         reportData  : this.reportData,
-        runData     : this.runData,
         editor      : this._editor,
         commentView : this._commentView,
         main        : this
@@ -1161,7 +1153,6 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
         region : 'left',
         splitter : true,
         reportData : this.reportData,
-        runData : this.runData,
         style : 'width: 300px;',
         editor : this._editor,
         buttonPane : buttonPane,

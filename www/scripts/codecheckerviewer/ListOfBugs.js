@@ -56,7 +56,6 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
     if (state.report !== undefined || state.reportHash !== undefined) {
       topic.publish('openFile',
         state.report !== undefined ? state.report : null,
-        state.run !== undefined ? getRunData(null, state.run) : null,
         state.reportHash !== undefined ? state.reportHash : null,
         grid);
       return;
@@ -280,7 +279,7 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
 
       switch (evt.cell.field) {
         case 'checkedFile':
-          topic.publish('openFile', item, this.runData, item.bugHash, this);
+          topic.publish('openFile', item, item.bugHash, this);
           break;
 
         case 'checkerId':
@@ -418,7 +417,7 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
       });
 
       this._openFileTopic = topic.subscribe('openFile',
-      function (reportData, runData, reportHash, sender) {
+      function (reportData, reportHash, sender) {
         if (sender && sender !== that._grid)
           return;
 
@@ -428,10 +427,11 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
         if (reportData !== null && !(reportData instanceof CC_OBJECTS.ReportData))
           reportData = CC_SERVICE.getReport(reportData);
 
-
-
         var getAndUseReportHash = reportHash && (!reportData ||
           reportData.reportId === null || reportData.bugHash !== reportHash);
+
+        var reportFilters = that._bugFilterView.getReportFilters();
+        var runResultParam = createRunResultFilterParameter(reportFilters);
 
         if (getAndUseReportHash) {
           // Get all reports by report hash
@@ -442,18 +442,15 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
           reports = CC_SERVICE.getRunResults(null, CC_OBJECTS.MAX_QUERY_SIZE,
             0, null, reportFilter, null);
           reportData = reports[0];
-
-          runData = getRunData(reportData.runId);
+        } else {
+          runResultParam.runIds = [reportData.runId];
+          runResultParam.cmpData = null;
         }
 
         if (this.reportData && this.reportData.reportId === reportData.reportId)
           return;
 
         this.reportData = reportData;
-
-        var reportFilters = that._bugFilterView.getReportFilters();
-        var runResultParam = createRunResultFilterParameter(reportFilters);
-        runResultParam.runIds = [reportData.runId];
 
         var filename = reportData.checkedFile.substr(
           reportData.checkedFile.lastIndexOf('/') + 1);
@@ -462,7 +459,6 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
           title : filename,
           closable : true,
           reportData : reportData,
-          runData : runData ? runData : that.runData,
           runResultParam : runResultParam,
           listOfBugsGrid : that._grid,
           onShow : function () {
