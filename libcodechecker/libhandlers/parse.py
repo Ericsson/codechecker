@@ -200,12 +200,12 @@ def main(args):
         report_count = Counter({})
 
         files = []
+        metadata_dict = {}
         if os.path.isfile(input_path):
             files.append(input_path)
 
         elif os.path.isdir(input_path):
             metadata_file = os.path.join(input_path, "metadata.json")
-            metadata_dict = {}
             if os.path.exists(metadata_file):
                 with open(metadata_file, 'r') as metadata:
                     metadata_dict = json.load(metadata)
