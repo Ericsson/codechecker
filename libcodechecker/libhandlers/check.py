@@ -14,6 +14,7 @@ import os
 import shutil
 import tempfile
 
+from libcodechecker import host_check
 from libcodechecker import libhandlers
 from libcodechecker.analyze.analyzers import analyzer_types
 from libcodechecker.logger import add_verbose_arguments
@@ -106,6 +107,14 @@ def add_arguments_to_parser(parser):
                              "temporary directory which will be removed after "
                              "the analysis.")
 
+    parser.add_argument('-t', '--type', '--output-format',
+                        dest="output_format",
+                        required=False,
+                        choices=['plist'],
+                        default='plist',
+                        help="Specify the format the analysis results "
+                             "should use.")
+
     parser.add_argument('-q', '--quiet',
                         dest="quiet",
                         action='store_true',
@@ -163,6 +172,17 @@ def add_arguments_to_parser(parser):
                                     "More threads mean faster analysis at "
                                     "the cost of using more memory.")
 
+    analyzer_opts.add_argument('-c', '--clean',
+                               dest="clean",
+                               required=False,
+                               action='store_true',
+                               default=argparse.SUPPRESS,
+                               help="Delete analysis reports stored in the "
+                                    "output directory. (By default, "
+                                    "CodeChecker would keep reports and "
+                                    "overwrites only those files that were "
+                                    "update by the current build command).")
+
     analyzer_opts.add_argument('-i', '--ignore', '--skip',
                                dest="skipfile",
                                required=False,
@@ -195,6 +215,16 @@ def add_arguments_to_parser(parser):
                                     "compiler on the system is special, e.g. "
                                     "when doing cross-compilation.")
 
+    analyzer_opts.add_argument('--capture-analysis-output',
+                               dest='capture_analysis_output',
+                               action='store_true',
+                               default=argparse.SUPPRESS,
+                               required=False,
+                               help="Store standard output and standard error "
+                                    "of successful analyzer invocations "
+                                    "into the '<OUTPUT_DIR>/success' "
+                                    "directory.")
+
     # TODO: One day, get rid of these. See Issue #36, #427.
     analyzer_opts.add_argument('--saargs',
                                dest="clangsa_args_cfg_file",
@@ -211,6 +241,60 @@ def add_arguments_to_parser(parser):
                                help="File containing argument which will be "
                                     "forwarded verbatim for the Clang-Tidy "
                                     "analyzer.")
+
+    if host_check.is_ctu_capable():
+        ctu_opts = parser.add_argument_group(
+            "cross translation unit analysis arguments",
+            "These arguments are only available if the Clang Static Analyzer "
+            "supports Cross-TU analysis. By default, no CTU analysis is run "
+            "when 'CodeChecker analyze' is called.")
+
+        ctu_modes = ctu_opts.add_mutually_exclusive_group()
+
+        ctu_modes.add_argument('--ctu', '--ctu-all',
+                               action='store_const',
+                               const=[True, True],
+                               dest='ctu_phases',
+                               default=argparse.SUPPRESS,
+                               help="Perform Cross Translation Unit (CTU) "
+                                    "analysis, both 'collect' and 'analyze' "
+                                    "phases. In this mode, the extra files "
+                                    "created by 'collect' are cleaned up "
+                                    "after the analysis.")
+
+        ctu_modes.add_argument('--ctu-collect',
+                               action='store_const',
+                               const=[True, False],
+                               dest='ctu_phases',
+                               default=argparse.SUPPRESS,
+                               help="Perform the first, 'collect' phase of "
+                                    "Cross-TU analysis. This phase generates "
+                                    "extra files needed by CTU analysis, and "
+                                    "puts them into '<OUTPUT_DIR>/ctu-dir'. "
+                                    "NOTE: If this argument is present, "
+                                    "CodeChecker will NOT execute the "
+                                    "analyzers!")
+
+        ctu_modes.add_argument('--ctu-analyze',
+                               action='store_const',
+                               const=[False, True],
+                               dest='ctu_phases',
+                               default=argparse.SUPPRESS,
+                               help="Perform the second, 'analyze' phase of "
+                                    "Cross-TU analysis, using already "
+                                    "available extra files in "
+                                    "'<OUTPUT_DIR>/ctu-dir'. (These files "
+                                    "will not be cleaned up in this mode.)")
+
+        ctu_opts.add_argument('--ctu-on-the-fly',
+                              action='store_true',
+                              dest='ctu_in_memory',
+                              default=argparse.SUPPRESS,
+                              help="If specified, the 'collect' phase will "
+                                   "not create the extra AST dumps, but "
+                                   "rather analysis will be run with an "
+                                   "in-memory recompilation of the source "
+                                   "files.")
 
     checkers_opts = parser.add_argument_group(
         "checker configuration",
@@ -240,6 +324,23 @@ def add_arguments_to_parser(parser):
                                help="Set a checker (or checker group) "
                                     "to BE PROHIBITED from use in the "
                                     "analysis.")
+
+    checkers_opts.add_argument('--enable-all',
+                               dest="enable_all",
+                               action='store_true',
+                               required=False,
+                               default=argparse.SUPPRESS,
+                               help="Force the running analyzers to use "
+                                    "almost every checker available. The "
+                                    "checker groups 'alpha.', 'debug.' and "
+                                    "'osx.' (on Linux) are NOT enabled "
+                                    "automatically and must be EXPLICITLY "
+                                    "specified. WARNING! Enabling all "
+                                    "checkers might result in the analysis "
+                                    "losing precision and stability, and "
+                                    "could even result in a total failure of "
+                                    "the analysis. USE WISELY AND AT YOUR "
+                                    "OWN RISK!")
 
     output_opts = parser.add_argument_group("output arguments")
 
@@ -334,6 +435,9 @@ def main(args):
                           'add_compiler_defaults',
                           'clangsa_args_cfg_file',
                           'tidy_args_cfg_file',
+                          'capture_analysis_output',
+                          'ctu_phases',
+                          'ctu_in_memory',
                           'ordered_checkers'  # --enable and --disable.
                           ]
         for key in args_to_update:

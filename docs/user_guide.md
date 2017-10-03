@@ -121,7 +121,9 @@ After the results has been printed to the standard output, the temporary files
 used for the analysis are cleaned up.
 
 Please see the individual help for `log`, `analyze` and `parse` (below in this
-_User guide_) for information about the arguments of `quickcheck`.
+_User guide_) for information about the arguments which are not documented
+here. For example the CTU related arguments are documented at `analyze`
+subcommand.
 
 ~~~~~~~~~~~~~~~~~~~~~
 usage: CodeChecker check [-h] [-o OUTPUT_DIR] [-q] [-f]
@@ -144,6 +146,9 @@ optional arguments:
                         Store the analysis output in the given folder. If it
                         is not given then the results go into a temporary
                         directory which will be removed after the analysis.
+  -t {plist}, --type {plist}, --output-format {plist}
+                        Specify the format the analysis results should use.
+                        (default: plist)
   -q, --quiet           If specified, the build tool's and the analyzers'
                         output will not be printed to the standard output.
   -f, --force           Delete analysis results stored in the database for the
@@ -163,11 +168,23 @@ log arguments:
 analyzer arguments:
 
   -j JOBS, --jobs JOBS
+  -c, --clean
   -i SKIPFILE, --ignore SKIPFILE, --skip SKIPFILE
   --analyzers ANALYZER [ANALYZER ...]
   --add-compiler-defaults
+  --capture-analysis-output
   --saargs CLANGSA_ARGS_CFG_FILE
   --tidyargs TIDY_ARGS_CFG_FILE
+
+cross translation unit analysis arguments:
+  These arguments are only available if the Clang Static Analyzer supports
+  Cross-TU analysis. By default, no CTU analysis is run when 'CodeChecker
+  analyze' is called.
+
+  --ctu, --ctu-all
+  --ctu-collect
+  --ctu-analyze
+  --ctu-on-the-fly
 
 checker configuration:
 
@@ -325,7 +342,7 @@ optional arguments:
                         directory. (By default, CodeChecker would keep reports
                         and overwrites only those files that were update by
                         the current build command).
-  -n NAME, --name NAME  Annotate the ran analysis with a custom name in the
+  -n NAME, --name NAME  Annotate the run analysis with a custom name in the
                         created metadata file.
   --verbose {info,debug,debug_analyzer}
                         Set verbosity level. (default: info)
@@ -519,7 +536,7 @@ your own risk!**
 
 Even specifying `--enable-all` will **NOT** enable checkers from some special
 checker groups, such as `alpha.` and `debug.`. `osx.` checkers are only enabled
-if CodeChecker is ran on a macOS machine. `--enable-all` can further be
+if CodeChecker is run on a macOS machine. `--enable-all` can further be
 fine-tuned with subsequent `--enable` and `--disable` arguments, for example
 
 ~~~~
@@ -540,7 +557,7 @@ mode uses some extra storage space under the specified `--output-dir`.
 ~~~~~~~~~~~~~~~~~~~~~
 cross translation unit analysis arguments:
   These arguments are only available if the Clang Static Analyzer supports
-  Cross-TU analysis. By default, no such analysis is ran when 'CodeChecker
+  Cross-TU analysis. By default, no such analysis is run when 'CodeChecker
   analyze' is called.
 
   --ctu, --ctu-all      Perform Cross Translation Unit (CTU) analysis, both
@@ -557,7 +574,7 @@ cross translation unit analysis arguments:
                         '<OUTPUT_DIR>/ctu-dir'. (These files will not be
                         cleaned up in this mode.)
   --ctu-on-the-fly      If specified, the 'collect' phase will not create the
-                        extra AST dumps, but rather analysis will be ran with
+                        extra AST dumps, but rather analysis will be run with
                         an in-memory recompilation of the source files.
 ~~~~~~~~~~~~~~~~~~~~~
 
@@ -605,7 +622,7 @@ optional arguments:
                         Set verbosity level. (default: info)
 ~~~~~~~~~~~~~~~~~~~~~
 
-For example, if the analysis was ran like:
+For example, if the analysis was run like:
 
 ~~~~
 CodeChecker analyze ../codechecker_myProject_build.log -o my_plists
@@ -716,7 +733,7 @@ optional arguments:
 server arguments:
   Specifies a 'CodeChecker server' instance which will be used to store the
   results. This server must be running and listening, and the given product
-  must exist prior to the 'store' command being ran.
+  must exist prior to the 'store' command being run.
 
   --url PRODUCT_URL     The URL of the product to store the results for, in
                         the format of '[http[s]://]host:port/Endpoint'.
@@ -727,7 +744,7 @@ The results can be viewed by connecting to such a server in a Web browser or
 via 'CodeChecker cmd'.
 ~~~~~~~~~~~~~~~~~~~~~
 
-For example, if the analysis was ran like:
+For example, if the analysis was run like:
 
 ~~~~
 CodeChecker analyze ../codechecker_myProject_build.log -o ./my_plists
@@ -808,7 +825,7 @@ can be used to retrieve the to-be-used analyzers' install path and version
 information.
 
 By default, this command only lists the names of the available analyzers (with
-respect to the environment CodeChecker is ran in).
+respect to the environment CodeChecker is run in).
 
 ~~~~~~~~~~~~~~~~~~~~~
 usage: CodeChecker analyzers [-h] [--all] [--details]

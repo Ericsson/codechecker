@@ -11,10 +11,10 @@ import argparse
 import json
 import os
 import shutil
-import subprocess
 import sys
 
 from libcodechecker import generic_package_context
+from libcodechecker import host_check
 from libcodechecker.analyze import log_parser
 from libcodechecker.analyze import analyzer
 from libcodechecker.analyze.analyzers import analyzer_types
@@ -89,17 +89,6 @@ def add_arguments_to_parser(parser):
     Add the subcommand's arguments to the given argparse.ArgumentParser.
     """
 
-    def is_ctu_capable():
-        """ Detects if the current clang is CTU compatible. """
-
-        context = generic_package_context.get_context()
-        ctu_func_map_cmd = context.ctu_func_map_cmd
-        try:
-            version = subprocess.check_output([ctu_func_map_cmd, '-version'])
-        except (subprocess.CalledProcessError, OSError):
-            version = 'ERROR'
-        return version != 'ERROR'
-
     parser.add_argument('logfile',
                         type=str,
                         nargs='+',
@@ -163,7 +152,7 @@ def add_arguments_to_parser(parser):
                         dest="name",
                         required=False,
                         default=argparse.SUPPRESS,
-                        help="Annotate the ran analysis with a custom name in "
+                        help="Annotate the run analysis with a custom name in "
                              "the created metadata file.")
 
     analyzer_opts = parser.add_argument_group("analyzer arguments")
@@ -216,11 +205,11 @@ def add_arguments_to_parser(parser):
                                help="File containing argument which will be "
                                     "forwarded verbatim for Clang-Tidy.")
 
-    if is_ctu_capable():
+    if host_check.is_ctu_capable():
         ctu_opts = parser.add_argument_group(
             "cross translation unit analysis arguments",
             "These arguments are only available if the Clang Static Analyzer "
-            "supports Cross-TU analysis. By default, no CTU analysis is ran "
+            "supports Cross-TU analysis. By default, no CTU analysis is run "
             "when 'CodeChecker analyze' is called.")
 
         ctu_modes = ctu_opts.add_mutually_exclusive_group()
@@ -266,7 +255,7 @@ def add_arguments_to_parser(parser):
                               default=argparse.SUPPRESS,
                               help="If specified, the 'collect' phase will "
                                    "not create the extra AST dumps, but "
-                                   "rather analysis will be ran with an "
+                                   "rather analysis will be run with an "
                                    "in-memory recompilation of the source "
                                    "files.")
 
