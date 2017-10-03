@@ -204,6 +204,16 @@ class Context(object):
         return self.pckg_layout['ld_logger_lib_name']
 
     @property
+    def path_plist_to_html_bin(self):
+        return os.path.join(self.package_root,
+                            self.pckg_layout['plist_to_html_bin'])
+
+    @property
+    def path_plist_to_html_dist(self):
+        return os.path.join(self.package_root,
+                            self.pckg_layout['plist_to_html_dist_path'])
+
+    @property
     def compiler_resource_dir(self):
         resource_dir = self.pckg_layout.get('compiler_resource_dir')
         if not resource_dir:
