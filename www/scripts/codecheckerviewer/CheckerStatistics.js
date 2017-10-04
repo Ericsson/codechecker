@@ -41,14 +41,15 @@ function (declare, ItemFileWriteStore, Deferred, all, Memory, Observable,
       this.inherited(arguments);
 
       if(this.dropDown && this.dropDownButton){
-        var label = '';
-
-        this.options.forEach(function(option) {
-          if (option.selected)
-            label += (label.length ? ', ' : '') + option.label;
+        var selectedOptions = this.options.filter(function (opt) {
+          return opt.selected;
         });
 
-        this.dropDownButton.set('label', label.length ? label : this.label);
+        var label = selectedOptions.length ? selectedOptions.length == 1
+            ? selectedOptions[0].label : "Multiple runs"
+            : this.label;
+
+        this.dropDownButton.set('label', label);
       }
     }
   });
@@ -67,15 +68,21 @@ function (declare, ItemFileWriteStore, Deferred, all, Memory, Observable,
         dropDown  : true,
         onChange  : function (state) {
           that.selectedRuns = state;
+          this.changed = true;
+        },
+        onBlur : function () {
+          if (!this.changed)
+            return;
 
           var runIds = [];
           this.store.query({}).forEach(function (item) {
-            if (state.indexOf(item.label) !== -1)
+            if (that.selectedRuns.indexOf(item.label) !== -1)
               runIds.push(item.value);
           });
 
           that.dataGrid.refreshGrid(runIds);
-          hashHelper.setStateValue('run', state);
+          hashHelper.setStateValue('run', that.selectedRuns);
+          this.changed = false;
         }
       });
 
@@ -112,10 +119,10 @@ function (declare, ItemFileWriteStore, Deferred, all, Memory, Observable,
           });
         });
 
-        if (!that.selectedRuns)
-          setTimeout(function () { that.dataGrid.refreshGrid(); }, 0);
-        else
+        if (that.selectedRuns)
           that._runFilter.set('value', that.selectedRuns);
+
+        that.dataGrid.refreshGrid();
       });
     }
   });
@@ -144,12 +151,6 @@ function (declare, ItemFileWriteStore, Deferred, all, Memory, Observable,
       this.keepSelection = true;
       this.escapeHTMLInData = false;
       this.sortInfo = -2; // sort by severity
-    },
-
-    postCreate : function () {
-      this.inherited(arguments);
-
-      this._populateStatistics();
     },
 
     onRowClick : function (evt) {
