@@ -62,7 +62,16 @@ def get_compiler_includes(compiler, lang, compile_opts, extra_opts=None):
             if line.startswith(end_mark):
                 do_append = False
             if do_append:
-                include_paths.append("-isystem " + line)
+                # On OSX there are framework includes,
+                # where we need to strip the "(framework directory)" string.
+                # For instance:
+                # /System/Library/Frameworks (framework directory)
+                fpos = line.find("(framework directory)")
+                if fpos == -1:
+                    include_paths.append("-isystem " + line)
+                else:
+                    include_paths.append("-isystem " + line[0:fpos-1])
+
             if line.startswith(start_mark):
                 do_append = True
 
@@ -75,15 +84,9 @@ def get_compiler_target(compiler):
     """
     Returns the target triple of the given compiler as a string.
 
-    If the compiler is not a version of GCC, an empty string is returned.
-    Compilers other than GCC might have default targets differing from
-    the build target.
     """
     target_label = "Target:"
     target = ""
-
-    gcc_label = "gcc"
-    gcc = False
 
     cmd = compiler + ' -v'
     LOG.debug("Retrieving target platform information via '" + cmd + "'")
@@ -99,10 +102,6 @@ def get_compiler_target(compiler):
             line = line.strip().split()
             if line[0] == target_label:
                 target = line[1]
-            if line[0] == gcc_label:
-                gcc = True
-        if not gcc:
-            target = ""
 
     except OSError as oerr:
         LOG.error("Cannot find compiler target: " + oerr.strerror + "\n")
@@ -112,6 +111,9 @@ def get_compiler_target(compiler):
 
 def parse_compile_commands_json(logfile, add_compiler_defaults=False):
     import json
+    # The add-compiler-defaults is a deprecated argument
+    # and we always perform target and include auto-detection.
+    add_compiler_defaults = True
     LOG.debug('parse_compile_commands_json: ' + str(add_compiler_defaults))
 
     actions = []

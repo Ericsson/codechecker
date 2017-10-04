@@ -184,7 +184,8 @@ def add_arguments_to_parser(parser):
                                action='store_true',
                                required=False,
                                default=argparse.SUPPRESS,
-                               help="Retrieve compiler-specific configuration "
+                               help="DEPRECATED. Always True. Retrieve "
+                                    " compiler-specific configuration "
                                     "from the analyzers themselves, and use "
                                     "them with Clang. This is used when the "
                                     "compiler on the system is special, e.g. "

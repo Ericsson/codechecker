@@ -365,6 +365,7 @@ analyzer arguments:
                         Currently supported analyzers are: clangsa, clang-
                         tidy.
   --add-compiler-defaults
+                        DEPRECATED. Always True. 
                         Retrieve compiler-specific configuration from the
                         compilers themselves, and use them with Clang. This is
                         used when the compiler on the system is special, e.g.
