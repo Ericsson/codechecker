@@ -424,7 +424,7 @@ def handle_list_result_types(args):
     else:
         items = check_run_names(client, args.names)
 
-    run_ids = map(lambda _, run: run.runId, items)
+    run_ids = map(lambda run: run.runId, items.values())
 
     all_checkers_report_filter = ttypes.ReportFilter()
     all_checkers = client.getCheckerCounts(run_ids, all_checkers_report_filter,
