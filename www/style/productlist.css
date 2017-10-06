@@ -200,3 +200,12 @@ span.product-avatar {
   float: right;
   margin-top: 6px;
 }
+
+#list-of-products {
+  display: flex;
+  flex-direction: column;
+}
+
+#productGrid {
+  flex-grow: 1;
+}

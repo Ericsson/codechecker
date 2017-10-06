@@ -116,7 +116,8 @@ function (declare, topic, domConstruct, Button, BorderContainer,
     //--- Center panel ---//
 
     var listOfProducts = new ListOfProducts({
-      title : 'Products'
+      title : 'Products',
+      id : 'list-of-products'
     });
 
     productsPane.addChild(listOfProducts);
