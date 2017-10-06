@@ -139,10 +139,8 @@ output. Check only needs a build command or an already existing logfile and
 performs every step of doing the analysis in batch.
 
 optional arguments:
-  -h, --help            show this help message and exit
+  -h, --help
   -o OUTPUT_DIR, --output OUTPUT_DIR
-                        Store the analysis output in the given folder.
-                        (default: /home/<username>/.codechecker/reports)
   -q, --quiet           If specified, the build tool's and the analyzers'
                         output will not be printed to the standard output.
   -f, --force           Delete analysis results stored in the database for the
@@ -153,7 +151,6 @@ optional arguments:
                         incrementally update defect reports for source files
                         that were analysed.)
   --verbose {info,debug,debug_analyzer}
-                        Set verbosity level. (default: info)
 
 log arguments:
 
@@ -178,31 +175,39 @@ output arguments:
   --print-steps
 ~~~~~~~~~~~~~~~~~~~~~
 
-## PRODUCT_URL format
+# `PRODUCT_URL` format
 
-Several sub-commands (`store`, `cmd`)  need exact specification of the server, port, access protocol
-and storage area (aka product endpoint) where to store to and query from the analysis results.
-CodeChecker uses the `PRODUCT_URL` format to specify an exact storage endpoint:
-`[http[s]]://]host:port/ProductEndpoint`
+Several subcommands, such as `store` and `cmd` need a connection specification
+on which server and for which *Product* (read more [about
+products](/docs/products.md)) an action, such as report storage or result
+retrieving, should be done.
 
-The first part is the access protocol being `http` or secure `https` 
-(if ommitted, the default is `http`), the second part is the host and TCP port where 
-the codechecker server is listening on, and the last part is `ProductEndpoint`, which
-is a specific/separate storage area for the product being analyzed.
-Please note that `ProductEndpoint` must be created first on the server before
-it could be used.
+This is done via the `PRODUCT_URL` where indicated in the subcommand, which
+contains the server's access protocol, address, and the to-be-used product's
+unique endpoint. The format of this string is:
+`[http[s]://]host:port/ProductEndpoint`. This URL looks like a standar Web
+browsing (HTTP) request URL.
 
-For example 
-`https://codechecker.server:5001/MyProduct`
-specifies that there is a listening server on host `codechecker.server` on
-port `5001` which is to be accessed by `https` protocol and which has a 
-product endpoint `MyProduct`.
+CodeChecker communicates via HTTP requests, thus the first part specifies
+whether or not a more secure SSL/TLS-wrapped `https` protocol should be used.
+If omitted, the default value is `http`. The second part is the host and the
+port the server listens on. After a `/`, the unique endpoint of the product
+must be given, this is case-sensitive. This unique endpoint is configured and
+allocated when the [product is created](/docs/products.md), by the server's
+administrators. The product must exist and be properly configured before any
+normal operation could be done on it.
 
-`CodeChecker store ./my-reports --url https://codechecker.server:5001/MyProduct -n myrun`
-will store analysis reports from the `my-reports` folder into the above specified 
-location in a run called `myrun`.
-     
-     
+If no URL is specified, the default value `http://localhost:8001/Default` will
+be used: a standard HTTP CodeChecker server running on the local machine, on
+the default port, using the *Default* product.
+
+## Example
+
+The URL `https://codechecker.example.org:9999/SampleProduct` will access the
+server machine `codechecker.example.org` trying to connect to a server
+listening on port `9999` via HTTPS. The product `SampleProduct` will be used.
+
+
 # Available CodeChecker commands
 
 ## 1. `log` mode
@@ -993,7 +998,7 @@ running server management:
 ~~~~~~~~~~~~~~~~~~~~~
 
 CodeChecker servers can be started in the background as any other service, via
-common Shell tools, such as `nohup` and `&!`. The running instances can be
+common shell tools such as `nohup` and `&!`. The running instances can be
 queried via `--list`.
 
 Calling `CodeChecker server --stop` will stop the "default" server, i.e. one
