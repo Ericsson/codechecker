@@ -199,13 +199,7 @@ function (declare, topic, domConstruct, Dialog, Button,
 
     var checkerStatisticsTab = new CheckerStatistics({
       title : 'Checker statistics',
-      listOfAllReports : listOfAllReports,
-      onShow : function () {
-        hashHelper.resetStateValues({
-          'tab' : 'statistics',
-          'run' : this._filterPane.selectedRuns
-        });
-      }
+      listOfAllReports : listOfAllReports
     });
     runsTab.addChild(checkerStatisticsTab);
     runsTab.addChild(listOfAllReports);
