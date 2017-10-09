@@ -15,14 +15,13 @@ define([
   'dijit/Dialog',
   'dijit/form/Button',
   'dijit/form/TextBox',
-  'dijit/layout/BorderContainer',
   'dijit/layout/ContentPane',
   'codechecker/util',
   'products/PermissionList',
   'products/ProductSettingsView'],
 function (declare, domClass, domConstruct, ItemFileWriteStore, topic,
-  DataGrid, ConfirmDialog, Dialog, Button, TextBox, BorderContainer,
-  ContentPane, util, PermissionList, ProductSettingsView) {
+  DataGrid, ConfirmDialog, Dialog, Button, TextBox, ContentPane, util,
+  PermissionList, ProductSettingsView) {
 
   //--- Global (server-wide) permission configuration dialog ---//
 
@@ -394,18 +393,15 @@ function (declare, domClass, domConstruct, ItemFileWriteStore, topic,
 
   //--- Main view ---//
 
-  return declare(BorderContainer, {
+  return declare(ContentPane, {
     postCreate : function () {
       var infoPane = new ProductInfoPane({
-        region : 'top'
+        id : 'product-infopane'
       });
 
       this.set('infoPane', infoPane);
 
-      var listOfProductsGrid = new ListOfProductsGrid({
-        id : 'productGrid',
-        region : 'center'
-      });
+      var listOfProductsGrid = new ListOfProductsGrid({ id : 'productGrid' });
       
       this.set('listOfProductsGrid', listOfProductsGrid);
       infoPane.set('listOfProductsGrid', listOfProductsGrid);
