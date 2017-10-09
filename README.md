@@ -66,23 +66,23 @@ For a detailed dependency list, please see [Requirements](docs/deps.md). The
 following commands are used to bootstrap CodeChecker on Ubuntu 16.04.1 LTS:
 
 ~~~{.sh}
-# Install mandatory dependencies for a development and analysis environment
-# NOTE: clang-3.9 can be replaced by any later versions of LLVM/Clang
+# Install mandatory dependencies for a development and analysis environment.
+# NOTE: clang-3.9 can be replaced by any later versions of LLVM/Clang.
 sudo apt-get install clang-3.9 build-essential curl doxygen gcc-multilib \
   git python-virtualenv python-dev thrift-compiler
 
-# Check out CodeChecker
+# Check out CodeChecker source code.
 git clone https://github.com/Ericsson/CodeChecker.git --depth 1 ~/codechecker
 cd ~/codechecker
 
-# Create a Python virtualenv and set it as your environment
+# Create a Python virtualenv and set it as your environment.
 make venv
 source $PWD/venv/bin/activate
 
-# Build and install a CodeChecker package
+# Build and install a CodeChecker package.
 make package
 
-# For ease of access, add the build directory to PATH
+# For ease of access, add the build directory to PATH.
 export PATH="$PWD/build/CodeChecker/bin:$PATH"
 
 cd ..
@@ -129,23 +129,23 @@ Check out and build LLVM/Clang with extra tools. Follow the [Get Started with
 LLVM/Clang](http://clang.llvm.org/get_started.html) documentation.
 
 ~~~{.sh}
-# Download and install dependencies
+# Download and install dependencies.
 brew update
 brew install doxygen gcc git
 brew install homebrew/versions/thrift090
 
-# Fetch source code
+# Fetch source code.
 git clone https://github.com/Ericsson/CodeChecker.git --depth 1 ~/codechecker
 cd ~/codechecker
 
-# Create a Python virtualenv and set it as your environment
+# Create a Python virtualenv and set it as your environment.
 make venv
 source $PWD/venv/bin/activate
 
-# Build and install a CodeChecker package
+# Build and install a CodeChecker package.
 make package
 
-# For ease of access, add the build directory to PATH
+# For ease of access, add the build directory to PATH.
 export PATH="$PWD/build/CodeChecker/bin:$PATH"
 
 cd ..
@@ -184,15 +184,15 @@ analysis in.
 source ~/codechecker/venv/bin/activate
 
 # Path of CodeChecker package
-# NOTE: SKIP this line if you want to always specify CodeChecker's full path
+# NOTE: SKIP this line if you want to always specify CodeChecker's full path.
 export PATH=~/codechecker/build/CodeChecker/bin:$PATH
 
 # Path of `scan-build.py` (intercept-build)
-# NOTE: SKIP this line if you don't want to use intercept-build
+# NOTE: SKIP this line if you don't want to use intercept-build.
 export PATH=~/<user path>/llvm/tools/clang/tools/scan-build-py/bin:$PATH
 
 # Path of the built LLVM/Clang
-# NOTE: SKIP this line if clang is available in your PATH as an installed Linux package
+# NOTE: SKIP this line if clang is available in your PATH as an installed Linux package.
 export PATH=~/<user path>/build/bin:$PATH
 ~~~
 
