@@ -117,7 +117,7 @@ def create_folder_layout(path, layout):
                     sys.exit()
 
 
-def copy_tree(src, dst):
+def copy_tree(src, dst, skip=None):
     """ Copy file tree. """
 
     if not os.path.exists(dst):
@@ -125,8 +125,12 @@ def copy_tree(src, dst):
     for item in os.listdir(src):
         source = os.path.join(src, item)
         destination = os.path.join(dst, item)
+
+        if skip is not None and source in skip:
+            continue
+
         if os.path.isdir(source):
-            copy_tree(source, destination)
+            copy_tree(source, destination, skip)
         else:
             delta = os.stat(src).st_mtime - os.stat(dst).st_mtime
             if not os.path.exists(destination) or delta > 0:
@@ -709,7 +713,17 @@ def build_package(repository_root, build_package_config, env=None):
     LOG.debug('Copy web client files')
     source = os.path.join(repository_root, 'www')
     target = os.path.join(package_root, package_layout['www'])
-    copy_tree(source, target)
+
+    # Copy user guide to the web directory except images which will be placed
+    # to the common image directory.
+    userguide_images = os.path.join(source, 'userguide', 'images')
+    copy_tree(source, target, [userguide_images])
+    copy_tree(userguide_images, os.path.join(target, 'images'))
+
+    # Rename gen-docs to docs.
+    target_userguide = os.path.join(package_root, package_layout['userguide'])
+    shutil.move(os.path.join(target_userguide, 'gen-docs'),
+                os.path.join(target_userguide, 'doc'))
 
     # Copy font files.
     for _, dep in vendor_projects.items():

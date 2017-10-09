@@ -9,21 +9,19 @@ define([
   'dojo/topic',
   'dojo/dom-construct',
   'dijit/Dialog',
-  'dijit/DropDownMenu',
-  'dijit/MenuItem',
   'dijit/form/Button',
-  'dijit/form/DropDownButton',
   'dijit/layout/BorderContainer',
   'dijit/layout/ContentPane',
   'dijit/layout/TabContainer',
   'codechecker/CheckerStatistics',
   'codechecker/hashHelper',
+  'codechecker/HeaderMenu',
   'codechecker/ListOfBugs',
   'codechecker/ListOfRuns',
   'codechecker/util'],
-function (declare, topic, domConstruct, Dialog, DropDownMenu, MenuItem,
-  Button, DropDownButton, BorderContainer, ContentPane, TabContainer,
-  CheckerStatistics, hashHelper, ListOfBugs, ListOfRuns, util) {
+function (declare, topic, domConstruct, Dialog, Button,
+  BorderContainer, ContentPane, TabContainer, CheckerStatistics, hashHelper,
+  HeaderMenu, ListOfBugs, ListOfRuns, util) {
 
   var runDataList = null;
 
@@ -36,6 +34,12 @@ function (declare, topic, domConstruct, Dialog, DropDownMenu, MenuItem,
   function initByUrl() {
     var state = hashHelper.getValues();
 
+    for (var key in state)
+      if (key.indexOf('userguide-') !== -1) {
+        topic.publish('tab/userguide');
+        return;
+      }
+
     switch (state.tab) {
       case undefined:
         if (state.run || state.baseline || state.newcheck || state.difftype ||
@@ -46,6 +50,9 @@ function (declare, topic, domConstruct, Dialog, DropDownMenu, MenuItem,
         return;
       case 'statistics':
         topic.publish('tab/checkerStatistics');
+        return;
+      case 'userguide':
+        topic.publish('tab/userguide');
         return;
       case 'allReports':
         topic.publish('tab/allReports');
@@ -134,61 +141,6 @@ function (declare, topic, domConstruct, Dialog, DropDownMenu, MenuItem,
       });
     }
 
-    //--- Menu button ---//
-
-    var credits = new Dialog({
-      title : 'Credits',
-      class : 'credits',
-      content :
-        '<b>D&aacute;niel Krupp</b> <a href="http://github.com/dkrupp">@dkrupp</a><br /> \
-           daniel.krupp@ericsson.com<br /> \
-         <b>Gy&ouml;rgy Orb&aacute;n</b> <a href="http://github.com/gyorb">@gyorb</a><br /> \
-           gyorgy.orban@ericsson.com<br /> \
-         <b>Tibor Brunner</b> <a href="http://github.com/bruntib">@bruntib</a><br /> \
-           tibor.brunner@ericsson.com<br /> \
-         <b>G&aacute;bor Horv&aacute;th</b> <a href="http://github.com/Xazax-hun">@Xazax-hun</a><br /> \
-           gabor.a.horvath@ericsson.com<br /> \
-         <b>Rich&aacute;rd Szalay</b> <a href="http://github.com/whisperity">@whisperity</a><br /> \
-           richard.szalay@ericsson.com<br /> \
-         <b>M&aacute;rton Csord&aacute;s</b> <a href="http://github.com/csordasmarton">@csordasmarton</a><br /> \
-           marton.csordas@ericsson.com<br /> \
-         <b>Boldizs&aacute;r T&oacute;th</b> <a href="http://github.com/bobszi">@bobszi</a><br /> \
-           toth.boldizsar@gmail.com<br> \
-         <b>Bence Babati</b> <a href="http://github.com/babati">@babati</a><br /> \
-           bence.babati@ericsson.com<br /> \
-         <b>G&aacute;bor Alex Isp&aacute;novics</b> <a href="http://github.com/igalex">@igalex</a><br /> \
-           gabor.alex.ispanovics@ericsson.com<br /> \
-         <b>Szabolcs Sipos</b> <a href="http://github.com/labuwx">@labuwx</a><br /> \
-           labuwx@balfug.com<br />'
-    });
-
-    var menuItems = new DropDownMenu();
-
-    menuItems.addChild(new MenuItem({
-      label : 'CodeChecker @ GitHub',
-      onClick : function () {
-        window.open('http://github.com/Ericsson/codechecker', '_blank');
-      }
-    }));
-
-    menuItems.addChild(new MenuItem({
-      label : 'Send bug report',
-      onClick : function () {
-        window.open('http://github.com/Ericsson/codechecker/issues/new', '_blank');
-      }
-    }));
-
-    menuItems.addChild(new MenuItem({
-      label : 'Credits',
-      onClick : function () { credits.show(); }
-    }));
-
-    var menuButton = new DropDownButton({
-      class : 'main-menu-button',
-      iconClass : 'dijitIconFunction',
-      dropDown : menuItems
-    });
-
     //--- Back button to product list ---//
 
     var productListButton = new Button({
@@ -201,9 +153,12 @@ function (declare, topic, domConstruct, Dialog, DropDownMenu, MenuItem,
       }
     });
 
-    var headerMenu = domConstruct.create('div', {
-        id : 'header-menu'
-      });
+    var headerMenu = domConstruct.create('div', { id : 'header-menu' });
+
+    var menuButton = new HeaderMenu({
+      class : 'main-menu-button',
+      iconClass : 'dijitIconFunction',
+    });
 
     if (loginUserSpan != null)
         domConstruct.place(loginUserSpan, headerMenu);
@@ -312,6 +267,33 @@ function (declare, topic, domConstruct, Dialog, DropDownMenu, MenuItem,
       }
 
       runsTab.selectChild(runIdToTab[tabId]);
+    });
+
+    topic.subscribe('tab/userguide', function () {
+      var that = this;
+
+      if (!this.userguide) {
+        this.userguide = new ContentPane({
+          title : 'User guide',
+          closable : true,
+          href  : 'userguide/doc/html/md_userguide.html',
+          onClose : function () {
+            delete that.userguide;
+            return true;
+          },
+          onShow : function () {
+            hashHelper.resetStateValues({
+              'tab' : 'userguide'
+            });
+          }
+        });
+        runsTab.addChild(this.userguide);
+      }
+
+      hashHelper.resetStateValues({
+        'tab' : 'userguide'
+      });
+      runsTab.selectChild(this.userguide);
     });
 
     var docDialog = new Dialog();

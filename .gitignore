@@ -16,6 +16,7 @@ vendor/build-logger/build/
 
 # doxygen generated files
 gen-docs/
+www/userguide/gen-docs/
 
 # thrift generated files
 thrift_api/gen-js/

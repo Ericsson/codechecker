@@ -1,0 +1,12 @@
+PROJECT_NAME           = "CodeChecker"
+PROJECT_BRIEF          = "Defect database and viewer extension for the Clang Static Analyzer and Clang Tidy"
+OUTPUT_DIRECTORY       = ./gen-docs
+INPUT                  = 
+FILE_PATTERNS          = *.md
+RECURSIVE              = NO
+INPUT_FILTER           = 
+SEARCHENGINE           = NO
+HTML_HEADER            = header.html
+HTML_FOOTER            = footer.html
+DISABLE_INDEX          = YES
+GENERATE_LATEX         = NO

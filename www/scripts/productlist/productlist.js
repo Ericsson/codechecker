@@ -11,9 +11,12 @@ define([
   'dijit/form/Button',
   'dijit/layout/BorderContainer',
   'dijit/layout/ContentPane',
+  'dijit/layout/TabContainer',
+  'codechecker/hashHelper',
+  'codechecker/HeaderMenu',
   'products/ListOfProducts'],
-function (declare, topic, domConstruct, Button, BorderContainer,
-  ContentPane, ListOfProducts) {
+function (declare, topic, domConstruct, Button, BorderContainer, ContentPane,
+  TabContainer, hashHelper, HeaderMenu, ListOfProducts) {
 
   return function () {
 
@@ -37,11 +40,17 @@ function (declare, topic, domConstruct, Button, BorderContainer,
 
     var layout = new BorderContainer({ id : 'mainLayout' });
 
+    var productsTab = new TabContainer({ region : 'center' });
+    layout.addChild(productsTab);
+
     var headerPane = new ContentPane({ id : 'headerPane', region : 'top' });
     layout.addChild(headerPane);
 
-    var productsPane = new ContentPane({ region : 'center' });
-    layout.addChild(productsPane);
+    var productsPane = new ContentPane({
+      title : 'All products',
+      region : 'center'
+    });
+    productsTab.addChild(productsPane);
 
     //--- Logo ---//
 
@@ -105,12 +114,18 @@ function (declare, topic, domConstruct, Button, BorderContainer,
         id : 'header-menu'
     });
 
+    var headerMenuButton = new HeaderMenu({
+      class : 'main-menu-button',
+      iconClass : 'dijitIconFunction',
+    });
+
     if (loginUserSpan != null)
         domConstruct.place(loginUserSpan, headerMenu);
 
     if (isSuperuser || isAdminOfAnyProduct)
       domConstruct.place(menuButton.domNode, headerMenu);
 
+    domConstruct.place(headerMenuButton.domNode, headerMenu);
     domConstruct.place(headerMenu, headerPane.domNode);
 
     //--- Center panel ---//
@@ -121,6 +136,33 @@ function (declare, topic, domConstruct, Button, BorderContainer,
     });
 
     productsPane.addChild(listOfProducts);
+
+    topic.subscribe('tab/userguide', function () {
+      var that = this;
+
+      if (!this.userguide) {
+        this.userguide = new ContentPane({
+          title : 'User guide',
+          closable : true,
+          href  : 'userguide/doc/html/md_userguide.html',
+          onClose : function () {
+            delete that.userguide;
+            return true;
+          },
+          onShow : function () {
+            hashHelper.resetStateValues({
+              'tab' : 'userguide'
+            });
+          }
+        });
+        productsTab.addChild(this.userguide);
+      }
+
+      hashHelper.resetStateValues({
+        'tab' : 'userguide'
+      });
+      productsTab.selectChild(this.userguide);
+    });
 
     //--- Init page ---//
 
