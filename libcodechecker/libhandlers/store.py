@@ -322,7 +322,7 @@ def main(args):
 
         client.massStoreRun(args.name,
                             args.tag if 'tag' in args else None,
-                            context.version,
+                            str(context.version),
                             b64zip,
                             'force' in args)
 
