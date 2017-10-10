@@ -41,7 +41,11 @@ def check_run_names(client, check_names):
     maps run names to runs. The dictionary contains only the runs in
     check_names or all runs if check_names is empty or None.
     """
-    run_info = {run.name: run for run in client.getRunData(None)}
+    run_filter = ttypes.RunFilter()
+    run_filter.names = check_names
+    run_filter.exactMatch = check_names is not None
+
+    run_info = {run.name: run for run in client.getRunData(run_filter)}
 
     if not check_names:
         return run_info
