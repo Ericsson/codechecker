@@ -323,9 +323,10 @@ class StorageSession:
     """
     This class is a singleton which helps to handle a transaction which
     belong to the checking of an entire run. This class holds the SQLAlchemy
-    session for the run being checked and the set of touched reports. This
-    latter one is needed so at the end the detection status of the rest reports
-    can be set to "resolved".
+    session for the run being stored.
+
+    bug_id_detection_status dictionary stores the found bug ids in this
+    storage session with the corresponding detection status to it.
     """
 
     class __StorageSession:
@@ -335,7 +336,7 @@ class StorageSession:
 
         def start_run_session(self, run_id, transaction):
             self.__sessions[run_id] = {
-                'touched_reports': set(),
+                'bug_id_detection_status': {},
                 'transaction': transaction,
                 'timer': time.time()}
 
@@ -343,14 +344,17 @@ class StorageSession:
             this_session = self.__sessions[run_id]
             transaction = this_session['transaction']
 
-            # Set resolved reports
-
-            transaction.query(Report) \
-                .filter(Report.run_id == run_id,
-                        Report.id.notin_(this_session['touched_reports'])) \
-                .update({Report.detection_status: 'resolved',
-                         Report.fixed_at: run_history_time},
-                        synchronize_session='fetch')
+            # Set the detection status for all of the not found bug id's
+            # in this storage session to resolved.
+            if this_session['bug_id_detection_status']:
+                transaction.query(Report) \
+                    .filter(Report.run_id == run_id,
+                            Report.bug_id.notin_(
+                                this_session['bug_id_detection_status']
+                                .keys())) \
+                    .update({Report.detection_status: 'resolved',
+                             Report.fixed_at: run_history_time},
+                            synchronize_session='fetch')
 
             transaction.commit()
             transaction.close()
@@ -363,11 +367,13 @@ class StorageSession:
             transaction.close()
             del self.__sessions[run_id]
 
-        def touch_report(self, run_id, report_id):
-            self.__sessions[run_id]['touched_reports'].add(report_id)
+        def save_detection_status(self, run_id, bug_id, set_status):
+            self.__sessions[run_id]['bug_id_detection_status'][bug_id] = \
+                set_status
 
-        def is_touched(self, run_id, report_id):
-            return report_id in self.__sessions[run_id]['touched_reports']
+        def get_detection_status(self, run_id, report_id):
+            return self.__sessions[run_id]['bug_id_detection_status'] \
+                    .get(report_id)
 
         def has_ongoing_run(self, run_id):
             return run_id in self.__sessions
