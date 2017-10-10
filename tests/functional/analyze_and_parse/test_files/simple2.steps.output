@@ -20,6 +20,7 @@ CHECK#CodeChecker check --build "make simple2" --output $OUTPUT$ --quiet --analy
 [HIGH] simple2.cpp:17:14: Division by zero [core.DivideZero]
   return 2015 / x;
               ^
+  Report hash: 44b4d1ee758a6705311fa9e2c0051aa6
   Steps:
     1, simple2.cpp:15:6: Calling 'foo'
     2, simple2.cpp:3:1: Entered call from 'main'
