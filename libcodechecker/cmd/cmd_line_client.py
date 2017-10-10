@@ -168,6 +168,14 @@ def handle_diff_results(args):
 
         report_filter = ttypes.ReportFilter()
         add_filter_conditions(report_filter, args.filter)
+
+        # Do not show resolved bugs in compare mode new.
+        if cmp_data.diffType == ttypes.DiffType.NEW:
+            report_filter.detectionStatus = [
+                ttypes.DetectionStatus.NEW,
+                ttypes.DetectionStatus.UNRESOLVED,
+                ttypes.DetectionStatus.REOPENED]
+
         sort_mode = [(ttypes.SortMode(
             ttypes.SortType.FILENAME,
             ttypes.Order.ASC))]
