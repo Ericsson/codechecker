@@ -129,6 +129,7 @@ def add_arguments_to_parser(parser):
     parser.add_argument('-o', '--output',
                         dest="output_path",
                         required=True,
+                        default=argparse.SUPPRESS,
                         help="Store the analysis output in the given folder.")
 
     parser.add_argument('-t', '--type', '--output-format',
@@ -353,6 +354,11 @@ def main(args):
 
     # Run the analysis.
     args.output_path = os.path.abspath(args.output_path)
+    if os.path.exists(args.output_path) and \
+            not os.path.isdir(args.output_path):
+        LOG.error("The given output path is not a directory: " +
+                  args.output_path)
+        sys.exit(1)
 
     # We clear the output directory in the following cases.
     ctu_dir = os.path.join(args.output_path, 'ctu-dir')
