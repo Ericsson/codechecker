@@ -74,8 +74,7 @@ function (declare, dom, topic, ContentPane, util) {
 
               topic.publish('filterchange', {
                 parent : that.bugOverView,
-                changed : state,
-                subtab : null
+                changed : state
               });
             }
           }, content);

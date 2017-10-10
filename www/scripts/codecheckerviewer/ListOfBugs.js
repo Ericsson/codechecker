@@ -376,6 +376,7 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
             'tab' : state.tab,
             'subtab' : 'runHistory'
           });
+          that.subtab = 'runHistory';
         }
       });
 
@@ -412,7 +413,7 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
       this._hashChangeTopic = topic.subscribe('/dojo/hashchange',
       function (url) {
         var state = hashHelper.getState();
-        if (state.subtab !== that.subtab)
+        if (state.tab === that.tab && state.subtab !== that.subtab)
           initByUrl(that._grid, that.tab);
       });
 
