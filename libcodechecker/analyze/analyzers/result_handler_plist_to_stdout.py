@@ -143,6 +143,7 @@ class PlistToStdout(ResultHandler):
                                                        source_file))
             self.__output.write('\n')
             if self.__print_steps:
+                self.__output.write('  Report hash: ' + report_hash + '\n')
                 self.__output.write('  Steps:\n')
                 for index, event in enumerate(events):
                     self.__output.write(index_format % (index + 1))
