@@ -24,12 +24,12 @@ from libcodechecker import util
 from libcodechecker.analyze import analyzer_env
 from libcodechecker.logger import LoggerFactory
 from libcodechecker.logger import add_verbose_arguments
-from libcodechecker.server import client_db_access_server
-from libcodechecker.server import database_handler
+from libcodechecker.server import server
 from libcodechecker.server import instance_manager
-from libcodechecker.server.config_db_model \
+from libcodechecker.server.database import database
+from libcodechecker.server.database.config_db_model \
     import IDENTIFIER as CONFIG_META
-from libcodechecker.server.run_db_model \
+from libcodechecker.server.database.run_db_model \
     import IDENTIFIER as RUN_META
 
 
@@ -455,7 +455,7 @@ def main(args):
                              not os.path.exists(args.sqlite) and \
                              not os.path.exists(default_product_path)
 
-    sql_server = database_handler.SQLServer.from_cmdline_args(
+    sql_server = database.SQLServer.from_cmdline_args(
         vars(args), CONFIG_META, context.config_migration_root,
         interactive=True, env=check_env)
 
@@ -468,7 +468,7 @@ def main(args):
         LOG.debug("Create default product...")
         LOG.debug("Configuring schema and migration...")
 
-        prod_server = database_handler.SQLiteDatabase(
+        prod_server = database.SQLiteDatabase(
             default_product_path, RUN_META,
             context.run_migration_root, check_env)
         prod_server.connect(context.run_db_version_info, init=True)
@@ -477,7 +477,7 @@ def main(args):
         product_conn_string = prod_server.get_connection_string()
         LOG.debug("Default database created and connected.")
 
-        client_db_access_server.add_initial_run_database(
+        server.add_initial_run_database(
             sql_server, product_conn_string)
 
         LOG.info("Product 'Default' at '{0}' created and set up."
@@ -497,15 +497,15 @@ def main(args):
                     'version': context.package_git_tag}
 
     try:
-        client_db_access_server.start_server(args.config_directory,
-                                             package_data,
-                                             args.view_port,
-                                             sql_server,
-                                             suppress_handler,
-                                             args.listen_address,
-                                             'force_auth' in args,
-                                             context,
-                                             check_env)
+        server.start_server(args.config_directory,
+                            package_data,
+                            args.view_port,
+                            sql_server,
+                            suppress_handler,
+                            args.listen_address,
+                            'force_auth' in args,
+                            context,
+                            check_env)
     except socket.error as err:
         if err.errno == errno.EADDRINUSE:
             LOG.error("Server can't be started, maybe the given port number "

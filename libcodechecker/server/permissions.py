@@ -129,7 +129,8 @@ class PermissionHandler(object):
         global config_db_model
         if config_db_model is None:
             LOG.debug("Handler initiated for first time, loading ORM...")
-            from . import config_db_model as ConfigDB
+            from libcodechecker.server.database import config_db_model \
+                as ConfigDB
             config_db_model = ConfigDB
 
     # These high-level methods are used by client code. These contain
