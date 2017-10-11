@@ -415,6 +415,7 @@ def handle_diff_results(args):
 def handle_list_result_types(args):
     def getStatistics(client, run_ids, field, values):
         report_filter = ttypes.ReportFilter()
+        report_filter.isUnique = True
         setattr(report_filter, field, values)
         checkers = client.getCheckerCounts(run_ids,
                                            report_filter,
@@ -435,6 +436,8 @@ def handle_list_result_types(args):
     run_ids = map(lambda run: run.runId, items.values())
 
     all_checkers_report_filter = ttypes.ReportFilter()
+    all_checkers_report_filter.isUnique = True
+
     all_checkers = client.getCheckerCounts(run_ids, all_checkers_report_filter,
                                            None)
     all_checkers_dict = dict((res.name, res) for res in all_checkers)
