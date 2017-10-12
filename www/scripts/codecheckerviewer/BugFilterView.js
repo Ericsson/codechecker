@@ -1459,6 +1459,10 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
 
       this._clearAllButton.set('filters', this._filters);
 
+      this._subscribeTopics();
+    },
+
+    initLoad : function () {
       //--- Select items from the current url state ---//
 
       var state = hashHelper.getState();
@@ -1481,8 +1485,6 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
       }
 
       this.refreshFilters(state, true);
-
-      this._subscribeTopics();
     },
 
     clearAll : function () {

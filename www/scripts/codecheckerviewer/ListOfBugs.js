@@ -149,9 +149,6 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
           }
         });
 
-      deferred.total = CC_SERVICE.getRunResultCount(runResultParam.runIds,
-        query.reportFilters, runResultParam.cmpData);
-
       return deferred;
     },
 
@@ -389,7 +386,6 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
       var that = this;
 
       this._bugOverview.addChild(this._bugFilterView);
-      this._grid.refreshGrid(that._bugFilterView.getReportFilters());
 
       this._bugOverview.addChild(this._grid);
       this.addChild(this._bugOverview);
@@ -505,6 +501,9 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
 
       if (!this.initalized) {
         this.initalized = true;
+
+        this._bugFilterView.initLoad();
+        this._grid.refreshGrid(this._bugFilterView.getReportFilters());
 
         var urlState = hashHelper.getState();
         if (urlState.tab === state.tab)

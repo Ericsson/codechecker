@@ -14,11 +14,12 @@ define([
   'dojo/topic',
   'dojox/form/CheckedMultiSelect',
   'dojox/grid/DataGrid',
+  'dojox/widget/Standby',
   'dijit/layout/ContentPane',
   'codechecker/hashHelper',
   'codechecker/util'],
 function (declare, ItemFileWriteStore, Deferred, all, Memory, Observable,
-  topic, CheckedMultiSelect, DataGrid, ContentPane, hashHelper, util) {
+  topic, CheckedMultiSelect, DataGrid, Standby, ContentPane, hashHelper, util) {
 
   function severityFormatter(severity) {
     var severity = util.severityFromCodeToString(severity);
@@ -97,10 +98,7 @@ function (declare, ItemFileWriteStore, Deferred, all, Memory, Observable,
         this.selectedRuns = state.run instanceof Array
           ? state.run.map(function (run) { return run; })
           : [state.run];
-
-      this.loadRunStoreData();
     },
-
 
     loadRunStoreData : function () {
       var that = this;
@@ -233,6 +231,8 @@ function (declare, ItemFileWriteStore, Deferred, all, Memory, Observable,
     refreshGrid : function (runIds) {
       var that = this;
 
+      this.standBy.show();
+
       this.store.fetch({
         onComplete : function (runs) {
           runs.forEach(function (run) {
@@ -291,16 +291,23 @@ function (declare, ItemFileWriteStore, Deferred, all, Memory, Observable,
           });
         });
         that.sort();
+        that.standBy.hide();
       });
     }
   });
 
   return declare(ContentPane, {
-    constructor : function (args) {
-      dojo.safeMixin(this, args);
+    postCreate : function () {
+      this._standBy = new Standby({
+        color : '#ffffff',
+        target : this.domNode,
+        duration : 0
+      });
+      this.addChild(this._standBy);
 
       this._checkerStatistics = new CheckerStatistics({
-        bugFilterView : this.listOfAllReports._bugFilterView
+        bugFilterView : this.listOfAllReports._bugFilterView,
+        standBy : this._standBy
       });
 
       this._filterPane = new FilterPane({
@@ -308,11 +315,21 @@ function (declare, ItemFileWriteStore, Deferred, all, Memory, Observable,
       });
 
       this._checkerStatistics.set('filterPane', this._filterPane);
-    },
 
-    postCreate : function () {
       this.addChild(this._filterPane);
       this.addChild(this._checkerStatistics);
+    },
+
+    onShow : function () {
+      if (!this.initalized) {
+        this.initalized = true;
+
+        this._filterPane.loadRunStoreData();
+      }
+      hashHelper.resetStateValues({
+        'tab' : 'statistics',
+        'run' : this._filterPane.selectedRuns
+      });
     }
   });
 });
