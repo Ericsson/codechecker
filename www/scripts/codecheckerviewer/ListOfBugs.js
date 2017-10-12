@@ -444,10 +444,15 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
           runResultParam.cmpData = null;
         }
 
-        if (this.reportData && this.reportData.reportId === reportData.reportId)
+        if (that.reportData &&
+            that.reportData.reportId === reportData.reportId) {
+          var tab = that._bugViewerHashToTab[reportData.bugHash];
+          if (tab)
+            that.selectChild(tab);
           return;
+        }
 
-        this.reportData = reportData;
+        that.reportData = reportData;
 
         var filename = reportData.checkedFile.substr(
           reportData.checkedFile.lastIndexOf('/') + 1);
@@ -468,6 +473,8 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
           },
           onClose : function () {
             delete that._bugViewerHashToTab[reportData.bugHash];
+            that.reportData = null;
+
             topic.publish('subtab/bugOverview');
 
             return true;
