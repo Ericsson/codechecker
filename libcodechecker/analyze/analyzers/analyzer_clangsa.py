@@ -97,6 +97,9 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             # Compiling is enough.
             analyzer_cmd.append('-c')
 
+            # Do not warn about the unused gcc/g++ arguments.
+            analyzer_cmd.append('-Qunused-arguments')
+
             analyzer_cmd.append('--analyze')
 
             # Turn off clang hardcoded checkers list.
