@@ -141,6 +141,9 @@ performs every step of doing the analysis in batch.
 optional arguments:
   -h, --help
   -o OUTPUT_DIR, --output OUTPUT_DIR
+                        Store the analysis output in the given folder. If it
+                        is not given then the results go into a temporary
+                        directory which will be removed after the analysis.
   -q, --quiet           If specified, the build tool's and the analyzers'
                         output will not be printed to the standard output.
   -f, --force           Delete analysis results stored in the database for the

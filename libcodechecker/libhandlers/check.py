@@ -11,6 +11,8 @@ stdout.
 
 import argparse
 import os
+import shutil
+import tempfile
 
 from libcodechecker import libhandlers
 from libcodechecker.analyze.analyzers import analyzer_types
@@ -95,11 +97,14 @@ def add_arguments_to_parser(parser):
     """
 
     parser.add_argument('-o', '--output',
+                        type=str,
                         dest="output_dir",
                         required=False,
-                        default=os.path.join(get_default_workspace(),
-                                             'reports'),
-                        help="Store the analysis output in the given folder.")
+                        default=argparse.SUPPRESS,
+                        help="Store the analysis output in the given folder. "
+                             "If it is not given then the results go into a "
+                             "temporary directory which will be removed after "
+                             "the analysis.")
 
     parser.add_argument('-q', '--quiet',
                         dest="quiet",
@@ -271,7 +276,19 @@ def main(args):
         if key in source:
             setattr(target, key, getattr(source, key))
 
-    output_dir = os.path.abspath(args.output_dir)
+    # If no output directory is given then the checker results go to a
+    # temporary directory. This way the subsequent "quick" checks don't pollute
+    # the result list of a previous check. If the detection status function is
+    # intended to be used (i.e. by keeping the .plist files) then the output
+    # directory has to be provided explicitly.
+    is_temp_output = False
+    if 'output_dir' in args:
+        output_dir = args.output_dir
+    else:
+        output_dir = tempfile.mkdtemp()
+        is_temp_output = True
+
+    output_dir = os.path.abspath(output_dir)
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
@@ -350,5 +367,8 @@ def main(args):
         LOG.error("Running check failed. " + ex.message)
         import traceback
         traceback.print_exc()
+    finally:
+        if is_temp_output:
+            shutil.rmtree(output_dir)
 
     LOG.debug("Check finished.")
