@@ -5,10 +5,24 @@
 # -------------------------------------------------------------------------
 
 import os
+import subprocess
 
+from libcodechecker import generic_package_context
 from libcodechecker.logger import LoggerFactory
 
 LOG = LoggerFactory.get_new_logger('HOST CHECK')
+
+
+def is_ctu_capable():
+    """ Detects if the current clang is CTU compatible. """
+
+    context = generic_package_context.get_context()
+    ctu_func_map_cmd = context.ctu_func_map_cmd
+    try:
+        version = subprocess.check_output([ctu_func_map_cmd, '-version'])
+    except (subprocess.CalledProcessError, OSError):
+        version = 'ERROR'
+    return version != 'ERROR'
 
 
 def check_zlib():
