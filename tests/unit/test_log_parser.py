@@ -52,7 +52,7 @@ class LogParserTest(unittest.TestCase):
 
         self.assertEqual(' '.join(results.files),
                          r'"-DVARIABLE="some value"" /tmp/a.cpp')
-        self.assertEqual(len(build_action.analyzer_options), 0)
+        self.assertEqual(len(build_action.analyzer_options), 1)
 
     def test_new_ldlogger(self):
         """
@@ -64,12 +64,13 @@ class LogParserTest(unittest.TestCase):
         # now properly log the multiword arguments. When these are parsed by
         # the log_parser, the define's value will be passed to the analyzer.
         #
-        # Logfile contains -DVARIABLE="some value".
+        # Logfile contains -DVARIABLE="some value"
+        # and --target=x86_64-linux-gnu.
 
         build_action = log_parser.parse_log(logfile)[0]
 
         self.assertEqual(list(build_action.sources)[0], r'/tmp/a.cpp')
-        self.assertEqual(len(build_action.analyzer_options), 1)
+        self.assertEqual(len(build_action.analyzer_options), 2)
         self.assertEqual(build_action.analyzer_options[0],
                          r'-DVARIABLE="\"some value"\"')
 
@@ -88,14 +89,14 @@ class LogParserTest(unittest.TestCase):
         logfile = os.path.join(self.__test_files, "intercept-old.json")
 
         # Scan-build-py shipping with clang-5.0 makes a logfile that contains:
-        # -DVARIABLE=\"some value\"
+        # -DVARIABLE=\"some value\" and --target=x86_64-linux-gnu
         #
         # The define is passed to the analyzer properly.
 
         build_action = log_parser.parse_log(logfile)[0]
 
         self.assertEqual(list(build_action.sources)[0], r'/tmp/a.cpp')
-        self.assertEqual(len(build_action.analyzer_options), 1)
+        self.assertEqual(len(build_action.analyzer_options), 2)
         self.assertEqual(build_action.analyzer_options[0],
                          r'-DVARIABLE="\"some value"\"')
 
@@ -117,13 +118,15 @@ class LogParserTest(unittest.TestCase):
         # command string. This argument vector contains the define as it's
         # element in the following format:
         # -DVARIABLE=\"some value\"
+        # and the target triplet, e.g.:
+        # --target=x86_64-linux-gnu
         #
         # The define is passed to the analyzer properly.
 
         build_action = log_parser.parse_log(logfile)[0]
 
         self.assertEqual(list(build_action.sources)[0], r'/tmp/a.cpp')
-        self.assertEqual(len(build_action.analyzer_options), 1)
+        self.assertEqual(len(build_action.analyzer_options), 2)
         self.assertEqual(build_action.analyzer_options[0],
                          r'-DVARIABLE="\"some value"\"')
 

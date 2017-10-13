@@ -51,15 +51,55 @@ Once the build is logged successfully (and the `compilation.json`) was created, 
 
 Hint:
  You can do the 1st and the 2nd step in one round by executing `check`
+```
+ cd tmux
+ make clean
+ CodeChecker check -b "make" -o ./reports
+``` 
+or to run on 22 threads
+
+```
+ CodeChecker check -j22 -b "make clean;make -j22" -o ./reports
+```
+
+
+### Cross-Compilation
+Cross-compilers are auto-detected by CodeChecker, so 
+the `--target` and the compiler pre-configured
+include paths of `gcc/g++` are automatically passed to `clang` when analyzing.
+
+**Make sure that the compilers used for building the project (e.g. `/usr/bin/gcc`) are
+accessible when `CodeChecker analyze` or `check` is invoked.**
+
+### Incremental Analysis
+ The analysis can be run for only the changed files and the `report-directory` will be
+ correctly updated with the new results.
+ 
  ```
  cd tmux
  make clean
- CodeChecker check -b "make"
-or to run on 22 threads
- CodeChecker check -j22 -b "make clean;make -j22"
+ CodeChecker check -b "make" -o reports
+ 
+ #Change only 1 file in tmux
+ vi ./cmd-find.c
+ 
+ #Only cmd-find.c will be re-analyzed 
+ CodeChecker check -b "make" -o reports
 ```
+Now the `reports` directory contains also the results of the updated `cmd-find.c`.
 
-[What to do if the analysis fails (analysis settings for cross-compilation)](/docs/cross-compilation.md)
+### Analysis Failures
+
+The `reports/failed` folder contains all build-actions that
+were failed to analyze. For these there will be no results.
+
+Possible reasons for failed analysis:
+* The original `gcc` compiler options were not recognized by `clang`, or not all include paths were
+correctly detected, so Clang analysis was unsuccessful.
+* Clang was more strict when parsing the C/C++ code than the original compiler (e.g.`gcc`).
+ Any non-standard compliant or `gcc` specific code needs to be removed to successfully analyze the file.    
+* Clang crashed during the analysis.
+
 
 ## Step 3: Store analysis results in a CodeChecker DB and visualize results
 You can store the analysis results in a central database and view the results in a web viewer

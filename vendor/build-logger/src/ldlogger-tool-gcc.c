@@ -14,7 +14,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
-
+#include <unistd.h>
+#include <string.h>
 /**
  * States for GCCargument parser.
  */
@@ -168,6 +169,9 @@ static void getDefaultArguments(const char* prog_, LoggerVector* args_)
   int incStarted = 0;
 
   strcpy(command, prog_);
+  /* WARNING: this always gets the C++ compiler include
+   * dirs even if we are compiling C file.
+   * */
   strcat(command, " -xc++ -E -v - < /dev/null 2>&1");
 
   cmdOut = popen(command, "r");
@@ -227,6 +231,23 @@ static void getDefaultArguments(const char* prog_, LoggerVector* args_)
   pclose(cmdOut);
 }
 
+char* findFullPath(const char* executable, char* fullpath) {
+  char* path;
+  char* dir;
+  path = strdup(getenv("PATH"));
+  for (dir = strtok(path, ":"); dir; dir = strtok(NULL, ":")) {
+    strcpy(fullpath, dir);
+    strcpy(fullpath + strlen(dir), "/");
+    strcpy(fullpath + strlen(dir) + 1, executable);
+    if (access(fullpath, F_OK ) != -1 ) {
+        free(path);
+        return fullpath;
+    }
+  }
+  free(path);
+  return 0;
+}
+
 int loggerGccParserCollectActions(
   const char* prog_,
   const char* toolName_,
@@ -235,11 +256,27 @@ int loggerGccParserCollectActions(
 {
   size_t i;
   /* Position of the last include path + 1 */
+  char full_prog_path[PATH_MAX+1];
+  char *path_ptr;
+
   size_t lastIncPos = 1;
   GccArgsState state = Normal;
   LoggerAction* action = loggerActionNew(toolName_);
 
-  loggerVectorAdd(&action->arguments, loggerStrDup(toolName_));
+  /* If prog_ is a relative path we try to
+   * convert it to absolute path.
+   */
+  path_ptr = realpath(prog_, full_prog_path);
+
+  /* If we cannot convert it, we try to find the
+   * executable in the PATH.
+   */
+  if (!path_ptr)
+	  path_ptr = findFullPath(toolName_, full_prog_path);
+  if (path_ptr) /* Log compiler with full path. */
+	  loggerVectorAdd(&action->arguments, loggerStrDup(full_prog_path));
+  else  /* Compiler was not found in path, log the binary name only. */
+  	  loggerVectorAdd(&action->arguments, loggerStrDup(toolName_));
 
   for (i = 1; argv_[i]; ++i)
   {
@@ -259,7 +296,7 @@ int loggerGccParserCollectActions(
     }
   }
 
-  if (!getenv("CC_LOGGER_NO_DEF_DIRS"))
+  if (getenv("CC_LOGGER_DEF_DIRS"))
   {
     LoggerVector defIncludes;
     loggerVectorInit(&defIncludes);
