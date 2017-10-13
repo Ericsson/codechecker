@@ -310,7 +310,7 @@ def add_arguments_to_parser(parser):
 
     checkers_opts.add_argument('-e', '--enable',
                                dest="enable",
-                               metavar='checker/checker-group',
+                               metavar='checker/group/profile',
                                default=argparse.SUPPRESS,
                                action=OrderedCheckersAction,
                                help="Set a checker (or checker group) "
@@ -318,7 +318,7 @@ def add_arguments_to_parser(parser):
 
     checkers_opts.add_argument('-d', '--disable',
                                dest="disable",
-                               metavar='checker/checker-group',
+                               metavar='checker/group/profile',
                                default=argparse.SUPPRESS,
                                action=OrderedCheckersAction,
                                help="Set a checker (or checker group) "

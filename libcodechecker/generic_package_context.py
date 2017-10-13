@@ -23,6 +23,7 @@ class Context(object):
     def __init__(self, package_root, pckg_layout, cfg_dict):
         env_vars = cfg_dict['environment_variables']
         self.__checker_config = cfg_dict['checker_config']
+        self.__available_profiles = cfg_dict['available_profiles']
 
         # Get the common environment variables.
         self.pckg_layout = pckg_layout
@@ -141,8 +142,12 @@ class Context(object):
                     self.__analyzers[name] = value
 
     @property
-    def default_checkers_config(self):
+    def checker_config(self):
         return self.__checker_config
+
+    @property
+    def available_profiles(self):
+        return self.__available_profiles
 
     @property
     def version(self):
@@ -340,7 +345,7 @@ def get_context():
 
     LOG.debug(cfg_dict)
 
-    LOG.debug('Loading layout config')
+    LOG.debug('Loading layout config.')
 
     layout_cfg_file = os.path.join(package_root, "config",
                                    "package_layout.json")

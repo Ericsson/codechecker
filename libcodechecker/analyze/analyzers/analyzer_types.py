@@ -10,6 +10,7 @@ Supported analyzer types.
 import os
 import platform
 import re
+import sys
 
 from libcodechecker.analyze import analyzer_env
 from libcodechecker.analyze import host_check
@@ -141,14 +142,37 @@ def construct_analyzer(buildaction,
         return None
 
 
+def gen_name_variations(checkers):
+    """
+    Generate all applicable name variations from the given checker list.
+    """
+    checker_names = [name for name, _ in checkers]
+    reserved_names = []
+
+    for name in checker_names:
+        delim = '.' if '.' in name else '-'
+        parts = name.split(delim)
+        # Creates a list of variations from a checker name, e.g.
+        # ['security', 'security.insecureAPI', 'security.insecureAPI.gets']
+        # from 'security.insecureAPI.gets' or
+        # ['misc', 'misc-dangling', 'misc-dangling-handle']
+        # from 'misc-dangling-handle'.
+        variations = [delim.join(parts[:(i + 1)]) for i in range(len(parts))]
+        reserved_names += variations
+
+    return reserved_names
+
+
 def initialize_checkers(config_handler,
+                        available_profiles,
+                        package_root,
                         checkers,
-                        default_checkers=None,
+                        checker_config=None,
                         cmdline_checkers=None,
                         enable_all=False):
     """
     Initializes the checker list for the specified config handler based
-    on the given defaults, commandline arguments and analyzer-retriever
+    on given checker profiles, commandline arguments and the analyzer-retrieved
     checker list.
     """
 
@@ -156,14 +180,19 @@ def initialize_checkers(config_handler,
     for checker_name, description in checkers:
         config_handler.add_checker(checker_name, False, description)
 
-    # Set default enabled or disabled checkers, retrieved from a config file.
-    if default_checkers:
-        for checker in default_checkers:
-            for checker_name, enabled in checker.items():
-                if enabled:
+    # Set default enabled or disabled checkers, retrieved from the config file.
+    if checker_config:
+        # Check whether a default profile exists.
+        profile_lists = checker_config.values()
+        all_profiles = [
+            profile for check_list in profile_lists for profile in check_list]
+        if 'default' not in all_profiles:
+            LOG.warning("No default profile found!")
+        else:
+            # Turn default checkers on.
+            for checker_name, profile_list in checker_config.items():
+                if 'default' in profile_list:
                     config_handler.enable_checker(checker_name)
-                else:
-                    config_handler.disable_checker(checker_name)
 
     # If enable_all is given, almost all checkers should be enabled.
     if enable_all:
@@ -182,11 +211,48 @@ def initialize_checkers(config_handler,
 
     # Set user defined enabled or disabled checkers from the command line.
     if cmdline_checkers:
-        for checker_name, enabled in cmdline_checkers:
-            if enabled:
-                config_handler.enable_checker(checker_name)
+
+        # Construct a list of reserved checker names.
+        # (It is used to check if a profile name is valid.)
+        reserved_names = gen_name_variations(checkers)
+
+        for identifier, enabled in cmdline_checkers:
+
+            # The identifier is a profile name.
+            if identifier in available_profiles:
+                profile_name = identifier
+
+                if profile_name == "list":
+                    LOG.error("'list' is a reserved profile keyword. ")
+                    LOG.error("Please choose another profile name in "
+                              "'{0}'/config/config.json and rebuild."
+                              .format(package_root))
+                    sys.exit(1)
+
+                if profile_name in reserved_names:
+                    LOG.error("Profile name '" + profile_name + "' conflicts "
+                              "with a checker(-group) name.")
+                    LOG.error("Please choose another profile name in "
+                              "'{0}'/config/config.json and rebuild."
+                              .format(package_root))
+                    sys.exit(1)
+
+                profile_checkers = [name for name, profile_list
+                                    in checker_config.items()
+                                    if profile_name in profile_list]
+                for checker_name in profile_checkers:
+                    if enabled:
+                        config_handler.enable_checker(checker_name)
+                    else:
+                        config_handler.disable_checker(checker_name)
+
+            # The identifier is a checker(-group) name.
             else:
-                config_handler.disable_checker(checker_name)
+                checker_name = identifier
+                if enabled:
+                    config_handler.enable_checker(checker_name)
+                else:
+                    config_handler.disable_checker(checker_name)
 
 
 def __replace_env_var(cfg_file):
@@ -239,8 +305,8 @@ def __build_clangsa_config_handler(args, context):
     checkers = analyzer.get_analyzer_checkers(config_handler, check_env)
 
     # Read clang-sa checkers from the config file.
-    clang_sa_checkers = context.default_checkers_config.get(CLANG_SA +
-                                                            '_checkers')
+    clang_sa_checkers = context.checker_config.get(CLANG_SA + '_checkers')
+
     try:
         cmdline_checkers = args.ordered_checkers
     except AttributeError:
@@ -249,6 +315,8 @@ def __build_clangsa_config_handler(args, context):
         cmdline_checkers = None
 
     initialize_checkers(config_handler,
+                        context.available_profiles,
+                        context.package_root,
                         checkers,
                         clang_sa_checkers,
                         cmdline_checkers,
@@ -285,8 +353,8 @@ def __build_clang_tidy_config_handler(args, context):
     checkers = analyzer.get_analyzer_checkers(config_handler, check_env)
 
     # Read clang-tidy checkers from the config file.
-    clang_tidy_checkers = context.default_checkers_config.get(CLANG_TIDY +
-                                                              '_checkers')
+    clang_tidy_checkers = context.checker_config.get(CLANG_TIDY + '_checkers')
+
     try:
         cmdline_checkers = args.ordered_checkers
     except AttributeError:
@@ -296,6 +364,8 @@ def __build_clang_tidy_config_handler(args, context):
         cmdline_checkers = None
 
     initialize_checkers(config_handler,
+                        context.available_profiles,
+                        context.package_root,
                         checkers,
                         clang_tidy_checkers,
                         cmdline_checkers,
