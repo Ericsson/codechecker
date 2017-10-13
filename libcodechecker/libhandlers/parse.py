@@ -14,6 +14,8 @@ import json
 import os
 import sys
 
+from plist_to_html import PlistToHtml
+
 from libcodechecker import generic_package_context
 from libcodechecker import generic_package_suppress_handler
 from libcodechecker import util
@@ -22,7 +24,6 @@ from libcodechecker.analyze.analyzers import analyzer_types
 from libcodechecker.log import build_action
 from libcodechecker.logger import add_verbose_arguments
 from libcodechecker.logger import LoggerFactory
-
 from libcodechecker.output_formatters import twodim_to_str
 
 LOG = LoggerFactory.get_new_logger('PARSE')
@@ -72,6 +73,28 @@ def add_arguments_to_parser(parser):
                         help="Specify the format the analysis results were "
                              "created as.")
 
+    output_opts = parser.add_argument_group("export arguments")
+    output_opts.add_argument('-e', '--export',
+                             dest="export",
+                             required=False,
+                             choices=['html'],
+                             help="Specify extra output format type.")
+
+    output_opts.add_argument('-o', '--output',
+                             dest="output_path",
+                             help="Store the output in the given folder.")
+
+    output_opts.add_argument('-c', '--clean',
+                             dest="clean",
+                             required=False,
+                             action='store_true',
+                             default=argparse.SUPPRESS,
+                             help="Delete output results stored in the output "
+                                  "directory. (By default, it would keep "
+                                  "output files and overwrites only those "
+                                  "that belongs to a plist file given by the "
+                                  "input argument.")
+
     parser.add_argument('--suppress',
                         type=str,
                         dest="suppress",
@@ -108,7 +131,25 @@ def add_arguments_to_parser(parser):
                              "the reported defect.")
 
     add_verbose_arguments(parser)
-    parser.set_defaults(func=main)
+
+    def __handle(args):
+        """Custom handler for 'parser' so custom error messages can be
+        printed without having to capture 'parser' in main."""
+
+        def arg_match(options):
+            return util.arg_match(options, sys.argv[1:])
+
+        # --export cannot be specified without --output.
+        export = ['-e', '--export']
+        output = ['-o', '--output']
+        if any(arg_match(export)) and not any(arg_match(output)):
+            parser.error("argument --export: not allowed without "
+                         "argument --output")
+
+        # If everything is fine, do call the handler for the subcommand.
+        main(args)
+
+    parser.set_defaults(func=__handle)
 
 
 def parse(f, context, metadata_dict, suppress_handler, steps):
@@ -194,6 +235,17 @@ def main(args):
         input_path = os.path.abspath(input_path)
         os.chdir(original_cwd)
         LOG.debug("Parsing input argument: '" + input_path + "'")
+
+        export = args.export if 'export' in args else None
+        if export is not None and export == 'html':
+            output_path = os.path.abspath(args.output_path)
+
+            LOG.info("Generating html output files:")
+            PlistToHtml.parse(input_path,
+                              output_path,
+                              context.path_plist_to_html_dist,
+                              'clean' in args)
+            continue
 
         severity_stats = Counter({})
         file_stats = Counter({})

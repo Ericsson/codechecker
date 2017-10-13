@@ -568,7 +568,8 @@ cross translation unit analysis arguments:
 `parse` prints analysis results to the standard output.
 
 ~~~~~~~~~~~~~~~~~~~~~
-usage: CodeChecker parse [-h] [-t {plist}] [--suppress SUPPRESS]
+usage: CodeChecker parse [-h] [-t {plist}] [--export {html}]
+                         [-o OUTPUT_PATH] [-c] [--suppress SUPPRESS]
                          [--export-source-suppress] [--print-steps]
                          [--verbose {info,debug,debug_analyzer}]
                          [file/folder [file/folder ...]]
@@ -603,6 +604,16 @@ optional arguments:
                         reported defect.
   --verbose {info,debug,debug_analyzer}
                         Set verbosity level. (default: info)
+
+export arguments:
+  -e {html}, --export {html}
+                        Specify extra output format type. (default: None)
+  -o OUTPUT_PATH, --output OUTPUT_PATH
+                        Store the output in the given folder. (default: None)
+  -c, --clean           Delete the output results stored in the output
+                        directory. (By default, it would keep output files and
+                        overwrite only those that belongs to a plist file
+                        given by the input argument.
 ~~~~~~~~~~~~~~~~~~~~~
 
 For example, if the analysis was ran like:

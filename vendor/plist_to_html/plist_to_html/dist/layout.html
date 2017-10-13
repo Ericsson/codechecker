@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Plist HTML Viewer</title>
+
+    <meta charset="UTF-8">
+
+    <style type="text/css">
+      <$CODEMIRROR_CSS$>
+      <$STYLE_CSS$>
+    </style>
+
+    <script type="text/javascript">
+      /* <$CODEMIRROR_LICENSE$> */
+      <$CODEMIRROR_JS$>
+      <$CLIKE_JS$>
+      <$BUG_VIEWER$>
+
+      var data = <$REPORT_DATA$>;
+      window.onload = function() {
+        BugViewer.init(data.files, data.reports);
+        BugViewer.create();
+
+        if (data.reports.length)
+          BugViewer.setReport(data.reports[0]);
+      };
+    </script>
+  </head>
+  <body>
+  <div class="container">
+    <div id="content">
+      <div id="report-nav">
+        <div class="header">Reports</div>
+      </div>
+      <div id="editor-wrapper">
+        <div class="header">
+          <div id="file-path"></div>
+        </div>
+        <div id="editor"></div>
+      </div>
+    </div>
+  </div>
+  </body>
+</html>

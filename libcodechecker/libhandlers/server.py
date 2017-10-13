@@ -246,16 +246,7 @@ def add_arguments_to_parser(parser):
         printed without having to capture 'parser' in main."""
 
         def arg_match(options):
-            """Checks and selects the option string specified in 'options'
-            that are present in the invocation argv."""
-            matched_args = []
-            for option in options:
-                if any([arg if option.startswith(arg) else None
-                        for arg in sys.argv[1:]]):
-                    matched_args.append(option)
-                    continue
-
-            return matched_args
+            return util.arg_match(options, sys.argv[1:])
 
         # See if there is a "PostgreSQL argument" specified in the invocation
         # without '--postgresql' being there. There is no way to distinguish

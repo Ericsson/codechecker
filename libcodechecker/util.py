@@ -287,3 +287,16 @@ def split_product_url(url):
               .format(protocol, host, port, product_name))
 
     return protocol, host, port, product_name
+
+
+def arg_match(options, args):
+    """Checks and selects the option string specified in 'options'
+    that are present in parameter 'args'."""
+    matched_args = []
+    for option in options:
+        if any([arg if option.startswith(arg) else None
+                for arg in args]):
+            matched_args.append(option)
+            continue
+
+    return matched_args
