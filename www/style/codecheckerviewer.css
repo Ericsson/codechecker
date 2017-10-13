@@ -1171,3 +1171,23 @@ span[class*="severity-"] {
 .doxgen .image {
   text-align: center;
 }
+
+/* Checker statistics */
+.dojoxCheckedMultiSelectMenu {
+  max-height: 200px;
+  display: flex;
+}
+
+.checker-statistics {
+  display: flex;
+  flex-direction: column;
+}
+
+.checker-statistics-filter {
+  display: block;
+  overflow: hidden;
+}
+
+.checker-statistics-list {
+  flex-grow: 1;
+}

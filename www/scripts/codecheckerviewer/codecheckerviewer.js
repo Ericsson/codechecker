@@ -198,6 +198,7 @@ function (declare, topic, domConstruct, Dialog, Button,
     //--- Check static tab ---//
 
     var checkerStatisticsTab = new CheckerStatistics({
+      class : 'checker-statistics',
       title : 'Checker statistics',
       listOfAllReports : listOfAllReports
     });

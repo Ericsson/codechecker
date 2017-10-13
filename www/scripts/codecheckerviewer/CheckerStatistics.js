@@ -62,7 +62,6 @@ function (declare, ItemFileWriteStore, Deferred, all, Memory, Observable,
       this._runStore = new Observable(new Memory({}));
 
       this._runFilter = new RunFilter({
-        store     : this._runStore,
         labelAttr : 'label',
         label     : "Get statistics only for runs...",
         multiple  : true,
@@ -116,6 +115,8 @@ function (declare, ItemFileWriteStore, Deferred, all, Memory, Observable,
             value : run.runId
           });
         });
+
+        that._runFilter.set('store', that._runStore);
 
         if (that.selectedRuns)
           that._runFilter.set('value', that.selectedRuns);
@@ -306,11 +307,13 @@ function (declare, ItemFileWriteStore, Deferred, all, Memory, Observable,
       this.addChild(this._standBy);
 
       this._checkerStatistics = new CheckerStatistics({
+        class : 'checker-statistics-list',
         bugFilterView : this.listOfAllReports._bugFilterView,
         standBy : this._standBy
       });
 
       this._filterPane = new FilterPane({
+        class : 'checker-statistics-filter',
         dataGrid : this._checkerStatistics
       });
 
