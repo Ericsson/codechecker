@@ -432,12 +432,10 @@ def handle_list_result_types(args):
 
     client = setup_client(args.product_url)
 
-    if 'all_results' in args:
-        items = check_run_names(client, None)
-    else:
+    run_ids = None
+    if 'all_results' not in args:
         items = check_run_names(client, args.names)
-
-    run_ids = map(lambda run: run.runId, items.values())
+        run_ids = map(lambda run: run.runId, items.values())
 
     all_checkers_report_filter = ttypes.ReportFilter()
     all_checkers_report_filter.isUnique = True
