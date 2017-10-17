@@ -334,13 +334,17 @@ def main(args):
         LOG.warning("Only one log file can be processed right now!")
         sys.exit(1)
 
+    args.output_path = os.path.abspath(args.output_path)
+    if not os.path.exists(args.output_path):
+        os.makedirs(args.output_path)
+
     for log_file in args.logfile:
         if not os.path.exists(log_file):
             LOG.error("The specified logfile '" + log_file + "' does not "
                       "exist!")
             continue
 
-        actions += log_parser.parse_log(log_file,
+        actions += log_parser.parse_log(log_file, args.output_path,
                                         'add_compiler_defaults' in args)
 
     if len(actions) == 0:
@@ -350,9 +354,6 @@ def main(args):
 
     if 'enable_all' in args:
         LOG.info("'--enable-all' was supplied for this analysis.")
-
-    # Run the analysis.
-    args.output_path = os.path.abspath(args.output_path)
 
     # We clear the output directory in the following cases.
     ctu_dir = os.path.join(args.output_path, 'ctu-dir')
@@ -366,9 +367,6 @@ def main(args):
         LOG.info("Previous analysis results in '{0}' have been removed, "
                  "overwriting with current result".format(args.output_path))
         shutil.rmtree(args.output_path)
-
-    if not os.path.exists(args.output_path):
-        os.makedirs(args.output_path)
 
     LOG.debug("Output will be stored to: '" + args.output_path + "'")
 

@@ -24,8 +24,8 @@
   },
   "runtime": {
     "analyzers": {
-      "clangsa": "clang",
-      "clang-tidy": "clang-tidy"
+      "clangsa": "/home/egbomrt/WORK/llvm/build/release/bin/clang",
+      "clang-tidy": "/home/egbomrt/WORK/llvm/build/release/bin/clang-tidy"
     },
     "ld_logger_bin": "bin/ldlogger",
     "ld_logger_lib_name": "ldlogger.so",
