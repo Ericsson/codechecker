@@ -121,7 +121,9 @@ After the results has been printed to the standard output, the temporary files
 used for the analysis are cleaned up.
 
 Please see the individual help for `log`, `analyze` and `parse` (below in this
-_User guide_) for information about the arguments of `quickcheck`.
+_User guide_) for information about the arguments which are not documented
+here. For example the CTU related arguments are documented at `analyze`
+subcommand.
 
 ~~~~~~~~~~~~~~~~~~~~~
 usage: CodeChecker check [-h] [-o OUTPUT_DIR] [-q] [-f]
@@ -130,7 +132,7 @@ usage: CodeChecker check [-h] [-o OUTPUT_DIR] [-q] [-f]
                          [--add-compiler-defaults]
                          [--saargs CLANGSA_ARGS_CFG_FILE]
                          [--tidyargs TIDY_ARGS_CFG_FILE]
-                         [-e checker/checker-group] [-d checker/checker-group]
+                         [-e checker/group/profile] [-d checker/group/profile]
                          [--print-steps]
                          [--verbose {info,debug,debug_analyzer}]
 
@@ -139,10 +141,14 @@ output. Check only needs a build command or an already existing logfile and
 performs every step of doing the analysis in batch.
 
 optional arguments:
-  -h, --help            show this help message and exit
+  -h, --help
   -o OUTPUT_DIR, --output OUTPUT_DIR
-                        Store the analysis output in the given folder.
-                        (default: /home/<username>/.codechecker/reports)
+                        Store the analysis output in the given folder. If it
+                        is not given then the results go into a temporary
+                        directory which will be removed after the analysis.
+  -t {plist}, --type {plist}, --output-format {plist}
+                        Specify the format the analysis results should use.
+                        (default: plist)
   -q, --quiet           If specified, the build tool's and the analyzers'
                         output will not be printed to the standard output.
   -f, --force           Delete analysis results stored in the database for the
@@ -153,7 +159,6 @@ optional arguments:
                         incrementally update defect reports for source files
                         that were analysed.)
   --verbose {info,debug,debug_analyzer}
-                        Set verbosity level. (default: info)
 
 log arguments:
 
@@ -163,46 +168,66 @@ log arguments:
 analyzer arguments:
 
   -j JOBS, --jobs JOBS
+  -c, --clean
   -i SKIPFILE, --ignore SKIPFILE, --skip SKIPFILE
   --analyzers ANALYZER [ANALYZER ...]
   --add-compiler-defaults
+  --capture-analysis-output
   --saargs CLANGSA_ARGS_CFG_FILE
   --tidyargs TIDY_ARGS_CFG_FILE
 
+cross translation unit analysis arguments:
+  These arguments are only available if the Clang Static Analyzer supports
+  Cross-TU analysis. By default, no CTU analysis is run when 'CodeChecker
+  analyze' is called.
+
+  --ctu, --ctu-all
+  --ctu-collect
+  --ctu-analyze
+  --ctu-on-the-fly
+
 checker configuration:
 
-  -e checker/checker-group, --enable checker/checker-group
-  -d checker/checker-group, --disable checker/checker-group
+  -e checker/group/profile, --enable checker/group/profile
+  -d checker/group/profile, --disable checker/group/profile
 
 output arguments:
   --print-steps
 ~~~~~~~~~~~~~~~~~~~~~
 
-## PRODUCT_URL format
+# `PRODUCT_URL` format
 
-Several sub-commands (`store`, `cmd`)  need exact specification of the server, port, access protocol
-and storage area (aka product endpoint) where to store to and query from the analysis results.
-CodeChecker uses the `PRODUCT_URL` format to specify an exact storage endpoint:
-`[http[s]]://]host:port/ProductEndpoint`
+Several subcommands, such as `store` and `cmd` need a connection specification
+on which server and for which *Product* (read more [about
+products](/docs/products.md)) an action, such as report storage or result
+retrieving, should be done.
 
-The first part is the access protocol being `http` or secure `https` 
-(if ommitted, the default is `http`), the second part is the host and TCP port where 
-the codechecker server is listening on, and the last part is `ProductEndpoint`, which
-is a specific/separate storage area for the product being analyzed.
-Please note that `ProductEndpoint` must be created first on the server before
-it could be used.
+This is done via the `PRODUCT_URL` where indicated in the subcommand, which
+contains the server's access protocol, address, and the to-be-used product's
+unique endpoint. The format of this string is:
+`[http[s]://]host:port/ProductEndpoint`. This URL looks like a standar Web
+browsing (HTTP) request URL.
 
-For example 
-`https://codechecker.server:5001/MyProduct`
-specifies that there is a listening server on host `codechecker.server` on
-port `5001` which is to be accessed by `https` protocol and which has a 
-product endpoint `MyProduct`.
+CodeChecker communicates via HTTP requests, thus the first part specifies
+whether or not a more secure SSL/TLS-wrapped `https` protocol should be used.
+If omitted, the default value is `http`. The second part is the host and the
+port the server listens on. After a `/`, the unique endpoint of the product
+must be given, this is case-sensitive. This unique endpoint is configured and
+allocated when the [product is created](/docs/products.md), by the server's
+administrators. The product must exist and be properly configured before any
+normal operation could be done on it.
 
-`CodeChecker store ./my-reports --url https://codechecker.server:5001/MyProduct -n myrun`
-will store analysis reports from the `my-reports` folder into the above specified 
-location in a run called `myrun`.
-     
-     
+If no URL is specified, the default value `http://localhost:8001/Default` will
+be used: a standard HTTP CodeChecker server running on the local machine, on
+the default port, using the *Default* product.
+
+## Example
+
+The URL `https://codechecker.example.org:9999/SampleProduct` will access the
+server machine `codechecker.example.org` trying to connect to a server
+listening on port `9999` via HTTPS. The product `SampleProduct` will be used.
+
+
 # Available CodeChecker commands
 
 ## 1. `log` mode
@@ -283,8 +308,8 @@ usage: CodeChecker analyze [-h] [-j JOBS] [-i SKIPFILE] -o OUTPUT_PATH
                            [--capture-analysis-output]
                            [--saargs CLANGSA_ARGS_CFG_FILE]
                            [--tidyargs TIDY_ARGS_CFG_FILE]
-                           [-e checker/checker-group]
-                           [-d checker/checker-group] [--enable-all]
+                           [-e checker/group/profile]
+                           [-d checker/group/profile] [--enable-all]
                            [--verbose {info,debug,debug_analyzer}]
                            logfile [logfile ...]
 
@@ -317,7 +342,7 @@ optional arguments:
                         directory. (By default, CodeChecker would keep reports
                         and overwrites only those files that were update by
                         the current build command).
-  -n NAME, --name NAME  Annotate the ran analysis with a custom name in the
+  -n NAME, --name NAME  Annotate the run analysis with a custom name in the
                         created metadata file.
   --verbose {info,debug,debug_analyzer}
                         Set verbosity level. (default: info)
@@ -360,6 +385,7 @@ analyzer arguments:
                         Currently supported analyzers are: clangsa, clang-
                         tidy.
   --add-compiler-defaults
+                        DEPRECATED. Always True. 
                         Retrieve compiler-specific configuration from the
                         compilers themselves, and use them with Clang. This is
                         used when the compiler on the system is special, e.g.
@@ -468,12 +494,12 @@ available checkers in the binaries installed on your system.
 ~~~~~~~~~~~~~~~~~~~~~
 checker configuration:
 
-  -e checker/checker-group, --enable checker/checker-group
-                        Set a checker (or checker group) to BE USED in the
-                        analysis.
-  -d checker/checker-group, --disable checker/checker-group
-                        Set a checker (or checker group) to BE PROHIBITED from
-                        use in the analysis.
+  -e checker/group/profile, --enable checker/group/profile
+                        Set a checker (or checker group or checker profile)
+                        to BE USED in the analysis.
+  -d checker/group/profile, --disable checker/group/profile
+                        Set a checker (or checker group or checker profile)
+                        to BE PROHIBITED from use in the analysis.
   --enable-all          Force the running analyzers to use almost every
                         checker available. The checker groups 'alpha.',
                         'debug.' and 'osx.' (on Linux) are NOT enabled
@@ -484,20 +510,36 @@ checker configuration:
                         WISELY AND AT YOUR OWN RISK!
 ~~~~~~~~~~~~~~~~~~~~~
 
-Both `--enable` and `--disable` take individual checkers or checker groups as
-their argument and there can be any number of such flags specified.
-
-For example
+Both `--enable` and `--disable` take individual checkers, checker groups or
+checker profiles as their argument and there can be any number of such flags
+specified. Flag order is important, subsequent options **overwrite** previously
+specified ones. For example
 
 ~~~
---enable core --disable core.uninitialized --enable core.uninitialized.Assign
+--enable extreme --disable core.uninitialized --enable core.uninitialized.Assign
 ~~~
 
-will enable every `core` checker which is not `core.uninitialized`, but
-`core.uninitialized.Assign` will also be enabled.
+will enable every checker of the `extreme` profile that do not belong to the
+ `core.uninitialized` group, with the exception of `core.uninitialized.Assign`,
+which will be enabled after all.
 
 Disabling certain checkers - such as the `core` group - is unsupported by
 the LLVM/Clang community, and thus discouraged.
+
+
+#### Checker profiles
+
+Checker profiles describe custom sets of enabled checks which can be specified
+in the `{INSTALL_DIR}/config/config.json` file. Three built-in options are
+available grouping checkers by their quality (measured by their false positive
+rate): `default`, `sensitive` and `extreme`. Detailed information about profiles
+can be retrieved by the `CodeChecker checkers` command.
+
+Note: `list` is a reserved keyword used to show all the available profiles and
+thus should not be used as a profile name. Profile names should also be
+different from checker(-group) names as they are enabled using the same syntax
+and coinciding names could cause unintended behavior.
+
 
 #### `--enable-all`
 
@@ -511,7 +553,7 @@ your own risk!**
 
 Even specifying `--enable-all` will **NOT** enable checkers from some special
 checker groups, such as `alpha.` and `debug.`. `osx.` checkers are only enabled
-if CodeChecker is ran on a macOS machine. `--enable-all` can further be
+if CodeChecker is run on a macOS machine. `--enable-all` can further be
 fine-tuned with subsequent `--enable` and `--disable` arguments, for example
 
 ~~~~
@@ -532,7 +574,7 @@ mode uses some extra storage space under the specified `--output-dir`.
 ~~~~~~~~~~~~~~~~~~~~~
 cross translation unit analysis arguments:
   These arguments are only available if the Clang Static Analyzer supports
-  Cross-TU analysis. By default, no such analysis is ran when 'CodeChecker
+  Cross-TU analysis. By default, no such analysis is run when 'CodeChecker
   analyze' is called.
 
   --ctu, --ctu-all      Perform Cross Translation Unit (CTU) analysis, both
@@ -549,7 +591,7 @@ cross translation unit analysis arguments:
                         '<OUTPUT_DIR>/ctu-dir'. (These files will not be
                         cleaned up in this mode.)
   --ctu-on-the-fly      If specified, the 'collect' phase will not create the
-                        extra AST dumps, but rather analysis will be ran with
+                        extra AST dumps, but rather analysis will be run with
                         an in-memory recompilation of the source files.
 ~~~~~~~~~~~~~~~~~~~~~
 
@@ -560,7 +602,8 @@ cross translation unit analysis arguments:
 `parse` prints analysis results to the standard output.
 
 ~~~~~~~~~~~~~~~~~~~~~
-usage: CodeChecker parse [-h] [-t {plist}] [--suppress SUPPRESS]
+usage: CodeChecker parse [-h] [-t {plist}] [--export {html}]
+                         [-o OUTPUT_PATH] [-c] [--suppress SUPPRESS]
                          [--export-source-suppress] [--print-steps]
                          [--verbose {info,debug,debug_analyzer}]
                          [file/folder [file/folder ...]]
@@ -595,9 +638,19 @@ optional arguments:
                         reported defect.
   --verbose {info,debug,debug_analyzer}
                         Set verbosity level. (default: info)
+
+export arguments:
+  -e {html}, --export {html}
+                        Specify extra output format type. (default: None)
+  -o OUTPUT_PATH, --output OUTPUT_PATH
+                        Store the output in the given folder. (default: None)
+  -c, --clean           Delete the output results stored in the output
+                        directory. (By default, it would keep output files and
+                        overwrite only those that belongs to a plist file
+                        given by the input argument.
 ~~~~~~~~~~~~~~~~~~~~~
 
-For example, if the analysis was ran like:
+For example, if the analysis was run like:
 
 ~~~~
 CodeChecker analyze ../codechecker_myProject_build.log -o my_plists
@@ -708,7 +761,7 @@ optional arguments:
 server arguments:
   Specifies a 'CodeChecker server' instance which will be used to store the
   results. This server must be running and listening, and the given product
-  must exist prior to the 'store' command being ran.
+  must exist prior to the 'store' command being run.
 
   --url PRODUCT_URL     The URL of the product to store the results for, in
                         the format of '[http[s]://]host:port/Endpoint'.
@@ -719,7 +772,7 @@ The results can be viewed by connecting to such a server in a Web browser or
 via 'CodeChecker cmd'.
 ~~~~~~~~~~~~~~~~~~~~~
 
-For example, if the analysis was ran like:
+For example, if the analysis was run like:
 
 ~~~~
 CodeChecker analyze ../codechecker_myProject_build.log -o ./my_plists
@@ -756,7 +809,8 @@ providing a quick overview on which checkers are available in the analyzers.
 
 ~~~~~~~~~~~~~~~~~~~~~
 usage: CodeChecker checkers [-h] [--analyzers ANALYZER [ANALYZER ...]]
-                            [--details] [--only-enabled | --only-disabled]
+                            [--details] [--profile {PROFILE/list}]
+                            [--only-enabled | --only-disabled]
                             [-o {rows,table,csv,json}]
                             [--verbose {info,debug,debug_analyzer}]
 
@@ -769,6 +823,10 @@ optional arguments:
                         Show checkers only from the analyzers specified.
   --details             Show details about the checker, such as description,
                         if available.
+  --profile {PROFILE/list}
+                        List checkers enabled by the selected profile.
+                        'list' is a special option showing details about
+                        profiles collectively.
   --only-enabled        Show only the enabled checkers.
   --only-disabled       Show only the disabled checkers.
   -o {rows,table,csv,json}, --output {rows,table,csv,json}
@@ -800,7 +858,7 @@ can be used to retrieve the to-be-used analyzers' install path and version
 information.
 
 By default, this command only lists the names of the available analyzers (with
-respect to the environment CodeChecker is ran in).
+respect to the environment CodeChecker is run in).
 
 ~~~~~~~~~~~~~~~~~~~~~
 usage: CodeChecker analyzers [-h] [--all] [--details]
@@ -993,7 +1051,7 @@ running server management:
 ~~~~~~~~~~~~~~~~~~~~~
 
 CodeChecker servers can be started in the background as any other service, via
-common Shell tools, such as `nohup` and `&!`. The running instances can be
+common shell tools such as `nohup` and `&!`. The running instances can be
 queried via `--list`.
 
 Calling `CodeChecker server --stop` will stop the "default" server, i.e. one

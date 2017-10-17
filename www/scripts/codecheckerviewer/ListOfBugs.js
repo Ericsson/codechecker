@@ -149,9 +149,6 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
           }
         });
 
-      deferred.total = CC_SERVICE.getRunResultCount(runResultParam.runIds,
-        query.reportFilters, runResultParam.cmpData);
-
       return deferred;
     },
 
@@ -376,6 +373,7 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
             'tab' : state.tab,
             'subtab' : 'runHistory'
           });
+          that.subtab = 'runHistory';
         }
       });
 
@@ -388,7 +386,6 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
       var that = this;
 
       this._bugOverview.addChild(this._bugFilterView);
-      this._grid.refreshGrid(that._bugFilterView.getReportFilters());
 
       this._bugOverview.addChild(this._grid);
       this.addChild(this._bugOverview);
@@ -412,7 +409,7 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
       this._hashChangeTopic = topic.subscribe('/dojo/hashchange',
       function (url) {
         var state = hashHelper.getState();
-        if (state.subtab !== that.subtab)
+        if (state.tab === that.tab && state.subtab !== that.subtab)
           initByUrl(that._grid, that.tab);
       });
 
@@ -447,10 +444,15 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
           runResultParam.cmpData = null;
         }
 
-        if (this.reportData && this.reportData.reportId === reportData.reportId)
+        if (that.reportData &&
+            that.reportData.reportId === reportData.reportId) {
+          var tab = that._bugViewerHashToTab[reportData.bugHash];
+          if (tab)
+            that.selectChild(tab);
           return;
+        }
 
-        this.reportData = reportData;
+        that.reportData = reportData;
 
         var filename = reportData.checkedFile.substr(
           reportData.checkedFile.lastIndexOf('/') + 1);
@@ -471,6 +473,8 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
           },
           onClose : function () {
             delete that._bugViewerHashToTab[reportData.bugHash];
+            that.reportData = null;
+
             topic.publish('subtab/bugOverview');
 
             return true;
@@ -504,6 +508,9 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
 
       if (!this.initalized) {
         this.initalized = true;
+
+        this._bugFilterView.initLoad();
+        this._grid.refreshGrid(this._bugFilterView.getReportFilters());
 
         var urlState = hashHelper.getState();
         if (urlState.tab === state.tab)

@@ -11,7 +11,6 @@ import traceback
 import subprocess
 import shlex
 import json
-import errno
 
 # TODO: This is a cross-subpackage import!
 from libcodechecker.log import build_action
@@ -54,15 +53,26 @@ def parse_compiler_includes(lines):
     end_mark = "End of search list."
 
     include_paths = []
+
     do_append = False
     for line in lines.splitlines(True):
         line = line.strip()
         if line.startswith(end_mark):
             do_append = False
         if do_append:
-            include_paths.append("-isystem " + line)
+            # On OSX there are framework includes,
+            # where we need to strip the "(framework directory)" string.
+            # For instance:
+            # /System/Library/Frameworks (framework directory)
+            fpos = line.find("(framework directory)")
+            if fpos == -1:
+                include_paths.append("-isystem " + line)
+            else:
+                include_paths.append("-isystem " + line[0:fpos-1])
+
         if line.startswith(start_mark):
             do_append = True
+
     return include_paths
 
 
@@ -70,24 +80,14 @@ def parse_compiler_target(lines):
     """
     Parse the compiler target from a string.
 
-    If the compiler is not a version of GCC, an empty string is returned.
-    Compilers other than GCC might have default targets differing from
-    the build target.
     """
     target_label = "Target:"
     target = ""
-
-    gcc_label = "gcc"
-    gcc = False
 
     for line in lines.splitlines(True):
         line = line.strip().split()
         if line[0] == target_label:
             target = line[1]
-        if line[0] == gcc_label:
-            gcc = True
-    if not gcc:
-        target = ""
 
     return target
 
@@ -142,6 +142,9 @@ def get_compiler_target(compiler, output_path):
 def parse_compile_commands_json(logfile, output_path,
                                 add_compiler_defaults=False):
     import json
+    # The add-compiler-defaults is a deprecated argument
+    # and we always perform target and include auto-detection.
+    add_compiler_defaults = True
     LOG.debug('parse_compile_commands_json: ' + str(add_compiler_defaults))
 
     actions = []

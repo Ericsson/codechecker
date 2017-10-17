@@ -41,7 +41,11 @@ def check_run_names(client, check_names):
     maps run names to runs. The dictionary contains only the runs in
     check_names or all runs if check_names is empty or None.
     """
-    run_info = {run.name: run for run in client.getRunData(None)}
+    run_filter = ttypes.RunFilter()
+    run_filter.names = check_names
+    run_filter.exactMatch = check_names is not None
+
+    run_info = {run.name: run for run in client.getRunData(run_filter)}
 
     if not check_names:
         return run_info
@@ -168,6 +172,14 @@ def handle_diff_results(args):
 
         report_filter = ttypes.ReportFilter()
         add_filter_conditions(report_filter, args.filter)
+
+        # Do not show resolved bugs in compare mode new.
+        if cmp_data.diffType == ttypes.DiffType.NEW:
+            report_filter.detectionStatus = [
+                ttypes.DetectionStatus.NEW,
+                ttypes.DetectionStatus.UNRESOLVED,
+                ttypes.DetectionStatus.REOPENED]
+
         sort_mode = [(ttypes.SortMode(
             ttypes.SortType.FILENAME,
             ttypes.Order.ASC))]
@@ -407,6 +419,7 @@ def handle_diff_results(args):
 def handle_list_result_types(args):
     def getStatistics(client, run_ids, field, values):
         report_filter = ttypes.ReportFilter()
+        report_filter.isUnique = True
         setattr(report_filter, field, values)
         checkers = client.getCheckerCounts(run_ids,
                                            report_filter,
@@ -424,9 +437,11 @@ def handle_list_result_types(args):
     else:
         items = check_run_names(client, args.names)
 
-    run_ids = map(lambda _, run: run.runId, items)
+    run_ids = map(lambda run: run.runId, items.values())
 
     all_checkers_report_filter = ttypes.ReportFilter()
+    all_checkers_report_filter.isUnique = True
+
     all_checkers = client.getCheckerCounts(run_ids, all_checkers_report_filter,
                                            None)
     all_checkers_dict = dict((res.name, res) for res in all_checkers)

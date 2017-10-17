@@ -18,11 +18,10 @@ from ProductManagement_v6 import ttypes
 
 from libcodechecker.logger import LoggerFactory
 from libcodechecker.profiler import timeit
-
-from . import permissions
-from config_db_model import *
-from database_handler import SQLServer
-from routing import is_valid_product_endpoint
+from libcodechecker.server import permissions
+from libcodechecker.server.database.config_db_model import *
+from libcodechecker.server.database.database import SQLServer
+from libcodechecker.server.routing import is_valid_product_endpoint
 
 LOG = LoggerFactory.get_new_logger('PRODUCT HANDLER')
 

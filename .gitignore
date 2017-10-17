@@ -10,12 +10,14 @@ Makefile.local
 # external sources
 vendor/*
 !vendor/build-logger
+!vendor/plist_to_html
 
 # build-logger build dir
 vendor/build-logger/build/
 
 # doxygen generated files
 gen-docs/
+www/userguide/gen-docs/
 
 # thrift generated files
 thrift_api/gen-js/

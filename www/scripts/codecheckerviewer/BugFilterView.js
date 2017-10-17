@@ -954,6 +954,31 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
 
       return item.length ? item[0].label : null;
     },
+    getRunDataItem : function (runName) {
+      var runFilter = new CC_OBJECTS.RunFilter();
+      runFilter.names = [runName];
+      runFilter.exactMatch = true;
+
+      var runDataList = CC_SERVICE.getRunData(runFilter);
+      var run = runDataList.length ? runDataList[0] : null;
+
+      return run
+        ? { label : run.name, value : run.runId, count : run.resultCount }
+        : null;
+    },
+    getRunFilterItem : function (runName) {
+      var item = this._items.filter(function (item) {
+        return item.label === runName;
+      });
+
+      if (!item.length) {
+        var item = this.getRunDataItem(runName);
+        this._items.push(item);
+        return item ? item.value : null;
+      }
+
+      return item[0].value;
+    },
     stateDecoder : function (key) {
       // If no item is available, get items from the server to decode URL
       // value.
@@ -967,11 +992,7 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
         this._items = this.createItem(res);
       }
 
-      var item = this._items.filter(function (item) {
-        return item.label === key;
-      });
-
-      return item.length ? item[0].value : null;
+      return this.getRunFilterItem(key);
     }
   });
 
@@ -1062,11 +1083,7 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
               this._items = this.createItem(res);
             }
 
-            var item = this._items.filter(function (item) {
-              return item.label === key;
-            });
-
-            return item.length ? item[0].value : null;
+            return this.getRunFilterItem(key);
           }
         });
         this._filters.push(this._runNameNewCheckFilter);
@@ -1442,6 +1459,10 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
 
       this._clearAllButton.set('filters', this._filters);
 
+      this._subscribeTopics();
+    },
+
+    initLoad : function () {
       //--- Select items from the current url state ---//
 
       var state = hashHelper.getState();
@@ -1464,8 +1485,6 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
       }
 
       this.refreshFilters(state, true);
-
-      this._subscribeTopics();
     },
 
     clearAll : function () {

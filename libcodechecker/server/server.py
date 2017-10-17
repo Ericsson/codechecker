@@ -40,17 +40,16 @@ from libcodechecker import session_manager
 from libcodechecker.logger import LoggerFactory
 from libcodechecker.util import get_tmp_dir_hash
 
-from . import database_handler
 from . import instance_manager
 from . import permissions
 from . import routing
-from bad_api_version_handler import ThriftAPIMismatchHandler as BadAPIHandler
-from client_auth_handler import ThriftAuthHandler as AuthHandler_v6
-from client_db_access_handler import ThriftRequestHandler as ReportHandler_v6
-from config_db_model import Product as ORMProduct
-from product_db_access_handler import ThriftProductHandler \
-    as ProductHandler_v6
-from run_db_model import IDENTIFIER as RUN_META
+from api.authentication import ThriftAuthHandler as AuthHandler_v6
+from api.bad_api_version import ThriftAPIMismatchHandler as BadAPIHandler
+from api.product_server import ThriftProductHandler as ProductHandler_v6
+from api.report_server import ThriftRequestHandler as ReportHandler_v6
+from database import database
+from database.config_db_model import Product as ORMProduct
+from database.run_db_model import IDENTIFIER as RUN_META
 
 LOG = LoggerFactory.get_new_logger('SERVER')
 
@@ -499,7 +498,7 @@ class Product(object):
         # We need to connect to the database and perform setting up the
         # schema.
         LOG.debug("Configuring schema and migration...")
-        sql_server = database_handler.SQLServer.from_connection_string(
+        sql_server = database.SQLServer.from_connection_string(
             self.__connection_string,
             RUN_META,
             self.__context.run_migration_root,

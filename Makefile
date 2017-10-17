@@ -29,13 +29,19 @@ thrift: build_dir
 
 	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C api/
 
-package: build_dir gen-docs thrift
+userguide: build_dir
+	$(MAKE) -C www/userguide
+
+package: build_dir gen-docs thrift userguide build_plist_to_html
 	if [ ! -d "$(BUILD_DIR)/CodeChecker" ]; then \
 		./scripts/build_package.py -r $(ROOT) -o $(BUILD_DIR) -b $(BUILD_DIR); \
 	fi
 
 build_dir:
 	mkdir -p $(BUILD_DIR)
+
+build_plist_to_html:
+	$(MAKE) -C vendor/plist_to_html
 
 venv:
 	# Create a virtual environment which can be used to run the build package.
@@ -56,7 +62,7 @@ clean_venv_dev:
 
 clean: clean_package clean_vendor
 
-clean_package:
+clean_package: clean_userguide clean_plist_to_html
 	rm -rf $(BUILD_DIR)
 	rm -rf gen-docs
 	find . -name "*.pyc" -delete
@@ -69,3 +75,9 @@ clean_vendor:
 	rm -rf vendor/jsplumb
 	rm -rf vendor/marked
 	rm -rf vendor/thrift
+
+clean_userguide:
+	rm -rf www/userguide/gen-docs
+
+clean_plist_to_html:
+	rm -rf vendor/plist_to_html/build

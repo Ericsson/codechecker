@@ -17,11 +17,11 @@ database is an isolated storage of results, completely separate, and can be
 added and removed from a server on the fly.
 
 Command-line tools that are used to access analysis data take an `--url
-PRODUCT_URL` parameter, which specifies the access protocol, 
-server host, port, and the product's unique endpoint 
-in the following format: `[http[s]://]localhost:8001/Default`,
-where `Default` is the product's endpoint. See the [User Guide](/docs/user_guide.md#product_url-format) 
-for further details.
+PRODUCT_URL` parameter, which specifies the access protocol, server host,
+port, and the product's unique endpoint in the following format:
+`[http[s]://]localhost:8001/Default`, where `Default` is the product's
+endpoint. See the [User Guide](/docs/user_guide.md#product_url-format) for
+further details.
 
 The Web application separates products based on their unique endpoint. The
 home page of the server is the product list, shown above.
@@ -47,6 +47,17 @@ product configuration. All these commands take a server URL (e.g.
 `http://localhost:8001`) as their argument, as the commands control a server,
 and not an individual product endpoint.
 
+Certain administrative actions regarding products can only be executed by
+[superusers](/docs/permissions.md). If you are running a server without
+[authentication](/docs/authentication.md) turned on, no access to these
+features is the expected behaviour. You can use the combination of
+[`--force-authentication` and `--reset-root`
+commands](/docs/user_guide.md#master-superuser-and-authentication-forcing) to
+restart your server specifically to can access administrative actions. When
+the server is started as such, use [`CodeChecker cmd
+login`](/docs/user_guide.md#authenticate-to-the-server-login) to authenticate
+yourself with the "root" credentials generated for this running server.
+
 ~~~~~~~~~~~~~~~~~~~~~
 usage: CodeChecker cmd products [-h] [--verbose {info,debug,debug_analyzer}]
                                 {list,add,del} ...
@@ -66,9 +77,8 @@ available actions:
     del                 Delete a product from the server's products.
 
 common arguments:
-  --host HOST           The address of the CodeChecker server to connect to.
-                        (default: localhost)
-  -p PORT, --port PORT  The port the server is running on. (default: 8001)
+  --url SERVER_URL      The URL of the server to access, in the format of
+                        '[http[s]://]host:port'. (default: localhost:8001)
   --verbose {info,debug,debug_analyzer}
                         Set verbosity level. (default: info)
 
@@ -79,7 +89,7 @@ Please see 'CodeChecker cmd login' to authenticate.
 ## Listing products (`list`)
 
 ~~~~~~~~~~~~~~~~~~~~~
-usage: CodeChecker cmd products list [-h] [--host HOST] [-p PORT]
+usage: CodeChecker cmd products list [-h] [--url SERVER_URL]
                                      [-o {plaintext,rows,table,csv,json}]
                                      [--verbose {info,debug,debug_analyzer}]
 
@@ -106,7 +116,7 @@ usage: CodeChecker cmd products add [-h] [-n DISPLAY_NAME]
                                     [--dbaddress DBADDRESS] [--dbport DBPORT]
                                     [--dbusername DBUSERNAME]
                                     [--dbpassword DBPASSWORD]
-                                    [--dbname DBNAME] [--host HOST] [-p PORT]
+                                    [--dbname DBNAME] [--url SERVER_URL]
                                     [--verbose {info,debug,debug_analyzer}]
                                     ENDPOINT
 
@@ -159,7 +169,7 @@ PostgreSQL arguments:
 ## Delete a product (`del`)
 
 ~~~~~~~~~~~~~~~~~~~~~
-usage: CodeChecker cmd products del [-h] [--host HOST] [-p PORT]
+usage: CodeChecker cmd products del [-h] [--url SERVER_URL]
                                     [--verbose {info,debug,debug_analyzer}]
                                     ENDPOINT
 
@@ -177,6 +187,16 @@ optional arguments:
 ~~~~~~~~~~~~~~~~~~~~~
 
 # Managing products through the web interface
+
+Certain administrative actions regarding products can only be executed by
+[superusers](/docs/permissions.md). If you are running a server without
+[authentication](/docs/authentication.md) turned on, no access to these
+features is the expected behaviour. You can use the combination of
+[`--force-authentication` and `--reset-root`
+commands](/docs/user_guide.md#master-superuser-and-authentication-forcing) to
+restart your server specifically to can access administrative actions. When
+the server is started as such and the browser prompts for authentication,
+enter the generated "root" credentials.
 
 !["Add new product" dialog](/docs/images/newproduct.png)
 

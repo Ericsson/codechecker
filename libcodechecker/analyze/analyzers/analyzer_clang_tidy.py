@@ -90,6 +90,8 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
 
             analyzer_cmd.append("--")
 
+            analyzer_cmd.append('-Qunused-arguments')
+
             # Options before the analyzer options.
             if len(config.compiler_resource_dir) > 0:
                 analyzer_cmd.extend(['-resource-dir',

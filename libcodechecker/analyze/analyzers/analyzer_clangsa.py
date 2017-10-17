@@ -94,8 +94,8 @@ class ClangSA(analyzer_base.SourceAnalyzer):
                                      '-isystem',
                                      config.compiler_resource_dir])
 
-            # Compiling is enough.
-            analyzer_cmd.append('-c')
+            # Do not warn about the unused gcc/g++ arguments.
+            analyzer_cmd.append('-Qunused-arguments')
 
             analyzer_cmd.append('--analyze')
 

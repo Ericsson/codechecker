@@ -1,71 +1,123 @@
+PostgreSQL
+==========
 
-## PostgreSQL
+This guide covers the extra installation and configuration steps required to
+run CodeChecker servers with a PostgreSQL database as backend.
 
-## Extra runtime requirements for PostgreSQL database support
-  *  [PostgreSQL](http://www.postgresql.org/ "PostgreSQL") (> 9.3.5) (optional)
-  *  [psycopg2](http://initd.org/psycopg/ "psycopg2") (> 2.5.4) or [pg8000](https://github.com/mfenniak/pg8000 "pg8000") (>= 1.10.0) at least one database connector is required for postgreSQL database support (both are supported)
-     - [PyPi psycopg2](https://pypi.python.org/pypi/psycopg2/2.6.1) __requires lbpq!__
+Alternatively, and by default, CodeChecker uses SQLite as database backend,
+and these steps are not mandatory for a successful installation.
+
+## List of runtime dependencies
+
+  *  [PostgreSQL](http://www.postgresql.org) (> `9.3.5`)
+     (optional)
+  *  At least one database connector library for PostgreSQL support required:
+     - [psycopg2](http://initd.org/psycopg) (> `2.5.4`) or
+     - [pg8000](https://github.com/mfenniak/pg8000) (>= `1.10.0`)
+     - [PyPi psycopg2](https://pypi.python.org/pypi/psycopg2/2.6.1)
+       **(Requires `lbpq`!)**
      - [PyPi pg8000](https://pypi.python.org/pypi/pg8000)
 
-## Install & setup additional dependencies
-Tested on Ubuntu LTS 14.04.2
+## Installing dependencies and setting up a server
+Tested on Ubuntu LTS `14.04.2`.
+
 ~~~~~~{.sh}
+# Get the extra PostgreSQL packages.
+sudo apt-get install libpq-dev postgresql \
+  postgresql-client-common postgresql-common \
+  python-dev
 
-# get the extra postgresql packages
-sudo apt-get install libpq-dev python-dev postgresql postgresql-client-common postgresql-common
+# Setup databases for CodeChecker.
+#
+# By default, only the installer-created 'postgres' user has access to
+# database-specific binaries and actions.
 
-# Note: The following PostgreSQL specific steps are only needed when PostgreSQL
-# is used for checking. By default CodeChecker uses SQLite.
-
-# setup database for a test_user
+# Switch to this daemon user.
 sudo -i -u postgres
-# add a test user with "test_pwd" password
-createuser --createdb --login --pwprompt test_user
+
+# Create a new user to be used for connecting to the database.
+# (The password will be prompted for, and read from the standard input.)
+createuser --login --pwprompt codechecker
+
+# NOTE: For production systems, certain extra access control configuration
+# should be done to make sure database access is secure. Refer to the
+# PostgreSQL manual on connection control.
+
+# Create the configuration database for CodeChecker.
+createdb codechecker_config
+
+# The newly created user must have privileges on its own database.
+psql -C "GRANT ALL PRIVILEGES ON DATABASE codechecker_config TO codechecker;"
+
+# Return to your normal shell via:
 exit
 
-# PostgreSQL authentication
-# PGPASSFILE environment variable should be set to a pgpass file
+# PGPASSFILE environment variable should be set to a 'pgpass' file.
 # For format and further information see PostgreSQL documentation:
 # http://www.postgresql.org/docs/current/static/libpq-pgpass.html
 
-echo "*:5432:*:test_user:test_pwd" >> ~/.pgpass
+echo "*:5432:*:codechecker:my_password" >> ~/.pgpass
 chmod 0600 ~/.pgpass
-
-# activate the already created virtualenv in the basic setup
-source ~/checker_env/bin/activate
-
-# install required python modules
-pip install -r .ci/python_requirements
-
-# create CodeChecker package
-./build_package.py -o ~/codechecker_package
-cd ..
 ~~~~~~
 
-## Run CodeChecker
+> For format and further information on `pgpass` files, please refer to the
+> [PostgreSQL documentation](http://www.postgresql.org/docs/current/static/libpq-pgpass.html).
 
-Activate virtualenv.
+At this point, you can normall continue with installing the neccessary Python
+requirements and creating an install of CodeChecker:
+
 ~~~~~~{.sh}
-source ~/checker_env/bin/activate
+# Set the created virtualenv as your environment.
+source $PWD/venv/bin/activate
+
+# Build and install a CodeChecker package.
+make package
+
+# For ease of access, add the build directory to PATH.
+export PATH="$PWD/build/CodeChecker/bin:$PATH"
 ~~~~~~
 
-Add package bin directory to PATH.
-This step can be skipped if you always give the path of CodeChecker command.
+Once the package is installed and the PostgreSQL server is running, a
+CodeChecker server can be started by specifying the **configuration**
+database's connection arguments. (Read more about the [`CodeChecker server`
+command](/docs/user_guide.md#7-server-mode).)
+
+The `codechecker_config` database will contain server-specific configurations.
+
 ~~~~~~{.sh}
-export PATH=~/codechecker_package/CodeChecker/bin:$PATH
+CodeChecker server --postgresql \
+  --db-host localhost --db-port 5432 \
+  --db-username codechecker --db-name codechecker_config
 ~~~~~~
 
-Start web server to view the results.
+## Creating analysis databases
+
+At least one additional database must be created in which analysis reports
+will be stored. (Unlike the default SQLite mode, creation of this *Default*
+product is **not automatic** when PostgreSQL is used!)
+
 ~~~~~~{.sh}
-CodeChecker server --dbusername test_user --postgresql
+# Switch to the daemon user.
+sudo -i -u postgres
+
+# Create database and give rights to the server user.
+createdb default_product
+
+# The newly created user must have privileges on its own database.
+psql -C "GRANT ALL PRIVILEGES ON DATABASE default_product TO codechecker;"
 ~~~~~~
 
-Check a test project.
+For a product to be set up by the server, an empty database with rights given
+must exist **in advance**. Once the database is created, a product can be
+added via `CodeChecker cmd products add`, or
+[via the Web interface](/docs/products.md#managing-products-through-the-web-interface).
+
 ~~~~~~{.sh}
-CodeChecker check --dbusername test_user -n test_project_check -b "cd my_test_project && make clean && make"
+CodeChecker cmd products add Default --name "Default Product" \
+  --postgresql \
+  --db-host localhost --db-port 5432 \
+  --db-username codechecker --db-name default_product
 ~~~~~~
 
-View the results with firefox.
-~~~~~~{.sh}
-firefox http://localhost:8001
-~~~~~~
+Once the product is configured, normal operations, such as `store` and
+browsing the results in the Web application, can commence.

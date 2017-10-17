@@ -17,7 +17,7 @@ from codeCheckerDBAccess_v6 import ttypes
 
 from libcodechecker.logger import LoggerFactory
 # TODO: This is a cross-subpackage import.
-from libcodechecker.server.run_db_model import *
+from libcodechecker.server.database.run_db_model import *
 
 LOG = LoggerFactory.get_new_logger('STORE HANDLER')
 

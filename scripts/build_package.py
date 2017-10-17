@@ -117,7 +117,7 @@ def create_folder_layout(path, layout):
                     sys.exit()
 
 
-def copy_tree(src, dst):
+def copy_tree(src, dst, skip=None):
     """ Copy file tree. """
 
     if not os.path.exists(dst):
@@ -125,8 +125,12 @@ def copy_tree(src, dst):
     for item in os.listdir(src):
         source = os.path.join(src, item)
         destination = os.path.join(dst, item)
+
+        if skip is not None and source in skip:
+            continue
+
         if os.path.isdir(source):
-            copy_tree(source, destination)
+            copy_tree(source, destination, skip)
         else:
             delta = os.stat(src).st_mtime - os.stat(dst).st_mtime
             if not os.path.exists(destination) or delta > 0:
@@ -489,6 +493,31 @@ def build_package(repository_root, build_package_config, env=None):
             else:
                 LOG.info('Skipping ld logger from package')
 
+    # Plist to html library files.
+    source = os.path.join(repository_root,
+                          'vendor', 'plist_to_html', 'plist_to_html')
+    target = os.path.join(package_root,
+                          package_layout['lib_plist_to_html'])
+    copy_tree(source, target)
+
+    # Building Plist to html generator
+    plist_to_html_path = build_package_config['plist_to_html_path']
+    plist_to_html_build = os.path.join(plist_to_html_path, 'build')
+
+    # Copy plist to html files.
+    target = os.path.join(package_root,
+                          package_layout['plist_to_html'])
+
+    copy_tree(plist_to_html_build, target)
+
+    curr_dir = os.getcwd()
+    os.chdir(os.path.join(package_root, package_layout['bin']))
+    plist_to_html_symlink = os.path.join('../',
+                                         package_layout['plist_to_html'],
+                                         'bin', 'plist-to-html')
+    os.symlink(plist_to_html_symlink, 'plist-to-html')
+    os.chdir(curr_dir)
+
     # Copy Python API stubs.
     generated_api_root = os.path.join(build_dir, 'thrift')
     target = os.path.join(package_root, package_layout['gencodechecker'])
@@ -709,7 +738,17 @@ def build_package(repository_root, build_package_config, env=None):
     LOG.debug('Copy web client files')
     source = os.path.join(repository_root, 'www')
     target = os.path.join(package_root, package_layout['www'])
-    copy_tree(source, target)
+
+    # Copy user guide to the web directory except images which will be placed
+    # to the common image directory.
+    userguide_images = os.path.join(source, 'userguide', 'images')
+    copy_tree(source, target, [userguide_images])
+    copy_tree(userguide_images, os.path.join(target, 'images'))
+
+    # Rename gen-docs to docs.
+    target_userguide = os.path.join(package_root, package_layout['userguide'])
+    shutil.move(os.path.join(target_userguide, 'gen-docs'),
+                os.path.join(target_userguide, 'doc'))
 
     # Copy font files.
     for _, dep in vendor_projects.items():
@@ -803,6 +842,11 @@ if __name__ == "__main__":
                               dest='rebuild_ld_logger',
                               help='Clean and rebuild logger.')
 
+    plist_to_html_group = parser.add_argument_group('plist-to-html')
+    plist_to_html_group.add_argument("--plist-to-html", action="store",
+                                     dest="plist_to_html_path",
+                                     help="Plist to html source path.")
+
     parser.add_argument("--compress", action="store",
                         dest="compress", default=False,
                         metavar="PACKAGE.tar.gz",
@@ -827,5 +871,12 @@ if __name__ == "__main__":
                                       'build-logger')
 
     build_package_config['ld_logger_path'] = default_logger_dir
+
+    # Set plist to html tool directory.
+    default_plist_to_html_dir = os.path.join(repository_root,
+                                             'vendor',
+                                             'plist_to_html')
+
+    build_package_config['plist_to_html_path'] = default_plist_to_html_dir
 
     build_package(repository_root, build_package_config)

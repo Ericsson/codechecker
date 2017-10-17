@@ -73,6 +73,15 @@ def add_arguments_to_parser(parser):
                         help="Show details about the checker, such as "
                              "description, if available.")
 
+    parser.add_argument('--profile',
+                        dest='profile',
+                        metavar='PROFILE/list',
+                        required=False,
+                        default=argparse.SUPPRESS,
+                        help="List checkers enabled by the selected profile. "
+                             "'list' is a special option showing details "
+                             "about profiles collectively.")
+
     filters = parser.add_mutually_exclusive_group(required=False)
 
     filters.add_argument('--only-enabled',
@@ -119,6 +128,29 @@ def main(args):
     analyzer_config_map = analyzer_types.build_config_handlers(args,
                                                                context,
                                                                working)
+    # List available checker profiles.
+    if 'profile' in args and args.profile == 'list':
+        if 'details' not in args:
+            if args.output_format not in ['csv', 'json']:
+                header = ['Profile name']
+            else:
+                header = ['profile_name']
+        else:
+            if args.output_format not in ['csv', 'json']:
+                header = ['Profile name', 'Description']
+            else:
+                header = ['profile_name', 'description']
+
+        rows = []
+        for (profile, description) in context.available_profiles.items():
+            if 'details' not in args:
+                rows.append([profile])
+            else:
+                rows.append([profile, description])
+
+        print(output_formatters.twodim_to_str(args.output_format,
+                                              header, rows))
+        return
 
     # Use good looking different headers based on format.
     if 'details' not in args:
@@ -142,14 +174,35 @@ def main(args):
 
         checkers = source_analyzer.get_analyzer_checkers(config_handler,
                                                          analyzer_environment)
-        default_checker_cfg = context.default_checkers_config.get(
+        default_checker_cfg = context.checker_config.get(
             analyzer + '_checkers')
-        analyzer_types.initialize_checkers(config_handler,
-                                           checkers,
-                                           default_checker_cfg)
+
+        if 'profile' in args:
+            if args.profile not in context.available_profiles:
+                LOG.error("Checker profile '" + args.profile +
+                          "' does not exist!")
+                LOG.error("To list available profiles, use '--profile list'.")
+                return
+
+            profile_checkers = [(args.profile, True)]
+            analyzer_types.initialize_checkers(config_handler,
+                                               context.available_profiles,
+                                               context.package_root,
+                                               checkers,
+                                               default_checker_cfg,
+                                               profile_checkers)
+        else:
+            analyzer_types.initialize_checkers(config_handler,
+                                               context.available_profiles,
+                                               context.package_root,
+                                               checkers,
+                                               default_checker_cfg)
 
         for checker_name, value in config_handler.checks().items():
             enabled, description = value
+
+            if not enabled and 'profile' in args:
+                continue
 
             if enabled and 'only_disabled' in args:
                 continue

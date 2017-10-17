@@ -14,7 +14,7 @@ import sys
 from sqlalchemy import *
 from sqlalchemy.ext.declarative import declarative_base
 
-from . import permissions
+from libcodechecker.server import permissions
 
 CC_META = MetaData(naming_convention={
     "ix": 'ix_%(column_0_label)s',

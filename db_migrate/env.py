@@ -9,7 +9,7 @@ config = context.config
 # Add your model's MetaData object here
 # for 'autogenerate' support.
 try:
-    from libcodechecker.server.run_db_model import Base
+    from libcodechecker.server.database.run_db_model import Base
 except ImportError:
     # Assume we are in the source directory
     import sys

@@ -35,9 +35,8 @@ from libcodechecker.analyze import plist_parser
 from libcodechecker.analyze import store_handler
 from libcodechecker.logger import LoggerFactory
 from libcodechecker.profiler import timeit
-
-from . import permissions
-from run_db_model import *
+from libcodechecker.server import permissions
+from libcodechecker.server.database.run_db_model import *
 
 LOG = LoggerFactory.get_new_logger('RUN ACCESS HANDLER')
 

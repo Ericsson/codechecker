@@ -32,8 +32,8 @@ before_install:
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then git clone https://github.com/llvm-mirror/clang.git ~/llvm --branch master --single-branch --depth 1; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then curl http://releases.llvm.org/3.9.0/clang+llvm-3.9.0-x86_64-apple-darwin.tar.xz -O; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update;               fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install homebrew/versions/thrift090;                fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PATH=/usr/local/Cellar/thrift@0.90/0.9.0/bin:$PATH; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install thrift@0.9;                fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PATH=/usr/local/Cellar/thrift@0.9/0.9.3/bin:$PATH; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then which thrift;                fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install doxygen;               fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then tar xf clang+llvm-3.9.0-x86_64-apple-darwin.tar.xz -C ~/; fi
