@@ -1719,6 +1719,15 @@ class ThriftRequestHandler(object):
     def massStoreRun(self, name, tag, version, b64zip, force):
         self.__require_store()
 
+        try:
+            session = self.__Session()
+            run = session.query(Run).filter(Run.name == name).one_or_none()
+
+            if run and self.__storage_session.has_ongoing_run(run.id):
+                raise Exception('Storage of ' + name + ' is already going!')
+        finally:
+            session.close()
+
         # Unzip sent data.
         zip_dir = unzip(b64zip)
 
