@@ -14,6 +14,7 @@ import datetime
 import sys
 
 from libcodechecker import output_formatters
+from libcodechecker import util
 from libcodechecker.cmd import cmd_line_client
 from libcodechecker.cmd import product_client
 from libcodechecker.logger import add_verbose_arguments
@@ -105,10 +106,26 @@ def __add_common_arguments(parser,
                                   required=False,
                                   # TODO: 'plaintext' only kept for legacy.
                                   default="plaintext",
-                                  choices=["plaintext"] +
+                                  choices=["plaintext", "html"] +
                                           output_formatters.USER_FORMATS,
                                   help="The output format to use in showing "
                                        "the data.")
+
+        common_group.add_argument('-e', '--export-dir',
+                                  dest="export_dir",
+                                  default=argparse.SUPPRESS,
+                                  help="Store the output in the given folder.")
+
+        common_group.add_argument('-c', '--clean',
+                                  dest="clean",
+                                  required=False,
+                                  action='store_true',
+                                  default=argparse.SUPPRESS,
+                                  help="Delete output results stored in the "
+                                       "output directory. (By default, it "
+                                       "would keep output files and "
+                                       "overwrites only those that contain "
+                                       "any reports).")
 
     add_verbose_arguments(common_group)
 
@@ -210,6 +227,20 @@ def __register_diff(parser):
                        action='store_true',
                        help="Show results that appear in both the 'base' and "
                             "the 'new' run.")
+
+    def __handle(args):
+        """Custom handler for 'diff' so custom error messages can be
+        printed without having to capture 'parser' in main."""
+
+        output_dir = ['-e', '--export-dir']
+        if args.output_format == 'html' and \
+           not any(util.arg_match(output_dir, sys.argv[1:])):
+            parser.error("argument --output html: not allowed without "
+                         "argument --export-dir")
+
+        cmd_line_client.handle_diff_results(args)
+
+    parser.set_defaults(func=__handle)
 
 
 def __register_sum(parser):
@@ -595,7 +626,6 @@ def add_arguments_to_parser(parser):
                     "differ between the two.",
         help="Compare two analysis runs and show the difference.")
     __register_diff(diff)
-    diff.set_defaults(func=cmd_line_client.handle_diff_results)
     __add_common_arguments(diff, has_matrix_output=True)
 
     sum_p = subcommands.add_parser(

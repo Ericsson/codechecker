@@ -5,14 +5,19 @@
 # -------------------------------------------------------------------------
 
 import base64
+from collections import defaultdict
 from datetime import datetime
 import json
 import os
 import re
 import sys
+import shutil
+
+from plist_to_html import PlistToHtml
 
 from codeCheckerDBAccess_v6 import constants, ttypes
 
+from libcodechecker import generic_package_context
 from libcodechecker import suppress_handler
 from libcodechecker import suppress_file_handler
 from libcodechecker.analyze import plist_parser
@@ -167,6 +172,7 @@ def handle_list_results(args):
 
 
 def handle_diff_results(args):
+    context = generic_package_context.get_context()
 
     def get_diff_results(client, baseids, cmp_data):
 
@@ -321,7 +327,81 @@ def handle_diff_results(args):
                     filtered_reports.append(result)
         return filtered_reports
 
-    def print_reports(client, reports, output_format):
+    def cached_report_file_lookup(file_cache, file_id):
+        """
+        Get source file data for the given file and caches it in a file cache
+        if file data is not found in the cache. Finally, it returns the source
+        file data from the cache.
+        """
+        if file_id not in file_cache:
+            source = client.getSourceFileData(file_id, True,
+                                              ttypes.Encoding.BASE64)
+            file_content = base64.b64decode(source.fileContent)
+            file_cache[file_id] = {'id': file_id,
+                                   'path': source.filePath,
+                                   'content': file_content}
+
+        return file_cache[file_id]
+
+    def get_report_data(client, reports, file_cache):
+        """
+        Returns necessary report files and report data events for the HTML
+        plist parser.
+        """
+        file_sources = {}
+        report_data = []
+
+        for report in reports:
+            file_sources[report.fileId] = cached_report_file_lookup(
+                file_cache, report.fileId)
+
+            details = client.getReportDetails(report.reportId)
+            events = []
+            for index, event in enumerate(details.pathEvents):
+                file_sources[event.fileId] = cached_report_file_lookup(
+                    file_cache, event.fileId)
+
+                events.append({'line': event.startLine,
+                               'col': event.startCol,
+                               'file': event.fileId,
+                               'msg': event.msg,
+                               'step': index + 1})
+            report_data.append(events)
+
+        return {'files': file_sources,
+                'reports': report_data}
+
+    def report_to_html(client, reports, output_dir):
+        """
+        Generate HTML output files for the given reports in the given output
+        directory by using the Plist To HTML parser.
+        """
+        html_builder = PlistToHtml.HtmlBuilder(context.path_plist_to_html_dist)
+
+        file_report_map = defaultdict(list)
+        for report in reports:
+            file_report_map[report.fileId].append(report)
+
+        file_cache = {}
+        for file_id, file_reports in file_report_map.items():
+            checked_file = file_reports[0].checkedFile
+            filename = os.path.basename(checked_file)
+
+            report_data = get_report_data(client, file_reports, file_cache)
+
+            output_path = os.path.join(output_dir,
+                                       filename + '_' + str(file_id) + '.html')
+            html_builder.create(output_path, report_data)
+            print('Html file was generated for file://{0}: file://{1}'.format(
+                checked_file, output_path))
+
+    def print_reports(client, reports, output_format, diff_type):
+        output_dir = args.export_dir if 'export_dir' in args else None
+        if 'clean' in args and os.path.isdir(output_dir):
+            print("Previous analysis results in '{0}' have been removed, "
+                  "overwriting with current results.".format(output_dir))
+            shutil.rmtree(output_dir)
+
         if output_format == 'json':
             output = []
             for report in reports:
@@ -330,6 +410,24 @@ def handle_diff_results(args):
                 else:
                     output.append(report)
             print(CmdLineOutputEncoder().encode(output))
+            return
+
+        if output_format == 'html':
+            if len(reports) == 0:
+                print('No {0} reports was found!'.format(diff_type))
+                return
+
+            output_dir = args.export_dir
+            if not os.path.exists(output_dir):
+                os.makedirs(output_dir)
+
+            print("Generating HTML output files to file://{0} directory:\n"
+                  .format(output_dir))
+
+            report_to_html(client, reports, output_dir)
+
+            print('\nTo view the results in a browser run:\n'
+                  '  $ firefox {0}'.format(args.export_dir))
             return
 
         header = ['File', 'Checker', 'Severity', 'Msg', 'Source']
@@ -392,6 +490,12 @@ def handle_diff_results(args):
     LOG.info("Matching against runs: " +
              ', '.join(map(lambda run: run.name, base_runs)))
 
+    diff_type = 'new'
+    if 'unresolved' in args:
+        diff_type = 'unresolved'
+    elif 'resolved' in args:
+        diff_type = 'resolved'
+
     results = []
     if report_dir_mode:
         diff_type = 'new'
@@ -416,7 +520,7 @@ def handle_diff_results(args):
     if len(results) == 0:
         LOG.info("No results.")
     else:
-        print_reports(client, results, args.output_format)
+        print_reports(client, results, args.output_format, diff_type)
 
 
 def handle_list_result_types(args):
