@@ -307,14 +307,15 @@ def __build_clangsa_config_handler(args, context):
     # Read clang-sa checkers from the config file.
     clang_sa_checkers = context.checker_config.get(CLANG_SA +
                                                    '_checkers')
-    if args.collect_stats:
+    if 'collect_stats' in args:
+        LOG.debug("Enabling Statistics Checkers")
         stat_checkers = []
         for checker in checkers:
             if checker[0].find("statisticsCollector") != -1:
                 stat_checkers.append({checker[0]: True})
-        LOG.debug("Enabling Statistics Checkers")
-        print(stat_checkers)
-        clang_sa_checkers.extend(stat_checkers)
+                LOG.debug(checker[0])
+                # Add statistical checkers to the default profile.
+                clang_sa_checkers[checker[0]] = [u"default"]
     try:
         cmdline_checkers = args.ordered_checkers
     except AttributeError:

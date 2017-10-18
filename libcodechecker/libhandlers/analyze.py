@@ -89,11 +89,6 @@ def add_arguments_to_parser(parser):
     Add the subcommand's arguments to the given argparse.ArgumentParser.
     """
 
-    def is_statistics_capable():
-        """ Detects if the current clang is Statistics compatible. """
-        # FIXME: Implement this function
-        return True
-
     parser.add_argument('logfile',
                         type=str,
                         nargs='+',
@@ -211,7 +206,7 @@ def add_arguments_to_parser(parser):
                                help="File containing argument which will be "
                                     "forwarded verbatim for Clang-Tidy.")
 
-    if is_statistics_capable():
+    if host_check.is_statistics_capable():
         stat_opts = parser.add_argument_group(
             "statistics analysis arguments",
             "These arguments are only available if the Clang Static Analyzer "

@@ -100,7 +100,7 @@ def perform_analysis(args, context, actions, metadata):
     if 'collect_stats' in args:
         if analyzer_types.CLANG_SA not in analyzers:
             LOG.error("Statistics can only be used with"
-                      "the clang static analyzer.")
+                      " the clang static analyzer.")
             return
 
     actions = prepare_actions(actions, analyzers)
