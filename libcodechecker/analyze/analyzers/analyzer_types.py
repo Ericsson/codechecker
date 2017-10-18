@@ -305,8 +305,8 @@ def __build_clangsa_config_handler(args, context):
     checkers = analyzer.get_analyzer_checkers(config_handler, check_env)
 
     # Read clang-sa checkers from the config file.
-    clang_sa_checkers = context.default_checkers_config.get(CLANG_SA +
-                                                            '_checkers')
+    clang_sa_checkers = context.checker_config.get(CLANG_SA +
+                                                   '_checkers')
     if args.collect_stats:
         stat_checkers = []
         for checker in checkers:
