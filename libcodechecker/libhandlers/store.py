@@ -234,6 +234,10 @@ def assemble_zip(inputs, zip_file, client):
                 elif f == 'metadata.json':
                     zipf.write(plist_file, os.path.join('reports', f))
 
+        if len(hash_to_file) == 0:
+            LOG.warning("There is no report to store. After uploading these "
+                        "results the previous reports become resolved.")
+
         necessary_hashes = client.getMissingContentHashes(hash_to_file.keys())
         for f, h in file_to_hash.items():
             if h in necessary_hashes:
