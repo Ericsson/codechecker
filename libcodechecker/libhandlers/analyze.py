@@ -213,20 +213,19 @@ def add_arguments_to_parser(parser):
             "supports Statistics-based analysis "
             "(e.g. statisticsCollector.ReturnValueCheck,"
             "statisticsCollector.SpecialReturnValue checkers are available).")
-        stat_modes = stat_opts.add_argument_group()
-        stat_modes.add_argument('--collect-stats', '--collect-stats',
-                                action='store_true',
-                                default=False,
-                                dest='collect_stats',
-                                help="Perform the first, 'collect' phase of "
-                                     "Statistical analysis. This phase"
-                                     "generates extra files needed by "
-                                     "statistics analysis, and "
-                                     "puts them into "
-                                     "'<OUTPUT_DIR>/statistics'."
-                                     " NOTE: If this argument is present, "
-                                     "CodeChecker will NOT execute the "
-                                     "analyzers!")
+        stat_opts.add_argument('--collect-stats', '--collect-stats',
+                               action='store_true',
+                               default=False,
+                               dest='collect_stats',
+                               help="Perform the first, 'collect' phase of "
+                                    "Statistical analysis. This phase"
+                                    "generates extra files needed by "
+                                    "statistics analysis, and "
+                                    "puts them into "
+                                    "'<OUTPUT_DIR>/statistics'."
+                                    " NOTE: If this argument is present, "
+                                    "CodeChecker will NOT execute the "
+                                    "analyzers!")
 
     if host_check.is_ctu_capable():
         ctu_opts = parser.add_argument_group(
