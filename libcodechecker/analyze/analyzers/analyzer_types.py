@@ -311,7 +311,7 @@ def __build_clangsa_config_handler(args, context):
         LOG.debug("Enabling Statistics Checkers")
         stat_checkers = []
         for checker in checkers:
-            if checker[0].find("statisticsCollector") != -1:
+            if checker[0].find("statisticscollector") != -1:
                 stat_checkers.append({checker[0]: True})
                 LOG.debug(checker[0])
                 # Add statistical checkers to the default profile.

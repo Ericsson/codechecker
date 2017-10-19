@@ -48,7 +48,7 @@ def is_statistics_capable():
     checkers = analyzer.get_analyzer_checkers(clangsa_cfg, check_env)
 
     import re
-    stat_checkers_pattern = re.compile(r'.+statisticsCollector.+')
+    stat_checkers_pattern = re.compile(r'.+statisticscollector.+')
 
     stats_checkers = []
     for checker_name, _ in checkers:
