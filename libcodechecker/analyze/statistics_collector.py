@@ -30,8 +30,8 @@ def create_statistics(clang_output_dir, stats_dir):
                 clang_outs.append(os.path.join(clang_output_dir, f))
     except OSError as oerr:
         LOG.debug(oerr)
-        LOG.warning("Statistics can not be collected.")
-        LOG.warning("Analyzer output error.")
+        LOG.debug("Statistics can not be collected.")
+        LOG.debug("Analyzer output error.")
         return
 
     if len(clang_outs) == 0:
