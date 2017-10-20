@@ -39,7 +39,7 @@ def create_statistics(clang_output_dir, stats_dir):
     cmd_arg.extend(clang_outs)
     with open(unchecked_yaml, 'w') as unchecked_file:
         subprocess.Popen(cmd_arg, stdout=unchecked_file)
-    LOG.info("Statistics successfully generated into: " + unchecked_yaml)
+    LOG.debug("Statistics successfully generated into: " + unchecked_yaml)
 
     special_ret_yaml = os.path.join(stats_dir, "SpecialReturn.yaml")
 
@@ -49,4 +49,4 @@ def create_statistics(clang_output_dir, stats_dir):
     cmd_arg.extend(clang_outs)
     with open(special_ret_yaml, 'w') as unchecked_file:
         subprocess.Popen(cmd_arg, stdout=unchecked_file)
-    LOG.info("Statistics successfully generated into: " + special_ret_yaml)
+    LOG.debug("Statistics successfully generated into: " + special_ret_yaml)
