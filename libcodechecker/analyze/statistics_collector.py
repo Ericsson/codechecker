@@ -29,7 +29,7 @@ def create_statistics(clang_output_dir, stats_dir):
             if os.path.isfile(os.path.join(clang_output_dir, f)):
                 clang_outs.append(os.path.join(clang_output_dir, f))
     except OSError as oerr:
-        LOG.debug(ex)
+        LOG.debug(oerr)
         LOG.warning("Statistics can not be collected.")
         LOG.warning("Analyzer output error.")
         return
