@@ -22,7 +22,8 @@ def gen_yaml():
 
     THRESHOLD = 0.85
     MIN_OCCURENCE_COUNT = 1
-    p = re.compile('.*Special Return Value:.*:[0-9]*:[0-9]*.*,(.*),([0,1]),([0,1])')
+    p = re.compile(
+            r'.*Special Return Value:.*:[0-9]*:[0-9]*.*,(.*),([0,1]),([0,1])')
     nof_negative = dict()
     nof_null = dict()
     total = dict()
