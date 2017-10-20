@@ -25,7 +25,6 @@ def gen_yaml():
     nof_unchecked = dict()
     total = dict()
     for line in fileinput.input():
-        # print "line:"+line
         m = p.match(line)
         if m:
             func = m.group(1)
@@ -37,7 +36,7 @@ def gen_yaml():
                 total[func] = 1
                 nof_unchecked[func] = int(checked)
 
-    for key in total:
+    for key in sorted(total):
         checked_ratio = 1 - nof_unchecked[key]/total[key]
         if (checked_ratio > THRESHOLD and total[key] >= MIN_OCCURENCE_COUNT):
             print "- " + key

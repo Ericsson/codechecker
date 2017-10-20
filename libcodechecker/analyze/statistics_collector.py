@@ -31,13 +31,22 @@ def create_statistics(clang_output_dir, stats_dir):
     if len(clang_outs) == 0:
         return
 
-    unchecked_yaml = os.path.join(stats_dir, "unchecked_ret.yaml")
+    unchecked_yaml = os.path.join(stats_dir, "UncheckedReturn.yaml")
 
     ret_val_cmd = os.path.join(script_path, "statistics",
-                               "gen_yaml_for_return_value_check.py")
-    # spec_ret = os.path.join(stats_dir, "special_ret.yaml")
+                               "gen_yaml_for_return_value_checks.py")
     cmd_arg = [ret_val_cmd]
     cmd_arg.extend(clang_outs)
     with open(unchecked_yaml, 'w') as unchecked_file:
         subprocess.Popen(cmd_arg, stdout=unchecked_file)
     LOG.info("Statistics successfully generated into: " + unchecked_yaml)
+
+    special_ret_yaml = os.path.join(stats_dir, "SpecialReturn.yaml")
+
+    special_ret_val = os.path.join(script_path, "statistics",
+                                   "gen_yaml_for_special_return_values.py")
+    cmd_arg = [special_ret_val]
+    cmd_arg.extend(clang_outs)
+    with open(special_ret_yaml, 'w') as unchecked_file:
+        subprocess.Popen(cmd_arg, stdout=unchecked_file)
+    LOG.info("Statistics successfully generated into: " + special_ret_yaml)
