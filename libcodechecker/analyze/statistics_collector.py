@@ -24,9 +24,15 @@ def create_statistics(clang_output_dir, stats_dir):
         os.mkdir(stats_dir)
 
     clang_outs = []
-    for f in os.listdir(clang_output_dir):
-        if os.path.isfile(os.path.join(clang_output_dir, f)):
-            clang_outs.append(os.path.join(clang_output_dir, f))
+    try:
+        for f in os.listdir(clang_output_dir):
+            if os.path.isfile(os.path.join(clang_output_dir, f)):
+                clang_outs.append(os.path.join(clang_output_dir, f))
+    except OSError as oerr:
+        LOG.debug(ex)
+        LOG.warning("Statistics can not be collected.")
+        LOG.warning("Analyzer output error.")
+        return
 
     if len(clang_outs) == 0:
         return
