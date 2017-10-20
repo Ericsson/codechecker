@@ -179,7 +179,7 @@
   "misc-sizeof-container":                                      "HIGH",
   "misc-sizeof-expression":                                     "HIGH",
   "misc-static-assert":                                         "MEDIUM",
-  "misc-string-compare":                                        "HIGH",
+  "misc-string-compare":                                        "LOW",
   "misc-string-constructor":                                    "HIGH",
   "misc-string-integer-assignment":                             "LOW",
   "misc-string-literal-with-embedded-nul":                      "MEDIUM",
