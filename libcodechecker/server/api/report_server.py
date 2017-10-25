@@ -288,7 +288,7 @@ def unzip(b64zip):
     with open(zip_file, 'wb') as zip_f:
         zip_f.write(zlib.decompress(base64.b64decode(b64zip)))
 
-    with zipfile.ZipFile(zip_file, 'r') as zipf:
+    with zipfile.ZipFile(zip_file, 'r', allowZip64=True) as zipf:
         try:
             zipf.extractall(temp_dir)
         except:

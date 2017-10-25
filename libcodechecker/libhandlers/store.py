@@ -31,10 +31,12 @@ from libcodechecker.analyze import plist_parser
 from libcodechecker.libclient import client as libclient
 from libcodechecker.logger import add_verbose_arguments
 from libcodechecker.logger import LoggerFactory
+from libcodechecker.util import sizeof_fmt
 from libcodechecker.util import split_product_url
 
 
 LOG = LoggerFactory.get_new_logger('STORE')
+MAX_UPLOAD_SIZE = 1 * 1024 * 1024 * 1024  # 1GiB
 
 
 def full_traceback(func):
@@ -206,7 +208,7 @@ def assemble_zip(inputs, zip_file, client):
         except Exception as ex:
             LOG.error('Parsing the plist failed: ' + str(ex))
 
-    with zipfile.ZipFile(zip_file, 'a') as zipf:
+    with zipfile.ZipFile(zip_file, 'a', allowZip64=True) as zipf:
         for input_path in inputs:
             input_path = os.path.abspath(input_path)
 
@@ -319,6 +321,12 @@ def main(args):
 
     try:
         assemble_zip(args.input, zip_file, client)
+
+        if os.stat(zip_file).st_size > MAX_UPLOAD_SIZE:
+            LOG.error("The result list to upload is too big (max: {})."
+                      .format(sizeof_fmt(MAX_UPLOAD_SIZE)))
+            sys.exit(1)
+
         with open(zip_file, 'rb') as zf:
             b64zip = base64.b64encode(zf.read())
 
