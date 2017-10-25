@@ -40,9 +40,10 @@ def worker_result_handler(results, metadata, output_path):
     for res, skipped, reanalyzed, analyzer_type, _ in results:
         if skipped:
             skipped_num += 1
-        elif reanalyzed:
-            reanalyzed_num += 1
         else:
+            if reanalyzed:
+                reanalyzed_num += 1
+
             if res == 0:
                 successful_analysis[analyzer_type] += 1
             else:
