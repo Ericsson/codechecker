@@ -160,7 +160,7 @@ class OutputParser(object):
 
             return message, line
         except StopIteration:
-            return message, line
+            return message, ''
 
     def _parse_code(self, message, titer, line):
         # Eat code line.

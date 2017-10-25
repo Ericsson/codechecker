@@ -190,6 +190,17 @@ class TidyOutputParserTestCase(unittest.TestCase):
         for message in messages:
             self.assertIn(message, self.tidy3_repr)
 
+    def test_tidy4(self):
+        """
+        Test the generated Messages of tidy4.out ClangTidy output file.
+        This is an uncomplete file which is equal with tidy1.out except it's
+        missing the last two lines.
+        """
+        messages = self.parser.parse_messages_from_file('tidy4.out')
+        self.assertEqual(len(messages), len(self.tidy1_repr))
+        for message in messages:
+            self.assertIn(message, self.tidy1_repr)
+
 
 class TidyPListConverterTestCase(unittest.TestCase):
     """
