@@ -16,6 +16,7 @@ import sqlalchemy
 import shared
 from ProductManagement_v6 import ttypes
 
+from libcodechecker import util
 from libcodechecker.logger import LoggerFactory
 from libcodechecker.profiler import timeit
 from libcodechecker.server import permissions
@@ -119,12 +120,12 @@ class ThriftProductHandler(object):
             prods = session.query(Product)
 
             if product_endpoint_filter:
-                prods = prods.filter(Product.endpoint.ilike(
-                    '%{0}%'.format(product_endpoint_filter)))
+                prods = prods.filter(Product.endpoint.ilike('%{0}%'.format(
+                    util.escape_like(product_endpoint_filter)), escape='*'))
 
             if product_name_filter:
-                prods = prods.filter(Product.display_name.ilike(
-                    '%{0}%'.format(product_name_filter)))
+                prods = prods.filter(Product.display_name.ilike('%{0}%'.format(
+                    util.escape_like(product_name_filter)), escape='*'))
 
             prods = prods.all()
 

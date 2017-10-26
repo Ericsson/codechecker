@@ -72,7 +72,7 @@ def setup_package():
     # Extend the checker configuration with the server access.
     codechecker_cfg.update(server_access)
 
-    test_project_name = project_info['name'] + '_' + uuid.uuid4().hex
+    test_project_name = project_info['name'] + '_' + uuid.uuid4().hex + '**'
 
     ret = codechecker.check(codechecker_cfg,
                             test_project_name,
@@ -81,7 +81,7 @@ def setup_package():
         sys.exit(1)
     print("Analyzing the test project was successful.")
 
-    test_project_name_new = project_info['name'] + '_' + uuid.uuid4().hex
+    test_project_name_new = project_info['name'] + '*' + uuid.uuid4().hex + '%'
 
     # Let's run the second analysis with different
     # checkers to have some real difference.
