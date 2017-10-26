@@ -98,10 +98,11 @@ def perform_analysis(args, context, actions, metadata):
             return
 
     if 'collect_stats' in args:
-        if analyzer_types.CLANG_SA not in analyzers:
-            LOG.error("Statistics can only be used with"
-                      " the clang static analyzer.")
-            return
+        if args.collect_stats:
+            if analyzer_types.CLANG_SA not in analyzers:
+                LOG.error("Statistics can only be used with"
+                          " the clang static analyzer.")
+                return
 
     actions = prepare_actions(actions, analyzers)
     config_map = analyzer_types.build_config_handlers(args, context, analyzers)
