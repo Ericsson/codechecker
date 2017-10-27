@@ -418,9 +418,6 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
         if (sender && sender !== that._grid)
           return;
 
-        if (!that.runData && !that.baseline && !reportHash && !that.allReportView)
-          return;
-
         if (reportData !== null && !(reportData instanceof CC_OBJECTS.ReportData))
           reportData = CC_SERVICE.getReport(reportData);
 
@@ -436,8 +433,8 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
           reportFilter.reportHash = [reportHash];
           reportFilter.isUnique = false;
 
-          reports = CC_SERVICE.getRunResults(null, CC_OBJECTS.MAX_QUERY_SIZE,
-            0, null, reportFilter, null);
+          reports = CC_SERVICE.getRunResults(runResultParam.runIds,
+            CC_OBJECTS.MAX_QUERY_SIZE,  0, null, reportFilter, null);
           reportData = reports[0];
         } else {
           runResultParam.runIds = [reportData.runId];
