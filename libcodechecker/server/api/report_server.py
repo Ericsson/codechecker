@@ -177,8 +177,8 @@ def get_diff_hashes_for_query(base_run_ids, base_line_hashes, new_run_ids,
                                           msg)
 
 
-def get_run_result_query_helper(session, run_ids, report_filter, is_unique,
-                                is_count=False):
+def get_run_result_query_helper(session, run_ids, report_filter, cmp_data,
+                                diff_hashes, is_unique, is_count=False):
     filter_expression = process_report_filter_v2(report_filter)
 
     if is_unique:
@@ -186,14 +186,13 @@ def get_run_result_query_helper(session, run_ids, report_filter, is_unique,
                           Report.checker_id,
                           Report.checker_message,
                           Report.severity,
-                          File.filename,
-                          ReviewStatus) \
-            .distinct(Report.bug_id,
+                          Report.file_id,
+                          func.max(ReviewStatus.status).label('status')) \
+            .group_by(Report.bug_id,
                       Report.checker_id,
                       Report.checker_message,
                       Report.severity,
-                      File.filename,
-                      ReviewStatus.status)
+                      Report.file_id)
     elif is_count:
         q = session.query(Report)
     else:
@@ -201,13 +200,8 @@ def get_run_result_query_helper(session, run_ids, report_filter, is_unique,
                           File,
                           ReviewStatus)
 
-    q = q.filter(Report.run_id.in_(run_ids)) \
-        .outerjoin(File, Report.file_id == File.id) \
-        .outerjoin(ReviewStatus,
-                   ReviewStatus.bug_hash == Report.bug_id) \
-        .filter(filter_expression)
-
-    return q
+    return filter_report_filter(q, filter_expression, run_ids, cmp_data,
+                                diff_hashes)
 
 
 def bugpathevent_db_to_api(bpe):
@@ -316,6 +310,23 @@ def create_count_expression(report_filter):
         return func.count(Report.bug_id.distinct())
     else:
         return func.count(literal_column('*'))
+
+
+def filter_report_filter(q, filter_expression, run_ids=None, cmp_data=None,
+                         diff_hashes=None):
+    if run_ids:
+        q = q.filter(Report.run_id.in_(run_ids))
+
+    q = q.outerjoin(File,
+                    Report.file_id == File.id) \
+        .outerjoin(ReviewStatus,
+                   ReviewStatus.bug_hash == Report.bug_id) \
+        .filter(filter_expression)
+
+    if cmp_data:
+        q = q.filter(Report.bug_id.in_(diff_hashes))
+
+    return q
 
 
 class StorageSession:
@@ -469,7 +480,8 @@ class ThriftRequestHandler(object):
     def __require_store(self):
         self.__require_permission([permissions.PRODUCT_STORE])
 
-    def __sortResultsQuery(self, query, sort_types=None, is_unique=False):
+    def __sortResultsQuery(self, query, sort_types=None, is_unique=False,
+                           subquery=None):
         """
         Helper method for __queryDiffResults and queryResults to apply sorting.
         """
@@ -482,8 +494,11 @@ class ThriftRequestHandler(object):
                          SortType.DETECTION_STATUS: [Report.detection_status]}
 
         if is_unique:
-            sort_type_map[SortType.FILENAME] = [File.filename]
-            sort_type_map[SortType.DETECTION_STATUS] = []
+            sort_type_map = {SortType.FILENAME: [File.filename],
+                             SortType.CHECKER_NAME: [subquery.c.checker_id],
+                             SortType.SEVERITY: [subquery.c.severity],
+                             SortType.REVIEW_STATUS: [subquery.c.status],
+                             SortType.DETECTION_STATUS: []}
 
         # Mapping the SQLAlchemy functions.
         order_type_map = {Order.ASC: asc, Order.DESC: desc}
@@ -600,14 +615,14 @@ class ThriftRequestHandler(object):
         try:
             session = self.__Session()
 
-            if not run_ids:
-                run_ids = self.__get_run_ids_to_query(session, None)
+            res = session.query(RunHistory)
 
-            res = session.query(RunHistory) \
-                .filter(RunHistory.run_id.in_(run_ids)) \
-                .order_by(RunHistory.time.desc()) \
-                .limit(limit) \
-                .offset(offset)
+            if run_ids:
+                res = res.filter(RunHistory.run_id.in_(run_ids))
+
+            res = res.order_by(RunHistory.time.desc()) \
+                     .limit(limit) \
+                     .offset(offset)
 
             results = []
             for history in res:
@@ -687,9 +702,7 @@ class ThriftRequestHandler(object):
 
             results = []
 
-            if not run_ids:
-                run_ids = self.__get_run_ids_to_query(session, cmp_data)
-
+            diff_hashes = None
             if cmp_data:
                 diff_hashes, run_ids = self._cmp_helper(session,
                                                         run_ids,
@@ -700,38 +713,51 @@ class ThriftRequestHandler(object):
 
             is_unique = report_filter is not None and report_filter.isUnique
             q = get_run_result_query_helper(session, run_ids, report_filter,
-                                            is_unique)
-
-            q = self.__sortResultsQuery(q, sort_types, is_unique)
-
-            # This is needed to resolved pgsql DISTINCT expressions must match
-            # initial ORDER BY expressions problem.
-            if is_unique:
-                q = q.order_by(Report.bug_id,
-                               Report.checker_id,
-                               Report.checker_message,
-                               Report.severity,
-                               File.filename,
-                               ReviewStatus.status)
-
-            if cmp_data:
-                q = q.filter(Report.bug_id.in_(diff_hashes))
+                                            cmp_data, diff_hashes, is_unique)
 
             if is_unique:
-                for report_hash, checker, checker_msg, severity,\
-                    path, review_status in \
-                        q.limit(limit).offset(offset):
+                q = q.limit(limit).offset(offset).subquery()
 
-                    review_data = create_review_data(review_status)
+                report_query = session.query(q,
+                                             ReviewStatus.message,
+                                             ReviewStatus.author,
+                                             ReviewStatus.date) \
+                    .outerjoin(ReviewStatus,
+                               ReviewStatus.bug_hash == q.c.bug_id) \
+                    .subquery()
+
+                file_query = session.query(report_query,
+                                           File.filename.label('filename')) \
+                    .outerjoin(File, report_query.c.file_id == File.id)
+
+                file_query = self.__sortResultsQuery(
+                    file_query, sort_types, is_unique, report_query)
+
+                for report_hash, checker, checker_msg, severity, file_id, \
+                    rs_status, rs_msg, rs_author, rs_date, path in \
+                        file_query:
+
+                    review_data = None
+                    if rs_status:
+                        review_data = ReviewData(
+                            status=review_status_enum(rs_status),
+                            comment=rs_msg,
+                            author=rs_author,
+                            date=str(rs_date))
+                    else:
+                        review_data = ReviewData(
+                            status=ttypes.ReviewStatus.UNREVIEWED)
+
                     results.append(
                         ReportData(bugHash=report_hash,
                                    checkedFile=path,
                                    checkerMsg=checker_msg,
                                    checkerId=checker,
                                    severity=severity,
-                                   reviewData=review_data)
-                    )
+                                   reviewData=review_data))
             else:
+                q = self.__sortResultsQuery(q, sort_types)
+
                 for report, source_file, review_status in \
                         q.limit(limit).offset(offset):
 
@@ -773,25 +799,28 @@ class ThriftRequestHandler(object):
         results = []
         session = self.__Session()
         try:
-            if not run_ids:
-                run_ids = self.__get_run_ids_to_query(session)
-
             filter_expression = process_report_filter_v2(report_filter)
 
-            count_expr = func.count(literal_column('*'))
+            count_expr = create_count_expression(report_filter)
+            q = session.query(Run.id,
+                              Run.name,
+                              count_expr) \
+                .select_from(Report)
 
-            q = session.query(func.max(Report.id), Run, count_expr) \
-                .filter(Report.run_id.in_(run_ids)) \
-                .outerjoin(File, Report.file_id == File.id) \
-                .outerjoin(ReviewStatus,
-                           ReviewStatus.bug_hash == Report.bug_id) \
-                .outerjoin(Run,
-                           Report.run_id == Run.id) \
-                .filter(filter_expression).group_by(Run.id).all()
+            if run_ids:
+                q = q.filter(Report.run_id.in_(run_ids))
 
-            for _, run, count in q:
-                report_count = RunReportCount(runId=run.id,
-                                              name=run.name,
+            q = q.outerjoin(File, Report.file_id == File.id) \
+                 .outerjoin(ReviewStatus,
+                            ReviewStatus.bug_hash == Report.bug_id) \
+                 .outerjoin(Run,
+                            Report.run_id == Run.id) \
+                 .filter(filter_expression) \
+                 .group_by(Run.id)
+
+            for run_id, run_name, count in q:
+                report_count = RunReportCount(runId=run_id,
+                                              name=run_name,
                                               reportCount=count)
                 results.append(report_count)
 
@@ -810,10 +839,7 @@ class ThriftRequestHandler(object):
         session = self.__Session()
 
         try:
-
-            if not run_ids:
-                run_ids = self.__get_run_ids_to_query(session, cmp_data)
-
+            diff_hashes = None
             if cmp_data:
                 diff_hashes, run_ids = self._cmp_helper(session,
                                                         run_ids,
@@ -824,17 +850,14 @@ class ThriftRequestHandler(object):
 
             is_unique = report_filter is not None and report_filter.isUnique
             q = get_run_result_query_helper(session, run_ids, report_filter,
-                                            is_unique, True)
+                                            cmp_data, diff_hashes, is_unique,
+                                            True)
 
-            if cmp_data:
-                q = q.filter(Report.bug_id.in_(diff_hashes))
+            report_count = q.count()
+            if report_count is None:
+                report_count = 0
 
-            reportCount = q.count()
-
-            if reportCount is None:
-                reportCount = 0
-
-            return reportCount
+            return report_count
 
         except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
             msg = str(alchemy_ex)
@@ -1240,6 +1263,9 @@ class ThriftRequestHandler(object):
         Return the hash list which should be queried
         in the returned run id list.
         """
+        if not run_ids:
+            run_ids = self.__get_run_ids_to_query(session, cmp_data)
+
         base_run_ids = run_ids
         new_run_ids = cmp_data.runIds
         diff_type = cmp_data.diffType
@@ -1270,10 +1296,7 @@ class ThriftRequestHandler(object):
         results = []
         session = self.__Session()
         try:
-
-            if not run_ids:
-                run_ids = self.__get_run_ids_to_query(session, cmp_data)
-
+            diff_hashes = None
             if cmp_data:
                 diff_hashes, run_ids = self._cmp_helper(session,
                                                         run_ids,
@@ -1285,24 +1308,33 @@ class ThriftRequestHandler(object):
             filter_expression = process_report_filter_v2(
                 report_filter, CountFilter.CHECKER_NAME)
 
-            count_expr = create_count_expression(report_filter)
+            is_unique = report_filter is not None and report_filter.isUnique
+            if is_unique:
+                q = session.query(func.max(Report.checker_id).label(
+                                      'checker_id'),
+                                  func.max(Report.severity).label(
+                                      'severity'),
+                                  Report.bug_id)
+            else:
+                q = session.query(Report.checker_id,
+                                  Report.severity,
+                                  func.count(Report.bug_id))
 
-            q = session.query(Report.checker_id,
-                              Report.severity,
-                              count_expr) \
-                .filter(Report.run_id.in_(run_ids)) \
-                .outerjoin(File,
-                           Report.file_id == File.id) \
-                .outerjoin(ReviewStatus,
-                           ReviewStatus.bug_hash == Report.bug_id) \
-                .filter(filter_expression) \
+            q = filter_report_filter(q, filter_expression, run_ids, cmp_data,
+                                     diff_hashes)
 
-            if cmp_data:
-                q = q.filter(Report.bug_id.in_(diff_hashes))
+            unique_checker_q = None
+            if is_unique:
+                q = q.group_by(Report.bug_id).subquery()
+                unique_checker_q = session.query(q.c.checker_id,
+                                                 func.max(q.c.severity),
+                                                 func.count(q.c.bug_id)) \
+                    .group_by(q.c.checker_id)
+            else:
+                unique_checker_q = q.group_by(Report.checker_id,
+                                              Report.severity)
 
-            q = q.group_by(Report.checker_id, Report.severity).all()
-
-            for name, severity, count in q:
+            for name, severity, count in unique_checker_q:
                 checker_count = CheckerCount(name=name,
                                              severity=severity,
                                              count=count)
@@ -1325,10 +1357,7 @@ class ThriftRequestHandler(object):
         results = {}
         session = self.__Session()
         try:
-
-            if not run_ids:
-                run_ids = self.__get_run_ids_to_query(session, cmp_data)
-
+            diff_hashes = None
             if cmp_data:
                 diff_hashes, run_ids = self._cmp_helper(session,
                                                         run_ids,
@@ -1340,22 +1369,27 @@ class ThriftRequestHandler(object):
             filter_expression = process_report_filter_v2(report_filter,
                                                          CountFilter.SEVERITY)
 
-            count_expr = create_count_expression(report_filter)
+            is_unique = report_filter is not None and report_filter.isUnique
+            if is_unique:
+                q = session.query(func.max(Report.severity).label('severity'),
+                                  Report.bug_id)
+            else:
+                q = session.query(Report.severity,
+                                  func.count(Report.bug_id))
 
-            q = session.query(Report.severity, count_expr) \
-                .filter(Report.run_id.in_(run_ids)) \
-                .outerjoin(File,
-                           Report.file_id == File.id) \
-                .outerjoin(ReviewStatus,
-                           ReviewStatus.bug_hash == Report.bug_id) \
-                .filter(filter_expression) \
+            q = filter_report_filter(q, filter_expression, run_ids, cmp_data,
+                                     diff_hashes)
 
-            if cmp_data:
-                q = q.filter(Report.bug_id.in_(diff_hashes))
+            severities = None
+            if is_unique:
+                q = q.group_by(Report.bug_id).subquery()
+                severities = session.query(q.c.severity,
+                                           func.count(q.c.bug_id)) \
+                    .group_by(q.c.severity).all()
+            else:
+                severities = q.group_by(Report.severity).all()
 
-            checker_ids = q.group_by(Report.severity).all()
-
-            results = dict(checker_ids)
+            results = dict(severities)
 
         except Exception as ex:
             LOG.error(ex)
@@ -1374,10 +1408,7 @@ class ThriftRequestHandler(object):
         results = {}
         session = self.__Session()
         try:
-
-            if not run_ids:
-                run_ids = self.__get_run_ids_to_query(session, cmp_data)
-
+            diff_hashes = None
             if cmp_data:
                 diff_hashes, run_ids = self._cmp_helper(session,
                                                         run_ids,
@@ -1389,22 +1420,29 @@ class ThriftRequestHandler(object):
             filter_expression = process_report_filter_v2(
                 report_filter, CountFilter.CHECKER_MSG)
 
-            count_expr = create_count_expression(report_filter)
+            is_unique = report_filter is not None and report_filter.isUnique
+            if is_unique:
+                q = session.query(func.max(Report.checker_message).label(
+                                      'checker_message'),
+                                  Report.bug_id)
+            else:
+                q = session.query(Report.checker_message,
+                                  func.count(Report.bug_id))
 
-            q = session.query(Report.checker_message, count_expr) \
-                .filter(Report.run_id.in_(run_ids)) \
-                .outerjoin(File,
-                           Report.file_id == File.id) \
-                .outerjoin(ReviewStatus,
-                           ReviewStatus.bug_hash == Report.bug_id) \
-                .filter(filter_expression) \
+            q = filter_report_filter(q, filter_expression, run_ids, cmp_data,
+                                     diff_hashes)
 
-            if cmp_data:
-                q = q.filter(Report.bug_id.in_(diff_hashes))
+            checker_messages = None
+            if is_unique:
+                q = q.group_by(Report.bug_id).subquery()
+                checker_messages = session.query(q.c.checker_message,
+                                                 func.count(q.c.bug_id)) \
+                    .group_by(q.c.checker_message).all()
+            else:
+                checker_messages = q.group_by(Report.checker_message,
+                                              Report.severity).all()
 
-            checker_ids = q.group_by(Report.checker_message).all()
-
-            results = dict(checker_ids)
+            results = dict(checker_messages)
 
         except Exception as ex:
             LOG.error(ex)
@@ -1423,10 +1461,7 @@ class ThriftRequestHandler(object):
         results = defaultdict(int)
         session = self.__Session()
         try:
-
-            if not run_ids:
-                run_ids = self.__get_run_ids_to_query(session, cmp_data)
-
+            diff_hashes = None
             if cmp_data:
                 diff_hashes, run_ids = self._cmp_helper(session,
                                                         run_ids,
@@ -1438,22 +1473,28 @@ class ThriftRequestHandler(object):
             filter_expression = process_report_filter_v2(
                 report_filter, CountFilter.REVIEW_STATUS)
 
-            count_expr = create_count_expression(report_filter)
+            is_unique = report_filter is not None and report_filter.isUnique
+            if is_unique:
+                q = session.query(Report.bug_id,
+                                  func.max(ReviewStatus.status).label(
+                                      'status'))
+            else:
+                q = session.query(func.max(Report.bug_id),
+                                  ReviewStatus.status,
+                                  func.count(Report.bug_id))
 
-            q = session.query(func.max(Report.id),
-                              ReviewStatus.status,
-                              count_expr) \
-                .filter(Report.run_id.in_(run_ids)) \
-                .outerjoin(File,
-                           Report.file_id == File.id) \
-                .outerjoin(ReviewStatus,
-                           ReviewStatus.bug_hash == Report.bug_id) \
-                .filter(filter_expression) \
+            q = filter_report_filter(q, filter_expression, run_ids, cmp_data,
+                                     diff_hashes)
 
-            if cmp_data:
-                q = q.filter(Report.bug_id.in_(diff_hashes))
-
-            review_statuses = q.group_by(ReviewStatus.status).all()
+            review_statuses = None
+            if is_unique:
+                q = q.group_by(Report.bug_id).subquery()
+                review_statuses = session.query(func.max(q.c.bug_id),
+                                                q.c.status,
+                                                func.count(q.c.bug_id)) \
+                    .group_by(q.c.status).all()
+            else:
+                review_statuses = q.group_by(ReviewStatus.status).all()
 
             for _, rev_status, count in review_statuses:
                 if rev_status is None:
@@ -1481,10 +1522,6 @@ class ThriftRequestHandler(object):
         results = {}
         session = self.__Session()
         try:
-
-            if not run_ids:
-                run_ids = self.__get_run_ids_to_query(session, cmp_data)
-
             if cmp_data:
                 diff_hashes, run_ids = self._cmp_helper(session,
                                                         run_ids,
@@ -1496,24 +1533,33 @@ class ThriftRequestHandler(object):
             filter_expression = process_report_filter_v2(report_filter,
                                                          CountFilter.FILE)
 
-            count_expr = create_count_expression(report_filter)
+            stmt = session.query(Report.bug_id,
+                                 Report.file_id) \
+                          .outerjoin(ReviewStatus,
+                                     ReviewStatus.bug_hash == Report.bug_id) \
+                          .filter(filter_expression)
 
-            q = session.query(func.max(Report.id),
-                              File.filepath,
-                              count_expr) \
-                .filter(Report.run_id.in_(run_ids)) \
-                .outerjoin(File,
-                           Report.file_id == File.id) \
-                .outerjoin(ReviewStatus,
-                           ReviewStatus.bug_hash == Report.bug_id) \
-                .filter(filter_expression) \
+            if run_ids:
+                stmt = stmt.filter(Report.run_id.in_(run_ids))
 
-            if cmp_data:
-                q = q.filter(Report.bug_id.in_(diff_hashes))
+            if report_filter is not None and report_filter.isUnique:
+                stmt = stmt.group_by(Report.bug_id, Report.file_id)
 
-            file_paths = q.group_by(File.filepath).all()
+            stmt = stmt.subquery()
 
-            for _, fp, count in file_paths:
+            report_count = session.query(stmt.c.file_id,
+                                         func.count(1).label(
+                                             'report_count')) \
+                .group_by(stmt.c.file_id) \
+                .subquery()
+
+            file_paths = session.query(File.filepath,
+                                       report_count.c.report_count) \
+                .join(report_count,
+                      report_count.c.file_id == File.id) \
+                .all()
+
+            for fp, count in file_paths:
                 results[fp] = count
 
         except Exception as ex:
@@ -1533,10 +1579,6 @@ class ThriftRequestHandler(object):
         results = []
         session = self.__Session()
         try:
-
-            if not run_ids:
-                run_ids = self.__get_run_ids_to_query(session, cmp_data)
-
             if cmp_data:
                 diff_hashes, run_ids = self._cmp_helper(session,
                                                         run_ids,
@@ -1549,33 +1591,39 @@ class ThriftRequestHandler(object):
                 report_filter, CountFilter.RUN_HISTORY_TAG)
 
             count_expr = create_count_expression(report_filter)
-
-            q = session.query(func.max(Report.id),
-                              Run.name,
-                              RunHistory.time,
-                              RunHistory.version_tag,
-                              count_expr) \
-                .filter(Report.run_id.in_(run_ids)) \
-                .outerjoin(Run,
-                           Run.id == Report.run_id) \
-                .outerjoin(File,
-                           Report.file_id == File.id) \
-                .outerjoin(RunHistory,
-                           RunHistory.run_id == Report.run_id) \
+            count_q = session.query(Report.run_id,
+                                    count_expr.label('report_count')) \
+                .outerjoin(File, Report.file_id == File.id) \
                 .outerjoin(ReviewStatus,
                            ReviewStatus.bug_hash == Report.bug_id) \
                 .filter(filter_expression) \
+                .group_by(Report.run_id) \
+                .subquery()
 
-            if cmp_data:
-                q = q.filter(Report.bug_id.in_(diff_hashes))
+            tag_q = session.query(RunHistory.run_id.label('run_id'),
+                                  func.max(RunHistory.id).label(
+                                      'run_history_id')) \
+                .filter(RunHistory.version_tag.isnot(None))
 
-            history_tags = q.group_by(Run.name,
-                                      RunHistory.time,
-                                      RunHistory.version_tag).all()
+            if run_ids:
+                tag_q = tag_q.filter(RunHistory.run_id.in_(run_ids))
 
-            for _, run_name, time, tag, count in history_tags:
+            tag_q = tag_q.group_by(RunHistory.run_id).subquery()
+
+            q = session.query(tag_q.c.run_id,
+                              Run.name,
+                              RunHistory.time,
+                              RunHistory.version_tag,
+                              count_q.c.report_count) \
+                .outerjoin(RunHistory,
+                           RunHistory.id == tag_q.c.run_history_id) \
+                .outerjoin(Run, Run.id == tag_q.c.run_id) \
+                .outerjoin(count_q, count_q.c.run_id == RunHistory.run_id) \
+                .filter(RunHistory.version_tag.isnot(None))
+
+            for _, run_name, version_time, tag, count in q:
                 if tag:
-                    results.append(RunTagCount(time=str(time),
+                    results.append(RunTagCount(time=str(version_time),
                                                name=run_name + ':' + tag,
                                                count=count))
 
@@ -1596,10 +1644,7 @@ class ThriftRequestHandler(object):
         results = {}
         session = self.__Session()
         try:
-
-            if not run_ids:
-                run_ids = self.__get_run_ids_to_query(session, cmp_data)
-
+            diff_hashes = None
             if cmp_data:
                 diff_hashes, run_ids = self._cmp_helper(session,
                                                         run_ids,
@@ -1614,16 +1659,10 @@ class ThriftRequestHandler(object):
             count_expr = func.count(literal_column('*'))
 
             q = session.query(Report.detection_status,
-                              count_expr) \
-                .filter(Report.run_id.in_(run_ids)) \
-                .outerjoin(File,
-                           Report.file_id == File.id) \
-                .outerjoin(ReviewStatus,
-                           ReviewStatus.bug_hash == Report.bug_id) \
-                .filter(filter_expression) \
+                              count_expr)
 
-            if cmp_data:
-                q = q.filter(Report.bug_id.in_(diff_hashes))
+            q = filter_report_filter(q, filter_expression, run_ids, cmp_data,
+                                     diff_hashes)
 
             detection_stats = q.group_by(Report.detection_status).all()
 
