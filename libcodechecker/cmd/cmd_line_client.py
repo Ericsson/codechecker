@@ -168,7 +168,7 @@ def handle_list_results(args):
 
 def handle_diff_results(args):
 
-    def getDiffResults(client, baseids, cmp_data):
+    def get_diff_results(client, baseids, cmp_data):
 
         report_filter = ttypes.ReportFilter()
         add_filter_conditions(report_filter, args.filter)
@@ -205,7 +205,7 @@ def handle_diff_results(args):
                                            cmp_data)
         return all_results
 
-    def getReportDirResults(reportdir):
+    def get_report_dir_results(reportdir):
         all_reports = []
         for filename in os.listdir(reportdir):
             if filename.endswith(".plist"):
@@ -223,7 +223,7 @@ def handle_diff_results(args):
                     LOG.error(ex)
         return all_reports
 
-    def getLineFromFile(filename, lineno):
+    def get_line_from_file(filename, lineno):
         with open(filename, 'r') as f:
             i = 1
             for line in f:
@@ -232,14 +232,14 @@ def handle_diff_results(args):
                 i += 1
         return ""
 
-    def getLineFromRemoteFile(client, fid, lineno):
+    def get_line_from_remote_file(client, fid, lineno):
         # Thrift Python client cannot decode JSONs that contain non '\u00??'
         # characters, so we instead ask for a Base64-encoded version.
         source = client.getSourceFileData(fid, True, ttypes.Encoding.BASE64)
         lines = base64.b64decode(source.fileContent).split('\n')
         return "" if len(lines) < lineno else lines[lineno - 1]
 
-    def getDiffReportDir(client, baseids, report_dir, diff_type):
+    def get_diff_report_dir(client, baseids, report_dir, diff_type):
 
         report_filter = ttypes.ReportFilter()
         add_filter_conditions(report_filter, args.filter)
@@ -271,7 +271,7 @@ def handle_diff_results(args):
             base_hashes[res.bugHash] = res
 
         filtered_reports = []
-        new_results = getReportDirResults(report_dir)
+        new_results = get_report_dir_results(report_dir)
         new_hashes = {}
         suppressed_in_code = []
 
@@ -321,7 +321,7 @@ def handle_diff_results(args):
                     filtered_reports.append(result)
         return filtered_reports
 
-    def printReports(client, reports, output_format):
+    def print_reports(client, reports, output_format):
         if output_format == 'json':
             output = []
             for report in reports:
@@ -344,8 +344,8 @@ def handle_diff_results(args):
                 check_name = report.main['check_name']
                 check_msg = report.main['description']
                 source_line =\
-                    getLineFromFile(report.main['location']['file_name'],
-                                    bug_line)
+                    get_line_from_file(report.main['location']['file_name'],
+                                       bug_line)
             else:
                 bug_line = report.line
                 bug_col = report.column
@@ -353,7 +353,7 @@ def handle_diff_results(args):
                 checked_file = report.checkedFile + ':' + str(bug_line) +\
                     ":" + str(bug_col)
                 source_line =\
-                    getLineFromRemoteFile(client, report.fileId, bug_line)
+                    get_line_from_remote_file(client, report.fileId, bug_line)
                 check_name = report.checkerId
                 check_msg = report.checkerMsg
             rows.append(
@@ -399,9 +399,9 @@ def handle_diff_results(args):
             diff_type = 'unresolved'
         elif 'resolved' in args:
             diff_type = 'resolved'
-        results = getDiffReportDir(client, base_ids,
-                                   os.path.abspath(args.newname),
-                                   diff_type)
+        results = get_diff_report_dir(client, base_ids,
+                                      os.path.abspath(args.newname),
+                                      diff_type)
     else:
         cmp_data = ttypes.CompareData(runIds=[newid])
         if 'new' in args:
@@ -411,13 +411,13 @@ def handle_diff_results(args):
         elif 'resolved' in args:
             cmp_data.diffType = ttypes.DiffType.RESOLVED
 
-        results = getDiffResults(client, base_ids, cmp_data)
+        results = get_diff_results(client, base_ids, cmp_data)
 
-    printReports(client, results, args.output_format)
+    print_reports(client, results, args.output_format)
 
 
 def handle_list_result_types(args):
-    def getStatistics(client, run_ids, field, values):
+    def get_statistics(client, run_ids, field, values):
         report_filter = ttypes.ReportFilter()
         report_filter.isUnique = True
         setattr(report_filter, field, values)
@@ -427,7 +427,7 @@ def handle_list_result_types(args):
 
         return dict((res.name, res.count) for res in checkers)
 
-    def checkerCount(dict, key):
+    def checker_count(dict, key):
         return dict[key] if key in dict else 0
 
     client = setup_client(args.product_url)
@@ -446,20 +446,20 @@ def handle_list_result_types(args):
                                            None)
     all_checkers_dict = dict((res.name, res) for res in all_checkers)
 
-    unrev_checkers = getStatistics(client, run_ids, 'reviewStatus',
-                                   [ttypes.ReviewStatus.UNREVIEWED])
+    unrev_checkers = get_statistics(client, run_ids, 'reviewStatus',
+                                    [ttypes.ReviewStatus.UNREVIEWED])
 
-    confirmed_checkers = getStatistics(client, run_ids, 'reviewStatus',
-                                       [ttypes.ReviewStatus.CONFIRMED])
+    confirmed_checkers = get_statistics(client, run_ids, 'reviewStatus',
+                                        [ttypes.ReviewStatus.CONFIRMED])
 
-    false_checkers = getStatistics(client, run_ids, 'reviewStatus',
-                                   [ttypes.ReviewStatus.FALSE_POSITIVE])
+    false_checkers = get_statistics(client, run_ids, 'reviewStatus',
+                                    [ttypes.ReviewStatus.FALSE_POSITIVE])
 
-    intentional_checkers = getStatistics(client, run_ids, 'reviewStatus',
-                                         [ttypes.ReviewStatus.INTENTIONAL])
+    intentional_checkers = get_statistics(client, run_ids, 'reviewStatus',
+                                          [ttypes.ReviewStatus.INTENTIONAL])
 
-    resolved_checkers = getStatistics(client, run_ids, 'detectionStatus',
-                                      [ttypes.DetectionStatus.RESOLVED])
+    resolved_checkers = get_statistics(client, run_ids, 'detectionStatus',
+                                       [ttypes.DetectionStatus.RESOLVED])
 
     all_results = []
     for key, checker_data in sorted(all_checkers_dict.items(),
@@ -469,11 +469,11 @@ def handle_list_result_types(args):
             checker=key,
             severity=ttypes.Severity._VALUES_TO_NAMES[checker_data.severity],
             reports=checker_data.count,
-            unreviewed=checkerCount(unrev_checkers, key),
-            confirmed=checkerCount(confirmed_checkers, key),
-            false_positive=checkerCount(false_checkers, key),
-            intentional=checkerCount(intentional_checkers, key),
-            resolved=checkerCount(resolved_checkers, key),
+            unreviewed=checker_count(unrev_checkers, key),
+            confirmed=checker_count(confirmed_checkers, key),
+            false_positive=checker_count(false_checkers, key),
+            intentional=checker_count(intentional_checkers, key),
+            resolved=checker_count(resolved_checkers, key),
          ))
 
     if args.output_format == 'json':
