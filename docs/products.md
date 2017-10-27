@@ -26,7 +26,16 @@ further details.
 The Web application separates products based on their unique endpoint. The
 home page of the server is the product list, shown above.
 
-## First start
+Table of Contents
+=================
+* [First start](#first-start)
+* [Managing products through the command-line tool, `CodeChecker cmd`](#cmd)
+  * [Listing products (`list`)](#listing-products)
+  * [Adding new product (`add`)](#adding-new-product)
+  * [Delete a product (`del`)](#delete-a-product)
+* [Managing products through the web interface](#web-interface)
+
+# <a name="first-start"></a> First start
 
 When a CodeChecker server is started with a SQLite configuration database, and
 this database is not yet created (such as when the server is started fresh on
@@ -37,7 +46,7 @@ with a SQLite database file next to the configuration database, in
 This does NOT hold true for PostgreSQL configuration backends. These servers,
 as PostgreSQL is advanced usage, must be configured manually.
 
-# Managing products through the command-line tool, `CodeChecker cmd`
+# <a name="cmd"></a> Managing products through the command-line tool, `CodeChecker cmd`
 
 Please see the [User guide](/docs/user_guide.md) for overview on the `cmd`
 command.
@@ -86,7 +95,7 @@ Most of these commands require authentication and appropriate access rights.
 Please see 'CodeChecker cmd login' to authenticate.
 ~~~~~~~~~~~~~~~~~~~~~
 
-## Listing products (`list`)
+## <a name="listing-products"></a> Listing products (`list`)
 
 ~~~~~~~~~~~~~~~~~~~~~
 usage: CodeChecker cmd products list [-h] [--url SERVER_URL]
@@ -104,7 +113,7 @@ common arguments:
                         (default: plaintext)
 ~~~~~~~~~~~~~~~~~~~~~
 
-## Adding new product (`add`)
+## <a name="adding-new-product"></a> Adding new product (`add`)
 
 `add` assigns the unique `PRODUCT_NAME` endpoint with a database connection,
 making a new product available on the server.
@@ -166,7 +175,7 @@ PostgreSQL arguments:
                         Name of the database to use. (default: <ENDPOINT>)
 ~~~~~~~~~~~~~~~~~~~~~
 
-## Delete a product (`del`)
+## <a name="delete-a-product"></a> Delete a product (`del`)
 
 ~~~~~~~~~~~~~~~~~~~~~
 usage: CodeChecker cmd products del [-h] [--url SERVER_URL]
@@ -186,7 +195,7 @@ optional arguments:
   -h, --help            show this help message and exit
 ~~~~~~~~~~~~~~~~~~~~~
 
-# Managing products through the web interface
+# <a name="web-interface"></a> Managing products through the web interface
 
 Certain administrative actions regarding products can only be executed by
 [superusers](/docs/permissions.md). If you are running a server without

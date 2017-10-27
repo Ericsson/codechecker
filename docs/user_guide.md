@@ -1,4 +1,57 @@
-# CodeChecker
+Table of Contents
+=================
+* [CodeChecker](#codechecker)
+  * [Default configuration](#default-configuration)
+* [Easy analysis wrappers](#easy-analysis-wrappers)
+  * [`check`](#check)
+* [`PRODUCT_URL` format](#product-url-format)
+  * [Example](#product-url-format-example)
+* [Available CodeChecker commands](#available-commands)
+  * [`log`](#log)
+  * [`analyze`](#analyze)
+    * [_Skip_ file](#skip)
+      * [Example](#skip-example)
+    * [Analyzer configuration](#analyzer-configuration)
+      * [Compiler-specific include path and define detection (cross compilation)](#include-path)
+      * [Forwarding compiler options](#forwarding-compiler-options)
+        * [_Clang Static Analyzer_](#clang-static-analyzer)
+        * [_Clang-Tidy_](#clang-tidy)
+    * [Toggling checkers](#toggling-checkers)
+      * [Checker profiles](#checker-profiles)
+      * [`--enable-all`](#enable-all)
+    * [Cross Translation Unit (CTU) analysis mode](#ctu)
+  * [`parse`](#parse)
+    * [Suppression in the source code](#suppression-code)
+      * [Supported formats](#supported-formats)
+      * [Exporting source code suppression to suppress file](#suppress-file)
+  * [`store`](#store)
+    * [Using SQLite for database](#sqlite)
+  * [`checkers`](#checkers)
+  * [`analyzers`](#analyzers)
+  * [`server`](#server)
+    * [Creating a public server](#public-server)
+    * [Configuring database and server settings' location](#server-settings)
+    * [Master superuser and authentication forcing](#auth-force)
+    * [Enfore secure socket (SSL)](#ssl)
+    * [Managing running servers](#managing-running-servers)
+  * [`cmd`](#cmd)
+    * [`runs` (List runs)](#cmd-runs)
+    * [`results` (List analysis results' summary)](#cmd-results)
+    * [`diff` (Show differences between two runs)](#cmd-diff)
+    * [`sum` (Show summarised count of results)](#cmd-sum)
+    * [`del` (Remove analysis runs)](#cmd-del)
+    * [`suppress` (Manage and export/import suppressions)](#manage-suppressions)
+      * [Import suppressions between server and suppress file](#import-suppressions)
+    * [`products` (Manage product configuration of a server)](#cmd-product)
+    * [`login` (Authenticate to the server)](#cmd-login)
+* [Advanced usage](#advanced-usage)
+  * [Run CodeChecker distributed in a cluster](#distributed-in-cluster)
+  * [Setup PostgreSQL (one time only)](#pgsql)
+  * [Run CodeChecker on multiple hosts](#multiple-hosts)
+    * [PostgreSQL authentication (optional)](#pgsql-auth)
+* [Debugging CodeChecker](#debug)
+
+# <a name="codechecker"></a> CodeChecker
 
 First of all, you have to setup the environment for CodeChecker.
 CodeChecker uses SQLite database (by default) to store the results
@@ -64,7 +117,7 @@ output.
 ~~~~~~~~~~~~~~~~~~~~~
 
 
-## Default configuration
+## <a name="default-configuration"></a> Default configuration
 
 Used ports:
 
@@ -75,13 +128,13 @@ The server listens only on the local machine.
 
 The initial product is called `Default`.
 
-# Easy analysis wrappers
+# <a name="easy-analysis-wrappers"></a> Easy analysis wrappers
 
 CodeChecker provides, along with the more fine-tuneable commands, some easy
 out-of-the-box invocations to ensure the most user-friendly operation, the
 **check** mode.
 
-## `check`
+## <a name="check"></a> `check`
 
 It is possible to easily analyse the project for defects without keeping the
 temporary analysis files and without using any database to store the reports
@@ -195,7 +248,7 @@ output arguments:
   --print-steps
 ~~~~~~~~~~~~~~~~~~~~~
 
-# `PRODUCT_URL` format
+# <a name="product-url-format"></a> `PRODUCT_URL` format
 
 Several subcommands, such as `store` and `cmd` need a connection specification
 on which server and for which *Product* (read more [about
@@ -221,16 +274,16 @@ If no URL is specified, the default value `http://localhost:8001/Default` will
 be used: a standard HTTP CodeChecker server running on the local machine, on
 the default port, using the *Default* product.
 
-## Example
+## <a name="product-url-format-example"></a> Example
 
 The URL `https://codechecker.example.org:9999/SampleProduct` will access the
 server machine `codechecker.example.org` trying to connect to a server
 listening on port `9999` via HTTPS. The product `SampleProduct` will be used.
 
 
-# Available CodeChecker commands
+# <a name="available-commands"></a> Available CodeChecker commands
 
-## 1. `log` mode
+## <a name="log"></a> 1. `log` mode
 
 The first step in performing an analysis on your project is to record
 information about the files in your project for the analyzers. This is done by
@@ -280,7 +333,7 @@ Example:
 CodeChecker log -o ../codechecker_myProject_build.log -b "make -j2"
 ~~~~~~~~~~~~~~~~~~~~~
 
-## 2. `analyze` mode
+## <a name="analyze"></a> 2. `analyze` mode
 
 After a JSON Compilation Command Database has been created, the next step is
 to invoke and execute the analyzers. CodeChecker will use the specified
@@ -348,7 +401,7 @@ optional arguments:
                         Set verbosity level. (default: info)
 ~~~~~~~~~~~~~~~~~~~~~
 
-### _Skip_ file
+### <a name="skip"></a> _Skip_ file
 
 ~~~~~~~~~~~~~~~~~~~~~
 -s SKIPFILE, --ignore SKIPFILE, --skip SKIPFILE
@@ -364,7 +417,7 @@ Each line in the skip file begins with a `-` or a `+`, followed by a path glob
 pattern. `-` means that if a file matches a pattern it should **not** be
 checked, `+` means that it should be.
 
-#### Example
+#### <a name="skip-example"></a> Example
 
 ~~~~~~~~~~~~~~~~~~~~~
 -/skip/all/files/in/directory/*
@@ -376,7 +429,7 @@ checked, `+` means that it should be.
 In the above example, every file under `/dir` **will be** skipped, except the
 one explicitly specified to **be analyzed** (`/dir/do.check.this.file`).
 
-### Analyzer configuration
+### <a name="analyzer-configuration"></a> Analyzer configuration
 
 ~~~~~~~~~~~~~~~~~~~~~
 analyzer arguments:
@@ -409,7 +462,7 @@ used to specify which analyzer tool should be used (by default, all supported
 are used). The tools are completely independent, so either can be omitted if
 not present as they are provided by different binaries.
 
-#### Compiler-specific include path and define detection (cross compilation)
+#### <a name="include-path"></a> Compiler-specific include path and define detection (cross compilation)
 
 Some of the include paths are hardcoded during compiler build. If a (cross)
 compiler is used to build a project it is possible that the wrong include
@@ -432,7 +485,7 @@ to the analyzers:
  - `-m32` (32-bit build)
  - `-m64` (64-bit build)
 
-#### Forwarding compiler options
+#### <a name="forwarding-compiler-options"></a> Forwarding compiler options
 
 Forwarded options can modify the compilation actions logged by the build logger
 or created by CMake (when exporting compile commands). The extra compiler
@@ -445,7 +498,7 @@ value. Otherwise an error message is logged saying that the variable is not
 set, and in this case an empty string is inserted in the place of the
 placeholder.
 
-##### _Clang Static Analyzer_
+##### <a name="clang-static-analyzer"></a> _Clang Static Analyzer_
 
 Use the `--saargs` argument to a file which contains compilation options.
 
@@ -462,7 +515,7 @@ options, for example:
 
 (where `MY_LIB` is the path of a library code)
 
-##### _Clang-Tidy_
+##### <a name="clang-tidy"></a> _Clang-Tidy_
 
 Use the `--tidyargs` argument to a file which contains compilation options.
 
@@ -485,7 +538,7 @@ Example:
 
 (where `MY_LIB` is the path of a library code)
 
-### Toggling checkers
+### <a name="toggling-checkers"></a> Toggling checkers
 
 The list of checkers to be used in the analysis can be fine-tuned with the
 `--enable` and `--disable` options. See `codechecker-checkers` for the list of
@@ -527,7 +580,7 @@ Disabling certain checkers - such as the `core` group - is unsupported by
 the LLVM/Clang community, and thus discouraged.
 
 
-#### Checker profiles
+#### <a name="checker-profiles"></a> Checker profiles
 
 Checker profiles describe custom sets of enabled checks which can be specified
 in the `{INSTALL_DIR}/config/config.json` file. Three built-in options are
@@ -541,7 +594,7 @@ different from checker(-group) names as they are enabled using the same syntax
 and coinciding names could cause unintended behavior.
 
 
-#### `--enable-all`
+#### <a name="enable-all"></a> `--enable-all`
 
 Specifying `--enable-all` will "force" CodeChecker to enable **every** checker
 available in the analyzers. This presents an easy shortcut to force such an
@@ -562,7 +615,7 @@ fine-tuned with subsequent `--enable` and `--disable` arguments, for example
 
 can be used to "further" enable `alpha.` checkers, and disable `misc` ones.
 
-### Cross Translation Unit (CTU) analysis mode
+### <a name="ctu"></a> Cross Translation Unit (CTU) analysis mode
 
 If the `clang` static analyzer binary in your installation supports
 [Cross Translation Unit analysis](http://llvm.org/devmtg/2017-03//2017/02/20/accepted-sessions.html#7),
@@ -595,7 +648,7 @@ cross translation unit analysis arguments:
                         an in-memory recompilation of the source files.
 ~~~~~~~~~~~~~~~~~~~~~
 
-## 3. `parse` mode
+## <a name="parse"></a> 3. `parse` mode
 
 `parse` is used to read previously created machine-readable analysis results
 (such as `plist` files), usually previously generated by `CodeChecker analyze`.
@@ -662,7 +715,7 @@ then the results of the analysis can be printed with
 CodeChecker parse ./my_plists
 ~~~~
 
-### Suppression in the source code
+### <a name="suppression-code"></a> Suppression in the source code
 
 Suppress comments can be used in the source files to suppress specific or all
 checker results found in a particular line of code. Suppress comment should be
@@ -671,7 +724,7 @@ between the line with the bug and the suppress comment.
 
 Only comment lines staring with `//` are supported!
 
-#### Supported formats
+#### <a name="supported-formats"></a> Supported formats
 
 ~~~~~~~~~~~~~~~~~~~~~
 void test() {
@@ -701,7 +754,7 @@ void test() {
 }
 ~~~~~~~~~~~~~~~~~~~~~
 
-#### Exporting source code suppression to suppress file
+#### <a name="suppress-file"></a> Exporting source code suppression to suppress file
 
 ~~~~~~~~~~~~~~~~~~~~~
   --export-source-suppress
@@ -714,7 +767,7 @@ void test() {
 CodeChecker parse ./my_plists --suppress generated.suppress --export-source-suppress
 ~~~~
 
-## 4. `store` mode
+## <a name="store"></a> 4. `store` mode
 
 A `Codechecker server` needs to be started before the reports can be stored to
 a database.
@@ -784,7 +837,7 @@ then the results of the analysis can be stored with this command:
 CodeChecker store ./my_plists -n my_project
 ~~~~
 
-### Using SQLite for database
+### <a name="sqlite"></a> Using SQLite for database
 
 CodeChecker can also use SQLite for storing the results. In this case the
 SQLite database will be created in the workspace directory.
@@ -799,7 +852,7 @@ which case `--dbport`, `--dbaddress`, `--dbname`, and
 upgrade your CodeChecker to a newer version, you might need to re-check your
 project.
 
-## 5. `checkers` mode
+## <a name="checkers"></a> 5. `checkers` mode
 
 List the checkers available in the installed analyzers which can be used when
 performing an analysis.
@@ -851,7 +904,7 @@ The _default_ list of enabled and disabled checkers can be altered by editing
 `{INSTALL_DIR}/config/config.json`. Note, that this file is overwritten when
 the package is reinstalled!
 
-## 6. `analyzers` mode
+## <a name="analyzers"></a> 6. `analyzers` mode
 
 List the available and supported analyzers installed on the system. This command
 can be used to retrieve the to-be-used analyzers' install path and version
@@ -886,7 +939,7 @@ A detailed view of the available analyzers is available via `--details`. In the
 A machine-readable `csv` or `json` output can be generated by supplying the
 `--output csv` or `--output json` argument.
 
-## 7. `server` mode
+## <a name="server"></a> 7. `server` mode
 
 To view and store the analysis reports in a database, a `CodeChecker server`
 must be started. This is done via the `server` command, which creates a
@@ -964,7 +1017,7 @@ To start a server with default configuration, simply execute
 CodeChecker server
 ~~~~~~~~~~~~~~~~~~~~~
 
-### Creating a public server
+### <a name="public-server"></a> Creating a public server
 
 ~~~~~~~~~~~~~~~~~~~~~
   --host LISTEN_ADDRESS
@@ -981,7 +1034,7 @@ By default, the running server can only be accessed from the same machine
 (`localhost`) where it is running. This can be overridden by specifying
 `--host ""`, instructing the server to listen on all available interfaces.
 
-### Configuring database and server settings' location
+### <a name="server-settings"></a> Configuring database and server settings' location
 
 The `--sqlite` (or `--postgresql` and the various `--db-` arguments) can be
 used to specify where the database, containing the analysis reports is.
@@ -1005,7 +1058,7 @@ configuration file is found, a product named `Default`, using `Default.sqlite`
 in the configuration directory is automatically created. Please see
 [Product management](products.md) for details on how to configure products.
 
-### Master superuser and authentication forcing
+### <a name="auth-force"></a> Master superuser and authentication forcing
 
 ~~~~~~~~~~~~~~~~~~~~~
 root account arguments:
@@ -1027,7 +1080,7 @@ root account arguments:
                         not require authentication otherwise.
 ~~~~~~~~~~~~~~~~~~~~~
 
-### Enfore secure socket (SSL)
+### <a name="ssl"></a> Enfore secure socket (SSL)
 
 You can enforce SSL security on your listening socket. In this case all clients must
 access your server using the `https://host:port` URL format.
@@ -1039,7 +1092,7 @@ using the [openssl tool](https://www.openssl.org/).
 When the server finds these files upon start-up, 
 SSL will be automatically enabled. 
 
-### Managing running servers
+### <a name="managing-running-servers"></a> Managing running servers
 
 ~~~~~~~~~~~~~~~~~~~~~
 running server management:
@@ -1067,7 +1120,7 @@ CodeChecker server -w ~/my_codechecker_workspace -p 8002 --stop
 
 `--stop-all` will stop every running server that is printed by `--list`.
 
-## 8. `cmd` mode
+## <a name="cmd"></a> 8. `cmd` mode
 
 The `CodeChecker cmd` is a lightweight command line client that can be used to
 view analysis results from the command-line. The command-line client can also
@@ -1136,7 +1189,7 @@ common arguments:
                         Set verbosity level. (default: info)
 ~~~~~~~~~~~~~~~~~~~~~
 
-### List runs (`runs`)
+### <a name="cmd-runs"></a> List runs (`runs`)
 
 ~~~~~~~~~~~~~~~~~~~~~
 usage: CodeChecker cmd runs [-h] [--url PRODUCT_URL]
@@ -1146,7 +1199,7 @@ usage: CodeChecker cmd runs [-h] [--url PRODUCT_URL]
 List the analysis runs available on the server.
 ~~~~~~~~~~~~~~~~~~~~~
 
-### List analysis results' summary (`results`)
+### <a name="cmd-results"></a> List analysis results' summary (`results`)
 
 Prints basic information about analysis results, such as location, checker
 name, summary.
@@ -1176,7 +1229,7 @@ optional arguments:
                         "high,medium:unix,core:*.cpp,*.h" (default: ::)
 ~~~~~~~~~~~~~~~~~~~~~
 
-### Show differences between two runs (`diff`)
+### <a name="cmd-diff"></a> Show differences between two runs (`diff`)
 
 This mode shows analysis results (in the same format as `results`) does, but
 from the comparison of two runs.
@@ -1245,7 +1298,7 @@ provide a regular expression by `-b` flag which covers the required run names.
 The Python regex syntax has to be used:
 https://docs.python.org/2/library/re.html#regular-expression-syntax.
 
-### Show summarised count of results (`sum`)
+### <a name="cmd-sum"></a> Show summarised count of results (`sum`)
 
 ~~~~~~~~~~~~~~~~~~~~~
 usage: CodeChecker cmd sum [-h] (-n RUN_NAME [RUN_NAME ...] | -a) [-s]
@@ -1271,7 +1324,7 @@ optional arguments:
                         "high,medium:unix,core:*.cpp,*.h" (default: ::)
 ~~~~~~~~~~~~~~~~~~~~~
 
-### Remove analysis runs (`del`)
+### <a name="cmd-del"></a> Remove analysis runs (`del`)
 
 ~~~~~~~~~~~~~~~~~~~~~
 usage: CodeChecker cmd del [-h]
@@ -1310,7 +1363,7 @@ optional arguments:
                         (00:00:00) is used).
 ~~~~~~~~~~~~~~~~~~~~~
 
-### Manage and export/import suppressions (`suppress`)
+### <a name="manage-suppressions"></a> Manage and export/import suppressions (`suppress`)
 
 ~~~~~~~~~~~~~~~~~~~~~
 usage: CodeChecker cmd suppress [-h] [-f] -i SUPPRESS_FILE [--url PRODUCT_URL]
@@ -1331,7 +1384,7 @@ optional arguments:
                         database.
 ~~~~~~~~~~~~~~~~~~~~~
 
-#### Import suppressions between server and suppress file
+#### <a name="import-suppressions"></a> Import suppressions between server and suppress file
 
 
 ~~~~~~~~~~~~~~~~~~~~~
@@ -1343,11 +1396,11 @@ optional arguments:
 `--import` **appends** the suppressions found in the given suppress file to
 the database on the server.
 
-### Manage product configuration of a server (`products`)
+### <a name="cmd-product"></a> Manage product configuration of a server (`products`)
 
 Please see [Product management](products.md) for details.
 
-### Authenticate to the server (`login`)
+### <a name="cmd-login"></a> Authenticate to the server (`login`)
 
 ~~~~~~~~~~~~~~~~~~~~~
 usage: CodeChecker cmd login [-h] [-d] [--url SERVER_URL]
@@ -1379,9 +1432,9 @@ can be used normally.
 The password can be saved on the disk. If such "preconfigured" password is
 not found, the user will be asked, in the command-line, to provide credentials.
 
-# Advanced usage
+# <a name="advanced-usage"></a> Advanced usage
 
-## Run CodeChecker distributed in a cluster
+## <a name="distributed-in-cluster"></a> Run CodeChecker distributed in a cluster
 
 You may want to configure CodeChecker to do the analysis on separate machines in a distributed way.
 Start the postgres database on a central machine (in this example it is called codechecker.central) on a remotely accessible address and port and then run
@@ -1389,7 +1442,7 @@ Start the postgres database on a central machine (in this example it is called c
 
 Create and start an empty database to which the CodeChecker server can connect.
 
-## Setup PostgreSQL (one time only)
+## <a name="pgsql"></a> Setup PostgreSQL (one time only)
 
 Before the first use, you have to setup PostgreSQL.
 PostgreSQL stores its data files in a data directory, so before you start the PostgreSQL server you have to create and init this data directory.
@@ -1408,7 +1461,7 @@ postgres -U codechecker -D /path/to/pgsql_data -p 5432 &>pgsql_log &
 CodeChecker server -w ~/codechecker_workspace --dbaddress localhost --dbport 5432 --view-port 8001
 ~~~~~~~~~~~~~~~~~~~~~
 
-## Run CodeChecker on multiple hosts
+## <a name="multiple-hosts"></a> Run CodeChecker on multiple hosts
 
 Then you can run CodeChecker on multiple hosts but using the same run name (in this example this is called "distributed_run".
 CodeChecker server is listening on codechecker.central port 8001.
@@ -1421,14 +1474,14 @@ CodeChecker check -w /tmp/codechecker_ws -b "cd module_1;make" --port 8001 --hos
 CodeChecker check -w /tmp/codechecker_ws -b "cd module_2;make" --port 8001 --host codechecker.central disributed_run
 ~~~~~~~~~~~~~~~~~~~~~
 
-### PostgreSQL authentication (optional)
+### <a name="pgsql-auth"></a> PostgreSQL authentication (optional)
 
 If a CodeChecker is run with a user that needs database authentication, the
 PGPASSFILE environment variable should be set to a pgpass file
 For format and further information see PostgreSQL documentation:
 http://www.postgresql.org/docs/current/static/libpq-pgpass.html
 
-# Debugging CodeChecker
+# <a name="debug"></a> Debugging CodeChecker
 
 Command line flag can be used to turn in CodeChecker debug mode. The different
 subcommands can be given a `-v` flag which needs a parameter. Possible values

@@ -7,7 +7,13 @@ run CodeChecker servers with a PostgreSQL database as backend.
 Alternatively, and by default, CodeChecker uses SQLite as database backend,
 and these steps are not mandatory for a successful installation.
 
-## List of runtime dependencies
+Table of Contents
+=================
+* [List of runtime dependencies](#list-of-runtime-dependencies)
+* [Installing dependencies and setting up a server](#installing-dependencies)
+* [Creating analysis databases](#creating-analysis-databases)
+
+## <a name="list-of-runtime-dependencies"></a> List of runtime dependencies
 
   *  [PostgreSQL](http://www.postgresql.org) (> `9.3.5`)
      (optional)
@@ -18,7 +24,7 @@ and these steps are not mandatory for a successful installation.
        **(Requires `lbpq`!)**
      - [PyPi pg8000](https://pypi.python.org/pypi/pg8000)
 
-## Installing dependencies and setting up a server
+## <a name="installing-dependencies"></a> Installing dependencies and setting up a server
 Tested on Ubuntu LTS `14.04.2`.
 
 ~~~~~~{.sh}
@@ -90,7 +96,7 @@ CodeChecker server --postgresql \
   --db-username codechecker --db-name codechecker_config
 ~~~~~~
 
-## Creating analysis databases
+## <a name="creating-analysis-databases"></a> Creating analysis databases
 
 At least one additional database must be created in which analysis reports
 will be stored. (Unlike the default SQLite mode, creation of this *Default*

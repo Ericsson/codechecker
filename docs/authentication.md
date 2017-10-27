@@ -9,7 +9,22 @@ the results stored on a server.
 > **NOTICE!** Some authentication subsystems require additional packages to
 > be installed before they can be used. See below.
 
-## Server-side configuration
+Table of Contents
+=================
+* [Server-side configuration](#server-side-configuration)
+  * [<i>Dictionary</i> authentication](#dictionary-authentication)
+  * [External authentication methods](#external-auth-methods)
+    * [<i>PAM</i> authentication](#pam-authentication)
+    * [<i>LDAP</i> authentication](#ldap-authentication)
+      * [Configuration options](#configuration-options)
+* [Client-side configuration](#client-side-configuration)
+  * [Web-browser client](#web-browser-client)
+  * [Command-line client](#command-line-client)
+    * [Preconfigured credentials](#preconfigured-credentials)
+    * [Automatic login](#automatic-login)
+    * [Currently active tokens](#currently-active-tokens)
+
+## <a name="server-side-configuration"></a> Server-side configuration
 
 The server's configuration is stored in the server's *workspace* folder, in
 `session_config.json`. This file is created, at the first start of the server,
@@ -58,7 +73,7 @@ authenticates them. Authentications are attempted in the order they are
 described here: *dicitonary* takes precedence, *pam* is a secondary and *ldap*
 is a tertiary backend, if enabled.
 
-### <i>Dictionary</i> authentication
+### <a name="dictionary-authentication"></a> <i>Dictionary</i> authentication
 
 The `authentication.method_dictionary` contains a plaintext `username:password`
 credentials for authentication. If the user's login matches any of the
@@ -81,7 +96,7 @@ the user belongs to.
 }
 ~~~
 
-### External authentication methods
+### <a name="external-auth-methods"></a> External authentication methods
 
 External authentication methods connect to a privilege manager to authenticate
 users against.
@@ -100,7 +115,7 @@ source ~/checker_env/bin/activate
 pip install -r .ci/auth_requirements
 ~~~
 
-#### <i>PAM</i> authentication
+#### <a name="pam-authentication"></a> <i>PAM</i> authentication
 
 To access the server via PAM authentication, the user must provide valid
 username and password which is accepted by PAM.
@@ -128,7 +143,7 @@ access the server.
 }
 ~~~
 
-#### <i>LDAP</i> authentication
+#### <a name="ldap-authentication"></a> <i>LDAP</i> authentication
 
 CodeChecker also supports *LDAP*-based authentication. The
 `authentication.method_ldap` section contains the configuration for LDAP
@@ -141,7 +156,7 @@ Servers are connected to and queries are executed in the order they appear in
 the configuration file. Because of this, it is not advised to list too many
 servers as it can elongate the authentication process.
 
-##### Configuration options
+##### <a name="configuration-options"></a> Configuration options
 
  * `connection_url`
 
@@ -241,16 +256,16 @@ servers as it can elongate the authentication process.
 
 ----
 
-## Client-side configuration
+## <a name="client-side-configuration"></a> Client-side configuration
 
-### Web-browser client
+### <a name="web-browser-client"></a> Web-browser client
 
 Authentication in the web browser is handled via standard *HTTP Authenticate*
 headers, the browser will prompt the user to supply their credentials.
 
 For browser authentication to work, cookies must be enabled!
 
-### Command-line client
+### <a name="command-line-client"></a> Command-line client
 
 The `CodeChecker cmd` client needs to be authenticated for a server before any
 data communication could take place.
@@ -294,7 +309,7 @@ given; otherwise, *Invalid access* is shown instead of real data.
 Privileged session expire after a set amount of time. To log out manually,
 issue the command `CodeChecker cmd login -h host -p port --logout`.
 
-#### Preconfigured credentials
+#### <a name="preconfigured-credentials"></a> Preconfigured credentials
 
 To alleviate the need for supplying authentication in the command-line every
 time a server is connected to, users can pre-configure their credentials to be
@@ -328,7 +343,7 @@ order:
      `*:port`, is tried
   4. Global credentials for the installation is stored with the `*` key
 
-#### Automatic login
+#### <a name="automatic-login"></a> Automatic login
 
 If authentication is required by the server and the user hasn't logged in but
 there are saved credentials for the server, `CodeChecker cmd` will
@@ -336,7 +351,7 @@ automatically try to log in.
 
 This behaviour can be disabled by setting `client_autologin` to `false`.
 
-#### Currently active tokens
+#### <a name="currently-active-tokens"></a> Currently active tokens
 
 The user's currently active sessions' token are stored in the
 `~/.codechecker.session.json`.
