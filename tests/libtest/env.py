@@ -45,7 +45,8 @@ def get_postgresql_cfg():
     if use_postgresql:
         pg_db_config = {'dbaddress': 'localhost',
                         'dbport': os.environ.get('TEST_DBPORT'),
-                        'dbname': 'codechecker_config'
+                        'dbname': 'codechecker_config_' +
+                                  os.environ['CODECHECKER_DB_DRIVER']
                         }
         if os.environ.get('TEST_DBUSERNAME', False):
             pg_db_config['dbusername'] = os.environ['TEST_DBUSERNAME']
