@@ -324,9 +324,15 @@ def check(check_data):
                         LOG.debug("[ZIP] Writing analyzer STDOUT to /stdout")
                         archive.writestr("stdout", rh.analyzer_stdout)
 
+                        if not quiet_output_on_stdout:
+                            LOG.debug_analyzer('\n' + rh.analyzer_stdout)
+
                     if len(rh.analyzer_stderr) > 0:
                         LOG.debug("[ZIP] Writing analyzer STDERR to /stderr")
                         archive.writestr("stderr", rh.analyzer_stderr)
+
+                        if not quiet_output_on_stdout:
+                            LOG.debug_analyzer('\n' + rh.analyzer_stderr)
 
                     LOG.debug("Generating dependent headers via compiler...")
                     try:
