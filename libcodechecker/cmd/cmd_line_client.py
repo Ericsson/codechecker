@@ -297,7 +297,7 @@ def handle_diff_results(args):
             # and not suppressed in the code.
             for result in new_results:
                 if not (result.main['issue_hash_content_of_line_in_context']
-                        in base_hashes) and\
+                        in base_hashes) and \
                    not (result.main['issue_hash_content_of_line_in_context']
                         in suppressed_in_code):
                     filtered_reports.append(result)
@@ -306,7 +306,7 @@ def handle_diff_results(args):
             # which are not present in the report dir
             # or suppressed.
             for result in base_results:
-                if not (result.bugHash in new_hashes) or\
+                if not (result.bugHash in new_hashes) or \
                         (result.bugHash in suppressed_in_code):
                     filtered_reports.append(result)
         elif diff_type == 'unresolved':
@@ -316,7 +316,7 @@ def handle_diff_results(args):
 
             for result in new_results:
                 new_hash = result.main['issue_hash_content_of_line_in_context']
-                if new_hash in base_hashes and\
+                if new_hash in base_hashes and \
                         not (new_hash in suppressed_in_code):
                     filtered_reports.append(result)
         return filtered_reports
@@ -413,7 +413,10 @@ def handle_diff_results(args):
 
         results = get_diff_results(client, base_ids, cmp_data)
 
-    print_reports(client, results, args.output_format)
+    if len(results) == 0:
+        LOG.info("No results.")
+    else:
+        print_reports(client, results, args.output_format)
 
 
 def handle_list_result_types(args):
