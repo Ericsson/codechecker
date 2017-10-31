@@ -25,7 +25,6 @@ import sqlalchemy
 from sqlalchemy import func
 
 import shared
-import store_handler
 from codeCheckerDBAccess_v6 import constants, ttypes
 from codeCheckerDBAccess_v6.ttypes import *
 
@@ -38,6 +37,8 @@ from libcodechecker.profiler import timeit
 from libcodechecker.server import db_cleanup
 from libcodechecker.server import permissions
 from libcodechecker.server.database.run_db_model import *
+
+from . import store_handler
 
 LOG = LoggerFactory.get_new_logger('RUN ACCESS HANDLER')
 

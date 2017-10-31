@@ -48,10 +48,10 @@ from . import db_cleanup
 from . import instance_manager
 from . import permissions
 from . import routing
-from api.authentication import ThriftAuthHandler as AuthHandler_v6
 from api.bad_api_version import ThriftAPIMismatchHandler as BadAPIHandler
-from api.product_server import ThriftProductHandler as ProductHandler_v6
-from api.report_server import ThriftRequestHandler as ReportHandler_v6
+from api.v6.authentication import ThriftAuthHandler as AuthHandler_v6
+from api.v6.product_server import ThriftProductHandler as ProductHandler_v6
+from api.v6.report_server import ThriftRequestHandler as ReportHandler_v6
 from database import database
 from database.config_db_model import Product as ORMProduct
 from database.run_db_model import IDENTIFIER as RUN_META
