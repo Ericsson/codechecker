@@ -74,21 +74,24 @@ def process_report_filter_v2(report_filter, count_filter=None):
         return text('')
 
     AND = []
-    if report_filter.filepath is not None and count_filter != CountFilter.FILE:
+    if report_filter.filepath is not None:
         OR = [File.filepath.ilike(conv(fp))
               for fp in report_filter.filepath]
         AND.append(or_(*OR))
 
-    if report_filter.checkerMsg is not None and \
-       count_filter != CountFilter.CHECKER_MSG:
+    if report_filter.checkerMsg is not None:
         OR = [Report.checker_message.ilike(conv(cm))
               for cm in report_filter.checkerMsg]
         AND.append(or_(*OR))
 
-    if report_filter.checkerName is not None and \
-       count_filter != CountFilter.CHECKER_NAME:
+    if report_filter.checkerName is not None:
         OR = [Report.checker_id.ilike(conv(cn))
               for cn in report_filter.checkerName]
+        AND.append(or_(*OR))
+
+    if report_filter.runName is not None:
+        OR = [Run.name.ilike(conv(rn))
+              for rn in report_filter.runName]
         AND.append(or_(*OR))
 
     if report_filter.reportHash is not None:
@@ -788,7 +791,7 @@ class ThriftRequestHandler(object):
             session.close()
 
     @timeit
-    def getRunReportCounts(self, run_ids, report_filter):
+    def getRunReportCounts(self, run_ids, report_filter, limit, offset):
         """
           Count the results separately for multiple runs.
           If an empty run id list is provided the report
@@ -816,6 +819,9 @@ class ThriftRequestHandler(object):
                             Report.run_id == Run.id) \
                  .filter(filter_expression) \
                  .group_by(Run.id)
+
+            if limit:
+                q = q.limit(limit).offset(offset)
 
             for run_id, run_name, count in q:
                 report_count = RunReportCount(runId=run_id,
@@ -1285,7 +1291,8 @@ class ThriftRequestHandler(object):
         return report_hashes, run_ids
 
     @timeit
-    def getCheckerCounts(self, run_ids, report_filter, cmp_data):
+    def getCheckerCounts(self, run_ids, report_filter, cmp_data, limit,
+                         offset):
         """
           If the run id list is empty the metrics will be counted
           for all of the runs and in compare mode all of the runs
@@ -1332,6 +1339,9 @@ class ThriftRequestHandler(object):
             else:
                 unique_checker_q = q.group_by(Report.checker_id,
                                               Report.severity)
+
+            if limit:
+                unique_checker_q = unique_checker_q.limit(limit).offset(offset)
 
             for name, severity, count in unique_checker_q:
                 checker_count = CheckerCount(name=name,
@@ -1397,7 +1407,8 @@ class ThriftRequestHandler(object):
             return results
 
     @timeit
-    def getCheckerMsgCounts(self, run_ids, report_filter, cmp_data):
+    def getCheckerMsgCounts(self, run_ids, report_filter, cmp_data, limit,
+                            offset):
         """
           If the run id list is empty the metrics will be counted
           for all of the runs and in compare mode all of the runs
@@ -1436,12 +1447,15 @@ class ThriftRequestHandler(object):
                 q = q.group_by(Report.bug_id).subquery()
                 checker_messages = session.query(q.c.checker_message,
                                                  func.count(q.c.bug_id)) \
-                    .group_by(q.c.checker_message).all()
+                    .group_by(q.c.checker_message)
             else:
                 checker_messages = q.group_by(Report.checker_message,
-                                              Report.severity).all()
+                                              Report.severity)
 
-            results = dict(checker_messages)
+            if limit:
+                checker_messages = checker_messages.limit(limit).offset(offset)
+
+            results = dict(checker_messages.all())
 
         except Exception as ex:
             LOG.error(ex)
@@ -1511,7 +1525,7 @@ class ThriftRequestHandler(object):
             return results
 
     @timeit
-    def getFileCounts(self, run_ids, report_filter, cmp_data):
+    def getFileCounts(self, run_ids, report_filter, cmp_data, limit, offset):
         """
           If the run id list is empty the metrics will be counted
           for all of the runs and in compare mode all of the runs
@@ -1536,6 +1550,8 @@ class ThriftRequestHandler(object):
                                  Report.file_id) \
                           .outerjoin(ReviewStatus,
                                      ReviewStatus.bug_hash == Report.bug_id) \
+                          .outerjoin(File,
+                                     File.id == Report.file_id) \
                           .filter(filter_expression)
 
             if run_ids:
@@ -1549,14 +1565,16 @@ class ThriftRequestHandler(object):
             report_count = session.query(stmt.c.file_id,
                                          func.count(1).label(
                                              'report_count')) \
-                .group_by(stmt.c.file_id) \
-                .subquery()
+                .group_by(stmt.c.file_id)
 
+            if limit:
+                report_count = report_count.limit(limit).offset(offset)
+
+            report_count = report_count.subquery()
             file_paths = session.query(File.filepath,
                                        report_count.c.report_count) \
                 .join(report_count,
-                      report_count.c.file_id == File.id) \
-                .all()
+                      report_count.c.file_id == File.id)
 
             for fp, count in file_paths:
                 results[fp] = count

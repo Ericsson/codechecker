@@ -175,7 +175,8 @@ struct ReportFilter {
   8: list<string>          runHistoryTag,
   9: optional i64          firstDetectionDate,
   10: optional i64         fixDate,
-  11: optional bool        isUnique
+  11: optional bool        isUnique,
+  12: list<string>         runName
 }
 
 struct RunReportCount {
@@ -262,7 +263,9 @@ service codeCheckerDBAccess {
   // counts will be calculated for all of the available runs.
   // PERMISSION: PRODUCT_ACCESS
   RunReportCounts getRunReportCounts(1: list<i64>    runIds,
-                                     2: ReportFilter reportFilter)
+                                     2: ReportFilter reportFilter,
+                                     3: i64          limit,
+                                     4: i64          offset)
                                      throws (1: shared.RequestFailed requestError),
 
   // Count all the results some runIds can be used for diff counting.
@@ -353,7 +356,9 @@ service codeCheckerDBAccess {
   // PERMISSION: PRODUCT_ACCESS
   map<string, i64> getCheckerMsgCounts(1: list<i64>    runIds,
                                        2: ReportFilter reportFilter,
-                                       3: CompareData  cmpData)
+                                       3: CompareData  cmpData,
+                                       4: i64          limit,
+                                       5: i64          offset)
                                        throws (1: shared.RequestFailed requestError),
 
   // If the run id list is empty the metrics will be counted
@@ -380,7 +385,9 @@ service codeCheckerDBAccess {
   // PERMISSION: PRODUCT_ACCESS
   map<string, i64> getFileCounts(1: list<i64>    runIds,
                                  2: ReportFilter reportFilter,
-                                 3: CompareData  cmpData)
+                                 3: CompareData  cmpData,
+                                 4: i64          limit,
+                                 5: i64          offset)
                                  throws (1: shared.RequestFailed requestError),
 
   // If the run id list is empty the metrics will be counted
@@ -389,7 +396,9 @@ service codeCheckerDBAccess {
   // PERMISSION: PRODUCT_ACCESS
   CheckerCounts getCheckerCounts(1: list<i64>    runIds,
                                  2: ReportFilter reportFilter,
-                                 3: CompareData  cmpData)
+                                 3: CompareData  cmpData,
+                                 4: i64          limit,
+                                 5: i64          offset)
                                  throws (1: shared.RequestFailed requestError),
 
   // If the run id list is empty the metrics will be counted

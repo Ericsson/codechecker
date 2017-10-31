@@ -85,6 +85,8 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
    * Creates a tooltip for a report filter with selectable options.
    */
   var FilterTooltip = declare(ContentPane, {
+    defaultQueryFilterSize : 10,
+
     constructor : function (args) {
       dojo.safeMixin(this, args);
 
@@ -103,16 +105,51 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
 
             var query = this.get('value');
             this.timer = setTimeout(function () {
-              dom.empty(that._selectMenuList);
-              that._render(query);
+              if (that.reportFilter.serverSideSearch)
+                that.getItems(query);
+              else
+                that._render(query);
             }, 300);
           }
         });
     },
 
+    getItems : function (query) {
+      var that = this;
+
+      this._standBy.show();
+
+      if (!query)
+        query = '*';
+
+      dom.empty(this._selectMenuList);
+
+      this.reportFilter.getItems(query, this.defaultQueryFilterSize).then(
+      function (items) {
+        that.reportFilter._items = items;
+        that._render(query);
+        that._standBy.hide();
+
+        // Some cases the tooltip overflows the window at the bottom. By
+        // opening the dialog again resolves the problem.
+        popup.open({
+          popup : that._dialog,
+          around : that.around
+        });
+        that._dialog.focus();
+      });
+    },
+
     postCreate : function () {
-      if (this.search && this.search.enable)
+      if (this.search && this.search.enable) {
         this.addChild(this._searchBox);
+
+        this._standBy = new Standby({
+          target : this.domNode,
+          color : '#ffffff'
+        });
+        this.addChild(this._standBy);
+      }
 
       dom.place(this._selectMenuList, this.domNode);
 
@@ -130,7 +167,10 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
      * Shows the tooltip.
      */
     show : function () {
-      this._render();
+      if (this.reportFilter.serverSideSearch)
+        this.getItems();
+      else
+        this._render();
 
       //--- Open up the tooltip ---//
 
@@ -162,7 +202,8 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
       var hasItem = false;
 
       this.reportFilter._items.forEach(function (item) {
-        if (that._search(item.label, query))
+        if (!that.reportFilter.serverSideSearch &&
+            that._search(item.label, query))
           return;
 
         hasItem = true;
@@ -589,6 +630,25 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
         else
           delete this._selectedFilterItems[key];
       }
+    },
+
+    createSearchData : function (filter, limit) {
+      var filterName = this.parent.getReportFilterName(this.class);
+      var reportFilter = this.parent.getReportFilters();
+
+      if (!(reportFilter[filterName] instanceof Array))
+        reportFilter[filterName] = [];
+
+      if (filter)
+        reportFilter[filterName].push('*' + filter + '*');
+
+      if (!limit)
+        limit = reportFilter[filterName].length;
+
+      return {
+        reportFilter : reportFilter,
+        limit : limit
+      };
     }
   });
 
@@ -932,16 +992,29 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
 
   var RunFilterBase = declare(SelectFilter, {
     enableSearch : true,
+    serverSideSearch : true,
     filterLabel  : 'Search for run names...',
-
-    getItems : function () {
-      var self = this;
+    getItems : function (filter, limit) {
+      var that = this;
       var deferred = new Deferred();
 
       var reportFilter = this.parent.getReportFilters();
-      CC_SERVICE.getRunReportCounts(null, reportFilter, function (res) {
-        deferred.resolve(self.createItem(res));
-      });
+      var runIds = this.getState()[this.class];
+
+      if (!limit)
+        limit = runIds ? runIds.length : 0;
+      else {
+        runIds = null;
+        reportFilter.runName = ['*' + filter + '*'];
+      }
+
+      if (limit)
+        CC_SERVICE.getRunReportCounts(runIds, reportFilter, limit, 0,
+        function (res) {
+          deferred.resolve(that.createItem(res));
+        });
+      else
+        deferred.resolve([]);
 
       return deferred;
     },
@@ -993,8 +1066,8 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
         var runs = this.parent.getRunIds();
         var reportFilter = this.parent.getReportFilters();
 
-        var res =
-          CC_SERVICE.getRunReportCounts(runs.baseline, reportFilter);
+        var res = CC_SERVICE.getRunReportCounts(runs.baseline, reportFilter,
+          runs.length);
 
         this._items = this.createItem(res);
       }
@@ -1084,8 +1157,8 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
               var runs = this.parent.getRunIds();
               var reportFilter = this.parent.getReportFilters();
 
-              var res =
-                CC_SERVICE.getRunReportCounts(runs.newcheck, reportFilter);
+              var res = CC_SERVICE.getRunReportCounts(runs.newcheck,
+                reportFilter, runs.length);
 
               this._items = this.createItem(res);
             }
@@ -1109,7 +1182,7 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
           },
           disableMultipleOption : true,
 
-          getItems : function () {
+          getItems : function (filter, limit) {
             var deferred = new Deferred();
 
             var reportFilter = that.getReportFilters();
@@ -1378,15 +1451,21 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
         title : 'File',
         parent   : this,
         enableSearch : true,
+        serverSideSearch : true,
         filterLabel : 'Search for files...',
-        getItems : function () {
+        getItems : function (filter, limit) {
           var deferred = new Deferred();
 
           var runs = that.getRunIds();
-          var reportFilter = that.getReportFilters();
+          var searchData = this.createSearchData(filter, limit);
 
-          CC_SERVICE.getFileCounts(runs.baseline, reportFilter, runs.newcheck,
-          function (res) {
+          if (!searchData.limit) {
+            deferred.resolve([]);
+            return deferred;
+          }
+
+          CC_SERVICE.getFileCounts(runs.baseline, searchData.reportFilter,
+          runs.newcheck, searchData.limit, 0, function (res) {
             deferred.resolve(Object.keys(res).sort(alphabetical)
             .map(function (file) {
               return {
@@ -1409,21 +1488,22 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
         title : 'Checker name',
         parent   : this,
         enableSearch : true,
+        serverSideSearch : true,
         filterLabel : 'Search for checker names...',
-        getItems : function () {
+        getItems : function (filter, limit) {
           var deferred = new Deferred();
 
           var runs = that.getRunIds();
-          var reportFilter = that.getReportFilters();
+          var searchData = this.createSearchData(filter, limit);
 
-          CC_SERVICE.getCheckerCounts(runs.baseline, reportFilter,
-            runs.newcheck, function (res) {
-            deferred.resolve(res.sort(function (a, b) {
-              if (a.name < b.name) return -1;
-              if (a.name > b.name) return 1;
+          if (!searchData.limit) {
+            deferred.resolve([]);
+            return deferred;
+          }
 
-              return 0;
-            }).map(function (checker) {
+          CC_SERVICE.getCheckerCounts(runs.baseline, searchData.reportFilter,
+            runs.newcheck, searchData.limit, 0, function (res) {
+            deferred.resolve(res.map(function (checker) {
               return {
                 label : checker.name,
                 value : checker.name,
@@ -1444,17 +1524,22 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
         title : 'Checker message',
         parent   : this,
         enableSearch : true,
+        serverSideSearch : true,
         filterLabel : 'Search for checker messages...',
-        getItems : function () {
+        getItems : function (filter, limit) {
           var deferred = new Deferred();
 
           var runs = that.getRunIds();
-          var reportFilter = that.getReportFilters();
+          var searchData = this.createSearchData(filter, limit);
 
-          CC_SERVICE.getCheckerMsgCounts(runs.baseline, reportFilter,
-            runs.newcheck, function (res) {
-            deferred.resolve(Object.keys(res).sort(alphabetical)
-            .map(function (msg) {
+          if (!searchData.limit) {
+            deferred.resolve([]);
+            return deferred;
+          }
+
+          CC_SERVICE.getCheckerMsgCounts(runs.baseline, searchData.reportFilter,
+            runs.newcheck, searchData.limit, 0, function (res) {
+            deferred.resolve(Object.keys(res).map(function (msg) {
               return {
                 label : msg,
                 value : msg,
