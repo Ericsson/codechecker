@@ -1191,3 +1191,17 @@ span[class*="severity-"] {
 .checker-statistics-list {
   flex-grow: 1;
 }
+
+.run-count-wrapper {
+  padding: 10px;
+}
+
+.run-count {
+  background-color: #7994a226;
+  color: #5a6971;
+  padding: 2px 5px;
+  margin-left: 3px;
+  border-radius: 15px;
+  line-height: 1;
+  font-weight: bold;
+}

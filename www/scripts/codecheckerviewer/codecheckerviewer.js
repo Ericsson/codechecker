@@ -172,7 +172,7 @@ function (declare, topic, domConstruct, Dialog, Button,
     //--- Center panel ---//
 
     var listOfRuns = new ListOfRuns({
-      title : 'List of runs',
+      title : 'Runs',
       onLoaded : function (runDataParam) {
         runDataList = runDataParam;
         initByUrl();
