@@ -16,7 +16,23 @@ Different *scopes* of CodeChecker use different permissions. Currently,
 permissions can be defined on the server level (system/global permission), or
 on the product level.
 
-## The master superuser (root)
+Table of Contents
+=================
+* [The master superuser (root)](#the-master-superuser)
+* [Managing permissions](#managing-permissions)
+* [Permission concepts](#permission-concepts)
+  * [Default value](#default-value)
+  * [Permission inheritance](#permission-inheritance)
+  * [Permission manager](#permission-manager)
+* [Available permissions](#available-permissions)
+  * [Server-wide (global) permissions](#global-permissions)
+    * [`SUPERUSER`](#superuser)
+  * [Product-level permissions](#product-level-permissions)
+    * [`PRODUCT_ADMIN`](#product-admin)
+    * [`PRODUCT_ACCESS`](#product-access)
+    * [`PRODUCT_STORE`](#product-store)
+
+## <a name="the-master-superuser"></a> The master superuser (root)
 
 Each CodeChecker server at its first start generates a master superuser
 (*root*) access credential which it prints into its standard output:
@@ -39,7 +55,7 @@ If the server has authentication enabled, the *root* user will **always have
 access** despite of the configured authentication backends' decision, and
 will automatically **have the `SUPERUSER` permission**.
 
-## Managing permissions
+## <a name="managing-permissions"></a> Managing permissions
 
 ![Global permission manager](/docs/images/permissions.png)
 
@@ -59,11 +75,11 @@ You can edit multiple permissions opening the window only once. Simply tick or
 untick the users/groups you want to give the permission to or revoke from them.
 Clicking *OK* will save the changes to the database.
 
-## Permission concepts
+## <a name="permission-concepts"></a> Permission concepts
 
 Each permission has a unique name, such as `SUPERUSER` or `PRODUCT_ADMIN`.
 
-### Default value
+### <a name="default-value"></a> Default value
 
 Permissions can either be *not granted* or *granted* by default. 
 
@@ -78,7 +94,7 @@ has the permission. However, if at least one user or group is explicitly
 given the permission, only the users who have the permission given will be
 able to utilise it.
 
-### Permission inheritance
+### <a name="permission-inheritance"></a> Permission inheritance
 
 Certain permissions automatically imply other permissions, e.g. a
 `PRODUCT_ADMIN` is automatically given every product-level permission.
@@ -88,20 +104,20 @@ behaviour mentioned above. If no user has the `PRODUCT_ACCESS` permission,
 every user will have it (because it is a *default granted* permission), despite
 an existing `PRODUCT_ADMIN` inheriting the permission.
 
-### Permission manager
+### <a name="permission-manager"></a> Permission manager
 
 Permissions have a clear "chain of command" set in CodeChecker. Only a user who
 has permission `A`'s manager permission can grant or revoke other users' rights
 to `A`.
 
-## Available permissions
+## <a name="available-permissions"></a> Available permissions
 
 > Developer guide: See the [API documentation](/api/README.md) for the list of
 > permissions and which API call requires which permission exactly.
 
-### Server-wide (global) permissions
+### <a name="global-permissions"></a> Server-wide (global) permissions
 
-#### `SUPERUSER`
+#### <a name="superuser"></a> `SUPERUSER`
 
 |    Default    |
 |---------------|
@@ -116,9 +132,9 @@ system.
 > immediately change everything on the server, from demoting other superusers
 > to destroying analysis results!
 
-### Product-level permissions
+### <a name="product-level-permissions"></a> Product-level permissions
 
-#### `PRODUCT_ADMIN`
+#### <a name="product-admin"></a> `PRODUCT_ADMIN`
 
 |    Default    |
 |---------------|
@@ -133,7 +149,7 @@ of the product.
 
 Product admins are automatically given other `PRODUCT_` permissions.
 
-#### `PRODUCT_ACCESS`
+#### <a name="product-access"></a> `PRODUCT_ACCESS`
 
 | Default |    Managed by   |          Inherited from          |
 |---------|-----------------|----------------------------------|
@@ -144,7 +160,7 @@ The basic permission to access analysis results stored in the product. With
 this permission, the user can browse analysis results, comment, set detection
 status, etc.
 
-#### `PRODUCT_STORE`
+#### <a name="product-store"></a> `PRODUCT_STORE`
 
 | Default |    Managed by   | Inherited from  |
 |---------|-----------------|-----------------|

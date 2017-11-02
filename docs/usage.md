@@ -3,7 +3,27 @@
 This is lazy dog HOWTO to using CodeChecker analysis.
 It invokes Clang Static Analyzer and Clang-Tidy tools to analyze your code.
 
-## Step 1: Integrate CodeChecker into your build system
+Table of Contents
+=================
+* [Step 1: Integrate CodeChecker into your build system](#step-1)
+* [Step 2: Analyze your code](#step-2)
+  * [Cross-Compilation](#cross-compilation)
+  * [Incremental Analysis](#incremental-analysis)
+  * [Analysis Failures](#analysis-failures)
+* [Step 3: Store analysis results in a CodeChecker DB and visualize results](#step-3)
+* [Step 4: Fine tune Analysis configuration](#step-4)
+  * [Ignore modules from your analysis](#ignore-modules)
+  * [Enable/Disable Checkers](#enable-disable-checkers)
+  * [Identify files that failed analysis](#identify-files)
+* [Step 5: Integrate CodeChecker into your CI loop](#step-5)
+  * [Storing daily runs](#storing-daily-runs)
+  * [Store each analysis in a new run](#storing-new-runs)
+    * [Example](#storing-new-runs-example)
+  * [Storing the results of each commit and guarding the introduction of new bugs](#storing-results)
+    * [Example](#storing-results-example)
+  * [Programmer checking new bugs in the code after local edit (and compare it to a central database)](#compare)
+
+## <a name="step-1"></a> Step 1: Integrate CodeChecker into your build system
 CodeChecker only analyzes what is also built by your build system.
 
 1. Select a module to build (open source tmux in this example).
@@ -37,7 +57,7 @@ cat ./compilation.json
   and in most cases, _System Integrity Protection_ needs to be turned off. 
   See the [README](/README.md#mac-os-x) for details.
 
-## Step 2: Analyze your code
+## <a name="step-2"></a> Step 2: Analyze your code
 Once the build is logged successfully (and the `compilation.json`) was created, you can analyze your project.
 
 1. Run the analysis: 
@@ -63,7 +83,7 @@ or to run on 22 threads
 ```
 
 
-### Cross-Compilation
+### <a name="cross-compilation"></a> Cross-Compilation
 Cross-compilers are auto-detected by CodeChecker, so 
 the `--target` and the compiler pre-configured
 include paths of `gcc/g++` are automatically passed to `clang` when analyzing.
@@ -71,7 +91,7 @@ include paths of `gcc/g++` are automatically passed to `clang` when analyzing.
 **Make sure that the compilers used for building the project (e.g. `/usr/bin/gcc`) are
 accessible when `CodeChecker analyze` or `check` is invoked.**
 
-### Incremental Analysis
+### <a name="incremental-analysis"></a> Incremental Analysis
  The analysis can be run for only the changed files and the `report-directory` will be
  correctly updated with the new results.
  
@@ -88,7 +108,7 @@ accessible when `CodeChecker analyze` or `check` is invoked.**
 ```
 Now the `reports` directory contains also the results of the updated `cmd-find.c`.
 
-### Analysis Failures
+### <a name="analysis-failures"></a> Analysis Failures
 
 The `reports/failed` folder contains all build-actions that
 were failed to analyze. For these there will be no results.
@@ -101,7 +121,7 @@ correctly detected, so Clang analysis was unsuccessful.
 * Clang crashed during the analysis.
 
 
-## Step 3: Store analysis results in a CodeChecker DB and visualize results
+## <a name="step-3"></a> Step 3: Store analysis results in a CodeChecker DB and visualize results
 You can store the analysis results in a central database and view the results in a web viewer
 1. Start the CodeChecker server locally on port 8555 (using SQLite DB, which is not recommended for multi-user central deployment)
 create a workspace directory, where the database will be stored.
@@ -125,8 +145,8 @@ See [user guide](/docs/user_guide.md#product_url-format) for detailed descriptio
 3. View the results in your web browser
  http://localhost:8555/Default
 
-## Step 4: Fine tune Analysis configuration
-### Ignore modules from your analysis 
+## <a name="step-4"></a> Step 4: Fine tune Analysis configuration
+### <a name="ignore-modules"></a> Ignore modules from your analysis 
 
 You can ignore analysis results for certain files for example 3rd party modules.
 For that use the `-i` parameter of the analyze command:
@@ -142,7 +162,7 @@ For the skip file format see the [user guide](/docs/user_guide.md#skip-file).
  CodeChecker analyze -b "make" -i ./skip.file" -o ./reports
 ```
 
-### Enable/Disable Checkers
+### <a name="enable-disable-checkers"></a> Enable/Disable Checkers
 
 You can list the checkers using the following command
 ```
@@ -157,7 +177,7 @@ For example to enable alpha checkers additionally to the defaults
  CodeChecker analyze -e alpha  -b "make" -i ./skip.file" -o ./reports
 ```
 
-### Identify files that failed analysis
+### <a name="identify-files"></a> Identify files that failed analysis
 After execution of
 ```
  CodeChecker analyze build.json -o reports
@@ -169,7 +189,7 @@ directory.
 This means that analysis of these files failed and there is no Clang Static Analyzer output for these compilation commands.
 
 
-## Step 5: Integrate CodeChecker into your CI loop
+## <a name="step-5"></a> Step 5: Integrate CodeChecker into your CI loop
 
 This section describes a recommended way on how CodeChecker is designed to be
 used in a CI environment to
@@ -197,11 +217,11 @@ version of the same source file.
   This way your suppressions remain also resistant to eventual changes of the
   bug hash (generated by clang).
  
-### Storing daily runs
+### <a name="storing-daily-runs"></a> Storing daily runs
 Let us assume that you want to analyze your code-base daily and would like to
 send out an email summary about any newly introduced and resolved issues.
 
-#### Store each analysis in a new run
+#### <a name="storing-new-runs"></a> Store each analysis in a new run
 
 Each daily analysis should be stored as a new run name, for example using the
 following naming convention: `<module_name>_<branch_name>_<date>`.
@@ -239,7 +259,7 @@ If you would like to generate a report page out of this using a script, you can 
 > **Note:** Don't forget to delete old runs you don't need to save database
 > space.
 
-##### Example
+##### <a name="storing-new-runs-example"></a> Example
 
 The following is a concise Shell script that can be used in a Jenkins or any
 other CI engine. This will exit with return status `1`, failing the job, if
@@ -343,7 +363,7 @@ This can be done via e-mail sending, setting these as attachments, or copying
 these files into a persistent (outside the CI job's workspace!) place and
 sending its URL to the maintainers.
 
-#### Storing the results of each commit and guarding the introduction of new bugs
+#### <a name="storing-results"></a> Storing the results of each commit and guarding the introduction of new bugs
 Let us assume that at each commit you would like to keep your analysis 
 results up-to-date and send an alert email to the programmer if a new bug is
 introduced in a "pull request", and if there is a new bug in the
@@ -408,7 +428,7 @@ int z = x / y; // warn
 See [User guide](user_guide.md#suppression-in-the-source-code) for more
 information.
 
-##### Example
+##### <a name="storing-results-example"></a> Example
 
 The following is a concise Shell script that can be used in a Jenkins or any
 other CI engine. This will exit with return status `1`, failing the job, if
@@ -512,7 +532,7 @@ The return code of this script can be further used in the CI job to set ticket
 or pull request status on the code tracker (such as Gerrit or GitLab).
 
 
-### Programmer checking new bugs in the code after local edit (and compare it to a central database)
+### <a name="compare"></a> Programmer checking new bugs in the code after local edit (and compare it to a central database)
 Say that you made some local changes in your code (tmux in our example) and
 you wonder whether you introduced any new bugs. Each bug has a unique hash
 identifier that is independent of the line number, therefore resistant to
@@ -537,4 +557,3 @@ master branch is already stored under run name `tmux_master`.
 ```
  CodeChecker cmd diff -b tmux_master -n ./reports --new --url http://localhost:8555/Default
 ```
-

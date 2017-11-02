@@ -5,22 +5,34 @@ get results.
 
 Any new client should only interact with the database through these APIs.
 
-Available APIs
+Table of Contents
+=================
+* [Available APIs](#available-apis)
+  * [Report server](#report-server-api)
+  * [Authentication system](#authentication-system-api)
+  * [Product management system](#product-management-system-api)
+* [API versioning](#api-versioning)
+  * [How to add new API versions](#how-to-add-new-api-versions)
+    * [Minor API improvements](#minor-api-improvements)
+    * [Major API changes](#major-api-changes)
+  * [How to delete API versions](#how-to-delete-api-versions)
+
+<a name="available-apis"></a> Available APIs
 --------------
 
-### Report server API
+### <a name="report-server-api"></a> Report server API
 The report server API should be used by any client to view or store analysis
 results.
 
-### Authentication system API
+### <a name="authentication-system-api"></a> Authentication system API
 The authentication layer is used for supporting privileged-access only access
 and permission management.
 
-### Product management system API
+### <a name="product-management-system-api"></a> Product management system API
 The product management layer is responsible for handling requests about the
 different products and their configuration.
 
-API versioning
+<a name="api-versioning"></a> API versioning
 --------------
 
 CodeChecker supports some backward compatibility between API versions.
@@ -37,9 +49,9 @@ For example:
 Executing `make thrift` in the main folder of CodeChecker will automatically
 build each API version to the `build/` dir.
 
-### How to add new API versions
+### <a name="how-to-add-new-api-versions"></a> How to add new API versions
 
-#### Minor API improvements
+#### <a name="minor-api-improvements"></a> Minor API improvements
 
 For minor changes, these changes should go into the **existing** API files,
 with appropriate Thrift-based versioning for `struct`s where necessary.
@@ -55,7 +67,7 @@ already existing functions, only extend the API:
  2. Change the `www/scripts/version.js` file to represent the newest version,
  e.g. `6.1`.
 
-#### Major API changes
+#### <a name="major-api-changes"></a> Major API changes
 
 For major changes, a **new** API must be defined. Start by creating a full
 copy of the previous version's API to a new folder, e.g. `v7`.
@@ -85,7 +97,7 @@ copy of the previous version's API to a new folder, e.g. `v7`.
  are routed to be handled by these new handlers. (Keep the formatting of
  imported names akin to those already in the file.)
 
-### How to delete API versions
+### <a name="how-to-delete-api-versions"></a> How to delete API versions
 
 Only major API versions can be deleted.
 
