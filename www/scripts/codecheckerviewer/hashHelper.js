@@ -73,7 +73,10 @@ function (hash, ioQuery, topic, util) {
      * @see setStateValues
      */
     setStateValue : function (key, value, preventUpdateUrl) {
-      this.setStateValues({ [key] : value }, preventUpdateUrl);
+      var state = {};
+      state[key] = value;
+
+      this.setStateValues(state, preventUpdateUrl);
     }
   };
 
