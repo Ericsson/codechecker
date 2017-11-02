@@ -1205,3 +1205,30 @@ span[class*="severity-"] {
   line-height: 1;
   font-weight: bold;
 }
+
+.customIcon.statistics:before {
+  content: "\e023";
+}
+
+.customIcon.reports:before {
+  content: "\e003";
+}
+
+.customIcon.list-opened:before {
+  content: "\e004";
+}
+
+.customIcon.all-reports:before {
+  content: "\e003";
+}
+
+.customIcon.all-reports:after {
+  content: "A";
+  position: absolute;
+  right: 0;
+  top: 0;
+  padding: 1px;
+  font-size: 0.5em;
+  background-color: #484848;
+  color: white;
+}

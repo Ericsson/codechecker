@@ -327,6 +327,7 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
 
       this._bugOverview = new BorderContainer({
         title : 'Bug Overview',
+        iconClass : 'customIcon list-opened',
         onShow : function () {
           if (!this.initalized) {
             this.initalized = true;
@@ -362,6 +363,7 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
 
       this._runHistory = new RunHistory({
         title : 'Run history',
+        iconClass : 'customIcon run',
         runData : this.runData,
         bugOverView : this._bugOverview,
         bugFilterView : this._bugFilterView,
@@ -456,6 +458,7 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
 
         var bugViewer = new BugViewer({
           title : filename,
+          iconClass : 'customIcon bug',
           closable : true,
           reportData : reportData,
           runResultParam : runResultParam,
