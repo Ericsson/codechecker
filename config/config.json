@@ -110,7 +110,6 @@
         "cppcoreguidelines-pro-type-member-init" : ["extreme"],
         "cppcoreguidelines-pro-type-reinterpret-cast" : ["sensitive", "extreme"],
         "cppcoreguidelines-pro-type-static-cast-downcast" : ["sensitive", "extreme"],
-        "cppcoreguidelines-pro-type-vararg" : ["sensitive", "extreme"],
         "cppcoreguidelines-slicing" : ["sensitive", "extreme"],
         "cppcoreguidelines-special-member-functions" : ["default", "sensitive", "extreme"],
         "google-build-explicit-make-pair" : ["sensitive", "extreme"],
