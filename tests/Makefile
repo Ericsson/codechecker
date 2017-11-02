@@ -59,7 +59,7 @@ run_test: package venv_dev
 	$(ACTIVATE_DEV_VENV) && \
 		$(REPO_ROOT) $(CLANG_VERSION) $(TEST_PROJECT) \
 		nosetests $(NOSECFG) ${TEST} \
-		&& ${EXIT_HAPPY} || ${EXIT_ERROR}
+		&& { ${SHUTDOWN_SERVER_CMD}; } || ${EXIT_ERROR}
 
 test_unit: venv_dev
 	$(ACTIVATE_DEV_VENV) && $(UNIT_TEST_CMD)
