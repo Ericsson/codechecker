@@ -7,21 +7,18 @@
 define([
   'dojo/_base/declare',
   'dojo/topic',
-  'dojo/dom-construct',
   'dijit/Dialog',
   'dijit/form/Button',
   'dijit/layout/BorderContainer',
-  'dijit/layout/ContentPane',
   'dijit/layout/TabContainer',
   'codechecker/CheckerStatistics',
   'codechecker/hashHelper',
-  'codechecker/HeaderMenu',
+  'codechecker/HeaderPane',
   'codechecker/ListOfBugs',
   'codechecker/ListOfRuns',
   'codechecker/util'],
-function (declare, topic, domConstruct, Dialog, Button,
-  BorderContainer, ContentPane, TabContainer, CheckerStatistics, hashHelper,
-  HeaderMenu, ListOfBugs, ListOfRuns, util) {
+function (declare, topic, Dialog, Button, BorderContainer, TabContainer,
+  CheckerStatistics, hashHelper, HeaderPane, ListOfBugs, ListOfRuns, util) {
 
   var runDataList = null;
 
@@ -104,42 +101,12 @@ function (declare, topic, domConstruct, Dialog, Button,
 
     var layout = new BorderContainer({ id : 'mainLayout' });
 
-    var headerPane = new ContentPane({ id : 'headerPane', region : 'top' });
-    layout.addChild(headerPane);
-
     var runsTab = new TabContainer({ region : 'center' });
     layout.addChild(runsTab);
-
-    //--- Logo ---//
 
     CURRENT_PRODUCT = CC_PROD_SERVICE.getCurrentProduct();
     var currentProductName = util.atou(CURRENT_PRODUCT.displayedName_b64);
     document.title = currentProductName + ' - CodeChecker';
-
-    var logoContainer = domConstruct.create('div', {
-      id : 'logo-container'
-    }, headerPane.domNode);
-
-    var logo = domConstruct.create('span', { id : 'logo' }, logoContainer);
-
-    var logoText = domConstruct.create('div', {
-      id : 'logo-text',
-      innerHTML : 'CodeChecker ' + CC_SERVICE.getPackageVersion()
-    }, logoContainer);
-
-    var title = domConstruct.create('span', {
-      id : 'logo-title',
-      innerHTML : currentProductName
-    }, logoText);
-
-    var user = CC_AUTH_SERVICE.getLoggedInUser();
-    var loginUserSpan = null;
-    if (user.length > 0) {
-      loginUserSpan = domConstruct.create('span', {
-        id: 'loggedin',
-        innerHTML: "Logged in as " + user + "."
-      });
-    }
 
     //--- Back button to product list ---//
 
@@ -153,21 +120,14 @@ function (declare, topic, domConstruct, Dialog, Button,
       }
     });
 
-    var headerMenu = domConstruct.create('div', { id : 'header-menu' });
-
-    var menuButton = new HeaderMenu({
-      class : 'main-menu-button',
-      iconClass : 'dijitIconFunction',
+    var headerPane = new HeaderPane({
+      id : 'headerPane',
+      title : currentProductName,
+      region : 'top',
+      menuItems : [ productListButton.domNode ],
+      mainTab : runsTab
     });
-
-    if (loginUserSpan != null)
-        domConstruct.place(loginUserSpan, headerMenu);
-
-    domConstruct.place(productListButton.domNode, headerMenu);
-
-    domConstruct.place(menuButton.domNode, headerMenu);
-
-    domConstruct.place(headerMenu, headerPane.domNode);
+    layout.addChild(headerPane);
 
     //--- Center panel ---//
 
@@ -266,33 +226,6 @@ function (declare, topic, domConstruct, Dialog, Button,
       }
 
       runsTab.selectChild(runIdToTab[tabId]);
-    });
-
-    topic.subscribe('tab/userguide', function () {
-      var that = this;
-
-      if (!this.userguide) {
-        this.userguide = new ContentPane({
-          title : 'User guide',
-          closable : true,
-          href  : 'userguide/doc/html/md_userguide.html',
-          onClose : function () {
-            delete that.userguide;
-            return true;
-          },
-          onShow : function () {
-            hashHelper.resetStateValues({
-              'tab' : 'userguide'
-            });
-          }
-        });
-        runsTab.addChild(this.userguide);
-      }
-
-      hashHelper.resetStateValues({
-        'tab' : 'userguide'
-      });
-      runsTab.selectChild(this.userguide);
     });
 
     var docDialog = new Dialog();
