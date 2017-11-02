@@ -17,7 +17,7 @@ define([
   'dijit/layout/ContentPane',
   'dojox/grid/DataGrid',
   'codechecker/util'],
-function (declare, domConstruct, ItemFileWriteStore, topic, Dialog, Button,
+function (declare, dom, ItemFileWriteStore, topic, Dialog, Button,
   RadioButton, TextBox, BorderContainer, ContentPane, DataGrid, util) {
 
   /**
@@ -157,7 +157,9 @@ function (declare, domConstruct, ItemFileWriteStore, topic, Dialog, Button,
       });
 
       CC_SERVICE.getRunData(runFilter, function (runDataList) {
+        that._updateRunCount(runDataList.length);
         that._sortRunData(runDataList);
+
         runDataList.forEach(function (item) {
           that._addRunData(item);
         });
@@ -190,6 +192,7 @@ function (declare, domConstruct, ItemFileWriteStore, topic, Dialog, Button,
       var that = this;
 
       CC_SERVICE.getRunData(runFilter, function (runDataList) {
+        that._updateRunCount(runDataList.length);
         that._sortRunData(runDataList);
 
         // In Firefox the onLoaded function called immediately before topics
@@ -205,6 +208,11 @@ function (declare, domConstruct, ItemFileWriteStore, topic, Dialog, Button,
 
         that.render();
       });
+    },
+
+    _updateRunCount : function (num) {
+      this.parent._runCount.innerHTML = num;
+      this.parent.updateTitle();
     },
 
     onLoaded : function (runDataList) {}
@@ -273,6 +281,7 @@ function (declare, domConstruct, ItemFileWriteStore, topic, Dialog, Button,
 
     postCreate : function () {
       this.addChild(this._runFilter);
+
       if (this.get('showDelete'))
         this.addChild(this._deleteBtn);
       this.addChild(this._diffBtn);
@@ -326,6 +335,18 @@ function (declare, domConstruct, ItemFileWriteStore, topic, Dialog, Button,
     postCreate : function () {
       var that = this;
 
+      this._runCountWrapper = dom.create('span', {
+        class : 'run-count-wrapper',
+        innerHTML : this.get('title')
+      });
+
+      this._runCount = dom.create('span', {
+        class : 'run-count',
+        innerHTML : '?'
+      }, this._runCountWrapper);
+
+      this.updateTitle();
+
       var showDelete = CC_AUTH_SERVICE.hasPermission(
         Permission.PRODUCT_STORE, util.createPermissionParams({
           productID : CURRENT_PRODUCT.id
@@ -339,6 +360,7 @@ function (declare, domConstruct, ItemFileWriteStore, topic, Dialog, Button,
       var listOfRunsGrid = new ListOfRunsGrid({
         region : 'center',
         infoPane : runsInfoPane,
+        parent : this,
         onLoaded : that.onLoaded,
         showDelete : showDelete
       });
@@ -347,6 +369,10 @@ function (declare, domConstruct, ItemFileWriteStore, topic, Dialog, Button,
 
       this.addChild(runsInfoPane);
       this.addChild(listOfRunsGrid);
+    },
+
+    updateTitle : function () {
+      this.set('title', this._runCountWrapper.innerHTML);
     },
 
     onLoaded : function (runDataList) {}
