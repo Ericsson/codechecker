@@ -173,6 +173,7 @@ function (declare, topic, domConstruct, Dialog, Button,
 
     var listOfRuns = new ListOfRuns({
       title : 'Runs',
+      iconClass : 'customIcon run-name',
       onLoaded : function (runDataParam) {
         runDataList = runDataParam;
         initByUrl();
@@ -191,6 +192,7 @@ function (declare, topic, domConstruct, Dialog, Button,
 
     var listOfAllReports = new ListOfBugs({
       title : 'All reports',
+      iconClass : 'customIcon all-reports',
       allReportView : true,
       tab : 'allReports'
     });
@@ -200,6 +202,7 @@ function (declare, topic, domConstruct, Dialog, Button,
     var checkerStatisticsTab = new CheckerStatistics({
       class : 'checker-statistics',
       title : 'Checker statistics',
+      iconClass : 'customIcon statistics',
       listOfAllReports : listOfAllReports
     });
     runsTab.addChild(checkerStatisticsTab);
@@ -221,6 +224,7 @@ function (declare, topic, domConstruct, Dialog, Button,
         runIdToTab[tabData.runId] = new ListOfBugs({
           runData : param.runData,
           title : tabData.name,
+          iconClass : 'customIcon reports',
           closable : true,
           tab : tabData.name,
           onClose : function () {
