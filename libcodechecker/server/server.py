@@ -40,6 +40,7 @@ from libcodechecker import session_manager
 from libcodechecker.logger import LoggerFactory
 from libcodechecker.util import get_tmp_dir_hash
 
+from . import db_cleanup
 from . import instance_manager
 from . import permissions
 from . import routing
@@ -420,7 +421,7 @@ class Product(object):
     # connect() call so the next could be made.
     CONNECT_RETRY_TIMEOUT = 300
 
-    def __init__(self, orm_object, context, check_env):
+    def __init__(self, orm_object, context, check_env, db_cleanup):
         """
         Set up a new managed product object for the configuration given.
         """
@@ -433,6 +434,7 @@ class Product(object):
         self.__engine = None
         self.__session = None
         self.__connected = False
+        self.__db_cleanup = db_cleanup
 
         self.__last_connect_attempt = None
 
@@ -516,6 +518,9 @@ class Product(object):
             self.__connected = True
             self.__last_connect_attempt = None
             LOG.debug("Database connected.")
+
+            if self.__db_cleanup:
+                db_cleanup.run_cleanup_jobs(self.__session)
         except Exception as ex:
             LOG.error("The database for product '{0}' cannot be connected to."
                       .format(self.endpoint))
@@ -548,6 +553,7 @@ class CCSimpleHttpServer(HTTPServer):
                  RequestHandlerClass,
                  config_directory,
                  product_db_sql_server,
+                 db_cleanup,
                  pckg_data,
                  suppress_handler,
                  context,
@@ -566,6 +572,7 @@ class CCSimpleHttpServer(HTTPServer):
         self.context = context
         self.check_env = check_env
         self.manager = manager
+        self.db_cleanup = db_cleanup
         self.__products = {}
 
         # Create a database engine for the configuration database.
@@ -642,7 +649,10 @@ class CCSimpleHttpServer(HTTPServer):
             raise Exception("This product is already configured!")
 
         LOG.info("Setting up product '{0}'".format(orm_product.endpoint))
-        conn = Product(orm_product, self.context, self.check_env)
+        conn = Product(orm_product,
+                       self.context,
+                       self.check_env,
+                       self.db_cleanup)
         self.__products[conn.endpoint] = conn
 
         conn.connect()
@@ -710,8 +720,8 @@ def __make_root_file(root_file):
 
 
 def start_server(config_directory, package_data, port, db_conn_string,
-                 suppress_handler, listen_address, force_auth, context,
-                 check_env):
+                 suppress_handler, listen_address, force_auth, db_cleanup,
+                 context, check_env):
     """
     Start http server to handle web client and thrift requests.
     """
@@ -742,6 +752,7 @@ def start_server(config_directory, package_data, port, db_conn_string,
                                      RequestHandler,
                                      config_directory,
                                      db_conn_string,
+                                     db_cleanup,
                                      package_data,
                                      suppress_handler,
                                      context,
