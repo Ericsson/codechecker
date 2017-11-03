@@ -31,7 +31,7 @@ function (declare, dom, topic, ContentPane, util) {
 
       var historyGroupByDate = {};
       historyData.forEach(function (data) {
-        var date = new Date(data.time);
+        var date = new Date(data.time.replace(/ /g,'T'));
         var groupDate = date.getDate() + ' '
           + util.getMonthName(date.getMonth()) + ', '
           + date.getFullYear();
@@ -52,7 +52,7 @@ function (declare, dom, topic, ContentPane, util) {
         var content = dom.create('div', { class : 'content' }, group);
 
         historyGroupByDate[key].forEach(function (data) {
-          var date = new Date(data.time);
+          var date = new Date(data.time.replace(/ /g,'T'));
           var time = util.formatDateAMPM(date);
 
           var history = dom.create('div', {

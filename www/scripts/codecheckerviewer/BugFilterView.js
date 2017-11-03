@@ -293,7 +293,12 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
      * will be the filter class name and the value will be the selected item
      * values. If no filter item is selected the value will be null.
      */
-    getState : function () { return { [this.class] : null }; },
+    getState : function () {
+      var state = {};
+      state[this.class] = null;
+
+      return state;
+    },
 
     /**
      * Set filter state from the parameter state object.
@@ -452,7 +457,9 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
         return isNaN(key) ? key : parseFloat(key);
       });
 
-      return  { [this.class] : state.length ? state : null };
+      var ret = {};
+      ret[this.class] = state.length ? state : null;
+      return ret;
     },
 
     /**
@@ -906,15 +913,15 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
     },
 
     getUrlState : function () {
-      return {
-        [this.class] : this._isUnique ? 'on' : 'off'
-      };
+      var state = {};
+      state[this.class] = this._isUnique ? 'on' : 'off';
+      return state;
     },
 
     getState : function () {
-      return {
-        [this.class] : this._isUnique
-      };
+      var state = {};
+      state[this.class] = this._isUnique;
+      return state;
     },
 
     clearAll : function () {
@@ -1096,7 +1103,9 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
           title    : 'Diff type',
           parent   : this,
           defaultValues : function () {
-            return { [this.class] : [CC_OBJECTS.DiffType.NEW] };
+            var state = {};
+            state[this.class] = [CC_OBJECTS.DiffType.NEW];
+            return state;
           },
           disableMultipleOption : true,
 
@@ -1118,7 +1127,9 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
 
               CC_SERVICE.getRunResultCount(runIds, reportFilter, cmpData,
               function (res) {
-                d.resolve({ [key] : res});
+                var state = {};
+                state[key] = res;
+                d.resolve(state);
               });
 
               return d.promise;
@@ -1552,7 +1563,10 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
       var state = {};
 
       this._filters.forEach(function (filter) {
-        Object.assign(state, filter.getState());
+        var filterState = filter.getState();
+        Object.keys(filterState).forEach(function(key) {
+          state[key] = filterState[key];
+        });
       });
 
       return state;
@@ -1565,7 +1579,10 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
       var state = {};
 
       this._filters.forEach(function (filter) {
-        Object.assign(state, filter.getUrlState());
+        var urlState = filter.getUrlState();
+        Object.keys(urlState).forEach(function(key) {
+          state[key] = urlState[key];
+        });
 
         //--- Load default values for the first time ---//
 

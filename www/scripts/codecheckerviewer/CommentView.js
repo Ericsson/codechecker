@@ -71,7 +71,7 @@ function (declare, dom, style, topic, Memory, Observable, ConfirmDialog,
 
       dom.create('span', { class : 'author', innerHTML: this.author }, vb);
 
-      var time = util.timeAgo(new Date(this.time));
+      var time = util.timeAgo(new Date(this.time.replace(/ /g,'T')));
       dom.create('span', { class : 'time', innerHTML: time }, vb);
 
       //--- Comment operations (edit, remove) ---//
