@@ -386,21 +386,18 @@ class StorageSession:
             self.__sessions[run_id]['timer'] = time.time()
             return self.__sessions[run_id]['transaction']
 
-        # FIXME: do we need this guard at all?
-        # Storage is performed locally on the server
-        # so why would it timeout?
         def _timeout_sessions(self):
             """
             The storage session times out if no action happens in the
-            transaction belonging to the given run within 10 seconds.
+            transaction belonging to the given run within 30 minutes.
             """
             for run_id, session in self.__sessions.iteritems():
-                if int(time.time() - session['timer']) > 10:
+                if int(time.time() - session['timer']) > 30 * 60:
                     LOG.info('Session timeout for run ' + str(run_id))
                     self.abort_session(run_id)
                     break
 
-            threading.Timer(10, self._timeout_sessions).start()
+            threading.Timer(10 * 60, self._timeout_sessions).start()
 
     instance = None
 
