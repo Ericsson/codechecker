@@ -301,8 +301,8 @@ class TestReportFilter(unittest.TestCase):
                                                              None)
 
         unique_bugs = set()
-        # Uniqueing is done based on file name, line number, and hash.
+        # Uniqueing is done based on bug hash.
         for b in bugs:
-            unique_bugs.add((b['file'], b['checker'], b['hash']))
+            unique_bugs.add((b['hash']))
 
         self.assertEqual(len(unique_bugs), run_result_count)
