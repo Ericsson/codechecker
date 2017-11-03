@@ -105,6 +105,10 @@ class ThriftClientHelper(object):
         pass
 
     @ThriftClientCall
+    def getReportDetails(self, reportId):
+        pass
+
+    @ThriftClientCall
     def getSourceFileData(self, fileId, fileContent, encoding):
         pass
 
