@@ -128,15 +128,13 @@ class ClangSA(analyzer_base.SourceAnalyzer):
                                          '-Xclang', checker_name])
 
             if config.ctu_dir:
-                env = analyzer_env.get_check_env(config.path_env_extra,
-                                                 config.ld_lib_path_extra)
-                triple_arch = ctu_triple_arch.get_triple_arch(self.buildaction,
-                                                              self.source_file,
-                                                              config, env)
                 analyzer_cmd.extend(['-Xclang', '-analyzer-config',
                                      '-Xclang',
-                                     'xtu-dir=' + os.path.join(config.ctu_dir,
-                                                               triple_arch)])
+                                     'xtu-dir=' + self.get_xtu_dir(),
+                                     ])
+                if config.ctu_has_analyzer_display_ctu_progress:
+                    analyzer_cmd.extend(['-Xclang',
+                                         '-analyzer-display-ctu-progress'])
                 if config.ctu_in_memory:
                     analyzer_cmd.extend(['-Xclang', '-analyzer-config',
                                          '-Xclang',
@@ -160,35 +158,38 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             LOG.error(ex)
             return []
 
+    def get_xtu_dir(self):
+        """
+        Returns the path of the xtu directory (containing the triple).
+        """
+        config = self.config_handler
+        env = analyzer_env.get_check_env(config.path_env_extra,
+                                         config.ld_lib_path_extra)
+        triple_arch = ctu_triple_arch.get_triple_arch(self.buildaction,
+                                                      self.source_file,
+                                                      config, env)
+        xtu_dir = os.path.join(config.ctu_dir, triple_arch)
+        return xtu_dir
+
     def get_analyzer_mentioned_files(self, output):
         """
         Parse ClangSA's output to generate a list of files that were mentioned
         in the standard output or standard error.
         """
 
-        # A line mentioning a file in ClangSA's output looks like this:
-        # /home/.../.cpp:L:C: warning: foobar.
-        regex = re.compile(
-            # File path followed by a ':'.
-            '^(?P<path>[\S ]+?):'
-            # Line number followed by a ':'.
-            '(?P<line>\d+?):'
-            # Column number followed by a ':' and a space.
-            # This is optional, as lines beginning with
-            # "In file included from" don't have a column number.
-            '((?P<column>\d+?):\ )?')
+        regex_for_ctu_ast_load = re.compile(
+            "ANALYZE \(CTU loaded AST for source file\): (.*)")
 
         paths = []
 
-        for line in output.splitlines():
-            # Files can also be referenced in a line that
-            # begins as "In file included from /home/...".
-            if line[0] == 'I':
-                line = line.replace("In file included from ", "", 1)
+        xtu_ast_dir = os.path.join(self.get_xtu_dir(), "ast")
 
-            match = re.match(regex, line)
+        for line in output.splitlines():
+            match = re.match(regex_for_ctu_ast_load, line)
             if match:
-                paths.append(match.group('path'))
+                path = match.group(1)
+                if xtu_ast_dir in path:
+                    paths.append(path[len(xtu_ast_dir):])
 
         return set(paths)
 
