@@ -398,7 +398,7 @@ def main(args):
     try:
         # --- Step 1.: Perform logging if build command was specified.
         if 'command' in args:
-            logfile = os.path.join(output_dir, 'compile_cmd.json')
+            logfile = tempfile.NamedTemporaryFile().name
 
             # Translate the argument list between check and log.
             log_args = argparse.Namespace(

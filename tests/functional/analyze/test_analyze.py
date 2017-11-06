@@ -91,6 +91,78 @@ class TestAnalyze(unittest.TestCase):
                 os.remove(f)
         self.assertEquals(failed_file_count, failed_count)
 
+    def test_compiler_info_files(self):
+        # GIVEN
+        build_json = os.path.join(self.test_workspace, "build_simple.json")
+        reports_dir = os.path.join(self.test_workspace, "reports")
+        source_file = os.path.join(self.test_workspace, "simple.cpp")
+
+        # Create a compilation database.
+        build_log = [{"directory": self.test_workspace,
+                      "command": "gcc -c " + source_file,
+                      "file": source_file
+                      },
+                     {"directory": self.test_workspace,
+                      "command": "clang -c " + source_file,
+                      "file": source_file
+                      }
+                     ]
+
+        with open(build_json, 'w') as outfile:
+            json.dump(build_log, outfile)
+
+        # Test file contents
+        simple_file_content = "int main() { return 0; }"
+
+        # Write content to the test file
+        with open(source_file, 'w') as source:
+            source.write(simple_file_content)
+
+        # Create analyze command.
+        analyze_cmd = [self._codechecker_cmd, "analyze", build_json,
+                       "--analyzers", "clangsa", "-o", reports_dir]
+
+        # WHEN
+        # Run analyze.
+        process = subprocess.Popen(
+            analyze_cmd, stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE, cwd=self.test_dir)
+        process.communicate()
+
+        # THEN
+        errcode = process.returncode
+        self.assertEquals(errcode, 0)
+
+        from libcodechecker.analyze.log_parser import\
+            compiler_includes_dump_file
+        from libcodechecker.analyze.log_parser import compiler_target_dump_file
+        includes_File = os.path.join(reports_dir, compiler_includes_dump_file)
+        target_File = os.path.join(reports_dir, compiler_target_dump_file)
+        self.assertEquals(os.path.exists(includes_File), True)
+        self.assertEquals(os.path.exists(target_File), True)
+        self.assertNotEqual(os.stat(includes_File).st_size, 0)
+        self.assertNotEqual(os.stat(target_File).st_size, 0)
+
+        # Test the validity of the json files.
+        with open(includes_File, 'r') as f:
+            try:
+                data = json.load(f)
+                self.assertEquals(len(data), 2)
+                self.assertTrue("clang" in data)
+                self.assertTrue("gcc" in data)
+            except ValueError:
+                self.fail("json.load should successfully parse the file %s"
+                          % includes_File)
+        with open(target_File, 'r') as f:
+            try:
+                data = json.load(f)
+                self.assertEquals(len(data), 2)
+                self.assertTrue("clang" in data)
+                self.assertTrue("gcc" in data)
+            except ValueError:
+                self.fail("json.load should successfully parse the file %s"
+                          % target_File)
+
     def test_capture_analysis_output(self):
         """
         Test if reports/success/<output_file>.[stdout,stderr].txt

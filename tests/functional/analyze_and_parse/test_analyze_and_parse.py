@@ -110,9 +110,9 @@ class AnalyzeParseTestCase(unittest.TestCase):
                             in skip_prefixes]):
                     post_processed_output.append(line)
 
-            print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Actual output below:")
+            print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Actual output below:")
             print(''.join(post_processed_output))
-            print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Expected output below:")
+            print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Expected output below:")
             print(correct_output)
 
             print("Test output file: " + path)

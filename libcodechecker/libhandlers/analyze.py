@@ -316,36 +316,15 @@ def main(args):
     readable format.
     """
 
-    context = generic_package_context.get_context()
-
-    # Parse the JSON CCDBs and retrieve the compile commands.
-    actions = []
-
     if len(args.logfile) != 1:
         LOG.warning("Only one log file can be processed right now!")
         sys.exit(1)
 
     args.output_path = os.path.abspath(args.output_path)
-    if os.path.exists(args.output_path):
-        if not os.path.isdir(args.output_path):
-            LOG.error("The given output path is not a directory: " +
-                      args.output_path)
-            sys.exit(1)
-    else:
-        os.makedirs(args.output_path)
-
-    for log_file in args.logfile:
-        if not os.path.exists(log_file):
-            LOG.error("The specified logfile '" + log_file + "' does not "
-                      "exist!")
-            continue
-
-        actions += log_parser.parse_log(log_file, args.output_path,
-                                        'add_compiler_defaults' in args)
-
-    if len(actions) == 0:
-        LOG.info("None of the specified build log files contained "
-                 "valid compilation commands. No analysis needed...")
+    if os.path.exists(args.output_path) and \
+            not os.path.isdir(args.output_path):
+        LOG.error("The given output path is not a directory: " +
+                  args.output_path)
         sys.exit(1)
 
     if 'enable_all' in args:
@@ -364,8 +343,27 @@ def main(args):
                  "overwriting with current result".format(args.output_path))
         shutil.rmtree(args.output_path)
 
+    if not os.path.exists(args.output_path):
+        os.makedirs(args.output_path)
+
     LOG.debug("Output will be stored to: '" + args.output_path + "'")
 
+    # Parse the JSON CCDBs and retrieve the compile commands.
+    actions = []
+    for log_file in args.logfile:
+        if not os.path.exists(log_file):
+            LOG.error("The specified logfile '" + log_file + "' does not "
+                      "exist!")
+            continue
+
+        actions += log_parser.parse_log(log_file, args.output_path,
+                                        'add_compiler_defaults' in args)
+    if len(actions) == 0:
+        LOG.info("None of the specified build log files contained "
+                 "valid compilation commands. No analysis needed...")
+        sys.exit(1)
+
+    context = generic_package_context.get_context()
     metadata = {'action_num': len(actions),
                 'command': sys.argv,
                 'versions': {

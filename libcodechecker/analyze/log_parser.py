@@ -4,13 +4,13 @@
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
 
+import json
 import os
 import re
+import shlex
+import subprocess
 import sys
 import traceback
-import subprocess
-import shlex
-import json
 
 # TODO: This is a cross-subpackage import!
 from libcodechecker.log import build_action
@@ -27,11 +27,14 @@ COMPILE_OPTS_FWD_TO_DEFAULTS_GETTER = frozenset(
     ['^-m(32|64)',
      '^-std=.*'])
 
+compiler_includes_dump_file = "compiler_includes.json"
+compiler_target_dump_file = "compiler_target.json"
+
 
 def get_compiler_err(cmd):
-    '''
+    """
     Returns the stderr of a compiler invocation as string.
-    '''
+    """
     try:
         proc = subprocess.Popen(shlex.split(cmd),
                                 stdin=subprocess.PIPE,
@@ -58,7 +61,7 @@ def parse_compiler_includes(lines):
     for line in lines.splitlines(True):
         line = line.strip()
         if line.startswith(end_mark):
-            do_append = False
+            break
         if do_append:
             # On OSX there are framework includes,
             # where we need to strip the "(framework directory)" string.
@@ -93,15 +96,17 @@ def parse_compiler_target(lines):
 
 
 def dump_compiler_info(output_path, filename, data):
-    filename = output_path + "/" + filename
-    append_write = 'w'
+    filename = os.path.join(output_path, filename)
+    all_data = dict()
     if os.path.exists(filename):
-        append_write = 'a'
-    with open(filename, append_write) as f:
-        f.write(json.dumps(data))
+        with open(filename, 'r') as f:
+            all_data = json.load(f)
+    all_data.update(data)
+    with open(filename, 'w') as f:
+        f.write(json.dumps(all_data))
 
 
-def get_compiler_includes(compiler, lang, compile_opts, output_path,
+def get_compiler_includes(compiler, lang, compile_opts, output_path=None,
                           extra_opts=None):
     """
     Returns a list of default includes of the given compiler.
@@ -120,12 +125,14 @@ def get_compiler_includes(compiler, lang, compile_opts, output_path,
 
     LOG.debug("Retrieving default includes via '" + cmd + "'")
     err = get_compiler_err(cmd)
-    dump_compiler_info(output_path, "compiler_includes.json",
-                       {"compiler": compiler, "includes": err})
+    if output_path is not None:
+        LOG.debug("Dumping default includes " + compiler)
+        dump_compiler_info(output_path, compiler_includes_dump_file,
+                           {compiler: err})
     return parse_compiler_includes(err)
 
 
-def get_compiler_target(compiler, output_path):
+def get_compiler_target(compiler, output_path=None):
     """
     Returns the target triple of the given compiler as a string.
     """
@@ -134,18 +141,30 @@ def get_compiler_target(compiler, output_path):
     LOG.debug("Retrieving target platform information via '" + cmd + "'")
 
     err = get_compiler_err(cmd)
-    dump_compiler_info(output_path, "compiler_target.json",
-                       {"compiler": compiler, "target": err})
+    if output_path is not None:
+        dump_compiler_info(output_path, compiler_target_dump_file,
+                           {compiler: err})
     return parse_compiler_target(err)
 
 
-def parse_compile_commands_json(logfile, output_path,
+def remove_file_if_exists(filename):
+    if os.path.isfile(filename):
+        os.remove(filename)
+
+
+def parse_compile_commands_json(logfile, output_path=None,
                                 add_compiler_defaults=False):
     import json
     # The add-compiler-defaults is a deprecated argument
     # and we always perform target and include auto-detection.
     add_compiler_defaults = True
     LOG.debug('parse_compile_commands_json: ' + str(add_compiler_defaults))
+
+    if output_path is not None:
+        remove_file_if_exists(os.path.join(output_path,
+                                           compiler_includes_dump_file))
+        remove_file_if_exists(os.path.join(output_path,
+                                           compiler_target_dump_file))
 
     actions = []
     filtered_build_actions = {}
@@ -243,7 +262,11 @@ def parse_compile_commands_json(logfile, output_path,
     return actions
 
 
-def parse_log(logfilepath, output_path, add_compiler_defaults=False):
+def parse_log(logfilepath, output_path=None, add_compiler_defaults=False):
+    '''
+    @param output_path: The report directory. Files with the compiler includes
+    and targets will be written into this dir if add_compiler_defaults is set.
+    '''
     LOG.debug('Parsing log file: ' + logfilepath)
 
     with open(logfilepath) as logfile:
