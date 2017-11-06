@@ -137,3 +137,14 @@ class LogParserTest(unittest.TestCase):
 
         self.assertEqual(list(build_action.sources)[0], r'/tmp/a b.cpp')
         self.assertEqual(build_action.lang, 'c++')
+
+    def test_omitting_link_actions(self):
+        """
+        Test whether plist parser omits build actions which belong to a linking
+        action, i.e. those of which the imput file is a .o or .so.
+        """
+        logfile = os.path.join(self.__test_files, "link_actions.json")
+
+        build_actions = log_parser.parse_log(logfile)
+
+        self.assertEqual(len(build_actions), 1)

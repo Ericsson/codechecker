@@ -153,12 +153,11 @@ def remove_file_if_exists(filename):
 
 
 def parse_compile_commands_json(logfile, output_path=None,
-                                add_compiler_defaults=False):
+                                including_link_actions=False):
     import json
     # The add-compiler-defaults is a deprecated argument
     # and we always perform target and include auto-detection.
-    add_compiler_defaults = True
-    LOG.debug('parse_compile_commands_json: ' + str(add_compiler_defaults))
+    LOG.debug('parse_compile_commands_json')
 
     if output_path is not None:
         remove_file_if_exists(os.path.join(output_path,
@@ -217,7 +216,7 @@ def parse_compile_commands_json(logfile, output_path=None,
         action.target = results.arch
 
         # Store the compiler built in include paths and defines.
-        if add_compiler_defaults and results.compiler:
+        if results.compiler:
             if not (results.compiler in compiler_includes):
                 # Fetch defaults from the compiler,
                 # make sure we use the correct architecture.
@@ -257,22 +256,28 @@ def parse_compile_commands_json(logfile, output_path=None,
         counter += 1
 
     for _, ba in filtered_build_actions.items():
-        actions.append(ba)
+        if including_link_actions or \
+                not all(map(lambda f: f.endswith('.o') or f.endswith('.so'),
+                            ba.sources)):
+            actions.append(ba)
+        else:
+            LOG.debug('Skipping {}, because it is a linking action.'.format(
+                      ', '.join(ba.sources)))
 
     return actions
 
 
-def parse_log(logfilepath, output_path=None, add_compiler_defaults=False):
+def parse_log(logfilepath, output_path=None, including_link_actions=False):
     '''
     @param output_path: The report directory. Files with the compiler includes
-    and targets will be written into this dir if add_compiler_defaults is set.
+    and targets will be written into this dir.
     '''
     LOG.debug('Parsing log file: ' + logfilepath)
 
     with open(logfilepath) as logfile:
         try:
             actions = parse_compile_commands_json(logfile, output_path,
-                                                  add_compiler_defaults)
+                                                  including_link_actions)
         except (ValueError, KeyError, TypeError) as ex:
             if os.stat(logfilepath).st_size == 0:
                 LOG.error('The compile database is empty.')
