@@ -6,6 +6,7 @@
 
 import errno
 import subprocess
+import tempfile
 
 from libcodechecker.logger import LoggerFactory
 
@@ -35,3 +36,26 @@ def check_clang(compiler_bin, env):
             LOG.error(oerr)
             LOG.error('Failed to run: "' + ' '.join(clang_version_cmd) + '"')
             return False
+
+
+def has_analyzer_feature(clang_bin, feature):
+    with tempfile.NamedTemporaryFile() as inputFile:
+        inputFile.write("void foo(){}")
+        inputFile.flush()
+        cmd = [clang_bin, "-x", "c", "--analyze",
+               "-Xclang", feature, inputFile.name, "-o", "-"]
+        LOG.debug('run: "' + ' '.join(cmd) + '"')
+        try:
+            proc = subprocess.Popen(cmd,
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE,
+                                    )
+            out, err = proc.communicate()
+
+            LOG.debug("stdout:\n" + out)
+            LOG.debug("stderr:\n" + err)
+
+            return proc.returncode == 0
+        except OSError:
+            LOG.error('Failed to run: "' + ' '.join(cmd) + '"')
+            raise

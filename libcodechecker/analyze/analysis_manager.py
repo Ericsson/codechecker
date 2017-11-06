@@ -366,6 +366,9 @@ def check(check_data):
 
                     LOG.debug("Writing dependent files to archive.")
                     for dependent_source in dependencies:
+                        if not os.path.isabs(dependent_source):
+                            dependent_source = \
+                                os.path.abspath(dependent_source)
                         LOG.debug("[ZIP] Writing '" + dependent_source + "' "
                                   "to the archive.")
                         archive_path = dependent_source.lstrip('/')
