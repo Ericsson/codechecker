@@ -313,3 +313,10 @@ def sizeof_fmt(num, suffix='B'):
             return "%3.1f%s%s" % (num, unit, suffix)
         num /= 1024.0
     return "%.1f%s%s" % (num, 'Yi', suffix)
+
+
+def escape_like(string, escape_char='*'):
+    """Escape the string parameter used in SQL LIKE expressions."""
+    return string.replace(escape_char, escape_char * 2) \
+                 .replace('%', escape_char + '%') \
+                 .replace('_', escape_char + '_')

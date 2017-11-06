@@ -30,6 +30,7 @@ from codeCheckerDBAccess_v6.ttypes import *
 
 from libcodechecker import generic_package_context
 from libcodechecker import suppress_handler
+from libcodechecker import util
 # TODO: Cross-subpackage import here.
 from libcodechecker.analyze import plist_parser
 from libcodechecker.analyze import store_handler
@@ -559,7 +560,8 @@ class ThriftRequestHandler(object):
                     if run_filter.exactMatch:
                         q = q.filter(Run.name.in_(run_filter.names))
                     else:
-                        OR = [Run.name.ilike('%' + name + '%') for
+                        OR = [Run.name.ilike('%{0}%'.format(
+                                  util.escape_like(name)), escape='*') for
                               name in run_filter.names]
                         q = q.filter(or_(*OR))
 
