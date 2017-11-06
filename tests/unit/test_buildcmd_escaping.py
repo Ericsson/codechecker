@@ -38,7 +38,7 @@ class BuildCmdTestNose(unittest.TestCase):
         cls.src_file_name = "main.cpp"
         cls.src_file_path = os.path.join(cls.tmp_dir,
                                          cls.src_file_name)
-        cls.compiler = "g++"
+        cls.compiler = "clang++"
 
         with open(cls.src_file_path, "w") as test_src:
             test_src.write("""
