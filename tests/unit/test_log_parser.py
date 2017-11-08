@@ -52,7 +52,7 @@ class LogParserTest(unittest.TestCase):
 
         self.assertEqual(' '.join(results.files),
                          r'"-DVARIABLE="some value"" /tmp/a.cpp')
-        self.assertEqual(len(build_action.analyzer_options), 1)
+        self.assertEqual(len(build_action.analyzer_options), 0)
 
     def test_new_ldlogger(self):
         """
@@ -70,7 +70,8 @@ class LogParserTest(unittest.TestCase):
         build_action = log_parser.parse_log(logfile)[0]
 
         self.assertEqual(list(build_action.sources)[0], r'/tmp/a.cpp')
-        self.assertEqual(len(build_action.analyzer_options), 2)
+        self.assertEqual(len(build_action.analyzer_options), 1)
+        self.assertTrue(len(build_action.target) > 0)
         self.assertEqual(build_action.analyzer_options[0],
                          r'-DVARIABLE="\"some value"\"')
 
@@ -96,7 +97,8 @@ class LogParserTest(unittest.TestCase):
         build_action = log_parser.parse_log(logfile)[0]
 
         self.assertEqual(list(build_action.sources)[0], r'/tmp/a.cpp')
-        self.assertEqual(len(build_action.analyzer_options), 2)
+        self.assertEqual(len(build_action.analyzer_options), 1)
+        self.assertTrue(len(build_action.target) > 0)
         self.assertEqual(build_action.analyzer_options[0],
                          r'-DVARIABLE="\"some value"\"')
 
@@ -126,7 +128,8 @@ class LogParserTest(unittest.TestCase):
         build_action = log_parser.parse_log(logfile)[0]
 
         self.assertEqual(list(build_action.sources)[0], r'/tmp/a.cpp')
-        self.assertEqual(len(build_action.analyzer_options), 2)
+        self.assertEqual(len(build_action.analyzer_options), 1)
+        self.assertTrue(len(build_action.target) > 0)
         self.assertEqual(build_action.analyzer_options[0],
                          r'-DVARIABLE="\"some value"\"')
 

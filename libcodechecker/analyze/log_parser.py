@@ -173,7 +173,7 @@ def parse_compile_commands_json(logfile, output_path=None,
     data = json.load(logfile)
 
     compiler_includes = {}
-    compiler_target = ''
+    compiler_target = {}
 
     counter = 0
     for entry in data:
@@ -233,13 +233,12 @@ def parse_compile_commands_json(logfile, output_path=None,
                                           results.compile_opts, output_path,
                                           extra_opts)
 
-                compiler_target = get_compiler_target(results.compiler,
-                                                      output_path)
+            if not (results.compiler in compiler_target):
+                compiler_target[results.compiler] = \
+                    get_compiler_target(results.compiler, output_path)
 
             action.compiler_includes = compiler_includes[results.compiler]
-
-            if compiler_target != "":
-                action.analyzer_options.append("--target=" + compiler_target)
+            action.target = compiler_target[results.compiler]
 
         if results.action == option_parser.ActionType.COMPILE or \
            results.action == option_parser.ActionType.LINK:

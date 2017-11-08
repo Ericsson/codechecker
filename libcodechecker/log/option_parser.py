@@ -225,6 +225,7 @@ class OptionParserResult(object):
         self._link_opts = []
         self._files = []
         self._arch = ''
+        self._target = ''
         self._lang = None
         self._output = ''
         self._compiler = None
@@ -288,6 +289,14 @@ class OptionParserResult(object):
     @arch.setter
     def arch(self, value):
         self._arch = value
+
+    @property
+    def target(self):
+        return self._target
+
+    @target.setter
+    def target(self, value):
+        self._target = value
 
     @property
     def lang(self):

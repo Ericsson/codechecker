@@ -102,6 +102,9 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
             # Set language.
             analyzer_cmd.extend(['-x', self.buildaction.lang])
 
+            if self.buildaction.target != "":
+                analyzer_cmd.append("--target=" + self.buildaction.target)
+
             analyzer_cmd.extend(self.buildaction.analyzer_options)
 
             analyzer_cmd.extend(self.buildaction.compiler_includes)
