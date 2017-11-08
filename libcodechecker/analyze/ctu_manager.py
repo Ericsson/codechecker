@@ -113,9 +113,10 @@ def generate_ast(triple_arch, action, source, config, env):
 
     cmdstr = ' '.join(cmd)
     LOG.debug_analyzer("Generating AST using '%s'" % cmdstr)
-    ret_code, _, _ = analyzer_base.SourceAnalyzer.run_proc(cmdstr, env)
+    ret_code, _, err = analyzer_base.SourceAnalyzer.run_proc(cmdstr, env)
     if ret_code != 0:
-        LOG.error("Error generating AST using '%s'", cmdstr)
+        LOG.error("Error generating AST.\n\ncommand:\n\n%s\n\nstderr:\n\n%s",
+                  cmdstr, err)
 
 
 def func_map_list_src_to_ast(func_src_list, ctu_in_memory):
@@ -150,9 +151,10 @@ def map_functions(triple_arch, action, source, config, env,
 
     cmdstr = ' '.join(cmd)
     LOG.debug_analyzer("Generating function map using '%s'" % cmdstr)
-    ret_code, stdout, _ = analyzer_base.SourceAnalyzer.run_proc(cmdstr, env)
+    ret_code, stdout, err = analyzer_base.SourceAnalyzer.run_proc(cmdstr, env)
     if ret_code != 0:
-        LOG.error("Error generating function map using '%s'", cmdstr)
+        LOG.error("Error generating function map."
+                  "\n\ncommand:\n\n%s\n\nstderr:\n\n%s", cmdstr, err)
         return
 
     func_src_list = stdout.splitlines()
