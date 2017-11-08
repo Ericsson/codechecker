@@ -6,17 +6,14 @@
 
 define([
   'dojo/_base/declare',
-  'dojo/topic',
-  'dojo/dom-construct',
   'dijit/form/Button',
   'dijit/layout/BorderContainer',
   'dijit/layout/ContentPane',
   'dijit/layout/TabContainer',
-  'codechecker/hashHelper',
-  'codechecker/HeaderMenu',
+  'codechecker/HeaderPane',
   'products/ListOfProducts'],
-function (declare, topic, domConstruct, Button, BorderContainer, ContentPane,
-  TabContainer, hashHelper, HeaderMenu, ListOfProducts) {
+function (declare, Button, BorderContainer, ContentPane, TabContainer,
+  HeaderPane, ListOfProducts) {
 
   return function () {
 
@@ -43,49 +40,26 @@ function (declare, topic, domConstruct, Button, BorderContainer, ContentPane,
     var productsTab = new TabContainer({ region : 'center' });
     layout.addChild(productsTab);
 
-    var headerPane = new ContentPane({ id : 'headerPane', region : 'top' });
-    layout.addChild(headerPane);
-
     var productsPane = new ContentPane({
       title : 'All products',
       region : 'center'
     });
     productsTab.addChild(productsPane);
 
-    //--- Logo ---//
+    //--- Center panel ---//
 
-    var logoContainer = domConstruct.create('div', {
-      id : 'logo-container'
-    }, headerPane.domNode);
+    var listOfProducts = new ListOfProducts({
+      title : 'Products',
+      id : 'list-of-products'
+    });
 
-    var logo = domConstruct.create('span', { id : 'logo' }, logoContainer);
-
-    var logoText = domConstruct.create('div', {
-      id : 'logo-text',
-      innerHTML : 'CodeChecker ' + CC_PROD_SERVICE.getPackageVersion()
-    }, logoContainer);
-
-    var title = domConstruct.create('span', {
-      id : 'logo-title',
-      innerHTML : "Products on this server"
-    }, logoText);
-
-    var user = CC_AUTH_SERVICE.getLoggedInUser();
-    var loginUserSpan = null;
-    if (user.length > 0) {
-      loginUserSpan = domConstruct.create('span', {
-        id: 'loggedin',
-        innerHTML: "Logged in as " + user + "."
-      });
-    }
+    productsPane.addChild(listOfProducts);
 
     //--- Admin button ---//
 
     layout.set('adminLevel', 0);
 
-    var isSuperuser = CC_AUTH_SERVICE.hasPermission(
-      Permission.SUPERUSER, "");
-
+    var isSuperuser = CC_AUTH_SERVICE.hasPermission(Permission.SUPERUSER, "");
     var isAdminOfAnyProduct = CC_PROD_SERVICE.isAdministratorOfAnyProduct();
 
     var menuButton = new Button({
@@ -110,59 +84,16 @@ function (declare, topic, domConstruct, Button, BorderContainer, ContentPane,
       }
     });
 
-    var headerMenu = domConstruct.create('div', {
-        id : 'header-menu'
+    var headerPane = new HeaderPane({
+      id : 'headerPane',
+      title : "Products on this server",
+      region : 'top',
+      menuItems : isSuperuser || isAdminOfAnyProduct
+                ? [ menuButton.domNode ]
+                : null,
+      mainTab : productsTab
     });
-
-    var headerMenuButton = new HeaderMenu({
-      class : 'main-menu-button',
-      iconClass : 'dijitIconFunction',
-    });
-
-    if (loginUserSpan != null)
-        domConstruct.place(loginUserSpan, headerMenu);
-
-    if (isSuperuser || isAdminOfAnyProduct)
-      domConstruct.place(menuButton.domNode, headerMenu);
-
-    domConstruct.place(headerMenuButton.domNode, headerMenu);
-    domConstruct.place(headerMenu, headerPane.domNode);
-
-    //--- Center panel ---//
-
-    var listOfProducts = new ListOfProducts({
-      title : 'Products',
-      id : 'list-of-products'
-    });
-
-    productsPane.addChild(listOfProducts);
-
-    topic.subscribe('tab/userguide', function () {
-      var that = this;
-
-      if (!this.userguide) {
-        this.userguide = new ContentPane({
-          title : 'User guide',
-          closable : true,
-          href  : 'userguide/doc/html/md_userguide.html',
-          onClose : function () {
-            delete that.userguide;
-            return true;
-          },
-          onShow : function () {
-            hashHelper.resetStateValues({
-              'tab' : 'userguide'
-            });
-          }
-        });
-        productsTab.addChild(this.userguide);
-      }
-
-      hashHelper.resetStateValues({
-        'tab' : 'userguide'
-      });
-      productsTab.selectChild(this.userguide);
-    });
+    layout.addChild(headerPane);
 
     //--- Init page ---//
 
