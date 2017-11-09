@@ -1,0 +1,12 @@
+[
+	{
+		"directory": "/tmp",
+		"command": "g++ /tmp/a.cpp -o /tmp/a.out",
+		"file": "/tmp/a.cpp"
+	},
+	{
+		"directory": "/tmp",
+		"command": "g++ /tmp/c.cpp /tmp/b.o -o /tmp/a.out",
+		"file": "/tmp/b.o"
+	}
+]

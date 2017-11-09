@@ -357,7 +357,7 @@ def main(args):
             continue
 
         actions += log_parser.parse_log(log_file, args.output_path,
-                                        'add_compiler_defaults' in args)
+                                        'ctu_phases' in args)
     if len(actions) == 0:
         LOG.info("None of the specified build log files contained "
                  "valid compilation commands. No analysis needed...")
