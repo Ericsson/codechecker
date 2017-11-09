@@ -21,6 +21,7 @@ except ImportError:
 from libcodechecker.log import build_manager
 from libcodechecker.analyze import log_parser
 from libcodechecker.analyze.analyzers import analyzer_base
+from libcodechecker.libhandlers.analyze import ParseLogOptions
 
 
 class BuildCmdTestNose(unittest.TestCase):
@@ -81,7 +82,9 @@ class BuildCmdTestNose(unittest.TestCase):
         comp_cmd_json = self.__get_cmp_json(compile_cmd)
         with closing(StringIO()) as text:
             text.write(comp_cmd_json)
-            return log_parser.parse_compile_commands_json(text)
+
+            return log_parser.parse_compile_commands_json(text,
+                                                          ParseLogOptions())
 
     def test_buildmgr(self):
         """

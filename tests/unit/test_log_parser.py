@@ -11,6 +11,7 @@ import unittest
 
 from libcodechecker.analyze import log_parser
 from libcodechecker.log import option_parser
+from libcodechecker.libhandlers.analyze import ParseLogOptions
 
 
 class LogParserTest(unittest.TestCase):
@@ -47,7 +48,7 @@ class LogParserTest(unittest.TestCase):
         # option_parser, so here we aim for a non-failing stalemate of the
         # define being considered a file and ignored, for now.
 
-        build_action = log_parser.parse_log(logfile)[0]
+        build_action = log_parser.parse_log(logfile, ParseLogOptions())[0]
         results = option_parser.parse_options(build_action.original_command)
 
         self.assertEqual(' '.join(results.files),
@@ -67,7 +68,7 @@ class LogParserTest(unittest.TestCase):
         # Logfile contains -DVARIABLE="some value"
         # and --target=x86_64-linux-gnu.
 
-        build_action = log_parser.parse_log(logfile)[0]
+        build_action = log_parser.parse_log(logfile, ParseLogOptions())[0]
 
         self.assertEqual(list(build_action.sources)[0], r'/tmp/a.cpp')
         self.assertEqual(len(build_action.analyzer_options), 1)
@@ -78,7 +79,7 @@ class LogParserTest(unittest.TestCase):
         # Test source file with spaces.
         logfile = os.path.join(self.__test_files, "ldlogger-new-space.json")
 
-        build_action = log_parser.parse_log(logfile)[0]
+        build_action = log_parser.parse_log(logfile, ParseLogOptions())[0]
 
         self.assertEqual(list(build_action.sources)[0], r'/tmp/a b.cpp')
         self.assertEqual(build_action.lang, 'c++')
@@ -94,7 +95,7 @@ class LogParserTest(unittest.TestCase):
         #
         # The define is passed to the analyzer properly.
 
-        build_action = log_parser.parse_log(logfile)[0]
+        build_action = log_parser.parse_log(logfile, ParseLogOptions())[0]
 
         self.assertEqual(list(build_action.sources)[0], r'/tmp/a.cpp')
         self.assertEqual(len(build_action.analyzer_options), 1)
@@ -105,7 +106,7 @@ class LogParserTest(unittest.TestCase):
         # Test source file with spaces.
         logfile = os.path.join(self.__test_files, "intercept-old-space.json")
 
-        build_action = log_parser.parse_log(logfile)[0]
+        build_action = log_parser.parse_log(logfile, ParseLogOptions())[0]
 
         self.assertEqual(list(build_action.sources)[0], r'/tmp/a b.cpp')
         self.assertEqual(build_action.lang, 'c++')
@@ -125,7 +126,7 @@ class LogParserTest(unittest.TestCase):
         #
         # The define is passed to the analyzer properly.
 
-        build_action = log_parser.parse_log(logfile)[0]
+        build_action = log_parser.parse_log(logfile, ParseLogOptions())[0]
 
         self.assertEqual(list(build_action.sources)[0], r'/tmp/a.cpp')
         self.assertEqual(len(build_action.analyzer_options), 1)
@@ -136,7 +137,7 @@ class LogParserTest(unittest.TestCase):
         # Test source file with spaces.
         logfile = os.path.join(self.__test_files, "intercept-new-space.json")
 
-        build_action = log_parser.parse_log(logfile)[0]
+        build_action = log_parser.parse_log(logfile, ParseLogOptions())[0]
 
         self.assertEqual(list(build_action.sources)[0], r'/tmp/a b.cpp')
         self.assertEqual(build_action.lang, 'c++')

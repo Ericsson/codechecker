@@ -106,7 +106,17 @@ def dump_compiler_info(output_path, filename, data):
         f.write(json.dumps(all_data))
 
 
-def get_compiler_includes(compiler, lang, compile_opts, output_path=None,
+def load_compiler_info(filename, compiler):
+    with open(filename, 'r') as f:
+        data = json.load(f)
+    value = data.get(compiler)
+    if value is None:
+        LOG.error("Could not find compiler %s in file %s" %
+                  (compiler, filename))
+    return value
+
+
+def get_compiler_includes(parseLogOptions, compiler, lang, compile_opts,
                           extra_opts=None):
     """
     Returns a list of default includes of the given compiler.
@@ -123,26 +133,38 @@ def get_compiler_includes(compiler, lang, compile_opts, output_path=None,
     cmd = compiler + " " + ' '.join(extra_opts) + " -E -x " + lang + \
         " " + sysroot + " - -v "
 
-    LOG.debug("Retrieving default includes via '" + cmd + "'")
-    err = get_compiler_err(cmd)
-    if output_path is not None:
+    err = ""
+    if parseLogOptions.compiler_includes_file is None:
+        LOG.debug("Retrieving default includes via '" + cmd + "'")
+        err = get_compiler_err(cmd)
+    else:
+        err = load_compiler_info(parseLogOptions.compiler_includes_file,
+                                 compiler)
+
+    if parseLogOptions.output_path is not None:
         LOG.debug("Dumping default includes " + compiler)
-        dump_compiler_info(output_path, compiler_includes_dump_file,
+        dump_compiler_info(parseLogOptions.output_path,
+                           compiler_includes_dump_file,
                            {compiler: err})
     return parse_compiler_includes(err)
 
 
-def get_compiler_target(compiler, output_path=None):
+def get_compiler_target(parseLogOptions, compiler):
     """
     Returns the target triple of the given compiler as a string.
     """
+    err = ""
+    if parseLogOptions.compiler_target_file is None:
+        cmd = compiler + ' -v'
+        LOG.debug("Retrieving target platform information via '" + cmd + "'")
+        err = get_compiler_err(cmd)
+    else:
+        err = load_compiler_info(parseLogOptions.compiler_target_file,
+                                 compiler)
 
-    cmd = compiler + ' -v'
-    LOG.debug("Retrieving target platform information via '" + cmd + "'")
-
-    err = get_compiler_err(cmd)
-    if output_path is not None:
-        dump_compiler_info(output_path, compiler_target_dump_file,
+    if parseLogOptions.output_path is not None:
+        dump_compiler_info(parseLogOptions.output_path,
+                           compiler_target_dump_file,
                            {compiler: err})
     return parse_compiler_target(err)
 
@@ -152,14 +174,13 @@ def remove_file_if_exists(filename):
         os.remove(filename)
 
 
-def parse_compile_commands_json(logfile, output_path=None,
-                                add_compiler_defaults=False):
-    import json
+def parse_compile_commands_json(logfile, parseLogOptions):
     # The add-compiler-defaults is a deprecated argument
     # and we always perform target and include auto-detection.
     add_compiler_defaults = True
     LOG.debug('parse_compile_commands_json: ' + str(add_compiler_defaults))
 
+    output_path = parseLogOptions.output_path
     if output_path is not None:
         remove_file_if_exists(os.path.join(output_path,
                                            compiler_includes_dump_file))
@@ -229,13 +250,13 @@ def parse_compile_commands_json(logfile, output_path=None,
                             extra_opts.append(comp_opt)
 
                 compiler_includes[results.compiler] = \
-                    get_compiler_includes(results.compiler, results.lang,
-                                          results.compile_opts, output_path,
+                    get_compiler_includes(parseLogOptions, results.compiler,
+                                          results.lang, results.compile_opts,
                                           extra_opts)
 
             if not (results.compiler in compiler_target):
                 compiler_target[results.compiler] = \
-                    get_compiler_target(results.compiler, output_path)
+                    get_compiler_target(parseLogOptions, results.compiler)
 
             action.compiler_includes = compiler_includes[results.compiler]
             action.target = compiler_target[results.compiler]
@@ -261,7 +282,7 @@ def parse_compile_commands_json(logfile, output_path=None,
     return actions
 
 
-def parse_log(logfilepath, output_path=None, add_compiler_defaults=False):
+def parse_log(logfilepath, parseLogOptions):
     '''
     @param output_path: The report directory. Files with the compiler includes
     and targets will be written into this dir if add_compiler_defaults is set.
@@ -270,8 +291,7 @@ def parse_log(logfilepath, output_path=None, add_compiler_defaults=False):
 
     with open(logfilepath) as logfile:
         try:
-            actions = parse_compile_commands_json(logfile, output_path,
-                                                  add_compiler_defaults)
+            actions = parse_compile_commands_json(logfile, parseLogOptions)
         except (ValueError, KeyError, TypeError) as ex:
             if os.stat(logfilepath).st_size == 0:
                 LOG.error('The compile database is empty.')
