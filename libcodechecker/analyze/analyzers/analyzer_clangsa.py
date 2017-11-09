@@ -143,6 +143,8 @@ class ClangSA(analyzer_base.SourceAnalyzer):
 
             # Set language.
             analyzer_cmd.extend(['-x', self.buildaction.lang])
+            if self.buildaction.target != "":
+                analyzer_cmd.append("--target=" + self.buildaction.target)
 
             analyzer_cmd.append(config.analyzer_extra_arguments)
 
