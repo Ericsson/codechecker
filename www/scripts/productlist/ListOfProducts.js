@@ -252,8 +252,6 @@ function (declare, domClass, domConstruct, ItemFileWriteStore, topic,
 
       CC_PROD_SERVICE.getProducts(null, productNameFilter,
       function (productList) {
-        that.onLoaded(productList);
-
         productList.forEach(function (item) {
           that._addProductData(item);
         });
@@ -312,8 +310,10 @@ function (declare, domClass, domConstruct, ItemFileWriteStore, topic,
     },
 
     onLoaded : function (productDataList) {
+      var that = this;
+
       this.toggleAdminButtons(this.adminLevel);
-      this.sort();
+      setTimeout(function () { that.sort(); }, 0);
     }
   });
 
