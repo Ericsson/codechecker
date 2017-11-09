@@ -165,7 +165,8 @@ class ThriftClientHelper(object):
         pass
 
     @ThriftClientCall
-    def getCheckerMsgCounts(self, runIds, reportFilter, cmpData):
+    def getCheckerMsgCounts(self, runIds, reportFilter, cmpData, limit,
+                            offset):
         pass
 
     @ThriftClientCall
@@ -177,11 +178,12 @@ class ThriftClientHelper(object):
         pass
 
     @ThriftClientCall
-    def getFileCounts(self, runIds, reportFilter, cmpData):
+    def getFileCounts(self, runIds, reportFilter, cmpData, limit, offset):
         pass
 
     @ThriftClientCall
-    def getCheckerCounts(self, base_run_ids, reportFilter, cmpData):
+    def getCheckerCounts(self, base_run_ids, reportFilter, cmpData, limit,
+                         offset):
         pass
 
     # STORAGE RELATED API CALLS

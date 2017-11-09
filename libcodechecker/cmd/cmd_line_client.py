@@ -530,7 +530,9 @@ def handle_list_result_types(args):
         setattr(report_filter, field, values)
         checkers = client.getCheckerCounts(run_ids,
                                            report_filter,
-                                           None)
+                                           None,
+                                           None,
+                                           0)
 
         return dict((res.name, res.count) for res in checkers)
 
@@ -547,8 +549,11 @@ def handle_list_result_types(args):
     all_checkers_report_filter = ttypes.ReportFilter()
     all_checkers_report_filter.isUnique = True
 
-    all_checkers = client.getCheckerCounts(run_ids, all_checkers_report_filter,
-                                           None)
+    all_checkers = client.getCheckerCounts(run_ids,
+                                           all_checkers_report_filter,
+                                           None,
+                                           None,
+                                           0)
     all_checkers_dict = dict((res.name, res) for res in all_checkers)
 
     unrev_checkers = get_statistics(client, run_ids, 'reviewStatus',

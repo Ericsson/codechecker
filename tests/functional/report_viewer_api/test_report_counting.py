@@ -120,7 +120,9 @@ class TestReportFilter(unittest.TestCase):
         runid = self._runids[0]
         checker_counts = self._cc_client.getCheckerCounts([runid],
                                                           None,
-                                                          None)
+                                                          None,
+                                                          None,
+                                                          0)
         checkers_dict = dict((res.name, res.count) for res in checker_counts)
 
         self.assertGreaterEqual(len(checker_counts), len(self.run1_checkers))
@@ -134,7 +136,9 @@ class TestReportFilter(unittest.TestCase):
         core_filter = ReportFilter(checkerName=["core*"])
         checker_counts = self._cc_client.getCheckerCounts([runid],
                                                           core_filter,
-                                                          None)
+                                                          None,
+                                                          None,
+                                                          0)
         checkers_dict = dict((res.name, res.count) for res in checker_counts)
 
         core_checkers = {k: v for k, v in self.run1_checkers.items()
@@ -150,7 +154,9 @@ class TestReportFilter(unittest.TestCase):
         runid = self._runids[1]
         checker_counts = self._cc_client.getCheckerCounts([runid],
                                                           None,
-                                                          None)
+                                                          None,
+                                                          None,
+                                                          0)
         checkers_dict = dict((res.name, res.count) for res in checker_counts)
 
         self.assertGreaterEqual(len(checker_counts), len(self.run2_checkers))
@@ -162,7 +168,9 @@ class TestReportFilter(unittest.TestCase):
         """
         checker_counts = self._cc_client.getCheckerCounts(self._runids,
                                                           None,
-                                                          None)
+                                                          None,
+                                                          None,
+                                                          0)
         checkers_dict = dict((res.name, res.count) for res in checker_counts)
 
         r1_checkers = Counter(self.run1_checkers)
@@ -179,7 +187,9 @@ class TestReportFilter(unittest.TestCase):
         core_filter = ReportFilter(checkerName=["core*"])
         checker_counts = self._cc_client.getCheckerCounts(self._runids,
                                                           core_filter,
-                                                          None)
+                                                          None,
+                                                          None,
+                                                          0)
         checkers_dict = dict((res.name, res.count) for res in checker_counts)
 
         core_checkers_r1 = {k: v for k, v in self.run1_checkers.items()
@@ -241,7 +251,8 @@ class TestReportFilter(unittest.TestCase):
         Get all the file counts for run1.
         """
         runid = self._runids[0]
-        file_counts = self._cc_client.getFileCounts([runid], None, None)
+        file_counts = self._cc_client.getFileCounts([runid], None, None, None,
+                                                    0)
         res = {get_filename(k): v for k, v in file_counts.items()}
 
         print(res)
@@ -253,7 +264,8 @@ class TestReportFilter(unittest.TestCase):
         Get all the file counts for run2.
         """
         runid = self._runids[1]
-        file_counts = self._cc_client.getFileCounts([runid], None, None)
+        file_counts = self._cc_client.getFileCounts([runid], None, None, None,
+                                                    0)
         res = {get_filename(k): v for k, v in file_counts.items()}
 
         print(res)
@@ -264,7 +276,11 @@ class TestReportFilter(unittest.TestCase):
         """
         Get all the file counts for run1 and run2.
         """
-        file_counts = self._cc_client.getFileCounts(self._runids, None, None)
+        file_counts = self._cc_client.getFileCounts(self._runids,
+                                                    None,
+                                                    None,
+                                                    None,
+                                                    0)
         res = {get_filename(k): v for k, v in file_counts.items()}
 
         r1_count = Counter(self.run1_files)
@@ -284,7 +300,9 @@ class TestReportFilter(unittest.TestCase):
 
         file_counts = self._cc_client.getFileCounts(self._runids,
                                                     null_stack_filter,
-                                                    None)
+                                                    None,
+                                                    None,
+                                                    0)
 
         res = {get_filename(k): v for k, v in file_counts.items()}
 
@@ -312,15 +330,21 @@ class TestReportFilter(unittest.TestCase):
         """
         run1_msgs = self._cc_client.getCheckerMsgCounts([self._runids[0]],
                                                         None,
-                                                        None)
+                                                        None,
+                                                        None,
+                                                        0)
 
         run2_msgs = self._cc_client.getCheckerMsgCounts([self._runids[1]],
                                                         None,
-                                                        None)
+                                                        None,
+                                                        None,
+                                                        0)
 
         run1_run2_msgs = self._cc_client.getCheckerMsgCounts(self._runids,
                                                              None,
-                                                             None)
+                                                             None,
+                                                             None,
+                                                             0)
 
         r1_checker_msg = Counter(run1_msgs)
         r2_checker_msg = Counter(run2_msgs)
@@ -482,7 +506,9 @@ class TestReportFilter(unittest.TestCase):
             detectionStatus=[DetectionStatus.NEW])
         new_reports = self._cc_client.getCheckerCounts([runid],
                                                        new_filter,
-                                                       None)
+                                                       None,
+                                                       None,
+                                                       0)
         checkers_dict = dict((res.name, res.count) for res in new_reports)
 
         new = {'core.CallAndMessage': 5,
@@ -504,7 +530,9 @@ class TestReportFilter(unittest.TestCase):
             detectionStatus=[DetectionStatus.RESOLVED])
         resolved_reports = self._cc_client.getCheckerCounts([runid],
                                                             resolved_filter,
-                                                            None)
+                                                            None,
+                                                            None,
+                                                            0)
         checkers_dict = dict((res.name, res.count) for res in resolved_reports)
 
         self.assertDictEqual({}, checkers_dict)
@@ -520,7 +548,9 @@ class TestReportFilter(unittest.TestCase):
         unresolved_reports = \
             self._cc_client.getCheckerCounts([runid],
                                              unresolved_filter,
-                                             None)
+                                             None,
+                                             None,
+                                             0)
         checkers_dict = dict((res.name, res.count)
                              for res in unresolved_reports)
 
@@ -536,7 +566,9 @@ class TestReportFilter(unittest.TestCase):
             detectionStatus=[DetectionStatus.REOPENED])
         reopened_reports = self._cc_client.getCheckerCounts([runid],
                                                             reopen_filter,
-                                                            None)
+                                                            None,
+                                                            None,
+                                                            0)
         checkers_dict = dict((res.name, res.count) for res in reopened_reports)
         self.assertDictEqual({}, checkers_dict)
 
@@ -552,14 +584,14 @@ class TestReportFilter(unittest.TestCase):
         separate_report_counts = 0
         for run in runs:
             run_report_count = self._cc_client.getRunReportCounts(
-                [run.runId], None)
+                [run.runId], None, None, 0)
             # Should return the count for only one run.
             self.assertEqual(len(run_report_count), 1)
             separate_report_counts += run_report_count[0].reportCount
 
         all_report_counts = 0
         report_counts = \
-            self._cc_client.getRunReportCounts([], None)
+            self._cc_client.getRunReportCounts([], None, None, 0)
 
         for rc in report_counts:
             all_report_counts += rc.reportCount

@@ -243,7 +243,9 @@ class Diff(unittest.TestCase):
 
         diff_res = self._cc_client.getCheckerCounts([base_run_id],
                                                     None,
-                                                    cmp_data)
+                                                    cmp_data,
+                                                    None,
+                                                    0)
         diff_dict = dict((res.name, res.count) for res in diff_res)
 
         # core.CallAndMessage is the new checker.
@@ -262,7 +264,9 @@ class Diff(unittest.TestCase):
         report_filter = ReportFilter(checkerName=["*core*"])
         diff_res = self._cc_client.getCheckerCounts([base_run_id],
                                                     report_filter,
-                                                    cmp_data)
+                                                    cmp_data,
+                                                    None,
+                                                    0)
         diff_dict = dict((res.name, res.count) for res in diff_res)
 
         # core.CallAndMessage is the new checker.
@@ -281,7 +285,9 @@ class Diff(unittest.TestCase):
                                diffType=DiffType.RESOLVED)
         diff_res = self._cc_client.getCheckerCounts([base_run_id],
                                                     report_filter,
-                                                    cmp_data)
+                                                    cmp_data,
+                                                    None,
+                                                    0)
         diff_dict = dict((res.name, res.count) for res in diff_res)
 
         # Resolved core checkers.
@@ -300,7 +306,9 @@ class Diff(unittest.TestCase):
                                diffType=DiffType.UNRESOLVED)
         diff_res = self._cc_client.getCheckerCounts([base_run_id],
                                                     report_filter,
-                                                    cmp_data)
+                                                    cmp_data,
+                                                    None,
+                                                    0)
         diff_dict = dict((res.name, res.count) for res in diff_res)
 
         # Unresolved core checkers.
@@ -319,7 +327,9 @@ class Diff(unittest.TestCase):
 
         diff_res = self._cc_client.getCheckerCounts([base_run_id],
                                                     None,
-                                                    cmp_data)
+                                                    cmp_data,
+                                                    None,
+                                                    0)
         diff_dict = dict((res.name, res.count) for res in diff_res)
 
         # All unresolved checkers.
@@ -429,7 +439,9 @@ class Diff(unittest.TestCase):
 
         diff_res = self._cc_client.getCheckerCounts([base_run_id],
                                                     None,
-                                                    cmp_data)
+                                                    cmp_data,
+                                                    None,
+                                                    0)
         diff_dict = dict((res.name, res.count) for res in diff_res)
 
         test_res = {'core.StackAddressEscape': 3}
@@ -449,7 +461,9 @@ class Diff(unittest.TestCase):
         diff_res = \
             self._cc_client.getCheckerCounts([base_run_id],
                                              None,
-                                             cmp_data)
+                                             cmp_data,
+                                             None,
+                                             0)
         diff_dict = dict((res.name, res.count) for res in diff_res)
 
         test_res = {'cplusplus.NewDelete': 5,
@@ -478,7 +492,9 @@ class Diff(unittest.TestCase):
                 diff_res = \
                     self._cc_client.getCheckerCounts([base_run_id],
                                                      checker_filter,
-                                                     cmp_data)
+                                                     cmp_data,
+                                                     None,
+                                                     0)
                 diff_dict = dict((res.name, res.count) for res in diff_res)
 
                 # There should be only one result for each checker name.
