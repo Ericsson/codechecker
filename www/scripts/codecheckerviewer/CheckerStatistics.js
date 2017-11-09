@@ -267,7 +267,9 @@ function (declare, ItemFileWriteStore, Deferred, all, Memory, Observable,
         if (q.field)
           reportFilter[q.field] = q.values;
 
-        CC_SERVICE.getCheckerCounts(runIds, reportFilter, null, null,
+        var limit = null;
+        var offset = null;
+        CC_SERVICE.getCheckerCounts(runIds, reportFilter, null, limit, offset,
         function (res) {
           var obj = {};
           res.forEach(function (item) { obj[item.name] = item; });
