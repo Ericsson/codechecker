@@ -53,7 +53,7 @@ createuser --login --pwprompt codechecker
 createdb codechecker_config
 
 # The newly created user must have privileges on its own database.
-psql -C "GRANT ALL PRIVILEGES ON DATABASE codechecker_config TO codechecker;"
+psql -c "GRANT ALL PRIVILEGES ON DATABASE codechecker_config TO codechecker;"
 
 # Return to your normal shell via:
 exit
@@ -110,7 +110,7 @@ sudo -i -u postgres
 createdb default_product
 
 # The newly created user must have privileges on its own database.
-psql -C "GRANT ALL PRIVILEGES ON DATABASE default_product TO codechecker;"
+psql -c "GRANT ALL PRIVILEGES ON DATABASE default_product TO codechecker;"
 ~~~~~~
 
 For a product to be set up by the server, an empty database with rights given
