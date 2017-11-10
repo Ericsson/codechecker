@@ -1221,20 +1221,6 @@ span[class*="severity-"] {
   display: flex;
 }
 
-.checker-statistics {
-  display: flex;
-  flex-direction: column;
-}
-
-.checker-statistics-filter {
-  display: block;
-  overflow: hidden;
-}
-
-.checker-statistics-list {
-  flex-grow: 1;
-}
-
 .run-count-wrapper {
   padding: 10px;
 }
@@ -1279,4 +1265,38 @@ span[class*="severity-"] {
 /* Removes orange border from focus */
 .dijitTooltipBelow {
   outline: none;
+}
+
+.severity-statistics-list {
+  width: 300px;
+}
+
+.statistic-header-wrapper {
+  font-weight: 600;
+  font-size: 1.5em;
+  padding: 10px;
+  color: #3680a9;
+}
+
+.statistic-header-wrapper .title {
+  vertical-align: middle;
+}
+
+.export-to {
+  padding: 4px;
+  margin: 0 5px;
+  font-weight: 600;
+  font-size: small;
+  vertical-align: middle;
+  cursor: pointer;
+}
+
+.export-to:hover {
+  text-decoration: underline;
+}
+
+.export-to-csv {
+  background-color: #d9e4ee;
+  color: #357ea7;
+  border: 1px solid #cad2da;
 }
