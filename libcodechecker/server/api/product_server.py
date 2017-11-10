@@ -79,6 +79,42 @@ class ThriftProductHandler(object):
             if session:
                 session.close()
 
+    def __get_product(self, session, product):
+        """
+        Retrieve the product connection object and create a Thrift Product
+        object for the given product record in the database.
+        """
+
+        server_product = self.__server.get_product(product.endpoint)
+        if not server_product:
+            LOG.info("Product '{0}' was found in the configuration "
+                     "database but no database connection was "
+                     "present. Mounting analysis run database..."
+                     .format(product.endpoint))
+            self.__server.add_product(product)
+            server_product = self.__server.get_product(product.endpoint)
+
+        name = base64.b64encode(product.display_name.encode('utf-8'))
+        descr = base64.b64encode(product.description.encode('utf-8')) \
+            if product.description else None
+
+        args = {'config_db_session': session,
+                'productID': product.id}
+        product_access = permissions.require_permission(
+            permissions.PRODUCT_ACCESS, args, self.__auth_session)
+        product_admin = permissions.require_permission(
+            permissions.PRODUCT_ADMIN, args, self.__auth_session)
+
+        return server_product, ttypes.Product(
+            id=product.id,
+            endpoint=product.endpoint,
+            displayedName_b64=name,
+            description_b64=descr,
+            connected=server_product.db_status == shared.ttypes.DBStatus.OK,
+            accessible=product_access,
+            administrating=product_admin,
+            databaseStatus=server_product.db_status)
+
     @timeit
     def getPackageVersion(self):
         return self.__package_version
@@ -119,6 +155,21 @@ class ThriftProductHandler(object):
             session = self.__session()
             prods = session.query(Product)
 
+            num_all_products = prods.count()  # prods get filtered later.
+            if num_all_products < self.__server.num_products:
+                # It can happen that a product gets removed from the
+                # configuration database from a different server that uses the
+                # same configuration database. In this case, the product is
+                # no longer valid, yet the current server keeps a connection
+                # object up.
+                LOG.info("{0} products were removed but server is still "
+                         "connected to them. Disconnecting these...".format(
+                             self.__server.num_products - num_all_products))
+
+                all_products = session.query(Product).all()
+                self.__server.remove_products_except([prod.endpoint for prod
+                                                      in all_products])
+
             if product_endpoint_filter:
                 prods = prods.filter(Product.endpoint.ilike('%{0}%'.format(
                     util.escape_like(product_endpoint_filter)), escape='*'))
@@ -128,48 +179,9 @@ class ThriftProductHandler(object):
                     util.escape_like(product_name_filter)), escape='*'))
 
             prods = prods.all()
-
             for prod in prods:
-                server_product = self.__server.get_product(prod.endpoint)
-
-                if not server_product:
-                    # TODO: Better support this, if the configuration database
-                    # is mounted to multiple servers?
-                    LOG.error("Product '{0}' was found in the configuration "
-                              "database, but no database connection is "
-                              "present. Was the configuration database "
-                              "connected to multiple servers?"
-                              .format(prod.endpoint))
-                    LOG.info("Please restart the server to make this "
-                             "product available.")
-                    continue
-
-                LOG.debug("Checking database connection for product: " +
-                          prod.endpoint)
-
-                server_product.connect()
-                db_status = server_product.db_status
-
-                name = base64.b64encode(prod.display_name.encode('utf-8'))
-                descr = base64.b64encode(prod.description.encode('utf-8')) \
-                    if prod.description else None
-
-                args = {'config_db_session': session,
-                        'productID': prod.id}
-                product_access = permissions.require_permission(
-                    permissions.PRODUCT_ACCESS, args, self.__auth_session)
-                product_admin = permissions.require_permission(
-                    permissions.PRODUCT_ADMIN, args, self.__auth_session)
-
-                result.append(ttypes.Product(
-                    id=prod.id,
-                    endpoint=prod.endpoint,
-                    displayedName_b64=name,
-                    description_b64=descr,
-                    connected=db_status == shared.ttypes.DBStatus.OK,
-                    accessible=product_access,
-                    administrating=product_admin,
-                    databaseStatus=db_status))
+                _, ret = self.__get_product(session, prod)
+                result.append(ret)
 
             return result
 
@@ -200,45 +212,16 @@ class ThriftProductHandler(object):
             session = self.__session()
             prod = session.query(Product).get(self.__product.id)
 
-            server_product = self.__server.get_product(prod.endpoint)
-            if not server_product:
-                # TODO: Like above, better support this.
-                LOG.error("Product '{0}' was found in the configuration "
-                          "database, but no database connection is "
-                          "present. Was the configuration database "
-                          "connected to multiple servers?"
-                          .format(prod.endpoint))
-                LOG.info("Please restart the server to make this "
-                         "product available.")
+            if not prod:
+                msg = "The product requested has been disconnected from the " \
+                      "server."
+                LOG.error(msg)
                 raise shared.ttypes.RequestFailed(
-                    shared.ttypes.ErrorCode.DATABASE,
-                    "Product exists, but was not connected to this server.")
+                    shared.ttypes.ErrorCode.IOERROR,
+                    msg)
 
-            name = base64.b64encode(prod.display_name.encode('utf-8'))
-            descr = base64.b64encode(prod.description.encode('utf-8')) \
-                if prod.description else None
-
-            args = {'config_db_session': session,
-                    'productID': prod.id}
-            product_access = permissions.require_permission(
-                permissions.PRODUCT_ACCESS, args, self.__auth_session)
-            product_admin = permissions.require_permission(
-                permissions.PRODUCT_ADMIN, args, self.__auth_session)
-
-            # Update the database status.
-            server_product.connect()
-
-            connected = server_product.db_status == shared.ttypes.DBStatus.OK
-            return ttypes.Product(
-                id=prod.id,
-                endpoint=prod.endpoint,
-                displayedName_b64=name,
-                description_b64=descr,
-                connected=connected,
-                accessible=product_access,
-                administrating=product_admin,
-                databaseStatus=server_product.db_status)
-
+            _, ret = self.__get_product(session, prod)
+            return ret
         except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
             msg = str(alchemy_ex)
             LOG.error(msg)

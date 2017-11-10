@@ -449,6 +449,8 @@ class RequestHandler(SimpleHTTPRequestHandler):
             # Convert every Exception to the proper format which can be parsed
             # by the Thrift clients expecting JSON responses.
             LOG.error(exn.message)
+            import traceback
+            traceback.print_exc()
             ex = TApplicationException(TApplicationException.INTERNAL_ERROR,
                                        exn.message)
             fname, _, seqid = iprot.readMessageBegin()
@@ -755,6 +757,13 @@ class CCSimpleHttpServer(HTTPServer):
 
         self.__products[prod.endpoint] = prod
 
+    @property
+    def num_products(self):
+        """
+        Returns the number of products currently mounted by the server.
+        """
+        return len(self.__products)
+
     def get_product(self, endpoint):
         """
         Get the product connection object for the given endpoint, or None.
@@ -766,7 +775,7 @@ class CCSimpleHttpServer(HTTPServer):
         Returns the Product object for the only product connected to by the
         server, or None, if there are 0 or >= 2 products managed.
         """
-        return self.__products.items()[0][1] if len(self.__products) == 1 \
+        return self.__products.items()[0][1] if self.num_products == 1 \
             else None
 
     def remove_product(self, endpoint):
@@ -779,6 +788,14 @@ class CCSimpleHttpServer(HTTPServer):
         product.teardown()
 
         del self.__products[endpoint]
+
+    def remove_products_except(self, endpoints_to_keep):
+        """
+        Removes EVERY product connection from the server except those
+        endpoints specified in :endpoints_to_keep.
+        """
+        map(self.remove_product, [ep for ep in self.__products.keys()
+                                  if ep not in endpoints_to_keep])
 
 
 def __make_root_file(root_file):
