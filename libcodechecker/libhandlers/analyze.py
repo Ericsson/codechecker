@@ -121,6 +121,22 @@ def add_arguments_to_parser(parser):
                         default=argparse.SUPPRESS,
                         help="Store the analysis output in the given folder.")
 
+    parser.add_argument('--compiler-includes-file',
+                        dest="compiler_includes_file",
+                        required=False,
+                        default=None,
+                        help="Read the compiler includes from the specified "
+                             "file rather than invoke the compiler "
+                             "executable.")
+
+    parser.add_argument('--compiler-target-file',
+                        dest="compiler_target_file",
+                        required=False,
+                        default=None,
+                        help="Read the compiler target from the specified "
+                             "file rather than invoke the compiler "
+                             "executable.")
+
     parser.add_argument('-t', '--type', '--output-format',
                         dest="output_format",
                         required=False,
@@ -310,6 +326,22 @@ def add_arguments_to_parser(parser):
     parser.set_defaults(func=main)
 
 
+class ParseLogOptions:
+    " Options for log parsing. "
+
+    def __init__(self, args=None):
+        if (args is None):
+            self.output_path = None
+            self.compiler_includes_file = None
+            self.compiler_target_file = None
+        else:
+            self.output_path = getattr(args, 'output_path', None)
+            self.compiler_includes_file =\
+                getattr(args, 'compiler_includes_file', None)
+            self.compiler_target_file =\
+                getattr(args, 'compiler_target_file', None)
+
+
 def main(args):
     """
     Perform analysis on the given logfiles and store the results in a machine-
@@ -346,6 +378,7 @@ def main(args):
     if not os.path.exists(args.output_path):
         os.makedirs(args.output_path)
 
+    LOG.debug("args: " + str(args))
     LOG.debug("Output will be stored to: '" + args.output_path + "'")
 
     # Parse the JSON CCDBs and retrieve the compile commands.
@@ -356,8 +389,8 @@ def main(args):
                       "exist!")
             continue
 
-        actions += log_parser.parse_log(log_file, args.output_path,
-                                        'add_compiler_defaults' in args)
+        parseLogOptions = ParseLogOptions(args)
+        actions += log_parser.parse_log(log_file, parseLogOptions)
     if len(actions) == 0:
         LOG.info("None of the specified build log files contained "
                  "valid compilation commands. No analysis needed...")
