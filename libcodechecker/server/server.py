@@ -531,9 +531,19 @@ class Product(object):
             return
 
         self.__engine.dispose()
-
         self.__session = None
         self.__engine = None
+        self.__connected = False
+
+    def mark_failed(self, reason):
+        """
+        Disposes the database connection to the product's backend, and also
+        saves the given :reason as reason for the connection dropped.
+        """
+        LOG.error("The database connection for product '{0}' failed. "
+                  "Reason: {1}".format(self.endpoint, reason))
+        self.teardown()
+        self.__last_connect_attempt = (datetime.datetime.now(), reason)
 
 
 class CCSimpleHttpServer(HTTPServer):
