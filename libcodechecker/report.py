@@ -13,15 +13,15 @@ All hash generation algorithms should be documented and implemented here.
 """
 import hashlib
 import json
-import linecache
 import os
 
 from libcodechecker.logger import LoggerFactory
+from libcodechecker.util import get_line
 
 LOG = LoggerFactory.get_new_logger('REPORT')
 
 
-def generate_report_hash(path, files, check_name):
+def generate_report_hash(path, source_file, check_name):
     """
     !!! Compatible with the old hash before v6.0
 
@@ -78,17 +78,16 @@ def generate_report_hash(path, files, check_name):
         main_section = path[-1]
 
         m_loc = main_section.get('location')
-        source_file = files[m_loc.get('file')]
         source_line = m_loc.get('line')
 
         from_col = m_loc.get('col')
         until_col = m_loc.get('col')
 
-        line_content = linecache.getline(source_file, source_line)
+        line_content = get_line(source_file, source_line)
 
         if line_content == '' and not os.path.isfile(source_file):
-            LOG.debug("Failed to generate report hash.")
-            LOG.debug('%s does not exists!' % source_file)
+            LOG.error("Failed to generate report hash.")
+            LOG.error('%s does not exists!' % source_file)
 
         file_name = os.path.basename(source_file)
         msg = main_section.get('message')

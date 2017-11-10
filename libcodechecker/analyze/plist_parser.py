@@ -56,7 +56,7 @@ def get_checker_name(diagnostic):
     return checker_name
 
 
-def get_report_hash(diagnostic, files):
+def get_report_hash(diagnostic, source_file):
     """
     Check if checker name is available in the report.
     Checker hash was not available in older clang versions before 3.8.
@@ -65,8 +65,10 @@ def get_report_hash(diagnostic, files):
     report_hash = diagnostic.get('issue_hash_content_of_line_in_context')
     if not report_hash:
         # Generate hash value if it is missing from the report.
-        report_hash = generate_report_hash(diagnostic['path'], files,
-                                           get_checker_name(diagnostic))
+        report_hash \
+            = generate_report_hash(diagnostic['path'],
+                                   source_file,
+                                   get_checker_name(diagnostic))
     return report_hash
 
 
@@ -101,7 +103,7 @@ def parse_plist(path):
             # We need to extend information for plist files generated
             # by older clang version (before 3.8).
             main_section['issue_hash_content_of_line_in_context'] = \
-                get_report_hash(diag, files)
+                get_report_hash(diag, files[diag['location']['file']])
 
             bug_path_items = [item for item in diag['path']]
 
