@@ -16,9 +16,11 @@ define([
   'dijit/layout/BorderContainer',
   'dijit/layout/ContentPane',
   'dojox/grid/DataGrid',
+  'codechecker/hashHelper',
   'codechecker/util'],
 function (declare, dom, ItemFileWriteStore, topic, Dialog, Button,
-  RadioButton, TextBox, BorderContainer, ContentPane, DataGrid, util) {
+  RadioButton, TextBox, BorderContainer, ContentPane, DataGrid, hashHelper,
+  util) {
 
   /**
    * This function helps to format a data grid cell with two radio buttons.
@@ -107,7 +109,10 @@ function (declare, dom, ItemFileWriteStore, topic, Dialog, Button,
 
       switch (evt.cell.field) {
         case 'name':
-          topic.publish('openRun', { runData : item.runData[0] });
+          hashHelper.setStateValues({
+            'run' : item.runData[0].name,
+            'tab' : item.runData[0].name
+          });
           break;
 
         case 'del':
