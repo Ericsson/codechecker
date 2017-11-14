@@ -414,6 +414,55 @@ class StorageSession:
         return getattr(self.instance, name)
 
 
+class DatabaseException(Exception):
+    """
+    Represents an Exception that was created by a handler method that
+    accessed the database.
+    """
+    def __init__(self, alchemy_ex):
+        """
+        Create a new DatabaseException encapsulating the SQLAlchemy-given
+        exception as its "inner exception".
+        """
+        super(DatabaseException, self).__init__(str(alchemy_ex))
+        self.alchemy_ex = alchemy_ex
+
+        # OperationalError encapsulates lower level DB-API instances of
+        # operational errors, such as database server disconnects, memory
+        # allocation problems, etc.
+        self.operational_error = isinstance(alchemy_ex,
+                                            sqlalchemy.exc.OperationalError)
+
+        if self.operational_error:
+            # If an operational error happened, the wrapped operational error
+            # (DB-API type) is available in the 'orig' field.
+            self.dbapi_error = alchemy_ex.__dict__['orig']
+
+            # If an operation error happens, save a "one-liner" of the error
+            # itself as the current exception's message.
+            qualtype = type(self.dbapi_error).__module__ + '.' + \
+                type(self.dbapi_error).__name__
+
+            msg = self.dbapi_error.message.split('\n')
+            if not alchemy_ex.connection_invalidated:
+                # If the connection in the pool can't stand up, the error
+                # reported is "could not connect to server:
+                # connection refused".
+                msg = msg[0]
+            else:
+                # But if there was a valid connection from a pool and the
+                # database connection died while this handle was active
+                # (this should be the more usual case), then the first line
+                # only says "terminated connection due to administrator
+                # command", which is not very useful for users.
+                msg = msg[1]
+
+            self.message = "({0}) {1}".format(qualtype, msg)
+
+    def __str__(self):
+        return str(self.alchemy_ex)
+
+
 class ThriftRequestHandler(object):
     """
     Connect to database and handle thrift client requests.
@@ -481,6 +530,36 @@ class ThriftRequestHandler(object):
     def __require_store(self):
         self.__require_permission([permissions.PRODUCT_STORE])
 
+    def __capture_database_connection_errors(func):
+        """
+        A decorator which makes the decorated method's DatabaseExceptions
+        properly captured and reported to the product interface.
+        """
+        def wrapper(self, *args, **kwargs):
+            try:
+                return func(self, *args, **kwargs)
+            except DatabaseException as de:
+                LOG.error("DatabaseException happened while serving the "
+                          "request.")
+                LOG.error(de)
+
+                if de.operational_error:
+                    LOG.error("Error indicates problems with access to run "
+                              "database.")
+                    self.__product.mark_failed(de.message)
+
+                # Transform the database Exception to a message over the wire.
+                raise shared.ttypes.RequestFailed(
+                    shared.ttypes.ErrorCode.DATABASE, str(de))
+            except Exception as e:
+                LOG.error("Exception '{0}' while serving request!"
+                          .format(type(e).__name__))
+                LOG.error(e)
+                raise shared.ttypes.RequestFailed(
+                    shared.ttypes.ErrorCode.GENERAL, str(e))
+
+        return wrapper
+
     def __sortResultsQuery(self, query, sort_types=None, is_unique=False,
                            subquery=None):
         """
@@ -531,6 +610,7 @@ class ThriftRequestHandler(object):
         return run_ids
 
     @timeit
+    @__capture_database_connection_errors
     def getRunData(self, run_filter):
         self.__require_access()
         try:
@@ -602,16 +682,13 @@ class ThriftRequestHandler(object):
                                        status_sum[instance.id],
                                        version_tag))
             return results
-
         except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
-            msg = str(alchemy_ex)
-            LOG.error(msg)
-            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
-                                              msg)
+            raise DatabaseException(alchemy_ex)
         finally:
             session.close()
 
     @timeit
+    @__capture_database_connection_errors
     def getRunHistory(self, run_ids, limit, offset):
         self.__require_access()
         try:
@@ -636,14 +713,12 @@ class ThriftRequestHandler(object):
 
             return results
         except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
-            msg = str(alchemy_ex)
-            LOG.error(msg)
-            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
-                                              msg)
+            raise DatabaseException(alchemy_ex)
         finally:
             session.close()
 
     @timeit
+    @__capture_database_connection_errors
     def getReport(self, reportId):
         self.__require_access()
         try:
@@ -678,15 +753,12 @@ class ThriftRequestHandler(object):
                 reviewData=create_review_data(review_status),
                 detectionStatus=detection_status_enum(report.detection_status))
         except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
-            msg = str(alchemy_ex)
-            LOG.error(msg)
-            raise shared.ttypes.RequestFailed(
-                shared.ttypes.ErrorCode.DATABASE,
-                msg)
+            raise DatabaseException(alchemy_ex)
         finally:
             session.close()
 
     @timeit
+    @__capture_database_connection_errors
     def getRunResults(self, run_ids, limit, offset, sort_types,
                       report_filter, cmp_data):
         self.__require_access()
@@ -781,16 +853,13 @@ class ThriftRequestHandler(object):
                     )
 
             return results
-
         except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
-            msg = str(alchemy_ex)
-            LOG.error(msg)
-            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
-                                              msg)
+            raise DatabaseException(alchemy_ex)
         finally:
             session.close()
 
     @timeit
+    @__capture_database_connection_errors
     def getRunReportCounts(self, run_ids, report_filter, limit, offset):
         """
           Count the results separately for multiple runs.
@@ -828,17 +897,14 @@ class ThriftRequestHandler(object):
                                               name=run_name,
                                               reportCount=count)
                 results.append(report_count)
-
         except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
-            msg = str(alchemy_ex)
-            LOG.error(msg)
-            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
-                                              msg)
+            raise DatabaseException(alchemy_ex)
         finally:
             session.close()
             return results
 
     @timeit
+    @__capture_database_connection_errors
     def getRunResultCount(self, run_ids, report_filter, cmp_data):
         self.__require_access()
         session = self.__Session()
@@ -863,13 +929,8 @@ class ThriftRequestHandler(object):
                 report_count = 0
 
             return report_count
-
         except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
-            msg = str(alchemy_ex)
-            LOG.error(msg)
-            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
-                                              msg)
-
+            raise DatabaseException(alchemy_ex)
         finally:
             session.close()
 
@@ -889,6 +950,7 @@ class ThriftRequestHandler(object):
         return bug_items
 
     @timeit
+    @__capture_database_connection_errors
     def getReportDetails(self, reportId):
         """
         Parameters:
@@ -920,15 +982,12 @@ class ThriftRequestHandler(object):
                 bug_point_list.append(bug_point)
 
             return ReportDetails(bug_events_list, bug_point_list)
-
         except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
-            msg = str(alchemy_ex)
-            LOG.error(msg)
-            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
-                                              msg)
+            raise DatabaseException(alchemy_ex)
         finally:
             session.close()
 
+    @__capture_database_connection_errors
     def _setReviewStatus(self, report_id, status, message, session):
         """
         This function sets the review status of the given report. This is the
@@ -965,10 +1024,7 @@ class ThriftRequestHandler(object):
                 raise shared.ttypes.RequestFailed(
                     shared.ttypes.ErrorCode.DATABASE, msg)
         except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
-            msg = str(alchemy_ex)
-            LOG.error(msg)
-            raise shared.ttypes.RequestFailed(
-                shared.ttypes.ErrorCode.DATABASE, msg)
+            raise DatabaseException(alchemy_ex)
 
     @timeit
     def changeReviewStatus(self, report_id, status, message):
@@ -985,6 +1041,7 @@ class ThriftRequestHandler(object):
         return res
 
     @timeit
+    @__capture_database_connection_errors
     def getComments(self, report_id):
         """
             Return the list of comments for the given bug.
@@ -1015,13 +1072,8 @@ class ThriftRequestHandler(object):
                 LOG.error(msg)
                 raise shared.ttypes.RequestFailed(
                     shared.ttypes.ErrorCode.DATABASE, msg)
-
         except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
-            msg = str(alchemy_ex)
-            LOG.error(msg)
-            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
-                                              msg)
-
+            raise DatabaseException(alchemy_ex)
         except Exception as ex:
             msg = str(ex)
             LOG.error(msg)
@@ -1031,6 +1083,7 @@ class ThriftRequestHandler(object):
             session.close()
 
     @timeit
+    @__capture_database_connection_errors
     def getCommentCount(self, report_id):
         """
             Return the number of comments for the given bug.
@@ -1049,11 +1102,7 @@ class ThriftRequestHandler(object):
 
             return commentCount
         except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
-            msg = str(alchemy_ex)
-            LOG.error(msg)
-            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
-                                              msg)
-
+            raise DatabaseException(alchemy_ex)
         except Exception as ex:
             msg = str(ex)
             LOG.error(msg)
@@ -1063,6 +1112,7 @@ class ThriftRequestHandler(object):
             session.close()
 
     @timeit
+    @__capture_database_connection_errors
     def addComment(self, report_id, comment_data):
         """
             Add new comment for the given bug.
@@ -1090,11 +1140,7 @@ class ThriftRequestHandler(object):
                 raise shared.ttypes.RequestFailed(
                     shared.ttypes.ErrorCode.DATABASE, msg)
         except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
-            msg = str(alchemy_ex)
-            LOG.error(msg)
-            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
-                                              msg)
-
+            raise DatabaseException(alchemy_ex)
         except Exception as ex:
             msg = str(ex)
             LOG.error(msg)
@@ -1104,6 +1150,7 @@ class ThriftRequestHandler(object):
             session.close()
 
     @timeit
+    @__capture_database_connection_errors
     def updateComment(self, comment_id, content):
         """
             Update the given comment message with new content. We allow
@@ -1134,11 +1181,7 @@ class ThriftRequestHandler(object):
                 raise shared.ttypes.RequestFailed(
                     shared.ttypes.ErrorCode.DATABASE, msg)
         except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
-            msg = str(alchemy_ex)
-            LOG.error(msg)
-            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
-                                              msg)
-
+            raise DatabaseException(alchemy_ex)
         except Exception as ex:
             msg = str(ex)
             LOG.error(msg)
@@ -1148,6 +1191,7 @@ class ThriftRequestHandler(object):
             session.close()
 
     @timeit
+    @__capture_database_connection_errors
     def removeComment(self, comment_id):
         """
             Remove the comment. We allow comments to be removed by it's
@@ -1177,11 +1221,7 @@ class ThriftRequestHandler(object):
                 raise shared.ttypes.RequestFailed(
                     shared.ttypes.ErrorCode.DATABASE, msg)
         except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
-            msg = str(alchemy_ex)
-            LOG.error(msg)
-            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
-                                              msg)
-
+            raise DatabaseException(alchemy_ex)
         except Exception as ex:
             msg = str(ex)
             LOG.error(msg)
@@ -1223,6 +1263,7 @@ class ThriftRequestHandler(object):
                                               msg)
 
     @timeit
+    @__capture_database_connection_errors
     def getSourceFileData(self, fileId, fileContent, encoding):
         """
         Parameters:
@@ -1253,12 +1294,8 @@ class ThriftRequestHandler(object):
             else:
                 return SourceFileData(fileId=sourcefile.id,
                                       filePath=sourcefile.filepath)
-
         except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
-            msg = str(alchemy_ex)
-            LOG.error(msg)
-            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
-                                              msg)
+            raise DatabaseException(alchemy_ex)
         finally:
             session.close()
 
