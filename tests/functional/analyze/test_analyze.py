@@ -429,3 +429,34 @@ class TestAnalyze(unittest.TestCase):
         # Run analyze on the simple file again.
         self.__analyze_incremental(simple_file_content, build_json,
                                    reports_dir, 1, 0)
+
+    def test_relative_include_paths(self):
+        """
+        Test if the build json contains relative paths.
+        """
+        build_json = os.path.join(self.test_workspace, "build_simple_rel.json")
+        report_dir = os.path.join(self.test_workspace, "reports_relative")
+        source_file = os.path.join(self.test_dir, "simple.c")
+        failed_dir = os.path.join(report_dir, "failed")
+
+        # Create a compilation database.
+        build_log = [{"directory": self.test_dir,
+                      "command": "cc -c " + source_file + " -Iincludes",
+                      "file": source_file
+                      }]
+
+        with open(build_json, 'w') as outfile:
+            json.dump(build_log, outfile)
+
+        analyze_cmd = [self._codechecker_cmd, "analyze", build_json,
+                       "--analyzers", "clangsa", "-o", report_dir]
+        # CodeChecker is executed in a different
+        # dir than the containing folder of simple.c.
+        process = subprocess.Popen(
+            analyze_cmd, stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE, cwd=self.test_workspace)
+        process.communicate()
+
+        errcode = process.returncode
+        self.assertEquals(errcode, 0)
+        self.assertFalse(os.path.isdir(failed_dir))

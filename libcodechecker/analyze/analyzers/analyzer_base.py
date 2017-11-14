@@ -98,8 +98,10 @@ class SourceAnalyzer(object):
         res_handler.analyzer_cmd = analyzer_cmd
         analyzer_cmd = ' '.join(analyzer_cmd)
         try:
-            ret_code, stdout, stderr = SourceAnalyzer.run_proc(analyzer_cmd,
-                                                               env)
+            ret_code, stdout, stderr \
+                = SourceAnalyzer.run_proc(analyzer_cmd,
+                                          env,
+                                          res_handler.buildaction.directory)
             res_handler.analyzer_returncode = ret_code
             res_handler.analyzer_stdout = stdout
             res_handler.analyzer_stderr = stderr

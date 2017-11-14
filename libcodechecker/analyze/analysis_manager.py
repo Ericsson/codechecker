@@ -145,7 +145,9 @@ def create_dependencies(action):
 
         LOG.debug("Crafting build dependencies from GCC or Clang!")
 
-        output, rc = util.call_command(command, env=os.environ)
+        output, rc = util.call_command(command,
+                                       env=os.environ,
+                                       cwd=action.directory)
         if rc == 0:
             # Parse 'Makefile' syntax dependency output.
             dependencies = output.replace('__dummy: ', '') \
@@ -366,6 +368,8 @@ def check(check_data):
 
                     LOG.debug("Writing dependent files to archive.")
                     for dependent_source in dependencies:
+                        dependent_source = os.path.join(action.directory,
+                                                        dependent_source)
                         if not os.path.isabs(dependent_source):
                             dependent_source = \
                                 os.path.abspath(dependent_source)

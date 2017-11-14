@@ -39,7 +39,9 @@ def get_triple_arch(action, source, config, env):
     cmd = get_compile_command(action, config, source)
     cmd.insert(1, '-###')
     cmdstr = ' '.join(cmd)
-    _, stdout, stderr = analyzer_base.SourceAnalyzer.run_proc(cmdstr, env)
+    _, stdout, stderr = analyzer_base.SourceAnalyzer.run_proc(cmdstr,
+                                                              env,
+                                                              action.directory)
     last_line = (stdout + stderr).splitlines()[-1]
     res_cmd = shlex.split(last_line)
     arch = ""
