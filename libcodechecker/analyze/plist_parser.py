@@ -43,15 +43,15 @@ from libcodechecker.report import generate_report_hash
 LOG = LoggerFactory.get_new_logger('PLIST_PARSER')
 
 
-def get_checker_name(diagnostic):
+def get_checker_name(diagnostic, path=""):
     """
     Check if checker name is available in the report.
     Checker name was not available in older clang versions before 3.7.
     """
     checker_name = diagnostic.get('check_name')
     if not checker_name:
-        LOG.info("Check name wasn't found in the plist file. "
-                 "Read the user guide!")
+        LOG.info("Check name wasn't found in the plist file '%s'. "
+                 "Read the user guide!" % path)
         checker_name = "unknown"
     return checker_name
 
@@ -96,7 +96,7 @@ def parse_plist(path):
 
             # We need to extend information for plist files generated
             # by older clang version (before 3.7).
-            main_section['check_name'] = get_checker_name(diag)
+            main_section['check_name'] = get_checker_name(diag, path)
 
             # We need to extend information for plist files generated
             # by older clang version (before 3.8).
