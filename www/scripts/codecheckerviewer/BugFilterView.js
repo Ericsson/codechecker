@@ -126,7 +126,7 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
 
       this.reportFilter.getItems(query, this.defaultQueryFilterSize).then(
       function (items) {
-        that.reportFilter._items = items;
+        that._items = items;
         that._render(query);
         that._standBy.hide();
 
@@ -167,8 +167,10 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
      * Shows the tooltip.
      */
     show : function () {
+      this._items = this.reportFilter._items;
+
       if (this.reportFilter.serverSideSearch)
-        this.getItems();
+        this.getItems(this._searchBox.get('value'));
       else
         this._render();
 
@@ -201,7 +203,7 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
 
       var hasItem = false;
 
-      this.reportFilter._items.forEach(function (item) {
+      this._items.forEach(function (item) {
         if (!that.reportFilter.serverSideSearch &&
             that._search(item.label, query))
           return;
@@ -230,6 +232,9 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
           class     : 'select-menu-item ' + (selected ? 'selected' : ''),
           innerHTML : content,
           onclick   : function () {
+            if (that.reportFilter.serverSideSearch)
+              that.reportFilter._items.push(item);
+
             if (that.disableMultipleOption) {
               that.reportFilter.clearAll();
               that.reportFilter.selectItem(that.class, item.value);
@@ -640,7 +645,7 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
         reportFilter[filterName] = [];
 
       if (filter)
-        reportFilter[filterName].push('*' + filter + '*');
+        reportFilter[filterName] = ['*' + filter + '*'];
 
       if (!limit)
         limit = reportFilter[filterName].length;
