@@ -51,7 +51,7 @@ class TestInstances(unittest.TestCase):
         test_cfg = env.import_test_cfg(self._test_workspace)
         codechecker_1 = test_cfg['codechecker_1']
         EVENT_1.clear()
-        start_server(codechecker_1, EVENT_1)
+        start_server(codechecker_1, EVENT_1, ['--skip-db-cleanup'])
 
         instance = [i for i in instance_manager.list(self.home)
                     if i['port'] == codechecker_1['viewer_port'] and
@@ -68,7 +68,7 @@ class TestInstances(unittest.TestCase):
         codechecker_1 = test_cfg['codechecker_1']
         codechecker_2 = test_cfg['codechecker_2']
         EVENT_2.clear()
-        start_server(codechecker_2, EVENT_2)
+        start_server(codechecker_2, EVENT_2, ['--skip-db-cleanup'])
 
         # Workspaces must match, servers were started in the same workspace.
         instance_workspaces = [i['workspace']
@@ -130,7 +130,7 @@ class TestInstances(unittest.TestCase):
         codechecker_1 = test_cfg['codechecker_1']
         codechecker_2 = test_cfg['codechecker_2']
         EVENT_2.clear()
-        start_server(codechecker_2, EVENT_2)
+        start_server(codechecker_2, EVENT_2, ['--skip-db-cleanup'])
 
         # Kill the server, but yet again give a grace period.
         self.assertEqual(0, self.run_cmd([env.codechecker_cmd(),
@@ -194,8 +194,8 @@ class TestInstances(unittest.TestCase):
         codechecker_2 = test_cfg['codechecker_2']
         EVENT_1.clear()
         EVENT_2.clear()
-        start_server(codechecker_1, EVENT_1)
-        start_server(codechecker_2, EVENT_2)
+        start_server(codechecker_1, EVENT_1, ['--skip-db-cleanup'])
+        start_server(codechecker_2, EVENT_2, ['--skip-db-cleanup'])
 
         self.assertEqual(len(instance_manager.list(self.home)), 2,
                          "Two servers were started but they don't appear "
