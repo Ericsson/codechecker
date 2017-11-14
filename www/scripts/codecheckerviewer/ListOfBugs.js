@@ -248,6 +248,7 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
       this.store = new ObjectStore({ objectStore : new BugStore() });
       this.escapeHTMLInData = false;
       this.selectionMode = 'single';
+      this.rowsPerPage = CC_OBJECTS.MAX_QUERY_SIZE;
       this._lastSelectedRow = 0;
     },
 
