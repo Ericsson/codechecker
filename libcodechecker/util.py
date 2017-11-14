@@ -320,3 +320,21 @@ def escape_like(string, escape_char='*'):
     return string.replace(escape_char, escape_char * 2) \
                  .replace('%', escape_char + '%') \
                  .replace('_', escape_char + '_')
+
+
+def get_line(file_name, line_no):
+    """
+    Return the given line from the file. If line_no is larger than the number
+    of lines in the file then empty string returns.
+    If the file can't be opened for read, the function also returns empty
+    string.
+    """
+    try:
+        with open(file_name) as f:
+            for line in f:
+                line_no -= 1
+                if line_no == 0:
+                    return line
+            return ''
+    except IOError:
+        return ''

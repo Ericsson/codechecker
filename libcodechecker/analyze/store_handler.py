@@ -359,15 +359,23 @@ def addReport(storage_session,
                         report.detection_status == 'unresolved' or \
                         report.detection_status == 'reopened':
                     new_status = 'unresolved'
+
                     report.file_id = file_id
+                    report.line = line_num
+                    report.column = column
+
                     change_path_and_events(session,
                                            report.id,
                                            bugpath,
                                            events)
                 elif report.detection_status == 'resolved':
                     new_status = 'reopened'
+
                     report.file_id = file_id
+                    report.line = line_num
+                    report.column = column
                     report.fixed_at = None
+
                     change_path_and_events(session,
                                            report.id,
                                            bugpath,

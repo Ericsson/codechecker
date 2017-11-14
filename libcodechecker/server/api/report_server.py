@@ -1882,7 +1882,6 @@ class ThriftRequestHandler(object):
                 continue
 
             file_ids = {}
-            # Store content of file to the server if needed.
             for file_name in files:
                 file_ids[file_name] = file_path_to_id[file_name]
 

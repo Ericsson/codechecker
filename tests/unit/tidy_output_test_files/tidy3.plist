@@ -11,6 +11,8 @@
 			<string>modernize-use-nullptr</string>
 			<key>description</key>
 			<string>use nullptr</string>
+			<key>issue_hash_content_of_line_in_context</key>
+			<string>881bd0b5111814b3eaab59f4229eccba</string>
 			<key>location</key>
 			<dict>
 				<key>col</key>
@@ -67,6 +69,8 @@
 			<string>clang-analyzer-core.NullDereference</string>
 			<key>description</key>
 			<string>Dereference of null pointer (loaded from variable 'x')</string>
+			<key>issue_hash_content_of_line_in_context</key>
+			<string>42a599e2e32611711ec3ffce39cd61ce</string>
 			<key>location</key>
 			<dict>
 				<key>col</key>

@@ -15,6 +15,7 @@ import plistlib
 import re
 
 from libcodechecker.logger import LoggerFactory
+from libcodechecker.report import generate_report_hash
 
 LOG = LoggerFactory.get_new_logger('TIDY OUTPUT CONVERTER')
 
@@ -252,13 +253,14 @@ class PListConverter(object):
 
         return fmap
 
-    def _add_diagnostics(self, messages, fmap):
+    def _add_diagnostics(self, messages, files):
         """
         Adds the messages to the plist as diagnostics.
         """
 
+        fmap = self._add_files_from_messages(messages)
         for message in messages:
-            diag = PListConverter._create_diag(message, fmap)
+            diag = PListConverter._create_diag(message, fmap, files)
             self.plist['diagnostics'].append(diag)
 
     @staticmethod
@@ -275,7 +277,7 @@ class PListConverter(object):
             return parts[0]
 
     @staticmethod
-    def _create_diag(message, fmap):
+    def _create_diag(message, fmap, files):
         """
         Creates a new plist diagnostic from a single clang-tidy message.
         """
@@ -297,6 +299,11 @@ class PListConverter(object):
         # the web interface. FIXME: notes and fixits should not be events.
         diag['path'].append(PListConverter._create_event_from_note(message,
                                                                    fmap))
+
+        diag['issue_hash_content_of_line_in_context'] \
+            = generate_report_hash(diag['path'],
+                                   files[diag['location']['file']],
+                                   message.checker)
 
         return diag
 
@@ -366,8 +373,7 @@ class PListConverter(object):
         Adds the given clang-tidy messages to the plist.
         """
 
-        fmap = self._add_files_from_messages(messages)
-        self._add_diagnostics(messages, fmap)
+        self._add_diagnostics(messages, self.plist['files'])
 
     def write_to_file(self, path):
         """
