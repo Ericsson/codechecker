@@ -988,6 +988,8 @@ optional arguments:
                         locally, but to everyone, who can access the server
                         over the Internet. (Equivalent to specifying '--host
                         ""'.) (default: False)
+  --skip-db-cleanup     Skip performing cleanup jobs on the database like
+                        removing unused files.
   --verbose {info,debug,debug_analyzer}
                         Set verbosity level. (default: info)
 

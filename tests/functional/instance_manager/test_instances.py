@@ -15,8 +15,8 @@ import unittest
 from libcodechecker.server import instance_manager
 
 from libtest import env
+from libtest.codechecker import start_server
 from . import EVENT_1, EVENT_2
-from . import start_server
 
 
 class TestInstances(unittest.TestCase):

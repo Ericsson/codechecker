@@ -36,6 +36,7 @@ from libcodechecker.analyze import plist_parser
 from libcodechecker.analyze import store_handler
 from libcodechecker.logger import LoggerFactory
 from libcodechecker.profiler import timeit
+from libcodechecker.server import db_cleanup
 from libcodechecker.server import permissions
 from libcodechecker.server.database.run_db_model import *
 
@@ -1734,13 +1735,7 @@ class ThriftRequestHandler(object):
             session.commit()
 
         # Delete files and contents that are not present in any bug paths.
-        s1 = select([BugPathEvent.file_id])
-        s2 = select([BugReportPoint.file_id])
-        session.query(File).filter(not_(File.id.in_(s1.union(s2)))).delete(
-            synchronize_session=False)
-        session.query(FileContent).filter(not_(FileContent.content_hash.in_(
-            select([File.content_hash])))).delete(synchronize_session=False)
-        session.commit()
+        db_cleanup.remove_unused_files(session)
         session.close()
         return True
 

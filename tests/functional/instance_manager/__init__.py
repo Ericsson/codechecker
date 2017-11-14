@@ -87,34 +87,3 @@ def teardown_package():
 
     print("Removing: " + TEST_WORKSPACE)
     shutil.rmtree(TEST_WORKSPACE)
-
-
-# This server uses multiple custom servers, which are brought up here
-# and torn down by the package itself --- it does not connect to the
-# test run's "master" server.
-def start_server(codechecker_cfg, event):
-    """Start the CodeChecker server."""
-    def start_server_proc(event, server_cmd, checking_env):
-        """Target function for starting the CodeChecker server."""
-        proc = subprocess.Popen(server_cmd, env=checking_env)
-
-        # Blocking termination until event is set.
-        event.wait()
-
-        # If proc is still running, stop it.
-        if proc.poll() is None:
-            proc.terminate()
-
-    server_cmd = codechecker.serv_cmd(codechecker_cfg['workspace'],
-                                      str(codechecker_cfg['viewer_port']),
-                                      None)
-
-    server_proc = multiprocessing.Process(
-        name='server',
-        target=start_server_proc,
-        args=(event, server_cmd, codechecker_cfg['check_env']))
-
-    server_proc.start()
-
-    # Wait for server to start and connect to database.
-    time.sleep(5)
