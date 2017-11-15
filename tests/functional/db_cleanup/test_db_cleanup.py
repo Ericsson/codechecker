@@ -100,6 +100,7 @@ int f(int x) { return 1 / x; }
 
         return file_ids
 
+    @unittest.skip("Work in progress")
     def test_garbage_file_collection(self):
         event = multiprocessing.Event()
         event.clear()
