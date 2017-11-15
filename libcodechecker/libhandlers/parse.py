@@ -161,7 +161,7 @@ def parse(f, context, metadata_dict, suppress_handler, steps):
     """
 
     if not f.endswith(".plist"):
-        LOG.info("Skipping input file '" + f + "' as it is not a plist.")
+        LOG.debug("Skipping input file '" + f + "' as it is not a plist.")
         return {}
 
     LOG.debug("Parsing input file '" + f + "'")
