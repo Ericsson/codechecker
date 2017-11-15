@@ -254,9 +254,11 @@ function (declare, dom, ItemFileWriteStore, topic, Dialog, Button,
         class    : 'diff-btn',
         disabled : true,
         onClick  : function () {
-          topic.publish('openDiff', {
-            baseline : that.baseline,
-            newcheck : that.newcheck
+          hashHelper.setStateValues({
+            baseline : that.baseline.name,
+            newcheck : that.newcheck.name,
+            difftype : CC_OBJECTS.DiffType.NEW,
+            tab : that.baseline.name + '_diff_' + that.newcheck.name
           });
         }
       });
