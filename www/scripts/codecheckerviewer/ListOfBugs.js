@@ -437,7 +437,8 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
           reportFilter.isUnique = false;
 
           reports = CC_SERVICE.getRunResults(runResultParam.runIds,
-            CC_OBJECTS.MAX_QUERY_SIZE,  0, null, reportFilter, null);
+            CC_OBJECTS.MAX_QUERY_SIZE,  0, null, reportFilter,
+            runResultParam.cmpData);
           reportData = reports[0];
         } else {
           runResultParam.runIds = [reportData.runId];
