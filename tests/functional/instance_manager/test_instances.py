@@ -53,6 +53,7 @@ class TestInstances(unittest.TestCase):
         EVENT_1.clear()
         start_server(codechecker_1, EVENT_1, ['--skip-db-cleanup'])
 
+        time.sleep(5)
         instance = [i for i in instance_manager.list(self.home)
                     if i['port'] == codechecker_1['viewer_port'] and
                     i['workspace'] == self._test_workspace]
@@ -71,6 +72,7 @@ class TestInstances(unittest.TestCase):
         start_server(codechecker_2, EVENT_2, ['--skip-db-cleanup'])
 
         # Workspaces must match, servers were started in the same workspace.
+        time.sleep(5)
         instance_workspaces = [i['workspace']
                                for i in instance_manager.list(self.home)
                                if i['workspace'] == self._test_workspace]
