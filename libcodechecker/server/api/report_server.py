@@ -750,11 +750,12 @@ class ThriftRequestHandler(object):
                                    severity=severity,
                                    reviewData=review_data))
             else:
-                q = session.query(Report.id, Report.file_id, Report.line,
-                                  Report.column, Report.detection_status,
-                                  Report.bug_id, Report.checker_message,
-                                  Report.checker_id, Report.severity,
-                                  ReviewStatus, File.filepath) \
+                q = session.query(Report.run_id, Report.id, Report.file_id,
+                                  Report.line, Report.column,
+                                  Report.detection_status, Report.bug_id,
+                                  Report.checker_message, Report.checker_id,
+                                  Report.severity, ReviewStatus,
+                                  File.filepath) \
                     .outerjoin(File, Report.file_id == File.id) \
                     .outerjoin(ReviewStatus,
                                ReviewStatus.bug_hash == Report.bug_id) \
@@ -774,13 +775,14 @@ class ThriftRequestHandler(object):
 
                 q = q.limit(limit).offset(offset)
 
-                for report_id, file_id, line, column, d_status, bug_id, \
-                    checker_msg, checker, severity, r_status, path \
+                for run_id, report_id, file_id, line, column, d_status, \
+                    bug_id, checker_msg, checker, severity, r_status, path \
                         in q:
 
                     review_data = create_review_data(r_status)
                     results.append(
-                        ReportData(bugHash=bug_id,
+                        ReportData(runId=run_id,
+                                   bugHash=bug_id,
                                    checkedFile=path,
                                    checkerMsg=checker_msg,
                                    reportId=report_id,
