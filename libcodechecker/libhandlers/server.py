@@ -120,7 +120,7 @@ def add_arguments_to_parser(parser):
     parser.add_argument('--skip-db-cleanup',
                         dest="skip_db_cleanup",
                         action='store_true',
-                        default=argparse.SUPPRESS,
+                        default=True,
                         required=False,
                         help="Skip performing cleanup jobs on the database "
                              "like removing unused files.")
