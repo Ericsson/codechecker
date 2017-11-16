@@ -107,7 +107,6 @@ In OSX environment the intercept-build tool from
 [scan-build](https://github.com/rizsotto/scan-build) is used to log the
 compiler invocations.
 
-
 It is possible that the [intercept-build can not
 log](https://github.com/rizsotto/scan-build#limitations)
 the compiler calls without turning off *System Integrity Protection (SIP)*.
@@ -123,16 +122,17 @@ You can turn off SIP on El Capitan this way:
   * Click the  (Apple) menu and select Restart....
 
 The following commands are used to bootstrap CodeChecker on
-OS X El Capitan 10.11.5 and macOS Sierra 10.12 Beta.
-
-Check out and build LLVM/Clang with extra tools. Follow the [Get Started with
-LLVM/Clang](http://clang.llvm.org/get_started.html) documentation.
+OS X El Capitan 10.11, macOS Sierra 10.12 and macOS High Sierra 10.13.
 
 ~~~{.sh}
 # Download and install dependencies.
 brew update
 brew install doxygen gcc git
-brew install homebrew/versions/thrift090
+brew install llvm@3.9
+
+# Install Thrift 0.9.3 (Note: the general Thrift version is 0.10.0 on macOS High Sierra 10.13)
+brew unlink thrift
+brew install thrift@0.9
 
 # Fetch source code.
 git clone https://github.com/Ericsson/CodeChecker.git --depth 1 ~/codechecker
@@ -140,6 +140,7 @@ cd ~/codechecker
 
 # Create a Python virtualenv and set it as your environment.
 make venv
+make add_osx_extras_to_venv
 source $PWD/venv/bin/activate
 
 # Build and install a CodeChecker package.
