@@ -37,7 +37,8 @@ class Permission(object):
         :param name:           The name of the permission
         :param default_enable: If False, only the people explicitly given this
           permission are marked as having it. If True, an empty list of people
-          given the permission means that everyone has the permission.
+          given the permission means that everyone has the permission, if the
+          server is running in authentication ENABLED mode.
         :param inherited_from: The list of permissions which automatically
           imply this permission. (Disjunctive list, i.e. if the user has
           either of these permissions specified, they have the current one
@@ -204,8 +205,11 @@ class PermissionHandler(object):
         the current permission.
         """
         if not auth_session:
-            return self._permission.default_enable
-        if auth_session.is_root and self._perm_name == 'SUPERUSER':
+            # If the user does not have an auth_session it means it is a guest
+            # and the server is running in authentication disabled mode.
+            # All permissions are automatically granted in this case.
+            return True
+        elif auth_session.is_root and self._perm_name == 'SUPERUSER':
             # The special master superuser (root) automatically has the
             # SUPERUSER permission.
             return True
@@ -214,7 +218,7 @@ class PermissionHandler(object):
         groups = self._has_perm_impl(auth_session.groups, True)
 
         if not name and not groups and self._permission.default_enable:
-            # Default enabled permission work in a way that if noone has the
+            # Default enabled permission work in a way that if no one has the
             # permission, everyone has it.
             # ("No-one has the permission" is represented as a * user having
             # the permission, this invariant kept up by add() and remove().)
@@ -224,7 +228,7 @@ class PermissionHandler(object):
 
     def list_permitted(self):
         """
-        Returns the a pair of usernames and groups that are given the current
+        Returns a pair of usernames and groups that are given the current
         permission.
         """
         records = self._list_authorised_impl()
@@ -445,6 +449,7 @@ class ProductPermission(Permission):
         return ProductPermission.Handler(self, config_db_session, productID)
 
 # ---------------------------------------------------------------------------
+
 
 PERMISSION_SCOPES = {
     'SYSTEM': SystemPermission,

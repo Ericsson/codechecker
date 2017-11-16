@@ -63,16 +63,16 @@ will automatically **have the `SUPERUSER` permission**.
  * Product-level permissions can be edited by clicking the edit icon for the
    product you want to configure the permissions for.
 
-Permissions can be managed on the web interface. From the dropdown, select the
+Permissions can be managed on the web interface. From the drop-down, select the
 permission you want to configure. The two lists show the users and groups
 known to the system - if a tick is present in its row, the given user or group
 has the permission directly granted. (Users who only have a certain permission
 through permission inheritance are not shown with a tick.)
 
-Only the permissions you have rights to manage are shown in the dropdown.
+Only the permissions you have rights to manage are shown in the drop-down.
 
 You can edit multiple permissions opening the window only once. Simply tick or
-untick the users/groups you want to give the permission to or revoke from them.
+un-tick the users/groups you want to give the permission to or revoke from them.
 Clicking *OK* will save the changes to the database.
 
 ## <a name="permission-concepts"></a> Permission concepts
@@ -81,18 +81,19 @@ Each permission has a unique name, such as `SUPERUSER` or `PRODUCT_ADMIN`.
 
 ### <a name="default-value"></a> Default value
 
-Permissions can either be *not granted* or *granted* by default. 
+Permissions can either be *not granted* or *granted* by default.
 
 Some permissions are *default not granted*, which means that only users whom
-are explicitly given the permission have it. This also means that if the
-server is running with authentication disabled, no one has the permission
-granted.
+are explicitly given the permission have it.
 
 Some permissions are *default granted*, which means that initially, every user
-(this includes guests if the server is running with authentication disabled)
 has the permission. However, if at least one user or group is explicitly
 given the permission, only the users who have the permission given will be
 able to utilise it.
+
+If the server is running without authentication &ndash; in this case there are
+no "users" as everyone is a guest &ndash; **every permission is automatically
+granted**.
 
 ### <a name="permission-inheritance"></a> Permission inheritance
 

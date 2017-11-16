@@ -57,15 +57,7 @@ product configuration. All these commands take a server URL (e.g.
 and not an individual product endpoint.
 
 Certain administrative actions regarding products can only be executed by
-[superusers](/docs/permissions.md). If you are running a server without
-[authentication](/docs/authentication.md) turned on, no access to these
-features is the expected behaviour. You can use the combination of
-[`--force-authentication` and `--reset-root`
-commands](/docs/user_guide.md#master-superuser-and-authentication-forcing) to
-restart your server specifically to can access administrative actions. When
-the server is started as such, use [`CodeChecker cmd
-login`](/docs/user_guide.md#authenticate-to-the-server-login) to authenticate
-yourself with the "root" credentials generated for this running server.
+[superusers](/docs/permissions.md), if the server has authentication turned on.
 
 ~~~~~~~~~~~~~~~~~~~~~
 usage: CodeChecker cmd products [-h] [--verbose {info,debug,debug_analyzer}]
@@ -198,14 +190,8 @@ optional arguments:
 # <a name="web-interface"></a> Managing products through the web interface
 
 Certain administrative actions regarding products can only be executed by
-[superusers](/docs/permissions.md). If you are running a server without
-[authentication](/docs/authentication.md) turned on, no access to these
-features is the expected behaviour. You can use the combination of
-[`--force-authentication` and `--reset-root`
-commands](/docs/user_guide.md#master-superuser-and-authentication-forcing) to
-restart your server specifically to can access administrative actions. When
-the server is started as such and the browser prompts for authentication,
-enter the generated "root" credentials.
+[superusers](/docs/permissions.md) if the server is running with authentication
+turned on.
 
 !["Add new product" dialog](/docs/images/newproduct.png)
 

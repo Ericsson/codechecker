@@ -69,7 +69,7 @@ chmod 0600 ~/.pgpass
 > For format and further information on `pgpass` files, please refer to the
 > [PostgreSQL documentation](http://www.postgresql.org/docs/current/static/libpq-pgpass.html).
 
-At this point, you can normall continue with installing the neccessary Python
+At this point, you can normal continue with installing the necessary Python
 requirements and creating an install of CodeChecker:
 
 ~~~~~~{.sh}
