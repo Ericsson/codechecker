@@ -14,6 +14,8 @@ from libcodechecker.analyze.analyzers import ctu_triple_arch
 from libcodechecker.analyze import analyzer_env
 from libcodechecker.logger import LoggerFactory
 from libcodechecker.util import get_binary_in_path
+from libcodechecker.analyze.analyzer_env import\
+    extend_analyzer_cmd_with_resource_dir
 
 LOG = LoggerFactory.get_new_logger('CLANGSA')
 
@@ -88,11 +90,8 @@ class ClangSA(analyzer_base.SourceAnalyzer):
 
             analyzer_cmd = [config.analyzer_binary]
 
-            if len(config.compiler_resource_dir) > 0:
-                analyzer_cmd.extend(['-resource-dir',
-                                     config.compiler_resource_dir,
-                                     '-isystem',
-                                     config.compiler_resource_dir])
+            extend_analyzer_cmd_with_resource_dir(analyzer_cmd,
+                                                  config.compiler_resource_dir)
 
             # Do not warn about the unused gcc/g++ arguments.
             analyzer_cmd.append('-Qunused-arguments')

@@ -10,6 +10,8 @@ Helpers for determining triple arch of a compile action
 import shlex
 
 from libcodechecker.analyze.analyzers import analyzer_base
+from libcodechecker.analyze.analyzer_env import\
+    extend_analyzer_cmd_with_resource_dir
 
 
 def get_compile_command(action, config, source='', output=''):
@@ -17,10 +19,9 @@ def get_compile_command(action, config, source='', output=''):
     for other operations. """
 
     cmd = [config.analyzer_binary]
+    extend_analyzer_cmd_with_resource_dir(cmd,
+                                          config.compiler_resource_dir)
     cmd.extend(action.compiler_includes)
-    if len(config.compiler_resource_dir) > 0:
-        cmd.extend(['-resource-dir', config.compiler_resource_dir,
-                    '-isystem', config.compiler_resource_dir])
     cmd.append('-c')
     cmd.extend(['-x', action.lang])
     cmd.append(config.analyzer_extra_arguments)
