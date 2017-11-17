@@ -35,6 +35,7 @@ class product_urlTest(unittest.TestCase):
         test("localhost", 8002, "MyProduct")
         test("another.server", 80, "CodeChecker", "http")
         test("very-secure.another.server", 443, "CodeChecker", "https")
+        test("contains-a-port-overri.de", 1234, "PRD", "https")
 
     def testProductName(self):
         """
@@ -46,7 +47,7 @@ class product_urlTest(unittest.TestCase):
             sprotocol, shost, sport, sname = split_product_url(url)
             self.assertEqual(sprotocol, protocol if protocol else "http")
             self.assertEqual(shost, "localhost")
-            self.assertEqual(sport, 8001)
+            self.assertEqual(sport, 443 if protocol == 'https' else 8001)
             self.assertEqual(sname, name)
 
         test("Default")
@@ -65,13 +66,13 @@ class product_urlTest(unittest.TestCase):
             sprotocol, shost, sport, sname = split_product_url(url)
             self.assertEqual(sprotocol, protocol if protocol else "http")
             self.assertEqual(shost, host)
-            self.assertEqual(sport, 8001)
+            self.assertEqual(sport, 443 if protocol == 'https' else 8001)
             self.assertEqual(sname, name)
 
         test("localhost", "Default")
         test("otherhost", "awesome123", "http")
 
-        # 8080/product as if 8080 was a host name.
+        # 8080/MyProduct as if 8080 was a host name.
         test("8080", "MyProduct")
         test("super", "verygood", "https")
 
@@ -127,7 +128,7 @@ class product_urlTest(unittest.TestCase):
             sprotocol, shost, sport = split_server_url(url)
             self.assertEqual(sprotocol, protocol if protocol else "http")
             self.assertEqual(shost, host)
-            self.assertEqual(sport, 8001)
+            self.assertEqual(sport, 443 if protocol == 'https' else 8001)
 
         test("codechecker")
         test("codechecker", "http")
