@@ -1,9 +1,33 @@
-from codeCheckerDBAccess_v6.ttypes import*
+# -------------------------------------------------------------------------
+#                     The CodeChecker Infrastructure
+#   This file is distributed under the University of Illinois Open Source
+#   License. See LICENSE.TXT for details.
+# -------------------------------------------------------------------------
+"""
+Perform automatic cleanup routines on the database.
+"""
+
+from datetime import datetime, timedelta
+
+from codeCheckerDBAccess_v6.ttypes import *
 
 from libcodechecker.logger import get_logger
 from libcodechecker.server.database.run_db_model import *
 
 LOG = get_logger('server')
+
+
+def remove_stale_runs(session):
+    LOG.debug("Pruning of stale runs whose storage went away started...")
+
+    locks_expired_at = datetime.now() - timedelta(minutes=30)
+
+    session.query(Run) \
+        .filter(and_(Run.duration == -2,
+                     Run.lock_timestamp < locks_expired_at)) \
+        .delete(synchronize_session=False)
+
+    LOG.info("Pruning of stale runs whose storage went away finished.")
 
 
 def remove_unused_files(session):

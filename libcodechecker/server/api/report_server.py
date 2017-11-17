@@ -10,20 +10,17 @@ Handle Thrift requests.
 import base64
 import codecs
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timedelta
 import hashlib
 import json
 import sys
 import tempfile
-import threading
-import time
 import zipfile
 import zlib
 
 import sqlalchemy
 
 import shared
-import store_handler
 from codeCheckerDBAccess_v6 import constants, ttypes
 from codeCheckerDBAccess_v6.ttypes import *
 
@@ -36,8 +33,12 @@ from libcodechecker.profiler import timeit
 from libcodechecker.server import permissions
 from libcodechecker.server.database import db_cleanup
 from libcodechecker.server.database.run_db_model import *
+from libcodechecker.server.database.session_context import DBSession
+
+from . import store_handler
 
 LOG = get_logger('server')
+RUN_LOCK_TIMEOUT_IN_DATABASE = 30 * 60  # 30 minutes.
 
 
 class CountFilter:
@@ -48,28 +49,6 @@ class CountFilter:
     REVIEW_STATUS = 4
     DETECTION_STATUS = 5
     RUN_HISTORY_TAG = 6
-
-
-class DBSession(object):
-    """
-    Requires a session maker object and creates one session which can be used
-    in the context.
-
-    The session will be automatically closed, but commiting must be done
-    inside the context.
-    """
-    def __init__(self, session_maker):
-        self.__session = None
-        self.__session_maker = session_maker
-
-    def __enter__(self):
-        # create new session
-        self.__session = self.__session_maker()
-        return self.__session
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if self.__session:
-            self.__session.close()
 
 
 def exc_to_thrift_reqfail(func):
@@ -536,7 +515,16 @@ class ThriftRequestHandler(object):
                               name in run_filter.names]
                         q = q.filter(or_(*OR))
 
-            q = q.outerjoin(stmt, Run.id == stmt.c.run_id) \
+            # There can be runs whose duration is -2 (first store) and their
+            # lock has expired. In this case, these are runs that were started
+            # but the store operation for them crashed irrecoverably. Thus, no
+            # data apart from this "lock record" exists for these runs, so they
+            # should not be presented to the user.
+            locks_expired_at = datetime.now() - \
+                timedelta(seconds=RUN_LOCK_TIMEOUT_IN_DATABASE)
+            q = q.filter(not_(and_(Run.duration == -2,
+                                   Run.lock_timestamp < locks_expired_at))) \
+                .outerjoin(stmt, Run.id == stmt.c.run_id) \
                 .outerjoin(tag_q, Run.id == tag_q.c.run_id) \
                 .outerjoin(RunHistory,
                            RunHistory.id == tag_q.c.run_history_id) \
@@ -1920,8 +1908,14 @@ class ThriftRequestHandler(object):
 
         with DBSession(self.__Session) as session:
             run = session.query(Run).filter(Run.name == name).one_or_none()
-            max_run_count = self.__manager.get_max_run_count()
 
+            if run and run.is_locked(RUN_LOCK_TIMEOUT_IN_DATABASE):
+                msg = "'{0}' is already being stored into.".format(name)
+                LOG.error(msg)
+                raise shared.ttypes.RequestFailed(
+                    shared.ttypes.ErrorCode.GENERAL, msg)
+
+            max_run_count = self.__manager.get_max_run_count()
             # If max_run_count is not set in the config file, it will allow
             # the user to upload unlimited runs.
             if max_run_count:
@@ -1977,8 +1971,9 @@ class ThriftRequestHandler(object):
                 # Round the duration to seconds.
                 durations = int(sum(check_durations))
 
-            with DBSession(self.__Session) as session:
-                run_id = store_handler.addCheckerRun(session,
+            with DBSession(self.__Session) as run_transaction_buffer:
+                run_id = store_handler.addCheckerRun(self.__Session,
+                                                     run_transaction_buffer,
                                                      command,
                                                      name,
                                                      tag,
@@ -1986,19 +1981,20 @@ class ThriftRequestHandler(object):
                                                      run_history_time,
                                                      version,
                                                      force)
-                self.__store_reports(session,
+
+                self.__store_reports(run_transaction_buffer,
                                      report_dir,
                                      source_root,
                                      run_id,
                                      file_path_to_id,
                                      run_history_time)
 
-                store_handler.setRunDuration(session,
+                store_handler.setRunDuration(run_transaction_buffer,
                                              run_id,
                                              durations)
 
-                store_handler.finishCheckerRun(session, run_id)
+                store_handler.finishCheckerRun(run_transaction_buffer, run_id)
 
-                session.commit()
+                run_transaction_buffer.commit()
 
             return run_id
