@@ -122,12 +122,15 @@ def ldap_error_handler():
     except ldap.INVALID_CREDENTIALS:
         LOG.error("Invalid credentials, please recheck "
                   "your authentication configuration.")
+        raise
 
     except ldap.FILTER_ERROR:
         LOG.error("Filter error, please recheck your filter patterns.")
+        raise
 
     except ldap.LDAPError as err:
         log_ldap_error(err)
+        raise
 
 
 def get_user_dn(con,
@@ -212,16 +215,22 @@ class LDAPConnection(object):
 
         LOG.debug('Binding to LDAP server with user: ' + who if who else '')
 
-        with ldap_error_handler():
-            if who is None or cred is None:
-                # Try anonymous bind.
-                res = self.connection.simple_bind_s()
-                LOG.debug(res)
-            else:
-                # Bind with the given credentials
-                LOG.debug(who)
-                res = self.connection.simple_bind_s(who, cred)
-                LOG.debug(res)
+        try:
+            with ldap_error_handler():
+                if who is None or cred is None:
+                    # Try anonymous bind.
+                    res = self.connection.simple_bind_s()
+                    LOG.debug(res)
+                else:
+                    # Bind with the given credentials.
+                    LOG.debug(who)
+                    res = self.connection.simple_bind_s(who, cred)
+                    LOG.debug(res)
+        except:
+            LOG.debug("Server bind failed.")
+            if self.connection is not None:
+                self.connection.unbind()
+            self.connection = None
 
     def __enter__(self):
         return self.connection
@@ -274,7 +283,12 @@ def auth_user(ldap_config, username=None, credentials=None):
     if not service_user:
         service_user = username
         service_cred = credentials
+
     with LDAPConnection(ldap_config, service_user, service_cred) as connection:
+        if connection is None:
+            LOG.error('Please check your LDAP server '
+                      'authentication credentials.')
+            return False
 
         user_dn = get_user_dn(connection,
                               account_base,
@@ -288,11 +302,13 @@ def auth_user(ldap_config, username=None, credentials=None):
                 LOG.error('Anonymous bind might not be enabled.')
             LOG.error('Configured username: ' + service_user)
             return False
-    # bind with the users dn to check group membership
+
+    # Bind with the user's DN to check group membership.
     with LDAPConnection(ldap_config, user_dn, credentials) as connection:
-        return True
-    LOG.info("User:" + username + " cannot be authenticated.")
-    return False
+        if not connection:
+            LOG.info("User: " + username + " cannot be authenticated.")
+
+        return connection is not None
 
 
 def get_groups(ldap_config, username, credentials):
@@ -321,6 +337,11 @@ def get_groups(ldap_config, username, credentials):
 
     LOG.debug("creating LDAP connection. service user" + service_user)
     with LDAPConnection(ldap_config, service_user, service_cred) as connection:
+        if connection is None:
+            LOG.error('Please check your LDAP server '
+                      'authentication credentials.')
+            return False
+
         user_dn = get_user_dn(connection,
                               account_base,
                               account_pattern,
@@ -352,25 +373,26 @@ def get_groups(ldap_config, username, credentials):
             return []
 
         # Attribute name must be ascii encoded
-        group_name_attr = group_name_attr.encode('ascii',
-                                                 'ignore')
+        group_name_attr = group_name_attr.encode('ascii', 'ignore')
         attr_list = [group_name_attr]
 
         LOG.debug("Performing LDAP search for group:" + group_pattern +
                   "Group Name Attr:" + group_name_attr)
 
         groups = []
-        with ldap_error_handler():
-            group_result = connection.search_s(group_base,
-                                               group_scope,
-                                               group_pattern,
-                                               attr_list)
-            if group_result:
-                for g in group_result:
-                    groups.append(g[1][group_name_attr][0])
+        try:
+            with ldap_error_handler():
+                group_result = connection.search_s(group_base,
+                                                   group_scope,
+                                                   group_pattern,
+                                                   attr_list)
+                if group_result:
+                    for g in group_result:
+                        groups.append(g[1][group_name_attr][0])
 
-        LOG.debug("groups:")
-        LOG.debug(groups)
-        return groups
-    LOG.error("Cannot get ldap groups for user:"+username)
-    return []
+            LOG.debug("groups:")
+            LOG.debug(groups)
+            return groups
+        except:
+            LOG.error("Cannot get ldap groups for user: " + username)
+            return []
