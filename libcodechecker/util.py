@@ -198,7 +198,7 @@ def split_server_url(url):
     url = url.lstrip('/').rstrip('/')
 
     # A valid server_url looks like this: 'http://localhost:8001/'.
-    host, port = 'localhost', 8001
+    host, port = 'localhost', 443 if protocol == 'https' else 8001
     try:
         parts = url.split('/', 1)
 
@@ -253,7 +253,8 @@ def split_product_url(url):
     url = url.lstrip('/').rstrip('/')
 
     # A valid product_url looks like this: 'http://localhost:8001/Product'.
-    host, port, product_name = 'localhost', 8001, 'Default'
+    host, product_name = 'localhost', 'Default'
+    port = 443 if protocol == 'https' else 8001
     try:
         parts = url.split("/")
 
