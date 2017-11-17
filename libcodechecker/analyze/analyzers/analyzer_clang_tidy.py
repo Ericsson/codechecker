@@ -14,6 +14,8 @@ import subprocess
 from libcodechecker.analyze.analyzers import analyzer_base
 from libcodechecker.logger import LoggerFactory
 from libcodechecker.util import get_binary_in_path
+from libcodechecker.analyze.analyzer_env import\
+    extend_analyzer_cmd_with_resource_dir
 
 LOG = LoggerFactory.get_new_logger('CLANG TIDY')
 
@@ -92,13 +94,8 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
 
             analyzer_cmd.append('-Qunused-arguments')
 
-            # Options before the analyzer options.
-            if len(config.compiler_resource_dir) > 0:
-                analyzer_cmd.extend(['-resource-dir',
-                                     config.compiler_resource_dir,
-                                     '-isystem',
-                                     config.compiler_resource_dir])
-
+            extend_analyzer_cmd_with_resource_dir(analyzer_cmd,
+                                                  config.compiler_resource_dir)
             # Set language.
             analyzer_cmd.extend(['-x', self.buildaction.lang])
 
