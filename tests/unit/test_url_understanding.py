@@ -8,8 +8,19 @@
 
 import unittest
 
+from libcodechecker.util import expand_whole_protocol_and_port
 from libcodechecker.util import split_product_url
 from libcodechecker.util import split_server_url
+
+
+def expected_protocol(protocol=None, port=None):
+    protocol, _ = expand_whole_protocol_and_port(protocol, port)
+    return protocol
+
+
+def expected_port(protocol=None, port=None):
+    _, port = expand_whole_protocol_and_port(protocol, port)
+    return port
 
 
 class product_urlTest(unittest.TestCase):
@@ -26,9 +37,9 @@ class product_urlTest(unittest.TestCase):
                            host, ":", str(port), "/", name])
 
             sprotocol, shost, sport, sname = split_product_url(url)
-            self.assertEqual(sprotocol, protocol if protocol else "http")
+            self.assertEqual(sprotocol, expected_protocol(protocol, port))
             self.assertEqual(shost, host)
-            self.assertEqual(sport, port)
+            self.assertEqual(sport, expected_port(protocol, port))
             self.assertEqual(sname, name)
 
         test("localhost", 8001, "Default")
@@ -45,9 +56,9 @@ class product_urlTest(unittest.TestCase):
             url = ''.join([protocol + "://" if protocol else "", name])
 
             sprotocol, shost, sport, sname = split_product_url(url)
-            self.assertEqual(sprotocol, protocol if protocol else "http")
+            self.assertEqual(sprotocol, expected_protocol(protocol, None))
             self.assertEqual(shost, "localhost")
-            self.assertEqual(sport, 443 if protocol == 'https' else 8001)
+            self.assertEqual(sport, expected_port(protocol, None))
             self.assertEqual(sname, name)
 
         test("Default")
@@ -64,9 +75,9 @@ class product_urlTest(unittest.TestCase):
                            host, "/", name])
 
             sprotocol, shost, sport, sname = split_product_url(url)
-            self.assertEqual(sprotocol, protocol if protocol else "http")
+            self.assertEqual(sprotocol, expected_protocol(protocol, None))
             self.assertEqual(shost, host)
-            self.assertEqual(sport, 443 if protocol == 'https' else 8001)
+            self.assertEqual(sport, expected_port(protocol, None))
             self.assertEqual(sname, name)
 
         test("localhost", "Default")
@@ -93,6 +104,9 @@ class product_urlTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             split_product_url("localhost:12PortIsANumber34/Foo")
 
+        with self.assertRaises(ValueError):
+            split_product_url("codechecker://codecheker.com/Baz")
+
     def testFullServerURL(self):
         """
         Whole server URL understanding.
@@ -102,9 +116,9 @@ class product_urlTest(unittest.TestCase):
                            host, ":", str(port)])
 
             sprotocol, shost, sport = split_server_url(url)
-            self.assertEqual(sprotocol, protocol if protocol else "http")
+            self.assertEqual(sprotocol, expected_protocol(protocol, port))
             self.assertEqual(shost, host)
-            self.assertEqual(sport, port)
+            self.assertEqual(sport, expected_port(protocol, port))
 
         test("localhost", 8001)
         test("localhost", 8002)
@@ -126,14 +140,14 @@ class product_urlTest(unittest.TestCase):
             url = ''.join([protocol + "://" if protocol else "", host])
 
             sprotocol, shost, sport = split_server_url(url)
-            self.assertEqual(sprotocol, protocol if protocol else "http")
+            self.assertEqual(sprotocol, expected_protocol(protocol, None))
             self.assertEqual(shost, host)
-            self.assertEqual(sport, 443 if protocol == 'https' else 8001)
+            self.assertEqual(sport, expected_port(protocol, None))
 
-        test("codechecker")
-        test("codechecker", "http")
-        test("codechecker.local")
-        test("www.example.org", "https")
+        test("codechecker")  # Port: 8001
+        test("codechecker", "http")  # Port: 80
+        test("codechecker.local")  # Port: 8001
+        test("www.example.org", "https")  # Port: 443
 
     def testBadServerURLs(self):
         """
@@ -145,3 +159,6 @@ class product_urlTest(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             split_server_url("localhost:12PortIsANumber34")
+
+        with self.assertRaises(ValueError):
+            split_server_url("whatever://whatev.er")
