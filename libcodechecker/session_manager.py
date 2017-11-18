@@ -145,10 +145,12 @@ def load_session_cfg(session_cfg_file):
     except IOError:
         LOG.debug('Failed to open user authentication file: ' +
                   session_cfg_file)
+        raise
     except ValueError as verr:
         LOG.warning(verr)
         LOG.warning('Not valid user authentication file: ' +
                     session_cfg_file)
+        raise
 
     return scfg_dict
 
@@ -442,7 +444,11 @@ class SessionManager_Client:
                                         ".codechecker.passwords.json")
         LOG.debug(session_cfg_file)
 
-        scfg_dict = load_session_cfg(session_cfg_file)
+        try:
+            scfg_dict = load_session_cfg(session_cfg_file)
+        except (IOError, ValueError):
+            # On the client's side, continue execution with defaults.
+            scfg_dict = {}
 
         if not scfg_dict.get("credentials"):
             scfg_dict["credentials"] = {}

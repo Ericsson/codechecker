@@ -19,6 +19,7 @@ from random import sample
 import stat
 import socket
 import ssl
+import sys
 import urllib
 
 try:
@@ -748,6 +749,12 @@ def start_server(config_directory, package_data, port, db_conn_string,
                      .format(root_file))
             root_sha = __make_root_file(root_file)
 
+    try:
+        manager = session_manager.SessionManager(root_sha, force_auth)
+    except IOError, ValueError:
+        LOG.error("The server's authentication config file is invalid!")
+        sys.exit(1)
+
     http_server = CCSimpleHttpServer(server_addr,
                                      RequestHandler,
                                      config_directory,
@@ -757,9 +764,7 @@ def start_server(config_directory, package_data, port, db_conn_string,
                                      suppress_handler,
                                      context,
                                      check_env,
-                                     session_manager.SessionManager(
-                                         root_sha, force_auth)
-                                     )
+                                     manager)
 
     try:
         instance_manager.register(os.getpid(),
