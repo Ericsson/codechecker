@@ -191,6 +191,7 @@ def parse_compile_commands_json(logfile, parseLogOptions):
     filtered_build_actions = {}
 
     logfile.seek(0)
+    # WARN: Every value will be unicode.
     data = json.load(logfile)
 
     compiler_includes = {}
@@ -198,7 +199,7 @@ def parse_compile_commands_json(logfile, parseLogOptions):
 
     counter = 0
     for entry in data:
-        sourcefile = entry['file']
+        sourcefile = str(entry['file'])
 
         if not os.path.isabs(sourcefile):
             # Newest versions of intercept-build can create the 'file' in the
@@ -213,7 +214,7 @@ def parse_compile_commands_json(logfile, parseLogOptions):
 
         action = build_action.BuildAction(counter)
         if 'command' in entry:
-            command = entry['command']
+            command = str(entry['command'])
 
             # Old versions of intercept-build (confirmed to those shipping
             # with upstream clang-5.0) do escapes in another way:
@@ -229,9 +230,11 @@ def parse_compile_commands_json(logfile, parseLogOptions):
             command = ' '.join(entry['arguments'])
         else:
             raise KeyError("No valid 'command' or 'arguments' entry found!")
+
+        command = str(command)
         results = option_parser.parse_options(command)
 
-        action.original_command = command
+        action.original_command = str(command)
         action.analyzer_options = results.compile_opts
 
         action.lang = results.lang
@@ -266,8 +269,8 @@ def parse_compile_commands_json(logfile, parseLogOptions):
             action.skip = False
 
         # TODO: Check arch.
-        action.directory = entry['directory']
-        action.sources = sourcefile
+        action.directory = str(entry['directory'])
+        action.sources = str(sourcefile)
         # Filter out duplicate compilation commands.
         unique_key = action.cmp_key
         if filtered_build_actions.get(unique_key) is None:
