@@ -26,11 +26,11 @@ from libcodechecker import generic_package_suppress_handler
 from libcodechecker import host_check
 from libcodechecker import logger
 from libcodechecker import output_formatters
-from libcodechecker import session_manager
 from libcodechecker import util
 from libcodechecker.analyze import analyzer_env
-from libcodechecker.server import server
 from libcodechecker.server import instance_manager
+from libcodechecker.server import server
+from libcodechecker.server import session_manager
 from libcodechecker.server.database import database
 from libcodechecker.server.database import database_status
 from libcodechecker.server.database.config_db_model \
@@ -861,7 +861,7 @@ def server_init_start(args):
 def main(args):
     """
     Setup a logger server based on the configuration and
-    manage the Codechecker server.
+    manage the CodeChecker server.
     """
     with logger.LOG_CFG_SERVER(args.verbose):
         server_init_start(args)

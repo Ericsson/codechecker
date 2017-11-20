@@ -14,6 +14,7 @@ import os
 import re
 import shutil
 import socket
+import stat
 import subprocess
 import tempfile
 
@@ -434,6 +435,28 @@ def get_new_line_col_without_whitespace(line_content, old_col):
 
     return ''.join(line_content.split()), \
            old_col - line_strip_len
+
+
+def check_file_owner_rw(file_to_check):
+    """
+    Check the file permissions.
+    Return:
+        True if only the owner can read or write the file.
+        False if other users or groups can read or write the file.
+    """
+
+    mode = os.stat(file_to_check)[stat.ST_MODE]
+    if mode & stat.S_IRGRP \
+            or mode & stat.S_IWGRP \
+            or mode & stat.S_IROTH \
+            or mode & stat.S_IWOTH:
+        LOG.warning("'{0}' is readable by users other than you! "
+                    "This poses a risk of leaking sensitive "
+                    "information, such as passwords, session tokens, etc.!\n"
+                    "Please 'chmod 0600 {0}' so only you can access the file."
+                    .format(file_to_check))
+        return False
+    return True
 
 
 def load_json_or_empty(path, default=None, kind=None):

@@ -16,10 +16,10 @@ from thrift.Thrift import TApplicationException
 import shared
 from codeCheckerDBAccess_v6 import codeCheckerDBAccess
 
-from libcodechecker import session_manager
 from libcodechecker import util
 from libcodechecker.logger import get_logger
 
+from credential_manager import SESSION_COOKIE_NAME
 
 LOG = get_logger('system')
 
@@ -35,8 +35,7 @@ class ThriftClientHelper(object):
         self.client = codeCheckerDBAccess.Client(self.protocol)
 
         if session_token:
-            headers = {'Cookie': session_manager.SESSION_COOKIE_NAME +
-                       "=" + session_token}
+            headers = {'Cookie': SESSION_COOKIE_NAME + '=' + session_token}
             self.transport.setCustomHeaders(headers)
 
     def ThriftClientCall(function):

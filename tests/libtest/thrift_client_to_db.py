@@ -5,7 +5,6 @@
 # -----------------------------------------------------------------------------
 
 from functools import partial
-from libcodechecker import util
 import os
 import re
 import socket
@@ -17,6 +16,7 @@ from thrift.Thrift import TApplicationException
 
 import shared
 
+from libcodechecker import util
 from libcodechecker.version import CLIENT_API as VERSION
 
 
@@ -110,9 +110,10 @@ class CCViewerHelper(ThriftAPIHelper):
     def __init__(self, protocol, host, port, product, endpoint,
                  auto_handle_connection=True, session_token=None):
         # Import only if necessary; some tests may not add this to PYTHONPATH.
-        from libcodechecker import session_manager
         from codeCheckerDBAccess_v6 import codeCheckerDBAccess
         from codeCheckerDBAccess_v6.constants import MAX_QUERY_SIZE
+        from libcodechecker.libclient.credential_manager \
+            import SESSION_COOKIE_NAME
 
         self.max_query_size = MAX_QUERY_SIZE
         url = util.create_product_url(protocol, host, port,
@@ -123,8 +124,7 @@ class CCViewerHelper(ThriftAPIHelper):
         protocol = TJSONProtocol.TJSONProtocol(transport)
         client = codeCheckerDBAccess.Client(protocol)
         if session_token:
-            headers = {'Cookie': session_manager.SESSION_COOKIE_NAME +
-                       "=" + session_token}
+            headers = {'Cookie': SESSION_COOKIE_NAME + '=' + session_token}
             transport.setCustomHeaders(headers)
         super(CCViewerHelper, self).__init__(transport,
                                              client, auto_handle_connection)
@@ -167,16 +167,16 @@ class CCAuthHelper(ThriftAPIHelper):
     def __init__(self, proto, host, port, uri, auto_handle_connection=True,
                  session_token=None):
         # Import only if necessary; some tests may not add this to PYTHONPATH.
-        from libcodechecker import session_manager
         from Authentication_v6 import codeCheckerAuthentication
+        from libcodechecker.libclient.credential_manager \
+            import SESSION_COOKIE_NAME
         url = util.create_product_url(proto, host, port,
                                       '/v' + VERSION + uri)
         transport = THttpClient.THttpClient(url)
         protocol = TJSONProtocol.TJSONProtocol(transport)
         client = codeCheckerAuthentication.Client(protocol)
         if session_token:
-            headers = {'Cookie': session_manager.SESSION_COOKIE_NAME +
-                       "=" + session_token}
+            headers = {'Cookie': SESSION_COOKIE_NAME + '=' + session_token}
             transport.setCustomHeaders(headers)
         super(CCAuthHelper, self).__init__(transport,
                                            client, auto_handle_connection)
@@ -191,8 +191,9 @@ class CCProductHelper(ThriftAPIHelper):
                  uri, auto_handle_connection=True,
                  session_token=None):
         # Import only if necessary; some tests may not add this to PYTHONPATH.
-        from libcodechecker import session_manager
         from ProductManagement_v6 import codeCheckerProductService
+        from libcodechecker.libclient.credential_manager \
+            import SESSION_COOKIE_NAME
         full_uri = '/v' + VERSION + uri
         if product:
             full_uri = '/' + product + full_uri
@@ -202,8 +203,7 @@ class CCProductHelper(ThriftAPIHelper):
         protocol = TJSONProtocol.TJSONProtocol(transport)
         client = codeCheckerProductService.Client(protocol)
         if session_token:
-            headers = {'Cookie': session_manager.SESSION_COOKIE_NAME +
-                       "=" + session_token}
+            headers = {'Cookie': SESSION_COOKIE_NAME + '=' + session_token}
             transport.setCustomHeaders(headers)
         super(CCProductHelper, self).__init__(transport,
                                               client, auto_handle_connection)

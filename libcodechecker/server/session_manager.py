@@ -4,38 +4,34 @@
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
 """
-Handles the allocation and destruction of privileged sessions associated
-with a particular CodeChecker server.
+Handles the management of authentication sessions on the server's side.
 """
 
 from datetime import datetime
 import hashlib
-import json
 import os
 import shutil
-import stat
 import time
 import uuid
 
-import portalocker
-
 from libcodechecker.logger import get_logger
-from libcodechecker import util
+from libcodechecker.util import check_file_owner_rw
+from libcodechecker.util import load_json_or_empty
+from libcodechecker.version import SESSION_COOKIE_NAME
 
 unsupported_methods = []
 
 try:
     from libcodechecker.libauth import cc_ldap
 except ImportError:
-    unsupported_methods.append("ldap")
+    unsupported_methods.append('ldap')
 
 try:
     from libcodechecker.libauth import cc_pam
 except ImportError:
-    unsupported_methods.append("pam")
+    unsupported_methods.append('pam')
 
 LOG = get_logger("server")
-SESSION_COOKIE_NAME = "__ccPrivilegedAccessToken"
 session_lifetimes = {}
 
 
@@ -44,8 +40,8 @@ class _Session(object):
 
     # Create an initial salt from system environment for use with the session
     # permanent persistency routine.
-    __initial_salt = hashlib.sha256(SESSION_COOKIE_NAME + "__" +
-                                    str(time.time()) + "__" +
+    __initial_salt = hashlib.sha256(SESSION_COOKIE_NAME + '__' +
+                                    str(time.time()) + '__' +
                                     os.urandom(16)).hexdigest()
 
     @staticmethod
@@ -54,7 +50,7 @@ class _Session(object):
         persistency hash is intended to be used for the "session recycle"
         feature to prevent NAT endpoints from accidentally getting each
         other's session."""
-        return hashlib.sha256(auth_string + "@" +
+        return hashlib.sha256(auth_string + '@' +
                               _Session.__initial_salt).hexdigest()
 
     def __init__(self, token, phash, username, groups, is_root=False):
@@ -77,7 +73,7 @@ class _Session(object):
         it. A session is valid in its soft-lifetime."""
 
         if (datetime.now() - self.last_access).total_seconds() <= \
-                session_lifetimes["soft"] and self.still_reusable():
+                session_lifetimes['soft'] and self.still_reusable():
             # If the session is still valid within the "reuse enabled" (soft)
             # past and the check comes from a real user access, we revalidate
             # the session by extending its lifetime --- the user retains their
@@ -98,7 +94,7 @@ class _Session(object):
         hard lifetime: while a session is reusable, a valid authentication
         from the session's user will return the user to the session."""
         return (datetime.now() - self.last_access).total_seconds() <= \
-            session_lifetimes["hard"]
+            session_lifetimes['hard']
 
     def revalidate(self):
         if self.still_reusable():
@@ -107,41 +103,6 @@ class _Session(object):
             # timeframe, it can NOT be resurrected at all --- the user needs
             # to log in into a brand-new session.
             self.last_access = datetime.now()
-
-
-def check_file_owner_rw(file_to_check):
-    """
-    Check the file permissions.
-    Return:
-        True if only the owner can read or write the file.
-        False if other users or groups can read or write the file.
-    """
-
-    mode = os.stat(file_to_check)[stat.ST_MODE]
-    if mode & stat.S_IRGRP \
-            or mode & stat.S_IWGRP \
-            or mode & stat.S_IROTH \
-            or mode & stat.S_IWOTH:
-        LOG.warning("'{0}' is readable by users other than you!"
-                    " This poses a risk of leaking sensitive"
-                    " information, such as passwords, session tokens, etc.!\n"
-                    "Please 'chmod 0600 {0}' so only you can access the file."
-                    .format(file_to_check))
-        return False
-    return True
-
-
-def load_server_cfg(server_cfg_file):
-    """
-    Tries to load the session config file which should be a
-    valid json file, if loading fails returns an empty dict.
-    """
-
-    if os.path.exists(server_cfg_file):
-        check_file_owner_rw(server_cfg_file)
-        return util.load_json_or_empty(server_cfg_file, {})
-
-    return {}
 
 
 class SessionManager:
@@ -179,14 +140,17 @@ class SessionManager:
 
         LOG.debug(server_cfg_file)
 
-        # Create the default settings and then load the file from the disk.
-        scfg_dict = {'authentication': {'enabled': False}}
-        scfg_dict.update(load_server_cfg(server_cfg_file))
+        scfg_dict = load_json_or_empty(server_cfg_file, {},
+                                       'server configuration')
+        if scfg_dict != {}:
+            check_file_owner_rw(server_cfg_file)
+        else:
+            scfg_dict = {'authentication': {'enabled': False}}
 
-        self.__max_run_count = scfg_dict["max_run_count"] \
-            if "max_run_count" in scfg_dict else None
+        self.__max_run_count = scfg_dict['max_run_count'] \
+            if 'max_run_count' in scfg_dict else None
 
-        self.__auth_config = scfg_dict["authentication"]
+        self.__auth_config = scfg_dict['authentication']
 
         if force_auth:
             LOG.debug("Authentication was force-enabled.")
@@ -196,32 +160,32 @@ class SessionManager:
         self.__auth_config['method_root'] = root_sha
 
         # If no methods are configured as enabled, disable authentication.
-        if scfg_dict["authentication"].get("enabled"):
+        if scfg_dict['authentication'].get('enabled'):
             found_auth_method = False
 
-            if "method_dictionary" in self.__auth_config and \
-                    self.__auth_config["method_dictionary"].get("enabled"):
+            if 'method_dictionary' in self.__auth_config and \
+                    self.__auth_config['method_dictionary'].get('enabled'):
                 found_auth_method = True
 
-            if "method_ldap" in self.__auth_config and \
-                    self.__auth_config["method_ldap"].get("enabled"):
-                if "ldap" not in unsupported_methods:
+            if 'method_ldap' in self.__auth_config and \
+                    self.__auth_config['method_ldap'].get('enabled'):
+                if 'ldap' not in unsupported_methods:
                     found_auth_method = True
                 else:
                     LOG.warning("LDAP authentication was enabled but "
                                 "prerequisites are NOT installed on the system"
                                 "... Disabling LDAP authentication.")
-                    self.__auth_config["method_ldap"]["enabled"] = False
+                    self.__auth_config['method_ldap']['enabled'] = False
 
-            if "method_pam" in self.__auth_config and \
-                    self.__auth_config["method_pam"].get("enabled"):
-                if "pam" not in unsupported_methods:
+            if 'method_pam' in self.__auth_config and \
+                    self.__auth_config['method_pam'].get('enabled'):
+                if 'pam' not in unsupported_methods:
                     found_auth_method = True
                 else:
                     LOG.warning("PAM authentication was enabled but "
                                 "prerequisites are NOT installed on the system"
                                 "... Disabling PAM authentication.")
-                    self.__auth_config["method_pam"]["enabled"] = False
+                    self.__auth_config['method_pam']['enabled'] = False
 
             #
             if not found_auth_method:
@@ -234,20 +198,20 @@ class SessionManager:
                     LOG.warning("Authentication is enabled but no valid "
                                 "authentication backends are configured... "
                                 "Falling back to no authentication.")
-                    self.__auth_config["enabled"] = False
+                    self.__auth_config['enabled'] = False
 
-        session_lifetimes["soft"] = \
-            self.__auth_config.get("soft_expire") or 60
-        session_lifetimes["hard"] = \
-            self.__auth_config.get("session_lifetime") or 300
+        session_lifetimes['soft'] = \
+            self.__auth_config.get('soft_expire') or 60
+        session_lifetimes['hard'] = \
+            self.__auth_config.get('session_lifetime') or 300
 
-    def isEnabled(self):
-        return self.__auth_config.get("enabled")
+    def is_enabled(self):
+        return self.__auth_config.get('enabled')
 
-    def getRealm(self):
+    def get_realm(self):
         return {
-            "realm": self.__auth_config.get("realm_name"),
-            "error": self.__auth_config.get("realm_error")
+            "realm": self.__auth_config.get('realm_name'),
+            "error": self.__auth_config.get('realm_error')
         }
 
     def __handle_validation(self, auth_string):
@@ -276,16 +240,16 @@ class SessionManager:
 
     def __is_method_enabled(self, method):
         return method not in unsupported_methods and \
-            "method_" + method in self.__auth_config and \
-            self.__auth_config["method_" + method].get("enabled")
+            'method_' + method in self.__auth_config and \
+            self.__auth_config['method_' + method].get('enabled')
 
     def __try_auth_root(self, auth_string):
         """
         Try to authenticate the user against the root username:password's hash.
         """
-        if "method_root" in self.__auth_config and \
+        if 'method_root' in self.__auth_config and \
                 hashlib.sha256(auth_string).hexdigest() == \
-                self.__auth_config["method_root"]:
+                self.__auth_config['method_root']:
             return {
                 'username': SessionManager.get_user_name(auth_string),
                 'groups': [],
@@ -301,12 +265,12 @@ class SessionManager:
         Returns a validation object if successful, which contains the users'
         groups.
         """
-        method_config = self.__auth_config.get("method_dictionary")
+        method_config = self.__auth_config.get('method_dictionary')
         if not method_config:
             return False
 
-        valid = self.__is_method_enabled("dictionary") and \
-            auth_string in method_config.get("auths")
+        valid = self.__is_method_enabled('dictionary') and \
+            auth_string in method_config.get('auths')
         if not valid:
             return False
 
@@ -324,9 +288,9 @@ class SessionManager:
         """
         Try to authenticate user based on the PAM configuration.
         """
-        if self.__is_method_enabled("pam"):
-            username, password = auth_string.split(":")
-            if cc_pam.auth_user(self.__auth_config["method_pam"],
+        if self.__is_method_enabled('pam'):
+            username, password = auth_string.split(':')
+            if cc_pam.auth_user(self.__auth_config['method_pam'],
                                 username, password):
                 # PAM does not hold a group membership list we can reliably
                 # query.
@@ -338,11 +302,11 @@ class SessionManager:
         """
         Try to authenticate user to all the configured authorities.
         """
-        if self.__is_method_enabled("ldap"):
-            username, password = auth_string.split(":")
+        if self.__is_method_enabled('ldap'):
+            username, password = auth_string.split(':')
 
-            ldap_authorities = self.__auth_config["method_ldap"] \
-                .get("authorities")
+            ldap_authorities = self.__auth_config['method_ldap'] \
+                .get('authorities')
             for ldap_conf in ldap_authorities:
                 if cc_ldap.auth_user(ldap_conf, username, password):
                     groups = cc_ldap.get_groups(ldap_conf, username, password)
@@ -352,7 +316,7 @@ class SessionManager:
 
     @staticmethod
     def get_user_name(auth_string):
-        return auth_string.split(":")[0]
+        return auth_string.split(':')[0]
 
     def create_or_get_session(self, auth_string):
         """Create a new session for the given auth-string, if it is valid. If
@@ -360,12 +324,12 @@ class SessionManager:
         Currently only username:password format auth_string
         is supported.
         """
-        if not self.__auth_config["enabled"]:
+        if not self.__auth_config['enabled']:
             return None
 
         self.__logins_since_prune += 1
         if self.__logins_since_prune >= \
-                self.__auth_config["logins_until_cleanup"]:
+                self.__auth_config['logins_until_cleanup']:
             self.__cleanup_sessions()
 
         validation = self.__try_auth_root(auth_string)
@@ -387,11 +351,11 @@ class SessionManager:
                 session = session_already
             else:
                 # TODO: Use a more secure way for token generation?
-                token = uuid.UUID(bytes=os.urandom(16)).__str__().replace("-",
-                                                                          "")
+                token = uuid.UUID(bytes=os.urandom(16)).__str__().replace('-',
+                                                                          '')
 
                 user_name = validation['username']
-                groups = validation.get("groups", [])
+                groups = validation.get('groups', [])
                 is_root = validation.get('root', False)
 
                 session = _Session(token,
@@ -406,7 +370,7 @@ class SessionManager:
     def is_valid(self, token, access=False):
         """Validates a given token (cookie) against
         the known list of privileged sessions."""
-        if not self.isEnabled():
+        if not self.is_enabled():
             return True
         else:
             return any(_sess.token == token and _sess.still_valid(access)
@@ -423,7 +387,7 @@ class SessionManager:
         """Gets the privileged session object based
         based on the token.
         """
-        if not self.isEnabled():
+        if not self.is_enabled():
             return None
         for _sess in SessionManager.__valid_sessions:
             if _sess.token == token and _sess.still_valid(access):
@@ -444,68 +408,3 @@ class SessionManager:
                                            in SessionManager.__valid_sessions
                                            if s.still_reusable()]
         self.__logins_since_prune = 0
-
-
-class SessionManager_Client:
-    def __init__(self):
-        LOG.debug('Loading session config')
-
-        # Check whether user's configuration exists.
-        user_home = os.path.expanduser("~")
-        session_cfg_file = os.path.join(user_home,
-                                        ".codechecker.passwords.json")
-        LOG.debug(session_cfg_file)
-
-        scfg_dict = load_server_cfg(session_cfg_file)
-
-        if not scfg_dict.get("credentials"):
-            scfg_dict["credentials"] = {}
-
-        self.__save = scfg_dict
-        self.__autologin = scfg_dict.get("client_autologin") \
-            if "client_autologin" in scfg_dict else True
-
-        # Check and load token storage for user
-        self.token_file = os.path.join(user_home, ".codechecker.session.json")
-        LOG.debug(self.token_file)
-
-        if os.path.exists(self.token_file):
-            with open(self.token_file, 'r') as f:
-                input = json.loads(f.read())
-                self.__tokens = input.get("tokens")
-            check_file_owner_rw(self.token_file)
-        else:
-            with open(self.token_file, 'w') as f:
-                json.dump({'tokens': {}}, f)
-            os.chmod(self.token_file, stat.S_IRUSR | stat.S_IWUSR)
-
-            self.__tokens = {}
-
-    def is_autologin_enabled(self):
-        return self.__autologin
-
-    def getToken(self, host, port):
-        return self.__tokens.get("{0}:{1}".format(host, port))
-
-    def getAuthString(self, host, port):
-        ret = self.__save["credentials"].get("{0}:{1}".format(host, port))
-        if not ret:
-            ret = self.__save["credentials"].get(host)
-        if not ret:
-            ret = self.__save["credentials"].get("*:{0}".format(port))
-        if not ret:
-            ret = self.__save["credentials"].get("*")
-
-        return ret
-
-    def saveToken(self, host, port, token, destroy=False):
-        if destroy:
-            del self.__tokens["{0}:{1}".format(host, port)]
-        else:
-            self.__tokens["{0}:{1}".format(host, port)] = token
-
-        with open(self.token_file, 'w') as scfg:
-            portalocker.lock(scfg, portalocker.LOCK_EX)
-            json.dump({'tokens': self.__tokens}, scfg,
-                      indent=2, sort_keys=True)
-            portalocker.unlock(scfg)

@@ -20,6 +20,7 @@ import stat
 import socket
 import ssl
 import sys
+import stat
 import urllib
 
 try:
@@ -40,13 +41,13 @@ from Authentication_v6 import codeCheckerAuthentication as AuthAPI_v6
 from codeCheckerDBAccess_v6 import codeCheckerDBAccess as ReportAPI_v6
 from ProductManagement_v6 import codeCheckerProductService as ProductAPI_v6
 
-from libcodechecker import session_manager
 from libcodechecker.logger import get_logger
 from libcodechecker.util import get_tmp_dir_hash
 
 from . import instance_manager
 from . import permissions
 from . import routing
+from . import session_manager
 from api.authentication import ThriftAuthHandler as AuthHandler_v6
 from api.bad_api_version import ThriftAPIMismatchHandler as BadAPIHandler
 from api.product_server import ThriftProductHandler as ProductHandler_v6
@@ -84,7 +85,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
         present.
         """
 
-        if not self.server.manager.isEnabled():
+        if not self.server.manager.is_enabled():
             return None
 
         success = None
@@ -153,18 +154,18 @@ class RequestHandler(SimpleHTTPRequestHandler):
         LOG.info("{0}:{1} -- [{2}] GET {3}"
                  .format(self.client_address[0],
                          str(self.client_address[1]),
-                         auth_session.user if auth_session else "Anonymous",
+                         auth_session.user if auth_session else 'Anonymous',
                          self.path))
 
-        if self.server.manager.isEnabled() and not auth_session:
-            realm = self.server.manager.getRealm()["realm"]
-            error_body = self.server.manager.getRealm()["error"]
+        if self.server.manager.is_enabled() and not auth_session:
+            realm = self.server.manager.get_realm()['realm']
+            error_body = self.server.manager.get_realm()['error']
 
             self.send_response(401)  # 401 Unauthorised
-            self.send_header("WWW-Authenticate",
+            self.send_header('WWW-Authenticate',
                              'Basic realm="{0}"'.format(realm))
-            self.send_header("Content-type", "text/plain")
-            self.send_header("Content-length", str(len(error_body)))
+            self.send_header('Content-type', 'text/plain')
+            self.send_header('Content-length', str(len(error_body)))
             self.send_header('Connection', 'close')
             self.end_headers()
             self.wfile.write(error_body)
@@ -344,7 +345,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
         iprot = input_protocol_factory.getProtocol(itrans)
         oprot = output_protocol_factory.getProtocol(otrans)
 
-        if self.server.manager.isEnabled() and \
+        if self.server.manager.is_enabled() and \
                 not self.path.endswith('/Authentication') and \
                 not auth_session:
             # Bail out if the user is not authenticated...
