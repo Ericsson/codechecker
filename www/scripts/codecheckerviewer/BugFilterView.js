@@ -1493,21 +1493,15 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
         title : 'Checker name',
         parent   : this,
         enableSearch : true,
-        serverSideSearch : true,
         filterLabel : 'Search for checker names...',
         getItems : function (filter, limit) {
           var deferred = new Deferred();
 
           var runs = that.getRunIds();
-          var searchData = this.createSearchData(filter, limit);
+          var reportFilter = that.getReportFilters();
 
-          if (!searchData.limit) {
-            deferred.resolve([]);
-            return deferred;
-          }
-
-          CC_SERVICE.getCheckerCounts(runs.baseline, searchData.reportFilter,
-            runs.newcheck, searchData.limit, 0, function (res) {
+          CC_SERVICE.getCheckerCounts(runs.baseline, reportFilter,
+          runs.newcheck, null, 0, function (res) {
             deferred.resolve(res.map(function (checker) {
               return {
                 label : checker.name,
