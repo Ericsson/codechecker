@@ -86,7 +86,8 @@ def process_report_filter_v2(report_filter, count_filter=None):
               for cm in report_filter.checkerMsg]
         AND.append(or_(*OR))
 
-    if report_filter.checkerName is not None:
+    if report_filter.checkerName is not None and \
+       count_filter != CountFilter.CHECKER_NAME:
         OR = [Report.checker_id.ilike(conv(cn))
               for cn in report_filter.checkerName]
         AND.append(or_(*OR))
