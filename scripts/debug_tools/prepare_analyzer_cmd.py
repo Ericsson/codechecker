@@ -11,7 +11,7 @@ import os
 import sys
 
 
-def getFirstLineOfFile(fname):
+def get_first_line_of_file(fname):
     with open(fname) as f:
         return f.readline()
 
@@ -62,7 +62,7 @@ class PathOptions:
 
 
 def prepare(analyzer_command_file, pathOptions):
-    res = lib.change_paths(getFirstLineOfFile(analyzer_command_file),
+    res = lib.change_paths(get_first_line_of_file(analyzer_command_file),
                            AnalyzerCommandPathModifier(pathOptions))
     return res
 

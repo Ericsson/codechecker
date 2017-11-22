@@ -9,12 +9,13 @@ of them (with `_DEBUG` postfix).  These modified files contain the paths
 prefixed with the root of the source directory which holds the dependent source
 files (`sources-root`).
 
-`prepare_analyzer_cmd.py` creates a new analyzer command which may be executed
-immediately, if cross translation unit (CTU) was disabled.  However, to debug
-CTU analysis related crashed in clang we have to synthetise the AST dump files
-too, so other phases are needed which are done in `prepare_all_cmd_for_ctu.py`.
-It executes `CodeChecker` with ctu-collect, therefore `CodeChecker` must be in
-the `PATH` and the proper venv must be set.
+`prepare_analyzer_cmd.py` creates a new clang static analyzer command
+(`analyzer-command_DEBUG`) which may be executed immediately if cross
+translation unit (CTU) was disabled.  However, to debug CTU analysis related
+crashed in clang we have to synthetise the AST dump files too, so other phases
+are needed which are done in `prepare_all_cmd_for_ctu.py`.  It executes
+`CodeChecker` with ctu-collect, therefore `CodeChecker` must be in the `PATH`
+and the proper venv must be set.
 
 Example session for debugging a clang crash:
 ```sh
