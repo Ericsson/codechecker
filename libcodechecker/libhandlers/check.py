@@ -439,6 +439,7 @@ def main(args):
                           'capture_analysis_output',
                           'ctu_phases',
                           'ctu_in_memory',
+                          'enable_all',
                           'ordered_checkers'  # --enable and --disable.
                           ]
         for key in args_to_update:
