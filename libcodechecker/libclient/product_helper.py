@@ -11,6 +11,7 @@ import socket
 from thrift.transport import THttpClient
 from thrift.protocol import TJSONProtocol
 from thrift.protocol.TProtocol import TProtocolException
+from thrift.Thrift import TApplicationException
 
 import shared
 from ProductManagement_v6 import codeCheckerProductService
@@ -62,6 +63,10 @@ class ThriftProductHelper(object):
                 else:
                     print('Other error')
                     print(str(reqfailure))
+            except TApplicationException as ex:
+                print("Internal server error on {0}:{1}"
+                      .format(self.__host, self.__port))
+                print(ex.message)
             except TProtocolException as ex:
                 print("Connection failed to {0}:{1}"
                       .format(self.__host, self.__port))

@@ -32,6 +32,8 @@ except ImportError:
 from sqlalchemy.orm import sessionmaker
 from thrift.protocol import TJSONProtocol
 from thrift.transport import TTransport
+from thrift.Thrift import TApplicationException
+from thrift.Thrift import TMessageType
 
 from Authentication_v6 import codeCheckerAuthentication as AuthAPI_v6
 from codeCheckerDBAccess_v6 import codeCheckerDBAccess as ReportAPI_v6
@@ -296,17 +298,17 @@ class RequestHandler(SimpleHTTPRequestHandler):
 
                     if not product.connected:
                         # If the reconnection fails, send an error to the user.
-                        LOG.debug("Product reconnection failed.")
-                        self.send_error(  # 500 Internal Server Error
-                            500, "Product '{0}' database connection failed!"
-                                 .format(product_endpoint))
-                        return
+                        error_msg = "Product '{0}' database " \
+                                    "connection failed!" \
+                                    .format(product_endpoint)
+                        LOG.error(error_msg)
+                        raise ValueError(error_msg)
+
                 elif not product:
-                    LOG.debug("Requested product does not exist.")
-                    self.send_error(
-                        404, "The product {0} does not exist."
-                             .format(product_endpoint))
-                    return
+                    error_msg = "The product {0} does not exist." \
+                                .format(product_endpoint)
+                    LOG.error(error_msg)
+                    raise ValueError(error_msg)
 
             version_supported = routing.is_supported_version(api_ver)
             if version_supported:
@@ -330,13 +332,11 @@ class RequestHandler(SimpleHTTPRequestHandler):
                     elif request_endpoint == 'CodeCheckerService':
                         # This endpoint is a product's report_server.
                         if not product:
-                            LOG.debug("Requested CodeCheckerService on a "
-                                      "nonexistent product.")
-                            self.send_error(  # 404 Not Found
-                                404,
-                                "The specified product '{0}' does not exist!"
-                                .format(product_endpoint))
-                            return
+                            error_msg = "Requested CodeCheckerService on a " \
+                                         "nonexistent product: '{0}'." \
+                                        .format(product_endpoint)
+                            LOG.error(error_msg)
+                            raise ValueError(error_msg)
 
                         acc_handler = ReportHandler_v6(
                             product.session_factory,
@@ -350,10 +350,10 @@ class RequestHandler(SimpleHTTPRequestHandler):
                         processor = ReportAPI_v6.Processor(acc_handler)
                     else:
                         LOG.debug("This API endpoint does not exist.")
-                        self.send_error(404,  # 404 Not Fount
-                                        "No API endpoint named '{0}'."
-                                        .format(self.path))
-                        return
+                        error_msg = "No API endpoint named '{0}'." \
+                                    .format(self.path)
+                        raise ValueError(error_msg)
+
             else:
                 if request_endpoint == 'Authentication':
                     # API-version checking is supported on the auth endpoint.
@@ -362,12 +362,10 @@ class RequestHandler(SimpleHTTPRequestHandler):
                 else:
                     # Send a custom, but valid Thrift error message to the
                     # client requesting this action.
-                    LOG.debug("API version v{0} not supported by server."
-                              .format(api_ver))
-                    self.send_error(400,  # 400 Bad Request
-                                    "This API version 'v{0}' is not supported."
-                                    .format(api_ver))
-                    return
+                    error_msg = "API version v{0} not supported by server." \
+                                .format(api_ver)
+
+                    raise ValueError(error_msg)
 
             processor.process(iprot, oprot)
             result = otrans.getvalue()
@@ -380,10 +378,22 @@ class RequestHandler(SimpleHTTPRequestHandler):
             return
 
         except Exception as exn:
-            import traceback
-            traceback.print_exc()
-            LOG.error(str(exn))
-            self.send_error(404, "Request failed.")
+            # Convert every Exception to the proper format which can be parsed
+            # by the Thrift clients expecting JSON responses.
+            LOG.error(exn.message)
+            ex = TApplicationException(TApplicationException.INTERNAL_ERROR,
+                                       exn.message)
+            fname, _, seqid = iprot.readMessageBegin()
+            oprot.writeMessageBegin(fname, TMessageType.EXCEPTION, seqid)
+            ex.write(oprot)
+            oprot.writeMessageEnd()
+            oprot.trans.flush()
+            result = otrans.getvalue()
+            self.send_response(200)
+            self.send_header("content-type", "application/x-thrift")
+            self.send_header("Content-Length", len(result))
+            self.end_headers()
+            self.wfile.write(result)
             return
 
     def list_directory(self, path):

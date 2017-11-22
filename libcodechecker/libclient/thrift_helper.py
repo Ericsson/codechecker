@@ -11,6 +11,7 @@ import sys
 from thrift.transport import THttpClient
 from thrift.protocol import TJSONProtocol
 from thrift.protocol.TProtocol import TProtocolException
+from thrift.Thrift import TApplicationException
 
 import shared
 from codeCheckerDBAccess_v6 import codeCheckerDBAccess
@@ -68,7 +69,10 @@ class ThriftClientHelper(object):
                     print(str(reqfailure))
 
                 raise
-
+            except TApplicationException as ex:
+                print("Internal server error on {0}:{1}"
+                      .format(self.__host, self.__port))
+                print(ex.message)
             except TProtocolException as ex:
                 if ex.type == TProtocolException.UNKNOWN:
                     LOG.debug('Unknown thrift error')
