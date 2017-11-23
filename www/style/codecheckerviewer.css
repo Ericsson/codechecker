@@ -903,6 +903,16 @@ span[class*="severity-"] {
   background-color: inherit;
 }
 
+.select-menu-item.regex-item {
+  background-color: #3b8cc6;
+  color: white;
+}
+
+.select-menu-item.selected,
+.select-menu-item.regex-item:hover {
+  color: black;
+}
+
 .select-menu-item .customIcon {
   vertical-align: text-top;
   float: left;
