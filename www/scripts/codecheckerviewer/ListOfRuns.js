@@ -110,6 +110,9 @@ function (declare, dom, ItemFileWriteStore, topic, Dialog, Button,
 
       switch (evt.cell.field) {
         case 'name':
+          if (!evt.target.classList.contains('link'))
+            return;
+
           hashHelper.setStateValues({
             'run' : item.runData[0].name,
             'tab' : item.runData[0].name
