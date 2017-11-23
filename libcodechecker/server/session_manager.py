@@ -10,57 +10,55 @@ Handles the management of authentication sessions on the server's side.
 from datetime import datetime
 import hashlib
 import os
-import shutil
-import time
 import uuid
+
+from sqlalchemy import and_
 
 from libcodechecker.logger import get_logger
 from libcodechecker.util import check_file_owner_rw
 from libcodechecker.util import load_json_or_empty
-from libcodechecker.version import SESSION_COOKIE_NAME
+from libcodechecker.version import SESSION_COOKIE_NAME as _SCN
 
-unsupported_methods = []
+from database.config_db_model import Session as SessionRecord
+
+UNSUPPORTED_METHODS = []
 
 try:
     from libcodechecker.libauth import cc_ldap
 except ImportError:
-    unsupported_methods.append('ldap')
+    UNSUPPORTED_METHODS.append('ldap')
 
 try:
     from libcodechecker.libauth import cc_pam
 except ImportError:
-    unsupported_methods.append('pam')
+    UNSUPPORTED_METHODS.append('pam')
+
 
 LOG = get_logger("server")
-session_lifetimes = {}
+SESSION_COOKIE_NAME = _SCN
 
 
 class _Session(object):
     """A session for an authenticated, privileged client connection."""
 
-    # Create an initial salt from system environment for use with the session
-    # permanent persistency routine.
-    __initial_salt = hashlib.sha256(SESSION_COOKIE_NAME + '__' +
-                                    str(time.time()) + '__' +
-                                    os.urandom(16)).hexdigest()
-
     @staticmethod
-    def calc_persistency_hash(auth_string):
+    def calc_persistency_hash(auth_string, salt=None):
         """Calculates a more secure persistency hash for the session. This
         persistency hash is intended to be used for the "session recycle"
         feature to prevent NAT endpoints from accidentally getting each
         other's session."""
         return hashlib.sha256(auth_string + '@' +
-                              _Session.__initial_salt).hexdigest()
+                              salt if salt else 'CodeChecker').hexdigest()
 
-    def __init__(self, token, phash, username, groups, is_root=False):
+    def __init__(self, token, phash, username, groups,
+                 is_root=False, database=None):
         self.last_access = datetime.now()
         self.token = token
         self.persistent_hash = phash
         self.user = username
         self.groups = groups
-
         self.__root = is_root
+        self.__database = database
 
     @property
     def is_root(self):
@@ -68,18 +66,20 @@ class _Session(object):
         superuser (root) credentials."""
         return self.__root
 
-    def still_valid(self, do_revalidate=False):
-        """Returns if the session is still valid, and optionally revalidates
-        it. A session is valid in its soft-lifetime."""
+    def still_valid(self, soft_lifetime, hard_lifetime, do_revalidate=False):
+        """
+        Returns if the session is still valid, and optionally revalidates
+        it. A session is valid in its soft-lifetime.
+        """
 
         if (datetime.now() - self.last_access).total_seconds() <= \
-                session_lifetimes['soft'] and self.still_reusable():
+                soft_lifetime and self.still_reusable(hard_lifetime):
             # If the session is still valid within the "reuse enabled" (soft)
             # past and the check comes from a real user access, we revalidate
             # the session by extending its lifetime --- the user retains their
             # data.
             if do_revalidate:
-                self.revalidate()
+                self.revalidate(soft_lifetime, hard_lifetime)
 
             # The session is still valid if it has been used in the past
             # (length of "past" is up to server host).
@@ -89,63 +89,76 @@ class _Session(object):
         # the user needs to authenticate again.
         return False
 
-    def still_reusable(self):
+    def still_reusable(self, hard_lifetime):
         """Returns whether the session is still reusable, ie. within its
         hard lifetime: while a session is reusable, a valid authentication
         from the session's user will return the user to the session."""
         return (datetime.now() - self.last_access).total_seconds() <= \
-            session_lifetimes['hard']
+            hard_lifetime
 
-    def revalidate(self):
-        if self.still_reusable():
+    def revalidate(self, soft_lifetime, hard_lifetime):
+        if self.still_reusable(hard_lifetime):
             # A session is only revalidated if it has yet to exceed its
             # "hard" lifetime. After a session hasn't been used for this
             # timeframe, it can NOT be resurrected at all --- the user needs
             # to log in into a brand-new session.
             self.last_access = datetime.now()
 
+            if self.__database and not self.still_reusable(soft_lifetime):
+                # Update the timestamp in the database for the session's last
+                # access. We only do this if the soft-lifetime has expired so
+                # that not EVERY API requests' EVERY session check creates a
+                # database write.
+                try:
+                    transaction = self.__database()
+                    record = transaction.query(SessionRecord). \
+                        get(self.persistent_hash)
+
+                    if record:
+                        record.last_access = self.last_access
+                        transaction.commit()
+                except Exception as e:
+                    LOG.error("Couldn't update usage timestamp of {0}"
+                              .format(self.token))
+                    LOG.error(str(e))
+                finally:
+                    transaction.close()
+
 
 class SessionManager:
-    CodeChecker_Workspace = None
+    """
+    Provides the functionality required to handle user authentication on a
+    CodeChecker server.
+    """
 
-    __valid_sessions = []
-    __logins_since_prune = 0
+    def __init__(self, configuration_file, session_salt,
+                 root_sha, force_auth=False):
+        """
+        Initialise a new Session Manager on the server.
 
-    def __init__(self, root_sha, force_auth=False):
-        LOG.debug('Loading session config')
+        :param configuration_file: The configuration file to read
+            authentication backends from.
+        :param session_salt: An initial salt that will be used in hashing
+            the session to the database.
+        :param root_sha: The SHA-256 hash of the root user's authentication.
+        :param force_auth: If True, the manager will be enabled even if the
+            configuration file disables authentication.
+        """
+        self.__database_connection = None
+        self.__logins_since_prune = 0
+        self.__sessions = []
+        self.__session_salt = hashlib.sha1(session_salt).hexdigest()
 
-        # Check whether workspace's configuration exists.
-        server_cfg_file = os.path.join(SessionManager.CodeChecker_Workspace,
-                                       "server_config.json")
-
-        if not os.path.exists(server_cfg_file):
-            # For backward compatibility reason if the session_config.json file
-            # exists we rename it to server_config.json.
-            session_cfg_file = os.path.join(
-                SessionManager.CodeChecker_Workspace,
-                "session_config.json")
-            example_cfg_file = os.path.join(os.environ['CC_PACKAGE_ROOT'],
-                                            "config", "server_config.json")
-            if os.path.exists(session_cfg_file):
-                LOG.info("Renaming {0} to {1}. Please check the example "
-                         "configuration file ({2}) or the user guide for "
-                         "more information.".format(session_cfg_file,
-                                                    server_cfg_file,
-                                                    example_cfg_file))
-                os.rename(session_cfg_file, server_cfg_file)
-            else:
-                LOG.info("CodeChecker server's example configuration file "
-                         "created at " + server_cfg_file)
-                shutil.copyfile(example_cfg_file, server_cfg_file)
-
-        LOG.debug(server_cfg_file)
-
-        scfg_dict = load_json_or_empty(server_cfg_file, {},
+        LOG.debug(configuration_file)
+        scfg_dict = load_json_or_empty(configuration_file, {},
                                        'server configuration')
         if scfg_dict != {}:
-            check_file_owner_rw(server_cfg_file)
+            check_file_owner_rw(configuration_file)
         else:
-            scfg_dict = {'authentication': {'enabled': False}}
+            # If the configuration dict is empty, it means a JSON couldn't
+            # have been parsed from it.
+            raise ValueError("Server configuration file was invalid, or "
+                             "empty.")
 
         self.__max_run_count = scfg_dict['max_run_count'] \
             if 'max_run_count' in scfg_dict else None
@@ -169,7 +182,7 @@ class SessionManager:
 
             if 'method_ldap' in self.__auth_config and \
                     self.__auth_config['method_ldap'].get('enabled'):
-                if 'ldap' not in unsupported_methods:
+                if 'ldap' not in UNSUPPORTED_METHODS:
                     found_auth_method = True
                 else:
                     LOG.warning("LDAP authentication was enabled but "
@@ -179,7 +192,7 @@ class SessionManager:
 
             if 'method_pam' in self.__auth_config and \
                     self.__auth_config['method_pam'].get('enabled'):
-                if 'pam' not in unsupported_methods:
+                if 'pam' not in UNSUPPORTED_METHODS:
                     found_auth_method = True
                 else:
                     LOG.warning("PAM authentication was enabled but "
@@ -187,7 +200,6 @@ class SessionManager:
                                 "... Disabling PAM authentication.")
                     self.__auth_config['method_pam']['enabled'] = False
 
-            #
             if not found_auth_method:
                 if force_auth:
                     LOG.warning("Authentication was manually enabled, but no "
@@ -200,11 +212,7 @@ class SessionManager:
                                 "Falling back to no authentication.")
                     self.__auth_config['enabled'] = False
 
-        session_lifetimes['soft'] = \
-            self.__auth_config.get('soft_expire') or 60
-        session_lifetimes['hard'] = \
-            self.__auth_config.get('session_lifetime') or 300
-
+    @property
     def is_enabled(self):
         return self.__auth_config.get('enabled')
 
@@ -213,6 +221,15 @@ class SessionManager:
             "realm": self.__auth_config.get('realm_name'),
             "error": self.__auth_config.get('realm_error')
         }
+
+    def set_database_connection(self, connection):
+        """
+        Set the instance's database connection to use in fetching
+        database-stored sessions to the given connection.
+
+        Use None as connection's value to unset the database.
+        """
+        self.__database_connection = connection
 
     def __handle_validation(self, auth_string):
         """
@@ -239,7 +256,7 @@ class SessionManager:
         return False
 
     def __is_method_enabled(self, method):
-        return method not in unsupported_methods and \
+        return method not in UNSUPPORTED_METHODS and \
             'method_' + method in self.__auth_config and \
             self.__auth_config['method_' + method].get('enabled')
 
@@ -318,6 +335,51 @@ class SessionManager:
     def get_user_name(auth_string):
         return auth_string.split(':')[0]
 
+    def _fetch_session_or_token(self, persistency_hash):
+        """
+        Contact the session store to try fetching a valid session or token
+        for the given session object hash. This first uses the instance's
+        in-memory storage, and if nothing is found, contacts the database
+        (if connected).
+
+        Returns a _Session object if found locally.
+        Returns a string token if it was found in the database.
+        None if a session wasn't found.
+        """
+
+        # Try the local store first.
+        sessions = (s for s in self.__sessions
+                    if self.__still_reusable(s) and
+                    s.persistent_hash == persistency_hash)
+        session = next(sessions, None)
+
+        if not session and self.__database_connection:
+            try:
+                # Try the database, if it is connected.
+                transaction = self.__database_connection()
+                db_record = transaction.query(SessionRecord) \
+                    .get(persistency_hash)
+
+                if db_record:
+                    if (datetime.now() - db_record.last_access). \
+                            total_seconds() <= \
+                            self.__auth_config['session_lifetime']:
+                        # If a token was found in the database and the session
+                        # for it can still be resurrected, we reuse this token.
+                        return db_record.token
+                    else:
+                        # The token has expired, remove it from the database.
+                        transaction.delete(db_record)
+                        transaction.commit()
+            except Exception as e:
+                LOG.error("Couldn't check login in the database: ")
+                LOG.error(str(e))
+            finally:
+                if transaction:
+                    transaction.close()
+
+        return session
+
     def create_or_get_session(self, auth_string):
         """Create a new session for the given auth-string, if it is valid. If
         an existing session is found, return that instead.
@@ -337,44 +399,69 @@ class SessionManager:
             validation = self.__handle_validation(auth_string)
 
         if validation:
-            # If the session is still valid and credentials
-            # are resent return old token.
-            session_already = next(
-                (s for s
-                 in SessionManager.__valid_sessions if s.still_reusable() and
-                 s.persistent_hash ==
-                    _Session.calc_persistency_hash(auth_string)),
-                None)
+            sess_hash = _Session.calc_persistency_hash(self.__session_salt,
+                                                       auth_string)
+            local_session, db_token = None, None
 
-            if session_already:
-                session_already.revalidate()
-                session = session_already
-            else:
-                # TODO: Use a more secure way for token generation?
-                token = uuid.UUID(bytes=os.urandom(16)).__str__().replace('-',
-                                                                          '')
+            # If the session is still valid and credentials are resent,
+            # return old token. This is fetched either locally or from the db.
+            session_or_token = self._fetch_session_or_token(sess_hash)
+            if session_or_token:
+                if isinstance(session_or_token, _Session):
+                    # We were able to fetch a session from the local in-memory
+                    # storage.
+                    local_session = session_or_token
+                    self.__still_valid(local_session, do_revalidate=True)
+                elif isinstance(session_or_token, basestring):
+                    # The database gave us a token, which we will reuse in
+                    # creating a local cache entry for the session.
+                    db_token = session_or_token
+
+            if not local_session:
+                # If there isn't a Session locally, create it.
+                token = db_token if db_token else \
+                    uuid.UUID(bytes=os.urandom(16)).__str__().replace('-', '')
 
                 user_name = validation['username']
                 groups = validation.get('groups', [])
                 is_root = validation.get('root', False)
 
-                session = _Session(token,
-                                   _Session.calc_persistency_hash(auth_string),
-                                   user_name, groups, is_root)
-                SessionManager.__valid_sessions.append(session)
+                local_session = _Session(token, sess_hash,
+                                         user_name, groups, is_root,
+                                         self.__database_connection)
+                self.__sessions.append(local_session)
 
-            return session
+                if self.__database_connection:
+                    if not db_token:
+                        # If db_token is None, the session was created
+                        # brand new.
+                        try:
+                            transaction = self.__database_connection()
+                            record = SessionRecord(sess_hash, token)
+                            transaction.add(record)
+                            transaction.commit()
+                        except Exception as e:
+                            LOG.error("Couldn't store login into database: ")
+                            LOG.error(str(e))
+                        finally:
+                            if transaction:
+                                transaction.close()
+                    else:
+                        # The local session was created from a token
+                        # already present in the database, thus we can't
+                        # add a new one.
+                        self.__still_valid(local_session, do_revalidate=True)
 
-        return None
+            return local_session
 
     def is_valid(self, token, access=False):
         """Validates a given token (cookie) against
         the known list of privileged sessions."""
-        if not self.is_enabled():
+        if not self.is_enabled:
             return True
-        else:
-            return any(_sess.token == token and _sess.still_valid(access)
-                       for _sess in SessionManager.__valid_sessions)
+
+        return any(sess.token == token and self.__still_valid(sess, access)
+                   for sess in self.__sessions)
 
     def get_max_run_count(self):
         """
@@ -387,24 +474,66 @@ class SessionManager:
         """Gets the privileged session object based
         based on the token.
         """
-        if not self.is_enabled():
+        if not self.is_enabled:
             return None
-        for _sess in SessionManager.__valid_sessions:
-            if _sess.token == token and _sess.still_valid(access):
-                return _sess
-        return None
+
+        for sess in self.__sessions:
+            if sess.token == token and self.__still_valid(sess, access):
+                return sess
 
     def invalidate(self, token):
-        """Remove a user's previous session from the store."""
-        for session in SessionManager.__valid_sessions[:]:
-            if session.token == token:
-                SessionManager.__valid_sessions.remove(session)
-                return True
+        """
+        Remove a user's previous session from the store.
+        """
+
+        try:
+            transaction = self.__database_connection() \
+                if self.__database_connection else None
+
+            for session in self.__sessions[:]:
+                if session.token == token:
+                    self.__sessions.remove(session)
+
+                    if transaction:
+                        transaction.query(SessionRecord). \
+                            filter(and_(SessionRecord.auth_string ==
+                                        session.persistent_hash,
+                                        SessionRecord.token == token)). \
+                            delete()
+                        transaction.commit()
+
+            return True
+        except Exception as e:
+            LOG.error("Couldn't invalidate session for token {0}"
+                      .format(token))
+            LOG.error(str(e))
+        finally:
+            if transaction:
+                transaction.close()
 
         return False
 
     def __cleanup_sessions(self):
-        SessionManager.__valid_sessions = [s for s
-                                           in SessionManager.__valid_sessions
-                                           if s.still_reusable()]
+        tokens = [s.token for s in self.__sessions
+                  if not self.__still_reusable(s)]
         self.__logins_since_prune = 0
+
+        for token in tokens:
+            self.invalidate(token)
+
+    def __still_reusable(self, session):
+        """
+        Helper function for checking if the session could be
+        resurrected, even if the soft grace period has expired.
+        """
+        return session.still_reusable(self.__auth_config['session_lifetime'])
+
+    def __still_valid(self, session, do_revalidate=False):
+        """
+        Helper function for checking the validity of a session and
+        optionally resurrecting it (if possible). This function uses the
+        current instance's grace periods.
+        """
+        return session.still_valid(self.__auth_config['soft_expire'],
+                                   self.__auth_config['session_lifetime'],
+                                   do_revalidate)

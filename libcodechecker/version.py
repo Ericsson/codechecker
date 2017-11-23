@@ -8,24 +8,18 @@ This module stores constants that are shared between the CodeChecker server
 and client, related to API and other version-specific information.
 """
 
-"""
-The name of the cookie which contains the user's authentication session's
-token.
-"""
+# The name of the cookie which contains the user's authentication session's
+# token.
 SESSION_COOKIE_NAME = "__ccPrivilegedAccessToken"
 
-"""
-The newest supported minor version (value) for each supported major version
-(key) in this particular build.
-"""
+# The newest supported minor version (value) for each supported major version
+# (key) in this particular build.
 SUPPORTED_VERSIONS = {
     6: 6
 }
 
-"""
-Used by the client to automatically identify the latest major and minor
-version.
-"""
+# Used by the client to automatically identify the latest major and minor
+# version.
 CLIENT_API = '{0}.{1}'.format(
     max(SUPPORTED_VERSIONS.keys()),
     SUPPORTED_VERSIONS[max(SUPPORTED_VERSIONS.keys())])

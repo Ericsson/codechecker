@@ -36,14 +36,14 @@ class UserCredentials:
 
         scfg_dict = load_json_or_empty(session_cfg_file, {},
                                        "user authentication")
-        check_file_owner_rw(session_cfg_file)
+        if os.path.exists(session_cfg_file):
+            check_file_owner_rw(session_cfg_file)
 
         if not scfg_dict.get('credentials'):
             scfg_dict['credentials'] = {}
 
         self.__save = scfg_dict
-        self.__autologin = scfg_dict.get('client_autologin') \
-            if 'client_autologin' in scfg_dict else True
+        self.__autologin = scfg_dict.get('client_autologin', True)
 
         # Check and load token storage for user.
         self.token_file = os.path.join(user_home, ".codechecker.session.json")

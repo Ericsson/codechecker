@@ -48,7 +48,7 @@ class ThriftAuthHandler(object):
         token = None
         if self.__auth_session:
             token = self.__auth_session.token
-        return HandshakeInformation(self.__manager.is_enabled(),
+        return HandshakeInformation(self.__manager.is_enabled,
                                     self.__manager.is_valid(
                                         token,
                                         True))

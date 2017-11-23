@@ -30,7 +30,6 @@ from libcodechecker import util
 from libcodechecker.analyze import analyzer_env
 from libcodechecker.server import instance_manager
 from libcodechecker.server import server
-from libcodechecker.server import session_manager
 from libcodechecker.server.database import database
 from libcodechecker.server.database import database_status
 from libcodechecker.server.database.config_db_model \
@@ -679,8 +678,6 @@ def server_init_start(args):
 
     context = generic_package_context.get_context()
     context.codechecker_workspace = args.config_directory
-    session_manager.SessionManager.CodeChecker_Workspace = \
-        args.config_directory
     context.db_username = args.dbusername
 
     check_env = analyzer_env.get_check_env(context.path_env_extra,
