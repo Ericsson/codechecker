@@ -70,7 +70,8 @@ def get_check_env(path_env_extra, ld_lib_path_extra):
     return new_env
 
 
-def extend_analyzer_cmd_with_resource_dir(analyzer_cmd, compiler_resource_dir):
+def extend_analyzer_cmd_with_resource_dir(analyzer_cmd,
+                                          compiler_resource_dir):
     """
     GCC and Clang handles the certain compiler intrinsics for specific
     instruction sets (like SSE, AVX) differently.  They have their own set of
@@ -95,6 +96,14 @@ def extend_analyzer_cmd_with_resource_dir(analyzer_cmd, compiler_resource_dir):
     and describes our intentions more cleanly if we just simply disable the
     inludes from the resource dir.
     """
-    if len(compiler_resource_dir) > 0:
-        analyzer_cmd.extend(['-nobuiltininc',
-                             '-isystem', compiler_resource_dir])
+    if len(compiler_resource_dir) == 0:
+        return
+
+    resource_inc = compiler_resource_dir
+    # Resource include path must end with "/include".
+    basename = os.path.basename(os.path.normpath(resource_inc))
+    if basename != 'include':
+        resource_inc = os.path.join(resource_inc, "include")
+
+    analyzer_cmd.extend(['-nobuiltininc',
+                         '-isystem', resource_inc])
