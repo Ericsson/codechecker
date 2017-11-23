@@ -113,6 +113,10 @@ class ThriftClientHelper(object):
         pass
 
     @ThriftClientCall
+    def getDiffResultsHash(self, run_ids, report_hashes, diff_type):
+        pass
+
+    @ThriftClientCall
     def getRunResultCount(self, runIds, reportFilters, cmp_data):
         pass
 

@@ -245,8 +245,8 @@ def handle_diff_results(args):
         lines = base64.b64decode(source.fileContent).split('\n')
         return "" if len(lines) < lineno else lines[lineno - 1]
 
-    def get_diff_report_dir(client, baseids, report_dir, diff_type):
-
+    def get_diff_base_results(client, baseids, base_hashes, suppressed_hashes):
+        base_results = []
         report_filter = ttypes.ReportFilter()
         add_filter_conditions(report_filter, args.filter)
 
@@ -256,7 +256,7 @@ def handle_diff_results(args):
         limit = constants.MAX_QUERY_SIZE
         offset = 0
 
-        base_results = []
+        report_filter.reportHash = base_hashes + suppressed_hashes
         results = client.getRunResults(baseids,
                                        limit,
                                        offset,
@@ -272,16 +272,15 @@ def handle_diff_results(args):
                                            sort_mode,
                                            report_filter,
                                            None)
-        base_hashes = {}
-        for res in base_results:
-            base_hashes[res.bugHash] = res
+        return base_results
 
+    def get_diff_report_dir(client, baseids, report_dir, cmp_data):
         filtered_reports = []
-        new_results = get_report_dir_results(report_dir)
+        report_dir_results = get_report_dir_results(report_dir)
         new_hashes = {}
         suppressed_in_code = []
 
-        for rep in new_results:
+        for rep in report_dir_results:
             bughash = rep.main['issue_hash_content_of_line_in_context']
             source_file = rep.main['location']['file_name']
             bug_line = rep.main['location']['line']
@@ -297,34 +296,27 @@ def handle_diff_results(args):
                           "is suppressed in code. file:" + source_file +
                           "Line "+str(bug_line))
 
-        if diff_type == 'new':
-            # Shows new reports from the report dir
-            # which are not present in the baseline (server)
-            # and not suppressed in the code.
-            for result in new_results:
-                if not (result.main['issue_hash_content_of_line_in_context']
-                        in base_hashes) and \
-                   not (result.main['issue_hash_content_of_line_in_context']
-                        in suppressed_in_code):
-                    filtered_reports.append(result)
-        elif diff_type == 'resolved':
-            # Show bugs in the baseline (server)
-            # which are not present in the report dir
-            # or suppressed.
-            for result in base_results:
-                if not (result.bugHash in new_hashes) or \
-                        (result.bugHash in suppressed_in_code):
-                    filtered_reports.append(result)
-        elif diff_type == 'unresolved':
-            # Shows bugs in the report dir
-            # that are not suppressed and
-            # which are also present in the baseline (server)
+        base_hashes = client.getDiffResultsHash(baseids,
+                                                new_hashes.keys(),
+                                                cmp_data.diffType)
 
-            for result in new_results:
-                new_hash = result.main['issue_hash_content_of_line_in_context']
-                if new_hash in base_hashes and \
-                        not (new_hash in suppressed_in_code):
+        if cmp_data.diffType == ttypes.DiffType.NEW or \
+           cmp_data.diffType == ttypes.DiffType.UNRESOLVED:
+            # Shows reports from the report dir which are not present in the
+            # baseline (NEW reports) or appear in both side (UNRESOLVED
+            # reports) and not suppressed in the code.
+            for result in report_dir_results:
+                h = result.main['issue_hash_content_of_line_in_context']
+                if h in base_hashes and h not in suppressed_in_code:
                     filtered_reports.append(result)
+        elif cmp_data.diffType == ttypes.DiffType.RESOLVED:
+            # Show bugs in the baseline (server) which are not present in the
+            # report dir or suppressed.
+            results = get_diff_base_results(client, baseids, base_hashes,
+                                            suppressed_in_code)
+            for result in results:
+                filtered_reports.append(result)
+
         return filtered_reports
 
     def cached_report_file_lookup(file_cache, file_id):
@@ -395,7 +387,7 @@ def handle_diff_results(args):
             print('Html file was generated for file://{0}: file://{1}'.format(
                 checked_file, output_path))
 
-    def print_reports(client, reports, output_format, diff_type):
+    def print_reports(client, reports, output_format):
         output_dir = args.export_dir if 'export_dir' in args else None
         if 'clean' in args and os.path.isdir(output_dir):
             print("Previous analysis results in '{0}' have been removed, "
@@ -413,10 +405,6 @@ def handle_diff_results(args):
             return
 
         if output_format == 'html':
-            if len(reports) == 0:
-                print('No {0} reports was found!'.format(diff_type))
-                return
-
             output_dir = args.export_dir
             if not os.path.exists(output_dir):
                 os.makedirs(output_dir)
@@ -490,37 +478,27 @@ def handle_diff_results(args):
     LOG.info("Matching against runs: " +
              ', '.join(map(lambda run: run.name, base_runs)))
 
-    diff_type = 'new'
-    if 'unresolved' in args:
-        diff_type = 'unresolved'
+    cmp_data = ttypes.CompareData()
+    if 'new' in args:
+        cmp_data.diffType = ttypes.DiffType.NEW
+    elif 'unresolved' in args:
+        cmp_data.diffType = ttypes.DiffType.UNRESOLVED
     elif 'resolved' in args:
-        diff_type = 'resolved'
+        cmp_data.diffType = ttypes.DiffType.RESOLVED
 
     results = []
     if report_dir_mode:
-        diff_type = 'new'
-        if 'unresolved' in args:
-            diff_type = 'unresolved'
-        elif 'resolved' in args:
-            diff_type = 'resolved'
         results = get_diff_report_dir(client, base_ids,
                                       os.path.abspath(args.newname),
-                                      diff_type)
+                                      cmp_data)
     else:
-        cmp_data = ttypes.CompareData(runIds=[newid])
-        if 'new' in args:
-            cmp_data.diffType = ttypes.DiffType.NEW
-        elif 'unresolved' in args:
-            cmp_data.diffType = ttypes.DiffType.UNRESOLVED
-        elif 'resolved' in args:
-            cmp_data.diffType = ttypes.DiffType.RESOLVED
-
+        cmp_data.runIds = [newid]
         results = get_diff_results(client, base_ids, cmp_data)
 
     if len(results) == 0:
         LOG.info("No results.")
     else:
-        print_reports(client, results, args.output_format, diff_type)
+        print_reports(client, results, args.output_format)
 
 
 def handle_list_result_types(args):

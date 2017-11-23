@@ -429,6 +429,7 @@ class Product(object):
         self.__endpoint = orm_object.endpoint
         self.__connection_string = orm_object.connection
         self.__display_name = orm_object.display_name
+        self.__driver_name = None
         self.__context = context
         self.__check_env = check_env
         self.__engine = None
@@ -463,6 +464,13 @@ class Product(object):
         can be used to initiate transactional connections.
         """
         return self.__session
+
+    @property
+    def driver_name(self):
+        """
+        Returns the name of the sql driver (sqlite, postgres).
+        """
+        return self.__driver_name
 
     @property
     def connected(self):
@@ -506,6 +514,11 @@ class Product(object):
             self.__context.run_migration_root,
             interactive=False,
             env=self.__check_env)
+
+        if isinstance(sql_server, database.PostgreSQLServer):
+            self.__driver_name = 'postgresql'
+        elif isinstance(sql_server, database.SQLiteDatabase):
+            self.__driver_name = 'sqlite'
 
         try:
             sql_server.connect(self.__context.run_db_version_info, init=True)

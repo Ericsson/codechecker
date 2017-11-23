@@ -665,6 +665,60 @@ class ThriftRequestHandler(object):
             session.close()
 
     @timeit
+    def getDiffResultsHash(self, run_ids, report_hashes, diff_type):
+        self.__require_access()
+
+        try:
+            session = self.__Session()
+            if diff_type == DiffType.NEW:
+                # In postgresql we can select multiple rows filled with
+                # constants by using `unnest` function. In sqlite we have to
+                # use multiple UNION ALL.
+                new_hashes = None
+
+                base_hashes = session.query(Report.bug_id.label('bug_id')) \
+                    .outerjoin(File, Report.file_id == File.id) \
+                    .filter(Report.run_id.in_(run_ids))
+
+                if self.__product.driver_name == 'postgresql':
+                    new_hashes = select([func.unnest(report_hashes)
+                                        .label('bug_id')]) \
+                        .except_(base_hashes).alias('new_bugs')
+                    return [res[0] for res in session.query(new_hashes)]
+                else:
+                    new_hashes = union_all(*[
+                        select([bindparam('bug_id' + str(i), h)
+                               .label('bug_id')])
+                        for i, h in enumerate(report_hashes)])
+                    q = select([new_hashes]).except_(base_hashes)
+                    return [res[0] for res in session.query(q)]
+            elif diff_type == DiffType.RESOLVED:
+                results = session.query(Report.bug_id) \
+                    .filter(Report.run_id.in_(run_ids)) \
+                    .filter(Report.bug_id.notin_(report_hashes)) \
+                    .all()
+
+                return [res[0] for res in results]
+
+            elif diff_type == DiffType.UNRESOLVED:
+                results = session.query(Report.bug_id) \
+                    .filter(Report.run_id.in_(run_ids)) \
+                    .filter(Report.bug_id.in_(report_hashes)) \
+                    .all()
+
+                return [res[0] for res in results]
+
+            else:
+                return []
+        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
+            msg = str(alchemy_ex)
+            LOG.error(msg)
+            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
+                                              msg)
+        finally:
+            session.close()
+
+    @timeit
     def getRunResults(self, run_ids, limit, offset, sort_types,
                       report_filter, cmp_data):
         self.__require_access()
