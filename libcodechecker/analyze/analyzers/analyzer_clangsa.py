@@ -90,9 +90,6 @@ class ClangSA(analyzer_base.SourceAnalyzer):
 
             analyzer_cmd = [config.analyzer_binary]
 
-            extend_analyzer_cmd_with_resource_dir(analyzer_cmd,
-                                                  config.compiler_resource_dir)
-
             # Do not warn about the unused gcc/g++ arguments.
             analyzer_cmd.append('-Qunused-arguments')
 
@@ -150,6 +147,9 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             analyzer_cmd.extend(self.buildaction.analyzer_options)
 
             analyzer_cmd.extend(self.buildaction.compiler_includes)
+
+            extend_analyzer_cmd_with_resource_dir(analyzer_cmd,
+                                                  config.compiler_resource_dir)
 
             analyzer_cmd.append(self.source_file)
 
