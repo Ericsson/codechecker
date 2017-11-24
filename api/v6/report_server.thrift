@@ -242,6 +242,13 @@ service codeCheckerDBAccess {
                                    3: i64       offset)
                                    throws (1: shared.RequestFailed requestError),
 
+  // Returns report hashes based on the diffType parameter.
+  // PERMISSION: PRODUCT_ACCESS
+  list<string> getDiffResultsHash(1: list<i64>    runIds,
+                                  2: list<string> reportHashes,
+                                  3: DiffType     diffType)
+                                  throws (1: shared.RequestFailed requestError),
+
   // PERMISSION: PRODUCT_ACCESS
   ReportData getReport(1: i64 reportId)
                        throws (1: shared.RequestFailed requestError),
