@@ -172,6 +172,49 @@ def get_default_workspace():
     return workspace
 
 
+def __strip_protocol_from_url(url):
+    """
+    Strip the PROTOCOL specifier from an URL string and return it, along with
+    the remainder of the URL.
+    """
+    if '://' not in url:
+        return None, url
+
+    parts = url.split('://', 1)
+    protocol = parts[0]
+    url = url.replace(parts[0] + '://', '').lstrip('/').rstrip('/')
+
+    return protocol, url
+
+
+def expand_whole_protocol_and_port(protocol=None, port=None):
+    """
+    Calculate a full protocol and port value from the possibly None protocol
+    and port values given. This method helps to default port numbers to
+    connection protocols understood by CodeChecker.
+    """
+
+    proto, portnum = None, None
+    if protocol:
+        proto = protocol
+
+        if protocol == 'http':
+            portnum = 80
+        elif protocol == 'https':
+            portnum = 443
+        else:
+            raise ValueError("'{0}' is not a protocol understood by "
+                             "CodeChecker".format(protocol))
+    else:
+        proto = 'http'
+        portnum = 8001
+
+    if port:
+        portnum = port
+
+    return proto, portnum
+
+
 def split_server_url(url):
     """
     Splits the given CodeChecker server URL into its parts.
@@ -188,17 +231,11 @@ def split_server_url(url):
     """
 
     LOG.debug("Parsing server url '{0}'".format(url))
+    protocol, url = __strip_protocol_from_url(url)
 
-    protocol = 'http'
-    if url.startswith('http'):
-        parts = url.split('://', 1)
-        protocol = parts[0]
-        url = url.replace(parts[0] + '://', '')
-
-    url = url.lstrip('/').rstrip('/')
-
-    # A valid server_url looks like this: 'http://localhost:8001/'.
-    host, port = 'localhost', 443 if protocol == 'https' else 8001
+    # A valid product_url looks like this: 'http://localhost:8001/Product'.
+    protocol, port = expand_whole_protocol_and_port(protocol, None)
+    host = 'localhost'
     try:
         parts = url.split('/', 1)
 
@@ -243,18 +280,11 @@ def split_product_url(url):
     """
 
     LOG.debug("Parsing product url '{0}'".format(url))
-
-    protocol = 'http'
-    if url.startswith('http'):
-        parts = url.split('://', 1)
-        protocol = parts[0]
-        url = url.replace(parts[0] + '://', '')
-
-    url = url.lstrip('/').rstrip('/')
+    protocol, url = __strip_protocol_from_url(url)
 
     # A valid product_url looks like this: 'http://localhost:8001/Product'.
+    protocol, port = expand_whole_protocol_and_port(protocol, None)
     host, product_name = 'localhost', 'Default'
-    port = 443 if protocol == 'https' else 8001
     try:
         parts = url.split("/")
 
