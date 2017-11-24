@@ -351,8 +351,22 @@ def __build_clang_tidy_config_handler(args, context):
 
     config_handler = config_handler_clang_tidy.ClangTidyConfigHandler()
     config_handler.analyzer_binary = context.analyzer_binaries.get(CLANG_TIDY)
-    config_handler.compiler_resource_dir =\
-        __get_compiler_resource_dir(context, config_handler.analyzer_binary)
+
+    # FIXME We cannot get the resource dir from the clang-tidy binary,
+    # therefore now we get a clang binary which is a sibling of the clang-tidy.
+    # TODO Support "clang-tidy -print-resource-dir" .
+    check_env = analyzer_env.get_check_env(context.path_env_extra,
+                                           context.ld_lib_path_extra)
+    check_env['PATH'] = os.path.dirname(config_handler.analyzer_binary)
+    clang_bin = analyzer_clangsa.ClangSA.resolve_missing_binary('clang',
+                                                                check_env)
+    if os.path.isfile(clang_bin):
+        config_handler.compiler_resource_dir =\
+            __get_compiler_resource_dir(context, clang_bin)
+    else:
+        config_handler.compiler_resource_dir =\
+            __get_compiler_resource_dir(context,
+                                        config_handler.analyzer_binary)
 
     try:
         with open(args.tidy_args_cfg_file, 'rb') as tidy_cfg:
