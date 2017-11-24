@@ -107,6 +107,11 @@ class product_urlTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             split_product_url("codechecker://codecheker.com/Baz")
 
+        with self.assertRaises(ValueError):
+            # Make sure we don't understand "https://foobar.baz:1234" as
+            # HTTPS, localhost, 443, and "foobar.baz:1234" product name.
+            split_product_url("https://foobar.bar:1234")
+
     def testFullServerURL(self):
         """
         Whole server URL understanding.

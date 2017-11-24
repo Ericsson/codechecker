@@ -249,8 +249,7 @@ def split_server_url(url):
             raise ValueError("The server's address is not in a valid "
                              "'host:port' format!")
     except:
-        LOG.error("The specified server URL is invalid.")
-        raise
+        raise ValueError("The specified server URL is invalid.")
 
     LOG.debug("Result: With '{0}' on server '{1}:{2}'"
               .format(protocol, host, port))
@@ -290,11 +289,16 @@ def split_product_url(url):
 
         if len(parts) == 1:
             # If only one word is given in the URL, consider it as product
-            # name, but then it cannot begin with a number.
+            # name, but then it must appear to be a valid product name.
+
+            # "Only one word" URLs can be just simple host names too:
+            # http://codechecker.example.com:1234 should NOT be understood as
+            # the "codechecker.example.com:1234" product on "localhost:8001".
             product_name = parts[0]
-            if product_name[0].isdigit():
-                raise ValueError("Product name was given in URL, but it "
-                                 "cannot begin with a number!")
+            if product_name[0].isdigit() or '.' in product_name \
+                    or ':' in product_name:
+                raise ValueError("The given product URL is invalid. Please "
+                                 "specify a full product URL.")
         elif len(parts) == 2:
             # URL is at least something/product-name.
             product_name = parts[1]
@@ -312,8 +316,7 @@ def split_product_url(url):
         else:
             raise ValueError("Product URL can not contain extra '/' chars.")
     except:
-        LOG.error("The specified product URL is invalid.")
-        raise
+        raise ValueError("The specified product URL is invalid.")
 
     LOG.debug("Result: With '{0}' on server '{1}:{2}', product '{3}'"
               .format(protocol, host, port, product_name))
