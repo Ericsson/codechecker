@@ -94,8 +94,6 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
 
             analyzer_cmd.append('-Qunused-arguments')
 
-            extend_analyzer_cmd_with_resource_dir(analyzer_cmd,
-                                                  config.compiler_resource_dir)
             # Set language.
             analyzer_cmd.extend(['-x', self.buildaction.lang])
 
@@ -105,6 +103,9 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
             analyzer_cmd.extend(self.buildaction.analyzer_options)
 
             analyzer_cmd.extend(self.buildaction.compiler_includes)
+
+            extend_analyzer_cmd_with_resource_dir(analyzer_cmd,
+                                                  config.compiler_resource_dir)
 
             return analyzer_cmd
 

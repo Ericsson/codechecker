@@ -266,6 +266,19 @@ def __replace_env_var(cfg_file):
     return replacer
 
 
+def __get_compiler_resource_dir(context, analyzer_binary):
+    resource_dir = ''
+    if len(context.compiler_resource_dir) > 0:
+        resource_dir = context.compiler_resource_dir
+    # If not set then ask the binary for the resource dir.
+    else:
+        # Can be None if Clang is too old.
+        resource_dir = host_check.get_resource_dir(analyzer_binary)
+        if resource_dir is None:
+            resource_dir = ""
+    return resource_dir
+
+
 def __build_clangsa_config_handler(args, context):
     """
     Build the config handler for clang static analyzer.
@@ -275,7 +288,8 @@ def __build_clangsa_config_handler(args, context):
     config_handler = config_handler_clangsa.ClangSAConfigHandler()
     config_handler.analyzer_plugins_dir = context.checker_plugin
     config_handler.analyzer_binary = context.analyzer_binaries.get(CLANG_SA)
-    config_handler.compiler_resource_dir = context.compiler_resource_dir
+    config_handler.compiler_resource_dir =\
+        __get_compiler_resource_dir(context, config_handler.analyzer_binary)
 
     if 'ctu_phases' in args:
         config_handler.ctu_dir = os.path.join(args.output_path,
@@ -337,7 +351,24 @@ def __build_clang_tidy_config_handler(args, context):
 
     config_handler = config_handler_clang_tidy.ClangTidyConfigHandler()
     config_handler.analyzer_binary = context.analyzer_binaries.get(CLANG_TIDY)
-    config_handler.compiler_resource_dir = context.compiler_resource_dir
+
+    # FIXME We cannot get the resource dir from the clang-tidy binary,
+    # therefore now we get a clang binary which is a sibling of the clang-tidy.
+    # TODO Support "clang-tidy -print-resource-dir" .
+    check_env = analyzer_env.get_check_env(context.path_env_extra,
+                                           context.ld_lib_path_extra)
+    # Overwrite PATH to contain only the parent of the clang binary.
+    if os.path.isabs(config_handler.analyzer_binary):
+        check_env['PATH'] = os.path.dirname(config_handler.analyzer_binary)
+    clang_bin = analyzer_clangsa.ClangSA.resolve_missing_binary('clang',
+                                                                check_env)
+    if os.path.isfile(clang_bin):
+        config_handler.compiler_resource_dir =\
+            __get_compiler_resource_dir(context, clang_bin)
+    else:
+        config_handler.compiler_resource_dir =\
+            __get_compiler_resource_dir(context,
+                                        config_handler.analyzer_binary)
 
     try:
         with open(args.tidy_args_cfg_file, 'rb') as tidy_cfg:

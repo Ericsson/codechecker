@@ -7,6 +7,7 @@
 """
 
 from collections import defaultdict
+import codecs
 import glob
 import multiprocessing
 import os
@@ -148,6 +149,7 @@ def create_dependencies(action):
         output, rc = util.call_command(command,
                                        env=os.environ,
                                        cwd=action.directory)
+        output = codecs.decode(output, 'utf-8', 'replace')
         if rc == 0:
             # Parse 'Makefile' syntax dependency output.
             dependencies = output.replace('__dummy: ', '') \
