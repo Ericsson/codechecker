@@ -146,10 +146,10 @@ class ClangSA(analyzer_base.SourceAnalyzer):
 
             analyzer_cmd.extend(self.buildaction.analyzer_options)
 
-            analyzer_cmd.extend(self.buildaction.compiler_includes)
-
             extend_analyzer_cmd_with_resource_dir(analyzer_cmd,
                                                   config.compiler_resource_dir)
+
+            analyzer_cmd.extend(self.buildaction.compiler_includes)
 
             analyzer_cmd.append(self.source_file)
 
