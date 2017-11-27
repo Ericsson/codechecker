@@ -225,6 +225,13 @@ struct CompareData {
   2: DiffType  diffType
 }
 
+// This type is used to get line content information for the given file at the
+// given positions.
+struct LinesInFilesRequested {
+  1: i64        fileId,
+  2: set<i64>   lines
+}
+typedef list<LinesInFilesRequested> LinesInFilesRequestedList
 
 service codeCheckerDBAccess {
 
@@ -294,6 +301,14 @@ service codeCheckerDBAccess {
                                    2: bool     fileContent,
                                    3: Encoding encoding)
                                    throws (1: shared.RequestFailed requestError),
+
+  // Get line content information for multiple files in different positions.
+  // The first key of the map is a file id, the second is a line number:
+  // (e.g.: lineContent = result[fileId][line])
+  // PERMISSION: PRODUCT_ACCESS
+  map<i64, map<i64, string>> getLinesInSourceFileContents(1: LinesInFilesRequestedList linesInFilesRequested,
+                                                          2: Encoding encoding)
+                                                          throws (1: shared.RequestFailed requestError),
 
   // change review status of a bug.
   // PERMISSION: PRODUCT_ACCESS or PRODUCT_STORE
