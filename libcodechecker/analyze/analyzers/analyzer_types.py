@@ -357,7 +357,9 @@ def __build_clang_tidy_config_handler(args, context):
     # TODO Support "clang-tidy -print-resource-dir" .
     check_env = analyzer_env.get_check_env(context.path_env_extra,
                                            context.ld_lib_path_extra)
-    check_env['PATH'] = os.path.dirname(config_handler.analyzer_binary)
+    # Overwrite PATH to contain only the parent of the clang binary.
+    if os.path.isabs(config_handler.analyzer_binary):
+        check_env['PATH'] = os.path.dirname(config_handler.analyzer_binary)
     clang_bin = analyzer_clangsa.ClangSA.resolve_missing_binary('clang',
                                                                 check_env)
     if os.path.isfile(clang_bin):
