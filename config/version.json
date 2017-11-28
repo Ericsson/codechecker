@@ -1,8 +1,8 @@
 {
     "version": {
         "major" : "6",
-        "minor" : "2",
-        "revision" : "1"
+        "minor" : "3",
+        "revision" : "0"
     },
     "product_db_version": {
         "major" : "6",
