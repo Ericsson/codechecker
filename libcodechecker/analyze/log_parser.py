@@ -89,7 +89,7 @@ def parse_compiler_target(lines):
 
     for line in lines.splitlines(True):
         line = line.strip().split()
-        if line[0] == target_label:
+        if len(line) > 1 and line[0] == target_label:
             target = line[1]
 
     return target
