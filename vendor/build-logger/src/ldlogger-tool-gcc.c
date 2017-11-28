@@ -28,7 +28,11 @@ typedef enum _GccArgsState
   /**
    * After a -o paramater.
    */
-  InOutputArg
+  InOutputArg,
+  /**
+   * After a flag which requires a path after it, e.g. -I or -L.
+   */
+  PathRequired
 } GccArgsState;
 
 /**
@@ -85,6 +89,15 @@ static GccArgsState processArgument(
     loggerFileInitFromPath(&action_->output, argToAdd);
     state_ = Normal;
   }
+  else if (state_ == PathRequired)
+  {
+    if (!loggerMakePathAbs(arg_, argToAdd, 0))
+    {
+      strcpy(argToAdd, arg_);
+    }
+
+    state_ = Normal;
+  }
   else if (strcmp(arg_, "-o") == 0)
   {
     state_ = InOutputArg;
@@ -109,14 +122,37 @@ static GccArgsState processArgument(
      */
     strcpy(argToAdd, arg_);
   }
-  else if (arg_[0] == '-' && (arg_[1] == 'I' || arg_[1] == 'L') && arg_[2])
+  else if (arg_[0] == '-' && (arg_[1] == 'I' || arg_[1] == 'L'))
   {
-    /* This is a -I or -L option with a path */
-    char fullPath[PATH_MAX];
-    if (loggerMakePathAbs(arg_ + 2, fullPath, 0))
+    if (arg_[2])
     {
-      argToAdd[2] = 0;
-      strcat(argToAdd, fullPath);
+      /* This is a -I or -L option with a path */
+      char fullPath[PATH_MAX];
+      if (loggerMakePathAbs(arg_ + 2, fullPath, 0))
+      {
+        argToAdd[2] = 0;
+        strcat(argToAdd, fullPath);
+      }
+    }
+    else
+    {
+      /* The argument of -I or -L is separated by a space. */
+      state_ = PathRequired;
+    }
+  }
+  else if (strncmp(arg_, "-isystem", 8 /*8 == strlen("-isystem")*/) == 0)
+  {
+    if (arg_[8] == 0)
+      state_ = PathRequired;
+    else
+    {
+      /* This is a -isystem option with a path */
+      char fullPath[PATH_MAX];
+      if (loggerMakePathAbs(arg_ + 8, fullPath, 0))
+      {
+        argToAdd[8] = 0;
+        strcat(argToAdd, fullPath);
+      }
     }
   }
   else
