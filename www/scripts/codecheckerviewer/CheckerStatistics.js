@@ -158,6 +158,10 @@ function (declare, ItemFileWriteStore, dom, Deferred, all, Memory, Observable,
 
     onRowClick : function (evt) {
       var that = this;
+
+      if (!evt.target.classList.contains('link'))
+        return;
+
       var item = this.getItem(evt.rowIndex);
 
       var runNameFilter = that.bugFilterView._runNameFilter;

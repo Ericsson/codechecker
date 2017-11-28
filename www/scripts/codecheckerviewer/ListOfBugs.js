@@ -154,9 +154,10 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
 
     _formatItems : function (reportDataList) {
       reportDataList.forEach(function (reportData) {
-        if (reportData.line)
-          reportData.checkedFile = reportData.checkedFile +
-            ' @ Line ' + reportData.line;
+        reportData.file = {
+          line : reportData.line,
+          file : reportData.checkedFile
+        };
 
         //--- Review status ---//
 
@@ -228,14 +229,24 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
     return msg !== null ? msg : 'N/A';
   }
 
+  function fileFormatter(obj) {
+    return '<span class="link">' + (obj.line
+      ? obj.file + ' @ Line ' + obj.line
+      : obj.file) + '</span>';
+  }
+
+  function checkerNameFormatter(checkerId) {
+    return '<span class="link">' + checkerId + '</span>';
+  }
+
   var ListOfBugsGrid = declare(DataGrid, {
     constructor : function () {
       var width = (100 / 5).toString() + '%';
 
       this.structure = [
-        { name : 'File', field : 'checkedFile', cellClasses : 'link compact', width : '100%' },
+        { name : 'File', field : 'file', cellClasses : 'compact', width : '100%', formatter: fileFormatter },
         { name : 'Message', field : 'checkerMsg', width : '100%', formatter : checkerMessageFormatter },
-        { name : 'Checker name', field : 'checkerId', cellClasses : 'link', width : '50%' },
+        { name : 'Checker name', field : 'checkerId', width : '50%', formatter: checkerNameFormatter },
         { name : 'Severity', field : 'severity', cellClasses : 'severity', width : '15%', formatter : severityFormatter },
         { name : 'Review status', field : 'reviewStatus', cellClasses : 'review-status', width : '15%', formatter : reviewStatusFormatter },
         { name : 'Review comment', cellClasses : 'review-comment-message compact', field : 'reviewComment', width : '50%' },
@@ -275,8 +286,11 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
 
       this._lastSelectedRow = evt.rowIndex;
 
+      if (!evt.target.classList.contains('link'))
+        return;
+
       switch (evt.cell.field) {
-        case 'checkedFile':
+        case 'file':
           topic.publish('openFile', item, item.bugHash, this);
           break;
 
