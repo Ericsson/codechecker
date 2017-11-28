@@ -7,6 +7,7 @@
 define([
   'dojo/_base/declare',
   'dojo/data/ItemFileWriteStore',
+  'dojo/dom-construct',
   'dojo/Deferred',
   'dojo/promise/all',
   'dojo/store/Memory',
@@ -18,7 +19,7 @@ define([
   'dijit/layout/ContentPane',
   'codechecker/hashHelper',
   'codechecker/util'],
-function (declare, ItemFileWriteStore, Deferred, all, Memory, Observable,
+function (declare, ItemFileWriteStore, dom, Deferred, all, Memory, Observable,
   topic, CheckedMultiSelect, DataGrid, Standby, ContentPane, hashHelper, util) {
 
   function severityFormatter(severity) {
@@ -80,7 +81,8 @@ function (declare, ItemFileWriteStore, Deferred, all, Memory, Observable,
               runIds.push(item.value);
           });
 
-          that.dataGrid.refreshGrid(runIds);
+          that.checkerStatisticsGrid.refreshGrid(runIds);
+          that.severityStatisticsGrid.refreshGrid(runIds);
           hashHelper.setStateValue('run', that.selectedRuns);
           this.changed = false;
         }
@@ -121,7 +123,8 @@ function (declare, ItemFileWriteStore, Deferred, all, Memory, Observable,
         if (that.selectedRuns)
           that._runFilter.set('value', that.selectedRuns);
 
-        that.dataGrid.refreshGrid();
+        that.checkerStatisticsGrid.refreshGrid();
+        that.severityStatisticsGrid.refreshGrid();
       });
     }
   });
@@ -148,6 +151,7 @@ function (declare, ItemFileWriteStore, Deferred, all, Memory, Observable,
       this.focused = true;
       this.selectable = true;
       this.keepSelection = true;
+      this.autoHeight = true;
       this.escapeHTMLInData = false;
       this.sortInfo = -2; // sort by severity
     },
@@ -297,6 +301,127 @@ function (declare, ItemFileWriteStore, Deferred, all, Memory, Observable,
         that.sort();
         that.standBy.hide();
       });
+    },
+
+    exportToCSV : function () {
+      this.store.fetch({
+        onComplete : function (statistics) {
+          var content = [['Checker', 'Severity', 'All reports', 'Resolved',
+            'Unreviewed', 'Confirmed bug', 'False positive', 'Intentional']];
+          statistics.forEach(function (stat) {
+            content.push([stat.checker,
+              util.severityFromCodeToString(stat.severity), stat.reports,
+              stat.resolved, stat.unreviewed, stat.confirmed,
+              stat.falsePositive, stat.intentional
+            ]);
+          });
+          util.exportToCSV('cc_checker_statistics.csv', content);
+        }
+      });
+    }
+  });
+
+  var SeverityStatistics = declare(DataGrid, {
+    constructor : function (args) {
+      dojo.safeMixin(this, args);
+
+      this.store = new ItemFileWriteStore({
+        data : { identifier : 'id', items : [] }
+      });
+
+      this.structure = [
+        { name : 'Severity', field : 'severity', styles : 'text-align: center;', width : '15%', formatter : severityFormatter},
+        { name : '<span class="customIcon detection-status-unresolved"></span> All reports', field : 'reports', width : '20%', formatter : numberFormatter},
+      ];
+
+      this.focused = true;
+      this.selectable = true;
+      this.keepSelection = true;
+      this.autoHeight = true;
+      this.escapeHTMLInData = false;
+      this.sortInfo = -1; // sort by severity
+    },
+
+    onRowClick : function (evt) {
+      var that = this;
+      var item = this.getItem(evt.rowIndex);
+
+      var runNameFilter = that.bugFilterView._runNameFilter;
+      var severityFilter = that.bugFilterView._severityFilter;
+
+      var state = that.bugFilterView.clearAll();
+      state[runNameFilter.class] = this.filterPane.selectedRuns;
+
+      switch (evt.cell.field) {
+        case 'severity':
+        case 'reports':
+          state[severityFilter.class] =
+            severityFilter.stateConverter(parseInt(item.severity[0]));
+          break;
+        default:
+          return;
+      }
+
+
+      topic.publish('tab/allReports');
+      topic.publish('filterchange', {
+        parent : that.bugFilterView,
+        changed : state
+      });
+    },
+
+    refreshGrid : function (runIds) {
+      var that = this;
+
+      this.standBy.show();
+
+      this.store.fetch({
+        onComplete : function (statistics) {
+          statistics.forEach(function (statistic) {
+            that.store.deleteItem(statistic);
+          });
+          that.store.save();
+        }
+      });
+
+      this._populateStatistics(runIds);
+    },
+
+    _populateStatistics : function (runIds) {
+      var that = this;
+
+      var reportFilter = new CC_OBJECTS.ReportFilter();
+      reportFilter.isUnique = true;
+
+      var limit = null;
+      var offset = null;
+      CC_SERVICE.getSeverityCounts(runIds, reportFilter, null, limit, offset,
+      function (res) {
+        for (key in res) {
+          that.store.newItem({
+            id : key,
+            severity : key,
+            reports : res[key]
+          });
+        }
+        that.sort();
+        that.standBy.hide();
+      });
+    },
+
+    exportToCSV : function () {
+      this.store.fetch({
+        onComplete : function (statistics) {
+          var content = [['Severity', 'Reports']];
+          statistics.forEach(function (stat) {
+            content.push([
+              util.severityFromCodeToString(stat.severity),
+              stat.reports
+            ]);
+          });
+          util.exportToCSV('cc_severity_statistics.csv', content);
+        }
+      });
     }
   });
 
@@ -315,15 +440,29 @@ function (declare, ItemFileWriteStore, Deferred, all, Memory, Observable,
         standBy : this._standBy
       });
 
+      this._severityStatistics = new SeverityStatistics({
+        class : 'severity-statistics-list',
+        bugFilterView : this.listOfAllReports._bugFilterView,
+        standBy : this._standBy
+      });
+
+
       this._filterPane = new FilterPane({
         class : 'checker-statistics-filter',
-        dataGrid : this._checkerStatistics
+        checkerStatisticsGrid : this._checkerStatistics,
+        severityStatisticsGrid : this._severityStatistics
       });
 
       this._checkerStatistics.set('filterPane', this._filterPane);
+      this._severityStatistics.set('filterPane', this._filterPane);
 
       this.addChild(this._filterPane);
+
+      this._createHeader(this, 'Checker statistics', this._checkerStatistics);
       this.addChild(this._checkerStatistics);
+
+      this._createHeader(this, 'Severity statistics', this._severityStatistics);
+      this.addChild(this._severityStatistics);
     },
 
     onShow : function () {
@@ -336,6 +475,25 @@ function (declare, ItemFileWriteStore, Deferred, all, Memory, Observable,
         'tab' : 'statistics',
         'run' : this._filterPane.selectedRuns
       });
+    },
+
+    _createHeader : function (parent, title, grid) {
+      var wrapper = dom.create('div', {
+        class : 'statistic-header-wrapper'
+      }, parent.domNode);
+
+      dom.create('span', {
+        class : 'title',
+        innerHTML : title
+      }, wrapper);
+
+      dom.create('a', {
+        class : 'export-to export-to-csv',
+        innerHTML : 'Export CSV',
+        onclick : function () {
+          grid.exportToCSV();
+        }
+      }, wrapper);
     }
   });
 });

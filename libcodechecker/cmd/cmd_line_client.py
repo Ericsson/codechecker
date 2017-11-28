@@ -549,6 +549,17 @@ def handle_list_result_types(args):
     resolved_checkers = get_statistics(client, run_ids, 'detectionStatus',
                                        [ttypes.DetectionStatus.RESOLVED])
 
+    # Get severity counts
+    report_filter = ttypes.ReportFilter()
+    report_filter.isUnique = True
+    sev_count = client.getSeverityCounts(run_ids, report_filter, None)
+    severities = []
+    for key, count in sorted(sev_count.items(),
+                             reverse=True):
+        severities.append(dict(
+            severity=ttypes.Severity._VALUES_TO_NAMES[key],
+            reports=count))
+
     all_results = []
     for key, checker_data in sorted(all_checkers_dict.items(),
                                     key=lambda x: x[1].severity,
@@ -566,6 +577,7 @@ def handle_list_result_types(args):
 
     if args.output_format == 'json':
         print(CmdLineOutputEncoder().encode(all_results))
+        print(CmdLineOutputEncoder().encode(severities))
     else:
         header = ['Checker', 'Severity', 'All reports', 'Resolved',
                   'Unreviewed', 'Confirmed', 'False positive', "Intentional"]
@@ -580,6 +592,16 @@ def handle_list_result_types(args):
                          str(stat['confirmed']),
                          str(stat['false_positive']),
                          str(stat['intentional'])))
+
+        print(twodim_to_str(args.output_format, header, rows))
+
+        # Print severity counts
+        header = ['Severity', 'All reports']
+
+        rows = []
+        for stat in severities:
+            rows.append((stat['severity'],
+                         str(stat['reports'])))
 
         print(twodim_to_str(args.output_format, header, rows))
 

@@ -359,6 +359,21 @@ function (locale, dom, style, json) {
         date.getUTCMinutes(),
         date.getUTCSeconds(),
         date.getUTCMilliseconds());
+    },
+
+    exportToCSV : function (filename, content) {
+      var csvContent = 'data:text/csv;charset=utf-8,';
+      content.forEach(function (c) {
+        csvContent += c.join(',') + '\r\n';
+      });
+
+      var link = dom.create('a', {
+        href : encodeURI(csvContent),
+        download : filename
+      }, document.body);
+
+      link.click();
+      document.body.removeChild(link);
     }
   };
 });
