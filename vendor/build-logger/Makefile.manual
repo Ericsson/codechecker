@@ -9,6 +9,8 @@
 #  ldlogger_32.so
 #  ldlogger_64.so
 
+.PHONY: test
+
 # C compiler
 CC = gcc
 # Preprocessor flags
@@ -90,3 +92,6 @@ ldlogger_32.so: $(LDLOGGER_LIB_SOURCES) $(LDLOGGER_LIB_HEADERS)
 # ldlogger lib 64
 ldlogger_64.so: $(LDLOGGER_LIB_SOURCES) $(LDLOGGER_LIB_HEADERS)
 	$(CC) -m64 $(CPPFLAGS) $(LIB_CFLAGS) $(LIB_LDFLAGS) $(LDLOGGER_LIB_SOURCES) $(LDLOGGER_SOURCES) -o $@
+
+test:
+	test/test_logger.sh $(BUILD_DIR)
