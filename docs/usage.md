@@ -113,11 +113,21 @@ Now the `reports` directory contains also the results of the updated `cmd-find.c
 The `reports/failed` folder contains all build-actions that
 were failed to analyze. For these there will be no results.
 
+Generally speaking, if a project can be compiled with Clang then the analysis
+should be sucessful always.  We support analysis for those projects which are
+built only with GCC, but there are some limitations.
+
 Possible reasons for failed analysis:
-* The original `gcc` compiler options were not recognized by `clang`, or not all include paths were
-correctly detected, so Clang analysis was unsuccessful.
-* Clang was more strict when parsing the C/C++ code than the original compiler (e.g.`gcc`).
- Any non-standard compliant or `gcc` specific code needs to be removed to successfully analyze the file.    
+* The original GCC compiler options were not recognized by Clang.
+* There are included headers for [GCC features which are
+  not supported by Clang](/docs/gcc_incompatibilities.md).
+* Clang was more strict when parsing the C/C++ code than the original compiler (GCC).
+ Any non-standard compliant or GCC specific code needs to be removed to successfully analyze the file.
+ One other solution may be to use the `__clang_analyzer__` macro. When the
+ static analyzer is using clang to parse source files, it implicitly defines
+ the preprocessor macro
+ [__clang_analyzer__](https://clang-analyzer.llvm.org/faq.html#exclude_code). One can use this macro to
+ selectively exclude code the analyzer examines.
 * Clang crashed during the analysis.
 
 
