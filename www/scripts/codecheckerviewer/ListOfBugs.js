@@ -455,9 +455,9 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
             runResultParam.cmpData);
           reportData = reports[0];
         } else {
-          runResultParam.runIds = [reportData.runId];
           runResultParam.cmpData = null;
         }
+        runResultParam.runIds = [reportData.runId];
 
         if (that.reportData &&
             that.reportData.reportId === reportData.reportId) {
