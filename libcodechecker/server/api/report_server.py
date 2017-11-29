@@ -1936,6 +1936,14 @@ class ThriftRequestHandler(object):
 
         session = self.__storage_session.get_transaction(run_id)
 
+        all_reports = session.query(Report) \
+            .filter(Report.run_id == run_id) \
+            .all()
+
+        hash_map_reports = defaultdict(list)
+        for report in all_reports:
+            hash_map_reports[report.bug_id].append(report)
+
         # Processing PList files.
         _, _, report_files = next(os.walk(report_dir), ([], [], []))
         for f in report_files:
@@ -1958,6 +1966,8 @@ class ThriftRequestHandler(object):
             for file_name in files:
                 file_ids[file_name] = file_path_to_id[file_name]
 
+            report_path_and_events = {}
+
             # Store report.
             for report in reports:
                 LOG.debug("Storing check results to the database.")
@@ -1975,6 +1985,9 @@ class ThriftRequestHandler(object):
                 LOG.debug("Storing report")
                 report_id = store_handler.addReport(
                     self.__storage_session,
+                    hash_map_reports[
+                        report.main['issue_hash_content_of_line_in_context']],
+                    report_path_and_events,
                     run_id,
                     file_ids[files[report.main['location']['file']]],
                     report.main,
@@ -1998,6 +2011,11 @@ class ThriftRequestHandler(object):
                     self._setReviewStatus(report_id, status, comment, session)
 
                 LOG.debug("Storing done for report " + str(report_id))
+
+            if len(report_path_and_events):
+                store_handler.changePathAndEvents(self.__storage_session,
+                                                  run_id,
+                                                  report_path_and_events)
 
         if len(check_durations) > 0:
             store_handler.setRunDuration(self.__storage_session,

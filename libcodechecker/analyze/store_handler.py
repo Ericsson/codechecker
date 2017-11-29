@@ -139,33 +139,6 @@ def store_bug_path(session, bugpath, report_id):
         session.add(brp)
 
 
-def change_path_and_events(session, report_id, bugpath, events):
-    try:
-        LOG.debug("Remove previous bug path and events for report " +
-                  str(report_id))
-
-        session.query(BugPathEvent) \
-            .filter(BugPathEvent.report_id == report_id) \
-            .delete()
-
-        session.query(BugReportPoint) \
-            .filter(BugReportPoint.report_id == report_id) \
-            .delete()
-
-        LOG.debug("Add new bug path and events for report" +
-                  str(report_id))
-
-        LOG.debug("storing bug path")
-        store_bug_path(session, bugpath, report_id)
-        LOG.debug("storing events")
-        store_bug_events(session, events, report_id)
-
-    except Exception as ex:
-        raise shared.ttypes.RequestFailed(
-            shared.ttypes.ErrorCode.GENERAL,
-            str(ex))
-
-
 def is_same_event_path(report_id, events, session):
     """
     Checks if the given event path is the same as the one in the
@@ -317,6 +290,8 @@ def setRunDuration(storage_session, run_id, duration):
 
 
 def addReport(storage_session,
+              all_reports,
+              report_path_and_events,
               run_id,
               file_id,
               main_section,
@@ -339,13 +314,9 @@ def addReport(storage_session,
 
         checker_id = checker_id or 'NOT FOUND'
 
-        # TODO: performance issues when executing the following query on
-        # large databases?
-        reports = session.query(Report) \
-            .filter(Report.bug_id == bug_hash, Report.run_id == run_id)
         # Check for duplicates by bug hash.
         LOG.debug("checking duplicates")
-        for report in reports:
+        for report in all_reports:
             LOG.debug("there is a possible duplicate")
             # TODO: file_id and path equality check won't be necessary
             # when path hash is added.
@@ -364,10 +335,7 @@ def addReport(storage_session,
                     report.line = line_num
                     report.column = column
 
-                    change_path_and_events(session,
-                                           report.id,
-                                           bugpath,
-                                           events)
+                    report_path_and_events[report.id] = (bugpath, events)
                 elif report.detection_status == 'resolved':
                     new_status = 'reopened'
 
@@ -376,10 +344,7 @@ def addReport(storage_session,
                     report.column = column
                     report.fixed_at = None
 
-                    change_path_and_events(session,
-                                           report.id,
-                                           bugpath,
-                                           events)
+                    report_path_and_events[report.id] = (bugpath, events)
 
                 if new_status:
                     report.detection_status = new_status
@@ -411,6 +376,7 @@ def addReport(storage_session,
         store_bug_events(session, events, report.id)
 
         storage_session.touch_report(run_id, report.id)
+        all_reports.append(report)
 
         return report.id
 
@@ -418,6 +384,23 @@ def addReport(storage_session,
         raise shared.ttypes.RequestFailed(
             shared.ttypes.ErrorCode.GENERAL,
             str(ex))
+
+
+def changePathAndEvents(storage_session, run_id, report_path_map):
+    session = storage_session.get_transaction(run_id)
+    report_ids = report_path_map.keys()
+
+    session.query(BugPathEvent) \
+        .filter(BugPathEvent.report_id.in_(report_ids)) \
+        .delete(synchronize_session=False)
+
+    session.query(BugReportPoint) \
+        .filter(BugReportPoint.report_id.in_(report_ids)) \
+        .delete(synchronize_session=False)
+
+    for report_id, (bug_path, events) in report_path_map.items():
+        store_bug_path(session, bug_path, report_id)
+        store_bug_events(session, events, report_id)
 
 
 def addFileContent(session, filepath, content, content_hash, encoding):
