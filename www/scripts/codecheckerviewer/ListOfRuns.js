@@ -275,10 +275,14 @@ function (declare, dom, ItemFileWriteStore, topic, Dialog, Button,
         onClick  : function () {
           that.listOfRunsGrid.store.fetch({
             onComplete : function (runs) {
+              var runCount = runs.length;
               runs.forEach(function (run) {
-                if (that.deleteRunIds.indexOf(run.runid[0]) !== -1)
+                if (that.deleteRunIds.indexOf(run.runid[0]) !== -1) {
                   that.listOfRunsGrid.store.deleteItem(run);
+                  --runCount;
+                }
               });
+              that.listOfRunsGrid._updateRunCount(runCount);
             }
           });
 
