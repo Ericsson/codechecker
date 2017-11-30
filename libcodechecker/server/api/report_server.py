@@ -312,7 +312,8 @@ def filter_report_filter(q, filter_expression, run_ids=None, cmp_data=None,
 def get_sort_map(sort_types, is_unique=False):
     # Get a list of sort_types which will be a nested ORDER BY.
     sort_type_map = {
-        SortType.FILENAME: [(File.filepath, 'filepath')],
+        SortType.FILENAME: [(File.filepath, 'filepath'),
+                            (Report.line, 'line')],
         SortType.CHECKER_NAME: [(Report.checker_id, 'checker_id')],
         SortType.SEVERITY: [(Report.severity, 'severity')],
         SortType.REVIEW_STATUS: [(ReviewStatus.status, 'rw_status')],
@@ -791,6 +792,13 @@ class ThriftRequestHandler(object):
                     .outerjoin(sorted_reports,
                                sorted_reports.c.id == Report.id) \
                     .filter(sorted_reports.c.id.isnot(None))
+
+                # We have to sort the results again because an ORDER BY in a
+                # subtable is broken by the JOIN.
+                q = sort_results_query(q,
+                                       sort_types,
+                                       sort_type_map,
+                                       order_type_map)
 
                 for report_id, bug_id, checker_msg, checker, severity, \
                     status, filename, path in \
