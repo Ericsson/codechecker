@@ -250,6 +250,8 @@ Developer Documentation
   * [Package layout](docs/package_layout.md)
   * [Checker documentation](docs/checker_docs.md)
   * [Thrift interface](api/README.md)
+  * [Feature overview of command-line and Web
+    interface](docs/feature_comparison.md)
   * [Package and integration tests](tests/README.md)
   * [Database schema migration](docs/db_schema_guide.md)
   * A high-level overview about the infrastructure is available amongst the
