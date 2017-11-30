@@ -69,14 +69,48 @@ def parse_compiler_includes(lines):
             # /System/Library/Frameworks (framework directory)
             fpos = line.find("(framework directory)")
             if fpos == -1:
-                include_paths.append("-isystem " + line)
+                include_paths.append(line)
             else:
-                include_paths.append("-isystem " + line[0:fpos-1])
+                include_paths.append(line[0:fpos-1])
 
         if line.startswith(start_mark):
             do_append = True
 
     return include_paths
+
+
+def filter_compiler_includes(include_dirs):
+    """
+    Filter the list of compiler includes.
+    We want to elide GCC's include-fixed and instrinsic directory.
+    See docs/gcc_incompatibilities.md
+    """
+
+    def contains_intrinsic_headers(include_dir):
+        """
+        Returns True if the given directory contains at least one intrinsic
+        header.
+        """
+        if not os.path.exists(include_dir):
+            return False
+        for f in os.listdir(include_dir):
+            if f.endswith("intrin.h"):
+                return True
+        return False
+
+    result = []
+    for include_dir in include_dirs:
+        # Skip GCC's fixinclude dir
+        if os.path.basename(os.path.normpath(include_dir)) == "include-fixed":
+            continue
+        if contains_intrinsic_headers(include_dir):
+            continue
+        result.append(include_dir)
+    return result
+
+
+def prepend_isystem_and_normalize(include_dirs):
+    return ["-isystem " + os.path.normpath(idir) for idir in include_dirs]
 
 
 def parse_compiler_target(lines):
@@ -146,7 +180,8 @@ def get_compiler_includes(parseLogOptions, compiler, lang, compile_opts,
         dump_compiler_info(parseLogOptions.output_path,
                            compiler_includes_dump_file,
                            {compiler: err})
-    return parse_compiler_includes(err)
+    return prepend_isystem_and_normalize(
+        filter_compiler_includes(parse_compiler_includes(err)))
 
 
 def get_compiler_target(parseLogOptions, compiler):
