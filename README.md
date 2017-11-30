@@ -56,6 +56,7 @@ User Documentation
   * [Overview about connecting multiple analysis run databases](docs/products.md)
   * [Permission management](docs/permissions.md)
   * [Usage of PostgreSQL database](docs/postgresql_setup.md)
+  * [How to deal with false positives](docs/false_positives.md)
 
 Install
 -------

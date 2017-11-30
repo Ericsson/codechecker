@@ -240,7 +240,8 @@ applied.
 - <span class="customIcon review-status-confirmed-bug"></span> **Confirmed**:
 This is really a bug.
 - <span class="customIcon review-status-false-positive"></span>
-**False positive**: This is not a bug.
+**False positive**: This is not a bug. Before marking a bug false positive
+you should read the [false positive how to](https://github.com/Ericsson/codechecker/blob/master/docs/false_positives.md).
 - <span class="customIcon review-status-intentional"></span> **Intentional**:
 This report is a bug but we don't want to fix it.
 
