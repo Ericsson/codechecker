@@ -1,3 +1,19 @@
+# False positives
+
+CodeChecker is running static analysis tools on the code. Unfortunately, it is
+not possible to create perfect tools. They might report correct code as
+incorrect. These findings are called false positives. This document explains
+how to deal with them. As a rule of thumb, whenever you encounter a
+false positive finding using suppression should be only the last resort. Why?
+Read on.
+
+Having a false positive indicates that the analyzer does not understand some
+properties of the code. Suppressing a result will not help its understanding.
+Making the code more obvious for the tool, however, makes the analysis more
+precise. As a bonus, such code is sometimes also more readable for developers.
+
+This guide introduces tips and tricks how to make the code easier to analyze.
+
 Table of Contents
 =================
  * [What target to analyze?](#what-target-to-analyze)
@@ -9,26 +25,10 @@ Table of Contents
    * [Suppress specific dead store warnings](#suppress-specific-dead-store-warnings)
    * [Alternative implementations](#alternative-implementations)
  * [Syntax based checks](#syntax-based-checks)
- * [Suppress results](#suppress-results)
+ * [Suppress or skip results](#suppress-or-skip-results)
    * [3rd party code](#third-party-code)
    * [Authored code](#authored-code)
    * [Unauthored code](#unauthored-code)
-
-# False positives
-
-CodeChecker is running static analysis tools on the code. Unfortunately, it is
-not possible to create perfect tools. They might report correct code as
-incorrect. These findings are called false positives. This document intended
-to help how to deal with them. As a rule of thumb, whenever you encounter a
-false positive finding using suppression should be only the last resort. Why?
-Read on.
-
-Having a false positive indicates that the analyzer do not understand some
-properties of the code. Suppressing a result will not help its understanding.
-Making the code more obvious for the tool, however, makes the analysis more
-precise. As a bonus, such code sometimes also more readable for developers.
-
-This guide introduce tips and tricks how to make the code easier to analyze.
 
 ## <a name="what-target-to-analyze"></a> What target to analyze?
 
@@ -36,7 +36,7 @@ Usually, a project has multiple build targets for different purposes. There
 might be multiple targets for multiple architectures, releases, debugging.
 
 We advise to use the debug target to analyze the code. The reason is, debug
-targets usually contains assertions, while release targets does not.
+targets usually contain assertions, while release targets do not.
 These assertions convey useful information to the analyzer.
 
 The analyzer understands the standard assert macro. In case a project has
@@ -174,8 +174,31 @@ turn off checks from the `core` package.
 
 ### <a name="suppress-specific-dead-store-warnings"></a> Suppress specific dead store warnings
 
-How to suppress a specific dead store warning and more useful tips can be found
-[here](https://clang-analyzer.llvm.org/faq.html).
+How to suppress a specific dead store warning from the Clang Static Analyzer
+and more useful tips can be found [here](https://clang-analyzer.llvm.org/faq.html).
+Alternatively, the `__clang_analyzer__` macro can be used to introduce usages.
+Or sometimes macros just need to be cleaned up. Let us consider the following
+example:
+
+```cpp
+void foo() {
+  int x = 3; // Dead store warning.
+#ifdef ABC
+  dostuff(x);
+#endif
+}
+```
+
+It can be rewritten to as the following to suppress the warning:
+
+```cpp
+void foo() {
+#ifdef ABC
+  int x = 3; // No warning.
+  dostuff(x);
+#endif
+}
+```
 
 ### <a name="alternative-implementations"></a> Alternative implementations
 
@@ -214,10 +237,10 @@ point value the loss of precision during integer division is intentional.
 Adding a comment why this is intentional would make this even clearer.
 Such edits makes the code easier to understand for fellow developers. 
 
-## <a name="suppress-results"></a> Suppress results
+## <a name="suppress-or-skip-results"></a> Suppress or skip results
 
 When none of the above works, we can still resort to suppressing a particular
-finding. There are multiple ways to do this and it is important to chose the
+finding. There are multiple ways to do this and it is important to choose the
 right one.
 
 ### <a name="third-party-code"></a> 3rd party code
