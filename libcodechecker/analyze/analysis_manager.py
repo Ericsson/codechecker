@@ -179,6 +179,19 @@ def init_worker(checked_num, action_num):
     progress_actions = action_num
 
 
+def get_dependent_headers(buildaction, archive):
+    LOG.debug("Generating dependent headers via compiler...")
+    try:
+        dependencies = set(create_dependencies(buildaction))
+    except Exception as ex:
+        LOG.debug("Couldn't create dependencies:")
+        LOG.debug(str(ex))
+        # TODO append with buildaction
+        archive.writestr("no-sources", str(ex))
+        dependencies = set()
+    return dependencies
+
+
 def check(check_data):
     """
     Invoke clang with an action which called by processes.
@@ -187,7 +200,7 @@ def check(check_data):
     skiplist handler is None if no skip file was configured.
     """
 
-    action, context, analyzer_config_map, \
+    actions_map, action, context, analyzer_config_map, \
         output_dir, skip_handler, quiet_output_on_stdout, \
         capture_analysis_output = check_data
 
@@ -338,14 +351,8 @@ def check(check_data):
                         if not quiet_output_on_stdout:
                             LOG.debug_analyzer('\n' + rh.analyzer_stderr)
 
-                    LOG.debug("Generating dependent headers via compiler...")
-                    try:
-                        dependencies = set(create_dependencies(rh.buildaction))
-                    except Exception as ex:
-                        LOG.debug("Couldn't create dependencies:")
-                        LOG.debug(str(ex))
-                        archive.writestr("no-sources", str(ex))
-                        dependencies = set()
+                    dependencies = get_dependent_headers(rh.buildaction,
+                                                         archive)
 
                     LOG.debug("Fetching other dependent files from analyzer "
                               "output...")
@@ -366,15 +373,39 @@ def check(check_data):
                         LOG.debug(str(ex))
                         other_files = set()
 
-                    dependencies.update(other_files)
+                    mentioned_files_dependent_files = set()
+                    for of in other_files:
+                        mentioned_file = os.path.abspath(
+                            os.path.join(action.directory, of))
+                        # Use the target of the original build action
+                        key = mentioned_file, action.target
+                        mentioned_file_action = actions_map.get(key)
+                        if mentioned_file_action is not None:
+                            mentioned_file_deps = get_dependent_headers(
+                                mentioned_file_action, archive)
+                            mentioned_files_dependent_files.\
+                                update(mentioned_file_deps)
+                        else:
+                            LOG.debug("Could not find %s in build actions"
+                                      % key)
 
-                    LOG.debug("Writing dependent files to archive.")
+                    dependencies.update(other_files)
+                    dependencies.update(mentioned_files_dependent_files)
+
+                    # `dependencies` might contain absolute and relative paths
+                    # for the same file, so make everything absolute by
+                    # joining with the the absolute action.directory.
+                    # If `dependent_source` is absolute it remains absolute
+                    # after the join, as documented on docs.python.org .
+                    dependencies_copy = set()
                     for dependent_source in dependencies:
                         dependent_source = os.path.join(action.directory,
                                                         dependent_source)
-                        if not os.path.isabs(dependent_source):
-                            dependent_source = \
-                                os.path.abspath(dependent_source)
+                        dependencies_copy.add(dependent_source)
+                    dependencies = dependencies_copy
+
+                    LOG.debug("Writing dependent files to archive.")
+                    for dependent_source in dependencies:
                         LOG.debug("[ZIP] Writing '" + dependent_source + "' "
                                   "to the archive.")
                         archive_path = dependent_source.lstrip('/')
@@ -433,6 +464,25 @@ def check(check_data):
         return 1, skipped, reanalyzed, action.analyzer_type, None
 
 
+def create_actions_map(actions):
+    """
+    Create a dict for the build actions.
+    Key of the dict: (source_file, target).
+    """
+    result = dict()
+    for act in actions:
+        if act.source_count > 1:
+            LOG.error("Multiple sources for one build action: " +
+                      str(act.sources))
+        source = os.path.join(act.directory, act.sources.next())
+        key = source, act.target
+        if key in result:
+            LOG.error("Multiple entires in compile database "
+                      "with the same (source, target) pair: (%s, %s)" % key)
+        result[key] = act
+    return result
+
+
 def start_workers(actions, context, analyzer_config_map,
                   jobs, output_path, skip_handler, metadata,
                   quiet_analyze, capture_analysis_output):
@@ -440,6 +490,8 @@ def start_workers(actions, context, analyzer_config_map,
     Start the workers in the process pool.
     For every build action there is worker which makes the analysis.
     """
+
+    actions_map = create_actions_map(actions)
 
     # Handle SIGINT to stop this script running.
     def signal_handler(*arg, **kwarg):
@@ -465,7 +517,8 @@ def start_workers(actions, context, analyzer_config_map,
         # It is a python bug, this does not happen if a timeout is specified;
         # then receive the interrupt immediately.
 
-        analyzed_actions = [(build_action,
+        analyzed_actions = [(actions_map,
+                             build_action,
                              context,
                              analyzer_config_map,
                              output_path,

@@ -236,6 +236,7 @@ def parse_compile_commands_json(logfile, parseLogOptions):
 
         action.lang = results.lang
         action.target = results.arch
+        action.output = results.output
 
         # Store the compiler built in include paths and defines.
         if add_compiler_defaults and results.compiler:

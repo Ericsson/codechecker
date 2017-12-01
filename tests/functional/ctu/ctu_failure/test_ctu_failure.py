@@ -15,6 +15,7 @@ import zipfile
 
 from libtest import env
 from libtest import project
+from libtest.codechecker import call_command
 
 from libcodechecker.analyze import host_check
 
@@ -40,7 +41,8 @@ class TestCtu(unittest.TestCase):
         self.report_dir = os.path.join(self.test_workspace, 'reports')
         os.makedirs(self.report_dir)
 
-        self.test_dir = project.path('ctu_failure')
+    def __set_up_test_dir(self, project_path):
+        self.test_dir = project.path(project_path)
 
         # Get if clang is CTU-capable or not.
         cmd = [self._codechecker_cmd, 'analyze', '-h']
@@ -75,6 +77,7 @@ class TestCtu(unittest.TestCase):
     def test_ctu_logs_ast_import(self):
         """ Test that Clang indeed logs the AST import events.
         """
+        self.__set_up_test_dir('ctu_failure')
         if not self.ctu_capable:
             self.skipTest(NO_CTU_MESSAGE)
         if not self.ctu_has_analyzer_display_ctu_progress:
@@ -87,18 +90,17 @@ class TestCtu(unittest.TestCase):
     def test_ctu_failure_zip(self):
         """ Test the failure zip contains the source of imported TU
         """
-
+        self.__set_up_test_dir('ctu_failure')
         if not self.ctu_capable:
             self.skipTest(NO_CTU_MESSAGE)
         if not self.ctu_has_analyzer_display_ctu_progress:
             self.skipTest(NO_DISPLAY_CTU_PROGRESS)
 
+        # The below special checker `ExprInspection` crashes when a function
+        # with a specified name is analyzed.
         output = self.__do_ctu_all(reparse=False,
                                    extra_args=[
                                        "--verbose", "debug",
-                                       # The below special checker crashes when
-                                       # a function with a specified name is
-                                       # analyzed.
                                        "-e", "debug.ExprInspection"
                                    ])
 
@@ -136,6 +138,60 @@ class TestCtu(unittest.TestCase):
             check_source_in_archive("main.c")
             check_source_in_archive("lib.c")
 
+    def test_ctu_failure_zip_with_headers(self):
+        """
+        Test the failure zip contains the source of imported TU and all the
+        headers on which the TU depends.
+        """
+        self.__set_up_test_dir('ctu_failure_with_headers')
+        if not self.ctu_capable:
+            self.skipTest(NO_CTU_MESSAGE)
+        if not self.ctu_has_analyzer_display_ctu_progress:
+            self.skipTest(NO_DISPLAY_CTU_PROGRESS)
+
+        # The below special checker `ExprInspection` crashes when a function
+        # with a specified name is analyzed.
+        output = self.__do_ctu_all(reparse=False,
+                                   extra_args=[
+                                       "--verbose", "debug",
+                                       "-e", "debug.ExprInspection"
+                                   ])
+
+        # lib.c should be logged as its AST is loaded by Clang
+        self.assertRegexpMatches(
+                output,
+                "ANALYZE \(CTU loaded AST for source file\): .*lib\.c")
+
+        # We expect a failure archive to be in the failed directory.
+        failed_dir = os.path.join(self.report_dir, "failed")
+        failed_files = os.listdir(failed_dir)
+        self.assertEquals(len(failed_files), 1)
+        # Ctu should fail during analysis of main.c
+        self.assertIn("main.c", failed_files[0])
+
+        fail_zip = os.path.join(failed_dir, failed_files[0])
+
+        with zipfile.ZipFile(fail_zip, 'r') as archive:
+            files = archive.namelist()
+
+            self.assertIn("build-action", files)
+            self.assertIn("analyzer-command", files)
+
+            def check_source_in_archive(source_in_archive):
+                source_file = os.path.join(self.test_dir, source_in_archive)
+                source_in_archive = os.path.join("sources-root",
+                                                 source_file.lstrip('/'))
+                self.assertIn(source_in_archive, files)
+                # Check file content.
+                with archive.open(source_in_archive, 'r') as archived_code:
+                    with open(source_file, 'r') as source_code:
+                        self.assertEqual(archived_code.read(),
+                                         source_code.read())
+
+            check_source_in_archive("main.c")
+            check_source_in_archive("lib.c")
+            check_source_in_archive("lib.h")
+
     def __do_ctu_all(self, reparse, extra_args=None):
         """
         Execute a full CTU run.
@@ -149,21 +205,9 @@ class TestCtu(unittest.TestCase):
         if extra_args is not None:
             cmd.extend(extra_args)
         cmd.append(self.buildlog)
-        output = subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                         cwd=self.test_dir, env=self.env)
-        return output
 
-    def __do_ctu_analyze(self, reparse):
-        """ Execute CTU analyze phase. """
-
-        cmd = [self._codechecker_cmd, 'analyze', '-o', self.report_dir,
-               '--analyzers', 'clangsa', '--ctu-analyze']
-        if reparse:
-            cmd.append('--ctu-on-the-fly')
-        cmd.append(self.buildlog)
-        output = subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                         cwd=self.test_dir, env=self.env)
-        return output
+        out, _ = call_command(cmd, cwd=self.test_dir, env=self.env)
+        return out
 
     def __getClangSaPath(self):
         cmd = [self._codechecker_cmd, 'analyzers', '--details', '-o', 'json']
