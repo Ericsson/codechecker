@@ -243,6 +243,19 @@ def add_arguments_to_parser(parser):
                                     "forwarded verbatim for the Clang-Tidy "
                                     "analyzer.")
 
+    analyzer_opts.add_argument('--timeout',
+                               type=int,
+                               dest='timeout',
+                               required=False,
+                               default=argparse.SUPPRESS,
+                               help="The amount of time (in seconds) that "
+                                    "each analyzer can spend, individually, "
+                                    "to analyze the project. If the analysis "
+                                    "of a particular file takes longer than "
+                                    "this time, the analyzer is killed and "
+                                    "the analysis is considered as a failed "
+                                    "one.")
+
     if host_check.is_ctu_capable():
         ctu_opts = parser.add_argument_group(
             "cross translation unit analysis arguments",
@@ -442,7 +455,8 @@ def main(args):
                           'ctu_phases',
                           'ctu_in_memory',
                           'enable_all',
-                          'ordered_checkers'  # --enable and --disable.
+                          'ordered_checkers',  # --enable and --disable.
+                          'timeout'
                           ]
         for key in args_to_update:
             __update_if_key_exists(args, analyze_args, key)

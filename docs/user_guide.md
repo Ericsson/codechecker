@@ -185,7 +185,7 @@ usage: CodeChecker check [-h] [-o OUTPUT_DIR] [-q] [-f]
                          [--analyzers ANALYZER [ANALYZER ...]]
                          [--add-compiler-defaults]
                          [--saargs CLANGSA_ARGS_CFG_FILE]
-                         [--tidyargs TIDY_ARGS_CFG_FILE]
+                         [--tidyargs TIDY_ARGS_CFG_FILE] [--timeout TIMEOUT]
                          [-e checker/group/profile] [-d checker/group/profile]
                          [--print-steps]
                          [--verbose {info,debug,debug_analyzer}]
@@ -229,6 +229,7 @@ analyzer arguments:
   --capture-analysis-output
   --saargs CLANGSA_ARGS_CFG_FILE
   --tidyargs TIDY_ARGS_CFG_FILE
+  --timeout TIMEOUT
 
 cross translation unit analysis arguments:
   These arguments are only available if the Clang Static Analyzer supports
@@ -361,7 +362,7 @@ usage: CodeChecker analyze [-h] [-j JOBS] [-i SKIPFILE] -o OUTPUT_PATH
                            [--add-compiler-defaults]
                            [--capture-analysis-output]
                            [--saargs CLANGSA_ARGS_CFG_FILE]
-                           [--tidyargs TIDY_ARGS_CFG_FILE]
+                           [--tidyargs TIDY_ARGS_CFG_FILE] [--timeout TIMEOUT]
                            [-e checker/group/profile]
                            [-d checker/group/profile] [--enable-all]
                            [--verbose {info,debug,debug_analyzer}]
@@ -454,6 +455,11 @@ analyzer arguments:
   --tidyargs TIDY_ARGS_CFG_FILE
                         File containing argument which will be forwarded
                         verbatim for Clang-Tidy.
+  --timeout TIMEOUT     The amount of time (in seconds) that each analyzer can
+                        spend, individually, to analyze the project. If the
+                        analysis of a particular file takes longer than this
+                        time, the analyzer is killed and the analysis is
+                        considered as a failed one.
 ~~~~~~~~~~~~~~~~~~~~~
 
 CodeChecker supports several analyzer tools. Currently, these analyzers are

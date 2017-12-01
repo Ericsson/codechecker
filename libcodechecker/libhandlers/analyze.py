@@ -222,6 +222,19 @@ def add_arguments_to_parser(parser):
                                help="File containing argument which will be "
                                     "forwarded verbatim for Clang-Tidy.")
 
+    analyzer_opts.add_argument('--timeout',
+                               type=int,
+                               dest='timeout',
+                               required=False,
+                               default=argparse.SUPPRESS,
+                               help="The amount of time (in seconds) that "
+                                    "each analyzer can spend, individually, "
+                                    "to analyze the project. If the analysis "
+                                    "of a particular file takes longer than "
+                                    "this time, the analyzer is killed and "
+                                    "the analysis is considered as a failed "
+                                    "one.")
+
     if host_check.is_ctu_capable():
         ctu_opts = parser.add_argument_group(
             "cross translation unit analysis arguments",
