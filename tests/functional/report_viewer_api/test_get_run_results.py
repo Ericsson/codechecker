@@ -51,6 +51,25 @@ class RunResults(unittest.TestCase):
 
         self._runid = test_runs[0].runId
 
+    def __check_bug_path_order(self, run_results, order):
+        """
+        Checks the bug path length order of the run results.
+        :param run_results: Run results.
+        :param order: If it is a negative value, it checks that bug path length
+        of the results order is descending otherwise ascending.
+        """
+        prev = None
+        for res in run_results:
+            self.assertGreater(res.bugPathLength, 0)
+
+            if not prev:
+                prev = res
+                continue
+            if order == Order.ASC:
+                self.assertGreaterEqual(res.bugPathLength, prev.bugPathLength)
+            else:
+                self.assertLessEqual(res.bugPathLength, prev.bugPathLength)
+
     def test_get_run_results_no_filter(self):
         """ Get all the run results without any filtering. """
         runid = self._runid
@@ -219,3 +238,26 @@ class RunResults(unittest.TestCase):
                             (bug1.line <=
                              bug2.line) or
                             (bug1.checkerId <= bug2.checkerId))
+
+    def test_bug_path_length(self):
+        runid = self._runid
+        sortMode1 = SortMode(SortType.BUG_PATH_LENGTH, Order.ASC)
+        sortMode2 = SortMode(SortType.BUG_PATH_LENGTH, Order.DESC)
+        simple_filter = ReportFilter()
+        unique_filter = ReportFilter(isUnique=True)
+
+        run_results = self._cc_client.getRunResults([runid],
+                                                    100,
+                                                    0,
+                                                    [sortMode1],
+                                                    simple_filter,
+                                                    None)
+        self.__check_bug_path_order(run_results, Order.ASC)
+
+        run_results = self._cc_client.getRunResults([runid],
+                                                    100,
+                                                    0,
+                                                    [sortMode2],
+                                                    unique_filter,
+                                                    None)
+        self.__check_bug_path_order(run_results, Order.DESC)

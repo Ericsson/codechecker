@@ -68,7 +68,8 @@ enum SortType {
   CHECKER_NAME,
   SEVERITY,
   REVIEW_STATUS,
-  DETECTION_STATUS
+  DETECTION_STATUS,
+  BUG_PATH_LENGTH,
 }
 
 
@@ -161,6 +162,7 @@ struct ReportData {
   12: DetectionStatus detectionStatus, // State of the bug (see the enum constant values).
   13: string          detectedAt,      // Detection date of the report.
   14: string          fixedAt          // Date when the report was fixed.
+  15: i64             bugPathLength,   // Length of the bug path.
 }
 typedef list<ReportData> ReportDataList
 

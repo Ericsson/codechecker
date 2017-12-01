@@ -368,6 +368,7 @@ def get_sort_map(sort_types, is_unique=False):
     sort_type_map = {
         SortType.FILENAME: [(File.filepath, 'filepath'),
                             (Report.line, 'line')],
+        SortType.BUG_PATH_LENGTH: [('bug_path_length', 'bug_path_length')],
         SortType.CHECKER_NAME: [(Report.checker_id, 'checker_id')],
         SortType.SEVERITY: [(Report.severity, 'severity')],
         SortType.REVIEW_STATUS: [(ReviewStatus.status, 'rw_status')],
@@ -782,17 +783,26 @@ class ThriftRequestHandler(object):
             filter_expression = process_report_filter_v2(session,
                                                          report_filter)
 
+            path_len_q = session.query(BugPathEvent.report_id,
+                                       func.count(BugPathEvent.report_id)
+                                       .label('path_length')) \
+                .group_by(BugPathEvent.report_id) \
+                .subquery()
+
             is_unique = report_filter is not None and report_filter.isUnique
             if is_unique:
                 sort_types, sort_type_map, order_type_map = \
                     get_sort_map(sort_types, True)
 
-                selects = [func.max(Report.id).label('id')]
+                selects = [func.max(Report.id).label('id'),
+                           func.max(path_len_q.c.path_length)
+                               .label('bug_path_length')]
                 for sort in sort_types:
                     sorttypes = sort_type_map.get(sort.type)
                     for sorttype in sorttypes:
-                        selects.append(func.max(sorttype[0])
-                                       .label(sorttype[1]))
+                        if sorttype[0] != 'bug_path_length':
+                            selects.append(func.max(sorttype[0])
+                                           .label(sorttype[1]))
 
                 unique_reports = session.query(*selects)
                 unique_reports = filter_report_filter(unique_reports,
@@ -801,10 +811,15 @@ class ThriftRequestHandler(object):
                                                       cmp_data,
                                                       diff_hashes)
                 unique_reports = unique_reports \
-                    .group_by(Report.bug_id).subquery()
+                    .outerjoin(path_len_q,
+                               path_len_q.c.report_id == Report.id) \
+                    .group_by(Report.bug_id) \
+                    .subquery()
 
                 # Sort the results
-                sorted_reports = session.query(unique_reports.c.id)
+                sorted_reports = \
+                    session.query(unique_reports.c.id,
+                                  unique_reports.c.bug_path_length)
 
                 sorted_reports = sort_results_query(sorted_reports,
                                                     sort_types,
@@ -819,7 +834,8 @@ class ThriftRequestHandler(object):
                                   Report.checker_message, Report.checker_id,
                                   Report.severity, Report.detected_at,
                                   Report.fixed_at, ReviewStatus,
-                                  File.filename, File.filepath) \
+                                  File.filename, File.filepath,
+                                  sorted_reports.c.bug_path_length) \
                     .outerjoin(File, Report.file_id == File.id) \
                     .outerjoin(ReviewStatus,
                                ReviewStatus.bug_hash == Report.bug_id) \
@@ -835,8 +851,8 @@ class ThriftRequestHandler(object):
                                        order_type_map)
 
                 for report_id, bug_id, checker_msg, checker, severity, \
-                    detected_at, fixed_at, status, filename, path in \
-                        q:
+                    detected_at, fixed_at, status, filename, path, \
+                        bug_path_len in q:
                     review_data = create_review_data(status)
 
                     results.append(
@@ -847,7 +863,8 @@ class ThriftRequestHandler(object):
                                    severity=severity,
                                    reviewData=review_data,
                                    detectedAt=str(detected_at),
-                                   fixedAt=str(fixed_at)))
+                                   fixedAt=str(fixed_at),
+                                   bugPathLength=bug_path_len))
             else:
                 q = session.query(Report.run_id, Report.id, Report.file_id,
                                   Report.line, Report.column,
@@ -855,10 +872,14 @@ class ThriftRequestHandler(object):
                                   Report.checker_message, Report.checker_id,
                                   Report.severity, Report.detected_at,
                                   Report.fixed_at, ReviewStatus,
-                                  File.filepath) \
+                                  File.filepath,
+                                  path_len_q.c.path_length
+                                      .label('bug_path_length')) \
                     .outerjoin(File, Report.file_id == File.id) \
                     .outerjoin(ReviewStatus,
                                ReviewStatus.bug_hash == Report.bug_id) \
+                    .outerjoin(path_len_q,
+                               path_len_q.c.report_id == Report.id) \
                     .filter(filter_expression)
 
                 if run_ids:
@@ -877,7 +898,7 @@ class ThriftRequestHandler(object):
 
                 for run_id, report_id, file_id, line, column, d_status, \
                     bug_id, checker_msg, checker, severity, detected_at,\
-                    fixed_at, r_status, path \
+                    fixed_at, r_status, path, bug_path_len \
                         in q:
 
                     review_data = create_review_data(r_status)
@@ -896,7 +917,8 @@ class ThriftRequestHandler(object):
                                    detectionStatus=detection_status_enum(
                                        d_status),
                                    detectedAt=str(detected_at),
-                                   fixedAt=str(fixed_at)))
+                                   fixedAt=str(fixed_at),
+                                   bugPathLength=bug_path_len))
 
             return results
 
