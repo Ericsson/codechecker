@@ -18,6 +18,34 @@ from . import env
 from . import project
 
 
+def call_command(cmd, cwd, env):
+    """
+    Execute a process in a test case.  If the run is successful do not bloat
+    the test output, but in case of any failure dump stdout and stderr.
+    Returns the utf decoded (stdout, stderr) pair of strings.
+    """
+    def show(out, err):
+        print("\nTEST execute stdout:\n")
+        print(out.decode("utf-8"))
+        print("\nTEST execute stderr:\n")
+        print(out.decode("utf-8"))
+    try:
+        proc = subprocess.Popen(cmd,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE,
+                                cwd=cwd, env=env)
+        out, err = proc.communicate()
+        if proc.returncode != 0:
+            show(out, err)
+            print('Unsuccessful run: "' + ' '.join(cmd) + '"')
+            raise Exception("Unsuccessful run of command.")
+        return out.decode("utf-8"), err.decode("utf-8")
+    except OSError:
+        show(out, err)
+        print('Failed to run: "' + ' '.join(cmd) + '"')
+        raise
+
+
 def wait_for_postgres_shutdown(workspace):
     """
     Wait for PostgreSQL to shut down.
