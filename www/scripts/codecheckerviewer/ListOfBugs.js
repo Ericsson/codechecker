@@ -175,7 +175,7 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
       var sortMode = new CC_OBJECTS.SortMode();
 
       sortMode.type
-        = sort.attribute === 'checkedFile'
+        = sort.attribute === 'file'
         ? CC_OBJECTS.SortType.FILENAME
         : sort.attribute === 'checkerId'
         ? CC_OBJECTS.SortType.CHECKER_NAME
@@ -270,7 +270,7 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
     canSort : function (inSortInfo) {
       var cell = this.getCell(Math.abs(inSortInfo) - 1);
 
-      return cell.field === 'checkedFile' ||
+      return cell.field === 'file' ||
              cell.field === 'checkerId'   ||
              cell.field === 'severity'    ||
              cell.field === 'reviewStatus' ||
