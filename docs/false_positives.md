@@ -208,6 +208,33 @@ function or provide an alternative implementation that is easier to model
 (i.e.: implementation without bitwise operation tricks). This can be achieved
 using the `__clang_analyzer__` macro.
 
+For example the following code:
+
+```cpp
+unsigned f(unsigned x) {
+  return (x >> 1) & 1;
+}
+```
+
+Could be rewritten as:
+
+```cpp
+#ifndef __clang_analyzer__
+unsigned f(unsigned x) {
+  return (x >> 1) & 1;
+}
+#else
+unsigned f(unsigned x) {
+  return (x / 2) % 2;
+}
+#endif
+```
+
+The implementation without the bit manipulation can be understood by
+the analyzer better. Note that the compiler might generate the same code
+for the two implementations, so it might make sense to use only the more
+obvious one.
+
 ## <a name="syntax-based-checks"></a> Syntax based checks
 
 Clang-Tidy has lots of useful syntax based checks. Some of these checks
