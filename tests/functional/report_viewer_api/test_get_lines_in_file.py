@@ -17,7 +17,7 @@ from codeCheckerDBAccess_v6.ttypes import LinesInFilesRequested
 from codeCheckerDBAccess_v6.ttypes import ReportFilter
 
 
-class TestRunFilter(unittest.TestCase):
+class TestGetLinesInFile(unittest.TestCase):
 
     _ccClient = None
 
