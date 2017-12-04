@@ -12,6 +12,7 @@ import socket
 from thrift.transport import THttpClient
 from thrift.protocol import TJSONProtocol
 from thrift.protocol.TProtocol import TProtocolException
+from thrift.Thrift import TApplicationException
 
 import shared
 from Authentication_v6 import codeCheckerAuthentication
@@ -69,6 +70,10 @@ class ThriftAuthHelper():
                     print(str(reqfailure))
 
                 sys.exit(1)
+            except TApplicationException as ex:
+                print("Internal server error on {0}:{1}"
+                      .format(self.__host, self.__port))
+                print(ex.message)
             except TProtocolException as ex:
                 print("Connection failed to {0}:{1}"
                       .format(self.__host, self.__port))
