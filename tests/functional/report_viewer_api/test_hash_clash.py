@@ -102,11 +102,11 @@ class HashClash(unittest.TestCase):
         # The PList file contains six bugs:
         # 1. A normal bug
         # 2. Same as the first one (no new report generated)
-        # 3. Same as the first one except for line numbers (no new report
+        # 3. Same as the first one except for line numbers (new report
         #    generated)
         # 4. Same as the first one except for column numbers (new report
         #    generated)
-        # 5. Same as the first one except for the file name (no new report
+        # 5. Same as the first one except for the file name (new report
         #    generated)
         # 6. Same as the first one except for the checker message (new report
         #    generated)
@@ -128,12 +128,12 @@ class HashClash(unittest.TestCase):
         for report in reports:
             by_file[report.fileId] += 1
 
-        self.assertEqual(by_file[fileid1], 3)
+        self.assertEqual(by_file[fileid1], 5)
         self.assertEqual(by_file[fileid2], 1)
 
         by_checker_message = defaultdict(int)
         for report in reports:
             by_checker_message[report.checkerMsg] += 1
 
-        self.assertEqual(by_checker_message['checker message'], 3)
+        self.assertEqual(by_checker_message['checker message'], 5)
         self.assertEqual(by_checker_message['checker message 2'], 1)

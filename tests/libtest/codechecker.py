@@ -169,7 +169,6 @@ def check(codechecker_cfg, test_project_name, test_project_path):
     check_cmd = ['CodeChecker', 'check',
                  '-o', output_dir,
                  '-b', "'" + build_cmd + "'",
-                 '--analyzers', 'clangsa',
                  '--quiet',
                  '--verbose', 'debug']
 

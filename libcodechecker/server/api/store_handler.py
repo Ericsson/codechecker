@@ -15,6 +15,7 @@ import sqlalchemy
 import shared
 from codeCheckerDBAccess_v6 import ttypes
 
+from libcodechecker import generic_package_context
 from libcodechecker.logger import LoggerFactory
 # TODO: This is a cross-subpackage import.
 from libcodechecker.server.database.run_db_model import *
@@ -248,7 +249,7 @@ def addCheckerRun(session, storage_session, command, name, tag, username,
             str(ex))
 
 
-def finishCheckerRun(storage_session, run_id, run_history_time):
+def finishCheckerRun(storage_session, run_id):
     """
     """
     try:
@@ -262,7 +263,7 @@ def finishCheckerRun(storage_session, run_id, run_history_time):
 
         run.mark_finished()
 
-        storage_session.end_run_session(run_id, run_history_time)
+        storage_session.end_run_session(run_id)
 
         return True
 
@@ -290,81 +291,35 @@ def setRunDuration(storage_session, run_id, duration):
 
 
 def addReport(storage_session,
-              all_reports,
-              report_path_and_events,
               run_id,
               file_id,
               main_section,
               bugpath,
               events,
-              checker_id,
-              severity,
+              detection_status,
               detection_time):
     """
     """
     try:
         session = storage_session.get_transaction(run_id)
 
-        bug_hash = main_section['issue_hash_content_of_line_in_context']
-        msg = main_section['description']
-        checker_cat = main_section['category']
-        bug_type = main_section['type']
-        line_num = main_section['location']['line']
-        column = main_section['location']['col']
+        checker_name = main_section['check_name']
+        context = generic_package_context.get_context()
+        severity_name = context.severity_map.get(checker_name,
+                                                 'UNSPECIFIED')
+        severity = ttypes.Severity._NAMES_TO_VALUES[severity_name]
 
-        checker_id = checker_id or 'NOT FOUND'
-
-        # Check for duplicates by bug hash.
-        LOG.debug("checking duplicates")
-        for report in all_reports:
-            LOG.debug("there is a possible duplicate")
-            # TODO: file_id and path equality check won't be necessary
-            # when path hash is added.
-            if report.checker_id == checker_id and \
-                    is_same_event_path(report.id, events, session):
-
-                new_status = None
-
-                if report.detection_status == 'new' and not \
-                        storage_session.is_touched(run_id, report.id) or \
-                        report.detection_status == 'unresolved' or \
-                        report.detection_status == 'reopened':
-                    new_status = 'unresolved'
-
-                    report.file_id = file_id
-                    report.line = line_num
-                    report.column = column
-
-                    report_path_and_events[report.id] = (bugpath, events)
-                elif report.detection_status == 'resolved':
-                    new_status = 'reopened'
-
-                    report.file_id = file_id
-                    report.line = line_num
-                    report.column = column
-                    report.fixed_at = None
-
-                    report_path_and_events[report.id] = (bugpath, events)
-
-                if new_status:
-                    report.detection_status = new_status
-
-                storage_session.touch_report(run_id, report.id)
-
-                return report.id
-
-        LOG.debug("no duplicate storing report")
         report = Report(run_id,
-                        bug_hash,
+                        main_section['issue_hash_content_of_line_in_context'],
                         file_id,
-                        msg,
-                        checker_id,
-                        checker_cat,
-                        bug_type,
-                        line_num,
-                        column,
+                        main_section['description'],
+                        checker_name or 'NOT FOUND',
+                        main_section['category'],
+                        main_section['type'],
+                        main_section['location']['line'],
+                        main_section['location']['col'],
                         severity,
-                        "new",
+                        detection_status,
                         detection_time)
 
         session.add(report)
@@ -374,9 +329,6 @@ def addReport(storage_session,
         store_bug_path(session, bugpath, report.id)
         LOG.debug("storing events")
         store_bug_events(session, events, report.id)
-
-        storage_session.touch_report(run_id, report.id)
-        all_reports.append(report)
 
         return report.id
 
@@ -434,7 +386,7 @@ def addFileContent(session, filepath, content, content_hash, encoding):
                 fc = FileContent(content_hash, compressed_content)
                 session.add(fc)
                 session.commit()
-            except sqlalchemy.exc.IntegrityError as ex:
+            except sqlalchemy.exc.IntegrityError:
                 # Other transaction moght have added the same content in
                 # the meantime.
                 session.rollback()

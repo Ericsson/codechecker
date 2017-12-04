@@ -25,15 +25,14 @@ import sqlalchemy
 from sqlalchemy import func
 
 import shared
+import store_handler
 from codeCheckerDBAccess_v6 import constants, ttypes
 from codeCheckerDBAccess_v6.ttypes import *
 
-from libcodechecker import generic_package_context
 from libcodechecker import suppress_handler
 from libcodechecker import util
 # TODO: Cross-subpackage import here.
 from libcodechecker.analyze import plist_parser
-from libcodechecker.analyze import store_handler
 from libcodechecker.logger import LoggerFactory
 from libcodechecker.profiler import timeit
 from libcodechecker.server import db_cleanup
@@ -360,18 +359,9 @@ class StorageSession:
                 'transaction': transaction,
                 'timer': time.time()}
 
-        def end_run_session(self, run_id, run_history_time):
+        def end_run_session(self, run_id):
             this_session = self.__sessions[run_id]
             transaction = this_session['transaction']
-
-            # Set resolved reports
-
-            transaction.query(Report) \
-                .filter(Report.run_id == run_id,
-                        Report.id.notin_(this_session['touched_reports'])) \
-                .update({Report.detection_status: 'resolved',
-                         Report.fixed_at: run_history_time},
-                        synchronize_session='fetch')
 
             transaction.commit()
             transaction.close()
@@ -1974,6 +1964,8 @@ class ThriftRequestHandler(object):
             for report in all_reports:
                 hash_map_reports[report.bug_id].append(report)
 
+            new_bug_hashes = set()
+
             # Processing PList files.
             _, _, report_files = next(os.walk(report_dir), ([], [], []))
             for f in report_files:
@@ -1993,18 +1985,9 @@ class ThriftRequestHandler(object):
                 for file_name in files:
                     file_ids[file_name] = file_path_to_id[file_name]
 
-                report_path_and_events = {}
-
                 # Store report.
                 for report in reports:
                     LOG.debug("Storing check results to the database.")
-
-                    checker_name = report.main['check_name']
-                    context = generic_package_context.get_context()
-                    severity_name = context.severity_map.get(checker_name,
-                                                             'UNSPECIFIED')
-                    severity = \
-                        Severity._NAMES_TO_VALUES[severity_name]
 
                     bug_paths, bug_events = \
                         store_handler.collect_paths_events(report, file_ids,
@@ -2013,18 +1996,26 @@ class ThriftRequestHandler(object):
                     LOG.debug("Storing report")
                     bug_id = report.main[
                         'issue_hash_content_of_line_in_context']
+                    if bug_id in hash_map_reports:
+                        old_report = hash_map_reports[bug_id][0]
+                        old_status = old_report.detection_status
+                        detection_status = 'reopened' \
+                            if old_status == 'resolved' else 'unresolved'
+                    else:
+                        detection_status = 'new'
+
                     report_id = store_handler.addReport(
                         self.__storage_session,
-                        hash_map_reports[bug_id],
-                        report_path_and_events,
                         run_id,
                         file_ids[files[report.main['location']['file']]],
                         report.main,
                         bug_paths,
                         bug_events,
-                        checker_name,
-                        severity,
-                        run_history_time)
+                        detection_status,
+                        run_history_time if detection_status == 'new' else
+                        old_report.detected_at)
+
+                    new_bug_hashes.add(bug_id)
 
                     last_report_event = report.bug_path[-1]
                     file_name = files[last_report_event['location']['file']]
@@ -2047,10 +2038,19 @@ class ThriftRequestHandler(object):
 
                     LOG.debug("Storing done for report " + str(report_id))
 
-                if len(report_path_and_events):
-                    store_handler.changePathAndEvents(self.__storage_session,
-                                                      run_id,
-                                                      report_path_and_events)
+            reports_to_delete = set()
+            for bug_hash, reports in hash_map_reports.items():
+                if bug_hash in new_bug_hashes:
+                    reports_to_delete.update(map(lambda x: x.id, reports))
+                else:
+                    for report in reports:
+                        report.detection_status = 'resolved'
+                        report.fixed_at = run_history_time
+
+            if len(reports_to_delete) != 0:
+                session.query(Report) \
+                    .filter(Report.id.in_(reports_to_delete)) \
+                    .delete(synchronize_session=False)
 
             if len(check_durations) > 0:
                 store_handler.setRunDuration(self.__storage_session,
@@ -2058,7 +2058,6 @@ class ThriftRequestHandler(object):
                                              # Round the duration to seconds.
                                              int(sum(check_durations)))
 
-            store_handler.finishCheckerRun(self.__storage_session, run_id,
-                                           run_history_time)
+            store_handler.finishCheckerRun(self.__storage_session, run_id)
 
             return run_id
