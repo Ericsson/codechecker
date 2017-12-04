@@ -117,6 +117,10 @@ class ThriftClientHelper(object):
         pass
 
     @ThriftClientCall
+    def getLinesInSourceFileContents(self, lines_in_files_requested, encoding):
+        pass
+
+    @ThriftClientCall
     def getDiffResultsHash(self, run_ids, report_hashes, diff_type):
         pass
 

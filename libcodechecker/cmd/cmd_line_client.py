@@ -420,8 +420,23 @@ def handle_diff_results(args):
 
         header = ['File', 'Checker', 'Severity', 'Msg', 'Source']
         rows = []
+
+        source_lines = defaultdict(set)
         for report in reports:
-            if type(report) is Report:
+            if not isinstance(report, Report):
+                source_lines[report.fileId].add(report.line)
+
+        lines_in_files_requested = []
+        for key in source_lines:
+            lines_in_files_requested.append(
+                ttypes.LinesInFilesRequested(fileId=key,
+                                             lines=source_lines[key]))
+
+        source_line_contents = client.getLinesInSourceFileContents(
+            lines_in_files_requested, ttypes.Encoding.BASE64)
+
+        for report in reports:
+            if isinstance(report, Report):
                 bug_line = report.main['location']['line']
                 bug_col = report.main['location']['col']
                 sev = 'unknown'
@@ -438,8 +453,8 @@ def handle_diff_results(args):
                 sev = ttypes.Severity._VALUES_TO_NAMES[report.severity]
                 checked_file = report.checkedFile + ':' + str(bug_line) +\
                     ":" + str(bug_col)
-                source_line =\
-                    get_line_from_remote_file(client, report.fileId, bug_line)
+                source_line = base64.b64decode(
+                    source_line_contents[report.fileId][bug_line])
                 check_name = report.checkerId
                 check_msg = report.checkerMsg
             rows.append(

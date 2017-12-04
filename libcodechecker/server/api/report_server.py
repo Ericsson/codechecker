@@ -1344,6 +1344,35 @@ class ThriftRequestHandler(object):
         finally:
             session.close()
 
+    @timeit
+    def getLinesInSourceFileContents(self, lines_in_files_requested, encoding):
+        self.__require_access()
+        try:
+            session = self.__Session()
+
+            res = defaultdict(lambda: defaultdict(str))
+            for lines_in_file in lines_in_files_requested:
+                sourcefile = session.query(File).get(lines_in_file.fileId)
+                cont = session.query(FileContent).get(sourcefile.content_hash)
+                lines = zlib.decompress(cont.content).split('\n')
+                for line in lines_in_file.lines:
+                    content = '' if len(lines) < line else lines[line - 1]
+                    if not encoding or encoding == Encoding.DEFAULT:
+                        content = codecs.decode(content, 'utf-8', 'replace')
+                    elif encoding == Encoding.BASE64:
+                        content = base64.b64encode(content)
+                    res[lines_in_file.fileId][line] = content
+
+            return res
+        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
+            msg = str(alchemy_ex)
+            LOG.error(msg)
+            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
+                                              msg)
+
+        finally:
+            session.close()
+
     def _cmp_helper(self, session, run_ids, cmp_data):
         """
         Get the report hashes for all of the runs.
