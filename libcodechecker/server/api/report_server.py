@@ -128,7 +128,7 @@ def process_report_filter_v2(report_filter, count_filter=None):
 
         OR = []
         if detection_status is not None and len(detection_status) == 1 and \
-           shared.ttypes.DetectionStatus.RESOLVED in detection_status:
+           ttypes.DetectionStatus.RESOLVED in detection_status:
             OR.append(Report.fixed_at >= date)
         else:
             OR.append(Report.detected_at >= date)
@@ -139,7 +139,7 @@ def process_report_filter_v2(report_filter, count_filter=None):
 
         OR = []
         if detection_status is not None and len(detection_status) == 1 and \
-           shared.ttypes.DetectionStatus.RESOLVED in detection_status:
+           ttypes.DetectionStatus.RESOLVED in detection_status:
             OR.append(Report.fixed_at < date)
         else:
             OR.append(Report.detected_at < date)
@@ -518,8 +518,8 @@ class ThriftRequestHandler(object):
 
             # Count the reports subquery.
             stmt = session.query(Report.run_id,
-                                 func.count(literal_column('*')).label(
-                                     'report_count')) \
+                                 func.count(Report.bug_id.distinct())
+                                 .label('report_count')) \
                 .group_by(Report.run_id) \
                 .subquery()
 
@@ -559,8 +559,7 @@ class ThriftRequestHandler(object):
 
             status_q = session.query(Report.run_id,
                                      Report.detection_status,
-                                     func.count(literal_column('*'))
-                                         .label('status_count')) \
+                                     func.count(Report.bug_id.distinct())) \
                 .group_by(Report.run_id, Report.detection_status)
 
             status_sum = defaultdict(defaultdict)

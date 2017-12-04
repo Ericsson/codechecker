@@ -10,10 +10,11 @@ import unittest
 
 from libtest import env
 
+from codeCheckerDBAccess_v6.ttypes import ReportFilter
 from codeCheckerDBAccess_v6.ttypes import RunFilter
 
 
-class TestRunFilter(unittest.TestCase):
+class TestRunData(unittest.TestCase):
 
     _ccClient = None
 
@@ -86,3 +87,17 @@ class TestRunFilter(unittest.TestCase):
         test_runs = self.__get_runs('non_existing_run_name')
         self.assertEqual(len(test_runs), 0,
                          "There should be no run for this test.")
+
+    def test_number_of_unique_reports(self):
+        """
+        Tests that resultCount field value in runData is equal with the
+        number of unique reports in the run.
+        """
+        test_runs = self.__get_runs()
+
+        unique_filter = ReportFilter(isUnique=True)
+        for run in test_runs:
+            run_count = self._cc_client.getRunResultCount([run.runId],
+                                                          unique_filter,
+                                                          None)
+            self.assertEqual(run.resultCount, run_count)
