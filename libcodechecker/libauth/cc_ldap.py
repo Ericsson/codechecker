@@ -303,7 +303,8 @@ def auth_user(ldap_config, username=None, credentials=None):
             LOG.error('Configured username: ' + service_user)
             return False
 
-    # Bind with the user's DN to check group membership.
+    # Bind with the user's DN to check the password given by the user.
+    # If bind is successful the user has given the right password.
     with LDAPConnection(ldap_config, user_dn, credentials) as connection:
         if not connection:
             LOG.info("User: " + username + " cannot be authenticated.")
@@ -312,6 +313,9 @@ def auth_user(ldap_config, username=None, credentials=None):
 
 
 def get_groups(ldap_config, username, credentials):
+    """
+    Get the LDAP groups for a given user.
+    """
 
     account_base = ldap_config.get('accountBase')
     if account_base is None:
