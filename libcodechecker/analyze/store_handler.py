@@ -492,6 +492,8 @@ def addFileRecord(session, filepath, content_hash):
             file_record = session.query(File) \
                 .filter(File.content_hash == content_hash,
                         File.filepath == filepath).one_or_none()
-        return file_record.id
+
+        return file_record.id if file_record else None
+
     finally:
         session.close()
