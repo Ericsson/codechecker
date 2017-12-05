@@ -100,9 +100,9 @@ class CustomFormatter(logging.Formatter):
     def formatTime(self, record, datefmt=None):
         if LoggerFactory.log_level == logging.DEBUG or \
                 LoggerFactory.log_level == logging.DEBUG_ANALYZER:
-            return time.strftime('%H:%M:%S')
+            return time.strftime('%Y-%m-%d %H:%M:%S')
         else:
-            return time.strftime('%H:%M')
+            return time.strftime('%Y-%m-%d %H:%M')
 
     def format(self, record):
 
