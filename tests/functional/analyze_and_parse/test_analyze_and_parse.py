@@ -105,7 +105,7 @@ class AnalyzeParseTestCase(unittest.TestCase):
                              "[] - Skipping input file"]
             for line in output:
                 # replace timestamps
-                line = re.sub(r'\[\d{2}:\d{2}\]', '[]', line)
+                line = re.sub(r'\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}\]', '[]', line)
                 if not any([line.startswith(prefix) for prefix
                             in skip_prefixes]):
                     post_processed_output.append(line)
