@@ -8,10 +8,10 @@ Suppress handling.
 """
 
 import abc
-import linecache
 import os
 import re
 
+from libcodechecker import util
 from libcodechecker.logger import LoggerFactory
 
 LOG = LoggerFactory.get_new_logger('SUPPRESS HANDLER')
@@ -148,7 +148,7 @@ class SourceSuppressHandler(object):
             collected_lines = []
 
             while not marker_found and comment_line:
-                source_line = linecache.getline(source_file, previous_line_num)
+                source_line = util.get_line(source_file, previous_line_num)
                 if self.__check_if_comment(source_line):
                     # It is a comment.
                     if self.suppress_marker in source_line:
