@@ -110,13 +110,10 @@ def parse_plist(path):
             report = Report(main_section, bug_path_items)
             reports.append(report)
 
-    except ExpatError as err:
+    except ExpatError, TypeError, AttributeError as err:
         LOG.error('Failed to process plist file: ' + path +
                   ' wrong file format?')
         LOG.error(err)
-    except AttributeError as ex:
-        LOG.error('Failed to get important report data from plist.')
-        LOG.error(ex)
     except IndexError as iex:
         LOG.error('Indexing error during processing plist file ' +
                   path)
@@ -215,7 +212,7 @@ def remove_report_from_plist(plist_content, skip_handler):
     new_data = {}
     try:
         report_data = plistlib.readPlistFromString(plist_content)
-    except ExpatError as ex:
+    except ExpatError, TypeError, AttributeError as ex:
         LOG.error("Failed to parse plist content, "
                   "keeping the original version")
         LOG.error(plist_content)
