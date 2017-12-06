@@ -2019,10 +2019,10 @@ class ThriftRequestHandler(object):
                     store_handler.collect_paths_events(report, file_ids, files)
 
                 LOG.debug("Storing report")
+                bug_id = report.main['issue_hash_content_of_line_in_context']
                 report_id = store_handler.addReport(
                     self.__storage_session,
-                    hash_map_reports[
-                        report.main['issue_hash_content_of_line_in_context']],
+                    hash_map_reports[bug_id],
                     report_path_and_events,
                     run_id,
                     file_ids[files[report.main['location']['file']]],
@@ -2034,10 +2034,40 @@ class ThriftRequestHandler(object):
                     run_history_time)
 
                 last_report_event = report.bug_path[-1]
+                file_name = files[last_report_event['location']['file']]
+                source_file_name = os.path.realpath(
+                    os.path.join(source_root, file_name.strip("/")))
+
+                if not os.path.isfile(source_file_name):
+                    # If the file was not found in the source root directory
+                    # we get the content from the database and create a
+                    # temporary file for code suppression.
+                    curr_report = filter(lambda x: x.id == report_id,
+                                         hash_map_reports[bug_id])[0]
+                    source_data = self.getSourceFileData(curr_report.file_id,
+                                                         True, None)
+
+                    # TODO: Improve the suppress handler to be able to work on
+                    # file content and no extra directory and file
+                    # creation/cleanup is needed.
+                    dir_name = os.path.dirname(source_file_name)
+                    if not os.path.exists(dir_name):
+                        os.makedirs(dir_name)
+
+                    try:
+                        with open(source_file_name, 'w') as new_file:
+                            # Encoding is needed here because parsing Xerces
+                            # throws me the following error message:
+                            # 'ascii' codec can't encode character u'\ufffd'.
+                            content = source_data.fileContent.encode('utf-8')
+                            new_file.write(content)
+                    except Exception as ex:
+                        print(ex)
+
                 sp_handler = suppress_handler.SourceSuppressHandler(
-                    files[last_report_event['location']['file']],
+                    source_file_name,
                     last_report_event['location']['line'],
-                    report.main['issue_hash_content_of_line_in_context'],
+                    bug_id,
                     report.main['check_name'])
 
                 supp = sp_handler.get_suppressed()
