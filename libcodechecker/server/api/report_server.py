@@ -247,32 +247,25 @@ def review_status_enum(status):
         return ttypes.ReviewStatus.INTENTIONAL
 
 
-def unzip(b64zip):
+def unzip(b64zip, output_dir):
     """
     This function unzips the base64 encoded zip file. This zip is extracted
     to a temporary directory and the ZIP is then deleted. The function returns
     the name of the extracted directory.
     """
+    with tempfile.NamedTemporaryFile(suffix='.zip') as zip_file:
+        LOG.debug("Unzipping mass storage ZIP '{0}' to '{1}'..."
+                  .format(zip_file.name, output_dir))
 
-    _, zip_file = tempfile.mkstemp('.zip')
-    temp_dir = tempfile.mkdtemp()
-    LOG.debug("Unzipping mass storage ZIP '{0}' to '{1}'..."
-              .format(zip_file, temp_dir))
-
-    with open(zip_file, 'wb') as zip_f:
-        zip_f.write(zlib.decompress(base64.b64decode(b64zip)))
-
-    with zipfile.ZipFile(zip_file, 'r', allowZip64=True) as zipf:
-        try:
-            zipf.extractall(temp_dir)
-        except:
-            LOG.error("Failed to extract received ZIP.")
-            import traceback
-            traceback.print_exc()
-            raise
-
-    os.remove(zip_file)
-    return temp_dir
+        zip_file.write(zlib.decompress(base64.b64decode(b64zip)))
+        with zipfile.ZipFile(zip_file, 'r', allowZip64=True) as zipf:
+            try:
+                zipf.extractall(output_dir)
+            except:
+                LOG.error("Failed to extract received ZIP.")
+                import traceback
+                traceback.print_exc()
+                raise
 
 
 def create_review_data(review_status):
@@ -1893,183 +1886,182 @@ class ThriftRequestHandler(object):
         finally:
             session.close()
 
-        # Unzip sent data.
-        zip_dir = unzip(b64zip)
+        with util.TemporaryDirectory() as zip_dir:
+            # Unzip sent data.
+            unzip(b64zip, zip_dir)
 
-        LOG.debug("Using unzipped folder '{0}'".format(zip_dir))
+            LOG.debug("Using unzipped folder '{0}'".format(zip_dir))
 
-        source_root = os.path.join(zip_dir, 'root')
-        report_dir = os.path.join(zip_dir, 'reports')
-        metadata_file = os.path.join(report_dir, 'metadata.json')
-        content_hash_file = os.path.join(zip_dir, 'content_hashes.json')
+            source_root = os.path.join(zip_dir, 'root')
+            report_dir = os.path.join(zip_dir, 'reports')
+            metadata_file = os.path.join(report_dir, 'metadata.json')
+            content_hash_file = os.path.join(zip_dir, 'content_hashes.json')
 
-        with open(content_hash_file) as chash_file:
-            filename2hash = json.load(chash_file)
+            with open(content_hash_file) as chash_file:
+                filename2hash = json.load(chash_file)
 
-        check_commands, check_durations = \
-            store_handler.metadata_info(metadata_file)
+            check_commands, check_durations = \
+                store_handler.metadata_info(metadata_file)
 
-        if len(check_commands) == 0:
-            command = ' '.join(sys.argv)
-        elif len(check_commands) == 1:
-            command = ' '.join(check_commands[0])
-        else:
-            command = "multiple analyze calls: " + \
-                      '; '.join([' '.join(com) for com in check_commands])
+            if len(check_commands) == 0:
+                command = ' '.join(sys.argv)
+            elif len(check_commands) == 1:
+                command = ' '.join(check_commands[0])
+            else:
+                command = "multiple analyze calls: " + \
+                          '; '.join([' '.join(com) for com in check_commands])
 
-        # Storing file contents from plist.
-        file_path_to_id = {}
+            # Storing file contents from plist.
+            file_path_to_id = {}
 
-        for file_name, file_hash in filename2hash.items():
-            source_file_name = os.path.join(source_root,
-                                            file_name.strip("/"))
-            source_file_name = os.path.realpath(source_file_name)
-            LOG.debug("Storing source file: " + source_file_name)
+            for file_name, file_hash in filename2hash.items():
+                source_file_name = os.path.join(source_root,
+                                                file_name.strip("/"))
+                source_file_name = os.path.realpath(source_file_name)
+                LOG.debug("Storing source file: " + source_file_name)
 
-            if not os.path.isfile(source_file_name):
-                # The file was not in the ZIP file, because we already have the
-                # content. Let's check if we already have a file record in the
-                # database or we need to add one.
+                if not os.path.isfile(source_file_name):
+                    # The file was not in the ZIP file, because we already have the
+                    # content. Let's check if we already have a file record in the
+                    # database or we need to add one.
 
-                LOG.debug(file_name + ' not found or already stored.')
-                fid = store_handler.addFileRecord(self.__Session(),
-                                                  file_name,
-                                                  file_hash)
-                if not fid:
-                    LOG.error("File ID for " + source_file_name +
-                              " is not found in the DB with content hash " +
-                              file_hash +
-                              ". Missing from ZIP?")
-                file_path_to_id[file_name] = fid
-                LOG.debug(str(fid) + " fileid found")
-                continue
+                    LOG.debug(file_name + ' not found or already stored.')
+                    fid = store_handler.addFileRecord(self.__Session(),
+                                                      file_name,
+                                                      file_hash)
+                    if not fid:
+                        LOG.error("File ID for " + source_file_name +
+                                  " is not found in the DB with content hash " +
+                                  file_hash +
+                                  ". Missing from ZIP?")
+                    file_path_to_id[file_name] = fid
+                    LOG.debug(str(fid) + " fileid found")
+                    continue
 
-            with codecs.open(source_file_name, 'r',
-                             'UTF-8', 'replace') as source_file:
-                file_content = source_file.read()
-                file_content = codecs.encode(file_content, 'utf-8')
+                with codecs.open(source_file_name, 'r',
+                                 'UTF-8', 'replace') as source_file:
+                    file_content = source_file.read()
+                    file_content = codecs.encode(file_content, 'utf-8')
 
-                file_path_to_id[file_name] = \
-                    store_handler.addFileContent(self.__Session(),
-                                                 file_name,
-                                                 file_content,
-                                                 file_hash,
-                                                 None)
+                    file_path_to_id[file_name] = \
+                        store_handler.addFileContent(self.__Session(),
+                                                     file_name,
+                                                     file_content,
+                                                     file_hash,
+                                                     None)
 
-        user = self.__auth_session.user \
-            if self.__auth_session else 'Anonymous'
+            user = self.__auth_session.user \
+                if self.__auth_session else 'Anonymous'
 
-        run_history_time = datetime.now()
-        run_id = store_handler.addCheckerRun(self.__Session(),
-                                             self.__storage_session,
-                                             command,
-                                             name,
-                                             tag,
-                                             user,
-                                             run_history_time,
-                                             version,
-                                             force)
+            run_history_time = datetime.now()
+            run_id = store_handler.addCheckerRun(self.__Session(),
+                                                 self.__storage_session,
+                                                 command,
+                                                 name,
+                                                 tag,
+                                                 user,
+                                                 run_history_time,
+                                                 version,
+                                                 force)
 
-        session = self.__storage_session.get_transaction(run_id)
+            session = self.__storage_session.get_transaction(run_id)
 
-        all_reports = session.query(Report) \
-            .filter(Report.run_id == run_id) \
-            .all()
+            all_reports = session.query(Report) \
+                .filter(Report.run_id == run_id) \
+                .all()
 
-        hash_map_reports = defaultdict(list)
-        for report in all_reports:
-            hash_map_reports[report.bug_id].append(report)
+            hash_map_reports = defaultdict(list)
+            for report in all_reports:
+                hash_map_reports[report.bug_id].append(report)
 
-        # Processing PList files.
-        _, _, report_files = next(os.walk(report_dir), ([], [], []))
-        for f in report_files:
-            if not f.endswith('.plist'):
-                continue
+            # Processing PList files.
+            _, _, report_files = next(os.walk(report_dir), ([], [], []))
+            for f in report_files:
+                if not f.endswith('.plist'):
+                    continue
 
-            LOG.debug("Parsing input file '" + f + "'")
+                LOG.debug("Parsing input file '" + f + "'")
 
-            try:
-                # FIXME: We are parsing the plists for the
-                # second time here. Use re-use the
-                # previous results.
-                files, reports = plist_parser.parse_plist(
-                    os.path.join(report_dir, f))
-            except Exception as ex:
-                LOG.error('Parsing the plist failed: ' + str(ex))
-                continue
+                try:
+                    # FIXME: We are parsing the plists for the
+                    # second time here. Use re-use the
+                    # previous results.
+                    files, reports = plist_parser.parse_plist(
+                        os.path.join(report_dir, f))
+                except Exception as ex:
+                    LOG.error('Parsing the plist failed: ' + str(ex))
+                    continue
 
-            file_ids = {}
-            for file_name in files:
-                file_ids[file_name] = file_path_to_id[file_name]
+                file_ids = {}
+                for file_name in files:
+                    file_ids[file_name] = file_path_to_id[file_name]
 
-            report_path_and_events = {}
+                report_path_and_events = {}
 
-            # Store report.
-            for report in reports:
-                LOG.debug("Storing check results to the database.")
+                # Store report.
+                for report in reports:
+                    LOG.debug("Storing check results to the database.")
 
-                checker_name = report.main['check_name']
-                context = generic_package_context.get_context()
-                severity_name = context.severity_map.get(checker_name,
-                                                         'UNSPECIFIED')
-                severity = \
-                    Severity._NAMES_TO_VALUES[severity_name]
+                    checker_name = report.main['check_name']
+                    context = generic_package_context.get_context()
+                    severity_name = context.severity_map.get(checker_name,
+                                                             'UNSPECIFIED')
+                    severity = \
+                        Severity._NAMES_TO_VALUES[severity_name]
 
-                bug_paths, bug_events = \
-                    store_handler.collect_paths_events(report, file_ids, files)
+                    bug_paths, bug_events = \
+                        store_handler.collect_paths_events(report, file_ids,
+                                                           files)
 
-                LOG.debug("Storing report")
-                bug_id = report.main['issue_hash_content_of_line_in_context']
-                report_id = store_handler.addReport(
-                    self.__storage_session,
-                    hash_map_reports[bug_id],
-                    report_path_and_events,
-                    run_id,
-                    file_ids[files[report.main['location']['file']]],
-                    report.main,
-                    bug_paths,
-                    bug_events,
-                    checker_name,
-                    severity,
-                    run_history_time)
+                    LOG.debug("Storing report")
+                    bug_id = report.main[
+                        'issue_hash_content_of_line_in_context']
+                    report_id = store_handler.addReport(
+                        self.__storage_session,
+                        hash_map_reports[bug_id],
+                        report_path_and_events,
+                        run_id,
+                        file_ids[files[report.main['location']['file']]],
+                        report.main,
+                        bug_paths,
+                        bug_events,
+                        checker_name,
+                        severity,
+                        run_history_time)
 
-                last_report_event = report.bug_path[-1]
-                file_name = files[last_report_event['location']['file']]
-                source_file_name = os.path.realpath(
-                    os.path.join(source_root, file_name.strip("/")))
+                    last_report_event = report.bug_path[-1]
+                    file_name = files[last_report_event['location']['file']]
+                    source_file_name = os.path.realpath(
+                        os.path.join(source_root, file_name.strip("/")))
 
-                if os.path.isfile(source_file_name):
-                    sp_handler = suppress_handler.SourceSuppressHandler(
-                        source_file_name,
-                        last_report_event['location']['line'],
-                        bug_id,
-                        report.main['check_name'])
+                    if os.path.isfile(source_file_name):
+                        sp_handler = suppress_handler.SourceSuppressHandler(
+                            source_file_name,
+                            last_report_event['location']['line'],
+                            bug_id,
+                            report.main['check_name'])
 
-                    supp = sp_handler.get_suppressed()
-                    if supp:
-                        _, _, comment = supp
-                        status = ttypes.ReviewStatus.FALSE_POSITIVE
-                        self._setReviewStatus(report_id, status, comment,
-                                              session)
+                        supp = sp_handler.get_suppressed()
+                        if supp:
+                            _, _, comment = supp
+                            status = ttypes.ReviewStatus.FALSE_POSITIVE
+                            self._setReviewStatus(report_id, status, comment,
+                                                  session)
 
-                LOG.debug("Storing done for report " + str(report_id))
+                    LOG.debug("Storing done for report " + str(report_id))
 
-            if len(report_path_and_events):
-                store_handler.changePathAndEvents(self.__storage_session,
-                                                  run_id,
-                                                  report_path_and_events)
+                if len(report_path_and_events):
+                    store_handler.changePathAndEvents(self.__storage_session,
+                                                      run_id,
+                                                      report_path_and_events)
 
-        if len(check_durations) > 0:
-            store_handler.setRunDuration(self.__storage_session,
-                                         run_id,
-                                         # Round the duration to seconds.
-                                         int(sum(check_durations)))
+            if len(check_durations) > 0:
+                store_handler.setRunDuration(self.__storage_session,
+                                             run_id,
+                                             # Round the duration to seconds.
+                                             int(sum(check_durations)))
 
-        store_handler.finishCheckerRun(self.__storage_session, run_id,
-                                       run_history_time)
+            store_handler.finishCheckerRun(self.__storage_session, run_id,
+                                           run_history_time)
 
-        # TODO: This directory should be removed even if an exception is thrown
-        # above.
-        shutil.rmtree(zip_dir)
-
-        return run_id
+            return run_id
