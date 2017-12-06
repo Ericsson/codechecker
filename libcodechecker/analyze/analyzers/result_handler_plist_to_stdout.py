@@ -6,12 +6,12 @@
 
 from abc import ABCMeta
 from collections import defaultdict
-import linecache
 import math
 import os
 import sys
 
 from libcodechecker import suppress_handler
+from libcodechecker import util
 from libcodechecker.analyze import plist_parser
 from libcodechecker.analyze.analyzers.result_handler_base import ResultHandler
 from libcodechecker.logger import LoggerFactory
@@ -51,7 +51,7 @@ class PlistToStdout(ResultHandler):
     @staticmethod
     def __format_location(event, source_file):
         loc = event['location']
-        line = linecache.getline(source_file, loc['line'])
+        line = util.get_line(source_file, loc['line'])
         if line == '':
             return line
 
