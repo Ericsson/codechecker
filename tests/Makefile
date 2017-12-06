@@ -20,7 +20,7 @@ CLEAR_WORKSPACE_CMD = rm -rf $(BUILD_DIR)/workspace
 # Nose test runner configuration options.
 NOSECFG = --config .noserc
 
-test: pep8 test_unit test_functional
+test: pep8 test_unit test_functional test_build_logger
 
 test_novenv: pep8 test_unit_novenv test_functional_novenv
 
@@ -123,3 +123,6 @@ test_matrix_psql_pg8000: pep8 test_unit test_psql_pg8000
 clean_travis:
 	# Clean CodeChecker config files stored in the users home directory.
 	rm -rf ~/.codechecker*
+
+test_build_logger:
+	cd vendor/build-logger; make -f Makefile.manual test
