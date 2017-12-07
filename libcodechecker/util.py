@@ -45,15 +45,14 @@ def is_localhost(address):
 
     try:
         valid_values.append(socket.gethostbyname('localhost'))
-    except Exception:
-        # Failed to get ip address for localhost.
-        pass
+    except socket.herror:
+        LOG.debug("Failed to get IP address for localhost.")
 
     try:
         valid_values.append(socket.gethostbyname(socket.gethostname()))
-    except Exception:
-        # Failed to get ip address for host_name.
-        pass
+    except socket.herror:
+        LOG.debug("Failed to get IP address for hostname '{0}'"
+                  .format(socket.gethostname()))
 
     return address in valid_values
 

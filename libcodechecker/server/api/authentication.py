@@ -89,7 +89,8 @@ class ThriftAuthHandler(object):
 
     # ============= Authorization, permission management =============
 
-    def __unpack_extra_params(self, extra_params, session=None):
+    @staticmethod
+    def __unpack_extra_params(extra_params, session=None):
         """
         Helper function to unpack the extra_params JSON string to a dict.
 
@@ -106,8 +107,8 @@ class ThriftAuthHandler(object):
 
         return params
 
-    def __create_permission_args(self, perm_enum, extra_params_string,
-                                 session):
+    @staticmethod
+    def __create_permission_args(perm_enum, extra_params_string, session):
         """
         Helper function to transform the permission-specific values from the
         API into the appropriate Python constructs needed by the permission
@@ -115,7 +116,8 @@ class ThriftAuthHandler(object):
         """
 
         perm = permissions.permission_from_api_enum(perm_enum)
-        params = self.__unpack_extra_params(extra_params_string, session)
+        params = ThriftAuthHandler.__unpack_extra_params(extra_params_string,
+                                                         session)
         return perm, params
 
     @timeit
@@ -147,7 +149,8 @@ class ThriftAuthHandler(object):
 
             # The database connection must always be passed to the permission
             # handler.
-            params = self.__unpack_extra_params(extra_params, session)
+            params = ThriftAuthHandler.__unpack_extra_params(extra_params,
+                                                             session)
 
             perms = []
             for perm in permissions.get_permissions(scope):
@@ -187,7 +190,7 @@ class ThriftAuthHandler(object):
 
         try:
             session = self.__config_db()
-            perm, params = self.__create_permission_args(
+            perm, params = ThriftAuthHandler.__create_permission_args(
                 permission, extra_params, session)
 
             if not require_manager(perm, params, self.__auth_session):
@@ -220,7 +223,7 @@ class ThriftAuthHandler(object):
 
         try:
             session = self.__config_db()
-            perm, params = self.__create_permission_args(
+            perm, params = ThriftAuthHandler.__create_permission_args(
                 permission, extra_params, session)
 
             if not require_manager(perm, params, self.__auth_session):
@@ -251,7 +254,7 @@ class ThriftAuthHandler(object):
 
         try:
             session = self.__config_db()
-            perm, params = self.__create_permission_args(
+            perm, params = ThriftAuthHandler.__create_permission_args(
                 permission, extra_params, session)
 
             if not require_manager(perm, params, self.__auth_session):
@@ -285,7 +288,7 @@ class ThriftAuthHandler(object):
 
         try:
             session = self.__config_db()
-            perm, params = self.__create_permission_args(
+            perm, params = ThriftAuthHandler.__create_permission_args(
                 permission, extra_params, session)
 
             return require_permission(perm, params,

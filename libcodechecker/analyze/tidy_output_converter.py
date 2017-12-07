@@ -163,7 +163,8 @@ class OutputParser(object):
         except StopIteration:
             return message, ''
 
-    def _parse_code(self, message, titer, line):
+    @staticmethod
+    def _parse_code(message, titer, line):
         # Eat code line.
         if OutputParser.note_line_re.match(line) or \
                 OutputParser.message_line_re.match(line):
@@ -178,7 +179,8 @@ class OutputParser(object):
             return line
         return titer.next()
 
-    def _parse_fixits(self, message, titer, line):
+    @staticmethod
+    def _parse_fixits(message, titer, line):
         """Parses fixit messages."""
 
         while OutputParser.message_line_re.match(line) is None and \

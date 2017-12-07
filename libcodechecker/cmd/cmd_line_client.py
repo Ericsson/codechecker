@@ -33,9 +33,9 @@ LOG = LoggerFactory.get_new_logger('CMD')
 
 
 class CmdLineOutputEncoder(json.JSONEncoder):
-    def default(self, obj):
+    def default(self, o):
         d = {}
-        d.update(obj.__dict__)
+        d.update(o.__dict__)
         return d
 
 
@@ -237,13 +237,6 @@ def handle_diff_results(args):
                     return line
                 i += 1
         return ""
-
-    def get_line_from_remote_file(client, fid, lineno):
-        # Thrift Python client cannot decode JSONs that contain non '\u00??'
-        # characters, so we instead ask for a Base64-encoded version.
-        source = client.getSourceFileData(fid, True, ttypes.Encoding.BASE64)
-        lines = base64.b64decode(source.fileContent).split('\n')
-        return "" if len(lines) < lineno else lines[lineno - 1]
 
     def get_diff_base_results(client, baseids, base_hashes, suppressed_hashes):
         base_results = []
@@ -529,8 +522,8 @@ def handle_list_result_types(args):
 
         return dict((res.name, res.count) for res in checkers)
 
-    def checker_count(dict, key):
-        return dict[key] if key in dict else 0
+    def checker_count(checker_dict, key):
+        return checker_dict.get(key, 0)
 
     client = setup_client(args.product_url)
 

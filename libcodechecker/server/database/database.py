@@ -19,7 +19,6 @@ import sqlalchemy
 from sqlalchemy import event
 from sqlalchemy.engine.url import URL, make_url
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.sql.elements import quoted_name
 
 from libcodechecker import host_check
 from libcodechecker import pgpass

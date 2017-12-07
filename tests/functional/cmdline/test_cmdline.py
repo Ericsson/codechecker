@@ -12,8 +12,6 @@ import os
 import subprocess
 import unittest
 
-from nose.tools import assert_equals
-
 from libtest import env
 
 
@@ -61,31 +59,31 @@ class TestCmdline(unittest.TestCase):
         """ Main cmdline help. """
 
         main_help = [env.codechecker_cmd(), '--help']
-        assert_equals(0, run_cmd(main_help))
+        self.assertEqual(0, run_cmd(main_help))
 
     def test_version_help(self):
         """ Test the 'version' subcommand. """
 
         version_help = [env.codechecker_cmd(), 'version', '--help']
-        assert_equals(0, run_cmd(version_help))
+        self.assertEqual(0, run_cmd(version_help))
 
     def test_check_help(self):
         """ Get help for check subcmd. """
 
         check_help = [env.codechecker_cmd(), 'check', '--help']
-        assert_equals(0, run_cmd(check_help))
+        self.assertEqual(0, run_cmd(check_help))
 
     def test_server_help(self):
         """ Get help for server subcmd. """
 
         srv_help = [env.codechecker_cmd(), 'server', '--help']
-        assert_equals(0, run_cmd(srv_help))
+        self.assertEqual(0, run_cmd(srv_help))
 
     def test_checkers(self):
         """ Listing available checkers. """
 
         checkers_cmd = [env.codechecker_cmd(), 'checkers']
-        assert_equals(0, run_cmd(checkers_cmd))
+        self.assertEqual(0, run_cmd(checkers_cmd))
 
     def test_sum(self):
         """ Test cmd sum command. """
@@ -93,5 +91,6 @@ class TestCmdline(unittest.TestCase):
         sum_res = [self._codechecker_cmd, 'cmd', 'sum',
                    '-a', '--url', str(self.server_url)]
 
-        assert_equals(0, run_cmd(sum_res,
-                      env=self._test_config['codechecker_cfg']['check_env']))
+        self.assertEqual(
+            0, run_cmd(sum_res,
+                       env=self._test_config['codechecker_cfg']['check_env']))

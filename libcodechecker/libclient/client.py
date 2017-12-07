@@ -161,7 +161,7 @@ def perform_auth_for_handler(protocol, manager, host, port,
 
     try:
         auth_response = auth_client.getAuthParameters()
-    except TApplicationException as tex:
+    except TApplicationException:
         auth_response = AuthTypes.HandshakeInformation()
         auth_response.requiresAuthentication = False
 

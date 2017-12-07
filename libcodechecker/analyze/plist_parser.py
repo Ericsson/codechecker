@@ -244,14 +244,8 @@ def remove_report_from_plist(plist_content, skip_handler):
             if skip_handler.should_skip(f):
                 file_ids_to_remove.append(i)
 
-        fids, kept_diagnostics = fids_in_path(report_data, file_ids_to_remove)
+        _, kept_diagnostics = fids_in_path(report_data, file_ids_to_remove)
         report_data['diagnostics'] = kept_diagnostics
-
-        remove_file = True
-        for f in file_ids_to_remove:
-            if f in fids:
-                remove_file = False
-                break
 
         new_data = report_data
         res = plistlib.writePlistToString(new_data)

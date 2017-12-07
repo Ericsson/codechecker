@@ -278,8 +278,8 @@ def handle_external_repository(dep, clean, env, verbose):
                     fontcss = os.path.join(tmp, fontcss)
                     LOG.debug("Retrieving font for " + font + "(" +
                               os.path.basename(fontcss) + ")")
-                    with open(fontcss, 'r') as input:
-                        css = input.read()
+                    with open(fontcss, 'r') as css_file:
+                        css = css_file.read()
 
                     for local_name in re.findall(r'local\(([\S ]+?)\)', css):
                         if local_name not in localdefs:

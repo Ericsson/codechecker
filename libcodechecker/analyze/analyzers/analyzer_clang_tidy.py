@@ -61,7 +61,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
 
         return self.checkers
 
-    def construct_analyzer_cmd(self, res_handler):
+    def construct_analyzer_cmd(self, result_handler):
         """
         """
         try:

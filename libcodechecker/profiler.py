@@ -32,7 +32,7 @@ class Timer(object):
     def __enter__(self):
         self.before = datetime.datetime.now()
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(self, timer_type, value, traceback):
         after = datetime.datetime.now()
         time_diff = after - self.before
         LOG.debug(self.block_name + " " + str(time_diff.total_seconds())+'s')

@@ -369,6 +369,7 @@ def addFileContent(session, filepath, content, content_hash, encoding):
     wait until the other transactions finish. In the meantime the run adding
     transaction times out.
     """
+
     if encoding == ttypes.Encoding.BASE64:
         content = base64.b64decode(content)
 

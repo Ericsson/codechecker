@@ -432,10 +432,10 @@ def main(args):
 
         if source != target:
             shutil.copyfile(source, target)
-    except shutil.Error as serr:
-        LOG.debug("Compile command json file is the same")
-    except Exception as ex:
-        LOG.debug("Copying compile command json file failed.")
+    except shutil.Error:
+        LOG.debug("Compilation database JSON file is the same.")
+    except Exception:
+        LOG.debug("Copying compilation database JSON file failed.")
 
     LOG.info("Analysis finished.")
     LOG.info("To view results in the terminal use the "

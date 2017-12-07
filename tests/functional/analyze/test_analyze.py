@@ -44,11 +44,6 @@ class TestAnalyze(unittest.TestCase):
         if os.path.isdir(self.report_dir):
             shutil.rmtree(self.report_dir)
 
-    def __get_plist_files(self, reportdir):
-        return [os.path.join(reportdir, filename)
-                for filename in os.listdir(reportdir)
-                if filename.endswith('.plist')]
-
     def __analyze_incremental(self, content_, build_json, reports_dir,
                               plist_count, failed_count):
         """

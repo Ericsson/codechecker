@@ -103,7 +103,7 @@ def unregister(pid, folder=None):
     __rewriteInstanceFile([], [socket.gethostname() + ":" + str(pid)], folder)
 
 
-def list(folder=None):
+def get_instances(folder=None):
     """Returns the list of running servers for the current user."""
 
     # This method does NOT write the descriptor file.
