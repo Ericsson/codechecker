@@ -34,6 +34,7 @@ Table of Contents
     * [Master superuser and authentication forcing](#auth-force)
     * [Enfore secure socket (SSL)](#ssl)
     * [Managing running servers](#managing-running-servers)
+    * [Manage server database upgrades](#manage-server-database-upgrade)
   * [`cmd`](#cmd)
     * [`runs` (List runs)](#cmd-runs)
     * [`results` (List analysis results' summary)](#cmd-results)
@@ -1121,6 +1122,33 @@ CodeChecker server -w ~/my_codechecker_workspace -p 8002 --stop
 ~~~~~~~~~~~~~~~~~~~~~
 
 `--stop-all` will stop every running server that is printed by `--list`.
+
+### <a name="manage-server-database-upgrade"></a> Manage server database upgrades
+
+Use these arguments to manage the database versions handled by the server.
+For a more detailed description about the schema upgrade check out the
+[schema migration guide](docs/db_schema_guide.md).
+
+~~~~~~~~~~~~~~~~~~~~~
+Database management arguments.:
+  WARNING these commands needs to be called with the same workspace and
+  configuration arguments as the server so the configuration database will
+  be found which is required for the schema migration. Migration can be done
+  without a running server but pay attention to use the same arguments which
+  will be used to start the server. NOTE: Before migration it is advised to
+  create a full a backup of the product databases.
+
+  --status STATUS       Name of the product to get the database status for.
+                        Use 'all' to list the database statuses for all of the
+                        products.
+  --upgrade-schema PRODUCT_TO_UPGRADE
+                        Name of the product to upgrade to the latest database
+                        schema available in the package. Use 'all' to upgrade
+                        all of the products.NOTE: Before migration it is
+                        advised to create a full backup of the product
+                        databases.
+~~~~~~~~~~~~~~~~~~~~~
+
 
 ## <a name="cmd"></a> 8. `cmd` mode
 

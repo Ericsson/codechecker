@@ -98,6 +98,10 @@ class ThriftProductHelper(object):
     def getCurrentProduct(self):
         pass
 
+    @ThriftClientCall
+    def getProductConfiguration(self, product_id):
+        pass
+
     # -----------------------------------------------------------------------
     @ThriftClientCall
     def addProduct(self, product):

@@ -311,7 +311,7 @@ def main(args):
         sys.exit(1)
 
     # Setup connection to the remote server.
-    client = libclient.setup_client(args.product_url)
+    client = libclient.setup_client(args.product_url, product_client=False)
 
     LOG.debug("Initializing client connecting to {0}:{1}/{2} done."
               .format(host, port, product_name))

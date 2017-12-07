@@ -99,6 +99,104 @@ file contains an empty `upgrade` and a `downgrade` function.
 
 The empty `upgrade` and `downgrade` should be written by hand.
 
+
+# Database upgrade for running servers
+
+It is possible that a new release introduces database changes and database
+schema migration is required.
+
+There are two database types which might need schema migration.
+One of them is the configuration database (storing product configurations)
+and the other is the run database (storing analysis reports).
+
+If there is some schema mismatch and migration is needed you will get a
+warning at server start.
+
+## IMPORTANT before schema upgrade
+
+If there is some schema change it is recommended to create a full backup
+of your configuration and run databases before running the migration.
+If there is some error during the migration you can still restore the
+previous version and there will be no data loss.
+
+### Migration at server start
+
+Schema migration can be done at server start. The database for the config
+and product databases will be automatically checked. If there are databases wich can
+be upgraded you will be asked if you want to upgrade the schema to the latest
+version.
+
+NOTE: Before running the migration you should make a full backup of your
+config and product databases!
+
+The config database location will be printed first at the server start.
+Migration of the config database is done independently from the product databases.
+The product database locations can be viewed with the `CodeChecker server
+--db-status all` command.
+
+## Checking if migration will be required.
+
+Running the `CodeChecker server --db-status all` command with the new CodeChecker
+release will show you if database upgrade is needed for the new release.
+
+NOTE: Use the same arguments which were used to start the server to check
+the status. It is required to find the used configuration database.
+
+ ```sh
+$ CodeChecker server --db-status all
+[15:01] - Checking configuration database ...
+[15:01] - Database is OK.
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Product endpoint | Database status                                | Database location              | Schema version in the database | Schema version in the package
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Default          | Database is up to date.                        | ~/.codechecker/Default.sqlite  | 82ca43f05c10 (up to date)      | 82ca43f05c10
+Default2         | Database schema mismatch! Possible to upgrade. | ~/.codechecker/Default2.sqlite | 82ca43f05c10                   | f1f7600168dc
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+```
+
+## Upgrade configuration database
+
+The configuration database migration can be done at server start.
+A prompt will ask you if you want to proceed with the schema upgrade.
+
+NOTE: After the configuration database was upgraded only the newer CodeChecker
+releases will be able to read up the configuration. The older versions will
+fail to start.
+
+## Upgrade product databases
+
+### Check if migration is possible
+
+With the `CodeChecker server --db-status all` the database statuses for all of the
+product databases can be checked.
+
+### Product migration
+
+Schema upgrade can be done for each product independently or in a row for all
+of the products with the `CodeChecker server --db-upgrade-schema PRODUCT_NAME` command.
+
+```sh
+$ CodeChecker server --db-upgrade-schema Default
+[15:01] - Checking configuration database ...
+[15:01] - Database is OK.
+[15:01] - Preparing schema upgrade for Default
+[WARNING] [15:01] - Please note after migration only newer CodeChecker versions can be used to start the server
+[WARNING] [15:01] - It is advised to make a full backup of your run databases.
+[15:01] - ========================
+[15:01] - Upgrading: Default
+[15:01] - Database schema mismatch: migration is available.
+Do you want to upgrade to new schema? Y(es)/n(o) y
+Upgrading schema ...
+Done.
+Database is OK.
+[15:01] - ========================
+```
+
+Schema upgrade can be done for multiple products in a row if the
+`CodeChecker server --db-upgrade-schema all` command is used.
+A prompt will ask for user input for each product, no schema
+modification is done without asking the user.
+
 # Further reading
 
 You should also read the [Alembic tutorial](http://alembic.readthedocs.org/en/latest/tutorial.html#create-a-migration-script)

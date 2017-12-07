@@ -144,11 +144,11 @@ class ThriftProductHandler(object):
                              "product available.")
                     continue
 
-                # Clients are expected to use this method to query if
-                # the product exists and usable. Usability sometimes requires
-                # "updating" the "is connected" status of the database.
-                if not server_product.connected:
-                    server_product.connect()
+                LOG.debug("Checking database connection for product: " +
+                          prod.endpoint)
+
+                server_product.connect()
+                db_status = server_product.db_status
 
                 name = base64.b64encode(prod.display_name.encode('utf-8'))
                 descr = base64.b64encode(prod.description.encode('utf-8')) \
@@ -166,9 +166,10 @@ class ThriftProductHandler(object):
                     endpoint=prod.endpoint,
                     displayedName_b64=name,
                     description_b64=descr,
-                    connected=server_product.connected,
+                    connected=False,  # DEPRECATED use databaseStatus instead.
                     accessible=product_access,
-                    administrating=product_admin))
+                    administrating=product_admin,
+                    databaseStatus=db_status))
 
             return result
 
@@ -224,14 +225,18 @@ class ThriftProductHandler(object):
             product_admin = permissions.require_permission(
                 permissions.PRODUCT_ADMIN, args, self.__auth_session)
 
+            # Update the database status.
+            server_product.connect()
+
             return ttypes.Product(
                 id=prod.id,
                 endpoint=prod.endpoint,
                 displayedName_b64=name,
                 description_b64=descr,
-                connected=server_product.connected,
+                connected=False,  # DEPRECATED use databaseStatus instead.
                 accessible=product_access,
-                administrating=product_admin)
+                administrating=product_admin,
+                databaseStatus=server_product.db_status)
 
         except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
             msg = str(alchemy_ex)
@@ -384,7 +389,7 @@ class ThriftProductHandler(object):
             LOG.debug("Attempting database connection to new product...")
 
             # Connect and create the database schema.
-            self.__server.add_product(orm_prod)
+            self.__server.add_product(orm_prod, init_db=True)
             connection_wrapper = self.__server.get_product(product.endpoint)
             if connection_wrapper.last_connection_failure:
                 msg = "The configured connection for '/{0}' failed: {1}" \

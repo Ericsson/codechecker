@@ -228,9 +228,10 @@ def setup_product_client(protocol, host, port, product_name=None):
     return product_client
 
 
-def setup_client(product_url):
+def setup_client(product_url, product_client=False):
     """
-    Setup the Thrift client and check API version and authentication needs.
+    Setup the Thrift Product or Service client and
+    check API version and authentication needs.
     """
 
     try:
@@ -243,9 +244,8 @@ def setup_client(product_url):
     _, session_token = setup_auth_client(protocol, host, port)
 
     # Check if the product exists.
-    product_client = setup_product_client(protocol, host, port,
-                                          product_name=None)
-    product = product_client.getProducts(product_name, None)
+    client = setup_product_client(protocol, host, port, product_name=None)
+    product = client.getProducts(product_name, None)
     product_error_str = None
     if not (product and len(product) == 1):
         product_error_str = "It does not exist."
@@ -254,16 +254,34 @@ def setup_client(product_url):
             # Only a "substring" match was found. We explicitly reject it
             # on the command-line!
             product_error_str = "It does not exist."
-        elif not product[0].connected:
-            product_error_str = "The database has issues, or the connection " \
-                                "is badly configured."
+
         elif not product[0].accessible:
             product_error_str = "You do not have access."
+
+        elif product[0].databaseStatus != shared.ttypes.DBStatus.OK:
+            product_error_str = "The database has issues, or the connection " \
+                                "is badly configured."
 
     if product_error_str:
         LOG.error("The given product '{0}' can not be used! {1}"
                   .format(product_name, product_error_str))
         sys.exit(1)
+
+    if product_client:
+        LOG.debug("returning product client")
+        return client
+    else:
+        LOG.debug("returning service client")
+        # Service client was requested, setup
+        # and return it.
+        return setup_service_client(protocol,
+                                    host,
+                                    port,
+                                    product_name,
+                                    session_token)
+
+
+def setup_service_client(protocol, host, port, product_name, session_token):
 
     client = thrift_helper.ThriftClientHelper(
         protocol, host, port,

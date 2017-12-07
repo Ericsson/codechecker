@@ -1921,9 +1921,9 @@ class ThriftRequestHandler(object):
                 LOG.debug("Storing source file: " + source_file_name)
 
                 if not os.path.isfile(source_file_name):
-                    # The file was not in the ZIP file, because we already have the
-                    # content. Let's check if we already have a file record in the
-                    # database or we need to add one.
+                    # The file was not in the ZIP file, because we already
+                    # have the content. Let's check if we already have a file
+                    # record in the database or we need to add one.
 
                     LOG.debug(file_name + ' not found or already stored.')
                     fid = store_handler.addFileRecord(self.__Session(),
@@ -1931,8 +1931,8 @@ class ThriftRequestHandler(object):
                                                       file_hash)
                     if not fid:
                         LOG.error("File ID for " + source_file_name +
-                                  " is not found in the DB with content hash " +
-                                  file_hash +
+                                  " is not found in the DB with " +
+                                  "content hash " + file_hash +
                                   ". Missing from ZIP?")
                     file_path_to_id[file_name] = fid
                     LOG.debug(str(fid) + " fileid found")

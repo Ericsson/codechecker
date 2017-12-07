@@ -167,10 +167,9 @@ function (declare, domClass, domConstruct, ItemFileWriteStore, topic,
 
     onRowClick : function (evt) {
       var item = this.getItem(evt.rowIndex);
-
       switch (evt.cell.field) {
         case 'name':
-          if (item.connected[0] && item.accessible[0]) {
+          if (item.databaseStatus[0] === DBStatus.OK && item.accessible[0]) {
             window.open('/' + item.endpoint[0], '_self');
           }
           break;
@@ -213,20 +212,33 @@ function (declare, domClass, domConstruct, ItemFileWriteStore, topic,
         + name[0].toUpperCase()
         + '</span></div>';
 
-      if (!item.connected || !item.accessible) {
+      var dbStatus = item.databaseStatus;
+
+      dbStatusMsg = util.dbStatusFromCodeToString(dbStatus);
+
+      if (dbStatus !== DBStatus.OK || !item.accessible) {
         name = '<span class="product-error">'
           + name + '</span>';
 
-        if (!item.connected) {
-          statusIcon = '<span class="customIcon product-error"></span>';
-          description = '<span class="product-description-error database">'
-            + 'The database connection for this product could not be made!'
-            + '</span><br />' + description;
-        } else if (!item.accessible) {
+        if (!item.accessible) {
           statusIcon = '<span class="customIcon product-noaccess"></span>';
           description = '<span class="product-description-error access">'
             + 'You do not have access to this product!'
             + '</span><br />' + description;
+        } else if (dbStatus !== DBStatus.OK) {
+
+          var upgradeMsg = '';
+          statusIcon = '<span class="customIcon product-error"></span>';
+
+          if(dbStatus === DBStatus.SCHEMA_MISMATCH_OK ||
+             dbStatus === DBStatus.SCHEMA_MISSING){
+            upgradeMsg = ' (use <kbd>server</kbd> command for schema '
+                          + 'upgrade/initialization)';
+          }
+
+          description = '<span class="product-description-error database">'
+          + dbStatusMsg + upgradeMsg + '</span><br />' + description ;
+
         }
       } else {
         name = '<span class="link">' + name + '</span>';
@@ -239,7 +251,7 @@ function (declare, domClass, domConstruct, ItemFileWriteStore, topic,
         endpoint : item.endpoint,
         name : name,
         description : description,
-        connected : item.connected,
+        databaseStatus : item.databaseStatus,
         accessible : item.accessible,
         administrating : item.administrating,
         editIcon : '',

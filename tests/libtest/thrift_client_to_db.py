@@ -13,6 +13,7 @@ import socket
 from thrift.protocol import TJSONProtocol
 from thrift.transport import THttpClient
 from thrift.transport import TTransport
+from thrift.Thrift import TApplicationException
 
 import shared
 
@@ -55,6 +56,10 @@ class ThriftAPIHelper(object):
                 print(str(reqfailure))
 
             raise
+
+        except TApplicationException as err:
+            print(err.message)
+            return None
 
         except socket.error as serr:
             err_cause = os.strerror(serr.errno)

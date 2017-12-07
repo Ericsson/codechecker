@@ -11,6 +11,9 @@ from abc import ABCMeta, abstractmethod
 import os
 
 from alembic import command, config
+from alembic import script
+from alembic import migration
+
 from alembic.util import CommandError
 import sqlalchemy
 from sqlalchemy import event
@@ -23,7 +26,68 @@ from libcodechecker import pgpass
 from libcodechecker import util
 from libcodechecker.logger import LoggerFactory
 
+from shared.ttypes import DBStatus
+
 LOG = LoggerFactory.get_new_logger('DATABASE HANDLER')
+
+
+class DBContext():
+    """
+    Simple helper class to setup and sql engine, a database session
+    and a connection.
+
+    NOTE: The error property should be always checked inside the
+    with statement to verify that the engine/connection/session
+    setup was successful.
+    """
+
+    def __init__(self, sql_server):
+        self.sql_server = sql_server
+        self.db_engine = None
+        self.db_session = None
+        self.db_connection = None
+
+    def __enter__(self):
+        self.db_error = None
+        try:
+            self.db_engine = self.sql_server.create_engine()
+            self.db_session = sessionmaker(bind=self.engine)()
+            self.db_connection = self.db_session.connection()
+        except Exception as ex:
+            LOG.debug("Connection error")
+            LOG.debug(ex)
+            self.error = DBStatus.FAILED_TO_CONNECT
+
+        return self
+
+    @property
+    def error(self):
+        # Indicate that there is some problem with the
+        # database setup.
+        return self.db_error
+
+    @property
+    def engine(self):
+        # Get the configured engine.
+        return self.db_engine
+
+    @property
+    def connection(self):
+        # Get the configured connection.
+        return self.db_connection
+
+    @property
+    def session(self):
+        # Get the configured session.
+        return self.db_session
+
+    def __exit__(self, *args):
+        if self.db_session:
+            self.db_session.close()
+        if self.db_connection:
+            self.db_connection.close()
+        if self.db_engine:
+            self.db_engine.dispose()
 
 
 class SQLServer(object):
@@ -53,62 +117,186 @@ class SQLServer(object):
         self.__model_meta = model_meta
         self.migration_root = migration_root
 
-    def _create_or_update_schema(self, use_migration=True):
+    def _create_schema(self):
         """
-        Creates or updates the database schema. The database server has to be
-        started before this method is called.
-
-        If use_migration is True, this method runs an alembic upgrade to HEAD.
-
-        In the False case, there is no migration support and only SQLAlchemy
-        meta data is used for schema creation.
-
-        On error sys.exit(1) is called.
+        Creates the database schema if needed.
+        The database server has to be started before this method is called.
         """
 
         try:
-            engine = self.create_engine()
-
-            LOG.debug("Update/create database schema for {0}"
-                      .format(self.__model_meta['identifier']))
-            if use_migration:
-                LOG.debug("Creating new database session")
-                session = sessionmaker(bind=engine)()
-                connection = session.connection()
+            with DBContext(self) as db:
+                if db.error:
+                    return db.error
 
                 cfg = config.Config()
                 cfg.set_main_option("script_location", self.migration_root)
-                cfg.attributes["connection"] = connection
-                command.upgrade(cfg, "head")
+                cfg.attributes["connection"] = db.connection
 
-                session.commit()
-                session.close()
-            else:
-                LOG.debug("Creating full schema.")
-                self.__model_meta['orm_meta'].create_all(engine)
+                mcontext = migration.MigrationContext.configure(db.connection)
+                database_schema_revision = mcontext.get_current_revision()
+                LOG.debug('Schema revision in the database: ' +
+                          str(database_schema_revision))
 
-            engine.dispose()
-            LOG.debug("Update/create database schema: Done")
-            return True
+                if database_schema_revision:
+                    LOG.debug('Database schema was found.'
+                              ' No need to initialize new.')
+                else:
+                    LOG.debug('No schema was detected in the database.')
+                    LOG.debug('Initializing new ...')
+                    command.upgrade(cfg, "head")
+                    db.session.commit()
+                    LOG.debug('Done.')
+                    return True
+
+                return True
 
         except sqlalchemy.exc.SQLAlchemyError as alch_err:
             LOG.error(str(alch_err))
-            raise
+            return False
+
+        except Exception as ex:
+            LOG.error("Failed to create initial database schema")
+            LOG.error(ex)
+            return False
+
+    def get_schema_version(self):
+        """
+        Return the schema version from the database or a
+        database status error code.
+        """
+        try:
+            with DBContext(self) as db:
+                if db.error:
+                    return db.error
+
+                mcontext = migration.MigrationContext.configure(db.connection)
+                database_schema_revision = mcontext.get_current_revision()
+                LOG.debug("Schema revision in the database: " +
+                          str(database_schema_revision))
+
+                if database_schema_revision is None:
+                    LOG.debug("Database schema should have been created!")
+                    return DBStatus.SCHEMA_MISSING
+
+                return database_schema_revision
+
+        except sqlalchemy.exc.SQLAlchemyError as alch_err:
+            LOG.debug(str(alch_err))
+            return DBStatus.FAILED_TO_CONNECT
+
+    def check_schema(self):
+        """
+        Checks the database schema for schema mismatch.
+        The database server has to be started before this method is called.
+        """
+
+        try:
+            with DBContext(self) as db:
+                if db.error:
+                    return db.error
+
+                cfg = config.Config()
+                cfg.set_main_option("script_location", self.migration_root)
+                cfg.attributes["connection"] = db.connection
+
+                scriptt = script.ScriptDirectory.from_config(cfg)
+                mcontext = migration.MigrationContext.configure(
+                    db.connection)
+                database_schema_revision = mcontext.get_current_revision()
+                LOG.debug("Schema revision in the database: " +
+                          str(database_schema_revision))
+
+                if database_schema_revision is None:
+                    LOG.debug("Database schema should have been created!")
+                    return DBStatus.SCHEMA_MISSING
+
+                LOG.debug("Checking schema versions in the package.")
+                schema_config_head = scriptt.get_current_head()
+
+                if database_schema_revision != schema_config_head:
+                    LOG.debug("Database schema mismatch detected "
+                              "between the package and the database")
+                    LOG.debug("Checking if automatic upgrade is possible.")
+                    all_revs = [rev.revision for rev in
+                                scriptt.walk_revisions()]
+
+                    if database_schema_revision not in all_revs:
+                        LOG.debug("Automatic schema upgrade is not possible!")
+                        LOG.debug("Please re-check your database and"
+                                  "CodeChecker versions!")
+                        return DBStatus.SCHEMA_MISMATCH_NO
+
+                    # There is a schema mismatch.
+                    return DBStatus.SCHEMA_MISMATCH_OK
+                else:
+                    LOG.debug("Schema in the package and"
+                              " in the database is the same.")
+                    LOG.debug("No schema modification is needed.")
+                    return DBStatus.OK
+
+        except sqlalchemy.exc.SQLAlchemyError as alch_err:
+            LOG.debug(str(alch_err))
+            return DBStatus.FAILED_TO_CONNECT
         except CommandError as cerr:
-            LOG.error("Database schema and CodeChecker is incompatible. "
+            LOG.debug("Database schema and CodeChecker is incompatible. "
                       "Please update CodeChecker.")
             LOG.debug(str(cerr))
-            raise
+            return DBStatus.SCHEMA_MISMATCH
+
+    def upgrade(self):
+        """
+        Upgrade database db schema.
+
+        Checks the database schema for schema mismatch.
+        The database server has to be started before this method is called.
+
+        This method runs an alembic upgrade to HEAD.
+
+        """
+
+        # another safety check before we initialize or upgrade the schema
+        ret = self.check_schema()
+
+        migration_ok = [DBStatus.SCHEMA_MISMATCH_OK,
+                        DBStatus.SCHEMA_MISSING]
+        if ret not in migration_ok:
+            # schema migration is not possible
+            return ret
+
+        try:
+            with DBContext(self) as db:
+                if db.error:
+                    return db.error
+
+                LOG.debug("Update/create database schema for {0}"
+                          .format(self.__model_meta['identifier']))
+                LOG.debug("Creating new database session")
+
+                cfg = config.Config()
+                cfg.set_main_option("script_location", self.migration_root)
+                cfg.attributes["connection"] = db.connection
+                command.upgrade(cfg, "head")
+                db.session.commit()
+
+                LOG.debug("Upgrading database schema: Done")
+                return DBStatus.OK
+
+        except sqlalchemy.exc.SQLAlchemyError as alch_err:
+            LOG.error(str(alch_err))
+            return DBStatus.SCHEMA_UPGRADE_FAILED
+
+        except CommandError as cerr:
+            LOG.debug(str(cerr))
+            return DBStatus.SCHEMA_UPGRADE_FAILED
 
     @abstractmethod
-    def connect(self, db_version_info, init=False):
+    def connect(self, init=False):
         """
         Starts the database server and initializes the database server.
 
         On init == True, this it also initializes the database data and schema
         if needed.
 
-        On error sys.exit(1) should be called.
         """
         pass
 
@@ -119,6 +307,15 @@ class SQLServer(object):
 
         DO NOT LOG THE CONNECTION STRING BECAUSE IT MAY CONTAIN THE PASSWORD
         FOR THE DATABASE!
+        """
+        pass
+
+    @abstractmethod
+    def get_db_location(self):
+        """
+        Returns the database location.
+
+        DATABASE USERNAME AND PASSWORD SHOULD NOT BE RETURNED HERE!
         """
         pass
 
@@ -234,84 +431,6 @@ class SQLServer(object):
             return SQLiteDatabase(data_file, model_meta,
                                   migration_root, run_env=env)
 
-    def check_db_version(self, db_version_info, session=None):
-        """
-        Checks the database version and prints an error message on database
-        version mismatch.
-
-        - On mismatching or on missing version a sys.exit(1) is called.
-        - On missing DBVersion table, it returns False
-        - On compatible DB version, it returns True
-
-        Parameters:
-            db_version_info (db_version.DBVersionInfo): required database
-                version.
-            session: an open database session or None. If session is None, a
-                new session is created.
-        """
-
-        DBVersion = self.__model_meta['version_class']
-
-        try:
-            dispose_engine = False
-            if session is None:
-                engine = self.create_engine()
-                dispose_engine = True
-                session = sessionmaker(bind=engine)()
-            else:
-                engine = session.get_bind()
-
-            if not engine.has_table(quoted_name(DBVersion.__tablename__,
-                                                True)):
-                LOG.debug("Missing DBVersion table!")
-                return False
-
-            version = session.query(DBVersion).first()
-            if version is None:
-                # Version is not populated yet
-                raise ValueError("No version information found in "
-                                 "the database.")
-            elif not db_version_info.is_compatible(version.major,
-                                                   version.minor):
-                LOG.error("Version mismatch. Expected database version: " +
-                          str(db_version_info))
-                version_from_db = 'v' + str(version.major) + '.' + str(
-                    version.minor)
-                LOG.error("Version from the database is: " + version_from_db)
-                LOG.error("Please update your database.")
-                raise ValueError("Version mismatch in database!")
-
-            LOG.debug("Database version is compatible.")
-            return True
-        finally:
-            session.commit()
-            session.close()
-            if dispose_engine:
-                engine.dispose()
-
-    def _add_version(self, db_version_info, session=None):
-        """
-        Fills the DBVersion table.
-        """
-
-        engine = None
-        if session is None:
-            engine = self.create_engine()
-            session = sessionmaker(bind=engine)()
-
-        expected = db_version_info.get_expected_version()
-        LOG.debug("Adding DB version: " + str(expected))
-
-        DBVersion = self.__model_meta['version_class']
-        session.add(DBVersion(expected[0], expected[1]))
-        session.commit()
-        session.close()
-
-        if engine:
-            engine.dispose()
-
-        LOG.debug("Adding DB version done!")
-
 
 class PostgreSQLServer(SQLServer):
     """
@@ -362,7 +481,7 @@ class PostgreSQLServer(SQLServer):
                        database=database,
                        query=extra_args))
 
-    def connect(self, db_version_info, init=False):
+    def connect(self, init=False):
         """
         Connect to a PostgreSQL instance with given path, host and port.
         """
@@ -372,12 +491,21 @@ class PostgreSQLServer(SQLServer):
         LOG.debug("Checking if database is running at [{0}:{1}]"
                   .format(self.host, str(self.port)))
 
-        check_db = ['psql',
-                    '-h', self.host,
-                    '-p', str(self.port),
-                    '-U', self.user,
-                    '-d', self.database,
-                    '-c', 'SELECT version();']
+        if self.user:
+            # Try to connect to a specific database
+            # with a specific user.
+            check_db = ['psql',
+                        '-h', self.host,
+                        '-p', str(self.port),
+                        '-U', self.user,
+                        '-d', self.database,
+                        '-c', 'SELECT version();']
+        else:
+            # Try to connect with the default settings.
+            check_db = ['psql',
+                        '-h', self.host,
+                        '-p', str(self.port),
+                        '-c', 'SELECT version();']
 
         if not self.interactive:
             # Do not prompt for password in non-interactive mode.
@@ -385,7 +513,7 @@ class PostgreSQLServer(SQLServer):
 
         # If the user has a password pre-specified, use that for the
         # 'psql' call!
-        env = self.run_env if self.run_env else os.environ()
+        env = self.run_env if self.run_env else os.environ
         env = env.copy()
         if self.password:
             env['PGPASSWORD'] = self.password
@@ -393,23 +521,20 @@ class PostgreSQLServer(SQLServer):
         err, code = util.call_command(check_db, env)
 
         if code:
-            LOG.error("Database is not running, or cannot be connected to.")
-            LOG.error(err)
-            raise IOError(
-                "Database is not running, or cannot be connected to.")
+            LOG.debug(err)
+            return DBStatus.FAILED_TO_CONNECT
 
-        add_version = False
         if init:
-            add_version = not self.check_db_version(db_version_info)
-            self._create_or_update_schema(use_migration=True)
+            if not self._create_schema():
+                return DBStatus.SCHEMA_INIT_ERROR
 
-        if add_version:
-            self._add_version(db_version_info)
-
-        LOG.debug("Done. Connected to database.")
+        return self.check_schema()
 
     def get_connection_string(self):
         return self._get_connection_string(self.database)
+
+    def get_db_location(self):
+        return self.host + ":" + str(self.port) + "/" + self.database
 
 
 class SQLiteDatabase(SQLServer):
@@ -435,16 +560,16 @@ class SQLiteDatabase(SQLServer):
 
         event.listen(engine, 'connect', _set_sqlite_pragma)
 
-    def connect(self, db_version_info, init=False):
+    def connect(self, init=False):
         if init:
-            add_version = not self.check_db_version(db_version_info)
-            self._create_or_update_schema(use_migration=True)
-            if add_version:
-                self._add_version(db_version_info)
+            if not self._create_schema():
+                LOG.error("Failed to create schema")
+                return DBStatus.SCHEMA_INIT_ERROR
 
-        if not os.path.exists(self.dbpath):
-            LOG.error("Database file (%s) is missing!" % self.dbpath)
-            raise IOError("Database file (%s) is missing!" % self.dbpath)
+        return self.check_schema()
 
     def get_connection_string(self):
         return str(URL('sqlite+pysqlite', None, None, None, None, self.dbpath))
+
+    def get_db_location(self):
+        return self.dbpath

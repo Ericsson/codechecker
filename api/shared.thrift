@@ -35,3 +35,17 @@ enum Permission {
   PRODUCT_ACCESS   = 17,        // scope: PRODUCT
   PRODUCT_STORE    = 18         // scope: PRODUCT
 }
+
+/**
+* Status information about the database backend.
+*/
+enum DBStatus {
+  OK,                           // Everything is ok with the database.
+  MISSING,                      // The database is missing.
+  FAILED_TO_CONNECT,            // Failed to connect to the database.
+  SCHEMA_MISMATCH_OK,           // Schema mismatch between the server and the database.
+  SCHEMA_MISMATCH_NO,           // No automatic migration is available.
+  SCHEMA_MISSING,               // Schema is missing from the database.
+  SCHEMA_INIT_ERROR,            // Failed to create initial database schema.
+  SCHEMA_UPGRADE_FAILED         // Failed to upgrade schema.
+}
