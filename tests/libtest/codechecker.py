@@ -169,8 +169,7 @@ def check(codechecker_cfg, test_project_name, test_project_path):
     check_cmd = ['CodeChecker', 'check',
                  '-o', output_dir,
                  '-b', "'" + build_cmd + "'",
-                 '--quiet',
-                 '--verbose', 'debug']
+                 '--quiet']
 
     suppress_file = codechecker_cfg.get('suppress_file')
     if suppress_file:
@@ -199,8 +198,7 @@ def check(codechecker_cfg, test_project_name, test_project_path):
 
     store_cmd = ['CodeChecker', 'store', '-n', test_project_name,
                  output_dir,
-                 '--url', env.parts_to_url(codechecker_cfg),
-                 '--verbose', 'debug']
+                 '--url', env.parts_to_url(codechecker_cfg)]
 
     tag = codechecker_cfg.get('tag')
     if tag:
