@@ -30,6 +30,7 @@ COMPILE_OPTION_MAP = {
     '-idirafter': 1,
     '-imacros': 1,
     '-include': 1,
+    '--include': 1,
     '-iprefix': 1,
     '-isysroot': 1,
     '-isystem': 1,
