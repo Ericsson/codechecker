@@ -395,10 +395,12 @@ def main(args):
         os.makedirs(output_dir)
 
     logfile = None
+    is_command = False
     try:
         # --- Step 1.: Perform logging if build command was specified.
         if 'command' in args:
             logfile = tempfile.NamedTemporaryFile().name
+            is_command = True
 
             # Translate the argument list between check and log.
             log_args = argparse.Namespace(
@@ -476,5 +478,7 @@ def main(args):
     finally:
         if is_temp_output:
             shutil.rmtree(output_dir)
+        if is_command:
+            os.remove(logfile)
 
     LOG.debug("Check finished.")
