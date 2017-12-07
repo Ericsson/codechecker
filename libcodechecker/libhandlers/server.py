@@ -15,6 +15,12 @@ import os
 import socket
 import sys
 
+from alembic import config
+from alembic import script
+from sqlalchemy.orm import sessionmaker
+
+from shared.ttypes import DBStatus
+
 from libcodechecker import generic_package_context
 from libcodechecker import generic_package_suppress_handler
 from libcodechecker import host_check
@@ -27,8 +33,11 @@ from libcodechecker.logger import add_verbose_arguments
 from libcodechecker.server import server
 from libcodechecker.server import instance_manager
 from libcodechecker.server.database import database
+from libcodechecker.server.database import database_status
 from libcodechecker.server.database.config_db_model \
     import IDENTIFIER as CONFIG_META
+from libcodechecker.server.database.config_db_model \
+    import Product as ORMProduct
 from libcodechecker.server.database.run_db_model \
     import IDENTIFIER as RUN_META
 
@@ -247,6 +256,47 @@ def add_arguments_to_parser(parser):
                                 help="Stops all of your running CodeChecker "
                                      "server instances.")
 
+    database_mgmnt = parser.add_argument_group(
+            "Database management arguments.",
+            """WARNING these commands needs to be called with the same
+            workspace and configuration arguments as the server so the
+            configuration database will be found which is required for the
+            schema migration. Migration can be done without a running server
+            but pay attention to use the same arguments which will be used to
+            start the server.
+            NOTE:
+            Before migration it is advised to create a full a backup of
+            the product databases.
+            """)
+
+    database_mgmnt = database_mgmnt. \
+        add_mutually_exclusive_group(required=False)
+
+    database_mgmnt.add_argument('--db-status',
+                                type=str,
+                                dest="status",
+                                action='store',
+                                default=argparse.SUPPRESS,
+                                required=False,
+                                help="Name of the product to get "
+                                     "the database status for. "
+                                     "Use 'all' to list the database "
+                                     "statuses for all of the products.")
+
+    database_mgmnt.add_argument('--db-upgrade-schema',
+                                type=str,
+                                dest='product_to_upgrade',
+                                action='store',
+                                default=argparse.SUPPRESS,
+                                required=False,
+                                help="Name of the product to upgrade to the "
+                                     "latest database schema available in "
+                                     "the package. Use 'all' to upgrade all "
+                                     "of the products."
+                                     "NOTE: Before migration it is advised"
+                                     " to create a full backup of "
+                                     "the product databases.")
+
     add_verbose_arguments(parser)
 
     def __handle(args):
@@ -342,6 +392,193 @@ def add_arguments_to_parser(parser):
     parser.set_defaults(func=__handle)
 
 
+def print_prod_status(prod_status):
+    """
+    Print the database statuses for each of the products.
+    """
+
+    header = ['Product endpoint', 'Database status',
+              'Database location',
+              'Schema version in the database',
+              'Schema version in the package']
+    rows = []
+
+    for k, v in prod_status.items():
+        db_status, schema_ver, package_ver, db_location = v
+        db_status_msg = database_status.db_status_msg.get(db_status)
+        if schema_ver == package_ver:
+            schema_ver += " (up to date)"
+        rows.append([k, db_status_msg, db_location, schema_ver, package_ver])
+
+    prod_status = output_formatters.twodim_to_str('table',
+                                                  header,
+                                                  rows,
+                                                  sortby_column_number=0)
+    print(prod_status)
+
+
+def get_schema_version_from_package(migration_root):
+    """
+    Returns the latest schema version in the package.
+    """
+
+    cfg = config.Config()
+    cfg.set_main_option("script_location", migration_root)
+    pckg_schema_ver = script.ScriptDirectory.from_config(cfg)
+    return pckg_schema_ver.get_current_head()
+
+
+def check_product_db_status(cfg_sql_server, context):
+    """
+    Check the products for database statuses.
+
+    :returns: dictionary of product endpoints with database statuses
+    """
+
+    migration_root = context.run_migration_root
+
+    engine = cfg_sql_server.create_engine()
+    config_session = sessionmaker(bind=engine)
+    sess = config_session()
+
+    try:
+        products = sess.query(ORMProduct).all()
+    except Exception as ex:
+        LOG.debug(ex)
+        LOG.error("Failed to get product configurations from the database.")
+        LOG.error("Please check your command arguments.")
+        sys.exit(1)
+
+    package_schema = get_schema_version_from_package(migration_root)
+
+    db_errors = [DBStatus.FAILED_TO_CONNECT,
+                 DBStatus.MISSING,
+                 DBStatus.SCHEMA_INIT_ERROR,
+                 DBStatus.SCHEMA_MISSING]
+
+    prod_status = {}
+    for pd in products:
+        db = database.SQLServer.from_connection_string(pd.connection,
+                                                       RUN_META,
+                                                       migration_root,
+                                                       interactive=False)
+        db_location = db.get_db_location()
+        ret = db.connect()
+        s_ver = db.get_schema_version()
+        if s_ver in db_errors:
+            s_ver = None
+        prod_status[pd.endpoint] = (ret, s_ver, package_schema, db_location)
+
+    sess.commit()
+    sess.close()
+    engine.dispose()
+
+    return prod_status
+
+
+def __db_status_check(cfg_sql_server, context, product_name=None):
+    """
+    Check and print database statuses for the given product.
+    """
+    if not product_name:
+        return 0
+
+    LOG.debug("Checking database status for " + product_name +
+              " product.")
+
+    prod_statuses = check_product_db_status(cfg_sql_server, context)
+
+    if product_name != 'all':
+        avail = prod_statuses.get(product_name)
+        if not avail:
+            LOG.error("No product was found with this endpoint: " +
+                      str(product_name))
+            return 1
+
+        prod_statuses = {k: v for k, v in prod_statuses.items()
+                         if k == product_name}
+
+    print_prod_status(prod_statuses)
+    return 0
+
+
+def __db_migration(cfg_sql_server, context, product_to_upgrade='all'):
+    """
+    Handle database management.
+    Schema checking and migration.
+    """
+    LOG.info("Preparing schema upgrade for " + str(product_to_upgrade))
+    product_name = product_to_upgrade
+
+    prod_statuses = check_product_db_status(cfg_sql_server, context)
+    prod_to_upgrade = []
+
+    if product_name != 'all':
+        avail = prod_statuses.get(product_name)
+        if not avail:
+            LOG.error("No product was found with this endpoint: " +
+                      product_name)
+            return 1
+        prod_to_upgrade.append(product_name)
+    else:
+        prod_to_upgrade = list(prod_statuses.keys())
+
+    migration_root = context.run_migration_root
+
+    LOG.warning("Please note after migration only "
+                "newer CodeChecker versions can be used "
+                "to start the server")
+    LOG.warning("It is advised to make a full backup of your "
+                "run databases.")
+    for prod in prod_to_upgrade:
+        LOG.info("========================")
+        LOG.info("Checking: " + prod)
+        engine = cfg_sql_server.create_engine()
+        config_session = sessionmaker(bind=engine)
+        sess = config_session()
+
+        product = sess.query(ORMProduct).filter(
+                ORMProduct.endpoint == prod).first()
+        db = database.SQLServer.from_connection_string(product.connection,
+                                                       RUN_META,
+                                                       migration_root,
+                                                       interactive=False)
+
+        db_status = db.connect()
+
+        msg = database_status.db_status_msg.get(db_status,
+                                                'Unknown database status')
+
+        LOG.info(msg)
+        if db_status == DBStatus.SCHEMA_MISSING:
+            question = 'Do you want to initialize a new schema for ' \
+                        + product.endpoint + '? Y(es)/n(o) '
+            if util.get_user_input(question):
+                ret = db.connect(init=True)
+                msg = database_status.db_status_msg.get(
+                    ret, 'Unknown database status')
+            else:
+                LOG.info("No schema initialization was done.")
+
+        elif db_status == DBStatus.SCHEMA_MISMATCH_OK:
+            question = 'Do you want to upgrade to new schema for ' \
+                        + product.endpoint + '? Y(es)/n(o) '
+            if util.get_user_input(question):
+                LOG.info("Upgrading schema ...")
+                ret = db.upgrade()
+                LOG.info("Done.")
+                msg = database_status.db_status_msg.get(
+                    ret, 'Unknown database status')
+            else:
+                LOG.info("No schema migration was done.")
+
+        sess.commit()
+        sess.close()
+        engine.dispose()
+        LOG.info("========================")
+    return 0
+
+
 def __instance_management(args):
     """Handles the instance-manager commands --list/--stop/--stop-all."""
 
@@ -421,9 +658,6 @@ def main(args):
             not os.path.isdir(os.path.dirname(args.sqlite)):
         os.makedirs(os.path.dirname(args.sqlite))
 
-    suppress_handler = generic_package_suppress_handler. \
-        GenericSuppressHandler(None, False)
-
     if 'reset_root' in args:
         try:
             os.remove(os.path.join(args.config_directory, 'root.user'))
@@ -446,20 +680,82 @@ def main(args):
     check_env = analyzer_env.get_check_env(context.path_env_extra,
                                            context.ld_lib_path_extra)
 
+    cfg_sql_server = database.SQLServer.from_cmdline_args(
+        vars(args), CONFIG_META, context.config_migration_root,
+        interactive=True, env=check_env)
+
+    LOG.info("Checking configuration database ...")
+    db_status = cfg_sql_server.connect()
+    db_status_msg = database_status.db_status_msg.get(db_status)
+    LOG.info(db_status_msg)
+
+    if db_status == DBStatus.SCHEMA_MISSING:
+        LOG.debug("Config database schema is missing, initializing new.")
+        db_status = cfg_sql_server.connect(init=True)
+        if db_status != DBStatus.OK:
+            LOG.error("Config database initialization failed!")
+            LOG.error("Please check debug logs.")
+            sys.exit(1)
+
+    if db_status == DBStatus.SCHEMA_MISMATCH_NO:
+        LOG.debug("Configuration database schema mismatch.")
+        LOG.debug("No schema upgrade is possible.")
+        sys.exit(1)
+
+    if db_status == DBStatus.SCHEMA_MISMATCH_OK:
+        LOG.debug("Configuration database schema mismatch.")
+        LOG.debug("Schema upgrade is possible.")
+        LOG.warning("Please note after migration only "
+                    "newer CodeChecker versions can be used"
+                    "to start the server")
+        LOG.warning("It is advised to make a full backup of your "
+                    "configuration database")
+
+        LOG.warning(cfg_sql_server.get_db_location())
+
+        question = 'Do you want to upgrade to the new schema?' \
+                   ' Y(es)/n(o) '
+        if util.get_user_input(question):
+            print("Upgrading schema ...")
+            ret = cfg_sql_server.upgrade()
+            msg = database_status.db_status_msg.get(
+                ret, 'Unknown database status')
+            print(msg)
+            if ret != DBStatus.OK:
+                LOG.error("Schema migration failed")
+                syst.exit(ret)
+        else:
+            LOG.info("No schema migration was done.")
+            sys.exit(0)
+
+    if db_status == DBStatus.MISSING:
+        LOG.error("Missing configuration database.")
+        LOG.error("Server can not be started.")
+        sys.exit(1)
+
+    # Configuration database setup and check is needed before database
+    # statuses can be checked.
+    try:
+        if args.status:
+            ret = __db_status_check(cfg_sql_server, context, args.status)
+            sys.exit(ret)
+    except AttributeError:
+        LOG.debug('Status was not in the arguments.')
+
+    try:
+        if args.product_to_upgrade:
+            ret = __db_migration(cfg_sql_server, context,
+                                 args.product_to_upgrade)
+            sys.exit(ret)
+    except AttributeError:
+        LOG.debug('Product upgrade was not in the arguments.')
+
     # Create the main database link from the arguments passed over the
     # command line.
     default_product_path = os.path.join(args.config_directory,
                                         'Default.sqlite')
     create_default_product = 'sqlite' in args and \
-                             not os.path.exists(args.sqlite) and \
                              not os.path.exists(default_product_path)
-
-    sql_server = database.SQLServer.from_cmdline_args(
-        vars(args), CONFIG_META, context.config_migration_root,
-        interactive=True, env=check_env)
-
-    LOG.debug("Connecting to product configuration database.")
-    sql_server.connect(context.product_db_version_info, init=True)
 
     if create_default_product:
         # Create a default product and add it to the configuration database.
@@ -470,17 +766,54 @@ def main(args):
         prod_server = database.SQLiteDatabase(
             default_product_path, RUN_META,
             context.run_migration_root, check_env)
-        prod_server.connect(context.run_db_version_info, init=True)
 
-        LOG.debug("Connecting database engine for default product")
+        LOG.debug("Checking 'Default' product database.")
+        db_status = prod_server.connect()
+        if db_status != DBStatus.MISSING:
+            db_status = prod_server.connect(init=True)
+            LOG.error(database_status.db_status_msg.get(db_status))
+            if db_status != DBStatus.OK:
+                LOG.error("Failed to configure default product")
+                sys.exit(1)
+
         product_conn_string = prod_server.get_connection_string()
-        LOG.debug("Default database created and connected.")
 
         server.add_initial_run_database(
-            sql_server, product_conn_string)
+            cfg_sql_server, product_conn_string)
 
         LOG.info("Product 'Default' at '{0}' created and set up."
                  .format(default_product_path))
+
+    prod_statuses = check_product_db_status(cfg_sql_server, context)
+
+    upgrade_available = {}
+    for k, v in prod_statuses.items():
+        db_status, _, _, _ = v
+        if db_status == DBStatus.SCHEMA_MISMATCH_OK or \
+                db_status == DBStatus.SCHEMA_MISSING:
+            upgrade_available[k] = v
+
+    if upgrade_available:
+        print_prod_status(prod_statuses)
+        LOG.warning("Multiple products can be upgraded, make a backup!")
+        __db_migration(cfg_sql_server, context)
+
+    prod_statuses = check_product_db_status(cfg_sql_server, context)
+    print_prod_status(prod_statuses)
+
+    non_ok_db = False
+    for k, v in prod_statuses.items():
+        db_status, _, _, _ = v
+        if db_status != DBStatus.OK:
+            non_ok_db = True
+        break
+
+    if non_ok_db:
+        msg = "There are some database issues. " \
+              "Do you want to start the " \
+              "server? Y(es)/n(o) "
+        if not util.get_user_input(msg):
+            sys.exit(1)
 
     # Start database viewer.
     checker_md_docs = os.path.join(context.doc_root, 'checker_md_docs')
@@ -495,11 +828,14 @@ def main(args):
                     'checker_md_docs_map': checker_md_docs_map,
                     'version': context.package_git_tag}
 
+    suppress_handler = generic_package_suppress_handler. \
+        GenericSuppressHandler(None, False)
+
     try:
         server.start_server(args.config_directory,
                             package_data,
                             args.view_port,
-                            sql_server,
+                            cfg_sql_server,
                             suppress_handler,
                             args.listen_address,
                             'force_auth' in args,

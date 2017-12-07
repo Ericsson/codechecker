@@ -206,6 +206,37 @@ function (locale, dom, style, json) {
     },
 
     /**
+     * Converts a Thrift API database status id to human readable string.
+     *
+     * @param {String|Number} dbStatus Thrift API DBStatus id.
+     * @return Human readable review status string.
+     */
+    dbStatusFromCodeToString : function (dbStatus) {
+      switch (parseInt(dbStatus)) {
+        case DBStatus.OK:
+          return 'Database is up to date.';
+        case DBStatus.MISSING:
+          return 'Database is missing.';
+        case DBStatus.FAILED_TO_CONNECT:
+          return 'Failed to connect to the database.';
+        case DBStatus.SCHEMA_MISMATCH_OK:
+          return 'Schema mismatch: migration is possible.';
+        case DBStatus.SCHEMA_MISMATCH_NO:
+          return 'Schema mismatch: migration not available.';
+        case DBStatus.SCHEMA_MISSING:
+          return 'Schema is missing.';
+        case DBStatus.SCHEMA_INIT_ERROR:
+          return 'Schema initialization error.';
+        default:
+          console.warn(
+            'Non existing database status code: ',
+            dbStatus);
+          return 'N/A';
+      }
+    },
+
+
+    /**
      * Creates a CSS class for a Thrift API review status id.
      *
      * @param {String|Number} reviewCode Thrift API ReviewStatus id.

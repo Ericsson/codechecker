@@ -17,7 +17,7 @@ except ImportError:
 
     sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
                                                  "..")))
-    from libcodechecker.server.run_db_model import Base
+    from libcodechecker.server.database.run_db_model import Base
 
 target_metadata = Base.metadata
 

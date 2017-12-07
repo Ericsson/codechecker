@@ -35,6 +35,7 @@ from thrift.transport import TTransport
 from thrift.Thrift import TApplicationException
 from thrift.Thrift import TMessageType
 
+from shared.ttypes import DBStatus
 from Authentication_v6 import codeCheckerAuthentication as AuthAPI_v6
 from codeCheckerDBAccess_v6 import codeCheckerDBAccess as ReportAPI_v6
 from ProductManagement_v6 import codeCheckerProductService as ProductAPI_v6
@@ -175,7 +176,10 @@ class RequestHandler(SimpleHTTPRequestHandler):
                 routing.split_client_GET_request(self.path)
 
             if product_endpoint is not None and product_endpoint != '':
-                if not self.server.get_product(product_endpoint):
+
+                product = self.server.get_product(product_endpoint)
+
+                if not product:
                     LOG.info("Product endpoint '{0}' does not exist."
                              .format(product_endpoint))
                     self.send_error(
@@ -183,6 +187,26 @@ class RequestHandler(SimpleHTTPRequestHandler):
                         "The product {0} does not exist."
                         .format(product_endpoint))
                     return
+
+                if product:
+                    # Try to reconnect in these cases.
+                    # Do not try to reconnect if there is a schema mismatch.
+                    reconnect_cases = [DBStatus.FAILED_TO_CONNECT,
+                                       DBStatus.MISSING,
+                                       DBStatus.SCHEMA_INIT_ERROR]
+                    # If the product is not connected, try reconnecting...
+                    if product.db_status in reconnect_cases:
+                        LOG.error("Request's product '{0}' is not connected! "
+                                  "Attempting reconnect..."
+                                  .format(product_endpoint))
+                        product.connect()
+                        if product.db_status != DBStatus.OK:
+                            # If the reconnection fails,
+                            # redirect user to the products page.
+                            self.send_response(307)  # 307 Temporary Redirect
+                            self.send_header("Location", '/products.html')
+                            self.end_headers()
+                            return
 
                 if path == '' and not self.path.endswith('/'):
                     # /prod must be routed to /prod/index.html first, so later
@@ -210,17 +234,28 @@ class RequestHandler(SimpleHTTPRequestHandler):
                         "{0}/".format(product_endpoint), "", 1)
                     LOG.debug("Product routing after: " + self.path)
             else:
+
                 if self.path in ['/', '/index.html']:
                     only_product = self.server.get_only_product()
-                    if only_product and only_product.connected:
-                        LOG.debug("Redirecting '/' to ONLY product '/{0}'"
-                                  .format(only_product.endpoint))
+                    if only_product:
+                        prod_db_status = only_product.db_status
+                        if prod_db_status == DBStatus.OK:
+                            LOG.debug("Redirecting '/' to ONLY product '/{0}'"
+                                      .format(only_product.endpoint))
 
-                        self.send_response(307)  # 307 Temporary Redirect
-                        self.send_header("Location",
-                                         '/{0}'.format(only_product.endpoint))
-                        self.end_headers()
-                        return
+                            self.send_response(307)  # 307 Temporary Redirect
+                            msg = '/{0}'.format(only_product.endpoint)
+                            self.send_header("Location", msg)
+                            self.end_headers()
+                            return
+                        else:
+                            LOG.debug("Redirecting '/' to ONLY product '/{0}'"
+                                      .format(only_product.endpoint))
+
+                            self.send_response(307)  # 307 Temporary Redirect
+                            self.send_header("Location", '/products.html')
+                            self.end_headers()
+                            return
 
                     # Route homepage queries to serving the product list.
                     LOG.debug("Serving product list as homepage.")
@@ -233,6 +268,52 @@ class RequestHandler(SimpleHTTPRequestHandler):
                 self.send_response(200)  # 200 OK
 
             SimpleHTTPRequestHandler.do_GET(self)
+
+    def __check_prod_db(self, product):
+        """
+        Check the product database status.
+        Try to reconnect in some cases.
+
+        Returns if everything is ok with the database or
+        throw an exception with the error message if something
+        is wrong with the database.
+
+        """
+        if product:
+            # Try to reconnect in these cases.
+            # Do not try to reconnect if there is a schema mismatch.
+            # If the product is not connected, try reconnecting...
+            reconnect_cases = [DBStatus.FAILED_TO_CONNECT,
+                               DBStatus.MISSING,
+                               DBStatus.SCHEMA_INIT_ERROR]
+
+            if product.db_status == DBStatus.OK:
+                # no reconnection needed
+                return
+            elif product.db_status in reconnect_cases:
+                LOG.error("Request's product '{0}' is not connected! "
+                          "Attempting reconnect..."
+                          .format(product.endpoint))
+                product.connect()
+                if product.db_status != DBStatus.OK:
+                    # If the reconnection fails,
+                    # send an error to the user.
+                    LOG.debug("Product reconnection failed.")
+                    error_msg = "'{0}' database connection " \
+                        "failed!".format(product.endpoint)
+                    LOG.error(error_msg)
+                    raise ValueError(error_msg)
+            else:
+                # send an error to the user.
+                error_msg = "'{0}' database connection " \
+                    "failed!".format(product.endpoint)
+                LOG.error(error_msg)
+                raise ValueError(error_msg)
+
+        else:
+            error_msg = "The product " + str(product) + " does not exists"
+            LOG.error(error_msg)
+            raise ValueError(error_msg)
 
     def do_POST(self):
         """
@@ -289,26 +370,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
                 # The current request came through a product route, and not
                 # to the main endpoint.
                 product = self.server.get_product(product_endpoint)
-                if product and not product.connected:
-                    # If the product is not connected, try reconnecting...
-                    LOG.debug("Request's product '{0}' is not connected! "
-                              "Attempting reconnect..."
-                              .format(product_endpoint))
-                    product.connect()
-
-                    if not product.connected:
-                        # If the reconnection fails, send an error to the user.
-                        error_msg = "Product '{0}' database " \
-                                    "connection failed!" \
-                                    .format(product_endpoint)
-                        LOG.error(error_msg)
-                        raise ValueError(error_msg)
-
-                elif not product:
-                    error_msg = "The product {0} does not exist." \
-                                .format(product_endpoint)
-                    LOG.error(error_msg)
-                    raise ValueError(error_msg)
+                self.__check_prod_db(product)
 
             version_supported = routing.is_supported_version(api_ver)
             if version_supported:
@@ -337,6 +399,12 @@ class RequestHandler(SimpleHTTPRequestHandler):
                                         .format(product_endpoint)
                             LOG.error(error_msg)
                             raise ValueError(error_msg)
+
+                        if product_endpoint:
+                            # The current request came through a
+                            # product route, and not to the main endpoint.
+                            product = self.server.get_product(product_endpoint)
+                            self.__check_prod_db(product)
 
                         acc_handler = ReportHandler_v6(
                             product.session_factory,
@@ -445,8 +513,8 @@ class Product(object):
         self.__check_env = check_env
         self.__engine = None
         self.__session = None
-        self.__connected = False
         self.__db_cleanup = db_cleanup
+        self.__db_status = DBStatus.MISSING
 
         self.__last_connect_attempt = None
 
@@ -484,12 +552,12 @@ class Product(object):
         return self.__driver_name
 
     @property
-    def connected(self):
+    def db_status(self):
         """
-        Returns whether the product has a valid connection to the managed
-        database.
+        Returns the status of the database which belongs to this product.
+        Call connect to update it.
         """
-        return self.__connected
+        return self.__db_status
 
     @property
     def last_connection_failure(self):
@@ -500,25 +568,17 @@ class Product(object):
         return self.__last_connect_attempt[1] if self.__last_connect_attempt \
             else None
 
-    def connect(self):
+    def connect(self, init_db=False):
         """
         Initiates the actual connection to the database configured for the
         product.
+
+        Eeach time the connect is called the db_status is updated.
         """
-        if self.__connected:
-            return
 
-        if self.__last_connect_attempt and \
-                (datetime.datetime.now() - self.__last_connect_attempt[0]). \
-                total_seconds() <= Product.CONNECT_RETRY_TIMEOUT:
-            return
-
-        LOG.debug("Connecting database for product '{0}'".
+        LOG.debug("Checking '{0}' database.".
                   format(self.endpoint))
 
-        # We need to connect to the database and perform setting up the
-        # schema.
-        LOG.debug("Configuring schema and migration...")
         sql_server = database.SQLServer.from_connection_string(
             self.__connection_string,
             RUN_META,
@@ -532,31 +592,38 @@ class Product(object):
             self.__driver_name = 'sqlite'
 
         try:
-            sql_server.connect(self.__context.run_db_version_info, init=True)
+            LOG.debug("Trying to connect to the database")
+            db_status = sql_server.connect()
 
             # Create the SQLAlchemy engine.
-            LOG.debug("Connecting database engine")
             self.__engine = sql_server.create_engine()
+            LOG.debug(self.__engine)
+
             self.__session = sessionmaker(bind=self.__engine)
 
-            self.__connected = True
+            self.__engine.execute('SELECT 1')
+            self.__db_status = db_status
             self.__last_connect_attempt = None
-            LOG.debug("Database connected.")
 
-            if self.__db_cleanup:
+            if self.__db_status == DBStatus.SCHEMA_MISSING and init_db:
+                LOG.debug("Initializing new database schema.")
+                self.__db_status = sql_server.connect(init_db)
+
+            if self.__db_status == DBStatus.OK and self.__db_cleanup:
                 db_cleanup.run_cleanup_jobs(self.__session)
+
         except Exception as ex:
             LOG.error("The database for product '{0}' cannot be connected to."
                       .format(self.endpoint))
             LOG.error(ex.message)
-            self.__connected = False
+            self.__db_status = DBStatus.FAILED_TO_CONNECT
             self.__last_connect_attempt = (datetime.datetime.now(), ex.message)
 
     def teardown(self):
         """
         Disposes the database connection to the product's backend.
         """
-        if not self.__connected:
+        if self.__db_status == DBStatus.FAILED_TO_CONNECT:
             return
 
         self.__engine.dispose()
@@ -664,22 +731,29 @@ class CCSimpleHttpServer(HTTPServer):
         self.__request_handlers.apply_async(self.process_request_thread,
                                             (request, client_address))
 
-    def add_product(self, orm_product):
+    def add_product(self, orm_product, init_db=False):
         """
         Adds a product to the list of product databases connected to
         by the server.
         """
         if orm_product.endpoint in self.__products:
-            raise Exception("This product is already configured!")
+            LOG.debug("This product is already configured!")
+            return
 
-        LOG.info("Setting up product '{0}'".format(orm_product.endpoint))
-        conn = Product(orm_product,
+        LOG.debug("Setting up product '{0}'".format(orm_product.endpoint))
+
+        prod = Product(orm_product,
                        self.context,
                        self.check_env,
                        self.db_cleanup)
-        self.__products[conn.endpoint] = conn
 
-        conn.connect()
+        # Update the product database status.
+        prod.connect()
+        if prod.db_status == DBStatus.SCHEMA_MISSING and init_db:
+            LOG.debug("Schema was missing in the database. Initializing new")
+            prod.connect(init_db=True)
+
+        self.__products[prod.endpoint] = prod
 
     def get_product(self, endpoint):
         """

@@ -23,6 +23,7 @@ Table of Contents
   * [Alternative 2: Store each analysis in a new run](#storing-new-runs)
     * [Jenkins Script](#storing-new-runs-example)  
   * [Programmer checking new bugs in the code after local edit (and compare it to a central database)](#compare)
+* [Updating CodeChecker to new version](#upgrade)
 
 ## <a name="step-1"></a> Step 1: Integrate CodeChecker into your build system
 CodeChecker only analyzes what is also built by your build system.
@@ -391,3 +392,11 @@ master branch is already stored under run name `tmux_master`.
 ```
  CodeChecker cmd diff -b tmux_master -n ./reports --new --url http://localhost:8555/Default
 ```
+
+## <a name="upgrade"></a> Updating CodeChecker to new version
+
+If a new CodeChecker release is available it might be possible that there are
+some database changes compared to the previous release.
+If you run into database migration warnings during the server start please
+check our [database schema upgrade guide's](db_schema_guide.md)
+`Database upgrade for running servers` section.

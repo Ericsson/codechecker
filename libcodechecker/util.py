@@ -399,3 +399,12 @@ class TemporaryDirectory:
 
     def __del__(self, *args):
         self.__cleanup()
+
+
+def get_user_input(msg):
+    """
+    Get the user input.
+
+    :returns: True/False based on the asnwer from the user
+    """
+    return raw_input(msg).lower() in ['y', 'yes']

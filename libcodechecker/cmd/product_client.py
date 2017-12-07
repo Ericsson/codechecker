@@ -15,9 +15,11 @@ from ProductManagement_v6.ttypes import *
 from libcodechecker.libclient.client import setup_product_client
 from libcodechecker.logger import LoggerFactory
 from libcodechecker.output_formatters import twodim_to_str
+from libcodechecker.server.database import database_status
 from libcodechecker.util import split_server_url
 
 from cmd_line_client import CmdLineOutputEncoder
+
 
 LOG = LoggerFactory.get_new_logger('CMD')
 
@@ -33,16 +35,22 @@ def handle_list_products(args):
             results.append({product.endpoint: product})
         print(CmdLineOutputEncoder().encode(results))
     else:  # plaintext, csv
-        header = ['Status', 'Endpoint', 'Name', 'Description']
+        header = ['Database status', 'Endpoint', 'Name', 'Description']
         rows = []
         for product in products:
             name = base64.b64decode(product.displayedName_b64) \
                 if product.displayedName_b64 else ''
             description = base64.b64decode(product.description_b64) \
                 if product.description_b64 else ''
-            rows.append(('Database error' if not product.connected
-                         else 'No access' if not product.accessible
-                         else '',
+
+            if not product.accessible:
+                db_status_msg = 'No access.'
+            else:
+                db_status = product.databaseStatus
+                db_status_msg = database_status.db_status_msg.get(
+                    db_status, 'Unknown database status')
+
+            rows.append((db_status_msg,
                          product.endpoint, name, description))
 
         print(twodim_to_str(args.output_format, header, rows))

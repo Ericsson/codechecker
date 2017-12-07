@@ -139,8 +139,12 @@ class TestProducts(unittest.TestCase):
                          "The product's endpoint is improper.")
         self.assertTrue(pr_data.id > 0, "Product didn't have valid ID")
 
-        self.assertTrue(pr_data.connected, "Products should be connectible "
-                        "in a test environment.")
+        # The connected attribute of a product will be always False.
+        # There is a new databaseStatus attribute which can be used
+        # to check the status of the databases.
+        self.assertFalse(pr_data.connected,
+                         "Deprecated value will take always False."
+                         "Use databaseStatus instead.")
 
         # Now get the SERVERSPACE (configuration) for the product.
         # TODO: These things usually should only work for superusers!
@@ -246,10 +250,11 @@ class TestProducts(unittest.TestCase):
                          "The endpoint was changed -- perhaps the "
                          "temporary connection leaked into the database?")
 
-        # The new database should be empty.
+        # There is no schema initialization if the product database
+        # was changed. The inital schema needs to be created manually
+        # for the new database.
         runs = self._cc_client.getRunData(None)
-        self.assertEqual(len(runs), 0,
-                         "We connected to a new database but it wasn't empty?")
+        self.assertIsNone(runs)
 
         # Connect back to the old database.
         config.connection.database = old_db_name
@@ -296,8 +301,8 @@ class TestProducts(unittest.TestCase):
                          "Server didn't save new endpoint.")
 
         # The old product is gone. Thus, connection should NOT happen.
-        with self.assertRaises(Exception):
-            self._cc_client.getRunData(None)
+        res = self._cc_client.getRunData(None)
+        self.assertIsNone(res)
 
         # The new product should connect and have the data.
         codechecker_cfg = self.test_cfg['codechecker_cfg']
