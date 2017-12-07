@@ -2038,43 +2038,19 @@ class ThriftRequestHandler(object):
                 source_file_name = os.path.realpath(
                     os.path.join(source_root, file_name.strip("/")))
 
-                if not os.path.isfile(source_file_name):
-                    # If the file was not found in the source root directory
-                    # we get the content from the database and create a
-                    # temporary file for code suppression.
-                    curr_report = filter(lambda x: x.id == report_id,
-                                         hash_map_reports[bug_id])[0]
-                    source_data = self.getSourceFileData(curr_report.file_id,
-                                                         True, None)
+                if os.path.isfile(source_file_name):
+                    sp_handler = suppress_handler.SourceSuppressHandler(
+                        source_file_name,
+                        last_report_event['location']['line'],
+                        bug_id,
+                        report.main['check_name'])
 
-                    # TODO: Improve the suppress handler to be able to work on
-                    # file content and no extra directory and file
-                    # creation/cleanup is needed.
-                    dir_name = os.path.dirname(source_file_name)
-                    if not os.path.exists(dir_name):
-                        os.makedirs(dir_name)
-
-                    try:
-                        with open(source_file_name, 'w') as new_file:
-                            # Encoding is needed here because parsing Xerces
-                            # throws me the following error message:
-                            # 'ascii' codec can't encode character u'\ufffd'.
-                            content = source_data.fileContent.encode('utf-8')
-                            new_file.write(content)
-                    except Exception as ex:
-                        print(ex)
-
-                sp_handler = suppress_handler.SourceSuppressHandler(
-                    source_file_name,
-                    last_report_event['location']['line'],
-                    bug_id,
-                    report.main['check_name'])
-
-                supp = sp_handler.get_suppressed()
-                if supp:
-                    _, _, comment = supp
-                    status = ttypes.ReviewStatus.FALSE_POSITIVE
-                    self._setReviewStatus(report_id, status, comment, session)
+                    supp = sp_handler.get_suppressed()
+                    if supp:
+                        _, _, comment = supp
+                        status = ttypes.ReviewStatus.FALSE_POSITIVE
+                        self._setReviewStatus(report_id, status, comment,
+                                              session)
 
                 LOG.debug("Storing done for report " + str(report_id))
 
