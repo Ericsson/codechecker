@@ -143,6 +143,6 @@ class TestSuppress(unittest.TestCase):
         report = self._cc_client.getReport(bug.reportId)
 
         # The stored suppress comment for the same bughash is the same.
-        status = ReviewStatus.FALSE_POSITIVE
-        self.assertEqual(report.reviewData.comment, 'deliberate segfault!')
+        status = ReviewStatus.CONFIRMED
+        self.assertEqual(report.reviewData.comment, 'This is really a bug')
         self.assertEqual(report.reviewData.status, status)
