@@ -377,7 +377,7 @@ def check(check_data):
                     for of in other_files:
                         mentioned_file = os.path.abspath(
                             os.path.join(action.directory, of))
-                        # Use the target of the original build action
+                        # Use the target of the original build action.
                         key = mentioned_file, action.target
                         mentioned_file_action = actions_map.get(key)
                         if mentioned_file_action is not None:
@@ -386,8 +386,8 @@ def check(check_data):
                             mentioned_files_dependent_files.\
                                 update(mentioned_file_deps)
                         else:
-                            LOG.debug("Could not find %s in build actions"
-                                      % key)
+                            LOG.debug("Could not find {0} in build actions."
+                                      .format(key))
 
                     dependencies.update(other_files)
                     dependencies.update(mentioned_files_dependent_files)
@@ -408,14 +408,26 @@ def check(check_data):
                     for dependent_source in dependencies:
                         LOG.debug("[ZIP] Writing '" + dependent_source + "' "
                                   "to the archive.")
-                        archive_path = dependent_source.lstrip('/')
+                        archive_subpath = dependent_source.lstrip('/')
+
+                        archive_path = os.path.join('sources-root',
+                                                    archive_subpath)
+                        try:
+                            _ = archive.getinfo(archive_path)
+                            LOG.debug("[ZIP] '{0}' is already in the ZIP "
+                                      "file, won't add it again!"
+                                      .format(archive_path))
+                            continue
+                        except KeyError:
+                            # If the file is already contained in the ZIP,
+                            # a valid object is returned, otherwise a KeyError
+                            # is raised.
+                            pass
 
                         try:
-                            archive.write(
-                                dependent_source,
-                                os.path.join("sources-root",
-                                             archive_path),
-                                zipfile.ZIP_DEFLATED)
+                            archive.write(dependent_source,
+                                          archive_path,
+                                          zipfile.ZIP_DEFLATED)
                         except Exception as ex:
                             # In certain cases, the output could contain
                             # invalid tokens (such as error messages that were
@@ -424,8 +436,8 @@ def check(check_data):
                             LOG.debug("[ZIP] Couldn't write, because " +
                                       str(ex))
                             archive.writestr(
-                                os.path.join("failed-sources-root",
-                                             archive_path),
+                                os.path.join('failed-sources-root',
+                                             archive_subpath),
                                 "Couldn't write this file, because:\n" +
                                 str(ex))
 
