@@ -291,10 +291,11 @@ def store(codechecker_cfg, test_project_name, report_path):
         print(out)
         print(err)
 
-        return 0
-    except CalledProcessError as cerr:
-        print("Failed to call:\n" + ' '.join(cerr.cmd))
-        return cerr.returncode
+        return proc.returncode
+    except OSError as oserr:
+        print("Failed to call:\n" + ' '.join(store_cmd) +
+              "\n" + oserr.strerror)
+        return oserr.errno
 
 
 def serv_cmd(config_dir, port, pg_config=None, serv_args=None):

@@ -1,0 +1,230 @@
+#
+# -----------------------------------------------------------------------------
+#                     The CodeChecker Infrastructure
+#   This file is distributed under the University of Illinois Open Source
+#   License. See LICENSE.TXT for details.
+# -----------------------------------------------------------------------------
+
+"""
+Test accessing products that were added in a "Shared configuration database"
+environment.
+"""
+
+import base64
+from copy import deepcopy
+import multiprocessing
+import os
+import shutil
+import subprocess
+import time
+import unittest
+
+from ProductManagement_v6.ttypes import ProductConfiguration
+from ProductManagement_v6.ttypes import DatabaseConnection
+
+from libtest import codechecker
+from libtest import env
+
+# Stopping events for CodeChecker server.
+EVENT = multiprocessing.Event()
+
+
+# This test uses multiple custom servers, which are brought up here
+# and torn down by the module itself --- it does not only connect to the
+# test run's "master" server.
+def start_server(codechecker_cfg, event):
+    """Start the CodeChecker server."""
+
+    def start_server_proc(event, server_cmd, checking_env):
+        """Target function for starting the CodeChecker server."""
+        proc = subprocess.Popen(server_cmd, env=checking_env)
+
+        # Blocking termination until event is set.
+        event.wait()
+
+        # If proc is still running, stop it.
+        if proc.poll() is None:
+            proc.terminate()
+
+    # The server is started in the same folder as the "master" one.
+    server_cmd = codechecker.serv_cmd(env.get_workspace(None),
+                                      str(codechecker_cfg['viewer_port']),
+                                      env.get_postgresql_cfg())
+
+    server_proc = multiprocessing.Process(
+        name='server',
+        target=start_server_proc,
+        args=(event, server_cmd, codechecker_cfg['check_env']))
+
+    server_proc.start()
+
+    # Wait for server to start and connect to database.
+    time.sleep(5)
+
+
+class TestProductConfigShare(unittest.TestCase):
+
+    def setUp(self):
+        """
+        Set up the environment and the test module's configuration from the
+        package.
+        """
+
+        # TEST_WORKSPACE is automatically set by test package __init__.py .
+        self.test_workspace_main = os.environ['TEST_WORKSPACE']
+
+        test_class = self.__class__.__name__
+        print('Running ' + test_class + ' tests in ' +
+              self.test_workspace_main)
+
+        # Set up a configuration for the main server.
+        # Get the test configuration from the prepared int the test workspace.
+        self.test_cfg = env.import_test_cfg(self.test_workspace_main)
+
+        self.product_name = self.test_cfg['codechecker_cfg']['viewer_product']
+
+        # Setup a viewer client to test viewer API calls.
+        self._cc_client = env.setup_viewer_client(self.test_workspace_main)
+        self.assertIsNotNone(self._cc_client)
+
+        # Setup an authentication client for creating sessions.
+        self._auth_client = env.setup_auth_client(self.test_workspace_main,
+                                                  session_token='_PROHIBIT')
+
+        # Create a SUPERUSER login.
+        root_token = self._auth_client.performLogin("Username:Password",
+                                                    "root:root")
+
+        # Setup a product client to test product API calls.
+        self._pr_client = env.setup_product_client(self.test_workspace_main)
+        self.assertIsNotNone(self._pr_client)
+
+        # Setup a product client to test product API calls which requires root.
+        self._root_client = env.setup_product_client(self.test_workspace_main,
+                                                     session_token=root_token)
+        self.assertIsNotNone(self._pr_client)
+
+        # Get the run names which belong to this test.
+        run_names = env.get_run_names(self.test_workspace_main)
+
+        runs = self._cc_client.getRunData(None)
+        test_runs = [run for run in runs if run.name in run_names]
+
+        self.assertEqual(len(test_runs), 1,
+                         "There should be only one run for this test.")
+        self._runid = test_runs[0].runId
+
+        # Start a second server with the same configuration database as the
+        # main one.
+        self.test_workspace_secondary = env.get_workspace('producttest_second')
+        self.codechecker_cfg_2 = {
+            'check_env': self.test_cfg['codechecker_cfg']['check_env'],
+            'workspace': self.test_workspace_secondary,
+            'checkers': [],
+            'viewer_host': 'localhost',
+            'viewer_port': env.get_free_port(),
+            'viewer_product': 'producttest_second'
+        }
+        self.codechecker_cfg_2['check_env']['HOME'] = \
+            self.test_workspace_secondary
+        env.export_test_cfg(self.test_workspace_secondary,
+                            {'codechecker_cfg': self.codechecker_cfg_2})
+        start_server(self.codechecker_cfg_2, EVENT)
+
+        # Set up API clients for the secondary server.
+        self._auth_client_2 = env.setup_auth_client(
+            self.test_workspace_secondary, session_token='_PROHIBIT')
+        root_token_2 = self._auth_client_2.performLogin("Username:Password",
+                                                        "root:root")
+        self._pr_client_2 = env.setup_product_client(
+            self.test_workspace_secondary, session_token=root_token_2)
+        self.assertIsNotNone(self._pr_client_2)
+
+    def test_read_product_from_another_server(self):
+        """
+        Test if adding and removing a product is visible from the other server.
+        """
+
+        # Check if the main server's product is visible on the second server.
+        self.assertEqual(
+            self._pr_client_2.getProducts('producttest', None)[0].endpoint,
+            'producttest',
+            "Main server's product was not loaded by the secondary server.")
+
+        # Create a new product on the secondary server.
+        name = base64.b64encode('producttest_second')
+        product_cfg = ProductConfiguration(
+            endpoint='producttest_second',
+            displayedName_b64=name,
+            description_b64=name,
+            connection=DatabaseConnection(
+                engine='sqlite',
+                host='',
+                port=0,
+                username_b64='',
+                password_b64='',
+                database=os.path.join(self.test_workspace_secondary,
+                                      'data.sqlite'))
+        )
+
+        self.assertTrue(self._pr_client_2.addProduct(product_cfg),
+                        "Cannot create product on secondary server.")
+
+        # Use the same CodeChecker config that was used on the main server,
+        # but store into the secondary one.
+        store_cfg = deepcopy(self.test_cfg['codechecker_cfg'])
+        store_cfg.update({
+            'viewer_port': self.codechecker_cfg_2['viewer_port'],
+            'viewer_product': self.codechecker_cfg_2['viewer_product']})
+        codechecker.login(store_cfg,
+                          self.test_workspace_secondary,
+                          'root', 'root')
+        store_res = codechecker.store(store_cfg,
+                                      'test_proj-secondary',
+                                      os.path.join(self.test_workspace_main,
+                                                   'reports'))
+        self.assertEqual(store_res, 0, "Storing the test project failed.")
+
+        cc_client_2 = env.setup_viewer_client(self.test_workspace_secondary)
+        self.assertEqual(len(cc_client_2.getRunData(None)), 1,
+                         "There should be a run present in the new server.")
+
+        self.assertEqual(len(self._cc_client.getRunData(None)), 1,
+                         "There should be a run present in the database when "
+                         "connected through the main server.")
+
+        # Remove the product through the main server.
+        p_id = self._root_client.getProducts('producttest_second', None)[0].id
+        p_id2 = self._pr_client_2.getProducts('producttest_second', None)[0].id
+        self.assertIsNotNone(p_id)
+        self.assertEqual(p_id, p_id2,
+                         "The products have different ID across the two "
+                         "servers. WHAT? Database isn't shared?!")
+
+        self.assertTrue(self._root_client.removeProduct(p_id),
+                        "Main server reported error while removing product.")
+
+        self.assertEqual(len(self._pr_client.getProducts('_second', None)),
+                         0,
+                         "Secondary server still sees the removed product.")
+
+        # Try to store into the product just removed through the secondary
+        # server, which still sees the product internally.
+        store_res = codechecker.store(store_cfg,
+                                      'test_proj-secondary',
+                                      os.path.join(self.test_workspace_main,
+                                                   'reports'))
+        self.assertNotEqual(store_res, 0, "Storing into the server with "
+                            "the product missing should've resulted in "
+                            "an error.")
+
+    def tearDown(self):
+        """
+        Clean the environment after running this test module
+        """
+
+        # Let the secondary CodeChecker servers die.
+        EVENT.set()
+
+        print("Removing: " + self.test_workspace_secondary)
+        shutil.rmtree(self.test_workspace_secondary)

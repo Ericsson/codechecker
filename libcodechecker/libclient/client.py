@@ -216,10 +216,10 @@ def setup_product_client(protocol, host, port, product_name=None):
             '/' + product_name + '/v' + CLIENT_API + '/Products',
             session_token)
 
-        # However, in this case, the specified product might not be existing,
-        # which makes subsequent calls to this API crash (server sends
-        # HTTP 500 Internal Server Error error page).
-        if not product_client.getPackageVersion():
+        # However, in this case, the specified product might not exist,
+        # which means we can't communicate with the server orderly.
+        if not product_client.getPackageVersion() or \
+                not product_client.getCurrentProduct():
             LOG.error("The product '{0}' cannot be communicated with. It "
                       "either doesn't exist, or the server's configuration "
                       "is bogus.".format(product_name))
