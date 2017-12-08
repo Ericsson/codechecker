@@ -166,7 +166,7 @@ class ThriftProductHandler(object):
                     endpoint=prod.endpoint,
                     displayedName_b64=name,
                     description_b64=descr,
-                    connected=False,  # DEPRECATED use databaseStatus instead.
+                    connected=db_status == shared.ttypes.DBStatus.OK,
                     accessible=product_access,
                     administrating=product_admin,
                     databaseStatus=db_status))
@@ -228,12 +228,13 @@ class ThriftProductHandler(object):
             # Update the database status.
             server_product.connect()
 
+            connected = server_product.db_status == shared.ttypes.DBStatus.OK
             return ttypes.Product(
                 id=prod.id,
                 endpoint=prod.endpoint,
                 displayedName_b64=name,
                 description_b64=descr,
-                connected=False,  # DEPRECATED use databaseStatus instead.
+                connected=connected,
                 accessible=product_access,
                 administrating=product_admin,
                 databaseStatus=server_product.db_status)
