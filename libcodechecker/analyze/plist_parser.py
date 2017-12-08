@@ -30,6 +30,7 @@ With the newer clang releases more information is available in the plist files.
 
 """
 
+import os
 import plistlib
 import sys
 import traceback
@@ -72,7 +73,7 @@ def get_report_hash(diagnostic, source_file):
     return report_hash
 
 
-def parse_plist(path):
+def parse_plist(path, source_root=None):
     """
     Parse the reports from a plist file.
     One plist file can contain multiple reports.
@@ -102,8 +103,12 @@ def parse_plist(path):
 
             # We need to extend information for plist files generated
             # by older clang version (before 3.8).
+            file_path = files[diag['location']['file']]
+            if source_root:
+                file_path = os.path.join(source_root, file_path.lstrip('/'))
+
             main_section['issue_hash_content_of_line_in_context'] = \
-                get_report_hash(diag, files[diag['location']['file']])
+                get_report_hash(diag, file_path)
 
             bug_path_items = [item for item in diag['path']]
 

@@ -1983,11 +1983,8 @@ class ThriftRequestHandler(object):
                 LOG.debug("Parsing input file '" + f + "'")
 
                 try:
-                    # FIXME: We are parsing the plists for the
-                    # second time here. Use re-use the
-                    # previous results.
                     files, reports = plist_parser.parse_plist(
-                        os.path.join(report_dir, f))
+                        os.path.join(report_dir, f), source_root)
                 except Exception as ex:
                     LOG.error('Parsing the plist failed: ' + str(ex))
                     continue
