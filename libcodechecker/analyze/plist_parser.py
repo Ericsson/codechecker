@@ -87,6 +87,7 @@ def parse_plist(path, source_root=None):
 
         files = plist['files']
 
+        diag_changed = False
         for diag in plist['diagnostics']:
 
             available_keys = diag.keys()
@@ -107,14 +108,26 @@ def parse_plist(path, source_root=None):
             if source_root:
                 file_path = os.path.join(source_root, file_path.lstrip('/'))
 
+            report_hash = get_report_hash(diag, file_path)
             main_section['issue_hash_content_of_line_in_context'] = \
-                get_report_hash(diag, file_path)
+                report_hash
+
+            if 'issue_hash_content_of_line_in_context' not in diag:
+                # If the report hash was not in the plist, we set it in the
+                # diagnostic section for later update.
+                diag['issue_hash_content_of_line_in_context'] = report_hash
+                diag_changed = True
 
             bug_path_items = [item for item in diag['path']]
 
             report = Report(main_section, bug_path_items)
             reports.append(report)
 
+        if diag_changed:
+            # If the diagnostic section has changed we update the plist file.
+            # This way the client will always send a plist file where the
+            # report hash field is filled.
+            plistlib.writePlist(plist, path)
     except (ExpatError, TypeError, AttributeError) as err:
         LOG.error('Failed to process plist file: ' + path +
                   ' wrong file format?')
