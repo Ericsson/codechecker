@@ -15,6 +15,7 @@ import os
 import unittest
 
 from shared.ttypes import RequestFailed
+from shared.ttypes import DBStatus
 from ProductManagement_v6.ttypes import ProductConfiguration
 from ProductManagement_v6.ttypes import DatabaseConnection
 
@@ -139,12 +140,10 @@ class TestProducts(unittest.TestCase):
                          "The product's endpoint is improper.")
         self.assertTrue(pr_data.id > 0, "Product didn't have valid ID")
 
-        # The connected attribute of a product will be always False.
-        # There is a new databaseStatus attribute which can be used
-        # to check the status of the databases.
-        self.assertFalse(pr_data.connected,
-                         "Deprecated value will take always False."
-                         "Use databaseStatus instead.")
+        # The connected attribute of a product will be always True if
+        # database status is OK.
+        connected = pr_data.databaseStatus == DBStatus.OK
+        self.assertEqual(pr_data.connected, connected)
 
         # Now get the SERVERSPACE (configuration) for the product.
         # TODO: These things usually should only work for superusers!
