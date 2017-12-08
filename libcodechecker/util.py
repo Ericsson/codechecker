@@ -9,6 +9,7 @@ Util module.
 
 import datetime
 import hashlib
+import json
 import os
 import re
 import shutil
@@ -433,3 +434,23 @@ def get_new_line_col_without_whitespace(line_content, old_col):
 
     return ''.join(line_content.split()), \
            old_col - line_strip_len
+
+
+def load_json_or_empty(path, default=None, kind=None):
+    """
+    Load the contents of the given file as a JSON and return it's value,
+    or default if the file can't be loaded.
+    """
+
+    ret = default
+    try:
+        with open(path, 'r') as handle:
+            ret = json.loads(handle.read())
+    except IOError:
+        LOG.warning("Failed to open {0} file: {1}"
+                    .format(kind if kind else 'json', path))
+    except ValueError:
+        LOG.warning("'{1}' is not a valid {0} file."
+                    .format(kind if kind else 'json', path))
+
+    return ret

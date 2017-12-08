@@ -267,29 +267,29 @@ def enable_auth(workspace):
     an auth-enabled server.
 
     Running the tests only work if the initial value (in package
-    session_config.json) is FALSE for authentication.enabled.
+    server_config.json) is FALSE for authentication.enabled.
     """
 
-    session_config_filename = "session_config.json"
+    server_config_filename = "server_config.json"
 
     cc_package = codechecker_package()
     original_auth_cfg = os.path.join(cc_package,
                                      'config',
-                                     session_config_filename)
+                                     server_config_filename)
 
     shutil.copy(original_auth_cfg, workspace)
 
-    session_cfg_file = os.path.join(workspace,
-                                    session_config_filename)
+    server_cfg_file = os.path.join(workspace,
+                                   server_config_filename)
 
-    with open(session_cfg_file, 'r+') as scfg:
+    with open(server_cfg_file, 'r+') as scfg:
         __scfg_original = scfg.read()
         scfg.seek(0)
         try:
             scfg_dict = json.loads(__scfg_original)
         except ValueError as verr:
             print(verr)
-            print('Malformed session config json.')
+            print('Malformed server config json.')
             sys.exit(1)
 
         scfg_dict["authentication"]["enabled"] = True

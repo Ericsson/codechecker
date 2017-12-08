@@ -20,6 +20,7 @@ import uuid
 import portalocker
 
 from libcodechecker.logger import get_logger
+from libcodechecker import util
 
 unsupported_methods = []
 
@@ -130,29 +131,14 @@ def check_file_owner_rw(file_to_check):
     return True
 
 
-def load_session_cfg(session_cfg_file):
+def load_server_cfg(server_cfg_file):
     """
     Tries to load the session config file which should be a
     valid json file, if loading fails returns an empty dict.
     """
 
-    scfg_dict = {}
-    try:
-        with open(session_cfg_file, 'r') as scfg:
-            scfg_dict = json.loads(scfg.read())
-        check_file_owner_rw(session_cfg_file)
-
-    except IOError:
-        LOG.debug('Failed to open user authentication file: ' +
-                  session_cfg_file)
-        raise
-    except ValueError as verr:
-        LOG.warning(verr)
-        LOG.warning('Not valid user authentication file: ' +
-                    session_cfg_file)
-        raise
-
-    return scfg_dict
+    check_file_owner_rw(server_cfg_file)
+    return util.load_json_or_empty(server_cfg_file, {})
 
 
 class SessionManager:
@@ -165,21 +151,34 @@ class SessionManager:
         LOG.debug('Loading session config')
 
         # Check whether workspace's configuration exists.
-        session_cfg_file = os.path.join(SessionManager.CodeChecker_Workspace,
-                                        "session_config.json")
+        server_cfg_file = os.path.join(SessionManager.CodeChecker_Workspace,
+                                       "server_config.json")
 
-        if not os.path.exists(session_cfg_file):
-            LOG.info("CodeChecker server's authentication example "
-                     "configuration file created at " + session_cfg_file)
-            shutil.copyfile(os.path.join(os.environ['CC_PACKAGE_ROOT'],
-                                         "config", "session_config.json"),
-                            session_cfg_file)
+        if not os.path.exists(server_cfg_file):
+            # For backward compatibility reason if the session_config.json file
+            # exists we rename it to server_config.json.
+            session_cfg_file = os.path.join(
+                SessionManager.CodeChecker_Workspace,
+                "session_config.json")
+            example_cfg_file = os.path.join(os.environ['CC_PACKAGE_ROOT'],
+                                            "config", "server_config.json")
+            if os.path.exists(session_cfg_file):
+                LOG.info("Renaming {0} to {1}. Please check the example "
+                         "configuration file ({2}) or the user guide for "
+                         "more information.".format(session_cfg_file,
+                                                    server_cfg_file,
+                                                    example_cfg_file))
+                os.rename(session_cfg_file, server_cfg_file)
+            else:
+                LOG.info("CodeChecker server's example configuration file "
+                         "created at " + server_cfg_file)
+                shutil.copyfile(example_cfg_file, server_cfg_file)
 
-        LOG.debug(session_cfg_file)
+        LOG.debug(server_cfg_file)
 
         # Create the default settings and then load the file from the disk.
         scfg_dict = {'authentication': {'enabled': False}}
-        scfg_dict.update(load_session_cfg(session_cfg_file))
+        scfg_dict.update(load_server_cfg(server_cfg_file))
 
         self.__auth_config = scfg_dict["authentication"]
 
@@ -444,11 +443,7 @@ class SessionManager_Client:
                                         ".codechecker.passwords.json")
         LOG.debug(session_cfg_file)
 
-        try:
-            scfg_dict = load_session_cfg(session_cfg_file)
-        except (IOError, ValueError):
-            # On the client's side, continue execution with defaults.
-            scfg_dict = {}
+        scfg_dict = load_server_cfg(session_cfg_file)
 
         if not scfg_dict.get("credentials"):
             scfg_dict["credentials"] = {}
