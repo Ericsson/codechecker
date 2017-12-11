@@ -404,6 +404,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
                             self.__check_prod_db(product)
 
                         acc_handler = ReportHandler_v6(
+                            self.server.manager,
                             product.session_factory,
                             product,
                             auth_session,

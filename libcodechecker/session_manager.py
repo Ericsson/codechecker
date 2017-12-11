@@ -137,8 +137,11 @@ def load_server_cfg(server_cfg_file):
     valid json file, if loading fails returns an empty dict.
     """
 
-    check_file_owner_rw(server_cfg_file)
-    return util.load_json_or_empty(server_cfg_file, {})
+    if os.path.exists(server_cfg_file):
+        check_file_owner_rw(server_cfg_file)
+        return util.load_json_or_empty(server_cfg_file, {})
+
+    return {}
 
 
 class SessionManager:
@@ -179,6 +182,9 @@ class SessionManager:
         # Create the default settings and then load the file from the disk.
         scfg_dict = {'authentication': {'enabled': False}}
         scfg_dict.update(load_server_cfg(server_cfg_file))
+
+        self.__max_run_count = scfg_dict["max_run_count"] \
+            if "max_run_count" in scfg_dict else None
 
         self.__auth_config = scfg_dict["authentication"]
 
@@ -405,6 +411,13 @@ class SessionManager:
         else:
             return any(_sess.token == token and _sess.still_valid(access)
                        for _sess in SessionManager.__valid_sessions)
+
+    def get_max_run_count(self):
+        """
+        Returns the maximum storable run count. If the value is None it means
+        we can upload unlimited number of runs.
+        """
+        return self.__max_run_count
 
     def get_session(self, token, access=False):
         """Gets the privileged session object based
