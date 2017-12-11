@@ -1873,7 +1873,9 @@ class ThriftRequestHandler(object):
             run = session.query(Run).filter(Run.name == name).one_or_none()
 
             if run and self.__storage_session.has_ongoing_run(run.id):
-                raise Exception('Storage of ' + name + ' is already going!')
+                raise shared.ttypes.RequestFailed(
+                    shared.ttypes.ErrorCode.GENERAL,
+                    'Storage of ' + name + ' is already going!')
         finally:
             session.close()
 
