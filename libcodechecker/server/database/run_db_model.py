@@ -184,7 +184,8 @@ class Report(Base):
     id = Column(Integer, autoincrement=True, primary_key=True)
     file_id = Column(Integer, ForeignKey('files.id', deferrable=True,
                                          initially="DEFERRED",
-                                         ondelete='CASCADE'))
+                                         ondelete='CASCADE'),
+                     index=True)
     run_id = Column(Integer,
                     ForeignKey('runs.id', deferrable=True,
                                initially="DEFERRED",
