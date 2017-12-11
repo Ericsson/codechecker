@@ -11,6 +11,7 @@ import base64
 import codecs
 from collections import defaultdict
 from datetime import datetime
+import hashlib
 import json
 import os
 import shutil
@@ -337,6 +338,27 @@ def sort_results_query(query, sort_types, sort_type_map, order_type_map,
             query = query.order_by(order_type(sort_col))
 
     return query
+
+
+def get_report_path_hash(report, files):
+    report_path_hash = ''
+    events = filter(lambda i: i.get('kind') == 'event', report.bug_path)
+
+    for event in events:
+        file_name = os.path.basename(files[event['location']['file']])
+        line = str(event['location']['line']) if 'location' in event else 0
+        col = str(event['location']['col']) if 'location' in event else 0
+
+        report_path_hash += line + '|' + col + '|' + event['message'] + \
+                            file_name;
+
+    if not len(report_path_hash):
+        LOG.error('Failed to generate report path hash!')
+        LOG.error(report)
+        LOG.error(events)
+
+    LOG.debug(report_path_hash)
+    return hashlib.md5(report_path_hash.encode()).hexdigest()
 
 
 class StorageSession:
@@ -1967,6 +1989,7 @@ class ThriftRequestHandler(object):
             for report in all_reports:
                 hash_map_reports[report.bug_id].append(report)
 
+            already_added = set()
             new_bug_hashes = set()
 
             # Processing PList files.
@@ -1990,11 +2013,17 @@ class ThriftRequestHandler(object):
 
                 # Store report.
                 for report in reports:
-                    LOG.debug("Storing check results to the database.")
-
                     bug_paths, bug_events = \
                         store_handler.collect_paths_events(report, file_ids,
                                                            files)
+                    report_path_hash = get_report_path_hash(report,
+                                                            files)
+                    if report_path_hash in already_added:
+                        LOG.debug('Not storing report. Already added')
+                        LOG.debug(report)
+                        continue
+
+                    LOG.debug("Storing check results to the database.")
 
                     LOG.debug("Storing report")
                     bug_id = report.main[
@@ -2019,6 +2048,7 @@ class ThriftRequestHandler(object):
                         old_report.detected_at)
 
                     new_bug_hashes.add(bug_id)
+                    already_added.add(report_path_hash)
 
                     last_report_event = report.bug_path[-1]
                     file_name = files[last_report_event['location']['file']]
