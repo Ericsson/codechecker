@@ -35,8 +35,8 @@ from libcodechecker import util
 from libcodechecker.analyze import plist_parser
 from libcodechecker.logger import LoggerFactory
 from libcodechecker.profiler import timeit
-from libcodechecker.server import db_cleanup
 from libcodechecker.server import permissions
+from libcodechecker.server.database import db_cleanup
 from libcodechecker.server.database.run_db_model import *
 
 LOG = LoggerFactory.get_new_logger('RUN ACCESS HANDLER')
@@ -1833,6 +1833,7 @@ class ThriftRequestHandler(object):
 
         # Delete files and contents that are not present in any bug paths.
         db_cleanup.remove_unused_files(session)
+        session.commit()
         session.close()
         return True
 

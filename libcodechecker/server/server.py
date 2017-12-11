@@ -44,7 +44,6 @@ from libcodechecker import session_manager
 from libcodechecker.logger import LoggerFactory
 from libcodechecker.util import get_tmp_dir_hash
 
-from . import db_cleanup
 from . import instance_manager
 from . import permissions
 from . import routing
@@ -53,6 +52,7 @@ from api.bad_api_version import ThriftAPIMismatchHandler as BadAPIHandler
 from api.product_server import ThriftProductHandler as ProductHandler_v6
 from api.report_server import ThriftRequestHandler as ReportHandler_v6
 from database import database
+from database import db_cleanup
 from database.config_db_model import Product as ORMProduct
 from database.run_db_model import IDENTIFIER as RUN_META
 
@@ -502,7 +502,7 @@ class Product(object):
     # connect() call so the next could be made.
     CONNECT_RETRY_TIMEOUT = 300
 
-    def __init__(self, orm_object, context, check_env, db_cleanup):
+    def __init__(self, orm_object, context, check_env):
         """
         Set up a new managed product object for the configuration given.
         """
@@ -515,7 +515,6 @@ class Product(object):
         self.__check_env = check_env
         self.__engine = None
         self.__session = None
-        self.__db_cleanup = db_cleanup
         self.__db_status = DBStatus.MISSING
 
         self.__last_connect_attempt = None
@@ -611,9 +610,6 @@ class Product(object):
                 LOG.debug("Initializing new database schema.")
                 self.__db_status = sql_server.connect(init_db)
 
-            if self.__db_status == DBStatus.OK and self.__db_cleanup:
-                db_cleanup.run_cleanup_jobs(self.__session)
-
         except Exception as ex:
             LOG.error("The database for product '{0}' cannot be connected to."
                       .format(self.endpoint))
@@ -633,6 +629,26 @@ class Product(object):
         self.__session = None
         self.__engine = None
 
+    def cleanup_run_db(self):
+        """
+        Cleanup the run database wich belongs to this product.
+        """
+        connection_str = self.__connection_string
+        prod_db = database.SQLServer.from_connection_string(connection_str,
+                                                            RUN_META,
+                                                            None,
+                                                            interactive=False)
+        with database.DBContext(prod_db) as db:
+            try:
+                db_cleanup.remove_unused_files(db.session)
+                db.session.commit()
+                return True
+            except Exception as ex:
+                db.session.rollback()
+                LOG.error("File cleanup failed.")
+                LOG.error(ex)
+                return False
+
 
 class CCSimpleHttpServer(HTTPServer):
     """
@@ -646,7 +662,7 @@ class CCSimpleHttpServer(HTTPServer):
                  RequestHandlerClass,
                  config_directory,
                  product_db_sql_server,
-                 db_cleanup,
+                 skip_db_cleanup,
                  pckg_data,
                  suppress_handler,
                  context,
@@ -665,7 +681,6 @@ class CCSimpleHttpServer(HTTPServer):
         self.context = context
         self.check_env = check_env
         self.manager = manager
-        self.db_cleanup = db_cleanup
         self.__products = {}
 
         # Create a database engine for the configuration database.
@@ -674,19 +689,25 @@ class CCSimpleHttpServer(HTTPServer):
         self.config_session = sessionmaker(bind=self.__engine)
 
         # Load the initial list of products and set up the server.
-        sess = self.config_session()
+        cfg_sess = self.config_session()
         permissions.initialise_defaults('SYSTEM', {
-            'config_db_session': sess
+            'config_db_session': cfg_sess
         })
-        products = sess.query(ORMProduct).all()
+        products = cfg_sess.query(ORMProduct).all()
         for product in products:
             self.add_product(product)
             permissions.initialise_defaults('PRODUCT', {
-                'config_db_session': sess,
+                'config_db_session': cfg_sess,
                 'productID': product.id
             })
-        sess.commit()
-        sess.close()
+        cfg_sess.commit()
+        cfg_sess.close()
+
+        if not skip_db_cleanup:
+            for endpoint, product in self.__products.items():
+                if not product.cleanup_run_db():
+                    LOG.warning("Cleaning database for " +
+                                endpoint + " Failed.")
 
         self.__request_handlers = ThreadPool(processes=10)
         try:
@@ -737,6 +758,7 @@ class CCSimpleHttpServer(HTTPServer):
         """
         Adds a product to the list of product databases connected to
         by the server.
+        Checks the database connection for the product databases.
         """
         if orm_product.endpoint in self.__products:
             LOG.debug("This product is already configured!")
@@ -746,8 +768,7 @@ class CCSimpleHttpServer(HTTPServer):
 
         prod = Product(orm_product,
                        self.context,
-                       self.check_env,
-                       self.db_cleanup)
+                       self.check_env)
 
         # Update the product database status.
         prod.connect()
@@ -835,7 +856,7 @@ def __make_root_file(root_file):
 
 
 def start_server(config_directory, package_data, port, db_conn_string,
-                 suppress_handler, listen_address, force_auth, db_cleanup,
+                 suppress_handler, listen_address, force_auth, skip_db_cleanup,
                  context, check_env):
     """
     Start http server to handle web client and thrift requests.
@@ -873,7 +894,7 @@ def start_server(config_directory, package_data, port, db_conn_string,
                                      RequestHandler,
                                      config_directory,
                                      db_conn_string,
-                                     db_cleanup,
+                                     skip_db_cleanup,
                                      package_data,
                                      suppress_handler,
                                      context,
