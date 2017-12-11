@@ -339,41 +339,6 @@ def sort_results_query(query, sort_types, sort_type_map, order_type_map,
     return query
 
 
-def is_same_event_path(session, report_id, events):
-    """
-    Checks if the given event path is the same as the one in the
-    events argument.
-    """
-    try:
-        q = session.query(BugPathEvent) \
-            .filter(BugPathEvent.report_id == report_id) \
-            .order_by(BugPathEvent.order)
-
-        for i, point2 in enumerate(q):
-            if i == len(events) or len(events) == 1:
-                return False
-
-            point1 = events[i]
-
-            file1name = os.path.basename(session.query(File).
-                                         get(point1.fileId).filepath)
-            file2name = os.path.basename(session.query(File).
-                                         get(point2.file_id).filepath)
-
-            if point1.startCol != point2.col_begin or \
-                    point1.endCol != point2.col_end or \
-                    file1name != file2name or \
-                    point1.msg != point2.msg:
-                return False
-
-        return True
-
-    except Exception as ex:
-        raise shared.ttypes.RequestFailed(
-            shared.ttypes.ErrorCode.GENERAL,
-            str(ex))
-
-
 class StorageSession:
     """
     This class is a singleton which helps to handle a transaction which
@@ -1998,10 +1963,9 @@ class ThriftRequestHandler(object):
                 .filter(Report.run_id == run_id) \
                 .all()
 
-            new_hash_map_reports = defaultdict(list)
-            db_hash_map_reports = defaultdict(list)
+            hash_map_reports = defaultdict(list)
             for report in all_reports:
-                db_hash_map_reports[report.bug_id].append(report)
+                hash_map_reports[report.bug_id].append(report)
 
             new_bug_hashes = set()
 
@@ -2031,46 +1995,30 @@ class ThriftRequestHandler(object):
                     bug_paths, bug_events = \
                         store_handler.collect_paths_events(report, file_ids,
                                                            files)
+
+                    LOG.debug("Storing report")
                     bug_id = report.main[
                         'issue_hash_content_of_line_in_context']
+                    if bug_id in hash_map_reports:
+                        old_report = hash_map_reports[bug_id][0]
+                        old_status = old_report.detection_status
+                        detection_status = 'reopened' \
+                            if old_status == 'resolved' else 'unresolved'
+                    else:
+                        detection_status = 'new'
 
-                    # Check that in the database or in the actual transaction
-                    # is there any report with the same event path.
-                    all_reports = db_hash_map_reports[bug_id] + \
-                        new_hash_map_reports[bug_id]
-                    already_stored_report = None
-                    if len(bug_events) > 1:
-                        for r in all_reports:
-                            if is_same_event_path(session, r.id, bug_events):
-                                already_stored_report = r
-                                break
+                    report_id = store_handler.addReport(
+                        self.__storage_session,
+                        run_id,
+                        file_ids[files[report.main['location']['file']]],
+                        report.main,
+                        bug_paths,
+                        bug_events,
+                        detection_status,
+                        run_history_time if detection_status == 'new' else
+                        old_report.detected_at)
 
-                    if not already_stored_report:
-                        if len(db_hash_map_reports[bug_id]):
-                            old_report = db_hash_map_reports[bug_id][0]
-                            old_status = old_report.detection_status
-                            detection_status = 'reopened' \
-                                if old_status == 'resolved' else 'unresolved'
-                        else:
-                            detection_status = 'new'
-
-                        already_stored_report = store_handler.addReport(
-                            self.__storage_session,
-                            run_id,
-                            file_ids[files[report.main['location']['file']]],
-                            report.main,
-                            bug_paths,
-                            bug_events,
-                            detection_status,
-                            run_history_time if detection_status == 'new' else
-                            old_report.detected_at)
-
-                        new_bug_hashes.add(bug_id)
-                        new_hash_map_reports[bug_id].append(
-                            already_stored_report)
-
-                        LOG.debug("Storing done for report " + str(
-                            already_stored_report.id))
+                    new_bug_hashes.add(bug_id)
 
                     last_report_event = report.bug_path[-1]
                     file_name = files[last_report_event['location']['file']]
@@ -2088,11 +2036,13 @@ class ThriftRequestHandler(object):
                         if supp:
                             _, _, comment = supp
                             status = ttypes.ReviewStatus.FALSE_POSITIVE
-                            self._setReviewStatus(already_stored_report.id,
-                                                  status, comment, session)
+                            self._setReviewStatus(report_id, status, comment,
+                                                  session)
+
+                    LOG.debug("Storing done for report " + str(report_id))
 
             reports_to_delete = set()
-            for bug_hash, reports in db_hash_map_reports.items():
+            for bug_hash, reports in hash_map_reports.items():
                 if bug_hash in new_bug_hashes:
                     reports_to_delete.update(map(lambda x: x.id, reports))
                 else:
