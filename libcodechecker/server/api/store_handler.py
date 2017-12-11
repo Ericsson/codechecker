@@ -140,41 +140,6 @@ def store_bug_path(session, bugpath, report_id):
         session.add(brp)
 
 
-def is_same_event_path(report_id, events, session):
-    """
-    Checks if the given event path is the same as the one in the
-    events argument.
-    """
-    try:
-        q = session.query(BugPathEvent) \
-            .filter(BugPathEvent.report_id == report_id) \
-            .order_by(BugPathEvent.order)
-
-        for i, point2 in enumerate(q):
-            if i == len(events):
-                return False
-
-            point1 = events[i]
-
-            file1name = os.path.basename(session.query(File).
-                                         get(point1.fileId).filepath)
-            file2name = os.path.basename(session.query(File).
-                                         get(point2.file_id).filepath)
-
-            if point1.startCol != point2.col_begin or \
-                    point1.endCol != point2.col_end or \
-                    file1name != file2name or \
-                    point1.msg != point2.msg:
-                return False
-
-        return True
-
-    except Exception as ex:
-        raise shared.ttypes.RequestFailed(
-            shared.ttypes.ErrorCode.GENERAL,
-            str(ex))
-
-
 def addCheckerRun(session, storage_session, command, name, tag, username,
                   run_history_time, version, force):
     """
@@ -330,7 +295,7 @@ def addReport(storage_session,
         LOG.debug("storing events")
         store_bug_events(session, events, report.id)
 
-        return report.id
+        return report
 
     except Exception as ex:
         raise shared.ttypes.RequestFailed(
