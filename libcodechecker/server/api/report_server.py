@@ -350,7 +350,7 @@ def get_report_path_hash(report, files):
         col = str(event['location']['col']) if 'location' in event else 0
 
         report_path_hash += line + '|' + col + '|' + event['message'] + \
-                            file_name;
+            file_name
 
     if not len(report_path_hash):
         LOG.error('Failed to generate report path hash!')
