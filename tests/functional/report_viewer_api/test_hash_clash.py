@@ -128,12 +128,12 @@ class HashClash(unittest.TestCase):
         for report in reports:
             by_file[report.fileId] += 1
 
-        self.assertEqual(by_file[fileid1], 5)
+        self.assertEqual(by_file[fileid1], 4)
         self.assertEqual(by_file[fileid2], 1)
 
         by_checker_message = defaultdict(int)
         for report in reports:
             by_checker_message[report.checkerMsg] += 1
 
-        self.assertEqual(by_checker_message['checker message'], 5)
+        self.assertEqual(by_checker_message['checker message'], 4)
         self.assertEqual(by_checker_message['checker message 2'], 1)
