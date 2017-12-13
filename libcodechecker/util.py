@@ -250,7 +250,7 @@ def split_server_url(url):
         else:
             raise ValueError("The server's address is not in a valid "
                              "'host:port' format!")
-    except:
+    except Exception:
         raise ValueError("The specified server URL is invalid.")
 
     LOG.debug("Result: With '{0}' on server '{1}:{2}'"
@@ -317,7 +317,7 @@ def split_product_url(url):
                                  "'host:port' format!")
         else:
             raise ValueError("Product URL can not contain extra '/' chars.")
-    except:
+    except Exception:
         raise ValueError("The specified product URL is invalid.")
 
     LOG.debug("Result: With '{0}' on server '{1}:{2}', product '{3}'"

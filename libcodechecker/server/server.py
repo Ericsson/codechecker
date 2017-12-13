@@ -879,7 +879,7 @@ def start_server(config_directory, package_data, port, db_conn_string,
             with open(root_file, 'r') as f:
                 root_sha = f.read()
             LOG.debug("Root digest is '{0}'".format(root_sha))
-        except:
+        except IOError:
             LOG.info("Cannot open root file '{0}' even though it exists"
                      .format(root_file))
             root_sha = __make_root_file(root_file)

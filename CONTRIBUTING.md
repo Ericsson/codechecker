@@ -15,13 +15,13 @@ Contribution guidelines
 
 Python style
 ------------
-In CodeChecker, we use the [PEP-8](https://www.python.org/dev/peps/pep-0008)
-rules in our coding style. _PEP-8_ is enforced by the test infrastructure
-&ndash; if you write a new module outside the current directory structure,
+In CodeChecker, we use [pycodestyle](https://pypi.python.org/pypi/pycodestyle/)
+to automatically check our coding style. `pycodestyle` is enforced by the test
+infrastructure &ndash; if you write a new module outside the current directory structure,
 make sure to add its path to [`tests/Makefile`](`tests/Makefile`) under the
-`pep8` target.
+`pycodestyle` target.
 
-In addition to the general rules of _PEP-8_, please keep the following rules
+In addition to the general rules of `pycodestyle`, please keep the following rules
 while writing your code:
 
   * Comments must be whole sentences, beginning with a capital letter and

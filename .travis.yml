@@ -63,7 +63,7 @@ before_install:
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then createuser -s postgres; fi
 
 install:
-    - pip install nose pep8
+    - pip install nose pycodestyle
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pip install virtualenv; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then cat postgres.log; fi
 

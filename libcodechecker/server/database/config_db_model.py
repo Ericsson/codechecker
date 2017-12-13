@@ -106,6 +106,7 @@ class ProductPermission(Base):
         self.name = name
         self.is_group = is_group
 
+
 IDENTIFIER = {
     'identifier': "ConfigDatabase",
     'orm_meta': CC_META,

@@ -627,7 +627,7 @@ def __instance_management(args):
                 LOG.info("Stopped CodeChecker server running on port {0} "
                          "in workspace {1} (PID: {2})".
                          format(i['port'], i['workspace'], i['pid']))
-            except:
+            except Exception:
                 # Let the exception come out if the commands fail
                 LOG.error("Couldn't stop process PID #" + str(i['pid']))
                 raise

@@ -20,12 +20,12 @@ CLEAR_WORKSPACE_CMD = rm -rf $(BUILD_DIR)/workspace
 # Nose test runner configuration options.
 NOSECFG = --config .noserc
 
-test: pep8 test_unit test_functional test_build_logger
+test: pycodestyle test_unit test_functional test_build_logger
 
-test_novenv: pep8 test_unit_novenv test_functional_novenv
+test_novenv: pycodestyle test_unit_novenv test_functional_novenv
 
-pep8:
-	pep8 bin libcodechecker scripts tests vendor/plist_to_html
+pycodestyle:
+	pycodestyle bin libcodechecker scripts tests vendor/plist_to_html
 
 UNIT_TEST_CMD = nosetests $(NOSECFG) tests/unit
 
@@ -112,13 +112,13 @@ test_clean:
 
 # Use the proper requirement file for the given test configuration
 test_matrix_sqlite: VENV_DEV_REQ_FILE = .ci/basic_python_requirements
-test_matrix_sqlite: pep8 test_unit test_sqlite
+test_matrix_sqlite: pycodestyle test_unit test_sqlite
 
 test_matrix_psql_psycopg2: VENV_DEV_REQ_FILE = .ci/python_requirements_psql_psycopg2
-test_matrix_psql_psycopg2: pep8 test_unit test_psql_psycopg2
+test_matrix_psql_psycopg2: pycodestyle test_unit test_psql_psycopg2
 
 test_matrix_psql_pg8000: VENV_DEV_REQ_FILE = .ci/python_requirements_psql_pg8000
-test_matrix_psql_pg8000: pep8 test_unit test_psql_pg8000
+test_matrix_psql_pg8000: pycodestyle test_unit test_psql_pg8000
 
 clean_travis:
 	# Clean CodeChecker config files stored in the users home directory.
