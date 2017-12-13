@@ -634,10 +634,12 @@ class Product(object):
         Cleanup the run database wich belongs to this product.
         """
         connection_str = self.__connection_string
-        prod_db = database.SQLServer.from_connection_string(connection_str,
-                                                            RUN_META,
-                                                            None,
-                                                            interactive=False)
+        prod_db = \
+            database.SQLServer.from_connection_string(connection_str,
+                                                      RUN_META,
+                                                      None,
+                                                      interactive=False,
+                                                      env=self.__check_env)
         with database.DBContext(prod_db) as db:
             try:
                 db_cleanup.remove_unused_files(db.session)

@@ -456,12 +456,15 @@ def check_product_db_status(cfg_sql_server, context):
                  DBStatus.SCHEMA_INIT_ERROR,
                  DBStatus.SCHEMA_MISSING]
 
+    cc_env = analyzer_env.get_check_env(context.path_env_extra,
+                                        context.ld_lib_path_extra)
     prod_status = {}
     for pd in products:
         db = database.SQLServer.from_connection_string(pd.connection,
                                                        RUN_META,
                                                        migration_root,
-                                                       interactive=False)
+                                                       interactive=False,
+                                                       env=cc_env)
         db_location = db.get_db_location()
         ret = db.connect()
         s_ver = db.get_schema_version()
@@ -530,6 +533,9 @@ def __db_migration(cfg_sql_server, context, product_to_upgrade='all'):
                 "to start the server")
     LOG.warning("It is advised to make a full backup of your "
                 "run databases.")
+
+    cc_env = analyzer_env.get_check_env(context.path_env_extra,
+                                        context.ld_lib_path_extra)
     for prod in prod_to_upgrade:
         LOG.info("========================")
         LOG.info("Checking: " + prod)
@@ -542,7 +548,8 @@ def __db_migration(cfg_sql_server, context, product_to_upgrade='all'):
         db = database.SQLServer.from_connection_string(product.connection,
                                                        RUN_META,
                                                        migration_root,
-                                                       interactive=False)
+                                                       interactive=False,
+                                                       env=cc_env)
 
         db_status = db.connect()
 
