@@ -19,6 +19,8 @@ def get_compile_command(action, config, source='', output=''):
     for other operations. """
 
     cmd = [config.analyzer_binary]
+    if action.target != "":
+        cmd.append("--target=" + action.target)
     extend_analyzer_cmd_with_resource_dir(cmd,
                                           config.compiler_resource_dir)
     cmd.extend(action.compiler_includes)
