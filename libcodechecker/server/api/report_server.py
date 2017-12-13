@@ -53,6 +53,57 @@ class CountFilter:
     RUN_HISTORY_TAG = 6
 
 
+class DBSession(object):
+    """
+    Requires a session maker object and creates one session which can be used
+    in the context.
+
+    The session will be automatically closed, but commiting must be done
+    inside the context.
+    """
+    def __init__(self, session_maker):
+        self.__session = None
+        self.__session_maker = session_maker
+
+    def __enter__(self):
+        # create new session
+        self.__session = self.__session_maker()
+        return self.__session
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.__session:
+            self.__session.close()
+
+
+def exc_to_thrift_reqfail(func):
+    """
+    Convert internal exceptions to RequestFailed exception
+    which can be sent back on the thrift connections.
+    """
+    func_name = func.__name__
+
+    def wrapper(*args, **kwargs):
+        try:
+            res = func(*args, **kwargs)
+            return res
+
+        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
+            # Convert SQLAlchemy exceptions.
+            msg = str(alchemy_ex)
+            LOG.error(func_name + ":\n" + msg)
+            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
+                                              msg)
+        except shared.ttypes.RequestFailed as rf:
+            LOG.error(rf.message)
+            raise
+        except Exception as ex:
+            LOG.error(ex.message)
+            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.GENERAL,
+                                              ex.message)
+
+    return wrapper
+
+
 def conv(text):
     """
     Convert * to % got from clients for the database queries.
@@ -472,8 +523,7 @@ class ThriftRequestHandler(object):
         have any of the given permissions.
         """
 
-        try:
-            session = self.__config_database()
+        with DBSession(self.__config_database) as session:
             args = dict(self.__permission_args)
             args['config_db_session'] = session
 
@@ -485,14 +535,6 @@ class ThriftRequestHandler(object):
                     "You are not authorized to execute this action.")
 
             return True
-
-        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
-            msg = str(alchemy_ex)
-            LOG.error(msg)
-            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
-                                              msg)
-        finally:
-            session.close()
 
     def __require_access(self):
         self.__require_permission([permissions.PRODUCT_ACCESS])
@@ -515,11 +557,11 @@ class ThriftRequestHandler(object):
 
         return run_ids
 
+    @exc_to_thrift_reqfail
     @timeit
     def getRunData(self, run_filter):
         self.__require_access()
-        try:
-            session = self.__Session()
+        with DBSession(self.__Session) as session:
 
             # Count the reports subquery.
             stmt = session.query(Report.run_id,
@@ -587,19 +629,12 @@ class ThriftRequestHandler(object):
                                        version_tag))
             return results
 
-        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
-            msg = str(alchemy_ex)
-            LOG.error(msg)
-            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
-                                              msg)
-        finally:
-            session.close()
-
+    @exc_to_thrift_reqfail
     @timeit
     def getRunHistory(self, run_ids, limit, offset):
         self.__require_access()
-        try:
-            session = self.__Session()
+
+        with DBSession(self.__Session) as session:
 
             res = session.query(RunHistory)
 
@@ -619,19 +654,13 @@ class ThriftRequestHandler(object):
                                               time=str(history.time)))
 
             return results
-        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
-            msg = str(alchemy_ex)
-            LOG.error(msg)
-            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
-                                              msg)
-        finally:
-            session.close()
 
+    @exc_to_thrift_reqfail
     @timeit
     def getReport(self, reportId):
         self.__require_access()
-        try:
-            session = self.__Session()
+
+        with DBSession(self.__Session) as session:
 
             result = session.query(Report,
                                    File,
@@ -661,21 +690,13 @@ class ThriftRequestHandler(object):
                 severity=report.severity,
                 reviewData=create_review_data(review_status),
                 detectionStatus=detection_status_enum(report.detection_status))
-        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
-            msg = str(alchemy_ex)
-            LOG.error(msg)
-            raise shared.ttypes.RequestFailed(
-                shared.ttypes.ErrorCode.DATABASE,
-                msg)
-        finally:
-            session.close()
 
+    @exc_to_thrift_reqfail
     @timeit
     def getDiffResultsHash(self, run_ids, report_hashes, diff_type):
         self.__require_access()
 
-        try:
-            session = self.__Session()
+        with DBSession(self.__Session) as session:
             if diff_type == DiffType.NEW:
                 # In postgresql we can select multiple rows filled with
                 # constants by using `unnest` function. In sqlite we have to
@@ -716,14 +737,8 @@ class ThriftRequestHandler(object):
 
             else:
                 return []
-        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
-            msg = str(alchemy_ex)
-            LOG.error(msg)
-            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
-                                              msg)
-        finally:
-            session.close()
 
+    @exc_to_thrift_reqfail
     @timeit
     def getRunResults(self, run_ids, limit, offset, sort_types,
                       report_filter, cmp_data):
@@ -736,10 +751,7 @@ class ThriftRequestHandler(object):
                       str(max_query_limit))
             limit = max_query_limit
 
-        session = self.__Session()
-
-        try:
-
+        with DBSession(self.__Session) as session:
             results = []
 
             diff_hashes = None
@@ -864,14 +876,6 @@ class ThriftRequestHandler(object):
 
             return results
 
-        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
-            msg = str(alchemy_ex)
-            LOG.error(msg)
-            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
-                                              msg)
-        finally:
-            session.close()
-
     @timeit
     def getRunReportCounts(self, run_ids, report_filter, limit, offset):
         """
@@ -881,8 +885,7 @@ class ThriftRequestHandler(object):
         """
         self.__require_access()
         results = []
-        session = self.__Session()
-        try:
+        with DBSession(self.__Session) as session:
             filter_expression = process_report_filter_v2(report_filter)
 
             count_expr = create_count_expression(report_filter)
@@ -912,21 +915,14 @@ class ThriftRequestHandler(object):
                                               reportCount=count)
                 results.append(report_count)
 
-        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
-            msg = str(alchemy_ex)
-            LOG.error(msg)
-            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
-                                              msg)
-        finally:
-            session.close()
             return results
 
+    @exc_to_thrift_reqfail
     @timeit
     def getRunResultCount(self, run_ids, report_filter, cmp_data):
         self.__require_access()
-        session = self.__Session()
 
-        try:
+        with DBSession(self.__Session) as session:
             diff_hashes = None
             if cmp_data:
                 diff_hashes, run_ids = self._cmp_helper(session,
@@ -950,15 +946,6 @@ class ThriftRequestHandler(object):
 
             return report_count
 
-        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
-            msg = str(alchemy_ex)
-            LOG.error(msg)
-            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
-                                              msg)
-
-        finally:
-            session.close()
-
     @timeit
     def __construct_bug_item_list(self, session, report_id, item_type):
 
@@ -974,6 +961,7 @@ class ThriftRequestHandler(object):
 
         return bug_items
 
+    @exc_to_thrift_reqfail
     @timeit
     def getReportDetails(self, reportId):
         """
@@ -981,8 +969,7 @@ class ThriftRequestHandler(object):
          - reportId
         """
         self.__require_access()
-        try:
-            session = self.__Session()
+        with DBSession(self.__Session) as session:
 
             report = session.query(Report).get(reportId)
 
@@ -1007,14 +994,6 @@ class ThriftRequestHandler(object):
 
             return ReportDetails(bug_events_list, bug_point_list)
 
-        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
-            msg = str(alchemy_ex)
-            LOG.error(msg)
-            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
-                                              msg)
-        finally:
-            session.close()
-
     def _setReviewStatus(self, report_id, status, message, session):
         """
         This function sets the review status of the given report. This is the
@@ -1024,60 +1003,50 @@ class ThriftRequestHandler(object):
         """
         self.__require_permission([permissions.PRODUCT_ACCESS,
                                    permissions.PRODUCT_STORE])
-        try:
-            report = session.query(Report).get(report_id)
-            if report:
-                review_status = session.query(ReviewStatus).get(report.bug_id)
-                if review_status is None:
-                    review_status = ReviewStatus()
-                    review_status.bug_hash = report.bug_id
+        report = session.query(Report).get(report_id)
+        if report:
+            review_status = session.query(ReviewStatus).get(report.bug_id)
+            if review_status is None:
+                review_status = ReviewStatus()
+                review_status.bug_hash = report.bug_id
 
-                user = self.__auth_session.user \
-                    if self.__auth_session else "Anonymous"
+            user = self.__auth_session.user \
+                if self.__auth_session else "Anonymous"
 
-                review_status.status = review_status_str(status)
-                review_status.author = user
-                review_status.message = message
-                review_status.date = datetime.now()
+            review_status.status = review_status_str(status)
+            review_status.author = user
+            review_status.message = message
+            review_status.date = datetime.now()
 
-                session.add(review_status)
-                session.flush()
+            session.add(review_status)
+            session.flush()
 
-                return True
-            else:
-                msg = 'Report id ' + str(report_id) + \
-                      ' was not found in the database.'
-                LOG.error(msg)
-                raise shared.ttypes.RequestFailed(
-                    shared.ttypes.ErrorCode.DATABASE, msg)
-        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
-            msg = str(alchemy_ex)
-            LOG.error(msg)
+            return True
+        else:
             raise shared.ttypes.RequestFailed(
                 shared.ttypes.ErrorCode.DATABASE, msg)
 
+    @exc_to_thrift_reqfail
     @timeit
     def changeReviewStatus(self, report_id, status, message):
         """
         Change review status of the bug by report id.
         """
-        try:
-            session = self.__Session()
+        with DBSession(self.__Session) as session:
             res = self._setReviewStatus(report_id, status, message, session)
             session.commit()
-        finally:
-            session.close()
 
         return res
 
+    @exc_to_thrift_reqfail
     @timeit
     def getComments(self, report_id):
         """
             Return the list of comments for the given bug.
         """
         self.__require_access()
-        try:
-            session = self.__Session()
+
+        with DBSession(self.__Session) as session:
             report = session.query(Report).get(report_id)
             if report:
                 result = []
@@ -1098,32 +1067,17 @@ class ThriftRequestHandler(object):
             else:
                 msg = 'Report id ' + str(report_id) + \
                       ' was not found in the database.'
-                LOG.error(msg)
                 raise shared.ttypes.RequestFailed(
                     shared.ttypes.ErrorCode.DATABASE, msg)
 
-        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
-            msg = str(alchemy_ex)
-            LOG.error(msg)
-            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
-                                              msg)
-
-        except Exception as ex:
-            msg = str(ex)
-            LOG.error(msg)
-            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.IOERROR,
-                                              msg)
-        finally:
-            session.close()
-
+    @exc_to_thrift_reqfail
     @timeit
     def getCommentCount(self, report_id):
         """
             Return the number of comments for the given bug.
         """
         self.__require_access()
-        try:
-            session = self.__Session()
+        with DBSession(self.__Session) as session:
             report = session.query(Report).get(report_id)
             if report:
                 commentCount = session.query(Comment) \
@@ -1134,28 +1088,15 @@ class ThriftRequestHandler(object):
                 commentCount = 0
 
             return commentCount
-        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
-            msg = str(alchemy_ex)
-            LOG.error(msg)
-            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
-                                              msg)
 
-        except Exception as ex:
-            msg = str(ex)
-            LOG.error(msg)
-            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.IOERROR,
-                                              msg)
-        finally:
-            session.close()
-
+    @exc_to_thrift_reqfail
     @timeit
     def addComment(self, report_id, comment_data):
         """
             Add new comment for the given bug.
         """
         self.__require_access()
-        session = self.__Session()
-        try:
+        with DBSession(self.__Session) as session:
             report = session.query(Report).get(report_id)
             if report:
                 user = self.__auth_session.user\
@@ -1175,20 +1116,8 @@ class ThriftRequestHandler(object):
                 LOG.error(msg)
                 raise shared.ttypes.RequestFailed(
                     shared.ttypes.ErrorCode.DATABASE, msg)
-        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
-            msg = str(alchemy_ex)
-            LOG.error(msg)
-            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
-                                              msg)
 
-        except Exception as ex:
-            msg = str(ex)
-            LOG.error(msg)
-            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.IOERROR,
-                                              msg)
-        finally:
-            session.close()
-
+    @exc_to_thrift_reqfail
     @timeit
     def updateComment(self, comment_id, content):
         """
@@ -1197,8 +1126,7 @@ class ThriftRequestHandler(object):
             Anyonymous comments that can be updated by anybody.
         """
         self.__require_access()
-        try:
-            session = self.__Session()
+        with DBSession(self.__Session) as session:
 
             user = self.__auth_session.user \
                 if self.__auth_session else "Anonymous"
@@ -1219,20 +1147,8 @@ class ThriftRequestHandler(object):
                 LOG.error(msg)
                 raise shared.ttypes.RequestFailed(
                     shared.ttypes.ErrorCode.DATABASE, msg)
-        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
-            msg = str(alchemy_ex)
-            LOG.error(msg)
-            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
-                                              msg)
 
-        except Exception as ex:
-            msg = str(ex)
-            LOG.error(msg)
-            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.IOERROR,
-                                              msg)
-        finally:
-            session.close()
-
+    @exc_to_thrift_reqfail
     @timeit
     def removeComment(self, comment_id):
         """
@@ -1241,11 +1157,11 @@ class ThriftRequestHandler(object):
             updated by anybody.
         """
         self.__require_access()
-        try:
-            session = self.__Session()
 
-            user = self.__auth_session.user \
-                if self.__auth_session else "Anonymous"
+        user = self.__auth_session.user \
+            if self.__auth_session else "Anonymous"
+
+        with DBSession(self.__Session) as session:
 
             comment = session.query(Comment).get(comment_id)
             if comment:
@@ -1259,23 +1175,11 @@ class ThriftRequestHandler(object):
             else:
                 msg = 'Comment id ' + str(comment_id) + \
                       ' was not found in the database.'
-                LOG.error(msg)
                 raise shared.ttypes.RequestFailed(
                     shared.ttypes.ErrorCode.DATABASE, msg)
-        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
-            msg = str(alchemy_ex)
-            LOG.error(msg)
-            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
-                                              msg)
 
-        except Exception as ex:
-            msg = str(ex)
-            LOG.error(msg)
-            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.IOERROR,
-                                              msg)
-        finally:
-            session.close()
-
+    @exc_to_thrift_reqfail
+    @timeit
     def getCheckerDoc(self, checkerId):
         """
         Parameters:
@@ -1304,10 +1208,10 @@ class ThriftRequestHandler(object):
 
         except Exception as ex:
             msg = str(ex)
-            LOG.error(msg)
             raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.IOERROR,
                                               msg)
 
+    @exc_to_thrift_reqfail
     @timeit
     def getSourceFileData(self, fileId, fileContent, encoding):
         """
@@ -1317,8 +1221,7 @@ class ThriftRequestHandler(object):
          - enum Encoding
         """
         self.__require_access()
-        try:
-            session = self.__Session()
+        with DBSession(self.__Session) as session:
             sourcefile = session.query(File).get(fileId)
 
             if sourcefile is None:
@@ -1340,19 +1243,11 @@ class ThriftRequestHandler(object):
                 return SourceFileData(fileId=sourcefile.id,
                                       filePath=sourcefile.filepath)
 
-        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
-            msg = str(alchemy_ex)
-            LOG.error(msg)
-            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
-                                              msg)
-        finally:
-            session.close()
-
+    @exc_to_thrift_reqfail
     @timeit
     def getLinesInSourceFileContents(self, lines_in_files_requested, encoding):
         self.__require_access()
-        try:
-            session = self.__Session()
+        with DBSession(self.__Session) as session:
 
             res = defaultdict(lambda: defaultdict(str))
             for lines_in_file in lines_in_files_requested:
@@ -1368,14 +1263,6 @@ class ThriftRequestHandler(object):
                     res[lines_in_file.fileId][line] = content
 
             return res
-        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
-            msg = str(alchemy_ex)
-            LOG.error(msg)
-            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
-                                              msg)
-
-        finally:
-            session.close()
 
     def _cmp_helper(self, session, run_ids, cmp_data):
         """
@@ -1405,6 +1292,7 @@ class ThriftRequestHandler(object):
                                       diff_type)
         return report_hashes, run_ids
 
+    @exc_to_thrift_reqfail
     @timeit
     def getCheckerCounts(self, run_ids, report_filter, cmp_data, limit,
                          offset):
@@ -1415,8 +1303,7 @@ class ThriftRequestHandler(object):
         """
         self.__require_access()
         results = []
-        session = self.__Session()
-        try:
+        with DBSession(self.__Session) as session:
             diff_hashes = None
             if cmp_data:
                 diff_hashes, run_ids = self._cmp_helper(session,
@@ -1465,13 +1352,9 @@ class ThriftRequestHandler(object):
                                              severity=severity,
                                              count=count)
                 results.append(checker_count)
+        return results
 
-        except Exception as ex:
-            LOG.error(ex)
-        finally:
-            session.close()
-            return results
-
+    @exc_to_thrift_reqfail
     @timeit
     def getSeverityCounts(self, run_ids, report_filter, cmp_data):
         """
@@ -1481,8 +1364,7 @@ class ThriftRequestHandler(object):
         """
         self.__require_access()
         results = {}
-        session = self.__Session()
-        try:
+        with DBSession(self.__Session) as session:
             diff_hashes = None
             if cmp_data:
                 diff_hashes, run_ids = self._cmp_helper(session,
@@ -1516,13 +1398,9 @@ class ThriftRequestHandler(object):
                 severities = q.group_by(Report.severity)
 
             results = dict(severities)
+        return results
 
-        except Exception as ex:
-            LOG.error(ex)
-        finally:
-            session.close()
-            return results
-
+    @exc_to_thrift_reqfail
     @timeit
     def getCheckerMsgCounts(self, run_ids, report_filter, cmp_data, limit,
                             offset):
@@ -1533,8 +1411,7 @@ class ThriftRequestHandler(object):
         """
         self.__require_access()
         results = {}
-        session = self.__Session()
-        try:
+        with DBSession(self.__Session) as session:
             diff_hashes = None
             if cmp_data:
                 diff_hashes, run_ids = self._cmp_helper(session,
@@ -1574,13 +1451,9 @@ class ThriftRequestHandler(object):
                 checker_messages = checker_messages.limit(limit).offset(offset)
 
             results = dict(checker_messages.all())
+        return results
 
-        except Exception as ex:
-            LOG.error(ex)
-        finally:
-            session.close()
-            return results
-
+    @exc_to_thrift_reqfail
     @timeit
     def getReviewStatusCounts(self, run_ids, report_filter, cmp_data):
         """
@@ -1590,8 +1463,7 @@ class ThriftRequestHandler(object):
         """
         self.__require_access()
         results = defaultdict(int)
-        session = self.__Session()
-        try:
+        with DBSession(self.__Session) as session:
             diff_hashes = None
             if cmp_data:
                 diff_hashes, run_ids = self._cmp_helper(session,
@@ -1635,13 +1507,9 @@ class ThriftRequestHandler(object):
                 else:
                     rev_status = review_status_enum(rev_status)
                     results[rev_status] += count
+        return results
 
-        except Exception as ex:
-            LOG.error(ex)
-        finally:
-            session.close()
-            return results
-
+    @exc_to_thrift_reqfail
     @timeit
     def getFileCounts(self, run_ids, report_filter, cmp_data, limit, offset):
         """
@@ -1651,8 +1519,7 @@ class ThriftRequestHandler(object):
         """
         self.__require_access()
         results = {}
-        session = self.__Session()
-        try:
+        with DBSession(self.__Session) as session:
             if cmp_data:
                 diff_hashes, run_ids = self._cmp_helper(session,
                                                         run_ids,
@@ -1696,13 +1563,9 @@ class ThriftRequestHandler(object):
 
             for fp, count in file_paths:
                 results[fp] = count
+        return results
 
-        except Exception as ex:
-            LOG.error(ex)
-        finally:
-            session.close()
-            return results
-
+    @exc_to_thrift_reqfail
     @timeit
     def getRunHistoryTagCounts(self, run_ids, report_filter, cmp_data):
         """
@@ -1712,8 +1575,7 @@ class ThriftRequestHandler(object):
         """
         self.__require_access()
         results = []
-        session = self.__Session()
-        try:
+        with DBSession(self.__Session) as session:
             if cmp_data:
                 diff_hashes, run_ids = self._cmp_helper(session,
                                                         run_ids,
@@ -1763,13 +1625,9 @@ class ThriftRequestHandler(object):
                     results.append(RunTagCount(time=str(version_time),
                                                name=run_name + ':' + tag,
                                                count=count))
+        return results
 
-        except Exception as ex:
-            LOG.error(ex)
-        finally:
-            session.close()
-            return results
-
+    @exc_to_thrift_reqfail
     @timeit
     def getDetectionStatusCounts(self, run_ids, report_filter, cmp_data):
         """
@@ -1779,8 +1637,7 @@ class ThriftRequestHandler(object):
         """
         self.__require_access()
         results = {}
-        session = self.__Session()
-        try:
+        with DBSession(self.__Session) as session:
             diff_hashes = None
             if cmp_data:
                 diff_hashes, run_ids = self._cmp_helper(session,
@@ -1806,11 +1663,7 @@ class ThriftRequestHandler(object):
             results = dict(detection_stats)
             results = {detection_status_enum(k): v for k, v in results.items()}
 
-        except Exception as ex:
-            LOG.error(ex)
-        finally:
-            session.close()
-            return results
+        return results
 
     @timeit
     def __get_hashes_for_runs(self, session, run_ids):
@@ -1829,37 +1682,40 @@ class ThriftRequestHandler(object):
         return self.__package_version
 
     # -----------------------------------------------------------------------
+    @exc_to_thrift_reqfail
     @timeit
     def removeRunResults(self, run_ids):
         self.__require_store()
-        session = self.__Session()
 
-        runs_to_delete = []
-        for run_id in run_ids:
-            LOG.debug('Run id to delete: ' + str(run_id))
+        with DBSession(self.__Session) as session:
 
-            run_to_delete = session.query(Run).get(run_id)
-            if not run_to_delete.can_delete:
-                LOG.debug("Can't delete " + str(run_id))
-                continue
+            runs_to_delete = []
+            for run_id in run_ids:
+                LOG.debug('Run id to delete: ' + str(run_id))
 
-            run_to_delete.can_delete = False
+                run_to_delete = session.query(Run).get(run_id)
+                if not run_to_delete.can_delete:
+                    LOG.debug("Can't delete " + str(run_id))
+                    continue
+
+                run_to_delete.can_delete = False
+                session.commit()
+                runs_to_delete.append(run_to_delete)
+
+            for run_to_delete in runs_to_delete:
+                # FIXME: clean up bugpaths. Once run_id is a foreign key there,
+                # it should be automatic.
+                session.delete(run_to_delete)
+                session.commit()
+
+            # Delete files and contents that are not present in any bug paths.
+            db_cleanup.remove_unused_files(session)
             session.commit()
-            runs_to_delete.append(run_to_delete)
-
-        for run_to_delete in runs_to_delete:
-            # FIXME: clean up bugpaths. Once run_id is a foreign key there,
-            # it should be automatic.
-            session.delete(run_to_delete)
-            session.commit()
-
-        # Delete files and contents that are not present in any bug paths.
-        db_cleanup.remove_unused_files(session)
-        session.commit()
-        session.close()
-        return True
+            session.close()
+            return True
 
     # -----------------------------------------------------------------------
+    @exc_to_thrift_reqfail
     def getSuppressFile(self):
         """
         Return the suppress file path or empty string if not set.
@@ -1870,11 +1726,11 @@ class ThriftRequestHandler(object):
             return suppress_file
         return ''
 
+    @exc_to_thrift_reqfail
     @timeit
     def getMissingContentHashes(self, file_hashes):
         self.__require_store()
-        try:
-            session = self.__Session()
+        with DBSession(self.__Session) as session:
 
             q = session.query(FileContent) \
                 .options(sqlalchemy.orm.load_only('content_hash')) \
@@ -1883,23 +1739,18 @@ class ThriftRequestHandler(object):
             return list(set(file_hashes) -
                         set(map(lambda fc: fc.content_hash, q)))
 
-        finally:
-            session.close()
-
+    @exc_to_thrift_reqfail
     @timeit
     def massStoreRun(self, name, tag, version, b64zip, force):
         self.__require_store()
 
-        try:
-            session = self.__Session()
+        with DBSession(self.__Session) as session:
             run = session.query(Run).filter(Run.name == name).one_or_none()
 
             if run and self.__storage_session.has_ongoing_run(run.id):
                 raise shared.ttypes.RequestFailed(
                     shared.ttypes.ErrorCode.GENERAL,
                     'Storage of ' + name + ' is already going!')
-        finally:
-            session.close()
 
         with util.TemporaryDirectory() as zip_dir:
             # Unzip sent data.
@@ -1941,9 +1792,11 @@ class ThriftRequestHandler(object):
                     # record in the database or we need to add one.
 
                     LOG.debug(file_name + ' not found or already stored.')
-                    fid = store_handler.addFileRecord(self.__Session(),
-                                                      file_name,
-                                                      file_hash)
+                    fid = None
+                    with DBSession(self.__Session) as session:
+                        fid = store_handler.addFileRecord(session,
+                                                          file_name,
+                                                          file_hash)
                     if not fid:
                         LOG.error("File ID for " + source_file_name +
                                   " is not found in the DB with " +
@@ -1958,12 +1811,13 @@ class ThriftRequestHandler(object):
                     file_content = source_file.read()
                     file_content = codecs.encode(file_content, 'utf-8')
 
-                    file_path_to_id[file_name] = \
-                        store_handler.addFileContent(self.__Session(),
-                                                     file_name,
-                                                     file_content,
-                                                     file_hash,
-                                                     None)
+                    with DBSession(self.__Session) as session:
+                        file_path_to_id[file_name] = \
+                            store_handler.addFileContent(session,
+                                                         file_name,
+                                                         file_content,
+                                                         file_hash,
+                                                         None)
 
             user = self.__auth_session.user \
                 if self.__auth_session else 'Anonymous'

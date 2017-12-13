@@ -369,49 +369,46 @@ def addFileContent(session, filepath, content, content_hash, encoding):
     wait until the other transactions finish. In the meantime the run adding
     transaction times out.
     """
-    try:
-        if encoding == ttypes.Encoding.BASE64:
-            content = base64.b64decode(content)
+    if encoding == ttypes.Encoding.BASE64:
+        content = base64.b64decode(content)
 
-        if not content_hash:
-            hasher = sha256()
-            hasher.update(content)
-            content_hash = hasher.hexdigest()
+    if not content_hash:
+        hasher = sha256()
+        hasher.update(content)
+        content_hash = hasher.hexdigest()
 
-        file_content = session.query(FileContent).get(content_hash)
-        if not file_content:
-            try:
-                compressed_content = zlib.compress(content,
-                                                   zlib.Z_BEST_COMPRESSION)
-                fc = FileContent(content_hash, compressed_content)
-                session.add(fc)
-                session.commit()
-            except sqlalchemy.exc.IntegrityError:
-                # Other transaction moght have added the same content in
-                # the meantime.
-                session.rollback()
+    file_content = session.query(FileContent).get(content_hash)
+    if not file_content:
+        try:
+            compressed_content = zlib.compress(content,
+                                               zlib.Z_BEST_COMPRESSION)
+            fc = FileContent(content_hash, compressed_content)
+            session.add(fc)
+            session.commit()
+        except sqlalchemy.exc.IntegrityError:
+            # Other transaction moght have added the same content in
+            # the meantime.
+            session.rollback()
 
-        file_record = session.query(File) \
-            .filter(File.content_hash == content_hash,
-                    File.filepath == filepath) \
-            .one_or_none()
-        if not file_record:
-            try:
-                file_record = File(filepath, content_hash)
-                session.add(file_record)
-                session.commit()
-            except sqlalchemy.exc.IntegrityError as ex:
-                # Other transaction might have added the same file in the
-                # meantime.
-                session.rollback()
-                file_record = session.query(File) \
-                    .filter(File.content_hash == content_hash,
-                            File.filepath == filepath) \
-                    .one_or_none()
+    file_record = session.query(File) \
+        .filter(File.content_hash == content_hash,
+                File.filepath == filepath) \
+        .one_or_none()
+    if not file_record:
+        try:
+            file_record = File(filepath, content_hash)
+            session.add(file_record)
+            session.commit()
+        except sqlalchemy.exc.IntegrityError as ex:
+            # Other transaction might have added the same file in the
+            # meantime.
+            session.rollback()
+            file_record = session.query(File) \
+                .filter(File.content_hash == content_hash,
+                        File.filepath == filepath) \
+                .one_or_none()
 
-        return file_record.id
-    finally:
-        session.close()
+    return file_record.id
 
 
 def addFileRecord(session, filepath, content_hash):
@@ -426,26 +423,22 @@ def addFileRecord(session, filepath, content_hash):
     wait until the other transactions finish. In the meantime the run adding
     transaction times out.
     """
+    file_record = session.query(File) \
+        .filter(File.content_hash == content_hash,
+                File.filepath == filepath) \
+        .one_or_none()
+    if file_record:
+        return file_record.id
     try:
+        file_record = File(filepath, content_hash)
+        session.add(file_record)
+        session.commit()
+    except sqlalchemy.exc.IntegrityError as ex:
+        # Other transaction might have added the same file in the
+        # meantime.
+        session.rollback()
         file_record = session.query(File) \
             .filter(File.content_hash == content_hash,
-                    File.filepath == filepath) \
-            .one_or_none()
-        if file_record:
-            return file_record.id
-        try:
-            file_record = File(filepath, content_hash)
-            session.add(file_record)
-            session.commit()
-        except sqlalchemy.exc.IntegrityError as ex:
-            # Other transaction might have added the same file in the
-            # meantime.
-            session.rollback()
-            file_record = session.query(File) \
-                .filter(File.content_hash == content_hash,
-                        File.filepath == filepath).one_or_none()
+                    File.filepath == filepath).one_or_none()
 
-        return file_record.id if file_record else None
-
-    finally:
-        session.close()
+    return file_record.id if file_record else None
