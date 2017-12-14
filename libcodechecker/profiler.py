@@ -8,6 +8,8 @@ from datetime import datetime
 import cProfile
 import pstats
 
+from functools import wraps
+
 try:
     from StringIO import StringIO
 except ImportError:
@@ -61,10 +63,14 @@ def timeit(function):
         res = function(*args, **kwargs)
         return res
 
-    if LoggerFactory.get_log_level() == logger.DEBUG:
-        return debug_wrapper
-    else:
-        return release_wrapper
+    @wraps(function)
+    def wrapper(*args, **kwargs):
+        if LoggerFactory.get_log_level() == logger.DEBUG:
+            return debug_wrapper(*args, **kwargs)
+        else:
+            return release_wrapper(*args, **kwargs)
+
+    return wrapper
 
 
 def profileit(function):
