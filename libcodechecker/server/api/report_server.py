@@ -677,6 +677,9 @@ class ThriftRequestHandler(object):
         try:
             session = self.__Session()
             if diff_type == DiffType.NEW:
+                if not report_hashes:
+                    return []
+
                 # In postgresql we can select multiple rows filled with
                 # constants by using `unnest` function. In sqlite we have to
                 # use multiple UNION ALL.
