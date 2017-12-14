@@ -26,7 +26,7 @@
         "alpha.core.SizeofPtr" : ["sensitive", "extreme"],
         "alpha.core.TestAfterDivZero" : ["sensitive", "extreme"],
         "alpha.cplusplus.DeleteWithNonVirtualDtor" : ["sensitive", "extreme"],
-        "alpha.cplusplus.IteratorRange" : ["sensitive", "extreme"],
+        "alpha.cplusplus.IteratorRange" : [],
         "alpha.cplusplus.MisusedMovedObject" : ["sensitive", "extreme"],
         "alpha.security.ArrayBound" : ["extreme"],
         "alpha.security.ArrayBoundV2" : ["extreme"],
