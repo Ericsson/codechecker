@@ -38,6 +38,7 @@ def add_verbose_arguments(parser):
                         default='info',
                         help='Set verbosity level.')
 
+
 DEBUG_ANALYZER = logging.DEBUG_ANALYZER = 15
 logging.addLevelName(DEBUG_ANALYZER, 'DEBUG_ANALYZER')
 

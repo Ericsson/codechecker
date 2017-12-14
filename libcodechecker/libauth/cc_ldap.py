@@ -226,7 +226,7 @@ class LDAPConnection(object):
                     LOG.debug(who)
                     res = self.connection.simple_bind_s(who, cred)
                     LOG.debug(res)
-        except:
+        except Exception:
             LOG.debug("Server bind failed.")
             if self.connection is not None:
                 self.connection.unbind()
@@ -397,6 +397,6 @@ def get_groups(ldap_config, username, credentials):
             LOG.debug("groups:")
             LOG.debug(groups)
             return groups
-        except:
+        except Exception:
             LOG.error("Cannot get ldap groups for user: " + username)
             return []

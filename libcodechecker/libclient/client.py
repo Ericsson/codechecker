@@ -72,7 +72,7 @@ def setup_auth_client_from_url(product_url, session_token=None):
     try:
         protocol, host, port, _ = split_product_url(product_url)
         return setup_auth_client(protocol, host, port, session_token)
-    except:
+    except ValueError:
         LOG.error("Malformed product URL was provided. A valid product URL "
                   "looks like this: 'http://my.server.com:80/ProductName'.")
         sys.exit(2)  # 2 for argument error.
@@ -236,7 +236,7 @@ def setup_client(product_url, product_client=False):
 
     try:
         protocol, host, port, product_name = split_product_url(product_url)
-    except:
+    except ValueError:
         LOG.error("Malformed product URL was provided. A valid product URL "
                   "looks like this: 'http://my.server.com:80/ProductName'.")
         sys.exit(2)  # 2 for argument error.

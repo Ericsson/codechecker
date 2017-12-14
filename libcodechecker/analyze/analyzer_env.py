@@ -28,7 +28,7 @@ def get_log_env(logfile, context, original_env):
         original_ld_library_path = new_env['LD_LIBRARY_PATH']
         new_env['LD_LIBRARY_PATH'] = context.path_logger_lib + ':' + \
             original_ld_library_path
-    except:
+    except KeyError:
         new_env['LD_LIBRARY_PATH'] = context.path_logger_lib
 
     # Set ld logger logfile.
@@ -52,7 +52,7 @@ def get_check_env(path_env_extra, ld_lib_path_extra):
 
         try:
             new_env['PATH'] = extra_path + ':' + new_env['PATH']
-        except:
+        except KeyError:
             new_env['PATH'] = extra_path
 
     if len(ld_lib_path_extra) > 0:
@@ -64,7 +64,7 @@ def get_check_env(path_env_extra, ld_lib_path_extra):
             original_ld_library_path = new_env['LD_LIBRARY_PATH']
             new_env['LD_LIBRARY_PATH'] = \
                 extra_lib + ':' + original_ld_library_path
-        except:
+        except KeyError:
             new_env['LD_LIBRARY_PATH'] = extra_lib
 
     return new_env

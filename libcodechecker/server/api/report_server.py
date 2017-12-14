@@ -261,7 +261,7 @@ def unzip(b64zip, output_dir):
         with zipfile.ZipFile(zip_file, 'r', allowZip64=True) as zipf:
             try:
                 zipf.extractall(output_dir)
-            except:
+            except Exception:
                 LOG.error("Failed to extract received ZIP.")
                 import traceback
                 traceback.print_exc()
