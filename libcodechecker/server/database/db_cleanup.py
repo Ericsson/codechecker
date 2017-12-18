@@ -7,7 +7,7 @@ LOG = LoggerFactory.get_new_logger('DB CLEANUP')
 
 
 def remove_unused_files(session):
-    LOG.debug("Garbage collection of dangling files started...")
+    LOG.info("Garbage collection of dangling files started...")
 
     bpe_files = session.query(BugPathEvent.file_id) \
         .group_by(BugPathEvent.file_id) \
@@ -29,4 +29,4 @@ def remove_unused_files(session):
         .filter(FileContent.content_hash.notin_(files)) \
         .delete(synchronize_session=False)
 
-    LOG.debug("Garbage collection of dangling files finished.")
+    LOG.info("Garbage collection of dangling files finished.")
