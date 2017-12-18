@@ -1826,6 +1826,10 @@ class ThriftRequestHandler(object):
                 if self.__auth_session else 'Anonymous'
 
             run_history_time = datetime.now()
+            # A new database session is initialized here and used
+            # to store the analysis reports.
+            # finishCheckerRun should close the session when
+            # the storage is done.
             run_id = store_handler.addCheckerRun(self.__Session(),
                                                  self.__storage_session,
                                                  command,
@@ -1948,6 +1952,8 @@ class ThriftRequestHandler(object):
                                              # Round the duration to seconds.
                                              int(sum(check_durations)))
 
+            # The database session initialized in addCheckerRun should be
+            # closed in finishCheckerRun after the report storage is done.
             store_handler.finishCheckerRun(self.__storage_session, run_id)
 
             return run_id
