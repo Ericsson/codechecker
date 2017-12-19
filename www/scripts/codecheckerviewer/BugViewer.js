@@ -258,6 +258,7 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
           var element = dom.create('div', {
             style : 'margin-left: ' + left,
             class : 'check-msg ' + enumType,
+            idx : bubble.bugEventNumber,
             innerHTML : (bubbles.length !== 1 ? enumeration : '')
                       + parseBugStepMsg(entities.encode(bubble.msg))
           });
@@ -321,6 +322,13 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
       this._lineMarks.forEach(function (mark) { mark.clear(); });
       this._lineMarks = [];
       resetJsPlumb(this);
+    },
+
+    highlightCurrentBubble : function (idx) {
+      this._lineWidgets.forEach(function (widget) {
+        var lineIdx = widget.node.getAttribute('idx');
+        domClass.toggle(widget.node, 'current', parseInt(lineIdx) === idx);
+      });
     },
 
     jumpTo : function (line, column) {
@@ -628,6 +636,8 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
         };
       }
       this.editor.highlightBugPathEvent(eventToMark);
+      this.editor.highlightCurrentBubble(item.idx);
+
       topic.publish("hooks/bugpath/EventClicked", {
         id    : item.id.split('_')[1],
         event : item.bugPathEvent
@@ -758,6 +768,7 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
         parent : report.reportId + '',
         report : report,
         isLeaf : true,
+        idx : reportDetails.pathEvents.length,
         kind : 'msg'
       });
 
@@ -834,6 +845,7 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
         res.push({
           id : report.reportId + '_' + (index + 1),
           name : name,
+          idx : (index + 1),
           tooltip : tooltip,
           backgroundColor : highlightData.background,
           iconOverride : highlightData.iconOverride,

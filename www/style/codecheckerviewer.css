@@ -222,6 +222,10 @@ html, body {
   border: 1px solid #faebcc;
 }
 
+.check-msg.current {
+  border: 2px dashed #3692ff;
+}
+
 .checker-enum {
   color: white;
   padding: 1px 5px;
