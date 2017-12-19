@@ -13,8 +13,6 @@ from collections import defaultdict
 from datetime import datetime
 import hashlib
 import json
-import os
-import shutil
 import sys
 import tempfile
 import threading
@@ -23,7 +21,6 @@ import zipfile
 import zlib
 
 import sqlalchemy
-from sqlalchemy import func
 
 import shared
 import store_handler
@@ -542,7 +539,8 @@ class ThriftRequestHandler(object):
     def __require_store(self):
         self.__require_permission([permissions.PRODUCT_STORE])
 
-    def __get_run_ids_to_query(self, session, cmp_data=None):
+    @staticmethod
+    def __get_run_ids_to_query(session, cmp_data=None):
         """
         Return run id list for the queries.
         If compare data is set remove those run ids from the returned list.
@@ -949,8 +947,9 @@ class ThriftRequestHandler(object):
 
             return report_count
 
+    @staticmethod
     @timeit
-    def __construct_bug_item_list(self, session, report_id, item_type):
+    def __construct_bug_item_list(session, report_id, item_type):
 
         q = session.query(item_type) \
             .filter(item_type.report_id == report_id) \
@@ -976,18 +975,16 @@ class ThriftRequestHandler(object):
 
             report = session.query(Report).get(reportId)
 
-            events = self.__construct_bug_item_list(session,
-                                                    report.id,
-                                                    BugPathEvent)
+            events = ThriftRequestHandler.__construct_bug_item_list(
+                session, report.id, BugPathEvent)
             bug_events_list = []
             for event, file_path in events:
                 event = bugpathevent_db_to_api(event)
                 event.filePath = file_path
                 bug_events_list.append(event)
 
-            points = self.__construct_bug_item_list(session,
-                                                    report.id,
-                                                    BugReportPoint)
+            points = ThriftRequestHandler.__construct_bug_item_list(
+                session, report.id, BugReportPoint)
 
             bug_point_list = []
             for bug_point, file_path in points:
@@ -1274,18 +1271,21 @@ class ThriftRequestHandler(object):
         in the returned run id list.
         """
         if not run_ids:
-            run_ids = self.__get_run_ids_to_query(session, cmp_data)
+            run_ids = ThriftRequestHandler.__get_run_ids_to_query(session,
+                                                                  cmp_data)
 
         base_run_ids = run_ids
         new_run_ids = cmp_data.runIds
         diff_type = cmp_data.diffType
 
-        base_line_hashes = self.__get_hashes_for_runs(session, base_run_ids)
+        base_line_hashes = ThriftRequestHandler.__get_hashes_for_runs(
+            session, base_run_ids)
 
         if not new_run_ids:
             return base_line_hashes, base_run_ids
 
-        new_check_hashes = self.__get_hashes_for_runs(session, new_run_ids)
+        new_check_hashes = ThriftRequestHandler.__get_hashes_for_runs(
+            session, new_run_ids)
 
         report_hashes, run_ids = \
             get_diff_hashes_for_query(base_run_ids,
@@ -1668,8 +1668,9 @@ class ThriftRequestHandler(object):
 
         return results
 
+    @staticmethod
     @timeit
-    def __get_hashes_for_runs(self, session, run_ids):
+    def __get_hashes_for_runs(session, run_ids):
 
         LOG.debug('query all hashes')
         # Keyed tuple list is returned.

@@ -125,10 +125,6 @@ class ThriftClientHelper(object):
         pass
 
     @ThriftClientCall
-    def getRunResultCount(self, runIds, reportFilters, cmp_data):
-        pass
-
-    @ThriftClientCall
     def getRunResultTypes(self, runId, reportFilters):
         pass
 

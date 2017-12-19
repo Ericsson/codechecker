@@ -19,7 +19,6 @@ from libcodechecker import libhandlers
 from libcodechecker.analyze.analyzers import analyzer_types
 from libcodechecker.logger import add_verbose_arguments
 from libcodechecker.logger import LoggerFactory
-from libcodechecker.util import get_default_workspace
 
 LOG = LoggerFactory.get_new_logger('CHECK')
 

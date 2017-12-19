@@ -15,28 +15,29 @@ from operator import itemgetter
 USER_FORMATS = ['rows', 'table', 'csv', 'json']
 
 
-def twodim_to_str(format, keys, rows, sortby_column_number=None, rev=False):
+def twodim_to_str(format_name, keys, rows,
+                  sort_by_column_number=None, rev=False):
     """
     Converts the given two-dimensional array (with the specified keys)
     to the given format.
     """
-    if sortby_column_number is not None:
-        rows.sort(key=itemgetter(sortby_column_number), reverse=rev)
+    if sort_by_column_number is not None:
+        rows.sort(key=itemgetter(sort_by_column_number), reverse=rev)
 
     all_rows = rows
     if keys is not None and len(keys) > 0:
         all_rows = [keys] + rows
 
-    if format == 'rows':
+    if format_name == 'rows':
         return twodim_to_rows(rows)
-    elif format == 'table' or format == 'plaintext':
+    elif format_name == 'table' or format_name == 'plaintext':
         # TODO: 'plaintext' for now to support the 'CodeChecker cmd' interface.
         return twodim_to_table(all_rows)
-    elif format == 'csv':
+    elif format_name == 'csv':
         return twodim_to_csv(all_rows)
-    elif format == 'dictlist':
+    elif format_name == 'dictlist':
         return twodim_to_dictlist(keys, rows)
-    elif format == 'json':
+    elif format_name == 'json':
         return json.dumps(twodim_to_dictlist(keys, rows))
     else:
         raise ValueError("Unsupported format")

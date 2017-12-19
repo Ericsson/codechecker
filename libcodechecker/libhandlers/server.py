@@ -413,7 +413,7 @@ def print_prod_status(prod_status):
     prod_status = output_formatters.twodim_to_str('table',
                                                   header,
                                                   rows,
-                                                  sortby_column_number=0)
+                                                  sort_by_column_number=0)
     print(prod_status)
 
 
@@ -593,7 +593,7 @@ def __instance_management(args):
     # once "workspace", as a concept, is removed.
     # QUESTION: What is the bestest way here to identify a server for the user?
     if 'list' in args:
-        instances = instance_manager.list()
+        instances = instance_manager.get_instances()
 
         instances_on_multiple_hosts = any(True for inst in instances
                                           if inst['hostname'] !=
@@ -604,7 +604,7 @@ def __instance_management(args):
             head = ['Workspace', 'Computer host', 'View port']
 
         rows = []
-        for instance in instance_manager.list():
+        for instance in instance_manager.get_instances():
             if not instances_on_multiple_hosts:
                 rows.append((instance['workspace'], str(instance['port'])))
             else:
@@ -617,7 +617,7 @@ def __instance_management(args):
         print("Your running CodeChecker servers:")
         print(output_formatters.twodim_to_str('table', head, rows))
     elif 'stop' in args or 'stop_all' in args:
-        for i in instance_manager.list():
+        for i in instance_manager.get_instances():
             if i['hostname'] != socket.gethostname():
                 continue
 

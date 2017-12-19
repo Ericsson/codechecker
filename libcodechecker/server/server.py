@@ -269,49 +269,46 @@ class RequestHandler(SimpleHTTPRequestHandler):
 
             SimpleHTTPRequestHandler.do_GET(self)
 
-    def __check_prod_db(self, product):
+    @staticmethod
+    def __check_prod_db(product):
         """
         Check the product database status.
         Try to reconnect in some cases.
 
-        Returns if everything is ok with the database or
-        throw an exception with the error message if something
-        is wrong with the database.
-
+        Returns if everything is ok with the database or throw an exception
+        with the error message if something is wrong with the database.
         """
-        if product:
-            # Try to reconnect in these cases.
-            # Do not try to reconnect if there is a schema mismatch.
-            # If the product is not connected, try reconnecting...
-            reconnect_cases = [DBStatus.FAILED_TO_CONNECT,
-                               DBStatus.MISSING,
-                               DBStatus.SCHEMA_INIT_ERROR]
 
-            if product.db_status == DBStatus.OK:
-                # no reconnection needed
-                return
-            elif product.db_status in reconnect_cases:
-                LOG.error("Request's product '{0}' is not connected! "
-                          "Attempting reconnect..."
-                          .format(product.endpoint))
-                product.connect()
-                if product.db_status != DBStatus.OK:
-                    # If the reconnection fails,
-                    # send an error to the user.
-                    LOG.debug("Product reconnection failed.")
-                    error_msg = "'{0}' database connection " \
-                        "failed!".format(product.endpoint)
-                    LOG.error(error_msg)
-                    raise ValueError(error_msg)
-            else:
-                # send an error to the user.
+        if not product:
+            error_msg = "The product " + str(product) + " does not exists"
+            LOG.error(error_msg)
+            raise ValueError(error_msg)
+
+        if product.db_status == DBStatus.OK:
+            # No reconnect needed.
+            return
+
+        # Try to reconnect in these cases.
+        # Do not try to reconnect if there is a schema mismatch.
+        # If the product is not connected, try reconnecting...
+        if product.db_status in [DBStatus.FAILED_TO_CONNECT,
+                                 DBStatus.MISSING,
+                                 DBStatus.SCHEMA_INIT_ERROR]:
+            LOG.error("Request's product '{0}' is not connected! "
+                      "Attempting reconnect..."
+                      .format(product.endpoint))
+            product.connect()
+            if product.db_status != DBStatus.OK:
+                # If the reconnection fails send an error to the user.
+                LOG.debug("Product reconnection failed.")
                 error_msg = "'{0}' database connection " \
                     "failed!".format(product.endpoint)
                 LOG.error(error_msg)
                 raise ValueError(error_msg)
-
         else:
-            error_msg = "The product " + str(product) + " does not exists"
+            # Send an error to the user.
+            error_msg = "'{0}' database connection " \
+                "failed!".format(product.endpoint)
             LOG.error(error_msg)
             raise ValueError(error_msg)
 

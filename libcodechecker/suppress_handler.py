@@ -78,7 +78,8 @@ class SourceSuppressHandler(object):
         self.__suppressed_checkers = set()
         self.__suppress_comment = None
 
-    def __check_if_comment(self, line):
+    @staticmethod
+    def __check_if_comment(line):
         """
         Check if the line is a comment.
         Accepted comment format is only if line starts with '//'.
@@ -149,7 +150,7 @@ class SourceSuppressHandler(object):
 
             while not marker_found and comment_line:
                 source_line = util.get_line(source_file, previous_line_num)
-                if self.__check_if_comment(source_line):
+                if SourceSuppressHandler.__check_if_comment(source_line):
                     # It is a comment.
                     if self.suppress_marker in source_line:
                         # Found the marker.

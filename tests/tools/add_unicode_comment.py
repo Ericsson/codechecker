@@ -10,10 +10,10 @@ import argparse
 import os
 import re
 
-commentBegin = '/* Unicode comment\n'
-commentEnd = '\nUnicode comment */'
+COMMENT_BEGIN = '/* Unicode comment\n'
+COMMENT_END = '\nUnicode comment */'
 
-comment = \
+COMMENT = \
     r"""Hungarian special characters:
 áÁ éÉ íÍ óÓ öÖ őŐ úÚ üÜ űŰ
 
@@ -22,70 +22,69 @@ Other special characters:
 
 # Somebody might have written into the line directly after the comment,
 # if so do not remove '\n'
-commentPattern = re.compile(
-    r'\n' + re.escape(commentBegin) + r'.*?' + re.escape(
-        commentEnd) + r'(\n(?=\n|$))?', re.DOTALL)
+COMMENT_PATTERN = re.compile(
+    r'\n' + re.escape(COMMENT_BEGIN) + r'.*?' + re.escape(
+        COMMENT_END) + r'(\n(?=\n|$))?', re.DOTALL)
 
 
-def parseArgs():
-    global args
-    parser = argparse.ArgumentParser(description='This script appends a '
-                                     'C block comment containing special '
-                                     'Unicode characters to the end of '
-                                     'the source files.')
-
-    parser.add_argument('--remove', '-r', action='store_true', dest='remove',
-                        help='Remove the comments from the files.')
-
-    parser.add_argument(dest='paths', nargs='*',
-                        help='The paths of the source files or the '
-                        'directories containing the source files.'
-                        'Directories are explored recursively.')
-
-    args = parser.parse_args()
-
-
-def addCommentToFile(filePath):
+def add_comment_to_file(args, file_path):
     if args.remove:
-        print('Removing comments from %s' % filePath)
-        fullComment = ''
+        print('Removing comments from %s' % file_path)
+        full_comment = ''
     else:
-        print('Adding the comment to %s' % filePath)
-        fullComment = '\n' + commentBegin + comment + commentEnd + '\n'
+        print('Adding the comment to %s' % file_path)
+        full_comment = '\n' + COMMENT_BEGIN + COMMENT + COMMENT_END + '\n'
 
-    with open(filePath, 'r+') as file:
-        text = file.read()
-        text = re.sub(commentPattern, '', text)
-        text += fullComment
+    with open(file_path, 'r+') as handle:
+        text = handle.read()
+        text = re.sub(COMMENT_PATTERN, '', text)
+        text += full_comment
 
-        file.seek(0)
-        file.truncate()
-        file.write(text)
+        handle.seek(0)
+        handle.truncate()
+        handle.write(text)
 
 
-def addCommentToDirectory(dirPath):
-    for root, _, files in os.walk(dirPath):
-        for fileName in files:
-            if not re.match(r'.*(\.c|\.h|\.cpp|\.hpp|\.cxx|\.hxx)$', fileName):
+def add_comment_to_directory(args, dir_path):
+    for root, _, files in os.walk(dir_path):
+        for file_name in files:
+            if not re.match(r'.*(\.c|\.h|\.cpp|\.hpp|\.cxx|\.hxx)$',
+                            file_name):
                 continue
-            filePath = os.path.join(root, fileName)
-            addCommentToFile(filePath)
+            file_path = os.path.join(root, file_name)
+            add_comment_to_file(args, file_path)
 
 
 def main():
-    parseArgs()
+    parser = argparse.ArgumentParser(
+        description="This script appends a C block comment containing "
+                    "special Unicode characters to the end of the source "
+                    "files.")
+
+    parser.add_argument('--remove', '-r',
+                        action='store_true',
+                        dest='remove',
+                        help='Remove the comments from the files.')
+
+    parser.add_argument(dest='paths',
+                        nargs='*',
+                        help="The paths of the source files or the "
+                             "directories containing the source files. "
+                             "Directories are explored recursively.")
+
+    args = parser.parse_args()
+
     if len(args.paths) > 0:
         for path in args.path:
-            fullPath = os.path.realpath(path)
-            if os.path.isfile(fullPath):
-                addCommentToFile(fullPath)
-            elif os.path.isdir(fullPath):
-                addCommentToDirectory(fullPath)
+            full_path = os.path.realpath(path)
+            if os.path.isfile(full_path):
+                add_comment_to_file(args, full_path)
+            elif os.path.isdir(full_path):
+                add_comment_to_directory(args, full_path)
             else:
                 print('%s is not a valid file or directory.' % path)
     else:
-        workingDir = os.getcwd()
-        addCommentToDirectory(workingDir)
+        add_comment_to_directory(args, os.getcwd())
 
 
 if __name__ == '__main__':

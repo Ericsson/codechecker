@@ -15,7 +15,6 @@ import functools
 from hashlib import sha256
 import json
 import os
-import shutil
 import sys
 import tempfile
 import traceback
@@ -36,7 +35,7 @@ from libcodechecker.util import split_product_url
 
 
 LOG = LoggerFactory.get_new_logger('STORE')
-MAX_UPLOAD_SIZE = 1 * 1024 * 1024 * 1024  # 1GiB
+MAX_UPLOAD_SIZE = 1 * 1024 * 1024 * 1024  # 1 GiB.
 
 
 def full_traceback(func):

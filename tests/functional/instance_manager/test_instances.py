@@ -54,7 +54,7 @@ class TestInstances(unittest.TestCase):
         start_server(codechecker_1, EVENT_1, ['--skip-db-cleanup'])
 
         time.sleep(5)
-        instance = [i for i in instance_manager.list(self.home)
+        instance = [i for i in instance_manager.get_instances(self.home)
                     if i['port'] == codechecker_1['viewer_port'] and
                     i['workspace'] == self._test_workspace]
 
@@ -73,18 +73,19 @@ class TestInstances(unittest.TestCase):
 
         # Workspaces must match, servers were started in the same workspace.
         time.sleep(5)
-        instance_workspaces = [i['workspace']
-                               for i in instance_manager.list(self.home)
-                               if i['workspace'] == self._test_workspace]
+        instance_workspaces = [
+            i['workspace'] for i in instance_manager.get_instances(self.home)
+            if i['workspace'] == self._test_workspace]
 
         self.assertEqual(len(instance_workspaces), 2,
                          "Two servers in the same workspace but the workspace"
                          " was not found twice in the instance list.")
 
         # Exactly one server should own each port generated
-        instance_ports = [i['port'] for i in instance_manager.list(self.home)
-                          if i['port'] == codechecker_1['viewer_port'] or
-                          i['port'] == codechecker_2['viewer_port']]
+        instance_ports = [
+            i['port'] for i in instance_manager.get_instances(self.home)
+            if i['port'] == codechecker_1['viewer_port'] or
+            i['port'] == codechecker_2['viewer_port']]
 
         self.assertEqual(len(instance_ports), 2,
                          "The ports for the two started servers were not found"
@@ -107,10 +108,10 @@ class TestInstances(unittest.TestCase):
         codechecker_1 = test_cfg['codechecker_1']
         codechecker_2 = test_cfg['codechecker_2']
 
-        instance_1 = [i for i in instance_manager.list(self.home)
+        instance_1 = [i for i in instance_manager.get_instances(self.home)
                       if i['port'] == codechecker_1['viewer_port'] and
                       i['workspace'] == self._test_workspace]
-        instance_2 = [i for i in instance_manager.list(self.home)
+        instance_2 = [i for i in instance_manager.get_instances(self.home)
                       if i['port'] == codechecker_2['viewer_port'] and
                       i['workspace'] == self._test_workspace]
 
@@ -146,10 +147,10 @@ class TestInstances(unittest.TestCase):
 
         # Check if the remaining server is still there,
         # we need to make sure that --stop only kills the specified server!
-        instance_1 = [i for i in instance_manager.list(self.home)
+        instance_1 = [i for i in instance_manager.get_instances(self.home)
                       if i['port'] == codechecker_1['viewer_port'] and
                       i['workspace'] == self._test_workspace]
-        instance_2 = [i for i in instance_manager.list(self.home)
+        instance_2 = [i for i in instance_manager.get_instances(self.home)
                       if i['port'] == codechecker_2['viewer_port'] and
                       i['workspace'] == self._test_workspace]
 
@@ -171,10 +172,10 @@ class TestInstances(unittest.TestCase):
                          "The stop command didn't return exit code 0.")
         time.sleep(5)
 
-        instance_1 = [i for i in instance_manager.list(self.home)
+        instance_1 = [i for i in instance_manager.get_instances(self.home)
                       if i['port'] == codechecker_1['viewer_port'] and
                       i['workspace'] == self._test_workspace]
-        instance_2 = [i for i in instance_manager.list(self.home)
+        instance_2 = [i for i in instance_manager.get_instances(self.home)
                       if i['port'] == codechecker_2['viewer_port'] and
                       i['workspace'] == self._test_workspace]
 
@@ -199,7 +200,7 @@ class TestInstances(unittest.TestCase):
         start_server(codechecker_1, EVENT_1, ['--skip-db-cleanup'])
         start_server(codechecker_2, EVENT_2, ['--skip-db-cleanup'])
 
-        self.assertEqual(len(instance_manager.list(self.home)), 2,
+        self.assertEqual(len(instance_manager.get_instances(self.home)), 2,
                          "Two servers were started but they don't appear "
                          "in the instance list.")
 
@@ -209,6 +210,6 @@ class TestInstances(unittest.TestCase):
                          "The stop-all command didn't return exit code 0.")
         time.sleep(5)
 
-        self.assertEqual(len(instance_manager.list(self.home)), 0,
+        self.assertEqual(len(instance_manager.get_instances(self.home)), 0,
                          "Both servers were allegedly stopped but they "
                          "did not disappear.")

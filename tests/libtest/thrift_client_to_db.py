@@ -72,7 +72,10 @@ class ThriftAPIHelper(object):
         return res
 
     def open_connection(self):
-        assert not self._auto_handle_connection
+        if self._auto_handle_connection:
+            raise IOError("Explicitly opened connection of auto-connecting "
+                          "wrapper.")
+
         try:
             self._transport.open()
         except TTransport.TTransportException as terr:
@@ -80,7 +83,10 @@ class ThriftAPIHelper(object):
             raise
 
     def close_connection(self):
-        assert not self._auto_handle_connection
+        if self._auto_handle_connection:
+            raise IOError("Explicitly closed connection of auto-connecting "
+                          "wrapper.")
+
         self._transport.close()
 
     def __getattr__(self, attr):
@@ -95,7 +101,7 @@ class ThriftAPIHelper(object):
             raise
         return self
 
-    def __exit__(self, type, value, tb):
+    def __exit__(self, exc_type, value, tb):
         self._transport.close()
 
 
@@ -206,7 +212,7 @@ class CCProductHelper(ThriftAPIHelper):
         return partial(self._thrift_client_call, attr)
 
 
-def get_all_run_results(client, run_id, sort_mode=[], filters=None):
+def get_all_run_results(client, run_id, sort_mode=None, filters=None):
     """
     Get all the results for a run.
     Query limit limits the number of results can be got from the
@@ -216,6 +222,10 @@ def get_all_run_results(client, run_id, sort_mode=[], filters=None):
     offset = 0
     query_limit = client.max_query_size
     results = []
+
+    if not sort_mode:
+        sort_mode = []
+
     while True:
         partial_res = client.getRunResults([run_id],
                                            query_limit,
