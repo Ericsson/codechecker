@@ -1372,19 +1372,20 @@ function (declare, Deferred, dom, domClass, all, topic, Standby, Button,
       //--- Run history tags filter ---//
 
       this._runHistoryTagFilter = new SelectFilter({
-        class : 'run-history-tag',
+        class : 'run-tag',
         title : 'Run tag',
         parent   : this,
         enableSearch : true,
         filterLabel : 'Search for run tags...',
         createItem : function (runHistoryTagCount) {
           return runHistoryTagCount.map(function (tag) {
+            var tagName = tag.runName + ':' + tag.name;
             return {
-              label : tag.name,
-              value : tag.time,
+              label : tagName,
+              value : tag.id,
               count : tag.count,
               iconClass : 'customIcon tag',
-              iconStyle : 'color: ' + util.strToColor(tag.name)
+              iconStyle : 'color: ' + util.strToColor(tagName)
             };
           });
         },

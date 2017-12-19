@@ -12,7 +12,7 @@ accepts.
 # This dict object stores for each MAJOR version (key) the largest MINOR
 # version (value) supported by the build.
 SUPPORTED_VERSIONS = {
-    6: 4
+    6: 5
 }
 
 # This value is automatically generated to represent the highest version
