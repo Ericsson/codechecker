@@ -127,9 +127,17 @@ class OptionParserTest(unittest.TestCase):
         for the analyzer too to search for headers.
         """
         source_files = ["main.cpp", "test.cpp"]
-        compiler_options = ["-sysroot", "/home/sysroot",
-                            "-isysroot", "/home/isysroot",
-                            "-I/home/test"]
+        compiler_options = ["-std=c++11",
+                            "-include/include/myheader.h",
+                            "-include /include/myheader2.h",
+                            "--include", "/include/myheader3.h",
+                            "--sysroot", "/home/sysroot",
+                            "--sysroot=/home/sysroot3",
+                            "-isysroot /home/isysroot",
+                            "-isysroot/home/isysroot2",
+                            "-I/home/test", "-I /home/test2",
+                            "-idirafter /dirafter1",
+                            "-idirafter/dirafter2"]
         linker_options = ["-L/home/test_lib", "-lm"]
         build_cmd = "g++ -o myapp " + \
                     ' '.join(compiler_options) + ' ' + \
@@ -138,8 +146,13 @@ class OptionParserTest(unittest.TestCase):
 
         res = option_parser.parse_options(build_cmd)
         print(res)
+        co_no_space = []
+        for c in compiler_options:
+            co_no_space.append(c.replace(" ", ""))
+        print(set(co_no_space))
+        print(set(res.compile_opts))
         self.assertTrue(set(source_files) == set(res.files))
-        self.assertTrue(set(compiler_options) == set(res.compile_opts))
+        self.assertTrue(set(co_no_space) == set(res.compile_opts))
         self.assertTrue(set(linker_options) == set(res.link_opts))
         self.assertEqual(ActionType.COMPILE, res.action)
 
@@ -159,8 +172,8 @@ class OptionParserTest(unittest.TestCase):
         object_files = ["foo.o",
                         "main.o",
                         "bar.o"]
-        compiler_options = ["-sysroot", "/home/sysroot",
-                            "-isysroot", "/home/isysroot",
+        compiler_options = ["--sysroot", "/home/sysroot",
+                            "-isysroot/home/isysroot",
                             "-I/home/test"]
         linker_options = ["-L/home/test_lib", "-lm"]
         build_cmd = "g++ -o fubar " + \
