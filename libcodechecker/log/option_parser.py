@@ -24,26 +24,30 @@ from libcodechecker.logger import LoggerFactory
 
 LOG = LoggerFactory.get_new_logger('OPTION PARSER')
 
-# Compiler options.
+# Compiler options in the following format
+# argument_name: number of parameters sepearated by space.
 
 COMPILE_OPTION_MAP = {
-    '-idirafter': 1,
-    '-imacros': 1,
-    '-include': 1,
-    '--include': 1,
-    '-iprefix': 1,
-    '-isysroot': 1,
-    '-isystem': 1,
-    '-iwithprefix': 1,
-    '-iwithprefixbefore': 1,
     '-nostdinc': 0,
-    '-sysroot': 1
+    '--sysroot': 1,
+    '--include': 1
 }
 
+# Compiler options which are followed by 1 parameter with or without
+# space in between e.g. "-I/include" "-I /include".
+# After parsing the parameter will be merged to the compiler option.
 COMPILE_OPTION_MAP_MERGED = [
     '^-iquote(.*)$',
     '^-[DIU](.*)$',
-    '^-F(.+)$'
+    '^-F(.+)$',
+    '^-idirafter(.*)$',
+    '^-isystem(.*)$',
+    '^-imacros(.*)$',
+    '^-include(.*)$',
+    '^-isysroot(.*)$',
+    '^-iprefix(.*)$',
+    '^-iwithprefix(.*)$',
+    '^-iwithprefixbefore(.*)$'
 ]
 
 
@@ -80,8 +84,7 @@ COMPILER_LINKER_OPTION_MAP = {
     '-rdynamic': 0,
     '-s': 0,
     '-stdlib': 0,
-    '-sysroot': 1,
-    '-target': 1,
+    '-target': 1,  # This is a clang compiler option!
     '-v': 0,
     '-write-strings': 0
 }
