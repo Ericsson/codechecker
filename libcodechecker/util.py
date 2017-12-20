@@ -50,7 +50,7 @@ def is_localhost(address):
 
     try:
         valid_values.append(socket.gethostbyname(socket.gethostname()))
-    except socket.herror:
+    except (socket.herror, socket.gaierror):
         LOG.debug("Failed to get IP address for hostname '{0}'"
                   .format(socket.gethostname()))
 
