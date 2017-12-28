@@ -20,10 +20,12 @@ Table of Contents
  * [Infeasible path](#infeasible-path)
    * [Correlated conditions](#correlated-conditions)
    * [Partial functions](#partial-functions)
+   * [Loops](#loops)
    * [Prefer standard functions](#prefer-standard-functions)
    * [Do not turn off `core` checks](#do-not-turn-off-core-checks)
    * [Suppress specific dead store warnings](#suppress-specific-dead-store-warnings)
    * [Alternative implementations](#alternative-implementations)
+ * [Defensive checks](#defensive-checks)
  * [Syntax based checks](#syntax-based-checks)
  * [Suppress or skip results](#suppress-or-skip-results)
    * [3rd party code](#third-party-code)
@@ -128,6 +130,52 @@ Other macros or builtins expressing unreachable code may be used.
 Note that the rewritten code is also safer, since debug builds now check for
 more precondition violations. 
 
+### <a name="loops"></a> Loops
+
+Some loops are guaranteed to execute at least once and this is a dynamic
+invariant of the program.
+In some cases the analyzer cannot prove this property of a loop and it will
+simulate the path when the loop is not executed at all. It can be due to the
+lack of context or the code being too complex to the analyzer. 
+This might result in false positives like uninitialized variables or division
+by zero.
+
+Let us look at the the following example:
+
+```cpp
+int avg(List *l) {
+  int sum = 0;
+  int count = 0;
+  for(; l != 0; l = l->next) {
+    sum += l->data;
+    ++count;
+  }
+  return sum/count; // Warning, division by zero.
+}
+```
+
+Without a calling context the analyzer cannot know that `List` is guaranteed to
+be at least one element long. We need an `assert` to tell the analyzer about
+this invariant.
+
+```cpp
+int avg(List *l) {
+  int sum = 0;
+  int count = 0;
+  assert(l != 0);
+  for(; l != 0; l = l->next) {
+    sum += l->data;
+    ++count;
+  }
+  return sum/count; // No warning.
+}
+```
+
+Adding the `assert` will make the code cleaner for the reader because it makes
+an important invariant of the program explicit. Moreover, it will make the
+false positive finding disappear. This will also provide the users of the code
+with an explicit check in the debug build which can help find bugs.
+
 ### <a name="prefer-standard-functions"></a> Prefer standard functions
 
 The analyzer models the behavior of some standard functions but it has
@@ -177,6 +225,8 @@ turn off checks from the `core` package.
 How to suppress a specific dead store warning from the Clang Static Analyzer
 and more useful tips can be found [here](https://clang-analyzer.llvm.org/faq.html).
 Alternatively, the `__clang_analyzer__` macro can be used to introduce usages.
+This macro is automatically defined when the code is analyzed using the Clang
+Static Analyzer.
 Or sometimes macros just need to be cleaned up. Let us consider the following
 example:
 
@@ -234,6 +284,86 @@ The implementation without the bit manipulation can be understood by
 the analyzer better. Note that the compiler might generate the same code
 for the two implementations, so it might make sense to use only the more
 obvious one.
+
+## <a name="defensive-checks"></a> Defensive checks
+
+This section is an odd one because we describe a technique to reduce false
+negatives rather than false positives. 
+
+The preconditions of a function should not be violated by the callers.
+For the working example we will look at an `strlen` implementation.
+It is illegal to call `strlen` with a null pointer.
+
+```cpp
+int strlen(const char *c) {
+  int res = 0;
+  for(; *c != 0; ++c) // Warn! Null pointer dereference.
+    ++res;
+  return res;
+}
+
+int main() {
+  return strlen(0);
+}
+```
+
+The analyzer will be able to find the null dereference in the code above.
+In some cases, however, the author of the functions adds defensive checks to
+avoid crashes when some clients do not respect the precondition.
+
+```cpp
+int strlen(const char *c) {
+  if (c == 0) {
+    // Maybe set an error flag.
+    return 0; // Or might throw exception in case of C++.
+  }
+  int res = 0;
+  for(; *c != 0; ++c) // No warning.
+    ++res;
+  return res;
+}
+
+int main() {
+  return strlen(0);
+}
+```
+
+In the code above the analyzer will not be able to find any errors since it has
+no way to tell whether the defensive checks are due to precondition 
+violations or they are part of the defined behavior. This is called a false 
+negative.
+
+In order to reduce false negatives due to those safety checks we have several
+options.
+
+* We can state the precondition in the function signature. This is not always
+ possible with the current language features.
+```cpp
+int strlen(const char * _Nonnull c);
+```
+* We can just omit the safety check. This might not be feasible in every 
+scenario. But in case the only purpose of the check is debugging using 
+sanitizers and other dynamic analysis tools is always a viable alternative.
+* Guard the safety checks with a macro.
+```cpp
+int strlen(const char *c) {
+#ifndef __clang_analyzer__
+  if (c == 0)
+    return 0;
+#endif
+  int res = 0;
+  for(; *c != 0; ++c)
+    ++res;
+  return res;
+}
+```
+
+As a rule of thumb always think whether a condition in a defensive check is
+responsible for catching precondition violations or part of the defined 
+behavior of the function. In the former case, make sure the check does 
+compromise the static analysis. Excluding those checks from the analysis 
+might not only increase the useful results from the analyzer but also reduce
+the analysis time on that code.
 
 ## <a name="syntax-based-checks"></a> Syntax based checks
 
