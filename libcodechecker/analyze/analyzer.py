@@ -6,7 +6,9 @@
 """
 Prepare and start different analysis types
 """
+
 import copy
+from multiprocessing import Manager
 import os
 import shlex
 import shutil
@@ -36,6 +38,29 @@ def prepare_actions(actions, enabled_analyzers):
             new_action.analyzer_type = ea
             res.append(new_action)
     return res
+
+
+def create_actions_map(actions, manager):
+    """
+    Create a dict for the build actions which is shareable
+    safely between processes.
+    Key: (source_file, target)
+    Value: BuildAction
+    """
+
+    result = manager.dict()
+
+    for act in actions:
+        if act.source_count > 1:
+            LOG.debug("Multiple sources for one build action: " +
+                      str(act.sources))
+        source = os.path.join(act.directory, act.sources.next())
+        key = source, act.target
+        if key in result:
+            LOG.debug("Multiple entires in compile database "
+                      "with the same (source, target) pair: (%s, %s)" % key)
+        result[key] = act
+    return result
 
 
 def __get_analyzer_version(context, analyzer_config_map):
@@ -122,13 +147,22 @@ def perform_analysis(args, context, actions, metadata):
     LOG.info("Starting static analysis ...")
     start_time = time.time()
 
+    # Use Manager to create data objects which can be
+    # safely shared between processes.
+    manager = Manager()
+
+    config_map = manager.dict(config_map)
+
     if ctu_collect:
         ctu_manager.do_ctu_collect(actions, context, config_map, args.jobs,
                                    __get_skip_handler(args), ctu_dir)
 
+    actions_map = create_actions_map(actions, manager)
+
     if ctu_analyze or (not ctu_analyze and not ctu_collect):
-        analysis_manager.start_workers(actions, context, config_map,
-                                       args.jobs, args.output_path,
+        analysis_manager.start_workers(actions_map, actions, context,
+                                       config_map, args.jobs,
+                                       args.output_path,
                                        __get_skip_handler(args),
                                        metadata,
                                        'quiet' in args,
