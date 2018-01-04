@@ -16,9 +16,9 @@ from sqlalchemy import and_
 
 from shared.ttypes import Permission as PermissionEnum
 
-from libcodechecker.logger import LoggerFactory
+from libcodechecker.logger import get_logger
 
-LOG = LoggerFactory.get_new_logger('PERMISSIONS')
+LOG = get_logger('server')
 config_db_model = None  # Module will be loaded later...
 
 

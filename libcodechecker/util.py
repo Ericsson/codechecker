@@ -18,10 +18,9 @@ import tempfile
 
 import psutil
 
-from libcodechecker.logger import LoggerFactory
+from libcodechecker.logger import get_logger
 
-# WARNING! LOG should be only used in this module.
-LOG = LoggerFactory.get_new_logger('UTIL')
+LOG = get_logger('system')
 
 
 def get_free_port():

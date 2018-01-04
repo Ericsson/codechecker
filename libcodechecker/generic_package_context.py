@@ -13,7 +13,7 @@ from libcodechecker import logger
 # TODO: Refers subpackage library
 from libcodechecker.analyze.analyzers import analyzer_types
 
-LOG = logger.LoggerFactory.get_new_logger('CONTEXT')
+LOG = logger.get_logger('system')
 
 
 # -----------------------------------------------------------------------------
@@ -103,8 +103,8 @@ class Context(object):
             self.__package_git_hash = package_git_hash
 
             self.__package_git_tag = package_git_tag
-            if (logger.LoggerFactory.get_log_level() == logger.DEBUG or
-                    logger.LoggerFactory.get_log_level() ==
+            if (LOG.getEffectiveLevel() == logger.DEBUG or
+                    LOG.getEffectiveLevel() ==
                     logger.DEBUG_ANALYZER):
                 self.__package_git_tag = package_git_dirtytag
 

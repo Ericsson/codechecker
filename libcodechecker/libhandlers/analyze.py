@@ -13,15 +13,14 @@ import os
 import shutil
 import sys
 
+from libcodechecker import logger
 from libcodechecker import generic_package_context
 from libcodechecker import host_check
 from libcodechecker.analyze import log_parser
 from libcodechecker.analyze import analyzer
 from libcodechecker.analyze.analyzers import analyzer_types
-from libcodechecker.logger import add_verbose_arguments
-from libcodechecker.logger import LoggerFactory
 
-LOG = LoggerFactory.get_new_logger('ANALYZE')
+LOG = logger.get_logger('system')
 
 
 class OrderedCheckersAction(argparse.Action):
@@ -322,7 +321,7 @@ def add_arguments_to_parser(parser):
                                     "the analysis. USE WISELY AND AT YOUR "
                                     "OWN RISK!")
 
-    add_verbose_arguments(parser)
+    logger.add_verbose_arguments(parser)
     parser.set_defaults(func=main)
 
 
@@ -347,6 +346,7 @@ def main(args):
     Perform analysis on the given logfiles and store the results in a machine-
     readable format.
     """
+    logger.setup_logger(args.verbose)
 
     if len(args.logfile) != 1:
         LOG.warning("Only one log file can be processed right now!")

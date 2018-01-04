@@ -12,9 +12,9 @@ import os
 import re
 
 from libcodechecker import util
-from libcodechecker.logger import LoggerFactory
+from libcodechecker.logger import get_logger
 
-LOG = LoggerFactory.get_new_logger('SUPPRESS HANDLER')
+LOG = get_logger('system')
 
 
 class SuppressHandler(object):

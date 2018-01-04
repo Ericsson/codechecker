@@ -15,9 +15,9 @@ import traceback
 # TODO: This is a cross-subpackage import!
 from libcodechecker.log import build_action
 from libcodechecker.log import option_parser
-from libcodechecker.logger import LoggerFactory
+from libcodechecker.logger import get_logger
 
-LOG = LoggerFactory.get_new_logger('LOG PARSER')
+LOG = get_logger('buildlogger')
 
 
 # If these options are present in the original build command, they must

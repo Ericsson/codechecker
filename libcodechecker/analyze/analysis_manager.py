@@ -20,9 +20,9 @@ from libcodechecker import util
 from libcodechecker.analyze import analyzer_env
 from libcodechecker.analyze import plist_parser
 from libcodechecker.analyze.analyzers import analyzer_types
-from libcodechecker.logger import LoggerFactory
+from libcodechecker.logger import get_logger
 
-LOG = LoggerFactory.get_new_logger('ANALYSIS MANAGER')
+LOG = get_logger('analyzer')
 
 
 def worker_result_handler(results, metadata, output_path):

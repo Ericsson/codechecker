@@ -24,12 +24,11 @@ from shared.ttypes import DBStatus
 from libcodechecker import generic_package_context
 from libcodechecker import generic_package_suppress_handler
 from libcodechecker import host_check
+from libcodechecker import logger
 from libcodechecker import output_formatters
 from libcodechecker import session_manager
 from libcodechecker import util
 from libcodechecker.analyze import analyzer_env
-from libcodechecker.logger import LoggerFactory
-from libcodechecker.logger import add_verbose_arguments
 from libcodechecker.server import server
 from libcodechecker.server import instance_manager
 from libcodechecker.server.database import database
@@ -42,7 +41,7 @@ from libcodechecker.server.database.run_db_model \
     import IDENTIFIER as RUN_META
 
 
-LOG = LoggerFactory.get_new_logger('SERVER')
+LOG = logger.get_logger('server')
 
 
 def get_argparser_ctor_args():
@@ -297,7 +296,7 @@ def add_arguments_to_parser(parser):
                                      " to create a full backup of "
                                      "the product databases.")
 
-    add_verbose_arguments(parser)
+    logger.add_verbose_arguments(parser)
 
     def __handle(args):
         """Custom handler for 'server' so custom error messages can be
@@ -640,7 +639,7 @@ def __instance_management(args):
                 raise
 
 
-def main(args):
+def server_init_start(args):
     """
     Start or manage a CodeChecker report server.
     """
@@ -857,3 +856,12 @@ def main(args):
             sys.exit(1)
         else:
             raise
+
+
+def main(args):
+    """
+    Setup a logger server based on the configuration and
+    manage the Codechecker server.
+    """
+    with logger.LOG_CFG_SERVER(args.verbose):
+        server_init_start(args)

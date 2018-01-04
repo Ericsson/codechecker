@@ -14,10 +14,10 @@ import os
 import plistlib
 import re
 
-from libcodechecker.logger import LoggerFactory
+from libcodechecker.logger import get_logger
 from libcodechecker.report import generate_report_hash
 
-LOG = LoggerFactory.get_new_logger('TIDY OUTPUT CONVERTER')
+LOG = get_logger('analyzer.tidy')
 
 
 class Note(object):

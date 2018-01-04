@@ -20,9 +20,9 @@ import os
 import re
 import shlex
 
-from libcodechecker.logger import LoggerFactory
+from libcodechecker.logger import get_logger
 
-LOG = LoggerFactory.get_new_logger('OPTION PARSER')
+LOG = get_logger('buildlogger')
 
 # Compiler options in the following format
 # argument_name: number of parameters sepearated by space.

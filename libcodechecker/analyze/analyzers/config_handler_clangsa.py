@@ -7,9 +7,9 @@
 import re
 
 from libcodechecker.analyze.analyzers import config_handler
-from libcodechecker.logger import LoggerFactory
+from libcodechecker.logger import get_logger
 
-LOG = LoggerFactory.get_new_logger('CLANGSA CONFIG HANDLER')
+LOG = get_logger('analyzer.clangsa')
 
 
 class ClangSAConfigHandler(config_handler.AnalyzerConfigHandler):

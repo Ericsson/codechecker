@@ -16,11 +16,11 @@ import shared
 from codeCheckerDBAccess_v6 import ttypes
 
 from libcodechecker import generic_package_context
-from libcodechecker.logger import LoggerFactory
+from libcodechecker.logger import get_logger
 # TODO: This is a cross-subpackage import.
 from libcodechecker.server.database.run_db_model import *
 
-LOG = LoggerFactory.get_new_logger('STORE HANDLER')
+LOG = get_logger('system')
 
 
 def metadata_info(metadata_file):

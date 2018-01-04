@@ -31,13 +31,13 @@ from libcodechecker import suppress_handler
 from libcodechecker import util
 # TODO: Cross-subpackage import here.
 from libcodechecker.analyze import plist_parser
-from libcodechecker.logger import LoggerFactory
+from libcodechecker.logger import get_logger
 from libcodechecker.profiler import timeit
 from libcodechecker.server import permissions
 from libcodechecker.server.database import db_cleanup
 from libcodechecker.server.database.run_db_model import *
 
-LOG = LoggerFactory.get_new_logger('RUN ACCESS HANDLER')
+LOG = get_logger('server')
 
 
 class CountFilter:

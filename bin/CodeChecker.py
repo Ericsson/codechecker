@@ -18,10 +18,6 @@ import sys
 from shared.ttypes import RequestFailed
 
 from libcodechecker import libhandlers
-from libcodechecker.logger import LoggerFactory
-
-
-LOG = LoggerFactory.get_new_logger('MAIN')
 
 
 def main(subcommands=None):
@@ -67,7 +63,7 @@ Example scenario: Analyzing, and printing results to Terminal (no storage)
 In this case, no database is used, and the results are printed on the standard
 output.
 
-    CodeChecker check -b "cd ~/myproject && make\"""")
+    CodeChecker check -b "cd ~/myproject && make\" """)
 
         subparsers = parser.add_subparsers(help='commands')
 
@@ -78,37 +74,33 @@ output.
             if len(sys.argv) > 1:
                 first_command = sys.argv[1]
                 if first_command in subcommands:
-                    LOG.debug("Supplied an existing, valid subcommand: " +
-                              first_command)
 
                     # Consider only the given command as an available one.
                     subcommands = [first_command]
 
             for subcommand in subcommands:
-                LOG.debug("Creating arg parser for subcommand " + subcommand)
 
                 try:
                     libhandlers.add_subcommand(subparsers, str(subcommand))
                 except (IOError, ImportError):
-                    LOG.warning("Couldn't import module for subcommand '" +
-                                subcommand + "'... ignoring.")
+                    print("Couldn't import module for subcommand '" +
+                          subcommand + "'... ignoring.")
                     import traceback
                     traceback.print_exc(file=sys.stdout)
 
         args = parser.parse_args()
-        if 'verbose' in args:
-            LoggerFactory.set_log_level(args.verbose)
+
         args.func(args)
 
     except KeyboardInterrupt as kb_err:
-        LOG.info(str(kb_err))
-        LOG.info("Interrupted by user...")
+        print(str(kb_err))
+        print("Interrupted by user...")
         sys.exit(1)
 
     except RequestFailed as thrift_ex:
-        LOG.info("Server error.")
-        LOG.info("Error code: " + str(thrift_ex.errorCode))
-        LOG.info("Error message: " + str(thrift_ex.message))
+        print("Server error.")
+        print("Error code: " + str(thrift_ex.errorCode))
+        print("Error message: " + str(thrift_ex.message))
         sys.exit(1)
 
     # Handle all exception, but print stacktrace. It is needed for atexit.
@@ -122,10 +114,6 @@ output.
 
 # -----------------------------------------------------------------------------
 if __name__ == "__main__":
-    LOG.debug(sys.path)
-    LOG.debug(sys.version)
-    LOG.debug(sys.executable)
-    LOG.debug(os.environ.get('LD_LIBRARY_PATH'))
 
     # Load the available CodeChecker subcommands.
     # This list is generated dynamically by scripts/build_package.py, and is
@@ -134,8 +122,5 @@ if __name__ == "__main__":
 
     with open(commands_cfg) as cfg_file:
         commands = json.load(cfg_file)
-
-    LOG.debug("Available CodeChecker subcommands: ")
-    LOG.debug(commands)
 
     main(commands)

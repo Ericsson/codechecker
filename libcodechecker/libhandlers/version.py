@@ -10,10 +10,10 @@ Defines a subcommand for CodeChecker which prints version information.
 import argparse
 import json
 
+from libcodechecker import logger
 from libcodechecker import generic_package_context
 from libcodechecker import output_formatters
 from libcodechecker import version
-from libcodechecker.logger import add_verbose_arguments
 
 
 def get_argparser_ctor_args():
@@ -48,7 +48,7 @@ def add_arguments_to_parser(parser):
                         choices=output_formatters.USER_FORMATS,
                         help="The format to use when printing the version.")
 
-    add_verbose_arguments(parser)
+    logger.add_verbose_arguments(parser)
     parser.set_defaults(func=main)
 
 
@@ -57,6 +57,7 @@ def main(args):
     Get and print the version information from the version config
     file and Thrift API definition.
     """
+    logger.setup_logger(args.verbose)
 
     context = generic_package_context.get_context()
 

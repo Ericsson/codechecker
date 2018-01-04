@@ -9,9 +9,9 @@
 import fnmatch
 import re
 
-from libcodechecker.logger import LoggerFactory
+from libcodechecker.logger import get_logger
 
-LOG = LoggerFactory.get_new_logger('SKIPLIST HANDLER')
+LOG = get_logger('system')
 
 
 class SkipListHandler(object):

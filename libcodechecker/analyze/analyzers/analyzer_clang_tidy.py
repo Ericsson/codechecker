@@ -12,12 +12,12 @@ import shlex
 import subprocess
 
 from libcodechecker.analyze.analyzers import analyzer_base
-from libcodechecker.logger import LoggerFactory
+from libcodechecker.logger import get_logger
 from libcodechecker.util import get_binary_in_path
 from libcodechecker.analyze.analyzer_env import\
     extend_analyzer_cmd_with_resource_dir
 
-LOG = LoggerFactory.get_new_logger('CLANG TIDY')
+LOG = get_logger('analyzer')
 
 
 class ClangTidy(analyzer_base.SourceAnalyzer):

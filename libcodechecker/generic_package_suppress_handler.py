@@ -11,10 +11,10 @@ import os
 
 from libcodechecker import suppress_file_handler
 from libcodechecker import suppress_handler
-from libcodechecker.logger import LoggerFactory
+from libcodechecker.logger import get_logger
 
 # Warning! this logger should only be used in this module.
-LOG = LoggerFactory.get_new_logger('SUPPRESS')
+LOG = get_logger('system')
 
 
 class GenericSuppressHandler(suppress_handler.SuppressHandler):

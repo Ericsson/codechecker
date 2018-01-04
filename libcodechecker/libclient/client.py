@@ -14,7 +14,7 @@ import shared
 from Authentication_v6 import ttypes as AuthTypes
 
 from libcodechecker import session_manager
-from libcodechecker.logger import LoggerFactory
+from libcodechecker.logger import get_logger
 from libcodechecker.util import split_product_url
 from libcodechecker.version import CLIENT_API
 
@@ -22,7 +22,7 @@ from . import authentication_helper
 from . import thrift_helper
 from . import product_helper
 
-LOG = LoggerFactory.get_new_logger('CLIENT')
+LOG = get_logger('system')
 
 
 def check_api_version(auth_client):

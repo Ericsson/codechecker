@@ -8,9 +8,9 @@ import errno
 import subprocess
 import tempfile
 
-from libcodechecker.logger import LoggerFactory
+from libcodechecker.logger import get_logger
 
-LOG = LoggerFactory.get_new_logger('HOST CHECK')
+LOG = get_logger('analyze')
 
 
 def check_clang(compiler_bin, env):

@@ -14,7 +14,7 @@ import sqlalchemy
 import shared
 from Authentication_v6.ttypes import *
 
-from libcodechecker.logger import LoggerFactory
+from libcodechecker.logger import get_logger
 from libcodechecker.profiler import timeit
 from libcodechecker.server import permissions
 from libcodechecker.server.permissions \
@@ -22,7 +22,7 @@ from libcodechecker.server.permissions \
 from libcodechecker.server.permissions \
     import require_manager, require_permission
 
-LOG = LoggerFactory.get_new_logger('AUTH HANDLER')
+LOG = get_logger('server')
 
 
 class ThriftAuthHandler(object):

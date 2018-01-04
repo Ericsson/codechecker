@@ -19,18 +19,18 @@ from plist_to_html import PlistToHtml
 from codeCheckerDBAccess_v6 import constants, ttypes
 
 from libcodechecker import generic_package_context
+from libcodechecker import logger
 from libcodechecker import suppress_handler
 from libcodechecker import suppress_file_handler
 from libcodechecker.analyze import plist_parser
 from libcodechecker.libclient.client import handle_auth
 from libcodechecker.libclient.client import setup_client
-from libcodechecker.logger import LoggerFactory
 from libcodechecker.output_formatters import twodim_to_str
 from libcodechecker.report import Report
 from libcodechecker.util import split_server_url
 
 
-LOG = LoggerFactory.get_new_logger('CMD')
+LOG = logger.get_logger('system')
 
 
 class CmdLineOutputEncoder(json.JSONEncoder):
@@ -124,6 +124,8 @@ def handle_list_runs(args):
 
 
 def handle_list_results(args):
+    logger.setup_logger(args.verbose)
+
     client = setup_client(args.product_url)
 
     run_info = check_run_names(client, [args.name])
@@ -173,6 +175,9 @@ def handle_list_results(args):
 
 
 def handle_diff_results(args):
+
+    logger.setup_logger(args.verbose)
+
     context = generic_package_context.get_context()
 
     def get_diff_results(client, baseids, cmp_data):
@@ -671,6 +676,9 @@ def handle_list_result_types(args):
 
 
 def handle_remove_run_results(args):
+
+    logger.setup_logger(args.verbose)
+
     client = setup_client(args.product_url)
 
     def is_later(d1, d2):
@@ -718,6 +726,9 @@ def handle_remove_run_results(args):
 
 
 def handle_suppress(args):
+
+    logger.setup_logger(args.verbose)
+
     def bug_hash_filter(bug_id, filepath):
         filepath = '%' + filepath
         return [
@@ -746,6 +757,9 @@ def handle_suppress(args):
 
 
 def handle_login(args):
+
+    logger.setup_logger(args.verbose)
+
     protocol, host, port = split_server_url(args.server_url)
     handle_auth(protocol, host, port, args.username,
                 login='logout' not in args)

@@ -23,19 +23,19 @@ import zlib
 
 from shared.ttypes import Permission
 
+from libcodechecker import logger
 from libcodechecker import generic_package_context
 from libcodechecker import host_check
 from libcodechecker import util
 from libcodechecker.analyze import plist_parser
 from libcodechecker.libclient import client as libclient
-from libcodechecker.logger import add_verbose_arguments
-from libcodechecker.logger import LoggerFactory
 from libcodechecker.util import sizeof_fmt
 from libcodechecker.util import split_product_url
 
 
-LOG = LoggerFactory.get_new_logger('STORE')
-MAX_UPLOAD_SIZE = 1 * 1024 * 1024 * 1024  # 1 GiB.
+LOG = logger.get_logger('system')
+
+MAX_UPLOAD_SIZE = 1 * 1024 * 1024 * 1024  # 1GiB
 
 
 def full_traceback(func):
@@ -145,7 +145,7 @@ def add_arguments_to_parser(parser):
                                   "results for, in the format of "
                                   "'[http[s]://]host:port/Endpoint'.")
 
-    add_verbose_arguments(parser)
+    logger.add_verbose_arguments(parser)
     parser.set_defaults(func=main)
 
 
@@ -265,6 +265,7 @@ def main(args):
     Store the defect results in the specified input list as bug reports in the
     database.
     """
+    logger.setup_logger(args.verbose)
 
     if not host_check.check_zlib():
         raise Exception("zlib is not available on the system!")

@@ -20,9 +20,9 @@ from libcodechecker.analyze.analyzers import analyzer_base
 from libcodechecker.analyze.analyzers import analyzer_types
 from libcodechecker.analyze.analyzers import ctu_triple_arch
 from libcodechecker.analyze import analyzer_env
-from libcodechecker.logger import LoggerFactory
+from libcodechecker.logger import get_logger
 
-LOG = LoggerFactory.get_new_logger('CTU MANAGER')
+LOG = get_logger('analyzer')
 
 
 def generate_func_map_lines(fnmap_dir):

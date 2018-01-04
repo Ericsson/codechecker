@@ -18,10 +18,10 @@ from codeCheckerDBAccess_v6 import codeCheckerDBAccess
 
 from libcodechecker import session_manager
 from libcodechecker import util
-from libcodechecker.logger import LoggerFactory
+from libcodechecker.logger import get_logger
 
 
-LOG = LoggerFactory.get_new_logger('THRIFT HELPER')
+LOG = get_logger('system')
 
 
 class ThriftClientHelper(object):

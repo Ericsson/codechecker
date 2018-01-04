@@ -15,9 +15,9 @@ import argparse
 import os
 
 from libcodechecker import generic_package_context
+from libcodechecker import logger
 from libcodechecker.log import build_manager
 from libcodechecker.log.host_check import check_intercept
-from libcodechecker.logger import add_verbose_arguments
 
 
 def get_argparser_ctor_args():
@@ -77,7 +77,7 @@ def add_arguments_to_parser(parser):
                         help="Do not print the output of the build tool into "
                              "the output of this command.")
 
-    add_verbose_arguments(parser)
+    logger.add_verbose_arguments(parser)
     parser.set_defaults(func=main)
 
 
@@ -86,6 +86,8 @@ def main(args):
     Generates a build log by running the original build command.
     No analysis is done.
     """
+    logger.setup_logger(args.verbose)
+
     args.logfile = os.path.realpath(args.logfile)
     if os.path.exists(args.logfile):
         os.remove(args.logfile)

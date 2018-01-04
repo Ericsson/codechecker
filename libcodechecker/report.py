@@ -15,10 +15,10 @@ import hashlib
 import json
 import os
 
-from libcodechecker.logger import LoggerFactory
 import libcodechecker.util as util
+from libcodechecker.logger import get_logger
 
-LOG = LoggerFactory.get_new_logger('REPORT')
+LOG = get_logger('report')
 
 
 def generate_report_hash(path, source_file, check_name):
