@@ -211,8 +211,14 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
       this._refresh();
     },
 
-    drawBugPath : function () {
+    drawBugPath : function (linesNeeded, bubblesNeeded) {
       var that = this;
+
+      if (linesNeeded === undefined) linesNeeded = true;
+      if (bubblesNeeded === undefined) bubblesNeeded = true;
+
+      if (!linesNeeded && !bubblesNeeded)
+        return;
 
       this.clearBubbles();
       this.clearLines();
@@ -234,9 +240,13 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
       points.forEach(function (point) { --point.startCol; });
       points.forEach(function (bubble) { --bubble.startCol; });
 
-      that.addBubbles(bubbles);
-      that.addOtherFileBubbles(reportDetails.executionPath);
-      that.addLines(points);
+      if (bubblesNeeded) {
+        that.addBubbles(bubbles);
+        that.addOtherFileBubbles(reportDetails.executionPath);
+      }
+
+      if (linesNeeded)
+        that.addLines(points);
     },
 
     addBubbles : function (bubbles) {
@@ -621,18 +631,18 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
       if (isOtherFile || isOtherReport)
         // TODO: Now arrows are redrawn only if new file is opened. But what if
         // in the same file the path goes out of the CodeMirror-rendered area?
-        if (this.buttonPane.showArrowCheckbox.get('checked'))
-          this.editor.drawBugPath();
+        this.editor.drawBugPath(
+          this.buttonPane.showArrowCheckbox.get('checked'));
 
       this.editor.jumpTo(line, column);
 
       var eventToMark;
       if (item.bugPathEvent) {
         eventToMark = item.bugPathEvent;
-      }else{
+      } else {
         eventToMark = {
-            startLine : item.report.line, startCol : item.report.column,
-            endLine   : item.report.line, endCol   : item.report.column
+          startLine : item.report.line, startCol : item.report.column,
+          endLine   : item.report.line, endCol   : item.report.column
         };
       }
       this.editor.highlightBugPathEvent(eventToMark);
