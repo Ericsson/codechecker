@@ -65,7 +65,9 @@ class TestAnalyze(unittest.TestCase):
         process = subprocess.Popen(
             analyze_cmd, stdout=subprocess.PIPE,
             stderr=subprocess.PIPE, cwd=self.test_dir)
-        process.communicate()
+        out, err = process.communicate()
+        print(out)
+        print(err)
 
         errcode = process.returncode
         self.assertEquals(errcode, 0)
@@ -283,7 +285,9 @@ class TestAnalyze(unittest.TestCase):
             analyze_cmd, stdout=subprocess.PIPE,
             stderr=subprocess.PIPE, cwd=self.test_dir)
         out, err = process.communicate()
-        print(out + err)
+        print(out)
+        print(err)
+
         errcode = process.returncode
         self.assertEquals(errcode, 0)
 
@@ -319,7 +323,9 @@ class TestAnalyze(unittest.TestCase):
         process = subprocess.Popen(
             analyze_cmd, stdout=subprocess.PIPE,
             stderr=subprocess.PIPE, cwd=self.test_dir)
-        process.communicate()
+        out, err = process.communicate()
+        print(out)
+        print(err)
 
         errcode = process.returncode
         self.assertEquals(errcode, 0)
@@ -379,7 +385,9 @@ class TestAnalyze(unittest.TestCase):
             analyze_cmd, stdout=subprocess.PIPE,
             stderr=subprocess.PIPE, cwd=self.test_dir)
         out, err = process.communicate()
-        print(out + err)
+        print(out)
+        print(err)
+
         errcode = process.returncode
         self.assertEquals(errcode, 0)
 
