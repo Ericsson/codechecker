@@ -51,8 +51,8 @@ def get_checker_name(diagnostic, path=""):
     """
     checker_name = diagnostic.get('check_name')
     if not checker_name:
-        LOG.info("Check name wasn't found in the plist file '%s'. "
-                 "Read the user guide!" % path)
+        LOG.warning("Check name wasn't found in the plist file '%s'. "
+                    % path)
         checker_name = "unknown"
     return checker_name
 
@@ -120,7 +120,7 @@ def parse_plist(path, source_root=None):
 
             bug_path_items = [item for item in diag['path']]
 
-            report = Report(main_section, bug_path_items)
+            report = Report(main_section, bug_path_items, files)
             reports.append(report)
 
         if diag_changed:
