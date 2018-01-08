@@ -451,7 +451,7 @@ optional arguments:
 ### <a name="skip"></a> _Skip_ file
 
 ~~~~~~~~~~~~~~~~~~~~~
--s SKIPFILE, --ignore SKIPFILE, --skip SKIPFILE
+-i SKIPFILE, --ignore SKIPFILE, --skip SKIPFILE
                       Path to the Skipfile dictating which project files
                       should be omitted from analysis.
 ~~~~~~~~~~~~~~~~~~~~~
