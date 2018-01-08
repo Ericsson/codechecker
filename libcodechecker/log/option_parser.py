@@ -120,7 +120,6 @@ IGNORED_OPTION_MAP = {
     '-MD': 0,
     '-MV': 0,
     '-MMD': 0,
-    '-fsyntax-only': 0,
     '-save-temps': 0,
     '-install_name': 1,
     '-exported_symbols_list': 1,
@@ -134,7 +133,10 @@ IGNORED_OPTION_MAP = {
     '-sectorder': 3,
     '--param': 1,
     '-u': 1,
-    '--serialize-diagnostics': 1
+    '--serialize-diagnostics': 1,
+    # Clang gives different warnings than GCC. Thus if this flag is kept, the
+    # analysis with Clang can fail even if the compilation passes with GCC.
+    '-Werror': 0
 }
 
 IGNORED_OPTION_MAP_REGEX = {
