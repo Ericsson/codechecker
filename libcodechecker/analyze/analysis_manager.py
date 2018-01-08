@@ -476,34 +476,13 @@ def check(check_data):
         return 1, skipped, reanalyzed, action.analyzer_type, None
 
 
-def create_actions_map(actions):
-    """
-    Create a dict for the build actions.
-    Key of the dict: (source_file, target).
-    """
-    result = dict()
-    for act in actions:
-        if act.source_count > 1:
-            LOG.debug("Multiple sources for one build action: " +
-                      str(act.sources))
-        source = os.path.join(act.directory, act.sources.next())
-        key = source, act.target
-        if key in result:
-            LOG.debug("Multiple entires in compile database "
-                      "with the same (source, target) pair: (%s, %s)" % key)
-        result[key] = act
-    return result
-
-
-def start_workers(actions, context, analyzer_config_map,
+def start_workers(actions_map, actions, context, analyzer_config_map,
                   jobs, output_path, skip_handler, metadata,
                   quiet_analyze, capture_analysis_output):
     """
     Start the workers in the process pool.
     For every build action there is worker which makes the analysis.
     """
-
-    actions_map = create_actions_map(actions)
 
     # Handle SIGINT to stop this script running.
     def signal_handler(*arg, **kwarg):
