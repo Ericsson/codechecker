@@ -7,6 +7,7 @@
 import base64
 from collections import defaultdict
 from datetime import datetime
+import hashlib
 import json
 import os
 import re
@@ -356,6 +357,50 @@ def handle_diff_results(args):
         return {'files': file_sources,
                 'reports': report_data}
 
+    def reports_to_report_data(reports):
+        """
+        Converts reports from Report class from one plist file
+        to report data events for the HTML plist parser.
+        """
+        file_sources = {}
+        fname_to_fid = {}
+        report_data = []
+        findex = 0
+
+        for report in reports:
+            # Not all report in this list may refer to the same files
+            # thus we need to create a single file list with
+            # all files from all reports.
+            for f in report.files:
+                if f not in fname_to_fid:
+                    try:
+                        content = open(f, 'r').read()
+                    except (OSError, IOError):
+                        content = f + " NOT FOUND."
+                    file_sources[findex] = {'id': findex,
+                                            'path': f,
+                                            'content': content}
+                    fname_to_fid[f] = findex
+                    findex += 1
+
+            events = []
+            pathElements = report.bug_path
+            index = 1
+            for element in pathElements:
+                if element['kind'] == 'event':
+                    fname = report.files[element['location']['file']]
+                    new_fid = fname_to_fid[fname]
+                    events.append({'line': element['location']['line'],
+                                   'col':  element['location']['col'],
+                                   'file': new_fid,
+                                   'msg':  element['message'],
+                                   'step': index})
+                    index += 1
+            report_data.append(events)
+
+        return {'files': file_sources,
+                'reports': report_data}
+
     def report_to_html(client, reports, output_dir):
         """
         Generate HTML output files for the given reports in the given output
@@ -365,17 +410,26 @@ def handle_diff_results(args):
 
         file_report_map = defaultdict(list)
         for report in reports:
-            file_report_map[report.fileId].append(report)
+            file_path = ""
+            if isinstance(report, Report):
+                file_path = report.main['location']['file_name']
+            else:
+                file_path = report.checkedFile
+            file_report_map[file_path].append(report)
 
         file_cache = {}
-        for file_id, file_reports in file_report_map.items():
-            checked_file = file_reports[0].checkedFile
+        for file_path, file_reports in file_report_map.items():
+            checked_file = file_path
             filename = os.path.basename(checked_file)
+            h = int(hashlib.md5(file_path).hexdigest(), 16) % (10 ** 8)
 
-            report_data = get_report_data(client, file_reports, file_cache)
+            if isinstance(file_reports[0], Report):
+                report_data = reports_to_report_data(file_reports)
+            else:
+                report_data = get_report_data(client, file_reports, file_cache)
 
             output_path = os.path.join(output_dir,
-                                       filename + '_' + str(file_id) + '.html')
+                                       filename + '_' + str(h) + '.html')
             html_builder.create(output_path, report_data)
             print('Html file was generated for file://{0}: file://{1}'.format(
                 checked_file, output_path))
@@ -430,6 +484,7 @@ def handle_diff_results(args):
 
         for report in reports:
             if isinstance(report, Report):
+                # report is coming from a plist file.
                 bug_line = report.main['location']['line']
                 bug_col = report.main['location']['col']
                 sev = 'unknown'
@@ -441,6 +496,7 @@ def handle_diff_results(args):
                     get_line_from_file(report.main['location']['file_name'],
                                        bug_line)
             else:
+                # report is of ReportData type coming from CodeChecker server.
                 bug_line = report.line
                 bug_col = report.column
                 sev = ttypes.Severity._VALUES_TO_NAMES[report.severity]

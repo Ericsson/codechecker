@@ -152,7 +152,7 @@ class Report(object):
     from the path section for easier skip/suppression handling
     and result processing.
     """
-    def __init__(self, main, bugpath):
+    def __init__(self, main, bugpath, files):
         # Dictionary containing checker name, report hash,
         # main report position, report message ...
         self.__main = main
@@ -160,6 +160,9 @@ class Report(object):
         # Dictionary containing bug path related data
         # with control, event ... sections.
         self.__bug_path = bugpath
+
+        # Dictionary fileid to filepath that bugpath events refer to
+        self.__files = files
 
     @property
     def main(self):
@@ -169,6 +172,11 @@ class Report(object):
     def bug_path(self):
         return self.__bug_path
 
+    @property
+    def files(self):
+        return self.__files
+
     def __str__(self):
         msg = json.dumps(self.__main, sort_keys=True, indent=2)
+        msg += str(self.__files)
         return msg
