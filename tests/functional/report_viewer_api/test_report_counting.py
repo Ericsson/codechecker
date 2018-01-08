@@ -597,15 +597,3 @@ class TestReportFilter(unittest.TestCase):
             all_report_counts += rc.reportCount
 
         self.assertEqual(separate_report_counts, all_report_counts)
-
-    def test_run_history_tag_counts(self):
-        """
-        Count reports for all the runs.
-        There is only one tag
-        """
-        run = self._test_runs[0]
-        tag_reports = self._cc_client.getRunHistoryTagCounts(None,
-                                                             None,
-                                                             None)
-        self.assertEqual(len(tag_reports), 1)
-        self.assertEqual(tag_reports[0].name, run.name + ':v1.0')

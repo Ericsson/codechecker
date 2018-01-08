@@ -133,7 +133,9 @@ typedef list<RunHistoryData> RunHistoryDataList
 struct RunTagCount {
   1: string          time,   // Date time of the last run.
   2: string          name,   // Name of the tag.
-  3: i64             count   // Count of the reports.
+  3: i64             count,  // Count of the reports.
+  4: i64             id,     // Id of the run tag.
+  5: string          runName // Name of the run which the tag belongs to.
 }
 typedef list<RunTagCount> RunTagCounts
 
@@ -156,7 +158,9 @@ struct ReportData {
   9: i64              column,          // column number of the report main section (not part of the path).
   10: Severity        severity,        // Checker severity.
   11: ReviewData      reviewData,      // Bug review status information.
-  12: DetectionStatus detectionStatus  // State of the bug (see the enum constant values).
+  12: DetectionStatus detectionStatus, // State of the bug (see the enum constant values).
+  13: string          detectedAt,      // Detection date of the report.
+  14: string          fixedAt          // Date when the report was fixed.
 }
 typedef list<ReportData> ReportDataList
 
@@ -172,11 +176,12 @@ struct ReportFilter {
   5: list<Severity>        severity,
   6: list<ReviewStatus>    reviewStatus,
   7: list<DetectionStatus> detectionStatus,
-  8: list<string>          runHistoryTag,
+  8: list<string>          runHistoryTag,      // Date of the run tag. !Deprecated!
   9: optional i64          firstDetectionDate,
   10: optional i64         fixDate,
   11: optional bool        isUnique,
-  12: list<string>         runName
+  12: list<string>         runName,
+  13: list<i64>            runTag              // Ids of the run history tags.
 }
 
 struct RunReportCount {
