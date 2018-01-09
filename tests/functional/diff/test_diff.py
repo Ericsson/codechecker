@@ -612,3 +612,15 @@ class Diff(unittest.TestCase):
         self.assertEqual(count, 5)
         count = len(re.findall(r'\[unix\.Malloc\]', out))
         self.assertEqual(count, 1)
+
+    def test_max_compound_select(self):
+        """
+        Test the maximum number of compound select query.
+        """
+        base_run_id = self._base_runid
+
+        report_hashes = [str(i) for i in range(0, 10000)]
+        diff_res = self._cc_client.getDiffResultsHash([base_run_id],
+                                                      report_hashes,
+                                                      DiffType.NEW)
+        self.assertEqual(len(diff_res), len(report_hashes))

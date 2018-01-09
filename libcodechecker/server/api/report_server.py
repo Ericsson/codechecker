@@ -711,13 +711,12 @@ class ThriftRequestHandler(object):
 
         with DBSession(self.__Session) as session:
             if diff_type == DiffType.NEW:
-                if not report_hashes:
-                    return []
-
                 # In postgresql we can select multiple rows filled with
                 # constants by using `unnest` function. In sqlite we have to
                 # use multiple UNION ALL.
-                new_hashes = None
+
+                if not report_hashes:
+                    return []
 
                 base_hashes = session.query(Report.bug_id.label('bug_id')) \
                     .outerjoin(File, Report.file_id == File.id) \
@@ -729,12 +728,24 @@ class ThriftRequestHandler(object):
                         .except_(base_hashes).alias('new_bugs')
                     return [res[0] for res in session.query(new_hashes)]
                 else:
-                    new_hashes = union_all(*[
-                        select([bindparam('bug_id' + str(i), h)
-                               .label('bug_id')])
-                        for i, h in enumerate(report_hashes)])
-                    q = select([new_hashes]).except_(base_hashes)
-                    return [res[0] for res in session.query(q)]
+                    # The maximum number of compound select in sqlite is 500
+                    # by default. We increased SQLITE_MAX_COMPOUND_SELECT
+                    # limit but when the number of compound select was larger
+                    # than 8435 sqlite threw a `Segmentation fault` error.
+                    # For this reason we create queries with chunks.
+                    new_hashes = []
+                    chunk_size = 500
+                    for chunk in [report_hashes[i:i + chunk_size] for
+                                  i in range(0, len(report_hashes),
+                                             chunk_size)]:
+                        new_hashes_query = union_all(*[
+                            select([bindparam('bug_id' + str(i), h)
+                                   .label('bug_id')])
+                            for i, h in enumerate(chunk)])
+                        q = select([new_hashes_query]).except_(base_hashes)
+                        new_hashes.extend([res[0] for res in session.query(q)])
+
+                    return new_hashes
             elif diff_type == DiffType.RESOLVED:
                 results = session.query(Report.bug_id) \
                     .filter(Report.run_id.in_(run_ids)) \
