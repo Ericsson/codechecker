@@ -1657,7 +1657,7 @@ class ThriftRequestHandler(object):
 
             tag_q = tag_q.subquery()
 
-            q = session.query(tag_q.c.run_id,
+            q = session.query(tag_q.c.run_history_id,
                               func.max(Run.name).label('run_name'),
                               func.max(RunHistory.id),
                               func.max(RunHistory.time),
