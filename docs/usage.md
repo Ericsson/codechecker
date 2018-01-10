@@ -23,6 +23,7 @@ Table of Contents
   * [Alternative 2: Store each analysis in a new run](#storing-new-runs)
     * [Jenkins Script](#storing-new-runs-example)  
   * [Programmer checking new bugs in the code after local edit (and compare it to a central database)](#compare)
+  * [Setting up user authentication](#authentication)
 * [Updating CodeChecker to new version](#upgrade)
 
 ## <a name="step-1"></a> Step 1: Integrate CodeChecker into your build system
@@ -392,6 +393,11 @@ master branch is already stored under run name `tmux_master`.
 ```
  CodeChecker cmd diff -b tmux_master -n ./reports --new --url http://localhost:8555/Default
 ```
+
+### <a name="authentication"></a> Setting up user authentication
+You can set up authentication for your server and (web,command line) clients 
+as described in the [Authentication Guide](authentication.md). 
+
 
 ## <a name="upgrade"></a> Updating CodeChecker to new version
 
