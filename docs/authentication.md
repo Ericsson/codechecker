@@ -1,8 +1,6 @@
 CodeChecker authentication subsystem
 ====================================
 
-# Please be advised, that currently, login credentials travel on an unencrypted channel!
-
 CodeChecker also supports only allowing a privileged set of users to access
 the results stored on a server.
 
