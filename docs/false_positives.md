@@ -176,6 +176,39 @@ an important invariant of the program explicit. Moreover, it will make the
 false positive finding disappear. This will also provide the users of the code
 with an explicit check in the debug build which can help find bugs.
 
+In some cases the analyzer cannot reason about the values of expressions
+due to some limitations of the constraint solver. In the code example 
+below the analyzer cannot record the constraint about a complex expression.
+
+```cpp
+if (a > 1 && b > 1 && c > 1) {
+  int ret;
+  assert(a*b+c > 0);
+  while (a*b+c > 0) {
+    ret = 0;
+    ...
+  }
+  return ret; // Warning, uninitialized value.
+}
+```
+
+Introducing a new variable can suppress this problem.
+
+```cpp
+if (a > 1 && b > 1 && c > 1) {
+  int ret;
+  int cond = a*b+c;
+  assert(cond > 0);
+  while (cond > 0) {
+    ret = 0;
+    ...
+  }
+  return ret; // No warning.
+}
+```
+
+Do not forget to update the body of the loop if necessary.
+
 ### <a name="prefer-standard-functions"></a> Prefer standard functions
 
 The analyzer models the behavior of some standard functions but it has
