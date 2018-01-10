@@ -1,1 +1,1 @@
-CC_API_VERSION = '6.5';
+CC_API_VERSION = '6.6';

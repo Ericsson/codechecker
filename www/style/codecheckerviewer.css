@@ -1304,3 +1304,12 @@ span[class*="severity-"] {
   color: #357ea7;
   border: 1px solid #cad2da;
 }
+
+.bug-path-length {
+  position: relative;
+}
+
+.bug-path-length .length {
+  display: block;
+  text-align: center;
+}

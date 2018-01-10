@@ -96,6 +96,14 @@ function (locale, dom, style, json) {
       return dojo.blendColors(baseColour, new dojo.Color(blendColour), ratio);
     },
 
+    generateRedGreenGradientColor : function (value, max, opacity) {
+      var red   = (255 * value) / max;
+      var green = (255 * (max - value)) / max;
+      var blue  = 0;
+      return 'rgba(' + parseInt(red) + ',' + parseInt(green) + ',' + blue
+       + ',' + opacity + ')';
+    },
+
     /**
      * Converts the given number of seconds into a more human-readable
      * 'hh:mm:ss' format.

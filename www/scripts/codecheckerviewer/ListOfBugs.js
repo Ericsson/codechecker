@@ -7,6 +7,7 @@
 define([
   'dojo/_base/declare',
   'dojo/dom-construct',
+  'dojo/dom-style',
   'dojo/Deferred',
   'dojo/data/ObjectStore',
   'dojo/store/api/Store',
@@ -21,9 +22,9 @@ define([
   'codechecker/RunHistory',
   'codechecker/hashHelper',
   'codechecker/util'],
-function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
-  BorderContainer, TabContainer, Tooltip, DataGrid, BugViewer, BugFilterView,
-  RunHistory, hashHelper, util) {
+function (declare, dom, style, Deferred, ObjectStore, Store, QueryResults,
+  topic, BorderContainer, TabContainer, Tooltip, DataGrid, BugViewer,
+  BugFilterView, RunHistory, hashHelper, util) {
 
   function getRunData(runIds, runNames) {
     var runFilter = new CC_OBJECTS.RunFilter();
@@ -183,6 +184,8 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
         ? CC_OBJECTS.SortType.DETECTION_STATUS
         : sort.attribute === 'reviewStatus'
         ? CC_OBJECTS.SortType.REVIEW_STATUS
+        : sort.attribute === 'bugPathLength'
+        ? CC_OBJECTS.SortType.BUG_PATH_LENGTH
         : CC_OBJECTS.SortType.SEVERITY;
       sortMode.ord
         = sort.descending
@@ -239,6 +242,20 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
     return '<span class="link">' + checkerId + '</span>';
   }
 
+  function bugPathLengthFormatter(length) {
+    var d = dom.create('span', { innerHTML : length, class : 'length' });
+
+    // This value says that bug path length with this value and above are
+    // difficult to understand. The background color of these bug path lengths
+    // will be red.
+    var bugPathLengthLimit = 20;
+    var blendColor = util.generateRedGreenGradientColor(length,
+        bugPathLengthLimit, 0.5);
+    style.set(d, 'background-color', blendColor);
+
+    return d.outerHTML;
+  }
+
   var ListOfBugsGrid = declare(DataGrid, {
     constructor : function () {
       var width = (100 / 5).toString() + '%';
@@ -248,6 +265,7 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
         { name : 'Message', field : 'checkerMsg', width : '100%', formatter : checkerMessageFormatter },
         { name : 'Checker name', field : 'checkerId', width : '50%', formatter: checkerNameFormatter },
         { name : 'Severity', field : 'severity', cellClasses : 'severity', width : '15%', formatter : severityFormatter },
+        { name : 'Bug path length', field : 'bugPathLength', cellClasses : 'bug-path-length', width : '15%', formatter : bugPathLengthFormatter },
         { name : 'Review status', field : 'reviewStatus', cellClasses : 'review-status', width : '15%', formatter : reviewStatusFormatter },
         { name : 'Review comment', cellClasses : 'review-comment-message compact', field : 'reviewComment', width : '50%' },
         { name : 'Detection status', field : 'detectionStatus', cellClasses : 'detection-status', width : '15%', formatter : detectionStatusFormatter }
@@ -270,8 +288,9 @@ function (declare, dom, Deferred, ObjectStore, Store, QueryResults, topic,
     canSort : function (inSortInfo) {
       var cell = this.getCell(Math.abs(inSortInfo) - 1);
 
-      return cell.field === 'file' ||
+      return cell.field === 'bugPathLength' ||
              cell.field === 'checkerId'   ||
+             cell.field === 'file' ||
              cell.field === 'severity'    ||
              cell.field === 'reviewStatus' ||
              cell.field === 'detectionStatus';
