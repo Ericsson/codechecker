@@ -423,78 +423,6 @@ def get_report_path_hash(report, files):
     return hashlib.md5(report_path_hash.encode()).hexdigest()
 
 
-class StorageSession:
-    """
-    This class is a singleton which helps to handle a transaction which
-    belong to the checking of an entire run. This class holds the SQLAlchemy
-    session for the run being checked and the set of touched reports. This
-    latter one is needed so at the end the detection status of the rest reports
-    can be set to "resolved".
-    """
-
-    class __StorageSession:
-        def __init__(self):
-            self.__sessions = dict()
-            self._timeout_sessions()
-
-        def start_run_session(self, run_id, transaction):
-            self.__sessions[run_id] = {
-                'touched_reports': set(),
-                'transaction': transaction,
-                'timer': time.time()}
-
-        def end_run_session(self, run_id):
-            this_session = self.__sessions[run_id]
-            transaction = this_session['transaction']
-
-            transaction.commit()
-            transaction.close()
-
-            del self.__sessions[run_id]
-
-        def abort_session(self, run_id):
-            transaction = self.__sessions[run_id]['transaction']
-            transaction.rollback()
-            transaction.close()
-            del self.__sessions[run_id]
-
-        def touch_report(self, run_id, report_id):
-            self.__sessions[run_id]['touched_reports'].add(report_id)
-
-        def is_touched(self, run_id, report_id):
-            return report_id in self.__sessions[run_id]['touched_reports']
-
-        def has_ongoing_run(self, run_id):
-            return run_id in self.__sessions
-
-        def get_transaction(self, run_id):
-            self.__sessions[run_id]['timer'] = time.time()
-            return self.__sessions[run_id]['transaction']
-
-        def _timeout_sessions(self):
-            """
-            The storage session times out if no action happens in the
-            transaction belonging to the given run within 30 minutes.
-            """
-            for run_id, session in self.__sessions.iteritems():
-                if int(time.time() - session['timer']) > 30 * 60:
-                    LOG.info('Session timeout for run ' + str(run_id))
-                    self.abort_session(run_id)
-                    break
-
-            threading.Timer(10 * 60, self._timeout_sessions).start()
-
-    instance = None
-
-    def __init__(self):
-        if not StorageSession.instance:
-            StorageSession.instance = \
-                StorageSession.__StorageSession()
-
-    def __getattr__(self, name):
-        return getattr(self.instance, name)
-
-
 class ThriftRequestHandler(object):
     """
     Connect to database and handle thrift client requests.
@@ -522,7 +450,6 @@ class ThriftRequestHandler(object):
         self.__suppress_handler = suppress_handler
         self.__package_version = package_version
         self.__Session = Session
-        self.__storage_session = StorageSession()
 
         self.__permission_args = {
             'productID': product.id
@@ -1827,18 +1754,167 @@ class ThriftRequestHandler(object):
             return list(set(file_hashes) -
                         set(map(lambda fc: fc.content_hash, q)))
 
+    def __store_source_files(self, source_root, filename_to_hash):
+        """
+        Storing file contents from plist.
+        """
+
+        file_path_to_id = {}
+
+        for file_name, file_hash in filename_to_hash.items():
+            source_file_name = os.path.join(source_root,
+                                            file_name.strip("/"))
+            source_file_name = os.path.realpath(source_file_name)
+            LOG.debug("Storing source file: " + source_file_name)
+
+            if not os.path.isfile(source_file_name):
+                # The file was not in the ZIP file, because we already
+                # have the content. Let's check if we already have a file
+                # record in the database or we need to add one.
+
+                LOG.debug(file_name + ' not found or already stored.')
+                fid = None
+                with DBSession(self.__Session) as session:
+                    fid = store_handler.addFileRecord(session,
+                                                      file_name,
+                                                      file_hash)
+                if not fid:
+                    LOG.error("File ID for " + source_file_name +
+                              " is not found in the DB with " +
+                              "content hash " + file_hash +
+                              ". Missing from ZIP?")
+                file_path_to_id[file_name] = fid
+                LOG.debug(str(fid) + " fileid found")
+                continue
+
+            with codecs.open(source_file_name, 'r',
+                             'UTF-8', 'replace') as source_file:
+                file_content = source_file.read()
+                file_content = codecs.encode(file_content, 'utf-8')
+
+                with DBSession(self.__Session) as session:
+                    file_path_to_id[file_name] = \
+                        store_handler.addFileContent(session,
+                                                     file_name,
+                                                     file_content,
+                                                     file_hash,
+                                                     None)
+        return file_path_to_id
+
+    def __store_reports(self, session, report_dir, source_root, run_id,
+                        file_path_to_id, run_history_time):
+        """
+        Parse up and store the plist report files.
+        """
+
+        all_reports = session.query(Report) \
+            .filter(Report.run_id == run_id) \
+            .all()
+
+        hash_map_reports = defaultdict(list)
+        for report in all_reports:
+            hash_map_reports[report.bug_id].append(report)
+
+        already_added = set()
+        new_bug_hashes = set()
+
+        # Processing PList files.
+        _, _, report_files = next(os.walk(report_dir), ([], [], []))
+        for f in report_files:
+            if not f.endswith('.plist'):
+                continue
+
+            LOG.debug("Parsing input file '" + f + "'")
+
+            try:
+                files, reports = plist_parser.parse_plist(
+                    os.path.join(report_dir, f), source_root)
+            except Exception as ex:
+                LOG.error('Parsing the plist failed: ' + str(ex))
+                continue
+
+            file_ids = {}
+            for file_name in files:
+                file_ids[file_name] = file_path_to_id[file_name]
+
+            # Store report.
+            for report in reports:
+                bug_paths, bug_events = \
+                    store_handler.collect_paths_events(report, file_ids,
+                                                       files)
+                report_path_hash = get_report_path_hash(report,
+                                                        files)
+                if report_path_hash in already_added:
+                    LOG.debug('Not storing report. Already added')
+                    LOG.debug(report)
+                    continue
+
+                LOG.debug("Storing check results to the database.")
+
+                LOG.debug("Storing report")
+                bug_id = report.main[
+                    'issue_hash_content_of_line_in_context']
+                if bug_id in hash_map_reports:
+                    old_report = hash_map_reports[bug_id][0]
+                    old_status = old_report.detection_status
+                    detection_status = 'reopened' \
+                        if old_status == 'resolved' else 'unresolved'
+                else:
+                    detection_status = 'new'
+
+                report_id = store_handler.addReport(
+                    session,
+                    run_id,
+                    file_ids[files[report.main['location']['file']]],
+                    report.main,
+                    bug_paths,
+                    bug_events,
+                    detection_status,
+                    run_history_time if detection_status == 'new' else
+                    old_report.detected_at)
+
+                new_bug_hashes.add(bug_id)
+                already_added.add(report_path_hash)
+
+                last_report_event = report.bug_path[-1]
+                file_name = files[last_report_event['location']['file']]
+                source_file_name = os.path.realpath(
+                    os.path.join(source_root, file_name.strip("/")))
+
+                if os.path.isfile(source_file_name):
+                    sp_handler = suppress_handler.SourceSuppressHandler(
+                        source_file_name,
+                        last_report_event['location']['line'],
+                        bug_id,
+                        report.main['check_name'])
+
+                    supp = sp_handler.get_suppressed()
+                    if supp:
+                        _, _, comment = supp
+                        status = ttypes.ReviewStatus.FALSE_POSITIVE
+                        self._setReviewStatus(report_id, status, comment,
+                                              session)
+
+                LOG.debug("Storing done for report " + str(report_id))
+
+        reports_to_delete = set()
+        for bug_hash, reports in hash_map_reports.items():
+            if bug_hash in new_bug_hashes:
+                reports_to_delete.update(map(lambda x: x.id, reports))
+            else:
+                for report in reports:
+                    report.detection_status = 'resolved'
+                    report.fixed_at = run_history_time
+
+        if len(reports_to_delete) != 0:
+            session.query(Report) \
+                .filter(Report.id.in_(reports_to_delete)) \
+                .delete(synchronize_session=False)
+
     @exc_to_thrift_reqfail
     @timeit
     def massStoreRun(self, name, tag, version, b64zip, force):
         self.__require_store()
-
-        with DBSession(self.__Session) as session:
-            run = session.query(Run).filter(Run.name == name).one_or_none()
-
-            if run and self.__storage_session.has_ongoing_run(run.id):
-                raise shared.ttypes.RequestFailed(
-                    shared.ttypes.ErrorCode.GENERAL,
-                    'Storage of ' + name + ' is already going!')
 
         with util.TemporaryDirectory() as zip_dir:
             # Unzip sent data.
@@ -1852,7 +1928,15 @@ class ThriftRequestHandler(object):
             content_hash_file = os.path.join(zip_dir, 'content_hashes.json')
 
             with open(content_hash_file) as chash_file:
-                filename2hash = json.load(chash_file)
+                filename_to_hash = json.load(chash_file)
+
+            file_path_to_id = self.__store_source_files(source_root,
+                                                        filename_to_hash)
+
+            user = self.__auth_session.user \
+                if self.__auth_session else 'Anonymous'
+
+            run_history_time = datetime.now()
 
             check_commands, check_durations = \
                 store_handler.metadata_info(metadata_file)
@@ -1865,180 +1949,33 @@ class ThriftRequestHandler(object):
                 command = "multiple analyze calls: " + \
                           '; '.join([' '.join(com) for com in check_commands])
 
-            # Storing file contents from plist.
-            file_path_to_id = {}
-
-            for file_name, file_hash in filename2hash.items():
-                source_file_name = os.path.join(source_root,
-                                                file_name.strip("/"))
-                source_file_name = os.path.realpath(source_file_name)
-                LOG.debug("Storing source file: " + source_file_name)
-
-                if not os.path.isfile(source_file_name):
-                    # The file was not in the ZIP file, because we already
-                    # have the content. Let's check if we already have a file
-                    # record in the database or we need to add one.
-
-                    LOG.debug(file_name + ' not found or already stored.')
-                    fid = None
-                    with DBSession(self.__Session) as session:
-                        fid = store_handler.addFileRecord(session,
-                                                          file_name,
-                                                          file_hash)
-                    if not fid:
-                        LOG.error("File ID for " + source_file_name +
-                                  " is not found in the DB with " +
-                                  "content hash " + file_hash +
-                                  ". Missing from ZIP?")
-                    file_path_to_id[file_name] = fid
-                    LOG.debug(str(fid) + " fileid found")
-                    continue
-
-                with codecs.open(source_file_name, 'r',
-                                 'UTF-8', 'replace') as source_file:
-                    file_content = source_file.read()
-                    file_content = codecs.encode(file_content, 'utf-8')
-
-                    with DBSession(self.__Session) as session:
-                        file_path_to_id[file_name] = \
-                            store_handler.addFileContent(session,
-                                                         file_name,
-                                                         file_content,
-                                                         file_hash,
-                                                         None)
-
-            user = self.__auth_session.user \
-                if self.__auth_session else 'Anonymous'
-
-            run_history_time = datetime.now()
-            # A new database session is initialized here and used
-            # to store the analysis reports.
-            # finishCheckerRun should close the session when
-            # the storage is done.
-            run_id = store_handler.addCheckerRun(self.__Session(),
-                                                 self.__storage_session,
-                                                 command,
-                                                 name,
-                                                 tag,
-                                                 user,
-                                                 run_history_time,
-                                                 version,
-                                                 force)
-
-            session = self.__storage_session.get_transaction(run_id)
-
-            all_reports = session.query(Report) \
-                .filter(Report.run_id == run_id) \
-                .all()
-
-            hash_map_reports = defaultdict(list)
-            for report in all_reports:
-                hash_map_reports[report.bug_id].append(report)
-
-            already_added = set()
-            new_bug_hashes = set()
-
-            # Processing PList files.
-            _, _, report_files = next(os.walk(report_dir), ([], [], []))
-            for f in report_files:
-                if not f.endswith('.plist'):
-                    continue
-
-                LOG.debug("Parsing input file '" + f + "'")
-
-                try:
-                    files, reports = plist_parser.parse_plist(
-                        os.path.join(report_dir, f), source_root)
-                except Exception as ex:
-                    LOG.error('Parsing the plist failed: ' + str(ex))
-                    continue
-
-                file_ids = {}
-                for file_name in files:
-                    file_ids[file_name] = file_path_to_id[file_name]
-
-                # Store report.
-                for report in reports:
-                    bug_paths, bug_events = \
-                        store_handler.collect_paths_events(report, file_ids,
-                                                           files)
-                    report_path_hash = get_report_path_hash(report,
-                                                            files)
-                    if report_path_hash in already_added:
-                        LOG.debug('Not storing report. Already added')
-                        LOG.debug(report)
-                        continue
-
-                    LOG.debug("Storing check results to the database.")
-
-                    LOG.debug("Storing report")
-                    bug_id = report.main[
-                        'issue_hash_content_of_line_in_context']
-                    if bug_id in hash_map_reports:
-                        old_report = hash_map_reports[bug_id][0]
-                        old_status = old_report.detection_status
-                        detection_status = 'reopened' \
-                            if old_status == 'resolved' else 'unresolved'
-                    else:
-                        detection_status = 'new'
-
-                    report_id = store_handler.addReport(
-                        self.__storage_session,
-                        run_id,
-                        file_ids[files[report.main['location']['file']]],
-                        report.main,
-                        bug_paths,
-                        bug_events,
-                        detection_status,
-                        run_history_time if detection_status == 'new' else
-                        old_report.detected_at)
-
-                    new_bug_hashes.add(bug_id)
-                    already_added.add(report_path_hash)
-
-                    last_report_event = report.bug_path[-1]
-                    file_name = files[last_report_event['location']['file']]
-                    source_file_name = os.path.realpath(
-                        os.path.join(source_root, file_name.strip("/")))
-
-                    if os.path.isfile(source_file_name):
-                        sp_handler = suppress_handler.SourceSuppressHandler(
-                            source_file_name,
-                            last_report_event['location']['line'],
-                            bug_id,
-                            report.main['check_name'])
-
-                        supp = sp_handler.get_suppressed()
-                        if supp:
-                            _, _, comment = supp
-                            status = ttypes.ReviewStatus.FALSE_POSITIVE
-                            self._setReviewStatus(report_id, status, comment,
-                                                  session)
-
-                    LOG.debug("Storing done for report " + str(report_id))
-
-            reports_to_delete = set()
-            for bug_hash, reports in hash_map_reports.items():
-                if bug_hash in new_bug_hashes:
-                    reports_to_delete.update(map(lambda x: x.id, reports))
-                else:
-                    for report in reports:
-                        report.detection_status = 'resolved'
-                        report.fixed_at = run_history_time
-
-            if len(reports_to_delete) != 0:
-                session.query(Report) \
-                    .filter(Report.id.in_(reports_to_delete)) \
-                    .delete(synchronize_session=False)
-
+            durations = 0
             if len(check_durations) > 0:
-                store_handler.setRunDuration(self.__storage_session,
-                                             run_id,
-                                             # Round the duration to seconds.
-                                             int(sum(check_durations)))
+                # Round the duration to seconds.
+                durations = int(sum(check_durations))
 
-            # The database session initialized in addCheckerRun should be
-            # closed in finishCheckerRun after the report storage is done.
-            store_handler.finishCheckerRun(self.__storage_session, run_id)
+            with DBSession(self.__Session) as session:
+                run_id = store_handler.addCheckerRun(session,
+                                                     command,
+                                                     name,
+                                                     tag,
+                                                     user,
+                                                     run_history_time,
+                                                     version,
+                                                     force)
+                self.__store_reports(session,
+                                     report_dir,
+                                     source_root,
+                                     run_id,
+                                     file_path_to_id,
+                                     run_history_time)
+
+                store_handler.setRunDuration(session,
+                                             run_id,
+                                             durations)
+
+                store_handler.finishCheckerRun(session, run_id)
+
+                session.commit()
 
             return run_id
