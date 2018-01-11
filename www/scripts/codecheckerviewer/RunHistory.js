@@ -69,7 +69,7 @@ function (declare, dom, topic, ContentPane, util) {
                   detectionStatusFilter.stateConverter(CC_OBJECTS.DetectionStatus.REOPENED)];
                 state[dateFilter._toDate.class] = that._formatDate(date);
               } else {
-                state['run-history-tag'] = data.runName + ':' + data.versionTag;
+                state['run-tag'] = data.runName + ':' + data.versionTag;
               }
 
               topic.publish('filterchange', {
