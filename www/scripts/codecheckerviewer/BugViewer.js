@@ -579,7 +579,7 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
         0,
         null,
         fileFilter,
-        this.runResultParam.cmpData,
+        null,
         function (result) {
           result.forEach(function (report) { that._addReport(report); });
 
