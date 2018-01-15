@@ -178,6 +178,9 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         in the standard output or standard error.
         """
 
+        if not output:
+            return set()
+
         regex_for_ctu_ast_load = re.compile(
             "ANALYZE \(CTU loaded AST for source file\): (.*)")
 

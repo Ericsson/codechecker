@@ -119,6 +119,9 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
         mentioned in the standard output or standard error.
         """
 
+        if not output:
+            return set()
+
         # A line mentioning a file in Clang-Tidy's output looks like this:
         # /home/.../.cpp:L:C: warning: foobar.
         regex = re.compile(

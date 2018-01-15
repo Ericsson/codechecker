@@ -11,6 +11,7 @@ import codecs
 import glob
 import multiprocessing
 import os
+import shutil
 import signal
 import sys
 import traceback
@@ -192,6 +193,266 @@ def get_dependent_headers(buildaction, archive):
     return dependencies
 
 
+def __escape_source_path(source):
+    """
+    Escape the spaces in the source path, but make sure not to
+    over-escape already escaped spaces.
+    """
+    if ' ' in source:
+        space_locations = [i for i, c in enumerate(source) if c == ' ']
+        # If a \ is added to the text, the following indexes must be
+        # shifted by one.
+        rolling_offset = 0
+
+        for orig_idx in space_locations:
+            idx = orig_idx + rolling_offset
+            if idx != 0 and source[idx - 1] != '\\':
+                source = source[:idx] + '\ ' + source[idx + 1:]
+                rolling_offset += 1
+    return source
+
+
+def collect_debug_data(zip_file, other_files, buildaction, out, err,
+                       original_command, analyzer_cmd, analyzer_returncode,
+                       action_directory, action_target):
+    """
+    Collect analysis and build system information which can be used
+    to reproduce the failed analysis.
+    """
+
+    with zipfile.ZipFile(zip_file, 'w') as archive:
+        LOG.debug("[ZIP] Writing analyzer STDOUT to /stdout")
+        archive.writestr("stdout", out)
+
+        LOG.debug("[ZIP] Writing analyzer STDERR to /stderr")
+        archive.writestr("stderr", err)
+
+        dependencies = get_dependent_headers(buildaction,
+                                             archive)
+
+        mentioned_files_dependent_files = set()
+        for of in other_files:
+            mentioned_file = os.path.abspath(
+                os.path.join(action_directory, of))
+            # Use the target of the original build action.
+            key = mentioned_file, action_target
+            mentioned_file_action = actions_map.get(key)
+            if mentioned_file_action is not None:
+                mentioned_file_deps = get_dependent_headers(
+                    mentioned_file_action, archive)
+                mentioned_files_dependent_files.\
+                    update(mentioned_file_deps)
+            else:
+                LOG.debug("Could not find {0} in build actions."
+                          .format(key))
+
+        dependencies.update(other_files)
+        dependencies.update(mentioned_files_dependent_files)
+
+        # `dependencies` might contain absolute and relative paths
+        # for the same file, so make everything absolute by
+        # joining with the the absolute action.directory.
+        # If `dependent_source` is absolute it remains absolute
+        # after the join, as documented on docs.python.org .
+        dependencies_copy = set()
+        for dependent_source in dependencies:
+            dependent_source = os.path.join(action_directory,
+                                            dependent_source)
+            dependencies_copy.add(dependent_source)
+        dependencies = dependencies_copy
+
+        LOG.debug("Writing dependent files to archive.")
+        for dependent_source in dependencies:
+            LOG.debug("[ZIP] Writing '" + dependent_source + "' "
+                      "to the archive.")
+            archive_subpath = dependent_source.lstrip('/')
+
+            archive_path = os.path.join('sources-root',
+                                        archive_subpath)
+            try:
+                _ = archive.getinfo(archive_path)
+                LOG.debug("[ZIP] '{0}' is already in the ZIP "
+                          "file, won't add it again!"
+                          .format(archive_path))
+                continue
+            except KeyError:
+                # If the file is already contained in the ZIP,
+                # a valid object is returned, otherwise a KeyError
+                # is raised.
+                pass
+
+            try:
+                archive.write(dependent_source,
+                              archive_path,
+                              zipfile.ZIP_DEFLATED)
+            except Exception as ex:
+                # In certain cases, the output could contain
+                # invalid tokens (such as error messages that were
+                # printed even though the dependency generation
+                # returned 0).
+                LOG.debug("[ZIP] Couldn't write, because " +
+                          str(ex))
+                archive.writestr(
+                    os.path.join('failed-sources-root',
+                                 archive_subpath),
+                    "Couldn't write this file, because:\n" +
+                    str(ex))
+
+        LOG.debug("[ZIP] Writing extra information...")
+
+        archive.writestr("build-action", original_command)
+        archive.writestr("analyzer-command", ' '.join(analyzer_cmd))
+        archive.writestr("return-code", str(analyzer_returncode))
+
+
+def save_output(base_file_name, out, err):
+    try:
+        if out:
+            with open(base_file_name + ".stdout.txt", 'w') as outf:
+                outf.write(out)
+
+        if err:
+            with open(base_file_name + ".stderr.txt", 'w') as outf:
+                outf.write(err)
+    except IOError as ioerr:
+        LOG.debug("Failed to save analyzer output")
+        LOG.debug(ioerr)
+
+
+def save_metadata(result_file, analyzer_result_file, analyzed_source_file):
+    """
+    Save some extra information next to the plist, .source
+    acting as an extra metadata file.
+    """
+    with open(result_file + ".source", 'w') as orig:
+        orig.write(analyzed_source_file.replace(r'\ ', ' ') + "\n")
+
+    if os.path.exists(analyzer_result_file) and \
+            not os.path.exists(result_file):
+        os.rename(analyzer_result_file, result_file)
+
+
+def prepare_check(source, action, analyzer_config_map,
+                  output_dir, severity_map, skip_handler):
+    """
+    Construct the source analyzer build the analysis command
+    and result handler for the analysis.
+    """
+
+    # Create a source analyzer.
+    source_analyzer = \
+        analyzer_types.construct_analyzer(action,
+                                          analyzer_config_map)
+
+    # Source is the currently analyzed source file
+    # there can be more in one buildaction.
+    source_analyzer.source_file = source
+
+    # The result handler for analysis is an empty result handler
+    # which only returns metadata, but can't process the results.
+    rh = analyzer_types.construct_analyze_handler(action,
+                                                  output_dir,
+                                                  severity_map,
+                                                  skip_handler)
+
+    # NOTICE!
+    # The currently analyzed source file needs to be set before the
+    # analyzer command is constructed.
+    # The analyzer output file is based on the currently
+    # analyzed source.
+    rh.analyzed_source_file = source
+
+    if os.path.exists(rh.analyzer_result_file):
+        reanalyzed = True
+
+    # Construct the analyzer cmd.
+    analyzer_cmd = source_analyzer.construct_analyzer_cmd(rh)
+
+    return source_analyzer, analyzer_cmd, rh
+
+
+def handle_success(rh, result_file, result_base, skip_handler,
+                   capture_analysis_output, failed_dir, success_dir):
+    """
+    Result postprocessing is required if the analysis was
+    successful (mainly clang tidy output conversion is done).
+
+    Skipping reports for header files is done here too.
+    """
+    if capture_analysis_output:
+        save_output(os.path.join(success_dir, result_base),
+                    rh.analyzer_stdout, rh.analyzer_stderr)
+
+    rh.postprocess_result()
+    # Generated reports will be handled separately at store.
+
+    save_metadata(result_file, rh.analyzer_result_file,
+                  rh.analyzed_source_file)
+
+    # Remove the previously generated error file.
+    if os.path.exists(failed_dir):
+        err_file = os.path.join(failed_dir, result_base + '.zip')
+        if os.path.exists(err_file):
+            os.remove(err_file)
+
+    if skip_handler:
+        # We need to check the plist content because skipping
+        # reports in headers can be done only this way.
+        plist_parser.skip_report_from_plist(result_file,
+                                            skip_handler)
+
+
+def handle_failure(source_analyzer, rh, action, failed_dir, zip_file,
+                   result_base):
+    """
+    If the analysis fails a debug zip is packed together which contains
+    build, analysis information and source files to be able to
+    reproduce the failed analysis.
+    """
+
+    other_files = set()
+
+    try:
+        LOG.debug("Fetching other dependent files from analyzer "
+                  "output...")
+        other_files.update(
+            source_analyzer.get_analyzer_mentioned_files(
+                rh.analyzer_stdout))
+
+        other_files.update(
+            source_analyzer.get_analyzer_mentioned_files(
+                rh.analyzer_stderr))
+    except Exception:
+        LOG.debug("Couldn't generate list of other files "
+                  "from analyzer output:")
+        LOG.debug(str(ex))
+
+    LOG.debug("Writing error debugging to '" + failed_dir + "'")
+
+    zip_file = result_base + '.zip'
+
+    zip_file = os.path.join(failed_dir, zip_file)
+
+    collect_debug_data(zip_file,
+                       other_files,
+                       rh.buildaction,
+                       rh.analyzer_stdout,
+                       rh.analyzer_stderr,
+                       action.original_command,
+                       rh.analyzer_cmd,
+                       rh.analyzer_returncode,
+                       action.directory,
+                       action.target)
+    LOG.debug("ZIP file written at '" + zip_file + "'")
+
+    return_codes = rh.analyzer_returncode
+
+    # Remove files that successfully analyzed earlier on.
+    plist_file = result_base + ".plist"
+    if os.path.exists(plist_file):
+        os.remove(plist_file)
+
+
 def check(check_data):
     """
     Invoke clang with an action which called by processes.
@@ -202,10 +463,15 @@ def check(check_data):
 
     actions_map, action, context, analyzer_config_map, \
         output_dir, skip_handler, quiet_output_on_stdout, \
-        capture_analysis_output, analysis_timeout = check_data
+        capture_analysis_output, analysis_timeout, \
+        analyzer_environment = check_data
 
     skipped = False
     reanalyzed = False
+
+    failed_dir = os.path.join(output_dir, "failed")
+    success_dir = os.path.join(output_dir, "success")
+
     try:
         # If one analysis fails the check fails.
         return_codes = 0
@@ -224,44 +490,12 @@ def check(check_data):
                 skipped = True
                 continue
 
-            # Escape the spaces in the source path, but make sure not to
-            # over-escape already escaped spaces.
-            if ' ' in source:
-                space_locations = [i for i, c in enumerate(source) if c == ' ']
-                # If a \ is added to the text, the following indexes must be
-                # shifted by one.
-                rolling_offset = 0
+            source = __escape_source_path(source)
 
-                for orig_idx in space_locations:
-                    idx = orig_idx + rolling_offset
-                    if idx != 0 and source[idx - 1] != '\\':
-                        source = source[:idx] + '\ ' + source[idx + 1:]
-                        rolling_offset += 1
-
-            # Construct analyzer env.
-            analyzer_environment = analyzer_env.get_check_env(
-                context.path_env_extra,
-                context.ld_lib_path_extra)
-
-            # Create a source analyzer.
-            source_analyzer = \
-                analyzer_types.construct_analyzer(action,
-                                                  analyzer_config_map)
-
-            # Source is the currently analyzed source file
-            # there can be more in one buildaction.
-            source_analyzer.source_file = source
-
-            # The result handler for analysis is an empty result handler
-            # which only returns metadata, but can't process the results.
-            rh = analyzer_types.construct_analyze_handler(action,
-                                                          output_dir,
-                                                          context.severity_map,
-                                                          skip_handler)
-
-            rh.analyzed_source_file = source
-            if os.path.exists(rh.analyzer_result_file):
-                reanalyzed = True
+            source_analyzer, analyzer_cmd, rh = \
+                prepare_check(source, action, analyzer_config_map,
+                              output_dir, context.severity_map,
+                              skip_handler)
 
             # The analyzer invocation calls __create_timeout as a callback
             # when the analyzer starts. This callback creates the timeout
@@ -289,7 +523,8 @@ def check(check_data):
                     # shouldn't do anything.
                     pass
 
-            source_analyzer.analyze(rh, analyzer_environment,
+            # Fills up the result handler with the analyzer information.
+            source_analyzer.analyze(analyzer_cmd, rh, analyzer_environment,
                                     __create_timeout)
 
             # If execution reaches this line, the analyzer process has quit.
@@ -308,198 +543,35 @@ def check(check_data):
             # names to contain no escape sequences for every analyzer.
             result_file = rh.analyzer_result_file.replace(r'\ ', ' ')
             result_base = os.path.basename(result_file)
-            failed_dir = os.path.join(output_dir, "failed")
 
             if rh.analyzer_returncode == 0:
-                # Analysis was successful processing results.
-                if capture_analysis_output:
-                    success_dir = os.path.join(output_dir, "success")
-                    if not os.path.exists(success_dir):
-                        os.makedirs(success_dir)
 
-                if len(rh.analyzer_stdout) > 0:
-                    if not quiet_output_on_stdout:
-                        LOG.debug_analyzer('\n' + rh.analyzer_stdout)
-
-                    if capture_analysis_output:
-                        with open(os.path.join(success_dir, result_base) +
-                                  ".stdout.txt", 'w') as outf:
-                            outf.write(rh.analyzer_stdout)
-
-                if len(rh.analyzer_stderr) > 0:
-                    if not quiet_output_on_stdout:
-                        LOG.debug_analyzer('\n' + rh.analyzer_stderr)
-
-                    if capture_analysis_output:
-                        with open(os.path.join(success_dir, result_base) +
-                                  ".stderr.txt", 'w') as outf:
-                            outf.write(rh.analyzer_stderr)
-
-                rh.postprocess_result()
-                # Generated reports will be handled separately at store.
-
-                # Save some extra information next to the plist, .source
-                # acting as an extra metadata file.
-                with open(result_file + ".source", 'w') as orig:
-                    orig.write(
-                        rh.analyzed_source_file.replace(r'\ ', ' ') + "\n")
-
-                if os.path.exists(rh.analyzer_result_file) and \
-                        not os.path.exists(result_file):
-                    os.rename(rh.analyzer_result_file, result_file)
-
+                handle_success(rh, result_file, result_base,
+                               skip_handler, capture_analysis_output,
+                               failed_dir, success_dir)
                 LOG.info("[%d/%d] %s analyzed %s successfully." %
                          (progress_checked_num.value, progress_actions.value,
                           action.analyzer_type, source_file_name))
 
-                # Remove the previously generated error file.
-                if os.path.exists(failed_dir):
-                    err_file = os.path.join(failed_dir, result_base + '.zip')
-                    if os.path.exists(err_file):
-                        os.remove(err_file)
-
-                if skip_handler:
-                    # We need to check the plist content because skipping
-                    # reports in headers can be done only this way.
-                    plist_parser.skip_report_from_plist(result_file,
-                                                        skip_handler)
-
             else:
-                # If the analysis has failed, we help debugging.
-                if not os.path.exists(failed_dir):
-                    os.makedirs(failed_dir)
-                LOG.debug("Writing error debugging to '" + failed_dir + "'")
 
-                zip_file = result_base + '.zip'
-                with zipfile.ZipFile(os.path.join(failed_dir, zip_file),
-                                     'w') as archive:
-                    if len(rh.analyzer_stdout) > 0:
-                        LOG.debug("[ZIP] Writing analyzer STDOUT to /stdout")
-                        archive.writestr("stdout", rh.analyzer_stdout)
-
-                        if not quiet_output_on_stdout:
-                            LOG.debug_analyzer('\n' + rh.analyzer_stdout)
-
-                    if len(rh.analyzer_stderr) > 0:
-                        LOG.debug("[ZIP] Writing analyzer STDERR to /stderr")
-                        archive.writestr("stderr", rh.analyzer_stderr)
-
-                        if not quiet_output_on_stdout:
-                            LOG.debug_analyzer('\n' + rh.analyzer_stderr)
-
-                    dependencies = get_dependent_headers(rh.buildaction,
-                                                         archive)
-
-                    LOG.debug("Fetching other dependent files from analyzer "
-                              "output...")
-                    try:
-                        other_files = set()
-                        if len(rh.analyzer_stdout) > 0:
-                            other_files.update(
-                                source_analyzer.get_analyzer_mentioned_files(
-                                    rh.analyzer_stdout))
-
-                        if len(rh.analyzer_stderr) > 0:
-                            other_files.update(
-                                source_analyzer.get_analyzer_mentioned_files(
-                                    rh.analyzer_stderr))
-                    except Exception as ex:
-                        LOG.debug("Couldn't generate list of other files "
-                                  "from analyzer output:")
-                        LOG.debug(str(ex))
-                        other_files = set()
-
-                    mentioned_files_dependent_files = set()
-                    for of in other_files:
-                        mentioned_file = os.path.abspath(
-                            os.path.join(action.directory, of))
-                        # Use the target of the original build action.
-                        key = mentioned_file, action.target
-                        mentioned_file_action = actions_map.get(key)
-                        if mentioned_file_action is not None:
-                            mentioned_file_deps = get_dependent_headers(
-                                mentioned_file_action, archive)
-                            mentioned_files_dependent_files.\
-                                update(mentioned_file_deps)
-                        else:
-                            LOG.debug("Could not find {0} in build actions."
-                                      .format(key))
-
-                    dependencies.update(other_files)
-                    dependencies.update(mentioned_files_dependent_files)
-
-                    # `dependencies` might contain absolute and relative paths
-                    # for the same file, so make everything absolute by
-                    # joining with the the absolute action.directory.
-                    # If `dependent_source` is absolute it remains absolute
-                    # after the join, as documented on docs.python.org .
-                    dependencies_copy = set()
-                    for dependent_source in dependencies:
-                        dependent_source = os.path.join(action.directory,
-                                                        dependent_source)
-                        dependencies_copy.add(dependent_source)
-                    dependencies = dependencies_copy
-
-                    LOG.debug("Writing dependent files to archive.")
-                    for dependent_source in dependencies:
-                        LOG.debug("[ZIP] Writing '" + dependent_source + "' "
-                                  "to the archive.")
-                        archive_subpath = dependent_source.lstrip('/')
-
-                        archive_path = os.path.join('sources-root',
-                                                    archive_subpath)
-                        try:
-                            _ = archive.getinfo(archive_path)
-                            LOG.debug("[ZIP] '{0}' is already in the ZIP "
-                                      "file, won't add it again!"
-                                      .format(archive_path))
-                            continue
-                        except KeyError:
-                            # If the file is already contained in the ZIP,
-                            # a valid object is returned, otherwise a KeyError
-                            # is raised.
-                            pass
-
-                        try:
-                            archive.write(dependent_source,
-                                          archive_path,
-                                          zipfile.ZIP_DEFLATED)
-                        except Exception as ex:
-                            # In certain cases, the output could contain
-                            # invalid tokens (such as error messages that were
-                            # printed even though the dependency generation
-                            # returned 0).
-                            LOG.debug("[ZIP] Couldn't write, because " +
-                                      str(ex))
-                            archive.writestr(
-                                os.path.join('failed-sources-root',
-                                             archive_subpath),
-                                "Couldn't write this file, because:\n" +
-                                str(ex))
-
-                    LOG.debug("[ZIP] Writing extra information...")
-
-                    archive.writestr("build-action",
-                                     rh.buildaction.original_command)
-                    archive.writestr("analyzer-command",
-                                     ' '.join(rh.analyzer_cmd))
-                    archive.writestr("return-code",
-                                     str(rh.analyzer_returncode))
-
-                LOG.debug("ZIP file written at '" +
-                          os.path.join(failed_dir, zip_file) + "'")
                 LOG.error("Analyzing '" + source_file_name + "' with " +
                           action.analyzer_type + " failed.")
-                if rh.analyzer_stdout != '' and not quiet_output_on_stdout:
-                    LOG.error(rh.analyzer_stdout)
-                if rh.analyzer_stderr != '' and not quiet_output_on_stdout:
-                    LOG.error(rh.analyzer_stderr)
-                return_codes = rh.analyzer_returncode
 
-                # Remove files that successfully analyzed earlier on.
-                plist_file = result_base + ".plist"
-                if os.path.exists(plist_file):
-                    os.remove(plist_file)
+                handle_failure(source_analyzer, rh, action, failed_dir,
+                               action, result_base)
+
+            if not quiet_output_on_stdout:
+                if rh.analyzer_returncode:
+                    LOG.error('\n' + rh.analyzer_stdout)
+                else:
+                    LOG.debug_analyzer('\n' + rh.analyzer_stdout)
+
+            if not quiet_output_on_stdout:
+                if rh.analyzer_returncode:
+                    LOG.error('\n' + rh.analyzer_stderr)
+                else:
+                    LOG.debug_analyzer('\n' + rh.analyzer_stderr)
 
         progress_checked_num.value += 1
 
@@ -537,6 +609,22 @@ def start_workers(actions_map, actions, context, analyzer_config_map,
                                 initargs=(checked_var,
                                           actions_num))
 
+    failed_dir = os.path.join(output_path, "failed")
+    # If the analysis has failed, we help debugging.
+    if not os.path.exists(failed_dir):
+        os.makedirs(failed_dir)
+
+    success_dir = os.path.join(output_path, "success")
+
+    # Analysis was successful processing results.
+    if not os.path.exists(success_dir):
+        os.makedirs(success_dir)
+
+    # Construct analyzer env.
+    analyzer_environment = analyzer_env.get_check_env(
+        context.path_env_extra,
+        context.ld_lib_path_extra)
+
     try:
         # Workaround, equivalent of map.
         # The main script does not get signal
@@ -552,7 +640,8 @@ def start_workers(actions_map, actions, context, analyzer_config_map,
                              skip_handler,
                              quiet_analyze,
                              capture_analysis_output,
-                             timeout)
+                             timeout,
+                             analyzer_environment)
                             for build_action in actions]
 
         pool.map_async(check,
@@ -568,3 +657,9 @@ def start_workers(actions_map, actions, context, analyzer_config_map,
         raise
     finally:
         pool.join()
+
+    if not os.listdir(success_dir):
+        shutil.rmtree(success_dir)
+
+    if not os.listdir(failed_dir):
+        shutil.rmtree(failed_dir)
