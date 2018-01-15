@@ -73,7 +73,7 @@ def get_report_hash(diagnostic, source_file):
     return report_hash
 
 
-def parse_plist(path, source_root=None):
+def parse_plist(path, source_root=None, allow_plist_update=True):
     """
     Parse the reports from a plist file.
     One plist file can contain multiple reports.
@@ -123,7 +123,7 @@ def parse_plist(path, source_root=None):
             report = Report(main_section, bug_path_items, files)
             reports.append(report)
 
-        if diag_changed:
+        if diag_changed and allow_plist_update:
             # If the diagnostic section has changed we update the plist file.
             # This way the client will always send a plist file where the
             # report hash field is filled.
