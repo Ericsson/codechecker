@@ -112,6 +112,7 @@ class TestCtuFailure(unittest.TestCase):
         # We expect a failure archive to be in the failed directory.
         failed_dir = os.path.join(self.report_dir, "failed")
         failed_files = os.listdir(failed_dir)
+
         self.assertEquals(len(failed_files), 1)
         # Ctu should fail during analysis of main.c
         self.assertIn("main.c", failed_files[0])
@@ -120,7 +121,6 @@ class TestCtuFailure(unittest.TestCase):
 
         with zipfile.ZipFile(fail_zip, 'r') as archive:
             files = archive.namelist()
-
             self.assertIn("build-action", files)
             self.assertIn("analyzer-command", files)
 
@@ -191,6 +191,37 @@ class TestCtuFailure(unittest.TestCase):
             check_source_in_archive("main.c")
             check_source_in_archive("lib.c")
             check_source_in_archive("lib.h")
+
+    def test_ctu_fallback(self):
+        """ In case of ctu failure the non ctu analysis will be triggered.
+        """
+        self.__set_up_test_dir('ctu_failure')
+        if not self.ctu_capable:
+            self.skipTest(NO_CTU_MESSAGE)
+        if not self.ctu_has_analyzer_display_ctu_progress:
+            self.skipTest(NO_DISPLAY_CTU_PROGRESS)
+
+        output = self.__do_ctu_all(reparse=False,
+                                   extra_args=[
+                                       "--verbose", "debug",
+                                       "-e", "debug.ExprInspection",
+                                       "--ctu-reanalyze-on-failure"
+                                   ])
+
+        # lib.c should be logged as its AST is loaded by Clang
+        self.assertRegexpMatches(
+                output,
+                "ANALYZE \(CTU loaded AST for source file\): .*lib\.c")
+
+        # We expect two failure archives to be in the failed directory.
+        # One failure archive is produced by the CTU analysis and the
+        # other archive is produced by the non CTU analysis.
+        failed_dir = os.path.join(self.report_dir, "failed")
+        failed_files = os.listdir(failed_dir)
+        print(failed_files)
+        self.assertEquals(len(failed_files), 2)
+        # Ctu should fail during analysis of main.c
+        self.assertIn("main.c", failed_files[0])
 
     def __do_ctu_all(self, reparse, extra_args=None):
         """

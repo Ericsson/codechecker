@@ -159,6 +159,8 @@ def perform_analysis(args, context, actions, metadata):
 
     actions_map = create_actions_map(actions, manager)
 
+    ctu_reanalyze_on_failure = 'ctu_reanalyze_on_failure' in args and \
+        args.ctu_reanalyze_on_failure
     if ctu_analyze or (not ctu_analyze and not ctu_collect):
         analysis_manager.start_workers(actions_map, actions, context,
                                        config_map, args.jobs,
@@ -168,7 +170,8 @@ def perform_analysis(args, context, actions, metadata):
                                        'quiet' in args,
                                        'capture_analysis_output' in args,
                                        args.timeout if 'timeout' in args
-                                       else None)
+                                       else None,
+                                       ctu_reanalyze_on_failure)
 
     end_time = time.time()
     LOG.info("Analysis length: " + str(end_time - start_time) + " sec.")

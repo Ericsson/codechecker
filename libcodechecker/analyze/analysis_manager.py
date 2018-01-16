@@ -20,6 +20,7 @@ import zipfile
 from libcodechecker import util
 from libcodechecker.analyze import analyzer_env
 from libcodechecker.analyze import plist_parser
+from libcodechecker.analyze.analyzers import analyzer_clangsa
 from libcodechecker.analyze.analyzers import analyzer_types
 from libcodechecker.logger import get_logger
 
@@ -198,28 +199,16 @@ def __escape_source_path(source):
     Escape the spaces in the source path, but make sure not to
     over-escape already escaped spaces.
     """
-    if ' ' in source:
-        space_locations = [i for i, c in enumerate(source) if c == ' ']
-        # If a \ is added to the text, the following indexes must be
-        # shifted by one.
-        rolling_offset = 0
-
-        for orig_idx in space_locations:
-            idx = orig_idx + rolling_offset
-            if idx != 0 and source[idx - 1] != '\\':
-                source = source[:idx] + '\ ' + source[idx + 1:]
-                rolling_offset += 1
-    return source
+    return '\ '.join(source.replace('\ ', ' ').split(' '))
 
 
 def collect_debug_data(zip_file, other_files, buildaction, out, err,
                        original_command, analyzer_cmd, analyzer_returncode,
-                       action_directory, action_target):
+                       action_directory, action_target, actions_map):
     """
     Collect analysis and build system information which can be used
     to reproduce the failed analysis.
     """
-
     with zipfile.ZipFile(zip_file, 'w') as archive:
         LOG.debug("[ZIP] Writing analyzer STDOUT to /stdout")
         archive.writestr("stdout", out)
@@ -332,17 +321,34 @@ def save_metadata(result_file, analyzer_result_file, analyzed_source_file):
         os.rename(analyzer_result_file, result_file)
 
 
-def prepare_check(source, action, analyzer_config_map,
-                  output_dir, severity_map, skip_handler):
+def is_ctu_active(source_analyzer):
+    """
+    Check if CTU analysis is active for Clang Static Analyzer.
+    """
+    if not isinstance(source_analyzer, analyzer_clangsa.ClangSA):
+        return False
+
+    return source_analyzer.is_ctu_available() and \
+        source_analyzer.is_ctu_enabled()
+
+
+def prepare_check(source, action, analyzer_config_map, output_dir,
+                  severity_map, skip_handler, disable_ctu=False):
     """
     Construct the source analyzer build the analysis command
     and result handler for the analysis.
     """
+    reanalyzed = False
 
     # Create a source analyzer.
     source_analyzer = \
         analyzer_types.construct_analyzer(action,
                                           analyzer_config_map)
+
+    if disable_ctu:
+        # WARNING! can be called only on ClangSA
+        # Needs to be called before construct_analyzer_cmd
+        source_analyzer.disable_ctu()
 
     # Source is the currently analyzed source file
     # there can be more in one buildaction.
@@ -368,11 +374,11 @@ def prepare_check(source, action, analyzer_config_map,
     # Construct the analyzer cmd.
     analyzer_cmd = source_analyzer.construct_analyzer_cmd(rh)
 
-    return source_analyzer, analyzer_cmd, rh
+    return source_analyzer, analyzer_cmd, rh, reanalyzed
 
 
 def handle_success(rh, result_file, result_base, skip_handler,
-                   capture_analysis_output, failed_dir, success_dir):
+                   capture_analysis_output, success_dir):
     """
     Result postprocessing is required if the analysis was
     successful (mainly clang tidy output conversion is done).
@@ -389,12 +395,6 @@ def handle_success(rh, result_file, result_base, skip_handler,
     save_metadata(result_file, rh.analyzer_result_file,
                   rh.analyzed_source_file)
 
-    # Remove the previously generated error file.
-    if os.path.exists(failed_dir):
-        err_file = os.path.join(failed_dir, result_base + '.zip')
-        if os.path.exists(err_file):
-            os.remove(err_file)
-
     if skip_handler:
         # We need to check the plist content because skipping
         # reports in headers can be done only this way.
@@ -402,14 +402,13 @@ def handle_success(rh, result_file, result_base, skip_handler,
                                             skip_handler)
 
 
-def handle_failure(source_analyzer, rh, action, failed_dir, zip_file,
-                   result_base):
+def handle_failure(source_analyzer, rh, action, zip_file,
+                   result_base, actions_map):
     """
     If the analysis fails a debug zip is packed together which contains
     build, analysis information and source files to be able to
     reproduce the failed analysis.
     """
-
     other_files = set()
 
     try:
@@ -427,12 +426,6 @@ def handle_failure(source_analyzer, rh, action, failed_dir, zip_file,
                   "from analyzer output:")
         LOG.debug(str(ex))
 
-    LOG.debug("Writing error debugging to '" + failed_dir + "'")
-
-    zip_file = result_base + '.zip'
-
-    zip_file = os.path.join(failed_dir, zip_file)
-
     collect_debug_data(zip_file,
                        other_files,
                        rh.buildaction,
@@ -442,10 +435,9 @@ def handle_failure(source_analyzer, rh, action, failed_dir, zip_file,
                        rh.analyzer_cmd,
                        rh.analyzer_returncode,
                        action.directory,
-                       action.target)
+                       action.target,
+                       actions_map)
     LOG.debug("ZIP file written at '" + zip_file + "'")
-
-    return_codes = rh.analyzer_returncode
 
     # Remove files that successfully analyzed earlier on.
     plist_file = result_base + ".plist"
@@ -464,13 +456,14 @@ def check(check_data):
     actions_map, action, context, analyzer_config_map, \
         output_dir, skip_handler, quiet_output_on_stdout, \
         capture_analysis_output, analysis_timeout, \
-        analyzer_environment = check_data
+        analyzer_environment, ctu_reanalyze_on_failure, \
+        output_dirs = check_data
 
     skipped = False
     reanalyzed = False
 
-    failed_dir = os.path.join(output_dir, "failed")
-    success_dir = os.path.join(output_dir, "success")
+    failed_dir = output_dirs["failed"]
+    success_dir = output_dirs["success"]
 
     try:
         # If one analysis fails the check fails.
@@ -492,7 +485,7 @@ def check(check_data):
 
             source = __escape_source_path(source)
 
-            source_analyzer, analyzer_cmd, rh = \
+            source_analyzer, analyzer_cmd, rh, reanalyzed = \
                 prepare_check(source, action, analyzer_config_map,
                               output_dir, context.severity_map,
                               skip_handler)
@@ -544,33 +537,94 @@ def check(check_data):
             result_file = rh.analyzer_result_file.replace(r'\ ', ' ')
             result_base = os.path.basename(result_file)
 
+            ctu_active = is_ctu_active(source_analyzer)
+
+            ctu_suffix = 'CTU'
+            zip_suffix = ctu_suffix if ctu_active else ''
+
+            zip_file = result_base + zip_suffix + '.zip'
+            zip_file = os.path.join(failed_dir, zip_file)
+
+            ctu_zip_file = result_base + ctu_suffix + '.zip'
+            ctu_zip_file = os.path.join(failed_dir, ctu_zip_file)
+
+            return_codes = rh.analyzer_returncode
             if rh.analyzer_returncode == 0:
+
+                # Remove the previously generated error file.
+                if os.path.exists(zip_file):
+                    os.remove(zip_file)
+
+                # Remove the previously generated CTU error file.
+                if os.path.exists(ctu_zip_file):
+                    os.remove(ctu_zip_file)
 
                 handle_success(rh, result_file, result_base,
                                skip_handler, capture_analysis_output,
-                               failed_dir, success_dir)
+                               success_dir)
                 LOG.info("[%d/%d] %s analyzed %s successfully." %
                          (progress_checked_num.value, progress_actions.value,
                           action.analyzer_type, source_file_name))
 
             else:
-
                 LOG.error("Analyzing '" + source_file_name + "' with " +
-                          action.analyzer_type + " failed.")
+                          action.analyzer_type +
+                          " CTU" if ctu_active else " " + "failed.")
 
-                handle_failure(source_analyzer, rh, action, failed_dir,
-                               action, result_base)
+                if not quiet_output_on_stdout:
+                    LOG.error('\n' + rh.analyzer_stdout)
+                    LOG.error('\n' + rh.analyzer_stderr)
+
+                handle_failure(source_analyzer, rh, action, zip_file,
+                               result_base, actions_map)
+
+                if ctu_active and ctu_reanalyze_on_failure:
+                    LOG.error("Try to reanalyze without CTU")
+                    # Try to reanalyze with CTU disabled.
+                    source_analyzer, analyzer_cmd, rh, reanalyzed = \
+                        prepare_check(source, action,
+                                      analyzer_config_map,
+                                      output_dir,
+                                      context.severity_map,
+                                      skip_handler,
+                                      True)
+
+                    # Fills up the result handler with
+                    # the analyzer information.
+                    source_analyzer.analyze(analyzer_cmd,
+                                            rh,
+                                            analyzer_environment)
+
+                    return_codes = rh.analyzer_returncode
+                    if rh.analyzer_returncode == 0:
+                        handle_success(rh, result_file, result_base,
+                                       skip_handler, capture_analysis_output,
+                                       success_dir, zipfile)
+
+                        msg = "[{0}/{1}] {2} analyzed {3} without" \
+                            " CTU successfully.".format(
+                                      progress_checked_num.value,
+                                      progress_actions.value,
+                                      action.analyzer_type,
+                                      source_file_name)
+
+                        LOG.info(msg)
+                    else:
+                        LOG.error("Analyzing '" + source_file_name +
+                                  "' with " + action.analyzer_type +
+                                  " without CTU failed.")
+
+                        zip_file = result_base + '.zip'
+                        zip_file = os.path.join(failed_dir, zip_file)
+                        handle_failure(source_analyzer, rh, action,
+                                       zip_file, result_base, actions_map)
 
             if not quiet_output_on_stdout:
                 if rh.analyzer_returncode:
                     LOG.error('\n' + rh.analyzer_stdout)
-                else:
-                    LOG.debug_analyzer('\n' + rh.analyzer_stdout)
-
-            if not quiet_output_on_stdout:
-                if rh.analyzer_returncode:
                     LOG.error('\n' + rh.analyzer_stderr)
                 else:
+                    LOG.debug_analyzer('\n' + rh.analyzer_stdout)
                     LOG.debug_analyzer('\n' + rh.analyzer_stderr)
 
         progress_checked_num.value += 1
@@ -586,7 +640,8 @@ def check(check_data):
 
 def start_workers(actions_map, actions, context, analyzer_config_map,
                   jobs, output_path, skip_handler, metadata,
-                  quiet_analyze, capture_analysis_output, timeout):
+                  quiet_analyze, capture_analysis_output, timeout,
+                  ctu_reanalyze_on_failure):
     """
     Start the workers in the process pool.
     For every build action there is worker which makes the analysis.
@@ -620,6 +675,9 @@ def start_workers(actions_map, actions, context, analyzer_config_map,
     if not os.path.exists(success_dir):
         os.makedirs(success_dir)
 
+    output_dirs = {'success': success_dir,
+                   'failed': failed_dir}
+
     # Construct analyzer env.
     analyzer_environment = analyzer_env.get_check_env(
         context.path_env_extra,
@@ -641,7 +699,9 @@ def start_workers(actions_map, actions, context, analyzer_config_map,
                              quiet_analyze,
                              capture_analysis_output,
                              timeout,
-                             analyzer_environment)
+                             analyzer_environment,
+                             ctu_reanalyze_on_failure,
+                             output_dirs)
                             for build_action in actions]
 
         pool.map_async(check,
