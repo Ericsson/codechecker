@@ -16,7 +16,7 @@ import json
 import os
 
 from libcodechecker.logger import LoggerFactory
-from libcodechecker.util import get_line
+import libcodechecker.util as util
 
 LOG = LoggerFactory.get_new_logger('REPORT')
 
@@ -79,11 +79,9 @@ def generate_report_hash(path, source_file, check_name):
 
         m_loc = main_section.get('location')
         source_line = m_loc.get('line')
-
         from_col = m_loc.get('col')
-        until_col = m_loc.get('col')
 
-        line_content = get_line(source_file, source_line)
+        line_content = util.get_line(source_file, source_line)
 
         if line_content == '' and not os.path.isfile(source_file):
             LOG.error("Failed to generate report hash.")
@@ -92,12 +90,14 @@ def generate_report_hash(path, source_file, check_name):
         file_name = os.path.basename(source_file)
         msg = main_section.get('message')
 
+        line_param = util.get_new_line_col_without_whitespace(line_content,
+                                                              from_col)
         hash_content = [file_name,
                         check_name,
                         msg,
-                        line_content,
-                        str(from_col),
-                        str(until_col)]
+                        line_param[0],
+                        str(line_param[1]),
+                        str(line_param[1])]
 
         hash_from_ctrl_section = True
         for i, section in enumerate(ctrl_sections):
@@ -138,6 +138,8 @@ def generate_report_hash(path, source_file, check_name):
                 hash_content.append(str(col_num))
 
         string_to_hash = '|||'.join(hash_content)
+        LOG.debug(string_to_hash)
+
         return hashlib.md5(string_to_hash.encode()).hexdigest()
 
     except Exception as ex:

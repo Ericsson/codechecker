@@ -12,7 +12,7 @@
 			<key>description</key>
 			<string>use nullptr</string>
 			<key>issue_hash_content_of_line_in_context</key>
-			<string>881bd0b5111814b3eaab59f4229eccba</string>
+			<string>ccde2e4be08efb5c6f82bd2de12cd9ed</string>
 			<key>location</key>
 			<dict>
 				<key>col</key>
@@ -70,7 +70,7 @@
 			<key>description</key>
 			<string>Dereference of null pointer (loaded from variable 'x')</string>
 			<key>issue_hash_content_of_line_in_context</key>
-			<string>42a599e2e32611711ec3ffce39cd61ce</string>
+			<string>f0ab7b9c9d7455fd053049148ca2867b</string>
 			<key>location</key>
 			<dict>
 				<key>col</key>

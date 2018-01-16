@@ -77,9 +77,9 @@ int main()
 
   i = *p + 42;
 
-  sizeof(42);
-  sizeof(42);
-  sizeof(42);
+sizeof (42);
+    sizeof(42);
+         sizeof (  42   );
 }""", """
 int main()
 {
@@ -154,7 +154,7 @@ int main()
         for report in reports:
             if report.detectionStatus == DetectionStatus.UNRESOLVED:
                 self.assertIn(report.bugHash,
-                              ['e248e7441c15bcf0e47b5a3ad03df243',
+                              ['77f2f02d76df893a208557169f0347b0',
                                '209be2f6905590d99853ce01d52a78e0',
                                'e8f47588c8095f02a53e338984ce52ba'])
             elif report.detectionStatus == DetectionStatus.NEW:
@@ -192,7 +192,7 @@ int main()
                               ['ac147b31a745d91be093bd70bbc5567c'])
             elif report.detectionStatus == DetectionStatus.UNRESOLVED:
                 self.assertIn(report.bugHash,
-                              ['e248e7441c15bcf0e47b5a3ad03df243',
+                              ['77f2f02d76df893a208557169f0347b0',
                                'cbd629ba2ee25c41cdbf5e2e336b1b1c'])
 
                 file_content = self._cc_client.getSourceFileData(
@@ -220,7 +220,7 @@ int main()
         for report in reports:
             if report.detectionStatus == DetectionStatus.UNRESOLVED:
                 self.assertIn(report.bugHash,
-                              ['e248e7441c15bcf0e47b5a3ad03df243',
+                              ['77f2f02d76df893a208557169f0347b0',
                                'cbd629ba2ee25c41cdbf5e2e336b1b1c'])
             elif report.detectionStatus == DetectionStatus.REOPENED:
                 self.assertIn(report.bugHash,
@@ -244,7 +244,7 @@ int main()
                               ['209be2f6905590d99853ce01d52a78e0',
                                'e8f47588c8095f02a53e338984ce52ba',
                                'cbd629ba2ee25c41cdbf5e2e336b1b1c',
-                               'e248e7441c15bcf0e47b5a3ad03df243'])
+                               '77f2f02d76df893a208557169f0347b0'])
 
                 file_content = self._cc_client.getSourceFileData(
                     report.fileId,

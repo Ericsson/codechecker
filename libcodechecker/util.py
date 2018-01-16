@@ -407,3 +407,30 @@ def get_user_input(msg):
     :returns: True/False based on the asnwer from the user
     """
     return raw_input(msg).lower() in ['y', 'yes']
+
+
+def get_new_line_col_without_whitespace(line_content, old_col):
+    """
+    This function removes white spaces from the line content parameter and
+    calculates the new line location.
+    Returns the line content without white spaces and the new column number.
+
+    E.g.:
+    line_content = "  int foo = 17;   sizeof(43);  "
+                                      ^
+                                      |- bug_col = 18
+    content_begin = "  int foo = 17;   "
+    content_begin_strip = "intfoo=17;"
+    line_strip_len = 18 - 10 => 8
+    ''.join(line_content.split()) => "intfoo=17;sizeof(43);"
+                                                ^
+                                                |- until_col - line_strip_len
+                                                       18    -     8
+                                                             = 10
+    """
+    content_begin = line_content[:old_col]
+    content_begin_strip = ''.join(content_begin.split())
+    line_strip_len = len(content_begin) - len(content_begin_strip)
+
+    return ''.join(line_content.split()), \
+           old_col - line_strip_len
