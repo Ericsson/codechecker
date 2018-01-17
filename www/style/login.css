@@ -1,0 +1,26 @@
+#login-form {
+  display: block;
+  position: relative;
+  top: 25%;
+  margin: 0 auto;
+  width: 20%;
+  background-color: #edf4fa;
+  border: 1px solid;
+  border-color: #e5e6e9 #dfe0e4 #d0d1d5;
+  border-radius: 5px;
+}
+
+#login-form .mbox.mbox-error {
+  background-color: white;
+}
+
+#login-form .login-prompt {
+  font-weight: bold;
+  font-size: 12pt;
+  display: inline-block;
+  margin-bottom: 18px;
+}
+
+#login-form .formElement .form-input {
+    width: 100%;
+}

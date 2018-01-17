@@ -108,21 +108,6 @@ class RequestHandler(SimpleHTTPRequestHandler):
                         success = self.server.manager.get_session(values[1],
                                                                   True)
 
-        if success is None:
-            # Session cookie was invalid (or not found...)
-            # Attempt to see if the browser has sent us
-            # an authentication request.
-            authHeader = self.headers.getheader("Authorization")
-            if authHeader is not None and authHeader.startswith("Basic "):
-                authString = base64.decodestring(
-                    self.headers.getheader("Authorization").
-                    replace("Basic ", ""))
-
-                session = self.server.manager.create_or_get_session(
-                    authString)
-                if session:
-                    return session
-
         # Else, access is still not granted.
         if success is None:
             LOG.debug(client_host + ":" + str(client_port) +
@@ -147,7 +132,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
 
     def do_GET(self):
         """
-        Handles the webbrowser access (GET requests).
+        Handles the browser access (GET requests).
         """
 
         auth_session = self.__check_auth_in_request()
@@ -157,20 +142,23 @@ class RequestHandler(SimpleHTTPRequestHandler):
                          auth_session.user if auth_session else 'Anonymous',
                          self.path))
 
-        if not self.path.startswith('/login.html') and \
-                self.server.manager.is_enabled and not auth_session:
-            returnto = '?returnto=' + self.path.ltrim('/') \
-                if self.path != '/' else ''
-
-            self.send_response(307)  # 307 Temporary Redirect
-            self.send_header("Location", '/login.html' + returnto)
-            self.end_headers()
-            return
-
         if auth_session is not None:
             self.auth_token = auth_session.token
 
         product_endpoint, path = routing.split_client_GET_request(self.path)
+
+        if self.server.manager.is_enabled and not auth_session \
+                and routing.is_protected_GET_entrypoint(path):
+            # If necessary, prompt the user for authentication.
+            returnto = '#returnto=' + urllib.quote_plus(self.path.lstrip('/'))\
+                if self.path != '/' else ''
+
+            self.send_response(307)  # 307 Temporary Redirect
+            self.send_header('Location', '/login.html' + returnto)
+            self.send_header('Connection', 'close')
+            self.end_headers()
+            self.wfile.write('')
+            return
 
         if product_endpoint is not None and product_endpoint != '':
             # Route the user if there is a product endpoint in the request.

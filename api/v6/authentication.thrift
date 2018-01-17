@@ -10,8 +10,8 @@ namespace py Authentication_v6
 namespace js codeCheckerAuthentication_v6
 
 struct HandshakeInformation {
-  1: bool requiresAuthentication,       // true if the server has a privileged zone --- the state of having a valid access is not considered here
-  2: bool sessionStillActive            // whether the session in which the HandshakeInformation is returned is a valid one
+  1: bool requiresAuthentication,       // True if the server has a privileged zone.
+  2: bool sessionStillActive            // Whether the session in which the HandshakeInformation is returned is a live one
 }
 
 struct AuthorisationList {
@@ -36,24 +36,25 @@ service codeCheckerAuthentication {
                        throws (1: shared.RequestFailed requestError),
 
   // ============= Authentication and session handling =============
-  // get basic authentication information from the server
+  // Get basic authentication information from the server.
   HandshakeInformation getAuthParameters(),
 
 
-  // retrieves a list of accepted authentication methods from the server
+  // Retrieves a list of accepted authentication methods from the server.
   list<string> getAcceptedAuthMethods(),
 
-  // handles creating a session token for the user
+  // Handles creating a session token for the user.
   string performLogin(1: string authMethod,
                       2: string authString)
                       throws (1: shared.RequestFailed requestError),
 
-  // performs logout action for the user (must be called from the corresponding valid session)
+  // Performs logout action for the user. Must be called from the
+  // corresponding valid session which is to be destroyed.
   bool destroySession()
                       throws (1: shared.RequestFailed requestError),
 
-  // returns currently logged in user within the active session
-  // returns empty string if the session is not active
+  // Returns the currently logged in user within the active session, or empty
+  // string if no authenticated session is active.
   string getLoggedInUser()
                          throws (1: shared.RequestFailed requestError),
 

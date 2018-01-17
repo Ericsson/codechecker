@@ -14,8 +14,9 @@ from libcodechecker.version import SUPPORTED_VERSIONS
 
 # A list of top-level path elements under the webserver root
 # which should not be considered as a product route.
-NON_PRODUCT_ENDPOINTS = ['products.html',
-                         'index.html',
+NON_PRODUCT_ENDPOINTS = ['index.html',
+                         'login.html',
+                         'products.html',
                          'fonts',
                          'images',
                          'scripts',
@@ -29,6 +30,13 @@ NON_PRODUCT_ENDPOINTS += ['Authentication',
                           'Products',
                           'CodeCheckerService'
                           ]
+
+
+# A list of top-level path elements under the webserver root which should
+# be protected by authentication requirement when accessing the server.
+PROTECTED_ENTRY_POINTS = ['',  # Empty string in a request is 'index.html'.
+                          'index.html',
+                          'products.html']
 
 
 def is_valid_product_endpoint(uripart):
@@ -122,3 +130,11 @@ def split_client_POST_request(path):
         remainder = split_path[2]
 
         return None, version_tag, remainder
+
+
+def is_protected_GET_entrypoint(path):
+    """
+    Returns if the given GET request's PATH enters the server through an
+    entry point which is considered protected by authentication requirements.
+    """
+    return path in PROTECTED_ENTRY_POINTS
