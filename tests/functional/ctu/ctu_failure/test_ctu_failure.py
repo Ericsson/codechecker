@@ -9,7 +9,6 @@
 import json
 import os
 import shutil
-import subprocess
 import unittest
 import zipfile
 
@@ -46,8 +45,7 @@ class TestCtu(unittest.TestCase):
 
         # Get if clang is CTU-capable or not.
         cmd = [self._codechecker_cmd, 'analyze', '-h']
-        output = subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                         cwd=self.test_dir, env=self.env)
+        output, _ = call_command(cmd, cwd=self.test_dir, env=self.env)
         self.ctu_capable = '--ctu-' in output
         print("'analyze' reported CTU-compatibility? " + str(self.ctu_capable))
 
@@ -211,8 +209,7 @@ class TestCtu(unittest.TestCase):
 
     def __getClangSaPath(self):
         cmd = [self._codechecker_cmd, 'analyzers', '--details', '-o', 'json']
-        output = subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                         cwd=self.test_dir, env=self.env)
+        output, _ = call_command(cmd, cwd=self.test_dir, env=self.env)
         json_data = json.loads(output)
         if json_data[0]["name"] == "clangsa":
             return json_data[0]["path"]
