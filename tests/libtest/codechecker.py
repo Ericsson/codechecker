@@ -28,7 +28,7 @@ def call_command(cmd, cwd, env):
         print("\nTEST execute stdout:\n")
         print(out.decode("utf-8"))
         print("\nTEST execute stderr:\n")
-        print(out.decode("utf-8"))
+        print(err.decode("utf-8"))
     try:
         proc = subprocess.Popen(cmd,
                                 stdout=subprocess.PIPE,

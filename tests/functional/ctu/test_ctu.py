@@ -10,10 +10,10 @@ import glob
 import json
 import os
 import shutil
-import subprocess
 import unittest
 
 from libtest import env
+from libtest.codechecker import call_command
 
 NO_CTU_MESSAGE = "CTU is not supported"
 
@@ -39,8 +39,7 @@ class TestCtu(unittest.TestCase):
 
         # Get if clang is CTU-capable or not.
         cmd = [self._codechecker_cmd, 'analyze', '-h']
-        output = subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                         cwd=self.test_dir, env=self.env)
+        output, _ = call_command(cmd, cwd=self.test_dir, env=self.env)
         self.ctu_capable = '--ctu-' in output
         print("'analyze' reported CTU-compatibility? " + str(self.ctu_capable))
 
@@ -125,9 +124,8 @@ class TestCtu(unittest.TestCase):
         if reparse:
             cmd.append('--ctu-on-the-fly')
         cmd.append(self.buildlog)
-        output = subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                         cwd=self.test_dir, env=self.env)
-        return output
+        out, _ = call_command(cmd, cwd=self.test_dir, env=self.env)
+        return out
 
     def __do_ctu_collect(self, reparse):
         """ Execute CTU collect phase. """
@@ -137,8 +135,7 @@ class TestCtu(unittest.TestCase):
         if reparse:
             cmd.append('--ctu-on-the-fly')
         cmd.append(self.buildlog)
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                cwd=self.test_dir, env=self.env)
+        call_command(cmd, cwd=self.test_dir, env=self.env)
 
     def __check_ctu_collect(self, reparse):
         """ Check artifacts of CTU collect phase. """
@@ -160,9 +157,8 @@ class TestCtu(unittest.TestCase):
         if reparse:
             cmd.append('--ctu-on-the-fly')
         cmd.append(self.buildlog)
-        output = subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                         cwd=self.test_dir, env=self.env)
-        return output
+        out, _ = call_command(cmd, cwd=self.test_dir, env=self.env)
+        return out
 
     def __check_ctu_analyze(self, output):
         """ Check artifacts of CTU analyze phase. """
@@ -172,8 +168,7 @@ class TestCtu(unittest.TestCase):
         self.assertIn("analyzed main.c successfully", output)
 
         cmd = [self._codechecker_cmd, 'parse', self.report_dir]
-        output = subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                         cwd=self.test_dir, env=self.env)
+        output, _ = call_command(cmd, cwd=self.test_dir, env=self.env)
         self.assertIn("no defects while analyzing lib.c", output)
         self.assertIn("defect(s) while analyzing main.c", output)
         self.assertIn("lib.c:3:", output)
