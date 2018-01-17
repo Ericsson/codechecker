@@ -668,13 +668,15 @@ def build_package(repository_root, build_package_config, env=None):
                                                      cwd=repository_root)
         git_describe_dirty = str(git_describe_dirty.rstrip())
 
-        # Always replace the git tag with the manually configured version
+        # Always replace the Git tag with the manually configured version
         # information -- but keep the "tainted" flag (if the working directory
         # differs from a commit) information visible, along with the
         # abbreviated command hash.
-        git_describe_dirty = git_describe_dirty.replace(git_describe,
-                                                        version_string)
-        git_describe = version_string
+        # (This makes the tag compiled into the package improper, but this
+        # is a design decision of the developer team!)
+        git_tag = version_string
+        git_tag_dirty = git_describe_dirty.replace(git_describe,
+                                                   version_string)
     except subprocess.CalledProcessError as cperr:
         LOG.warning('Failed to get last commit describe.')
         LOG.warning(str(cperr))
@@ -684,8 +686,8 @@ def build_package(repository_root, build_package_config, env=None):
         sys.exit(1)
 
     version_json_data['git_hash'] = git_hash
-    version_json_data['git_describe'] = {'tag': git_describe,
-                                         'dirty': git_describe_dirty}
+    version_json_data['git_describe'] = {'tag': git_tag,
+                                         'dirty': git_tag_dirty}
 
     time_now = time.strftime("%Y-%m-%dT%H:%M")
     version_json_data['package_build_date'] = time_now
@@ -694,6 +696,17 @@ def build_package(repository_root, build_package_config, env=None):
     with open(version_file, 'w') as v_file:
         v_file.write(
             json.dumps(version_json_data, sort_keys=True, indent=4))
+
+    # Show version information on the command-line.
+    LOG.debug(json.dumps(version_json_data, sort_keys=True, indent=2))
+    LOG.info("This is CodeChecker v{0} ({1})"
+             .format(version_string, git_hash))
+    # Show the original, Git-given describe information.
+    LOG.info("Built from Git tags: {0} ({1})"
+             .format(git_describe, git_describe_dirty))
+    # Show the touched-up version information that uses the configuration file.
+    LOG.info("Baked with Git tag information merged with configured version: "
+             "{0} ({1})".format(git_tag, git_tag_dirty))
 
     # CodeChecker main scripts.
     LOG.debug('Copy main codechecker files')
