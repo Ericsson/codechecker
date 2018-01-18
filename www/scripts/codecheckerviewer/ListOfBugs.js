@@ -164,9 +164,6 @@ function (declare, dom, style, Deferred, ObjectStore, Store, QueryResults,
 
         var review = reportData.reviewData;
         reportData.reviewStatus = review.status;
-        reportData.reviewComment = review.author && review.comment
-          ? review.comment
-          : review.author ? '-' : '';
       });
 
       return reportDataList;
@@ -267,7 +264,6 @@ function (declare, dom, style, Deferred, ObjectStore, Store, QueryResults,
         { name : 'Severity', field : 'severity', cellClasses : 'severity', width : '15%', formatter : severityFormatter },
         { name : 'Bug path length', field : 'bugPathLength', cellClasses : 'bug-path-length', width : '15%', formatter : bugPathLengthFormatter },
         { name : 'Review status', field : 'reviewStatus', cellClasses : 'review-status', width : '15%', formatter : reviewStatusFormatter },
-        { name : 'Review comment', cellClasses : 'review-comment-message compact', field : 'reviewComment', width : '50%' },
         { name : 'Detection status', field : 'detectionStatus', cellClasses : 'detection-status', width : '15%', formatter : detectionStatusFormatter }
       ];
 
@@ -325,7 +321,7 @@ function (declare, dom, style, Deferred, ObjectStore, Store, QueryResults,
 
       var item = this.getItem(evt.rowIndex);
       switch (evt.cell.field) {
-        case 'reviewComment':
+        case 'reviewStatus':
           if (item.reviewData.author) {
             var content = util.reviewStatusTooltipContent(item.reviewData);
             Tooltip.show(content.outerHTML, evt.target, ['below']);
@@ -336,7 +332,7 @@ function (declare, dom, style, Deferred, ObjectStore, Store, QueryResults,
 
     onCellMouseOut : function (evt) {
       switch (evt.cell.field) {
-        case 'reviewComment':
+        case 'reviewStatus':
           Tooltip.hide(evt.target);
           break;
       }
