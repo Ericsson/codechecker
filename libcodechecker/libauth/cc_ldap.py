@@ -99,7 +99,7 @@ def log_ldap_error(ldap_error):
     """
     Log the LDAP error details in debug mode.
     """
-    toprint = ''
+    toprint = 'LDAP Error: '
     if ldap_error.message:
         if 'info' in ldap_error.message:
             toprint = toprint + ldap_error.message['info']
@@ -218,14 +218,29 @@ class LDAPConnection(object):
         try:
             with ldap_error_handler():
                 if who is None or cred is None:
-                    # Try anonymous bind.
+                    LOG.debug("Anonymous bind with no credentials.")
                     res = self.connection.simple_bind_s()
                     LOG.debug(res)
                 else:
-                    # Bind with the given credentials.
-                    LOG.debug(who)
+                    LOG.debug("Binding with credential: " + who)
                     res = self.connection.simple_bind_s(who, cred)
+                    whoami = self.connection.whoami_s()
                     LOG.debug(res)
+                    LOG.debug(whoami)
+
+                    # mail.python.org/pipermail/python-ldap/2012q4/003180.html
+                    if whoami is None:
+                        # If LDAP server allows anonymous binds, simple bind
+                        # does not throw an exception when the password is
+                        # empty and does the binding as anonymous.
+                        # This is an expected behaviour as per LDAP RFC.
+
+                        # However, if the bind is successful but no
+                        # authentication has been done, it is still to be
+                        # considered an error from the user's perspective.
+                        LOG.debug("Anonymous bind succeeded but no valid "
+                                  "password was given.")
+                        raise ldap.INVALID_CREDENTIALS()
         except Exception:
             LOG.debug("Server bind failed.")
             if self.connection is not None:
@@ -284,6 +299,7 @@ def auth_user(ldap_config, username=None, credentials=None):
         service_user = username
         service_cred = credentials
 
+    LOG.debug("Creating SERVICE connection...")
     with LDAPConnection(ldap_config, service_user, service_cred) as connection:
         if connection is None:
             LOG.error('Please check your LDAP server '
@@ -305,6 +321,7 @@ def auth_user(ldap_config, username=None, credentials=None):
 
     # Bind with the user's DN to check the password given by the user.
     # If bind is successful the user has given the right password.
+    LOG.debug("Creating USER connection...")
     with LDAPConnection(ldap_config, user_dn, credentials) as connection:
         if not connection:
             LOG.info("User: " + username + " cannot be authenticated.")
