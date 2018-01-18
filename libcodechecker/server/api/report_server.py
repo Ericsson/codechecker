@@ -429,6 +429,7 @@ class ThriftRequestHandler(object):
     """
 
     def __init__(self,
+                 manager,
                  Session,
                  product,
                  auth_session,
@@ -442,6 +443,7 @@ class ThriftRequestHandler(object):
             raise ValueError("Cannot initialize request handler without "
                              "a product to serve.")
 
+        self.__manager = manager
         self.__product = product
         self.__auth_session = auth_session
         self.__config_database = config_database
@@ -1915,6 +1917,27 @@ class ThriftRequestHandler(object):
     @timeit
     def massStoreRun(self, name, tag, version, b64zip, force):
         self.__require_store()
+
+        with DBSession(self.__Session) as session:
+            run = session.query(Run).filter(Run.name == name).one_or_none()
+            max_run_count = self.__manager.get_max_run_count()
+
+            # If max_run_count is not set in the config file, it will allow
+            # the user to upload unlimited runs.
+            if max_run_count:
+                run_count = session.query(Run.id).count()
+
+                # If we are not updating a run or the run count is reached the
+                # limit it will throw an exception.
+                if not run and run_count >= max_run_count:
+                    remove_run_count = run_count - max_run_count + 1
+                    raise shared.ttypes.RequestFailed(
+                        shared.ttypes.ErrorCode.GENERAL,
+                        'You reached the maximum number of allowed runs '
+                        '({0}/{1})! Please remove at least {2} run(s) before '
+                        'you try it again.'.format(run_count,
+                                                   max_run_count,
+                                                   remove_run_count))
 
         with util.TemporaryDirectory() as zip_dir:
             # Unzip sent data.

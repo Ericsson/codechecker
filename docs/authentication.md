@@ -25,8 +25,8 @@ Table of Contents
 ## <a name="server-side-configuration"></a> Server-side configuration
 
 The server's configuration is stored in the server's *workspace* folder, in
-`session_config.json`. This file is created, at the first start of the server,
-using the package's installed `config/session_config.json` as a template.
+`server_config.json`. This file is created, at the first start of the server,
+using the package's installed `config/server_config.json` as a template.
 
 The `authentication` section of the config file controls how authentication
 is handled.

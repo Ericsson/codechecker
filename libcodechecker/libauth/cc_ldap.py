@@ -7,7 +7,7 @@
 """
 
 LDAP authentication module for CodeChecker.
-Authenticate user based on the session_config.json LDAP part.
+Authenticate user based on the server_config.json LDAP part.
 
 In the configuration `null` means it is not configured.
 

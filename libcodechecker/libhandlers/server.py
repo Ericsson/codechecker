@@ -220,7 +220,7 @@ def add_arguments_to_parser(parser):
                               help="Force the server to run in "
                                    "authentication requiring mode, despite "
                                    "the configuration value in "
-                                   "'session_config.json'. This is needed "
+                                   "'server_config.json'. This is needed "
                                    "if you need to edit the product "
                                    "configuration of a server that would not "
                                    "require authentication otherwise.")
