@@ -59,13 +59,18 @@ DIFF_CMD=$(cat << END \
   END
 )
 
-WAS_OUTPUT=1
+# Assume that there are new bugs introduced, unless proven otherwise.
+echo -n "1" > "${WORKSPACE}/was_output.txt"
+
 eval "${DIFF_CMD}" | while read -r line
   do
-    # If CodeChecker says there aren't new bugs, introduce them.
+    # If CodeChecker says there aren't new bugs, don't introduce them.
     if [[ "$line" =~ "- No results" ]]
     then
-      WAS_OUTPUT=0
+      # This file is needed because the output of "CodeChecker cmd diff"
+      # may contain lines that are only information for the user, so we can
+      # not rely on the existence of 'bugs.txt' as only indicator of new bugs.
+      echo -n "0" > "${WORKSPACE}/was_output.txt"
     fi
 
     echo "${line}"
@@ -78,8 +83,9 @@ then
   eval "${DIFF_CMD}"
 
   echo "Bug visualisation HTML files generated at \"${HTML_DIR}\"."
-end
+fi
 
+WAS_OUTPUT=$(cat "${WORKSPACE}/was_output.txt")
 if [ $WAS_OUTPUT -eq 1 ]
 then
   echo "New bugs would be introduced -- rejecting pull request!"
