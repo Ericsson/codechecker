@@ -22,6 +22,7 @@ Table of Contents
    * [Partial functions](#partial-functions)
    * [Loops](#loops)
    * [Prefer standard functions](#prefer-standard-functions)
+   * [Use `const` whenever possible](#use-const)
    * [Do not turn off `core` checks](#do-not-turn-off-core-checks)
    * [Suppress specific dead store warnings](#suppress-specific-dead-store-warnings)
    * [Alternative implementations](#alternative-implementations)
@@ -130,6 +131,22 @@ Other macros or builtins expressing unreachable code may be used.
 Note that the rewritten code is also safer, since debug builds now check for
 more precondition violations. 
 
+In case of C++11 or later, another option is to use Immediately-Invoked
+Function Expression (IIFE) to avoid assigning a meaningless value.
+
+```cpp
+int f(MyEnum Val) {
+  const int x = [&] { // Note the lambda.
+    switch (Val) {
+      case MyEnumA: return 1;
+      case MyEnumB: return 5;
+      default: assert(false); return 0;
+    }
+  } ();
+  return 5/x; // No warning.
+}
+```
+
 ### <a name="loops"></a> Loops
 
 Some loops are guaranteed to execute at least once and this is a dynamic
@@ -146,7 +163,7 @@ Let us look at the the following example:
 int avg(List *l) {
   int sum = 0;
   int count = 0;
-  for(; l != 0; l = l->next) {
+  for(; l != NULL; l = l->next) {
     sum += l->data;
     ++count;
   }
@@ -162,8 +179,8 @@ this invariant.
 int avg(List *l) {
   int sum = 0;
   int count = 0;
-  assert(l != 0);
-  for(; l != 0; l = l->next) {
+  assert(l != NULL);
+  for(; l != NULL; l = l->next) {
     sum += l->data;
     ++count;
   }
@@ -176,9 +193,10 @@ an important invariant of the program explicit. Moreover, it will make the
 false positive finding disappear. This will also provide the users of the code
 with an explicit check in the debug build which can help find bugs.
 
-In some cases the analyzer cannot reason about the values of expressions
-due to some limitations of the constraint solver. In the code example 
-below the analyzer cannot record the constraint about a complex expression.
+In some cases the analyzer cannot reason about the possible values of
+expressions due to some limitations of the constraint solver. In the code
+example below the analyzer cannot record the constraint about a complex
+expression.
 
 ```cpp
 if (a > 1 && b > 1 && c > 1) {
@@ -192,7 +210,11 @@ if (a > 1 && b > 1 && c > 1) {
 }
 ```
 
-Introducing a new variable can suppress this problem.
+You can rewrite the code to reflect that there will always be at least one
+iteration such as using a `do-while` loop or using `while(true)` and break
+out from the loop.  
+If you do not want to change the layout of the code,
+introducing a new variable can suppress this problem.
 
 ```cpp
 if (a > 1 && b > 1 && c > 1) {
@@ -246,6 +268,41 @@ int f() {
 The result is easier to read for other developers who might not be familiar
 with the custom version of the function. The standard library functions also
 tend to be faster and more correct than custom solutions.
+
+### <a name="use-const"></a> Use `const` whenever possible
+
+It is useful to tell the analyzer when the state is not going to change.
+This will make the analysis more precise and the code more readable.
+Mark methods that are not going to change the state of the object as `const`.
+
+Also, avoid using global variables as they are harder to reason about.
+Mark global constants as `const`.
+
+Consider the following code:
+
+```cpp
+static char *allv[] = { "prog", "arg1", "arg2" };
+static int allc = sizeof(allv) / sizeof(allv[0]);
+static void f(void) {
+  for (int i = 1; i < allc; i++) {
+    const char *p = allv[i];  // Warning, out of bounds.
+  }
+}
+```
+
+Tha analyzer might not be able to tell that the value of `allc` is always
+the same as the length of the array `allv`. Rewriting the code and marking
+`allc` `const` will solve this issue.
+
+```cpp
+static char *allv[] = { "prog", "arg1", "arg2" };
+static const int allc = sizeof(allv) / sizeof(allv[0]);
+static void f(void) {
+  for (int i = 1; i < allc; i++) {
+    const char *p = allv[i];  // No warnings.
+  }
+}
+```
 
 ### <a name="do-not-turn-off-core-checks"></a> Do not turn off `core` checks
 
