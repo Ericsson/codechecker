@@ -9,10 +9,10 @@ Handle Thrift requests for authentication.
 
 import shared
 
-from libcodechecker.logger import LoggerFactory
+from libcodechecker.logger import get_logger
 from libcodechecker.profiler import timeit
 
-LOG = LoggerFactory.get_new_logger('BAD API VERSION HANDLER')
+LOG = get_logger('system')
 
 
 class ThriftAPIMismatchHandler(object):

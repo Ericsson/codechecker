@@ -14,13 +14,12 @@ import os
 import shutil
 import tempfile
 
+from libcodechecker import logger
 from libcodechecker import host_check
 from libcodechecker import libhandlers
 from libcodechecker.analyze.analyzers import analyzer_types
-from libcodechecker.logger import add_verbose_arguments
-from libcodechecker.logger import LoggerFactory
 
-LOG = LoggerFactory.get_new_logger('CHECK')
+LOG = logger.get_logger('system')
 
 
 class OrderedCheckersAction(argparse.Action):
@@ -352,7 +351,7 @@ def add_arguments_to_parser(parser):
                              help="Print the steps the analyzers took in "
                                   "finding the reported defect.")
 
-    add_verbose_arguments(parser)
+    logger.add_verbose_arguments(parser)
     parser.set_defaults(func=main)
 
 
@@ -360,6 +359,8 @@ def main(args):
     """
     Execute a wrapper over log-analyze-parse, aka 'check'.
     """
+
+    logger.setup_logger(args.verbose)
 
     def __load_module(name):
         """Loads the given subcommand's definition from the libs."""

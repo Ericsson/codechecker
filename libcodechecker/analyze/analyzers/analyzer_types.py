@@ -21,9 +21,9 @@ from libcodechecker.analyze.analyzers import config_handler_clangsa
 from libcodechecker.analyze.analyzers import result_handler_base
 from libcodechecker.analyze.analyzers import result_handler_clang_tidy
 from libcodechecker.analyze.analyzers import result_handler_plist_to_stdout
-from libcodechecker.logger import LoggerFactory
+from libcodechecker.logger import get_logger
 
-LOG = LoggerFactory.get_new_logger('ANALYZER TYPES')
+LOG = get_logger('analyzer')
 
 CLANG_SA = 'clangsa'
 CLANG_TIDY = 'clang-tidy'

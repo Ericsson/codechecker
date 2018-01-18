@@ -23,11 +23,11 @@ from sqlalchemy.orm import sessionmaker
 from libcodechecker import host_check
 from libcodechecker import pgpass
 from libcodechecker import util
-from libcodechecker.logger import LoggerFactory
+from libcodechecker.logger import get_logger
 
 from shared.ttypes import DBStatus
 
-LOG = LoggerFactory.get_new_logger('DATABASE HANDLER')
+LOG = get_logger('system')
 
 
 class DBContext():

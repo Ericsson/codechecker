@@ -19,7 +19,7 @@ import uuid
 
 import portalocker
 
-from libcodechecker.logger import LoggerFactory
+from libcodechecker.logger import get_logger
 
 unsupported_methods = []
 
@@ -33,7 +33,7 @@ try:
 except ImportError:
     unsupported_methods.append("pam")
 
-LOG = LoggerFactory.get_new_logger("SESSION MANAGER")
+LOG = get_logger("server")
 SESSION_COOKIE_NAME = "__ccPrivilegedAccessToken"
 session_lifetimes = {}
 

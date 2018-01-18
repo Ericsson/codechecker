@@ -14,9 +14,9 @@ from libcodechecker import suppress_handler
 from libcodechecker import util
 from libcodechecker.analyze import plist_parser
 from libcodechecker.analyze.analyzers.result_handler_base import ResultHandler
-from libcodechecker.logger import LoggerFactory
+from libcodechecker.logger import get_logger
 
-LOG = LoggerFactory.get_new_logger('PLIST TO STDOUT')
+LOG = get_logger('report')
 
 
 class PlistToStdout(ResultHandler):

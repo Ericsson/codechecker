@@ -11,9 +11,9 @@ import signal
 import subprocess
 import sys
 
-from libcodechecker.logger import LoggerFactory
+from libcodechecker.logger import get_logger
 
-LOG = LoggerFactory.get_new_logger('ANALYZER (BASE)')
+LOG = get_logger('analyzer')
 
 
 class SourceAnalyzer(object):

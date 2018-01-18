@@ -41,7 +41,7 @@ from codeCheckerDBAccess_v6 import codeCheckerDBAccess as ReportAPI_v6
 from ProductManagement_v6 import codeCheckerProductService as ProductAPI_v6
 
 from libcodechecker import session_manager
-from libcodechecker.logger import LoggerFactory
+from libcodechecker.logger import get_logger
 from libcodechecker.util import get_tmp_dir_hash
 
 from . import instance_manager
@@ -56,7 +56,7 @@ from database import db_cleanup
 from database.config_db_model import Product as ORMProduct
 from database.run_db_model import IDENTIFIER as RUN_META
 
-LOG = LoggerFactory.get_new_logger('SERVER')
+LOG = get_logger('server')
 
 
 class RequestHandler(SimpleHTTPRequestHandler):

@@ -1,9 +1,9 @@
 from codeCheckerDBAccess_v6.ttypes import*
 
-from libcodechecker.logger import LoggerFactory
+from libcodechecker.logger import get_logger
 from libcodechecker.server.database.run_db_model import *
 
-LOG = LoggerFactory.get_new_logger('DB CLEANUP')
+LOG = get_logger('server')
 
 
 def remove_unused_files(session):

@@ -36,12 +36,12 @@ import sys
 import traceback
 from xml.parsers.expat import ExpatError
 
-from libcodechecker.logger import LoggerFactory
+from libcodechecker.logger import get_logger
 
 from libcodechecker.report import Report
 from libcodechecker.report import generate_report_hash
 
-LOG = LoggerFactory.get_new_logger('PLIST_PARSER')
+LOG = get_logger('report')
 
 
 def get_checker_name(diagnostic, path=""):

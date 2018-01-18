@@ -1513,23 +1513,4 @@ http://www.postgresql.org/docs/current/static/libpq-pgpass.html
 
 # <a name="debug"></a> Debugging CodeChecker
 
-Command line flag can be used to turn in CodeChecker debug mode. The different
-subcommands can be given a `-v` flag which needs a parameter. Possible values
-are `debug`, `debug_analyzer` and `info`. Default is `info`.
-
-`debug_analyzer` switches analyzer related logs on:
-
-~~~~~~~~~~~~~~~~~~~~~
-CodeChecker check <name> -b <build_command> --verbose debug_analyzer
-~~~~~~~~~~~~~~~~~~~~~
-
-Turning on CodeChecker debug level logging is possible for the most
-subcommands:
-
-~~~~~~~~~~~~~~~~~~~~~
-CodeChecker check <name> -b <build_command> --verbose debug
-CodeChecker server -v <view_port> --verbose debug
-~~~~~~~~~~~~~~~~~~~~~
-
-If debug logging is enabled and PostgreSQL database is used, PostgreSQL logs
-are written to `postgresql.log` in the workspace directory.
+To change the log levels check out the [logging](logging.md) documentation.  

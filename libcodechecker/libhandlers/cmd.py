@@ -13,14 +13,11 @@ import getpass
 import datetime
 import sys
 
+from libcodechecker import logger
 from libcodechecker import output_formatters
 from libcodechecker import util
 from libcodechecker.cmd import cmd_line_client
 from libcodechecker.cmd import product_client
-from libcodechecker.logger import add_verbose_arguments
-from libcodechecker.logger import LoggerFactory
-
-LOG = LoggerFactory.get_new_logger('CMD')
 
 
 def valid_time(t):
@@ -127,7 +124,7 @@ def __add_common_arguments(parser,
                                        "overwrites only those that contain "
                                        "any reports).")
 
-    add_verbose_arguments(common_group)
+    logger.add_verbose_arguments(common_group)
 
 
 def __add_filtering_arguments(parser):

@@ -8,9 +8,9 @@ from abc import ABCMeta
 import hashlib
 import os
 
-from libcodechecker.logger import LoggerFactory
+from libcodechecker.logger import get_logger
 
-LOG = LoggerFactory.get_new_logger('RESULT HANDLER (BASE)')
+LOG = get_logger('analyzer')
 
 
 class ResultHandler(object):

@@ -17,14 +17,14 @@ import shared
 from ProductManagement_v6 import ttypes
 
 from libcodechecker import util
-from libcodechecker.logger import LoggerFactory
+from libcodechecker.logger import get_logger
 from libcodechecker.profiler import timeit
 from libcodechecker.server import permissions
 from libcodechecker.server.database.config_db_model import *
 from libcodechecker.server.database.database import SQLServer
 from libcodechecker.server.routing import is_valid_product_endpoint
 
-LOG = LoggerFactory.get_new_logger('PRODUCT HANDLER')
+LOG = get_logger('server')
 
 
 class ThriftProductHandler(object):

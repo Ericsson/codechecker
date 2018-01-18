@@ -11,13 +11,12 @@ analyzers available in CodeChecker.
 import argparse
 import subprocess
 
+from libcodechecker import logger
 from libcodechecker import generic_package_context
 from libcodechecker import output_formatters
 from libcodechecker.analyze.analyzers import analyzer_types
-from libcodechecker.logger import add_verbose_arguments
-from libcodechecker.logger import LoggerFactory
 
-LOG = LoggerFactory.get_new_logger('ANALYZERS')
+LOG = logger.get_logger('analyze')
 
 
 def get_argparser_ctor_args():
@@ -68,7 +67,7 @@ def add_arguments_to_parser(parser):
                         choices=output_formatters.USER_FORMATS,
                         help="Specify the format of the output list.")
 
-    add_verbose_arguments(parser)
+    logger.add_verbose_arguments(parser)
     parser.set_defaults(func=main)
 
 
@@ -76,6 +75,7 @@ def main(args):
     """
     List the analyzers' basic information supported by CodeChecker.
     """
+    logger.setup_logger(args.verbose)
 
     context = generic_package_context.get_context()
     working, errored = \

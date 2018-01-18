@@ -13,7 +13,7 @@ import sys
 from ProductManagement_v6.ttypes import *
 
 from libcodechecker.libclient.client import setup_product_client
-from libcodechecker.logger import LoggerFactory
+from libcodechecker import logger
 from libcodechecker.output_formatters import twodim_to_str
 from libcodechecker.server.database import database_status
 from libcodechecker.util import split_server_url
@@ -21,10 +21,12 @@ from libcodechecker.util import split_server_url
 from cmd_line_client import CmdLineOutputEncoder
 
 
-LOG = LoggerFactory.get_new_logger('CMD')
+LOG = logger.get_logger('system')
 
 
 def handle_list_products(args):
+    logger.setup_logger(args.verbose)
+
     protocol, host, port = split_server_url(args.server_url)
     client = setup_product_client(protocol, host, port)
     products = client.getProducts(None, None)
@@ -57,6 +59,8 @@ def handle_list_products(args):
 
 
 def handle_add_product(args):
+    logger.setup_logger(args.verbose)
+
     protocol, host, port = split_server_url(args.server_url)
     client = setup_product_client(protocol, host, port)
 
@@ -106,6 +110,8 @@ def handle_add_product(args):
 
 
 def handle_del_product(args):
+    logger.setup_logger(args.verbose)
+
     protocol, host, port = split_server_url(args.server_url)
     client = setup_product_client(protocol, host, port)
 

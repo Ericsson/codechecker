@@ -18,15 +18,14 @@ from plist_to_html import PlistToHtml
 
 from libcodechecker import generic_package_context
 from libcodechecker import generic_package_suppress_handler
+from libcodechecker import logger
 from libcodechecker import util
 from libcodechecker.analyze.analyzers import analyzer_types
 # TODO: This is a cross-subpackage reference...
 from libcodechecker.log import build_action
-from libcodechecker.logger import add_verbose_arguments
-from libcodechecker.logger import LoggerFactory
 from libcodechecker.output_formatters import twodim_to_str
 
-LOG = LoggerFactory.get_new_logger('PARSE')
+LOG = logger.get_logger('system')
 
 
 def get_argparser_ctor_args():
@@ -130,7 +129,7 @@ def add_arguments_to_parser(parser):
                         help="Print the steps the analyzers took in finding "
                              "the reported defect.")
 
-    add_verbose_arguments(parser)
+    logger.add_verbose_arguments(parser)
 
     def __handle(args):
         """Custom handler for 'parser' so custom error messages can be
@@ -194,6 +193,8 @@ def main(args):
     Entry point for parsing some analysis results and printing them to the
     stdout in a human-readable format.
     """
+
+    logger.setup_logger(args.verbose)
 
     context = generic_package_context.get_context()
 

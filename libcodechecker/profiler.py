@@ -16,9 +16,9 @@ except ImportError:
     from io import BytesIO as StringIO
 
 from libcodechecker import logger
-from libcodechecker.logger import LoggerFactory
+from libcodechecker.logger import get_logger
 
-LOG = LoggerFactory.get_new_logger('PROFILER')
+LOG = get_logger('profiler')
 
 
 class Timer(object):
@@ -65,7 +65,7 @@ def timeit(function):
 
     @wraps(function)
     def wrapper(*args, **kwargs):
-        if LoggerFactory.get_log_level() == logger.DEBUG:
+        if LOG.getEffectiveLevel() == logger.DEBUG:
             return debug_wrapper(*args, **kwargs)
         else:
             return release_wrapper(*args, **kwargs)

@@ -15,14 +15,14 @@ import shutil
 import subprocess
 import time
 
-from libcodechecker.logger import LoggerFactory
+from libcodechecker.logger import get_logger
 from libcodechecker.analyze import analysis_manager
 from libcodechecker.analyze import analyzer_env
 from libcodechecker.analyze import ctu_manager
 from libcodechecker.analyze import skiplist_handler
 from libcodechecker.analyze.analyzers import analyzer_types
 
-LOG = LoggerFactory.get_new_logger('ANALYZER')
+LOG = get_logger('analyzer')
 
 
 def prepare_actions(actions, enabled_analyzers):

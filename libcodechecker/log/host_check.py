@@ -8,9 +8,9 @@ import errno
 import os
 import subprocess
 
-from libcodechecker.logger import LoggerFactory
+from libcodechecker.logger import get_logger
 
-LOG = LoggerFactory.get_new_logger('HOST CHECK')
+LOG = get_logger('system')
 
 
 def check_intercept(env):
