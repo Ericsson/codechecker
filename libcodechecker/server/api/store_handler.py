@@ -175,7 +175,7 @@ def is_same_event_path(report_id, events, session):
             str(ex))
 
 
-def addCheckerRun(session, storage_session, command, name, tag, username,
+def addCheckerRun(session, command, name, tag, username,
                   run_history_time, version, force):
     """
     Store checker run related data to the database.
@@ -186,9 +186,6 @@ def addCheckerRun(session, storage_session, command, name, tag, username,
         LOG.debug("adding checker run")
 
         run = session.query(Run).filter(Run.name == name).one_or_none()
-
-        if run and storage_session.has_ongoing_run(run.id):
-            raise Exception('Storage of ' + name + ' is already going')
 
         if run and force:
             # Clean already collected results.
@@ -234,36 +231,28 @@ def addCheckerRun(session, storage_session, command, name, tag, username,
             if run_history:
                 run_history.version_tag = None
                 session.add(run_history)
-                session.flush()
 
         run_history = RunHistory(run_id, tag, username, run_history_time)
         session.add(run_history)
-        session.flush()
 
-        storage_session.start_run_session(run_id, session)
+        session.flush()
         return run_id
     except Exception as ex:
-        session.close()
         raise shared.ttypes.RequestFailed(
             shared.ttypes.ErrorCode.GENERAL,
             str(ex))
 
 
-def finishCheckerRun(storage_session, run_id):
+def finishCheckerRun(session, run_id):
     """
     """
     try:
-        session = storage_session.get_transaction(run_id)
-
         LOG.debug("Finishing checker run")
         run = session.query(Run).get(run_id)
         if not run:
-            storage_session.abort_session(run_id)
             return False
 
         run.mark_finished()
-
-        storage_session.end_run_session(run_id)
 
         return True
 
@@ -272,14 +261,12 @@ def finishCheckerRun(storage_session, run_id):
         return False
 
 
-def setRunDuration(storage_session, run_id, duration):
+def setRunDuration(session, run_id, check_durations):
     """
     """
     try:
-        session = storage_session.get_transaction(run_id)
-
-        LOG.debug("setting run duartion")
         run = session.query(Run).get(run_id)
+
         if not run:
             return False
 
@@ -290,7 +277,7 @@ def setRunDuration(storage_session, run_id, duration):
         return false
 
 
-def addReport(storage_session,
+def addReport(session,
               run_id,
               file_id,
               main_section,
@@ -301,7 +288,6 @@ def addReport(storage_session,
     """
     """
     try:
-        session = storage_session.get_transaction(run_id)
 
         checker_name = main_section['check_name']
         context = generic_package_context.get_context()
@@ -338,8 +324,7 @@ def addReport(storage_session,
             str(ex))
 
 
-def changePathAndEvents(storage_session, run_id, report_path_map):
-    session = storage_session.get_transaction(run_id)
+def changePathAndEvents(session, run_id, report_path_map):
     report_ids = report_path_map.keys()
 
     session.query(BugPathEvent) \
