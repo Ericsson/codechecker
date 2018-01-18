@@ -62,6 +62,7 @@ class TestCtuFailure(unittest.TestCase):
             for command in build_json:
                 command['directory'] = self.test_dir
 
+        self.__old_pwd = os.getcwd()
         os.chdir(self.test_workspace)
         self.buildlog = os.path.join(self.test_workspace, 'buildlog.json')
         with open(self.buildlog, 'w') as log_file:
@@ -71,6 +72,7 @@ class TestCtuFailure(unittest.TestCase):
         """ Tear down workspace."""
 
         shutil.rmtree(self.report_dir, ignore_errors=True)
+        os.chdir(self.__old_pwd)
 
     def test_ctu_logs_ast_import(self):
         """ Test that Clang indeed logs the AST import events.
