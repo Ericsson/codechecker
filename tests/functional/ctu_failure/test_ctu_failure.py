@@ -22,7 +22,7 @@ NO_CTU_MESSAGE = "CTU is not supported"
 NO_DISPLAY_CTU_PROGRESS = "-analyzer-display-ctu-progress is not supported"
 
 
-class TestCtu(unittest.TestCase):
+class TestCtuFailure(unittest.TestCase):
     """ Test CTU functionality. """
 
     def setUp(self):
