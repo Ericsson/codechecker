@@ -261,7 +261,7 @@ def finishCheckerRun(session, run_id):
         return False
 
 
-def setRunDuration(session, run_id, check_durations):
+def setRunDuration(session, run_id, duration):
     """
     """
     try:

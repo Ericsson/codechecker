@@ -11,13 +11,11 @@ database.
 import argparse
 import base64
 import errno
-import functools
 from hashlib import sha256
 import json
 import os
 import sys
 import tempfile
-import traceback
 import zipfile
 import zlib
 
@@ -36,18 +34,6 @@ from libcodechecker.util import split_product_url
 LOG = logger.get_logger('system')
 
 MAX_UPLOAD_SIZE = 1 * 1024 * 1024 * 1024  # 1GiB
-
-
-def full_traceback(func):
-
-    @functools.wraps(func)
-    def wrapper(*args, **kwargs):
-        try:
-            return func(*args, **kwargs)
-        except Exception as e:
-            msg = "{}\n\nOriginal {}".format(e, traceback.format_exc())
-            raise type(e)(msg)
-    return wrapper
 
 
 def get_argparser_ctor_args():

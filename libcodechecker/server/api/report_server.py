@@ -10,20 +10,17 @@ Handle Thrift requests.
 import base64
 import codecs
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timedelta
 import hashlib
 import json
 import sys
 import tempfile
-import threading
-import time
 import zipfile
 import zlib
 
 import sqlalchemy
 
 import shared
-import store_handler
 from codeCheckerDBAccess_v6 import constants, ttypes
 from codeCheckerDBAccess_v6.ttypes import *
 
@@ -36,6 +33,8 @@ from libcodechecker.profiler import timeit
 from libcodechecker.server import permissions
 from libcodechecker.server.database import db_cleanup
 from libcodechecker.server.database.run_db_model import *
+
+from . import store_handler
 
 LOG = get_logger('server')
 
@@ -1715,6 +1714,20 @@ class ThriftRequestHandler(object):
                     LOG.debug("Can't delete " + str(run_id))
                     continue
 
+                # Check if there is an existing lock on the given run name,
+                # which has not expired yet. If so, the run cannot be
+                # deleted, as someone is assumed to be storing into it.
+                locks_expired_at = datetime.now() - \
+                    timedelta(seconds=db_cleanup.RUN_LOCK_TIMEOUT_IN_DATABASE)
+                lock = session.query(RunLock) \
+                    .filter(RunLock.name == run_to_delete.name,
+                            RunLock.locked_at >= locks_expired_at) \
+                    .one_or_none()
+                if lock:
+                    LOG.info("Can't delete '{0}' as it is locked."
+                             .format(run_to_delete.name))
+                    continue
+
                 run_to_delete.can_delete = False
                 session.commit()
                 runs_to_delete.append(run_to_delete)
@@ -1913,11 +1926,98 @@ class ThriftRequestHandler(object):
                 .filter(Report.id.in_(reports_to_delete)) \
                 .delete(synchronize_session=False)
 
+    @staticmethod
+    @exc_to_thrift_reqfail
+    def __store_run_lock(session, name, username):
+        """
+        Store a RunLock record for the given run name into the database.
+        """
+
+        # If the run can be stored, we need to lock it first.
+        run_lock = session.query(RunLock) \
+            .filter(RunLock.name == name) \
+            .with_for_update(nowait=True).one_or_none()
+
+        if not run_lock:
+            # If there is no lock record for the given run name, the run
+            # is not locked -- create a new lock.
+            run_lock = RunLock(name, username)
+            session.add(run_lock)
+        elif run_lock.has_expired(
+                db_cleanup.RUN_LOCK_TIMEOUT_IN_DATABASE):
+            # There can be a lock in the database, which has already
+            # expired. In this case, we assume that the previous operation
+            # has failed, and thus, we can re-use the already present lock.
+            run_lock.touch()
+            run_lock.username = username
+        else:
+            # In case the lock exists and it has not expired, we must
+            # consider the run a locked one.
+            when = run_lock.when_expires(
+                db_cleanup.RUN_LOCK_TIMEOUT_IN_DATABASE)
+
+            username = run_lock.username if run_lock.username is not None \
+                else "another user"
+
+            LOG.info("Refusing to store into run '{0}' as it is locked by "
+                     "{1}. Lock will expire at '{2}'."
+                     .format(name, username, when))
+            raise shared.ttypes.RequestFailed(
+                shared.ttypes.ErrorCode.DATABASE,
+                "The run named '{0}' is being stored into by {1}. If the "
+                "other store operation has failed, this lock will expire "
+                "at '{2}'.".format(name, username, when))
+
+        # At any rate, if the lock has been created or updated, commit it
+        # into the database.
+        try:
+            session.commit()
+        except (sqlalchemy.exc.IntegrityError,
+                sqlalchemy.orm.exc.StaleDataError):
+            # The commit of this lock can fail.
+            #
+            # In case two store ops attempt to lock the same run name at the
+            # same time, committing the lock in the transaction that commits
+            # later will result in an IntegrityError due to the primary key
+            # constraint.
+            #
+            # In case two store ops attempt to lock the same run name with
+            # reuse and one of the operation hangs long enough before COMMIT
+            # so that the other operation commits and thus removes the lock
+            # record, StaleDataError is raised. In this case, also consider
+            # the run locked, as the data changed while the transaction was
+            # waiting, as another run wholly completed.
+
+            LOG.info("Run '{0}' got locked while current transaction "
+                     "tried to acquire a lock. Considering run as locked."
+                     .format(name))
+            raise shared.ttypes.RequestFailed(
+                shared.ttypes.ErrorCode.DATABASE,
+                "The run named '{0}' is being stored into by another "
+                "user.".format(name))
+
+    @staticmethod
+    @exc_to_thrift_reqfail
+    def __free_run_lock(session, name):
+        """
+        Remove the lock from the database for the given run name.
+        """
+        # Using with_for_update() here so the database (in case it supports
+        # this operation) locks the lock record's row from any other access.
+        run_lock = session.query(RunLock) \
+            .filter(RunLock.name == name) \
+            .with_for_update(nowait=True).one()
+        session.delete(run_lock)
+        session.commit()
+
     @exc_to_thrift_reqfail
     @timeit
     def massStoreRun(self, name, tag, version, b64zip, force):
         self.__require_store()
 
+        user = self.__auth_session.user if self.__auth_session else None
+
+        # Session that handles constraints on the run.
         with DBSession(self.__Session) as session:
             run = session.query(Run).filter(Run.name == name).one_or_none()
             max_run_count = self.__manager.get_max_run_count()
@@ -1939,66 +2039,96 @@ class ThriftRequestHandler(object):
                                                    max_run_count,
                                                    remove_run_count))
 
-        with util.TemporaryDirectory() as zip_dir:
-            # Unzip sent data.
-            unzip(b64zip, zip_dir)
+            ThriftRequestHandler.__store_run_lock(session, name, user)
 
-            LOG.debug("Using unzipped folder '{0}'".format(zip_dir))
+        try:
+            with util.TemporaryDirectory() as zip_dir:
+                unzip(b64zip, zip_dir)
 
-            source_root = os.path.join(zip_dir, 'root')
-            report_dir = os.path.join(zip_dir, 'reports')
-            metadata_file = os.path.join(report_dir, 'metadata.json')
-            content_hash_file = os.path.join(zip_dir, 'content_hashes.json')
+                LOG.debug("Using unzipped folder '{0}'".format(zip_dir))
 
-            with open(content_hash_file) as chash_file:
-                filename_to_hash = json.load(chash_file)
+                source_root = os.path.join(zip_dir, 'root')
+                report_dir = os.path.join(zip_dir, 'reports')
+                metadata_file = os.path.join(report_dir, 'metadata.json')
+                content_hash_file = os.path.join(zip_dir,
+                                                 'content_hashes.json')
 
-            file_path_to_id = self.__store_source_files(source_root,
-                                                        filename_to_hash)
+                with open(content_hash_file) as chash_file:
+                    filename_to_hash = json.load(chash_file)
 
-            user = self.__auth_session.user \
-                if self.__auth_session else 'Anonymous'
+                file_path_to_id = self.__store_source_files(source_root,
+                                                            filename_to_hash)
 
-            run_history_time = datetime.now()
+                run_history_time = datetime.now()
 
-            check_commands, check_durations = \
-                store_handler.metadata_info(metadata_file)
+                check_commands, check_durations = \
+                    store_handler.metadata_info(metadata_file)
 
-            if len(check_commands) == 0:
-                command = ' '.join(sys.argv)
-            elif len(check_commands) == 1:
-                command = ' '.join(check_commands[0])
-            else:
-                command = "multiple analyze calls: " + \
-                          '; '.join([' '.join(com) for com in check_commands])
+                if len(check_commands) == 0:
+                    command = ' '.join(sys.argv)
+                elif len(check_commands) == 1:
+                    command = ' '.join(check_commands[0])
+                else:
+                    command = "multiple analyze calls: " + \
+                              '; '.join([' '.join(com)
+                                         for com in check_commands])
 
-            durations = 0
-            if len(check_durations) > 0:
-                # Round the duration to seconds.
-                durations = int(sum(check_durations))
+                durations = 0
+                if len(check_durations) > 0:
+                    # Round the duration to seconds.
+                    durations = int(sum(check_durations))
 
+                # This session's transaction buffer stores the actual run data
+                # into the database.
+                LOG.critical("Begin storing run")
+                with DBSession(self.__Session) as session:
+                    # Load the lock record for "FOR UPDATE" so that the
+                    # transaction that handles the run's store operations
+                    # has a lock on the database row itself.
+                    run_lock = session.query(RunLock) \
+                        .filter(RunLock.name == name) \
+                        .with_for_update(nowait=True).one()
+
+                    # Do not remove this seemingly dummy print, we need to make
+                    # sure that the execution of the SQL statement is not
+                    # optimised away and the fetched row is not garbage
+                    # collected.
+                    LOG.debug("Storing into run '{0}' locked at '{1}'."
+                              .format(name, run_lock.locked_at))
+
+                    # Actual store operation begins here.
+                    run_id = store_handler.addCheckerRun(session,
+                                                         command,
+                                                         name,
+                                                         tag,
+                                                         user if user
+                                                         else 'Anonymous',
+                                                         run_history_time,
+                                                         version,
+                                                         force)
+
+                    self.__store_reports(session,
+                                         report_dir,
+                                         source_root,
+                                         run_id,
+                                         file_path_to_id,
+                                         run_history_time)
+
+                    store_handler.setRunDuration(session,
+                                                 run_id,
+                                                 durations)
+
+                    store_handler.finishCheckerRun(session, run_id)
+
+                    session.commit()
+
+                return run_id
+        finally:
+            # In any case if the "try" block's execution began, a run lock must
+            # exist, which can now be removed, as storage either completed
+            # successfully, or failed in a detectable manner.
+            # (If the failure is undetectable, the coded grace period expiry
+            # of the lock will allow further store operations to the given
+            # run name.)
             with DBSession(self.__Session) as session:
-                run_id = store_handler.addCheckerRun(session,
-                                                     command,
-                                                     name,
-                                                     tag,
-                                                     user,
-                                                     run_history_time,
-                                                     version,
-                                                     force)
-                self.__store_reports(session,
-                                     report_dir,
-                                     source_root,
-                                     run_id,
-                                     file_path_to_id,
-                                     run_history_time)
-
-                store_handler.setRunDuration(session,
-                                             run_id,
-                                             durations)
-
-                store_handler.finishCheckerRun(session, run_id)
-
-                session.commit()
-
-            return run_id
+                ThriftRequestHandler.__free_run_lock(session, name)

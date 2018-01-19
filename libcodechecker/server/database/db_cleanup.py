@@ -1,9 +1,36 @@
-from codeCheckerDBAccess_v6.ttypes import*
+# -------------------------------------------------------------------------
+#                     The CodeChecker Infrastructure
+#   This file is distributed under the University of Illinois Open Source
+#   License. See LICENSE.TXT for details.
+# -------------------------------------------------------------------------
+"""
+Contains housekeeping routines that are used to remove expired, obsolete,
+or dangling records from the database.
+"""
+
+from datetime import datetime, timedelta
+
+from codeCheckerDBAccess_v6.ttypes import *
 
 from libcodechecker.logger import get_logger
-from libcodechecker.server.database.run_db_model import *
+
+from run_db_model import *
 
 LOG = get_logger('server')
+RUN_LOCK_TIMEOUT_IN_DATABASE = 30 * 60  # 30 minutes.
+
+
+def remove_expired_run_locks(session):
+    LOG.info("Garbage collection of expired run locks started...")
+
+    locks_expired_at = datetime.now() - timedelta(
+        seconds=RUN_LOCK_TIMEOUT_IN_DATABASE)
+
+    session.query(RunLock) \
+        .filter(RunLock.locked_at < locks_expired_at) \
+        .delete(synchronize_session=False)
+
+    LOG.info("Garbage collection of expired run locks finished.")
 
 
 def remove_unused_files(session):
