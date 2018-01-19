@@ -51,21 +51,41 @@ class Run(Base):
 
     id = Column(Integer, autoincrement=True, primary_key=True)
     date = Column(DateTime)
-    duration = Column(Integer)  # Seconds, -1 if unfinished.
+
+    # If positive: the seconds the duration of the run.
+    # If -1, the run is undergoing a store, but there exists a previous state.
+    # If -2, the run is undergoing its first store.
+    duration = Column(Integer)
+
     name = Column(String)
     version = Column(String)
     command = Column(String)
     can_delete = Column(Boolean, nullable=False, server_default=true(),
                         default=True)
 
+    # Timestamp when the run was last accessed in an ongoing STORE operation.
+    lock_timestamp = Column(DateTime, nullable=True)
+
     def __init__(self, name, version, command):
         self.date, self.name, self.version, self.command = \
             datetime.now(), name, version, command
-        self.duration = -1
+        self.duration = -2
 
     def mark_finished(self):
-        if self.duration == -1:
+        if self.duration == -1 or self.duration == -2:
             self.duration = ceil((datetime.now() - self.date).total_seconds())
+
+        self.lock_timestamp = None
+
+    def is_locked(self, grace_time):
+        """
+        Returns if the run is locked, that is, the grace period (in seconds)
+        since the last lock notification haven't expired.
+        """
+        if not self.lock_timestamp:
+            return False
+        return (datetime.now() -
+                self.lock_timestamp).total_seconds() < grace_time
 
 
 class RunHistory(Base):
@@ -210,8 +230,8 @@ class Report(Base):
     detected_at = Column(DateTime, nullable=False)
     fixed_at = Column(DateTime)
 
-    # Cascade delete might remove rows SQLAlchemy warns about this
-    # to remove warnings about already deleted items set this to False.
+    # Cascade delete might remove rows, SQLAlchemy warns about this.
+    # To remove warnings about already deleted items set this to False.
     __mapper_args__ = {
         'confirm_deleted_rows': False
     }

@@ -17,10 +17,11 @@ from codeCheckerDBAccess_v6 import ttypes
 
 from libcodechecker import generic_package_context
 from libcodechecker.logger import get_logger
-# TODO: This is a cross-subpackage import.
 from libcodechecker.server.database.run_db_model import *
+from libcodechecker.server.database.session_context import DBSession
 
 LOG = get_logger('system')
+RUN_LOCK_TIMEOUT_IN_DATABASE = 30 * 60  # 30 minutes.
 
 
 def metadata_info(metadata_file):
@@ -175,17 +176,28 @@ def is_same_event_path(report_id, events, session):
             str(ex))
 
 
-def addCheckerRun(session, command, name, tag, username,
-                  run_history_time, version, force):
+def addCheckerRun(session_factory, run_data_session, command, name, tag,
+                  username, run_history_time, version, force):
     """
     Store checker run related data to the database.
     By default updates the results if name already exists.
     Using the force flag removes existing analysis results for a run.
     """
+
+    # run_data_session is the session that comes from the calling context,
+    # this is the transaction buffer which collects ALL the data that is needed
+    # to be committed for a run to be valid.
+
+    # session_factory is used separately to construct a transaction which
+    # commits lock-specific information into the database early ahead, so
+    # other servers possibly sharing the same database can know that a
+    # particular run is locked.
+
     try:
         LOG.debug("adding checker run")
 
-        run = session.query(Run).filter(Run.name == name).one_or_none()
+        run = run_data_session.query(Run).filter(Run.name == name) \
+            .one_or_none()
 
         if run and force:
             # Clean already collected results.
@@ -198,44 +210,66 @@ def addCheckerRun(session, command, name, tag, username,
                     msg)
 
             LOG.info('Removing previous analysis results ...')
-            session.delete(run)
+            run_data_session.delete(run)
+            run_data_session.flush()
 
-            checker_run = Run(name, version, command)
-            session.add(checker_run)
-            session.flush()
+            # The adding of the new run must happen on a separate session,
+            # so that the lock is committed to the database.
+            with DBSession(session_factory) as lock_session:
+                checker_run = Run(name, version, command)
+                checker_run.lock_timestamp = datetime.now()
+                lock_session.add(checker_run)
+                lock_session.commit()
+
             run_id = checker_run.id
-
         elif run:
             # There is already a run, update the results.
+
+            # Mark the run locked and save this information into the database.
+            with DBSession(session_factory) as lock_session:
+                run_lock = lock_session.query(Run).filter(Run.name == name) \
+                            .with_for_update().one_or_none()
+                run_lock.lock_timestamp = datetime.now()
+                lock_session.commit()
+
+            # Update the run's other metadata, but these only save into the
+            # transaction's buffer, so if the store fails, the previous
+            # timestamp and duration is recovered.
             run.date = datetime.now()
             run.command = command
             run.duration = -1
-            session.flush()
+            run_data_session.flush()
             run_id = run.id
         else:
-            # There is no run create new.
-            checker_run = Run(name, version, command)
-            session.add(checker_run)
-            session.flush()
-            run_id = checker_run.id
+            # There is no run, create a new and save into the database.
+            # This is done on the second transaction, so the first transaction
+            # keeps the run's related (but not yet saved) data only in the
+            # transaction buffer.
+            with DBSession(session_factory) as lock_session:
+                checker_run = Run(name, version, command)
+                checker_run.lock_timestamp = datetime.now()
+                lock_session.add(checker_run)
+                lock_session.commit()
+
+                run_id = checker_run.id
 
         # Add run to the history.
         LOG.debug("adding run to the history")
 
         if tag is not None:
-            run_history = session.query(RunHistory) \
+            run_history = run_data_session.query(RunHistory) \
                 .filter(RunHistory.run_id == run_id,
                         RunHistory.version_tag == tag) \
                 .one_or_none()
 
             if run_history:
                 run_history.version_tag = None
-                session.add(run_history)
+                run_data_session.add(run_history)
 
         run_history = RunHistory(run_id, tag, username, run_history_time)
-        session.add(run_history)
+        run_data_session.add(run_history)
 
-        session.flush()
+        run_data_session.flush()
         return run_id
     except Exception as ex:
         raise shared.ttypes.RequestFailed(
@@ -270,7 +304,7 @@ def setRunDuration(session, run_id, check_durations):
         if not run:
             return False
 
-        run.duration = duration
+        run.duration = check_durations
         return True
     except Exception as ex:
         LOG.error(ex)

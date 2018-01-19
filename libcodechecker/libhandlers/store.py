@@ -38,18 +38,6 @@ LOG = logger.get_logger('system')
 MAX_UPLOAD_SIZE = 1 * 1024 * 1024 * 1024  # 1GiB
 
 
-def full_traceback(func):
-
-    @functools.wraps(func)
-    def wrapper(*args, **kwargs):
-        try:
-            return func(*args, **kwargs)
-        except Exception as e:
-            msg = "{}\n\nOriginal {}".format(e, traceback.format_exc())
-            raise type(e)(msg)
-    return wrapper
-
-
 def get_argparser_ctor_args():
     """
     This method returns a dict containing the kwargs for constructing an

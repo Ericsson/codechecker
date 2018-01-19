@@ -641,6 +641,7 @@ class Product(object):
         with database.DBContext(prod_db) as db:
             try:
                 db_cleanup.remove_unused_files(db.session)
+                db_cleanup.remove_stale_runs(db.session)
                 db.session.commit()
                 return True
             except Exception as ex:
