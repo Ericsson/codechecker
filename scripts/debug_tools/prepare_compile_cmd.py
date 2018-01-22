@@ -46,6 +46,14 @@ def prepare(compile_command_json, sources_root):
             lib.change_paths(entry['directory'],
                              lib.IncludePathModifier(sources_root_abs))
 
+        try:
+            # This directory may not have been collected by the "failed log
+            # collectory" script if it is empty. However the existence of this
+            # directory is necessary for analysis.
+            os.makedirs(entry['directory'])
+        except OSError:
+            pass
+
         cmd = entry['command']
         compiler, compilerEnd = lib.find_path_end(cmd.lstrip(), 0)
         entry['command'] = compiler +\
