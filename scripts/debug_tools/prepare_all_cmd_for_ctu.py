@@ -7,6 +7,7 @@
 import argparse
 import json
 import os
+import platform
 import subprocess
 
 import prepare_compile_cmd
@@ -33,6 +34,18 @@ def execute(cmd):
     except OSError:
         print('Failed to run: "' + ' '.join(cmd) + '"')
         raise
+
+
+def get_triple_arch(analyze_command_file):
+    with open(analyze_command_file) as f:
+        cmd = f.readline()
+
+    cmd = cmd.split()
+    for flag in cmd:
+        if flag.startswith('--target='):
+            return flag[9:].split('-')[0]  # 9 == len('--target=')
+
+    return platform.machine()
 
 
 if __name__ == '__main__':
@@ -95,6 +108,7 @@ if __name__ == '__main__':
                    "--verbose", "debug"])
 
     analyzer_command_debug = "analyzer-command_DEBUG"
+    target = get_triple_arch('./analyzer-command')
     with open(analyzer_command_debug, 'w') as f:
         f.write(
             prepare_analyzer_cmd.prepare(
@@ -104,7 +118,7 @@ if __name__ == '__main__':
                     args.clang,
                     args.clang_plugin_name,
                     args.clang_plugin_path,
-                    "./report_debug/ctu-dir/x86_64")))
+                    "./report_debug/ctu-dir/" + target)))
 
     print(
         "Preparation of files for debugging is done. "
