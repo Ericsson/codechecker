@@ -78,7 +78,7 @@ class SourceAnalyzer(object):
         """
         pass
 
-    def analyze(self, res_handler, env=None):
+    def analyze(self, res_handler, env=None, proc_callback=None):
         """
         Run the analyzer.
         """
@@ -101,7 +101,8 @@ class SourceAnalyzer(object):
             ret_code, stdout, stderr \
                 = SourceAnalyzer.run_proc(analyzer_cmd,
                                           env,
-                                          res_handler.buildaction.directory)
+                                          res_handler.buildaction.directory,
+                                          proc_callback)
             res_handler.analyzer_returncode = ret_code
             res_handler.analyzer_stdout = stdout
             res_handler.analyzer_stderr = stderr
@@ -120,7 +121,7 @@ class SourceAnalyzer(object):
         pass
 
     @staticmethod
-    def run_proc(command, env=None, cwd=None):
+    def run_proc(command, env=None, cwd=None, proc_callback=None):
         """
         Just run the given command and return the return code
         and the stdout and stderr outputs of the process.
@@ -145,5 +146,9 @@ class SourceAnalyzer(object):
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE)
 
-        (stdout, stderr) = proc.communicate()
+        # Send the created analyzer process' object if somebody wanted it.
+        if proc_callback:
+            proc_callback(proc)
+
+        stdout, stderr = proc.communicate()
         return proc.returncode, stdout, stderr

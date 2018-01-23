@@ -202,7 +202,7 @@ def check(check_data):
 
     actions_map, action, context, analyzer_config_map, \
         output_dir, skip_handler, quiet_output_on_stdout, \
-        capture_analysis_output = check_data
+        capture_analysis_output, analysis_timeout = check_data
 
     skipped = False
     reanalyzed = False
@@ -263,8 +263,44 @@ def check(check_data):
             if os.path.exists(rh.analyzer_result_file):
                 reanalyzed = True
 
-            # Fills up the result handler with the analyzer information.
-            source_analyzer.analyze(rh, analyzer_environment)
+            # The analyzer invocation calls __create_timeout as a callback
+            # when the analyzer starts. This callback creates the timeout
+            # watcher over the analyzer process, which in turn returns a
+            # function, that can later be used to check if the analyzer quit
+            # because we killed it due to a timeout.
+            #
+            # We need to capture the "function pointer" returned by
+            # setup_process_timeout as reference, so that we may call it
+            # later. To work around scoping issues, we use a list here so the
+            # "function pointer" is captured by reference.
+            timeout_cleanup = [lambda: False]
+
+            if analysis_timeout and analysis_timeout > 0:
+                def __create_timeout(analyzer_process):
+                    """
+                    Once the analyzer process is started, this method is
+                    called. Set up a timeout for the analysis.
+                    """
+                    timeout_cleanup[0] = util.setup_process_timeout(
+                        analyzer_process, analysis_timeout, signal.SIGKILL)
+            else:
+                def __create_timeout(analyzer_process):
+                    # If no timeout is given by the client, this callback
+                    # shouldn't do anything.
+                    pass
+
+            source_analyzer.analyze(rh, analyzer_environment,
+                                    __create_timeout)
+
+            # If execution reaches this line, the analyzer process has quit.
+            if timeout_cleanup[0]():
+                LOG.warning("Analyzer ran too long, exceeding time limit "
+                            "of {0} seconds.".format(analysis_timeout))
+                LOG.warning("Considering this analysis as failed...")
+                rh.analyzer_returncode = -1
+                rh.analyzer_stderr = (">>> CodeChecker: Analysis timed out "
+                                      "after {0} seconds. <<<\n{1}") \
+                    .format(analysis_timeout, rh.analyzer_stderr)
 
             # If source file contains escaped spaces ("\ " tokens), then
             # clangSA writes the plist file with removing this escape
@@ -478,7 +514,7 @@ def check(check_data):
 
 def start_workers(actions_map, actions, context, analyzer_config_map,
                   jobs, output_path, skip_handler, metadata,
-                  quiet_analyze, capture_analysis_output):
+                  quiet_analyze, capture_analysis_output, timeout):
     """
     Start the workers in the process pool.
     For every build action there is worker which makes the analysis.
@@ -515,7 +551,8 @@ def start_workers(actions_map, actions, context, analyzer_config_map,
                              output_path,
                              skip_handler,
                              quiet_analyze,
-                             capture_analysis_output)
+                             capture_analysis_output,
+                             timeout)
                             for build_action in actions]
 
         pool.map_async(check,

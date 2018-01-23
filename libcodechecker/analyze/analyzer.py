@@ -166,7 +166,9 @@ def perform_analysis(args, context, actions, metadata):
                                        __get_skip_handler(args),
                                        metadata,
                                        'quiet' in args,
-                                       'capture_analysis_output' in args)
+                                       'capture_analysis_output' in args,
+                                       args.timeout if 'timeout' in args
+                                       else None)
 
     end_time = time.time()
     LOG.info("Analysis length: " + str(end_time - start_time) + " sec.")
