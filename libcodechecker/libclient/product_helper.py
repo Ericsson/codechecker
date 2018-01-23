@@ -16,8 +16,9 @@ from thrift.Thrift import TApplicationException
 import shared
 from ProductManagement_v6 import codeCheckerProductService
 
-from libcodechecker import session_manager
 from libcodechecker import util
+
+from credential_manager import SESSION_COOKIE_NAME
 
 
 class ThriftProductHelper(object):
@@ -30,8 +31,7 @@ class ThriftProductHelper(object):
         self.client = codeCheckerProductService.Client(self.protocol)
 
         if session_token:
-            headers = {'Cookie': session_manager.SESSION_COOKIE_NAME +
-                       "=" + session_token}
+            headers = {'Cookie': SESSION_COOKIE_NAME + '=' + session_token}
             self.transport.setCustomHeaders(headers)
 
             # ------------------------------------------------------------

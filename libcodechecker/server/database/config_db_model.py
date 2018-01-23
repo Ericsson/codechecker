@@ -9,6 +9,7 @@ SQLAlchemy ORM model for the product configuration database.
 
 from __future__ import print_function
 from __future__ import unicode_literals
+from datetime import datetime
 import sys
 
 from sqlalchemy import *
@@ -105,6 +106,21 @@ class ProductPermission(Base):
         self.product_id = product_id
         self.name = name
         self.is_group = is_group
+
+
+class Session(Base):
+    __tablename__ = 'sessions'
+
+    # Auth-String is a SHA-256 hash, while token is a Python UUID which is
+    # 32 characters (both in hex expanded format).
+    auth_string = Column(CHAR(64), nullable=False, primary_key=True)
+    token = Column(CHAR(32), nullable=False)
+    last_access = Column(DateTime, nullable=False)
+
+    def __init__(self, auth_string, token):
+        self.auth_string = auth_string
+        self.token = token
+        self.last_access = datetime.now()
 
 
 IDENTIFIER = {

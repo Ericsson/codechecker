@@ -5,9 +5,9 @@
 # -------------------------------------------------------------------------
 
 import os
-import sys
 # import datetime
 import socket
+import sys
 
 from thrift.transport import THttpClient
 from thrift.protocol import TJSONProtocol
@@ -17,8 +17,9 @@ from thrift.Thrift import TApplicationException
 import shared
 from Authentication_v6 import codeCheckerAuthentication
 
-from libcodechecker import session_manager
 from libcodechecker import util
+
+from credential_manager import SESSION_COOKIE_NAME
 
 
 class ThriftAuthHelper():
@@ -32,8 +33,7 @@ class ThriftAuthHelper():
         self.client = codeCheckerAuthentication.Client(self.protocol)
 
         if session_token:
-            headers = {'Cookie': session_manager.SESSION_COOKIE_NAME +
-                       "=" + session_token}
+            headers = {'Cookie': SESSION_COOKIE_NAME + '=' + session_token}
             self.transport.setCustomHeaders(headers)
 
             # ------------------------------------------------------------

@@ -4,19 +4,22 @@
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
 """
-This module stores a global constant between CodeChecker server and client,
-which dictates what API version the client should use, and what the server
-accepts.
+This module stores constants that are shared between the CodeChecker server
+and client, related to API and other version-specific information.
 """
 
-# This dict object stores for each MAJOR version (key) the largest MINOR
-# version (value) supported by the build.
+# The name of the cookie which contains the user's authentication session's
+# token.
+SESSION_COOKIE_NAME = "__ccPrivilegedAccessToken"
+
+# The newest supported minor version (value) for each supported major version
+# (key) in this particular build.
 SUPPORTED_VERSIONS = {
     6: 6
 }
 
-# This value is automatically generated to represent the highest version
-# available in the current build.
+# Used by the client to automatically identify the latest major and minor
+# version.
 CLIENT_API = '{0}.{1}'.format(
     max(SUPPORTED_VERSIONS.keys()),
     SUPPORTED_VERSIONS[max(SUPPORTED_VERSIONS.keys())])

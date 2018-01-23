@@ -13,14 +13,14 @@ from thrift.Thrift import TApplicationException
 import shared
 from Authentication_v6 import ttypes as AuthTypes
 
-from libcodechecker import session_manager
 from libcodechecker.logger import get_logger
 from libcodechecker.util import split_product_url
 from libcodechecker.version import CLIENT_API
 
 from . import authentication_helper
-from . import thrift_helper
 from . import product_helper
+from . import thrift_helper
+from credential_manager import UserCredentials
 
 LOG = get_logger('system')
 
@@ -46,8 +46,8 @@ def setup_auth_client(protocol, host, port, session_token=None):
     """
 
     if not session_token:
-        manager = session_manager.SessionManager_Client()
-        session_token = manager.getToken(host, port)
+        manager = UserCredentials()
+        session_token = manager.get_token(host, port)
         session_token_new = perform_auth_for_handler(protocol,
                                                      manager, host,
                                                      port,
@@ -79,8 +79,8 @@ def setup_auth_client_from_url(product_url, session_token=None):
 
 
 def handle_auth(protocol, host, port, username, login=False):
-    session = session_manager.SessionManager_Client()
-    auth_token = session.getToken(host, port)
+    session = UserCredentials()
+    auth_token = session.get_token(host, port)
     auth_client = authentication_helper.ThriftAuthHelper(protocol, host,
                                                          port,
                                                          '/v' +
@@ -92,7 +92,7 @@ def handle_auth(protocol, host, port, username, login=False):
     if not login:
         logout_done = auth_client.destroySession()
         if logout_done:
-            session.saveToken(host, port, None, True)
+            session.save_token(host, port, None, True)
             LOG.info("Successfully logged out.")
         return
 
@@ -116,7 +116,7 @@ def handle_auth(protocol, host, port, username, login=False):
     if 'Username:Password' in str(methods):
 
         # Try to use a previously saved credential from configuration file.
-        saved_auth = session.getAuthString(host, port)
+        saved_auth = session.get_auth_string(host, port)
 
         if saved_auth:
             LOG.info("Logging in using preconfigured credentials...")
@@ -134,7 +134,7 @@ def handle_auth(protocol, host, port, username, login=False):
                                                      username + ":" +
                                                      pwd)
 
-            session.saveToken(host, port, session_token)
+            session.save_token(host, port, session_token)
             LOG.info("Server reported successful authentication.")
         except shared.ttypes.RequestFailed as reqfail:
             LOG.error("Authentication failed! Please check your credentials.")
@@ -170,7 +170,7 @@ def perform_auth_for_handler(protocol, manager, host, port,
         print_err = False
 
         if manager.is_autologin_enabled():
-            auto_auth_string = manager.getAuthString(host, port)
+            auto_auth_string = manager.get_auth_string(host, port)
             if auto_auth_string:
                 # Try to automatically log in with a saved credential
                 # if it exists for the server.
@@ -178,7 +178,7 @@ def perform_auth_for_handler(protocol, manager, host, port,
                     session_token = auth_client.performLogin(
                         "Username:Password",
                         auto_auth_string)
-                    manager.saveToken(host, port, session_token)
+                    manager.save_token(host, port, session_token)
                     LOG.info("Authenticated using pre-configured "
                              "credentials.")
                     return session_token

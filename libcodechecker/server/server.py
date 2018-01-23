@@ -16,10 +16,11 @@ from multiprocessing.pool import ThreadPool
 import os
 import posixpath
 from random import sample
-import stat
+import shutil
 import socket
 import ssl
 import sys
+import stat
 import urllib
 
 try:
@@ -40,13 +41,13 @@ from Authentication_v6 import codeCheckerAuthentication as AuthAPI_v6
 from codeCheckerDBAccess_v6 import codeCheckerDBAccess as ReportAPI_v6
 from ProductManagement_v6 import codeCheckerProductService as ProductAPI_v6
 
-from libcodechecker import session_manager
 from libcodechecker.logger import get_logger
 from libcodechecker.util import get_tmp_dir_hash
 
 from . import instance_manager
 from . import permissions
 from . import routing
+from . import session_manager
 from api.authentication import ThriftAuthHandler as AuthHandler_v6
 from api.bad_api_version import ThriftAPIMismatchHandler as BadAPIHandler
 from api.product_server import ThriftProductHandler as ProductHandler_v6
@@ -84,7 +85,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
         present.
         """
 
-        if not self.server.manager.isEnabled():
+        if not self.server.manager.is_enabled:
             return None
 
         success = None
@@ -153,18 +154,18 @@ class RequestHandler(SimpleHTTPRequestHandler):
         LOG.info("{0}:{1} -- [{2}] GET {3}"
                  .format(self.client_address[0],
                          str(self.client_address[1]),
-                         auth_session.user if auth_session else "Anonymous",
+                         auth_session.user if auth_session else 'Anonymous',
                          self.path))
 
-        if self.server.manager.isEnabled() and not auth_session:
-            realm = self.server.manager.getRealm()["realm"]
-            error_body = self.server.manager.getRealm()["error"]
+        if self.server.manager.is_enabled and not auth_session:
+            realm = self.server.manager.get_realm()['realm']
+            error_body = self.server.manager.get_realm()['error']
 
             self.send_response(401)  # 401 Unauthorised
-            self.send_header("WWW-Authenticate",
+            self.send_header('WWW-Authenticate',
                              'Basic realm="{0}"'.format(realm))
-            self.send_header("Content-type", "text/plain")
-            self.send_header("Content-length", str(len(error_body)))
+            self.send_header('Content-type', 'text/plain')
+            self.send_header('Content-length', str(len(error_body)))
             self.send_header('Connection', 'close')
             self.end_headers()
             self.wfile.write(error_body)
@@ -344,7 +345,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
         iprot = input_protocol_factory.getProtocol(itrans)
         oprot = output_protocol_factory.getProtocol(otrans)
 
-        if self.server.manager.isEnabled() and \
+        if self.server.manager.is_enabled and \
                 not self.path.endswith('/Authentication') and \
                 not auth_session:
             # Bail out if the user is not authenticated...
@@ -687,6 +688,7 @@ class CCSimpleHttpServer(HTTPServer):
         LOG.debug("Creating database engine for CONFIG DATABASE...")
         self.__engine = product_db_sql_server.create_engine()
         self.config_session = sessionmaker(bind=self.__engine)
+        self.manager.set_database_connection(self.config_session)
 
         # Load the initial list of products and set up the server.
         cfg_sess = self.config_session()
@@ -855,7 +857,7 @@ def __make_root_file(root_file):
     return sha
 
 
-def start_server(config_directory, package_data, port, db_conn_string,
+def start_server(config_directory, package_data, port, config_sql_server,
                  suppress_handler, listen_address, force_auth, skip_db_cleanup,
                  context, check_env):
     """
@@ -884,16 +886,41 @@ def start_server(config_directory, package_data, port, db_conn_string,
                      .format(root_file))
             root_sha = __make_root_file(root_file)
 
+    # Check whether configuration file exists, create an example if not.
+    server_cfg_file = os.path.join(config_directory, 'server_config.json')
+    if not os.path.exists(server_cfg_file):
+        # For backward compatibility reason if the session_config.json file
+        # exists we rename it to server_config.json.
+        session_cfg_file = os.path.join(config_directory,
+                                        'session_config.json')
+        example_cfg_file = os.path.join(os.environ['CC_PACKAGE_ROOT'],
+                                        'config', 'server_config.json')
+        if os.path.exists(session_cfg_file):
+            LOG.info("Renaming '{0}' to '{1}'. Please check the example "
+                     "configuration file ('{2}') or the user guide for more "
+                     "information.".format(session_cfg_file,
+                                           server_cfg_file,
+                                           example_cfg_file))
+            os.rename(session_cfg_file, server_cfg_file)
+        else:
+            LOG.info("CodeChecker server's example configuration file "
+                     "created at '{0}'".format(server_cfg_file))
+            shutil.copyfile(example_cfg_file, server_cfg_file)
+
     try:
-        manager = session_manager.SessionManager(root_sha, force_auth)
+        manager = session_manager.SessionManager(
+            server_cfg_file,
+            config_sql_server.get_connection_string(),
+            root_sha,
+            force_auth)
     except IOError, ValueError:
-        LOG.error("The server's authentication config file is invalid!")
+        LOG.error("The server's configuration file is invalid!")
         sys.exit(1)
 
     http_server = CCSimpleHttpServer(server_addr,
                                      RequestHandler,
                                      config_directory,
-                                     db_conn_string,
+                                     config_sql_server,
                                      skip_db_cleanup,
                                      package_data,
                                      suppress_handler,
