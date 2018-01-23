@@ -493,10 +493,10 @@ class ThriftProductHandler(object):
                         product.connection)
                 if dbc.password_b64 and dbc.password_b64 != '':
                     dbpass = base64.b64decode(dbc.password_b64)
-                elif 'dbpass' in old_connection_args:
+                elif 'dbpassword' in old_connection_args:
                     # The password was not changed. Retrieving from old
                     # configuration -- if the old configuration contained such!
-                    dbpass = old_connection_args['dbpass']
+                    dbpass = old_connection_args['dbpassword']
                 else:
                     dbpass = None
 
