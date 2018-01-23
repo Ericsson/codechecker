@@ -132,23 +132,27 @@ def __add_filtering_arguments(parser):
     Add some common filtering arguments to the given parser.
     """
 
-    # TODO: '-s' does not mean suppressed anymore in any other command.
     parser.add_argument('-s', '--suppressed',
                         dest="suppressed",
                         action='store_true',
-                        help="Show only suppressed results instead of only "
-                             "unsuppressed ones.")
+                        help="DEPRECATED. Use the '--filter' option to get "
+                             "false positive (suppressed) results. Show only "
+                             "suppressed results instead of only unsuppressed "
+                             "ones.")
 
     parser.add_argument('--filter',
                         type=str,
                         dest='filter',
-                        default="::",
+                        default="::::",
                         help="Filter results. The filter string has the "
                              "following format: "
-                             "[<SEVERITIES>]:[<CHECKER_NAMES>]:[<FILE_PATHS>] "
+                             "[<SEVERITIES>]:[<CHECKER_NAMES>]:[<FILE_PATHS>]:"
+                             "[<DETECTION_STATUSES>]:[<REVIEW_STATUSES>]"
                              "where severites, checker_names, "
-                             "file_paths should be a comma separated list, "
-                             "e.g.: \"high,medium:unix,core:*.cpp,*.h\"")
+                             "file_paths, detection_statuses, review_statuses "
+                             "should be a comma separated list, e.g.:"
+                             "\"high,medium:unix,core:*.cpp,*.h:"
+                             "new,unresolved:false_positive,intentional\"")
 
 
 def __register_results(parser):

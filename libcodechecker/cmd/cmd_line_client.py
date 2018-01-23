@@ -80,13 +80,14 @@ def add_filter_conditions(report_filter, filter_str):
     the checker id doesn't have to be complete (e.g. unix).
     """
 
-    if filter_str.count(':') != 2:
-        LOG.error("Filter string has to contain two colons (e.g. "
-                  "\"high,medium:unix,core:*.cpp\").")
+    if filter_str.count(':') != 4:
+        LOG.error("Filter string has to contain four colons (e.g. "
+                  "\"high,medium:unix,core:*.cpp:new,unresolved:"
+                  "false_positive,intentional\").")
         sys.exit(1)
 
-    severities, checkers, paths = map(lambda x: x.strip(),
-                                      filter_str.split(':'))
+    severities, checkers, paths, dt_statuses, rw_statuses = \
+        map(lambda x: x.strip(), filter_str.split(':'))
 
     if severities:
         report_filter.severity = map(
@@ -98,6 +99,16 @@ def add_filter_conditions(report_filter, filter_str):
     if paths:
         report_filter.filepath = map(lambda x: '*' + x + '*',
                                      paths.split(','))
+
+    if dt_statuses:
+        report_filter.detectionStatus = map(
+            lambda x: ttypes.DetectionStatus._NAMES_TO_VALUES[x.upper()],
+            dt_statuses.split(','))
+
+    if rw_statuses:
+        report_filter.reviewStatus = map(
+            lambda x: ttypes.ReviewStatus._NAMES_TO_VALUES[x.upper()],
+            rw_statuses.split(','))
 
 # ---------------------------------------------------------------------------
 # Argument handlers for the 'CodeChecker cmd' subcommands.
@@ -154,24 +165,21 @@ def handle_list_results(args):
     if args.output_format == 'json':
         print(CmdLineOutputEncoder().encode(all_results))
     else:
-
-        if args.suppressed:
-            header = ['File', 'Checker', 'Severity', 'Msg', 'Suppress comment']
-        else:
-            header = ['File', 'Checker', 'Severity', 'Msg']
+        header = ['File', 'Checker', 'Severity', 'Msg', 'Review status',
+                  'Detection status']
 
         rows = []
         for res in all_results:
             bug_line = res.line
             checked_file = res.checkedFile + ' @ ' + str(bug_line)
             sev = ttypes.Severity._VALUES_TO_NAMES[res.severity]
+            rw_status = \
+                ttypes.ReviewStatus._VALUES_TO_NAMES[res.reviewData.status]
+            dt_status = \
+                ttypes.DetectionStatus._VALUES_TO_NAMES[res.detectionStatus]
 
-            if args.suppressed:
-                rows.append((checked_file, res.checkerId, sev,
-                             res.checkerMsg, res.suppressComment))
-            else:
-                rows.append(
-                    (checked_file, res.checkerId, sev, res.checkerMsg))
+            rows.append((checked_file, res.checkerId, sev,
+                         res.checkerMsg, rw_status, dt_status))
 
         print(twodim_to_str(args.output_format, header, rows))
 
