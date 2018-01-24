@@ -20,12 +20,19 @@ from libcodechecker.util import split_server_url
 
 from cmd_line_client import CmdLineOutputEncoder
 
+# Needs to be set in the handler functions.
+LOG = None
 
-LOG = logger.get_logger('system')
+
+def init_logger(level, logger_name='system'):
+    logger.setup_logger(level)
+    global LOG
+    LOG = logger.get_logger(logger_name)
 
 
 def handle_list_products(args):
-    logger.setup_logger(args.verbose)
+
+    init_logger(args.verbose)
 
     protocol, host, port = split_server_url(args.server_url)
     client = setup_product_client(protocol, host, port)
@@ -59,7 +66,8 @@ def handle_list_products(args):
 
 
 def handle_add_product(args):
-    logger.setup_logger(args.verbose)
+
+    init_logger(args.verbose)
 
     protocol, host, port = split_server_url(args.server_url)
     client = setup_product_client(protocol, host, port)
@@ -110,7 +118,8 @@ def handle_add_product(args):
 
 
 def handle_del_product(args):
-    logger.setup_logger(args.verbose)
+
+    init_logger(args.verbose)
 
     protocol, host, port = split_server_url(args.server_url)
     client = setup_product_client(protocol, host, port)
