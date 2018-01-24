@@ -71,6 +71,13 @@ def check_run_names(client, check_names):
     return run_info
 
 
+def get_runs(client, run_names):
+    run_filter = ttypes.RunFilter()
+    run_filter.names = run_names
+
+    return client.getRunData(run_filter)
+
+
 def add_filter_conditions(report_filter, filter_str):
     """
     This function fills some attributes of the given report filter based on
@@ -130,9 +137,12 @@ def handle_list_results(args):
 
     client = setup_client(args.product_url)
 
-    run_info = check_run_names(client, [args.name])
+    run_names = map(lambda x: x.strip(), args.name.split(':'))
+    run_ids = [run.runId for run in get_runs(client, run_names)]
 
-    run = run_info.get(args.name)
+    if not len(run_ids):
+        LOG.warning("No runs were found!")
+        sys.exit(1)
 
     limit = constants.MAX_QUERY_SIZE
     offset = 0
@@ -142,13 +152,13 @@ def handle_list_results(args):
     add_filter_conditions(report_filter, args.filter)
 
     all_results = []
-    results = client.getRunResults([run.runId], limit, offset, None,
+    results = client.getRunResults(run_ids, limit, offset, None,
                                    report_filter, None)
 
     while results:
         all_results.extend(results)
         offset += limit
-        results = client.getRunResults([run.runId], limit, offset, None,
+        results = client.getRunResults(run_ids, limit, offset, None,
                                        report_filter, None)
 
     if args.output_format == 'json':
@@ -594,8 +604,10 @@ def handle_list_result_types(args):
 
     run_ids = None
     if 'all_results' not in args:
-        items = check_run_names(client, args.names)
-        run_ids = map(lambda run: run.runId, items.values())
+        run_ids = [run.runId for run in get_runs(client, args.names)]
+        if not len(run_ids):
+            LOG.warning("No runs were found!")
+            sys.exit(1)
 
     all_checkers_report_filter = ttypes.ReportFilter()
     all_checkers_report_filter.isUnique = True
