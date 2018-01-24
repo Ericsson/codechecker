@@ -81,7 +81,7 @@ class UserCredentials:
 
     def save_token(self, host, port, token, destroy=False):
         if destroy:
-            del self.__tokens['{0}:{1}'.format(host, port)]
+            self.__tokens.pop('{0}:{1}'.format(host, port), None)
         else:
             self.__tokens['{0}:{1}'.format(host, port)] = token
 
