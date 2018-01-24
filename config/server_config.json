@@ -1,5 +1,5 @@
 {
-  "max_run_count": 200,
+  "max_run_count": null,
   "authentication": {
     "enabled" : false,
     "realm_name" : "CodeChecker Privileged server",
