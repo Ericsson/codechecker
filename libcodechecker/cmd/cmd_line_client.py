@@ -105,6 +105,8 @@ def add_filter_conditions(report_filter, filter_str):
 
 
 def handle_list_runs(args):
+    logger.setup_logger(args.verbose)
+
     client = setup_client(args.product_url)
     runs = client.getRunData(None)
 
@@ -571,6 +573,8 @@ def handle_diff_results(args):
 
 
 def handle_list_result_types(args):
+    logger.setup_logger(args.verbose)
+
     def get_statistics(client, run_ids, field, values):
         report_filter = ttypes.ReportFilter()
         report_filter.isUnique = True
