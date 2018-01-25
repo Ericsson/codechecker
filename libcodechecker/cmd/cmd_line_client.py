@@ -30,7 +30,14 @@ from libcodechecker.report import Report
 from libcodechecker.util import split_server_url
 
 
-LOG = logger.get_logger('system')
+# Needs to be set in the handler functions.
+LOG = None
+
+
+def init_logger(level, logger_name='system'):
+    logger.setup_logger(level)
+    global LOG
+    LOG = logger.get_logger(logger_name)
 
 
 class CmdLineOutputEncoder(json.JSONEncoder):
@@ -105,7 +112,8 @@ def add_filter_conditions(report_filter, filter_str):
 
 
 def handle_list_runs(args):
-    logger.setup_logger(args.verbose)
+
+    init_logger(args.verbose)
 
     client = setup_client(args.product_url)
     runs = client.getRunData(None)
@@ -126,7 +134,8 @@ def handle_list_runs(args):
 
 
 def handle_list_results(args):
-    logger.setup_logger(args.verbose)
+
+    init_logger(args.verbose)
 
     client = setup_client(args.product_url)
 
@@ -178,7 +187,7 @@ def handle_list_results(args):
 
 def handle_diff_results(args):
 
-    logger.setup_logger(args.verbose)
+    init_logger(args.verbose)
 
     context = generic_package_context.get_context()
 
@@ -573,7 +582,8 @@ def handle_diff_results(args):
 
 
 def handle_list_result_types(args):
-    logger.setup_logger(args.verbose)
+
+    init_logger(args.verbose)
 
     def get_statistics(client, run_ids, field, values):
         report_filter = ttypes.ReportFilter()
@@ -681,7 +691,7 @@ def handle_list_result_types(args):
 
 def handle_remove_run_results(args):
 
-    logger.setup_logger(args.verbose)
+    init_logger(args.verbose)
 
     client = setup_client(args.product_url)
 
@@ -731,7 +741,7 @@ def handle_remove_run_results(args):
 
 def handle_suppress(args):
 
-    logger.setup_logger(args.verbose)
+    init_logger(args.verbose)
 
     def bug_hash_filter(bug_id, filepath):
         filepath = '%' + filepath
@@ -762,7 +772,7 @@ def handle_suppress(args):
 
 def handle_login(args):
 
-    logger.setup_logger(args.verbose)
+    init_logger(args.verbose)
 
     protocol, host, port = split_server_url(args.server_url)
     handle_auth(protocol, host, port, args.username,
