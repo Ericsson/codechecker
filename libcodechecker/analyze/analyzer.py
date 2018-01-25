@@ -143,6 +143,15 @@ def perform_analysis(args, context, actions, metadata):
         LOG.error("CTU directory:'" + ctu_dir + "' does not exist.")
         return
 
+    # The folders in "directory" attributes of the compile_cmd.json need to
+    # exist for analysis because these are used as current working directory
+    # for some commands.
+    created_dirs = []
+    for action in actions:
+        if not os.path.exists(action.directory):
+            created_dirs.append(action.directory)
+            os.makedirs(action.directory)
+
     # Run analysis.
     LOG.info("Starting static analysis ...")
     start_time = time.time()
@@ -173,6 +182,9 @@ def perform_analysis(args, context, actions, metadata):
 
     metadata['timestamps'] = {'begin': start_time,
                               'end': end_time}
+
+    for directory in created_dirs:
+        shutil.rmtree(directory, ignore_errors=True)
 
     if ctu_collect and ctu_analyze:
         shutil.rmtree(ctu_dir, ignore_errors=True)
