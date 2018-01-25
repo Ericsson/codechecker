@@ -465,6 +465,9 @@ function (declare, dom, style, Deferred, ObjectStore, Store, QueryResults,
           reportFilter.reportHash = [reportHash];
           reportFilter.isUnique = false;
 
+          if (reportData)
+            reportFilter.filepath = ['*' + reportData.checkedFile];
+
           reports = CC_SERVICE.getRunResults(runResultParam.runIds,
             CC_OBJECTS.MAX_QUERY_SIZE,  0, null, reportFilter,
             runResultParam.cmpData);
