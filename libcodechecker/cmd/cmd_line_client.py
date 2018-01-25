@@ -627,13 +627,16 @@ def handle_list_result_types(args):
     report_filter.isUnique = True
     sev_count = client.getSeverityCounts(run_ids, report_filter, None)
     severities = []
+    severity_total = 0
     for key, count in sorted(sev_count.items(),
                              reverse=True):
         severities.append(dict(
             severity=ttypes.Severity._VALUES_TO_NAMES[key],
             reports=count))
+        severity_total += count
 
     all_results = []
+    total = defaultdict(int)
     for key, checker_data in sorted(all_checkers_dict.items(),
                                     key=lambda x: x[1].severity,
                                     reverse=True):
@@ -647,6 +650,12 @@ def handle_list_result_types(args):
             intentional=checker_count(intentional_checkers, key),
             resolved=checker_count(resolved_checkers, key),
          ))
+        total['total_reports'] += checker_data.count
+        total['total_resolved'] += checker_count(resolved_checkers, key)
+        total['total_unreviewed'] += checker_count(unrev_checkers, key)
+        total['total_confirmed'] += checker_count(confirmed_checkers, key)
+        total['total_false_positive'] += checker_count(false_checkers, key)
+        total['total_intentional'] += checker_count(intentional_checkers, key)
 
     if args.output_format == 'json':
         print(CmdLineOutputEncoder().encode(all_results))
@@ -666,7 +675,15 @@ def handle_list_result_types(args):
                          str(stat['false_positive']),
                          str(stat['intentional'])))
 
-        print(twodim_to_str(args.output_format, header, rows))
+        rows.append(('Total', '-', str(total['total_reports']),
+                     str(total['total_resolved']),
+                     str(total['total_unreviewed']),
+                     str(total['total_confirmed']),
+                     str(total['total_false_positive']),
+                     str(total['total_intentional'])))
+
+        print(twodim_to_str(args.output_format, header, rows,
+                            separate_footer=True))
 
         # Print severity counts
         header = ['Severity', 'All reports']
@@ -676,7 +693,10 @@ def handle_list_result_types(args):
             rows.append((stat['severity'],
                          str(stat['reports'])))
 
-        print(twodim_to_str(args.output_format, header, rows))
+        rows.append(('Total', str(severity_total)))
+
+        print(twodim_to_str(args.output_format, header, rows,
+                            separate_footer=True))
 
 
 def handle_remove_run_results(args):
