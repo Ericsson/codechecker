@@ -8,6 +8,7 @@ Table of Contents
   * [Example](#product-url-format-example)
 * [Available CodeChecker commands](#available-commands)
   * [`log`](#log)
+    * [BitBake](#bitbake)
   * [`analyze`](#analyze)
     * [_Skip_ file](#skip)
       * [Example](#skip-example)
@@ -334,6 +335,31 @@ Example:
 ~~~~~~~~~~~~~~~~~~~~~
 CodeChecker log -o ../codechecker_myProject_build.log -b "make -j2"
 ~~~~~~~~~~~~~~~~~~~~~
+
+### BitBake
+Do the following steps to log compiler calls made by
+[BitBake](https://github.com/openembedded/bitbake) using CodeChecker.
+
+* Add `LD_LIBRARY_PATH`, `LD_PRELOAD`, `CC_LOGGER_GCC_LIKE` and `CC_LOGGER_FILE`
+to `BB_ENV_EXTRAWHITE` variable in your shell environment:
+```bash
+export BB_ENV_EXTRAWHITE="LD_PRELOAD LD_LIBRARY_PATH CC_LOGGER_FILE CC_LOGGER_GCC_LIKE $BB_ENV_EXTRAWHITE"
+```
+ **Note:** `BB_ENV_EXTRAWHITE` specifies an additional set of variables to allow through
+(whitelist) from the external environment into BitBake's datastore.
+
+* Add the following lines to the `conf/bitbake.conf` file:
+```bash
+export LD_PRELOAD
+export LD_LIBRARY_PATH
+export CC_LOGGER_FILE
+export CC_LOGGER_GCC_LIKE
+```
+
+* Run `CodeChecker log`:
+```bash
+CodeChecker log -o ../codechecker_myProject_build.log -b "bitbake myProject"
+```
 
 ## <a name="analyze"></a> 2. `analyze` mode
 
