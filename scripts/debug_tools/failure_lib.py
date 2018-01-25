@@ -5,6 +5,7 @@
 # -------------------------------------------------------------------------
 import json
 import os
+import subprocess
 
 
 def find_path_end(string, path_begin):
@@ -57,3 +58,25 @@ def load_json_file(filename):
     with open(filename, 'r') as f:
         data = json.load(f)
     return data
+
+
+def get_resource_dir(clang_bin):
+    """
+    Returns the resource_dir of Clang or None if the switch is not supported by
+    Clang.
+    """
+    cmd = [clang_bin, "-print-resource-dir"]
+    try:
+        proc = subprocess.Popen(cmd,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE,
+                                )
+        out, err = proc.communicate()
+
+        if proc.returncode == 0:
+            return out.decode("utf-8").rstrip()
+        else:
+            return None
+    except OSError:
+        LOG.error('Failed to run: "' + ' '.join(cmd) + '"')
+        raise

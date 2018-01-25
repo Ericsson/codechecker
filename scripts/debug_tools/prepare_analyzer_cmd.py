@@ -64,7 +64,26 @@ class PathOptions:
 def prepare(analyzer_command_file, pathOptions):
     res = lib.change_paths(get_first_line_of_file(analyzer_command_file),
                            AnalyzerCommandPathModifier(pathOptions))
-    return res
+
+    if '-nobuiltininc' not in res:
+        return res
+
+    # Find Clang include path
+    clang_include_path = lib.get_resource_dir(pathOptions.clang) + '/include'
+
+    if clang_include_path is None:
+        clang_lib_path = os.path.dirname(pathOptions.clang) + '/../lib'
+        clang_include_path = ''
+        for path, _, files in os.walk(clang_lib_path):
+            if 'stddef.h' in files:
+                clang_include_path = path
+                break
+
+    if clang_include_path is None:
+        return res
+
+    return res.replace('-nobuiltininc',
+                       '-nobuiltininc -isystem ' + clang_include_path)
 
 
 if __name__ == '__main__':
