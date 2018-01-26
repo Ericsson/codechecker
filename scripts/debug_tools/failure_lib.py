@@ -78,5 +78,5 @@ def get_resource_dir(clang_bin):
         else:
             return None
     except OSError:
-        LOG.error('Failed to run: "' + ' '.join(cmd) + '"')
+        print('Failed to run: "' + ' '.join(cmd) + '"')
         raise
