@@ -34,8 +34,10 @@ class UserCredentials:
                                         ".codechecker.passwords.json")
         LOG.debug(session_cfg_file)
 
-        scfg_dict = load_json_or_empty(session_cfg_file, {},
-                                       "user authentication")
+        scfg_dict = {}
+        if os.path.exists(session_cfg_file):
+            scfg_dict = load_json_or_empty(session_cfg_file, {},
+                                           "user authentication")
         if os.path.exists(session_cfg_file):
             check_file_owner_rw(session_cfg_file)
 
