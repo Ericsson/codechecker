@@ -11,7 +11,6 @@ database.
 import argparse
 import base64
 import errno
-from hashlib import sha256
 import json
 import os
 import sys
@@ -173,6 +172,7 @@ def assemble_zip(inputs, zip_file, client):
     # There can be files with same hash,
     # but different path.
     file_to_hash = {}
+    file_to_mtime = {}
 
     def collect_file_hashes_from_plist(plist_file):
         try:
@@ -182,44 +182,63 @@ def assemble_zip(inputs, zip_file, client):
                 if not os.path.isfile(f):
                     return False
 
-                with open(f) as content:
-                    hasher = sha256()
-                    hasher.update(content.read())
-                    content_hash = hasher.hexdigest()
-                    hash_to_file[content_hash] = f
-                    file_to_hash[f] = content_hash
+                content_hash = util.get_file_content_hash(f)
+                hash_to_file[content_hash] = f
+                file_to_hash[f] = content_hash
+                file_to_mtime[f] = util.get_last_mod_time(f)
 
             return True
         except Exception as ex:
             LOG.error('Parsing the plist failed: ' + str(ex))
 
+    plist_report_files = []
+
+    changed_files = set()
+    for input_path in inputs:
+        input_path = os.path.abspath(input_path)
+
+        if not os.path.exists(input_path):
+            raise OSError(errno.ENOENT,
+                          "Input path does not exist", input_path)
+
+        if os.path.isfile(input_path):
+            files = [input_path]
+        else:
+            _, _, files = next(os.walk(input_path), ([], [], []))
+
+        for f in files:
+            plist_file = os.path.join(input_path, f)
+            if f.endswith(".plist"):
+                if collect_file_hashes_from_plist(plist_file):
+                    LOG.debug(
+                        "Copying file '{0}' to ZIP assembly dir..."
+                        .format(plist_file))
+                    plist_report_files.append(os.path.join(input_path, f))
+                else:
+                    LOG.warning("Skipping '{0}' because it contains "
+                                "a missing source file."
+                                .format(plist_file))
+            elif f == 'metadata.json':
+                plist_report_files.append(os.path.join(input_path, f))
+
+            plist_mtime = util.get_last_mod_time(plist_file)
+
+            for k, v in file_to_mtime.items():
+                if v > plist_mtime:
+                    changed_files.add(k)
+
+    if changed_files:
+        changed_files = '\n'.join([' - ' + f for f in changed_files])
+        LOG.warning("The following source file contents changed since the "
+                    "latest analysis:\n{0}\nPlease analyze your project "
+                    "again to update the reports!".format(changed_files))
+        sys.exit(1)
+
     with zipfile.ZipFile(zip_file, 'a', allowZip64=True) as zipf:
-        for input_path in inputs:
-            input_path = os.path.abspath(input_path)
-
-            if not os.path.exists(input_path):
-                raise OSError(errno.ENOENT,
-                              "Input path does not exist", input_path)
-
-            if os.path.isfile(input_path):
-                files = [input_path]
-            else:
-                _, _, files = next(os.walk(input_path), ([], [], []))
-
-            for f in files:
-                plist_file = os.path.join(input_path, f)
-                if f.endswith(".plist"):
-                    if collect_file_hashes_from_plist(plist_file):
-                        LOG.debug(
-                            "Copying file '{0}' to ZIP assembly dir..."
-                            .format(plist_file))
-                        zipf.write(plist_file, os.path.join('reports', f))
-                    else:
-                        LOG.warning("Skipping '{0}' because it contains "
-                                    "a missing source file."
-                                    .format(plist_file))
-                elif f == 'metadata.json':
-                    zipf.write(plist_file, os.path.join('reports', f))
+        for pl in plist_report_files:
+            _, plist_filename = os.path.split(pl)
+            zip_target = os.path.join('reports', plist_filename)
+            zipf.write(pl, zip_target)
 
         if len(hash_to_file) == 0:
             LOG.warning("There is no report to store. After uploading these "

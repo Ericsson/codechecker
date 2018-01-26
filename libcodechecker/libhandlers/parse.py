@@ -170,7 +170,7 @@ def parse(f, context, metadata_dict, suppress_handler, skip_handler, steps):
 
     if not f.endswith(".plist"):
         LOG.debug("Skipping input file '" + f + "' as it is not a plist.")
-        return {}
+        return {}, set()
 
     LOG.debug("Parsing input file '" + f + "'")
 
@@ -188,7 +188,23 @@ def parse(f, context, metadata_dict, suppress_handler, skip_handler, steps):
         analyzed_source_file = \
             metadata_dict['result_source_files'][f]
 
-    return rh.parse_and_write(f, analyzed_source_file)
+    files, reports = rh.parse(f)
+
+    plist_mtime = util.get_last_mod_time(f)
+
+    changed_files = set()
+    for source_file in files:
+        file_mtime = util.get_last_mod_time(source_file)
+        if file_mtime > plist_mtime:
+            changed_files.add(source_file)
+            LOG.warning(source_file +
+                        ' did change since the last analysis.')
+
+    if changed_files:
+        return {}, changed_files
+    else:
+        report_stats = rh.write(files, reports, analyzed_source_file)
+        return report_stats, set()
 
 
 def main(args):
@@ -278,13 +294,15 @@ def main(args):
             files = [os.path.join(input_path, file_name) for file_name
                      in file_names]
 
+        file_change = set()
         for file_path in files:
-            report_stats = parse(file_path,
-                                 context,
-                                 metadata_dict,
-                                 suppress_handler,
-                                 skip_handler,
-                                 'print_steps' in args)
+            report_stats, f_change = parse(file_path,
+                                           context,
+                                           metadata_dict,
+                                           suppress_handler,
+                                           skip_handler,
+                                           'print_steps' in args)
+            file_change = file_change.union(f_change)
 
             severity_stats.update(Counter(report_stats.get('severity',
                                           {})))
@@ -292,7 +310,6 @@ def main(args):
             report_count.update(Counter(report_stats.get('reports', {})))
 
         print("\n----==== Summary ====----")
-
         if file_stats:
             vals = [[os.path.basename(k), v] for k, v in
                     dict(file_stats).items()]
@@ -310,5 +327,13 @@ def main(args):
         print("----=================----")
         print("Total number of reports: {}".format(report_count))
         print("----=================----")
+
+        if file_change:
+            changed_files = '\n'.join([' - ' + f for f in file_change])
+            LOG.warning("The following source file contents changed since the "
+                        "latest analysis:\n{0}\nMultiple reports were not "
+                        "shown and skipped from the statistics. Please "
+                        "analyze your project again to update the "
+                        "reports!".format(changed_files))
 
     os.chdir(original_cwd)
