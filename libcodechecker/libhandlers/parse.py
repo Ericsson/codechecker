@@ -20,9 +20,9 @@ from libcodechecker import generic_package_context
 from libcodechecker import generic_package_suppress_handler
 from libcodechecker import logger
 from libcodechecker import util
-from libcodechecker.analyze.analyzers import analyzer_types
+from libcodechecker.analyze import plist_parser
+from libcodechecker.analyze.skiplist_handler import SkipListHandler
 # TODO: This is a cross-subpackage reference...
-from libcodechecker.log import build_action
 from libcodechecker.output_formatters import twodim_to_str
 
 LOG = logger.get_logger('system')
@@ -129,6 +129,15 @@ def add_arguments_to_parser(parser):
                         help="Print the steps the analyzers took in finding "
                              "the reported defect.")
 
+    parser.add_argument('-i', '--ignore', '--skip',
+                        dest="skipfile",
+                        required=False,
+                        default=argparse.SUPPRESS,
+                        help="Path to the Skipfile dictating which project "
+                             "files should be omitted from analysis. Please "
+                             "consult the User guide on how a Skipfile "
+                             "should be laid out.")
+
     logger.add_verbose_arguments(parser)
 
     def __handle(args):
@@ -151,7 +160,7 @@ def add_arguments_to_parser(parser):
     parser.set_defaults(func=__handle)
 
 
-def parse(f, context, metadata_dict, suppress_handler, steps):
+def parse(f, context, metadata_dict, suppress_handler, skip_handler, steps):
     """
     Prints the results in the given file to the standard output in a human-
     readable format.
@@ -165,27 +174,21 @@ def parse(f, context, metadata_dict, suppress_handler, steps):
 
     LOG.debug("Parsing input file '" + f + "'")
 
-    buildaction = build_action.BuildAction()
+    rh = plist_parser.PlistToPlaintextFormatter(suppress_handler,
+                                                skip_handler,
+                                                context.severity_map)
 
-    rh = analyzer_types.construct_parse_handler(buildaction,
-                                                f,
-                                                context.severity_map,
-                                                suppress_handler,
-                                                steps)
+    rh.print_steps = steps
 
     # Set some variables of the result handler to use the saved file.
-    rh.analyzer_returncode = 0
-    rh.analyzer_result_file = f
-    rh.analyzer_cmd = ""
 
+    analyzed_source_file = "UNKNOWN"
     if 'result_source_files' in metadata_dict and \
             f in metadata_dict['result_source_files']:
-        rh.analyzed_source_file = \
+        analyzed_source_file = \
             metadata_dict['result_source_files'][f]
-    else:
-        rh.analyzed_source_file = "UNKNOWN"
 
-    return rh.handle_results()
+    return rh.parse_and_write(f, analyzed_source_file)
 
 
 def main(args):
@@ -230,6 +233,10 @@ def main(args):
         LOG.error("Can't use '--export-source-suppress' unless '--suppress "
                   "SUPPRESS_FILE' is also given.")
         sys.exit(2)
+
+    skip_handler = None
+    if 'skipfile' in args:
+        skip_handler = SkipListHandler(args.skipfile)
 
     for input_path in args.input:
 
@@ -276,6 +283,7 @@ def main(args):
                                  context,
                                  metadata_dict,
                                  suppress_handler,
+                                 skip_handler,
                                  'print_steps' in args)
 
             severity_stats.update(Counter(report_stats.get('severity',

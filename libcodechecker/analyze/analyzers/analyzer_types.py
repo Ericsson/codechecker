@@ -20,7 +20,6 @@ from libcodechecker.analyze.analyzers import config_handler_clang_tidy
 from libcodechecker.analyze.analyzers import config_handler_clangsa
 from libcodechecker.analyze.analyzers import result_handler_base
 from libcodechecker.analyze.analyzers import result_handler_clang_tidy
-from libcodechecker.analyze.analyzers import result_handler_plist_to_stdout
 from libcodechecker.logger import get_logger
 
 LOG = get_logger('analyzer')
@@ -455,23 +454,4 @@ def construct_analyze_handler(buildaction,
 
     res_handler.severity_map = severity_map
     res_handler.skiplist_handler = skiplist_handler
-    return res_handler
-
-
-def construct_parse_handler(buildaction,
-                            output,
-                            severity_map,
-                            suppress_handler,
-                            print_steps):
-    """
-    Construct a result handler for parsing results in a human-readable format.
-    """
-    res_handler = result_handler_plist_to_stdout.PlistToStdout(
-        buildaction,
-        output,
-        None)
-
-    res_handler.print_steps = print_steps
-    res_handler.severity_map = severity_map
-    res_handler.suppress_handler = suppress_handler
     return res_handler
