@@ -660,7 +660,6 @@ def handle_list_result_types(args):
 
     if args.output_format == 'json':
         print(CmdLineOutputEncoder().encode(all_results))
-        print(CmdLineOutputEncoder().encode(severities))
     else:
         header = ['Checker', 'Severity', 'All reports', 'Resolved',
                   'Unreviewed', 'Confirmed', 'False positive', "Intentional"]
