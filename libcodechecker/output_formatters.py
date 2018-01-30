@@ -16,7 +16,8 @@ USER_FORMATS = ['rows', 'table', 'csv', 'json']
 
 
 def twodim_to_str(format_name, keys, rows,
-                  sort_by_column_number=None, rev=False):
+                  sort_by_column_number=None, rev=False,
+                  separate_footer=False):
     """
     Converts the given two-dimensional array (with the specified keys)
     to the given format.
@@ -32,7 +33,7 @@ def twodim_to_str(format_name, keys, rows,
         return twodim_to_rows(rows)
     elif format_name == 'table' or format_name == 'plaintext':
         # TODO: 'plaintext' for now to support the 'CodeChecker cmd' interface.
-        return twodim_to_table(all_rows)
+        return twodim_to_table(all_rows, True, separate_footer)
     elif format_name == 'csv':
         return twodim_to_csv(all_rows)
     elif format_name == 'dictlist':
@@ -81,7 +82,7 @@ def twodim_to_rows(lines):
     return '\n'.join(str_parts)
 
 
-def twodim_to_table(lines, separate_head=True):
+def twodim_to_table(lines, separate_head=True, separate_footer=False):
     """
     Pretty-prints the given two-dimensional array's lines.
     """
@@ -115,6 +116,9 @@ def twodim_to_table(lines, separate_head=True):
                             "columns than the others")
         if i == 0 and separate_head:
             str_parts.append("-" * (sum(widths) + 3 * (len(widths) - 1)))
+        if separate_footer and i == len(lines) - 2:
+            str_parts.append("-" * (sum(widths) + 3 * (len(widths) - 1)))
+
     str_parts.append("-" * (sum(widths) + 3 * (len(widths) - 1)))
 
     return '\n'.join(str_parts)
