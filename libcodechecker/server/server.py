@@ -641,12 +641,13 @@ class Product(object):
                                                       env=self.__check_env)
         with database.DBContext(prod_db) as db:
             try:
+                db_cleanup.remove_expired_run_locks(db.session)
                 db_cleanup.remove_unused_files(db.session)
                 db.session.commit()
                 return True
             except Exception as ex:
                 db.session.rollback()
-                LOG.error("File cleanup failed.")
+                LOG.error("Database cleanup failed.")
                 LOG.error(ex)
                 return False
 
