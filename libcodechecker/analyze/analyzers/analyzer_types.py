@@ -291,14 +291,19 @@ def __build_clangsa_config_handler(args, context):
     config_handler.compiler_resource_dir =\
         __get_compiler_resource_dir(context, config_handler.analyzer_binary)
 
+    check_env = analyzer_env.get_check_env(context.path_env_extra,
+                                           context.ld_lib_path_extra)
+
     if 'ctu_phases' in args:
         config_handler.ctu_dir = os.path.join(args.output_path,
                                               args.ctu_dir)
         config_handler.ctu_in_memory = 'ctu_in_memory' in args
+
         config_handler.ctu_has_analyzer_display_ctu_progress = \
             host_check.has_analyzer_feature(
                 context.analyzer_binaries.get(CLANG_SA),
-                '-analyzer-display-ctu-progress')
+                '-analyzer-display-ctu-progress',
+                check_env)
         config_handler.log_file = args.logfile
         config_handler.path_env_extra = context.path_env_extra
         config_handler.ld_lib_path_extra = context.ld_lib_path_extra
@@ -316,9 +321,6 @@ def __build_clangsa_config_handler(args, context):
         LOG.debug_analyzer(aerr)
 
     analyzer = construct_analyzer_type(CLANG_SA, config_handler, None)
-
-    check_env = analyzer_env.get_check_env(context.path_env_extra,
-                                           context.ld_lib_path_extra)
 
     checkers = analyzer.get_analyzer_checkers(config_handler, check_env)
 
