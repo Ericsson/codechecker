@@ -315,7 +315,7 @@ optional arguments:
   -q, --quiet           Do not print the output of the build tool into the
                         output of this command.
   --verbose {info,debug,debug_analyzer}
-                        Set verbosity level. (default: info)
+                        Set verbosity level.
 ~~~~~~~~~~~~~~~~~~~~~
 
 Please note, that only the files that are used in the given `--build` argument
@@ -426,7 +426,7 @@ optional arguments:
   -n NAME, --name NAME  Annotate the run analysis with a custom name in the
                         created metadata file.
   --verbose {info,debug,debug_analyzer}
-                        Set verbosity level. (default: info)
+                        Set verbosity level.
 ~~~~~~~~~~~~~~~~~~~~~
 
 ### <a name="skip"></a> _Skip_ file
@@ -723,7 +723,7 @@ optional arguments:
   --print-steps         Print the steps the analyzers took in finding the
                         reported defect.
   --verbose {info,debug,debug_analyzer}
-                        Set verbosity level. (default: info)
+                        Set verbosity level.
 
 export arguments:
   -e {html}, --export {html}
@@ -842,7 +842,7 @@ optional arguments:
                         incrementally update defect reports for source files
                         that were analysed.)
   --verbose {info,debug,debug_analyzer}
-                        Set verbosity level. (default: info)
+                        Set verbosity level.
 
 server arguments:
   Specifies a 'CodeChecker server' instance which will be used to store the
@@ -919,7 +919,7 @@ optional arguments:
                         The format to list the applicable checkers as.
                         (default: rows)
   --verbose {info,debug,debug_analyzer}
-                        Set verbosity level. (default: info)
+                        Set verbosity level.
 ~~~~~~~~~~~~~~~~~~~~~
 
 The list provided by default is formatted for easy machine and human
@@ -963,7 +963,7 @@ optional arguments:
   -o {rows,table,csv,json}, --output {rows,table,csv,json}
                         Specify the format of the output list. (default: rows)
   --verbose {info,debug,debug_analyzer}
-                        Set verbosity level. (default: info)
+                        Set verbosity level.
 ~~~~~~~~~~~~~~~~~~~~~
 
 A detailed view of the available analyzers is available via `--details`. In the
@@ -1024,7 +1024,7 @@ optional arguments:
   --skip-db-cleanup     Skip performing cleanup jobs on the database like
                         removing unused files.
   --verbose {info,debug,debug_analyzer}
-                        Set verbosity level. (default: info)
+                        Set verbosity level.
 
 configuration database arguments:
   --sqlite SQLITE_FILE  Path of the SQLite database file to use. (default:
@@ -1248,7 +1248,7 @@ common arguments:
                         The output format to use in showing the data.
                         (default: plaintext)
   --verbose {info,debug,debug_analyzer}
-                        Set verbosity level. (default: info)
+                        Set verbosity level.
 ~~~~~~~~~~~~~~~~~~~~~
 
 ### <a name="cmd-runs"></a> List runs (`runs`)
@@ -1487,7 +1487,7 @@ optional arguments:
 
 common arguments:
   --verbose {info,debug,debug_analyzer}
-                        Set verbosity level. (default: info)
+                        Set verbosity level.
 ~~~~~~~~~~~~~~~~~~~~~
 
 If a server [requires privileged access](authentication.md), you must

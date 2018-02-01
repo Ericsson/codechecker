@@ -86,7 +86,7 @@ def main(args):
     Generates a build log by running the original build command.
     No analysis is done.
     """
-    logger.setup_logger(args.verbose)
+    logger.setup_logger(args.verbose if 'verbose' in args else None)
 
     args.logfile = os.path.realpath(args.logfile)
     if os.path.exists(args.logfile):

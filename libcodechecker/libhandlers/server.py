@@ -860,5 +860,5 @@ def main(args):
     Setup a logger server based on the configuration and
     manage the CodeChecker server.
     """
-    with logger.LOG_CFG_SERVER(args.verbose):
+    with logger.LOG_CFG_SERVER(args.verbose if 'verbose' in args else None):
         server_init_start(args)

@@ -296,7 +296,7 @@ common arguments:
                         connect to. (default: localhost)
   -p PORT, --port PORT  The port the server is running on. (default: 8001)
   --verbose {info,debug,debug_analyzer}
-                        Set verbosity level. (default: info)
+                        Set verbosity level.
 ~~~~~~~~~~~~~~~~~~~~~
 
 The user can log in onto the server by issuing the command `CodeChecker cmd

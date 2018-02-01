@@ -112,7 +112,7 @@ def main(args):
     alongside with their description or enabled status in various formats.
     """
 
-    logger.setup_logger(args.verbose)
+    logger.setup_logger(args.verbose if 'verbose' in args else None)
 
     # If nothing is set, list checkers for all supported analyzers.
     analyzers = args.analyzers \

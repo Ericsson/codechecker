@@ -6,6 +6,7 @@
 """
 """
 
+import argparse
 import json
 import logging
 from logging import config
@@ -91,7 +92,7 @@ def add_verbose_arguments(parser):
     """
     parser.add_argument('--verbose', type=str, dest='verbose',
                         choices=CMDLINE_LOG_LEVELS,
-                        default='info',
+                        default=argparse.SUPPRESS,
                         help='Set verbosity level.')
 
 

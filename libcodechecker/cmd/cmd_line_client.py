@@ -124,7 +124,7 @@ def add_filter_conditions(report_filter, filter_str):
 
 def handle_list_runs(args):
 
-    init_logger(args.verbose)
+    init_logger(args.verbose if 'verbose' in args else None)
 
     client = setup_client(args.product_url)
     runs = client.getRunData(None)
@@ -145,8 +145,7 @@ def handle_list_runs(args):
 
 
 def handle_list_results(args):
-
-    init_logger(args.verbose)
+    init_logger(args.verbose if 'verbose' in args else None)
 
     client = setup_client(args.product_url)
 
@@ -195,7 +194,7 @@ def handle_list_results(args):
 
 def handle_diff_results(args):
 
-    init_logger(args.verbose)
+    init_logger(args.verbose if 'verbose' in args else None)
 
     context = generic_package_context.get_context()
 
@@ -591,7 +590,7 @@ def handle_diff_results(args):
 
 def handle_list_result_types(args):
 
-    init_logger(args.verbose)
+    init_logger(args.verbose if 'verbose' in args else None)
 
     def get_statistics(client, run_ids, field, values):
         report_filter = ttypes.ReportFilter()
@@ -718,7 +717,7 @@ def handle_list_result_types(args):
 
 def handle_remove_run_results(args):
 
-    init_logger(args.verbose)
+    init_logger(args.verbose if 'verbose' in args else None)
 
     client = setup_client(args.product_url)
 
@@ -768,7 +767,7 @@ def handle_remove_run_results(args):
 
 def handle_suppress(args):
 
-    init_logger(args.verbose)
+    init_logger(args.verbose if 'verbose' in args else None)
 
     def bug_hash_filter(bug_id, filepath):
         filepath = '%' + filepath
@@ -799,7 +798,7 @@ def handle_suppress(args):
 
 def handle_login(args):
 
-    init_logger(args.verbose)
+    init_logger(args.verbose if 'verbose' in args else None)
 
     protocol, host, port = split_server_url(args.server_url)
     handle_auth(protocol, host, port, args.username,

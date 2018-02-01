@@ -57,7 +57,7 @@ def main(args):
     Get and print the version information from the version config
     file and Thrift API definition.
     """
-    logger.setup_logger(args.verbose)
+    logger.setup_logger(args.verbose if 'verbose' in args else None)
 
     context = generic_package_context.get_context()
 

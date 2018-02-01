@@ -194,7 +194,7 @@ def main(args):
     stdout in a human-readable format.
     """
 
-    logger.setup_logger(args.verbose)
+    logger.setup_logger(args.verbose if 'verbose' in args else None)
 
     context = generic_package_context.get_context()
 
