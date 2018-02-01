@@ -52,7 +52,8 @@ class TestCtuFailure(unittest.TestCase):
         self.ctu_has_analyzer_display_ctu_progress = \
             host_check.has_analyzer_feature(self.__getClangSaPath(),
                                             '-analyzer-display-ctu-progress')
-        print("Has -analyzer-display-ctu-progress? " + str(self.ctu_capable))
+        print("Has -analyzer-display-ctu-progress? " +
+              str(self.ctu_has_analyzer_display_ctu_progress))
 
         # Fix the "template" build JSONs to contain a proper directory
         # so the tests work.
