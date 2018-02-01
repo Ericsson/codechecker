@@ -2080,7 +2080,6 @@ class ThriftRequestHandler(object):
 
                 # This session's transaction buffer stores the actual run data
                 # into the database.
-                LOG.critical("Begin storing run")
                 with DBSession(self.__Session) as session:
                     # Load the lock record for "FOR UPDATE" so that the
                     # transaction that handles the run's store operations
