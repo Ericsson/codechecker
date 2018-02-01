@@ -251,7 +251,7 @@ def main(args):
     Store the defect results in the specified input list as bug reports in the
     database.
     """
-    logger.setup_logger(args.verbose)
+    logger.setup_logger(args.verbose if 'verbose' in args else None)
 
     if not host_check.check_zlib():
         raise Exception("zlib is not available on the system!")

@@ -75,7 +75,7 @@ def main(args):
     """
     List the analyzers' basic information supported by CodeChecker.
     """
-    logger.setup_logger(args.verbose)
+    logger.setup_logger(args.verbose if 'verbose' in args else None)
 
     context = generic_package_context.get_context()
     working, errored = \

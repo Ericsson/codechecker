@@ -373,7 +373,7 @@ def main(args):
     Execute a wrapper over log-analyze-parse, aka 'check'.
     """
 
-    logger.setup_logger(args.verbose)
+    logger.setup_logger(args.verbose if 'verbose' in args else None)
 
     def __load_module(name):
         """Loads the given subcommand's definition from the libs."""

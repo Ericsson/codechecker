@@ -359,7 +359,7 @@ def main(args):
     Perform analysis on the given logfiles and store the results in a machine-
     readable format.
     """
-    logger.setup_logger(args.verbose)
+    logger.setup_logger(args.verbose if 'verbose' in args else None)
 
     if len(args.logfile) != 1:
         LOG.warning("Only one log file can be processed right now!")
