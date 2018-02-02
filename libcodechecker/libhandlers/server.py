@@ -412,7 +412,7 @@ def print_prod_status(prod_status):
                                                   header,
                                                   rows,
                                                   sort_by_column_number=0)
-    print(prod_status)
+    LOG.info('Status of products:\n{0}'.format(prod_status))
 
 
 def get_schema_version_from_package(migration_root):

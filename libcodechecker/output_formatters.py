@@ -107,7 +107,7 @@ def twodim_to_table(lines, separate_head=True, separate_footer=False):
     print_string = print_string[:-3]
 
     # Print the actual data.
-    print("-" * (sum(widths) + 3 * (len(widths) - 1)))
+    str_parts.append("-" * (sum(widths) + 3 * (len(widths) - 1)))
     for i, line in enumerate(lines):
         try:
             str_parts.append(print_string.format(*line))
