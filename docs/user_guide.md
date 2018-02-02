@@ -722,6 +722,10 @@ optional arguments:
                         will be written to the parameter of '--suppress'.
   --print-steps         Print the steps the analyzers took in finding the
                         reported defect.
+  -i SKIPFILE, --ignore SKIPFILE, --skip SKIPFILE
+                        Path to the Skipfile dictating which project files
+                        should be omitted from analysis. Please consult the
+                        User guide on how a Skipfile should be laid out.
   --verbose {info,debug,debug_analyzer}
                         Set verbosity level.
 

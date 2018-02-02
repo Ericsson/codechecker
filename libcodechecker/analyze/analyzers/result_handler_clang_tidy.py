@@ -7,8 +7,6 @@
 from libcodechecker.analyze import tidy_output_converter
 from libcodechecker.analyze.analyzers.result_handler_base \
     import ResultHandler
-from libcodechecker.analyze.analyzers.result_handler_plist_to_stdout \
-    import PlistToStdout
 from libcodechecker.logger import get_logger
 
 LOG = get_logger('report')
@@ -40,21 +38,5 @@ class ClangTidyPlistToFile(ResultHandler):
         """
         output_file = self.analyzer_result_file
         LOG.debug_analyzer(self.analyzer_stdout)
-        tidy_stdout = self.analyzer_stdout.splitlines()
-        generate_plist_from_tidy_result(output_file, tidy_stdout)
-
-
-class ClangTidyPlistToStdout(PlistToStdout):
-    """
-    Print the clang tidy results to the standard output.
-    """
-
-    def postprocess_result(self):
-        """
-        Clang-tidy results are post processed to have the same format as the
-        clang static analyzer result files.
-        """
-
-        output_file = self.analyzer_result_file
         tidy_stdout = self.analyzer_stdout.splitlines()
         generate_plist_from_tidy_result(output_file, tidy_stdout)
