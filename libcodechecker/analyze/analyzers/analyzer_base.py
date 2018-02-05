@@ -78,20 +78,11 @@ class SourceAnalyzer(object):
         """
         pass
 
-    def analyze(self, res_handler, env=None, proc_callback=None):
+    def analyze(self, analyzer_cmd, res_handler, env=None, proc_callback=None):
         """
         Run the analyzer.
         """
         LOG.debug('Running analyzer ...')
-
-        # NOTICE!
-        # The currently analyzed source file needs to be set before the
-        # analyzer command is constructed.
-        # The analyzer output file is based on the currently analyzed source.
-        res_handler.analyzed_source_file = self.source_file
-
-        # Construct the analyzer cmd.
-        analyzer_cmd = self.construct_analyzer_cmd(res_handler)
 
         LOG.debug_analyzer('\n' + ' '.join(analyzer_cmd))
 

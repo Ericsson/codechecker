@@ -288,6 +288,15 @@ def add_arguments_to_parser(parser):
                                    "in-memory recompilation of the source "
                                    "files.")
 
+        ctu_opts.add_argument('--ctu-reanalyze-on-failure',
+                              action='store_true',
+                              dest='ctu_reanalyze_on_failure',
+                              default=argparse.SUPPRESS,
+                              help="If Cross-TU analysis is enabled and fails "
+                                   "for some reason, try to re analyze the "
+                                   "same translation unit without "
+                                   "Cross-TU enabled.")
+
     checkers_opts = parser.add_argument_group(
         "checker configuration",
         "See 'codechecker-checkers' for the list of available checkers. "

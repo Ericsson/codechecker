@@ -38,7 +38,7 @@ def check_clang(compiler_bin, env):
             return False
 
 
-def has_analyzer_feature(clang_bin, feature):
+def has_analyzer_feature(clang_bin, feature, env=None):
     with tempfile.NamedTemporaryFile() as inputFile:
         inputFile.write("void foo(){}")
         inputFile.flush()
@@ -49,9 +49,9 @@ def has_analyzer_feature(clang_bin, feature):
             proc = subprocess.Popen(cmd,
                                     stdout=subprocess.PIPE,
                                     stderr=subprocess.PIPE,
+                                    env=env
                                     )
             out, err = proc.communicate()
-
             LOG.debug("stdout:\n" + out)
             LOG.debug("stderr:\n" + err)
 
@@ -61,7 +61,7 @@ def has_analyzer_feature(clang_bin, feature):
             raise
 
 
-def get_resource_dir(clang_bin):
+def get_resource_dir(clang_bin, env=None):
     """
     Returns the resource_dir of Clang or None if the switch is not supported by
     Clang.
@@ -72,7 +72,7 @@ def get_resource_dir(clang_bin):
         proc = subprocess.Popen(cmd,
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE,
-                                )
+                                env=env)
         out, err = proc.communicate()
 
         LOG.debug("stdout:\n" + out)

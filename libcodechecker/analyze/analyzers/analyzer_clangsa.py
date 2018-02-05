@@ -24,6 +24,9 @@ class ClangSA(analyzer_base.SourceAnalyzer):
     """
     Constructs clang static analyzer commands.
     """
+    def __init__(self, config_handler, buildaction):
+        self.__disable_ctu = False
+        super(ClangSA, self).__init__(config_handler, buildaction)
 
     def __parse_checkers(self, clangsa_output):
         """
@@ -52,6 +55,33 @@ class ClangSA(analyzer_base.SourceAnalyzer):
                     current = match.groupdict()
                     self.checkers.append((current['checker_name'],
                                           current['description']))
+
+    def is_ctu_available(self):
+        """
+        Check if ctu is available for the analyzer.
+        If the ctu_dir is set in the config, the analyzer is capable to
+        run ctu analysis.
+        """
+        config = self.config_handler
+        if config.ctu_dir:
+            return True
+        return False
+
+    def is_ctu_enabled(self):
+        """
+        Check if ctu is enabled for the analyzer.
+        """
+        return not self.__disable_ctu
+
+    def disable_ctu(self):
+        """
+        Disable ctu even if ctu is available.
+        By default it is enabled if available.
+        """
+        self.__disable_ctu = True
+
+    def enable_ctu(self):
+        self.__disable_ctu = False
 
     def get_analyzer_checkers(self, config_handler, env):
         """
@@ -123,7 +153,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
                                          '-analyzer-disable-checker',
                                          '-Xclang', checker_name])
 
-            if config.ctu_dir:
+            if config.ctu_dir and not self.__disable_ctu:
                 analyzer_cmd.extend(['-Xclang', '-analyzer-config',
                                      '-Xclang',
                                      'xtu-dir=' + self.get_xtu_dir(),
@@ -177,6 +207,9 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         Parse ClangSA's output to generate a list of files that were mentioned
         in the standard output or standard error.
         """
+
+        if not output:
+            return set()
 
         regex_for_ctu_ast_load = re.compile(
             "ANALYZE \(CTU loaded AST for source file\): (.*)")
