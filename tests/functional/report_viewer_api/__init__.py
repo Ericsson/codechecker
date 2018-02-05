@@ -98,6 +98,17 @@ def setup_package():
         sys.exit(1)
     print("Second analysis of the test project was successful.")
 
+    test_project_name_third = project_info['name'] + uuid.uuid4().hex
+
+    # Let's run the third analysis.
+    ret = codechecker.check(codechecker_cfg,
+                            test_project_name_third,
+                            project.path(test_project))
+
+    if ret:
+        sys.exit(1)
+    print("Third analysis of the test project was successful.")
+
     codechecker_cfg['run_names'] = [test_project_name,
                                     test_project_name_new]
 

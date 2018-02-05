@@ -48,26 +48,26 @@ class TestRunData(unittest.TestCase):
                          "There should be two runs for this test.")
 
         # Filter runs which name starts with `test_files_`.
-        test_runs = self.__get_runs('test_files_')
+        test_runs = self.__get_runs('test_files_*')
         self.assertEqual(len(test_runs), 1,
                          "There should be one run for this test.")
 
         # Run name filter is case insensitive.
-        test_runs = self.__get_runs('Test_Files_')
+        test_runs = self.__get_runs('Test_Files_*')
         self.assertEqual(len(test_runs), 1,
                          "There should be one run for this test.")
 
         # Filter runs which name contains `files_`.
-        test_runs = self.__get_runs('files_')
+        test_runs = self.__get_runs('*files_*')
         self.assertEqual(len(test_runs), 1,
                          "There should be one run for this test.")
 
         # Filter runs which name contains `test_files*`.
         test_runs = self.__get_runs('test_files*')
-        self.assertEqual(len(test_runs), 1,
-                         "There should be one run for this test.")
+        self.assertEqual(len(test_runs), 2,
+                         "There should be two runs for this test.")
 
-        test_runs = self.__get_runs('_')
+        test_runs = self.__get_runs('*_*')
         self.assertEqual(len(test_runs), 2,
                          "There should be two runs for this test.")
 
@@ -75,13 +75,9 @@ class TestRunData(unittest.TestCase):
         self.assertEqual(len(test_runs), 2,
                          "There should be two runs for this test.")
 
-        test_runs = self.__get_runs('**')
-        self.assertEqual(len(test_runs), 1,
-                         "There should be one run for this test.")
-
         test_runs = self.__get_runs('%')
-        self.assertEqual(len(test_runs), 1,
-                         "There should be one run for this test.")
+        self.assertEqual(len(test_runs), 0,
+                         "There should be no run for this test.")
 
         # Filter non existing run.
         test_runs = self.__get_runs('non_existing_run_name')

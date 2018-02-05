@@ -162,10 +162,16 @@ def __register_results(parser):
 
     parser.add_argument(type=str,
                         dest="name",
-                        metavar='RUN_NAME',
-                        help="Name of the analysis run to show result "
-                             "summaries of. Use 'CodeChecker cmd runs' to "
-                             "get the available runs.")
+                        metavar='RUN_NAMES',
+                        help="Names of the analysis runs to show result "
+                             "summaries of. This has the following format: "
+                             "<run_name_1>:<run_name_2>:<run_name_3> "
+                             "where run names can be a Python regex "
+                             "expression. So if you have run_1_a_name, "
+                             "run_2_b_name, run_2_c_name, run_3_d_name then"
+                             "\"run_2*:run_3_d_name\" selects the last three"
+                             "runs. Use 'CodeChecker cmd runs' to get the "
+                             "available runs.")
 
     __add_filtering_arguments(parser)
 
@@ -259,7 +265,15 @@ def __register_sum(parser):
                             metavar='RUN_NAME',
                             default=argparse.SUPPRESS,
                             help="Names of the analysis runs to show result "
-                                 "count breakdown for.")
+                                 "count breakdown for. This has the following "
+                                 "format: <run_name_1>:<run_name_2>:"
+                                 "<run_name_3> where run names can be a "
+                                 "Python regex expression. So if you have "
+                                 "run_1_a_name, run_2_b_name, run_2_c_name, "
+                                 "run_3_d_name then \"run_2*:run_3_d_name\""
+                                 "selects the last three runs. Use "
+                                 "'CodeChecker cmd runs' to get the available "
+                                 "runs.")
 
     name_group.add_argument('-a', '--all',
                             dest="all_results",
