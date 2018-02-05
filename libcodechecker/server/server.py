@@ -728,9 +728,8 @@ class CCSimpleHttpServer(HTTPServer):
                                               certfile=ssl_cert_file)
 
             else:
-                LOG.info("SSL key or cert files not found. Cert: " +
-                         ssl_cert_file +
-                         "\n Key: " + ssl_key_file)
+                LOG.info("Searching for SSL key at {0}, cert at {1}, "
+                         "not found...".format(ssl_key_file, ssl_cert_file))
                 LOG.info("Falling back to simple, insecure HTTP.")
 
         except Exception as e:
