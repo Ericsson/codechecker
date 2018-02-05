@@ -6,16 +6,18 @@
 
 define([
   'dojo/_base/declare',
-  'dojo/topic',
+  'dojo/cookie',
   'dojo/dom-construct',
+  'dojo/topic',
+  'dijit/form/Button',
   'dijit/layout/ContentPane',
   'dijit/popup',
   'dijit/TooltipDialog',
   'codechecker/hashHelper',
   'codechecker/HeaderMenu',
   'codechecker/util'],
-function (declare, topic, dom, ContentPane, popup, TooltipDialog, hashHelper,
-  HeaderMenu, util) {
+function (declare, cookie, dom, topic, Button, ContentPane, popup,
+  TooltipDialog, hashHelper, HeaderMenu, util) {
   return declare(ContentPane, {
     postCreate : function () {
       this.inherited(arguments);
@@ -61,6 +63,29 @@ function (declare, topic, dom, ContentPane, popup, TooltipDialog, hashHelper,
           innerHTML : 'Logged in as '
         }, profileMenu);
         dom.create('span', { class : 'user-name', innerHTML : user}, header);
+
+        var logoutButton = new Button({
+          class   : 'logout-btn',
+          label   : 'Log out',
+          onClick : function () {
+            try {
+              var logoutResult = CC_AUTH_SERVICE.destroySession();
+
+              if (logoutResult) {
+                cookie(CC_AUTH_COOKIE_NAME, 'LOGGED_OUT',
+                       { path : '/', expires : -1 });
+
+                // Redirect the user to the homepage after a successful logout.
+                window.location.reload(true);
+              } else {
+                console.warn("Server rejected logout.");
+              }
+            } catch (exc) {
+              console.error("Logout failed.", exc);
+            }
+          }
+        });
+        dom.place(logoutButton.domNode, profileMenu);
 
         //--- Permissions ---//
 
@@ -133,7 +158,7 @@ function (declare, topic, dom, ContentPane, popup, TooltipDialog, hashHelper,
 
       var headerMenuButton = new HeaderMenu({
         class : 'main-menu-button',
-        iconClass : 'dijitIconFunction',
+        iconClass : 'dijitIconFunction'
       });
       dom.place(headerMenuButton.domNode, this._headerMenu);
 

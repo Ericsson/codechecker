@@ -86,7 +86,6 @@ html, body {
 }
 
 #profile-menu .header {
-  border-bottom: 1px solid #b5bcc7;
   padding-bottom: 5px;
 }
 
@@ -95,7 +94,17 @@ html, body {
   color: #357ea7;
 }
 
+#profile-menu .logout-btn {
+  padding-bottom: 5px;
+}
+
+/** Remove orange outline from tooltip button. **/
+#profile-menu .logout-btn .dijitButtonContents {
+  outline: none;
+}
+
 #profile-menu .permission-title {
+  border-top: 1px solid #b5bcc7;
   padding: 5px 0px;
 }
 

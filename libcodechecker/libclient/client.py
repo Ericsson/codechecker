@@ -124,7 +124,7 @@ def handle_auth(protocol, host, port, username, login=False):
             pwd = saved_auth.split(":")[1]
         else:
             LOG.info("Logging in using credentials from command line...")
-            pwd = getpass.getpass("Please provide password for user '{0}'"
+            pwd = getpass.getpass("Please provide password for user '{0}': "
                                   .format(username))
 
         LOG.debug("Trying to login as {0} to {1}:{2}"

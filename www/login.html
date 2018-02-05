@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>CodeChecker</title>
+
+  <meta charset="UTF-8">
+
+  <link rel="shortcut icon" href="images/favicon.ico" />
+
+  <!-- CSS -->
+
+  <link type="text/css" rel="stylesheet" href="scripts/plugins/dojo/dijit/themes/claro/claro.css" />
+  <link type="text/css" rel="stylesheet" href="style/codecheckerviewer.css" />
+  <link type="text/css" rel="stylesheet" href="style/login.css" />
+  <link type="text/css" rel="stylesheet" href="style/productlist.css" />
+
+  <!-- Third party libraries -->
+
+  <script type="text/javascript" src="scripts/plugins/jsplumb/external/jquery-1.9.0-min.js"></script>
+  <script type="text/javascript" src="scripts/plugins/thrift/thrift.js"></script>
+
+  <!-- Services -->
+
+  <script type="text/javascript" src="scripts/codechecker-api/shared_types.js"></script>
+  <script type="text/javascript" src="scripts/codechecker-api/authentication_types.js"></script>
+  <script type="text/javascript" src="scripts/codechecker-api/codeCheckerAuthentication.js"></script>
+
+  <script type="text/javascript" src="scripts/version.js"></script>
+  <script type="text/javascript" src="scripts/browsersupport.js"></script>
+
+  <!-- Configure Dojo -->
+
+  <script>
+    var dojoConfig = {
+      baseUrl : '',
+      async : true,
+      packages : [
+        { name : 'dojo',  location : 'scripts/plugins/dojo/dojo'  },
+        { name : 'dijit', location : 'scripts/plugins/dojo/dijit' },
+        { name : 'dojox', location : 'scripts/plugins/dojo/dojox' },
+        { name : 'codechecker', location : 'scripts/codecheckerviewer' },
+        { name : 'login', location : 'scripts/login' }
+      ]
+    };
+  </script>
+
+  <script type="text/javascript" src="scripts/plugins/dojo/dojo/dojo.js"></script>
+
+  <!-- End loading custom scripts -->
+</head>
+<body class="claro">
+  <script>
+    if (!browserCompatible)
+      setNonCompatibleBrowserMessage();
+    else
+      require([
+        'login/login'],
+      function (loginPage) {
+        loginPage();
+      });
+  </script>
+</body>
+</html>

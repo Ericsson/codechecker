@@ -10,7 +10,7 @@ and client, related to API and other version-specific information.
 
 # The name of the cookie which contains the user's authentication session's
 # token.
-SESSION_COOKIE_NAME = "__ccPrivilegedAccessToken"
+SESSION_COOKIE_NAME = '__ccPrivilegedAccessToken'
 
 # The newest supported minor version (value) for each supported major version
 # (key) in this particular build.
