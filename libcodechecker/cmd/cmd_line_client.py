@@ -85,6 +85,29 @@ def get_runs(client, run_names):
     return client.getRunData(run_filter)
 
 
+def validate_filter_values(user_values, valid_values, value_type):
+    """
+    Check if the value provided by the user is a valid value.
+    """
+    if not user_values:
+        return True
+
+    non_valid_values = [status for status in user_values.split(',')
+                        if valid_values.get(status.upper(), None) is None]
+
+    if non_valid_values:
+        invalid_values = ','.join(map(lambda x: x.lower(), non_valid_values))
+        LOG.error('Invalid {0} value(s): {1}'
+                  .format(value_type, invalid_values))
+
+        valid_values = ','.join(map(lambda x: x.lower(), valid_values.keys()))
+        LOG.error('Valid values are: {0}'.format(valid_values))
+
+        return False
+
+    return True
+
+
 def add_filter_conditions(report_filter, filter_str):
     """
     This function fills some attributes of the given report filter based on
@@ -102,6 +125,17 @@ def add_filter_conditions(report_filter, filter_str):
 
     severities, checkers, paths, dt_statuses, rw_statuses = \
         map(lambda x: x.strip(), filter_str.split(':'))
+
+    values_to_check = [
+        (severities, ttypes.Severity._NAMES_TO_VALUES, 'severity'),
+        (dt_statuses, ttypes.DetectionStatus._NAMES_TO_VALUES,
+            'detection status'),
+        (rw_statuses, ttypes.ReviewStatus._NAMES_TO_VALUES,
+            'review status')]
+
+    if not all(valid for valid in
+               [validate_filter_values(*x) for x in values_to_check]):
+        sys.exit(1)
 
     if severities:
         report_filter.severity = map(
