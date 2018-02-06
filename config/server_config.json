@@ -4,7 +4,6 @@
     "enabled" : false,
     "realm_name" : "CodeChecker Privileged server",
     "realm_error" : "Access requires valid credentials.",
-    "soft_expire" : 60,
     "session_lifetime" : 300,
     "logins_until_cleanup" : 30,
     "method_dictionary": {

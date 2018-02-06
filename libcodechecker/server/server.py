@@ -77,45 +77,41 @@ class RequestHandler(SimpleHTTPRequestHandler):
         """ Silencing http server. """
         return
 
-    def __check_auth_in_request(self):
+    def __check_session_cookie(self):
         """
-        Wrapper to handle authentication needs from both GET and POST requests.
-        Returns a session object if correct cookie is presented or creates a
-        new session if the Authorization header and the correct credentials are
-        present.
+        Check the CodeChecker privileged access cookie in the request headers.
+
+        :returns: A session_manager._Session object if a correct, valid session
+        cookie was found in the headers. None, otherwise.
         """
 
         if not self.server.manager.is_enabled:
             return None
 
-        success = None
-
-        # Authentication can happen in two possible ways:
-        #
-        # The user either presents a valid session cookie -- in this case
-        # checking if the session for the given cookie is valid.
-
-        client_host, client_port = self.client_address
-
+        session = None
+        # Check if the user has presented a privileged access cookie.
         for k in self.headers.getheaders("Cookie"):
             split = k.split("; ")
             for cookie in split:
                 values = cookie.split("=")
                 if len(values) == 2 and \
                         values[0] == session_manager.SESSION_COOKIE_NAME:
-                    if self.server.manager.is_valid(values[1], True):
-                        # The session cookie contains valid data.
-                        success = self.server.manager.get_session(values[1],
-                                                                  True)
+                    session = self.server.manager.get_session(values[1])
 
-        # Else, access is still not granted.
-        if success is None:
+        if session and session.is_alive:
+            # If a valid session token was found and it can still be used,
+            # mark that the user's last access to the server was the
+            # request that resulted in the execution of this function.
+            session.revalidate()
+            return session
+        else:
+            # If the user's access cookie is no longer usable (invalid),
+            # present an error.
+            client_host, client_port = self.client_address
             LOG.debug(client_host + ":" + str(client_port) +
                       " Invalid access, credentials not found " +
                       "- session refused.")
             return None
-
-        return success
 
     def end_headers(self):
         # Sending the authentication cookie
@@ -135,7 +131,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
         Handles the browser access (GET requests).
         """
 
-        auth_session = self.__check_auth_in_request()
+        auth_session = self.__check_session_cookie()
         LOG.info("{0}:{1} -- [{2}] GET {3}"
                  .format(self.client_address[0],
                          str(self.client_address[1]),
@@ -216,10 +212,8 @@ class RequestHandler(SimpleHTTPRequestHandler):
             # serve the main page and the resources, for example:
             # /prod/(index.html) -> /(index.html)
             # /prod/styles/(...) -> /styles/(...)
-            LOG.debug("Product routing before " + self.path)
             self.path = self.path.replace(
                 "{0}/".format(product_endpoint), "", 1)
-            LOG.debug("Product routing after: " + self.path)
         else:
             # No product endpoint in the request.
 
@@ -309,7 +303,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
         """
 
         client_host, client_port = self.client_address
-        auth_session = self.__check_auth_in_request()
+        auth_session = self.__check_session_cookie()
         LOG.info("{0}:{1} -- [{2}] POST {3}"
                  .format(client_host,
                          str(client_port),

@@ -45,14 +45,6 @@ is handled.
 
     After this many login attempts made towards the server, it will perform an
     automatic cleanup of old, expired sessions.
- * `soft_expire`
-
-    (in seconds) When a user is authenticated, a session is created for them
-    and this session identifies the user's access. This configuration variable
-    sets how long the session considered "valid" before the user is needed
-    to reauthenticate again &mdash; if this time expires, the session will
-    be *hibernated*: the next access will be denied, but if the user presents
-    a valid login, they will get their session reused.
  * `session_lifetime`
 
     (in seconds) The lifetime of the session sets that after this many seconds
