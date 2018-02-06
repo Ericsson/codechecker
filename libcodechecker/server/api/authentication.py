@@ -45,13 +45,9 @@ class ThriftAuthHandler(object):
 
     @timeit
     def getAuthParameters(self):
-        token = None
-        if self.__auth_session:
-            token = self.__auth_session.token
-        return HandshakeInformation(self.__manager.is_enabled,
-                                    self.__manager.is_valid(
-                                        token,
-                                        True))
+        alive = self.__auth_session.is_alive if self.__auth_session \
+                else False
+        return HandshakeInformation(self.__manager.is_enabled, alive)
 
     @timeit
     def getLoggedInUser(self):
