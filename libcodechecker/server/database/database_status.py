@@ -6,7 +6,7 @@
 # -------------------------------------------------------------------------
 
 """
-Map between database statuses and the corresponding messages.
+Map between database status and the corresponding messages.
 """
 from shared.ttypes import DBStatus
 

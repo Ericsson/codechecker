@@ -1479,17 +1479,17 @@ class ThriftRequestHandler(object):
             q = filter_report_filter(q, filter_expression, run_ids, cmp_data,
                                      diff_hashes)
 
-            review_statuses = None
+            review_status = None
             if is_unique:
                 q = q.group_by(Report.bug_id).subquery()
-                review_statuses = session.query(func.max(q.c.bug_id),
-                                                q.c.status,
-                                                func.count(q.c.bug_id)) \
+                review_status = session.query(func.max(q.c.bug_id),
+                                              q.c.status,
+                                              func.count(q.c.bug_id)) \
                     .group_by(q.c.status)
             else:
-                review_statuses = q.group_by(ReviewStatus.status)
+                review_status = q.group_by(ReviewStatus.status)
 
-            for _, rev_status, count in review_statuses:
+            for _, rev_status, count in review_status:
                 if rev_status is None:
                     # If no review status is set count it as unreviewed.
                     rev_status = ttypes.ReviewStatus.UNREVIEWED

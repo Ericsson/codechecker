@@ -231,7 +231,7 @@ class TestReportFilter(unittest.TestCase):
 
         report_ids = [r.reportId for r in run_results]
 
-        # Set all review statuses in case some other tests changed them.
+        # Set all review status in case some other tests changed them.
         for rid in report_ids:
             self._cc_client.changeReviewStatus(rid,
                                                ReviewStatus.CONFIRMED,

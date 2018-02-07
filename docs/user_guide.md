@@ -1175,8 +1175,8 @@ Database management arguments.:
   create a full a backup of the product databases.
 
   --status STATUS       Name of the product to get the database status for.
-                        Use 'all' to list the database statuses for all of the
-                        products.
+                        Use 'all' to list the status of the databases for
+                        all of the products.
   --upgrade-schema PRODUCT_TO_UPGRADE
                         Name of the product to upgrade to the latest database
                         schema available in the package. Use 'all' to upgrade
@@ -1296,9 +1296,9 @@ optional arguments:
   --filter FILTER       Filter results. The filter string has the following
                         format:
                         [<SEVERITIES>]:[<CHECKER_NAMES>]:[<FILE_PATHS>]:
-                        [<DETECTION_STATUSES>]:[<REVIEW_STATUSES>] where
+                        [<DETECTION_STATUS>]:[<REVIEW_STATUS>] where
                         severites, checker_names, file_paths,
-                        detection_statuses and review_statuses should be a comma
+                        detection_status and review_status should be a comma
                         separated list, e.g.:
                         "high,medium:unix,core:*.cpp,*.h:new,unresolved:
                         false_positive,intentional" (default: ::)

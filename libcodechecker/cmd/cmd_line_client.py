@@ -100,7 +100,7 @@ def add_filter_conditions(report_filter, filter_str):
                   "false_positive,intentional\").")
         sys.exit(1)
 
-    severities, checkers, paths, dt_statuses, rw_statuses = \
+    severities, checkers, paths, dt_status, rw_status = \
         map(lambda x: x.strip(), filter_str.split(':'))
 
     if severities:
@@ -114,15 +114,15 @@ def add_filter_conditions(report_filter, filter_str):
         report_filter.filepath = map(lambda x: '*' + x + '*',
                                      paths.split(','))
 
-    if dt_statuses:
+    if dt_status:
         report_filter.detectionStatus = map(
             lambda x: ttypes.DetectionStatus._NAMES_TO_VALUES[x.upper()],
-            dt_statuses.split(','))
+            dt_status.split(','))
 
-    if rw_statuses:
+    if rw_status:
         report_filter.reviewStatus = map(
             lambda x: ttypes.ReviewStatus._NAMES_TO_VALUES[x.upper()],
-            rw_statuses.split(','))
+            rw_status.split(','))
 
 # ---------------------------------------------------------------------------
 # Argument handlers for the 'CodeChecker cmd' subcommands.

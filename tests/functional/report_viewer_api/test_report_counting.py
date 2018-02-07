@@ -459,7 +459,7 @@ class TestReportFilter(unittest.TestCase):
 
     def test_run1_all_detection_stats(self):
         """
-        Get all the report detection statuses for run1.
+        Get all the report detection status for run1.
         """
         runid = self._runids[0]
         detection_counts = \
@@ -471,7 +471,7 @@ class TestReportFilter(unittest.TestCase):
 
     def test_run2_all_detection_stats(self):
         """
-        Get all the report detection statuses for run2.
+        Get all the report detection status for run2.
         """
         runid = self._runids[1]
         detection_counts = \
@@ -483,7 +483,7 @@ class TestReportFilter(unittest.TestCase):
 
     def test_run1_run2_all_detection_stats(self):
         """
-        Get all the report detection statuses for all the runs.
+        Get all the report detection status for all the runs.
         """
         detection_counts = \
             self._cc_client.getDetectionStatusCounts(self._runids, None, None)

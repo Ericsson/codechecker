@@ -167,7 +167,7 @@ fail to start.
 
 ### Check if migration is possible
 
-With the `CodeChecker server --db-status all` the database statuses for all of the
+With the `CodeChecker server --db-status all` the status for all of the
 product databases can be checked.
 
 ### Product migration

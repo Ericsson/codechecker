@@ -147,9 +147,9 @@ def __add_filtering_arguments(parser):
                         help="Filter results. The filter string has the "
                              "following format: "
                              "[<SEVERITIES>]:[<CHECKER_NAMES>]:[<FILE_PATHS>]:"
-                             "[<DETECTION_STATUSES>]:[<REVIEW_STATUSES>]"
+                             "[<DETECTION_STATUS>]:[<REVIEW_STATUS>]"
                              "where severites, checker_names, "
-                             "file_paths, detection_statuses, review_statuses "
+                             "file_paths, detection_status, review_status "
                              "should be a comma separated list, e.g.:"
                              "\"high,medium:unix,core:*.cpp,*.h:"
                              "new,unresolved:false_positive,intentional\"")
