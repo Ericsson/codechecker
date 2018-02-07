@@ -1295,9 +1295,9 @@ optional arguments:
                         results instead of only unsuppressed ones.
   --filter FILTER       Filter results. The filter string has the following
                         format:
-                        [<SEVERITIES>]:[<CHECKER_NAMES>]:[<FILE_PATHS>]:
+                        [<SEVERITY>]:[<CHECKER_NAME>]:[<FILE_PATH>]:
                         [<DETECTION_STATUS>]:[<REVIEW_STATUS>] where
-                        severites, checker_names, file_paths,
+                        severity, checker_name, file_path,
                         detection_status and review_status should be a comma
                         separated list, e.g.:
                         "high,medium:unix,core:*.cpp,*.h:new,unresolved:
@@ -1337,8 +1337,8 @@ optional arguments:
                         (default: False)
   --filter FILTER       Filter results. The filter string has the following
                         format:
-                        [<SEVERITIES>]:[<CHECKER_NAMES>]:[<FILE_PATHS>] where
-                        severites, checker_names, file_paths should be a comma
+                        [<SEVERITY>]:[<CHECKER_NAME>]:[<FILE_PATH>] where
+                        severity, checker_name, file_path should be a comma
                         separated list, e.g.:
                         "high,medium:unix,core:*.cpp,*.h" (default: ::)
 
@@ -1398,8 +1398,8 @@ optional arguments:
                         (default: False)
   --filter FILTER       Filter results. The filter string has the following
                         format:
-                        [<SEVERITIES>]:[<CHECKER_NAMES>]:[<FILE_PATHS>] where
-                        severites, checker_names, file_paths should be a comma
+                        [<SEVERITY>]:[<CHECKER_NAME>]:[<FILE_PATH>] where
+                        severity, checker_name, file_path should be a comma
                         separated list, e.g.:
                         "high,medium:unix,core:*.cpp,*.h" (default: ::)
 ~~~~~~~~~~~~~~~~~~~~~
