@@ -278,8 +278,8 @@ def add_arguments_to_parser(parser):
                                 required=False,
                                 help="Name of the product to get "
                                      "the database status for. "
-                                     "Use 'all' to list the database "
-                                     "statuses for all of the products.")
+                                     "Use 'all' to list the status of the "
+                                     "databases for all of the products.")
 
     database_mgmnt.add_argument('--db-upgrade-schema',
                                 type=str,
@@ -392,7 +392,7 @@ def add_arguments_to_parser(parser):
 
 def print_prod_status(prod_status):
     """
-    Print the database statuses for each of the products.
+    Print the database status for each of the products.
     """
 
     header = ['Product endpoint', 'Database status',
@@ -428,9 +428,9 @@ def get_schema_version_from_package(migration_root):
 
 def check_product_db_status(cfg_sql_server, context):
     """
-    Check the products for database statuses.
+    Check the products for database status.
 
-    :returns: dictionary of product endpoints with database statuses
+    :returns: dictionary of product endpoints with database status
     """
 
     migration_root = context.run_migration_root
@@ -479,7 +479,7 @@ def check_product_db_status(cfg_sql_server, context):
 
 def __db_status_check(cfg_sql_server, context, product_name=None):
     """
-    Check and print database statuses for the given product.
+    Check and print database status for the given product.
     """
     if not product_name:
         return 0
@@ -487,19 +487,19 @@ def __db_status_check(cfg_sql_server, context, product_name=None):
     LOG.debug("Checking database status for " + product_name +
               " product.")
 
-    prod_statuses = check_product_db_status(cfg_sql_server, context)
+    prod_status = check_product_db_status(cfg_sql_server, context)
 
     if product_name != 'all':
-        avail = prod_statuses.get(product_name)
+        avail = prod_status.get(product_name)
         if not avail:
             LOG.error("No product was found with this endpoint: " +
                       str(product_name))
             return 1
 
-        prod_statuses = {k: v for k, v in prod_statuses.items()
-                         if k == product_name}
+        prod_status = {k: v for k, v in prod_status.items()
+                       if k == product_name}
 
-    print_prod_status(prod_statuses)
+    print_prod_status(prod_status)
     return 0
 
 
@@ -511,18 +511,18 @@ def __db_migration(cfg_sql_server, context, product_to_upgrade='all'):
     LOG.info("Preparing schema upgrade for " + str(product_to_upgrade))
     product_name = product_to_upgrade
 
-    prod_statuses = check_product_db_status(cfg_sql_server, context)
+    prod_status = check_product_db_status(cfg_sql_server, context)
     prod_to_upgrade = []
 
     if product_name != 'all':
-        avail = prod_statuses.get(product_name)
+        avail = prod_status.get(product_name)
         if not avail:
             LOG.error("No product was found with this endpoint: " +
                       product_name)
             return 1
         prod_to_upgrade.append(product_name)
     else:
-        prod_to_upgrade = list(prod_statuses.keys())
+        prod_to_upgrade = list(prod_status.keys())
 
     migration_root = context.run_migration_root
 
@@ -736,8 +736,8 @@ def server_init_start(args):
         LOG.error("Server can not be started.")
         sys.exit(1)
 
-    # Configuration database setup and check is needed before database
-    # statuses can be checked.
+    # Configuration database setup and check is needed before the
+    # status of the product database can be checked.
     try:
         if args.status:
             ret = __db_status_check(cfg_sql_server, context, args.status)
@@ -787,25 +787,25 @@ def server_init_start(args):
         LOG.info("Product 'Default' at '{0}' created and set up."
                  .format(default_product_path))
 
-    prod_statuses = check_product_db_status(cfg_sql_server, context)
+    prod_status = check_product_db_status(cfg_sql_server, context)
 
     upgrade_available = {}
-    for k, v in prod_statuses.items():
+    for k, v in prod_status.items():
         db_status, _, _, _ = v
         if db_status == DBStatus.SCHEMA_MISMATCH_OK or \
                 db_status == DBStatus.SCHEMA_MISSING:
             upgrade_available[k] = v
 
     if upgrade_available:
-        print_prod_status(prod_statuses)
+        print_prod_status(prod_status)
         LOG.warning("Multiple products can be upgraded, make a backup!")
         __db_migration(cfg_sql_server, context)
 
-    prod_statuses = check_product_db_status(cfg_sql_server, context)
-    print_prod_status(prod_statuses)
+    prod_status = check_product_db_status(cfg_sql_server, context)
+    print_prod_status(prod_status)
 
     non_ok_db = False
-    for k, v in prod_statuses.items():
+    for k, v in prod_status.items():
         db_status, _, _, _ = v
         if db_status != DBStatus.OK:
             non_ok_db = True

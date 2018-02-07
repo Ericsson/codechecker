@@ -440,7 +440,7 @@ def construct_analyze_handler(buildaction,
                               skiplist_handler):
     """
     Construct an empty (base) ResultHandler which is capable of returning
-    analyzer worker statuses to the caller method, but does not provide
+    analyzer worker status to the caller method, but does not provide
     actual parsing and processing of results, instead only saves the analysis
     results.
     """

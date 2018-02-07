@@ -41,7 +41,7 @@ enum Order {
 
 /**
  * Review status is a feature which allows a user to assign one of these
- * statuses to a particular Report.
+ * status to a particular Report.
  */
 enum ReviewStatus {
   UNREVIEWED,     // The report was not assigned a review (default).
