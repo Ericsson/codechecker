@@ -61,7 +61,9 @@ function (declare, domAttr, domClass, domConstruct, ItemFileWriteStore,
         }
 
         function diff(a, b) {
-          return a.filter(x => !b.includes(x));
+          return a.filter(function (x) {
+            return b.indexOf(x) === -1;
+          });
         }
 
         var permission = that._permissionStore.get(
@@ -118,7 +120,7 @@ function (declare, domAttr, domClass, domConstruct, ItemFileWriteStore,
         var name = textBox.get('value');
 
         if (name.length > 0 && name !== "*" &&
-            !nameList.includes(name)) {
+            nameList.indexOf(name) === -1) {
           nameList.push(name);
           store.newItem({ value : name});
 
@@ -315,7 +317,7 @@ function (declare, domAttr, domClass, domConstruct, ItemFileWriteStore,
     _hadPermissionInitially : function (permValue, name, isGroup) {
       var mapRecord = this.get('rightsMap')[permValue];
       mapRecord = isGroup ? mapRecord.groups : mapRecord.users;
-      return mapRecord.includes(name);
+      return mapRecord.indexOf(name) !== -1;
     },
 
     /**
@@ -328,10 +330,10 @@ function (declare, domAttr, domClass, domConstruct, ItemFileWriteStore,
 
       if (this._hadPermissionInitially(permValue, name, isGroup)) {
         // If the user had the right, it could be that we removed it meanwhile.
-        return !diffRecord.remove.includes(name);
+        return diffRecord.remove.indexOf(name) === -1;
       } else {
         // If didn't, it could be that we added it since.
-        return diffRecord.add.includes(name);
+        return diffRecord.add.indexOf(name) !== -1;
       }
     },
 

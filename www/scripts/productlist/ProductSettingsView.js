@@ -456,7 +456,7 @@ function (declare, domAttr, domClass, domConstruct, Dialog, Button,
 
       function shouldEnable(key) {
         for (var i = 0; i <= adminLevel; ++i)
-          if (FIELD_RANK_SHOW_RULES[i].includes(key))
+          if (FIELD_RANK_SHOW_RULES[i].indexOf(key) !== -1)
             return true;
 
         return false;
