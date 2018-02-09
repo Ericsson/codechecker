@@ -129,7 +129,7 @@ function (declare, cookie, dom, domConstruct, domClass, keys, on, Button,
         window.location = window.location.origin + '/' + returnTo;
       } else {
         var authMethods = CC_AUTH_SERVICE.getAcceptedAuthMethods();
-        if (!authMethods.includes('Username:Password')) {
+        if (authMethods.indexOf('Username:Password') === -1) {
           domClass.add(this._mbox.domNode, 'mbox-error');
           this._mbox.show("Server rejects username-password authentication!",
                           "This login form cannot be used.");
