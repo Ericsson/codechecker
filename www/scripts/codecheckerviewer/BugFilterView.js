@@ -136,7 +136,7 @@ function (declare, Deferred, dom, domClass, keys, all, topic, Standby, Button,
 
         if (that.reportFilter.serverSideSearch && query) {
           that._items.unshift({
-            label : query,
+            label : '&lrm;' + query + '&lrm;',
             value : query,
             isFilterByRegexItem : true
           });
@@ -225,7 +225,7 @@ function (declare, Deferred, dom, domClass, keys, all, topic, Standby, Button,
 
         hasItem = true;
 
-        var label = (item.isFilterByRegexItem ? 'Filter by this regex: ' : '') +
+        var label = (item.isFilterByRegexItem ? 'Filter by RegEx: ' : '') +
           item.label;
 
         var content = '<span class="customIcon selected"></span>'
