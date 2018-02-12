@@ -14,13 +14,26 @@
   {
     "name":"codemirror",
     "directory":"vendor/codemirror",
-    "version":"5.18.2",
+    "version":"5.25.0",
     "description":"codemirror",
     "homepage":"https://codemirror.net/",
     "repository":{
       "type":"git",
-      "git_tag":"5.18.2",
+      "git_tag":"5.25.0",
       "url":"https://github.com/codemirror/CodeMirror.git"
+    }
+  },
+  {
+    "name":"codemirror-dist",
+    "directory":"vendor/codemirror/dist",
+    "version":"5.25.0",
+    "description":"codemirror",
+    "homepage":"https://codemirror.net/",
+    "source_package":{
+      "download_cmd":"curl",
+      "url":"https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.25.0/codemirror.min.js",
+      "option":"-o",
+      "name":"codemirror.min.js"
     }
   },
   {
