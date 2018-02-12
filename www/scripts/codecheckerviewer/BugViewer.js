@@ -5,6 +5,7 @@ define([
   'dojo/dom-style',
   'dojo/fx',
   'dojo/fx/Toggler',
+  'dojo/keys',
   'dojo/on',
   'dojo/query',
   'dojo/store/Memory',
@@ -24,7 +25,7 @@ define([
   'codechecker/HtmlTree',
   'codechecker/util',
   'codechecker/hashHelper'],
-function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
+function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
   Observable, topic, entities, Dialog, ObjectStoreModel, ContentPane,
   BorderContainer, Button, CheckBox, Select, SimpleTextarea, Tooltip,
   CommentView, HtmlTree, util, hashHelper) {
@@ -901,38 +902,52 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
       var that = this;
 
       this._messageBox = new SimpleTextarea({
-        placeholder : '(Optionally) Explain the status change...'
+        placeholder : '(Optionally) Explain the status change...',
+        onKeyPress : function (e) {
+          var value = this.get('value');
+
+          // Accept ENTER as submit if nothing is entered into text area.
+          if (e.keyCode === keys.ENTER && !value.trim().length) {
+            that._messageBox.set('value', '');
+            that.changeReviewStatus();
+            dojo.stopEvent(e);
+          }
+        }
       });
 
       this._changeButton = new Button({
         label : 'Change',
         onClick : function () {
-          var message = that._messageBox.get('value');
-          var status = that.reviewStatusSelector.get('value');
-
-          var user = CC_AUTH_SERVICE.getLoggedInUser();
-          if (!user)
-            user = 'Anonymous';
-
-          //--- Update the current report data ---//
-
-          that.buttonPane.reportData.reviewData.comment = message;
-          that.buttonPane.reportData.reviewData.status = status;
-          that.buttonPane.reportData.reviewData.author = user;
-          that.buttonPane.reportData.reviewData.date = new Date();
-
-          that.buttonPane.showReviewStatusMessageBox(message);
-
-          //--- Change the review status. ---//
-
-          CC_SERVICE.changeReviewStatus(that.buttonPane.reportData.reportId,
-            status, message);
-
-          //--- Hide the dialog. ---//
-
-          that.hide();
+          that.changeReviewStatus();
         }
       });
+    },
+
+    changeReviewStatus : function () {
+      var message = this._messageBox.get('value');
+      var status = this.reviewStatusSelector.get('value');
+
+      var user = CC_AUTH_SERVICE.getLoggedInUser();
+      if (!user)
+        user = 'Anonymous';
+
+      //--- Update the current report data ---//
+
+      this.buttonPane.reportData.reviewData.comment = message;
+      this.buttonPane.reportData.reviewData.status = status;
+      this.buttonPane.reportData.reviewData.author = user;
+      this.buttonPane.reportData.reviewData.date = new Date();
+
+      this.buttonPane.showReviewStatusMessageBox(message);
+
+      //--- Change the review status. ---//
+
+      CC_SERVICE.changeReviewStatus(this.buttonPane.reportData.reportId,
+        status, message);
+
+      //--- Hide the dialog. ---//
+
+      this.hide();
     },
 
     onShow : function () {
