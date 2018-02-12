@@ -581,7 +581,10 @@ function (declare, domClass, dom, style, fx, Toggler, on, query, Memory,
         fileFilter,
         null,
         function (result) {
-          result.forEach(function (report) { that._addReport(report); });
+          result.sort(function (r1, r2) {
+            // Order reports by line.
+            return r1.line - r2.line;
+          }).forEach(function (report) { that._addReport(report); });
 
           that.bugStore.query({ parent : 'root' }).forEach(function (severity) {
             if (that.bugStore.query({ parent : severity.id }).length === 0)
