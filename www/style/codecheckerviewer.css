@@ -701,3 +701,25 @@ html, body {
 .source-component-manager .delete {
   color: #d63434;
 }
+
+.list-of-runs table {
+  position: relative;
+}
+
+.loading-wrapper {
+  display: block;
+  background-color: #ffffff94;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+}
+
+.loading {
+  background: url(../scripts/plugins/dojo/dijit/themes/claro/images/loadingAnimation.gif) no-repeat;
+  margin: 0 auto;
+  display: block;
+  width: 20px;
+  height: 20px;
+}

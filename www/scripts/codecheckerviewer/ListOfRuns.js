@@ -73,9 +73,16 @@ function (declare, dom, ItemFileWriteStore, topic, Dialog, Button,
     return versionTag ? versionTag.outerHTML : '';
   }
 
+
   function numberOfUnresolvedBugsFormatter (num) {
     return '<span title="' + util.getTooltip('numOfUnresolved') + '">'
       + num + '</span>'
+  }
+
+  function loadingFormatter(loading) {
+    return loading
+      ? '<span class="loading-wrapper"><span class="loading"></span></span>'
+      : '';
   }
 
   var ListOfRunsGrid = declare(DataGrid, {
@@ -93,7 +100,8 @@ function (declare, dom, ItemFileWriteStore, topic, Dialog, Button,
         { name : 'Check command', field : 'checkcmd', styles : 'text-align: center;' },
         { name : '<span title="' + util.getTooltip('detectionStatus') + '">Detection status</span>', field : 'detectionstatus', styles : 'text-align: center;', width : '30%' },
         { name : '<span title="' + util.getTooltip('versionTag') + '">Version tag</span>', field : 'versionTag', formatter : versionTagFormatter },
-        { name : 'Delete', field : 'del', styles : 'text-align: center;', type : 'dojox.grid.cells.Bool', editable : true }
+        { name : 'Delete', field : 'del', styles : 'text-align: center; border-right: 0px;', type : 'dojox.grid.cells.Bool', editable : true, noresize : true },
+        { name : '&nbsp;', field : 'loading', styles: 'border-left: 0px; padding-left: 1px; padding-right: 0px;', width : '1px', noresize : true, formatter : loadingFormatter },
       ];
 
       this.focused = true;
@@ -238,10 +246,10 @@ function (declare, dom, ItemFileWriteStore, topic, Dialog, Button,
   });
 
   var RunsInfoPane = declare(ContentPane, {
-    constructor : function () {
-      var that = this;
+    deleteRunIds : [],
 
-      this.deleteRunIds = [];
+    postCreate : function () {
+      var that = this;
 
       //--- Text box for searching runs. ---//
 
@@ -259,6 +267,23 @@ function (declare, dom, ItemFileWriteStore, topic, Dialog, Button,
           }, 500);
         }
       });
+      this.addChild(this._runFilter);
+
+      //--- Delete Button ---//
+
+      if (this.get('showDelete')) {
+        this._deleteBtn = new Button({
+          label    : 'Delete',
+          class    : 'del-btn',
+          disabled : true,
+          onClick  : function () {
+            that.deleteRunIds.forEach(function (runId) {
+              that.removeRun(runId);
+            });
+          }
+        });
+        this.addChild(this._deleteBtn);
+      }
 
       //--- Diff Button ---//
 
@@ -277,47 +302,6 @@ function (declare, dom, ItemFileWriteStore, topic, Dialog, Button,
         }
       });
 
-      //--- Delete Button ---//
-
-      this._deleteBtn = new Button({
-        label    : 'Delete',
-        class    : 'del-btn',
-        disabled : true,
-        onClick  : function () {
-          that.listOfRunsGrid.store.fetch({
-            onComplete : function (runs) {
-              var runCount = runs.length;
-              runs.forEach(function (run) {
-                if (that.deleteRunIds.indexOf(run.runid[0]) !== -1) {
-                  that.listOfRunsGrid.store.deleteItem(run);
-                  --runCount;
-                }
-              });
-              that.listOfRunsGrid._updateRunCount(runCount);
-            }
-          });
-
-          that.deleteRunIds.forEach(function (runId) {
-            CC_SERVICE.removeRun(runId, function () {}).fail(
-            function (jsReq, status, exc) {
-              new Dialog({
-                title : 'Failure!',
-                content : exc.message
-              }).show();
-            });
-          });
-
-          that.deleteRunIds = [];
-          that.update();
-        }
-      });
-    },
-
-    postCreate : function () {
-      this.addChild(this._runFilter);
-
-      if (this.get('showDelete'))
-        this.addChild(this._deleteBtn);
       this.addChild(this._diffBtn);
     },
 
@@ -362,6 +346,42 @@ function (declare, dom, ItemFileWriteStore, topic, Dialog, Button,
       this._diffBtn.set('label', activateDiff
         ? 'Diff ' + this.baseline.name + ' to ' + this.newcheck.name
         : 'Diff');
+    },
+
+    getRunStoreItem : function (runId, cb) {
+      this.listOfRunsGrid.store.fetch({
+        onComplete : function (runs) {
+          runs.forEach(function (run) {
+            if (runId === run.runid[0]) {
+              cb(run, runs);
+              return;
+            }
+          });
+        }
+      });
+    },
+
+    removeRun : function (runId) {
+      var that = this;
+      this.getRunStoreItem(runId, function (run) {
+        that.listOfRunsGrid.store.setValue(run, 'loading', true);
+
+        CC_SERVICE.removeRun(runId, function (success) {
+          that.getRunStoreItem(runId, function (run, runs) {
+            that.listOfRunsGrid.store.deleteItem(run);
+            that.listOfRunsGrid._updateRunCount(runs.length - 1);
+
+            var idx = that.deleteRunIds.indexOf(runId);
+            if (idx > -1)
+              that.deleteRunIds.splice(idx, 1);
+
+            that.update();
+          });
+        }).fail(function (jsReq, status, exc) {
+          that.listOfRunsGrid.store.setValue(run, 'loading', false);
+          console.warn(exc.message);
+        });
+      });
     }
   });
 
@@ -380,6 +400,7 @@ function (declare, dom, ItemFileWriteStore, topic, Dialog, Button,
       });
 
       var listOfRunsGrid = new ListOfRunsGrid({
+        class : 'list-of-runs',
         region : 'center',
         infoPane : runsInfoPane,
         parent : this,

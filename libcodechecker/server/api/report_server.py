@@ -595,7 +595,8 @@ class ThriftRequestHandler(object):
 
             q = session.query(Run,
                               RunHistory.version_tag,
-                              stmt.c.report_count)
+                              stmt.c.report_count) \
+                .filter(Run.can_delete.is_(True))
 
             if run_filter is not None:
                 if run_filter.ids is not None:
