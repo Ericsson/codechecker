@@ -127,6 +127,13 @@ function (locale, dom, style, json) {
       return prettyDuration;
     },
 
+    prettifyDate: function (date) {
+      if (!date.length) return "--------";
+
+      var items = date.split(/[\s\.]+/);
+      return items[0] + ' ' + items[1];
+    },
+
     /**
      * Creates a human friendly relative time ago on the date.
      */

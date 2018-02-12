@@ -182,14 +182,13 @@ function (declare, dom, ItemFileWriteStore, topic, Dialog, Button,
      * This function adds a new run data to the store.
      */
     _addRunData : function (runData) {
-      var currItemDate = runData.runDate.split(/[\s\.]+/);
       this.store.newItem({
         id           : runData.runId,
         runid        : runData.runId,
         name         : '<span class="link">' + runData.name + '</span>',
         versionTag   : { runName : runData.name,
                          versionTag : runData.versionTag },
-        date         : currItemDate[0] + ' ' + currItemDate[1],
+        date         : util.prettifyDate(runData.runDate),
         numberofbugs : runData.resultCount,
         duration     : util.prettifyDuration(runData.duration),
         runData      : runData,
