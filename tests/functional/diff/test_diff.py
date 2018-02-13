@@ -63,6 +63,7 @@ class Diff(unittest.TestCase):
         # Name order matters from __init__ !
         self._base_runid = test_runs[0].runId  # base
         self._new_runid = test_runs[1].runId  # new
+        self._update_runid = test_runs[2].runId  # updated
 
         self._codechecker_cmd = env.codechecker_cmd()
         self._report_dir = os.path.join(test_workspace, "reports")
@@ -100,8 +101,8 @@ class Diff(unittest.TestCase):
         diff_res = self._cc_client.getRunResultCount([],
                                                      None,
                                                      cmp_data)
-        # 5 new core.CallAndMessage issues.
-        self.assertEqual(diff_res, 5)
+        # No differences.
+        self.assertEqual(diff_res, 0)
 
     def test_get_diff_results_new(self):
         """
@@ -652,3 +653,52 @@ class Diff(unittest.TestCase):
                                                       report_hashes,
                                                       DiffType.NEW)
         self.assertEqual(len(diff_res), len(report_hashes))
+
+    def test_diff_run_tags(self):
+        """
+        Test for diff runs by run tags.
+        """
+        run_id = self._update_runid
+
+        def get_run_tag_id(tag_name):
+            run_history_filter = RunHistoryFilter(tagNames=[tag_name])
+            run_tags = self._cc_client.getRunHistory([run_id], None, None,
+                                                     run_history_filter)
+            self.assertEqual(len(run_tags), 1)
+            return run_tags[0].id
+
+        base_tag_id = get_run_tag_id('t1')
+        new_tag_id = get_run_tag_id('t2')
+
+        tag_filter = ReportFilter(runTag=[base_tag_id])
+        cmp_data = CompareData(runIds=[run_id],
+                               diffType=DiffType.NEW,
+                               runTag=[new_tag_id])
+
+        diff_res = self._cc_client.getRunResults([run_id],
+                                                 500,
+                                                 0,
+                                                 [],
+                                                 tag_filter,
+                                                 cmp_data)
+
+        # 5 new core.CallAndMessage issues.
+        self.assertEqual(len(diff_res), 5)
+
+        cmp_data.diffType = DiffType.RESOLVED
+        diff_res = self._cc_client.getRunResults([run_id],
+                                                 500,
+                                                 0,
+                                                 [],
+                                                 tag_filter,
+                                                 cmp_data)
+        self.assertEqual(len(diff_res), 3)
+
+        cmp_data.diffType = DiffType.UNRESOLVED
+        diff_res = self._cc_client.getRunResults([run_id],
+                                                 500,
+                                                 0,
+                                                 [],
+                                                 tag_filter,
+                                                 cmp_data)
+        self.assertEqual(len(diff_res), 26)

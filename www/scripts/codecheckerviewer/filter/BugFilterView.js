@@ -93,6 +93,8 @@ function (declare, lang, Deferred, domClass, dom, domStyle, topic, Button,
     postCreate : function () {
       var that = this;
 
+      var queryParams = hashHelper.getState();
+
       //--- Clear all filter button ---//
 
       this._topBarPane = dom.create('div', { class : 'top-bar'}, this.domNode);
@@ -138,6 +140,12 @@ function (declare, lang, Deferred, domClass, dom, domStyle, topic, Button,
         parent : this,
         updateReportFilter : function () {
           that.runIds = this.getRunIds();
+        },
+        initReportFilterOptions : function (opt) {
+          var opt = that.initReportFilterOptions(opt);
+          opt.cmpData = null;
+
+          return opt;
         }
       });
       this.register(this._runBaseLineFilter);
@@ -151,6 +159,12 @@ function (declare, lang, Deferred, domClass, dom, domStyle, topic, Button,
         parent   : this,
         updateReportFilter : function () {
           that.reportFilter.runTag = this.getTagIds();
+        },
+        initReportFilterOptions : function (opt) {
+          var opt = that.initReportFilterOptions(opt);
+          opt.cmpData = null;
+
+          return opt;
         }
       });
       this.register(this._runHistoryTagFilter);
@@ -158,7 +172,7 @@ function (declare, lang, Deferred, domClass, dom, domStyle, topic, Button,
 
       this._newCheckFilterToggle = new FilterToggle({
         title : 'Newcheck',
-        open : this.diffView
+        open : this.isDiffView(queryParams)
       });
       this.addChild(this._newCheckFilterToggle);
 
@@ -177,13 +191,55 @@ function (declare, lang, Deferred, domClass, dom, domStyle, topic, Button,
               that.cmpData.diffType = that._diffTypeFilter.defaultDiffType;
             }
             that.cmpData.runIds = runIds;
-          } else {
+          } else if (that.cmpData && !that.cmpData.runTag) {
             that.cmpData = null;
           }
+        },
+        initReportFilterOptions : function (opt) {
+          var opt = that.initReportFilterOptions(opt);
+
+          if (opt.reportFilter)
+            opt.reportFilter.runTag = null;
+
+          return opt;
         }
       });
       this.register(this._runNewCheckFilter);
       this._newCheckFilterToggle.addChild(this._runNewCheckFilter);
+
+      //--- Run history tags filter for newcheck ---//
+
+      this._runHistoryTagNewCheckFilter = new RunHistoryTagFilter({
+        class : 'run-tag-newcheck',
+        title : 'Run tag',
+        parent   : this,
+        updateReportFilter : function () {
+          var tagIds = this.getTagIds();
+
+          if (tagIds) {
+            if (!that.cmpData) {
+              that.cmpData = new CC_OBJECTS.CompareData();
+              that.cmpData.diffType = that._diffTypeFilter.currentDiffType;
+            }
+            that.cmpData.runTag = this.getTagIds();
+          } else if (!that.runIds) {
+            that.cmpData = null;
+          }
+        },
+        initReportFilterOptions : function (opt) {
+          var opt = that.initReportFilterOptions(opt);
+
+          if (opt.reportFilter)
+            opt.reportFilter.runTag = null;
+          if (opt.runIds)
+            opt.runIds = opt.cmpData ? opt.cmpData.runIds : null;
+          opt.cmpData = null;
+
+          return opt;
+        }
+      });
+      this.register(this._runHistoryTagNewCheckFilter);
+      this._newCheckFilterToggle.addChild(this._runHistoryTagNewCheckFilter);
 
       //--- Diff type filter ---//
 
@@ -519,10 +575,6 @@ function (declare, lang, Deferred, domClass, dom, domStyle, topic, Button,
       this.register(this._checkerMessageFilter);
       this.addChild(this._checkerMessageFilter);
 
-      //--- Initalize registered filters by URL ---//
-
-      var queryParams = hashHelper.getState();
-
       // Initalize only the current tab.
       if (this.parent.tab === queryParams.tab)
         this.initAll(queryParams);
@@ -571,6 +623,10 @@ function (declare, lang, Deferred, domClass, dom, domStyle, topic, Button,
       if (!opt.cmpData) opt.cmpData = lang.clone(this.cmpData);
       if (!opt.offset) opt.offset = 0;
       return opt;
+    },
+
+    isDiffView : function (queryParams) {
+      return queryParams.newcheck || queryParams['run-tag-newcheck'];
     },
 
     // Return the URL state of the current filter set.

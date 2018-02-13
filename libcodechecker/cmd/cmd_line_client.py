@@ -286,9 +286,7 @@ def handle_diff_results(args):
 
     context = generic_package_context.get_context()
 
-    def get_diff_results(client, baseids, cmp_data):
-
-        report_filter = ttypes.ReportFilter()
+    def get_diff_results(client, baseids, report_filter, cmp_data):
         add_filter_conditions(client, report_filter, args)
 
         # Do not show resolved bugs in compare mode new.
@@ -645,10 +643,33 @@ def handle_diff_results(args):
         else:
             print(twodim_to_str(output_format, header, rows))
 
+    def get_run_tag(client, run_ids, tag_name):
+        """
+        Returns run tag information for the given tag name in the given runs.
+        """
+        run_history_filter = ttypes.RunHistoryFilter()
+        run_history_filter.tagNames = [tag_name]
+        run_histories = client.getRunHistory(run_ids, None, None,
+                                             run_history_filter)
+
+        return run_histories[0] if len(run_histories) else None
+
     client = setup_client(args.product_url)
 
-    base_runs = get_runs(client, [args.basename])
+    report_filter = ttypes.ReportFilter()
+
+    # Process base run names and tags.
+    run_with_tag = args.basename.split(':')
+    base_run_name = run_with_tag[0]
+
+    base_runs = get_runs(client, [base_run_name])
     base_ids = map(lambda run: run.runId, base_runs)
+
+    # Set base run tag if it is available.
+    run_tag_name = run_with_tag[1] if len(run_with_tag) > 1 else None
+    if run_tag_name:
+        tag = get_run_tag(client, base_ids, run_tag_name)
+        report_filter.runTag = [tag.id] if tag else None
 
     if len(base_ids) == 0:
         LOG.warning("No run names match the given pattern: " + args.basename)
@@ -673,10 +694,14 @@ def handle_diff_results(args):
                                       os.path.abspath(args.newname),
                                       cmp_data)
     else:
-        new_runs = get_runs(client, [args.newname])
-        cmp_data.runIds = map(lambda run: run.runId, new_runs)
+        run_with_tag = args.newname.split(':')
+        new_run_name = run_with_tag[0]
+        run_tag_name = run_with_tag[1] if len(run_with_tag) > 1 else None
 
-        if len(new_runs) == 0:
+        new_runs = get_runs(client, [new_run_name])
+        new_ids = map(lambda run: run.runId, new_runs)
+
+        if len(new_ids) == 0:
             LOG.warning(
                 "No run names match the given pattern: " + args.newname)
             sys.exit(1)
@@ -684,7 +709,12 @@ def handle_diff_results(args):
         LOG.info("Matching new runs: " +
                  ', '.join(map(lambda run: run.name, new_runs)))
 
-        results = get_diff_results(client, base_ids, cmp_data)
+        cmp_data.runIds = new_ids
+        if run_tag_name:
+            tag = get_run_tag(client, new_ids, run_tag_name)
+            cmp_data.runTag = [tag.id] if tag else None
+
+        results = get_diff_results(client, base_ids, report_filter, cmp_data)
 
     if len(results) == 0:
         LOG.info("No results.")

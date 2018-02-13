@@ -240,8 +240,9 @@ struct RunFilter {
 // (to what the results/metrics will be copared to) and the new run ids and the
 // diff type should be set in the CompareData type.
 struct CompareData {
-  1: list<i64> runIds,
-  2: DiffType  diffType
+  1: list<i64>  runIds,
+  2: DiffType   diffType,
+  3: list<i64>  runTag,    // Ids of the run history tags.
 }
 
 // This type is used to get line content information for the given file at the
