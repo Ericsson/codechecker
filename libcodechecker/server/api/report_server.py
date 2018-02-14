@@ -734,7 +734,7 @@ class ThriftRequestHandler(object):
                     get_sort_map(sort_types, True)
 
                 selects = [func.max(Report.id).label('id'),
-                           func.max(path_len_q.c.path_length)
+                           func.min(path_len_q.c.path_length)
                                .label('bug_path_length')]
                 for sort in sort_types:
                     sorttypes = sort_type_map.get(sort.type)

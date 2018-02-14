@@ -468,8 +468,14 @@ function (declare, dom, style, Deferred, ObjectStore, Store, QueryResults,
           if (reportData)
             reportFilter.filepath = ['*' + reportData.checkedFile];
 
+          // We set a sort option to select a report which has the shortest
+          // bug path length.
+          var sortMode = new CC_OBJECTS.SortMode();
+          sortMode.type = CC_OBJECTS.SortType.BUG_PATH_LENGTH;
+          sortMode.ord = CC_OBJECTS.Order.ASC;
+
           reports = CC_SERVICE.getRunResults(runResultParam.runIds,
-            CC_OBJECTS.MAX_QUERY_SIZE,  0, null, reportFilter,
+            CC_OBJECTS.MAX_QUERY_SIZE,  0, [sortMode], reportFilter,
             runResultParam.cmpData);
           reportData = reports[0];
         } else {
