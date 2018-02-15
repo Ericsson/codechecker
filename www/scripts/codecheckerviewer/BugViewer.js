@@ -948,6 +948,10 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
       CC_SERVICE.changeReviewStatus(this.buttonPane.reportData.reportId,
         status, message);
 
+      //--- Set the previous value to the new one. ---//
+
+      this.reviewStatusSelector.prevValue = status;
+
       //--- Hide the dialog. ---//
 
       this.hide();
@@ -992,9 +996,11 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
         prevValue : that.reportData.reviewData.status,
         onChange : function () {
           that._reviewStatusDialog.show();
+          this.updateOption(this.options);
         },
         reset : function () {
           this.set('value', this.prevValue, false);
+          this.updateOption(this.options);
         }
       });
 
