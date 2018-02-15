@@ -172,6 +172,7 @@ class BugPathEvent(Base):
     report_id = Column(Integer, ForeignKey('reports.id', deferrable=True,
                                            initially="DEFERRED",
                                            ondelete='CASCADE'),
+                       index=True,
                        primary_key=True)
 
     def __init__(self, line_begin, col_begin, line_end, col_end,
@@ -201,6 +202,7 @@ class BugReportPoint(Base):
     report_id = Column(Integer, ForeignKey('reports.id', deferrable=True,
                                            initially="DEFERRED",
                                            ondelete='CASCADE'),
+                       index=True,
                        primary_key=True)
 
     def __init__(self, line_begin, col_begin, line_end, col_end,
