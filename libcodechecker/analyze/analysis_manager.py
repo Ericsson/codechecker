@@ -566,6 +566,12 @@ def check(check_data):
                          (progress_checked_num.value, progress_actions.value,
                           action.analyzer_type, source_file_name))
 
+                if skip_handler:
+                    # We need to check the plist content because skipping
+                    # reports in headers can be done only this way.
+                    plist_parser.skip_report_from_plist(result_file,
+                                                        skip_handler)
+
             else:
                 LOG.error("Analyzing '" + source_file_name + "' with " +
                           action.analyzer_type +

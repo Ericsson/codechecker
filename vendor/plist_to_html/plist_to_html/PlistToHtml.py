@@ -13,6 +13,13 @@ import shutil
 from xml.parsers.expat import ExpatError
 
 
+def get_last_mod_time(file_path):
+    """
+    Return the last modification time of a file.
+    """
+    return os.stat(file_path)[9]
+
+
 def get_file_content(filename):
     with open(filename, 'r') as f:
         return f.read()
@@ -60,6 +67,10 @@ class HtmlBuilder:
 
 
 def get_report_data_from_plist(plist):
+    """
+    Returns a dictionary with the source file contents and the reports parsed
+    from the plist.
+    """
     files = plist['files']
 
     reports = []
@@ -92,38 +103,61 @@ def get_report_data_from_plist(plist):
 def plist_to_html(file_path, output_path, html_builder):
     """
     Prints the results in the given file to HTML file.
+
+    Returns the skipped plist files because of source
+    file conent change.
     """
+    changed_source = set()
+    file_paths = []
     if not file_path.endswith(".plist"):
         print("\nSkipping input file {0} as it is not a plist.".format(
             file_path))
-        return
+        return file_path, changed_source
 
     print("\nParsing input file '" + file_path + "'")
-
     try:
         plist = plistlib.readPlist(file_path)
 
         report_data = get_report_data_from_plist(plist)
 
+        plist_mtime = get_last_mod_time(file_path)
+
+        source_changed = False
+
+        for sf in plist.get('files', []):
+            sf_mtime = get_last_mod_time(sf)
+            if sf_mtime > plist_mtime:
+                source_changed = True
+                changed_source.add(sf)
+
+        if source_changed:
+            return file_path, changed_source
+
         if report_data is None or not len(report_data['reports']):
             print('No report data in {0} file.'.format(file_path))
-            return
+            return file_path, changed_source
 
         html_filename = os.path.basename(file_path) + '.html'
         html_output_path = os.path.join(output_path, html_filename)
         html_builder.create(html_output_path, report_data)
 
         print('Html file was generated: {0}'.format(html_output_path))
+        return None, changed_source
+
     except ExpatError as err:
         print('Failed to process plist file: ' + file_path +
               ' wrong file format?', err)
+        return file_path, changed_source
     except AttributeError as ex:
         print('Failed to get important report data from plist.', ex)
+        return file_path, changed_source
     except IndexError as iex:
         print('Indexing error during processing plist file ' + file_path, iex)
+        return file_path, changed_source
     except Exception as ex:
         print('Error during processing reports from the plist file: ' +
               file_path, ex)
+        return file_path, changed_source
 
 
 def parse(input_path, output_path, layout_dir, clean=False):
@@ -146,12 +180,31 @@ def parse(input_path, output_path, layout_dir, clean=False):
         files = [os.path.join(input_path, file_name) for file_name
                  in file_names]
 
+    # Skipped plist reports from html generation because it is not a
+    # plist file or there are no reports in it.
+    skipped_report = set()
+
+    # Source files which modification time changed since the last analysis.
+    changed_source_files = set()
+
     html_builder = HtmlBuilder(layout_dir)
     for file_path in files:
-        plist_to_html(file_path, output_path, html_builder)
+        sr, changed_source = plist_to_html(file_path,
+                                           output_path,
+                                           html_builder)
+        if changed_source:
+            changed_source_files = changed_source_files.union(changed_source)
+        if sr:
+            skipped_report.add(sr)
 
     print('\nTo view the results in a browser run:\n> firefox {0}'.format(
         output_path))
+
+    if changed_source_files:
+        changed_files = '\n'.join([' - ' + f for f in changed_source_files])
+        print("\nThe following source file contents changed since the "
+              "latest analysis:\n{0}\nPlease analyze your project again to "
+              "update the reports!".format(changed_files))
 
 
 def __add_arguments_to_parser(parser):

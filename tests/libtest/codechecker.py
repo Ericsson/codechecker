@@ -268,6 +268,30 @@ def analyze(codechecker_cfg, test_project_name, test_project_path):
         return cerr.returncode
 
 
+def parse(codechecker_cfg):
+    """
+    Parse the results of the analysis and return the output.
+    """
+
+    parse_cmd = ['CodeChecker', 'parse', codechecker_cfg['reportdir']]
+
+    try:
+        print("LOG:")
+        proc = subprocess.Popen(shlex.split(' '.join(parse_cmd)),
+                                cwd=codechecker_cfg['workspace'],
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE,
+                                env=codechecker_cfg['check_env'])
+        out, err = proc.communicate()
+        print(out)
+        print(err)
+
+        return proc.returncode, out, err
+    except CalledProcessError as cerr:
+        print("Failed to call:\n" + ' '.join(cerr.cmd))
+        return 1, '', ''
+
+
 def store(codechecker_cfg, test_project_name, report_path):
     """
     Store results from a report dir.

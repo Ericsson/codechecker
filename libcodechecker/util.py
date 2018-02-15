@@ -533,3 +533,20 @@ def load_json_or_empty(path, default=None, kind=None):
                     .format(kind if kind else 'json', path))
 
     return ret
+
+
+def get_file_content_hash(file_path):
+    """
+    Return the file content hash for a file.
+    """
+    with open(file_path) as content:
+        hasher = hashlib.sha256()
+        hasher.update(content.read())
+        return hasher.hexdigest()
+
+
+def get_last_mod_time(file_path):
+    """
+    Return the last modification time of a file.
+    """
+    return os.stat(file_path)[9]

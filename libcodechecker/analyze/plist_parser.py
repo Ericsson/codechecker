@@ -333,9 +333,31 @@ class PlistToPlaintextFormatter(object):
                                      loc['col'],
                                      event['message'])
 
-    def __write_bugs(self, output, reports, files, analyzed_source_file,
-                     report_stats):
+    @staticmethod
+    def parse(plist_file):
         """
+        Parse a plist report file.
+        Returns:
+            - list of source files
+            - list of reports (type Report)
+        """
+        files, reports = [], []
+        try:
+            files, reports = parse_plist(plist_file)
+        except Exception as ex:
+            traceback.print_stack()
+            LOG.error('The generated plist is not valid!')
+            LOG.error(ex)
+        finally:
+            return files, reports
+
+    def write(self, files, reports, analyzed_source_file, output=sys.stdout):
+        """
+        Format an already parsed plist report file to a more
+        human readable format.
+        The formatted text is written to the output.
+        During writing the output statistics are collected.
+
         Write out the bugs to the output and collect report statistics.
         """
 
@@ -429,25 +451,6 @@ class PlistToPlaintextFormatter(object):
                 'Found %d defect(s) while analyzing%s\n\n' %
                 (non_suppressed, basefile_print))
 
-        report_stats["severity"] = severity_stats
-        report_stats["files"] = file_stats
-        report_stats["reports"] = report_count
-
-    def parse_and_write(self, plist_file, analyzed_source_file,
-                        output=sys.stdout):
-        """
-        Parse a plist report file format it to a more human readable format.
-        """
-        report_stats = {}
-        try:
-            files, reports = parse_plist(plist_file)
-        except Exception as ex:
-            traceback.print_stack()
-            LOG.error('The generated plist is not valid!')
-            LOG.error(ex)
-            return 1
-
-        self.__write_bugs(output, reports, files, analyzed_source_file,
-                          report_stats)
-
-        return report_stats
+        return {"severity": severity_stats,
+                "files": file_stats,
+                "reports": report_count}
