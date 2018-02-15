@@ -56,10 +56,8 @@ def add_arguments_to_parser(parser):
 
     parser.add_argument('input',
                         type=str,
-                        nargs='*',
+                        nargs='+',
                         metavar='file/folder',
-                        default=os.path.join(util.get_default_workspace(),
-                                             'reports'),
                         help="The analysis result files and/or folders "
                              "containing analysis results which should be "
                              "parsed and printed.")
