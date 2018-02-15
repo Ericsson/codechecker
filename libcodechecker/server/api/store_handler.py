@@ -15,7 +15,6 @@ import sqlalchemy
 import shared
 from codeCheckerDBAccess_v6 import ttypes
 
-from libcodechecker import generic_package_context
 from libcodechecker.logger import get_logger
 # TODO: This is a cross-subpackage import.
 from libcodechecker.server.database.run_db_model import *
@@ -284,15 +283,14 @@ def addReport(session,
               bugpath,
               events,
               detection_status,
-              detection_time):
+              detection_time,
+              severity_map):
     """
     """
     try:
 
         checker_name = main_section['check_name']
-        context = generic_package_context.get_context()
-        severity_name = context.severity_map.get(checker_name,
-                                                 'UNSPECIFIED')
+        severity_name = severity_map.get(checker_name, 'UNSPECIFIED')
         severity = ttypes.Severity._NAMES_TO_VALUES[severity_name]
 
         report = Report(run_id,

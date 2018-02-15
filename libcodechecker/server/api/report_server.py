@@ -24,6 +24,7 @@ import shared
 from codeCheckerDBAccess_v6 import constants, ttypes
 from codeCheckerDBAccess_v6.ttypes import *
 
+from libcodechecker import generic_package_context
 from libcodechecker import suppress_handler
 from libcodechecker import util
 # TODO: Cross-subpackage import here.
@@ -1817,7 +1818,7 @@ class ThriftRequestHandler(object):
         return file_path_to_id
 
     def __store_reports(self, session, report_dir, source_root, run_id,
-                        file_path_to_id, run_history_time):
+                        file_path_to_id, run_history_time, severity_map):
         """
         Parse up and store the plist report files.
         """
@@ -1886,7 +1887,8 @@ class ThriftRequestHandler(object):
                     bug_events,
                     detection_status,
                     run_history_time if detection_status == 'new' else
-                    old_report.detected_at)
+                    old_report.detected_at,
+                    severity_map)
 
                 new_bug_hashes.add(bug_id)
                 already_added.add(report_path_hash)
@@ -2041,6 +2043,8 @@ class ThriftRequestHandler(object):
 
             ThriftRequestHandler.__store_run_lock(session, name, user)
 
+        context = generic_package_context.get_context()
+
         try:
             with util.TemporaryDirectory() as zip_dir:
                 unzip(b64zip, zip_dir)
@@ -2111,7 +2115,8 @@ class ThriftRequestHandler(object):
                                          source_root,
                                          run_id,
                                          file_path_to_id,
-                                         run_history_time)
+                                         run_history_time,
+                                         context.severity_map)
 
                     store_handler.setRunDuration(session,
                                                  run_id,
