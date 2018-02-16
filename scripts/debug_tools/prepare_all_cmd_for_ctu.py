@@ -71,7 +71,8 @@ if __name__ == '__main__':
         '--clang_plugin_path', default=None,
         help="Path to the used clang plugin.")
     args = parser.parse_args()
-
+    # change the paths to absolute
+    args.sources_root = os.path.abspath(args.sources_root)
     compile_cmd_debug = "compile_cmd_DEBUG.json"
     with open(compile_cmd_debug, 'w') as f:
         f.write(
@@ -118,7 +119,7 @@ if __name__ == '__main__':
                     args.clang,
                     args.clang_plugin_name,
                     args.clang_plugin_path,
-                    "./report_debug/ctu-dir/" + target)))
+                    os.path.abspath("./report_debug/ctu-dir") + "/" + target)))
 
     print(
         "Preparation of files for debugging is done. "
