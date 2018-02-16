@@ -44,7 +44,7 @@ def reduce(prepoc_name, assert_string, analyzer_command_file, num_threads):
     if not os.path.exists(reduce_file_name):
         shutil.copy2(prepoc_name, reduce_file_name)
     conditions = []
-    compilable_cond = ['gcc','-c',reduce_file_name]
+    compilable_cond = ['gcc', '-c', '-Werror', reduce_file_name]
     conditions.append(' '.join(compilable_cond))
     with open(analyzer_command_file, 'r') as f:
         ctu_analyze_fail_cond = f.read().split(" ")
