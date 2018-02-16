@@ -1,1 +1,3 @@
 c417110e71a5cb8e8163d524076bb3ed||suppress.cpp||deliberate segfault!
+5f45decbfcfd4374ea7febf6227c96a7||suppress.cpp||deliberate warning!
+090ab5162ed1167c16b9a099cc7cc382||suppress.cpp||multi line comments!

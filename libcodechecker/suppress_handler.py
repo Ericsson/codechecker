@@ -144,11 +144,9 @@ class SourceSuppressHandler(object):
         if previous_line_num > 0:
 
             marker_found = False
-            comment_line = True
-
             collected_lines = []
 
-            while not marker_found and comment_line:
+            while not marker_found:
                 source_line = util.get_line(source_file, previous_line_num)
                 if SourceSuppressHandler.__check_if_comment(source_line):
                     # It is a comment.
@@ -159,8 +157,7 @@ class SourceSuppressHandler(object):
                         break
                     else:
                         collected_lines.append(source_line.strip())
-                        comment_line = True
-                else:
+                elif len(source_line.strip()):
                     # This is not a comment.
                     break
 
