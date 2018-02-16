@@ -39,13 +39,26 @@
   {
     "name":"jsplumb",
     "directory":"vendor/jsplumb",
-    "version":"1.7.6",
+    "version":"2.2.0",
     "description":"jsplumb",
     "homepage":"https://jsplumbtoolkit.com/",
     "repository":{
       "type":"git",
-      "git_tag":"1.7.6",
+      "git_tag":"2.2.0",
       "url":"https://github.com/sporritt/jsPlumb.git"
+    }
+  },
+  {
+    "name":"jquery",
+    "directory":"vendor/jquery",
+    "version":"3.1.1",
+    "description":"jquery",
+    "homepage":"https://jquery.com/",
+    "source_package":{
+      "download_cmd":"curl",
+      "url":"https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js",
+      "option":"-o",
+      "name":"jquery-3.1.1-min.js"
     }
   },
   {
