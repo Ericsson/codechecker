@@ -30,12 +30,12 @@ class Timer(object):
         self.block_name = block_name
 
     def __enter__(self):
-        self.before = datetime.datetime.now()
+        self.before = datetime.now()
 
     def __exit__(self, timer_type, value, traceback):
-        after = datetime.datetime.now()
+        after = datetime.now()
         time_diff = after - self.before
-        LOG.debug(self.block_name + " " + str(time_diff.total_seconds())+'s')
+        LOG.debug('['+str(time_diff.total_seconds()) + 's] ' + self.block_name)
 
 
 def timeit(function):
