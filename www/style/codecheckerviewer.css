@@ -1,5 +1,4 @@
 @charset "UTF-8";
-@import url('generated_fonts.css');
 
 /*** Main stuff ***/
 
@@ -25,7 +24,7 @@ html, body {
 }
 
 #logo-container {
-  font-family: 'Raleway', sans-serif;
+  font-family: sans-serif;
   font-size: 22pt;
   color: white;
 }
@@ -57,7 +56,7 @@ html, body {
 }
 
 #logged-in {
-  font-family: 'Raleway', sans-serif;
+  font-family: sans-serif;
   font-size: 11pt;
   color: white;
   padding-right: 10px;

@@ -98,27 +98,5 @@
       "option":"-o",
       "name":"xcode.min.css"
     }
-  },
-  {
-    "name":"googlefont_Raleway",
-    "directory":"vendor/fonts/Raleway",
-    "description":"Google Fonts required for styling the webpage",
-    "homepage":"https://fonts.google.com/",
-    "repository":{
-      "type":"font_import",
-      "font":"Raleway",
-      "url":"https://fonts.googleapis.com/css?family=Raleway"
-    }
-  },
-  {
-    "name":"googlefont_SourceCodePro",
-    "directory":"vendor/fonts/SourceCodePro",
-    "description":"Google Fonts required for styling the webpage",
-    "homepage":"https://fonts.google.com/",
-    "repository":{
-      "type":"font_import",
-      "font":"SourceCodePro",
-      "url":"https://fonts.googleapis.com/css?family=Source+Code+Pro"
-    }
   }
 ]
