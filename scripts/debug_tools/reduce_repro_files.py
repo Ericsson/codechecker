@@ -17,12 +17,14 @@ def get_preprocessed_repro_file(abs_file_path, analyzer_command_file):
         cmd = f.read().split(" ")
         param_pattern = re.compile("-I|-D")
         prepoc_params = [x for x in cmd if param_pattern.match(x)]
-        preproc = subprocess.Popen(["gcc", "-E"] + prepoc_params + [abs_file_path],
-                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        preproc = \
+            subprocess.Popen(["gcc", "-E"] + prepoc_params + [abs_file_path],
+                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, _ = preproc.communicate()
         filename = abs_file_path.split('/')[-1]
         # assuming exactly one dot (.) in the file name
-        prepoc_name = filename.split('.')[0] + "_preproc." + filename.split('.')[1]
+        prepoc_name = filename.split('.')[0] + "_preproc." + \
+            filename.split('.')[1]
     with open(prepoc_name, 'w') as preproc_file:
         preproc_file.write(out)
     return prepoc_name
@@ -73,7 +75,7 @@ def reduce(prepoc_name, assert_string, analyzer_command_file, num_threads):
     st = os.stat(creduce_test_name)
     os.chmod(creduce_test_name, st.st_mode | stat.S_IEXEC)
     subprocess.call(['creduce', creduce_test_name,
-                     reduce_file_name,'--n',str(num_threads)])
+                     reduce_file_name, '--n', str(num_threads)])
 
 
 def main():
