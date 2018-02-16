@@ -608,15 +608,16 @@ def build_package(repository_root, build_package_config, env=None):
     jsplumb_root = os.path.join(repository_root, jsplumb_dep.get('directory'))
     target = os.path.join(package_root, package_layout['web_client_jsplumb'])
     jsplumb = os.path.join(jsplumb_root, 'dist', 'js',
-                           'jquery.jsPlumb-1.7.6-min.js')
+                           'jsPlumb-2.2.0-min.js')
     shutil.copy(jsplumb, target)
 
     # Add jQuery for JsPlumb.
+    jquery_dep = vendor_projects['jquery']
+    jquery_root = os.path.join(repository_root, jquery_dep.get('directory'))
     target = os.path.join(target, 'external')
     if not os.path.exists(target):
         os.mkdir(target)
-    jquery = os.path.join(jsplumb_root, 'external',
-                          'jquery-1.9.0-min.js')
+    jquery = os.path.join(jquery_root, 'jquery-3.1.1-min.js')
     shutil.copy(jquery, target)
 
     # config files
