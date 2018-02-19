@@ -68,6 +68,26 @@ function (locale, dom, style, json) {
     },
 
     /**
+     * Converts a Thrift API diff type to human readable string.
+     *
+     * @param {String|Number} diffType Thrift API DiffType id
+     * @return Human readable diff type string.
+     */
+    diffTypeFromCodeToString : function (diffType) {
+      switch (parseInt(diffType)) {
+        case CC_OBJECTS.DiffType.NEW:
+          return 'New';
+        case CC_OBJECTS.DiffType.RESOLVED:
+          return 'Resolved';
+        case CC_OBJECTS.DiffType.UNRESOLVED:
+          return 'Unresolved';
+        default:
+          console.warn('Non existing diff type code: ', diffType);
+          return 'Unknown';
+      }
+    },
+
+    /**
      * This function creates a hexadecimal color from a string.
      */
     strToColor : function (str) {
@@ -180,7 +200,7 @@ function (locale, dom, style, json) {
         case CC_OBJECTS.ReviewStatus.UNREVIEWED:
           return 'Unreviewed';
         case CC_OBJECTS.ReviewStatus.CONFIRMED:
-          return 'Confirmed bug';
+          return 'Confirmed';
         case CC_OBJECTS.ReviewStatus.FALSE_POSITIVE:
           return 'False positive';
         case CC_OBJECTS.ReviewStatus.INTENTIONAL:

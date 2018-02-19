@@ -26,7 +26,7 @@ function (declare, ItemFileWriteStore, dom, Deferred, all, Memory, Observable,
     var severity = util.severityFromCodeToString(severity);
 
     var title = severity.charAt(0).toUpperCase() + severity.slice(1);
-    return '<span title="' + title  + '" class="customIcon icon-severity-'
+    return '<span title="' + title  + '" class="link customIcon icon-severity-'
       + severity + '" style="cursor: pointer;"></span>';
   }
 
@@ -157,84 +157,71 @@ function (declare, ItemFileWriteStore, dom, Deferred, all, Memory, Observable,
     },
 
     onRowClick : function (evt) {
-      var that = this;
-
       if (!evt.target.classList.contains('link'))
         return;
 
       var item = this.getItem(evt.rowIndex);
 
-      var runNameFilter = that.bugFilterView._runNameFilter;
-      var checkerNameFilter = that.bugFilterView._checkerNameFilter;
-      var reviewStatusFilter = that.bugFilterView._reviewStatusFilter;
-      var detectionStatusFilter = that.bugFilterView._detectionStatusFilter;
-      var severityFilter = that.bugFilterView._severityFilter;
+      var filter = this.bugFilterView;
+      var reviewFilter = filter._reviewStatusFilter;
+      var detectionFilter = filter._detectionStatusFilter;
 
-      var state = that.bugFilterView.clearAll();
-      state[checkerNameFilter.class] = item.checker;
-      state[runNameFilter.class] = this.filterPane.selectedRuns;
+      // Clear the filters.
+      filter.clearAll();
+
+      // Select the checker name.
+      filter._checkerNameFilter.select(item.checker);
+
+      // Select runs.
+      if (this.filterPane.selectedRuns)
+        this.filterPane.selectedRuns.forEach(function (runName) {
+          filter._runNameFilter.select(runName);
+        });
 
       switch (evt.cell.field) {
         case 'checker':
-          state[reviewStatusFilter.class] =
-          Object.keys(CC_OBJECTS.ReviewStatus).map(function (key) {
-            return reviewStatusFilter.stateConverter(
-              CC_OBJECTS.ReviewStatus[key]);
-          });
-
-          state[detectionStatusFilter.class] =
-          Object.keys(CC_OBJECTS.DetectionStatus).map(function (key) {
-            return detectionStatusFilter.stateConverter(
-              CC_OBJECTS.DetectionStatus[key]);
-          });
+        case 'reports':
           break;
         case 'severity':
-          state[severityFilter.class] =
-            severityFilter.stateConverter(item.severity[0]);
-          break;
-        case 'reports':
-          // Show all reports
+          filter._severityFilter.select(
+            filter._severityFilter.stateConverter(item.severity[0]));
           break;
         case 'resolved':
           if (!item.resolved[0]) return;
 
-          state[detectionStatusFilter.class] =
-          detectionStatusFilter.stateConverter(
-            CC_OBJECTS.DetectionStatus.RESOLVED);
+          detectionFilter.select(detectionFilter.stateConverter(
+            CC_OBJECTS.DetectionStatus.RESOLVED));
           break;
         case 'unreviewed':
           if (!item.unreviewed[0]) return;
 
-          state[reviewStatusFilter.class] = reviewStatusFilter.stateConverter(
-            CC_OBJECTS.ReviewStatus.UNREVIEWED);
+          reviewFilter.select(reviewFilter.stateConverter(
+            CC_OBJECTS.ReviewStatus.UNREVIEWED));
           break;
         case 'confirmed':
           if (!item.confirmed[0]) return;
 
-          state[reviewStatusFilter.class] = reviewStatusFilter.stateConverter(
-            CC_OBJECTS.ReviewStatus.CONFIRMED);
+          reviewFilter.select(reviewFilter.stateConverter(
+            CC_OBJECTS.ReviewStatus.CONFIRMED));
           break;
         case 'falsePositive':
           if (!item.falsePositive[0]) return;
 
-          state[reviewStatusFilter.class] = reviewStatusFilter.stateConverter(
-            CC_OBJECTS.ReviewStatus.FALSE_POSITIVE);
+          reviewFilter.select(reviewFilter.stateConverter(
+            CC_OBJECTS.ReviewStatus.FALSE_POSITIVE));
           break;
         case 'intentional':
           if (!item.intentional[0]) return;
 
-          state[reviewStatusFilter.class] = reviewStatusFilter.stateConverter(
-            CC_OBJECTS.ReviewStatus.INTENTIONAL);
+          reviewFilter.select(reviewFilter.stateConverter(
+            CC_OBJECTS.ReviewStatus.INTENTIONAL));
           break;
         default:
           return;
       }
 
+      filter.notifyAll();
       topic.publish('tab/allReports');
-      topic.publish('filterchange', {
-        parent : that.bugFilterView,
-        changed : state
-      });
     },
 
     refreshGrid : function (runIds) {
@@ -347,31 +334,33 @@ function (declare, ItemFileWriteStore, dom, Deferred, all, Memory, Observable,
     },
 
     onRowClick : function (evt) {
-      var that = this;
       var item = this.getItem(evt.rowIndex);
 
-      var runNameFilter = that.bugFilterView._runNameFilter;
-      var severityFilter = that.bugFilterView._severityFilter;
+      var filter = this.bugFilterView;
+      var runNameFilter = filter._runNameFilter;
+      var severityFilter = filter._severityFilter;
 
-      var state = that.bugFilterView.clearAll();
-      state[runNameFilter.class] = this.filterPane.selectedRuns;
+       // Clear the filters.
+      filter.clearAll();
+
+      // Select runs.
+      if (this.filterPane.selectedRuns)
+        this.filterPane.selectedRuns.forEach(function (runName) {
+          runNameFilter.select(runName);
+        });
 
       switch (evt.cell.field) {
         case 'severity':
         case 'reports':
-          state[severityFilter.class] =
-            severityFilter.stateConverter(parseInt(item.severity[0]));
+          severityFilter.select(
+            severityFilter.stateConverter(item.severity[0]));
           break;
         default:
           return;
       }
 
-
+      filter.notifyAll();
       topic.publish('tab/allReports');
-      topic.publish('filterchange', {
-        parent : that.bugFilterView,
-        changed : state
-      });
     },
 
     refreshGrid : function (runIds) {

@@ -127,9 +127,19 @@ struct RunHistoryData {
   2: string    runName,     // Name of the run.
   3: string    versionTag,  // Version tag of the report.
   4: string    user,        // User name who analysed the run.
-  5: string    time         // Date time when the run was analysed.
+  5: string    time,        // Date time when the run was analysed.
+  6: i64       id,          // Id of the run history tag.
 }
 typedef list<RunHistoryData> RunHistoryDataList
+
+/**
+ * Members of this struct are interpreted in "AND" relation with each other.
+ * Between the list elements there is "OR" relation.
+ * If exactMatch field is True it will use exact match for run names.
+ */
+struct RunHistoryFilter {
+  1: list<string> tagNames,   // Part of the tag names.
+}
 
 struct RunTagCount {
   1: string          time,   // Date time of the last run.
@@ -253,7 +263,8 @@ service codeCheckerDBAccess {
   // PERMISSION: PRODUCT_ACCESS
   RunHistoryDataList getRunHistory(1: list<i64> runIds,
                                    2: i64       limit,
-                                   3: i64       offset)
+                                   3: i64       offset,
+                                   4: RunHistoryFilter runHistoryFilter)
                                    throws (1: shared.RequestFailed requestError),
 
   // Returns report hashes based on the diffType parameter.

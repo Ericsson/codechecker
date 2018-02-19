@@ -40,16 +40,6 @@ from . import store_handler
 LOG = get_logger('server')
 
 
-class CountFilter:
-    FILE = 0
-    CHECKER_MSG = 1
-    CHECKER_NAME = 2
-    SEVERITY = 3
-    REVIEW_STATUS = 4
-    DETECTION_STATUS = 5
-    RUN_HISTORY_TAG = 6
-
-
 class DBSession(object):
     """
     Requires a session maker object and creates one session which can be used
@@ -110,13 +100,9 @@ def conv(text):
     return text.replace('*', '%')
 
 
-def process_report_filter_v2(session, report_filter, count_filter=None):
+def process_report_filter(session, report_filter):
     """
     Process the new report filter.
-    If the count_filter parameter is set it will ignore that field type of
-    the report_filter.
-    E.g.: If counter_filter is equal with Severity, it will ignore severity
-    field values of the report_filter.
     """
 
     if report_filter is None:
@@ -134,8 +120,7 @@ def process_report_filter_v2(session, report_filter, count_filter=None):
               for cm in report_filter.checkerMsg]
         AND.append(or_(*OR))
 
-    if report_filter.checkerName is not None and \
-       count_filter != CountFilter.CHECKER_NAME:
+    if report_filter.checkerName is not None:
         OR = [Report.checker_id.ilike(conv(cn))
               for cn in report_filter.checkerName]
         AND.append(or_(*OR))
@@ -148,18 +133,15 @@ def process_report_filter_v2(session, report_filter, count_filter=None):
     if report_filter.reportHash is not None:
         AND.append(Report.bug_id.in_(report_filter.reportHash))
 
-    if report_filter.severity is not None and \
-       count_filter != CountFilter.SEVERITY:
+    if report_filter.severity is not None:
         AND.append(Report.severity.in_(report_filter.severity))
 
-    if report_filter.detectionStatus is not None and \
-       count_filter != CountFilter.DETECTION_STATUS:
+    if report_filter.detectionStatus is not None:
         dst = list(map(detection_status_str,
                        report_filter.detectionStatus))
         AND.append(Report.detection_status.in_(dst))
 
-    if report_filter.reviewStatus is not None and \
-       count_filter != CountFilter.REVIEW_STATUS:
+    if report_filter.reviewStatus is not None:
         OR = [ReviewStatus.status.in_(
             list(map(review_status_str, report_filter.reviewStatus)))]
 
@@ -193,8 +175,7 @@ def process_report_filter_v2(session, report_filter, count_filter=None):
             OR.append(Report.detected_at < date)
         AND.append(or_(*OR))
 
-    if report_filter.runHistoryTag is not None and \
-       count_filter != CountFilter.RUN_HISTORY_TAG:
+    if report_filter.runHistoryTag is not None:
         OR = []
         for history_date in report_filter.runHistoryTag:
             date = datetime.strptime(history_date,
@@ -203,8 +184,7 @@ def process_report_filter_v2(session, report_filter, count_filter=None):
                 Report.fixed_at.is_(None), Report.fixed_at >= date)))
         AND.append(or_(*OR))
 
-    if report_filter.runTag is not None and \
-       count_filter != CountFilter.RUN_HISTORY_TAG:
+    if report_filter.runTag is not None:
         OR = []
         for tag_id in report_filter.runTag:
             history = session.query(RunHistory).get(tag_id)
@@ -493,7 +473,7 @@ class ThriftRequestHandler(object):
         run_ids = [r[0] for r in res]
         if cmp_data:
             all_rids = set(run_ids)
-            cmp_rids = set(cmp_data.runIds)
+            cmp_rids = set(cmp_data.runIds) if cmp_data.runIds else set()
             run_ids = list(all_rids.difference(cmp_rids))
 
         return run_ids
@@ -572,7 +552,7 @@ class ThriftRequestHandler(object):
 
     @exc_to_thrift_reqfail
     @timeit
-    def getRunHistory(self, run_ids, limit, offset):
+    def getRunHistory(self, run_ids, limit, offset, run_history_filter):
         self.__require_access()
 
         with DBSession(self.__Session) as session:
@@ -582,13 +562,19 @@ class ThriftRequestHandler(object):
             if run_ids:
                 res = res.filter(RunHistory.run_id.in_(run_ids))
 
-            res = res.order_by(RunHistory.time.desc()) \
-                     .limit(limit) \
-                     .offset(offset)
+            if run_history_filter:
+                res = res.filter(RunHistory.version_tag.in_(
+                    run_history_filter.tagNames))
+
+            res = res.order_by(RunHistory.time.desc())
+
+            if limit:
+                res = res.limit(limit).offset(offset)
 
             results = []
             for history in res:
-                results.append(RunHistoryData(runId=history.run.id,
+                results.append(RunHistoryData(id=history.id,
+                                              runId=history.run.id,
                                               runName=history.run.name,
                                               versionTag=history.version_tag,
                                               user=history.user,
@@ -720,8 +706,7 @@ class ThriftRequestHandler(object):
                     # There is no difference.
                     return results
 
-            filter_expression = process_report_filter_v2(session,
-                                                         report_filter)
+            filter_expression = process_report_filter(session, report_filter)
 
             path_len_q = session.query(BugPathEvent.report_id,
                                        func.count(BugPathEvent.report_id)
@@ -872,8 +857,7 @@ class ThriftRequestHandler(object):
         self.__require_access()
         results = []
         with DBSession(self.__Session) as session:
-            filter_expression = process_report_filter_v2(session,
-                                                         report_filter)
+            filter_expression = process_report_filter(session, report_filter)
 
             count_expr = create_count_expression(report_filter)
             q = session.query(Run.id,
@@ -919,8 +903,7 @@ class ThriftRequestHandler(object):
                     # There is no difference.
                     return 0
 
-            filter_expression = process_report_filter_v2(session,
-                                                         report_filter)
+            filter_expression = process_report_filter(session, report_filter)
             q = session.query(Report.bug_id)
             q = filter_report_filter(q, filter_expression, run_ids, cmp_data,
                                      diff_hashes)
@@ -1303,8 +1286,7 @@ class ThriftRequestHandler(object):
                     # There is no difference.
                     return results
 
-            filter_expression = process_report_filter_v2(
-                session, report_filter, CountFilter.CHECKER_NAME)
+            filter_expression = process_report_filter(session, report_filter)
 
             is_unique = report_filter is not None and report_filter.isUnique
             if is_unique:
@@ -1364,9 +1346,7 @@ class ThriftRequestHandler(object):
                     # There is no difference.
                     return results
 
-            filter_expression = process_report_filter_v2(session,
-                                                         report_filter,
-                                                         CountFilter.SEVERITY)
+            filter_expression = process_report_filter(session, report_filter)
 
             is_unique = report_filter is not None and report_filter.isUnique
             if is_unique:
@@ -1412,8 +1392,7 @@ class ThriftRequestHandler(object):
                     # There is no difference.
                     return results
 
-            filter_expression = process_report_filter_v2(
-                session, report_filter, CountFilter.CHECKER_MSG)
+            filter_expression = process_report_filter(session, report_filter)
 
             is_unique = report_filter is not None and report_filter.isUnique
             if is_unique:
@@ -1464,8 +1443,7 @@ class ThriftRequestHandler(object):
                     # There is no difference.
                     return results
 
-            filter_expression = process_report_filter_v2(
-                session, report_filter, CountFilter.REVIEW_STATUS)
+            filter_expression = process_report_filter(session, report_filter)
 
             is_unique = report_filter is not None and report_filter.isUnique
             if is_unique:
@@ -1519,9 +1497,7 @@ class ThriftRequestHandler(object):
                     # There is no difference.
                     return results
 
-            filter_expression = process_report_filter_v2(session,
-                                                         report_filter,
-                                                         CountFilter.FILE)
+            filter_expression = process_report_filter(session, report_filter)
 
             stmt = session.query(Report.bug_id,
                                  Report.file_id) \
@@ -1576,8 +1552,7 @@ class ThriftRequestHandler(object):
                     # There is no difference.
                     return results
 
-            filter_expression = process_report_filter_v2(
-                session, report_filter, CountFilter.RUN_HISTORY_TAG)
+            filter_expression = process_report_filter(session, report_filter)
 
             tag_run_ids = session.query(RunHistory.run_id.distinct()) \
                 .filter(RunHistory.version_tag.isnot(None)) \
@@ -1663,8 +1638,7 @@ class ThriftRequestHandler(object):
                     # There is no difference.
                     return results
 
-            filter_expression = process_report_filter_v2(
-                session, report_filter, CountFilter.DETECTION_STATUS)
+            filter_expression = process_report_filter(session, report_filter)
 
             count_expr = func.count(literal_column('*'))
 
