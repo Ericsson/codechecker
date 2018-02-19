@@ -764,30 +764,6 @@ def build_package(repository_root, build_package_config, env=None):
     shutil.move(os.path.join(target_userguide, 'gen-docs'),
                 os.path.join(target_userguide, 'doc'))
 
-    # Copy font files.
-    for _, dep in vendor_projects.items():
-        if 'repository' not in dep:
-            continue
-        if dep['repository']['type'] != "font_import":
-            continue
-
-        root = os.path.join(repository_root,
-                            dep.get('directory'))
-        target = os.path.join(package_root,
-                              package_layout['www'],
-                              'fonts')
-        copy_tree(root, target)
-
-        # The generated_fonts.css file must be handled separately,
-        # because each font alone specifies a generated_fonts.css
-        # but it has to be appended, and not rewritten by subsequent
-        # copies. The file also goes to style/, not fonts/
-        with open(os.path.join(package_root,
-                               package_layout['www'],
-                               "style", "generated_fonts.css"), 'a') as style:
-            with open(os.path.join(root, "generated_fonts.css"), 'r') as css:
-                style.write(css.read() + "\n")
-
     # CodeChecker db migrate.
     LOG.debug('Copy codechecker config database migration')
     source = os.path.join(repository_root, 'config_db_migrate')
