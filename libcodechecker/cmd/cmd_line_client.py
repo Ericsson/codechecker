@@ -815,12 +815,6 @@ def handle_suppress(args):
 
     init_logger(args.verbose if 'verbose' in args else None)
 
-    def bug_hash_filter(bug_id, filepath):
-        filepath = '%' + filepath
-        return [
-            ttypes.ReportFilter(bugHash=bug_id, filepath=filepath),
-            ttypes.ReportFilter(bugHash=bug_id, filepath=filepath)]
-
     limit = constants.MAX_QUERY_SIZE
 
     client = setup_client(args.product_url)
@@ -833,8 +827,11 @@ def handle_suppress(args):
             suppress_data = suppress_file_handler.get_suppress_data(supp_file)
 
         for bug_id, file_name, comment in suppress_data:
+            file_name = '%' + file_name
+            bug_hash_filter = ttypes.ReportFilter(filepath=[file_name],
+                                                  reportHash=[bug_id])
             reports = client.getRunResults([run.runId], limit, 0, None,
-                                           bug_hash_filter(bug_id, file_name),
+                                           bug_hash_filter,
                                            None)
 
             for report in reports:

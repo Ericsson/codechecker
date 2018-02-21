@@ -94,6 +94,38 @@ class TestSuppress(unittest.TestCase):
                                  "The generated suppress file does not "
                                  "look like what was expected.")
 
+    def test_suppress_import(self):
+        """
+        Test the suppress file importing.
+        """
+
+        generated_file = os.path.join(self._test_workspace,
+                                      "generated.suppress")
+
+        extract_cmd = ['CodeChecker', 'parse',
+                       os.path.join(self._test_workspace, "reports"),
+                       "--suppress", generated_file,
+                       "--export-source-suppress"
+                       ]
+
+        ret = call_cmd(extract_cmd,
+                       self._test_project_path,
+                       env.test_env(self._test_workspace))
+        self.assertEqual(ret, 0, "Failed to generate suppress file.")
+
+        codechecker_cfg = env.import_test_cfg(
+            self._test_workspace)['codechecker_cfg']
+
+        product_url = env.parts_to_url(codechecker_cfg)
+        import_cmd = ['CodeChecker', 'cmd', 'suppress', '-i', generated_file,
+                      '--url', product_url, self._run_name]
+
+        print(import_cmd)
+        ret = call_cmd(import_cmd,
+                       self._test_project_path,
+                       env.test_env(self._test_workspace))
+        self.assertEqual(ret, 0, "Failed to import suppress file.")
+
     def test_suppress_comment_in_db(self):
         """
         Exported source suppress comment stored as a review status in the db.
