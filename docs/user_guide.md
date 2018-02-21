@@ -692,7 +692,7 @@ usage: CodeChecker parse [-h] [-t {plist}] [--export {html}]
                          [-o OUTPUT_PATH] [-c] [--suppress SUPPRESS]
                          [--export-source-suppress] [--print-steps]
                          [--verbose {info,debug,debug_analyzer}]
-                         [file/folder [file/folder ...]]
+                         file/folder [file/folder ...]
 
 Parse and pretty-print the summary and results from one or more 'codechecker-
 analyze' result files.
@@ -700,7 +700,6 @@ analyze' result files.
 positional arguments:
   file/folder           The analysis result files and/or folders containing
                         analysis results which should be parsed and printed.
-                        (default: /home/<username>/.codechecker/reports)
 
 optional arguments:
   -h, --help            show this help message and exit
