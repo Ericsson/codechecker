@@ -19,6 +19,7 @@ import sqlalchemy
 from sqlalchemy import event
 from sqlalchemy.engine.url import URL, make_url
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import NullPool
 
 from libcodechecker import host_check
 from libcodechecker import pgpass
@@ -338,10 +339,13 @@ class SQLServer(object):
             # FIXME: workaround for locking errors
             engine = sqlalchemy.create_engine(self.get_connection_string(),
                                               encoding='utf8',
-                                              connect_args={'timeout': 600})
+                                              connect_args={'timeout': 600},
+                                              poolclass=NullPool)
         else:
             engine = sqlalchemy.create_engine(self.get_connection_string(),
-                                              encoding='utf8')
+                                              encoding='utf8',
+                                              pool_size=2,
+                                              pool_recycle=3600)
 
         self._register_engine_hooks(engine)
         return engine
