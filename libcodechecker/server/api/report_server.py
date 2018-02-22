@@ -1704,46 +1704,52 @@ class ThriftRequestHandler(object):
     def removeRunResults(self, run_ids):
         self.__require_store()
 
-        with DBSession(self.__Session) as session:
+        failed = False
+        for run_id in run_ids:
+            try:
+                with DBSession(self.__Session) as session:
+                    LOG.debug('Run id to delete: ' + str(run_id))
 
-            runs_to_delete = []
-            for run_id in run_ids:
-                LOG.debug('Run id to delete: ' + str(run_id))
+                    run_to_delete = session.query(Run).get(run_id)
+                    if not run_to_delete.can_delete:
+                        LOG.debug("Can't delete " + str(run_id))
+                        continue
 
-                run_to_delete = session.query(Run).get(run_id)
-                if not run_to_delete.can_delete:
-                    LOG.debug("Can't delete " + str(run_id))
-                    continue
+                    # Check if there is an existing lock on the given run name,
+                    # which has not expired yet. If so, the run cannot be
+                    # deleted, as someone is assumed to be storing into it.
+                    locks_expired_at = datetime.now() - \
+                        timedelta(
+                             seconds=db_cleanup.RUN_LOCK_TIMEOUT_IN_DATABASE)
+                    lock = session.query(RunLock) \
+                        .filter(RunLock.name == run_to_delete.name,
+                                RunLock.locked_at >= locks_expired_at) \
+                        .one_or_none()
+                    if lock:
+                        LOG.info("Can't delete '{0}' as it is locked."
+                                 .format(run_to_delete.name))
+                        continue
 
-                # Check if there is an existing lock on the given run name,
-                # which has not expired yet. If so, the run cannot be
-                # deleted, as someone is assumed to be storing into it.
-                locks_expired_at = datetime.now() - \
-                    timedelta(seconds=db_cleanup.RUN_LOCK_TIMEOUT_IN_DATABASE)
-                lock = session.query(RunLock) \
-                    .filter(RunLock.name == run_to_delete.name,
-                            RunLock.locked_at >= locks_expired_at) \
-                    .one_or_none()
-                if lock:
-                    LOG.info("Can't delete '{0}' as it is locked."
-                             .format(run_to_delete.name))
-                    continue
+                    run_to_delete.can_delete = False
+                    # Commmit the can_delete flag.
+                    session.commit()
 
-                run_to_delete.can_delete = False
-                session.commit()
-                runs_to_delete.append(run_to_delete)
+                    session.query(Run)\
+                        .filter(Run.id == run_id)\
+                        .delete(synchronize_session=False)
 
-            for run_to_delete in runs_to_delete:
-                # FIXME: clean up bugpaths. Once run_id is a foreign key there,
-                # it should be automatic.
-                session.delete(run_to_delete)
-                session.commit()
+                    # Delete files and contents that are not present
+                    # in any bug paths.
+                    db_cleanup.remove_unused_files(session)
+                    session.commit()
+                    session.close()
 
-            # Delete files and contents that are not present in any bug paths.
-            db_cleanup.remove_unused_files(session)
-            session.commit()
-            session.close()
-            return True
+            except Exception as ex:
+                LOG.error("Failed to remove run: " + str(run_id))
+                LOG.error(ex)
+                failed = True
+
+        return not failed
 
     # -----------------------------------------------------------------------
     @exc_to_thrift_reqfail
