@@ -30,7 +30,7 @@ class Permission(object):
     __metaclass__ = ABCMeta
 
     def __init__(self, name, default_enable=True,
-                 inherited_from=None, managed_by=None):
+                 inherited_from=None, managed_by=None, manages_self=False):
         """
         Creates the definition of a new permission.
 
@@ -50,6 +50,8 @@ class Permission(object):
           permission.
           Permissions can only be managed by having permissions in the same,
           or a broader scope.
+        :param manages_self:   If True, people who have this permission also
+          can manage this permission.
         """
         self.name = name
         self.default_enable = default_enable
@@ -59,13 +61,14 @@ class Permission(object):
         if managed_by is None:
             managed_by = []
 
+        # Permission can be managed by itself.
+        if manages_self:
+            managed_by = [self] + managed_by
+
         # The SUPERUSER permission is a hardcoded special case.
         if name == 'SUPERUSER':
             # SUPERUSER is the maximum rank, it cannot be inherited.
             self.inherited_from = []
-
-            # Only a SUPERUSER can manage another SUPERUSER.
-            self.managed_by = [self]
         else:
             # Granting SUPERUSER automatically grants every other permission.
             if SUPERUSER not in inherited_from:
@@ -610,13 +613,15 @@ def require_manager(permission, extra_params, user):
 
 
 SUPERUSER = _create_permission(SystemPermission, 'SUPERUSER',
-                               default_enable=False)
+                               default_enable=False,
+                               manages_self=True)
 
 # -- Product-level permissions --
 
 PRODUCT_ADMIN = _create_permission(ProductPermission, 'PRODUCT_ADMIN',
                                    default_enable=False,
-                                   managed_by=[SUPERUSER])
+                                   managed_by=[SUPERUSER],
+                                   manages_self=True)
 
 PRODUCT_STORE = _create_permission(ProductPermission, 'PRODUCT_STORE',
                                    default_enable=True,
