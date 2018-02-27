@@ -100,18 +100,24 @@ def create_dependencies(action):
     executed, is able to generate a dependency list.
     """
 
-    def __eliminate_argument(arg_vect, opt_strings, num_args=0):
+    def __eliminate_argument(arg_vect, opt_string, has_arg=False):
         """
-        This call eliminates the parameters matching the given option strings,
-        along with the number of arguments coming directly after the opt-string
-        from the command.
+        This call eliminates the parameters matching the given option string,
+        along with its argument coming directly after the opt-string if any,
+        from the command. The argument can possibly be separated from the flag.
         """
-        option_index = next(
-            (i for i, c in enumerate(arg_vect) if c in opt_strings), None)
+        while True:
+            option_index = next(
+                (i for i, c in enumerate(arg_vect)
+                    if c.startswith(opt_string)), None)
 
-        if option_index:
-            arg_vect = arg_vect[0:option_index] + \
-                arg_vect[option_index + num_args + 1:]
+            if option_index:
+                separate = 1 if has_arg and \
+                    len(arg_vect[option_index]) == len(opt_string) else 0
+                arg_vect = arg_vect[0:option_index] + \
+                    arg_vect[option_index + separate + 1:]
+            else:
+                break
 
         return arg_vect
 
@@ -126,22 +132,23 @@ def create_dependencies(action):
         # If an output file is set, the dependency is not written to the
         # standard output but rather into the given file.
         # We need to first eliminate the output from the command.
-        command = __eliminate_argument(command, ['-o', '--output'], 1)
+        command = __eliminate_argument(command, '-o', True)
+        command = __eliminate_argument(command, '--output', True)
 
         # Remove potential dependency-file-generator options from the string
         # too. These arguments found in the logged build command would derail
         # us and generate dependencies, e.g. into the build directory used.
-        command = __eliminate_argument(command, ['-MM'])
-        command = __eliminate_argument(command, ['-MF'], 1)
-        command = __eliminate_argument(command, ['-MP'])
-        command = __eliminate_argument(command, ['-MT'], 1)
-        command = __eliminate_argument(command, ['-MQ'], 1)
-        command = __eliminate_argument(command, ['-MD'])
-        command = __eliminate_argument(command, ['-MMD'])
+        command = __eliminate_argument(command, '-MM')
+        command = __eliminate_argument(command, '-MF', True)
+        command = __eliminate_argument(command, '-MP')
+        command = __eliminate_argument(command, '-MT', True)
+        command = __eliminate_argument(command, '-MQ', True)
+        command = __eliminate_argument(command, '-MD')
+        command = __eliminate_argument(command, '-MMD')
 
         # Clang contains some extra options.
-        command = __eliminate_argument(command, ['-MJ'], 1)
-        command = __eliminate_argument(command, ['-MV'])
+        command = __eliminate_argument(command, '-MJ', True)
+        command = __eliminate_argument(command, '-MV')
 
         # Build out custom invocation for dependency generation.
         command = [command[0], '-E', '-M', '-MT', '__dummy'] + command[1:]
