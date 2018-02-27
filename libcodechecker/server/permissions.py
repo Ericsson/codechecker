@@ -166,10 +166,10 @@ class PermissionHandler(object):
                         (is_group and len(users) == 1 and len(groups) == 1):
                     self._rem_perm_impl("*", False)
         else:
-            LOG.error("Permission '{0}' adding for {1} '{2}' failed!"
-                      .format(self._perm_name,
-                              'group' if is_group else 'user',
-                              auth_name))
+            LOG.info("Permission '{0}' already added for {1} '{2}'!".format(
+                self._perm_name,
+                'group' if is_group else 'user',
+                auth_name))
 
     def remove_permission(self, auth_name, is_group=False):
         """
@@ -193,10 +193,10 @@ class PermissionHandler(object):
                 if len(users) == 0 and len(groups) == 0:
                     self._add_perm_impl("*", False)
         else:
-            LOG.error("Permission '{0}' removal from {1} '{2}' failed!"
-                      .format(self._perm_name,
-                              'group' if is_group else 'user',
-                              auth_name))
+            LOG.info("Permission '{0}' already removed from {1} '{2}'!".format(
+                self._perm_name,
+                'group' if is_group else 'user',
+                auth_name))
 
     def has_permission(self, auth_session):
         """
