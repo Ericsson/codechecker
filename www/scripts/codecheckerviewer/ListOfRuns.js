@@ -95,7 +95,10 @@ function (declare, dom, ItemFileWriteStore, topic, Dialog, Button,
       this.escapeHTMLInData = false;
       this.rowsPerPage = CC_OBJECTS.MAX_QUERY_SIZE;
 
-      this._dialog = new Dialog({ title : 'Check command' });
+      this._dialog = new Dialog({
+        title : 'Check command',
+        style : 'max-width: 75%;'
+      });
     },
 
     postCreate : function () {
