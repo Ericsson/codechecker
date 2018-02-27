@@ -189,7 +189,7 @@ function (declare, domAttr, domClass, domConstruct, Dialog, Button,
               if (success)
                   if (that.successCallback !== undefined)
                     that.successCallback(success);
-            }).error(function (jsReq, status, exc) {
+            }).fail(function (jsReq, status, exc) {
               if (status === "parsererror")
                 that._showMessageBox('error',
                   "Adding the product failed!", exc.message);
@@ -204,7 +204,7 @@ function (declare, domAttr, domClass, domConstruct, Dialog, Button,
                   that._showMessageBox('success',
                     "Successfully edited the product settings!", "");
                 }
-            }).error(function (jsReq, status, exc) {
+            }).fail(function (jsReq, status, exc) {
               if (status === "parsererror")
                 that._showMessageBox('error',
                   "Saving new settings failed!", exc.message);

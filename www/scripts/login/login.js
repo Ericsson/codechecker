@@ -61,7 +61,7 @@ function (declare, cookie, dom, domConstruct, domClass, keys, on, Button,
 
           var returnTo = hash.getState('returnto') || '';
           window.location = window.location.origin + '/' + returnTo;
-        }).error(function (jsReq, status, exc) {
+        }).fail(function (jsReq, status, exc) {
           if (status === "parsererror") {
             that._standBy.hide();
             domClass.add(that._mbox.domNode, 'mbox-error');
