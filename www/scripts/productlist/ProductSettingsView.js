@@ -69,7 +69,7 @@ function (declare, domAttr, domClass, domConstruct, Dialog, Button,
     0 : ['submit'],
     /* PRODUCT_ADMIN */ 1 : ['name', 'description'],
     /* SUPERUSER */     2 : ['endpoint', 'dbengine', 'dbhost', 'dbport',
-                             'dbuser', 'dbpass', 'dbname']
+                             'dbuser', 'dbpass', 'dbname', 'runlimit']
   };
 
   var ProductMetadataPane = declare(ContentPane, {
@@ -109,6 +109,19 @@ function (declare, domAttr, domClass, domConstruct, Dialog, Button,
         name        : 'description',
         placeholder : '(Optional)',
         onChange    : setOrDeleteConfigValue
+      });
+
+      this._txtRunLimit = new NumberTextBox({
+        class       : 'form-input',
+        name        : 'run-limit',
+        value       : null,
+        constraints : {
+          fractional : false,
+          min        : 1
+        },
+        onChange : function () {
+          that._setConfigValue('runlimit', this.value);
+        }
       });
 
       //--- Database connection type buttons ---//
@@ -267,6 +280,7 @@ function (declare, domAttr, domClass, domConstruct, Dialog, Button,
 
       var product = new CC_PROD_OBJECTS.ProductConfiguration({
         endpoint: args['endpoint'],
+        runLimit: args['runlimit'] ? args['runlimit'] : null,
         displayedName_b64: util.utoa(name),
         description_b64: util.utoa(description),
         connection: dbConnection
@@ -316,6 +330,7 @@ function (declare, domAttr, domClass, domConstruct, Dialog, Button,
       var valid = false;
 
       if (this._formElements['endpoint']['element'].isValid() &&
+          this._formElements['runlimit']['element'].isValid() &&
           'database/engine' in this.productConfig)
         valid = true;
 
@@ -416,6 +431,7 @@ function (declare, domAttr, domClass, domConstruct, Dialog, Button,
       this._setConfigValue('_id', productAPIObj.id);
 
       setCfg(this._txtProdEndpoint, 'endpoint', productAPIObj.endpoint);
+      setCfg(this._txtRunLimit, 'runlimit', productAPIObj.runLimit);
       setCfg(this._txtProdName, 'name',
              util.atou(productAPIObj.displayedName_b64));
 
@@ -487,6 +503,7 @@ function (declare, domAttr, domClass, domConstruct, Dialog, Button,
                              "URL endpoint");
       this._placeFormElement(this._txtProdName, 'name', "Display name");
       this._placeFormElement(this._txtProdDescr, 'description', "Description");
+      this._placeFormElement(this._txtRunLimit, 'runlimit', "Run limit");
 
       //--- The database configuration selector is special ---//
 

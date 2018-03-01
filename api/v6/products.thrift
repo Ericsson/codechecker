@@ -25,7 +25,8 @@ struct ProductConfiguration {
   2:          string             endpoint,
   3:          string             displayedName_b64,
   4:          string             description_b64,
-  5: optional DatabaseConnection connection
+  5: optional DatabaseConnection connection,
+  6:          i64                runLimit,
 }
 typedef list<ProductConfiguration> ProductConfigurations
 
@@ -42,6 +43,7 @@ struct Product {
   8: shared.DBStatus   databaseStatus,       // Indicates the database backend status.
   9: i64               runCount,             // Number of runs in the product.
   10: string           latestStoreToProduct, // Latest date from the runs when the run in the product was updated.
+  11: i64              runLimit,             // Number of allowed runs for this product.
 }
 typedef list<Product> Products
 
