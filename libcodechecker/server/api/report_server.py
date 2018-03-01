@@ -28,7 +28,7 @@ from codeCheckerDBAccess_v6 import constants, ttypes
 from codeCheckerDBAccess_v6.ttypes import *
 
 from libcodechecker import generic_package_context
-from libcodechecker import suppress_handler
+from libcodechecker.source_code_comment_handler import SourceCodeCommentHandler
 from libcodechecker import util
 # TODO: Cross-subpackage import here.
 from libcodechecker.analyze import plist_parser
@@ -423,7 +423,7 @@ class ThriftRequestHandler(object):
                  config_database,
                  checker_md_docs,
                  checker_md_docs_map,
-                 suppress_handler,
+                 src_comment_handler,
                  package_version):
 
         if not product:
@@ -436,7 +436,7 @@ class ThriftRequestHandler(object):
         self.__config_database = config_database
         self.__checker_md_docs = checker_md_docs
         self.__checker_doc_map = checker_md_docs_map
-        self.__suppress_handler = suppress_handler
+        self.__src_comment_handler = src_comment_handler
         self.__package_version = package_version
         self.__Session = Session
 
@@ -1740,7 +1740,7 @@ class ThriftRequestHandler(object):
         Return the suppress file path or empty string if not set.
         """
         self.__require_access()
-        suppress_file = self.__suppress_handler.suppress_file
+        suppress_file = self.__src_comment_handler.suppress_file
         if suppress_file:
             return suppress_file
         return ''
@@ -1806,7 +1806,8 @@ class ThriftRequestHandler(object):
         return file_path_to_id
 
     def __store_reports(self, session, report_dir, source_root, run_id,
-                        file_path_to_id, run_history_time, severity_map):
+                        file_path_to_id, run_history_time, severity_map,
+                        wrong_src_code_comments):
         """
         Parse up and store the plist report files.
         """
@@ -1887,18 +1888,39 @@ class ThriftRequestHandler(object):
                     os.path.join(source_root, file_name.strip("/")))
 
                 if os.path.isfile(source_file_name):
-                    sp_handler = suppress_handler.SourceSuppressHandler(
-                        source_file_name,
-                        last_report_event['location']['line'],
-                        bug_id,
-                        report.main['check_name'])
+                    sc_handler = SourceCodeCommentHandler(source_file_name)
 
-                    supp = sp_handler.get_suppressed()
-                    if supp:
-                        _, _, comment = supp
-                        status = ttypes.ReviewStatus.FALSE_POSITIVE
-                        self._setReviewStatus(report_id, status, comment,
+                    checker_name = report.main['check_name']
+                    report_line = last_report_event['location']['line']
+                    source_file = os.path.basename(file_name)
+
+                    src_comment_data = sc_handler.filter_source_line_comments(
+                        report_line,
+                        checker_name)
+
+                    if len(src_comment_data) == 1:
+                        status = src_comment_data[0]['status']
+                        rw_status = ttypes.ReviewStatus.FALSE_POSITIVE
+                        if status == 'confirmed':
+                            rw_status = ttypes.ReviewStatus.CONFIRMED
+                        elif status == 'intentional':
+                            rw_status = ttypes.ReviewStatus.INTENTIONAL
+
+                        self._setReviewStatus(report_id,
+                                              rw_status,
+                                              src_comment_data[0]['message'],
                                               session)
+                    elif len(src_comment_data) > 1:
+                        LOG.warning(
+                            "Multiple source code comment can be found "
+                            "for '{0}' checker in '{1}' at line {2}. "
+                            "This bug will not be suppressed!".format(
+                                checker_name, source_file, report_line))
+
+                        wrong_src_code = "{0}|{1}|{2}".format(source_file,
+                                                              report_line,
+                                                              checker_name)
+                        wrong_src_code_comments.append(wrong_src_code)
 
                 LOG.debug("Storing done for report " + str(report_id))
 
@@ -2053,6 +2075,7 @@ class ThriftRequestHandler(object):
 
         context = generic_package_context.get_context()
 
+        wrong_src_code_comments = []
         try:
             with util.TemporaryDirectory() as zip_dir:
                 unzip(b64zip, zip_dir)
@@ -2124,7 +2147,8 @@ class ThriftRequestHandler(object):
                                          run_id,
                                          file_path_to_id,
                                          run_history_time,
-                                         context.severity_map)
+                                         context.severity_map,
+                                         wrong_src_code_comments)
 
                     store_handler.setRunDuration(session,
                                                  run_id,
@@ -2144,3 +2168,10 @@ class ThriftRequestHandler(object):
             # run name.)
             with DBSession(self.__Session) as session:
                 ThriftRequestHandler.__free_run_lock(session, name)
+
+            if len(wrong_src_code_comments):
+                raise shared.ttypes.RequestFailed(
+                    shared.ttypes.ErrorCode.SOURCE_FILE,
+                    "Multiple source code comment can be found with the same "
+                    "checker name for same bug!",
+                    wrong_src_code_comments)

@@ -10,14 +10,15 @@ Handler for suppressing a bug.
 import os
 
 from libcodechecker import suppress_file_handler
-from libcodechecker import suppress_handler
+from libcodechecker.source_code_comment_handler import \
+    BaseSourceCodeCommentHandler
 from libcodechecker.logger import get_logger
 
 # Warning! this logger should only be used in this module.
 LOG = get_logger('system')
 
 
-class GenericSuppressHandler(suppress_handler.SuppressHandler):
+class GenericSuppressHandler(BaseSourceCodeCommentHandler):
 
     def __init__(self, suppress_file, allow_write):
         """
@@ -52,7 +53,7 @@ class GenericSuppressHandler(suppress_handler.SuppressHandler):
             self.__suppress_info = suppress_file_handler.\
                 get_suppress_data(file_handle)
 
-    def store_suppress_bug_id(self, bug_id, file_name, comment):
+    def store_suppress_bug_id(self, bug_id, file_name, comment, status):
 
         if not self.__allow_write:
             return True
@@ -60,7 +61,8 @@ class GenericSuppressHandler(suppress_handler.SuppressHandler):
         ret = suppress_file_handler.write_to_suppress_file(self.suppress_file,
                                                            bug_id,
                                                            file_name,
-                                                           comment)
+                                                           comment,
+                                                           status)
         self.__revalidate_suppress_data()
         return ret
 

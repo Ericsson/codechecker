@@ -18,7 +18,7 @@ import tempfile
 import zipfile
 import zlib
 
-from shared.ttypes import Permission
+from shared.ttypes import Permission, RequestFailed, ErrorCode
 
 from libcodechecker import logger
 from libcodechecker import generic_package_context
@@ -26,6 +26,7 @@ from libcodechecker import host_check
 from libcodechecker import util
 from libcodechecker.analyze import plist_parser
 from libcodechecker.libclient import client as libclient
+from libcodechecker.output_formatters import twodim_to_str
 from libcodechecker.util import sizeof_fmt
 from libcodechecker.util import split_product_url
 
@@ -344,6 +345,16 @@ def main(args):
                             'force' in args)
 
         LOG.info("Storage finished successfully.")
+    except RequestFailed as reqfail:
+        if reqfail.errorCode == ErrorCode.SOURCE_FILE:
+            header = ['File', 'Line', 'Checker name']
+            table = twodim_to_str('table',
+                                  header,
+                                  [c.split('|') for c in reqfail.extraInfo])
+            LOG.warning("Setting the review statuses for some reports failed "
+                        "because of non valid source code comments: "
+                        "{0}\n {1}".format(reqfail.message, table))
+        sys.exit(1)
     except Exception as ex:
         LOG.info("Storage failed: " + str(ex))
         sys.exit(1)
