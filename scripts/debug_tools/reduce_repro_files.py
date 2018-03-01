@@ -1,3 +1,9 @@
+#!/usr/bin/env python
+# -------------------------------------------------------------------------
+#                     The CodeChecker Infrastructure
+#   This file is distributed under the University of Illinois Open Source
+#   License. See LICENSE.TXT for details.
+# -------------------------------------------------------------------------
 import argparse
 import re
 import os
@@ -65,9 +71,9 @@ def get_compilable_cond(clang, stdflag, file_name):
     return [clang, '-c', '-Werror', stdflag, file_name]
 
 
-def get_ast_dump_cond(clang, stdflag, file_abs_path, file_name):
+def get_ast_dump_cond(clang, stdflag, file_abs_path, file_name, triple_arch):
     ast_dump_path = os.path.join(os.path.abspath('./cc_files'),
-                                 'ctu-dir', 'x86_64', 'ast')
+                                 'ctu-dir', triple_arch, 'ast')
     ast_dump_path = os.path.join(ast_dump_path, '.' + file_abs_path + '.ast')
     return [clang, stdflag, '-Xclang', '-emit-pch', '-o', ast_dump_path, '-c',
             file_name]
@@ -139,9 +145,9 @@ def reduce_dep(dep_file_abs_path, assert_string,
     conditions = []
     compilable_cond = get_compilable_cond(clang, stdflag, reduce_file_name)
     conditions.append(' '.join(compilable_cond))
-
+    prepare_all_cmd_for_ctu.get_triple_arch(analyzer_command_file)
     ast_dump_cond = get_ast_dump_cond(
-        clang, stdflag, dep_file_abs_path, reduce_file_name)
+        clang, stdflag, dep_file_abs_path, reduce_file_name, triple_arch)
     conditions.append(' '.join(ast_dump_cond))
 
     ctu_analyze_fail_cond = get_ctu_analyze_fail_cond(
@@ -172,7 +178,7 @@ def get_new_cmd(old_cmd, file_dir_path):
     return ' '.join(new_cmd)
 
 
-def get_new_analyzer_cmd(clang, old_cmd, file_dir_path):
+def get_new_analyzer_cmd(clang, old_cmd, file_dir_path, triple_arch):
     old_cmd = old_cmd.split(" ")
     new_cmd = []
     param_pattern_include = re.compile("-I|-D")
@@ -194,7 +200,7 @@ def get_new_analyzer_cmd(clang, old_cmd, file_dir_path):
                     file_dir_path,
                     'cc_files',
                     'ctu-dir',
-                    'x86_64'))
+                    triple_arch))
             continue
         else:
             new_cmd.append(x)
@@ -356,7 +362,8 @@ def main():
     # writing compile commands to output dir
     with open(args.analyzer_command, 'r') as f:
         with open(analyzer_command_file, 'w') as f2:
-            f2.write(get_new_analyzer_cmd(args.clang, f.read(), output_dir))
+            triple_arch = prepare_all_cmd_for_ctu.get_triple_arch(f)
+            f2.write(get_new_analyzer_cmd(args.clang, f.read(), output_dir, triple_arch))
 
     # make it runnable
     st = os.stat(analyzer_command_file)
