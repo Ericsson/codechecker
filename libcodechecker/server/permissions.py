@@ -79,7 +79,8 @@ class Permission(object):
                 managed_by = [SUPERUSER] + managed_by
 
             self.inherited_from = inherited_from
-            self.managed_by = managed_by
+
+        self.managed_by = managed_by
 
     # Contains the list of arguments required by __call__ to initialise a
     # permission handler.
