@@ -166,10 +166,11 @@ def __register_results(parser):
                         help="Names of the analysis runs to show result "
                              "summaries of. This has the following format: "
                              "<run_name_1>:<run_name_2>:<run_name_3> "
-                             "where run names can be a Python regex "
-                             "expression. So if you have run_1_a_name, "
-                             "run_2_b_name, run_2_c_name, run_3_d_name then"
-                             "\"run_2*:run_3_d_name\" selects the last three"
+                             "where run names can contain * quantifiers which "
+                             "matches any number of characters (zero or "
+                             "more). So if you have run_1_a_name, "
+                             "run_2_b_name, run_2_c_name, run_3_d_name then "
+                             "\"run_2*:run_3_d_name\" selects the last three "
                              "runs. Use 'CodeChecker cmd runs' to get the "
                              "available runs.")
 
@@ -189,11 +190,11 @@ def __register_diff(parser):
                         default=argparse.SUPPRESS,
                         help="The 'base' (left) side of the difference: this "
                              "analysis run is used as the initial state in "
-                             "the comparison. The basename can be a Python "
-                             "regex which is meant to cover the whole run "
-                             "name. So if you have run_1_a_name, run_2_b_name "
-                             "and run_2_c_name then run_.*_[ab]_name selects "
-                             "the first two.")
+                             "the comparison. The basename can contain * "
+                             "quantifiers which matches any number of "
+                             "characters (zero or more). So if you have "
+                             "run-a-1, run-a-2 and run-b-1 "
+                             "then \"run-a*\" selects the first two.")
 
     parser.add_argument('-n', '--newname',
                         type=str,
@@ -203,11 +204,15 @@ def __register_diff(parser):
                         default=argparse.SUPPRESS,
                         help="The 'new' (right) side of the difference: this "
                              "analysis run is compared to the -b/--basename "
-                             "run. The parameter can be a run name"
+                             "run. The parameter can be a run name "
                              "(on the remote server) or a local "
                              "report directory "
-                             "(result of the analyze command)."
-                        )
+                             "(result of the analyze command). In case of run "
+                             "name the newname can contain * quantifiers "
+                             "which matches any number of characters "
+                             "(zero or more). So if you have "
+                             "run-a-1, run-a-2 and run-b-1 "
+                             "then \"run-a*\" selects the first two.")
 
     __add_filtering_arguments(parser)
 
