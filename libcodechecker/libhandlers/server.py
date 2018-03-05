@@ -755,8 +755,8 @@ def server_init_start(args):
 
     # Create the main database link from the arguments passed over the
     # command line.
-    default_product_path = os.path.join(args.config_directory,
-                                        'Default.sqlite')
+    cfg_dir = os.path.abspath(args.config_directory)
+    default_product_path = os.path.join(cfg_dir, 'Default.sqlite')
     create_default_product = 'sqlite' in args and \
                              not os.path.exists(default_product_path)
 
