@@ -460,7 +460,7 @@ def main(args):
                           ]
         for key in args_to_update:
             __update_if_key_exists(args, analyze_args, key)
-        if 'force' in args:
+        if 'force' in args or 'clean' in args:
             setattr(analyze_args, 'clean', True)
         __update_if_key_exists(args, analyze_args, 'verbose')
 
