@@ -35,11 +35,13 @@ struct Product {
   2: string            endpoint,
   3: string            displayedName_b64,
   4: string            description_b64,
-  5: bool              connected,         // True only if database status is OK.
-                                          // !DEPRECATED FLAG databaseStatus is used to get the status of the database.
-  6: bool              accessible,        // Indicates whether the current user can access this product.
-  7: bool              administrating     // Indicates that the current user can administrate the product.
-  8: shared.DBStatus   databaseStatus     // Indicates the database backend status.
+  5: bool              connected,            // True only if database status is OK.
+                                             // !DEPRECATED FLAG databaseStatus is used to get the status of the database.
+  6: bool              accessible,           // Indicates whether the current user can access this product.
+  7: bool              administrating,       // Indicates that the current user can administrate the product.
+  8: shared.DBStatus   databaseStatus,       // Indicates the database backend status.
+  9: i64               runCount,             // Number of runs in the product.
+  10: string           latestStoreToProduct, // Latest date from the runs when the run in the product was updated.
 }
 typedef list<Product> Products
 

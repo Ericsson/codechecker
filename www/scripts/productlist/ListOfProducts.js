@@ -139,8 +139,9 @@ function (declare, domClass, domConstruct, ItemFileWriteStore, topic,
         { name : '&nbsp;', field : 'status', cellClasses : 'status', width : '20px', noresize : true },
         { name : '&nbsp;', field : 'icon', cellClasses : 'product-icon', width : '40px', noresize : true },
         { name : 'Name', field : 'name', cellClasses : 'product-name', width : '25%' },
-        { name : 'Description', field : 'description', styles : 'text-align: left;', width : '70%' }/*,
-        { name : 'Last check date', field : 'date', styles : 'text-align: center;', width : '30%' },
+        { name : 'Description', field : 'description', styles : 'text-align: left;', width : '70%' },
+        { name : 'Number of runs', field : 'runCount', styles : 'text-align: center;', width : '25%' },
+        { name : 'Latest store to product', field : 'latestStoreToProduct', styles : 'text-align: center;', width : '25%' }/*,,
         { name : 'Last check bugs', field : 'numberofbugs', styles : 'text-align: center;', width : '20%' },
         { name : 'Last check duration', field : 'duration', styles : 'text-align: center;' }*/,
         { name : '&nbsp;', field : 'editIcon', cellClasses : 'status', width : '20px', noresize : true},
@@ -162,7 +163,10 @@ function (declare, domClass, domConstruct, ItemFileWriteStore, topic,
     canSort : function (inSortInfo) {
       var cell = this.getCell(Math.abs(inSortInfo) - 1);
 
-      return cell.field === 'name' || cell.field === 'description';
+      return cell.field === 'name' ||
+             cell.field === 'description' ||
+             cell.field === 'runCount' ||
+             cell.field === 'latestStoreToProduct';
     },
 
     onRowClick : function (evt) {
@@ -254,6 +258,8 @@ function (declare, domClass, domConstruct, ItemFileWriteStore, topic,
         databaseStatus : item.databaseStatus,
         accessible : item.accessible,
         administrating : item.administrating,
+        runCount : item.databaseStatus === DBStatus.OK ? item.runCount : 0,
+        latestStoreToProduct : util.prettifyDate(item.latestStoreToProduct),
         editIcon : '',
         deleteIcon : ''
       });

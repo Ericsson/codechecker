@@ -22,6 +22,7 @@ from libcodechecker.profiler import timeit
 from libcodechecker.server import permissions
 from libcodechecker.server.database.config_db_model import *
 from libcodechecker.server.database.database import SQLServer
+from libcodechecker.server.database.run_db_model import Run
 from libcodechecker.server.routing import is_valid_product_endpoint
 
 LOG = get_logger('server')
@@ -94,6 +95,20 @@ class ThriftProductHandler(object):
             self.__server.add_product(product)
             server_product = self.__server.get_product(product.endpoint)
 
+        server_product.connect()
+        num_of_runs = 0
+        latest_store_to_product = ""
+        if server_product.db_status == shared.ttypes.DBStatus.OK:
+            run_db_session = server_product.session_factory()
+            num_of_runs = run_db_session.query(Run).count()
+            if num_of_runs:
+                last_updated_run = run_db_session.query(Run) \
+                    .order_by(Run.date.desc()) \
+                    .limit(1) \
+                    .one_or_none()
+
+                latest_store_to_product = last_updated_run.date
+
         name = base64.b64encode(product.display_name.encode('utf-8'))
         descr = base64.b64encode(product.description.encode('utf-8')) \
             if product.description else None
@@ -110,6 +125,8 @@ class ThriftProductHandler(object):
             endpoint=product.endpoint,
             displayedName_b64=name,
             description_b64=descr,
+            runCount=num_of_runs,
+            latestStoreToProduct=str(latest_store_to_product),
             connected=server_product.db_status == shared.ttypes.DBStatus.OK,
             accessible=product_access,
             administrating=product_admin,
