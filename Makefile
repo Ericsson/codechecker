@@ -35,9 +35,7 @@ userguide: build_dir
 	$(MAKE) -C www/userguide
 
 package: build_dir gen-docs thrift userguide build_plist_to_html
-	if [ ! -d "$(BUILD_DIR)/CodeChecker" ]; then \
-		./scripts/build_package.py -r $(ROOT) -o $(BUILD_DIR) -b $(BUILD_DIR); \
-	fi
+	./scripts/build_package.py -r $(ROOT) -o $(BUILD_DIR) -b $(BUILD_DIR)
 
 build_dir:
 	mkdir -p $(BUILD_DIR)
