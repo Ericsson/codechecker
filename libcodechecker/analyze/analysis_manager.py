@@ -153,6 +153,9 @@ def create_dependencies(action):
         # Build out custom invocation for dependency generation.
         command = [command[0], '-E', '-M', '-MT', '__dummy'] + command[1:]
 
+        # Remove empty arguments
+        command = [i for i in command if i]
+
         LOG.debug("Crafting build dependencies from GCC or Clang!")
 
         output, rc = util.call_command(command,
