@@ -146,6 +146,7 @@ IGNORED_OPTION_MAP_REGEX = {
 # Unknown options by clang, will be skipped.
 
 UNKNOWN_OPTIONS_MAP_REGEX = {
+    '^-fallow-fetchr-insn': 0,
     '^-fcall-saved-.*': 0,
     '^-fcond-mismatch': 0,
     '^-fconserve-stack': 0,
@@ -184,7 +185,16 @@ UNKNOWN_OPTIONS_MAP_REGEX = {
     '^-m(no-)?sdata.*$': 0,
     '^-m(no-)?spe.*': 0,
     '^-m(no-)?string$': 0,
+    '^-m(no-)?dsbt': 0,
+    '^-m(no-)?fixed-ssp': 0,
+    '^-m(no-)?pointers-to-nested-functions': 0,
+    '^-mpcrel-func-addr': 0,
     '^-maccumulate-outgoing-args': 0,
+    '^-mcall-aixdesc': 0,
+    '^-mppa3-addr-bug': 0,
+    '^-mtraceback=.*': 0,
+    '^-mtext=.*': 0,
+    '^-misa=.*': 0,
     '^-mfix-cortex-m3-ldrd$': 0,
     '^-mmultiple$': 0,
     '^-msahf$': 0,
