@@ -229,26 +229,27 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
         return obj.fileId === that.sourceFileData.fileId;
       }
 
-      var reportDetails = CC_SERVICE.getReportDetails(this.reportData.reportId);
+      CC_SERVICE.getReportDetails(this.reportData.reportId,
+      function (reportDetails) {
+        var points = reportDetails.executionPath.filter(filterFunction);
+        reportDetails.pathEvents.map(function (evt, index) {
+          evt.bugEventNumber = index + 1;
+        });
 
-      var points = reportDetails.executionPath.filter(filterFunction);
-      reportDetails.pathEvents.map(function (evt, index) {
-        evt.bugEventNumber = index + 1;
+        var bubbles = reportDetails.pathEvents.filter(filterFunction);
+
+        // This is needed because CodeChecker gives different positions.
+        points.forEach(function (point) { --point.startCol; });
+        points.forEach(function (bubble) { --bubble.startCol; });
+
+        if (bubblesNeeded) {
+          that.addBubbles(bubbles);
+          that.addOtherFileBubbles(reportDetails.executionPath);
+        }
+
+        if (linesNeeded)
+          that.addLines(points);
       });
-
-      var bubbles = reportDetails.pathEvents.filter(filterFunction);
-
-      // This is needed because CodeChecker gives different positions.
-      points.forEach(function (point) { --point.startCol; });
-      points.forEach(function (bubble) { --bubble.startCol; });
-
-      if (bubblesNeeded) {
-        that.addBubbles(bubbles);
-        that.addOtherFileBubbles(reportDetails.executionPath);
-      }
-
-      if (linesNeeded)
-        that.addLines(points);
     },
 
     addBubbles : function (bubbles) {
@@ -310,7 +311,11 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
     },
 
     clearBubbles : function () {
-      this._lineWidgets.forEach(function (widget) { widget.clear(); });
+      var that = this;
+
+      this.codeMirror.operation(function () {
+        that._lineWidgets.forEach(function (widget) { widget.clear(); });
+      });
       this._lineWidgets = [];
     },
 
@@ -331,7 +336,11 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
     },
 
     clearLines : function () {
-      this._lineMarks.forEach(function (mark) { mark.clear(); });
+      var that = this;
+
+      this.codeMirror.operation(function () {
+        that._lineMarks.forEach(function (mark) { mark.clear(); });
+      });
       this._lineMarks = [];
       resetJsPlumb(this);
     },
