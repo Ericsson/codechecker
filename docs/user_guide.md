@@ -837,6 +837,12 @@ optional arguments:
                         used, if exists.
   --tag TAG             A unique identifier for this individual store of results
                         in the run's history.
+  --trim-path-prefix [TRIM_PATH_PREFIX [TRIM_PATH_PREFIX ...]]
+                        Removes leading path from files which will be stored.
+                        So if you have /a/b/c/x.cpp and /a/b/c/y.cpp then by
+                        removing "/a/b/" prefix will store files like c/x.cpp
+                        and c/y.cpp. If multiple prefix is given, the longest
+                        match will be removed.
   -f, --force           Delete analysis results stored in the database for the
                         current analysis run's name and store only the results
                         reported in the 'input' files. (By default,

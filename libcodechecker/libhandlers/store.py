@@ -101,6 +101,19 @@ def add_arguments_to_parser(parser):
                         help="A uniques identifier for this individual store "
                              "of results in the run's history.")
 
+    parser.add_argument('--trim-path-prefix',
+                        type=str,
+                        nargs='*',
+                        dest="trim_path_prefix",
+                        required=False,
+                        default=argparse.SUPPRESS,
+                        help="Removes leading path from files which will be "
+                             "stored. So if you have /a/b/c/x.cpp and "
+                             "/a/b/c/y.cpp then by removing \"/a/b/\" prefix "
+                             "will store files like c/x.cpp and c/y.cpp. "
+                             "If multiple prefix is given, the longest match "
+                             "will be removed.")
+
     parser.add_argument('-f', '--force',
                         dest="force",
                         default=argparse.SUPPRESS,
@@ -337,11 +350,15 @@ def main(args):
 
         context = generic_package_context.get_context()
 
+        trim_path_prefixes = args.trim_path_prefix if \
+            'trim_path_prefix' in args else None
+
         client.massStoreRun(args.name,
                             args.tag if 'tag' in args else None,
                             str(context.version),
                             b64zip,
-                            'force' in args)
+                            'force' in args,
+                            trim_path_prefixes)
 
         LOG.info("Storage finished successfully.")
     except Exception as ex:

@@ -555,3 +555,30 @@ def get_last_mod_time(file_path):
         LOG.debug(oerr)
         LOG.debug("File is missing")
         return None
+
+
+def trim_path_prefixes(path, prefixes):
+    """
+    Removes the longest matching leading path from the file path.
+    """
+
+    # If no prefixes are specified.
+    if not prefixes:
+        return path
+
+    # Find the longest matching prefix in the path.
+    longest_matching_prefix = None
+    for prefix in prefixes:
+        if not prefix.endswith('/'):
+            prefix += '/'
+
+        if path.startswith(prefix) and (not longest_matching_prefix or
+                                        longest_matching_prefix < prefix):
+            longest_matching_prefix = prefix
+
+    # If no prefix found or the longest prefix is the root do not trim the
+    # path.
+    if not longest_matching_prefix or longest_matching_prefix == '/':
+        return path
+
+    return path[len(longest_matching_prefix):]
