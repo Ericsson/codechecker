@@ -584,29 +584,14 @@ def handle_diff_results(args):
 
     client = setup_client(args.product_url)
 
-    report_dir_mode = False
-    if os.path.isdir(args.newname):
-        # If newname is a valid directory we assume that it is a report dir and
-        # we are in local compare mode.
-        report_dir_mode = True
-    else:
-        run_info = check_run_names(client, [args.newname])
-        newid = run_info[args.newname].runId
-
-    try:
-        basename_regex = '^' + args.basename + '$'
-        base_runs = filter(lambda run: re.match(basename_regex, run.name),
-                           client.getRunData(None))
-        base_ids = map(lambda run: run.runId, base_runs)
-    except re.error:
-        LOG.error('Invalid regex format in ' + args.basename)
-        sys.exit(1)
+    base_runs = get_runs(client, [args.basename])
+    base_ids = map(lambda run: run.runId, base_runs)
 
     if len(base_ids) == 0:
         LOG.warning("No run names match the given pattern: " + args.basename)
         sys.exit(1)
 
-    LOG.info("Matching against runs: " +
+    LOG.info("Matching base runs: " +
              ', '.join(map(lambda run: run.name, base_runs)))
 
     cmp_data = ttypes.CompareData()
@@ -618,12 +603,24 @@ def handle_diff_results(args):
         cmp_data.diffType = ttypes.DiffType.RESOLVED
 
     results = []
-    if report_dir_mode:
+    if os.path.isdir(args.newname):
+        # If newname is a valid directory we assume that it is a report dir and
+        # we are in local compare mode.
         results = get_diff_report_dir(client, base_ids,
                                       os.path.abspath(args.newname),
                                       cmp_data)
     else:
-        cmp_data.runIds = [newid]
+        new_runs = get_runs(client, [args.newname])
+        cmp_data.runIds = map(lambda run: run.runId, new_runs)
+
+        if len(new_runs) == 0:
+            LOG.warning(
+                "No run names match the given pattern: " + args.newname)
+            sys.exit(1)
+
+        LOG.info("Matching new runs: " +
+                 ', '.join(map(lambda run: run.name, new_runs)))
+
         results = get_diff_results(client, base_ids, cmp_data)
 
     if len(results) == 0:

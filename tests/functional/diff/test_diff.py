@@ -524,6 +524,34 @@ class Diff(unittest.TestCase):
         count = len(re.findall(r'\[core\.CallAndMessage\]', out))
         self.assertEqual(count, 4)
 
+    def test_cmd_compare_remote_res_count_new(self):
+        """
+        Count the new results with no filter in remote compare mode.
+        """
+        base_run_name = self._run_names[0]
+        new_run_name = self._run_names[1]
+
+        # Change test_files_blablabla to test_*_blablabla
+        new_run_name = new_run_name.replace('files', '*')
+
+        diff_cmd = [self._codechecker_cmd, "cmd", "diff",
+                    "--resolved",
+                    "--url", self._url,
+                    "-b", base_run_name,
+                    "-n", new_run_name
+                    ]
+        print(diff_cmd)
+        process = subprocess.Popen(
+            diff_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            env=self._test_config['codechecker_cfg']['check_env'],
+            cwd=os.environ['TEST_WORKSPACE'])
+        out, err = process.communicate()
+        print(out+err)
+
+        # # 3 disappeared core.StackAddressEscape issues
+        count = len(re.findall(r'\[core\.StackAddressEscape\]', out))
+        self.assertEqual(count, 3)
+
     def test_local_compare_res_count_resovled(self):
         """
         Count the resolved results with no filter in local compare mode.
@@ -584,8 +612,8 @@ class Diff(unittest.TestCase):
         """
         base_run_name = self._run_names[0]
 
-        # Change test_files_blablabla to test_.*_blablabla
-        base_run_name = base_run_name.replace('files', '.*')
+        # Change test_files_blablabla to test_*_blablabla
+        base_run_name = base_run_name.replace('files', '*')
 
         diff_cmd = [self._codechecker_cmd, "cmd", "diff",
                     "--unresolved",
