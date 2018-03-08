@@ -258,6 +258,15 @@
 }
 
 /* Date filter */
+
+.select-menu-item .today,
+.select-menu-item .yesterday,
+ .select-menu-item .this-week,
+ .select-menu-item .this-year,
+ .select-menu-item .this-month {
+  float: left;
+}
+
 .bug-filters .date-wrapper {
   margin-top: 5px;
   overflow: hidden;

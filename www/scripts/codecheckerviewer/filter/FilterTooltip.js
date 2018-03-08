@@ -135,16 +135,22 @@ function (declare, domClass, dom, keys, Standby, TextBox, popup, Tooltip,
         domClass.remove(this.itemsDom[value], 'selected');
     },
 
+    // Deselects all filter tooltip item.
+    deselectAll : function () {
+      for (var key in this.itemsDom)
+        this.deselect(key);
+    },
+
     // Toggle a filter item.
     toggle : function (value, item) {
-      if (this.itemsDom[value])
-        domClass.toggle(this.itemsDom[value], 'selected');
-
       // Select or deselect the filter item on the filter view.
       if (this.reportFilter.isSelected(value))
         this.reportFilter.deselect(value);
       else
         this.reportFilter.select(value, item);
+
+      if (this.itemsDom[value])
+        domClass.toggle(this.itemsDom[value], 'selected');
 
       // Store the changes to identify if some new actions (add/remove filter
       // items) are made during the tooltip show and hide events. If the item

@@ -443,11 +443,6 @@ html, body {
   font-weight: bold;
 }
 
-.select-menu-item .today,
-.select-menu-item .yesterday {
-  float: left;
-}
-
 /* Doxygen */
 
 .doxgen .github {
