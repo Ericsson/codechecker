@@ -262,7 +262,7 @@ function (declare, dom, ItemFileWriteStore, topic, Dialog, Button,
           hashHelper.setStateValues({
             baseline : that.baseline.name,
             newcheck : that.newcheck.name,
-            difftype : CC_OBJECTS.DiffType.NEW,
+            difftype : util.diffTypeFromCodeToString(CC_OBJECTS.DiffType.NEW),
             tab : that.baseline.name + '_diff_' + that.newcheck.name
           });
         }

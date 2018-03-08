@@ -576,7 +576,7 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
       fileFilter.filepath = [getProperFilePath(this.reportData.checkedFile)];
 
       CC_SERVICE.getRunResults(
-        this.runResultParam.runIds,
+        this.runIds,
         CC_OBJECTS.MAX_QUERY_SIZE,
         0,
         null,
@@ -1203,7 +1203,7 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
         style : 'width: 300px;',
         editor : this._editor,
         buttonPane : buttonPane,
-        runResultParam : this.runResultParam
+        runIds : this.runIds
       });
 
       this.addChild(bugStoreModelTree);

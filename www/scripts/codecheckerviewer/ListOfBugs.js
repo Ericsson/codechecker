@@ -18,13 +18,14 @@ define([
   'dijit/Tooltip',
   'dojox/grid/DataGrid',
   'codechecker/BugViewer',
-  'codechecker/BugFilterView',
+  'codechecker/filter/BugFilterView',
+  'codechecker/filter/FilterBase',
   'codechecker/RunHistory',
   'codechecker/hashHelper',
   'codechecker/util'],
 function (declare, dom, style, Deferred, ObjectStore, Store, QueryResults,
   topic, BorderContainer, TabContainer, Tooltip, DataGrid, BugViewer,
-  BugFilterView, RunHistory, hashHelper, util) {
+  BugFilterView, FilterBase, RunHistory, hashHelper, util) {
 
   function getRunData(runIds, runNames) {
     var runFilter = new CC_OBJECTS.RunFilter();
@@ -75,35 +76,14 @@ function (declare, dom, style, Deferred, ObjectStore, Store, QueryResults,
   var filterHook = function(filters, isDiff) {
     var length = 0;
 
+    if (!filters) return;
+
     Object.keys(filters).map(function (key) {
       if (filters[key])
         length += filters[key].length;
     })
 
     topic.publish("hooks/FilteringChanged" + (isDiff ? "Diff" : ""), length);
-  };
-
-  var createRunResultFilterParameter = function (reportFilters) {
-    var cmpData = null;
-    var runIds = null;
-    if (reportFilters.run)
-      runIds = reportFilters.run;
-    else if (reportFilters.baseline || reportFilters.newcheck) {
-      runIds = reportFilters.baseline;
-
-      if (reportFilters.newcheck) {
-        cmpData = new CC_OBJECTS.CompareData();
-        cmpData.runIds = reportFilters.newcheck;
-        cmpData.diffType = reportFilters.difftype
-          ? reportFilters.difftype
-          : CC_OBJECTS.DiffType.NEW;
-      }
-    }
-
-    return {
-      runIds  : runIds,
-      cmpData : cmpData
-    };
   };
 
   var BugStore = declare(Store, {
@@ -129,18 +109,16 @@ function (declare, dom, style, Deferred, ObjectStore, Store, QueryResults,
     },
 
     query : function (query, options) {
-      var that = this;
       var deferred = new Deferred();
 
-      var runResultParam = createRunResultFilterParameter(query.reportFilters);
-
+      var that = this;
       CC_SERVICE.getRunResults(
-        runResultParam.runIds,
+        query.runIds,
         CC_OBJECTS.MAX_QUERY_SIZE,
         options.start,
         options.sort ? options.sort.map(this._toSortMode) : null,
-        query.reportFilters,
-        runResultParam.cmpData,
+        query.reportFilter,
+        query.cmpData,
         function (reportDataList) {
           if (reportDataList instanceof RequestFailed)
             deferred.reject('Failed to get reports: ' + reportDataList.message);
@@ -253,7 +231,7 @@ function (declare, dom, style, Deferred, ObjectStore, Store, QueryResults,
     return d.outerHTML;
   }
 
-  var ListOfBugsGrid = declare(DataGrid, {
+  var ListOfBugsGrid = declare([DataGrid, FilterBase], {
     constructor : function () {
       var width = (100 / 5).toString() + '%';
 
@@ -277,8 +255,12 @@ function (declare, dom, style, Deferred, ObjectStore, Store, QueryResults,
       this._lastSelectedRow = 0;
     },
 
-    refreshGrid : function (reportFilters) {
-      this.setQuery({ reportFilters : reportFilters });
+    notify : function () {
+      this.setQuery({
+        runIds : this.bugFilterView.getRunIds(),
+        reportFilter : this.bugFilterView.getReportFilter(),
+        cmpData : this.bugFilterView.getCmpData()
+      });
     },
 
     canSort : function (inSortInfo) {
@@ -340,12 +322,13 @@ function (declare, dom, style, Deferred, ObjectStore, Store, QueryResults,
   });
 
   return declare(TabContainer, {
-    constructor : function (args) {
-      dojo.safeMixin(this, args);
+    constructor : function () {
+      this._bugViewerHashToTab = {};
+      this._subscribeTopics();
+    },
 
+    postCreate : function () {
       var that = this;
-
-      //--- Grid ---//
 
       this._grid = new ListOfBugsGrid({
         region : 'center',
@@ -359,11 +342,6 @@ function (declare, dom, style, Deferred, ObjectStore, Store, QueryResults,
         title : 'Bug Overview',
         iconClass : 'customIcon list-opened',
         onShow : function () {
-          if (!this.initalized) {
-            this.initalized = true;
-            return;
-          }
-
           that._grid.scrollToLastSelected();
           hashHelper.setStateValues({
             'report' : null,
@@ -380,42 +358,34 @@ function (declare, dom, style, Deferred, ObjectStore, Store, QueryResults,
         region   : 'left',
         style    : 'width: 300px; padding: 0px;',
         splitter : true,
-        diffView : this.diffView,
         parent   : this,
-        runData  : this.runData,
-        baseline : this.baseline,
-        newcheck : this.newcheck,
-        difftype : this.difftype,
-        allReportView : this.allReportView
+        diffView : this.diffView
       });
+      this._grid.set('bugFilterView', this._bugFilterView);
+      this._bugFilterView.register(this._grid);
+
+      // Call the notify explicitly to initalize grid filters.
+      this._grid.notify();
 
       //--- Run history ---//
 
-      this._runHistory = new RunHistory({
-        title : 'Run history',
-        iconClass : 'customIcon run',
-        runData : this.runData,
-        bugOverView : this._bugOverview,
-        bugFilterView : this._bugFilterView,
-        parent : this,
-        onShow : function () {
-          var state = hashHelper.getState();
+     this._runHistory = new RunHistory({
+       title : 'Run history',
+       iconClass : 'customIcon run',
+       runData : this.runData,
+       bugOverView : this._bugOverview,
+       bugFilterView : this._bugFilterView,
+       parent : this,
+       onShow : function () {
+         var state = hashHelper.getState();
 
-          hashHelper.setStateValues({
-            'tab' : state.tab,
-            'subtab' : 'runHistory'
-          });
-          that.subtab = 'runHistory';
-        }
-      });
-
-      this._bugViewerHashToTab = {};
-
-      this._subscribeTopics();
-    },
-
-    postCreate : function () {
-      var that = this;
+         hashHelper.setStateValues({
+           'tab' : state.tab,
+           'subtab' : 'runHistory'
+         });
+         that.subtab = 'runHistory';
+       }
+     });
 
       this._bugOverview.addChild(this._bugFilterView);
 
@@ -456,9 +426,6 @@ function (declare, dom, style, Deferred, ObjectStore, Store, QueryResults,
         var getAndUseReportHash = reportHash && (!reportData ||
           reportData.reportId === null || reportData.bugHash !== reportHash);
 
-        var reportFilters = that._bugFilterView.getReportFilters();
-        var runResultParam = createRunResultFilterParameter(reportFilters);
-
         if (getAndUseReportHash) {
           // Get all reports by report hash
           var reportFilter = new CC_OBJECTS.ReportFilter();
@@ -474,14 +441,11 @@ function (declare, dom, style, Deferred, ObjectStore, Store, QueryResults,
           sortMode.type = CC_OBJECTS.SortType.BUG_PATH_LENGTH;
           sortMode.ord = CC_OBJECTS.Order.ASC;
 
-          reports = CC_SERVICE.getRunResults(runResultParam.runIds,
-            CC_OBJECTS.MAX_QUERY_SIZE,  0, [sortMode], reportFilter,
-            runResultParam.cmpData);
+          var opt = that._bugFilterView.initReportFilterOptions();
+          reports = CC_SERVICE.getRunResults(opt.runIds,
+            CC_OBJECTS.MAX_QUERY_SIZE, 0, [sortMode], reportFilter, null);
           reportData = reports[0];
-        } else {
-          runResultParam.cmpData = null;
         }
-        runResultParam.runIds = [reportData.runId];
 
         if (that.reportData &&
             that.reportData.reportId === reportData.reportId) {
@@ -501,7 +465,7 @@ function (declare, dom, style, Deferred, ObjectStore, Store, QueryResults,
           iconClass : 'customIcon bug',
           closable : true,
           reportData : reportData,
-          runResultParam : runResultParam,
+          runIds : [reportData.runId],
           listOfBugsGrid : that._grid,
           onShow : function () {
             hashHelper.setStateValues({
@@ -531,46 +495,28 @@ function (declare, dom, style, Deferred, ObjectStore, Store, QueryResults,
 
         topic.publish('showComments', reportData.reportId, bugViewer._editor);
       });
-
-      this._filterChangeTopic = topic.subscribe('filterchange',
-      function (state) {
-        if (state.parent !== that._bugFilterView)
-          return;
-
-        var reportFilters = that._bugFilterView.getReportFilters();
-        that._grid.refreshGrid(reportFilters);
-      });
     },
 
     onShow : function () {
       var state  = this._bugFilterView.getUrlState();
       state.tab  = this.tab;
+      hashHelper.resetStateValues(state);
 
-      if (!this.initalized) {
-        this.initalized = true;
+      // If the filter has not been initalized then we should initalize it.
+      if (!this._bugFilterView.isInitalized())
+        this._bugFilterView.initAll(state);
 
-        this._bugFilterView.initLoad();
-        this._grid.refreshGrid(this._bugFilterView.getReportFilters());
+     //--- Call show method of the selected children ---//
 
-        var urlState = hashHelper.getState();
-        if (urlState.tab === state.tab)
-          return;
-      }
-
-      hashHelper.setStateValues(state, true);
-
-      //--- Call show method of the selected children ---//
-
-      this.getChildren().forEach(function (child) {
-        if (child.selected)
-          child.onShow();
-      });
+     this.getChildren().forEach(function (child) {
+       if (child.selected)
+         child.onShow();
+     });
     },
 
     destroy : function () {
       this.inherited(arguments);
       this._openFileTopic.remove();
-      this._filterChangeTopic.remove();
       this._hashChangeTopic.remove();
       this._bugOverviewTopic.remove();
       this._runHistoryTopic.remove();

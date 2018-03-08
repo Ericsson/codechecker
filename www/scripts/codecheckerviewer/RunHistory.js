@@ -9,8 +9,9 @@ define([
   'dojo/dom-construct',
   'dojo/topic',
   'dijit/layout/ContentPane',
+  'codechecker/hashHelper',
   'codechecker/util'],
-function (declare, dom, topic, ContentPane, util) {
+function (declare, dom, topic, ContentPane, hashHelper, util) {
 
   return declare(ContentPane, {
     constructor : function (args) {
@@ -42,9 +43,10 @@ function (declare, dom, topic, ContentPane, util) {
         historyGroupByDate[groupDate].push(data);
       });
 
-      var dateFilter = that.bugFilterView._detectionDateFilter;
-      var detectionStatusFilter =
-        that.bugFilterView._detectionStatusFilter;
+      var filter = this.bugFilterView;
+      var dateFilter = filter._detectionDateFilter;
+      var dsFilter = filter._detectionStatusFilter;
+      var runFilter = filter._runNameFilter;
 
       Object.keys(historyGroupByDate).forEach(function (key) {
         var group = dom.create('div', { class : 'history-group' }, that.domNode);
@@ -58,24 +60,27 @@ function (declare, dom, topic, ContentPane, util) {
           var history = dom.create('div', {
             class : 'history',
             onclick : function () {
-              var state = that.bugFilterView.clearAll();
-              state.run = [data.runName];
-              state.subtab = null;
+              that.bugFilterView.clearAll();
+
+              if (runFilter)
+                runFilter.select(data.runName);
 
               if (!data.versionTag) {
-                state[detectionStatusFilter.class] = [
-                  detectionStatusFilter.stateConverter(CC_OBJECTS.DetectionStatus.NEW),
-                  detectionStatusFilter.stateConverter(CC_OBJECTS.DetectionStatus.UNRESOLVED),
-                  detectionStatusFilter.stateConverter(CC_OBJECTS.DetectionStatus.REOPENED)];
-                state[dateFilter._toDate.class] = that._formatDate(date);
+                [
+                  CC_OBJECTS.DetectionStatus.NEW,
+                  CC_OBJECTS.DetectionStatus.UNRESOLVED,
+                  CC_OBJECTS.DetectionStatus.REOPENED
+                ].forEach(function (status) {
+                  dsFilter.select(dsFilter.stateConverter(status));
+                });
+                dateFilter.initFixedDateInterval(that._formatDate(date));
               } else {
-                state['run-tag'] = data.runName + ':' + data.versionTag;
+                filter._runHistoryTagFilter.select(
+                  data.runName + ":" + data.versionTag);
               }
 
-              topic.publish('filterchange', {
-                parent : that.bugOverView,
-                changed : state
-              });
+              that.bugFilterView.notifyAll();
+              hashHelper.setStateValues({subtab : null});
             }
           }, content);
 

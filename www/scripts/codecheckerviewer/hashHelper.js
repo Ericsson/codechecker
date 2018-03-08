@@ -10,12 +10,28 @@ function (hash, ioQuery, topic, util) {
   var state = {};
 
   var hashHelper = {
+   /**
+    * This function pushes the currently stored state to the browser history.
+    * During the update process, the "hashSetProgress" variable of the
+    * urlHandler object is set to true. This signs that the url update in the
+    * browser was done by urlHandler, not by the "browser back" or "browser
+    * forward" buttons.
+    */
+    updateUrl : function () {
+      this.hashSetProgress = true;
+
+      hash(ioQuery.objectToQuery(state));
+
+      var that = this;
+      setTimeout(function () { that.hashSetProgress = false; }, 0);
+    },
+
     /**
      * Clear the state and updates the URL.
      */
     clear : function () {
       state = {};
-      hash(ioQuery.objectToQuery(state));
+      this.updateUrl();
     },
 
     /**
@@ -60,7 +76,7 @@ function (hash, ioQuery, topic, util) {
       }
 
       if (changed && !preventUpdateUrl)
-        hash(ioQuery.objectToQuery(state));
+        this.updateUrl();
     },
 
     resetStateValues : function (obj) {
@@ -90,7 +106,7 @@ function (hash, ioQuery, topic, util) {
     if (state[key] instanceof Array)
       state[key] = util.arrayUnique(state[key]);
 
-  hash(ioQuery.objectToQuery(state));
+  hashHelper.updateUrl();
 
   /**
    * When "browser back" or "browser forward" button is pressed, then the global
@@ -98,6 +114,8 @@ function (hash, ioQuery, topic, util) {
    * the current url be synchronized.
    */
   topic.subscribe('/dojo/hashchange', function (url) {
+    if (hashHelper.hashSetProgress) return;
+
     state = hashHelper.getValues();
   });
 

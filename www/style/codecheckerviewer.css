@@ -622,7 +622,7 @@ span[class*="severity-"] {
   color: #4b9fd5;
 }
 
-.review-status-confirmed-bug::before {
+.review-status-confirmed::before {
   content: "\e019";
   color: #e92625;
 }
@@ -754,7 +754,9 @@ span[class*="severity-"] {
 /* All report counter */
 
 .bug-filters .report-count-wrapper {
-  float: right;
+  position: absolute;
+  top: 0;
+  right: 0;
   padding: 5px;
 }
 
