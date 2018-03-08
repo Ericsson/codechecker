@@ -131,11 +131,12 @@ function (declare, Deferred, dom, all, Standby, ContentPane, SelectFilter,
       var prevValue = this.stateEncoder(this.currentDiffType);
       this._filterTooltip.deselect(prevValue);
 
+      this.currentDiffType = this.stateDecoder(value);
+
       var label = this.stateEncoder(this.currentDiffType);
       if (this.labelFormatter)
         label = this.labelFormatter(label);
 
-      this.currentDiffType = this.stateDecoder(value);
       this.selectedItem = new SelectedFilterItem({
         class : 'select-menu-item',
         label : label,
