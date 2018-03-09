@@ -126,11 +126,11 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
         # /home/.../.cpp:L:C: warning: foobar.
         regex = re.compile(
             # File path followed by a ':'.
-            '^(?P<path>[\S ]+?):'
+            r'^(?P<path>[\S ]+?):'
             # Line number followed by a ':'.
-            '(?P<line>\d+?):'
+            r'(?P<line>\d+?):'
             # Column number followed by a ':' and a space.
-            '(?P<column>\d+?):\ ')
+            r'(?P<column>\d+?):\ ')
 
         paths = []
 

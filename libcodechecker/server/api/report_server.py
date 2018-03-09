@@ -13,12 +13,15 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 import hashlib
 import json
+import os
 import sys
 import tempfile
 import zipfile
 import zlib
 
 import sqlalchemy
+from sqlalchemy.sql.expression import or_, and_, func, \
+    asc, desc, text, union_all, select, bindparam, literal_column
 
 import shared
 from codeCheckerDBAccess_v6 import constants, ttypes
@@ -33,7 +36,10 @@ from libcodechecker.logger import get_logger
 from libcodechecker.profiler import timeit
 from libcodechecker.server import permissions
 from libcodechecker.server.database import db_cleanup
-from libcodechecker.server.database.run_db_model import *
+from libcodechecker.server.database.run_db_model import \
+    Report, ReviewStatus, File, Run, RunHistory, \
+    RunLock, Comment, BugPathEvent, BugReportPoint, \
+    FileContent
 
 from . import store_handler
 
@@ -91,13 +97,13 @@ def exc_to_thrift_reqfail(func):
     return wrapper
 
 
-def conv(text):
+def conv(filter_value):
     """
     Convert * to % got from clients for the database queries.
     """
-    if text is None:
+    if filter_value is None:
         return '%'
-    return text.replace('*', '%')
+    return filter_value.replace('*', '%')
 
 
 def process_report_filter(session, report_filter):
@@ -993,6 +999,7 @@ class ThriftRequestHandler(object):
 
             return True
         else:
+            msg = "No report found in the database."
             raise shared.ttypes.RequestFailed(
                 shared.ttypes.ErrorCode.DATABASE, msg)
 
@@ -1156,25 +1163,25 @@ class ThriftRequestHandler(object):
          - checkerId
         """
 
-        text = "No documentation found for checker: " + checkerId + \
-               "\n\nPlease refer to the documentation at the "
+        missing_doc = "No documentation found for checker: " + checkerId + \
+                      "\n\nPlease refer to the documentation at the "
         sa_link = "http://clang-analyzer.llvm.org/available_checks.html"
         tidy_link = "http://clang.llvm.org/extra/clang-tidy/checks/list.html"
 
         if "." in checkerId:
-            text += "[ClangSA](" + sa_link + ")"
+            missing_doc += "[ClangSA](" + sa_link + ")"
         elif "-" in checkerId:
-            text += "[ClangTidy](" + tidy_link + ")"
-        text += " homepage."
+            missing_doc += "[ClangTidy](" + tidy_link + ")"
+        missing_doc += " homepage."
 
         try:
             md_file = self.__checker_doc_map.get(checkerId)
             if md_file:
                 md_file = os.path.join(self.__checker_md_docs, md_file)
                 with open(md_file, 'r') as md_content:
-                    text = md_content.read()
+                    missing_doc = md_content.read()
 
-            return text
+            return missing_doc
 
         except Exception as ex:
             msg = str(ex)

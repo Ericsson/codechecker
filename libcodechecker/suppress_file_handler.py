@@ -139,8 +139,8 @@ def remove_from_suppress_file(suppress_file, value, file_name):
                 return False
             if re.match(old_format, line.strip()):
                 return False
-            else:
-                return True
+
+            return True
 
         # Filter out lines which should be removed.
         lines = filter(check_for_match, lines)

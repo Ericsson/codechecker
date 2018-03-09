@@ -20,7 +20,7 @@ from libcodechecker import util
 from libcodechecker.logger import get_logger
 from libcodechecker.profiler import timeit
 from libcodechecker.server import permissions
-from libcodechecker.server.database.config_db_model import *
+from libcodechecker.server.database.config_db_model import Product, IDENTIFIER
 from libcodechecker.server.database.database import SQLServer
 from libcodechecker.server.database.run_db_model import Run
 from libcodechecker.server.routing import is_valid_product_endpoint

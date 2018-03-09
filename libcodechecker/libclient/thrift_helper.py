@@ -39,11 +39,11 @@ class ThriftClientHelper(object):
             self.transport.setCustomHeaders(headers)
 
     def ThriftClientCall(function):
-        # print type(function)
+        # LOG.debug(type(function))
         funcName = function.__name__
 
         def wrapper(self, *args, **kwargs):
-            # print('['+self.__host+':'+str(self.__port)+'] '
+            # LOG.debug('['+self.__host+':'+str(self.__port)+'] '
             #       '>>>>> ['+funcName+']')
             # before = datetime.datetime.now()
             self.transport.open()
@@ -53,25 +53,25 @@ class ThriftClientHelper(object):
                 return res
             except shared.ttypes.RequestFailed as reqfailure:
                 if reqfailure.errorCode == shared.ttypes.ErrorCode.DATABASE:
-                    print('Database error on server')
-                    print(str(reqfailure.message))
+                    LOG.error('Database error on server')
+                    LOG.error(str(reqfailure.message))
                 elif reqfailure.errorCode ==\
                         shared.ttypes.ErrorCode.AUTH_DENIED:
-                    print('Authentication denied')
-                    print(str(reqfailure.message))
+                    LOG.error('Authentication denied')
+                    LOG.error(str(reqfailure.message))
                 elif reqfailure.errorCode ==\
                         shared.ttypes.ErrorCode.UNAUTHORIZED:
-                    print('Unauthorized to access')
-                    print(str(reqfailure.message))
+                    LOG.error('Unauthorized to access')
+                    LOG.error(str(reqfailure.message))
                 else:
-                    print('API call error: ' + funcName)
-                    print(str(reqfailure))
+                    LOG.error('API call error: ' + funcName)
+                    LOG.error(str(reqfailure))
 
                 raise
             except TApplicationException as ex:
-                print("Internal server error on {0}:{1}"
-                      .format(self.__host, self.__port))
-                print(ex.message)
+                LOG.error("Internal server error on {0}:{1}"
+                          .format(self.__host, self.__port))
+                LOG.error(ex.message)
             except TProtocolException as ex:
                 if ex.type == TProtocolException.UNKNOWN:
                     LOG.debug('Unknown thrift error')
@@ -87,16 +87,16 @@ class ThriftClientHelper(object):
                 LOG.debug(args)
                 LOG.debug(kwargs)
                 LOG.debug(ex.message)
-                print("Request failed to {0}:{1}"
-                      .format(self.__host, self.__port))
+                LOG.error("Request failed to {0}:{1}"
+                          .format(self.__host, self.__port))
                 sys.exit(1)
             except socket.error as serr:
-                print("Connection failed to {0}:{1}"
-                      .format(self.__host, self.__port))
+                LOG.error("Connection failed to {0}:{1}"
+                          .format(self.__host, self.__port))
                 errCause = os.strerror(serr.errno)
-                print(errCause)
-                print(str(serr))
-                print("Check if your CodeChecker server is running.")
+                LOG.error(errCause)
+                LOG.error(str(serr))
+                LOG.error("Check if your CodeChecker server is running.")
                 sys.exit(1)
             finally:
                 self.transport.close()

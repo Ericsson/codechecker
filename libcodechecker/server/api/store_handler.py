@@ -5,6 +5,7 @@
 # -------------------------------------------------------------------------
 
 import base64
+from datetime import datetime
 from hashlib import sha256
 import json
 import os
@@ -17,7 +18,8 @@ from codeCheckerDBAccess_v6 import ttypes
 
 from libcodechecker.logger import get_logger
 # TODO: This is a cross-subpackage import.
-from libcodechecker.server.database.run_db_model import *
+from libcodechecker.server.database.run_db_model import BugPathEvent, \
+    BugReportPoint, File, Run, RunHistory, Report, FileContent
 
 LOG = get_logger('system')
 
@@ -273,7 +275,7 @@ def setRunDuration(session, run_id, duration):
         return True
     except Exception as ex:
         LOG.error(ex)
-        return false
+        return False
 
 
 def addReport(session,
@@ -384,6 +386,7 @@ def addFileContent(session, filepath, content, content_hash, encoding):
             session.add(file_record)
             session.commit()
         except sqlalchemy.exc.IntegrityError as ex:
+            LOG.error(ex)
             # Other transaction might have added the same file in the
             # meantime.
             session.rollback()
@@ -418,6 +421,7 @@ def addFileRecord(session, filepath, content_hash):
         session.add(file_record)
         session.commit()
     except sqlalchemy.exc.IntegrityError as ex:
+        LOG.error(ex)
         # Other transaction might have added the same file in the
         # meantime.
         session.rollback()

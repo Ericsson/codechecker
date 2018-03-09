@@ -156,8 +156,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             if config.ctu_dir and not self.__disable_ctu:
                 analyzer_cmd.extend(['-Xclang', '-analyzer-config',
                                      '-Xclang',
-                                     'xtu-dir=' + self.get_xtu_dir(),
-                                     ])
+                                     'xtu-dir=' + self.get_xtu_dir()])
                 if config.ctu_has_analyzer_display_ctu_progress:
                     analyzer_cmd.extend(['-Xclang',
                                          '-analyzer-display-ctu-progress'])
