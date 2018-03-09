@@ -12,10 +12,11 @@ define([
   'dojox/widget/Standby',
   'dijit/form/TextBox',
   'dijit/popup',
+  'dijit/Tooltip',
   'dijit/TooltipDialog',
   'dijit/layout/ContentPane'],
-function (declare, domClass, dom, keys, Standby, TextBox, popup, TooltipDialog,
-  ContentPane) {
+function (declare, domClass, dom, keys, Standby, TextBox, popup, Tooltip,
+  TooltipDialog, ContentPane) {
 
   return declare(ContentPane, {
     // Default limit of the filter queries.
@@ -229,6 +230,14 @@ function (declare, domClass, dom, keys, Standby, TextBox, popup, TooltipDialog,
             title : label,
             onclick : function () {
               that.toggle(item.value, item);
+            },
+            mouseover : function () {
+              if (item.description)
+                Tooltip.show(item.description, this, ['after', 'below']);
+            },
+            mouseout : function () {
+              if (item.description)
+                Tooltip.hide(this);
             }
           }, that._selectMenuList);
         });

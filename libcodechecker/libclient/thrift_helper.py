@@ -126,6 +126,20 @@ class ThriftClientHelper(object):
                          offset):
         pass
 
+    # SOURCE COMPONENT RELATED API CALLS
+
+    @ThriftClientCall
+    def addSourceComponent(self, name, value, description):
+        pass
+
+    @ThriftClientCall
+    def getSourceComponents(self, component_filter):
+        pass
+
+    @ThriftClientCall
+    def removeSourceComponent(self, name):
+        pass
+
     # STORAGE RELATED API CALLS
 
     @ThriftClientCall

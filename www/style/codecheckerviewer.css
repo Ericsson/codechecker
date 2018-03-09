@@ -620,3 +620,15 @@ html, body {
 .checker-statistics-filter .is-unique {
   margin-left: 10px;
 }
+
+.component-description {
+  list-style: none;
+  margin: 0;
+  padding: 5px;
+}
+
+.component-description .component-item {
+  padding: 2px;
+  border-bottom: 1px solid #d9dbdd;
+  margin-bottom: 2px;
+}

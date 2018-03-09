@@ -15,7 +15,7 @@ from math import ceil
 import os
 
 from sqlalchemy import MetaData, Column, Integer, UniqueConstraint, String, \
-    DateTime, Boolean, ForeignKey, Binary, Enum
+    DateTime, Boolean, ForeignKey, Binary, Enum, Text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.expression import true
@@ -302,6 +302,26 @@ class ReviewStatus(Base):
     author = Column(String, nullable=False)
     message = Column(Binary, nullable=False)
     date = Column(DateTime, nullable=False)
+
+
+class SourceComponent(Base):
+    __tablename__ = 'source_components'
+
+    name = Column(String, nullable=False, primary_key=True)
+
+    # Contains multiple file paths separated by new line characters. Each file
+    # path start with a '+' (path should be filtered) or '-' (path should not
+    # be filtered) sign. E.g.: "+/a/b/x.cpp\n-/a/b/"
+    value = Column(Binary, nullable=False)
+
+    description = Column(Text, nullable=True)
+    username = Column(String, nullable=True)
+
+    def __init__(self, name, value, description=None, user_name=None):
+        self.name = name
+        self.value = value
+        self.description = description
+        self.username = user_name
 
 
 IDENTIFIER = {

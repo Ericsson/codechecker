@@ -9,11 +9,12 @@ define([
   'dojo/dom-construct',
   'dojox/widget/Standby',
   'dijit/layout/ContentPane',
+  'dijit/Tooltip',
   'codechecker/filter/FilterBase',
   'codechecker/filter/FilterTooltip',
   'codechecker/filter/SelectedFilterItem'],
-function (declare, dom, Standby, ContentPane, FilterBase, FilterTooltip,
-  SelectedFilterItem) {
+function (declare, dom, Standby, ContentPane, Tooltip, FilterBase,
+  FilterTooltip, SelectedFilterItem) {
   return declare([FilterBase, ContentPane], {
     constructor : function () {
       this.selectedItems = {}; // Selected filter items.
@@ -175,6 +176,15 @@ function (declare, dom, Standby, ContentPane, FilterBase, FilterTooltip,
             that.deselect(value);
             that.notifyOthers();
             this.destroy();
+          },
+          onMouseOver : function () {
+            if (this.options.description)
+              Tooltip.show(this.options.description,
+                this.domNode, ['after', 'below']);
+          },
+          onMouseOut : function () {
+            if (this.options.description)
+              Tooltip.hide(this.domNode);
           }
         });
         this._selectedFilterItems.addChild(this.selectedItems[value]);

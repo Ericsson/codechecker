@@ -27,7 +27,7 @@ from libcodechecker.libclient.client import setup_client
 from libcodechecker.output_formatters import twodim_to_str
 from libcodechecker.report import Report, get_report_path_hash
 from libcodechecker.source_code_comment_handler import SourceCodeCommentHandler
-from libcodechecker.util import split_server_url
+from libcodechecker.util import split_server_url, CmdLineOutputEncoder
 
 
 # Needs to be set in the handler functions.
@@ -38,13 +38,6 @@ def init_logger(level, logger_name='system'):
     logger.setup_logger(level)
     global LOG
     LOG = logger.get_logger(logger_name)
-
-
-class CmdLineOutputEncoder(json.JSONEncoder):
-    def default(self, o):
-        d = {}
-        d.update(o.__dict__)
-        return d
 
 
 def check_run_names(client, check_names):
