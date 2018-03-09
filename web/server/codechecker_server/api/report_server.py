@@ -283,6 +283,15 @@ def process_report_filter(session, report_filter):
 
         AND.append(or_(*OR))
 
+    if report_filter.bugPathLength is not None:
+        min_path_length = report_filter.bugPathLength.min
+        if min_path_length is not None:
+            AND.append(Report.path_length >= min_path_length)
+
+        max_path_length = report_filter.bugPathLength.max
+        if max_path_length is not None:
+            AND.append(Report.path_length <= max_path_length)
+
     filter_expr = and_(*AND)
     return filter_expr
 

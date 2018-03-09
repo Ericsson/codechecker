@@ -294,22 +294,26 @@
   float: left;
 }
 
-.bug-filters .date-wrapper {
+.bug-filters .date-wrapper,
+.bug-filters .bug-path-length-wrapper {
   margin-top: 5px;
   overflow: hidden;
 }
 
-.bug-filters .date-wrapper > div {
+.bug-filters .date-wrapper > div,
+.bug-filters .bug-path-length-wrapper > div {
   width: 45%;
 }
 
 .bug-filters .first-detection-date,
-.bug-filters .fix-date {
+.bug-filters .fix-date,
+.bug-filters .min-bug-path-length {
   float: left;
 }
 
 .bug-filters .first-detection-time,
-.bug-filters .fix-time {
+.bug-filters .fix-time,
+.bug-filters .max-bug-path-length {
   float: right;
 }
 

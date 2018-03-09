@@ -17,6 +17,7 @@ define([
   'dijit/form/Button',
   'dijit/layout/ContentPane',
   'codechecker/hashHelper',
+  'codechecker/filter/BugPathLengthFilter',
   'codechecker/filter/CheckerMessageFilter',
   'codechecker/filter/CheckerNameFilter',
   'codechecker/filter/DateFilter',
@@ -34,11 +35,11 @@ define([
   'codechecker/filter/UniqueFilter',
   'codechecker/util'],
 function (declare, lang, Deferred, domClass, dom, domStyle, topic,
-  ConfirmDialog, Dialog, Button, ContentPane, hashHelper, CheckerMessageFilter,
-  CheckerNameFilter, DateFilter, DetectionStatusFilter, DiffTypeFilter,
-  FileFilter, ReportCount, ReportHashFilter, ReviewStatusFilter, RunBaseFilter,
-  RunHistoryTagFilter, SelectFilter, SeverityFilter, SourceComponentFilter,
-  UniqueFilter, util) {
+  ConfirmDialog, Dialog, Button, ContentPane, hashHelper, BugPathLengthFilter,
+  CheckerMessageFilter, CheckerNameFilter, DateFilter, DetectionStatusFilter,
+  DiffTypeFilter, FileFilter, ReportCount, ReportHashFilter, ReviewStatusFilter,
+  RunBaseFilter, RunHistoryTagFilter, SelectFilter, SeverityFilter,
+  SourceComponentFilter, UniqueFilter, util) {
 
   var FilterToggle = declare(ContentPane, {
     class : 'filter-toggle',
@@ -352,6 +353,28 @@ function (declare, lang, Deferred, domClass, dom, domStyle, topic,
       });
       this.register(this._severityFilter);
       this.addChild(this._severityFilter);
+
+      //--- Bug path length filter ---//
+
+      this._bugPathLengthFilter = new BugPathLengthFilter({
+        class : 'bug-path-length',
+        title : 'Bug path length',
+        parent   : this,
+        updateReportFilter : function (state) {
+          var bugPathLength = null;
+
+          if (state.minBugPathLength || state.maxBugPathLength)  {
+            bugPathLength = new CC_OBJECTS.BugPathLengthRange({
+              min : state.minBugPathLength ? state.minBugPathLength : null,
+              max : state.maxBugPathLength ? state.maxBugPathLength : null,
+            });
+          }
+
+          that.reportFilter.bugPathLength = bugPathLength;
+        },
+      });
+      this.register(this._bugPathLengthFilter);
+      this.addChild(this._bugPathLengthFilter);
 
       //--- Detection date filter ---//
 

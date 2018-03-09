@@ -321,3 +321,34 @@ class TestReportFilter(unittest.TestCase):
             unique_bugs.add((b['hash']))
 
         self.assertEqual(len(unique_bugs), run_result_count)
+
+    def test_bug_path_length_filter(self):
+        """
+        Filter by bug path length.
+        """
+        sort_types = None
+
+        filters = [(None, 1), (1, 2), (1, None)]
+        for filter_values in filters:
+            len_min = filter_values[0]
+            len_max = filter_values[1]
+
+            bug_path_len_filter = BugPathLengthRange(min=len_min, max=len_max)
+            f = ReportFilter(bugPathLength=bug_path_len_filter)
+
+            run_results = self._cc_client.getRunResults(self._runids,
+                                                        None,
+                                                        0,
+                                                        sort_types,
+                                                        f,
+                                                        None,
+                                                        False)
+            self.assertIsNotNone(run_results)
+
+            if len_max:
+                self.assertTrue(all(r.bugPathLength <= len_max
+                                    for r in run_results))
+
+            if len_min:
+                self.assertTrue(all(r.bugPathLength >= len_min
+                                    for r in run_results))

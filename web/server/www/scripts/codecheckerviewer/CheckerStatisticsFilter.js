@@ -11,6 +11,7 @@ define([
   'dijit/form/Button',
   'codechecker/hashHelper',
   'codechecker/filter/BugFilterView',
+  'codechecker/filter/BugPathLengthFilter',
   'codechecker/filter/CheckerMessageFilter',
   'codechecker/filter/CheckerNameFilter',
   'codechecker/filter/DateFilter',
@@ -23,9 +24,9 @@ define([
   'codechecker/filter/SourceComponentFilter',
   'codechecker/filter/UniqueFilter'],
 function (declare, lang, dom, Button, hashHelper, BugFilterView,
-  CheckerMessageFilter, CheckerNameFilter, DateFilter, DetectionStatusFilter,
-  FileFilter, ReportCount, RunBaseFilter, RunHistoryTagFilter, SeverityFilter,
-  SourceComponentFilter, UniqueFilter) {
+  BugPathLengthFilter, CheckerMessageFilter, CheckerNameFilter, DateFilter,
+  DetectionStatusFilter, FileFilter, ReportCount, RunBaseFilter,
+  RunHistoryTagFilter, SeverityFilter, SourceComponentFilter, UniqueFilter) {
 
   return declare(BugFilterView, {
     postCreate : function () {
@@ -132,6 +133,28 @@ function (declare, lang, dom, Button, hashHelper, BugFilterView,
       });
       this.register(this._severityFilter);
       this.addChild(this._severityFilter);
+
+      //--- Bug path length filter ---//
+
+      this._bugPathLengthFilter = new BugPathLengthFilter({
+        class : 'bug-path-length',
+        title : 'Bug path length',
+        parent   : this,
+        updateReportFilter : function (state) {
+          var bugPathLength = null;
+
+          if (state.minBugPathLength || state.maxBugPathLength)  {
+            bugPathLength = new CC_OBJECTS.BugPathLengthRange({
+              min : state.minBugPathLength ? state.minBugPathLength : null,
+              max : state.maxBugPathLength ? state.maxBugPathLength : null,
+            });
+          }
+
+          that.reportFilter.bugPathLength = bugPathLength;
+        },
+      });
+      this.register(this._bugPathLengthFilter);
+      this.addChild(this._bugPathLengthFilter);
 
       //--- Detection date filter ---//
 

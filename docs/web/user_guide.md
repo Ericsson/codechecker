@@ -565,6 +565,11 @@ filter arguments:
                         'unresolved'])
   --severity [SEVERITY [SEVERITY ...]]
                         Filter results by severities.
+  --bug-path-length BUG_PATH_LENGTH
+                        Filter results by bug path length. This has the
+                        following format:
+                        <minimum_bug_path_length>:<maximum_bug_path_length>.
+                        Valid values are: "4:10", "4:", ":10"
   --tag [TAG [TAG ...]]
                         Filter results by version tag names. This can be used
                         only if basename or newname is a run name (on the
@@ -788,11 +793,12 @@ Prints basic information about analysis results, such as location, checker
 name, summary.
 
 ```
-usage: CodeChecker cmd results [-h] [--uniqueing {on,off}]
+usage: CodeChecker cmd results [-h] [--details] [--uniqueing {on,off}]
                                [--report-hash [REPORT_HASH [REPORT_HASH ...]]]
                                [--review-status [REVIEW_STATUS [REVIEW_STATUS ...]]]
                                [--detection-status [DETECTION_STATUS [DETECTION_STATUS ...]]]
                                [--severity [SEVERITY [SEVERITY ...]]]
+                               [--bug-path-length BUG_PATH_LENGTH]
                                [--tag [TAG [TAG ...]]]
                                [--file [FILE_PATH [FILE_PATH ...]]]
                                [--checker-name [CHECKER_NAME [CHECKER_NAME ...]]]
@@ -853,6 +859,7 @@ usage: CodeChecker cmd diff [-h] -b BASE_RUN -n NEW_RUN [--uniqueing {on,off}]
                             [--review-status [REVIEW_STATUS [REVIEW_STATUS ...]]]
                             [--detection-status [DETECTION_STATUS [DETECTION_STATUS ...]]]
                             [--severity [SEVERITY [SEVERITY ...]]]
+                            [--bug-path-length BUG_PATH_LENGTH]
                             [--tag [TAG [TAG ...]]]
                             [--file [FILE_PATH [FILE_PATH ...]]]
                             [--checker-name [CHECKER_NAME [CHECKER_NAME ...]]]
@@ -1020,6 +1027,7 @@ usage: CodeChecker cmd sum [-h] (-n RUN_NAME [RUN_NAME ...] | -a)
                            [--review-status [REVIEW_STATUS [REVIEW_STATUS ...]]]
                            [--detection-status [DETECTION_STATUS [DETECTION_STATUS ...]]]
                            [--severity [SEVERITY [SEVERITY ...]]]
+                           [--bug-path-length BUG_PATH_LENGTH]
                            [--tag [TAG [TAG ...]]]
                            [--file [FILE_PATH [FILE_PATH ...]]]
                            [--checker-name [CHECKER_NAME [CHECKER_NAME ...]]]
