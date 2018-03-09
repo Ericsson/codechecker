@@ -68,8 +68,8 @@ def generate_report_hash(path, source_file, check_name):
                 curr_start_range_end != prev_end_range_end:
             return (curr_start_range_begin['col'],
                     curr_start_range_end['col'])
-        else:
-            return None
+
+        return None
 
     # The last diag section from the bug path used as a main
     # diagnostic section.

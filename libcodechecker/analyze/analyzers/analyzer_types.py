@@ -116,9 +116,9 @@ def construct_analyzer_type(analyzer_type, config_handler, buildaction):
         analyzer = analyzer_clang_tidy.ClangTidy(config_handler,
                                                  buildaction)
         return analyzer
-    else:
-        LOG.error('Unsupported analyzer type: ' + analyzer_type)
-        return None
+
+    LOG.error('Unsupported analyzer type: ' + analyzer_type)
+    return None
 
 
 def construct_analyzer(buildaction,
@@ -310,7 +310,7 @@ def __build_clangsa_config_handler(args, context):
     try:
         with open(args.clangsa_args_cfg_file, 'rb') as sa_cfg:
             config_handler.analyzer_extra_arguments = \
-                re.sub('\$\((.*?)\)',
+                re.sub(r'\$\((.*?)\)',
                        __replace_env_var(args.clangsa_args_cfg_file),
                        sa_cfg.read().strip())
     except IOError as ioerr:
@@ -374,7 +374,7 @@ def __build_clang_tidy_config_handler(args, context):
     try:
         with open(args.tidy_args_cfg_file, 'rb') as tidy_cfg:
             config_handler.analyzer_extra_arguments = \
-                re.sub('\$\((.*?)\)', __replace_env_var,
+                re.sub(r'\$\((.*?)\)', __replace_env_var,
                        tidy_cfg.read().strip())
     except IOError as ioerr:
         LOG.debug_analyzer(ioerr)

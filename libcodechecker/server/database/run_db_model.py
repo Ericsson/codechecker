@@ -14,9 +14,10 @@ from datetime import datetime, timedelta
 from math import ceil
 import os
 
-from sqlalchemy import *
+from sqlalchemy import MetaData, Column, Integer, UniqueConstraint, String, \
+    DateTime, Boolean, ForeignKey, Binary, Enum
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import *
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql.expression import true
 
 CC_META = MetaData(naming_convention={

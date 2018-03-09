@@ -380,8 +380,8 @@ class PlistToPlaintextFormatter(object):
                 continue
             hash_value = report.main['issue_hash_content_of_line_in_context']
             bug = {'hash_value': hash_value,
-                   'file_path': f_path
-                   }
+                   'file_path': f_path}
+
             if self.suppress_handler and \
                     self.suppress_handler.get_suppressed(bug):
                 LOG.debug("Suppressed by suppress file: {0}".format(report))

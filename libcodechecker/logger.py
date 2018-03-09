@@ -110,8 +110,8 @@ def validate_loglvl(log_level):
     log_level = log_level.upper()
     if log_level not in map(string.upper, CMDLINE_LOG_LEVELS):
         return "INFO"
-    else:
-        return log_level
+
+    return log_level
 
 
 class LOG_CFG_SERVER(object):

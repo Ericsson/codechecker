@@ -21,15 +21,13 @@ NON_PRODUCT_ENDPOINTS = ['index.html',
                          'images',
                          'scripts',
                          'style',
-                         'userguide'
-                         ]
+                         'userguide']
 
 # A list of top-level path elements in requests (such as Thrift endpoints)
 # which should not be considered as a product route.
 NON_PRODUCT_ENDPOINTS += ['Authentication',
                           'Products',
-                          'CodeCheckerService'
-                          ]
+                          'CodeCheckerService']
 
 
 # A list of top-level path elements under the webserver root which should

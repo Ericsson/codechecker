@@ -109,7 +109,7 @@ def create_dependencies(action):
         while True:
             option_index = next(
                 (i for i, c in enumerate(arg_vect)
-                    if c.startswith(opt_string)), None)
+                 if c.startswith(opt_string)), None)
 
             if option_index:
                 separate = 1 if has_arg and \
@@ -619,10 +619,10 @@ def check(check_data):
 
                         msg = "[{0}/{1}] {2} analyzed {3} without" \
                             " CTU successfully.".format(
-                                      progress_checked_num.value,
-                                      progress_actions.value,
-                                      action.analyzer_type,
-                                      source_file_name)
+                                progress_checked_num.value,
+                                progress_actions.value,
+                                action.analyzer_type,
+                                source_file_name)
 
                         LOG.info(msg)
                     else:

@@ -12,7 +12,8 @@ from __future__ import unicode_literals
 from datetime import datetime
 import sys
 
-from sqlalchemy import *
+from sqlalchemy import MetaData, Column, Integer, Enum, String, Boolean, \
+    ForeignKey, CHAR, DateTime, Text
 from sqlalchemy.ext.declarative import declarative_base
 
 from libcodechecker.server import permissions

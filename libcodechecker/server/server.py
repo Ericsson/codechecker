@@ -8,7 +8,6 @@ Main server starts a http server which handles Thrift client
 and browser requests.
 """
 import atexit
-import base64
 import datetime
 import errno
 from hashlib import sha256
@@ -897,7 +896,13 @@ def start_server(config_directory, package_data, port, config_sql_server,
             config_sql_server.get_connection_string(),
             root_sha,
             force_auth)
-    except IOError, ValueError:
+    except IOError as ioerr:
+        LOG.debug(ioerr)
+        LOG.error("The server's configuration file "
+                  "is missing or can not be read!")
+        sys.exit(1)
+    except ValueError as verr:
+        LOG.debug(verr)
         LOG.error("The server's configuration file is invalid!")
         sys.exit(1)
 
