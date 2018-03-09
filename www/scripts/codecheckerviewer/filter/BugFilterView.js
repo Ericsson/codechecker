@@ -289,7 +289,7 @@ function (declare, lang, Deferred, dom, topic, Button, ContentPane, hashHelper,
 
       this._fileFilter = new SelectFilter({
         class : 'filepath',
-        title : 'File',
+        title : 'File path',
         parent: this,
         search : {
           enable : true,
