@@ -241,7 +241,7 @@ class SQLServer(object):
             LOG.debug("Database schema and CodeChecker is incompatible. "
                       "Please update CodeChecker.")
             LOG.debug(str(cerr))
-            return DBStatus.SCHEMA_MISMATCH
+            return DBStatus.SCHEMA_MISMATCH_NO
 
     def upgrade(self):
         """

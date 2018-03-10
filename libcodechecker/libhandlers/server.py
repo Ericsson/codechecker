@@ -726,7 +726,7 @@ def server_init_start(args):
             print(msg)
             if ret != DBStatus.OK:
                 LOG.error("Schema migration failed")
-                syst.exit(ret)
+                sys.exit(ret)
         else:
             LOG.info("No schema migration was done.")
             sys.exit(0)

@@ -431,7 +431,7 @@ def handle_failure(source_analyzer, rh, action, zip_file,
         other_files.update(
             source_analyzer.get_analyzer_mentioned_files(
                 rh.analyzer_stderr))
-    except Exception:
+    except Exception as ex:
         LOG.debug("Couldn't generate list of other files "
                   "from analyzer output:")
         LOG.debug(str(ex))
