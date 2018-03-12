@@ -549,4 +549,9 @@ def get_last_mod_time(file_path):
     """
     Return the last modification time of a file.
     """
-    return os.stat(file_path)[9]
+    try:
+        return os.stat(file_path).st_mtime
+    except OSError as oerr:
+        LOG.debug(oerr)
+        LOG.debug("File is missing")
+        return None

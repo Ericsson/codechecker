@@ -192,6 +192,14 @@ def parse(f, context, metadata_dict, suppress_handler, skip_handler, steps):
 
     changed_files = set()
     for source_file in files:
+        if plist_mtime is None:
+            # Failed to get the modification time for
+            # a file mark it as changed.
+            changed_files.add(source_file)
+            LOG.warning(source_file +
+                        ' is missing since the last analysis.')
+            continue
+
         file_mtime = util.get_last_mod_time(source_file)
         if file_mtime > plist_mtime:
             changed_files.add(source_file)
@@ -286,7 +294,14 @@ def main(args):
                     LOG.debug(metadata_dict)
 
                 if 'working_directory' in metadata_dict:
-                    os.chdir(metadata_dict['working_directory'])
+                    working_dir = metadata_dict['working_directory']
+                    try:
+                        os.chdir(working_dir)
+                    except OSError as oerr:
+                        LOG.debug(oerr)
+                        LOG.error("Working directory %s is missing.\n"
+                                  "Can not parse reports safely.", working_dir)
+                        sys.exit(1)
 
             _, _, file_names = next(os.walk(input_path), ([], [], []))
             files = [os.path.join(input_path, file_name) for file_name
