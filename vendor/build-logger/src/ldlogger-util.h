@@ -50,6 +50,12 @@ typedef void* (*LoggerDupFuc)(const void*);
 typedef int (*LoggerCmpFuc)(const void*, const void*);
 
 /**
+ * Typedef for predicate function for a vector. This should return 0 if the
+ * condition is not true for the element.
+ */
+typedef int (*LoggerPredFuc)(const void*);
+
+/**
  * A very simple vector.
  */
 typedef struct _LoggerVector 
@@ -148,17 +154,28 @@ int loggerVectorAddUnique(LoggerVector* vec_, void* data_, LoggerCmpFuc cmp_);
 void loggerVectorErase(LoggerVector* vec_, size_t index_);
 
 /**
- * Funds an elemnt using the given comparation fuction.
+ * Finds an element using the given comparation fuction.
  *
  * @param vec_ a vector struct (must be not NULL).
  * @param data_ an item.
  * @param cmp_ a comparation function.
- * @return SIZE_MAX if the element not found otherwise the item`s index
+ * @return SIZE_MAX if the element not found otherwise the item`s index.
  */
 size_t loggerVectorFind(
   LoggerVector* vec_,
   const void* data_,
   LoggerCmpFuc cmp_);
+
+/**
+ * Finds an element using the given predicate fuction.
+ *
+ * @param vec_ a vector struct (must be not NULL).
+ * @param pred_ a predicate function.
+ * @return SIZE_MAX if the element not found otherwise the item`s index.
+ */
+size_t loggerVectorFindIf(
+  LoggerVector* vec_,
+  LoggerPredFuc pred_);
 
 /**
  * An strdup implementation (its not in ANSI C).
