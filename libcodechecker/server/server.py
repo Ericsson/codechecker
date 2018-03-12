@@ -42,6 +42,7 @@ from ProductManagement_v6 import codeCheckerProductService as ProductAPI_v6
 
 from libcodechecker.logger import get_logger
 from libcodechecker.util import get_tmp_dir_hash
+from libcodechecker.version import get_version_str
 
 from . import instance_manager
 from . import permissions
@@ -412,8 +413,9 @@ class RequestHandler(SimpleHTTPRequestHandler):
                 else:
                     # Send a custom, but valid Thrift error message to the
                     # client requesting this action.
-                    error_msg = "API version v{0} not supported by server." \
-                                .format(api_ver)
+                    error_msg = "Incompatible client/server API." \
+                                "API versions supported by this server {0}." \
+                                .format(get_version_str())
 
                     raise ValueError(error_msg)
 

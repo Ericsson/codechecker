@@ -11,6 +11,7 @@ import shared
 
 from libcodechecker.logger import get_logger
 from libcodechecker.profiler import timeit
+from libcodechecker.version import get_version_str
 
 LOG = get_logger('system')
 
@@ -27,5 +28,6 @@ class ThriftAPIMismatchHandler(object):
     def checkAPIVersion(self):
         raise shared.ttypes.RequestFailed(
             shared.ttypes.ErrorCode.API_MISMATCH,
-            "The API version you tried to connect to ({0}) is not "
-            "supported by this server.".format(self.__request_version))
+            "The API version you are using is not "
+            "supported by this server.\n"
+            "Server API versions: {0} ".format(get_version_str()))

@@ -33,9 +33,10 @@ def check_api_version(auth_client):
     try:
         auth_client.checkAPIVersion()
     except shared.ttypes.RequestFailed as reqfail:
-        LOG.critical("The server uses a newer version of the API which is "
-                     "incompatible with this client. Please update client.")
-        LOG.debug(reqfail.message)
+        LOG.critical("Incompatible client/server API. "
+                     "Please check your client version.")
+        LOG.critical("Client API version: v%s", CLIENT_API)
+        LOG.critical(reqfail.message)
         sys.exit(1)
 
 
