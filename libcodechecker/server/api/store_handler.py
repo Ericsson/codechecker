@@ -233,7 +233,10 @@ def addCheckerRun(session, command, name, tag, username,
                 run_history.version_tag = None
                 session.add(run_history)
 
-        run_history = RunHistory(run_id, tag, username, run_history_time)
+        compressed_command = zlib.compress(command,
+                                           zlib.Z_BEST_COMPRESSION)
+        run_history = RunHistory(run_id, tag, username, run_history_time,
+                                 compressed_command)
         session.add(run_history)
 
         session.flush()

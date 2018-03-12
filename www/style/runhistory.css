@@ -38,7 +38,8 @@
 
 .history .run-name-wrapper,
 .history .tag-wrapper,
-.history .user-wrapper {
+.history .user-wrapper,
+.history .check-command {
   margin-left: 5px;
 }
 

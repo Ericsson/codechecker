@@ -580,12 +580,16 @@ class ThriftRequestHandler(object):
 
             results = []
             for history in res:
-                results.append(RunHistoryData(id=history.id,
-                                              runId=history.run.id,
-                                              runName=history.run.name,
-                                              versionTag=history.version_tag,
-                                              user=history.user,
-                                              time=str(history.time)))
+                check_command = zlib.decompress(history.check_command) \
+                  if history.check_command else None
+                results.append(RunHistoryData(
+                    id=history.id,
+                    runId=history.run.id,
+                    runName=history.run.name,
+                    versionTag=history.version_tag,
+                    user=history.user,
+                    time=str(history.time),
+                    checkCommand=check_command))
 
             return results
 
