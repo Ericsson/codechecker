@@ -36,6 +36,7 @@ from libcodechecker.logger import get_logger
 from libcodechecker.profiler import timeit
 from libcodechecker.server import permissions
 from libcodechecker.server.database import db_cleanup
+from libcodechecker.server.database.config_db_model import Product
 from libcodechecker.server.database.run_db_model import \
     Report, ReviewStatus, File, Run, RunHistory, \
     RunLock, Comment, BugPathEvent, BugReportPoint, \
@@ -1999,21 +2000,30 @@ class ThriftRequestHandler(object):
         session.delete(run_lock)
         session.commit()
 
-    @exc_to_thrift_reqfail
-    @timeit
-    def massStoreRun(self, name, tag, version, b64zip, force):
-        self.__require_store()
+    def __check_run_limit(self, run_name):
+        """
+        Checks the maximum allowed of uploadable runs for the current product.
+        """
+        max_run_count = self.__manager.get_max_run_count()
 
-        user = self.__auth_session.user if self.__auth_session else None
+        with DBSession(self.__config_database) as session:
+            product = session.query(Product).get(self.__product.id)
+            if product.run_limit:
+                max_run_count = product.run_limit
 
         # Session that handles constraints on the run.
         with DBSession(self.__Session) as session:
-            run = session.query(Run).filter(Run.name == name).one_or_none()
-            max_run_count = self.__manager.get_max_run_count()
-
-            # If max_run_count is not set in the config file, it will allow
-            # the user to upload unlimited runs.
             if max_run_count:
+                LOG.debug("Check the maximum number of allowed runs which is "
+                          "{0}".format(max_run_count))
+
+                run = session.query(Run) \
+                    .filter(Run.name == run_name) \
+                    .one_or_none()
+
+                # If max_run_count is not set in the config file, it will allow
+                # the user to upload unlimited runs.
+
                 run_count = session.query(Run.id).count()
 
                 # If we are not updating a run or the run count is reached the
@@ -2028,6 +2038,17 @@ class ThriftRequestHandler(object):
                                                    max_run_count,
                                                    remove_run_count))
 
+    @exc_to_thrift_reqfail
+    @timeit
+    def massStoreRun(self, name, tag, version, b64zip, force):
+        self.__require_store()
+
+        user = self.__auth_session.user if self.__auth_session else None
+
+        # Check constraints of the run.
+        self.__check_run_limit(name)
+
+        with DBSession(self.__Session) as session:
             ThriftRequestHandler.__store_run_lock(session, name, user)
 
         context = generic_package_context.get_context()

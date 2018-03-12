@@ -296,7 +296,8 @@ class ThriftProductHandler(object):
                 endpoint=product.endpoint,
                 displayedName_b64=name,
                 description_b64=descr,
-                connection=dbc)
+                connection=dbc,
+                runLimit=product.run_limit)
 
             return prod
 
@@ -385,7 +386,8 @@ class ThriftProductHandler(object):
                 endpoint=product.endpoint,
                 conn_str=conn_str,
                 name=displayed_name,
-                description=description)
+                description=description,
+                run_limit=product.runLimit)
 
             LOG.debug("Attempting database connection to new product...")
 
@@ -588,6 +590,7 @@ class ThriftProductHandler(object):
 
             # Update the settings in the database.
             product.endpoint = new_config.endpoint
+            product.run_limit = new_config.runLimit
             product.connection = conn_str
             product.display_name = displayed_name
             product.description = description

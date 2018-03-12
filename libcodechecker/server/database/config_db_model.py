@@ -49,12 +49,15 @@ class Product(Base):
     connection = Column(String, nullable=False)
     display_name = Column(String, nullable=False)
     description = Column(Text)
+    run_limit = Column(Integer)
 
-    def __init__(self, endpoint, conn_str, name=None, description=None):
+    def __init__(self, endpoint, conn_str, name=None, description=None,
+                 run_limit=None):
         self.endpoint = endpoint
         self.connection = conn_str
         self.display_name = name if name else endpoint
         self.description = description
+        self.run_limit = run_limit
 
 
 def __get_permission_names(scope=None):
