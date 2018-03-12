@@ -31,5 +31,17 @@ tests/projects/objc/DeallocUseAfterFreeErrors
 # idea files
 .idea/
 
+# vscode
+.vscode
+
 # vim temporary swap for open files
-*.swp
+[._]*.s[a-v][a-z]
+[._]*.sw[a-p]
+[._]s[a-v][a-z]
+[._]sw[a-p]
+
+# Auto-generated tag files
+tags
+.tags
+TAGS
+.TAGS
