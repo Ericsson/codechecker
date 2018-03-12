@@ -16,11 +16,9 @@ define([
   'dijit/layout/BorderContainer',
   'dijit/layout/ContentPane',
   'dojox/grid/DataGrid',
-  'codechecker/hashHelper',
   'codechecker/util'],
 function (declare, dom, ItemFileWriteStore, topic, Dialog, Button,
-  RadioButton, TextBox, BorderContainer, ContentPane, DataGrid, hashHelper,
-  util) {
+  RadioButton, TextBox, BorderContainer, ContentPane, DataGrid, util) {
 
   /**
    * This function helps to format a data grid cell with two radio buttons.
@@ -80,7 +78,7 @@ function (declare, dom, ItemFileWriteStore, topic, Dialog, Button,
       this.structure = [
         { name : 'Diff', field : 'diff', styles : 'text-align: center;', formatter : diffBtnFormatter},
         { name : 'Name', field : 'name', styles : 'text-align: left;', width : '100%' },
-        { name : 'Number of reports', field : 'numberofbugs', styles : 'text-align: center;', width : '20%' },
+        { name : 'Number of unresolved reports', field : 'numberofbugs', styles : 'text-align: center;', width : '20%' },
         { name : 'Storage date', field : 'date', styles : 'text-align: center;', width : '30%' },
         { name : 'Analysis duration', field : 'duration', styles : 'text-align: center;' },
         { name : 'Check command', field : 'checkcmd', styles : 'text-align: center;' },
@@ -116,9 +114,11 @@ function (declare, dom, ItemFileWriteStore, topic, Dialog, Button,
           if (!evt.target.classList.contains('link'))
             return;
 
-          hashHelper.setStateValues({
-            'run' : item.runData[0].name,
-            'tab' : item.runData[0].name
+          var runName = item.runData[0].name;
+          topic.publish('openRun', {
+            baseline : runName,
+            tabId : runName,
+            openedByUserEvent : true
           });
           break;
 
@@ -259,11 +259,12 @@ function (declare, dom, ItemFileWriteStore, topic, Dialog, Button,
         class    : 'diff-btn',
         disabled : true,
         onClick  : function () {
-          hashHelper.setStateValues({
-            run : that.baseline.name,
+          var runName = that.baseline.name;
+          topic.publish('openRun', {
+            baseline : that.baseline.name,
             newcheck : that.newcheck.name,
-            difftype : util.diffTypeFromCodeToString(CC_OBJECTS.DiffType.NEW),
-            tab : that.baseline.name + '_diff_' + that.newcheck.name
+            tabId : that.baseline.name + '_diff_' + that.newcheck.name,
+            openedByUserEvent : true
           });
         }
       });

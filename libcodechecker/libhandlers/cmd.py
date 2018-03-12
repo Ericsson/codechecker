@@ -292,6 +292,16 @@ def __register_sum(parser):
                             default=argparse.SUPPRESS,
                             help="Show breakdown for all analysis runs.")
 
+    parser.add_argument('--disable-unique',
+                        dest="disable_unique",
+                        action='store_true',
+                        default=argparse.SUPPRESS,
+                        help="List all bugs even if these end up in the same "
+                             "bug location, but reached through different "
+                             "paths. By uniqueing the bugs a report will be "
+                             "appeared only once even if it is found on "
+                             "several paths.")
+
     __add_filtering_arguments(parser)
 
 

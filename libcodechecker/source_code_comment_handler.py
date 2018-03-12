@@ -16,18 +16,16 @@ from libcodechecker.logger import get_logger
 
 LOG = get_logger('system')
 
+# Note: codechecker_suppress source code comment will be also
+# marked as false_positive.
+SKIP_REVIEW_STATUSES = ['false_positive', 'intentional']
+
 
 def skip_suppress_status(status):
     """
     Returns True if the given status is in the skip list, otherwise False.
     """
-
-    # Note: codechecker_suppress source code comment will be also
-    # marked as false_positive.
-    skip_suppress_statuses = ['false_positive',
-                              'intentional']
-
-    return status in skip_suppress_statuses
+    return status in SKIP_REVIEW_STATUSES
 
 
 class BaseSourceCodeCommentHandler(object):

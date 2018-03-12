@@ -349,7 +349,8 @@ function (declare, dom, style, Deferred, ObjectStore, Store, QueryResults,
         style    : 'width: 300px; padding: 0px;',
         splitter : true,
         parent   : this,
-        diffView : this.newcheck
+        diffView : this.newcheck,
+        openedByUserEvent : this.openedByUserEvent
       });
       this._grid.set('bugFilterView', this._bugFilterView);
       this._bugFilterView.register(this._grid);
@@ -504,8 +505,13 @@ function (declare, dom, style, Deferred, ObjectStore, Store, QueryResults,
       hashHelper.resetStateValues(state);
 
       // If the filter has not been initalized then we should initalize it.
-      if (!this._bugFilterView.isInitalized())
+      if (!this._bugFilterView.isInitalized()) {
+        if (this.baseline && !state.run)
+          state.run = this.baseline;
+        if (this.newcheck && !state.newcheck)
+          state.newcheck = this.newcheck;
         this._bugFilterView.initAll(state);
+      }
 
      //--- Call show method of the selected children ---//
 

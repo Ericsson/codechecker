@@ -616,3 +616,7 @@ html, body {
 .CodeMirror-selection-highlight-scrollbar {
   background-color: green
 }
+
+.checker-statistics-filter .is-unique {
+  margin-left: 10px;
+}

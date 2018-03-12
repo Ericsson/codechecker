@@ -659,9 +659,11 @@ def handle_list_result_types(args):
 
     init_logger(args.verbose if 'verbose' in args else None)
 
+    is_unique = 'disable_unique' not in args
+
     def get_statistics(client, run_ids, field, values):
         report_filter = ttypes.ReportFilter()
-        report_filter.isUnique = True
+        report_filter.isUnique = is_unique
         add_filter_conditions(report_filter, args.filter)
         setattr(report_filter, field, values)
         checkers = client.getCheckerCounts(run_ids,
@@ -685,7 +687,7 @@ def handle_list_result_types(args):
             sys.exit(1)
 
     all_checkers_report_filter = ttypes.ReportFilter()
-    all_checkers_report_filter.isUnique = True
+    all_checkers_report_filter.isUnique = is_unique
     add_filter_conditions(all_checkers_report_filter, args.filter)
 
     all_checkers = client.getCheckerCounts(run_ids,
@@ -712,7 +714,7 @@ def handle_list_result_types(args):
 
     # Get severity counts
     report_filter = ttypes.ReportFilter()
-    report_filter.isUnique = True
+    report_filter.isUnique = is_unique
     add_filter_conditions(report_filter, args.filter)
 
     sev_count = client.getSeverityCounts(run_ids, report_filter, None)

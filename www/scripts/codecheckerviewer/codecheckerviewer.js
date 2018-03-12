@@ -64,16 +64,10 @@ function (declare, topic, Dialog, Button, BorderContainer, TabContainer,
     if (newcheck && !(newcheck instanceof Array))
       newcheck = [newcheck];
 
-    var runs = state.tab.split('_diff_');
-    var title = runs.length == 2
-      ? 'Diff of ' + runs[0] + ' and ' + runs[1]
-      : runs[0];
-
     topic.publish('openRun', {
       baseline : baseline,
       newcheck : newcheck,
       tabId    : state.tab,
-      title    : title,
       difftype : state.difftype ? state.difftype : CC_OBJECTS.DiffType.NEW
     });
   }
@@ -155,11 +149,14 @@ function (declare, topic, Dialog, Button, BorderContainer, TabContainer,
 
     runsTab.addChild(listOfRuns);
 
+    var state = hashHelper.getState();
+
     var listOfAllReports = new ListOfBugs({
       title : 'All reports',
       iconClass : 'customIcon all-reports',
       allReportView : true,
-      tab : 'allReports'
+      tab : 'allReports',
+      openedByUserEvent : state['tab'] !== 'allReports'
     });
 
     //--- Check static tab ---//
@@ -188,13 +185,19 @@ function (declare, topic, Dialog, Button, BorderContainer, TabContainer,
       var newcheck = param.newcheck;
 
       if (!(tabId in runIdToTab)) {
+        var runs = tabId.split('_diff_');
+        var title = runs.length == 2
+          ? 'Diff of ' + runs[0] + ' and ' + runs[1]
+          : runs[0];
+
         runIdToTab[tabId] = new ListOfBugs({
           baseline : param.baseline,
           newcheck : param.newcheck,
-          title : param.title,
+          title : title,
           iconClass : 'customIcon reports',
           closable : true,
           tab : tabId,
+          openedByUserEvent : param.openedByUserEvent,
           onClose : function () {
             delete runIdToTab[tabId];
             return true;

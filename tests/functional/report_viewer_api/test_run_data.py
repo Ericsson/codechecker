@@ -10,8 +10,8 @@ import unittest
 
 from libtest import env
 
-from codeCheckerDBAccess_v6.ttypes import ReportFilter
-from codeCheckerDBAccess_v6.ttypes import RunFilter
+from codeCheckerDBAccess_v6.ttypes import ReportFilter, RunFilter, \
+    DetectionStatus
 
 
 class TestRunData(unittest.TestCase):
@@ -87,13 +87,17 @@ class TestRunData(unittest.TestCase):
     def test_number_of_unique_reports(self):
         """
         Tests that resultCount field value in runData is equal with the
-        number of unique reports in the run.
+        number of unfixed reports in the run.
         """
         test_runs = self.__get_runs()
 
-        unique_filter = ReportFilter(isUnique=True)
+        report_filter = ReportFilter()
+        report_filter.detectionStatus = [DetectionStatus.NEW,
+                                         DetectionStatus.UNRESOLVED,
+                                         DetectionStatus.REOPENED]
+
         for run in test_runs:
             run_count = self._cc_client.getRunResultCount([run.runId],
-                                                          unique_filter,
+                                                          report_filter,
                                                           None)
             self.assertEqual(run.resultCount, run_count)
