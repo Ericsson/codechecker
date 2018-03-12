@@ -304,6 +304,7 @@ def auth_user(ldap_config, username=None, credentials=None):
         if connection is None:
             LOG.error('Please check your LDAP server '
                       'authentication credentials.')
+            LOG.error('Configured username: %s', service_user)
             return False
 
         user_dn = get_user_dn(connection,
@@ -312,11 +313,9 @@ def auth_user(ldap_config, username=None, credentials=None):
                               account_scope)
 
         if user_dn is None:
-            LOG.error('Please check your LDAP server '
-                      'authentication credentials.')
+            LOG.error("DN lookup failed for user name: '%s'!", username)
             if service_user is None:
                 LOG.error('Anonymous bind might not be enabled.')
-            LOG.error('Configured username: ' + service_user)
             return False
 
     # Bind with the user's DN to check the password given by the user.
