@@ -12,14 +12,12 @@ import hashlib
 import os
 import uuid
 
-from sqlalchemy import and_
-
 from libcodechecker.logger import get_logger
 from libcodechecker.util import check_file_owner_rw
 from libcodechecker.util import load_json_or_empty
 from libcodechecker.version import SESSION_COOKIE_NAME as _SCN
 
-from database.config_db_model import Session as SessionRecord
+from database.config_db_model import Session as SessionRecord, SystemPermission
 
 UNSUPPORTED_METHODS = []
 
@@ -41,27 +39,18 @@ SESSION_COOKIE_NAME = _SCN
 class _Session(object):
     """A session for an authenticated, privileged client connection."""
 
-    @staticmethod
-    def calc_persistency_hash(auth_string, salt=None):
-        """Calculates a more secure persistency hash for the session. This
-        persistency hash is intended to be used for the "session recycle"
-        feature to prevent NAT endpoints from accidentally getting each
-        other's session."""
-        return hashlib.sha256(auth_string + '@' +
-                              salt if salt else 'CodeChecker').hexdigest()
-
-    def __init__(self, token, phash, username, groups,
-                 session_lifetime, is_root=False, database=None):
+    def __init__(self, token, username, groups,
+                 session_lifetime, is_root=False, database=None,
+                 last_access=None):
 
         self.token = token
-        self.persistent_hash = phash
         self.user = username
         self.groups = groups
 
         self.__session_lifetime = session_lifetime
         self.__root = is_root
         self.__database = database
-        self.last_access = datetime.now()
+        self.last_access = last_access if last_access else datetime.now()
 
     @property
     def is_root(self):
@@ -79,30 +68,36 @@ class _Session(object):
             self.__session_lifetime
 
     def revalidate(self):
-        if self.is_alive:
-            # A session is only revalidated if it has yet to exceed its
-            # lifetime. After a session hasn't been used for this interval,
-            # it can NOT be resurrected at all --- the user needs to log in
-            # to a brand-new session.
-            self.last_access = datetime.now()
+        """
+        A session is only revalidated if it has yet to exceed its
+        lifetime. After a session hasn't been used for this interval,
+        it can NOT be resurrected at all --- the user needs to log in
+        to a brand-new session.
+        """
 
-            if self.__database:
-                # Update the timestamp in the database for the session's last
-                # access.
-                try:
-                    transaction = self.__database()
-                    record = transaction.query(SessionRecord). \
-                        get(self.persistent_hash)
+        if not self.is_alive:
+            return
 
-                    if record:
-                        record.last_access = self.last_access
-                        transaction.commit()
-                except Exception as e:
-                    LOG.error("Couldn't update usage timestamp of {0}"
-                              .format(self.token))
-                    LOG.error(str(e))
-                finally:
-                    transaction.close()
+        self.last_access = datetime.now()
+
+        if self.__database:
+            # Update the timestamp in the database for the session's last
+            # access.
+            try:
+                transaction = self.__database()
+                record = transaction.query(SessionRecord) \
+                    .filter(SessionRecord.token == self.token) \
+                    .limit(1).one_or_none()
+
+                if record:
+                    record.last_access = self.last_access
+                    transaction.commit()
+            except Exception as e:
+                LOG.error("Couldn't update usage timestamp of {0}"
+                          .format(self.token))
+                LOG.error(str(e))
+            finally:
+                transaction.close()
 
 
 class SessionManager:
@@ -323,57 +318,39 @@ class SessionManager:
     def get_user_name(auth_string):
         return auth_string.split(':')[0]
 
-    def _fetch_session_or_token(self, persistency_hash):
+    def get_db_session_tokens(self, user_name):
         """
-        Contact the session store to try fetching a valid session or token
-        for the given session object hash. This first uses the instance's
-        in-memory storage, and if nothing is found, contacts the database
-        (if connected).
-
-        Returns a _Session object if found locally.
-        Returns a string token if it was found in the database.
-        None if a session wasn't found.
+        Get session token from the database for the given user.
         """
+        if not self.__database_connection:
+            return None
 
-        # Try the local store first. From the local store we can use a session
-        # if its lifetime still hasn't expired.
-        sessions = (s for s in self.__sessions
-                    if s.is_alive and
-                    s.persistent_hash == persistency_hash)
-        session = next(sessions, None)
+        try:
+            # Try the database, if it is connected.
+            transaction = self.__database_connection()
+            session_tokens = transaction.query(SessionRecord.token) \
+                .filter(SessionRecord.user_name == user_name) \
+                .all()
+            return [s[0] for s in session_tokens]
+        except Exception as e:
+            LOG.error("Couldn't check login in the database: ")
+            LOG.error(str(e))
+        finally:
+            if transaction:
+                transaction.close()
 
-        # If there is a session store database configured and the local query
-        # did not return any sessions, try finding one in the database.
-        if not session and self.__database_connection:
-            try:
-                # Try the database, if it is connected.
-                transaction = self.__database_connection()
-                db_record = transaction.query(SessionRecord) \
-                    .get(persistency_hash)
+        return None
 
-                if db_record:
-                    if (datetime.now() - db_record.last_access). \
-                            total_seconds() <= \
-                            self.__auth_config['session_lifetime']:
-                        # If a token was found in the database and the session
-                        # for it can still be resurrected, we reuse this token.
-                        return db_record.token
-                    else:
-                        # The token has expired, remove it from the database.
-                        transaction.delete(db_record)
-                        transaction.commit()
-            except Exception as e:
-                LOG.error("Couldn't check login in the database: ")
-                LOG.error(str(e))
-            finally:
-                if transaction:
-                    transaction.close()
-
-        return session
+    @staticmethod
+    def generate_session_token():
+        """
+        Returns a random session token.
+        """
+        return uuid.UUID(bytes=os.urandom(16)).__str__().replace('-', '')
 
     def create_or_get_session(self, auth_string):
         """
-        Create a new session for the given auth-string.
+        Creates a new session for the given auth-string.
 
         If an existing, valid session is found for the auth_string, that will
         be used instead. Otherwise, a brand new token cookie will be generated.
@@ -387,83 +364,51 @@ class SessionManager:
                 self.__auth_config['logins_until_cleanup']:
             self.__cleanup_sessions()
 
-        # Try to authenticate the user with the authentication backends
-        # configured.
+        # Checks that user can be authenticated as a 'root' user.
         validation = self.__try_auth_root(auth_string)
         if not validation:
+            # Try to authenticate user with different authentication methods.
             validation = self.__handle_validation(auth_string)
 
-        if validation:
-            sess_hash = _Session.calc_persistency_hash(self.__session_salt,
-                                                       auth_string)
-            local_session, db_token = None, None
+            if not validation:
+                return False
 
-            # If the session is still valid and credentials are resent,
-            # return old token. This is fetched either locally or from the db.
-            session_or_token = self._fetch_session_or_token(sess_hash)
-            if session_or_token:
-                if isinstance(session_or_token, _Session):
-                    # We were able to fetch a session from the local in-memory
-                    # storage. Use this session, and mark that it has been
-                    # used again, updating the access timestamp.
-                    local_session = session_or_token
-                    local_session.revalidate()
-                elif isinstance(session_or_token, basestring):
-                    # The database gave us a token, which we will reuse in
-                    # creating a local cache entry for the session.
-                    db_token = session_or_token
+        # If the session is still valid and credentials are present,
+        # return old token. This is fetched either locally or from the db.
+        user_name = validation['username']
+        tokens = self.get_db_session_tokens(user_name)
+        token = tokens[0] if len(tokens) else self.generate_session_token()
 
-            # A Session object does not exist in the server memory, so it must
-            # be created now.
-            if not local_session:
-                # Use the previously existing token if one was found in the
-                # database for the user, otherwise generate a brand new one.
-                token = db_token if db_token else \
-                    uuid.UUID(bytes=os.urandom(16)).__str__().replace('-', '')
+        local_session = self.get_session(token)
 
-                user_name = validation['username']
-                groups = validation.get('groups', [])
-                is_root = validation.get('root', False)
+        if local_session:
+            local_session.revalidate()
+        else:
+            groups = validation.get('groups', [])
+            is_root = validation.get('root', False)
 
-                local_session = _Session(
-                    token, sess_hash, user_name, groups,
-                    self.__auth_config['session_lifetime'],
-                    is_root, self.__database_connection)
-                self.__sessions.append(local_session)
+            local_session = _Session(
+                token, user_name, groups,
+                self.__auth_config['session_lifetime'],
+                is_root, self.__database_connection)
+            self.__sessions.append(local_session)
 
-                if self.__database_connection:
-                    try:
-                        transaction = self.__database_connection()
+            if self.__database_connection:
+                try:
+                    transaction = self.__database_connection()
+                    record = SessionRecord(token, user_name,
+                                           ';'.join(groups))
+                    transaction.add(record)
+                    transaction.commit()
+                except Exception as e:
+                    LOG.error("Couldn't store or update login record in "
+                              "database:")
+                    LOG.error(str(e))
+                finally:
+                    if transaction:
+                        transaction.close()
 
-                        if not db_token:
-                            # The session created locally was done with a brand
-                            # new token, so the cookie must be saved to the
-                            # database.
-                            record = SessionRecord(sess_hash, token)
-                            transaction.add(record)
-                        else:
-                            # The local session was created with a token that
-                            # was found in the database. In this case, a new
-                            # row cannot be added, but we must update the
-                            # timestamp of the user's access.
-                            transaction.query(SessionRecord) \
-                                .filter(SessionRecord.token == db_token) \
-                                .update(
-                                    {SessionRecord.last_access:
-                                     datetime.now()})
-
-                        transaction.commit()
-                    except Exception as e:
-                        LOG.error("Couldn't store or update login record in "
-                                  "database:")
-                        LOG.error(str(e))
-                    finally:
-                        if transaction:
-                            transaction.close()
-
-            return local_session
-
-        return False
+        return local_session
 
     def get_max_run_count(self):
         """
@@ -472,10 +417,48 @@ class SessionManager:
         """
         return self.__max_run_count
 
+    def _get_local_session_from_db(self, token):
+        """
+        Creates a local session if a valid session token can be found in the
+        database.
+        """
+
+        if not self.__database_connection:
+            return
+
+        try:
+            transaction = self.__database_connection()
+            db_record = transaction.query(SessionRecord) \
+                .filter(SessionRecord.token == token) \
+                .limit(1).one_or_none()
+
+            if db_record:
+                user_name = db_record.user_name
+                system_permission = transaction.query(SystemPermission) \
+                    .filter(SystemPermission.name == user_name) \
+                    .limit(1).one_or_none()
+
+                is_root = True if system_permission else False
+                local_session = _Session(
+                    token, user_name,
+                    db_record.groups.split(';'),
+                    self.__auth_config['session_lifetime'],
+                    is_root, self.__database_connection,
+                    db_record.last_access)
+
+                return local_session
+        except Exception as e:
+            LOG.error("Couldn't check login in the database: ")
+            LOG.error(str(e))
+        finally:
+            if transaction:
+                transaction.close()
+
     def get_session(self, token):
         """
         Retrieves the session for the given session cookie token from the
-        server's memory backend, if such session exists.
+        server's memory backend, if such session exists or creates and returns
+        a new one if the token exists in the database.
 
         :returns: The session object if one was found. None if authentication
         is not enabled, or if the cookie is not valid anymore.
@@ -485,31 +468,37 @@ class SessionManager:
             return None
 
         for sess in self.__sessions:
-            if sess.token == token:
+            if sess.is_alive and sess.token == token:
                 return sess
 
-        return None
+        # Try to get a local session from the database.
+        local_session = self._get_local_session_from_db(token)
+        if local_session and local_session.is_alive:
+            self.__sessions.append(local_session)
+        else:
+            self.invalidate(token)
+
+        return local_session
 
     def invalidate(self, token):
         """
         Remove a user's previous session from the store.
         """
-
         try:
             transaction = self.__database_connection() \
                 if self.__database_connection else None
 
+            # Remove local sessions.
             for session in self.__sessions[:]:
                 if session.token == token:
                     self.__sessions.remove(session)
 
-                    if transaction:
-                        transaction.query(SessionRecord). \
-                            filter(and_(SessionRecord.auth_string ==
-                                        session.persistent_hash,
-                                        SessionRecord.token == token)). \
-                            delete()
-                        transaction.commit()
+            # Remove sessions from the database.
+            if transaction:
+                transaction.query(SessionRecord) \
+                    .filter(SessionRecord.token == token) \
+                    .delete()
+                transaction.commit()
 
             return True
         except Exception as e:

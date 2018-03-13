@@ -19,6 +19,8 @@ import subprocess
 import time
 import unittest
 
+from shared.ttypes import Permission
+
 from ProductManagement_v6.ttypes import ProductConfiguration
 from ProductManagement_v6.ttypes import DatabaseConnection
 
@@ -94,6 +96,12 @@ class TestProductConfigShare(unittest.TestCase):
         # Create a SUPERUSER login.
         root_token = self._auth_client.performLogin("Username:Password",
                                                     "root:root")
+
+        ret = self._auth_client.addPermission(Permission.SUPERUSER,
+                                              "root",
+                                              False,
+                                              "")
+        self.assertTrue(ret)
 
         # Setup a product client to test product API calls.
         self._pr_client = env.setup_product_client(self.test_workspace_main)
