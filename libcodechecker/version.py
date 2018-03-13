@@ -23,3 +23,8 @@ SUPPORTED_VERSIONS = {
 CLIENT_API = '{0}.{1}'.format(
     max(SUPPORTED_VERSIONS.keys()),
     SUPPORTED_VERSIONS[max(SUPPORTED_VERSIONS.keys())])
+
+
+def get_version_str():
+    return ', '.join(["v" + str(v) + "." + str(SUPPORTED_VERSIONS[v])
+                      for v in SUPPORTED_VERSIONS])
