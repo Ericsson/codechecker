@@ -1805,8 +1805,9 @@ class ThriftRequestHandler(object):
                                                      None)
         return file_path_to_id
 
-    def __store_reports(self, session, report_dir, source_root, run_id,
-                        file_path_to_id, run_history_time, severity_map):
+    def __store_reports(self, session, source_root, run_id,
+                        file_path_to_id, run_history_time, severity_map,
+                        parsed_files_and_reports):
         """
         Parse up and store the plist report files.
         """
@@ -1821,22 +1822,7 @@ class ThriftRequestHandler(object):
 
         already_added = set()
         new_bug_hashes = set()
-
-        # Processing PList files.
-        _, _, report_files = next(os.walk(report_dir), ([], [], []))
-        for f in report_files:
-            if not f.endswith('.plist'):
-                continue
-
-            LOG.debug("Parsing input file '" + f + "'")
-
-            try:
-                files, reports = plist_parser.parse_plist(
-                    os.path.join(report_dir, f), source_root)
-            except Exception as ex:
-                LOG.error('Parsing the plist failed: ' + str(ex))
-                continue
-
+        for files, reports in parsed_files_and_reports:
             file_ids = {}
             for file_name in files:
                 file_ids[file_name] = file_path_to_id[file_name]
@@ -2090,6 +2076,25 @@ class ThriftRequestHandler(object):
                     # Round the duration to seconds.
                     durations = int(sum(check_durations))
 
+                parsed_files_and_reports = []
+                # Processing PList files.
+                _, _, report_files = next(os.walk(report_dir), ([], [], []))
+                for f in report_files:
+                    if not f.endswith('.plist'):
+                        continue
+
+                    LOG.debug("Parsing input file '" + f + "'")
+
+                    try:
+                        source_files, reports = plist_parser.parse_plist(
+                            os.path.join(report_dir, f), source_root)
+                        parsed_files_and_reports.append(
+                            (source_files, reports))
+
+                    except Exception as ex:
+                        LOG.error('Parsing the plist failed: ' + str(ex))
+                        continue
+
                 # This session's transaction buffer stores the actual run data
                 # into the database.
                 with DBSession(self.__Session) as session:
@@ -2119,12 +2124,12 @@ class ThriftRequestHandler(object):
                                                          force)
 
                     self.__store_reports(session,
-                                         report_dir,
                                          source_root,
                                          run_id,
                                          file_path_to_id,
                                          run_history_time,
-                                         context.severity_map)
+                                         context.severity_map,
+                                         parsed_files_and_reports)
 
                     store_handler.setRunDuration(session,
                                                  run_id,
