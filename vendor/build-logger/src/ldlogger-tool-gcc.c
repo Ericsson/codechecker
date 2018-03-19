@@ -39,6 +39,13 @@ static const char* const srcExts[] = {
 };
 
 /**
+ * List of file extensions accepted as object file.
+ */
+static const char* const objExts[] = {
+  "o", "so", "a", NULL
+};
+
+/**
  * List of compiler name infixes belonging to C compilers.
  */
 static const char* const cCompiler[] = {
@@ -320,6 +327,22 @@ char* findFullPath(const char* executable, char* fullpath) {
   return 0;
 }
 
+int isObjectFile(const char* filename_)
+{
+  char* ext = loggerGetFileExt(filename_, 1);
+
+  int i;
+  for (i = 0; objExts[i]; ++i)
+    if (strcmp(ext, objExts[i]) == 0)
+    {
+      free(ext);
+      return 1;
+    }
+
+  free(ext);
+  return 0;
+}
+
 int loggerGccParserCollectActions(
   const char* prog_,
   const char* toolName_,
@@ -337,6 +360,9 @@ int loggerGccParserCollectActions(
   size_t lastSysIncPos = 1;
   GccArgsState state = Normal;
   LoggerAction* action = loggerActionNew(toolName_);
+
+  char* keepLinkVar = getenv("CC_LOGGER_KEEP_LINK");
+  int keepLink = keepLinkVar && strcmp(keepLinkVar, "true") == 0;
 
   /* If prog_ is a relative path we try to
    * convert it to absolute path.
@@ -477,6 +503,14 @@ int loggerGccParserCollectActions(
     loggerVectorErase(&action->sources, i);
   }
 
-  loggerVectorAdd(actions_, action);
+  if (!keepLink)
+    do {
+      i = loggerVectorFindIf(&action->sources, (LoggerPredFuc) &isObjectFile);
+      loggerVectorErase(&action->sources, i);
+    } while (i != SIZE_MAX);
+
+  if (action->sources.size != 0)
+    loggerVectorAdd(actions_, action);
+
   return 1;
 }

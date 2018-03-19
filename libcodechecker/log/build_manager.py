@@ -46,7 +46,7 @@ def execute_buildcmd(command, silent=False, env=None, cwd=None):
     return proc.returncode
 
 
-def perform_build_command(logfile, command, context, silent=False):
+def perform_build_command(logfile, command, context, keep_link, silent=False):
     """
     Build the project and create a log file.
     """
@@ -85,6 +85,9 @@ def perform_build_command(logfile, command, context, silent=False):
             log_env = analyzer_env.get_log_env(logfile, context, original_env)
             if 'CC_LOGGER_GCC_LIKE' not in log_env:
                 log_env['CC_LOGGER_GCC_LIKE'] = 'gcc:g++:clang:clang++:cc:c++'
+            if keep_link or ('CC_LOGGER_KEEP_LINK' in log_env and
+                             log_env['CC_LOGGER_KEEP_LINK'] == 'true'):
+                log_env['CC_LOGGER_KEEP_LINK'] = 'true'
         else:
             LOG.error("Intercept-build is required"
                       " to run CodeChecker in OS X.")
@@ -117,66 +120,3 @@ def default_compilation_db(workspace_path, run_name):
                         + uid + '.json'
     compilation_commands = os.path.join(workspace_path, cmp_json_filename)
     return compilation_commands
-
-
-def check_log_file(args, context):
-    """
-    Check if the compilation command file was set in the command line.
-    If the argument is not set generate a new.
-    """
-    log_file = None
-    set_in_cmdline = False
-    try:
-        log_file = os.path.realpath(args.logfile)
-        if not os.path.exists(log_file):
-            LOG.error("The given compilation database"
-                      "file does not exists: " + log_file)
-            log_file = None
-        set_in_cmdline = True
-    except AttributeError as ex:
-        # args.log_file was not set.
-        LOG.debug(ex)
-        LOG.debug("Compilation database file was not set"
-                  " in the command line.")
-        log_file = generate_log_file(args, context, args.quiet_build)
-    finally:
-        return log_file, set_in_cmdline
-
-
-def generate_log_file(args, context, silent=False):
-    """
-    Returns a build command log file.
-    """
-
-    log_file = None
-    try:
-        if args.command:
-
-            intercept_build_executable = find_executable('intercept-build')
-
-            if intercept_build_executable is None:
-                if platform.system() == 'Linux':
-                    # Check if logger bin exists.
-                    if not os.path.isfile(context.path_logger_bin):
-                        LOG.error('Logger binary not found!'
-                                  'Required for logging.')
-                        sys.exit(1)
-
-                    # Check if logger lib exists.
-                    if not os.path.exists(context.path_logger_lib):
-                        LOG.error('Logger library directory not found!'
-                                  'Libs are required for logging.')
-                        sys.exit(1)
-
-            log_file = default_compilation_db(args.workspace, args.name)
-            open(log_file, 'a').close()  # Same as linux's touch.
-
-            perform_build_command(log_file,
-                                  args.command,
-                                  context,
-                                  silent=silent)
-
-    except AttributeError:
-        LOG.error("Missing build command.")
-    finally:
-        return log_file

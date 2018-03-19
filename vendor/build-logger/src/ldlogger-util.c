@@ -285,6 +285,18 @@ size_t loggerVectorFind(
   return SIZE_MAX;
 }
 
+size_t loggerVectorFindIf(
+  LoggerVector* vec_,
+  LoggerPredFuc pred_)
+{
+  size_t i;
+  for (i = 0; i < vec_->size; ++i)
+    if (pred_(vec_->data[i]) != 0)
+      return i;
+
+  return SIZE_MAX;
+}
+
 void loggerVectorErase(LoggerVector* vec_, size_t index_)
 {
   size_t i;

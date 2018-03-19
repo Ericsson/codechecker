@@ -69,6 +69,13 @@ def add_arguments_to_parser(parser):
                              "'make', but a more complex command, or the call "
                              "of a custom script file is also supported.")
 
+    parser.add_argument('-k', '--keep-link',
+                        dest="keep_link",
+                        default=argparse.SUPPRESS,
+                        action="store_true",
+                        help="If this flag is given then the output log file "
+                             "will contain the linking build actions too.")
+
     parser.add_argument('-q', '--quiet',
                         dest="quiet",
                         action='store_true',
@@ -96,4 +103,5 @@ def main(args):
     build_manager.perform_build_command(args.logfile,
                                         args.command,
                                         context,
+                                        'keep_link' in args,
                                         silent='quiet' in args)
