@@ -18,6 +18,8 @@ import socket
 import stat
 import subprocess
 import tempfile
+import uuid
+
 from threading import Timer
 
 import psutil
@@ -32,6 +34,28 @@ class CmdLineOutputEncoder(json.JSONEncoder):
         d = {}
         d.update(o.__dict__)
         return d
+
+
+class DBSession(object):
+    """
+    Requires a session maker object and creates one session which can be used
+    in the context.
+
+    The session will be automatically closed, but commiting must be done
+    inside the context.
+    """
+    def __init__(self, session_maker):
+        self.__session = None
+        self.__session_maker = session_maker
+
+    def __enter__(self):
+        # create new session
+        self.__session = self.__session_maker()
+        return self.__session
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.__session:
+            self.__session.close()
 
 
 def get_free_port():
@@ -597,3 +621,10 @@ def trim_path_prefixes(path, prefixes):
         return path
 
     return path[len(longest_matching_prefix):]
+
+
+def generate_session_token():
+    """
+    Returns a random session token.
+    """
+    return uuid.UUID(bytes=os.urandom(16)).__str__().replace('-', '')

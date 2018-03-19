@@ -90,6 +90,22 @@ class DictAuth(unittest.TestCase):
         user = authd_auth_client.getLoggedInUser()
         self.assertEqual(user, "cc")
 
+        # No personal token in the database.
+        personal_tokens = authd_auth_client.getTokens()
+        self.assertEqual(len(personal_tokens), 0)
+
+        # Create a new personal token.
+        description = "description"
+        personal_token = authd_auth_client.newToken(description)
+        token = personal_token.token
+        self.assertEqual(personal_token.description, description)
+
+        # Check whether the new token has been added.
+        personal_tokens = authd_auth_client.getTokens()
+        self.assertEqual(len(personal_tokens), 1)
+        self.assertEqual(personal_tokens[0].token, token)
+        self.assertEqual(personal_tokens[0].description, description)
+
         auth_client = env.setup_auth_client(self._test_workspace,
                                             session_token=self.sessionToken)
         result = auth_client.destroySession()
@@ -99,6 +115,46 @@ class DictAuth(unittest.TestCase):
         # Kill the session token that was created by login() too.
         codechecker.logout(self._test_cfg['codechecker_cfg'],
                            self._test_workspace)
+
+        auth_token_client = \
+            env.setup_auth_client(self._test_workspace,
+                                  session_token=token)
+
+        # Log-in by using an already generated personal token.
+        self.sessionToken = auth_token_client.performLogin("Username:Password",
+                                                           "cc:" + token)
+
+        self.assertIsNotNone(self.sessionToken,
+                             "Valid credentials didn't give us a token!")
+
+        user = auth_token_client.getLoggedInUser()
+        self.assertEqual(user, "cc")
+
+        result = auth_token_client.destroySession()
+        self.assertTrue(result, "Server did not allow us to destroy session.")
+
+        # Kill the session token that was created by login() too.
+        codechecker.logout(self._test_cfg['codechecker_cfg'],
+                           self._test_workspace)
+
+        self.sessionToken = auth_client.performLogin("Username:Password",
+                                                     "cc:test")
+        self.assertIsNotNone(self.sessionToken,
+                             "Valid credentials didn't give us a token!")
+
+        auth_client = env.setup_auth_client(self._test_workspace,
+                                            session_token=self.sessionToken)
+        # Remove the generated personal token.
+        ret = auth_client.removeToken(token)
+        self.assertTrue(ret)
+
+        # Check whether no more personal token in the database.
+        personal_tokens = auth_client.getTokens()
+        self.assertEqual(len(personal_tokens), 0)
+
+        result = auth_client.destroySession()
+
+        self.assertTrue(result, "Server did not allow us to destroy session.")
 
         with self.assertRaises(TProtocolException):
             # The server reports a HTTP 401 error which is not a valid

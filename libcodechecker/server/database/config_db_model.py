@@ -15,6 +15,7 @@ import sys
 from sqlalchemy import MetaData, Column, Integer, Enum, String, Boolean, \
     ForeignKey, CHAR, DateTime, Text
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.sql.expression import true
 
 from libcodechecker.server import permissions
 
@@ -113,20 +114,30 @@ class ProductPermission(Base):
 
 
 class Session(Base):
-    __tablename__ = 'user_sessions'
+    __tablename__ = 'auth_sessions'
 
-    user_name = Column(String, primary_key=True)
-    token = Column(CHAR(32), nullable=False, index=True)
+    id = Column(Integer, autoincrement=True, primary_key=True)
+
+    user_name = Column(String)
+    token = Column(CHAR(32), nullable=False, unique=True)
 
     # List of group names separated by semicolons.
     groups = Column(String)
 
     last_access = Column(DateTime, nullable=False)
 
-    def __init__(self, token, user_name, groups):
+    # Token description.
+    description = Column(String)
+
+    can_expire = Column(Boolean, server_default=true(), default=True)
+
+    def __init__(self, token, user_name, groups, description=None,
+                 can_expire=True):
         self.token = token
         self.user_name = user_name
         self.groups = groups
+        self.description = description
+        self.can_expire = can_expire
         self.last_access = datetime.now()
 
 

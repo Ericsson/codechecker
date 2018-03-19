@@ -8,19 +8,19 @@ Handle Thrift requests for authentication.
 """
 
 import json
-
-import sqlalchemy
-
 import shared
+
 from Authentication_v6.ttypes import *
 
 from libcodechecker.logger import get_logger
 from libcodechecker.profiler import timeit
 from libcodechecker.server import permissions
+from libcodechecker.server.database.config_db_model import Session
 from libcodechecker.server.permissions \
     import handler_from_scope_params as make_handler
 from libcodechecker.server.permissions \
     import require_manager, require_permission
+from libcodechecker.util import generate_session_token, DBSession
 
 LOG = get_logger('server')
 
@@ -34,6 +34,17 @@ class ThriftAuthHandler(object):
         self.__manager = manager
         self.__auth_session = auth_session
         self.__config_db = config_database
+
+    def __require_privilaged_access(self):
+        """
+        Checks if privilaged access is enabled for the server. Throws an
+        exception if it is not.
+        """
+        if not self.getLoggedInUser():
+            raise shared.ttypes.RequestFailed(
+                shared.ttypes.ErrorCode.UNAUTHORIZED,
+                "The server must be start by using privilaged access to "
+                "execute this action.")
 
     @timeit
     def checkAPIVersion(self):
@@ -140,9 +151,7 @@ class ThriftAuthHandler(object):
             # to getPermissions().
             return self.getPermissions(scope)
 
-        try:
-            session = self.__config_db()
-
+        with DBSession(self.__config_db) as session:
             # The database connection must always be passed to the permission
             # handler.
             params = ThriftAuthHandler.__unpack_extra_params(extra_params,
@@ -169,14 +178,6 @@ class ThriftAuthHandler(object):
             return [permissions.api_enum_for_permission(p)
                     for p in perms]
 
-        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
-            msg = str(alchemy_ex)
-            LOG.error(msg)
-            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
-                                              msg)
-        finally:
-            session.close()
-
     @timeit
     def getAuthorisedNames(self, permission, extra_params):
         """
@@ -184,8 +185,7 @@ class ThriftAuthHandler(object):
         permission.
         """
 
-        try:
-            session = self.__config_db()
+        with DBSession(self.__config_db) as session:
             perm, params = ThriftAuthHandler.__create_permission_args(
                 permission, extra_params, session)
 
@@ -203,22 +203,13 @@ class ThriftAuthHandler(object):
 
             return AuthorisationList(users, groups)
 
-        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
-            msg = str(alchemy_ex)
-            LOG.error(msg)
-            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
-                                              msg)
-        finally:
-            session.close()
-
     @timeit
     def addPermission(self, permission, auth_name, is_group, extra_params):
         """
         Adds the given permission to the user or group named auth_name.
         """
 
-        try:
-            session = self.__config_db()
+        with DBSession(self.__config_db) as session:
             perm, params = ThriftAuthHandler.__create_permission_args(
                 permission, extra_params, session)
 
@@ -234,22 +225,13 @@ class ThriftAuthHandler(object):
             session.commit()
             return True
 
-        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
-            msg = str(alchemy_ex)
-            LOG.error(msg)
-            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
-                                              msg)
-        finally:
-            session.close()
-
     @timeit
     def removePermission(self, permission, auth_name, is_group, extra_params):
         """
         Removes the given permission from the user or group auth_name.
         """
 
-        try:
-            session = self.__config_db()
+        with DBSession(self.__config_db) as session:
             perm, params = ThriftAuthHandler.__create_permission_args(
                 permission, extra_params, session)
 
@@ -265,14 +247,6 @@ class ThriftAuthHandler(object):
             session.commit()
             return True
 
-        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
-            msg = str(alchemy_ex)
-            LOG.error(msg)
-            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
-                                              msg)
-        finally:
-            session.close()
-
     @timeit
     def hasPermission(self, permission, extra_params):
         """
@@ -282,18 +256,79 @@ class ThriftAuthHandler(object):
         This method observes permission inheritance.
         """
 
-        try:
-            session = self.__config_db()
+        with DBSession(self.__config_db) as session:
             perm, params = ThriftAuthHandler.__create_permission_args(
                 permission, extra_params, session)
 
             return require_permission(perm, params,
                                       self.__auth_session)
 
-        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
-            msg = str(alchemy_ex)
-            LOG.error(msg)
-            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
-                                              msg)
-        finally:
-            session.close()
+    # ============= Authorization, permission management =============
+
+    @timeit
+    def newToken(self, description):
+        """
+        Generate a new personal access token with the given description.
+        """
+        self.__require_privilaged_access()
+        with DBSession(self.__config_db) as session:
+            token = generate_session_token()
+            user = self.getLoggedInUser()
+            session_token = Session(token, user, None, description, False)
+
+            session.add(session_token)
+            session.commit()
+
+            return SessionTokenData(token,
+                                    description,
+                                    str(session_token.last_access))
+
+    @timeit
+    def removeToken(self, token):
+        """
+        Removes the given personal access token of the logged in user.
+        """
+        self.__require_privilaged_access()
+        with DBSession(self.__config_db) as session:
+            # Check if the given token is a personal access token so it can be
+            # removed.
+            user = self.getLoggedInUser()
+            num_of_removed = session.query(Session) \
+                .filter(Session.user_name == user) \
+                .filter(Session.token == token) \
+                .filter(Session.can_expire.is_(False)) \
+                .delete(synchronize_session=False)
+            session.commit()
+
+            if not num_of_removed:
+                raise shared.ttypes.RequestFailed(
+                    shared.ttypes.ErrorCode.DATABASE,
+                    "Personal access token {0} was not found in the "
+                    "database.".format(token))
+
+            # Invalidate the local session by token.
+            self.__manager.invalidate_local_session(token)
+
+            return True
+
+    @timeit
+    def getTokens(self):
+        """
+        Get available personal access tokens of the logged in user.
+        """
+        self.__require_privilaged_access()
+        with DBSession(self.__config_db) as session:
+            user = self.getLoggedInUser()
+            sessionTokens = session.query(Session) \
+                .filter(Session.user_name == user) \
+                .filter(Session.can_expire.is_(False)) \
+                .all()
+
+            result = []
+            for t in sessionTokens:
+                result.append(SessionTokenData(
+                    t.token,
+                    t.description,
+                    str(t.last_access)))
+
+            return result

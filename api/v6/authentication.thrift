@@ -26,6 +26,13 @@ struct PermissionFilter {
   2: bool canManage   // The user can manage other users' authorisation to this permission.
 }
 
+struct SessionTokenData {
+  1: string token,          // Session token.
+  2: string description,    // Short description of the token.
+  3: string lastAccess,     // Last access time of the token in format 'yyyy-mm-dd hh:mm:ss.zzzzzz'.
+}
+typedef list<SessionTokenData> SessionTokenDataList
+
 service codeCheckerAuthentication {
 
   // This method is a dummy stub requiring no permissions. When a server is
@@ -116,5 +123,14 @@ service codeCheckerAuthentication {
   bool hasPermission(1: shared.Permission permission,
                      2: string            extraParams)
                      throws (1: shared.RequestFailed requestError)
+
+  SessionTokenDataList getTokens()
+                                 throws (1: shared.RequestFailed requestError)
+
+  SessionTokenData newToken(1: string description)
+                            throws (1: shared.RequestFailed requestError)
+
+  bool removeToken(1: string token)
+                   throws (1: shared.RequestFailed requestError)
 
 }
