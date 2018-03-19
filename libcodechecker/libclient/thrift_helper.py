@@ -4,19 +4,13 @@
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
 
-import os
-import socket
-import sys
-
 from thrift.transport import THttpClient
 from thrift.protocol import TJSONProtocol
-from thrift.protocol.TProtocol import TProtocolException
-from thrift.Thrift import TApplicationException
 
-import shared
 from codeCheckerDBAccess_v6 import codeCheckerDBAccess
 
 from libcodechecker import util
+from libcodechecker.libclient.thrift_call import ThriftClientCall
 from libcodechecker.logger import get_logger
 
 from credential_manager import SESSION_COOKIE_NAME
@@ -37,71 +31,6 @@ class ThriftClientHelper(object):
         if session_token:
             headers = {'Cookie': SESSION_COOKIE_NAME + '=' + session_token}
             self.transport.setCustomHeaders(headers)
-
-    def ThriftClientCall(function):
-        # LOG.debug(type(function))
-        funcName = function.__name__
-
-        def wrapper(self, *args, **kwargs):
-            # LOG.debug('['+self.__host+':'+str(self.__port)+'] '
-            #       '>>>>> ['+funcName+']')
-            # before = datetime.datetime.now()
-            self.transport.open()
-            func = getattr(self.client, funcName)
-            try:
-                res = func(*args, **kwargs)
-                return res
-            except shared.ttypes.RequestFailed as reqfailure:
-                if reqfailure.errorCode == shared.ttypes.ErrorCode.DATABASE:
-                    LOG.error('Database error on server')
-                    LOG.error(str(reqfailure.message))
-                elif reqfailure.errorCode ==\
-                        shared.ttypes.ErrorCode.AUTH_DENIED:
-                    LOG.error('Authentication denied')
-                    LOG.error(str(reqfailure.message))
-                elif reqfailure.errorCode ==\
-                        shared.ttypes.ErrorCode.UNAUTHORIZED:
-                    LOG.error('Unauthorized to access')
-                    LOG.error(str(reqfailure.message))
-                else:
-                    LOG.error('API call error: ' + funcName)
-                    LOG.error(str(reqfailure))
-
-                raise
-            except TApplicationException as ex:
-                LOG.error("Internal server error on {0}:{1}"
-                          .format(self.__host, self.__port))
-                LOG.error(ex.message)
-            except TProtocolException as ex:
-                if ex.type == TProtocolException.UNKNOWN:
-                    LOG.debug('Unknown thrift error')
-                elif ex.type == TProtocolException.INVALID_DATA:
-                    LOG.debug('Thrift invalid data error.')
-                elif ex.type == TProtocolException.NEGATIVE_SIZE:
-                    LOG.debug('Thrift negative size error.')
-                elif ex.type == TProtocolException.SIZE_LIMIT:
-                    LOG.debug('Thrift size limit error.')
-                elif ex.type == TProtocolException.BAD_VERSION:
-                    LOG.debug('Thrift bad version error.')
-                LOG.debug(funcName)
-                LOG.debug(args)
-                LOG.debug(kwargs)
-                LOG.debug(ex.message)
-                LOG.error("Request failed to {0}:{1}"
-                          .format(self.__host, self.__port))
-                sys.exit(1)
-            except socket.error as serr:
-                LOG.error("Connection failed to {0}:{1}"
-                          .format(self.__host, self.__port))
-                errCause = os.strerror(serr.errno)
-                LOG.error(errCause)
-                LOG.error(str(serr))
-                LOG.error("Check if your CodeChecker server is running.")
-                sys.exit(1)
-            finally:
-                self.transport.close()
-
-        return wrapper
 
     @ThriftClientCall
     def getRunData(self, run_name_filter):
