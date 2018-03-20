@@ -55,7 +55,7 @@ DROP_DB_CMD = bash -c 'psql -h localhost \
 		-p $${TEST_DBPORT} -U $${TEST_DBUSERNAME} postgres \
 		-c "DROP DATABASE codechecker_config_$${CODECHECKER_DB_DRIVER}"'
 
-run_test: package venv_dev
+run_test: venv_dev
 	$(ACTIVATE_DEV_VENV) && \
 		$(REPO_ROOT) $(CLANG_VERSION) $(TEST_PROJECT) \
 		nosetests $(NOSECFG) ${TEST} \
@@ -71,37 +71,37 @@ test_functional: test_sqlite test_psql
 
 test_functional_novenv: test_sqlite_novenv test_psql_novenv
 
-test_sqlite: package venv_dev
+test_sqlite: venv_dev
 		$(ACTIVATE_DEV_VENV) && $(FUNCTIONAL_TEST_CMD)
 
-test_sqlite_novenv: package
+test_sqlite_novenv:
 		$(FUNCTIONAL_TEST_CMD)
 
 test_psql: test_psql_psycopg2 test_psql_pg8000
 
 test_psql_novenv: test_psql_psycopg2_novenv test_psql_pg8000_novenv
 
-test_psql_psycopg2: package venv_dev
+test_psql_psycopg2: venv_dev
 	$(ACTIVATE_DEV_VENV) && \
 		$(DBUNAME) $(DBPORT) $(PSYCOPG2) $(MAKE_DB_CMD) && \
 		$(PSQL) $(DBUNAME) $(DBPORT) $(PSYCOPG2) \
 		$(FUNCTIONAL_TEST_CMD) && \
 		$(DBUNAME) $(DBPORT) $(PSYCOPG2) $(DROP_DB_CMD)
 
-test_psql_psycopg2_novenv: package
+test_psql_psycopg2_novenv:
 		$(DBUNAME) $(DBPORT) $(PSYCOPG2) $(MAKE_DB_CMD) && \
 		$(PSQL) $(DBUNAME) $(DBPORT) $(PSYCOPG2) \
 		$(FUNCTIONAL_TEST_CMD) && \
 		$(DBUNAME) $(DBPORT) $(PSYCOPG2) $(DROP_DB_CMD)
 
-test_psql_pg8000: package venv_dev
+test_psql_pg8000: venv_dev
 	$(ACTIVATE_DEV_VENV) && \
 		$(DBUNAME) $(DBPORT) $(PG8000) $(MAKE_DB_CMD) && \
 		$(PSQL) $(DBUNAME) $(DBPORT) $(PG8000) \
 		$(FUNCTIONAL_TEST_CMD) && \
 		$(DBUNAME) $(DBPORT) $(PG8000) $(DROP_DB_CMD)
 
-test_psql_pg8000_novenv: package
+test_psql_pg8000_novenv:
 		$(DBUNAME) $(DBPORT) $(PG8000) $(MAKE_DB_CMD) && \
 		$(PSQL) $(DBUNAME) $(DBPORT) $(PG8000) \
 		$(FUNCTIONAL_TEST_CMD) && \

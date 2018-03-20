@@ -81,5 +81,6 @@ addons:
 
 script:
     - make clean_travis
+    - make package
     - if [[ ! -z "$DATABASE" ]]; then make test_matrix_${DATABASE}; else make test; fi
     - make clean_travis

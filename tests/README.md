@@ -1,4 +1,11 @@
 # Running tests
+
+**Before running the tests the CodeChecker package needs to be built!**
+~~~~~~{.sh}
+# Build the package
+make package
+~~~~~~
+
 |cmd||  
 |----|---|  
 |`make test`| run all tests (unit and functional)|  
