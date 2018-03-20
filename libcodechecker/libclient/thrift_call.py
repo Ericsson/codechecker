@@ -21,13 +21,9 @@ def ThriftClientCall(function):
         - open and close transport,
         - log and handle errors
     """
-    # LOG.debug(type(function))
     funcName = function.__name__
 
     def wrapper(self, *args, **kwargs):
-        # LOG.debug('['+self.__host+':'+str(self.__port)+'] '
-        #       '>>>>> ['+funcName+']')
-        # before = datetime.datetime.now()
         self.transport.open()
         func = getattr(self.client, funcName)
         try:
@@ -55,8 +51,7 @@ def ThriftClientCall(function):
 
             raise
         except TApplicationException as ex:
-            LOG.error("Internal server error on {0}:{1}"
-                      .format(self.__host, self.__port))
+            LOG.error("Internal server error.")
             LOG.error(ex.message)
         except TProtocolException as ex:
             if ex.type == TProtocolException.UNKNOWN:
@@ -73,12 +68,10 @@ def ThriftClientCall(function):
             LOG.error(args)
             LOG.error(kwargs)
             LOG.error(ex.message)
-            LOG.error("Request failed to {0}:{1}"
-                      .format(self.__host, self.__port))
+            LOG.error("Request failed.")
             sys.exit(1)
         except socket.error as serr:
-            LOG.error("Connection failed to {0}:{1}"
-                      .format(self.__host, self.__port))
+            LOG.error("Connection failed.")
             errCause = os.strerror(serr.errno)
             LOG.error(errCause)
             LOG.error(str(serr))
