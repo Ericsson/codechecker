@@ -474,11 +474,12 @@ service codeCheckerDBAccess {
   // run.
   // The "force" parameter removes existing analysis results for a run.
   // PERMISSION: PRODUCT_STORE
-  i64 massStoreRun(1: string runName,
-                   2: string tag,
-                   3: string version,
-                   4: string zipfile,
-                   5: bool   force)
+  i64 massStoreRun(1: string       runName,
+                   2: string       tag,
+                   3: string       version,
+                   4: string       zipfile,
+                   5: bool         force,
+                   6: list<string> trimPathPrefixes)
                    throws (1: shared.RequestFailed requestError),
 
 }

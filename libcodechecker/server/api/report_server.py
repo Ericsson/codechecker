@@ -1758,7 +1758,8 @@ class ThriftRequestHandler(object):
             return list(set(file_hashes) -
                         set(map(lambda fc: fc.content_hash, q)))
 
-    def __store_source_files(self, source_root, filename_to_hash):
+    def __store_source_files(self, source_root, filename_to_hash,
+                             trim_path_prefixes):
         """
         Storing file contents from plist.
         """
@@ -1770,6 +1771,8 @@ class ThriftRequestHandler(object):
                                             file_name.strip("/"))
             source_file_name = os.path.realpath(source_file_name)
             LOG.debug("Storing source file: " + source_file_name)
+            trimmed_file_path = util.trim_path_prefixes(file_name,
+                                                        trim_path_prefixes)
 
             if not os.path.isfile(source_file_name):
                 # The file was not in the ZIP file, because we already
@@ -1780,7 +1783,7 @@ class ThriftRequestHandler(object):
                 fid = None
                 with DBSession(self.__Session) as session:
                     fid = store_handler.addFileRecord(session,
-                                                      file_name,
+                                                      trimmed_file_path,
                                                       file_hash)
                 if not fid:
                     LOG.error("File ID for " + source_file_name +
@@ -1799,7 +1802,7 @@ class ThriftRequestHandler(object):
                 with DBSession(self.__Session) as session:
                     file_path_to_id[file_name] = \
                         store_handler.addFileContent(session,
-                                                     file_name,
+                                                     trimmed_file_path,
                                                      file_content,
                                                      file_hash,
                                                      None)
@@ -2040,7 +2043,8 @@ class ThriftRequestHandler(object):
 
     @exc_to_thrift_reqfail
     @timeit
-    def massStoreRun(self, name, tag, version, b64zip, force):
+    def massStoreRun(self, name, tag, version, b64zip, force,
+                     trim_path_prefixes):
         self.__require_store()
 
         user = self.__auth_session.user if self.__auth_session else None
@@ -2069,7 +2073,8 @@ class ThriftRequestHandler(object):
                     filename_to_hash = json.load(chash_file)
 
                 file_path_to_id = self.__store_source_files(source_root,
-                                                            filename_to_hash)
+                                                            filename_to_hash,
+                                                            trim_path_prefixes)
 
                 run_history_time = datetime.now()
 

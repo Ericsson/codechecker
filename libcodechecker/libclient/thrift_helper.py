@@ -129,5 +129,6 @@ class ThriftClientHelper(object):
         pass
 
     @ThriftClientCall
-    def massStoreRun(self, name, tag, version, zipdir, force):
+    def massStoreRun(self, name, tag, version, zipdir, force,
+                     trim_path_prefixes):
         pass
