@@ -20,41 +20,45 @@ from libcodechecker.analyze.analyzer_env import\
 LOG = get_logger('analyzer')
 
 
+def parse_checkers(clangsa_output):
+    """
+    Parse clang static analyzer checkers list output.
+    Return a list of (checker name, description) tuples.
+    """
+
+    # Checker name and description in one line.
+    pattern = re.compile(
+        r'^\s\s(?P<checker_name>\S*)\s*(?P<description>.*)')
+    checkers_list = []
+    checker_name = None
+    for line in clangsa_output.splitlines():
+        if re.match(r'^CHECKERS:', line) or line == '':
+            continue
+        elif checker_name and not re.match(r'^\s\s\S', line):
+            # Collect description for the checker name.
+            checkers_list.append((checker_name, line.strip()))
+            checker_name = None
+        elif re.match(r'^\s\s\S+$', line.rstrip()):
+            # Only checker name is in the line.
+            checker_name = line.strip()
+        else:
+            # Checker name and description is in one line.
+            match = pattern.match(line.rstrip())
+            if match:
+                current = match.groupdict()
+                checkers_list.append((current['checker_name'],
+                                      current['description']))
+    return checkers_list
+
+
 class ClangSA(analyzer_base.SourceAnalyzer):
     """
     Constructs clang static analyzer commands.
     """
     def __init__(self, config_handler, buildaction):
         self.__disable_ctu = False
+        self.__checker_configs = []
         super(ClangSA, self).__init__(config_handler, buildaction)
-
-    def __parse_checkers(self, clangsa_output):
-        """
-        Parse clang static analyzer checkers, store them to checkers.
-        """
-
-        # Checker name and description in one line.
-        pattern = re.compile(
-            r'^\s\s(?P<checker_name>\S*)\s*(?P<description>.*)')
-
-        checker_name = None
-        for line in clangsa_output.splitlines():
-            if re.match(r'^CHECKERS:', line) or line == '':
-                continue
-            elif checker_name and not re.match(r'^\s\s\S', line):
-                # Collect description for the checker name.
-                self.checkers.append((checker_name, line.strip()))
-                checker_name = None
-            elif re.match(r'^\s\s\S+$', line.rstrip()):
-                # Only checker name is in the line.
-                checker_name = line.strip()
-            else:
-                # Checker name and description is in one line.
-                match = pattern.match(line.rstrip())
-                if match:
-                    current = match.groupdict()
-                    self.checkers.append((current['checker_name'],
-                                          current['description']))
 
     def is_ctu_available(self):
         """
@@ -83,27 +87,35 @@ class ClangSA(analyzer_base.SourceAnalyzer):
     def enable_ctu(self):
         self.__disable_ctu = False
 
-    def get_analyzer_checkers(self, config_handler, env):
+    def add_checker_config(self, checker_cfg):
+        """
+        Add configuration options to specific checkers.
+        checker_cfg should be a list of arguments in case of
+        Clang Static Analyzer like this:
+        ['-Xclang', '-analyzer-config', '-Xclang', 'checker_option=some_value']
+        """
+
+        self.__checker_configs.append(checker_cfg)
+
+    @staticmethod
+    def get_analyzer_checkers(config_handler, env):
         """
         Return the list of the supported checkers.
         """
-        if not self.checkers:
-            analyzer_binary = config_handler.analyzer_binary
+        analyzer_binary = config_handler.analyzer_binary
 
-            command = [analyzer_binary, "-cc1"]
-            for plugin in config_handler.analyzer_plugins:
-                command.extend(["-load", plugin])
-            command.append("-analyzer-checker-help")
+        command = [analyzer_binary, "-cc1"]
+        for plugin in config_handler.analyzer_plugins:
+            command.extend(["-load", plugin])
+        command.append("-analyzer-checker-help")
 
-            try:
-                command = shlex.split(' '.join(command))
-                result = subprocess.check_output(command,
-                                                 env=env)
-                self.__parse_checkers(result)
-            except (subprocess.CalledProcessError, OSError):
-                return {}
-
-        return self.checkers
+        try:
+            command = shlex.split(' '.join(command))
+            result = subprocess.check_output(command,
+                                             env=env)
+            return parse_checkers(result)
+        except (subprocess.CalledProcessError, OSError):
+            return {}
 
     def construct_analyzer_cmd(self, result_handler):
         """
@@ -141,6 +153,12 @@ class ClangSA(analyzer_base.SourceAnalyzer):
                                  '-analyzer-output=' + analyzer_mode])
 
             analyzer_cmd.extend(['-o', analyzer_output_file])
+
+            # Checker configuration arguments needs to be set before
+            # the checkers.
+            if self.__checker_configs:
+                for cfg in self.__checker_configs:
+                    analyzer_cmd.extend(cfg)
 
             # Config handler stores which checkers are enabled or disabled.
             for checker_name, value in config.checks().items():

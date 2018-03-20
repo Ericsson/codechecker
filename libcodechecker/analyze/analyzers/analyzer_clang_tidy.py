@@ -25,6 +25,9 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
     Constructs the clang tidy analyzer commands.
     """
 
+    def add_checker_config(self, checker_cfg):
+        LOG.error("Not implemented yet")
+
     def __parse_checkers(self, tidy_output):
         """
         Parse clang tidy checkers list.

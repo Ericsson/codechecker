@@ -8,18 +8,12 @@ Arranges the 1st phase of 2 phase executions for CTU
 """
 
 import glob
-import multiprocessing
 import os
 import shutil
-import signal
-import sys
 import tempfile
-import traceback
 
 from libcodechecker.analyze.analyzers import analyzer_base
-from libcodechecker.analyze.analyzers import analyzer_types
 from libcodechecker.analyze.analyzers import ctu_triple_arch
-from libcodechecker.analyze import analyzer_env
 from libcodechecker.logger import get_logger
 
 LOG = get_logger('analyzer')
@@ -178,71 +172,3 @@ def map_functions(triple_arch, action, source, config, env,
                                          dir=extern_fns_map_folder,
                                          delete=False) as out_file:
             out_file.write("\n".join(func_ast_list) + "\n")
-
-
-def collect_build_action(params):
-    """ Preprocess sources by generating all data needed by CTU analysis. """
-
-    action, context, analyzer_config_map, skip_handler, \
-        ctu_temp_fnmap_folder = params
-
-    try:
-        for source in action.sources:
-            if skip_handler and skip_handler.should_skip(source):
-                continue
-            if action.analyzer_type != analyzer_types.CLANG_SA:
-                continue
-            config = analyzer_config_map.get(analyzer_types.CLANG_SA)
-            analyzer_environment = analyzer_env.get_check_env(
-                context.path_env_extra,
-                context.ld_lib_path_extra)
-            triple_arch = ctu_triple_arch.get_triple_arch(action, source,
-                                                          config,
-                                                          analyzer_environment)
-            if not config.ctu_in_memory:
-                generate_ast(triple_arch, action, source, config,
-                             analyzer_environment)
-            map_functions(triple_arch, action, source, config,
-                          analyzer_environment, context.ctu_func_map_cmd,
-                          ctu_temp_fnmap_folder)
-    except Exception as ex:
-        LOG.debug_analyzer(str(ex))
-        traceback.print_exc(file=sys.stdout)
-        raise
-
-
-def do_ctu_collect(actions, context, analyzer_config_map,
-                   jobs, skip_handler, ctu_dir):
-    """
-    Start the workers for CTU collect phase.
-    """
-
-    def signal_handler(*arg, **kwarg):
-        try:
-            pool.terminate()
-        finally:
-            sys.exit(1)
-
-    ctu_temp_fnmap_folder = 'tmpExternalFnMaps'
-    ctu_func_map_file = 'externalFnMap.txt'
-
-    signal.signal(signal.SIGINT, signal_handler)
-    pool = multiprocessing.Pool(jobs)
-    try:
-        collect_actions = [(build_action,
-                            context,
-                            analyzer_config_map,
-                            skip_handler,
-                            ctu_temp_fnmap_folder)
-                           for build_action in actions]
-        pool.map_async(collect_build_action, collect_actions).get(float('inf'))
-        pool.close()
-    except Exception:
-        pool.terminate()
-        raise
-    finally:
-        pool.join()
-
-    merge_ctu_func_maps(ctu_dir,
-                        ctu_func_map_file,
-                        ctu_temp_fnmap_folder)

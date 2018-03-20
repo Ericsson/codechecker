@@ -16,8 +16,8 @@ import sys
 from libcodechecker import logger
 from libcodechecker import generic_package_context
 from libcodechecker import host_check
-from libcodechecker.analyze import log_parser
 from libcodechecker.analyze import analyzer
+from libcodechecker.analyze import log_parser
 from libcodechecker.analyze.analyzers import analyzer_types
 
 LOG = logger.get_logger('system')
@@ -242,7 +242,6 @@ def add_arguments_to_parser(parser):
             "when 'CodeChecker analyze' is called.")
 
         ctu_modes = ctu_opts.add_mutually_exclusive_group()
-
         ctu_modes.add_argument('--ctu', '--ctu-all',
                                action='store_const',
                                const=[True, True],
@@ -296,6 +295,49 @@ def add_arguments_to_parser(parser):
                                    "for some reason, try to re analyze the "
                                    "same translation unit without "
                                    "Cross-TU enabled.")
+
+    if host_check.is_statistics_capable():
+        stat_opts = parser.add_argument_group(
+            "EXPERIMENTAL statistics analysis feature arguments",
+            "These arguments are only available if the Clang Static Analyzer "
+            "supports Statistics-based analysis "
+            "(e.g. statisticsCollector.ReturnValueCheck, "
+            "statisticsCollector.SpecialReturnValue checkers are available).")
+        stat_opts.add_argument('--stats-collect', '--stats-collect',
+                               action='store',
+                               default=argparse.SUPPRESS,
+                               dest='stats_output',
+                               help="EXPERIMENTAL feature. "
+                                    "Perform the first, 'collect' phase of "
+                                    "Statistical analysis. This phase "
+                                    "generates extra files needed by "
+                                    "statistics analysis, and "
+                                    "puts them into "
+                                    "'<STATS_OUTPUT>'."
+                                    " NOTE: If this argument is present, "
+                                    "CodeChecker will NOT execute the "
+                                    "analyzers!")
+
+        stat_opts.add_argument('--stats-use', '--stats-use',
+                               action='store',
+                               default=argparse.SUPPRESS,
+                               dest='stats_dir',
+                               help="EXPERIMENTAL feature. "
+                                    "Use the previously generated statistics "
+                                    "results for the analysis from the given "
+                                    "'<STATS_DIR>'.")
+
+        stat_opts.add_argument('--stats',
+                               action='store_true',
+                               default=argparse.SUPPRESS,
+                               dest='stats_enabled',
+                               help="EXPERIMENTAL feature. "
+                                    "Perform both phases of "
+                                    "Statistical analysis. This phase "
+                                    "generates extra files needed by "
+                                    "statistics analysis and enables "
+                                    "the statistical checkers. "
+                                    "No need to enable them explicitly.")
 
     checkers_opts = parser.add_argument_group(
         "checker configuration",
@@ -458,11 +500,3 @@ def main(args):
         LOG.debug("Compilation database JSON file is the same.")
     except Exception:
         LOG.debug("Copying compilation database JSON file failed.")
-
-    LOG.info("Analysis finished.")
-    LOG.info("To view results in the terminal use the "
-             "\"CodeChecker parse\" command.")
-    LOG.info("To store results use the \"CodeChecker store\" command.")
-    LOG.info("See --help and the user guide for further options about"
-             " parsing and storing the reports.")
-    LOG.info("----=================----")

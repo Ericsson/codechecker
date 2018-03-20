@@ -22,6 +22,10 @@ from libcodechecker.analyze import analyzer_env
 from libcodechecker.analyze import plist_parser
 from libcodechecker.analyze.analyzers import analyzer_clangsa
 from libcodechecker.analyze.analyzers import analyzer_types
+from libcodechecker.analyze.statistics_collector \
+    import SpecialReturnValueCollector
+from libcodechecker.analyze.statistics_collector \
+    import ReturnValueCollector
 from libcodechecker.logger import get_logger
 
 LOG = get_logger('analyzer')
@@ -204,14 +208,6 @@ def get_dependent_headers(buildaction, archive):
     return dependencies
 
 
-def __escape_source_path(source):
-    """
-    Escape the spaces in the source path, but make sure not to
-    over-escape already escaped spaces.
-    """
-    return '\ '.join(source.replace('\ ', ' ').split(' '))
-
-
 def collect_debug_data(zip_file, other_files, buildaction, out, err,
                        original_command, analyzer_cmd, analyzer_returncode,
                        action_directory, action_target, actions_map):
@@ -343,7 +339,8 @@ def is_ctu_active(source_analyzer):
 
 
 def prepare_check(source, action, analyzer_config_map, output_dir,
-                  severity_map, skip_handler, disable_ctu=False):
+                  severity_map, skip_handler, statistics_data,
+                  disable_ctu=False):
     """
     Construct the source analyzer build the analysis command
     and result handler for the analysis.
@@ -359,6 +356,26 @@ def prepare_check(source, action, analyzer_config_map, output_dir,
         # WARNING! can be called only on ClangSA
         # Needs to be called before construct_analyzer_cmd
         source_analyzer.disable_ctu()
+
+    if action.analyzer_type == analyzer_types.CLANG_SA and statistics_data:
+        # WARNING! Statistical checkers are only supported by Clang
+        # Static Analyzer right now.
+        stats_dir = statistics_data['stats_out_dir']
+
+        # WARNING Because both statistical checkers use the same config
+        # directory it is enough to add it only once. This might change later.
+        # Configuration arguments should be added before the checkers are
+        # enabled.
+        stats_cfg = \
+            SpecialReturnValueCollector.checker_analyze_cfg(stats_dir)
+
+        source_analyzer.add_checker_config(stats_cfg)
+
+        source_analyzer.config_handler.enable_checker(
+            SpecialReturnValueCollector.checker_analyze)
+
+        source_analyzer.config_handler.enable_checker(
+            ReturnValueCollector.checker_analyze)
 
     # Source is the currently analyzed source file
     # there can be more in one buildaction.
@@ -467,7 +484,7 @@ def check(check_data):
         output_dir, skip_handler, quiet_output_on_stdout, \
         capture_analysis_output, analysis_timeout, \
         analyzer_environment, ctu_reanalyze_on_failure, \
-        output_dirs = check_data
+        output_dirs, statistics_data = check_data
 
     skipped = False
     reanalyzed = False
@@ -493,12 +510,12 @@ def check(check_data):
                 skipped = True
                 continue
 
-            source = __escape_source_path(source)
+            source = util.escape_source_path(source)
 
             source_analyzer, analyzer_cmd, rh, reanalyzed = \
                 prepare_check(source, action, analyzer_config_map,
                               output_dir, context.severity_map,
-                              skip_handler)
+                              skip_handler, statistics_data)
 
             # The analyzer invocation calls __create_timeout as a callback
             # when the analyzer starts. This callback creates the timeout
@@ -603,6 +620,7 @@ def check(check_data):
                                       output_dir,
                                       context.severity_map,
                                       skip_handler,
+                                      statistics_data,
                                       True)
 
                     # Fills up the result handler with
@@ -657,7 +675,7 @@ def check(check_data):
 def start_workers(actions_map, actions, context, analyzer_config_map,
                   jobs, output_path, skip_handler, metadata,
                   quiet_analyze, capture_analysis_output, timeout,
-                  ctu_reanalyze_on_failure):
+                  ctu_reanalyze_on_failure, statistics_data):
     """
     Start the workers in the process pool.
     For every build action there is worker which makes the analysis.
@@ -717,7 +735,8 @@ def start_workers(actions_map, actions, context, analyzer_config_map,
                              timeout,
                              analyzer_environment,
                              ctu_reanalyze_on_failure,
-                             output_dirs)
+                             output_dirs,
+                             statistics_data)
                             for build_action in actions]
 
         pool.map_async(check,
