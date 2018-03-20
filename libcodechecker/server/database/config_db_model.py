@@ -113,17 +113,20 @@ class ProductPermission(Base):
 
 
 class Session(Base):
-    __tablename__ = 'sessions'
+    __tablename__ = 'user_sessions'
 
-    # Auth-String is a SHA-256 hash, while token is a Python UUID which is
-    # 32 characters (both in hex expanded format).
-    auth_string = Column(CHAR(64), nullable=False, primary_key=True)
-    token = Column(CHAR(32), nullable=False)
+    user_name = Column(String, primary_key=True)
+    token = Column(CHAR(32), nullable=False, index=True)
+
+    # List of group names separated by semicolons.
+    groups = Column(String)
+
     last_access = Column(DateTime, nullable=False)
 
-    def __init__(self, auth_string, token):
-        self.auth_string = auth_string
+    def __init__(self, token, user_name, groups):
         self.token = token
+        self.user_name = user_name
+        self.groups = groups
         self.last_access = datetime.now()
 
 
