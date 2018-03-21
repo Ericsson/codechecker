@@ -155,14 +155,18 @@ function (declare, Deferred, dom, all, Standby, ContentPane, SelectFilter,
 
       this.currentDiffType = defaultDiffType;
       this.select(this.stateEncoder(this.currentDiffType));
+      this._filterTooltip.reset();
       this.updateReportFilter(this.currentDiffType);
     },
 
     notify : function () {
-      var that = this;
+      this._filterTooltip.reset();
 
+      var that = this;
       this._standBy.show();
       this.getItems().then(function (items) {
+        that._filterTooltip.reset(items);
+
         var selectedItems = items.filter(function (item) {
           return that.currentDiffType === item.id;
         });
