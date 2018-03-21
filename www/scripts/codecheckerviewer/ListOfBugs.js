@@ -369,23 +369,27 @@ function (declare, dom, style, Deferred, ObjectStore, Store, QueryResults,
 
       //--- Run history ---//
 
-     this._runHistory = new RunHistory({
-       title : 'Run history',
-       iconClass : 'customIcon run',
-       runData : this.runData,
-       bugOverView : this._bugOverview,
-       bugFilterView : this._bugFilterView,
-       parent : this,
-       onShow : function () {
-         var state = hashHelper.getState();
+      this._runHistory = new RunHistory({
+        title : 'Run history',
+        iconClass : 'customIcon run',
+        runData : this.runData,
+        bugOverView : this._bugOverview,
+        bugFilterView : this._bugFilterView,
+        parent : this,
+        onShow : function () {
+          if (!this.initalized)
+            this.initRunHistory();
 
-         hashHelper.setStateValues({
-           'tab' : state.tab,
-           'subtab' : 'runHistory'
-         });
-         that.subtab = 'runHistory';
-       }
-     });
+          var state = hashHelper.getState();
+
+          hashHelper.setStateValues({
+            'tab' : state.tab,
+            'subtab' : 'runHistory'
+          });
+          that.subtab = 'runHistory';
+          this.initalized = true;
+        }
+      });
 
       this._bugOverview.addChild(this._bugFilterView);
 
