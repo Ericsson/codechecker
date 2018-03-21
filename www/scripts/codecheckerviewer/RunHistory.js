@@ -8,27 +8,36 @@ define([
   'dojo/_base/declare',
   'dojo/dom-construct',
   'dojo/topic',
+  'dojox/widget/Standby',
   'dijit/layout/ContentPane',
   'codechecker/hashHelper',
   'codechecker/util'],
-function (declare, dom, topic, ContentPane, hashHelper, util) {
+function (declare, dom, topic, Standby, ContentPane, hashHelper, util) {
 
   return declare(ContentPane, {
-    constructor : function (args) {
-      dojo.safeMixin(this, args);
-
-      this.runId = this.runData ? this.runData.runId : null;
+    postCreate : function () {
+      this._standBy = new Standby({
+        target : this.domNode,
+        color : '#ffffff'
+      });
+      this.addChild(this._standBy);
     },
 
-    postCreate : function () {
-      this.inherited(arguments);
-
+    initRunHistory : function () {
       var that = this;
 
-      // Get histories for the actual run
-      var runIds = this.runId ? [this.runId] : null;
-      var historyData = CC_SERVICE.getRunHistory(
-        runIds, CC_OBJECTS.MAX_QUERY_SIZE, 0);
+      var runIds = this.runData ? [this.runData.runId] : null;
+      this._standBy.show();
+      CC_SERVICE.getRunHistory(runIds, CC_OBJECTS.MAX_QUERY_SIZE, 0, null,
+      function (historyData) {
+        that.renderRunHistoryTable(historyData);
+        that._standBy.hide();
+      });
+    },
+
+    // Renders the list of run histories.
+    renderRunHistoryTable : function (historyData) {
+      var that = this;
 
       var historyGroupByDate = {};
       historyData.forEach(function (data) {
@@ -101,7 +110,6 @@ function (declare, dom, topic, ContentPane, hashHelper, util) {
         })
       });
     },
-
 
     _formatDate : function (date) {
       var mm = date.getMonth() + 1; // getMonth() is zero-based
