@@ -89,10 +89,16 @@ class TestSuppress(unittest.TestCase):
         with open(generated_file, 'r') as generated:
             with open(os.path.join(self._test_project_path,
                       "suppress.expected"), 'r') as expected:
-                self.assertEqual(generated.read().strip(),
-                                 expected.read().strip(),
+                generated_content = generated.read()
+                expected_content = expected.read()
+                logging.debug(generated_content)
+                logging.debug(expected_content)
+
+                diff = set(expected_content).difference(generated_content)
+                self.assertEqual(len(diff),
+                                 0,
                                  "The generated suppress file does not "
-                                 "look like what was expected.")
+                                 "look like what was expected")
 
     def test_suppress_import(self):
         """
@@ -131,30 +137,43 @@ class TestSuppress(unittest.TestCase):
         Exported source suppress comment stored as a review status in the db.
         """
         runid = self._runid
-        logging.debug('Get all run results from the db for runid: ' +
+        logging.debug("Get all run results from the db for runid: " +
                       str(runid))
+
+        hash_to_suppress_msgs = {}
+        with open(os.path.join(self._test_project_path,
+                               "suppress.expected"), 'r') as expected:
+            for line in expected:
+                bug_hash, _, msg, status = line.strip().split('||')
+                rw_status = ReviewStatus.FALSE_POSITIVE
+                if status == 'confirmed':
+                    rw_status = ReviewStatus.CONFIRMED
+                elif status == 'intentional':
+                    rw_status = ReviewStatus.INTENTIONAL
+
+                hash_to_suppress_msgs[bug_hash] = {'message': msg,
+                                                   'status': rw_status}
 
         run_results = get_all_run_results(self._cc_client, runid)
         self.assertIsNotNone(run_results)
         self.assertNotEqual(len(run_results), 0)
 
-        bug = run_results[0]
+        for bug_hash in hash_to_suppress_msgs:
+            expected = hash_to_suppress_msgs[bug_hash]
+            report = [x for x in run_results if x.bugHash == bug_hash][0]
 
-        report = self._cc_client.getReport(bug.reportId)
+            # Check the stored suppress comment
+            self.assertEqual(report.reviewData.comment, expected['message'])
+            self.assertEqual(report.reviewData.status, expected['status'])
 
-        # Check the stored suppress comment
-        status = ReviewStatus.FALSE_POSITIVE
-        self.assertEqual(report.reviewData.comment, 'deliberate segfault!')
-        self.assertEqual(report.reviewData.status, status)
+            # Change review status to confirmed bug.
+            review_comment = "This is really a bug"
+            status = ReviewStatus.CONFIRMED
+            success = self._cc_client.changeReviewStatus(
+                report.reportId, status, review_comment)
 
-        # Change review status to confirmed bug.
-        review_comment = 'This is really a bug'
-        status = ReviewStatus.CONFIRMED
-        success = self._cc_client.changeReviewStatus(
-            bug.reportId, status, review_comment)
-
-        self.assertTrue(success)
-        logging.debug('Bug review status changed successfully')
+            self.assertTrue(success)
+            logging.debug("Bug review status changed successfully")
 
         # Check the same project again.
         codechecker_cfg = env.import_test_cfg(
@@ -173,11 +192,9 @@ class TestSuppress(unittest.TestCase):
         self.assertIsNotNone(updated_results)
         self.assertNotEqual(len(updated_results), 0)
 
-        bug = updated_results[0]
+        for bug_hash in hash_to_suppress_msgs:
+            report = [x for x in updated_results if x.bugHash == bug_hash][0]
 
-        report = self._cc_client.getReport(bug.reportId)
-
-        # The stored suppress comment for the same bughash is the same.
-        status = ReviewStatus.CONFIRMED
-        self.assertEqual(report.reviewData.comment, 'This is really a bug')
-        self.assertEqual(report.reviewData.status, status)
+            # Check the stored suppress comment
+            self.assertEqual(report.reviewData.comment, "This is really a bug")
+            self.assertEqual(report.reviewData.status, ReviewStatus.CONFIRMED)

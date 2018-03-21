@@ -10,12 +10,14 @@ enum ErrorCode {
   GENERAL,
   AUTH_DENIED,  // Authentication denied. We do not allow access to the service.
   UNAUTHORIZED, // Authorization denied. User does not have right to perform an action.
-  API_MISMATCH  // The client attempted to query an API version that is not supported by the server.
+  API_MISMATCH, // The client attempted to query an API version that is not supported by the server.
+  SOURCE_FILE,  // The client sent a source code which contains errors (e.g.: source code comment errors).
 }
 
 exception RequestFailed {
-  1: ErrorCode errorCode,
-  2: string    message
+  1: ErrorCode    errorCode,
+  2: string       message,
+  3: list<string> extraInfo
 }
 
 /**

@@ -20,13 +20,13 @@ from codeCheckerDBAccess_v6 import constants, ttypes
 
 from libcodechecker import generic_package_context
 from libcodechecker import logger
-from libcodechecker import suppress_handler
 from libcodechecker import suppress_file_handler
 from libcodechecker.analyze import plist_parser
 from libcodechecker.libclient.client import handle_auth
 from libcodechecker.libclient.client import setup_client
 from libcodechecker.output_formatters import twodim_to_str
 from libcodechecker.report import Report
+from libcodechecker.source_code_comment_handler import SourceCodeCommentHandler
 from libcodechecker.util import split_server_url
 
 
@@ -345,17 +345,25 @@ def handle_diff_results(args):
             bughash = rep.main['issue_hash_content_of_line_in_context']
             source_file = rep.main['location']['file_name']
             bug_line = rep.main['location']['line']
+            checker_name = rep.main['check_name']
+
             new_hashes[bughash] = rep
-            sp_handler = suppress_handler.SourceSuppressHandler(
-                    source_file,
-                    bug_line,
-                    bughash,
-                    rep.main['check_name'])
-            if sp_handler.get_suppressed():
+            sc_handler = SourceCodeCommentHandler(source_file)
+            src_comment_data = sc_handler.filter_source_line_comments(
+                bug_line,
+                checker_name)
+
+            if len(src_comment_data) == 1:
                 suppressed_in_code.append(bughash)
                 LOG.debug("Bug " + bughash +
                           "is suppressed in code. file:" + source_file +
                           "Line "+str(bug_line))
+            elif len(src_comment_data) > 1:
+                LOG.warning(
+                    "Multiple source code comment can be found "
+                    "for '{0}' checker in '{1}' at line {2}. "
+                    "This bug will not be suppressed!".format(
+                        checker_name, source_file, bug_line))
 
         base_hashes = client.getDiffResultsHash(baseids,
                                                 new_hashes.keys(),
@@ -827,7 +835,7 @@ def handle_suppress(args):
         with open(args.input) as supp_file:
             suppress_data = suppress_file_handler.get_suppress_data(supp_file)
 
-        for bug_id, file_name, comment in suppress_data:
+        for bug_id, file_name, comment, status in suppress_data:
             file_name = '%' + file_name
             bug_hash_filter = ttypes.ReportFilter(filepath=[file_name],
                                                   reportHash=[bug_id])
@@ -836,8 +844,13 @@ def handle_suppress(args):
                                            None)
 
             for report in reports:
-                status = ttypes.ReviewStatus.FALSE_POSITIVE
-                client.changeReviewStatus(report.reportId, status, comment)
+                rw_status = ttypes.ReviewStatus.FALSE_POSITIVE
+                if status == 'confirmed':
+                    rw_status = ttypes.ReviewStatus.CONFIRMED
+                elif status == 'intentional':
+                    rw_status = ttypes.ReviewStatus.INTENTIONAL
+
+                client.changeReviewStatus(report.reportId, rw_status, comment)
 
 
 def handle_login(args):

@@ -22,6 +22,7 @@ import os
 import re
 
 from libcodechecker.logger import get_logger
+from libcodechecker.source_code_comment_handler import SourceCodeCommentHandler
 
 LOG = get_logger('system')
 
@@ -43,9 +44,27 @@ def get_suppress_data(suppress_file):
         r"(?P<file_name>[^\\\|]+)\s*\|\|\s*(?P<comment>[^\|]*)$"
     new_format = re.compile(new_format_pattern, re.UNICODE)
 
+    markers = '|'.join(SourceCodeCommentHandler.source_code_comment_markers)
+    src_suppress_format_pattern = r"^(?P<bug_hash>[\d\w]{32})" \
+        r"(\#(?P<bug_hash_type>\d))?\s*\|\|\s*" \
+        r"(?P<file_name>[^\\\|]+)\s*\|\|\s*(?P<comment>[^\|]*)\s*\|\|\s*" \
+        r"(?P<status>[" + markers + "]*)$"
+    src_suppress_format = re.compile(src_suppress_format_pattern, re.UNICODE)
+
     suppress_data = []
 
     for line in suppress_file:
+
+        src_suppress_format_match = re.match(src_suppress_format, line.strip())
+        if src_suppress_format_match:
+            LOG.debug('Match for source code suppress entry format:')
+            src_suppress_format_match = src_suppress_format_match.groupdict()
+            LOG.debug(src_suppress_format_match)
+            suppress_data.append((src_suppress_format_match['bug_hash'],
+                                  src_suppress_format_match['file_name'],
+                                  src_suppress_format_match['comment'],
+                                  src_suppress_format_match['status']))
+            continue
 
         new_format_match = re.match(new_format, line.strip())
         if new_format_match:
@@ -74,7 +93,8 @@ def get_suppress_data(suppress_file):
 
 
 # ---------------------------------------------------------------------------
-def write_to_suppress_file(suppress_file, value, file_name, comment=''):
+def write_to_suppress_file(suppress_file, value, file_name, comment='',
+                           status='false_positive'):
     comment = comment.decode('UTF-8')
 
     LOG.debug('Processing suppress file: ' + suppress_file)
@@ -98,7 +118,8 @@ def write_to_suppress_file(suppress_file, value, file_name, comment=''):
 
         s_file.write(value + COMMENT_SEPARATOR +
                      file_name + COMMENT_SEPARATOR +
-                     comment + '\n')
+                     comment + COMMENT_SEPARATOR +
+                     status + '\n')
         s_file.close()
 
         return True
@@ -130,11 +151,17 @@ def remove_from_suppress_file(suppress_file, value, file_name):
             r"\s*\|\|\s*(?P<comment>[^\|]*)$"
         new_format = re.compile(new_format_pattern, re.UNICODE)
 
+        src_format_pattern = r"^" + value + r"(\#d)?\s*\|\|\s*" + file_name + \
+            r"\s*\|\|\s*(?P<comment>[^\|]*)\s*\|\|\s*(?P<status>[^\|]*)$"
+        src_suppress_format = re.compile(src_format_pattern, re.UNICODE)
+
         def check_for_match(line):
             """
             Check if the line matches the new or old format.
             """
             line = line.strip()
+            if re.match(src_suppress_format, line.strip()):
+                return False
             if re.match(new_format, line.strip()):
                 return False
             if re.match(old_format, line.strip()):

@@ -23,7 +23,7 @@ Table of Contents
     * [Cross Translation Unit (CTU) analysis mode](#ctu)
     * [Statistical analysis mode](#statistical)
   * [`parse`](#parse)
-    * [Suppression in the source code](#suppression-code)
+    * [Source code comments (review status)](#source-code-comments)
       * [Supported formats](#supported-formats)
       * [Exporting source code suppression to suppress file](#suppress-file)
   * [`store`](#store)
@@ -794,33 +794,56 @@ then the results of the analysis can be printed with
 CodeChecker parse ./my_plists
 ~~~~
 
-### <a name="suppression-code"></a> Suppression in the source code
+### <a name="source-code-comments"></a> Source code comments for review status
 
-Suppress comments can be used in the source files to suppress specific or all
-checker results found in a particular line of code. Suppress comment should be
-above the line where the defect was found, and no empty lines are allowed
-between the line with the bug and the suppress comment.
+Source code comments can be used in the source files to change the review status
+of a specific or all checker results found in a particular line of code.
+Source code comment should be above the line where the defect was found, and no
+empty lines are allowed between the line with the bug and the source code
+comment.
 
 Only comment lines staring with `//` are supported!
 
 #### <a name="supported-formats"></a> Supported formats
+The source code comment has the following format:
+~~~~~~~~~~~~~~~~~~~~~
+// codechecker comment type [checker name] comment
+~~~~~~~~~~~~~~~~~~~~~
 
+Multiple source code comment types are allowed:
+ * `codechecker_suppress`
+ * `codechecker_false_positive`
+ * `codechecker_intentional`
+ * `codechecker_confirmed`
+
+Source code comment change the `review status` of a bug in the following form:
+ * `codechecker_suppress` and `codechecker_false_positive` to `False positive`
+ * `codechecker_intentional` to `Intentional`
+ * `codechecker_confirmed` to `Confirmed`.
+
+Note: `codechecker_suppress` does the same as `codechecker_false_positive`.
+
+You can read more about review status [here](https://github.com/Ericsson/codechecker/blob/master/www/userguide/userguide.md#userguide-review-status)
+
+##### Change review status of a specific checker result
 ~~~~~~~~~~~~~~~~~~~~~
 void test() {
   int x;
-  // codechecker_suppress [deadcode.DeadStores] suppress deadcode
+  // codechecker_confirmed [deadcode.DeadStores] suppress deadcode
   x = 1; // warn
 }
 ~~~~~~~~~~~~~~~~~~~~~
 
+##### Change review status of all checker result
 ~~~~~~~~~~~~~~~~~~~~~
 void test() {
   int x;
-  // codechecker_suppress [all] suppress all checker results
+  // codechecker_false_positive [all] suppress all checker results
   x = 1; // warn
 }
 ~~~~~~~~~~~~~~~~~~~~~
 
+##### Multi line comments
 ~~~~~~~~~~~~~~~~~~~~~
 void test() {
   int x;

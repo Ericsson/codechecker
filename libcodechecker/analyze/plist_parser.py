@@ -38,11 +38,11 @@ import sys
 import traceback
 from xml.parsers.expat import ExpatError
 
-from libcodechecker import suppress_handler
 from libcodechecker import util
 from libcodechecker.logger import get_logger
 from libcodechecker.report import Report
 from libcodechecker.report import generate_report_hash
+from libcodechecker.source_code_comment_handler import SourceCodeCommentHandler
 
 LOG = get_logger('report')
 
@@ -279,7 +279,7 @@ class PlistToPlaintextFormatter(object):
     """
 
     def __init__(self,
-                 suppress_handler,
+                 src_comment_handler,
                  skip_handler,
                  severity_map,
                  analyzer_type="clangsa"):
@@ -287,7 +287,7 @@ class PlistToPlaintextFormatter(object):
         self.__analyzer_type = analyzer_type
         self.__severity_map = severity_map
         self.__print_steps = False
-        self.suppress_handler = suppress_handler
+        self.src_comment_handler = src_comment_handler
         self.skiplist_handler = skip_handler
 
     @property
@@ -382,8 +382,8 @@ class PlistToPlaintextFormatter(object):
             bug = {'hash_value': hash_value,
                    'file_path': f_path}
 
-            if self.suppress_handler and \
-                    self.suppress_handler.get_suppressed(bug):
+            if self.src_comment_handler and \
+                    self.src_comment_handler.get_suppressed(bug):
                 LOG.debug("Suppressed by suppress file: {0}".format(report))
                 continue
 
@@ -392,21 +392,30 @@ class PlistToPlaintextFormatter(object):
             report_line = last_report_event['location']['line']
             report_hash = report.main['issue_hash_content_of_line_in_context']
             checker_name = report.main['check_name']
-            sp_handler = suppress_handler.SourceSuppressHandler(source_file,
-                                                                report_line,
-                                                                report_hash,
-                                                                checker_name)
+            sc_handler = SourceCodeCommentHandler(source_file)
 
-            # Check for suppress comment.
-            suppress_data = sp_handler.get_suppressed()
-            if suppress_data:
-                if self.suppress_handler:
-                    hash_value, file_name, comment = suppress_data
-                    self.suppress_handler.store_suppress_bug_id(hash_value,
-                                                                file_name,
-                                                                comment)
+            # Check for source code comment.
+            src_comment_data = sc_handler.filter_source_line_comments(
+                report_line,
+                checker_name)
 
+            if len(src_comment_data) == 1:
+                LOG.debug("Suppressed by source code comment.")
+                if self.src_comment_handler:
+                    file_name = os.path.basename(source_file)
+                    message = src_comment_data[0]['message']
+                    status = src_comment_data[0]['status']
+                    self.src_comment_handler.store_suppress_bug_id(
+                        report_hash,
+                        file_name,
+                        message,
+                        status)
                 continue
+            elif len(src_comment_data) > 1:
+                LOG.warning("Multiple source code comment can be found "
+                            "for '{0}' checker in '{1}' at line {2}. "
+                            "This bug will not be suppressed!".format(
+                                checker_name, source_file, report_line))
 
             file_stats[f_path] += 1
             severity = self.__severity_map.get(checker_name,
