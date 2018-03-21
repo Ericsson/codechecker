@@ -611,6 +611,9 @@ function (declare, domAttr, domClass, domConstruct, Dialog, Button,
               'success',
               "Permission changes saved successfully!",
               "");
+
+            if (that.successCallback !== undefined)
+              that.successCallback();
           }
         }
       });
@@ -679,6 +682,7 @@ function (declare, domAttr, domClass, domConstruct, Dialog, Button,
 
       this._metadataPane.setAdminLevel(adminLevel);
       this._metadataPane.set('successCallback', successCallback);
+      this._permissionPane.set('successCallback', successCallback);
 
       if (mode === 'add') {
         this.set('title', "Add new product");

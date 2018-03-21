@@ -44,6 +44,7 @@ struct Product {
   9: i64               runCount,             // Number of runs in the product.
   10: string           latestStoreToProduct, // Latest date from the runs when the run in the product was updated.
   11: i64              runLimit,             // Number of allowed runs for this product.
+  12: list<string>     admins,               // Administrators of this product.
 }
 typedef list<Product> Products
 
