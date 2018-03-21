@@ -445,8 +445,15 @@ function (declare, dom, style, Deferred, ObjectStore, Store, QueryResults,
           sortMode.type = CC_OBJECTS.SortType.BUG_PATH_LENGTH;
           sortMode.ord = CC_OBJECTS.Order.ASC;
 
+          // Get run ids by the filter set.
+          var runIds = [];
           var opt = that._bugFilterView.initReportFilterOptions();
-          reports = CC_SERVICE.getRunResults(opt.runIds,
+          if (opt.runIds)
+            runIds = runIds.concat(opt.runIds);
+          if (opt.cmpData && opt.cmpData.runIds)
+            runIds = runIds.concat(opt.cmpData.runIds);
+
+          reports = CC_SERVICE.getRunResults(runIds.length ? runIds : null,
             CC_OBJECTS.MAX_QUERY_SIZE, 0, [sortMode], reportFilter, null);
           reportData = reports[0];
         }
