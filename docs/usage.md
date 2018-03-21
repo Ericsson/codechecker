@@ -25,6 +25,11 @@ Table of Contents
   * [Programmer checking new bugs in the code after local edit (and compare it to a central database)](#compare)
   * [Setting up user authentication](#authentication)
 * [Updating CodeChecker to new version](#upgrade)
+* [Unique Report Identifier](#unique-report-indentifier)
+* [Listing and Counting Reports](#listing-reports)
+  * [How reports are counted?](#how-report-are-counted)
+  * [Report Uniqueing](#report-uniqueing)
+  * [How diffs between runs are calculated?](#diffs-between-runs)
 
 ## <a name="step-1"></a> Step 1: Integrate CodeChecker into your build system
 CodeChecker only analyzes what is also built by your build system.
@@ -406,3 +411,198 @@ some database changes compared to the previous release.
 If you run into database migration warnings during the server start please
 check our [database schema upgrade guide's](db_schema_guide.md)
 `Database upgrade for running servers` section.
+
+# <a name="unique-report-indentifier"></a> Unique Report Identifier (RI)
+
+Each report has a unique (hash) identifier generated from checker name
+and the location of the finding: column number, textual content of the line,
+enclosing scope of the bug location (function signature, class, namespace).
+ 
+# <a name="listing-reports"></a> Listing and Counting Reports
+
+## <a name="how-report-are-counted"></a> How reports are counted?
+
+You can list analysis reports in two ways:
+1. Using the **`CodeChecker parse`** command, which **does not do deduplication**.
+2. Reports view of the **Web UI**, which **does deduplication**.
+
+These two views may show slightly different report list and counts based on how 
+duplicate findings or findings with the same hash identifier are rendered.
+
+The `CodeChecker parse` command does not do deduplication. 
+It lists reports simply as found by the
+analyzers and always lists all duplicate and similar findings.
+  
+You may find the same bug report multiple times for two reasons:
+1) The same source file is analyzed multiple times 
+(because the `compile_commmands.json` contains the build command multiple times)
+then the same findings will be listed multiple times. 
+2) All findings that are found in headers 
+will be shown as many times as many source file include that header.
+
+Web UI reports view on the other hand does deduplication: It will not show
+the same bug report two times even if the analyzer found it multiple times.
+
+**Example:**
+```c++
+//lib.h:
+inline int div_h(){int *p; *p=4;};
+inline int my_div(int);
+```
+
+```c++
+//lib.c:
+#include "lib.h"
+int my_div(int b){
+  return 1/b;
+}
+```
+
+```c++
+//a.c:
+#include "lib.h"
+int f(){
+  return my_div(0);
+}
+```
+
+```c++
+//b.c:
+#include "lib.h"
+int h(){
+  return my_div(0);
+}
+```
+
+Calling `CodeChecker check --ctu -b "g++ -c ./a.c ./b.c lib.c" --print-steps`
+
+shows
+
+```
+[2018-03-22 10:52] - ----=================----
+[HIGH] lib.h:1:30: Dereference of undefined pointer value [core.NullDereference]
+inline int div_h(){int *p; *p=4;};
+                             ^
+  Report hash: 6e7a6b71ac1a26751b7a7f7eea80f5da
+  Steps:
+    1, lib.h:1:20: 'p' declared without an initial value
+    2, lib.h:1:30: Dereference of undefined pointer value
+
+Found 1 defect(s) while analyzing lib.c
+
+Found no defects while analyzing a.c
+[HIGH] lib.c:3:11: Division by zero [core.DivideZero]
+  return 1/b;
+          ^
+  Report hash: fbf28fead62aff104c787906defd1169
+  Steps:
+    1, b.c:3:17: Passing the value 0 via 1st parameter 'b'
+    2, b.c:3:10: Calling 'my_div'
+    3, lib.c:2:1: Entered call from 'h'
+    4, lib.c:3:11: Division by zero
+
+[HIGH] lib.h:1:30: Dereference of undefined pointer value [core.NullDereference]
+inline int div_h(){int *p; *p=4;};
+                             ^
+  Report hash: 6e7a6b71ac1a26751b7a7f7eea80f5da
+  Steps:
+    1, lib.h:1:20: 'p' declared without an initial value
+    2, lib.h:1:30: Dereference of undefined pointer value
+
+Found 2 defect(s) while analyzing b.c
+
+[HIGH] lib.c:3:11: Division by zero [core.DivideZero]
+  return 1/b;
+          ^
+  Report hash: fbf28fead62aff104c787906defd1169
+  Steps:
+    1, a.c:3:17: Passing the value 0 via 1st parameter 'b'
+    2, a.c:3:10: Calling 'my_div'
+    3, lib.c:2:1: Entered call from 'f'
+    4, lib.c:3:11: Division by zero
+
+[HIGH] lib.h:1:30: Dereference of undefined pointer value [core.NullDereference]
+inline int div_h(){int *p; *p=4;};
+                             ^
+  Report hash: 6e7a6b71ac1a26751b7a7f7eea80f5da
+  Steps:
+    1, lib.h:1:20: 'p' declared without an initial value
+    2, lib.h:1:30: Dereference of undefined pointer value
+
+Found 2 defect(s) while analyzing a.c
+
+Found no defects while analyzing b.c
+Found no defects while analyzing lib.c
+
+----==== Summary ====----
+-----------------------
+Filename | Report count
+-----------------------
+lib.h    |            3
+lib.c    |            2
+-----------------------
+```
+
+These results are printed without deduplication and uniqueing.
+As you can see the *dereference of undefined pointer value* error in the 
+`lib.h` is printed 3 times, because the header is included from 
+`a.c, b.c, lib.c`. All three findings have the same Report Identifier value.
+The two division by zero errors from `a.c` and `b.c` are printed also separately.
+
+In deduplication mode and without uniqueing (in the Web UI) the reports
+in lib.h would be shown only once, as all three findings are identical. So in
+total we would see 3 errors: 1 for `lib.h` and 2 for `lib.c`.
+
+In uniqueing mode in the Web UI, only 2 distinct reports would be shown:
+1 *dereference of undefined pointer value* for the `lib.h` and 1 
+`Division by zero` for the `lib.c`.
+
+## <a name="report-uniqueing"></a>  Report Uniqueing
+
+There is an additional uniqueing functionality in the 
+Web UI that helps the grouping findings that have the same 
+*Report Identifier* within or accross muliple runs.
+You can enable this functionality by ticking in the "Unique reports" tick box
+in the Bug Overview tab.
+
+This feature is useful when 
+* you want to list unique findings accross multiple
+runs. In this mode the same report stored in different runs is shown only once.
+* you want count reports as one which end up in the same same bug location, but
+reached through different paths. For example the same null pointer deference 
+error may occur on multiple execution paths.
+
+The **checker statistics** view shows an aggregate count of the reports accross
+multiple runs. The report counts shown on that page are calculated using the
+unique report identifiers.
+
+## <a name="diffs-between-runs"></a>  How diffs between runs are calculated?
+
+Diffs between runs are calculated based on the Unique Report Identifier.
+
+Lets take run *A* and run *B* and take the diff between run *A* and *B*, 
+where *A* is the baseline.
+
+The base of the comparison are the reports that are not in 
+*detection status* "Resolved" and not in *review status* "False Positive" 
+and "Intentional".
+So all reports that are "active" in the runs.
+
+Reports only in B (new reports):
+All reports that have report identifier not present in A and which are in B.
+
+Reports only in A (old reports):
+All reports that have report identifier not present in B and which are in A.
+
+Reports both in A and B (common reports):
+All reports that have report identifier both in B and A.
+
+`CodeChecker cmd diff` command shows the reports without deduplication and 
+without uniqueing.
+
+In the Web UI diff view the report list is shown with deduplication and 
+optionally with uniqueing. Uniqueing can be switched on and off in the UI
+by the `Unique reports` tick box.
+
+So `CodeChecker cmd diff` always displays more reports than the Web UI as
+duplicates are not filtered out.
