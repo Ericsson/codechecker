@@ -776,7 +776,35 @@ class CCSimpleHttpServer(HTTPServer):
         """
         Get the product connection object for the given endpoint, or None.
         """
-        return self.__products.get(endpoint, None)
+        if endpoint in self.__products:
+            return self.__products.get(endpoint)
+
+        LOG.debug("Product with the given endpoint '%s' does not exist in "
+                  "the local cache. Try to get it from the database.",
+                  endpoint)
+
+        # If the product doesn't find in the cache, try to get it from the
+        # database.
+        try:
+            cfg_sess = self.config_session()
+            product = cfg_sess.query(ORMProduct) \
+                .filter(ORMProduct.endpoint == endpoint) \
+                .limit(1).one_or_none()
+
+            if not product:
+                return None
+
+            self.add_product(product)
+            permissions.initialise_defaults('PRODUCT', {
+                'config_db_session': cfg_sess,
+                'productID': product.id
+            })
+
+            return self.__products.get(endpoint, None)
+        finally:
+            if cfg_sess:
+                cfg_sess.close()
+                cfg_sess.commit()
 
     def get_only_product(self):
         """
