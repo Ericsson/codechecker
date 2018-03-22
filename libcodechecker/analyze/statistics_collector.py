@@ -158,15 +158,19 @@ class SpecialReturnValueCollector(object):
         stats = self.stats
         total = stats.get('total')
 
+        if threshold > 1:
+            LOG.warning("Statistics threshold should be under 1")
+
         for key in sorted(stats.get('total').keys()):
 
             negative_ratio = stats['nof_negative'][key]/stats['total'][key]
-            if (negative_ratio > threshold and
+            if (threshold < negative_ratio < 1 and
                     total[key] >= min_occurence_count):
                 neg.append(key)
 
             null_ratio = stats['nof_null'][key]/stats['total'][key]
-            if (null_ratio > threshold and total[key] >= min_occurence_count):
+            if (threshold < null_ratio < 1 and
+                    total[key] >= min_occurence_count):
                 null.append(key)
 
         return neg, null
@@ -260,12 +264,15 @@ class ReturnValueCollector(object):
         Return a lisf of function names where the return value
         was unchecked above the threshold.
         """
+        if threshold > 1:
+            LOG.warning("Statistics threshold should be under 1")
+
         unchecked_functions = []
         total = self.stats.get('total')
         for key in sorted(total):
             checked_ratio = 1 - \
                     self.stats['nof_unchecked'][key]/self.stats['total'][key]
-            if (checked_ratio > threshold and
+            if (threshold < checked_ratio < 1 and
                     total[key] >= min_occurence_count):
                 unchecked_functions.append(key)
         return unchecked_functions
