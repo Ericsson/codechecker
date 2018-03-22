@@ -144,7 +144,20 @@ class TestSuppress(unittest.TestCase):
         with open(os.path.join(self._test_project_path,
                                "suppress.expected"), 'r') as expected:
             for line in expected:
-                bug_hash, _, msg, status = line.strip().split('||')
+                src_code_info = line.strip().split('||')
+
+                status = None
+                if len(src_code_info) == 4:
+                    # Newest source code comment format where status is given.
+                    bug_hash, _, msg, status = src_code_info
+                elif len(src_code_info) == 3:
+                    # Old format where review status is not given.
+                    bug_hash, _, msg = src_code_info
+                else:
+                    # Oldest source code comment format where status and file
+                    # name are not given.
+                    bug_hash, msg = src_code_info
+
                 rw_status = ReviewStatus.FALSE_POSITIVE
                 if status == 'confirmed':
                     rw_status = ReviewStatus.CONFIRMED

@@ -73,7 +73,8 @@ def get_suppress_data(suppress_file):
             LOG.debug(new_format_match)
             suppress_data.append((new_format_match['bug_hash'],
                                   new_format_match['file_name'],
-                                  new_format_match['comment']))
+                                  new_format_match['comment'],
+                                  'false_positive'))
             continue
 
         old_format_match = re.match(old_format, line.strip())
@@ -83,7 +84,8 @@ def get_suppress_data(suppress_file):
             LOG.debug(old_format_match)
             suppress_data.append((old_format_match['bug_hash'],
                                   u'',  # empty file name
-                                  old_format_match['comment']))
+                                  old_format_match['comment'],
+                                  'false_positive'))
             continue
 
         if line.strip() != '':
