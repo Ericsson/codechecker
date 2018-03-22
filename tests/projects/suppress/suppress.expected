@@ -1,4 +1,4 @@
-0c07579523063acece2d7aebd4357cac||suppress.cpp||foo1 simple||false_positive
+0c07579523063acece2d7aebd4357cac||suppress.cpp||foo1 simple
 b206288036d43d440f69305429b5b067||suppress.cpp||foo2 simple||false_positive
 89eed80408973acac30e341779bb6e38||suppress.cpp||foo3 simple||intentional
 2bc45246974627658e7042371c9ccc76||suppress.cpp||foo4 simple||confirmed
