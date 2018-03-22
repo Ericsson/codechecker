@@ -35,7 +35,7 @@ typedef enum _GccArgsState
  * List of file extensions accepted as source file.
  */
 static const char* const srcExts[] = {
-  "c", "cc", "cpp", "cxx", "h", "hh", "hxx", "hpp", "o", "so", "a", NULL
+  "c", "cc", "cpp", "cxx", "o", "so", "a", NULL
 };
 
 /**
