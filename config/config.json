@@ -38,7 +38,7 @@
         "alpha.unix.PthreadLock" : ["sensitive", "extreme"],
         "alpha.unix.SimpleStream" : ["sensitive", "extreme"],
         "alpha.unix.Stream" : ["sensitive", "extreme"],
-        "alpha.unix.cstring.BufferOverlap" : ["sensitive", "extreme"],
+        "alpha.unix.cstring.BufferOverlap" : ["extreme"],
         "alpha.unix.cstring.NotNullTerminated" : ["sensitive", "extreme"],
         "alpha.unix.cstring.OutOfBounds" : ["sensitive", "extreme"],
         "apiModeling.google.GTest" : ["default", "sensitive", "extreme"],
