@@ -80,9 +80,7 @@ class BuildCmdTestNose(unittest.TestCase):
         to return the compilation actions.
         """
         comp_cmd_json = self.__get_cmp_json(compile_cmd)
-        with closing(StringIO()) as text:
-            text.write(comp_cmd_json)
-
+        with closing(StringIO(comp_cmd_json)) as text:
             return log_parser.parse_compile_commands_json(text,
                                                           ParseLogOptions())
 

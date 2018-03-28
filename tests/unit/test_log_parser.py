@@ -8,6 +8,7 @@
 
 import os
 import unittest
+from StringIO import StringIO
 
 from libcodechecker.analyze import log_parser
 from libcodechecker.log import option_parser
@@ -141,3 +142,64 @@ class LogParserTest(unittest.TestCase):
 
         self.assertEqual(list(build_action.sources)[0], r'/tmp/a b.cpp')
         self.assertEqual(build_action.lang, 'c++')
+
+    def test_skip_preproc(self):
+        """
+        Compiler preprocessor actions should be marked as skipped.
+        """
+        preprocessor_actions = StringIO('''[
+            {"directory": "/tmp",
+            "command": "g++ /tmp/a.cpp -E /tmp/a.cpp",
+            "file": "/tmp/a.cpp" },
+            {"directory": "/tmp",
+            "command": "g++ /tmp/a.cpp -MT /tmp/a.cpp",
+            "file": "/tmp/a.cpp" },
+            {"directory": "/tmp",
+            "command": "g++ /tmp/a.cpp -MM /tmp/a.cpp",
+            "file": "/tmp/a.cpp" },
+            {"directory": "/tmp",
+            "command": "g++ /tmp/a.cpp -MF /tmp/a.cpp",
+            "file": "/tmp/a.cpp" },
+            {"directory": "/tmp",
+            "command": "g++ /tmp/a.cpp -M /tmp/a.cpp",
+            "file": "/tmp/a.cpp" }]
+        ''')
+        build_actions = \
+            log_parser.parse_compile_commands_json(preprocessor_actions,
+                                                   ParseLogOptions())
+        for build_action in build_actions:
+            self.assertTrue(build_action.skip)
+
+    def test_keep_compile_and_dep(self):
+        """ Keep the compile command if -MD is set.
+        Dependency generation is done as a side effect of the compilation.
+        """
+        preprocessor_actions = StringIO('''[
+            {"directory": "/tmp",
+            "command": "g++ /tmp/a.cpp -MD /tmp/a.cpp",
+            "file": "/tmp/a.cpp" }]
+        ''')
+
+        build_actions = \
+            log_parser.parse_compile_commands_json(preprocessor_actions,
+                                                   ParseLogOptions())
+        for build_action in build_actions:
+            self.assertFalse(build_action.skip)
+
+    def test_skip_dep_with_e(self):
+        """ Skip the compile command if -MD is set together with -E. """
+
+        preprocessor_actions = StringIO('''[
+            {"directory": "/tmp",
+            "command": "g++ /tmp/a.cpp -MD -E /tmp/a.cpp",
+            "file": "/tmp/a.cpp" },
+            {"directory": "/tmp",
+            "command": "g++ /tmp/a.cpp -E -MD /tmp/a.cpp",
+            "file": "/tmp/a.cpp" } ]
+        ''')
+
+        build_actions = \
+            log_parser.parse_compile_commands_json(preprocessor_actions,
+                                                   ParseLogOptions())
+        for build_action in build_actions:
+            self.assertTrue(build_action.skip)
