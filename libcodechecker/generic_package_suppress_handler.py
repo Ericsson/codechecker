@@ -11,7 +11,7 @@ import os
 
 from libcodechecker import suppress_file_handler
 from libcodechecker.source_code_comment_handler import \
-    BaseSourceCodeCommentHandler
+    BaseSourceCodeCommentHandler, skip_suppress_status
 from libcodechecker.logger import get_logger
 
 # Warning! this logger should only be used in this module.
@@ -82,4 +82,5 @@ class GenericSuppressHandler(BaseSourceCodeCommentHandler):
 
         return any([suppress for suppress in self.__suppress_info
                     if suppress[0] == bug['hash_value'] and
-                    suppress[1] == os.path.basename(bug['file_path'])])
+                    suppress[1] == os.path.basename(bug['file_path']) and
+                    skip_suppress_status(suppress[3])])
