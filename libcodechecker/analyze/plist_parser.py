@@ -274,6 +274,49 @@ def skip_report_from_plist(plist_file, skip_handler):
         plist.truncate()
 
 
+def skip_report(report_hash, source_file, report_line, checker_name,
+                src_comment_handler=None):
+    """
+    Returns True if the report was suppressed in the source code, otherwise
+    False.
+    """
+    bug = {'hash_value': report_hash, 'file_path': source_file}
+    if src_comment_handler and src_comment_handler.get_suppressed(bug):
+        LOG.debug("Suppressed by suppress file: %s:%s [%s] %s", source_file,
+                  report_line, checker_name, report_hash)
+        return True
+
+    sc_handler = SourceCodeCommentHandler(source_file)
+
+    # Check for source code comment.
+    src_comment_data = sc_handler.filter_source_line_comments(
+        report_line,
+        checker_name)
+
+    if len(src_comment_data) == 1:
+        status = src_comment_data[0]['status']
+
+        LOG.debug("Suppressed by source code comment.")
+        if src_comment_handler:
+            file_name = os.path.basename(source_file)
+            message = src_comment_data[0]['message']
+            src_comment_handler.store_suppress_bug_id(
+                report_hash,
+                file_name,
+                message,
+                status)
+
+        if skip_suppress_status(status):
+            return True
+
+    elif len(src_comment_data) > 1:
+        LOG.warning("Multiple source code comment can be found "
+                    "for '{0}' checker in '{1}' at line {2}. "
+                    "This bug will not be suppressed!".format(
+                        checker_name, source_file, report_line))
+    return False
+
+
 class PlistToPlaintextFormatter(object):
     """
     Parse and format plist reports to a more human readable format.
@@ -380,46 +423,16 @@ class PlistToPlaintextFormatter(object):
                 LOG.debug("Skipped report in '%s'", f_path)
                 LOG.debug(report)
                 continue
-            hash_value = report.main['issue_hash_content_of_line_in_context']
-            bug = {'hash_value': hash_value,
-                   'file_path': f_path}
-
-            if self.src_comment_handler and \
-                    self.src_comment_handler.get_suppressed(bug):
-                LOG.debug("Suppressed by suppress file: {0}".format(report))
-                continue
 
             last_report_event = report.bug_path[-1]
             source_file = files[last_report_event['location']['file']]
             report_line = last_report_event['location']['line']
             report_hash = report.main['issue_hash_content_of_line_in_context']
             checker_name = report.main['check_name']
-            sc_handler = SourceCodeCommentHandler(source_file)
 
-            # Check for source code comment.
-            src_comment_data = sc_handler.filter_source_line_comments(
-                report_line,
-                checker_name)
-
-            if len(src_comment_data) == 1:
-                status = src_comment_data[0]['status']
-
-                LOG.debug("Suppressed by source code comment.")
-                if self.src_comment_handler:
-                    file_name = os.path.basename(source_file)
-                    message = src_comment_data[0]['message']
-                    self.src_comment_handler.store_suppress_bug_id(
-                        report_hash,
-                        file_name,
-                        message,
-                        status)
-                if skip_suppress_status(status):
-                    continue
-            elif len(src_comment_data) > 1:
-                LOG.warning("Multiple source code comment can be found "
-                            "for '{0}' checker in '{1}' at line {2}. "
-                            "This bug will not be suppressed!".format(
-                                checker_name, source_file, report_line))
+            if skip_report(report_hash, source_file, report_line,
+                           checker_name, self.src_comment_handler):
+                continue
 
             file_stats[f_path] += 1
             severity = self.__severity_map.get(checker_name,
