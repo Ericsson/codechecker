@@ -172,9 +172,18 @@ class ClangSA(analyzer_base.SourceAnalyzer):
                                          '-Xclang', checker_name])
 
             if config.ctu_dir and not self.__disable_ctu:
+                # ctu-clang5 compatibility
                 analyzer_cmd.extend(['-Xclang', '-analyzer-config',
                                      '-Xclang',
-                                     'xtu-dir=' + self.get_xtu_dir()])
+                                     'xtu-dir=' + self.get_ctu_dir()])
+                # ctu-clang6 compatibility (5.0 and 6.0 options work together)
+                analyzer_cmd.extend(['-Xclang', '-analyzer-config',
+                                     '-Xclang',
+                                     'experimental-enable-naive-ctu-analysis'
+                                     '=true',
+                                     '-Xclang', '-analyzer-config',
+                                     '-Xclang',
+                                     'ctu-dir=' + self.get_ctu_dir()])
                 if config.ctu_has_analyzer_display_ctu_progress:
                     analyzer_cmd.extend(['-Xclang',
                                          '-analyzer-display-ctu-progress'])
@@ -206,9 +215,9 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             LOG.error(ex)
             return []
 
-    def get_xtu_dir(self):
+    def get_ctu_dir(self):
         """
-        Returns the path of the xtu directory (containing the triple).
+        Returns the path of the ctu directory (containing the triple).
         """
         config = self.config_handler
         env = analyzer_env.get_check_env(config.path_env_extra,
@@ -216,8 +225,8 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         triple_arch = ctu_triple_arch.get_triple_arch(self.buildaction,
                                                       self.source_file,
                                                       config, env)
-        xtu_dir = os.path.join(config.ctu_dir, triple_arch)
-        return xtu_dir
+        ctu_dir = os.path.join(config.ctu_dir, triple_arch)
+        return ctu_dir
 
     def get_analyzer_mentioned_files(self, output):
         """
@@ -233,14 +242,14 @@ class ClangSA(analyzer_base.SourceAnalyzer):
 
         paths = []
 
-        xtu_ast_dir = os.path.join(self.get_xtu_dir(), "ast")
+        ctu_ast_dir = os.path.join(self.get_ctu_dir(), "ast")
 
         for line in output.splitlines():
             match = re.match(regex_for_ctu_ast_load, line)
             if match:
                 path = match.group(1)
-                if xtu_ast_dir in path:
-                    paths.append(path[len(xtu_ast_dir):])
+                if ctu_ast_dir in path:
+                    paths.append(path[len(ctu_ast_dir):])
 
         return set(paths)
 
