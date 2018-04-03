@@ -232,18 +232,19 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
       CC_SERVICE.getReportDetails(this.reportData.reportId,
       function (reportDetails) {
         var points = reportDetails.executionPath.filter(filterFunction);
-        reportDetails.pathEvents.map(function (evt, index) {
+        var pathEvents = reportDetails.pathEvents;
+        pathEvents.map(function (evt, index) {
           evt.bugEventNumber = index + 1;
         });
 
-        var bubbles = reportDetails.pathEvents.filter(filterFunction);
+        var bubbles = pathEvents.filter(filterFunction);
 
         // This is needed because CodeChecker gives different positions.
         points.forEach(function (point) { --point.startCol; });
         points.forEach(function (bubble) { --bubble.startCol; });
 
         if (bubblesNeeded) {
-          that.addBubbles(bubbles);
+          that.addBubbles(bubbles, pathEvents.length);
           that.addOtherFileBubbles(reportDetails.executionPath);
         }
 
@@ -252,12 +253,12 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
       });
     },
 
-    addBubbles : function (bubbles) {
+    addBubbles : function (bubbles, numOfPathEvents) {
       var that = this;
 
       that.codeMirror.operation(function () {
         bubbles.forEach(function (bubble, i) {
-          var isResult = i === bubbles.length - 1;
+          var isResult = bubble.bugEventNumber === numOfPathEvents;
 
           var left = that.codeMirror.defaultCharWidth() * bubble.startCol + 'px';
 
