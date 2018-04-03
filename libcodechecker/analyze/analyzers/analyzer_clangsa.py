@@ -177,13 +177,11 @@ class ClangSA(analyzer_base.SourceAnalyzer):
                                      '-Xclang',
                                      'xtu-dir=' + self.get_ctu_dir()])
                 # ctu-clang6 compatibility (5.0 and 6.0 options work together)
-                analyzer_cmd.extend(['-Xclang', '-analyzer-config',
-                                     '-Xclang',
-                                     'experimental-enable-naive-ctu-analysis'
-                                     '=true',
-                                     '-Xclang', '-analyzer-config',
-                                     '-Xclang',
-                                     'ctu-dir=' + self.get_ctu_dir()])
+                analyzer_cmd.extend(
+                    ['-Xclang', '-analyzer-config', '-Xclang',
+                     'experimental-enable-naive-ctu-analysis=true',
+                     '-Xclang', '-analyzer-config', '-Xclang',
+                     'ctu-dir=' + self.get_ctu_dir()])
                 if config.ctu_has_analyzer_display_ctu_progress:
                     analyzer_cmd.extend(['-Xclang',
                                          '-analyzer-display-ctu-progress'])
