@@ -1,0 +1,296 @@
+@font-face {
+  font-family: "codechecker";
+  src: url("../fonts/codechecker.eot");
+  src: url("../fonts/codechecker.eot#iefix") format("embedded-opentype"),
+    url("../fonts/codechecker.ttf") format("truetype"),
+    url("../fonts/codechecker.woff") format("woff"),
+    url("../fonts/codechecker.svg#codechecker") format("svg");
+  font-weight: normal;
+  font-style: normal;
+}
+
+.customIcon {
+  font-family: 'codechecker', Sans-Serif !important;
+  speak: none;
+  position: relative;
+  display: inline-block;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  width: 16px;
+  height: 16px;
+  font-size: 1.125em;
+  text-align: center;
+  margin-right: 4px;
+}
+
+.customIcon.spacer::before {
+  content: "\e000";
+}
+
+.customIcon.pathOpened {
+  opacity: 0.7;
+}
+
+.customIcon.result:before {
+  content: "\e005";
+}
+
+.customIcon.result {
+  color: #2125b6;
+}
+
+.customIcon.calling:before {
+  content: "\e006";
+}
+
+.customIcon.calling {
+  color: #1855B6;
+}
+
+.customIcon.entered_call:before {
+  content: "\e007";
+}
+
+.customIcon.entered_call {
+  color: #316ecf;
+}
+
+.customIcon.returning:before {
+  content: "\e008";
+}
+
+.customIcon.returning {
+  color: #61a2ff;
+}
+
+.customIcon.loop_enter:before {
+  content: "\e009";
+}
+
+.customIcon.loop_execute:before {
+  content: "\e00a";
+}
+
+.customIcon.loop_back:before {
+  content: "\e00b";
+}
+
+.customIcon.assume_msg:before {
+  content: "\e00c";
+}
+
+.customIcon.assume_msg:not(.nocolor) {
+  color: #b48a07;
+}
+
+.customIcon.assume_exclamation:before {
+  content: "\e00d";
+}
+
+.customIcon.assume_exclamation {
+  color: #ff5c11;
+}
+
+.customIcon.msg:before {
+  content: "\e00e";
+}
+
+.customIcon.assume_switch:before {
+  content: "\e011";
+}
+
+.customIcon.assume_switch {
+  color: #7f410c;
+}
+
+.customIcon.bug:before {
+  content: "\e001";
+}
+
+.customIcon.statistics:before {
+  content: "\e023";
+}
+
+.customIcon.reports:before {
+  content: "\e003";
+}
+
+.customIcon.list-opened:before {
+  content: "\e004";
+}
+
+.customIcon.all-reports:before {
+  content: "\e003";
+}
+
+/* Review Status */
+
+.review-status-unreviewed::before {
+  content: "\e017";
+  color: #4b9fd5;
+}
+
+.review-status-confirmed::before {
+  content: "\e019";
+  color: #e92625;
+}
+
+.review-status-false-positive::before {
+  content: "\e01a";
+  color: grey;
+}
+
+.review-status-intentional::before {
+  content: "\e018";
+  color: #669603;
+}
+
+.review-comment::before {
+  content: "\e00c";
+}
+
+/* Detection status icons */
+
+.detection-status-new::before {
+  content: "\e01f";
+  color: #ec7672;
+}
+
+.detection-status-unresolved::before {
+  content: "\e001";
+  color: #007ea7;
+}
+
+.detection-status-resolved::before {
+  content: "\e01d";
+  color: #669603;
+}
+
+.detection-status-reopened::before {
+  content: "\e009";
+  color: #ff0000;
+}
+
+/* Comment icons */
+
+.customIcon.edit:before {
+  content: "\e012";
+}
+
+.customIcon.delete:before {
+  content: "\e013";
+}
+
+/* Run history */
+
+.customIcon.run-name:before {
+  content: "\e024";
+}
+
+.customIcon.tag:before {
+  content: "\e020";
+}
+
+.customIcon.run:before {
+  content: "\e021";
+}
+
+.customIcon.user:before {
+  content: "\e022";
+}
+
+/* Date icons */
+
+.customIcon.today:before {
+  content : "T"
+}
+
+.customIcon.today {
+  background-color: #ee8985;
+  color: white;
+  font-weight: bold;
+
+}
+
+.customIcon.yesterday:before {
+  content : "Y"
+}
+
+.customIcon.yesterday {
+  background-color: #007ea7;
+  color: white;
+  font-weight: bold;
+}
+
+/* Severity icons */
+
+.icon-severity-low {
+  background-color: #669603;
+}
+
+.icon-severity-low:after {
+  content : 'L';
+}
+
+.icon-severity-unspecified {
+  background-color: #666666;
+}
+
+.icon-severity-unspecified:after {
+  content : 'U';
+}
+
+.icon-severity-style {
+  background-color: #9932cc;
+}
+
+.icon-severity-style:after {
+  content : 'S';
+}
+
+.icon-severity-medium {
+  background-color: #a9d323;
+  color: black;
+}
+
+.icon-severity-medium:after {
+  content : 'M';
+}
+
+.icon-severity-high {
+  background-color: #ffa800;
+}
+
+.icon-severity-high:after {
+  content : 'H';
+}
+
+.icon-severity-critical {
+  background-color: #e92625;
+}
+
+.icon-severity-critical:after {
+  content : 'C';
+}
+
+span[class*="severity-"] {
+  line-height: normal;
+  text-transform: capitalize;
+  font-size: 1em;
+  font-weight: bold;
+  color: white;
+}
+
+.customIcon.all-reports:after {
+  content: "A";
+  position: absolute;
+  right: 0;
+  top: 0;
+  padding: 1px;
+  font-size: 0.5em;
+  background-color: #484848;
+  color: white;
+}
