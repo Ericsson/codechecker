@@ -25,16 +25,14 @@ function (declare, lang, Deferred, dom, topic, Button, ContentPane, hashHelper,
   DateFilter, DiffTypeFilter, ReportCount, RunBaseFilter, RunHistoryTagFilter,
   SelectFilter, UniqueFilter, util) {
 
-  // Global variables which will store common filter options.
-  var runIds = [];
-  var reportFilter = null;
-  var cmpData = null;
-
   return declare(ContentPane, {
     constructor : function () {
+      this.runIds = [];
+      this.reportFilter = new CC_OBJECTS.ReportFilter();
+      this.cmpData = null;
+
       this._filters = []; // Registered filter components.
       this._isInitalized = false; // Shows that filter is already initalized.
-      reportFilter = new CC_OBJECTS.ReportFilter();
     },
 
     postCreate : function () {
@@ -58,7 +56,7 @@ function (declare, lang, Deferred, dom, topic, Button, ContentPane, hashHelper,
         class : 'is-unique',
         parent : this,
         updateReportFilter : function (isUnique) {
-          reportFilter.isUnique = isUnique;
+          that.reportFilter.isUnique = isUnique;
         }
       });
       this.register(this._uniqueFilter);
@@ -75,7 +73,7 @@ function (declare, lang, Deferred, dom, topic, Button, ContentPane, hashHelper,
       //--- Run filter ---//
 
       if (this.diffView) {
-        cmpData = new CC_OBJECTS.CompareData();
+        this.cmpData = new CC_OBJECTS.CompareData();
 
         //--- Run baseline filter ---//
 
@@ -84,7 +82,7 @@ function (declare, lang, Deferred, dom, topic, Button, ContentPane, hashHelper,
           title : 'Baseline',
           parent : this,
           updateReportFilter : function () {
-            runIds = this.getRunIds();
+            that.runIds = this.getRunIds();
           }
         });
         this.register(this._runBaseLineFilter);
@@ -97,7 +95,7 @@ function (declare, lang, Deferred, dom, topic, Button, ContentPane, hashHelper,
           title : 'Newcheck',
           parent : this,
           updateReportFilter : function () {
-            cmpData.runIds = this.getRunIds();
+            that.cmpData.runIds = this.getRunIds();
           }
         });
         this.register(this._runNewCheckFilter);
@@ -110,7 +108,7 @@ function (declare, lang, Deferred, dom, topic, Button, ContentPane, hashHelper,
           title : 'Diff type',
           parent : this,
           updateReportFilter : function (diffType) {
-            cmpData.diffType = diffType;
+            that.cmpData.diffType = diffType;
           }
         });
         this.register(this._diffTypeFilter);
@@ -121,7 +119,7 @@ function (declare, lang, Deferred, dom, topic, Button, ContentPane, hashHelper,
           title : 'Run name',
           parent : this,
           updateReportFilter : function () {
-            runIds = this.getRunIds();
+            that.runIds = this.getRunIds();
           }
         });
         this.register(this._runNameFilter);
@@ -135,7 +133,7 @@ function (declare, lang, Deferred, dom, topic, Button, ContentPane, hashHelper,
         title : 'Review status',
         parent   : this,
         updateReportFilter : function (reviewStatuses) {
-          reportFilter.reviewStatus = reviewStatuses;
+          that.reportFilter.reviewStatus = reviewStatuses;
         },
         stateConverter : function (value) {
           var status = util.enumValueToKey(
@@ -178,7 +176,7 @@ function (declare, lang, Deferred, dom, topic, Button, ContentPane, hashHelper,
         title : 'Detection status',
         parent   : this,
         updateReportFilter : function (detectionStatuses) {
-          reportFilter.detectionStatus = detectionStatuses;
+          that.reportFilter.detectionStatus = detectionStatuses;
         },
         stateConverter : function (value) {
           var status = util.enumValueToKey(
@@ -220,7 +218,7 @@ function (declare, lang, Deferred, dom, topic, Button, ContentPane, hashHelper,
         title : 'Severity',
         parent   : this,
         updateReportFilter : function (severities) {
-          reportFilter.severity = severities;
+          that.reportFilter.severity = severities;
         },
         stateConverter : function (value) {
           var status = util.enumValueToKey(
@@ -265,7 +263,7 @@ function (declare, lang, Deferred, dom, topic, Button, ContentPane, hashHelper,
         title : 'Run tag',
         parent   : this,
         updateReportFilter : function () {
-          reportFilter.runTag = this.getTagIds();
+          that.reportFilter.runTag = this.getTagIds();
         }
       });
       this.register(this._runHistoryTagFilter);
@@ -278,8 +276,8 @@ function (declare, lang, Deferred, dom, topic, Button, ContentPane, hashHelper,
         title    : 'Detection date',
         parent   : this,
         updateReportFilter : function (state) {
-          reportFilter.firstDetectionDate = state.detectionDate;
-          reportFilter.fixDate = state.fixDate;
+          that.reportFilter.firstDetectionDate = state.detectionDate;
+          that.reportFilter.fixDate = state.fixDate;
         }
       });
       this.register(this._detectionDateFilter);
@@ -301,7 +299,7 @@ function (declare, lang, Deferred, dom, topic, Button, ContentPane, hashHelper,
           return '&lrm;' + label + '&lrm;';
         },
         updateReportFilter : function (files) {
-          reportFilter.filepath = files;
+          that.reportFilter.filepath = files;
         },
         getItems : function (opt) {
           opt = that.initReportFilterOptions(opt);
@@ -339,7 +337,7 @@ function (declare, lang, Deferred, dom, topic, Button, ContentPane, hashHelper,
           placeHolder : 'Search for checker names...'
         },
         updateReportFilter : function (checkerNames) {
-          reportFilter.checkerName = checkerNames;
+          that.reportFilter.checkerName = checkerNames;
         },
         getItems : function (opt) {
           opt = that.initReportFilterOptions(opt);
@@ -374,7 +372,7 @@ function (declare, lang, Deferred, dom, topic, Button, ContentPane, hashHelper,
           placeHolder : 'Search for checker messages...'
         },
         updateReportFilter : function (checkerMessages) {
-          reportFilter.checkerMsg = checkerMessages;
+          that.reportFilter.checkerMsg = checkerMessages;
         },
         getItems : function (opt) {
           opt = that.initReportFilterOptions(opt);
@@ -427,14 +425,14 @@ function (declare, lang, Deferred, dom, topic, Button, ContentPane, hashHelper,
     },
 
     // Returns report filter options of the current filter set.
-    getReportFilter : function () { return reportFilter; },
+    getReportFilter : function () { return this.reportFilter; },
 
     // Returns run ids of the current filter set.
-    getRunIds : function () { return runIds; },
+    getRunIds : function () { return this.runIds; },
 
     // It will return null if filter view is normal otherwise in diff view
     // it returns filter compare data of the current filter set.
-    getCmpData : function () { return cmpData; },
+    getCmpData : function () { return this.cmpData; },
 
     // Register a new filter component.
     register : function (filter) { this._filters.push(filter); },
@@ -446,9 +444,9 @@ function (declare, lang, Deferred, dom, topic, Button, ContentPane, hashHelper,
     // Returns copy of report filter options.
     initReportFilterOptions : function (opt) {
       if (!opt) opt = {};
-      if (!opt.runIds) opt.runIds = lang.clone(runIds);
-      if (!opt.reportFilter) opt.reportFilter = lang.clone(reportFilter);
-      if (!opt.cmpData) opt.cmpData = lang.clone(cmpData);
+      if (!opt.runIds) opt.runIds = lang.clone(this.runIds);
+      if (!opt.reportFilter) opt.reportFilter = lang.clone(this.reportFilter);
+      if (!opt.cmpData) opt.cmpData = lang.clone(this.cmpData);
       if (!opt.offset) opt.offset = 0;
       return opt;
     },
