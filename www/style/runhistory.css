@@ -1,0 +1,47 @@
+.history-group {
+  margin-bottom: 10px;
+  border: 1px solid #e1e4e8;
+  border-radius: 5px;
+}
+
+.history-group .header {
+  font-size: 1.5em;
+  font-weight: bold;
+  color: #000;
+  font-family: Arial, sans serif;
+  display: inline-block;
+  padding: 10px;
+}
+
+.history-group .content {
+  padding: 10px;
+}
+
+.history {
+  padding: 5px;
+  border-bottom: 1px solid #e1e4e8;
+}
+
+.history:hover {
+  cursor: pointer;
+  background-color: #f5fdff;
+}
+
+.history:last-child {
+  border-bottom: none;
+}
+
+.history .time {
+  font-weight: bold;
+  margin-right: 10px;
+}
+
+.history .run-name-wrapper,
+.history .tag-wrapper,
+.history .user-wrapper {
+  margin-left: 5px;
+}
+
+.history .customIcon {
+  color: #73a7b9;
+}
