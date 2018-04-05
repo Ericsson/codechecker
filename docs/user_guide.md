@@ -47,8 +47,10 @@ Table of Contents
     * [`runs` (List runs)](#cmd-runs)
     * [`history` (List of run histories)](#cmd-history)
     * [`results` (List analysis results' summary)](#cmd-results)
+      * [Example](#cmd-results-example)
     * [`diff` (Show differences between two runs)](#cmd-diff)
     * [`sum` (Show summarised count of results)](#cmd-sum)
+      * [Example](#cmd-sum-example)
     * [`del` (Remove analysis runs)](#cmd-del)
     * [`suppress` (Manage and export/import suppressions)](#manage-suppressions)
       * [Import suppressions between server and suppress file](#import-suppressions)
@@ -1356,6 +1358,44 @@ common arguments:
                         Set verbosity level.
 ~~~~~~~~~~~~~~~~~~~~~
 
+Results can be filtered by using separate filter options of `results`, `diff`,
+`sum`, etc. commands.
+~~~~~~~~~~~~~~~~~~~~~
+filter arguments:
+  --review-status [REVIEW_STATUS [REVIEW_STATUS ...]]
+                        Filter results by review statuses.
+  --detection-status [DETECTION_STATUS [DETECTION_STATUS ...]]
+                        Filter results by detection statuses.
+  --severity [SEVERITY [SEVERITY ...]]
+                        Filter results by severities.
+  --tag [TAG [TAG ...]]
+                        Filter results by version tag names.
+  --file [FILE_PATH [FILE_PATH ...]]
+                        Filter results by file path. The file path can contain
+                        multiple * quantifiers which matches any number of
+                        characters (zero or more). So if you have /a/x.cpp and
+                        /a/y.cpp then "/a/*.cpp" selects both.
+  --checker-name [CHECKER_NAME [CHECKER_NAME ...]]
+                        Filter results by checker names. The checker name can
+                        contain multiple * quantifiers which matches any
+                        number of characters (zero or more). So for example
+                        "*DeadStores" will matches "deadcode.DeadStores"
+  --checker-msg [CHECKER_MSG [CHECKER_MSG ...]]
+                        Filter results by checker messages.The checker message
+                        can contain multiple * quantifiers which matches any
+                        number of characters (zero or more).
+  -s, --suppressed      DEPRECATED. Use the '--filter' option to get false
+                        positive (suppressed) results. Show only suppressed
+                        results instead of only unsuppressed ones.
+  --filter FILTER       DEPRECATED. Filter results. Use separated filter
+                        options to filter the results. The filter string has
+                        the following format: [<SEVERITIES>]:[<CHECKER_NAMES>]
+                        :[<FILE_PATHS>]:[<DETECTION_STATUSES>]:[<REVIEW_STATUS
+                        ES>] where severites, checker_names, file_paths,
+                        detection_statuses, review_statuses should be a comma
+                        separated list, e.g.: "high,medium:unix,core:*.cpp,*.h
+                        :new,unresolved:false_positive,intentional"
+
 ### <a name="source-components"></a> Source components (`components`)
 
 ~~~~~~~~~~~~~~~~~~~~~
@@ -1505,7 +1545,15 @@ Prints basic information about analysis results, such as location, checker
 name, summary.
 
 ~~~~~~~~~~~~~~~~~~~~~
-usage: CodeChecker cmd results [-h] [-s] [--filter FILTER] [--url PRODUCT_URL]
+usage: CodeChecker cmd results [-h]
+                               [--review-status [REVIEW_STATUS [REVIEW_STATUS ...]]]
+                               [--detection-status [DETECTION_STATUS [DETECTION_STATUS ...]]]
+                               [--severity [SEVERITY [SEVERITY ...]]]
+                               [--tag [TAG [TAG ...]]]
+                               [--file [FILE_PATH [FILE_PATH ...]]]
+                               [--checker-name [CHECKER_NAME [CHECKER_NAME ...]]]
+                               [--checker-msg [CHECKER_MSG [CHECKER_MSG ...]]]
+                               [-s] [--filter FILTER] [--url PRODUCT_URL]
                                [-o {plaintext,rows,table,csv,json}]
                                [--verbose {info,debug,debug_analyzer}]
                                RUN_NAMES
@@ -1524,19 +1572,23 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
-  -s, --suppressed      DEPRECATED. Use the '--filter' option to get false
-                        positive (suppressed) results. Show only suppressed
-                        results instead of only unsuppressed ones.
-  --filter FILTER       Filter results. The filter string has the following
-                        format:
-                        [<SEVERITIES>]:[<CHECKER_NAMES>]:[<FILE_PATHS>]:
-                        [<DETECTION_STATUSES>]:[<REVIEW_STATUSES>] where
-                        severites, checker_names, file_paths,
-                        detection_statuses and review_statuses should be a comma
-                        separated list, e.g.:
-                        "high,medium:unix,core:*.cpp,*.h:new,unresolved:
-                        false_positive,intentional" (default: ::)
 ~~~~~~~~~~~~~~~~~~~~~
+
+#### <a name="cmd-results-example"></a> Example
+```bash
+#Get analysis results for a run:
+CodeChecker cmd results my_run
+
+# Get analysis results for multiple runs:
+CodeChecker cmd results "my_run1:my_run2"
+
+# Get analysis results by using regex:
+CodeChecker cmd results "my_run*"
+
+# Get analysis results for a run and filter the analysis results:
+CodeChecker cmd results my_run --severity critical high medium \
+    --file "/home/username/my_project/*"
+```
 
 ### <a name="cmd-diff"></a> Show differences between two runs (`diff`)
 
@@ -1544,7 +1596,15 @@ This mode shows analysis results (in the same format as `results`) does, but
 from the comparison of two runs.
 
 ~~~~~~~~~~~~~~~~~~~~~
-usage: CodeChecker cmd diff [-h] -b BASE_RUN -n NEW_RUN [-s] [--filter FILTER]
+usage: CodeChecker cmd diff [-h] -b BASE_RUN -n NEW_RUN
+                            [--review-status [REVIEW_STATUS [REVIEW_STATUS ...]]]
+                            [--detection-status [DETECTION_STATUS [DETECTION_STATUS ...]]]
+                            [--severity [SEVERITY [SEVERITY ...]]]
+                            [--tag [TAG [TAG ...]]]
+                            [--file [FILE_PATH [FILE_PATH ...]]]
+                            [--checker-name [CHECKER_NAME [CHECKER_NAME ...]]]
+                            [--checker-msg [CHECKER_MSG [CHECKER_MSG ...]]]
+                            [-s] [--filter FILTER]
                             (--new | --resolved | --unresolved)
                             [--url PRODUCT_URL]
                             [-o {plaintext,rows,table,csv,json,html}]
@@ -1571,14 +1631,6 @@ optional arguments:
                         * quantifiers which matches any number of characters
                         (zero or more). So if you have run-a-1, run-a-2 and
                         run-b-1 then "run-a*" selects the first two.
-  -s, --suppressed      Filter results to only show suppressed entries.
-                        (default: False)
-  --filter FILTER       Filter results. The filter string has the following
-                        format:
-                        [<SEVERITIES>]:[<CHECKER_NAMES>]:[<FILE_PATHS>] where
-                        severites, checker_names, file_paths should be a comma
-                        separated list, e.g.:
-                        "high,medium:unix,core:*.cpp,*.h" (default: ::)
 
 comparison modes:
   --new                 Show results that didn't exist in the 'base' but
@@ -1615,10 +1667,16 @@ https://docs.python.org/2/library/re.html#regular-expression-syntax.
 
 ~~~~~~~~~~~~~~~~~~~~~
 usage: CodeChecker cmd sum [-h] (-n RUN_NAME [RUN_NAME ...] | -a)
-                           [--disable-unique] [-s] [--filter FILTER]
-                           [--url PRODUCT_URL]
-                           [-o {plaintext,html,rows,table,csv,json}]
-                           [-e EXPORT_DIR] [-c]
+                           [--disable-unique]
+                           [--review-status [REVIEW_STATUS [REVIEW_STATUS ...]]]
+                           [--detection-status [DETECTION_STATUS [DETECTION_STATUS ...]]]
+                           [--severity [SEVERITY [SEVERITY ...]]]
+                           [--tag [TAG [TAG ...]]]
+                           [--file [FILE_PATH [FILE_PATH ...]]]
+                           [--checker-name [CHECKER_NAME [CHECKER_NAME ...]]]
+                           [--checker-msg [CHECKER_MSG [CHECKER_MSG ...]]]
+                           [-s] [--filter FILTER] [--url PRODUCT_URL]
+                           [-o {plaintext,rows,table,csv,json}]
                            [--verbose {info,debug,debug_analyzer}]
 
 Show checker statistics for some analysis runs.
@@ -1631,22 +1689,26 @@ optional arguments:
                         <run_name_1>:<run_name_2>:<run_name_3> where run names
                         can be a Python regex expression. So if you have
                         run_1_a_name, run_2_b_name, run_2_c_name, run_3_d_name
-                        then "run_2*:run_3_d_name" selects the last three runs.
+                        then "run_2*:run_3_d_name"selects the last three runs.
                         Use 'CodeChecker cmd runs' to get the available runs.
   -a, --all             Show breakdown for all analysis runs.
   --disable-unique      List all bugs even if these end up in the same bug
                         location, but reached through different paths. By
                         uniqueing the bugs a report will be appeared only once
                         even if it is found on several paths.
-  -s, --suppressed      Filter results to only show suppressed entries.
-                        (default: False)
-  --filter FILTER       Filter results. The filter string has the following
-                        format:
-                        [<SEVERITIES>]:[<CHECKER_NAMES>]:[<FILE_PATHS>] where
-                        severites, checker_names, file_paths should be a comma
-                        separated list, e.g.:
-                        "high,medium:unix,core:*.cpp,*.h" (default: ::)
 ~~~~~~~~~~~~~~~~~~~~~
+
+#### <a name="cmd-sum-example"></a> Example
+```bash
+# Get statistics for a run:
+CodeChecker cmd sum -n my_run
+
+# Get statistics for all runs filtered by multiple checker names:
+CodeChecker cmd sum --all --checker-name "core.*" "deadcode.*"
+
+# Get statistics for all runs and only for severity 'high':
+CodeChecker cmd sum --all --severity "high"
+```
 
 ### <a name="cmd-del"></a> Remove analysis runs (`del`)
 
