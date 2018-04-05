@@ -12,6 +12,7 @@ import os
 import random
 
 import sqlalchemy
+from sqlalchemy.sql.expression import and_
 
 import shared
 from ProductManagement_v6 import ttypes
@@ -20,7 +21,8 @@ from libcodechecker import util
 from libcodechecker.logger import get_logger
 from libcodechecker.profiler import timeit
 from libcodechecker.server import permissions
-from libcodechecker.server.database.config_db_model import Product, IDENTIFIER
+from libcodechecker.server.database.config_db_model import IDENTIFIER, \
+    Product, ProductPermission
 from libcodechecker.server.database.database import SQLServer
 from libcodechecker.server.database.run_db_model import Run
 from libcodechecker.server.routing import is_valid_product_endpoint
@@ -120,6 +122,12 @@ class ThriftProductHandler(object):
         product_admin = permissions.require_permission(
             permissions.PRODUCT_ADMIN, args, self.__auth_session)
 
+        admin_perm_name = permissions.PRODUCT_ADMIN.name
+        admins = session.query(ProductPermission). \
+            filter(and_(ProductPermission.permission == admin_perm_name,
+                        ProductPermission.product_id == product.id)) \
+            .all()
+
         return server_product, ttypes.Product(
             id=product.id,
             endpoint=product.endpoint,
@@ -130,7 +138,8 @@ class ThriftProductHandler(object):
             connected=server_product.db_status == shared.ttypes.DBStatus.OK,
             accessible=product_access,
             administrating=product_admin,
-            databaseStatus=server_product.db_status)
+            databaseStatus=server_product.db_status,
+            admins=[admin.name for admin in admins])
 
     @timeit
     def getPackageVersion(self):
