@@ -10,6 +10,10 @@ import os
 import re
 import shlex
 import subprocess
+try:
+    from shlex import quote
+except ImportError:
+    from pipes import quote
 
 from libcodechecker.analyze.analyzers import analyzer_base
 from libcodechecker.logger import get_logger
@@ -91,7 +95,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
             LOG.debug(config.analyzer_extra_arguments)
             analyzer_cmd.append(config.analyzer_extra_arguments)
 
-            analyzer_cmd.append(self.source_file)
+            analyzer_cmd.append(quote(self.source_file))
 
             analyzer_cmd.append("--")
 

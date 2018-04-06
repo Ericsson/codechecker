@@ -26,7 +26,7 @@ class OptionParserTest(unittest.TestCase):
         build_cmd = "g++ -o main -fno-merge-const-bfstores " +\
                     ' '.join(source_files)
 
-        res = option_parser.parse_options(build_cmd)
+        res = option_parser.parse_options(build_cmd, source_files)
         print(res)
         self.assertFalse("-fno-merge-const-bfstores" in res.compile_opts)
         self.assertTrue(set(source_files) == set(res.files))
@@ -40,7 +40,7 @@ class OptionParserTest(unittest.TestCase):
         source_files = ["lib.cpp", "main.cpp"]
         build_cmd = "g++ -o main " + ' '.join(source_files)
 
-        res = option_parser.parse_options(build_cmd)
+        res = option_parser.parse_options(build_cmd, source_files)
         print(res)
         self.assertTrue(set(source_files) == set(res.files))
         self.assertEquals(ActionType.COMPILE, res.action)
@@ -52,7 +52,7 @@ class OptionParserTest(unittest.TestCase):
         source_files = ["main.cpp"]
         build_cmd = "g++ -c " + ' '.join(source_files)
 
-        res = option_parser.parse_options(build_cmd)
+        res = option_parser.parse_options(build_cmd, source_files)
         print(res)
         self.assertTrue(set(source_files) == set(res.files))
         self.assertEquals(ActionType.COMPILE, res.action)
@@ -65,7 +65,7 @@ class OptionParserTest(unittest.TestCase):
         build_cmd = "gcc -E " + ' '.join(source_files)
 
         print(build_cmd)
-        res = option_parser.parse_options(build_cmd)
+        res = option_parser.parse_options(build_cmd, source_files)
         print(res)
 
         self.assertTrue(set(source_files) == set(res.files))
@@ -81,7 +81,7 @@ class OptionParserTest(unittest.TestCase):
         build_cmd = "gcc -c -x " + lang + " " + ' '.join(source_files)
 
         print(build_cmd)
-        res = option_parser.parse_options(build_cmd)
+        res = option_parser.parse_options(build_cmd, source_files)
         print(res)
 
         self.assertTrue(set(source_files) == set(res.files))
@@ -98,7 +98,7 @@ class OptionParserTest(unittest.TestCase):
         build_cmd = "gcc -c -arch " + arch + " " + ' '.join(source_files)
 
         print(build_cmd)
-        res = option_parser.parse_options(build_cmd)
+        res = option_parser.parse_options(build_cmd, source_files)
         print(res)
 
         self.assertTrue(set(source_files) == set(res.files))
@@ -116,7 +116,7 @@ class OptionParserTest(unittest.TestCase):
                     ' '.join(compiler_options) + ' ' + \
                     ' '.join(source_files)
 
-        res = option_parser.parse_options(build_cmd)
+        res = option_parser.parse_options(build_cmd, source_files)
         print(res)
         self.assertTrue(set(compiler_options) == set(res.compile_opts))
         self.assertEqual(ActionType.COMPILE, res.action)
@@ -144,7 +144,7 @@ class OptionParserTest(unittest.TestCase):
                     ' '.join(linker_options) + ' ' + \
                     ' '.join(source_files)
 
-        res = option_parser.parse_options(build_cmd)
+        res = option_parser.parse_options(build_cmd, source_files)
         print(res)
         co_no_space = []
         for c in compiler_options:
@@ -161,7 +161,7 @@ class OptionParserTest(unittest.TestCase):
         Should be link if only object files are in the command.
         """
         build_cmd = "g++ -o fubar foo.o main.o bar.o -lm"
-        res = option_parser.parse_options(build_cmd)
+        res = option_parser.parse_options(build_cmd, [])
         print(res)
         self.assertEquals(ActionType.LINK, res.action)
 
@@ -181,7 +181,7 @@ class OptionParserTest(unittest.TestCase):
                     ' '.join(linker_options) + ' ' + \
                     ' '.join(object_files)
 
-        res = option_parser.parse_options(build_cmd)
+        res = option_parser.parse_options(build_cmd, [])
         print(res)
         self.assertTrue(set(object_files) == set(res.files))
         self.assertTrue(set(compiler_options) == set(res.compile_opts))
@@ -191,5 +191,42 @@ class OptionParserTest(unittest.TestCase):
     def test_ignore_flags(self):
         ignore = ["-Werror", "-MT hello", "-M", "-fsyntax-only"]
         build_cmd = "g++ {} main.cpp".format(' '.join(ignore))
-        res = option_parser.parse_options(build_cmd)
+        res = option_parser.parse_options(build_cmd, ['main.cpp'])
         self.assertEqual(res.compile_opts, ["-fsyntax-only"])
+
+    def test_keep_warning_flags(self):
+        build_cmd = "g++ -Wall -G 0 -Wextra main.cpp"
+        res = option_parser.parse_options(build_cmd, ['main.cpp'])
+        self.assertEqual(res.compile_opts, ["-Wall", "-G", "0", "-Wextra"])
+
+    def test_unhandled(self):
+        """
+        Unhandled options should be detected as compiler option.
+        """
+        source_files = ["/home/test/main test.cpp"]
+        build_cmd = "g++ -Unhandled " + ' '.join(source_files)
+        res = option_parser.parse_options(build_cmd, source_files)
+        self.assertEqual(res.compile_opts, ["-Unhandled"])
+
+    def test_stuff(self):
+        """
+        Unhandled options should be detected as compiler option.
+        """
+        source_files = ["/home/test/main test.cpp"]
+        build_cmd = \
+            'g++ -Unhandled -Dvalue="some value" \"/home/test/main test.cpp\"'
+        res = option_parser.parse_options(build_cmd, source_files)
+        self.assertEqual(res.compile_opts,
+                         ["-Unhandled", "-Dvalue=some value"])
+
+    def test_stuff2(self):
+        """
+        Unhandled options should be detected as compiler option.
+        """
+        source_files = ["/home/test/main test.cpp"]
+        build_cmd = \
+            'g++ -Unhandled \"-Dvalue=some value\"'
+        ' \"/home/test/main test.cpp\"'
+        res = option_parser.parse_options(build_cmd, source_files)
+        self.assertEqual(res.compile_opts,
+                         ["-Unhandled", "-Dvalue=some value"])

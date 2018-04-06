@@ -61,6 +61,12 @@ char* shellEscapeStr(const char* str_, char* buff_)
   char* out = buff_;
   int hasSpace = strchr(str_, ' ') != NULL;
 
+  if (hasSpace)
+  {
+    *out++ = '\\';
+    *out++ = '\"';
+  }
+
   while (*str_)
   {
     switch (*str_)
@@ -79,6 +85,12 @@ char* shellEscapeStr(const char* str_, char* buff_)
         *out++ = *str_++;
         break;
     }
+  }
+
+  if (hasSpace)
+  {
+    *out++ = '\\';
+    *out++ = '\"';
   }
 
   *out = '\0';

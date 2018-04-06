@@ -50,7 +50,8 @@ class LogParserTest(unittest.TestCase):
         # define being considered a file and ignored, for now.
 
         build_action = log_parser.parse_log(logfile, ParseLogOptions())[0]
-        results = option_parser.parse_options(build_action.original_command)
+        results = option_parser.parse_options(build_action.original_command,
+                                              build_action.sources)
 
         self.assertEqual(' '.join(results.files),
                          r'"-DVARIABLE="some value"" /tmp/a.cpp')

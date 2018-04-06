@@ -8,6 +8,10 @@ import os
 import re
 import shlex
 import subprocess
+try:
+    from shlex import quote
+except ImportError:
+    from pipes import quote
 
 from libcodechecker.analyze.analyzers import analyzer_base
 from libcodechecker.analyze.analyzers import ctu_triple_arch
@@ -152,7 +156,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
                                  '-Xclang',
                                  '-analyzer-output=' + analyzer_mode])
 
-            analyzer_cmd.extend(['-o', analyzer_output_file])
+            analyzer_cmd.extend(['-o', quote(analyzer_output_file)])
 
             # Checker configuration arguments needs to be set before
             # the checkers.
@@ -210,7 +214,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
 
             analyzer_cmd.extend(self.buildaction.compiler_includes)
 
-            analyzer_cmd.append(self.source_file)
+            analyzer_cmd.append(quote(self.source_file))
 
             return analyzer_cmd
 

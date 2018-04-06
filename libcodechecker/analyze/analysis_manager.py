@@ -11,6 +11,8 @@ import codecs
 import glob
 import multiprocessing
 import os
+import pipes
+import shlex
 import shutil
 import signal
 import sys
@@ -128,7 +130,8 @@ def create_dependencies(action):
     if 'CC_LOGGER_GCC_LIKE' not in os.environ:
         os.environ['CC_LOGGER_GCC_LIKE'] = 'gcc:g++:clang:clang++:cc:c++'
 
-    command = action.original_command.split(' ')
+    command = shlex.split(action.original_command)
+
     if any(binary_substring in command[0] for binary_substring
            in os.environ['CC_LOGGER_GCC_LIKE'].split(':')):
         # gcc and clang can generate makefile-style dependency list.
@@ -509,8 +512,6 @@ def check(check_data):
                 LOG.debug_analyzer(source_file_name + ' is skipped')
                 skipped = True
                 continue
-
-            source = util.escape_source_path(source)
 
             source_analyzer, analyzer_cmd, rh, reanalyzed = \
                 prepare_check(source, action, analyzer_config_map,

@@ -29,8 +29,12 @@ LOG = get_logger('buildlogger')
 
 COMPILE_OPTION_MAP = {
     '-nostdinc': 0,
+    '-pedantic': 0,
+    '-G': 1,
     '--sysroot': 1,
-    '--include': 1
+    '--include': 1,
+    '-Wall': 0,
+    '-Wextra': 0
 }
 
 # Compiler options which are followed by 1 parameter with or without
@@ -136,7 +140,9 @@ IGNORED_OPTION_MAP = {
     '--serialize-diagnostics': 1,
     # Clang gives different warnings than GCC. Thus if this flag is kept, the
     # analysis with Clang can fail even if the compilation passes with GCC.
-    '-Werror': 0
+    # -Werror and -pedantic-errors are skipped because of this.
+    '-Werror': 0,
+    '-pedantic-errors': 0
 }
 
 IGNORED_OPTION_MAP_REGEX = {
@@ -288,6 +294,9 @@ class OptionParserResult(object):
     @compile_opts.setter
     def compile_opts(self, value):
         self._compile_opts = value
+
+    def add_compile_option(self, value):
+        self._compile_opts.append(value)
 
     @property
     def link_opts(self):
@@ -504,23 +513,20 @@ def arg_check(it, result):
         if res:
             return True
 
-    # Unhandled compilation argument found.
-    LOG.debug("Unhandled argument: " + str(it.item))
     return False
 
 
-def parse_options(args):
+def parse_options(args, source_files):
     """ Requires a full compile command with the compiler,
     not only arguments."""
 
-    # Keep " characters.
-    args = args.replace(r'"', r'"\"')
-
     result_map = OptionParserResult()
-
     # The first element in the list is the compiler skip it from parsing.
+
     for it in OptionIterator(shlex.split(args)[1:]):
-        arg_check(it, result_map)
+        handled = arg_check(it, result_map)
+        if not handled:
+            LOG.debug("Skipped gcc argument: %s", str(it.item))
 
     for idx, opt in enumerate(result_map.compile_opts):
         if '"' in opt:
@@ -550,7 +556,7 @@ def parse_options(args):
             break
 
     if result_map.lang:
-        LOG.debug("Detected language" + result_map.lang)
+        LOG.debug("Detected language " + result_map.lang)
 
     # If there are no source files in the compilation argument
     # handle it as a link command.

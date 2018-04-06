@@ -257,13 +257,15 @@ def parse_compile_commands_json(logfile, parseLogOptions):
             # intercept-build anymore!)
             if r'\"' in command:
                 command = command.replace(r'\"', '"')
+
         elif 'arguments' in entry:
             # Newest versions of intercept-build create an argument vector
             # instead of a command string.
             command = ' '.join(entry['arguments'])
         else:
             raise KeyError("No valid 'command' or 'arguments' entry found!")
-        results = option_parser.parse_options(command)
+
+        results = option_parser.parse_options(command, [sourcefile])
 
         action.original_command = command
         action.analyzer_options = results.compile_opts
@@ -271,7 +273,6 @@ def parse_compile_commands_json(logfile, parseLogOptions):
         action.lang = results.lang
         action.target = results.arch
         action.output = results.output
-
         # Store the compiler built in include paths and defines.
         if add_compiler_defaults and results.compiler:
             if not (results.compiler in compiler_includes):
