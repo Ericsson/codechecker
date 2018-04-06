@@ -8,7 +8,7 @@ CHECK#CodeChecker check --build "make simple2" --output $OUTPUT$ --quiet --analy
 [] - Starting static analysis ...
 [] - [1/1] clangsa analyzed simple2.cpp successfully.
 [] - ----==== Summary ====----
-[] - Total compilation commands: 1
+[] - Total analyzed compilation commands: 1
 [] - Successfully analyzed
 [] -   clangsa: 1
 [] - ----=================----

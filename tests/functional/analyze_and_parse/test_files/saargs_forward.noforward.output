@@ -8,7 +8,7 @@ CHECK#CodeChecker check --build "make saargs_forward" --output $OUTPUT$ --quiet 
 [] - Starting static analysis ...
 [] - [1/1] clangsa analyzed saargs_forward.cpp successfully.
 [] - ----==== Summary ====----
-[] - Total compilation commands: 1
+[] - Total analyzed compilation commands: 1
 [] - Successfully analyzed
 [] -   clangsa: 1
 [] - ----=================----
