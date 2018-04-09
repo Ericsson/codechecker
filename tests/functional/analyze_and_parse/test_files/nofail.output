@@ -8,7 +8,7 @@ CHECK#CodeChecker check --build "make nofail" --output $OUTPUT$ --quiet --analyz
 [] - Starting static analysis ...
 [] - [1/1] clangsa analyzed nofail.cpp successfully.
 [] - ----==== Summary ====----
-[] - Total compilation commands: 1
+[] - Total analyzed compilation commands: 1
 [] - Successfully analyzed
 [] -   clangsa: 1
 [] - ----=================----

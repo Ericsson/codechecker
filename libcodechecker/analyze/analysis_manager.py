@@ -57,7 +57,7 @@ def worker_result_handler(results, metadata, output_path):
                 failed_analysis[analyzer_type] += 1
 
     LOG.info("----==== Summary ====----")
-    LOG.info("Total compilation commands: " + str(len(results)))
+    LOG.info("Total analyzed compilation commands: %s", str(len(results)))
     if successful_analysis:
         LOG.info("Successfully analyzed")
         for analyzer_type, res in successful_analysis.items():

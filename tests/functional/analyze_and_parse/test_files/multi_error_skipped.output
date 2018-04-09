@@ -7,7 +7,7 @@ CHECK#CodeChecker check --build "make multi_error" --output $OUTPUT$ --quiet --a
 [] - Build finished successfully.
 [] - Starting static analysis ...
 [] - ----==== Summary ====----
-[] - Total compilation commands: 1
+[] - Total analyzed compilation commands: 1
 [] - Skipped compilation commands: 1
 [] - ----=================----
 [] - Analysis finished.
