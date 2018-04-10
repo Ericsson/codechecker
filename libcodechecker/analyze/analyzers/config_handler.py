@@ -75,7 +75,7 @@ class AnalyzerConfigHandler(object):
     def add_checker(self, checker_name, enabled, description):
         """
         Add additional checker.
-        Tuple of (checker_name, True\False).
+        Tuple of (checker_name, True or False).
         """
         self.__available_checkers[checker_name] = (enabled, description)
 
