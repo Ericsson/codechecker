@@ -562,7 +562,7 @@ def escape_source_path(source):
     Escape the spaces in the source path, but make sure not to
     over-escape already escaped spaces.
     """
-    return '\ '.join(source.replace('\ ', ' ').split(' '))
+    return r'\ '.join(source.replace(r'\ ', ' ').split(' '))
 
 
 def trim_path_prefixes(path, prefixes):
