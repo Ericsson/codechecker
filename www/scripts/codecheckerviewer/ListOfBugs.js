@@ -331,11 +331,7 @@ function (declare, dom, style, Deferred, ObjectStore, Store, QueryResults,
       var that = this;
 
       this._grid = new ListOfBugsGrid({
-        region : 'center',
-        runData : this.runData,
-        baseline : this.baseline,
-        newcheck : this.newcheck,
-        difftype : this.difftype
+        region : 'center'
       });
 
       this._bugOverview = new BorderContainer({
@@ -359,7 +355,7 @@ function (declare, dom, style, Deferred, ObjectStore, Store, QueryResults,
         style    : 'width: 300px; padding: 0px;',
         splitter : true,
         parent   : this,
-        diffView : this.diffView
+        diffView : this.newcheck
       });
       this._grid.set('bugFilterView', this._bugFilterView);
       this._bugFilterView.register(this._grid);

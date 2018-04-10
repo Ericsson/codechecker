@@ -299,3 +299,11 @@ span[class*="severity-"] {
   background-color: #484848;
   color: white;
 }
+
+.carret-down::before {
+  content: "\f0d7";
+}
+
+.carret-up::before {
+  content: "\f0d8";
+}

@@ -260,7 +260,7 @@ function (declare, dom, ItemFileWriteStore, topic, Dialog, Button,
         disabled : true,
         onClick  : function () {
           hashHelper.setStateValues({
-            baseline : that.baseline.name,
+            run : that.baseline.name,
             newcheck : that.newcheck.name,
             difftype : util.diffTypeFromCodeToString(CC_OBJECTS.DiffType.NEW),
             tab : that.baseline.name + '_diff_' + that.newcheck.name

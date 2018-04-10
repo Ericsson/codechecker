@@ -8,7 +8,9 @@ define([
   'dojo/_base/declare',
   'dojo/_base/lang',
   'dojo/Deferred',
+  'dojo/dom-class',
   'dojo/dom-construct',
+  'dojo/dom-style',
   'dojo/topic',
   'dijit/form/Button',
   'dijit/layout/ContentPane',
@@ -21,9 +23,62 @@ define([
   'codechecker/filter/SelectFilter',
   'codechecker/filter/UniqueFilter',
   'codechecker/util'],
-function (declare, lang, Deferred, dom, topic, Button, ContentPane, hashHelper,
-  DateFilter, DiffTypeFilter, ReportCount, RunBaseFilter, RunHistoryTagFilter,
-  SelectFilter, UniqueFilter, util) {
+function (declare, lang, Deferred, domClass, dom, domStyle, topic, Button,
+  ContentPane, hashHelper, DateFilter, DiffTypeFilter, ReportCount,
+  RunBaseFilter, RunHistoryTagFilter, SelectFilter, UniqueFilter, util) {
+
+  var FilterToggle = declare(ContentPane, {
+    class : 'filter-toggle',
+    open : true,
+
+    postCreate : function () {
+      var that = this;
+
+      var header = dom.create('div', {
+        class : 'header',
+        onclick : function () {
+          that.open = !that.open;
+
+          if (that.open) {
+            domClass.remove(that._dropDownIcon, 'carret-up');
+            domClass.add(that._dropDownIcon, 'carret-down');
+            that.show();
+          } else {
+            domClass.remove(that._dropDownIcon, 'carret-down');
+            domClass.add(that._dropDownIcon, 'carret-up');
+            that.hide();
+          }
+        }
+      });
+      dom.place(header, this.domNode);
+
+      this._dropDownIcon = dom.create("span", {
+        class : "customIcon " + (this.open ? "carret-down" : "carret-up")
+      }, header);
+      dom.create("span", { innerHTML : this.title }, header);
+    },
+
+    hide : function () {
+      this.getChildren().forEach(function (child) {
+        domStyle.set(child.domNode, {
+          position : 'fixed',
+          top : 99999 + 'px',
+          visibility : 'hidden'
+        });
+      });
+    },
+
+    show : function () {
+      this.getChildren().forEach(function (child) {
+        domStyle.set(child.domNode, {
+          position : '',
+          top : '',
+          visibility : ''
+        });
+        child.resize();
+      });
+    }
+  });
 
   return declare(ContentPane, {
     constructor : function () {
@@ -70,61 +125,81 @@ function (declare, lang, Deferred, dom, topic, Button, ContentPane, hashHelper,
       this.register(this._reportCount);
       this.addChild(this._reportCount);
 
-      //--- Run filter ---//
+      //--- Baseline filter wrapper ---//
 
-      if (this.diffView) {
-        this.cmpData = new CC_OBJECTS.CompareData();
+      var baselineFilterToggle = new FilterToggle({ title : 'Baseline' });
+      this.addChild(baselineFilterToggle);
 
-        //--- Run baseline filter ---//
+      //--- Run baseline filter ---//
 
-        this._runBaseLineFilter = new RunBaseFilter({
-          class : 'baseline',
-          title : 'Baseline',
-          parent : this,
-          updateReportFilter : function () {
-            that.runIds = this.getRunIds();
+      this._runBaseLineFilter = new RunBaseFilter({
+        class : 'run',
+        title : 'Run name',
+        parent : this,
+        updateReportFilter : function () {
+          that.runIds = this.getRunIds();
+        }
+      });
+      this.register(this._runBaseLineFilter);
+      baselineFilterToggle.addChild(this._runBaseLineFilter);
+
+      //--- Run history tags filter ---//
+
+      this._runHistoryTagFilter = new RunHistoryTagFilter({
+        class : 'run-tag',
+        title : 'Run tag',
+        parent   : this,
+        updateReportFilter : function () {
+          that.reportFilter.runTag = this.getTagIds();
+        }
+      });
+      this.register(this._runHistoryTagFilter);
+      baselineFilterToggle.addChild(this._runHistoryTagFilter);
+
+      this._newCheckFilterToggle = new FilterToggle({
+        title : 'Newcheck',
+        open : this.diffView
+      });
+      this.addChild(this._newCheckFilterToggle);
+
+      //--- Run newcheck filter ---//
+
+      this._runNewCheckFilter = new RunBaseFilter({
+        class : 'newcheck',
+        title : 'Run name',
+        parent : this,
+        updateReportFilter : function () {
+          var runIds = this.getRunIds();
+
+          if (runIds) {
+            if (!that.cmpData) {
+              that.cmpData = new CC_OBJECTS.CompareData();
+              that.cmpData.diffType = that._diffTypeFilter.defaultDiffType;
+            }
+            that.cmpData.runIds = runIds;
+          } else {
+            that.cmpData = null;
           }
-        });
-        this.register(this._runBaseLineFilter);
-        this.addChild(this._runBaseLineFilter);
+        }
+      });
+      this.register(this._runNewCheckFilter);
+      this._newCheckFilterToggle.addChild(this._runNewCheckFilter);
 
-        //--- Run base filter ---//
+      //--- Diff type filter ---//
 
-        this._runNewCheckFilter = new RunBaseFilter({
-          class : 'newcheck',
-          title : 'Newcheck',
-          parent : this,
-          updateReportFilter : function () {
-            that.cmpData.runIds = this.getRunIds();
-          }
-        });
-        this.register(this._runNewCheckFilter);
-        this.addChild(this._runNewCheckFilter);
-
-        //--- Diff type filter ---//
-
-        this._diffTypeFilter = new DiffTypeFilter({
-          class : 'difftype',
-          title : 'Diff type',
-          parent : this,
-          updateReportFilter : function (diffType) {
+      this._diffTypeFilter = new DiffTypeFilter({
+        class : 'difftype',
+        title : 'Diff type',
+        noAvailableTooltipItemMsg :
+          'At least one run should be selected at Newcheck!',
+        parent : this,
+        updateReportFilter : function (diffType) {
+          if (that.cmpData)
             that.cmpData.diffType = diffType;
-          }
-        });
-        this.register(this._diffTypeFilter);
-        this.addChild(this._diffTypeFilter);
-      } else {
-        this._runNameFilter = new RunBaseFilter({
-          class : 'run',
-          title : 'Run name',
-          parent : this,
-          updateReportFilter : function () {
-            that.runIds = this.getRunIds();
-          }
-        });
-        this.register(this._runNameFilter);
-        this.addChild(this._runNameFilter);
-      }
+        }
+      });
+      this.register(this._diffTypeFilter);
+      this._newCheckFilterToggle.addChild(this._diffTypeFilter);
 
       //--- Review status filter ---//
 
@@ -255,19 +330,6 @@ function (declare, lang, Deferred, dom, topic, Button, ContentPane, hashHelper,
       });
       this.register(this._severityFilter);
       this.addChild(this._severityFilter);
-
-      //--- Run history tags filter ---//
-
-      this._runHistoryTagFilter = new RunHistoryTagFilter({
-        class : 'run-tag',
-        title : 'Run tag',
-        parent   : this,
-        updateReportFilter : function () {
-          that.reportFilter.runTag = this.getTagIds();
-        }
-      });
-      this.register(this._runHistoryTagFilter);
-      this.addChild(this._runHistoryTagFilter);
 
       //--- Detection date filter ---//
 
@@ -467,6 +529,9 @@ function (declare, lang, Deferred, dom, topic, Button, ContentPane, hashHelper,
     // Initalize all filter by URL parameters.
     initAll : function (queryParams) {
       if (!queryParams) queryParams = {};
+
+      if (!this._isInitalized && !queryParams.newcheck)
+        this._newCheckFilterToggle.hide();
 
       this._filters.forEach(function (filter) {
         filter.initByUrl(queryParams);
