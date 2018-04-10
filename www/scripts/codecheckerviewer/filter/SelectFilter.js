@@ -69,7 +69,7 @@ function (declare, dom, Standby, ContentPane, FilterBase, FilterTooltip,
       //--- Filter options ---//
 
       this._edit = dom.create('span', {
-        class : 'customIcon edit',
+        class : 'customIcon cogwheel',
         onclick : function () {
           that._filterTooltip.show();
         }

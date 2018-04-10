@@ -126,6 +126,11 @@
   content: "\e003";
 }
 
+.customIcon.cogwheel:before {
+  content: "\e01c";
+  color: #878d96;
+}
+
 /* Review Status */
 
 .review-status-unreviewed::before {

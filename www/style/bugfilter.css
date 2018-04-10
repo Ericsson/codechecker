@@ -98,13 +98,8 @@
   display: none;
 }
 
-.bug-filters .edit::before {
-  content: "\e01c";
-  color: #878d96;
-}
-
 .bug-filters .clean,
-.bug-filters .edit{
+.bug-filters .cogwheel {
   cursor: pointer;
 }
 
