@@ -6,7 +6,7 @@
 
 import base64
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timedelta
 import hashlib
 import json
 import os
@@ -177,10 +177,17 @@ def handle_list_runs(args):
         print(CmdLineOutputEncoder().encode(results))
 
     else:  # plaintext, csv
-        header = ['Name', 'ResultCount', 'RunDate']
+        header = ['Name', 'Number of reports', 'Storage date', 'Version tag',
+                  'Duration']
         rows = []
         for run in runs:
-            rows.append((run.name, str(run.resultCount), run.runDate))
+            duration = str(timedelta(seconds=run.duration)) \
+                if run.duration > -1 else 'Not finished'
+            rows.append((run.name,
+                         str(run.resultCount),
+                         run.runDate,
+                         run.versionTag if run.versionTag else '',
+                         duration))
 
         print(twodim_to_str(args.output_format, header, rows))
 
