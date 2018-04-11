@@ -219,13 +219,7 @@ function (declare, dom, style, Deferred, ObjectStore, Store, QueryResults,
 
   function bugPathLengthFormatter(length) {
     var d = dom.create('span', { innerHTML : length, class : 'length' });
-
-    // This value says that bug path length with this value and above are
-    // difficult to understand. The background color of these bug path lengths
-    // will be red.
-    var bugPathLengthLimit = 20;
-    var blendColor = util.generateRedGreenGradientColor(length,
-        bugPathLengthLimit, 0.5);
+    var blendColor = util.getBugPathLenColor(length);
     style.set(d, 'background-color', blendColor);
 
     return d.outerHTML;

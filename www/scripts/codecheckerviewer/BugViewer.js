@@ -105,6 +105,16 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
     return ret;
   }
 
+  function formatBugPathLen(bugPathLen) {
+    return dom.create('span', {
+      class : 'bug-path-length',
+      innerHTML : bugPathLen,
+      style : {
+        'background-color' : util.getBugPathLenColor(bugPathLen)
+      }
+    }).outerHTML;
+  }
+
   var Editor = declare(ContentPane, {
     constructor : function () {
       this._lineWidgets = [];
@@ -168,7 +178,8 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
             })[0];
 
             return {
-              label : run.name + ':' + filename + ':' + reportData.line,
+              label : run.name + ':' + filename + ':L' + reportData.line
+                    + ' [' + formatBugPathLen(reportData.bugPathLength) + ']',
               value : reportData.reportId
             };
           });
@@ -712,7 +723,7 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
     },
 
     _onNodeMouseLeave : function (node) {
-      if (node.item.isLeaf)
+      if (node.item.tooltip)
         Tooltip.hide(node.labelNode);
     },
 
@@ -885,6 +896,31 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
       return res;
     },
 
+    _getTooltip : function (report) {
+      var tooltip = '<div><b>Checker name</b>: ' + report.checkerId + '</div>'
+        + '<div><b>Checker message</b>: ' + report.checkerMsg + '</div>'
+        + '<div><b>Bug path length</b>: '
+        + formatBugPathLen(report.bugPathLength) + '</div>';
+
+      if (report.reviewData) {
+        var reviewStatus = report.reviewData.status;
+        var className = util.reviewStatusCssClass(reviewStatus);
+        var status = util.reviewStatusFromCodeToString(reviewStatus);
+
+        tooltip += '<div><b>Review status</b>: <span title="' + status
+          + '" class="customIcon ' + className + '"></span></div>';
+      }
+
+      tooltip += '<div><b>Detected at</b>: '
+        + util.prettifyDate(report.detectedAt) + '</div>';
+
+      if (report.fixedAt)
+        tooltip += '<div><b>Fixed at</b>: '
+          + util.prettifyDate(report.fixedAt) + '</div>';
+
+      return tooltip;
+    },
+
     _addReport : function (report) {
       var that = this;
 
@@ -894,12 +930,13 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
 
       this.bugStore.put({
         id : report.reportId + '',
-        name : 'L' + report.line
-             + ' &ndash; ' + report.checkerId,
+        name : 'L' + report.line + ' &ndash; ' + report.checkerId
+             + ' [<span title="Bug path length">' + report.bugPathLength + '</span>]',
         parent : parent,
         report : report,
         isLeaf : false,
         kind : 'bugpath',
+        tooltip : this._getTooltip(report),
         getChildren : function (node) {
           var reportDetails = CC_SERVICE.getReportDetails(report.reportId);
           return that._formatReportDetails(report, reportDetails);

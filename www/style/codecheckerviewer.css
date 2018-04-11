@@ -602,3 +602,9 @@ html, body {
   display: block;
   text-align: center;
 }
+
+.same-report-selector .bug-path-length,
+.dijitTree .bug-path-length,
+.dijitTooltip .bug-path-length {
+  padding: 0px 4px;
+}
