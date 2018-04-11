@@ -21,7 +21,7 @@ class BuildAction(object):
         self._target = ''
         self._source_count = 0
         self._sources = []
-        self._skip = True
+        self._skip = False
 
     def __str__(self):
         # For debugging.

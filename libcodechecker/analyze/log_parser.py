@@ -225,7 +225,6 @@ def parse_compile_commands_json(logfile, parseLogOptions):
     actions = []
     filtered_build_actions = {}
 
-    logfile.seek(0)
     data = json.load(logfile)
 
     compiler_includes = {}
@@ -297,9 +296,8 @@ def parse_compile_commands_json(logfile, parseLogOptions):
             action.compiler_includes = compiler_includes[results.compiler]
             action.target = compiler_target[results.compiler]
 
-        if results.action == option_parser.ActionType.COMPILE or \
-           results.action == option_parser.ActionType.LINK:
-            action.skip = False
+        if results.action != option_parser.ActionType.COMPILE:
+            action.skip = True
 
         # TODO: Check arch.
         action.directory = entry['directory']
@@ -314,7 +312,6 @@ def parse_compile_commands_json(logfile, parseLogOptions):
 
     for _, ba in filtered_build_actions.items():
         actions.append(ba)
-
     return actions
 
 
@@ -338,4 +335,5 @@ def parse_log(logfilepath, parseLogOptions):
             sys.exit(1)
 
     LOG.debug('Parsing log file done.')
-    return actions
+
+    return [build_action for build_action in actions if not build_action.skip]
