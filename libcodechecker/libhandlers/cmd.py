@@ -62,7 +62,8 @@ def get_argparser_ctor_args():
 
 def __add_common_arguments(parser,
                            needs_product_url=True,
-                           has_matrix_output=False):
+                           has_matrix_output=False,
+                           allow_html_output=False):
     """
     Add some common arguments, like server address and verbosity, to parser.
     """
@@ -98,31 +99,36 @@ def __add_common_arguments(parser,
                                        " '[http[s]://]host:port'.")
 
     if has_matrix_output:
+        output_formats = ["plaintext"] + output_formatters.USER_FORMATS
+        if allow_html_output:
+            output_formats += ["html"]
+
         common_group.add_argument('-o', '--output',
                                   dest="output_format",
                                   required=False,
                                   # TODO: 'plaintext' only kept for legacy.
                                   default="plaintext",
-                                  choices=["plaintext", "html"] +
-                                          output_formatters.USER_FORMATS,
+                                  choices=output_formats,
                                   help="The output format to use in showing "
                                        "the data.")
 
-        common_group.add_argument('-e', '--export-dir',
-                                  dest="export_dir",
-                                  default=argparse.SUPPRESS,
-                                  help="Store the output in the given folder.")
+        if allow_html_output:
+            common_group.add_argument('-e', '--export-dir',
+                                      dest="export_dir",
+                                      default=argparse.SUPPRESS,
+                                      help="Store the output in the given"
+                                           "folder.")
 
-        common_group.add_argument('-c', '--clean',
-                                  dest="clean",
-                                  required=False,
-                                  action='store_true',
-                                  default=argparse.SUPPRESS,
-                                  help="Delete output results stored in the "
-                                       "output directory. (By default, it "
-                                       "would keep output files and "
-                                       "overwrites only those that contain "
-                                       "any reports).")
+            common_group.add_argument('-c', '--clean',
+                                      dest="clean",
+                                      required=False,
+                                      action='store_true',
+                                      default=argparse.SUPPRESS,
+                                      help="Delete output results stored in"
+                                           "the output directory. (By "
+                                           "default, it would keep output "
+                                           "files and overwrites only those "
+                                           "that contain any reports).")
 
     logger.add_verbose_arguments(common_group)
 
@@ -646,7 +652,8 @@ def add_arguments_to_parser(parser):
                     "differ between the two.",
         help="Compare two analysis runs and show the difference.")
     __register_diff(diff)
-    __add_common_arguments(diff, has_matrix_output=True)
+    __add_common_arguments(diff, has_matrix_output=True,
+                           allow_html_output=True)
 
     sum_p = subcommands.add_parser(
         'sum',

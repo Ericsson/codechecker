@@ -1342,11 +1342,10 @@ Prints basic information about analysis results, such as location, checker
 name, summary.
 
 ~~~~~~~~~~~~~~~~~~~~~
-usage: CodeChecker cmd results [-h] RUN_NAME [-s] [--filter FILTER]
-                               [--url PRODUCT_URL]
+usage: CodeChecker cmd results [-h] [-s] [--filter FILTER] [--url PRODUCT_URL]
                                [-o {plaintext,rows,table,csv,json}]
                                [--verbose {info,debug,debug_analyzer}]
-                               RUN_NAME
+                               RUN_NAMES
 
 Show the individual analysis reports' summary.
 
@@ -1385,7 +1384,8 @@ from the comparison of two runs.
 usage: CodeChecker cmd diff [-h] -b BASE_RUN -n NEW_RUN [-s] [--filter FILTER]
                             (--new | --resolved | --unresolved)
                             [--url PRODUCT_URL]
-                            [-o {plaintext,rows,table,csv,json}]
+                            [-o {plaintext,rows,table,csv,json,html}]
+                            [-e EXPORT_DIR] [-c]
                             [--verbose {info,debug,debug_analyzer}]
 
 Compare two analysis runs to show the results that differ between the two.
