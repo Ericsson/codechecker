@@ -614,6 +614,31 @@ def __register_login(parser):
                              "session.")
 
 
+def __register_run_histories(parser):
+    """
+    Add argparse subcommand parser for the "list run histories by run name"
+    action.
+    """
+
+    parser.add_argument('-n', '--name',
+                        type=str,
+                        nargs='*',
+                        dest="names",
+                        metavar='RUN_NAME',
+                        default=argparse.SUPPRESS,
+                        required=False,
+                        help="Names of the analysis runs to show history for. "
+                             "If this argument is not supplied it will show "
+                             "the history for all runs. This has the "
+                             "following format: \"<run_name_1> <run_name_2> "
+                             "<run_name_3>\" where run names can be a Python"
+                             "regex expression. So if you have run_1_a_name, "
+                             "run_2_b_name, run_2_c_name, run_3_d_name "
+                             "then \"run_2* run_3_d_name\" shows history for "
+                             "the last three runs. Use 'CodeChecker cmd runs' "
+                             "to get the available runs.")
+
+
 def add_arguments_to_parser(parser):
     """
     Add the subcommand's arguments to the given argparse.ArgumentParser.
@@ -629,6 +654,15 @@ def add_arguments_to_parser(parser):
         help="List the available analysis runs.")
     runs.set_defaults(func=cmd_line_client.handle_list_runs)
     __add_common_arguments(runs, has_matrix_output=True)
+
+    run_histories = subcommands.add_parser(
+        'history',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description="Show run history for some analysis runs.",
+        help="Show run history of multiple runs.")
+    __register_run_histories(run_histories)
+    run_histories.set_defaults(func=cmd_line_client.handle_list_run_histories)
+    __add_common_arguments(run_histories, has_matrix_output=True)
 
     results = subcommands.add_parser(
         'results',

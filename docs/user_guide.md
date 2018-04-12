@@ -39,6 +39,7 @@ Table of Contents
     * [Manage server database upgrades](#manage-server-database-upgrade)
   * [`cmd`](#cmd)
     * [`runs` (List runs)](#cmd-runs)
+    * [`history` (List of run histories)](#cmd-history)
     * [`results` (List analysis results' summary)](#cmd-results)
     * [`diff` (Show differences between two runs)](#cmd-diff)
     * [`sum` (Show summarised count of results)](#cmd-sum)
@@ -1334,6 +1335,33 @@ usage: CodeChecker cmd runs [-h] [--url PRODUCT_URL]
                             [--verbose {info,debug,debug_analyzer}]
 
 List the analysis runs available on the server.
+~~~~~~~~~~~~~~~~~~~~~
+
+### <a name="cmd-history"></a> List of run histories (`history`)
+
+With this command you can list out the specific storage events which happened
+during storage processes under multiple run names.
+
+~~~~~~~~~~~~~~~~~~~~~
+usage: CodeChecker cmd history [-h] [-n [RUN_NAME [RUN_NAME ...]]]
+                               [--url PRODUCT_URL]
+                               [-o {plaintext,rows,table,csv,json}]
+                               [--verbose {info,debug,debug_analyzer}]
+
+Show run history for some analysis runs.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -n [RUN_NAME [RUN_NAME ...]], --name [RUN_NAME [RUN_NAME ...]]
+                        Names of the analysis runs to show history for. If
+                        this argument is not supplied it will show the history
+                        for all runs. This has the following format:
+                        "<run_name_1> <run_name_2> <run_name_3>" where run
+                        names can be a Pythonregex expression. So if you have
+                        run_1_a_name, run_2_b_name, run_2_c_name, run_3_d_name
+                        then "run_2* run_3_d_name" shows history for the last
+                        three runs. Use 'CodeChecker cmd runs' to get the
+                        available runs.
 ~~~~~~~~~~~~~~~~~~~~~
 
 ### <a name="cmd-results"></a> List analysis results' summary (`results`)

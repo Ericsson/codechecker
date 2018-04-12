@@ -37,6 +37,10 @@ class ThriftClientHelper(object):
         pass
 
     @ThriftClientCall
+    def getRunHistory(self, run_ids, limit, offset, run_history_filter):
+        pass
+
+    @ThriftClientCall
     def getReportDetails(self, reportId):
         pass
 

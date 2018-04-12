@@ -867,3 +867,28 @@ def handle_login(args):
     protocol, host, port = split_server_url(args.server_url)
     handle_auth(protocol, host, port, args.username,
                 login='logout' not in args)
+
+
+def handle_list_run_histories(args):
+    init_logger(args.verbose if 'verbose' in args else None)
+
+    client = setup_client(args.product_url)
+    run_ids = None
+    if 'names' in args:
+        runs = get_runs(client, args.names)
+        run_ids = [r.runId for r in runs]
+
+    run_history = client.getRunHistory(run_ids, None, None, None)
+
+    if args.output_format == 'json':
+        print(CmdLineOutputEncoder().encode(run_history))
+    else:  # plaintext, csv
+        header = ['Date', 'Run name', 'Version tag', 'User']
+        rows = []
+        for h in run_history:
+            rows.append((h.time,
+                         h.runName,
+                         h.versionTag if h.versionTag else '',
+                         h.user))
+
+        print(twodim_to_str(args.output_format, header, rows))
