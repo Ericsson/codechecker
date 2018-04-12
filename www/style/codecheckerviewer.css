@@ -608,3 +608,11 @@ html, body {
 .dijitTooltip .bug-path-length {
   padding: 0px 4px;
 }
+
+.cm-matchhighlight {
+  background-color: lightgreen
+}
+
+.CodeMirror-selection-highlight-scrollbar {
+  background-color: green
+}
