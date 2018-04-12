@@ -2,6 +2,7 @@
 
 CURRENT_DIR = $(shell pwd)
 BUILD_DIR = $(CURRENT_DIR)/build
+DEST_DIR = $(BUILD_DIR)/dest
 
 # Root of the repository.
 ROOT = $(CURRENT_DIR)
@@ -37,6 +38,15 @@ userguide: build_dir
 package: clean_package build_dir gen-docs thrift userguide build_plist_to_html
 	./scripts/build_package.py -r $(ROOT) -o $(BUILD_DIR) -b $(BUILD_DIR)
 
+deb: package
+	mkdir -p $(DEST_DIR)/opt
+	cp -ru $(BUILD_DIR)/CodeChecker $(DEST_DIR)/opt
+	cp -ru debian/DEBIAN $(DEST_DIR)
+	cp LICENSE.TXT $(DEST_DIR)/DEBIAN/copyright
+	mkdir -p $(DEST_DIR)/usr/bin
+	ln -sfrn $(DEST_DIR)/opt/CodeChecker/bin/CodeChecker $(DEST_DIR)/usr/bin/CodeChecker
+	dpkg-deb --build $(DEST_DIR) $(BUILD_DIR)/codechecker.deb
+
 build_dir:
 	mkdir -p $(BUILD_DIR)
 
@@ -64,7 +74,7 @@ venv_dev:
 clean_venv_dev:
 	rm -rf venv_dev
 
-clean: clean_package clean_vendor
+clean: clean_package clean_vendor clean_deb
 
 clean_package: clean_userguide clean_plist_to_html
 	rm -rf $(BUILD_DIR)
@@ -85,3 +95,6 @@ clean_userguide:
 
 clean_plist_to_html:
 	rm -rf vendor/plist_to_html/build
+
+clean_deb:
+	rm -rf $(DEST_DIR)

@@ -1,0 +1,20 @@
+Source: codechecker
+Version: 6.6
+Maintainer: Ericsson
+Homepage: https://github.com/Ericsson/codechecker
+Vcs-Git: git@github.com:Ericsson/codechecker.git
+Vcs-browser: https://github.com/Ericsson/codechecker.git
+Package: codechecker
+Architecture: all
+Depends: python2.7,
+         python-thrift (>= 0.9.1),
+         python-alembic (>= 0.8.2),
+         python-psutil (>= 3.4.2),
+         python-portalocker (>= 0.5.5),
+         clang (>= 3.8),
+         clang-tidy (>= 3.8)
+Recommends: postgresql,
+            pg8000
+Description: Analyzing C/C++ code
+ CodeChecker is an analyzer tooling, defect database and viewer extension for
+ the Clang Static Analyzer and Clang Tidy.
