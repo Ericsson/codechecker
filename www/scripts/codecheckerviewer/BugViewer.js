@@ -606,7 +606,14 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
         function (result) {
           result.sort(function (r1, r2) {
             // Order reports by line.
-            return r1.line - r2.line;
+            if (r1.line < r2.line) return -1;
+            if (r1.line > r2.line) return 1;
+
+            // Order report by bug path length if lines are same.
+            if (r1.bugPathLength < r2.bugPathLength) return -1;
+            if (r1.bugPathLength > r2.bugPathLength) return 1;
+
+            return 0;
           }).forEach(function (report) { that._addReport(report); });
 
           that.bugStore.query({ parent : 'root' }).forEach(function (severity) {
