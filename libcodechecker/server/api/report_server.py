@@ -625,7 +625,7 @@ class ThriftRequestHandler(object):
                 reviewData=create_review_data(review_status),
                 detectionStatus=detection_status_enum(report.detection_status),
                 detectedAt=str(report.detected_at),
-                fixedAt=str(report.fixed_at))
+                fixedAt=str(report.fixed_at) if report.fixed_at else None)
 
     @exc_to_thrift_reqfail
     @timeit
@@ -849,7 +849,7 @@ class ThriftRequestHandler(object):
                                    detectionStatus=detection_status_enum(
                                        d_status),
                                    detectedAt=str(detected_at),
-                                   fixedAt=str(fixed_at),
+                                   fixedAt=str(fixed_at) if fixed_at else None,
                                    bugPathLength=bug_path_len))
 
             return results

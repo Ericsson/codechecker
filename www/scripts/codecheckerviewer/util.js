@@ -124,6 +124,17 @@ function (locale, dom, style, json) {
        + ',' + opacity + ')';
     },
 
+    getBugPathLenColor : function (length, bugPathLengthLimit) {
+      // This value says that bug path length with this value and above are
+      // difficult to understand. The background color of these bug path lengths
+      // will be red.
+      if (bugPathLengthLimit === undefined)
+        bugPathLengthLimit = 20;
+
+      return this.generateRedGreenGradientColor(length,
+        bugPathLengthLimit, 0.5);
+    },
+
     /**
      * Converts the given number of seconds into a more human-readable
      * 'hh:mm:ss' format.
