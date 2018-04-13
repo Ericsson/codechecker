@@ -54,6 +54,11 @@ def collect_paths_events(report, file_ids, files):
                 database.
     files -- A list containing the file paths from the parsed plist file. The
              order of this list must be the same as in the plist file.
+
+    #TODO Multiple ranges could belong to an event or control node.
+    Only the first range from the list of ranges is stored into the
+    database. Further improvement can be to store and view all ranges
+    if there are more than one.
     """
     bug_paths = []
     bug_events = []
@@ -103,11 +108,21 @@ def collect_paths_events(report, file_ids, files):
 
     for event in events:
         file_path = files[event['location']['file']]
+
+        start_loc = event['location']
+        end_loc = event['location']
+        # Range can provide more precise location information.
+        # Use that if available.
+        ranges = event.get("ranges")
+        if ranges:
+            start_loc = ranges[0][0]
+            end_loc = ranges[0][1]
+
         bug_events.append(ttypes.BugPathEvent(
-            event['location']['line'],
-            event['location']['col'],
-            event['location']['line'],
-            event['location']['col'],
+            start_loc['line'],
+            start_loc['col'],
+            end_loc['line'],
+            end_loc['col'],
             event['message'],
             file_ids[file_path]))
 
