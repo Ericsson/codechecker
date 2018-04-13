@@ -34,6 +34,7 @@ from libcodechecker import util
 from libcodechecker.analyze import plist_parser
 from libcodechecker.logger import get_logger
 from libcodechecker.profiler import timeit
+from libcodechecker.report import get_report_path_hash
 from libcodechecker.server import permissions
 from libcodechecker.server.database import db_cleanup
 from libcodechecker.server.database.config_db_model import Product
@@ -387,27 +388,6 @@ def sort_results_query(query, sort_types, sort_type_map, order_type_map,
             query = query.order_by(order_type(sort_col))
 
     return query
-
-
-def get_report_path_hash(report, files):
-    report_path_hash = ''
-    events = filter(lambda i: i.get('kind') == 'event', report.bug_path)
-
-    for event in events:
-        file_name = os.path.basename(files[event['location']['file']])
-        line = str(event['location']['line']) if 'location' in event else 0
-        col = str(event['location']['col']) if 'location' in event else 0
-
-        report_path_hash += line + '|' + col + '|' + event['message'] + \
-            file_name
-
-    if not len(report_path_hash):
-        LOG.error('Failed to generate report path hash!')
-        LOG.error(report)
-        LOG.error(events)
-
-    LOG.debug(report_path_hash)
-    return hashlib.md5(report_path_hash.encode()).hexdigest()
 
 
 class ThriftRequestHandler(object):
@@ -1854,8 +1834,7 @@ class ThriftRequestHandler(object):
                 bug_paths, bug_events = \
                     store_handler.collect_paths_events(report, file_ids,
                                                        files)
-                report_path_hash = get_report_path_hash(report,
-                                                        files)
+                report_path_hash = get_report_path_hash(report, files)
                 if report_path_hash in already_added:
                     LOG.debug('Not storing report. Already added')
                     LOG.debug(report)

@@ -40,8 +40,8 @@ from xml.parsers.expat import ExpatError
 
 from libcodechecker import util
 from libcodechecker.logger import get_logger
-from libcodechecker.report import Report
-from libcodechecker.report import generate_report_hash
+from libcodechecker.report import Report, generate_report_hash, \
+    get_report_path_hash
 from libcodechecker.source_code_comment_handler import \
     SourceCodeCommentHandler, skip_suppress_status
 
@@ -326,6 +326,7 @@ class PlistToPlaintextFormatter(object):
                  src_comment_handler,
                  skip_handler,
                  severity_map,
+                 processed_path_hashes,
                  analyzer_type="clangsa"):
 
         self.__analyzer_type = analyzer_type
@@ -333,6 +334,7 @@ class PlistToPlaintextFormatter(object):
         self.__print_steps = False
         self.src_comment_handler = src_comment_handler
         self.skiplist_handler = skip_handler
+        self._processed_path_hashes = processed_path_hashes
 
     @property
     def print_steps(self):
@@ -416,6 +418,16 @@ class PlistToPlaintextFormatter(object):
 
         non_suppressed = 0
         for report in reports:
+            path_hash = get_report_path_hash(report, files)
+            if path_hash in self._processed_path_hashes:
+                LOG.debug("Not showing report because it is a deduplication "
+                          "of an already processed report!")
+                LOG.debug("Path hash: %s", path_hash)
+                LOG.debug(report)
+                continue
+
+            self._processed_path_hashes.add(path_hash)
+
             events = [i for i in report.bug_path if i.get('kind') == 'event']
             f_path = files[events[-1]['location']['file']]
             if self.skiplist_handler and \

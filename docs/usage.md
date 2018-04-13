@@ -423,25 +423,18 @@ enclosing scope of the bug location (function signature, class, namespace).
 ## <a name="how-report-are-counted"></a> How reports are counted?
 
 You can list analysis reports in two ways:
-1. Using the **`CodeChecker parse`** command, which **does not do deduplication**.
-2. Reports view of the **Web UI**, which **does deduplication**.
+1. Using the **`CodeChecker parse`** command.
+2. Reports view of the **Web UI**.
 
-These two views may show slightly different report list and counts based on how 
-duplicate findings or findings with the same hash identifier are rendered.
+Both of them do **deduplication**: it will not show the same bug report multiple
+times even if the analyzer found it multiple times.
 
-The `CodeChecker parse` command does not do deduplication. 
-It lists reports simply as found by the
-analyzers and always lists all duplicate and similar findings.
-  
 You may find the same bug report multiple times for two reasons:
 1) The same source file is analyzed multiple times 
 (because the `compile_commmands.json` contains the build command multiple times)
 then the same findings will be listed multiple times. 
 2) All findings that are found in headers 
 will be shown as many times as many source file include that header.
-
-Web UI reports view on the other hand does deduplication: It will not show
-the same bug report two times even if the analyzer found it multiple times.
 
 **Example:**
 ```c++
@@ -501,15 +494,7 @@ Found no defects while analyzing a.c
     3, lib.c:2:1: Entered call from 'h'
     4, lib.c:3:11: Division by zero
 
-[HIGH] lib.h:1:30: Dereference of undefined pointer value [core.NullDereference]
-inline int div_h(){int *p; *p=4;};
-                             ^
-  Report hash: 6e7a6b71ac1a26751b7a7f7eea80f5da
-  Steps:
-    1, lib.h:1:20: 'p' declared without an initial value
-    2, lib.h:1:30: Dereference of undefined pointer value
-
-Found 2 defect(s) while analyzing b.c
+Found 1 defect(s) while analyzing b.c
 
 [HIGH] lib.c:3:11: Division by zero [core.DivideZero]
   return 1/b;
@@ -521,15 +506,7 @@ Found 2 defect(s) while analyzing b.c
     3, lib.c:2:1: Entered call from 'f'
     4, lib.c:3:11: Division by zero
 
-[HIGH] lib.h:1:30: Dereference of undefined pointer value [core.NullDereference]
-inline int div_h(){int *p; *p=4;};
-                             ^
-  Report hash: 6e7a6b71ac1a26751b7a7f7eea80f5da
-  Steps:
-    1, lib.h:1:20: 'p' declared without an initial value
-    2, lib.h:1:30: Dereference of undefined pointer value
-
-Found 2 defect(s) while analyzing a.c
+Found 1 defect(s) while analyzing a.c
 
 Found no defects while analyzing b.c
 Found no defects while analyzing lib.c
@@ -538,16 +515,15 @@ Found no defects while analyzing lib.c
 -----------------------
 Filename | Report count
 -----------------------
-lib.h    |            3
+lib.h    |            1
 lib.c    |            2
 -----------------------
 ```
 
-These results are printed without deduplication and uniqueing.
+These results are printed by doing deduplication and without uniqueing.
 As you can see the *dereference of undefined pointer value* error in the 
-`lib.h` is printed 3 times, because the header is included from 
-`a.c, b.c, lib.c`. All three findings have the same Report Identifier value.
-The two division by zero errors from `a.c` and `b.c` are printed also separately.
+`lib.h` is printed only once, even if the header is included from
+`a.c, b.c, lib.c`.
 
 In deduplication mode and without uniqueing (in the Web UI) the reports
 in lib.h would be shown only once, as all three findings are identical. So in

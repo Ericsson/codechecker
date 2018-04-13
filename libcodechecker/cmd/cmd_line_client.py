@@ -25,7 +25,7 @@ from libcodechecker.analyze import plist_parser
 from libcodechecker.libclient.client import handle_auth
 from libcodechecker.libclient.client import setup_client
 from libcodechecker.output_formatters import twodim_to_str
-from libcodechecker.report import Report
+from libcodechecker.report import Report, get_report_path_hash
 from libcodechecker.source_code_comment_handler import SourceCodeCommentHandler
 from libcodechecker.util import split_server_url
 
@@ -288,6 +288,7 @@ def handle_diff_results(args):
 
     def get_report_dir_results(reportdir):
         all_reports = []
+        processed_path_hashes = set()
         for filename in os.listdir(reportdir):
             if filename.endswith(".plist"):
                 file_path = os.path.join(reportdir, filename)
@@ -295,9 +296,19 @@ def handle_diff_results(args):
                 try:
                     files, reports = plist_parser.parse_plist(file_path)
                     for report in reports:
+                        path_hash = get_report_path_hash(report, files)
+                        if path_hash in processed_path_hashes:
+                            LOG.debug("Not showing report because it is a "
+                                      "deduplication of an already processed "
+                                      "report!")
+                            LOG.debug("Path hash: %s", path_hash)
+                            LOG.debug(report)
+                            continue
+
+                        processed_path_hashes.add(path_hash)
                         report.main['location']['file_name'] = \
                             files[int(report.main['location']['file'])]
-                    all_reports.extend(reports)
+                        all_reports.append(report)
 
                 except Exception as ex:
                     LOG.error('The generated plist is not valid!')

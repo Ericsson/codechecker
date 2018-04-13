@@ -161,7 +161,8 @@ def add_arguments_to_parser(parser):
     parser.set_defaults(func=__handle)
 
 
-def parse(f, context, metadata_dict, suppress_handler, skip_handler, steps):
+def parse(f, context, metadata_dict, suppress_handler, skip_handler, steps,
+          processed_path_hashes):
     """
     Prints the results in the given file to the standard output in a human-
     readable format.
@@ -177,7 +178,8 @@ def parse(f, context, metadata_dict, suppress_handler, skip_handler, steps):
 
     rh = plist_parser.PlistToPlaintextFormatter(suppress_handler,
                                                 skip_handler,
-                                                context.severity_map)
+                                                context.severity_map,
+                                                processed_path_hashes)
 
     rh.print_steps = steps
 
@@ -275,6 +277,8 @@ def main(args):
     if 'skipfile' in args:
         skip_handler = SkipListHandler(args.skipfile)
 
+    processed_path_hashes = set()
+
     for input_path in args.input:
 
         input_path = os.path.abspath(input_path)
@@ -330,7 +334,8 @@ def main(args):
                                            metadata_dict,
                                            suppress_handler,
                                            skip_handler,
-                                           'print_steps' in args)
+                                           'print_steps' in args,
+                                           processed_path_hashes)
             file_change = file_change.union(f_change)
 
             severity_stats.update(Counter(report_stats.get('severity',
