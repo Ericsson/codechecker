@@ -201,7 +201,8 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
         foldGutter : true,
         gutters : ['CodeMirror-linenumbers', 'bugInfo'],
         extraKeys : {},
-        viewportMargin : 500
+        viewportMargin : 500,
+        highlightSelectionMatches : { showToken: /\w/, annotateScrollbar: true }
       });
 
       this.codeMirror.on('viewportChange', function (cm, from, to) {
