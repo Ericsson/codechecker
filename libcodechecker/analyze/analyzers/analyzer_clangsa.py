@@ -171,6 +171,11 @@ class ClangSA(analyzer_base.SourceAnalyzer):
                                          '-analyzer-disable-checker',
                                          '-Xclang', checker_name])
 
+            # Get analyzer notes as events from clang.
+            analyzer_cmd.extend(['-Xclang',
+                                 '-analyzer-config',
+                                 '-Xclang', 'notes-as-events=true'])
+
             if config.ctu_dir and not self.__disable_ctu:
                 # ctu-clang5 compatibility
                 analyzer_cmd.extend(['-Xclang', '-analyzer-config',
