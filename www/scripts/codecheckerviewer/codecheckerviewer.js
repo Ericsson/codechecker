@@ -39,7 +39,7 @@ function (declare, topic, Dialog, Button, BorderContainer, TabContainer,
 
     switch (state.tab) {
       case undefined:
-        if (state.run || state.baseline || state.newcheck || state.difftype ||
+        if (state.run || state.newcheck || state.difftype ||
           state.reportHash || state.report)
           topic.publish('tab/allReports');
         else
@@ -56,21 +56,26 @@ function (declare, topic, Dialog, Button, BorderContainer, TabContainer,
         return;
     }
 
+    var baseline = state.run;
+    if (baseline && !(baseline instanceof Array))
+      baseline = [baseline];
+
+    var newcheck = state.newcheck;
+    if (newcheck && !(newcheck instanceof Array))
+      newcheck = [newcheck];
+
     var runs = state.tab.split('_diff_');
-    if (runs.length == 2) {
-      topic.publish('openDiff', {
-        tabData  : { baseline : findRunData(runs[0]),
-                     newcheck : findRunData(runs[1]) },
-        baseline : findRunData(state.baseline),
-        newcheck : findRunData(state.newcheck),
-        difftype : state.difftype ? state.difftype : CC_OBJECTS.DiffType.NEW
-      });
-    } else {
-      topic.publish('openRun', {
-        tabData : findRunData(runs[0]),
-        runData : findRunData(state.run)
-      });
-    }
+    var title = runs.length == 2
+      ? 'Diff of ' + runs[0] + ' and ' + runs[1]
+      : runs[0];
+
+    topic.publish('openRun', {
+      baseline : baseline,
+      newcheck : newcheck,
+      tabId    : state.tab,
+      title    : title,
+      difftype : state.difftype ? state.difftype : CC_OBJECTS.DiffType.NEW
+    });
   }
 
   return function () {
@@ -178,44 +183,18 @@ function (declare, topic, Dialog, Button, BorderContainer, TabContainer,
     var runIdToTab = {};
 
     topic.subscribe('openRun', function (param) {
-      var tabData = param.tabData ? param.tabData : param.runData;
-
-      if (!(tabData.runId in runIdToTab)) {
-        runIdToTab[tabData.runId] = new ListOfBugs({
-          runData : param.runData,
-          title : tabData.name,
-          iconClass : 'customIcon reports',
-          closable : true,
-          tab : tabData.name,
-          onClose : function () {
-            delete runIdToTab[tabData.runId];
-            return true;
-          }
-        });
-
-        runsTab.addChild(runIdToTab[tabData.runId]);
-      }
-
-      runsTab.selectChild(runIdToTab[tabData.runId]);
-    });
-
-    topic.subscribe('openDiff', function (diff) {
-      var tabData = diff.tabData ? diff.tabData : { baseline : diff.baseline,
-                                                    newcheck : diff.newcheck };
-      var tabId = tabData.baseline.name + '_diff_'
-        +  tabData.newcheck.name;
+      var tabId = param.tabId;
+      var baseline = param.baseline;
+      var newcheck = param.newcheck;
 
       if (!(tabId in runIdToTab)) {
         runIdToTab[tabId] = new ListOfBugs({
-          baseline : diff.baseline,
-          newcheck : diff.newcheck,
-          difftype : diff.difftype,
-          title : 'Diff of '
-            + (tabData.baseline ? tabData.baseline.name : 'All')
-            + (tabData.newcheck ? ' and ' + tabData.newcheck.name : ''),
+          baseline : param.baseline,
+          newcheck : param.newcheck,
+          title : param.title,
+          iconClass : 'customIcon reports',
           closable : true,
           tab : tabId,
-          diffView : true,
           onClose : function () {
             delete runIdToTab[tabId];
             return true;

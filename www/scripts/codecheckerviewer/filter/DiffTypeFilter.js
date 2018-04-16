@@ -42,19 +42,24 @@ function (declare, Deferred, dom, all, Standby, ContentPane, SelectFilter,
     labelFormatter : function (label) {
       switch (label) {
         case this.stateEncoder(CC_OBJECTS.DiffType.NEW):
-          return 'Only in Newcheck (New)';
+          return 'Only in Newcheck';
         case this.stateEncoder(CC_OBJECTS.DiffType.RESOLVED):
-          return 'Only in Baseline (Resolved)';
+          return 'Only in Baseline';
         case this.stateEncoder(CC_OBJECTS.DiffType.UNRESOLVED):
-          return 'Both in Baseline and Newcheck (Unresolved)';
+          return 'Both in Baseline and Newcheck';
         default:
           return 'Unknown';
       }
     },
 
     getItems : function (opt) {
+      var deferred = new Deferred();
+
       var that = this;
       opt = this.parent.initReportFilterOptions(opt);
+
+      if (!opt.cmpData)
+        return deferred.resolve([]);
 
       // Get report filter count for each diff type.
       var query = Object.keys(CC_OBJECTS.DiffType).map(function (key) {
@@ -70,7 +75,6 @@ function (declare, Deferred, dom, all, Standby, ContentPane, SelectFilter,
         return d.promise;
       });
 
-      var deferred = new Deferred();
       all(query).then(function (res) {
         deferred.resolve(Object.keys(CC_OBJECTS.DiffType)
         .map(function (key, index) {

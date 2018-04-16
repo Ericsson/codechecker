@@ -11,6 +11,14 @@
   border-bottom: none
 }
 
+.bug-filters .filter-toggle > .dijitContentPane {
+  padding-bottom: 5px;
+}
+
+.bug-filters .filter-toggle > .dijitContentPane:last-child {
+  padding-bottom: 0px;
+}
+
 .bug-filters .top-bar {
   display: block;
   overflow: hidden;
@@ -271,4 +279,19 @@
 
 .select-menu-item .tag {
   color: #007ea7;
+}
+
+/* Filter toggler */
+
+.filter-toggle > .dijitContentPane {
+  padding-left: 5px;
+}
+
+.filter-toggle > .header {
+  padding-bottom: 5px;
+  font-weight: bold;
+  text-transform: uppercase;
+  color: #357ea7;
+  letter-spacing: 0.025em;
+  cursor: pointer;
 }

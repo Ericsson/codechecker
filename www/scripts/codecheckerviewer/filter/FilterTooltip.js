@@ -192,40 +192,48 @@ function (declare, domClass, dom, keys, Standby, TextBox, popup, TooltipDialog,
       this.resetDomItems();
 
       var that = this;
-      items.forEach(function (item) {
-        var label = (item.isRegexSearchItem ? 'Filter by RegEx: ' : '');
-        label += that.reportFilter.labelFormatter
-          ? that.reportFilter.labelFormatter(item.value)
-          : item.value;
 
-        var iconClass = that.reportFilter.getIconClass(item.value, item);
-        var iconStyle = that.reportFilter.getIconStyle
-          ? that.reportFilter.getIconStyle(item.value)
-          : null;
+      if (!items.length) {
+        dom.create('div', {
+          innerHTML : this.noAvailableTooltipItemMsg
+        }, this._selectMenuList);
+      } else {
+        items.forEach(function (item) {
+          var label = (item.isRegexSearchItem ? 'Filter by RegEx: ' : '');
+          label += that.reportFilter.labelFormatter
+            ? that.reportFilter.labelFormatter(item.value)
+            : item.value;
 
-        var content = '<span class="customIcon selected"></span>'
-          + (iconClass
-            ? '<span class="' + iconClass + '" style="' +
-              (iconStyle ? iconStyle : '') + '"></span>'
-            : '')
-          + '<span class="label">' + label + '</span>';
+          var iconClass = that.reportFilter.getIconClass(item.value, item);
+          var iconStyle = that.reportFilter.getIconStyle
+            ? that.reportFilter.getIconStyle(item.value)
+            : null;
 
-        if (item.count !== undefined)
-          content += '<span class="count">' + item.count + '</span>';
+          var content = '<span class="customIcon selected"></span>'
+            + (iconClass
+              ? '<span class="' + iconClass + '" style="' +
+                (iconStyle ? iconStyle : '') + '"></span>'
+              : '')
+            + '<span class="label">' + label + '</span>';
 
-        var classes = ['select-menu-item'];
-        if (that.reportFilter.isSelected(item.value)) classes.push('selected');
-        if (item.isRegexSearchItem) classes.push('regex-item');
+          if (item.count !== undefined)
+            content += '<span class="count">' + item.count + '</span>';
 
-        that.itemsDom[item.value] = dom.create('div', {
-          class     : classes.join(' '),
-          innerHTML : content,
-          title : label,
-          onclick : function () {
-            that.toggle(item.value, item);
-          }
-        }, that._selectMenuList);
-      });
+          var classes = ['select-menu-item'];
+          if (that.reportFilter.isSelected(item.value)) classes.push('selected');
+          if (item.isRegexSearchItem) classes.push('regex-item');
+
+          that.itemsDom[item.value] = dom.create('div', {
+            class     : classes.join(' '),
+            innerHTML : content,
+            title : label,
+            onclick : function () {
+              that.toggle(item.value, item);
+            }
+          }, that._selectMenuList);
+        });
+      }
+
       this._standBy.hide();
 
       // Some cases the tooltip overflows the window at the bottom. By

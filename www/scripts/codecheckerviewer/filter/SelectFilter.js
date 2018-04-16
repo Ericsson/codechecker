@@ -79,7 +79,10 @@ function (declare, dom, Standby, ContentPane, FilterBase, FilterTooltip,
         class : this.class,
         around : this._edit,
         search : this.search,
-        reportFilter : this
+        reportFilter : this,
+        noAvailableTooltipItemMsg : this.noAvailableTooltipItemMsg
+          ? this.noAvailableTooltipItemMsg
+          : 'No items'
       });
     },
 
