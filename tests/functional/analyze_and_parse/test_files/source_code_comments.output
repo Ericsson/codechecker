@@ -1,0 +1,40 @@
+NORMAL#CodeChecker log --output $LOGFILE$ --build "make source_code_comments" --quiet
+NORMAL#CodeChecker analyze $LOGFILE$ --output $OUTPUT$ --analyzers clang-tidy
+NORMAL#CodeChecker parse $OUTPUT$
+CHECK#CodeChecker check --build "make source_code_comments" --output $OUTPUT$ --quiet --analyzers clang-tidy
+--------------------------------------------------------------------------------
+[] - Starting build ...
+[] - Build finished successfully.
+[] - Starting static analysis ...
+[] - [1/1] clang-tidy analyzed source_code_comments.cpp successfully.
+[] - ----==== Summary ====----
+[] - Total analyzed compilation commands: 1
+[] - Successfully analyzed
+[] -   clang-tidy: 1
+[] - ----=================----
+[] - Analysis finished.
+[] - To view results in the terminal use the "CodeChecker parse" command.
+[] - To store results use the "CodeChecker store" command.
+[] - See --help and the user guide for further options about parsing and storing the reports.
+[] - ----=================----
+[HIGH] source_code_comments.cpp:13:3: suspicious usage of 'sizeof(K)'; did you mean 'K'? [misc-sizeof-expression]
+  sizeof(43);
+  ^
+
+Found 1 defect(s) while analyzing source_code_comments.cpp
+
+
+----==== Summary ====----
+---------------------------------------
+Filename                 | Report count
+---------------------------------------
+source_code_comments.cpp |            1
+---------------------------------------
+-----------------------
+Severity | Report count
+-----------------------
+HIGH     |            1
+-----------------------
+----=================----
+Total number of reports: 1
+----=================----

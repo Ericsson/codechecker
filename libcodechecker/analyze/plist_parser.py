@@ -42,7 +42,8 @@ from libcodechecker import util
 from libcodechecker.logger import get_logger
 from libcodechecker.report import Report
 from libcodechecker.report import generate_report_hash
-from libcodechecker.source_code_comment_handler import SourceCodeCommentHandler
+from libcodechecker.source_code_comment_handler import \
+    SourceCodeCommentHandler, skip_suppress_status
 
 LOG = get_logger('report')
 
@@ -400,17 +401,19 @@ class PlistToPlaintextFormatter(object):
                 checker_name)
 
             if len(src_comment_data) == 1:
+                status = src_comment_data[0]['status']
+
                 LOG.debug("Suppressed by source code comment.")
                 if self.src_comment_handler:
                     file_name = os.path.basename(source_file)
                     message = src_comment_data[0]['message']
-                    status = src_comment_data[0]['status']
                     self.src_comment_handler.store_suppress_bug_id(
                         report_hash,
                         file_name,
                         message,
                         status)
-                continue
+                if skip_suppress_status(status):
+                    continue
             elif len(src_comment_data) > 1:
                 LOG.warning("Multiple source code comment can be found "
                             "for '{0}' checker in '{1}' at line {2}. "
