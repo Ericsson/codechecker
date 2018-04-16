@@ -68,19 +68,6 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
   }
 
   /**
-   * The report information come from the ListOfBugs table in which the file
-   * paths are formatted: /file/path.xyz @ Line 123. This function cuts the path
-   * part of this string.
-   */
-  function getProperFilePath(filepath) {
-    var endPos = filepath.indexOf(' ');
-    if (endPos === -1)
-      endPos = filepath.length;
-
-    return filepath.substr(0, endPos);
-  }
-
-  /**
    * Creates a bug step enumeration icon.
    * @param value {integer} - Content of the enumeration icon.
    * @param type {error|fixit|info} - Class type of the enumeration icon.
@@ -595,7 +582,7 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
       });
 
       var fileFilter = new CC_OBJECTS.ReportFilter();
-      fileFilter.filepath = [getProperFilePath(this.reportData.checkedFile)];
+      fileFilter.filepath = [this.reportData.checkedFile];
 
       CC_SERVICE.getRunResults(
         this.runIds,
