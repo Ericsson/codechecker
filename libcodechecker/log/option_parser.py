@@ -141,6 +141,10 @@ IGNORED_OPTION_MAP = {
 
 IGNORED_OPTION_MAP_REGEX = {
     '^-g(.+)?$': 0,
+    # Link Time Optimization:
+    '^-flto': 0,
+    # MicroBlaze Options:
+    '^-mxl': 0
 }
 
 # Unknown options by clang, will be skipped.
@@ -480,6 +484,8 @@ def arg_check(it, result):
     arg_collection = [
         append_replacement_to_list(REPLACE_OPTIONS_MAP, result.compile_opts),
         skip(UNKNOWN_OPTIONS_MAP_REGEX, True),
+        skip(IGNORED_OPTION_MAP),
+        skip(IGNORED_OPTION_MAP_REGEX, True),
         set_attr('-x', result, 'lang'),
         set_attr('-o', result, 'output'),
         set_attr('-arch', result, 'arch'),
@@ -494,8 +500,6 @@ def arg_check(it, result):
         append_merged_to_list(COMPILE_OPTION_MAP_MERGED, result.compile_opts),
         append_merged_to_list(LINK_OPTION_MAP_MERGED, result.link_opts),
         skip(LINKER_OPTION_MAP),
-        skip(IGNORED_OPTION_MAP),
-        skip(IGNORED_OPTION_MAP_REGEX, True),
         append_to_list_from_file('-filelist', result.files),
         append_to_list({'^[^-].+': 0}, result.files, True)]
 
