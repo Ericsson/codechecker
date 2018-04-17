@@ -68,6 +68,9 @@ char* shellEscapeStr(const char* str_, char* buff_)
       case '\\':
       case '\"':
       case '\t':
+      case '\b':
+      case '\f':
+      case '\n':
         *out++ = '\\';
         *out++ = *str_++;
         break;
