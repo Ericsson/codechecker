@@ -115,16 +115,18 @@ class RunHistory(Base):
     version_tag = Column(String)
     user = Column(String, nullable=False)
     time = Column(DateTime, nullable=False)
+    check_command = Column(Binary)
 
     run = relationship(Run, uselist=False)
 
     __table_args__ = (UniqueConstraint('run_id', 'version_tag'),)
 
-    def __init__(self, run_id, version_tag, user, time):
+    def __init__(self, run_id, version_tag, user, time, check_command):
         self.run_id = run_id
         self.version_tag = version_tag
         self.user = user
         self.time = time
+        self.check_command = check_command
 
 
 class FileContent(Base):

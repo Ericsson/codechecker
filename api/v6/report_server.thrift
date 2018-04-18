@@ -123,12 +123,13 @@ struct RunData {
 typedef list<RunData> RunDataList
 
 struct RunHistoryData {
-  1: i64       runId,       // Unique id of the run.
-  2: string    runName,     // Name of the run.
-  3: string    versionTag,  // Version tag of the report.
-  4: string    user,        // User name who analysed the run.
-  5: string    time,        // Date time when the run was analysed.
-  6: i64       id,          // Id of the run history tag.
+  1: i64       runId,        // Unique id of the run.
+  2: string    runName,      // Name of the run.
+  3: string    versionTag,   // Version tag of the report.
+  4: string    user,         // User name who analysed the run.
+  5: string    time,         // Date time when the run was analysed.
+  6: i64       id,           // Id of the run history tag.
+  7: string    checkCommand, // Check command.
 }
 typedef list<RunHistoryData> RunHistoryDataList
 

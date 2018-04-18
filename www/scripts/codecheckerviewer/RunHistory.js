@@ -8,14 +8,20 @@ define([
   'dojo/_base/declare',
   'dojo/dom-construct',
   'dojo/topic',
+  'dijit/Dialog',
   'dojox/widget/Standby',
   'dijit/layout/ContentPane',
   'codechecker/hashHelper',
   'codechecker/util'],
-function (declare, dom, topic, Standby, ContentPane, hashHelper, util) {
+function (declare, dom, topic, Dialog, Standby, ContentPane, hashHelper, util) {
 
   return declare(ContentPane, {
     postCreate : function () {
+      this._dialog = new Dialog({
+        title : 'Check command',
+        style : 'max-width: 75%;'
+      });
+
       this._standBy = new Standby({
         target : this.domNode,
         color : '#ffffff'
@@ -68,47 +74,69 @@ function (declare, dom, topic, Standby, ContentPane, hashHelper, util) {
 
           var history = dom.create('div', {
             class : 'history',
-            onclick : function () {
-              that.bugFilterView.clearAll();
-
-              if (runFilter)
-                runFilter.select(data.runName);
-
-              if (!data.versionTag) {
-                [
-                  CC_OBJECTS.DetectionStatus.NEW,
-                  CC_OBJECTS.DetectionStatus.UNRESOLVED,
-                  CC_OBJECTS.DetectionStatus.REOPENED
-                ].forEach(function (status) {
-                  dsFilter.select(dsFilter.stateConverter(status));
-                });
-                dateFilter.initFixedDateInterval(that._formatDate(date));
-              } else {
-                filter._runHistoryTagFilter.select(
-                  data.runName + ":" + data.versionTag);
-              }
-
-              that.bugFilterView.notifyAll();
-              hashHelper.setStateValues({subtab : null});
-            }
           }, content);
 
-          dom.create('span', { class : 'time', innerHTML : time }, history);
+          var wrapper = dom.create('span', {
+            onclick : function () {
+              that.onRunHistoryClick(data);
+            }
+          }, history);
 
-          var runNameWrapper = dom.create('span', { class : 'run-name-wrapper', title: 'Run name'}, history);
+          dom.create('span', { class : 'time', innerHTML : time }, wrapper);
+
+          var runNameWrapper = dom.create('span', { class : 'run-name-wrapper', title: 'Run name'}, wrapper);
           dom.create('span', { class : 'customIcon run-name' }, runNameWrapper);
           dom.create('span', { class : 'run-name', innerHTML : data.runName }, runNameWrapper);
 
           if (data.versionTag) {
             var runTag = util.createRunTag(data.runName, data.versionTag);
-            dom.place(runTag, history);
+            dom.place(runTag, wrapper);
           }
 
-          var userWrapper = dom.create('span', {class : 'user-wrapper', title: 'User name' }, history);
+          var userWrapper = dom.create('span', {class : 'user-wrapper', title: 'User name' }, wrapper);
           dom.create('span', { class : 'customIcon user' }, userWrapper);
           dom.create('span', { class : 'user', innerHTML : data.user }, userWrapper);
+
+          if (data.checkCommand)
+            var checkCommand = dom.create('span', {
+              class : 'check-command link',
+              innerHTML : 'Check command',
+              onclick : function () {
+                that._dialog.set('content', data.checkCommand);
+                that._dialog.show();
+              }
+            }, history);
         })
       });
+    },
+
+    onRunHistoryClick : function (item) {
+      var filter = this.bugFilterView;
+      this.bugFilterView.clearAll();
+
+      if (filter._runNameFilter)
+        filter._runNameFilter.select(item.runName);
+
+      if (!item.versionTag) {
+        [
+          CC_OBJECTS.DetectionStatus.NEW,
+          CC_OBJECTS.DetectionStatus.UNRESOLVED,
+          CC_OBJECTS.DetectionStatus.REOPENED
+        ].forEach(function (status) {
+          filter._detectionStatusFilter.select(
+            filter._detectionStatusFilter.stateConverter(status));
+        });
+
+        var date = new Date(item.time.replace(/ /g,'T'));
+        filter._detectionDateFilter.initFixedDateInterval(
+          this._formatDate(date));
+      } else {
+        filter._runHistoryTagFilter.select(
+          item.runName + ":" + item.versionTag);
+      }
+
+      this.bugFilterView.notifyAll();
+      hashHelper.setStateValues({subtab : null});
     },
 
     _formatDate : function (date) {
