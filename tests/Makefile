@@ -61,10 +61,10 @@ run_test: venv_dev
 		nosetests $(NOSECFG) ${TEST} \
 		&& { ${SHUTDOWN_SERVER_CMD}; } || ${EXIT_ERROR}
 
-test_unit: venv_dev
+test_unit: venv_dev thrift
 	$(ACTIVATE_DEV_VENV) && $(UNIT_TEST_CMD)
 
-test_unit_novenv:
+test_unit_novenv: thrift
 	$(UNIT_TEST_CMD)
 
 test_functional: test_sqlite test_psql

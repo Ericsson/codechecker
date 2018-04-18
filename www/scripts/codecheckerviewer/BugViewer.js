@@ -545,12 +545,6 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
       topic.publish("hooks/report/Opened", this.reportData);
       var that = this;
 
-      setTimeout(function () {
-        that.editor.highlightBugPathEvent({
-          startLine : that.reportData.line, startCol : that.reportData.column,
-          endLine   : that.reportData.line, endCol   : that.reportData.column
-        });
-      }, 0);
     },
 
     /**
@@ -793,6 +787,10 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
     _formatReportDetails : function (report, reportDetails) {
       var res = [];
 
+      var lastBugEvent = reportDetails.pathEvents.length
+        ? reportDetails.pathEvents[reportDetails.pathEvents.length - 1]
+        : null;
+
       res.push({
         id : report.reportId + '_0',
         name : '<b><u>' + entities.encode(report.checkerMsg) + '</u></b>',
@@ -800,11 +798,20 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
         report : report,
         isLeaf : true,
         idx : reportDetails.pathEvents.length,
-        kind : 'msg'
+        kind : 'msg',
+        bugPathEvent : lastBugEvent
       });
 
-      if (reportDetails.pathEvents.length <= 1)
+      if (!lastBugEvent)
         return res;
+
+      var that = this;
+      setTimeout(function () {
+          that.editor.highlightBugPathEvent({
+            startLine : lastBugEvent.startLine, startCol : lastBugEvent.startCol,
+            endLine   : lastBugEvent.endLine, endCol   : lastBugEvent.endCol
+          });
+      }, 0);
 
       var filePaths = [];
       var areThereMultipleFiles = false;
@@ -829,7 +836,6 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
         return false; // Continue checking
       });
 
-      var that = this;
       reportDetails.pathEvents.forEach(function (step, index) {
         var isResult = index == reportDetails.pathEvents.length - 1;
 
