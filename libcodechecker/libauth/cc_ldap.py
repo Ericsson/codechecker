@@ -190,9 +190,10 @@ class LDAPConnection(object):
         None if initialization failed.
         """
 
-        ldap_server = ldap_config['connection_url']
+        ldap_server = ldap_config.get('connection_url')
         if ldap_server is None:
             LOG.error('Server address is missing from the configuration')
+            self.connection = None
             return
 
         referals = ldap_config.get('referals', False)
@@ -273,6 +274,9 @@ def auth_user(ldap_config, username=None, credentials=None):
     """
     Authenticate a user.
     """
+    if not username or not credentials:
+        LOG.error('No username or credential is provided for authentication.')
+        return False
 
     account_base = ldap_config.get('accountBase')
     if account_base is None:
