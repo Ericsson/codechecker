@@ -19,9 +19,9 @@ define([
   'codechecker/util',
   'products/PermissionList',
   'products/ProductSettingsView'],
-function (declare, domClass, domConstruct, ItemFileWriteStore, topic,
-  DataGrid, ConfirmDialog, Dialog, Button, TextBox, ContentPane, util,
-  PermissionList, ProductSettingsView) {
+function (declare, domClass, dom, ItemFileWriteStore, topic, DataGrid,
+  ConfirmDialog, Dialog, Button, TextBox, ContentPane, util, PermissionList,
+  ProductSettingsView) {
 
   //--- Global (server-wide) permission configuration dialog ---//
 
@@ -296,14 +296,7 @@ function (declare, domClass, domConstruct, ItemFileWriteStore, topic,
         }
       });
 
-      CC_PROD_SERVICE.getProducts(null, productNameFilter,
-      function (productDataList) {
-        productDataList.forEach(function (item) {
-          that._addProductData(item);
-        });
-
-        that.onLoaded(productDataList);
-      });
+      this._populateProducts(productNameFilter);
     },
 
     toggleAdminButtons : function (adminLevel) {
@@ -349,7 +342,7 @@ function (declare, domClass, domConstruct, ItemFileWriteStore, topic,
       }, 500);
     },
 
-    constructor : function () {
+    postCreate : function () {
       var that = this;
 
       //--- Product filter ---//
@@ -360,23 +353,29 @@ function (declare, domClass, domConstruct, ItemFileWriteStore, topic,
           that._executeFilter(this.get('value'));
         }
       });
+      this.addChild(this._productFilter);
+
+      var rightBtnWrapper = dom.create("div", {
+        style : "float:right"
+      }, this.domNode);
 
       //--- Edit permissions button ---//
 
       this._sysPermsBtn = new Button({
         label    : 'Edit global permissions',
-        class    : 'system-perms-btn',
+        class    : 'system-perms-btn invisible',
         onClick  : function () {
           that.systemPermissionsDialog.populatePermissions();
           that.systemPermissionsDialog.show();
         }
       });
+      dom.place(this._sysPermsBtn.domNode, rightBtnWrapper);
 
       //--- New product button ---//
 
       this._newBtn = new Button({
         label    : 'Create new product',
-        class    : 'new-btn',
+        class    : 'new-btn invisible',
         onClick  : function () {
           that.productSettingsView.setMode(
             that.get('adminLevel'), 'add', null,
@@ -390,16 +389,7 @@ function (declare, domClass, domConstruct, ItemFileWriteStore, topic,
           that.productSettingsView.show();
         }
       });
-    },
-
-    postCreate : function () {
-      this.addChild(this._productFilter);
-      this.addChild(this._newBtn);
-      this.addChild(this._sysPermsBtn);
-
-      // By default, the administrative buttons should be invisible.
-      domClass.add(this._newBtn.domNode, 'invisible');
-      domClass.add(this._sysPermsBtn.domNode, 'invisible');
+      dom.place(this._newBtn.domNode, rightBtnWrapper);
     },
 
     toggleAdminButtons : function (adminLevel) {
@@ -415,43 +405,40 @@ function (declare, domClass, domConstruct, ItemFileWriteStore, topic,
 
   return declare(ContentPane, {
     postCreate : function () {
-      var infoPane = new ProductInfoPane({
-        id : 'product-infopane'
+      this.infoPane = new ProductInfoPane({ id : 'product-infopane' });
+
+      this.listOfProductsGrid = new ListOfProductsGrid({
+        id : 'productGrid',
+        infoPane : this.infoPane
       });
 
-      this.set('infoPane', infoPane);
+      this.infoPane.set('listOfProductsGrid', this.listOfProductsGrid);
 
-      var listOfProductsGrid = new ListOfProductsGrid({ id : 'productGrid' });
-      
-      this.set('listOfProductsGrid', listOfProductsGrid);
-      infoPane.set('listOfProductsGrid', listOfProductsGrid);
-      listOfProductsGrid.set('infoPane', infoPane);
-
-      this.addChild(infoPane);
-      this.addChild(listOfProductsGrid);
+      this.addChild(this.infoPane);
+      this.addChild(this.listOfProductsGrid);
 
       //--- Initialise auxiliary GUI elements ---//
 
       var confirmDeleteDialog = new DeleteProductDialog({
         title       : 'Confirm deletion of product',
-        productGrid : listOfProductsGrid
+        productGrid : this.listOfProductsGrid
       });
 
-      listOfProductsGrid.set('confirmDeleteDialog', confirmDeleteDialog);
+      this.listOfProductsGrid.set('confirmDeleteDialog', confirmDeleteDialog);
 
       var productSettingsView = new ProductSettingsView({
         title       : 'Product settings',
-        productGrid : listOfProductsGrid
+        productGrid : this.listOfProductsGrid
       });
 
-      infoPane.set('productSettingsView', productSettingsView);
-      listOfProductsGrid.set('productSettingsView', productSettingsView);
+      this.infoPane.set('productSettingsView', productSettingsView);
+      this.listOfProductsGrid.set('productSettingsView', productSettingsView);
 
       var systemPermissionsDialog = new SystemPermissionsDialog({
         title  : 'Global permissions'
       });
 
-      infoPane.set('systemPermissionsDialog', systemPermissionsDialog);
+      this.infoPane.set('systemPermissionsDialog', systemPermissionsDialog);
     },
 
     setAdmin : function (adminLevel) {
