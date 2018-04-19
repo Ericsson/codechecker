@@ -99,14 +99,6 @@ class TestProducts(unittest.TestCase):
         product_cfg.connection = dbc
 
         with self.assertRaises(RequestFailed):
-            product_cfg.endpoint = "_INVALID"
-            self._root_client.addProduct(product_cfg)
-
-        with self.assertRaises(RequestFailed):
-            product_cfg.endpoint = "0foobar"
-            self._root_client.addProduct(product_cfg)
-
-        with self.assertRaises(RequestFailed):
             product_cfg.endpoint = "$$$$$$$"
             self._root_client.addProduct(product_cfg)
 
