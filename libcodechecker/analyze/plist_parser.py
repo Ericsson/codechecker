@@ -376,7 +376,8 @@ class PlistToPlaintextFormatter(object):
             f_path = files[events[-1]['location']['file']]
             if self.skiplist_handler and \
                     self.skiplist_handler.should_skip(f_path):
-                LOG.debug(report + ' is skipped (in ' + f_path + ")")
+                LOG.debug("Skipped report in '%s'", f_path)
+                LOG.debug(report)
                 continue
             hash_value = report.main['issue_hash_content_of_line_in_context']
             bug = {'hash_value': hash_value,
