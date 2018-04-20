@@ -11,7 +11,8 @@ Table of Contents
     * [BitBake](#bitbake)
   * [`analyze`](#analyze)
     * [_Skip_ file](#skip)
-      * [Example](#skip-example)
+      * [Absolute path examples](#skip-abs-example)
+      * [Relative or partial path examples](#skip-rel-example)
     * [Analyzer configuration](#analyzer-configuration)
       * [Compiler-specific include path and define detection (cross compilation)](#include-path)
       * [Forwarding compiler options](#forwarding-compiler-options)
@@ -449,14 +450,19 @@ optional arguments:
 ~~~~~~~~~~~~~~~~~~~~~
 
 Skipfiles filter which files should or should not be analyzed. CodeChecker
-reads the skipfile from top to bottom and stops at the first matching pattern
+reads the skipfile from **top to bottom and stops at the first matching pattern**
 when deciding whether or not a file should be analyzed.
 
 Each line in the skip file begins with a `-` or a `+`, followed by a path glob
 pattern. `-` means that if a file matches a pattern it should **not** be
 checked, `+` means that it should be.
 
-#### <a name="skip-example"></a> Example
+ * Absolute directory paths should start with `/`.
+ * Relative directory paths should start with `*`.
+ * Path parts should start and end with `*`.
+ * To skip everything use the `-*` mark. **Watch out for the order!**
+
+#### <a name="skip-abs-example"></a> Absolute path examples
 
 ~~~~~~~~~~~~~~~~~~~~~
 -/skip/all/files/in/directory/*
@@ -467,6 +473,22 @@ checked, `+` means that it should be.
 
 In the above example, every file under `/dir` **will be** skipped, except the
 one explicitly specified to **be analyzed** (`/dir/do.check.this.file`).
+
+#### <a name="skip-rel-example"></a> Relative or partial path examples
+
+~~~~~~~~~~~~~~~~~~~~~
++*/my_project/my_lib_to_skip/important_file.cpp
+-*/my_project/my_lib_to_skip*
+-*/my_project/3pplib/*
++*/my_project/*
+~~~~~~~~~~~~~~~~~~~~~
+
+In the above example, `important_file.cpp` will be analyzed even if every file
+where the path matches to `/my_project/my_lib_to_skip` will be skiped.  
+Every other file where the path contains `/myproject` except the files in the 
+`my_project/3pplib` will be analyzed.
+
+The provided *shell-style* pattern is converted to a regex with the [fnmatch.translate](https://docs.python.org/2/library/fnmatch.html#fnmatch.translate).
 
 ### <a name="analyzer-configuration"></a> Analyzer configuration
 
