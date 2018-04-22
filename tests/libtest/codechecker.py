@@ -371,11 +371,6 @@ def start_or_get_server():
         print("Starting server...")
         subprocess.Popen(server_cmd, env=env.test_env(config_dir))
 
-        # Wait for server to start and connect to database.
-        # We give a bit of grace period here as a separate subcommand needs to
-        # attach.
-        time.sleep(5)
-
         if pg_config:
             # The behaviour is that CodeChecker servers only configure a
             # 'Default' product in SQLite mode, if the server was started
@@ -393,6 +388,12 @@ def start_or_get_server():
                                       'viewer_port': port,
                                       'viewer_product': 'Default'},
                                      default_path)
+
+    # Wait for server to start and connect to database.
+    # We give a bit of grace period here as a separate subcommand needs to
+    # attach.
+    time.sleep(10)
+
     return {
         'viewer_host': 'localhost',
         'viewer_port': port
