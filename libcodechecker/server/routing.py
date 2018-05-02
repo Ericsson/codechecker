@@ -47,9 +47,7 @@ def is_valid_product_endpoint(uripart):
     if uripart in NON_PRODUCT_ENDPOINTS:
         return False
 
-    # Like programming variables: begin with letter and then letters, numbers,
-    # underscores.
-    pattern = r'^[A-Za-z][A-Za-z0-9_]*$'
+    pattern = r'^[A-Za-z0-9_]+$'
     if not re.match(pattern, uripart):
         return False
 
