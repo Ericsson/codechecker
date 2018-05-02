@@ -175,7 +175,7 @@ function (declare, ItemFileWriteStore, dom, Deferred, all, Memory, Observable,
       // Select runs.
       if (this.filterPane.selectedRuns)
         this.filterPane.selectedRuns.forEach(function (runName) {
-          filter._runNameFilter.select(runName);
+          filter._runBaseLineFilter.select(runName);
         });
 
       switch (evt.cell.field) {
@@ -337,7 +337,7 @@ function (declare, ItemFileWriteStore, dom, Deferred, all, Memory, Observable,
       var item = this.getItem(evt.rowIndex);
 
       var filter = this.bugFilterView;
-      var runNameFilter = filter._runNameFilter;
+      var runNameFilter = filter._runBaseLineFilter;
       var severityFilter = filter._severityFilter;
 
        // Clear the filters.

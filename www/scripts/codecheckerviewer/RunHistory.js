@@ -61,7 +61,7 @@ function (declare, dom, topic, Dialog, Standby, ContentPane, hashHelper, util) {
       var filter = this.bugFilterView;
       var dateFilter = filter._detectionDateFilter;
       var dsFilter = filter._detectionStatusFilter;
-      var runFilter = filter._runNameFilter;
+      var runFilter = filter._runBaseLineFilter;
 
       Object.keys(historyGroupByDate).forEach(function (key) {
         var group = dom.create('div', { class : 'history-group' }, that.domNode);
@@ -114,8 +114,8 @@ function (declare, dom, topic, Dialog, Standby, ContentPane, hashHelper, util) {
       var filter = this.bugFilterView;
       this.bugFilterView.clearAll();
 
-      if (filter._runNameFilter)
-        filter._runNameFilter.select(item.runName);
+      if (filter._runBaseLineFilter)
+        filter._runBaseLineFilter.select(item.runName);
 
       if (!item.versionTag) {
         [
