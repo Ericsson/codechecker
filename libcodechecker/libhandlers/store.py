@@ -187,21 +187,32 @@ def assemble_zip(inputs, zip_file, client):
     # but different path.
     file_to_hash = {}
     file_to_mtime = {}
+    missing_source_files = set()
 
     def collect_file_hashes_from_plist(plist_file):
+        """
+        Collects file content hashes and last modification times of files which
+        can be found in the given plist file.
+
+        :returns List of file paths which are in the processed plist file but
+        missing from the user's disk.
+        """
+        missing_files = []
         try:
             files, _ = plist_parser.parse_plist(plist_file)
 
             for f in files:
                 if not os.path.isfile(f):
-                    return False
+                    missing_files.append(f)
+                    missing_source_files.add(f)
+                    continue
 
                 content_hash = util.get_file_content_hash(f)
                 hash_to_file[content_hash] = f
                 file_to_hash[f] = content_hash
                 file_to_mtime[f] = util.get_last_mod_time(f)
 
-            return True
+            return missing_files
         except Exception as ex:
             LOG.error('Parsing the plist failed: ' + str(ex))
 
@@ -223,15 +234,16 @@ def assemble_zip(inputs, zip_file, client):
         for f in files:
             plist_file = os.path.join(input_path, f)
             if f.endswith(".plist"):
-                if collect_file_hashes_from_plist(plist_file):
+                missing_files = collect_file_hashes_from_plist(plist_file)
+                if not missing_files:
                     LOG.debug(
                         "Copying file '{0}' to ZIP assembly dir..."
                         .format(plist_file))
                     plist_report_files.append(os.path.join(input_path, f))
                 else:
-                    LOG.warning("Skipping '{0}' because it contains "
-                                "a missing source file."
-                                .format(plist_file))
+                    LOG.warning("Skipping '%s' because it refers "
+                                "the following missing source files: %s",
+                                plist_file, missing_files)
             elif f == 'metadata.json':
                 plist_report_files.append(os.path.join(input_path, f))
 
@@ -277,6 +289,10 @@ def assemble_zip(inputs, zip_file, client):
         target.write(compressed)
 
     LOG.debug("[ZIP] Mass store zip written at '{0}'".format(zip_file))
+
+    if missing_source_files:
+        LOG.warning("Missing source files: \n%s", '\n'.join(
+            map(lambda f_: " - " + f_, missing_source_files)))
 
 
 def main(args):
