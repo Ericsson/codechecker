@@ -8,6 +8,7 @@ Source code comment handling.
 """
 
 import abc
+import os
 import re
 
 from libcodechecker import util
@@ -193,8 +194,15 @@ class SourceCodeCommentHandler(object):
             if has_any_marker:
                 rev = list(reversed(curr_suppress_comment))
                 suppress_comment = ''.join(rev).replace('//', '')
-                source_line_comments.append(
-                    self.__process_source_line_comment(suppress_comment))
+                comment = self.__process_source_line_comment(suppress_comment)
+                if comment:
+                    source_line_comments.append(comment)
+                else:
+                    _, file_name = os.path.split(source_file)
+                    LOG.warning(
+                        "Misspelled review status comment in %s@%d: %s",
+                        file_name, previous_line_num, ' '.join(rev))
+
                 curr_suppress_comment = []
 
             if previous_line_num > 0:
