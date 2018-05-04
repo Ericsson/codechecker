@@ -45,7 +45,12 @@
       "misc-sizeof-container",
       "misc-swapped-arguments",
       "misc-undelegated-constructor",
-      "misc-unused-raii"]},
+      "misc-unused-raii",
+      "bugprone-assert-side-effect",
+      "bugprone-inaccurate-erase",
+      "performance-move-const-arg",
+      "performance-move-constructor-init",
+      "performance-noexcept-move-constructor"]},
   "action_num": 1,
   "result_source_files": {
     "$$$/main.cpp_9ef7b36e97a2d1331067971b5aa15684.plist": "$$$/main.cpp"},
