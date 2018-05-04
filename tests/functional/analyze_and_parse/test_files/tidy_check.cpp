@@ -1,6 +1,4 @@
-#include <cassert>
-
 int main() {
-    int i = 1;
-    assert(++i);
+  const char* c = "hello";
+  int i = sizeof(c);
 }
