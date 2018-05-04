@@ -761,7 +761,9 @@ usage: CodeChecker parse [-h] [-t {plist}] [--export {html}]
                          file/folder [file/folder ...]
 
 Parse and pretty-print the summary and results from one or more 'codechecker-
-analyze' result files.
+analyze' result files. Bugs which are commented by using "false_positive",
+"suppress" and "intentional" source code comments will not be printed by the
+`parse` command.
 
 positional arguments:
   file/folder           The analysis result files and/or folders containing

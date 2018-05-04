@@ -40,7 +40,10 @@ def get_argparser_ctor_args():
 
         # Description is shown when the command's help is queried directly
         'description': "Parse and pretty-print the summary and results from "
-                       "one or more 'codechecker-analyze' result files.",
+                       "one or more 'codechecker-analyze' result files. Bugs "
+                       "which are commented by using \"false_positive\", "
+                       "\"suppress\" and \"intentional\" source code "
+                       "comments will not be printed by the `parse` command.",
 
         # Help is shown when the "parent" CodeChecker command lists the
         # individual subcommands.
@@ -256,6 +259,18 @@ def main(args):
                   "SUPPRESS_FILE' is also given.")
         sys.exit(2)
 
+    def skip_html_report_data_handler(report_hash, source_file, report_line,
+                                      checker_name):
+        """
+        Report handler which skips bugs which were suppressed by source code
+        comments.
+        """
+        return plist_parser.skip_report(report_hash,
+                                        source_file,
+                                        report_line,
+                                        checker_name,
+                                        suppress_handler)
+
     skip_handler = None
     if 'skipfile' in args:
         skip_handler = SkipListHandler(args.skipfile)
@@ -274,7 +289,8 @@ def main(args):
             PlistToHtml.parse(input_path,
                               output_path,
                               context.path_plist_to_html_dist,
-                              'clean' in args)
+                              'clean' in args,
+                              skip_html_report_data_handler)
             continue
 
         severity_stats = Counter({})

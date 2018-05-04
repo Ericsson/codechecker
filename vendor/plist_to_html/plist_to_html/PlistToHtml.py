@@ -66,7 +66,7 @@ class HtmlBuilder:
             html_output.write(content)
 
 
-def get_report_data_from_plist(plist):
+def get_report_data_from_plist(plist, skip_report_handler=None):
     """
     Returns a dictionary with the source file contents and the reports parsed
     from the plist.
@@ -77,6 +77,19 @@ def get_report_data_from_plist(plist):
     file_sources = {}
     for diag in plist['diagnostics']:
         bug_path_items = [item for item in diag['path']]
+
+        last_report_event = bug_path_items[-1]
+        source_file = files[last_report_event['location']['file']]
+        report_line = last_report_event['location']['line']
+        report_hash = diag['issue_hash_content_of_line_in_context']
+        checker_name = diag['check_name']
+
+        if skip_report_handler and skip_report_handler(report_hash,
+                                                       source_file,
+                                                       report_line,
+                                                       checker_name):
+            continue
+
         events = [i for i in bug_path_items if i.get('kind') == 'event']
 
         report = []
@@ -100,7 +113,8 @@ def get_report_data_from_plist(plist):
             'reports': reports}
 
 
-def plist_to_html(file_path, output_path, html_builder):
+def plist_to_html(file_path, output_path, html_builder,
+                  skip_report_handler=None):
     """
     Prints the results in the given file to HTML file.
 
@@ -118,7 +132,7 @@ def plist_to_html(file_path, output_path, html_builder):
     try:
         plist = plistlib.readPlist(file_path)
 
-        report_data = get_report_data_from_plist(plist)
+        report_data = get_report_data_from_plist(plist, skip_report_handler)
 
         plist_mtime = get_last_mod_time(file_path)
 
@@ -160,7 +174,8 @@ def plist_to_html(file_path, output_path, html_builder):
         return file_path, changed_source
 
 
-def parse(input_path, output_path, layout_dir, clean=False):
+def parse(input_path, output_path, layout_dir, clean=False,
+          skip_report_handler=None):
     files = []
     input_path = os.path.abspath(input_path)
 
@@ -191,7 +206,8 @@ def parse(input_path, output_path, layout_dir, clean=False):
     for file_path in files:
         sr, changed_source = plist_to_html(file_path,
                                            output_path,
-                                           html_builder)
+                                           html_builder,
+                                           skip_report_handler)
         if changed_source:
             changed_source_files = changed_source_files.union(changed_source)
         if sr:
