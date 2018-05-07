@@ -30,7 +30,9 @@ LOG = get_logger('buildlogger')
 COMPILE_OPTION_MAP = {
     '-nostdinc': 0,
     '--sysroot': 1,
-    '--include': 1
+    '--include': 1,
+    '-pedantic': 0,
+    '-G': 1
 }
 
 # Compiler options which are followed by 1 parameter with or without
@@ -134,9 +136,11 @@ IGNORED_OPTION_MAP = {
     '--param': 1,
     '-u': 1,
     '--serialize-diagnostics': 1,
-    # Clang gives different warnings than GCC. Thus if this flag is kept, the
-    # analysis with Clang can fail even if the compilation passes with GCC.
-    '-Werror': 0
+    # Clang gives different warnings than GCC. Thus if these flags are kept,
+    # '-Werror', '-pedantic-errors' the analysis with Clang can fail even
+    # if the compilation passes with GCC.
+    '-Werror': 0,
+    '-pedantic-errors': 0
 }
 
 IGNORED_OPTION_MAP_REGEX = {
