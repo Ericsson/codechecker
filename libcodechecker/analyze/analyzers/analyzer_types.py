@@ -296,7 +296,6 @@ def __build_clangsa_config_handler(args, context):
     if 'ctu_phases' in args:
         config_handler.ctu_dir = os.path.join(args.output_path,
                                               args.ctu_dir)
-        config_handler.ctu_in_memory = 'ctu_in_memory' in args
 
         config_handler.ctu_has_analyzer_display_ctu_progress = \
             host_check.has_analyzer_feature(

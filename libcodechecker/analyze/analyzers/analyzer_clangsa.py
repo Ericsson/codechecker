@@ -190,11 +190,6 @@ class ClangSA(analyzer_base.SourceAnalyzer):
                 if config.ctu_has_analyzer_display_ctu_progress:
                     analyzer_cmd.extend(['-Xclang',
                                          '-analyzer-display-ctu-progress'])
-                if config.ctu_in_memory:
-                    analyzer_cmd.extend(['-Xclang', '-analyzer-config',
-                                         '-Xclang',
-                                         'xtu-reparse=' +
-                                         os.path.abspath(config.log_file[0])])
 
             # Set language.
             analyzer_cmd.extend(['-x', self.buildaction.lang])

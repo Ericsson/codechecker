@@ -21,7 +21,6 @@ class ClangSAConfigHandler(config_handler.AnalyzerConfigHandler):
         super(ClangSAConfigHandler, self).__init__()
         self.__checker_configs = []
         self.__ctu_dir = ''
-        self.__ctu_in_memory = False
         self.__log_file = ''
         self.__path_env_extra = ''
         self.__ld_lib_path_extra = ''
@@ -69,14 +68,6 @@ class ClangSAConfigHandler(config_handler.AnalyzerConfigHandler):
     @ctu_dir.setter
     def ctu_dir(self, value):
         self.__ctu_dir = value
-
-    @property
-    def ctu_in_memory(self):
-        return self.__ctu_in_memory
-
-    @ctu_in_memory.setter
-    def ctu_in_memory(self, value):
-        self.__ctu_in_memory = value
 
     @property
     def log_file(self):

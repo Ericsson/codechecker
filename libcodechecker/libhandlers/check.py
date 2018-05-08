@@ -298,16 +298,6 @@ def add_arguments_to_parser(parser):
                                     "'<OUTPUT_DIR>/ctu-dir'. (These files "
                                     "will not be cleaned up in this mode.)")
 
-        ctu_opts.add_argument('--ctu-on-the-fly',
-                              action='store_true',
-                              dest='ctu_in_memory',
-                              default=argparse.SUPPRESS,
-                              help="If specified, the 'collect' phase will "
-                                   "not create the extra AST dumps, but "
-                                   "rather analysis will be run with an "
-                                   "in-memory recompilation of the source "
-                                   "files.")
-
     checkers_opts = parser.add_argument_group(
         "checker configuration",
         "See 'codechecker-checkers' for the list of available checkers. "
@@ -453,7 +443,6 @@ def main(args):
                           'tidy_args_cfg_file',
                           'capture_analysis_output',
                           'ctu_phases',
-                          'ctu_in_memory',
                           'enable_all',
                           'ordered_checkers',  # --enable and --disable.
                           'timeout'

@@ -66,80 +66,61 @@ class TestCtu(unittest.TestCase):
     def test_ctu_all_no_reparse(self):
         """ Test full CTU without reparse. """
 
-        self.__test_ctu_all(False)
+        self.__test_ctu_all()
 
     def test_ctu_collect_no_reparse(self):
         """ Test CTU collect phase without reparse. """
 
-        self.__test_ctu_collect(False)
+        self.__test_ctu_collect()
 
     def test_ctu_analyze_no_reparse(self):
         """ Test CTU analyze phase without reparse. """
 
-        self.__test_ctu_analyze(False)
+        self.__test_ctu_analyze()
 
-    def test_ctu_all_reparse(self):
-        """ Test full CTU with reparse. """
-
-        self.__test_ctu_all(True)
-
-    def test_ctu_collect_reparse(self):
-        """ Test CTU collect phase with reparse. """
-
-        self.__test_ctu_collect(True)
-
-    def test_ctu_analyze_reparse(self):
-        """ Test CTU analyze phase with reparse. """
-
-        self.__test_ctu_analyze(True)
-
-    def __test_ctu_all(self, reparse):
+    def __test_ctu_all(self):
         """ Test full CTU. """
 
         if not self.ctu_capable:
             self.skipTest(NO_CTU_MESSAGE)
-        output = self.__do_ctu_all(reparse)
+        output = self.__do_ctu_all()
         self.__check_ctu_analyze(output)
 
-    def __test_ctu_collect(self, reparse):
+    def __test_ctu_collect(self):
         """ Test CTU collect phase. """
 
         if not self.ctu_capable:
             self.skipTest(NO_CTU_MESSAGE)
-        self.__do_ctu_collect(reparse)
-        self.__check_ctu_collect(reparse)
+        self.__do_ctu_collect()
+        self.__check_ctu_collect()
 
-    def __test_ctu_analyze(self, reparse):
+    def __test_ctu_analyze(self):
         """ Test CTU analyze phase. """
 
         if not self.ctu_capable:
             self.skipTest(NO_CTU_MESSAGE)
-        self.__do_ctu_collect(reparse)
-        output = self.__do_ctu_analyze(reparse)
+        self.__do_ctu_collect()
+        output = self.__do_ctu_analyze()
         self.__check_ctu_analyze(output)
 
-    def __do_ctu_all(self, reparse):
+    def __do_ctu_all(self):
         """ Execute a full CTU run. """
 
         cmd = [self._codechecker_cmd, 'analyze', '-o', self.report_dir,
                '--analyzers', 'clangsa', '--ctu-all']
-        if reparse:
-            cmd.append('--ctu-on-the-fly')
         cmd.append(self.buildlog)
         out, _ = call_command(cmd, cwd=self.test_dir, env=self.env)
         return out
 
-    def __do_ctu_collect(self, reparse):
+    def __do_ctu_collect(self):
         """ Execute CTU collect phase. """
 
         cmd = [self._codechecker_cmd, 'analyze', '-o', self.report_dir,
                '--analyzers', 'clangsa', '--ctu-collect']
-        if reparse:
-            cmd.append('--ctu-on-the-fly')
         cmd.append(self.buildlog)
         call_command(cmd, cwd=self.test_dir, env=self.env)
 
-    def __check_ctu_collect(self, reparse):
+    def __check_ctu_collect(self):
         """ Check artifacts of CTU collect phase. """
 
         ctu_dir = os.path.join(self.report_dir, 'ctu-dir')
@@ -147,17 +128,12 @@ class TestCtu(unittest.TestCase):
         for arch in glob.glob(os.path.join(ctu_dir, '*')):
             fn_map_file = os.path.join(ctu_dir, arch, 'externalFnMap.txt')
             self.assertTrue(os.path.isfile(fn_map_file))
-            if not reparse:
-                ast_dir = os.path.join(ctu_dir, arch, 'ast')
-                self.assertTrue(os.path.isdir(ast_dir))
 
-    def __do_ctu_analyze(self, reparse):
+    def __do_ctu_analyze(self):
         """ Execute CTU analyze phase. """
 
         cmd = [self._codechecker_cmd, 'analyze', '-o', self.report_dir,
                '--analyzers', 'clangsa', '--ctu-analyze']
-        if reparse:
-            cmd.append('--ctu-on-the-fly')
         cmd.append(self.buildlog)
         out, _ = call_command(cmd, cwd=self.test_dir, env=self.env)
         return out
