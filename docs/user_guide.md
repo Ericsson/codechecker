@@ -830,11 +830,12 @@ CodeChecker parse ./my_plists
 
 Source code comments can be used in the source files to change the review status
 of a specific or all checker results found in a particular line of code.
-Source code comment should be above the line where the defect was found, and no
+Source code comment should be above the line where the defect was found, and __no__
 empty lines are allowed between the line with the bug and the source code
 comment.
 
-Only comment lines staring with `//` are supported!
+Comment lines staring with `//` or C style `/**/` comments are supported.
+Watch out for the comment format!
 
 #### <a name="supported-formats"></a> Supported formats
 The source code comment has the following format:
@@ -858,25 +859,34 @@ Note: `codechecker_suppress` does the same as `codechecker_false_positive`.
 You can read more about review status [here](https://github.com/Ericsson/codechecker/blob/master/www/userguide/userguide.md#userguide-review-status)
 
 ##### Change review status of a specific checker result
-~~~~~~~~~~~~~~~~~~~~~
+```cpp
 void test() {
   int x;
   // codechecker_confirmed [deadcode.DeadStores] suppress deadcode
   x = 1; // warn
 }
-~~~~~~~~~~~~~~~~~~~~~
+```
 
 ##### Change review status of all checker result
-~~~~~~~~~~~~~~~~~~~~~
+```cpp
 void test() {
   int x;
   // codechecker_false_positive [all] suppress all checker results
   x = 1; // warn
 }
-~~~~~~~~~~~~~~~~~~~~~
+```
+
+##### Change review status of all checker result with C style comment
+```cpp
+void test() {
+  int x;
+  /* codechecker_false_positive [all] suppress all checker results */
+  x = 1; // warn
+}
+```
 
 ##### Multi line comments
-~~~~~~~~~~~~~~~~~~~~~
+```cpp
 void test() {
   int x;
 
@@ -886,7 +896,34 @@ void test() {
   // comment
   x = 1; // warn
 }
-~~~~~~~~~~~~~~~~~~~~~
+```
+
+##### Multi line C style comments
+```cpp
+void test() {
+  int x;
+
+  /* codechecker_suppress [all] suppress all
+  checker resuls
+  with a long
+  comment */
+  x = 1; // warn
+}
+```
+
+```cpp
+void test() {
+  int x;
+
+  /*
+    codechecker_suppress [all] suppress all
+    checker resuls
+    with a long
+    comment
+  */
+  x = 1; // warn
+}
+```
 
 #### <a name="suppress-file"></a> Exporting source code suppression to suppress file
 

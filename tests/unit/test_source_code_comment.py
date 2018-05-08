@@ -397,3 +397,280 @@ class SourceCodeCommentTestCase(unittest.TestCase):
             sc_handler.filter_source_line_comments(bug_line,
                                                    'my.checker_1')
         self.assertEqual(len(current_line_comments), 2)
+
+    def test_cstyle_comment(self):
+        """
+        C style comment in one line.
+        /* codechecker_suppress [ my_checker_1 ] suppress comment */
+        """
+
+        bug_line = 76
+        sc_handler = SourceCodeCommentHandler(self.__tmp_srcfile_1)
+        res = sc_handler.has_source_line_comments(bug_line)
+        self.assertTrue(res)
+
+        source_line_comments = sc_handler.get_source_line_comments(
+            bug_line)
+
+        for l in source_line_comments:
+            print(l)
+
+        self.assertEqual(len(source_line_comments), 1)
+
+        expected = [{
+                        'checkers': {'my_checker_1'},
+                        'message': 'suppress comment',
+                        'status': 'false_positive'
+                    }]
+
+        self.assertDictEqual(expected[0], source_line_comments[0])
+
+    def test_cstyle_comment_multi_line(self):
+        """
+        Multi line C style comment.
+        /* codechecker_suppress [ my_checker_1 ]
+        some longer
+        comment */
+        """
+
+        bug_line = 83
+        sc_handler = SourceCodeCommentHandler(self.__tmp_srcfile_1)
+        res = sc_handler.has_source_line_comments(bug_line)
+        self.assertTrue(res)
+
+        source_line_comments = sc_handler.get_source_line_comments(
+            bug_line)
+
+        for l in source_line_comments:
+            print(l)
+
+        self.assertEqual(len(source_line_comments), 1)
+
+        expected = [{
+                        'checkers': {'my_checker_1'},
+                        'message': 'some longer comment',
+                        'status': 'false_positive'
+                    }]
+
+        self.assertDictEqual(expected[0], source_line_comments[0])
+
+    def test_cstyle_comment_multi_nomsg(self):
+        """
+        Multi line C style comment.
+        /* codechecker_suppress [ my_checker_1 ]
+        */
+        """
+
+        bug_line = 89
+        sc_handler = SourceCodeCommentHandler(self.__tmp_srcfile_1)
+        res = sc_handler.has_source_line_comments(bug_line)
+        self.assertTrue(res)
+
+        source_line_comments = sc_handler.get_source_line_comments(
+            bug_line)
+
+        for l in source_line_comments:
+            print(l)
+
+        self.assertEqual(len(source_line_comments), 1)
+
+        expected = [{
+                        'checkers': {'my_checker_1'},
+                        'message': 'WARNING! source code comment is missing',
+                        'status': 'false_positive'
+                    }]
+
+        self.assertDictEqual(expected[0], source_line_comments[0])
+
+    def test_cstyle_comment_multi_star(self):
+        """
+        Multi line C style comment.
+
+        /* codechecker_suppress [ my_checker_1 ]
+         * multi line
+         * comment
+         * again
+         */
+        """
+
+        bug_line = 98
+        sc_handler = SourceCodeCommentHandler(self.__tmp_srcfile_1)
+        res = sc_handler.has_source_line_comments(bug_line)
+        self.assertTrue(res)
+
+        source_line_comments = sc_handler.get_source_line_comments(
+            bug_line)
+
+        for l in source_line_comments:
+            print('-======')
+            print(l)
+
+        self.assertEqual(len(source_line_comments), 1)
+
+        expected = [{
+                        'checkers': {'my_checker_1'},
+                        'message': 'multi line comment again',
+                        'status': 'false_positive'
+                    }]
+
+        self.assertDictEqual(expected[0], source_line_comments[0])
+
+    def test_cstyle_comment_multi_line_mismatch(self):
+        """
+        Multi line C style comment start '/*' is in a different line
+        from the codechecker review status comment.
+
+        /*
+          codechecker_suppress [ my_checker_1 ]
+          multi line
+          comment
+          again
+         */
+        """
+
+        bug_line = 108
+        sc_handler = SourceCodeCommentHandler(self.__tmp_srcfile_1)
+        res = sc_handler.has_source_line_comments(bug_line)
+        self.assertTrue(res)
+
+        source_line_comments = sc_handler.get_source_line_comments(
+            bug_line)
+
+        for l in source_line_comments:
+            print('-======')
+            print(l)
+
+        self.assertEqual(len(source_line_comments), 1)
+
+        expected = [{
+                        'checkers': {'my_checker_1'},
+                        'message': 'multi line comment again',
+                        'status': 'false_positive'
+                    }]
+
+        self.assertDictEqual(expected[0], source_line_comments[0])
+
+    def test_cstyle_multi_comment_multi_line(self):
+        """
+        Multi line C style comment with multiple review status comment.
+
+        /* codechecker_false_positive [ my.checker_2, my.checker_1 ] comment
+        codechecker_intentional [ my.checker_1 ] intentional comment */
+
+        """
+
+        bug_line = 49
+        sc_handler = SourceCodeCommentHandler(self.__tmp_srcfile_3)
+        res = sc_handler.has_source_line_comments(bug_line)
+        self.assertTrue(res)
+
+        source_line_comments = sc_handler.get_source_line_comments(
+            bug_line)
+
+        for l in source_line_comments:
+            print(l)
+
+        self.assertEqual(len(source_line_comments), 2)
+
+        expected = [{
+                        'checkers': {'my.checker_1'},
+                        'message': 'intentional comment',
+                        'status': 'intentional'},
+                    {
+                        'checkers': {'my.checker_1', 'my.checker_2'},
+                        'message': 'some comment',
+                        'status': 'false_positive'
+                    }]
+
+        self.assertDictEqual(expected[0], source_line_comments[0])
+        self.assertDictEqual(expected[1], source_line_comments[1])
+
+        current_line_comments = \
+            sc_handler.filter_source_line_comments(bug_line, 'my.checker_1')
+        self.assertEqual(len(current_line_comments), 2)
+        self.assertEqual(current_line_comments[0]['message'],
+                         expected[0]['message'])
+        self.assertEqual(current_line_comments[0]['status'],
+                         expected[0]['status'])
+        self.assertEqual(current_line_comments[1]['message'],
+                         expected[1]['message'])
+        self.assertEqual(current_line_comments[1]['status'],
+                         expected[1]['status'])
+
+        current_line_comments = \
+            sc_handler.filter_source_line_comments(bug_line, 'my.checker_2')
+        self.assertEqual(len(current_line_comments), 1)
+
+        self.assertEqual(current_line_comments[0]['message'],
+                         expected[1]['message'])
+        self.assertEqual(current_line_comments[0]['status'],
+                         expected[1]['status'])
+
+        current_line_comments = \
+            sc_handler.filter_source_line_comments(bug_line, 'my.dummy')
+        self.assertEqual(len(current_line_comments), 0)
+
+    def test_cstyle_multi_comment_multi_line_long(self):
+        """
+        Multi line C style comment with multiple review status comment.
+
+        /* codechecker_false_positive [ my.checker_2, my.checker_1 ] comment
+        which
+        is
+        long
+        codechecker_intentional [ my.checker_1 ] intentional comment
+        long
+        again */
+
+        """
+
+        bug_line = 60
+        sc_handler = SourceCodeCommentHandler(self.__tmp_srcfile_3)
+        res = sc_handler.has_source_line_comments(bug_line)
+        self.assertTrue(res)
+
+        source_line_comments = sc_handler.get_source_line_comments(
+            bug_line)
+
+        for l in source_line_comments:
+            print(l)
+
+        self.assertEqual(len(source_line_comments), 2)
+
+        expected = [{
+                        'checkers': {'my.checker_1'},
+                        'message': 'intentional comment long again',
+                        'status': 'intentional'},
+                    {
+                        'checkers': {'my.checker_1', 'my.checker_2'},
+                        'message': 'comment which is long',
+                        'status': 'false_positive'
+                    }]
+
+        self.assertDictEqual(expected[0], source_line_comments[0])
+        self.assertDictEqual(expected[1], source_line_comments[1])
+
+        current_line_comments = \
+            sc_handler.filter_source_line_comments(bug_line, 'my.checker_1')
+        self.assertEqual(len(current_line_comments), 2)
+        self.assertEqual(current_line_comments[0]['message'],
+                         expected[0]['message'])
+        self.assertEqual(current_line_comments[0]['status'],
+                         expected[0]['status'])
+        self.assertEqual(current_line_comments[1]['message'],
+                         expected[1]['message'])
+        self.assertEqual(current_line_comments[1]['status'],
+                         expected[1]['status'])
+
+        current_line_comments = \
+            sc_handler.filter_source_line_comments(bug_line, 'my.checker_2')
+        self.assertEqual(len(current_line_comments), 1)
+
+        self.assertEqual(current_line_comments[0]['message'],
+                         expected[1]['message'])
+        self.assertEqual(current_line_comments[0]['status'],
+                         expected[1]['status'])
+
+        current_line_comments = \
+            sc_handler.filter_source_line_comments(bug_line, 'my.dummy')
+        self.assertEqual(len(current_line_comments), 0)

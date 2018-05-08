@@ -1,5 +1,7 @@
 multi_error_suppress:
 	$(CXX) -w multi_error_suppress.cpp -o /dev/null
+multi_error_suppress_cstyle:
+	$(CXX) -w multi_error_suppress_cstyle.cpp -o /dev/null
 multi_error_suppress_typo:
 	$(CXX) -w multi_error_suppress_typo.cpp -o /dev/null
 multi_error:

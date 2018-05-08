@@ -71,3 +71,40 @@ void test_func(int num){ // line 70
     // wrong formatted suppress comment
     cout << "test func"  << endl;
 }
+
+/* codechecker_suppress [ my_checker_1 ] suppress comment */
+void test_func(int num){ // line 76
+    cout << "test func"  << endl;
+}
+
+/* codechecker_suppress [ my_checker_1 ]
+some longer
+comment */
+void test_func(int num){ // line 83
+    cout << "test func"  << endl;
+}
+
+/* codechecker_suppress [ my_checker_1 ]
+*/
+void test_func(int num){ // line 89
+    cout << "test func"  << endl;
+}
+
+/* codechecker_suppress [ my_checker_1 ]
+ * multi line
+ * comment
+ * again
+ */
+void test_func(int num){ // line 98
+    cout << "test func"  << endl;
+}
+
+/*
+  codechecker_suppress [ my_checker_1 ]
+  multi line
+  comment
+  again
+ */
+void test_func(int num){ // line 108
+    cout << "test func"  << endl;
+}
