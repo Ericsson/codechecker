@@ -17,7 +17,7 @@ from libcodechecker.libhandlers.analyze import ParseLogOptions
 
 class LogParserTest(unittest.TestCase):
     """
-    Test the log parser which convers logfiles (JSON CCDBs) to build action
+    Test the log parser which converts logfiles (JSON CCDBs) to build action
     lists.
     """
 
@@ -203,3 +203,17 @@ class LogParserTest(unittest.TestCase):
                                                    ParseLogOptions())
         for build_action in build_actions:
             self.assertTrue(build_action.skip)
+
+    def test_include_rel_to_abs(self):
+        """
+        Test working directory prepending to non-existent
+        (probably relative) include paths.
+        """
+        logfile = os.path.join(self.__test_files, "include.json")
+
+        build_action = log_parser.parse_log(logfile, ParseLogOptions())[0]
+
+        self.assertEqual(len(build_action.analyzer_options), 3)
+        self.assertEqual(build_action.analyzer_options[0], '-I/tmp/../include')
+        self.assertEqual(build_action.analyzer_options[1], '-I/tmp/../include')
+        self.assertEqual(build_action.analyzer_options[2], '-I/tmp')
