@@ -15,7 +15,6 @@ import hashlib
 import json
 import os
 
-import libcodechecker.util as util
 from libcodechecker.logger import get_logger
 from libcodechecker.util import get_line
 
@@ -145,6 +144,31 @@ def generate_report_hash(path, source_file, check_name):
         LOG.error("Hash generation failed")
         LOG.error(ex)
         return ''
+
+
+def get_report_path_hash(report, files):
+    """
+    Returns path hash for the given report. This can be used to filter
+    deduplications of multiple reports.
+    """
+    report_path_hash = ''
+    events = filter(lambda i: i.get('kind') == 'event', report.bug_path)
+
+    for event in events:
+        file_name = os.path.basename(files[event['location']['file']])
+        line = str(event['location']['line']) if 'location' in event else 0
+        col = str(event['location']['col']) if 'location' in event else 0
+
+        report_path_hash += line + '|' + col + '|' + event['message'] + \
+            file_name
+
+    if not report_path_hash:
+        LOG.error('Failed to generate report path hash!')
+        LOG.error(report)
+        LOG.error(events)
+
+    LOG.debug(report_path_hash)
+    return hashlib.md5(report_path_hash.encode()).hexdigest()
 
 
 class Report(object):

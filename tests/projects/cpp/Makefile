@@ -10,7 +10,8 @@ all:
 	$(CXX) -c skip_header.cpp
 	$(CXX) -c path_begin1.cpp
 	$(CXX) -c path_begin2.cpp
-	$(CXX) -c path_begin.cpp
+	$(CXX) -c -DVAR=2 path_begin.cpp
+	$(CXX) -c -DVAR=1 path_begin.cpp
 clean:
 	rm -f call_and_message.o
 	rm -f divide_zero.o

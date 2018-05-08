@@ -16,3 +16,6 @@ saargs_forward:
 	$(CXX) -w -std=c++11 saargs_forward.cpp -o /dev/null
 source_code_comments:
 	$(CXX) -w source_code_comments.cpp -o /dev/null
+deduplication:
+	$(CXX) -w -DVAR=1 simple1.cpp -o /dev/null
+	$(CXX) -w -DVAR=2 simple1.cpp -o /dev/null
