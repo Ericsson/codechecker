@@ -266,7 +266,18 @@ def parse_compile_commands_json(logfile, parseLogOptions):
         results = option_parser.parse_options(command)
 
         action.original_command = command
-        action.analyzer_options = results.compile_opts
+
+        # If the original include directory could not be found
+        # in the filesystem, it is possible that it was provided
+        # relative to the working directory in the compile json.
+        compile_opts = results.compile_opts
+        for i, opt in enumerate(compile_opts):
+            if opt.startswith('-I'):
+                inc_dir = opt[2:].strip()
+                if not os.path.isdir(inc_dir):
+                    compile_opts[i] = '-I' + \
+                        os.path.join(entry['directory'], inc_dir)
+        action.analyzer_options = compile_opts
 
         action.lang = results.lang
         action.target = results.arch
