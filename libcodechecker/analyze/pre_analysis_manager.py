@@ -115,9 +115,8 @@ def pre_analyze(params):
                     ctu_triple_arch.get_triple_arch(action, source,
                                                     config,
                                                     analyzer_environment)
-                if not config.ctu_in_memory:
-                    ctu_manager.generate_ast(triple_arch, action, source,
-                                             config, analyzer_environment)
+                ctu_manager.generate_ast(triple_arch, action, source,
+                                         config, analyzer_environment)
                 ctu_manager.map_functions(triple_arch, action, source, config,
                                           analyzer_environment,
                                           context.ctu_func_map_cmd,

@@ -115,7 +115,7 @@ def generate_ast(triple_arch, action, source, config, env):
                   cmdstr, err)
 
 
-def func_map_list_src_to_ast(func_src_list, ctu_in_memory):
+def func_map_list_src_to_ast(func_src_list):
     """ Turns textual function map list with source files into a
     function map list with ast files. """
 
@@ -124,14 +124,11 @@ def func_map_list_src_to_ast(func_src_list, ctu_in_memory):
         dpos = fn_src_txt.find(" ")
         mangled_name = fn_src_txt[0:dpos]
         path = fn_src_txt[dpos + 1:]
-        if ctu_in_memory:
-            ast_path = path
-        else:
-            # Normalize path on windows as well
-            path = os.path.splitdrive(path)[1]
-            # Make relative path out of absolute
-            path = path[1:] if path[0] == os.sep else path
-            ast_path = os.path.join("ast", path + ".ast")
+        # Normalize path on windows as well
+        path = os.path.splitdrive(path)[1]
+        # Make relative path out of absolute
+        path = path[1:] if path[0] == os.sep else path
+        ast_path = os.path.join("ast", path + ".ast")
         func_ast_list.append(mangled_name + " " + ast_path)
     return func_ast_list
 
@@ -157,8 +154,7 @@ def map_functions(triple_arch, action, source, config, env,
         return
 
     func_src_list = stdout.splitlines()
-    func_ast_list = func_map_list_src_to_ast(func_src_list,
-                                             config.ctu_in_memory)
+    func_ast_list = func_map_list_src_to_ast(func_src_list)
     extern_fns_map_folder = os.path.join(config.ctu_dir, triple_arch,
                                          temp_fnmap_folder)
     if not os.path.isdir(extern_fns_map_folder):

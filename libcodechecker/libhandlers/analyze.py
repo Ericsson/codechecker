@@ -277,16 +277,6 @@ def add_arguments_to_parser(parser):
                                     "'<OUTPUT_DIR>/ctu-dir'. (These files "
                                     "will not be cleaned up in this mode.)")
 
-        ctu_opts.add_argument('--ctu-on-the-fly',
-                              action='store_true',
-                              dest='ctu_in_memory',
-                              default=argparse.SUPPRESS,
-                              help="If specified, the 'collect' phase will "
-                                   "not create the extra AST dumps, but "
-                                   "rather analysis will be run with an "
-                                   "in-memory recompilation of the source "
-                                   "files.")
-
         ctu_opts.add_argument('--ctu-reanalyze-on-failure',
                               action='store_true',
                               dest='ctu_reanalyze_on_failure',
