@@ -282,9 +282,7 @@ int main()
             # metadata.json already removed.
             pass
 
-        codechecker.store(self._codechecker_cfg,
-                          'hello',
-                          self._codechecker_cfg['reportdir'])
+        codechecker.store(self._codechecker_cfg, 'hello')
 
         reports = self._cc_client.getRunResults([run_id],
                                                 100,
