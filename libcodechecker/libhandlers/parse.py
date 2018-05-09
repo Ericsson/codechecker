@@ -22,6 +22,7 @@ from libcodechecker import logger
 from libcodechecker import util
 from libcodechecker.analyze import plist_parser
 from libcodechecker.analyze.skiplist_handler import SkipListHandler
+from libcodechecker.report import Report, get_report_path_hash
 # TODO: This is a cross-subpackage reference...
 from libcodechecker.output_formatters import twodim_to_str
 
@@ -261,17 +262,32 @@ def main(args):
                   "SUPPRESS_FILE' is also given.")
         sys.exit(2)
 
+    processed_path_hashes = set()
+
     def skip_html_report_data_handler(report_hash, source_file, report_line,
-                                      checker_name):
+                                      checker_name, diag, files):
         """
         Report handler which skips bugs which were suppressed by source code
         comments.
         """
-        return plist_parser.skip_report(report_hash,
+        report = Report(None, diag['path'], files)
+        path_hash = get_report_path_hash(report, files)
+        if path_hash in processed_path_hashes:
+            LOG.debug("Skip report because it is a deduplication of an "
+                      "already processed report!")
+            LOG.debug("Path hash: %s", path_hash)
+            LOG.debug(diag)
+            return True
+
+        skip = plist_parser.skip_report(report_hash,
                                         source_file,
                                         report_line,
                                         checker_name,
                                         suppress_handler)
+        if not skip:
+            processed_path_hashes.add(path_hash)
+
+        return skip
 
     skip_handler = None
     if 'skipfile' in args:
@@ -279,7 +295,6 @@ def main(args):
             skip_handler = SkipListHandler(skip_file.read())
 
     html_builder = None
-    processed_path_hashes = set()
 
     for input_path in args.input:
 

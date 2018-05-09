@@ -166,7 +166,9 @@ def get_report_data_from_plist(plist, skip_report_handler=None):
         if skip_report_handler and skip_report_handler(report_hash,
                                                        source_file,
                                                        report_line,
-                                                       checker_name):
+                                                       checker_name,
+                                                       diag,
+                                                       files):
             continue
 
         events = [i for i in bug_path_items if i.get('kind') == 'event']
