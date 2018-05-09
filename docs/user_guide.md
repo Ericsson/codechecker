@@ -806,10 +806,10 @@ export arguments:
                         Specify extra output format type. (default: None)
   -o OUTPUT_PATH, --output OUTPUT_PATH
                         Store the output in the given folder. (default: None)
-  -c, --clean           Delete the output results stored in the output
+  -c, --clean           DEPRECATED. Delete output results stored in the output
                         directory. (By default, it would keep output files and
-                        overwrite only those that belongs to a plist file
-                        given by the input argument.
+                        overwrites only those that belongs to a plist file
+                        given by the input argument. (default: True)
 ~~~~~~~~~~~~~~~~~~~~~
 
 For example, if the analysis was run like:

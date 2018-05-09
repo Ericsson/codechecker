@@ -2,6 +2,7 @@ var BugViewer = {
   _files : [],
   _reports : [],
   _lineWidgets : [],
+  _navigationMenuItems : [],
   _sourceFileData : null,
   _currentReport : null,
   _lastBugEvent  : null,
@@ -9,6 +10,26 @@ var BugViewer = {
   init : function (files, reports) {
     this._files = files;
     this._reports = reports;
+  },
+
+  initByUrl : function () {
+    if (!this._reports) return;
+
+    var state = {};
+    window.location.hash.substr(1).split('&').forEach(function (s) {
+      var parts = s.split('=');
+      state[parts[0]] = parts[1];
+    });
+
+    for (var key in this._reports) {
+      var report = this._reports[key];
+      if (report.reportHash === state['reportHash']) {
+        this.navigate(report);
+        return;
+      }
+    }
+
+    this.navigate(this._reports[0]);
   },
 
   create : function () {
@@ -29,22 +50,38 @@ var BugViewer = {
     this._createNavigationMenu();
   },
 
+  navigate : function (report, item) {
+    if (!item) {
+      var items = this._navigationMenuItems.filter(function (navItem) {
+        return navItem.report.reportHash === report.reportHash;
+      });
+
+      if (!items.length) return;
+
+      item = items[0].widget;
+    }
+
+    this._selectedReport.classList.remove('active');
+    this._selectedReport = item;
+    this._selectedReport.classList.add('active');
+    this.setReport(report);
+  },
+
   _createNavigationMenu : function () {
     var that = this;
 
     var nav = document.getElementById('report-nav');
     var list = document.createElement('ul');
     this._reports.forEach(function (report) {
-      var lastBugEvent = report[report.length - 1];
+      var events = report['events'];
+      var lastBugEvent = events[events.length - 1];
       var item = document.createElement('li');
       item.innerHTML = lastBugEvent.msg;
       item.addEventListener('click', function () {
-        that._selectedReport.classList.remove('active');
-        that._selectedReport = this;
-        that._selectedReport.classList.add('active');
-        that.setReport(report);
+        that.navigate(report, item);
       })
       list.appendChild(item);
+      that._navigationMenuItems.push({ report : report, widget : item });
     });
 
     if (!this._selectedReport && list.childNodes.length) {
@@ -57,8 +94,10 @@ var BugViewer = {
 
   setReport : function (report) {
     this._currentReport = report;
-    var lastBugEvent = report[report.length - 1];
+    var events = report['events'];
+    var lastBugEvent = events[events.length - 1];
     this.setCurrentBugEvent(lastBugEvent);
+    window.location.hash = '#reportHash=' + report.reportHash;
   },
 
   setCurrentBugEvent : function (event) {
@@ -98,7 +137,8 @@ var BugViewer = {
 
     this.clearBubbles();
 
-    this._currentReport.forEach(function (bugEvent, i) {
+    var currentEvents = this._currentReport.events;
+    currentEvents.forEach(function (bugEvent, i) {
       if (bugEvent.file !== that._currentBugEvent.file)
         return;
 
@@ -113,7 +153,7 @@ var BugViewer = {
       enumeration.setAttribute('class', 'checker-enum ' + type);
       enumeration.innerHTML = bugEvent.step;
 
-      if (that._currentReport.length > 1)
+      if (currentEvents.length > 1)
         element.appendChild(enumeration);
 
       var prevBugEvent = bugEvent.step - 1;
@@ -121,7 +161,7 @@ var BugViewer = {
         var prevBug = document.createElement('span');
         prevBug.setAttribute('class', 'arrow left-arrow');
         prevBug.addEventListener('click', function () {
-          var event = that._currentReport[prevBugEvent - 1];
+          var event = that._currentReport.events[prevBugEvent - 1];
           that.setCurrentBugEvent(event);
         });
         element.appendChild(prevBug);
@@ -136,7 +176,7 @@ var BugViewer = {
         var nextBug = document.createElement('span');
         nextBug.setAttribute('class', 'arrow right-arrow');
         nextBug.addEventListener('click', function () {
-          var event = that._currentReport[nextBugEvent];
+          var event = that._currentReport.events[nextBugEvent];
           that.setCurrentBugEvent(event);
         });
         element.appendChild(nextBug);

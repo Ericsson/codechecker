@@ -6,6 +6,7 @@
 # -------------------------------------------------------------------------
 
 import argparse
+import codecs
 import json
 import os
 import plistlib
@@ -21,7 +22,7 @@ def get_last_mod_time(file_path):
 
 
 def get_file_content(filename):
-    with open(filename, 'r') as f:
+    with codecs.open(filename, 'r', 'UTF-8') as f:
         return f.read()
 
 
@@ -29,8 +30,20 @@ class HtmlBuilder:
     """
     Helper class to create html file from a report data.
     """
-    def __init__(self, layout_dir):
+    def __init__(self, layout_dir, checkers_severity_map_file=None):
+        self._severity_map = dict()
         self.layout_dir = layout_dir
+        self.checkers_severity_map_file = checkers_severity_map_file
+        self.generated_html_reports = {}
+
+        if self.checkers_severity_map_file:
+            try:
+                with open(self.checkers_severity_map_file) as severity_file:
+                    self._severity_map = json.load(severity_file)
+            except (IOError, ValueError):
+                print("{0} doesn't exist or not JSON format. Severity "
+                      "levels will not be available!".format(
+                          self.checkers_severity_map_file))
 
         # Mapping layout tags to files.
         self._layout_tag_files = {
@@ -46,7 +59,10 @@ class HtmlBuilder:
         self._layout = get_file_content(
             os.path.join(self.layout_dir, 'layout.html'))
 
-        # Get the content of the HTML layout dependecies.
+        self._index = get_file_content(
+            os.path.join(self.layout_dir, 'index.html'))
+
+        # Get the content of the HTML layout dependencies.
         self._tag_contents = {}
         for tag in self._layout_tag_files:
             self._tag_contents[tag] = get_file_content(
@@ -59,10 +75,74 @@ class HtmlBuilder:
         """
         Create html file with the given report data to the output path.
         """
+        self.generated_html_reports[output_path] = report_data['reports']
         content = self._layout.replace('<$REPORT_DATA$>',
                                        json.dumps(report_data))
 
-        with open(output_path, 'w+') as html_output:
+        with codecs.open(output_path, 'w+', 'UTF-8') as html_output:
+            html_output.write(content)
+
+    def create_index_html(self, output_dir):
+        """
+        Creates an index.html file which lists all available bugs which was
+        found in the processed plist files. This also creates a link for each
+        bug to the created html file where the bug can be found.
+        """
+
+        # Create table header.
+        table_reports = '''
+            <tr>
+              <th>File</th>
+              <th>Severity</th>
+              <th>Checker name</th>
+              <th>Message</th>
+              <th>Bug path length</th>
+            </tr>'''
+
+        # Sort reports based on file path levels and add severity levels
+        # for report data.
+        report_data = []
+        for html_file in self.generated_html_reports:
+            for report in self.generated_html_reports[html_file]:
+                checker = report['checkerName']
+                report['severity'] =\
+                    self._severity_map.get(checker, 'UNSPECIFIED')
+                report_data.append({'html_file': html_file, 'report': report})
+        report_data = sorted(report_data,
+                             key=lambda d: d['report']['path'])
+
+        # Create table lines.
+        for data in report_data:
+            html_file = data['html_file']
+            report = data['report']
+
+            events = report['events']
+            checker = report['checkerName']
+            severity = report['severity']
+
+            table_reports += '''
+              <tr>
+                <td>
+                  <a href="{0}#reportHash={1}">{2} @ Line {3}</a>
+                </td>
+                <td class="severity">
+                  <i class="severity-{4}"></i>
+                </td>
+                <td>{5}</td>
+                <td>{6}</td>
+                <td class="bug-path-length">{7}</td>
+              </tr>'''.format(os.path.basename(html_file),
+                              report['reportHash'],
+                              report['path'],
+                              events[-1]['line'],
+                              severity.lower(),
+                              checker,
+                              events[-1]['msg'],
+                              len(events))
+
+        content = self._index.replace('<$TABLE_REPORTS$>', table_reports)
+        output_path = os.path.join(output_dir, 'index.html')
+        with codecs.open(output_path, 'w+', 'UTF-8') as html_output:
             html_output.write(content)
 
 
@@ -78,9 +158,8 @@ def get_report_data_from_plist(plist, skip_report_handler=None):
     for diag in plist['diagnostics']:
         bug_path_items = [item for item in diag['path']]
 
-        last_report_event = bug_path_items[-1]
-        source_file = files[last_report_event['location']['file']]
-        report_line = last_report_event['location']['line']
+        source_file = files[diag['location']['file']]
+        report_line = diag['location']['line']
         report_hash = diag['issue_hash_content_of_line_in_context']
         checker_name = diag['check_name']
 
@@ -92,22 +171,27 @@ def get_report_data_from_plist(plist, skip_report_handler=None):
 
         events = [i for i in bug_path_items if i.get('kind') == 'event']
 
-        report = []
+        report_events = []
         for index, event in enumerate(events):
             file_id = event['location']['file']
             if file_id not in file_sources:
                 file_path = files[file_id]
-                source_data = open(file_path, 'r')
-                file_sources[file_id] = {'id': file_id,
-                                         'path': file_path,
-                                         'content': source_data.read()}
+                with codecs.open(file_path, 'r', 'UTF-8',
+                                 errors='replace') as source_data:
+                    file_sources[file_id] = {'id': file_id,
+                                             'path': file_path,
+                                             'content': source_data.read()}
 
-            report.append({'line': event.location['line'],
-                           'col':  event.location['col'],
-                           'file': event.location['file'],
-                           'msg':  event.message,
-                           'step': index + 1})
-        reports.append(report)
+            report_events.append({'line': event.location['line'],
+                                  'col':  event.location['col'],
+                                  'file': event.location['file'],
+                                  'msg':  event.message,
+                                  'step': index + 1})
+
+        reports.append({'events': report_events,
+                        'path': file_path,
+                        'reportHash': report_hash,
+                        'checkerName': checker_name})
 
     return {'files': file_sources,
             'reports': reports}
@@ -174,13 +258,13 @@ def plist_to_html(file_path, output_path, html_builder,
         return file_path, changed_source
 
 
-def parse(input_path, output_path, layout_dir, clean=False,
-          skip_report_handler=None):
+def parse(input_path, output_path, layout_dir, skip_report_handler=None,
+          html_builder=None):
     files = []
     input_path = os.path.abspath(input_path)
-
     output_dir = os.path.abspath(output_path)
-    if clean and os.path.isdir(output_dir):
+
+    if os.path.exists(output_path):
         print("Previous analysis results in '{0}' have been removed, "
               "overwriting with current results.".format(output_dir))
         shutil.rmtree(output_path)
@@ -202,7 +286,9 @@ def parse(input_path, output_path, layout_dir, clean=False,
     # Source files which modification time changed since the last analysis.
     changed_source_files = set()
 
-    html_builder = HtmlBuilder(layout_dir)
+    if not html_builder:
+        html_builder = HtmlBuilder(layout_dir)
+
     for file_path in files:
         sr, changed_source = plist_to_html(file_path,
                                            output_path,
@@ -214,7 +300,7 @@ def parse(input_path, output_path, layout_dir, clean=False,
             skipped_report.add(sr)
 
     print('\nTo view the results in a browser run:\n> firefox {0}'.format(
-        output_path))
+        os.path.join(output_path, 'index.html')))
 
     if changed_source_files:
         changed_files = '\n'.join([' - ' + f for f in changed_source_files])
@@ -236,25 +322,15 @@ def __add_arguments_to_parser(parser):
                         required=True,
                         help="Generate HTML output files in the given folder.")
 
+    curr_file_dir = os.path.dirname(os.path.abspath(__file__))
     parser.add_argument('-l', '--layout',
                         dest="layout_dir",
                         required=False,
-                        default=os.path.join(os.path.abspath(__file__),
+                        default=os.path.join(curr_file_dir,
                                              '..',
                                              'dist'),
                         help="Directory which contains dependency HTML, CSS "
                              "and JavaScript files.")
-
-    parser.add_argument('-c', '--clean',
-                        dest="clean",
-                        required=False,
-                        action='store_true',
-                        default=argparse.SUPPRESS,
-                        help="Delete the output results stored in the output "
-                             "directory. (By default, it would keep HTML "
-                             "files and overwrite only those files that "
-                             "belongs to a plist file given by the input "
-                             "argument.")
 
 
 def main():
@@ -274,8 +350,11 @@ def main():
     if isinstance(args.input, str):
         args.input = [args.input]
 
+    html_builder = HtmlBuilder(args.layout_dir)
     for input_path in args.input:
-        parse(input_path, args.output_dir, args.layout_dir, 'clean' in args)
+        parse(input_path, args.output_dir, args.layout_dir, None, html_builder)
+
+    html_builder.create_index_html(args.output_dir)
 
 
 if __name__ == "__main__":
