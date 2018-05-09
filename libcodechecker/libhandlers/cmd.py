@@ -18,7 +18,7 @@ from libcodechecker import output_formatters
 from libcodechecker import util
 from libcodechecker.cmd import cmd_line_client
 from libcodechecker.cmd import product_client
-from libcodechecker.cmd import source_component_client
+from libcodechecker.cmd import source_component_client, token_client
 
 
 class NewLineDefaultHelpFormatter(argparse.ArgumentDefaultsHelpFormatter):
@@ -826,6 +826,63 @@ def __register_run_histories(parser):
                              "to get the available runs.")
 
 
+def __register_token(parser):
+    """
+    Add argparse subcommand parser for the "handle token" action.
+    """
+
+    def __register_new(parser):
+        parser.add_argument("--description",
+                            type=str,
+                            metavar='DESCRIPTION',
+                            default=argparse.SUPPRESS,
+                            required=False,
+                            help="A custom textual description to be shown "
+                                 "alongside the token.")
+
+    def __register_del(parser):
+        """
+        Add argparse subcommand parser for the "del token" action.
+        """
+        parser.add_argument("token",
+                            type=str,
+                            metavar='TOKEN',
+                            default=argparse.SUPPRESS,
+                            help="Personal access token which will be "
+                                 "deleted.")
+
+    subcommands = parser.add_subparsers(title='available actions')
+
+    # Create handlers for individual subcommands.
+    list_tokens = subcommands.add_parser(
+        'list',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description="List the available personal access tokens.",
+        help="List tokens available on the server.")
+    list_tokens.set_defaults(
+        func=token_client.handle_list_tokens)
+    __add_common_arguments(list_tokens, has_matrix_output=True,
+                           needs_product_url=False)
+
+    new_t = subcommands.add_parser(
+        'new',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description="Creating a new personal access token.",
+        help="Creates a new personal access token.")
+    __register_new(new_t)
+    new_t.set_defaults(func=token_client.handle_add_token)
+    __add_common_arguments(new_t, needs_product_url=False)
+
+    del_t = subcommands.add_parser(
+        'del',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description="Removes the specified access token.",
+        help="Deletes a token from the server.")
+    __register_del(del_t)
+    del_t.set_defaults(func=token_client.handle_del_token)
+    __add_common_arguments(del_t, needs_product_url=False)
+
+
 def add_arguments_to_parser(parser):
     """
     Add the subcommand's arguments to the given argparse.ArgumentParser.
@@ -916,6 +973,16 @@ Get statistics for all runs and only for severity 'high':
     __register_sum(sum_p)
     sum_p.set_defaults(func=cmd_line_client.handle_list_result_types)
     __add_common_arguments(sum_p, has_matrix_output=True)
+
+    token = subcommands.add_parser(
+        'token',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description="Access subcommands related to configuring personal "
+                    "access tokens managed by a CodeChecker server. Please "
+                    "see the individual subcommands for details.",
+        help="Access subcommands related to configuring personal access "
+             "tokens managed by a CodeChecker server.")
+    __register_token(token)
 
     del_p = subcommands.add_parser(
         'del',

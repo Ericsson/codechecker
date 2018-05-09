@@ -43,32 +43,11 @@ from libcodechecker.server.database.run_db_model import \
     Report, ReviewStatus, File, Run, RunHistory, \
     RunLock, Comment, BugPathEvent, BugReportPoint, \
     FileContent, SourceComponent
+from libcodechecker.util import DBSession
 
 from . import store_handler
 
 LOG = get_logger('server')
-
-
-class DBSession(object):
-    """
-    Requires a session maker object and creates one session which can be used
-    in the context.
-
-    The session will be automatically closed, but commiting must be done
-    inside the context.
-    """
-    def __init__(self, session_maker):
-        self.__session = None
-        self.__session_maker = session_maker
-
-    def __enter__(self):
-        # create new session
-        self.__session = self.__session_maker()
-        return self.__session
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if self.__session:
-            self.__session.close()
 
 
 def exc_to_thrift_reqfail(func):

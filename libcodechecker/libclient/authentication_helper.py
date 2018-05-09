@@ -79,3 +79,17 @@ class ThriftAuthHelper():
     @ThriftClientCall
     def hasPermission(self, permission, extra_params):
         pass
+
+    # ============= Token management =============
+
+    @ThriftClientCall
+    def newToken(self, description):
+        pass
+
+    @ThriftClientCall
+    def removeToken(self, token):
+        pass
+
+    @ThriftClientCall
+    def getTokens(self):
+        pass

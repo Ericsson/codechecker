@@ -7,14 +7,12 @@
 Handles the management of authentication sessions on the server's side.
 """
 
-from datetime import datetime
+from datetime import datetime, timedelta
 import hashlib
-import os
-import uuid
 
 from libcodechecker.logger import get_logger
-from libcodechecker.util import check_file_owner_rw
-from libcodechecker.util import load_json_or_empty
+from libcodechecker.util import check_file_owner_rw, load_json_or_empty, \
+    generate_session_token
 from libcodechecker.version import SESSION_COOKIE_NAME as _SCN
 
 from database.config_db_model import Session as SessionRecord, SystemPermission
@@ -40,16 +38,18 @@ class _Session(object):
     """A session for an authenticated, privileged client connection."""
 
     def __init__(self, token, username, groups,
-                 session_lifetime, is_root=False, database=None,
-                 last_access=None):
+                 session_lifetime, refresh_time, is_root=False, database=None,
+                 last_access=None, can_expire=True):
 
         self.token = token
         self.user = username
         self.groups = groups
 
         self.__session_lifetime = session_lifetime
+        self.__refresh_time = refresh_time if refresh_time else None
         self.__root = is_root
         self.__database = database
+        self.__can_expire = can_expire
         self.last_access = last_access if last_access else datetime.now()
 
     @property
@@ -59,11 +59,25 @@ class _Session(object):
         return self.__root
 
     @property
+    def is_refresh_time_expire(self):
+        """
+        Returns if the refresh time of the session is expired.
+        """
+        if not self.__refresh_time:
+            return True
+
+        return (datetime.now() - self.last_access).total_seconds() > \
+            self.__refresh_time
+
+    @property
     def is_alive(self):
         """
         Returns if the session is alive and usable, that is, within its
         lifetime.
         """
+        if not self.__can_expire:
+            return True
+
         return (datetime.now() - self.last_access).total_seconds() <= \
             self.__session_lifetime
 
@@ -78,14 +92,16 @@ class _Session(object):
         if not self.is_alive:
             return
 
-        self.last_access = datetime.now()
+        if self.__database and self.is_refresh_time_expire:
+            self.last_access = datetime.now()
 
-        if self.__database:
             # Update the timestamp in the database for the session's last
             # access.
+            transaction = None
             try:
                 transaction = self.__database()
                 record = transaction.query(SessionRecord) \
+                    .filter(SessionRecord.user_name == self.user) \
                     .filter(SessionRecord.token == self.token) \
                     .limit(1).one_or_none()
 
@@ -97,7 +113,8 @@ class _Session(object):
                           .format(self.token))
                 LOG.error(str(e))
             finally:
-                transaction.close()
+                if transaction:
+                    transaction.close()
 
 
 class SessionManager:
@@ -151,6 +168,9 @@ class SessionManager:
         if 'soft_expire' in self.__auth_config:
             LOG.debug("Found deprecated argument 'soft_expire' in "
                       "server_config.authentication.")
+
+        self.__refresh_time = self.__auth_config['refresh_time'] \
+            if 'refresh_time' in self.__auth_config else None
 
         # Save the root SHA into the configuration (but only in memory!)
         self.__auth_config['method_root'] = root_sha
@@ -224,6 +244,10 @@ class SessionManager:
 
         This validation object contains two keys: username and groups.
         """
+        validation = self.__try_auth_root(auth_string)
+        if validation:
+            return validation
+
         validation = self.__try_auth_dictionary(auth_string)
         if validation:
             return validation
@@ -257,6 +281,33 @@ class SessionManager:
             }
 
         return False
+
+    def __try_auth_token(self, auth_string):
+        if not self.__database_connection:
+            return None
+
+        user_name, token = auth_string.split(':')
+
+        transaction = None
+        try:
+            # Try the database, if it is connected.
+            transaction = self.__database_connection()
+            auth_session = transaction.query(SessionRecord.token) \
+                .filter(SessionRecord.user_name == user_name) \
+                .filter(SessionRecord.token == token) \
+                .filter(SessionRecord.can_expire.is_(False)) \
+                .limit(1).one_or_none()
+
+            if not auth_session:
+                return False
+
+            return auth_session
+        except Exception as e:
+            LOG.error("Couldn't check login in the database: ")
+            LOG.error(str(e))
+        finally:
+            if transaction:
+                transaction.close()
 
     def __try_auth_dictionary(self, auth_string):
         """
@@ -318,20 +369,22 @@ class SessionManager:
     def get_user_name(auth_string):
         return auth_string.split(':')[0]
 
-    def get_db_session_tokens(self, user_name):
+    def get_db_auth_session_tokens(self, user_name):
         """
-        Get session token from the database for the given user.
+        Get authentication session token from the database for the given user.
         """
         if not self.__database_connection:
             return None
 
+        transaction = None
         try:
             # Try the database, if it is connected.
             transaction = self.__database_connection()
-            session_tokens = transaction.query(SessionRecord.token) \
+            session_tokens = transaction.query(SessionRecord) \
                 .filter(SessionRecord.user_name == user_name) \
+                .filter(SessionRecord.can_expire.is_(True)) \
                 .all()
-            return [s[0] for s in session_tokens]
+            return session_tokens
         except Exception as e:
             LOG.error("Couldn't check login in the database: ")
             LOG.error(str(e))
@@ -341,12 +394,16 @@ class SessionManager:
 
         return None
 
-    @staticmethod
-    def generate_session_token():
+    def __create_local_session(self, token, user_name, groups, is_root,
+                               last_access=None, can_expire=True):
         """
-        Returns a random session token.
+        Returns a new local session object initalized by the given parameters.
         """
-        return uuid.UUID(bytes=os.urandom(16)).__str__().replace('-', '')
+        return _Session(
+            token, user_name, groups,
+            self.__auth_config['session_lifetime'],
+            self.__refresh_time, is_root, self.__database_connection,
+            last_access, can_expire)
 
     def create_or_get_session(self, auth_string):
         """
@@ -364,35 +421,42 @@ class SessionManager:
                 self.__auth_config['logins_until_cleanup']:
             self.__cleanup_sessions()
 
-        # Checks that user can be authenticated as a 'root' user.
-        validation = self.__try_auth_root(auth_string)
-        if not validation:
-            # Try to authenticate user with different authentication methods.
-            validation = self.__handle_validation(auth_string)
+        # Try authenticate user with personal access token.
+        auth_token = self.__try_auth_token(auth_string)
+        if auth_token:
+            local_session = self.__get_local_session_from_db(auth_token.token)
+            local_session.revalidate()
+            self.__sessions.append(local_session)
+            return local_session
 
-            if not validation:
-                return False
+        # Try to authenticate user with different authentication methods.
+        validation = self.__handle_validation(auth_string)
+        if not validation:
+            return False
 
         # If the session is still valid and credentials are present,
         # return old token. This is fetched either locally or from the db.
         user_name = validation['username']
-        tokens = self.get_db_session_tokens(user_name)
-        token = tokens[0] if len(tokens) else self.generate_session_token()
+        tokens = self.get_db_auth_session_tokens(user_name)
+        token = tokens[0].token if len(tokens) else generate_session_token()
 
         local_session = self.get_session(token)
 
-        if local_session:
+        if local_session and local_session.is_alive:
+            # The token is still valid, re-validate it.
             local_session.revalidate()
         else:
+            # Invalidate the token because it has been expired.
+            self.invalidate(token)
+
             groups = validation.get('groups', [])
             is_root = validation.get('root', False)
 
-            local_session = _Session(
-                token, user_name, groups,
-                self.__auth_config['session_lifetime'],
-                is_root, self.__database_connection)
+            local_session = self.__create_local_session(token, user_name,
+                                                        groups, is_root)
             self.__sessions.append(local_session)
 
+            transaction = None
             if self.__database_connection:
                 try:
                     transaction = self.__database_connection()
@@ -417,7 +481,7 @@ class SessionManager:
         """
         return self.__max_run_count
 
-    def _get_local_session_from_db(self, token):
+    def __get_local_session_from_db(self, token):
         """
         Creates a local session if a valid session token can be found in the
         database.
@@ -426,6 +490,7 @@ class SessionManager:
         if not self.__database_connection:
             return
 
+        transaction = None
         try:
             transaction = self.__database_connection()
             db_record = transaction.query(SessionRecord) \
@@ -438,15 +503,15 @@ class SessionManager:
                     .filter(SystemPermission.name == user_name) \
                     .limit(1).one_or_none()
 
-                is_root = True if system_permission else False
-                local_session = _Session(
-                    token, user_name,
-                    db_record.groups.split(';'),
-                    self.__auth_config['session_lifetime'],
-                    is_root, self.__database_connection,
-                    db_record.last_access)
+                groups = db_record.groups.split(';') \
+                    if db_record.groups else []
 
-                return local_session
+                is_root = True if system_permission else False
+                return self.__create_local_session(token, user_name,
+                                                   groups,
+                                                   is_root,
+                                                   db_record.last_access,
+                                                   db_record.can_expire)
         except Exception as e:
             LOG.error("Couldn't check login in the database: ")
             LOG.error(str(e))
@@ -469,34 +534,51 @@ class SessionManager:
 
         for sess in self.__sessions:
             if sess.is_alive and sess.token == token:
+                # If the session is alive but the should be re-validated.
+                if sess.is_refresh_time_expire:
+                    sess.revalidate()
                 return sess
 
         # Try to get a local session from the database.
-        local_session = self._get_local_session_from_db(token)
+        local_session = self.__get_local_session_from_db(token)
         if local_session and local_session.is_alive:
             self.__sessions.append(local_session)
-        else:
-            self.invalidate(token)
+            if local_session.is_refresh_time_expire:
+                local_session.revalidate()
+            return local_session
+
+        self.invalidate(token)
+        return None
 
         return local_session
 
+    def invalidate_local_session(self, token):
+        """
+        Remove a user's previous session from the local in memory store.
+        """
+        for session in self.__sessions[:]:
+            if session.token == token:
+                self.__sessions.remove(session)
+                return True
+        return False
+
     def invalidate(self, token):
         """
-        Remove a user's previous session from the store.
+        Remove a user's previous session from local in memory and the database
+        store.
         """
+        transaction = None
         try:
+            self.invalidate_local_session(token)
+
             transaction = self.__database_connection() \
                 if self.__database_connection else None
-
-            # Remove local sessions.
-            for session in self.__sessions[:]:
-                if session.token == token:
-                    self.__sessions.remove(session)
 
             # Remove sessions from the database.
             if transaction:
                 transaction.query(SessionRecord) \
                     .filter(SessionRecord.token == token) \
+                    .filter(SessionRecord.can_expire.is_(True)) \
                     .delete()
                 transaction.commit()
 
@@ -512,9 +594,12 @@ class SessionManager:
         return False
 
     def __cleanup_sessions(self):
-        tokens = [s.token for s in self.__sessions
-                  if not s.is_alive]
         self.__logins_since_prune = 0
 
-        for token in tokens:
-            self.invalidate(token)
+        for s in self.__sessions:
+            if s.is_refresh_time_expire:
+                self.invalidate_local_session(s.token)
+
+        for s in self.__sessions:
+            if not s.is_alive:
+                self.invalidate(s.token)

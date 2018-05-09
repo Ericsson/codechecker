@@ -173,6 +173,12 @@ def perform_auth_for_handler(protocol, manager, host, port,
         if manager.is_autologin_enabled():
             auto_auth_string = manager.get_auth_string(host, port)
             if auto_auth_string:
+                LOG.info("Logging in using pre-configured credentials...")
+
+                username = auto_auth_string.split(':')[0]
+                LOG.debug("Trying to login as '%s' to '%s:%s'", username,
+                          host, port)
+
                 # Try to automatically log in with a saved credential
                 # if it exists for the server.
                 try:
@@ -180,8 +186,7 @@ def perform_auth_for_handler(protocol, manager, host, port,
                         "Username:Password",
                         auto_auth_string)
                     manager.save_token(host, port, session_token)
-                    LOG.info("Authenticated using pre-configured "
-                             "credentials.")
+                    LOG.info("Authentication successful.")
                     return session_token
                 except shared.ttypes.RequestFailed:
                     print_err = True
@@ -191,9 +196,17 @@ def perform_auth_for_handler(protocol, manager, host, port,
             print_err = True
 
         if print_err:
-            LOG.error("Access denied. This server requires authentication.")
-            LOG.error("Please log in onto the server using 'CodeChecker cmd "
-                      "login'.")
+            if manager.is_autologin_enabled():
+                LOG.error("Invalid pre-configured credentials.")
+                LOG.error("Your password has been changed or personal access "
+                          "token has been removed which is used by your "
+                          "\"~/.codechecker.passwords.json\" file. Please "
+                          "remove or change invalid credentials.")
+            else:
+                LOG.error("Access denied. This server requires "
+                          "authentication.")
+                LOG.error("Please log in onto the server using 'CodeChecker "
+                          "cmd login'.")
             sys.exit(1)
 
 

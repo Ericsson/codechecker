@@ -21,6 +21,10 @@ Table of Contents
     * [Preconfigured credentials](#preconfigured-credentials)
     * [Automatic login](#automatic-login)
     * [Currently active tokens](#currently-active-tokens)
+* [Personal access token](#personal-access-token)
+  * [`new`](#new-personal-access-token)
+  * [`list`](#list-personal-access-token)
+  * [`del`](#remove-personal-access-token)
 
 ## <a name="server-side-configuration"></a> Server-side configuration
 
@@ -49,6 +53,16 @@ is handled.
 
     (in seconds) The lifetime of the session sets that after this many seconds
     since last session access the session is permanently invalidated.
+
+ * `refresh_time`
+
+    (in seconds) Refresh time of the local session objects. We use local session
+    to prevent huge number of queries to the database. These sessions are stored
+    in the memory so if multiple CodeChecker servers use the same configuration
+    database these should be synced with each other and with the database. This
+    option defines the lifetime of the local session sets that after this many
+    seconds since last session access the local session is permanently
+    invalidated.
 
 If the server is shut down, every session is **immediately** invalidated. The
 running sessions are only stored in the server's memory, they are not written
@@ -333,6 +347,10 @@ order:
      `*:port`, is tried
   4. Global credentials for the installation is stored with the `*` key
 
+Is it possible to generate a token from command line which can be used to
+authenticate in the name of the given user. This way no need to store passwords
+in text files. For more information [see](#personal-access-token).
+
 #### <a name="automatic-login"></a> Automatic login
 
 If authentication is required by the server and the user hasn't logged in but
@@ -345,3 +363,64 @@ This behaviour can be disabled by setting `client_autologin` to `false`.
 
 The user's currently active sessions' token are stored in the
 `~/.codechecker.session.json`.
+
+## <a name="personal-access-token"></a> Personal access token
+Command line clients can authenticate itself using the username/password stored
+in the [`.codechecker.passwords.json`](#preconfigured-credentials). It is
+obviously not a good idea to store passwords in text files. Instead of this the
+user is able to generate a token from command line, that can be used to
+authenticate in the name of his/her name. To generate a new token, the user must
+be logged in first.
+
+Personal tokens can be written instead of the user's password in the
+`~/.codechecker.passwords.json` file:
+```json
+{
+  "client_autologin" : true,
+  "credentials": {
+    "*" : "global:passphrase",
+    "localhost:6251" : "super:22eca8f31ad117e90c371f2e98bcf4c9"
+  }
+}
+```
+
+### <a name="new-personal-access-token"></a> New personal access token (`new`)
+~~~~~~~~~~~~~~~~~~~~~
+usage: CodeChecker cmd token new [-h] [--description DESCRIPTION]
+                                 [--url SERVER_URL]
+                                 [--verbose {info,debug,debug_analyzer}]
+
+Creating a new personal access token.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --description DESCRIPTION
+                        A custom textual description to be shown alongside the
+                        token.
+~~~~~~~~~~~~~~~~~~~~~
+
+### <a name="list-personal-access-token"></a> List personal access tokens (`list`)
+
+~~~~~~~~~~~~~~~~~~~~~
+usage: CodeChecker cmd token list [-h] [--url SERVER_URL]
+                                  [-o {plaintext,html,rows,table,csv,json}]
+                                  [-e EXPORT_DIR] [-c]
+                                  [--verbose {info,debug,debug_analyzer}]
+
+List the available personal access tokens.
+
+optional arguments:
+  -h, --help            show this help message and exit
+~~~~~~~~~~~~~~~~~~~~~
+
+### <a name="remove-personal-access-token"></a> Remove personal access token (`del`)
+~~~~~~~~~~~~~~~~~~~~~
+usage: CodeChecker cmd token del [-h] [--url SERVER_URL]
+                                 [--verbose {info,debug,debug_analyzer}]
+                                 TOKEN
+
+Removes the specified access token.
+
+positional arguments:
+  TOKEN                 Personal access token which will be deleted.
+~~~~~~~~~~~~~~~~~~~~~
