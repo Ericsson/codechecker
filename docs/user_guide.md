@@ -1503,9 +1503,11 @@ https://docs.python.org/2/library/re.html#regular-expression-syntax.
 ### <a name="cmd-sum"></a> Show summarised count of results (`sum`)
 
 ~~~~~~~~~~~~~~~~~~~~~
-usage: CodeChecker cmd sum [-h] (-n RUN_NAME [RUN_NAME ...] | -a) [-s]
-                           [--filter FILTER] [--url PRODUCT_URL]
-                           [-o {plaintext,rows,table,csv,json}]
+usage: CodeChecker cmd sum [-h] (-n RUN_NAME [RUN_NAME ...] | -a)
+                           [--disable-unique] [-s] [--filter FILTER]
+                           [--url PRODUCT_URL]
+                           [-o {plaintext,html,rows,table,csv,json}]
+                           [-e EXPORT_DIR] [-c]
                            [--verbose {info,debug,debug_analyzer}]
 
 Show checker statistics for some analysis runs.
@@ -1521,6 +1523,10 @@ optional arguments:
                         then "run_2*:run_3_d_name" selects the last three runs.
                         Use 'CodeChecker cmd runs' to get the available runs.
   -a, --all             Show breakdown for all analysis runs.
+  --disable-unique      List all bugs even if these end up in the same bug
+                        location, but reached through different paths. By
+                        uniqueing the bugs a report will be appeared only once
+                        even if it is found on several paths.
   -s, --suppressed      Filter results to only show suppressed entries.
                         (default: False)
   --filter FILTER       Filter results. The filter string has the following

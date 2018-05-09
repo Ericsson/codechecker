@@ -218,6 +218,15 @@ function (declare, lang, Deferred, domClass, dom, domStyle, topic, Button,
         stateDecoder : function (key) {
           return CC_OBJECTS.ReviewStatus[key.replace(' ', '_').toUpperCase()];
         },
+        defaultValues : function () {
+          var state = {};
+          state[this.class] = [
+            CC_OBJECTS.ReviewStatus.UNREVIEWED,
+            CC_OBJECTS.ReviewStatus.CONFIRMED
+          ].map(this.stateConverter);
+
+          return state;
+        },
         getIconClass : function (value) {
           var statusCode = this.stateDecoder(value);
           return 'customIcon ' + util.reviewStatusCssClass(statusCode);
@@ -260,6 +269,16 @@ function (declare, lang, Deferred, domClass, dom, domStyle, topic, Button,
         },
         stateDecoder : function (key) {
           return CC_OBJECTS.DetectionStatus[key.toUpperCase()];
+        },
+        defaultValues : function () {
+          var state = {};
+          state[this.class] = [
+            CC_OBJECTS.DetectionStatus.NEW,
+            CC_OBJECTS.DetectionStatus.REOPENED,
+            CC_OBJECTS.DetectionStatus.UNRESOLVED
+          ].map(this.stateConverter);
+
+          return state;
         },
         getIconClass : function (value) {
           return 'customIcon detection-status-' + value.toLowerCase();
@@ -530,9 +549,24 @@ function (declare, lang, Deferred, domClass, dom, domStyle, topic, Button,
     initAll : function (queryParams) {
       if (!queryParams) queryParams = {};
 
-      if (!this._isInitalized && !queryParams.newcheck)
-        this._newCheckFilterToggle.hide();
+      if (!this.isInitalized()) {
+        if (!queryParams.newcheck)
+          this._newCheckFilterToggle.hide();
 
+        // Set default values if the tab has not been initalized before and if
+        // it is initalized by user clicks not by the URL.
+        if (this.openedByUserEvent)
+          this._filters.forEach(function (filter) {
+            if (filter.defaultValues) {
+              var defaultValues = filter.defaultValues();
+              for (var key in defaultValues)
+                if (!queryParams[key])
+                  queryParams[key] = defaultValues[key];
+            }
+          });
+      }
+
+      // Init filters by the parameter values.
       this._filters.forEach(function (filter) {
         filter.initByUrl(queryParams);
       });

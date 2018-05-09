@@ -11,7 +11,7 @@ define([
   'codechecker/filter/FilterBase'],
 function (dom, declare, CheckBox, FilterBase) {
   return declare(FilterBase, {
-    defaultValue : true,
+    defaultValue : false,
 
     postCreate : function () {
       var that = this;
@@ -32,7 +32,7 @@ function (dom, declare, CheckBox, FilterBase) {
 
     initByUrl : function (queryParams) {
       var state = queryParams[this.class];
-      var isUnique = state === 'off' ? false : true;
+      var isUnique = state === 'on' ? true : false;
       this._uniqueCheckBox.set('checked', isUnique, false);
       this.updateReportFilter(isUnique);
     },
@@ -46,7 +46,7 @@ function (dom, declare, CheckBox, FilterBase) {
       var state = {};
 
       var isUnique = this._uniqueCheckBox.get('checked');
-      state[this.class] = isUnique ? null : 'off';
+      state[this.class] = isUnique ? 'on' : null;
 
       return state;
     }

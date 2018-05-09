@@ -28,7 +28,8 @@ from codeCheckerDBAccess_v6 import constants, ttypes
 from codeCheckerDBAccess_v6.ttypes import *
 
 from libcodechecker import generic_package_context
-from libcodechecker.source_code_comment_handler import SourceCodeCommentHandler
+from libcodechecker.source_code_comment_handler import \
+    SourceCodeCommentHandler, SKIP_REVIEW_STATUSES
 from libcodechecker import util
 # TODO: Cross-subpackage import here.
 from libcodechecker.analyze import plist_parser
@@ -390,6 +391,22 @@ def sort_results_query(query, sort_types, sort_type_map, order_type_map,
     return query
 
 
+def filter_unresolved_reports(q):
+    """
+    Filter reports which are unresolved.
+
+    Note: review status of these reports are not in the SKIP_REVIEW_STATUSES
+    list.
+    """
+    skip_review_status = SKIP_REVIEW_STATUSES
+
+    return q.filter(Report.fixed_at.is_(None)) \
+            .filter(or_(ReviewStatus.status.is_(None),
+                        ReviewStatus.status.notin_(skip_review_status))) \
+            .outerjoin(ReviewStatus,
+                       ReviewStatus.bug_hash == Report.bug_id)
+
+
 class ThriftRequestHandler(object):
     """
     Connect to database and handle thrift client requests.
@@ -473,10 +490,11 @@ class ThriftRequestHandler(object):
 
             # Count the reports subquery.
             stmt = session.query(Report.run_id,
-                                 func.count(Report.bug_id.distinct())
-                                 .label('report_count')) \
-                .group_by(Report.run_id) \
-                .subquery()
+                                 func.count(Report.bug_id)
+                                 .label('report_count'))
+
+            stmt = filter_unresolved_reports(stmt) \
+                .group_by(Report.run_id).subquery()
 
             tag_q = session.query(RunHistory.run_id,
                                   func.max(RunHistory.id).label(
@@ -514,7 +532,7 @@ class ThriftRequestHandler(object):
 
             status_q = session.query(Report.run_id,
                                      Report.detection_status,
-                                     func.count(Report.bug_id.distinct())) \
+                                     func.count(Report.bug_id)) \
                 .group_by(Report.run_id, Report.detection_status)
 
             status_sum = defaultdict(defaultdict)

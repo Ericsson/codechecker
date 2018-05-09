@@ -16,11 +16,13 @@ define([
   'dojox/form/CheckedMultiSelect',
   'dojox/grid/DataGrid',
   'dojox/widget/Standby',
+  'dijit/form/CheckBox',
   'dijit/layout/ContentPane',
   'codechecker/hashHelper',
   'codechecker/util'],
 function (declare, ItemFileWriteStore, dom, Deferred, all, Memory, Observable,
-  topic, CheckedMultiSelect, DataGrid, Standby, ContentPane, hashHelper, util) {
+  topic, CheckedMultiSelect, DataGrid, Standby, CheckBox, ContentPane,
+  hashHelper, util) {
 
   function severityFormatter(severity) {
     var severity = util.severityFromCodeToString(severity);
@@ -75,30 +77,68 @@ function (declare, ItemFileWriteStore, dom, Deferred, all, Memory, Observable,
           if (!this.changed)
             return;
 
-          var runIds = [];
-          this.store.query({}).forEach(function (item) {
-            if (that.selectedRuns.indexOf(item.label) !== -1)
-              runIds.push(item.value);
-          });
-
-          that.checkerStatisticsGrid.refreshGrid(runIds);
-          that.severityStatisticsGrid.refreshGrid(runIds);
-          hashHelper.setStateValue('run', that.selectedRuns);
+          that.refreshGrids();
           this.changed = false;
         }
       });
 
       this.selectedRuns = null;
+      this.defaultUniqueValue = true;
+      this.isUnique = this.defaultUniqueValue;
     },
 
     postCreate : function () {
-      this.addChild(this._runFilter);
+      var that = this;
 
       var state = hashHelper.getValues();
-      if (state.tab === 'statistics' && state.run)
-        this.selectedRuns = state.run instanceof Array
-          ? state.run.map(function (run) { return run; })
-          : [state.run];
+      if (state.tab === 'statistics') {
+        if (state.run)
+          this.selectedRuns = state.run instanceof Array
+            ? state.run.map(function (run) { return run; })
+            : [state.run];
+        if (state['is-unique'] === 'off')
+          that.isUnique = false;
+      }
+
+      this.addChild(this._runFilter);
+
+      this._uniqueCheckBox = new CheckBox({
+        class : 'is-unique',
+        checked : this.isUnique,
+        onChange : function (isUnique) {
+          that.isUnique = isUnique;
+          that.refreshGrids();
+        }
+      });
+      dom.place(this._uniqueCheckBox.domNode, this.domNode);
+
+      this._uniqueCheckBoxLabel = dom.create('label', {
+        for : this._uniqueCheckBox.get('id'),
+        innerHTML : 'Unique reports'
+      }, this._uniqueCheckBox.domNode, 'after');
+    },
+
+    refreshGrids : function () {
+      var that = this;
+
+      var runIds = [];
+      this._runFilter.store.query({}).forEach(function (item) {
+        if (that.selectedRuns && that.selectedRuns.indexOf(item.label) !== -1)
+          runIds.push(item.value);
+      });
+
+      this.checkerStatisticsGrid.refreshGrid(runIds);
+      this.severityStatisticsGrid.refreshGrid(runIds);
+
+      this.updateURLState();
+    },
+
+    updateURLState : function () {
+      hashHelper.setStateValues({
+        'tab' : 'statistics',
+        'run' : this.selectedRuns,
+        'is-unique' : this.isUnique === this.defaultUniqueValue ? null : 'off'
+      });
     },
 
     loadRunStoreData : function () {
@@ -252,12 +292,10 @@ function (declare, ItemFileWriteStore, dom, Deferred, all, Memory, Observable,
         {field : 'reviewStatus', values : [CC_OBJECTS.ReviewStatus.INTENTIONAL]},
         {field : 'detectionStatus', values : [CC_OBJECTS.DetectionStatus.RESOLVED]}
       ].map(function (q) {
-        var that = this;
-
         var deferred = new Deferred();
 
         var reportFilter = new CC_OBJECTS.ReportFilter();
-        reportFilter.isUnique = true;
+        reportFilter.isUnique = that.filterPane.isUnique;
 
         if (q.field)
           reportFilter[q.field] = q.values;
@@ -384,7 +422,7 @@ function (declare, ItemFileWriteStore, dom, Deferred, all, Memory, Observable,
       var that = this;
 
       var reportFilter = new CC_OBJECTS.ReportFilter();
-      reportFilter.isUnique = true;
+      reportFilter.isUnique = this.filterPane.isUnique;
 
       var limit = null;
       var offset = null;
@@ -439,7 +477,6 @@ function (declare, ItemFileWriteStore, dom, Deferred, all, Memory, Observable,
         standBy : this._standBy
       });
 
-
       this._filterPane = new FilterPane({
         class : 'checker-statistics-filter',
         checkerStatisticsGrid : this._checkerStatistics,
@@ -464,10 +501,7 @@ function (declare, ItemFileWriteStore, dom, Deferred, all, Memory, Observable,
 
         this._filterPane.loadRunStoreData();
       }
-      hashHelper.resetStateValues({
-        'tab' : 'statistics',
-        'run' : this._filterPane.selectedRuns
-      });
+      this._filterPane.updateURLState();
     },
 
     _createHeader : function (parent, title, grid) {
