@@ -20,7 +20,7 @@ import zipfile
 import zlib
 
 import sqlalchemy
-from sqlalchemy.sql.expression import or_, and_, func, \
+from sqlalchemy.sql.expression import or_, and_, not_, func, \
     asc, desc, text, union_all, select, bindparam, literal_column
 
 import shared
@@ -42,7 +42,7 @@ from libcodechecker.server.database.config_db_model import Product
 from libcodechecker.server.database.run_db_model import \
     Report, ReviewStatus, File, Run, RunHistory, \
     RunLock, Comment, BugPathEvent, BugReportPoint, \
-    FileContent
+    FileContent, SourceComponent
 
 from . import store_handler
 
@@ -107,6 +107,37 @@ def conv(filter_value):
     if filter_value is None:
         return '%'
     return filter_value.replace('*', '%')
+
+
+def get_component_values(session, component_name):
+    """
+    Get component values by component names and returns a tuple where the
+    first item contains a list path which should be skipped and the second
+    item contains a list of path which should be included.
+    E.g.:
+      +/a/b/x.cpp
+      +/a/b/y.cpp
+      -/a/b
+    On the above component value this function will return the following:
+      (['/a/b'], ['/a/b/x.cpp', '/a/b/y.cpp'])
+    """
+    components = session.query(SourceComponent) \
+        .filter(SourceComponent.name.like(component_name)) \
+        .all()
+
+    skip = []
+    include = []
+
+    for component in components:
+        values = component.value.split('\n')
+        for value in values:
+            v = value[1:].strip()
+            if value[0] == '+':
+                include.append(v)
+            elif value[0] == '-':
+                skip.append(v)
+
+    return skip, include
 
 
 def process_report_filter(session, report_filter):
@@ -202,6 +233,34 @@ def process_report_filter(session, report_filter):
                            and_(Report.detected_at <= history.time,
                                 or_(Report.fixed_at.is_(None),
                                     Report.fixed_at >= history.time))))
+        AND.append(or_(*OR))
+
+    if report_filter.componentNames is not None:
+        OR = []
+        for component_name in report_filter.componentNames:
+            skip, include = get_component_values(session, component_name)
+
+            skip_q, include_q = None, None
+            if skip:
+                and_q = [not_(File.filepath.ilike(conv(fp))) for fp in skip]
+                skip_q = select([File.id]).where(and_(*and_q))
+
+            if include:
+                and_q = [File.filepath.ilike(conv(fp)) for fp in include]
+                include_q = select([File.id]).where(and_(*and_q))
+
+            file_ids = None
+            if skip and include:
+                file_ids = session.query(skip_q.union(include_q)) \
+                    .distinct() \
+                    .all()
+            elif skip:
+                file_ids = session.query(skip_q).all()
+            elif include:
+                file_ids = session.query(include_q).all()
+
+            if file_ids:
+                OR.append(or_(File.id.in_([f_id[0] for f_id in file_ids])))
         AND.append(or_(*OR))
 
     filter_expr = and_(*AND)
@@ -459,6 +518,9 @@ class ThriftRequestHandler(object):
                     "You are not authorized to execute this action.")
 
             return True
+
+    def __require_admin(self):
+        self.__require_permission([permissions.PRODUCT_ADMIN])
 
     def __require_access(self):
         self.__require_permission([permissions.PRODUCT_ACCESS])
@@ -1746,6 +1808,75 @@ class ThriftRequestHandler(object):
         if suppress_file:
             return suppress_file
         return ''
+
+    @exc_to_thrift_reqfail
+    @timeit
+    def addSourceComponent(self, name, value, description):
+        """
+        Adds a new source if it does not exist or updates an old one.
+        """
+        self.__require_admin()
+
+        with DBSession(self.__Session) as session:
+            component = session.query(SourceComponent).get(name)
+            user = self.__auth_session.user if self.__auth_session else None
+
+            if component:
+                component.value = value
+                component.description = description
+                component.user = user
+            else:
+                component = SourceComponent(name,
+                                            value,
+                                            description,
+                                            user)
+
+            session.add(component)
+            session.commit()
+
+            return True
+
+    @exc_to_thrift_reqfail
+    @timeit
+    def getSourceComponents(self, component_filter):
+        """
+        Returns the available source components.
+        """
+        self.__require_access()
+        with DBSession(self.__Session) as session:
+            q = session.query(SourceComponent)
+
+            if component_filter and len(component_filter):
+                sql_component_filter = [SourceComponent.name.ilike(conv(cf))
+                                        for cf in component_filter]
+                q = q.filter(*sql_component_filter)
+
+            q = q.order_by(SourceComponent.name)
+
+            return list(map(lambda c:
+                            SourceComponentData(c.name,
+                                                c.value,
+                                                c.description), q))
+
+    @exc_to_thrift_reqfail
+    @timeit
+    def removeSourceComponent(self, name):
+        """
+        Removes a source component.
+        """
+        self.__require_admin()
+
+        with DBSession(self.__Session) as session:
+            component = session.query(SourceComponent).get(name)
+            if component:
+                session.delete(component)
+                session.commit()
+                return True
+            else:
+                msg = 'Source component ' + str(name) + \
+                      ' was not found in the database.'
+                raise shared.ttypes.RequestFailed(
+                    shared.ttypes.ErrorCode.DATABASE, msg)
 
     @exc_to_thrift_reqfail
     @timeit

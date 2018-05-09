@@ -43,6 +43,9 @@ function (declare, dom, ContentPane) {
 
     // Update selected filter item by the options parameter.
     update : function (options) {
+      if (options && options.description)
+        this.options.description = options.description;
+
       if (this._countWrapper) {
         this.options.count = options ? options.count : null;
         this._countWrapper.innerHTML = options && options.count !== undefined

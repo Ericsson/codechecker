@@ -407,6 +407,47 @@ function (declare, lang, Deferred, domClass, dom, domStyle, topic, Button,
       this.register(this._fileFilter);
       this.addChild(this._fileFilter);
 
+      //--- Soruce component filter ---//
+
+      this._sourceComponentFilter = new SelectFilter({
+        class : 'source-component',
+        title : 'Source component',
+        parent: this,
+        search : {
+          enable : true,
+          placeHolder : 'Search for source components...'
+        },
+        updateReportFilter : function (components) {
+          that.reportFilter.componentNames = components;
+        },
+        formatDescription : function (value) {
+          var list = dom.create('ul', { class : 'component-description'});
+          value.split('\n').forEach(function (item) {
+            dom.create('li', {
+              innerHTML : item,
+              class : 'component-item'
+            }, list);
+          });
+          return list.outerHTML;
+        },
+        getItems : function (opt) {
+          var that = this;
+
+          var deferred = new Deferred();
+          CC_SERVICE.getSourceComponents(null, function (res) {
+            deferred.resolve(res.map(function (component) {
+              return {
+                value : component.name,
+                description : that.formatDescription(component.value)
+              };
+            }));
+          });
+          return deferred;
+        }
+      });
+      this.register(this._sourceComponentFilter);
+      this.addChild(this._sourceComponentFilter);
+
       //--- Checker name filter ---//
 
       this._checkerNameFilter = new SelectFilter({

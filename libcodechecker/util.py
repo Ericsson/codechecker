@@ -27,6 +27,13 @@ from libcodechecker.logger import get_logger
 LOG = get_logger('system')
 
 
+class CmdLineOutputEncoder(json.JSONEncoder):
+    def default(self, o):
+        d = {}
+        d.update(o.__dict__)
+        return d
+
+
 def get_free_port():
     """ Get a free port from the OS. """
 

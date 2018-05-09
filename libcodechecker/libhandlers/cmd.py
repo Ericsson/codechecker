@@ -18,6 +18,23 @@ from libcodechecker import output_formatters
 from libcodechecker import util
 from libcodechecker.cmd import cmd_line_client
 from libcodechecker.cmd import product_client
+from libcodechecker.cmd import source_component_client
+
+
+class NewLineDefaultHelpFormatter(argparse.ArgumentDefaultsHelpFormatter):
+
+    def _split_lines(self, text, width):
+        """
+        Split a multi line string into multiple lines and wraps those lines so
+        every line is at most 'width' character long.
+        """
+        lines = []
+        for line in text.splitlines():
+            w_lines = argparse.HelpFormatter._split_lines(self, line, width)
+            for w_line in w_lines:
+                lines.append(w_line)
+
+        return lines
 
 
 def valid_time(t):
@@ -610,6 +627,87 @@ def __register_products(parser):
     __add_common_arguments(del_p, needs_product_url=False)
 
 
+def __register_source_components(parser):
+    """
+    Add argparse subcommand parser for the "source component management"
+    action.
+    """
+
+    def __register_add(parser):
+        parser.add_argument("name",
+                            type=str,
+                            metavar='NAME',
+                            default=argparse.SUPPRESS,
+                            help="Unique name of the source component.")
+
+        parser.add_argument('--description',
+                            type=str,
+                            dest="description",
+                            default=argparse.SUPPRESS,
+                            required=False,
+                            help="A custom textual description to be shown "
+                                 "alongside the source component.")
+
+        parser.add_argument('-i', '--import',
+                            type=str,
+                            dest="component_file",
+                            metavar='COMPONENT_FILE',
+                            default=argparse.SUPPRESS,
+                            required=True,
+                            help="Path to the source component file which "
+                                 "contains multiple file paths. Each file "
+                                 "path start with a '+' (path should be "
+                                 "filtered) or '-' (path should not be "
+                                 "filtered) sign. E.g.: \n"
+                                 "  +/a/b/x.cpp\n"
+                                 "  -/a/b/\n"
+                                 "Please see the User guide for more "
+                                 "information.")
+
+    def __register_del(parser):
+        """
+        Add argparse subcommand parser for the "del component" action.
+        """
+        parser.add_argument("name",
+                            type=str,
+                            metavar='NAME',
+                            default=argparse.SUPPRESS,
+                            help="Name of the source component name which "
+                                 "will be removed.")
+
+    subcommands = parser.add_subparsers(title='available actions')
+
+    # Create handlers for individual subcommands.
+    list_components = subcommands.add_parser(
+        'list',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description="List the name and basic information about source "
+                    "component added to the server.",
+        help="List source components available on the server.")
+    list_components.set_defaults(
+        func=source_component_client.handle_list_components)
+    __add_common_arguments(list_components, has_matrix_output=True)
+
+    add = subcommands.add_parser(
+        'add',
+        formatter_class=NewLineDefaultHelpFormatter,
+        description="Creates a new source component or updates an existing "
+                    "one.",
+        help="Creates/updates a source component.")
+    __register_add(add)
+    add.set_defaults(func=source_component_client.handle_add_component)
+    __add_common_arguments(add)
+
+    del_c = subcommands.add_parser(
+        'del',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description="Removes the specified source component.",
+        help="Delete a source component from the server.")
+    __register_del(del_c)
+    del_c.set_defaults(func=source_component_client.handle_del_component)
+    __add_common_arguments(del_c)
+
+
 def __register_login(parser):
     """
     Add argparse subcommand parser for the "handle authentication" action.
@@ -745,6 +843,16 @@ def add_arguments_to_parser(parser):
              "by a CodeChecker server.")
     __register_products(products)
     __add_common_arguments(products, needs_product_url=None)
+
+    components = subcommands.add_parser(
+        'components',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description="Source components are named collection of directories "
+                    "specified as directory filter.",
+        help="Access subcommands related to configuring the source components "
+             "managed by a CodeChecker server.")
+    __register_source_components(components)
+    __add_common_arguments(components)
 
     login = subcommands.add_parser(
         'login',

@@ -194,7 +194,8 @@ struct ReportFilter {
   10: optional i64         fixDate,
   11: optional bool        isUnique,
   12: list<string>         runName,
-  13: list<i64>            runTag              // Ids of the run history tags.
+  13: list<i64>            runTag,             // Ids of the run history tags.
+  14: list<string>         componentNames,     // Names of the source components.
 }
 
 struct RunReportCount {
@@ -250,6 +251,15 @@ struct LinesInFilesRequested {
   2: set<i64>   lines
 }
 typedef list<LinesInFilesRequested> LinesInFilesRequestedList
+
+struct SourceComponentData {
+  1: string name,        // Name of the source component.
+  2: string value,       // Value of the source component. Element of the value
+                         // is separated by new lines. Each element begins
+                         // with a `-` or a `+`, followed by a path glob pattern.
+  3: string description, // Description of the source component.
+}
+typedef list<SourceComponentData> SourceComponentDataList
 
 service codeCheckerDBAccess {
 
@@ -450,6 +460,27 @@ service codeCheckerDBAccess {
                                       2: ReportFilter reportFilter,
                                       3: CompareData  cmpData)
                                       throws (1: shared.RequestFailed requestError),
+
+  //============================================
+  // Source component related API calls.
+  //============================================
+
+  // Add a new source component or override an existing one.
+  // PERMISSION: PRODUCT_ADMIN
+  bool addSourceComponent(1: string name,
+                          2: string value,
+                          3: string description)
+                          throws (1: shared.RequestFailed requestError),
+
+  // Get source components.
+  // PERMISSION: PRODUCT_ACCESS
+  SourceComponentDataList getSourceComponents(1: list<string> sourceComponentFilter)
+                                              throws (1: shared.RequestFailed requestError),
+
+  // Removes a source component.
+  // PERMISSION: PRODUCT_ADMIN
+  bool removeSourceComponent(1: string name)
+                             throws (1: shared.RequestFailed requestError),
 
   //============================================
   // Analysis result storage related API calls.

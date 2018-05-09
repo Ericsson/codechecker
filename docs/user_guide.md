@@ -39,6 +39,11 @@ Table of Contents
     * [Managing running servers](#managing-running-servers)
     * [Manage server database upgrades](#manage-server-database-upgrade)
   * [`cmd`](#cmd)
+    * [`components` (Source components)](#source-components)
+      * [`new` (New/Edit source component)](#new-source-components)
+        * Format of [component file](#component-file)
+      * [`list` (List source components)](#list-source-components)
+      * [`del` (Delete source components)](#delete-source-components)
     * [`runs` (List runs)](#cmd-runs)
     * [`history` (List of run histories)](#cmd-history)
     * [`results` (List analysis results' summary)](#cmd-results)
@@ -1349,6 +1354,112 @@ common arguments:
                         (default: plaintext)
   --verbose {info,debug,debug_analyzer}
                         Set verbosity level.
+~~~~~~~~~~~~~~~~~~~~~
+
+### <a name="source-components"></a> Source components (`components`)
+
+~~~~~~~~~~~~~~~~~~~~~
+usage: CodeChecker cmd components [-h] [--url PRODUCT_URL]
+                                  [--verbose {info,debug,debug_analyzer}]
+                                  {list,add,del} ...
+
+Source components are named collection of directories specified as directory
+filter.
+
+optional arguments:
+  -h, --help            show this help message and exit
+
+available actions:
+  {list,add,del}
+    list                List source components available on the server.
+    add                 Creates a new source component.
+    del                 Delete a source component from the server.
+~~~~~~~~~~~~~~~~~~~~~
+
+
+#### <a name="new-source-components"></a> New/Edit source component
+
+~~~~~~~~~~~~~~~~~~~~~
+usage: CodeChecker cmd components add [-h] [--description DESCRIPTION] -i
+                                      COMPONENT_FILE [--url PRODUCT_URL]
+                                      [--verbose {info,debug,debug_analyzer}]
+                                      NAME
+
+Creates a new source component or updates an existing one.
+
+positional arguments:
+  NAME                  Unique name of the source component.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --description DESCRIPTION
+                        A custom textual description to be shown alongside the
+                        source component.
+  -i COMPONENT_FILE, --import COMPONENT_FILE
+                        Path to the source component file which contains
+                        multiple file paths. Each file path start with a '+'
+                        (path should be filtered) or '-' (path should not be
+                        filtered) sign. E.g.:
+                        +/a/b/x.cpp
+                        -/a/b/
+                        Please see the User guide for more information.
+~~~~~~~~~~~~~~~~~~~~~
+
+##### <a name="component-file"></a> Format of component file
+
+Source component helps us to filter run results by multiple file paths.
+
+Each line in the source component file begins with a `-` or a `+`, followed by
+a path glob pattern:
+ * `-` means that if a file matches a pattern it should **not** be filtered
+ * `+` means that it should be filtered.
+
+Example:
+
+~~~~~~~~~~~~~~~~~~~~~
+-/dont/filter/files/in/directory/*
+-/dont/filter/this.file
+-/dir/*
++/dir/filter/in/directory/*
++/dir/filter.this.file
+~~~~~~~~~~~~~~~~~~~~~
+
+Note: the order of the source component value is not important. E.g.:
+~~~~~~~~~~~~~~~~~~~~~
++/a/b/x.cpp
+-/a/b/
+~~~~~~~~~~~~~~~~~~~~~
+means the same as
+~~~~~~~~~~~~~~~~~~~~~
+-/a/b/
++/a/b/x.cpp
+~~~~~~~~~~~~~~~~~~~~~
+`x.cpp` will be included in the run results and all other files under `/a/b/`
+path will not be included.
+
+#### <a name="list-source-components"></a> List source components
+List the name and basic information about source component added to the
+server.
+~~~~~~~~~~~~~~~~~~~~~
+usage: CodeChecker cmd components list [-h] [--url PRODUCT_URL]
+                                       [-o {plaintext,rows,table,csv,json}]
+                                       [--verbose {info,debug,debug_analyzer}]
+
+List the name and basic information about source component added to the
+server.
+~~~~~~~~~~~~~~~~~~~~~
+
+#### <a name="delete-source-components"></a> Delete source components
+
+~~~~~~~~~~~~~~~~~~~~~
+usage: CodeChecker cmd components del [-h] [--url PRODUCT_URL]
+                                      [--verbose {info,debug,debug_analyzer}]
+                                      NAME
+
+Removes the specified source component.
+
+positional arguments:
+  NAME                  The source component name which will be removed.
 ~~~~~~~~~~~~~~~~~~~~~
 
 ### <a name="cmd-runs"></a> List runs (`runs`)
