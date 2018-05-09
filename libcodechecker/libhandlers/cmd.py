@@ -37,6 +37,13 @@ class NewLineDefaultHelpFormatter(argparse.ArgumentDefaultsHelpFormatter):
         return lines
 
 
+class RawDescriptionDefaultHelpFormatter(
+    argparse.RawDescriptionHelpFormatter,
+    argparse.ArgumentDefaultsHelpFormatter
+):
+    pass
+
+
 def valid_time(t):
     """
     Constructs a datetime from a 'year:month:day:hour:minute:second'-formatted
@@ -155,27 +162,93 @@ def __add_filtering_arguments(parser):
     Add some common filtering arguments to the given parser.
     """
 
-    parser.add_argument('-s', '--suppressed',
-                        dest="suppressed",
-                        action='store_true',
-                        help="DEPRECATED. Use the '--filter' option to get "
-                             "false positive (suppressed) results. Show only "
-                             "suppressed results instead of only unsuppressed "
-                             "ones.")
+    f_group = parser.add_argument_group('filter arguments')
 
-    parser.add_argument('--filter',
-                        type=str,
-                        dest='filter',
-                        default="::::",
-                        help="Filter results. The filter string has the "
-                             "following format: "
-                             "[<SEVERITIES>]:[<CHECKER_NAMES>]:[<FILE_PATHS>]:"
-                             "[<DETECTION_STATUSES>]:[<REVIEW_STATUSES>]"
-                             "where severites, checker_names, "
-                             "file_paths, detection_statuses, review_statuses "
-                             "should be a comma separated list, e.g.:"
-                             "\"high,medium:unix,core:*.cpp,*.h:"
-                             "new,unresolved:false_positive,intentional\"")
+    f_group.add_argument('--review-status',
+                         nargs='*',
+                         dest="review_status",
+                         metavar='REVIEW_STATUS',
+                         default=argparse.SUPPRESS,
+                         help="Filter results by review statuses.")
+
+    f_group.add_argument('--detection-status',
+                         nargs='*',
+                         dest="detection_status",
+                         metavar='DETECTION_STATUS',
+                         default=argparse.SUPPRESS,
+                         help="Filter results by detection statuses.")
+
+    f_group.add_argument('--severity',
+                         nargs='*',
+                         dest="severity",
+                         metavar='SEVERITY',
+                         default=argparse.SUPPRESS,
+                         help="Filter results by severities.")
+
+    f_group.add_argument('--tag',
+                         nargs='*',
+                         dest="tag",
+                         metavar='TAG',
+                         default=argparse.SUPPRESS,
+                         help="Filter results by version tag names.")
+
+    f_group.add_argument('--file',
+                         nargs='*',
+                         dest="file_path",
+                         metavar='FILE_PATH',
+                         default=argparse.SUPPRESS,
+                         help="Filter results by file path. "
+                              "The file path can contain multiple * "
+                              "quantifiers which matches any number of "
+                              "characters (zero or more). So if you have "
+                              "/a/x.cpp and /a/y.cpp then \"/a/*.cpp\" "
+                              "selects both.")
+
+    f_group.add_argument('--checker-name',
+                         nargs='*',
+                         dest="checker_name",
+                         metavar='CHECKER_NAME',
+                         default=argparse.SUPPRESS,
+                         help="Filter results by checker names. "
+                              "The checker name can contain multiple * "
+                              "quantifiers which matches any number of "
+                              "characters (zero or more). So for example "
+                              "\"*DeadStores\" will matches "
+                              "\"deadcode.DeadStores\"")
+
+    f_group.add_argument('--checker-msg',
+                         nargs='*',
+                         dest="checker_msg",
+                         metavar='CHECKER_MSG',
+                         default=argparse.SUPPRESS,
+                         help="Filter results by checker messages."
+                              "The checker message can contain multiple * "
+                              "quantifiers which matches any number of "
+                              "characters (zero or more).")
+
+    f_group.add_argument('-s', '--suppressed',
+                         default=argparse.SUPPRESS,
+                         dest="suppressed",
+                         action='store_true',
+                         help="DEPRECATED. Use the '--filter' option to get "
+                              "false positive (suppressed) results. Show only "
+                              "suppressed results instead of only "
+                              "unsuppressed ones.")
+
+    f_group.add_argument('--filter',
+                         type=str,
+                         dest='filter',
+                         default=argparse.SUPPRESS,
+                         help="DEPRECATED. Filter results. Use separated "
+                              "filter options to filter the results. The "
+                              "filter string has the following format: "
+                              "[<SEVERITIES>]:[<CHECKER_NAMES>]:"
+                              "[<FILE_PATHS>]:[<DETECTION_STATUSES>]:"
+                              "[<REVIEW_STATUSES>] where severites, "
+                              "checker_names, file_paths, detection_statuses, "
+                              "review_statuses should be a comma separated "
+                              "list, e.g.: \"high,medium:unix,core:*.cpp,*.h:"
+                              "new,unresolved:false_positive,intentional\"")
 
 
 def __register_results(parser):
@@ -780,28 +853,66 @@ def add_arguments_to_parser(parser):
 
     results = subcommands.add_parser(
         'results',
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        formatter_class=RawDescriptionDefaultHelpFormatter,
         description="Show the individual analysis reports' summary.",
-        help="List analysis result (finding) summary for a given run.")
+        help="List analysis result (finding) summary for a given run.",
+        epilog='''Example scenario: List analysis results
+------------------------------------------------
+Get analysis results for a run:
+    CodeChecker cmd results my_run
+
+Get analysis results for multiple runs:
+    CodeChecker cmd results "my_run1:my_run2"
+
+Get analysis results by using regex:
+    CodeChecker cmd results "my_run*"
+
+Get analysis results for a run and filter the analysis results:
+    CodeChecker cmd results my_run --severity critical high medium \\
+        --file "/home/username/my_project/*"''')
     __register_results(results)
     results.set_defaults(func=cmd_line_client.handle_list_results)
     __add_common_arguments(results, has_matrix_output=True)
 
     diff = subcommands.add_parser(
         'diff',
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        formatter_class=RawDescriptionDefaultHelpFormatter,
         description="Compare two analysis runs to show the results that "
                     "differ between the two.",
-        help="Compare two analysis runs and show the difference.")
+        help="Compare two analysis runs and show the difference.",
+        epilog='''Example scenario: Compare multiple analysis runs
+------------------------------------------------
+Compare two runs and show results that didn't exist in the 'run1' but appear in
+the 'run2' run:
+    CodeChecker cmd diff -b run1 -n run2 --new
+
+Compare a remote run with a local report directory and show results that didn't
+exist in the remote run 'run1' but appear in the local report directory:
+    CodeChecker cmd diff -b run1 -n /my_report_dir --new
+
+Compare two runs and show results that exist in both runs and filter results
+by multiple severity values:
+    CodeChecker cmd diff -b run1 -n run2 --unresolved --severity high medium'''
+    )
     __register_diff(diff)
     __add_common_arguments(diff, has_matrix_output=True,
                            allow_html_output=True)
 
     sum_p = subcommands.add_parser(
         'sum',
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        formatter_class=RawDescriptionDefaultHelpFormatter,
         description="Show checker statistics for some analysis runs.",
-        help="Show statistics of checkers.")
+        help="Show statistics of checkers.",
+        epilog='''Example scenario: Get checker statistics
+------------------------------------------------
+Get statistics for a run:
+    CodeChecker cmd sum -n my_run
+
+Get statistics for all runs filtered by multiple checker names:
+    CodeChecker cmd sum --all --checker-name "core.*" "deadcode.*"
+
+Get statistics for all runs and only for severity 'high':
+    CodeChecker cmd sum --all --severity "high"''')
     __register_sum(sum_p)
     sum_p.set_defaults(func=cmd_line_client.handle_list_result_types)
     __add_common_arguments(sum_p, has_matrix_output=True)

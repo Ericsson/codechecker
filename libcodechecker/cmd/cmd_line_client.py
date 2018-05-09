@@ -71,6 +71,18 @@ def check_run_names(client, check_names):
     return run_info
 
 
+def check_deprecated_arg_usage(args):
+    if 'suppressed' in args:
+        LOG.warning('"--suppressed" option has been deprecated. Use '
+                    '"--review-status" option to get false positive '
+                    '(suppressed) results.')
+
+    if 'filter' in args:
+        LOG.warning('"--filter" option has been deprecated. Use '
+                    'separate filter options of this command to filter the '
+                    'results. For more information see the help.')
+
+
 def get_runs(client, run_names):
     run_filter = ttypes.RunFilter()
     run_filter.names = run_names
@@ -85,7 +97,7 @@ def validate_filter_values(user_values, valid_values, value_type):
     if not user_values:
         return True
 
-    non_valid_values = [status for status in user_values.split(',')
+    non_valid_values = [status for status in user_values
                         if valid_values.get(status.upper(), None) is None]
 
     if non_valid_values:
@@ -101,23 +113,43 @@ def validate_filter_values(user_values, valid_values, value_type):
     return True
 
 
-def add_filter_conditions(report_filter, filter_str):
+def add_filter_conditions(client, report_filter, args):
     """
     This function fills some attributes of the given report filter based on
-    the filter string which is provided in the command line. The filter string
-    has to contain three parts divided by colons: the severity, checker id and
-    the file path respectively. The file path can contain joker characters, and
-    the checker id doesn't have to be complete (e.g. unix).
+    the arguments which is provided in the command line.
     """
 
-    if filter_str.count(':') != 4:
-        LOG.error("Filter string has to contain four colons (e.g. "
-                  "\"high,medium:unix,core:*.cpp:new,unresolved:"
-                  "false_positive,intentional\").")
-        sys.exit(1)
+    severities = checkers = file_path = dt_statuses = rw_statuses = None
 
-    severities, checkers, paths, dt_statuses, rw_statuses = \
-        map(lambda x: x.strip(), filter_str.split(':'))
+    filter_str = args.filter if 'filter' in args else None
+    if filter_str:
+        if filter_str.count(':') != 4:
+            LOG.warning("Filter string has to contain four colons (e.g. "
+                        "\"high,medium:unix,core:*.cpp:new,unresolved:"
+                        "false_positive,intentional\").")
+        else:
+            filter_values = []
+            for x in filter_str.strip().split(':'):
+                values = [y.strip() for y in x.strip().split(',') if y.strip()]
+                filter_values.append(values if values else None)
+
+            severities, checkers, file_path, dt_statuses, rw_statuses = \
+                filter_values
+
+    if 'severity' in args:
+        severities = args.severity
+
+    if 'detection_status' in args:
+        dt_statuses = args.detection_status
+
+    if 'review_status' in args:
+        rw_statuses = args.review_status
+
+    if 'checker_name' in args:
+        checkers = args.checker_name
+
+    if 'file_path' in args:
+        file_path = args.file_path
 
     values_to_check = [
         (severities, ttypes.Severity._NAMES_TO_VALUES, 'severity'),
@@ -133,23 +165,33 @@ def add_filter_conditions(report_filter, filter_str):
     if severities:
         report_filter.severity = map(
                 lambda x: ttypes.Severity._NAMES_TO_VALUES[x.upper()],
-                severities.split(','))
+                severities)
+
     if checkers:
-        report_filter.checkerName = map(lambda x: '*' + x + '*',
-                                        checkers.split(','))
-    if paths:
-        report_filter.filepath = map(lambda x: '*' + x + '*',
-                                     paths.split(','))
+        report_filter.checkerName = checkers
+
+    if 'checker_msg' in args:
+        report_filter.checkerMsg = args.checker_msg
+
+    if file_path:
+        report_filter.filepath = file_path
+
+    if 'tag' in args:
+        run_history_filter = ttypes.RunHistoryFilter(tagNames=args.tag)
+        run_histories = client.getRunHistory(None, None, None,
+                                             run_history_filter)
+        if run_histories:
+            report_filter.runTag = [t.id for t in run_histories]
 
     if dt_statuses:
         report_filter.detectionStatus = map(
             lambda x: ttypes.DetectionStatus._NAMES_TO_VALUES[x.upper()],
-            dt_statuses.split(','))
+            dt_statuses)
 
     if rw_statuses:
         report_filter.reviewStatus = map(
             lambda x: ttypes.ReviewStatus._NAMES_TO_VALUES[x.upper()],
-            rw_statuses.split(','))
+            rw_statuses)
 
 # ---------------------------------------------------------------------------
 # Argument handlers for the 'CodeChecker cmd' subcommands.
@@ -187,6 +229,7 @@ def handle_list_runs(args):
 
 def handle_list_results(args):
     init_logger(args.verbose if 'verbose' in args else None)
+    check_deprecated_arg_usage(args)
 
     client = setup_client(args.product_url)
 
@@ -202,7 +245,7 @@ def handle_list_results(args):
 
     report_filter = ttypes.ReportFilter()
 
-    add_filter_conditions(report_filter, args.filter)
+    add_filter_conditions(client, report_filter, args)
 
     all_results = []
     results = client.getRunResults(run_ids, limit, offset, None,
@@ -239,13 +282,14 @@ def handle_list_results(args):
 def handle_diff_results(args):
 
     init_logger(args.verbose if 'verbose' in args else None)
+    check_deprecated_arg_usage(args)
 
     context = generic_package_context.get_context()
 
     def get_diff_results(client, baseids, cmp_data):
 
         report_filter = ttypes.ReportFilter()
-        add_filter_conditions(report_filter, args.filter)
+        add_filter_conditions(client, report_filter, args)
 
         # Do not show resolved bugs in compare mode new.
         if cmp_data.diffType == ttypes.DiffType.NEW:
@@ -320,7 +364,7 @@ def handle_diff_results(args):
     def get_diff_base_results(client, baseids, base_hashes, suppressed_hashes):
         base_results = []
         report_filter = ttypes.ReportFilter()
-        add_filter_conditions(report_filter, args.filter)
+        add_filter_conditions(client, report_filter, args)
 
         sort_mode = [(ttypes.SortMode(
             ttypes.SortType.FILENAME,
@@ -651,13 +695,15 @@ def handle_diff_results(args):
 def handle_list_result_types(args):
 
     init_logger(args.verbose if 'verbose' in args else None)
+    check_deprecated_arg_usage(args)
 
     is_unique = 'disable_unique' not in args
 
     def get_statistics(client, run_ids, field, values):
         report_filter = ttypes.ReportFilter()
         report_filter.isUnique = is_unique
-        add_filter_conditions(report_filter, args.filter)
+        add_filter_conditions(client, report_filter, args)
+
         setattr(report_filter, field, values)
         checkers = client.getCheckerCounts(run_ids,
                                            report_filter,
@@ -681,7 +727,7 @@ def handle_list_result_types(args):
 
     all_checkers_report_filter = ttypes.ReportFilter()
     all_checkers_report_filter.isUnique = is_unique
-    add_filter_conditions(all_checkers_report_filter, args.filter)
+    add_filter_conditions(client, all_checkers_report_filter, args)
 
     all_checkers = client.getCheckerCounts(run_ids,
                                            all_checkers_report_filter,
@@ -708,7 +754,7 @@ def handle_list_result_types(args):
     # Get severity counts
     report_filter = ttypes.ReportFilter()
     report_filter.isUnique = is_unique
-    add_filter_conditions(report_filter, args.filter)
+    add_filter_conditions(client, report_filter, args)
 
     sev_count = client.getSeverityCounts(run_ids, report_filter, None)
     severities = []
