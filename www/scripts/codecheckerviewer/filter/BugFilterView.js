@@ -16,6 +16,7 @@ define([
   'dijit/layout/ContentPane',
   'codechecker/hashHelper',
   'codechecker/filter/DateFilter',
+  'codechecker/filter/DetectionStatusFilter',
   'codechecker/filter/DiffTypeFilter',
   'codechecker/filter/ReportCount',
   'codechecker/filter/RunBaseFilter',
@@ -24,8 +25,9 @@ define([
   'codechecker/filter/UniqueFilter',
   'codechecker/util'],
 function (declare, lang, Deferred, domClass, dom, domStyle, topic, Button,
-  ContentPane, hashHelper, DateFilter, DiffTypeFilter, ReportCount,
-  RunBaseFilter, RunHistoryTagFilter, SelectFilter, UniqueFilter, util) {
+  ContentPane, hashHelper, DateFilter, DetectionStatusFilter, DiffTypeFilter,
+  ReportCount, RunBaseFilter, RunHistoryTagFilter, SelectFilter, UniqueFilter,
+  util) {
 
   var FilterToggle = declare(ContentPane, {
     class : 'filter-toggle',
@@ -114,6 +116,11 @@ function (declare, lang, Deferred, domClass, dom, domStyle, topic, Button,
         parent : this,
         updateReportFilter : function (isUnique) {
           that.reportFilter.isUnique = isUnique;
+
+          if (isUnique)
+            that._detectionStatusFilter.notAvailable();
+          else
+            that._detectionStatusFilter.available();
         }
       });
       this.register(this._uniqueFilter);
@@ -311,51 +318,12 @@ function (declare, lang, Deferred, domClass, dom, domStyle, topic, Button,
 
       //--- Detection status filter ---//
 
-      this._detectionStatusFilter = new SelectFilter({
+      this._detectionStatusFilter = new DetectionStatusFilter({
         class : 'detection-status',
         title : 'Detection status',
         parent   : this,
         updateReportFilter : function (detectionStatuses) {
           that.reportFilter.detectionStatus = detectionStatuses;
-        },
-        stateConverter : function (value) {
-          var status = util.enumValueToKey(
-            CC_OBJECTS.DetectionStatus, parseInt(value));
-          return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
-        },
-        stateDecoder : function (key) {
-          return CC_OBJECTS.DetectionStatus[key.toUpperCase()];
-        },
-        defaultValues : function () {
-          var state = {};
-          state[this.class] = [
-            CC_OBJECTS.DetectionStatus.NEW,
-            CC_OBJECTS.DetectionStatus.REOPENED,
-            CC_OBJECTS.DetectionStatus.UNRESOLVED
-          ].map(this.stateConverter);
-
-          return state;
-        },
-        getIconClass : function (value) {
-          return 'customIcon detection-status-' + value.toLowerCase();
-        },
-        getItems : function (opt) {
-          opt = that.initReportFilterOptions(opt);
-          opt.reportFilter.detectionStatus = null;
-
-          var deferred = new Deferred();
-          CC_SERVICE.getDetectionStatusCounts(opt.runIds, opt.reportFilter,
-          opt.cmpData, function (res) {
-            deferred.resolve(Object.keys(CC_OBJECTS.DetectionStatus).map(
-              function (key) {
-                var value = CC_OBJECTS.DetectionStatus[key];
-                return {
-                  value : util.detectionStatusFromCodeToString(value),
-                  count : res[value] !== undefined ? res[value] : 0
-                };
-            }));
-          });
-          return deferred;
         }
       });
       this.register(this._detectionStatusFilter);
