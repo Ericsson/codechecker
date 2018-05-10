@@ -909,7 +909,8 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
         var status = util.reviewStatusFromCodeToString(reviewStatus);
 
         tooltip += '<div><b>Review status</b>: <span title="' + status
-          + '" class="customIcon ' + className + '"></span></div>';
+          + '" class="customIcon ' + className + '"></span>(' + status
+          + ')</div>';
       }
 
       tooltip += '<div><b>Detected at</b>: '
