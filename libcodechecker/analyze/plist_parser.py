@@ -368,7 +368,7 @@ class PlistToPlaintextFormatter(object):
         fname = os.path.basename(source_file)
         if name:
             return '[%s] %s:%d:%d: %s [%s]' % (severity,
-                                               fname,
+                                               source_file,
                                                loc['line'],
                                                loc['col'],
                                                event['message'],

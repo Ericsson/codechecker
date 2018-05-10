@@ -107,6 +107,17 @@ class AnalyzeParseTestCase(unittest.TestCase):
                 # replace timestamps
                 line = re.sub(r'\[\w+ \d{4}-\d{2}-\d{2} \d{2}:\d{2}\]',
                               '[]', line)
+
+                # Replace full path only to file name on the following
+                # formatted lines:
+                # [severity] /a/b/x.cpp:line:col: message [checker]
+                # The replacement on this line will be the following:
+                # [severity] x.cpp:line:col: message [checker]
+                sep = re.escape(os.sep)
+                line = re.sub(r'^(\[\w+\]\s)(?P<path>.+{0})'
+                              r'(.+\:\d+\:\d+\:\s.*\s\[.*\])$'.format(sep),
+                              r'\1\3', line)
+
                 if not any([line.startswith(prefix) for prefix
                             in skip_prefixes]):
                     post_processed_output.append(line)
