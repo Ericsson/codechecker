@@ -90,6 +90,7 @@
   "bugprone-forward-declaration-namespace":                     "LOW",
   "bugprone-inaccurate-erase":                                  "HIGH",
   "bugprone-move-forwarding-reference":                         "MEDIUM",
+  "bugprone-misplaced-operator-in-strlen-in-alloc":             "MEDIUM",
   "bugprone-multiple-statement-macro":                          "MEDIUM",
   "bugprone-string-constructor":                                "HIGH",
   "bugprone-suspicious-memset-usage":                           "HIGH",

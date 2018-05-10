@@ -98,6 +98,7 @@
         "bugprone-forward-declaration-namespace" : ["default", "sensitive", "extreme"],
         "bugprone-inaccurate-erase" : ["default", "sensitive", "extreme"],
         "bugprone-integer-division" : ["default", "sensitive", "extreme"],
+        "bugprone-misplaced-operator-in-strlen-in-alloc" : ["default", "sensitive", "extreme"],
         "bugprone-move-forwarding-reference" : ["default", "sensitive", "extreme"],
         "bugprone-multiple-statement-macro" : ["sensitive", "extreme"],
         "bugprone-string-constructor" : ["default", "sensitive", "extreme"],
