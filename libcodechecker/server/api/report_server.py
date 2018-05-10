@@ -445,6 +445,27 @@ def filter_unresolved_reports(q):
                        ReviewStatus.bug_hash == Report.bug_id)
 
 
+def get_report_hashes(session, run_ids, tag_ids):
+    """
+    Get report hash list for the reports which can be found in the given runs
+    and the given tags.
+    """
+    q = session.query(Report.bug_id)
+
+    if run_ids:
+        q = q.filter(Report.run_id.in_(run_ids))
+
+    if tag_ids:
+        q = q.outerjoin(RunHistory,
+                        RunHistory.run_id == Report.run_id) \
+            .filter(RunHistory.id.in_(tag_ids)) \
+            .filter(Report.detected_at <= RunHistory.time) \
+            .filter(or_(Report.fixed_at.is_(None),
+                        Report.fixed_at > RunHistory.time))
+
+    return set([t[0] for t in q])
+
+
 class ThriftRequestHandler(object):
     """
     Connect to database and handle thrift client requests.
@@ -751,6 +772,7 @@ class ThriftRequestHandler(object):
             if cmp_data:
                 diff_hashes, run_ids = self._cmp_helper(session,
                                                         run_ids,
+                                                        report_filter,
                                                         cmp_data)
                 if not diff_hashes:
                     # There is no difference.
@@ -948,6 +970,7 @@ class ThriftRequestHandler(object):
             if cmp_data:
                 diff_hashes, run_ids = self._cmp_helper(session,
                                                         run_ids,
+                                                        report_filter,
                                                         cmp_data)
                 if not diff_hashes:
                     # There is no difference.
@@ -1285,7 +1308,7 @@ class ThriftRequestHandler(object):
 
             return res
 
-    def _cmp_helper(self, session, run_ids, cmp_data):
+    def _cmp_helper(self, session, run_ids, report_filter, cmp_data):
         """
         Get the report hashes for all of the runs.
         Return the hash list which should be queried
@@ -1299,14 +1322,24 @@ class ThriftRequestHandler(object):
         new_run_ids = cmp_data.runIds
         diff_type = cmp_data.diffType
 
-        base_line_hashes = ThriftRequestHandler.__get_hashes_for_runs(
-            session, base_run_ids)
+        tag_ids = report_filter.runTag if report_filter else None
+        base_line_hashes = get_report_hashes(session,
+                                             base_run_ids,
+                                             tag_ids)
 
-        if not new_run_ids:
+        # If run tag is set in compare data, after base line hashes are
+        # calculated remove it from the report filter because we will filter
+        # results by these hashes and there is no need to filter results by
+        # these tags again.
+        if cmp_data.runTag:
+            report_filter.runTag = None
+
+        if not new_run_ids and not cmp_data.runTag:
             return base_line_hashes, base_run_ids
 
-        new_check_hashes = ThriftRequestHandler.__get_hashes_for_runs(
-            session, new_run_ids)
+        new_check_hashes = get_report_hashes(session,
+                                             new_run_ids,
+                                             cmp_data.runTag)
 
         report_hashes, run_ids = \
             get_diff_hashes_for_query(base_run_ids,
@@ -1332,6 +1365,7 @@ class ThriftRequestHandler(object):
             if cmp_data:
                 diff_hashes, run_ids = self._cmp_helper(session,
                                                         run_ids,
+                                                        report_filter,
                                                         cmp_data)
                 if not diff_hashes:
                     # There is no difference.
@@ -1392,6 +1426,7 @@ class ThriftRequestHandler(object):
             if cmp_data:
                 diff_hashes, run_ids = self._cmp_helper(session,
                                                         run_ids,
+                                                        report_filter,
                                                         cmp_data)
                 if not diff_hashes:
                     # There is no difference.
@@ -1438,6 +1473,7 @@ class ThriftRequestHandler(object):
             if cmp_data:
                 diff_hashes, run_ids = self._cmp_helper(session,
                                                         run_ids,
+                                                        report_filter,
                                                         cmp_data)
                 if not diff_hashes:
                     # There is no difference.
@@ -1489,6 +1525,7 @@ class ThriftRequestHandler(object):
             if cmp_data:
                 diff_hashes, run_ids = self._cmp_helper(session,
                                                         run_ids,
+                                                        report_filter,
                                                         cmp_data)
                 if not diff_hashes:
                     # There is no difference.
@@ -1543,6 +1580,7 @@ class ThriftRequestHandler(object):
             if cmp_data:
                 diff_hashes, run_ids = self._cmp_helper(session,
                                                         run_ids,
+                                                        report_filter,
                                                         cmp_data)
                 if not diff_hashes:
                     # There is no difference.
@@ -1598,6 +1636,7 @@ class ThriftRequestHandler(object):
             if cmp_data:
                 diff_hashes, run_ids = self._cmp_helper(session,
                                                         run_ids,
+                                                        report_filter,
                                                         cmp_data)
                 if not diff_hashes:
                     # There is no difference.
@@ -1684,6 +1723,7 @@ class ThriftRequestHandler(object):
             if cmp_data:
                 diff_hashes, run_ids = self._cmp_helper(session,
                                                         run_ids,
+                                                        report_filter,
                                                         cmp_data)
                 if not diff_hashes:
                     # There is no difference.
@@ -1705,18 +1745,6 @@ class ThriftRequestHandler(object):
             results = {detection_status_enum(k): v for k, v in results.items()}
 
         return results
-
-    @staticmethod
-    @timeit
-    def __get_hashes_for_runs(session, run_ids):
-
-        LOG.debug('query all hashes')
-        # Keyed tuple list is returned.
-        base_line_hashes = session.query(Report.bug_id) \
-            .filter(Report.run_id.in_(run_ids)) \
-            .all()
-
-        return set([t[0] for t in base_line_hashes])
 
     # -----------------------------------------------------------------------
     @timeit
@@ -2044,6 +2072,11 @@ class ThriftRequestHandler(object):
                 reports_to_delete.update(map(lambda x: x.id, reports))
             else:
                 for report in reports:
+                    # We set the fix date of a report only if the report
+                    # has not been fixed before.
+                    if report.fixed_at:
+                        continue
+
                     report.detection_status = 'resolved'
                     report.fixed_at = run_history_time
 

@@ -181,8 +181,6 @@ function (declare, topic, Dialog, Button, BorderContainer, TabContainer,
 
     topic.subscribe('openRun', function (param) {
       var tabId = param.tabId;
-      var baseline = param.baseline;
-      var newcheck = param.newcheck;
 
       if (!(tabId in runIdToTab)) {
         var runs = tabId.split('_diff_');

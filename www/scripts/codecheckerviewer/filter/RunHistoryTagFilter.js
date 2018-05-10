@@ -18,7 +18,7 @@ function (dom, declare, Deferred, SelectFilter, util) {
     },
 
     getItems : function (opt) {
-      var opt = this.parent.initReportFilterOptions(opt);
+      var opt = this.initReportFilterOptions(opt);
       opt.reportFilter.runTag = opt.query ? opt.query : null;
 
       var deferred = new Deferred();

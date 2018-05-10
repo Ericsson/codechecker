@@ -130,9 +130,43 @@ def setup_package():
         sys.exit(1)
     print("CodeChecker analyze of test project was successful.")
 
+    test_project_name_update = project_info['name'] + '_' + uuid.uuid4().hex
+    codechecker_cfg['tag'] = 't1'
+    codechecker_cfg['checkers'] = ['-d', 'core.CallAndMessage',
+                                   '-e', 'core.StackAddressEscape'
+                                   ]
+    codechecker_cfg['reportdir'] = os.path.join(TEST_WORKSPACE, 'reports2')
+
+    ret = codechecker.check(codechecker_cfg,
+                            test_project_name_update,
+                            test_project_path)
+    if ret:
+        sys.exit(1)
+    print("Third analysis of the test project was successful.")
+
+    codechecker_cfg['tag'] = 't2'
+    codechecker_cfg['checkers'] = ['-e', 'core.CallAndMessage',
+                                   '-d', 'core.StackAddressEscape'
+                                   ]
+    ret = codechecker.check(codechecker_cfg,
+                            test_project_name_update,
+                            test_project_path)
+    if ret:
+        sys.exit(1)
+    print("Fourth analysis of the test project was successful.")
+
+    codechecker_cfg['tag'] = 't3'
+    ret = codechecker.check(codechecker_cfg,
+                            test_project_name_update,
+                            test_project_path)
+    if ret:
+        sys.exit(1)
+    print("Fifth analysis of the test project was successful.")
+
     # Order of the test run names matter at comparison!
     codechecker_cfg['run_names'] = [test_project_name_base,
-                                    test_project_name_new]
+                                    test_project_name_new,
+                                    test_project_name_update]
 
     test_config['codechecker_cfg'] = codechecker_cfg
 
