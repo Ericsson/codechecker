@@ -230,6 +230,36 @@
   font-weight: bold;
 }
 
+.customIcon.last-7-days:before {
+  content : "7"
+}
+
+.customIcon.last-7-days {
+  background-color: #54ae5f;
+  color: white;
+  font-weight: bold;
+}
+
+.customIcon.this-month:before {
+  content : "M"
+}
+
+.customIcon.this-month {
+  background-color: #8f44ad;
+  color: white;
+  font-weight: bold;
+}
+
+.customIcon.this-year:before {
+  content : "Y"
+}
+
+.customIcon.this-year {
+  background-color: #2e3f51;
+  color: white;
+  font-weight: bold;
+}
+
 /* Severity icons */
 
 .icon-severity-low {

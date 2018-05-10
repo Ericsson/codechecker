@@ -15,6 +15,70 @@ define([
 function (declare, Deferred, dom, DateTextBox, TimeTextBox, SelectFilter,
   util) {
 
+  // Date types which will be added to the Date filter tooltip.
+  var DATE_FILTER_ITEMS = {
+    'TODAY' : 0,
+    'YESTERDAY' : 1,
+    'LAST_7_DAYS' : 2,
+    'THIS_MONTH' : 3,
+    'THIS_YEAR' : 4
+  };
+
+  // Gets Date interval for a date filter type.
+  function getDateFilterInteval(type) {
+    switch (type) {
+      case DATE_FILTER_ITEMS.TODAY:
+        var midnight = new Date();
+        midnight.setHours(23,59,59,0);
+        return { from : new Date(), to : midnight};
+      case DATE_FILTER_ITEMS.YESTERDAY:
+        var yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+
+        var yesterdayMidnight = new Date(yesterday);
+        yesterdayMidnight.setHours(23,59,59,0);
+
+        return { from : yesterday, to : yesterdayMidnight};
+      case DATE_FILTER_ITEMS.LAST_7_DAYS:
+        var today = new Date();
+        var lastSevenDays = new Date(today.setDate(today.getDate() - 7));
+
+        return { from : lastSevenDays, to : new Date()};
+      case DATE_FILTER_ITEMS.THIS_MONTH:
+        var today = new Date();
+        var startDate = new Date(today.getFullYear(), today.getMonth(), 1);
+        return { from : startDate, to : today};
+      case DATE_FILTER_ITEMS.THIS_YEAR:
+        var today = new Date();
+        var startDate = new Date(today.getFullYear(), 0, 1);
+        return { from : startDate, to : today};
+      default:
+        console.warn("No date interval has been specified for type: " + type);
+    }
+  }
+
+  // Returns human readable date format for the given date inteval.
+  // E.g.:
+  // 1.) Months are different: 1 January - 9 March, 2018
+  // 2.) Months are same:      March 1 - 9, 2018
+  function formatDateInterval (fromDate, toDate) {
+    var from = fromDate.getDate();
+    var to = toDate.getDate();
+    if (fromDate.getMonth() !== toDate.getMonth()) {
+      from += ' ' + util.getMonthName(fromDate.getMonth());
+      to   += ' ' + util.getMonthName(toDate.getMonth());
+    } else
+      from = util.getMonthName(fromDate.getMonth()) + ' '  + from;
+
+    if (fromDate.getFullYear() !== toDate.getFullYear()) {
+      from += ' ' + fromDate.getFullYear();
+      to   += ' ' + toDate.getFullYear();
+    } else
+      to += ', ' + fromDate.getFullYear();
+
+    return from + ' - ' + to;
+  }
+
   return declare(SelectFilter, {
     postCreate : function () {
       var that = this;
@@ -83,8 +147,6 @@ function (declare, Deferred, dom, DateTextBox, TimeTextBox, SelectFilter,
 
       dom.place(this._toDate.domNode, toDateWrapper);
       dom.place(this._toTime.domNode, toDateWrapper);
-
-      this.selectedItem = null;
     },
 
     // Being called when date filter is changed.
@@ -94,23 +156,42 @@ function (declare, Deferred, dom, DateTextBox, TimeTextBox, SelectFilter,
     },
 
     getIconClass : function (value) {
-      switch (value.toLowerCase()) {
-        case 'today':
-          return 'customIcon text-icon today';
-        case 'yesterday':
-          return 'customIcon text-icon yesterday';
+      var key = util.enumValueToKey(DATE_FILTER_ITEMS, value);
+      if (key)
+        return 'customIcon text-icon ' + key.split('_').join('-').toLowerCase();
+    },
+
+    labelFormatter : function (value) {
+      var interval = getDateFilterInteval(value);
+
+      var formattedDate = interval
+        ? formatDateInterval(interval.from, interval.to)
+        : 'N/A';
+
+      switch (value) {
+        case DATE_FILTER_ITEMS.TODAY:
+          return 'Today';
+        case DATE_FILTER_ITEMS.YESTERDAY:
+          return 'Yesterday';
+        case DATE_FILTER_ITEMS.LAST_7_DAYS:
+          return 'Last 7 days (' + formattedDate + ')';
+        case DATE_FILTER_ITEMS.THIS_MONTH:
+          return 'This month (' + formattedDate + ')';
+        case DATE_FILTER_ITEMS.THIS_YEAR:
+          return 'This year (' + formattedDate + ')';
+        default:
+          return value;
       }
     },
 
     getItems : function () {
       var deferred = new Deferred();
 
-      deferred.resolve([
-        { value : 'Today' },
-        { value : 'Yesterday' }
-      ]);
+      var items = [];
+      for (var key in DATE_FILTER_ITEMS)
+        items.push({ value : DATE_FILTER_ITEMS[key] });
 
-      return deferred;
+      return deferred.resolve(items);
     },
 
     getUrlState : function () {
@@ -184,38 +265,35 @@ function (declare, Deferred, dom, DateTextBox, TimeTextBox, SelectFilter,
     },
 
     // Set whole day interval of the detected and fixed date filters.
-    setDayInterval : function (date) {
-      date.setHours(0,0,0,0);
+    setDayInterval : function (fromDate, toDate) {
+      fromDate.setHours(0,0,0,0);
 
-      this._fromDate.set('value', date, false);
-      this._fromTime.set('value', date);
+      this._fromDate.set('value', fromDate, false);
+      this._fromTime.set('value', fromDate);
 
-      var midnight = date;
-      midnight.setHours(23,59,59,0);
-      this._toDate.set('value', midnight, false);
-      this._toTime.set('value', midnight);
+      if (toDate === undefined) {
+        toDate = fromDate;
+        toDate.setHours(23,59,59,0);
+      }
+
+      this._toDate.set('value', toDate, false);
+      this._toTime.set('value', toDate);
 
       var state = this.getSelectedItemValues();
       this.updateReportFilter(state);
     },
 
     select : function (value) {
-      if (this.selectedItem)
-        this._filterTooltip.deselect(this.selectedItem);
+      this._filterTooltip.deselectAll();
 
-      switch (value.toLowerCase()) {
-        case 'today':
-          this.setDayInterval(new Date());
-          this.selectedItem = value;
-          break;
-        case 'yesterday':
-          var yesterday = new Date();
-          yesterday.setDate(yesterday.getDate() - 1);
-          this.setDayInterval(yesterday);
-          this.selectedItem = value;
-          break;
-        default:
-          console.warn("Value '" + value + "' is not handled!");
+      var key = util.enumValueToKey(DATE_FILTER_ITEMS, value);
+      if (key) {
+        var interval = getDateFilterInteval(value);
+        if (!interval) return;
+
+        this.setDayInterval(interval.from, interval.to);
+      } else {
+        console.warn("Value '" + key + "' is not handled!");
       }
     },
 
