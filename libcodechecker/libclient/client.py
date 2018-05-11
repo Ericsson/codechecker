@@ -25,6 +25,18 @@ from credential_manager import UserCredentials
 LOG = get_logger('system')
 
 
+def check_preconfigured_username(username, host, port):
+    """
+    Checks if username supplied by using preconfigured credentials.
+    """
+    if not username:
+        LOG.error("No username supplied! Please specify the "
+                  "username in your "
+                  "\"~/.codechecker.passwords.json\" file for "
+                  "%s:%s.", host, port)
+        sys.exit(1)
+
+
 def check_api_version(auth_client):
     """
     Check if server API is supported by the client.
@@ -123,6 +135,7 @@ def handle_auth(protocol, host, port, username, login=False):
             LOG.info("Logging in using preconfigured credentials...")
             username = saved_auth.split(":")[0]
             pwd = saved_auth.split(":")[1]
+            check_preconfigured_username(username, host, port)
         else:
             LOG.info("Logging in using credentials from command line...")
             pwd = getpass.getpass("Please provide password for user '{0}': "
@@ -176,6 +189,8 @@ def perform_auth_for_handler(protocol, manager, host, port,
                 LOG.info("Logging in using pre-configured credentials...")
 
                 username = auto_auth_string.split(':')[0]
+                check_preconfigured_username(username, host, port)
+
                 LOG.debug("Trying to login as '%s' to '%s:%s'", username,
                           host, port)
 
