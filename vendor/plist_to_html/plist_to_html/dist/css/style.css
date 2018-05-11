@@ -68,6 +68,10 @@ div.container {
   text-decoration: none;
 }
 
+#report-nav i[class*="severity-"] {
+  margin-right: 5px;
+}
+
 .header {
   border-bottom: 1px solid lightgrey;
   font-family: monospace;
@@ -82,8 +86,15 @@ div.container {
   font-weight: bold;
 }
 
-#file-path {
+#editor-wrapper .header > div {
+  padding-top: 2px;
+}
+
+#editor-wrapper .header > div > span:nth-child(2) {
   color: #195ea2;
+}
+
+#file-path {
   font-family: monospace;
 }
 
