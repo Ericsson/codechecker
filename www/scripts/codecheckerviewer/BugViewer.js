@@ -285,26 +285,33 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
     addOtherFileBubbles : function (path) {
       var that = this;
 
+      var createOtherFilterBubble = function (path, label) {
+        return dom.create('div', {
+          class : 'otherFileMsg',
+          innerHTML : label + ':<br>' + path.filePath.split('/').pop(),
+          onclick : function () {
+            that.set(
+              'sourceFileData',
+              CC_SERVICE.getSourceFileData(path.fileId, true));
+            that.drawBugPath();
+            that.jumpTo(path.startLine, path.startCol);
+          }
+        });
+      };
+
       that.codeMirror.operation(function () {
         for (var i = 1; i < path.length; ++i) {
-          if (path[i].fileId !== that.sourceFileData.fileId &&
-              path[i].fileId !== path[i - 1].fileId) {
-            var element = dom.create('div', {
-              class : 'otherFileMsg',
-              innerHTML : 'bugpath in:<br>' + path[i].filePath.split('/').pop(),
-              onclick : (function (i) {
-                return function () {
-                  that.set(
-                    'sourceFileData',
-                    CC_SERVICE.getSourceFileData(path[i].fileId, true));
-                  that.drawBugPath();
-                  that.jumpTo(path[i].startLine, path[i].startCol);
-                };
-              })(i)
-            });
-
-            that._lineWidgets.push(that.codeMirror.addLineWidget(
-              path[i - 1].startLine - 1, element));
+          if (path[i].fileId !== path[i - 1].fileId) {
+            if (path[i].fileId === that.sourceFileData.fileId) {
+              var bugPathFrom =
+                createOtherFilterBubble(path[i - 1], 'bugpath from');
+              that._lineWidgets.push(that.codeMirror.addLineWidget(
+                path[i].startLine - 1, bugPathFrom));
+            } else {
+              var bugPathIn = createOtherFilterBubble(path[i], 'bugpath in');
+              that._lineWidgets.push(that.codeMirror.addLineWidget(
+                path[i - 1].startLine - 1, bugPathIn));
+            }
           }
         }
       });
