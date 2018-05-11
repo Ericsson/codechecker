@@ -47,6 +47,13 @@ function (declare, cookie, dom, domConstruct, domClass, keys, on, Button,
     _doLogin : function() {
       var that = this;
 
+      // No username supplied.
+      if (!this.txtUser.value || !this.txtUser.value.trim().length) {
+        domClass.add(that._mbox.domNode, 'mbox-error');
+        that._mbox.show("Failed to log in!", "No username supplied.");
+        return;
+      }
+
       this.set('isAlreadyLoggingIn', true);
       this._standBy.show();
 
