@@ -153,6 +153,7 @@ function (declare, Deferred, dom, DateTextBox, TimeTextBox, SelectFilter,
     filterChanged : function () {
       var state = this.getSelectedItemValues();
       this.updateReportFilter(state);
+      this.notifyOthers();
     },
 
     getIconClass : function (value) {
