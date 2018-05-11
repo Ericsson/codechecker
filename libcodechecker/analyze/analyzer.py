@@ -89,10 +89,15 @@ def __get_analyzer_version(context, analyzer_config_map):
 
 
 def __get_skip_handler(args):
+    """
+    Initialize and return a skiplist handler if
+    there is a skip list file in the arguments.
+    """
     try:
         if args.skipfile:
             LOG.debug_analyzer("Creating skiplist handler.")
-            return skiplist_handler.SkipListHandler(args.skipfile)
+            with open(args.skipfile) as skip_file:
+                return skiplist_handler.SkipListHandler(skip_file.read())
     except AttributeError:
         LOG.debug_analyzer('Skip file was not set in the command line')
 
@@ -170,6 +175,7 @@ def perform_analysis(args, context, actions, metadata):
         statistics_data = manager.dict({'stats_out_dir':
                                         args.stats_output})
 
+    skip_handler = __get_skip_handler(args)
     if ctu_collect or statistics_data:
         ctu_data = None
         if ctu_collect or ctu_analyze:
@@ -184,7 +190,7 @@ def perform_analysis(args, context, actions, metadata):
                                               context,
                                               config_map,
                                               args.jobs,
-                                              __get_skip_handler(args),
+                                              skip_handler,
                                               ctu_data,
                                               statistics_data)
 
@@ -203,7 +209,7 @@ def perform_analysis(args, context, actions, metadata):
         analysis_manager.start_workers(actions_map, actions, context,
                                        config_map, args.jobs,
                                        args.output_path,
-                                       __get_skip_handler(args),
+                                       skip_handler,
                                        metadata,
                                        'quiet' in args,
                                        'capture_analysis_output' in args,
@@ -224,6 +230,9 @@ def perform_analysis(args, context, actions, metadata):
 
     metadata['timestamps'] = {'begin': start_time,
                               'end': end_time}
+
+    if skip_handler:
+        metadata['skip_file_lines'] = skip_handler.skip_file_lines
 
     if ctu_collect and ctu_analyze:
         shutil.rmtree(ctu_dir, ignore_errors=True)

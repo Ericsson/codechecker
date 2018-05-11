@@ -275,7 +275,8 @@ def main(args):
 
     skip_handler = None
     if 'skipfile' in args:
-        skip_handler = SkipListHandler(args.skipfile)
+        with open(args.skip_file, 'r') as skip_file:
+            skip_handler = SkipListHandler(skip_file.read())
 
     processed_path_hashes = set()
 

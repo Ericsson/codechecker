@@ -33,6 +33,7 @@ from libcodechecker.source_code_comment_handler import \
 from libcodechecker import util
 # TODO: Cross-subpackage import here.
 from libcodechecker.analyze import plist_parser
+from libcodechecker.analyze import skiplist_handler
 from libcodechecker.logger import get_logger
 from libcodechecker.profiler import timeit
 from libcodechecker.report import get_report_path_hash
@@ -1950,7 +1951,7 @@ class ThriftRequestHandler(object):
 
     def __store_reports(self, session, report_dir, source_root, run_id,
                         file_path_to_id, run_history_time, severity_map,
-                        wrong_src_code_comments):
+                        wrong_src_code_comments, skiphandler):
         """
         Parse up and store the plist report files.
         """
@@ -1987,6 +1988,11 @@ class ThriftRequestHandler(object):
 
             # Store report.
             for report in reports:
+
+                source_file = files[report.main['location']['file']]
+                if skiphandler.should_skip(source_file):
+                    continue
+
                 bug_paths, bug_events = \
                     store_handler.collect_paths_events(report, file_ids,
                                                        files)
@@ -2012,7 +2018,7 @@ class ThriftRequestHandler(object):
                 report_id = store_handler.addReport(
                     session,
                     run_id,
-                    file_ids[files[report.main['location']['file']]],
+                    file_ids[source_file],
                     report.main,
                     bug_paths,
                     bug_events,
@@ -2245,8 +2251,11 @@ class ThriftRequestHandler(object):
 
                 run_history_time = datetime.now()
 
-                check_commands, check_durations = \
+                check_commands, check_durations, skip_file_lines = \
                     store_handler.metadata_info(metadata_file)
+
+                skiphandler = skiplist_handler.SkipListHandler()
+                skiphandler.overwrite_skip_content(skip_file_lines)
 
                 if len(check_commands) == 0:
                     command = ' '.join(sys.argv)
@@ -2297,7 +2306,8 @@ class ThriftRequestHandler(object):
                                          file_path_to_id,
                                          run_history_time,
                                          context.severity_map,
-                                         wrong_src_code_comments)
+                                         wrong_src_code_comments,
+                                         skiphandler)
 
                     store_handler.setRunDuration(session,
                                                  run_id,

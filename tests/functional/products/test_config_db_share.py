@@ -187,10 +187,9 @@ class TestProductConfigShare(unittest.TestCase):
         codechecker.login(store_cfg,
                           self.test_workspace_secondary,
                           'root', 'root')
-        store_res = codechecker.store(store_cfg,
-                                      'test_proj-secondary',
-                                      os.path.join(self.test_workspace_main,
-                                                   'reports'))
+        store_cfg['reportdir'] = os.path.join(self.test_workspace_main,
+                                              'reports')
+        store_res = codechecker.store(store_cfg, 'test_proj-secondary')
         self.assertEqual(store_res, 0, "Storing the test project failed.")
 
         cc_client_2 = env.setup_viewer_client(self.test_workspace_secondary)
@@ -218,10 +217,7 @@ class TestProductConfigShare(unittest.TestCase):
 
         # Try to store into the product just removed through the secondary
         # server, which still sees the product internally.
-        store_res = codechecker.store(store_cfg,
-                                      'test_proj-secondary',
-                                      os.path.join(self.test_workspace_main,
-                                                   'reports'))
+        store_res = codechecker.store(store_cfg, 'test_proj-secondary')
         self.assertNotEqual(store_res, 0, "Storing into the server with "
                             "the product missing should've resulted in "
                             "an error.")

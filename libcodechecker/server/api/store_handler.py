@@ -27,6 +27,7 @@ LOG = get_logger('system')
 def metadata_info(metadata_file):
     check_commands = []
     check_durations = []
+    skip_file_lines = []
 
     if not os.path.isfile(metadata_file):
         return check_commands, check_durations
@@ -40,8 +41,10 @@ def metadata_info(metadata_file):
         check_durations.append(
             float(metadata_dict['timestamps']['end'] -
                   metadata_dict['timestamps']['begin']))
+    if 'skip_file_lines' in metadata_dict:
+        skip_file_lines = metadata_dict['skip_file_lines']
 
-    return check_commands, check_durations
+    return check_commands, check_durations, skip_file_lines
 
 
 def collect_paths_events(report, file_ids, files):

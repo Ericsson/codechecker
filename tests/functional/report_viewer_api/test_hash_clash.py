@@ -75,9 +75,9 @@ class HashClash(unittest.TestCase):
         _replace_path(os.path.join(self._test_dir, 'run.plist'),
                       self._test_dir)
 
+        self._codechecker_cfg['reportdir'] = self._test_dir
         codechecker.store(self._codechecker_cfg,
-                          'test_hash_clash_' + uuid4().hex,
-                          self._test_dir)
+                          'test_hash_clash_' + uuid4().hex)
 
     def _reports_for_latest_run(self):
         runs = self._report.getRunData(None)

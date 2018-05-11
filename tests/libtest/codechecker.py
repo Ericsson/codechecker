@@ -240,6 +240,18 @@ def analyze(codechecker_cfg, test_project_name, test_project_path):
                    '--analyzers', 'clangsa'
                    ]
 
+    suppress_file = codechecker_cfg.get('suppress_file')
+    if suppress_file:
+        analyze_cmd.extend(['--suppress', suppress_file])
+
+    skip_file = codechecker_cfg.get('skip_file')
+    if skip_file:
+        analyze_cmd.extend(['--skip', skip_file])
+
+    force = codechecker_cfg.get('force')
+    if force:
+        analyze_cmd.extend(['--force'])
+
     analyze_cmd.extend(codechecker_cfg['checkers'])
     try:
         print("LOG:")
@@ -292,7 +304,7 @@ def parse(codechecker_cfg):
         return 1, '', ''
 
 
-def store(codechecker_cfg, test_project_name, report_path):
+def store(codechecker_cfg, test_project_name):
     """
     Store results from a report dir.
     """
@@ -300,7 +312,7 @@ def store(codechecker_cfg, test_project_name, report_path):
     store_cmd = ['CodeChecker', 'store',
                  '--url', env.parts_to_url(codechecker_cfg),
                  '--name', test_project_name,
-                 report_path]
+                 codechecker_cfg['reportdir']]
 
     try:
         print("STORE:")

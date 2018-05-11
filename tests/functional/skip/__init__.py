@@ -70,13 +70,38 @@ def setup_package():
 
     test_project_name = project_info['name'] + '_' + uuid.uuid4().hex
 
-    ret = codechecker.check(codechecker_cfg,
-                            test_project_name,
-                            project.path(test_project))
+    skip_file = codechecker_cfg.pop('skip_file')
+
+    output_dir = codechecker_cfg['reportdir'] \
+        if 'reportdir' in codechecker_cfg \
+        else os.path.join(codechecker_cfg['workspace'], 'reports')
+
+    codechecker_cfg['reportdir'] = output_dir
+
+    # Analyze without skip.
+    ret = codechecker.analyze(codechecker_cfg,
+                              test_project_name,
+                              project.path(test_project))
+    if ret:
+        print("Analyzing the test project without a skip file failed.")
+        sys.exit(1)
+
+    codechecker_cfg['skip_file'] = skip_file
+
+    # Analyze with skip.
+    ret = codechecker.analyze(codechecker_cfg,
+                              test_project_name,
+                              project.path(test_project))
 
     if ret:
+        print("Analyzing the test project with a skip file failed.")
         sys.exit(1)
-    print("Analyzing the test project was successful.")
+
+    ret = codechecker.store(codechecker_cfg,
+                            test_project_name)
+    if ret:
+        print("Storing the results failed.")
+        sys.exit(1)
 
     codechecker_cfg['run_names'] = [test_project_name]
 

@@ -98,9 +98,7 @@ class TestSkeleton(unittest.TestCase):
 
         self.assertEqual(ret, 0)
 
-        ret = codechecker.store(self._codechecker_cfg,
-                                'test_proj',
-                                self._codechecker_cfg['reportdir'])
+        ret = codechecker.store(self._codechecker_cfg, 'test_proj')
         self.assertEqual(ret, 0)
 
         test_proj_path = self._testproject_data['project_path']
@@ -112,7 +110,5 @@ class TestSkeleton(unittest.TestCase):
 
         touch(null_deref_file)
 
-        ret = codechecker.store(self._codechecker_cfg,
-                                'test_proj',
-                                self._codechecker_cfg['reportdir'])
+        ret = codechecker.store(self._codechecker_cfg, 'test_proj')
         self.assertEqual(ret, 1)
