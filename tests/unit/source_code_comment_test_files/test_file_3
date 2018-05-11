@@ -43,3 +43,20 @@ void test_func(int num){ // line 37
 void test_func(int num){ // line 43
     cout << "test func"  << endl;
 }
+
+/* codechecker_false_positive [ my.checker_2, my.checker_1 ] some comment
+codechecker_intentional [ my.checker_1 ] intentional comment */
+void test_func(int num){ // line 49
+    cout << "test func"  << endl;
+}
+
+/* codechecker_false_positive [ my.checker_2, my.checker_1 ] comment
+which
+is
+long
+codechecker_intentional [ my.checker_1 ] intentional comment
+long
+again */
+void test_func(int num){ // line 60
+    cout << "test func"  << endl;
+}

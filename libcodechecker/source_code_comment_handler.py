@@ -92,6 +92,17 @@ class SourceCodeCommentHandler(object):
         """
         return source_line.strip().startswith('//')
 
+    @staticmethod
+    def __check_if_cstyle_comment(source_line):
+        """
+        Check if the line contains the start '/*' or
+        the the end '*/' of a C style comment.
+        """
+        src_line = source_line.strip()
+        cstyle_start = '/*' in src_line
+        cstyle_end = '*/' in src_line
+        return cstyle_start, cstyle_end
+
     def __process_source_line_comment(self, source_line_comment):
         """
         Process CodeChecker source code comment.
@@ -106,6 +117,15 @@ class SourceCodeCommentHandler(object):
 
         // codechecker_confirmed [checker.name1, checker.name2] some multi
         // line comment
+
+        Valid C style comments
+        /* codechecker_suppress [all] some comment for all checkers*/
+
+        /* codechecker_confirmed [checker.name1] some comment */
+
+        /* codechecker_confirmed [checker.name1, checker.name2] some multi
+        line comment */
+
         """
 
         # Remove extra spaces if any.
@@ -177,35 +197,71 @@ class SourceCodeCommentHandler(object):
 
         # Iterate over lines while it has comments or we reached
         # the top of the file.
+        cstyle_end_found = False
+
         while True:
+
             source_line = util.get_line(source_file, previous_line_num)
 
-            # This is not a comment.
-            if not SourceCodeCommentHandler.__check_if_comment(source_line):
-                break
+            # cpp style comment
+            is_comment = \
+                SourceCodeCommentHandler.__check_if_comment(source_line)
 
-            curr_suppress_comment.append(source_line.strip())
+            # cstyle commment
+            cstyle_start, cstyle_end = \
+                SourceCodeCommentHandler.__check_if_cstyle_comment(source_line)
+
+            if not is_comment and not cstyle_start and not cstyle_end:
+                if not cstyle_end_found:
+                    # Not a comment
+                    break
+
+            if not cstyle_end_found and cstyle_end:
+                cstyle_end_found = True
+
+            curr_suppress_comment.append(source_line)
             has_any_marker = any(marker in source_line for marker
                                  in self.source_code_comment_markers)
 
             # It is a comment.
             if has_any_marker:
                 rev = list(reversed(curr_suppress_comment))
-                suppress_comment = ''.join(rev).replace('//', '')
-                comment = self.__process_source_line_comment(suppress_comment)
+
+                orig_review_comment = ' '.join(rev).strip()
+
+                review_comment = ''
+
+                if rev[0].strip().startswith('//'):
+                    review_comment = orig_review_comment.replace('//', '')
+                else:
+                    r_comment = []
+                    for comment in rev:
+                        comment = comment.strip()
+                        comment = comment.replace('/*', '').replace('*/', '')
+                        if comment.startswith('*'):
+                            r_comment.append(comment[1:])
+                        else:
+                            r_comment.append(comment)
+
+                    review_comment = ' '.join(r_comment).strip()
+
+                comment = self.__process_source_line_comment(review_comment)
                 if comment:
                     source_line_comments.append(comment)
                 else:
                     _, file_name = os.path.split(source_file)
                     LOG.warning(
                         "Misspelled review status comment in %s@%d: %s",
-                        file_name, previous_line_num, ' '.join(rev))
+                        file_name, previous_line_num, orig_review_comment)
 
                 curr_suppress_comment = []
 
             if previous_line_num > 0:
                 previous_line_num -= 1
             else:
+                break
+
+            if cstyle_start:
                 break
 
         return source_line_comments
@@ -218,15 +274,24 @@ class SourceCodeCommentHandler(object):
          - If the checker name is specified in one of the source code comment
            than this will be return.
            E.g.: // codechecker_suppress [checker.name1] some comment
+             or
+                /* codechecker_suppress [checker.name1] some comment */
          - If checker name is not specified explicitly in any source code
            comment bug source code comment with checker name 'all' is
            specified then this will be returned.
            E.g.: // codechecker_suppress [all] some comment
+             or
+                /* codechecker_suppress [all] some comment */
          - If multiple source code comments are specified with the same checker
            name then multiple source code comments will be returned.
            E.g.: // codechecker_suppress [checker.name1] some comment1
                  // codechecker_suppress [checker.name1, checker.name2] some
                  // comment1
+             or
+                 /* codechecker_suppress [checker.name1] some comment1
+                 codechecker_suppress [checker.name1, checker.name2] some
+                 comment1 */
+
         """
         source_line_comments = self.get_source_line_comments(bug_line)
 
