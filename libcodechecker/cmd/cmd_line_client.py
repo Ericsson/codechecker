@@ -534,7 +534,9 @@ def handle_diff_results(args):
         Generate HTML output files for the given reports in the given output
         directory by using the Plist To HTML parser.
         """
-        html_builder = PlistToHtml.HtmlBuilder(context.path_plist_to_html_dist)
+        html_builder = PlistToHtml.HtmlBuilder(
+            context.path_plist_to_html_dist,
+            context.checkers_severity_map_file)
 
         file_report_map = defaultdict(list)
         for report in reports:
@@ -561,6 +563,8 @@ def handle_diff_results(args):
             html_builder.create(output_path, report_data)
             print('Html file was generated for file://{0}: file://{1}'.format(
                 checked_file, output_path))
+
+        html_builder.create_index_html(output_dir)
 
     def print_reports(client, reports, output_format):
         output_dir = args.export_dir if 'export_dir' in args else None
@@ -590,7 +594,8 @@ def handle_diff_results(args):
             report_to_html(client, reports, output_dir)
 
             print('\nTo view the results in a browser run:\n'
-                  '  $ firefox {0}'.format(args.export_dir))
+                  '  $ firefox {0}'.format(os.path.join(args.export_dir,
+                                                        'index.html')))
             return
 
         header = ['File', 'Checker', 'Severity', 'Msg', 'Source']

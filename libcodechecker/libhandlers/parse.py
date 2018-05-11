@@ -88,12 +88,12 @@ def add_arguments_to_parser(parser):
                              dest="clean",
                              required=False,
                              action='store_true',
-                             default=argparse.SUPPRESS,
-                             help="Delete output results stored in the output "
-                                  "directory. (By default, it would keep "
-                                  "output files and overwrites only those "
-                                  "that belongs to a plist file given by the "
-                                  "input argument.")
+                             default=True,
+                             help="DEPRECATED. Delete output results stored "
+                                  "in the output directory. (By default, it "
+                                  "would keep output files and overwrites "
+                                  "only those that belongs to a plist file "
+                                  "given by the input argument.")
 
     parser.add_argument('--suppress',
                         type=str,
@@ -278,6 +278,7 @@ def main(args):
         with open(args.skip_file, 'r') as skip_file:
             skip_handler = SkipListHandler(skip_file.read())
 
+    html_builder = None
     processed_path_hashes = set()
 
     for input_path in args.input:
@@ -290,12 +291,17 @@ def main(args):
         if export is not None and export == 'html':
             output_path = os.path.abspath(args.output_path)
 
+            if not html_builder:
+                html_builder = \
+                    PlistToHtml.HtmlBuilder(context.path_plist_to_html_dist,
+                                            context.checkers_severity_map_file)
+
             LOG.info("Generating html output files:")
             PlistToHtml.parse(input_path,
                               output_path,
                               context.path_plist_to_html_dist,
-                              'clean' in args,
-                              skip_html_report_data_handler)
+                              skip_html_report_data_handler,
+                              html_builder)
             continue
 
         severity_stats = Counter({})
@@ -372,3 +378,7 @@ def main(args):
                         "reports!".format(changed_files))
 
     os.chdir(original_cwd)
+
+    # Create index.html for the generated html files.
+    if html_builder:
+        html_builder.create_index_html(args.output_path)

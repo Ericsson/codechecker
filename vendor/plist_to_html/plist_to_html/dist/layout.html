@@ -20,9 +20,7 @@
       window.onload = function() {
         BugViewer.init(data.files, data.reports);
         BugViewer.create();
-
-        if (data.reports.length)
-          BugViewer.setReport(data.reports[0]);
+        BugViewer.initByUrl();
       };
     </script>
   </head>
