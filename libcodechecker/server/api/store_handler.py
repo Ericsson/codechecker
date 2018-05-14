@@ -41,10 +41,7 @@ def metadata_info(metadata_file):
         check_durations.append(
             float(metadata_dict['timestamps']['end'] -
                   metadata_dict['timestamps']['begin']))
-    if 'skip_file_lines' in metadata_dict:
-        skip_file_lines = metadata_dict['skip_file_lines']
-
-    return check_commands, check_durations, skip_file_lines
+    return check_commands, check_durations
 
 
 def collect_paths_events(report, file_ids, files):
