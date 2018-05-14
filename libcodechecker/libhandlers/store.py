@@ -246,6 +246,8 @@ def assemble_zip(inputs, zip_file, client):
                                 plist_file, missing_files)
             elif f == 'metadata.json':
                 plist_report_files.append(os.path.join(input_path, f))
+            elif f == 'skip_file':
+                plist_report_files.append(os.path.join(input_path, f))
 
             plist_mtime = util.get_last_mod_time(plist_file)
 

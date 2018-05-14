@@ -1951,7 +1951,7 @@ class ThriftRequestHandler(object):
 
     def __store_reports(self, session, report_dir, source_root, run_id,
                         file_path_to_id, run_history_time, severity_map,
-                        wrong_src_code_comments, skiphandler):
+                        wrong_src_code_comments, skip_handler):
         """
         Parse up and store the plist report files.
         """
@@ -1990,7 +1990,7 @@ class ThriftRequestHandler(object):
             for report in reports:
 
                 source_file = files[report.main['location']['file']]
-                if skiphandler.should_skip(source_file):
+                if skip_handler.should_skip(source_file):
                     continue
 
                 bug_paths, bug_events = \
@@ -2239,8 +2239,20 @@ class ThriftRequestHandler(object):
                 source_root = os.path.join(zip_dir, 'root')
                 report_dir = os.path.join(zip_dir, 'reports')
                 metadata_file = os.path.join(report_dir, 'metadata.json')
+                skip_file = os.path.join(report_dir, 'skip_file')
                 content_hash_file = os.path.join(zip_dir,
                                                  'content_hashes.json')
+
+                skip_handler = skiplist_handler.SkipListHandler()
+                if os.path.exists(skip_file):
+                    LOG.debug("Pocessing skip file %s", skip_file)
+                    try:
+                        with open(skip_file) as sf:
+                            skip_handler = \
+                                skiplist_handler.SkipListHandler(sf.read())
+                    except (IOError, OSError) as err:
+                        LOG.error("Failed to open skip file")
+                        LOG.error(err)
 
                 with open(content_hash_file) as chash_file:
                     filename_to_hash = json.load(chash_file)
@@ -2251,11 +2263,8 @@ class ThriftRequestHandler(object):
 
                 run_history_time = datetime.now()
 
-                check_commands, check_durations, skip_file_lines = \
+                check_commands, check_durations = \
                     store_handler.metadata_info(metadata_file)
-
-                skiphandler = skiplist_handler.SkipListHandler()
-                skiphandler.overwrite_skip_content(skip_file_lines)
 
                 if len(check_commands) == 0:
                     command = ' '.join(sys.argv)
@@ -2307,7 +2316,7 @@ class ThriftRequestHandler(object):
                                          run_history_time,
                                          context.severity_map,
                                          wrong_src_code_comments,
-                                         skiphandler)
+                                         skip_handler)
 
                     store_handler.setRunDuration(session,
                                                  run_id,

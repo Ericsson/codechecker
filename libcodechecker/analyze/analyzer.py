@@ -231,8 +231,16 @@ def perform_analysis(args, context, actions, metadata):
     metadata['timestamps'] = {'begin': start_time,
                               'end': end_time}
 
-    if skip_handler:
-        metadata['skip_file_lines'] = skip_handler.skip_file_lines
+    # Remove previous skip file if there was any.
+    skip_file_to_send = os.path.join(args.output_path, 'skip_file')
+
+    if os.path.exists(skip_file_to_send):
+        os.remove(skip_file_to_send)
+
+    if 'skipfile' in args:
+        LOG.debug("Copying skip file %s to %s",
+                  args.skipfile, skip_file_to_send)
+        shutil.copyfile(args.skipfile, skip_file_to_send)
 
     if ctu_collect and ctu_analyze:
         shutil.rmtree(ctu_dir, ignore_errors=True)
