@@ -117,16 +117,10 @@ function (declare, dom, topic, Dialog, Standby, ContentPane, hashHelper, util) {
       if (filter._runBaseLineFilter)
         filter._runBaseLineFilter.select(item.runName);
 
-      if (!item.versionTag) {
-        [
-          CC_OBJECTS.DetectionStatus.NEW,
-          CC_OBJECTS.DetectionStatus.UNRESOLVED,
-          CC_OBJECTS.DetectionStatus.REOPENED
-        ].forEach(function (status) {
-          filter._detectionStatusFilter.select(
-            filter._detectionStatusFilter.stateConverter(status));
-        });
+      filter._detectionStatusFilter.selectDefaultValues();
+      filter._reviewStatusFilter.selectDefaultValues();
 
+      if (!item.versionTag) {
         var date = new Date(item.time.replace(/ /g,'T'));
         filter._detectionDateFilter.initFixedDateInterval(
           this._formatDate(date));
