@@ -151,6 +151,12 @@ function (declare, lang, Deferred, domClass, dom, domStyle, topic, Button,
       this.register(this._runBaseLineFilter);
       baselineFilterToggle.addChild(this._runBaseLineFilter);
 
+      // Select initial base line values which come from the constructor.
+      if (this.baseline)
+        this.baseline.forEach(function (runName) {
+          that._runBaseLineFilter.select(runName);
+        });
+
       //--- Run history tags filter ---//
 
       this._runHistoryTagFilter = new RunHistoryTagFilter({
@@ -206,6 +212,12 @@ function (declare, lang, Deferred, domClass, dom, domStyle, topic, Button,
       });
       this.register(this._runNewCheckFilter);
       this._newCheckFilterToggle.addChild(this._runNewCheckFilter);
+
+      // Select initial new check values which come from the constructor.
+      if (this.newcheck)
+        this.newcheck.forEach(function (runName) {
+          that._runNewCheckFilter.select(runName);
+        });
 
       //--- Run history tags filter for newcheck ---//
 
