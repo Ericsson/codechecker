@@ -8,8 +8,9 @@ define([
   'dojo/dom-construct',
   'dojo/_base/declare',
   'dijit/form/CheckBox',
-  'codechecker/filter/FilterBase'],
-function (dom, declare, CheckBox, FilterBase) {
+  'codechecker/filter/FilterBase',
+  'codechecker/util'],
+function (dom, declare, CheckBox, FilterBase, util) {
   return declare(FilterBase, {
     defaultValue : false,
 
@@ -24,10 +25,8 @@ function (dom, declare, CheckBox, FilterBase) {
       });
       dom.place(this._uniqueCheckBox.domNode, this.domNode);
 
-      this._uniqueCheckBoxLabel = dom.create('label', {
-        for : this._uniqueCheckBox.get('id'),
-        innerHTML : 'Unique reports'
-      }, this._uniqueCheckBox.domNode, 'after');
+      this._uniqueCheckBoxLabel =
+        util.createLabelForUniqueCheckbox(this._uniqueCheckBox);
     },
 
     initByUrl : function (queryParams) {
