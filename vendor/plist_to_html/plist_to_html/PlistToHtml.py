@@ -102,6 +102,7 @@ class HtmlBuilder:
         # Create table header.
         table_reports = '''
             <tr>
+              <th>&nbsp;</th>
               <th>File</th>
               <th>Severity</th>
               <th>Checker name</th>
@@ -118,7 +119,7 @@ class HtmlBuilder:
                              key=lambda d: d['report']['path'])
 
         # Create table lines.
-        for data in report_data:
+        for i, data in enumerate(report_data):
             html_file = data['html_file']
             report = data['report']
 
@@ -128,16 +129,18 @@ class HtmlBuilder:
 
             table_reports += '''
               <tr>
+                <td>{0}</td>
                 <td>
-                  <a href="{0}#reportHash={1}">{2} @ Line {3}</a>
+                  <a href="{1}#reportHash={2}">{3} @ Line {4}</a>
                 </td>
                 <td class="severity">
-                  <i class="severity-{4}"></i>
+                  <i class="severity-{5}"></i>
                 </td>
-                <td>{5}</td>
                 <td>{6}</td>
-                <td class="bug-path-length">{7}</td>
-              </tr>'''.format(os.path.basename(html_file),
+                <td>{7}</td>
+                <td class="bug-path-length">{8}</td>
+              </tr>'''.format(i + 1,
+                              os.path.basename(html_file),
                               report['reportHash'],
                               report['path'],
                               events[-1]['line'],
