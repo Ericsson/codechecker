@@ -17,8 +17,36 @@ from subprocess import CalledProcessError
 from libtest import env
 
 
+class AnalyzeParseTestCaseMeta(type):
+    def __new__(mcs, name, bases, test_dict):
+
+        def gen_test(path, mode):
+            """
+            The returned test function will run the actual tests
+            which compare the output of the command with the
+            stored expected output.
+            """
+            def test(self):
+                self.check_one_file(path, mode)
+            return test
+
+        test_dir = os.path.join(
+            os.path.dirname(__file__), 'test_files')
+
+        # Iterate over the test directory and generate the test cases
+        # for each of the output files.
+        for ofile in glob.glob(os.path.join(test_dir, '*.output')):
+            test_name = 'test_' + os.path.basename(ofile)
+            test_dict[test_name + '_normal'] = gen_test(ofile, 'NORMAL')
+            test_dict[test_name + '_check'] = gen_test(ofile, 'CHECK')
+
+        return type.__new__(mcs, name, bases, test_dict)
+
+
 class AnalyzeParseTestCase(unittest.TestCase):
     """This class tests the CodeChecker 'analyze' and 'parse' feature."""
+
+    __metaclass__ = AnalyzeParseTestCaseMeta
 
     @classmethod
     def setup_class(cls):
@@ -46,7 +74,7 @@ class AnalyzeParseTestCase(unittest.TestCase):
         """Restore environment after tests have ran."""
         os.chdir(cls.__old_pwd)
 
-    def __check_one_file(self, path, mode):
+    def check_one_file(self, path, mode):
         """
         Test 'analyze' and 'parse' output on a ".output" file.
 
@@ -134,17 +162,3 @@ class AnalyzeParseTestCase(unittest.TestCase):
             print("Failed to run: " + ' '.join(cerr.cmd))
             print(cerr.output)
             return cerr.returncode
-
-    def test_analyze_and_parse_files(self):
-        """
-        Iterate over the test directory and run all tests in it.
-        """
-        for ofile in glob.glob(os.path.join(self.test_dir, '*.output')):
-            self.assertEqual(self.__check_one_file(ofile, 'NORMAL'), 0)
-
-    def test_check_files(self):
-        """
-        Iterate over the test directory and run all check (wrapper) tests.
-        """
-        for ofile in glob.glob(os.path.join(self.test_dir, '*.output')):
-            self.assertEqual(self.__check_one_file(ofile, 'CHECK'), 0)
