@@ -35,6 +35,7 @@ var BugViewer = {
   create : function () {
     this._content = document.getElementById('editor-wrapper');
     this._filepath = document.getElementById('file-path');
+    this._checkerName = document.getElementById('checker-name');
     this._editor = document.getElementById('editor');
 
     this._codeMirror = CodeMirror(this._editor, {
@@ -76,7 +77,13 @@ var BugViewer = {
       var events = report['events'];
       var lastBugEvent = events[events.length - 1];
       var item = document.createElement('li');
-      item.innerHTML = lastBugEvent.msg;
+
+      var severity = document.createElement('i');
+      severity.className = 'severity-' + report.severity.toLowerCase();
+
+      item.appendChild(severity);
+      item.appendChild(document.createTextNode(lastBugEvent.msg));
+
       item.addEventListener('click', function () {
         that.navigate(report, item);
       })
@@ -97,6 +104,9 @@ var BugViewer = {
     var events = report['events'];
     var lastBugEvent = events[events.length - 1];
     this.setCurrentBugEvent(lastBugEvent);
+    console.log(report);
+    this.setCheckerName(report.checkerName);
+
     window.location.hash = '#reportHash=' + report.reportHash;
   },
 
@@ -105,6 +115,10 @@ var BugViewer = {
     this.setSourceFileData(this._files[event.file]);
 
     this.jumpTo(event.line, 0)
+  },
+
+  setCheckerName : function (checkerName) {
+    this._checkerName.innerHTML = checkerName;
   },
 
   setSourceFileData : function (file) {

@@ -18,6 +18,7 @@ package: dep
 	mkdir -p $(BIN_DIR)
 	cp plist_to_html/dist/layout.html $(DIST_DIR)
 	cp plist_to_html/dist/index.html $(DIST_DIR)
+	cp plist_to_html/dist/css/icon.css $(DIST_DIR)
 	cp plist_to_html/dist/css/style.css $(DIST_DIR)
 	cp plist_to_html/dist/js/bugviewer.js $(DIST_DIR)
 	cp plist_to_html/PlistToHtml.py $(BIN_DIR)/plist-to-html

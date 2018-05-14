@@ -8,6 +8,7 @@
     <style type="text/css">
       <$CODEMIRROR_CSS$>
       <$STYLE_CSS$>
+      <$ICON_CSS$>
     </style>
 
     <script type="text/javascript">
@@ -32,7 +33,14 @@
       </div>
       <div id="editor-wrapper">
         <div class="header">
-          <div id="file-path"></div>
+          <div id="file">
+            <span class="label">File:</span>
+            <span id="file-path"></span>
+          </div>
+          <div id="checker">
+            <span class="label">Checker name:</span>
+            <span id="checker-name"></span>
+          </div>
         </div>
         <div id="editor"></div>
       </div>

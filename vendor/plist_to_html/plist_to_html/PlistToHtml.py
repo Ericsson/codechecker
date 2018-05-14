@@ -48,6 +48,7 @@ class HtmlBuilder:
         # Mapping layout tags to files.
         self._layout_tag_files = {
             'STYLE_CSS': 'style.css',
+            'ICON_CSS': 'icon.css',
             'CODEMIRROR_LICENSE': 'codemirror.LICENSE',
             'CODEMIRROR_CSS': 'codemirror.min.css',
             'CODEMIRROR_JS': 'codemirror.min.js',
@@ -71,10 +72,19 @@ class HtmlBuilder:
             self._layout = self._layout.replace('<${0}$>'.format(tag),
                                                 self._tag_contents[tag])
 
+            self._index = self._index.replace('<${0}$>'.format(tag),
+                                              self._tag_contents[tag])
+
     def create(self, output_path, report_data):
         """
         Create html file with the given report data to the output path.
         """
+        # Add severity levels for reports.
+        for report in report_data['reports']:
+            checker = report['checkerName']
+            report['severity'] = \
+                self._severity_map.get(checker, 'UNSPECIFIED')
+
         self.generated_html_reports[output_path] = report_data['reports']
         content = self._layout.replace('<$REPORT_DATA$>',
                                        json.dumps(report_data))
@@ -99,14 +109,10 @@ class HtmlBuilder:
               <th>Bug path length</th>
             </tr>'''
 
-        # Sort reports based on file path levels and add severity levels
-        # for report data.
+        # Sort reports based on file path levels.
         report_data = []
         for html_file in self.generated_html_reports:
             for report in self.generated_html_reports[html_file]:
-                checker = report['checkerName']
-                report['severity'] =\
-                    self._severity_map.get(checker, 'UNSPECIFIED')
                 report_data.append({'html_file': html_file, 'report': report})
         report_data = sorted(report_data,
                              key=lambda d: d['report']['path'])
