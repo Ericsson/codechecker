@@ -16,6 +16,8 @@
   },
   "checker_config": {
       "clangsa_checkers" : {
+        "core.NonnilStringConstants": ["default", "sensitive", "extreme"],
+        "alpha.cplusplus.DeleteWithNonVirtualDtor" : ["default", "sensitive", "extreme"],
         "alpha.core.BoolAssignment" : ["sensitive", "extreme"],
         "alpha.core.CallAndMessageUnInitRefArg" : ["extreme"],
         "alpha.core.CastSize" : ["sensitive", "extreme"],
@@ -67,7 +69,7 @@
         "nullability.NullablePassedToNonnull" : ["sensitive", "extreme"],
         "nullability.NullableReturnedFromNonnull" : ["sensitive", "extreme"],
         "optin.mpi.MPI-Checker" : ["sensitive", "extreme"],
-        "optin.portability.UnixAPI" : ["sensitive", "extreme"],
+        "optin.portability.UnixAPI" : ["default", "sensitive", "extreme"],
         "security.FloatLoopCounter" : ["default", "sensitive", "extreme"],
         "security.insecureAPI.UncheckedReturn" : ["default", "sensitive", "extreme"],
         "security.insecureAPI.getpw" : ["default", "sensitive", "extreme"],
