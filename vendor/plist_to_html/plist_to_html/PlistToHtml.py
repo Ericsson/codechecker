@@ -195,7 +195,7 @@ def get_report_data_from_plist(plist, skip_report_handler=None):
                                   'step': index + 1})
 
         reports.append({'events': report_events,
-                        'path': file_path,
+                        'path': source_file,
                         'reportHash': report_hash,
                         'checkerName': checker_name})
 
