@@ -350,7 +350,9 @@ function (declare, dom, style, Deferred, ObjectStore, Store, QueryResults,
         splitter : true,
         parent   : this,
         diffView : this.newcheck,
-        openedByUserEvent : this.openedByUserEvent
+        openedByUserEvent : this.openedByUserEvent,
+        baseline : this.baseline,
+        newcheck : this.newcheck
       });
       this._grid.set('bugFilterView', this._bugFilterView);
       this._bugFilterView.register(this._grid);

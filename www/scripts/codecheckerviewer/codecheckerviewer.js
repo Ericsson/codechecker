@@ -56,17 +56,9 @@ function (declare, topic, Dialog, Button, BorderContainer, TabContainer,
         return;
     }
 
-    var baseline = state.run;
-    if (baseline && !(baseline instanceof Array))
-      baseline = [baseline];
-
-    var newcheck = state.newcheck;
-    if (newcheck && !(newcheck instanceof Array))
-      newcheck = [newcheck];
-
     topic.publish('openRun', {
-      baseline : baseline,
-      newcheck : newcheck,
+      baseline : state.run,
+      newcheck : state.newcheck,
       tabId    : state.tab,
       difftype : state.difftype ? state.difftype : CC_OBJECTS.DiffType.NEW
     });
@@ -182,6 +174,14 @@ function (declare, topic, Dialog, Button, BorderContainer, TabContainer,
     topic.subscribe('openRun', function (param) {
       var tabId = param.tabId;
 
+      var baseline = param.baseline;
+      if (baseline && !(baseline instanceof Array))
+        baseline = [baseline];
+
+      var newcheck = param.newcheck;
+      if (newcheck && !(newcheck instanceof Array))
+        newcheck = [newcheck];
+
       if (!(tabId in runIdToTab)) {
         var runs = tabId.split('_diff_');
         var title = runs.length == 2
@@ -189,8 +189,8 @@ function (declare, topic, Dialog, Button, BorderContainer, TabContainer,
           : runs[0];
 
         runIdToTab[tabId] = new ListOfBugs({
-          baseline : param.baseline,
-          newcheck : param.newcheck,
+          baseline : baseline,
+          newcheck : newcheck,
           title : title,
           iconClass : 'customIcon reports',
           closable : true,
