@@ -375,7 +375,7 @@ function (declare, dom, style, Deferred, ObjectStore, Store, QueryResults,
 
           var state = hashHelper.getState();
 
-          hashHelper.setStateValues({
+          hashHelper.resetStateValues({
             'tab' : state.tab,
             'subtab' : 'runHistory'
           });
