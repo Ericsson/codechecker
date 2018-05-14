@@ -110,6 +110,18 @@ function (declare, dom, Standby, ContentPane, Tooltip, FilterBase,
       return state;
     },
 
+    defaultValues : function () { return {}; },
+
+    selectDefaultValues : function () {
+      var that = this;
+
+      var values = this.defaultValues();
+      var states = values[this.class];
+      if (!states) return;
+
+      states.forEach(function (status) { that.select(status); });
+    },
+
     // Returns the selected filter item values.
     getSelectedItemValues : function () {
       var keys = Object.keys(this.selectedItems);
