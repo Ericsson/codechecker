@@ -112,10 +112,8 @@ function (declare, ItemFileWriteStore, dom, Deferred, all, Memory, Observable,
       });
       dom.place(this._uniqueCheckBox.domNode, this.domNode);
 
-      this._uniqueCheckBoxLabel = dom.create('label', {
-        for : this._uniqueCheckBox.get('id'),
-        innerHTML : 'Unique reports'
-      }, this._uniqueCheckBox.domNode, 'after');
+      this._uniqueCheckBoxLabel =
+        util.createLabelForUniqueCheckbox(this._uniqueCheckBox);
     },
 
     refreshGrids : function () {

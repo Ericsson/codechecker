@@ -346,7 +346,7 @@ function (declare, dom, style, Deferred, ObjectStore, Store, QueryResults,
       this._bugFilterView = new BugFilterView({
         class    : 'bug-filters',
         region   : 'left',
-        style    : 'width: 300px; padding: 0px;',
+        style    : 'width: 320px; padding: 0px;',
         splitter : true,
         parent   : this,
         diffView : this.newcheck,

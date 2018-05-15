@@ -451,6 +451,18 @@ function (locale, dom, style, json) {
 
       link.click();
       document.body.removeChild(link);
+    },
+
+    createLabelForUniqueCheckbox(uniqueCheckBox) {
+      return dom.create('label', {
+        for : uniqueCheckBox.get('id'),
+        innerHTML : 'Unique reports <i class="icon-help"></i>',
+        title : 'This narrows the report list to unique bug. The same bug may '
+          + 'appear several times if it is found on different control paths, '
+          + 'i.e. through different function calls. By checking '
+          + '"Unique reports" a report appears only once even if it is found '
+          + 'on several paths.'
+      }, uniqueCheckBox.domNode, 'after');
     }
   };
 });

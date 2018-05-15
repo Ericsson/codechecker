@@ -616,6 +616,10 @@ html, body {
   margin-left: 10px;
 }
 
+.checker-statistics-filter > label {
+  font-weight: bold;
+}
+
 .component-description {
   list-style: none;
   margin: 0;

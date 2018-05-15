@@ -337,3 +337,20 @@ span[class*="severity-"] {
 .carret-up::before {
   content: "\f0d8";
 }
+
+.icon-help {
+  display: inline-block;
+  text-align: center;
+  background-color: #3680a9;
+  color: white;
+  border-radius: 50%;
+  width: 15px;
+  height: 15px;
+  font-size: 12px;
+  line-height: 15px;
+  cursor: help;
+}
+
+.icon-help:after {
+  content : '?';
+}
