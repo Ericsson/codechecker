@@ -236,7 +236,7 @@ function (declare, dom, style, Deferred, ObjectStore, Store, QueryResults,
         { name : 'Severity', field : 'severity', cellClasses : 'severity', width : '15%', formatter : severityFormatter },
         { name : 'Bug path length', field : 'bugPathLength', cellClasses : 'bug-path-length', width : '15%', formatter : bugPathLengthFormatter },
         { name : 'Review status', field : 'reviewStatus', cellClasses : 'review-status', width : '15%', formatter : reviewStatusFormatter },
-        { name : 'Detection status', field : 'detectionStatus', cellClasses : 'detection-status', width : '15%', formatter : detectionStatusFormatter }
+        { name : '<span title="' + util.getTooltip('detectionStatus') + '">Detection status</span>', field : 'detectionStatus', cellClasses : 'detection-status', width : '15%', formatter : detectionStatusFormatter }
       ];
 
       this.focused = true;
