@@ -158,7 +158,7 @@ Product admins are automatically given other `PRODUCT_` permissions.
 
 
 The basic permission to access analysis results stored in the product. With
-this permission, the user can browse analysis results, comment, set detection
+this permission, the user can browse analysis results, comment, set review
 status, etc.
 
 #### <a name="product-store"></a> `PRODUCT_STORE`
