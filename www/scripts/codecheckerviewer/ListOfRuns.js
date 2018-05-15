@@ -65,8 +65,15 @@ function (declare, dom, ItemFileWriteStore, topic, Dialog, Button,
   }
 
   function versionTagFormatter(param) {
-    var versionTag = util.createRunTag(param.runName, param.versionTag);
+    var versionTag = util.createRunTag(param.runName, param.versionTag,
+      util.getTooltip('versionTag'));
+
     return versionTag ? versionTag.outerHTML : '';
+  }
+
+  function numberOfUnresolvedBugsFormatter (num) {
+    return '<span title="' + util.getTooltip('numOfUnresolved') + '">'
+      + num + '</span>'
   }
 
   var ListOfRunsGrid = declare(DataGrid, {
@@ -78,12 +85,12 @@ function (declare, dom, ItemFileWriteStore, topic, Dialog, Button,
       this.structure = [
         { name : 'Diff', field : 'diff', styles : 'text-align: center;', formatter : diffBtnFormatter},
         { name : 'Name', field : 'name', styles : 'text-align: left;', width : '100%' },
-        { name : 'Number of unresolved reports', field : 'numberofbugs', styles : 'text-align: center;', width : '20%' },
+        { name : '<span title="' + util.getTooltip('numOfUnresolved') + '">Number of unresolved reports</span>', field : 'numberofbugs', formatter: numberOfUnresolvedBugsFormatter, styles : 'text-align: center;', width : '20%' },
         { name : 'Storage date', field : 'date', styles : 'text-align: center;', width : '30%' },
         { name : 'Analysis duration', field : 'duration', styles : 'text-align: center;' },
         { name : 'Check command', field : 'checkcmd', styles : 'text-align: center;' },
-        { name : 'Detection status', field : 'detectionstatus', styles : 'text-align: center;', width : '30%' },
-        { name : 'Version tag', field : 'versionTag', formatter : versionTagFormatter },
+        { name : '<span title="' + util.getTooltip('detectionStatus') + '">Detection status</span>', field : 'detectionstatus', styles : 'text-align: center;', width : '30%' },
+        { name : '<span title="' + util.getTooltip('versionTag') + '">Version tag</span>', field : 'versionTag', formatter : versionTagFormatter },
         { name : 'Delete', field : 'del', styles : 'text-align: center;', type : 'dojox.grid.cells.Bool', editable : true }
       ];
 

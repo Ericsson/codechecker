@@ -14,6 +14,17 @@ function (locale, dom, style, json) {
     'July', 'August', 'September', 'October', 'November', 'December'
   ];
 
+  var tooltips = {
+    detectionStatus : "Detection statuses are calculated based on the "
+                    + "detection status values from the previous store where "
+                    + "the reports are stored again with the same run name. "
+                    + "When storing the results of a run from scratch then "
+                    + "each report will have detection status of 'New'.",
+    numOfUnresolved : "Number of non unique reports excluding Resolved, "
+                    + "False positive and Intentional reports",
+    versionTag      : "Latest version tag of this run."
+  };
+
   return {
     /**
      * This function returns the first element of the given array for which the
@@ -314,10 +325,15 @@ function (locale, dom, style, json) {
      * @param runName {string} - Name of the run.
      * @param tag {string} - Tag of the run.
      */
-    createRunTag : function (runName, tag) {
+    createRunTag : function (runName, tag, tooltip) {
       if (!tag) return;
 
-      var tagWrapper = dom.create('span', { class : 'tag-wrapper', title: 'Version tag' });
+      if (tooltip === undefined)
+        tooltip = 'Version tag';
+
+      var tagWrapper =
+        dom.create('span', { class : 'tag-wrapper', title: tooltip });
+
       dom.create('span', {
         class : 'customIcon tag',
         style : 'color:' + this.strToColor(runName + ':' + tag)
@@ -463,6 +479,10 @@ function (locale, dom, style, json) {
           + '"Unique reports" a report appears only once even if it is found '
           + 'on several paths.'
       }, uniqueCheckBox.domNode, 'after');
+    },
+
+    getTooltip : function (name) {
+      return tooltips[name] ? tooltips[name] : '';
     }
   };
 });
