@@ -304,3 +304,8 @@
   letter-spacing: 0.025em;
   cursor: pointer;
 }
+
+.bug-filters .detection-status .warn {
+  color: #e92625;
+  margin-left: 5px;
+}

@@ -189,6 +189,10 @@
   content: "\e013";
 }
 
+.customIcon.warn:before {
+  content: "\e015";
+}
+
 /* Run history */
 
 .customIcon.run-name:before {
@@ -217,7 +221,6 @@
   background-color: #ee8985;
   color: white;
   font-weight: bold;
-
 }
 
 .customIcon.yesterday:before {

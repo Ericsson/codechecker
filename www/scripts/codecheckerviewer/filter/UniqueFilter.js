@@ -41,11 +41,13 @@ function (dom, declare, CheckBox, FilterBase, util) {
       this._uniqueCheckBox.set('checked', this.defaultValue, false);
     },
 
+    isUnique : function () {
+      return this._uniqueCheckBox.get('checked');
+    },
+
     getUrlState : function () {
       var state = {};
-
-      var isUnique = this._uniqueCheckBox.get('checked');
-      state[this.class] = isUnique ? 'on' : null;
+      state[this.class] = this.isUnique() ? 'on' : null;
 
       return state;
     }
