@@ -129,7 +129,8 @@ function (declare, lang, Deferred, domClass, dom, domStyle, topic, Button,
       //--- Report count ---//
 
       this._reportCount = new ReportCount({
-        parent : this
+        parent : this,
+        class : 'report-count'
       });
       this.register(this._reportCount);
       this.addChild(this._reportCount);

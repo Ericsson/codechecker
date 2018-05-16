@@ -18,7 +18,7 @@ function (dom, declare, FilterBase) {
       dom.create('i', { class : 'customIcon bug' }, wrapper);
 
       this._reportCount = dom.create('span', {
-        class : 'report-count',
+        class : 'count',
         innerHTML : 0
       }, wrapper);
     },
