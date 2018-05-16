@@ -142,9 +142,8 @@ function (declare, domClass, dom, ItemFileWriteStore, topic, DataGrid,
         { name : 'Description', field : 'description', styles : 'text-align: left;', width : '70%' },
         { name : 'Admins', field : 'admins', styles : 'text-align: left;', width : '70%' },
         { name : 'Number of runs', field : 'runCount', styles : 'text-align: center;', width : '25%' },
-        { name : 'Latest store to product', field : 'latestStoreToProduct', styles : 'text-align: center;', width : '25%' }/*,,
-        { name : 'Last check bugs', field : 'numberofbugs', styles : 'text-align: center;', width : '20%' },
-        { name : 'Last check duration', field : 'duration', styles : 'text-align: center;' }*/,
+        { name : 'Latest store to product', field : 'latestStoreToProduct', styles : 'text-align: center;', width : '25%' },
+        { name : 'Run store in progress', field : 'runStoreInProgress', styles : 'text-align: center;', width : '25%' },
         { name : '&nbsp;', field : 'editIcon', cellClasses : 'status', width : '20px', noresize : true},
         { name : '&nbsp;', field : 'deleteIcon', cellClasses : 'status', width : '20px', noresize : true}
       ];
@@ -262,6 +261,7 @@ function (declare, domClass, dom, ItemFileWriteStore, topic, DataGrid,
         runCount : item.databaseStatus === DBStatus.OK ? item.runCount : 0,
         admins : item.admins ? item.admins.join(', ') : null,
         latestStoreToProduct : util.prettifyDate(item.latestStoreToProduct),
+        runStoreInProgress : item.runStoreInProgress.join(', '),
         editIcon : '',
         deleteIcon : ''
       });
