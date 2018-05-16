@@ -530,6 +530,10 @@ html, body {
   text-align: center;
 }
 
+.doxgen .image > img {
+  max-width: 80%;
+}
+
 /* Checker statistics */
 .dojoxCheckedMultiSelectMenu {
   max-height: 200px;
