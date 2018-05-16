@@ -344,8 +344,7 @@ class SQLServer(object):
         else:
             engine = sqlalchemy.create_engine(self.get_connection_string(),
                                               encoding='utf8',
-                                              pool_size=2,
-                                              pool_recycle=3600)
+                                              poolclass=NullPool)
 
         self._register_engine_hooks(engine)
         return engine
