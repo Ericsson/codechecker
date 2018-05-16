@@ -11,12 +11,13 @@ Table of Contents
   * [Incremental Analysis](#incremental-analysis)
   * [Analysis Failures](#analysis-failures)
   * [Avoiding or Suppressing False Positives](#false-positives)
-* [Step 3: Store analysis results in a CodeChecker DB and visualize results](#step-3)
-* [Step 4: Fine tune Analysis configuration](#step-4)
+* [Step 3: View analysis results in command line or generate static HTML files](#step-3)
+* [Step 4: Store analysis results in a CodeChecker DB and visualize results](#step-4)
+* [Step 5: Fine tune Analysis configuration](#step-5)
   * [Ignore modules from your analysis](#ignore-modules)
   * [Enable/Disable Checkers](#enable-disable-checkers)
   * [Identify files that failed analysis](#identify-files)
-* [Step 5: Integrate CodeChecker into your CI loop](#step-5)
+* [Step 6: Integrate CodeChecker into your CI loop](#step-6)
   * [Storing & Updating runs](#storing-runs)
   * [ Alternative 1 (RECOMMENDED): Store the results of each commit in the same run](#storing-results)
     * [Jenkins Script](#storing-results-example)
@@ -153,7 +154,38 @@ to mark false positives in the source code. This way the suppression information
 line of code. Although it is possible, it is not recommended to suppress false positives
 on the Web UI only, because this way the suppression will be stored in a database that is unrelated to the source code.
 
-## <a name="step-3"></a> Step 3: Store analysis results in a CodeChecker DB and visualize results
+## <a name="step-3"></a>Step 3: View analysis results in command line or generate static HTML files
+You can print detailed results (including the control flow) in command line by running:
+```
+CodeChecker parse --print-steps ./reports
+...
+Found no defects while analyzing grid-view.c
+[MEDIUM] /home/ednikru/work/codechecker/play/tmux/log.c:89:1: Opened File never closed. Potential Resource leak [alpha.unix.Stream]
+}
+^
+  Report hash: 88d734fc6eeb71dd292863f2674c370a
+  Steps:
+    1, log.c:80:6: Assuming 'log_level' is equal to 0
+    2, log.c:89:1: Opened File never closed. Potential Resource leak
+
+Found 1 defect(s) while analyzing log.c
+...
+```
+
+It is possible to generate reports as plain `HTML` files using the `CodeChecker parse` command.
+```
+CodeChecker parse ./reports -e html -o ./reports_html
+...
+To view the results in a browser run:
+> firefox ./reports_html/index.html
+```
+
+`./reports_html` directory will contain an `index.html` with a link to all findings that are stored in separate `HTML` files (one per
+analyzed build action).
+
+![Analysis results in static HTML files](/docs/images/static_html.png)
+
+## <a name="step-4"></a> Step 4: Store analysis results in a CodeChecker DB and visualize results
 You can store the analysis results in a central database and view the results in a web viewer
 1. Start the CodeChecker server locally on port 8555 (using SQLite DB, which is not recommended for multi-user central deployment)
 create a workspace directory, where the database will be stored.
@@ -177,7 +209,7 @@ See [user guide](/docs/user_guide.md#product_url-format) for detailed descriptio
 3. View the results in your web browser
  http://localhost:8555/Default
 
-## <a name="step-4"></a> Step 4: Fine tune Analysis configuration
+## <a name="step-5"></a> Step 5: Fine tune Analysis configuration
 ### <a name="ignore-modules"></a> Ignore modules from your analysis 
 
 You can ignore analysis results for certain files for example 3rd party modules.
@@ -221,7 +253,7 @@ directory.
 This means that analysis of these files failed and there is no Clang Static Analyzer output for these compilation commands.
 
 
-## <a name="step-5"></a> Step 5: Integrate CodeChecker into your CI loop
+## <a name="step-6"></a> Step 6: Integrate CodeChecker into your CI loop
 
 This section describes a recommended way on how CodeChecker is designed to be
 used in a CI environment to
