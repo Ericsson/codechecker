@@ -1432,6 +1432,7 @@ filter arguments:
                         detection_statuses, review_statuses should be a comma
                         separated list, e.g.: "high,medium:unix,core:*.cpp,*.h
                         :new,unresolved:false_positive,intentional"
+~~~~~~~~~~~~~~~~~~~~~
 
 ### <a name="source-components"></a> Source components (`components`)
 
