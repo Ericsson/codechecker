@@ -72,6 +72,13 @@ function (declare, topic, Dialog, DropDownMenu, DropDownButton, MenuItem) {
           topic.publish('tab/userguide');
         }
       }));
+
+      this.addChild(new MenuItem({
+        label : 'New features',
+        onClick : function () {
+          topic.publish('tab/changelog');
+        }
+      }));
     }
   });
 

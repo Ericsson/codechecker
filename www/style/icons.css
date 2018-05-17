@@ -98,6 +98,10 @@
   content: "\e00e";
 }
 
+.customIcon.bulb:before {
+  content: "\e00f";
+}
+
 .customIcon.assume_switch:before {
   content: "\e011";
 }

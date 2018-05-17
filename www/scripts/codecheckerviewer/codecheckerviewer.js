@@ -6,10 +6,13 @@
 
 define([
   'dojo/_base/declare',
+  'dojo/cookie',
   'dojo/topic',
+  'dojox/image/Lightbox',
   'dijit/Dialog',
   'dijit/form/Button',
   'dijit/layout/BorderContainer',
+  'dijit/layout/ContentPane',
   'dijit/layout/TabContainer',
   'codechecker/CheckerStatistics',
   'codechecker/hashHelper',
@@ -17,8 +20,9 @@ define([
   'codechecker/ListOfBugs',
   'codechecker/ListOfRuns',
   'codechecker/util'],
-function (declare, topic, Dialog, Button, BorderContainer, TabContainer,
-  CheckerStatistics, hashHelper, HeaderPane, ListOfBugs, ListOfRuns, util) {
+function (declare, cookie, topic, Lightbox, Dialog, Button, BorderContainer,
+  ContentPane, TabContainer, CheckerStatistics, hashHelper, HeaderPane,
+  ListOfBugs, ListOfRuns, util) {
 
   var runDataList = null;
 
@@ -53,6 +57,9 @@ function (declare, topic, Dialog, Button, BorderContainer, TabContainer,
         return;
       case 'allReports':
         topic.publish('tab/allReports');
+        return;
+      case 'changelog':
+        topic.publish('tab/changelog');
         return;
     }
 
@@ -162,10 +169,14 @@ function (declare, topic, Dialog, Button, BorderContainer, TabContainer,
     runsTab.addChild(checkerStatisticsTab);
     runsTab.addChild(listOfAllReports);
 
+    var changelogPage = null;
+
     //--- Init page ---//
 
     document.body.appendChild(layout.domNode);
     layout.startup();
+
+    var packageVersion = CC_PROD_SERVICE.getPackageVersion();
 
     //------------------------------- Control --------------------------------//
 
@@ -230,10 +241,40 @@ function (declare, topic, Dialog, Button, BorderContainer, TabContainer,
       runsTab.selectChild(listOfRuns);
     });
 
+    topic.subscribe('tab/changelog', function (param) {
+      if (!changelogPage) {
+        changelogPage = new ContentPane({
+          id    : 'changelog',
+          href  : 'changelog.html',
+          title : '<span class="tab-new-features-label">New features</span>',
+          style : 'padding: 10px',
+          iconClass : 'customIcon bulb',
+          closable : true,
+          onShow : function () {
+            hashHelper.resetStateValues({
+              'tab' : 'changelog'
+            });
+          },
+          onClose : function () {
+            changelogPage = null;
+            cookie('changelog', packageVersion, { expires: 365 });
+            return true;
+          }
+        });
+        runsTab.addChild(changelogPage);
+      }
+
+      if (!param || !param.preventSelect)
+        runsTab.selectChild(changelogPage);
+    });
+
     //--- Handle main tabs ---//
 
     topic.subscribe('/dojo/hashchange', function (url) {
       initByUrl();
     });
+
+    if (!cookie('changelog') || cookie('changelog') > packageVersion)
+      topic.publish('tab/changelog', { preventSelect : true });
   };
 });

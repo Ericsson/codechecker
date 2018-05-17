@@ -1,0 +1,152 @@
+<div class="intro-header">
+  <h1>CodeChecker</h1>
+  <div class="intro-about">
+    CodeChecker is an analyzer tooling, defect database and viewer extension
+    for the <a href="https://clang-analyzer.llvm.org/">Clang Static Analyzer</a>
+    and <a href="http://clang.llvm.org/extra/clang-tidy/">Clang Tidy</a>.
+  </div>
+</div>
+
+<div class="separator"></div>
+
+<div class="blocks">
+  <h2>Highlights of <a href="https://github.com/Ericsson/codechecker/releases/tag/v6.7.0" class="link">CodeChecker 6.7.0</a> release</h2>
+  
+  <div class="items">
+    <div class="intro-row">
+      <h3>Component filters</h3>
+      <div class="content">
+        <div class="intro-col intro-col-left col-md-2">
+          Aministrators of a product can create new source components by
+          using <span class="code">CodeChecker cmd components</span> subcommand
+          which can be used to filter results by multiple file paths.<br/>
+        </div>
+        <div class="intro-col intro-col-right col-md-2">
+          <a href="/images/component_filter.png" data-dojo-type="dojox.image.Lightbox" title="Component filter">
+            <img src="/images/component_filter.png" alt="Component filter" />
+          </a>
+        </div>
+        <div class="clear">
+          Examples:
+          <ul>
+            <li>
+              Create a new component: <span class="code">CodeChecker cmd
+              components add -i ./my_source_component.txt --description
+              "Description of my component" my_source_component_name</span>
+            </li>
+            <li>
+              List all components: <span class="code">CodeChecker cmd components
+              list</span>
+            </li>
+          </ul>
+          For more information <a href="https://github.com/Ericsson/codechecker/blob/master/docs/user_guide.md#source-components">see</a>.
+        </div>
+      </div>
+    </div>
+
+    <div class="intro-row">
+      <h3>Diff two different tagged versions of the same run</h3>
+      <div class="content">
+        <div class="intro-col intro-col-left col-md-2">
+          It is possible to compare two different tagged versions of the same
+          run not only different run names.
+        </div>
+        <div class="intro-col intro-col-right col-md-2">
+          <a href="/images/run_tag_diff.png" data-dojo-type="dojox.image.Lightbox" title="Diff two different tagged versions of the same run">
+            <img src="/images/run_tag_diff.png" alt="Diff two different tagged versions of the same run" />
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="intro-row">
+      <h3>Generate index.html file by using <i>PlistToHTML</i></h3>
+      <div class="content">
+        <div class="intro-col intro-col-left col-md-2">
+          Creating an <span class="code">index.html</span> file that lists the
+          found reports which links to the local html pages.<br/>
+          Usage: <span class="code">CodeChecker parse ./reports -e html -o ./reports_html</span>
+          For more information <a href="https://github.com/Ericsson/codechecker/blob/master/docs/usage.md#step-3">see</a>.
+        </div>
+        <div class="intro-col intro-col-right col-md-2">
+          <a href="/images/plist_to_html_index.png" data-dojo-type="dojox.image.Lightbox" title="Generate index.html file by using PlistToHTML">
+            <img src="/images/plist_to_html_index.png" alt="Generate index.html file by using PlistToHTML" />
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="intro-row">
+      <h3>Separate filter options for cmd line</h3>
+      <div class="content">
+        <div class="intro-col intro-col-left">
+          Create separate filter options for <span class="code">CodeChecker cmd
+          results</span> and <span class="code">CodeChecker cmd diff</span>
+          command line options to be more consistent with the UI.<br/>
+          Examples:
+          <ul>
+            <li>
+              <span class="code">CodeChecker cmd results my_run --severity
+                  critical high medium --file "/home/username/my_project/*"</span>
+            </li>
+            <li>
+              <span class="code">CodeChecker cmd diff -b run1 -n run2
+                --unresolved --severity high medium --review-status
+                unreviewed confirmed</span>
+            </li>
+          </ul>
+          For more information <a href="https://github.com/Ericsson/codechecker/blob/master/docs/user_guide.md#cmd">see</a>.
+        </div>
+      </div>
+    </div>
+
+    <div class="intro-row">
+      <h3>Enable passwordless token based authentication</h3>
+      <div class="content">
+        <div class="intro-col intro-col-left">
+          Command line clients can authenticate using the username/password
+          stored in the <span class="code">.codechecker.passwords.json</span>.
+          It is obviously not a good idea to store passwords in text files.
+          Instead of this the user is able to generate a
+          token from command line, that can be used to authenticate in the name
+          of his/her name.<br/>
+          Examples:
+          <ul>
+            <li>
+              Create a new token: <span class="code">CodeChecker cmd token new
+                --description "Description of my token"</span>
+            </li>
+            <li>
+              List my personal access tokens: <span class="code">CodeChecker
+              cmd token list</span>
+            </li>
+          </ul>
+          For more information <a href="https://github.com/Ericsson/codechecker/blob/master/docs/authentication.md#personal-access-token">see</a>.
+        </div>
+      </div>
+    </div>
+
+    <div class="intro-row">
+      <h3>Consistent report counting</h3>
+      <div class="content">
+        <div class="intro-col intro-col-left">
+          <ul>
+            <li>Uniqueing is disabled at bug list view by default.</li>
+            <li>
+              Numbers on the Run page (<i>Number of unresolved reports</i>,
+              <i>Detection status</i>) are counted without uniqueing.
+            </li>
+            <li>
+              Set default filter set to the following values:
+              <ul>
+                <li>Review status: <i>Unreviewed</i>, <i>Confirmed</i></li>
+                <li>Detection status: <i>New</i>, <i>Reopened</i>, <i>Unresolved</i></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  
+  </div>
+</div>
