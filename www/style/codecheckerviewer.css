@@ -631,3 +631,12 @@ html, body {
   border-bottom: 1px solid #d9dbdd;
   margin-bottom: 2px;
 }
+
+.dijitTab .customIcon.bulb {
+  color: #ffb604;
+  font-weight: bold;
+}
+
+.tab-new-features-label {
+  font-weight: bold;
+}
