@@ -138,6 +138,12 @@ function (declare, dom, style, Deferred, ObjectStore, Store, QueryResults,
           file : reportData.checkedFile
         };
 
+        reportData.detectionStatus = {
+          status : reportData.detectionStatus,
+          detectedAt : reportData.detectedAt,
+          fixedAt : reportData.fixedAt
+        };
+
         //--- Review status ---//
 
         var review = reportData.reviewData;
@@ -183,11 +189,20 @@ function (declare, dom, style, Deferred, ObjectStore, Store, QueryResults,
       + severity + '"></span>';
   }
 
-  function detectionStatusFormatter(detectionStatus) {
+  function detectionStatusFormatter(data) {
+    var detectionStatus = data.status;
+
     if (detectionStatus !== null) {
       var status = util.detectionStatusFromCodeToString(detectionStatus);
+      var title = 'Status: ' + status;
 
-      return '<span title="' + status  + '" class="customIcon detection-status-'
+      if (data.detectedAt)
+        title += '\nDetected at: ' + util.prettifyDate(data.detectedAt);
+
+      if (data.fixedAt)
+        title += '\nFixed at: ' + util.prettifyDate(data.fixedAt);
+
+      return '<span title="' + title  + '" class="customIcon detection-status-'
         + status.toLowerCase() + '"></span>';
     }
 
