@@ -159,24 +159,47 @@ class TestProductConfigShare(unittest.TestCase):
             'producttest',
             "Main server's product was not loaded by the secondary server.")
 
-        # Create a new product on the secondary server.
-        name = base64.b64encode('producttest_second')
-        product_cfg = ProductConfiguration(
-            endpoint='producttest_second',
-            displayedName_b64=name,
-            description_b64=name,
-            connection=DatabaseConnection(
-                engine='sqlite',
-                host='',
-                port=0,
-                username_b64='',
-                password_b64='',
-                database=os.path.join(self.test_workspace_secondary,
-                                      'data.sqlite'))
-        )
+        def create_test_product(product_name, product_endpoint):
+            # Create a new product on the secondary server.
+            name = base64.b64encode(product_name)
+            return ProductConfiguration(
+                endpoint=product_endpoint,
+                displayedName_b64=name,
+                description_b64=name,
+                connection=DatabaseConnection(
+                    engine='sqlite',
+                    host='',
+                    port=0,
+                    username_b64='',
+                    password_b64='',
+                    database=os.path.join(self.test_workspace_secondary,
+                                          'data.sqlite')))
+
+        product_cfg = create_test_product('producttest_second',
+                                          'producttest_second')
 
         self.assertTrue(self._pr_client_2.addProduct(product_cfg),
                         "Cannot create product on secondary server.")
+
+        product_cfg = create_test_product('producttest_second 2',
+                                          'producttest_second_2')
+        self.assertTrue(self._pr_client_2.addProduct(product_cfg),
+                        "Cannot create product on secondary server.")
+
+        # Product name full string match.
+        products = self._pr_client_2.getProducts('producttest_second', None)
+        self.assertEqual(len(products), 1)
+
+        # Product endpoint full string match.
+        products = self._pr_client_2.getProducts(None, 'producttest_second')
+        self.assertEqual(len(products), 1)
+
+        # Product name substring match.
+        products = self._pr_client_2.getProducts('producttest_second*', None)
+        self.assertEqual(len(products), 2)
+
+        products = self._pr_client_2.getProducts(None, 'producttest_second*')
+        self.assertEqual(len(products), 2)
 
         # Use the same CodeChecker config that was used on the main server,
         # but store into the secondary one.

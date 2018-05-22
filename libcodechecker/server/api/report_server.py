@@ -40,6 +40,7 @@ from libcodechecker.report import get_report_path_hash
 from libcodechecker.server import permissions
 from libcodechecker.server.database import db_cleanup
 from libcodechecker.server.database.config_db_model import Product
+from libcodechecker.server.database.database import conv
 from libcodechecker.server.database.run_db_model import \
     Report, ReviewStatus, File, Run, RunHistory, \
     RunLock, Comment, BugPathEvent, BugReportPoint, \
@@ -78,15 +79,6 @@ def exc_to_thrift_reqfail(func):
                                               ex.message)
 
     return wrapper
-
-
-def conv(filter_value):
-    """
-    Convert * to % got from clients for the database queries.
-    """
-    if filter_value is None:
-        return '%'
-    return filter_value.replace('*', '%')
 
 
 def get_component_values(session, component_name):

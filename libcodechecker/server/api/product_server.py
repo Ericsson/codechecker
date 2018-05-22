@@ -23,7 +23,7 @@ from libcodechecker.profiler import timeit
 from libcodechecker.server import permissions
 from libcodechecker.server.database.config_db_model import IDENTIFIER, \
     Product, ProductPermission
-from libcodechecker.server.database.database import SQLServer
+from libcodechecker.server.database.database import SQLServer, conv
 from libcodechecker.server.database.run_db_model import Run
 from libcodechecker.server.routing import is_valid_product_endpoint
 
@@ -197,12 +197,14 @@ class ThriftProductHandler(object):
                                                       in all_products])
 
             if product_endpoint_filter:
-                prods = prods.filter(Product.endpoint.ilike('%{0}%'.format(
-                    util.escape_like(product_endpoint_filter)), escape='*'))
+                prods = prods.filter(Product.endpoint.ilike(
+                    conv(util.escape_like(product_endpoint_filter, '\\')),
+                    escape='\\'))
 
             if product_name_filter:
-                prods = prods.filter(Product.display_name.ilike('%{0}%'.format(
-                    util.escape_like(product_name_filter)), escape='*'))
+                prods = prods.filter(Product.display_name.ilike(
+                    conv(util.escape_like(product_name_filter, '\\')),
+                    escape='\\'))
 
             prods = prods.all()
             for prod in prods:
