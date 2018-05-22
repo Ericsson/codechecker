@@ -276,8 +276,11 @@ def setup_client(product_url, product_client=False):
     client = setup_product_client(protocol, host, port, product_name=None)
     product = client.getProducts(product_name, None)
     product_error_str = None
-    if not (product and len(product) == 1):
+    if not product:
         product_error_str = "It does not exist."
+    elif len(product) != 1:
+        product_error_str = "Multiple products can be found with the given " \
+                            "name."
     else:
         if product[0].endpoint != product_name:
             # Only a "substring" match was found. We explicitly reject it

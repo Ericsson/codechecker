@@ -575,3 +575,12 @@ class SQLiteDatabase(SQLServer):
 
     def get_db_location(self):
         return self.dbpath
+
+
+def conv(filter_value):
+    """
+    Convert * to % got from clients for the database queries.
+    """
+    if filter_value is None:
+        return '%'
+    return filter_value.replace('*', '%')
