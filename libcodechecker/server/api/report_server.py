@@ -223,13 +223,14 @@ def process_report_filter(session, report_filter):
 
             file_ids = None
             if skip and include:
-                file_ids = session.query(skip_q.union(include_q)) \
+                skip_q = skip_q.union(include_q).alias('component')
+                file_ids = session.query(skip_q) \
                     .distinct() \
                     .all()
             elif skip:
-                file_ids = session.query(skip_q).all()
+                file_ids = session.query(skip_q.alias('skip')).all()
             elif include:
-                file_ids = session.query(include_q).all()
+                file_ids = session.query(include_q.alias('include')).all()
 
             if file_ids:
                 OR.append(or_(File.id.in_([f_id[0] for f_id in file_ids])))
