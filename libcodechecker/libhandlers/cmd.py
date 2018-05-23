@@ -226,6 +226,13 @@ def __add_filtering_arguments(parser):
                               "quantifiers which matches any number of "
                               "characters (zero or more).")
 
+    f_group.add_argument('--component',
+                         nargs='*',
+                         dest="component",
+                         metavar='COMPONENT',
+                         default=argparse.SUPPRESS,
+                         help="Filter results by source components.")
+
     f_group.add_argument('-s', '--suppressed',
                          default=argparse.SUPPRESS,
                          dest="suppressed",
@@ -926,7 +933,10 @@ Get analysis results by using regex:
 
 Get analysis results for a run and filter the analysis results:
     CodeChecker cmd results my_run --severity critical high medium \\
-        --file "/home/username/my_project/*"''')
+        --file "/home/username/my_project/*"
+
+    CodeChecker cmd results my_run --review-status confirmed unreviewed \\
+        --component my_component_name''')
     __register_results(results)
     results.set_defaults(func=cmd_line_client.handle_list_results)
     __add_common_arguments(results, has_matrix_output=True)
