@@ -98,7 +98,7 @@ def handle_del_component(args):
     # Check that the given source component is exists.
     source_component = client.getSourceComponents([args.name])
 
-    if len(source_component):
+    if not source_component:
         LOG.error("The source component '{0}' does not exist!"
                   .format(args.name))
         sys.exit(1)
