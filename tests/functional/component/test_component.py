@@ -67,34 +67,84 @@ class TestComponent(unittest.TestCase):
         self._runid = test_runs[0].runId
         self._run_name = test_runs[0].name
 
-        self._component_name = 'dummy_component'
-        self._component_value = '\n'.join(['+*/divide_zero.cpp',
-                                           '-*/new_delete.cpp'])
-        self._component_description = "Test component"
+        self.components = [
+            {
+                'name': 'test_component1',
+                'value': '\n'.join(['+*/divide_zero.cpp',
+                                    '-*/new_delete.cpp']),
+                'description': 'Description of my first component'
+            },
+            {
+                'name': 'component name with whitespaces',
+                'value': '\n'.join(['+*/divide_zero.cpp',
+                                    '-*/new_delete.cpp']),
+                'description': 'Description of my second component'
+            },
+            {
+                'name': 'test_component2',
+                'value': '\n'.join(['+*/divide_zero.cpp',
+                                    '+*/null_dereference.cpp',
+                                    '-*/call_and_message.cpp',
+                                    '-*/new_delete.*']),
+                'description': 'Description of my second component'
+            },
+            {
+                'name': 'complex1',
+                'value': '\n'.join(['+*/divide_zero.cpp',
+                                    '-*/call_and_message.cpp',
+                                    '-*'])
+            },
+            {
+                'name': 'complex2',
+                'value': '\n'.join(['+*/null_dereference.cpp',
+                                    '-*/new_delete.cpp',
+                                    '-*'])
+            },
+            {
+                'name': 'exclude_all',
+                'value': '-*'
+            }
+        ]
+
+    def __add_new_component(self, component):
+        """
+        Creates a new source component.
+        """
+        description = component['description'] \
+            if 'description' in component else None
+        ret = self._cc_client.addSourceComponent(component['name'],
+                                                 component['value'],
+                                                 description)
+
+        self.assertTrue(ret)
+
+    def __remove_source_component(self, name):
+        """
+        Removes an existing source component.
+        """
+        ret = self._cc_client.removeSourceComponent(name)
+        self.assertTrue(ret)
 
     def test_component_management(self):
         """
         Test management of the components.
         """
+        test_component = self.components[0]
+
         # There are no source components available.
         components = self._cc_client.getSourceComponents(None)
         self.assertEqual(len(components), 0)
 
-        # Create a new source component.
-        ret = self._cc_client.addSourceComponent(self._component_name,
-                                                 self._component_value,
-                                                 self._component_description)
-        self.assertTrue(ret)
+        self.__add_new_component(test_component)
 
         components = self._cc_client.getSourceComponents(None)
         self.assertEqual(len(components), 1)
-        self.assertEqual(components[0].name, self._component_name)
-        self.assertEqual(components[0].value, self._component_value)
+        self.assertEqual(components[0].name, test_component['name'])
+        self.assertEqual(components[0].value, test_component['value'])
         self.assertEqual(components[0].description,
-                         self._component_description)
+                         test_component['description'])
 
-        ret = self._cc_client.removeSourceComponent(self._component_name)
-        self.assertTrue(ret)
+        self.__remove_source_component(test_component['name'])
 
         # There are no source components available.
         components = self._cc_client.getSourceComponents(None)
@@ -104,16 +154,14 @@ class TestComponent(unittest.TestCase):
         """
         Test report filter by component.
         """
+        test_component = self.components[0]
+
         components = self._cc_client.getSourceComponents(None)
         self.assertEqual(len(components), 0)
 
-        # Create a new source component.
-        ret = self._cc_client.addSourceComponent(self._component_name,
-                                                 self._component_value,
-                                                 self._component_description)
-        self.assertTrue(ret)
+        self.__add_new_component(test_component)
 
-        r_filter = ReportFilter(componentNames=[self._component_name])
+        r_filter = ReportFilter(componentNames=[test_component['name']])
         run_results = self._cc_client.getRunResults(None,
                                                     500,
                                                     0,
@@ -121,20 +169,156 @@ class TestComponent(unittest.TestCase):
                                                     r_filter,
                                                     None)
         self.assertIsNotNone(run_results)
+
+        # Check that reports which can be found in file what the source
+        # component including are in the filtered results.
         divide_zero_reports = [r for r in run_results if
                                r.checkedFile.endswith('divide_zero.cpp')]
         self.assertNotEqual(len(divide_zero_reports), 0)
 
+        # Check that reports which can be found in file what the source
+        # component excluding are in the filtered results.
+        new_delete_reports = [r for r in run_results if
+                              r.checkedFile.endswith('new_delete.cpp')]
+        self.assertEqual(len(new_delete_reports), 0)
+
+        # Check that reports which can be found in file what the source
+        # component does not includes or excludes are in the filtered results.
         divide_zero_reports = [r for r in run_results if
-                               r.checkedFile.endswith('new_delete.cpp')]
-        self.assertEqual(len(divide_zero_reports), 0)
+                               r.checkedFile.endswith('null_dereference.cpp')]
+        self.assertNotEqual(len(divide_zero_reports), 0)
+
+        self.__remove_source_component(test_component['name'])
+
+    def test_filter_report_by_complex_component(self):
+        """
+        Test report filter by complex component which includes and excludes
+        multiple file paths.
+        """
+        test_component = self.components[2]
+
+        components = self._cc_client.getSourceComponents(None)
+        self.assertEqual(len(components), 0)
+
+        self.__add_new_component(test_component)
+
+        r_filter = ReportFilter(componentNames=[test_component['name']])
+        run_results = self._cc_client.getRunResults(None,
+                                                    500,
+                                                    0,
+                                                    None,
+                                                    r_filter,
+                                                    None)
+        self.assertIsNotNone(run_results)
+
+        # Check that reports which can be found in file what the source
+        # component including are in the filtered results.
+        divide_zero_reports = [r for r in run_results if
+                               r.checkedFile.endswith('divide_zero.cpp')]
+        self.assertNotEqual(len(divide_zero_reports), 0)
+
+        null_deref_reports = [r for r in run_results if
+                              r.checkedFile.endswith('null_dereference.cpp')]
+        self.assertNotEqual(len(null_deref_reports), 0)
+
+        # Check that reports which can be found in file what the source
+        # component excluding are in the filtered results.
+        new_delete_reports = [r for r in run_results if
+                              r.checkedFile.endswith('new_delete.cpp')]
+        self.assertEqual(len(new_delete_reports), 0)
+
+        call_and_msg_reports = [r for r in run_results if
+                                r.checkedFile.endswith('call_and_message.cpp')]
+        self.assertEqual(len(call_and_msg_reports), 0)
+
+        # Check that reports which can be found in file what the source
+        # component does not includes or excludes are in the filtered results.
+        divide_zero_reports = [r for r in run_results if
+                               r.checkedFile.endswith('path_begin.cpp')]
+        self.assertNotEqual(len(divide_zero_reports), 0)
+
+        self.__remove_source_component(test_component['name'])
+
+    def test_filter_report_by_multiple_components(self):
+        """
+        Test report filter by multiple components.
+        """
+        test_component1 = self.components[3]
+        test_component2 = self.components[4]
+
+        components = self._cc_client.getSourceComponents(None)
+        self.assertEqual(len(components), 0)
+
+        self.__add_new_component(test_component1)
+        self.__add_new_component(test_component2)
+
+        components = self._cc_client.getSourceComponents(None)
+        self.assertEqual(len(components), 2)
+
+        r_filter = ReportFilter(componentNames=[test_component1['name'],
+                                                test_component2['name']])
+        run_results = self._cc_client.getRunResults(None,
+                                                    500,
+                                                    0,
+                                                    None,
+                                                    r_filter,
+                                                    None)
+        self.assertIsNotNone(run_results)
+
+        # Check that reports which can be found in file what the source
+        # component including are in the filtered results.
+        divide_zero_reports = [r for r in run_results if
+                               r.checkedFile.endswith('divide_zero.cpp')]
+        self.assertNotEqual(len(divide_zero_reports), 0)
+
+        null_deref_reports = [r for r in run_results if
+                              r.checkedFile.endswith('null_dereference.cpp')]
+        self.assertNotEqual(len(null_deref_reports), 0)
+
+        # Check that reports which can be found in file what the source
+        # component excluding are in the filtered results.
+        new_delete_reports = [r for r in run_results if
+                              r.checkedFile.endswith('new_delete.cpp')]
+        self.assertEqual(len(new_delete_reports), 0)
+
+        call_and_msg_reports = [r for r in run_results if
+                                r.checkedFile.endswith('call_and_message.cpp')]
+        self.assertEqual(len(call_and_msg_reports), 0)
+
+        self.__remove_source_component(test_component1['name'])
+        self.__remove_source_component(test_component2['name'])
+
+    def test_filter_report_by_excluding_all_results_component(self):
+        """
+        Test report filter by component which excludes all reportrs.
+        """
+        test_component = self.components[5]
+
+        components = self._cc_client.getSourceComponents(None)
+        self.assertEqual(len(components), 0)
+
+        self.__add_new_component(test_component)
+
+        r_filter = ReportFilter(componentNames=[test_component['name']])
+        run_results = self._cc_client.getRunResults(None,
+                                                    500,
+                                                    0,
+                                                    None,
+                                                    r_filter,
+                                                    None)
+        self.assertIsNotNone(run_results)
+
+        # No reports for this component.
+        self.assertEqual(len(run_results), 0)
+
+        self.__remove_source_component(test_component['name'])
 
     def test_component_name_with_whitespaces(self):
-        component_name = 'component name with whitespaces'
-        ret = self._cc_client.addSourceComponent(component_name,
-                                                 "",
-                                                 None)
-        self.assertTrue(ret)
+        """
+        Creates a new component which contains white spaces and removes it at
+        the end of test case.
+        """
+        test_component = self.components[1]
 
-        ret = self._cc_client.removeSourceComponent(component_name)
-        self.assertTrue(ret)
+        self.__add_new_component(test_component)
+        self.__remove_source_component(test_component['name'])
