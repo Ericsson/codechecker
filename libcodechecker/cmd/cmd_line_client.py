@@ -173,6 +173,9 @@ def add_filter_conditions(client, report_filter, args):
     if 'checker_msg' in args:
         report_filter.checkerMsg = args.checker_msg
 
+    if 'component' in args:
+        report_filter.componentNames = args.component
+
     if file_path:
         report_filter.filepath = file_path
 

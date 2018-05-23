@@ -1421,6 +1421,8 @@ filter arguments:
                         Filter results by checker messages.The checker message
                         can contain multiple * quantifiers which matches any
                         number of characters (zero or more).
+  --component [COMPONENT [COMPONENT ...]]
+                        Filter results by source components.
   -s, --suppressed      DEPRECATED. Use the '--filter' option to get false
                         positive (suppressed) results. Show only suppressed
                         results instead of only unsuppressed ones.
@@ -1591,7 +1593,8 @@ usage: CodeChecker cmd results [-h]
                                [--file [FILE_PATH [FILE_PATH ...]]]
                                [--checker-name [CHECKER_NAME [CHECKER_NAME ...]]]
                                [--checker-msg [CHECKER_MSG [CHECKER_MSG ...]]]
-                               [-s] [--filter FILTER] [--url PRODUCT_URL]
+                               [--component [COMPONENT [COMPONENT ...]]] [-s]
+                               [--filter FILTER] [--url PRODUCT_URL]
                                [-o {plaintext,rows,table,csv,json}]
                                [--verbose {info,debug,debug_analyzer}]
                                RUN_NAMES
@@ -1642,7 +1645,8 @@ usage: CodeChecker cmd diff [-h] -b BASE_RUN -n NEW_RUN
                             [--file [FILE_PATH [FILE_PATH ...]]]
                             [--checker-name [CHECKER_NAME [CHECKER_NAME ...]]]
                             [--checker-msg [CHECKER_MSG [CHECKER_MSG ...]]]
-                            [-s] [--filter FILTER]
+                            [--component [COMPONENT [COMPONENT ...]]] [-s]
+                            [--filter FILTER]
                             (--new | --resolved | --unresolved)
                             [--url PRODUCT_URL]
                             [-o {plaintext,rows,table,csv,json,html}]
@@ -1713,7 +1717,8 @@ usage: CodeChecker cmd sum [-h] (-n RUN_NAME [RUN_NAME ...] | -a)
                            [--file [FILE_PATH [FILE_PATH ...]]]
                            [--checker-name [CHECKER_NAME [CHECKER_NAME ...]]]
                            [--checker-msg [CHECKER_MSG [CHECKER_MSG ...]]]
-                           [-s] [--filter FILTER] [--url PRODUCT_URL]
+                           [--component [COMPONENT [COMPONENT ...]]] [-s]
+                           [--filter FILTER] [--url PRODUCT_URL]
                            [-o {plaintext,rows,table,csv,json}]
                            [--verbose {info,debug,debug_analyzer}]
 
