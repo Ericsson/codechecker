@@ -219,9 +219,9 @@ def process_report_filter(session, report_filter):
 
             if include:
                 and_q = [File.filepath.ilike(conv(fp)) for fp in include]
-                include_q = select([File.id]).where(and_(*and_q))
+                include_q = select([File.id]).where(or_(*and_q))
 
-            file_ids = None
+            file_ids = []
             if skip and include:
                 skip_q = skip_q.union(include_q).alias('component')
                 file_ids = session.query(skip_q) \
@@ -232,8 +232,7 @@ def process_report_filter(session, report_filter):
             elif include:
                 file_ids = session.query(include_q.alias('include')).all()
 
-            if file_ids:
-                OR.append(or_(File.id.in_([f_id[0] for f_id in file_ids])))
+            OR.append(or_(File.id.in_([f_id[0] for f_id in file_ids])))
         AND.append(or_(*OR))
 
     filter_expr = and_(*AND)
