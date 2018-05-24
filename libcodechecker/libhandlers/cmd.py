@@ -21,6 +21,12 @@ from libcodechecker.cmd import product_client
 from libcodechecker.cmd import source_component_client, token_client
 
 
+DEFAULT_FILTER_VALUES = {
+    'review_status': ['unreviewed', 'confirmed'],
+    'detection_status': ['new', 'reopened', 'unresolved']
+}
+
+
 class NewLineDefaultHelpFormatter(argparse.ArgumentDefaultsHelpFormatter):
 
     def _split_lines(self, text, width):
@@ -157,10 +163,14 @@ def __add_common_arguments(parser,
     logger.add_verbose_arguments(common_group)
 
 
-def __add_filtering_arguments(parser):
+def __add_filtering_arguments(parser, defaults=None):
     """
     Add some common filtering arguments to the given parser.
     """
+
+    def init_default(dest):
+        return defaults[dest] if defaults and dest in defaults \
+            else argparse.SUPPRESS
 
     f_group = parser.add_argument_group('filter arguments')
 
@@ -168,35 +178,35 @@ def __add_filtering_arguments(parser):
                          nargs='*',
                          dest="review_status",
                          metavar='REVIEW_STATUS',
-                         default=argparse.SUPPRESS,
+                         default=init_default('review_status'),
                          help="Filter results by review statuses.")
 
     f_group.add_argument('--detection-status',
                          nargs='*',
                          dest="detection_status",
                          metavar='DETECTION_STATUS',
-                         default=argparse.SUPPRESS,
+                         default=init_default('detection_status'),
                          help="Filter results by detection statuses.")
 
     f_group.add_argument('--severity',
                          nargs='*',
                          dest="severity",
                          metavar='SEVERITY',
-                         default=argparse.SUPPRESS,
+                         default=init_default('severity'),
                          help="Filter results by severities.")
 
     f_group.add_argument('--tag',
                          nargs='*',
                          dest="tag",
                          metavar='TAG',
-                         default=argparse.SUPPRESS,
+                         default=init_default('tag'),
                          help="Filter results by version tag names.")
 
     f_group.add_argument('--file',
                          nargs='*',
                          dest="file_path",
                          metavar='FILE_PATH',
-                         default=argparse.SUPPRESS,
+                         default=init_default('file_path'),
                          help="Filter results by file path. "
                               "The file path can contain multiple * "
                               "quantifiers which matches any number of "
@@ -208,7 +218,7 @@ def __add_filtering_arguments(parser):
                          nargs='*',
                          dest="checker_name",
                          metavar='CHECKER_NAME',
-                         default=argparse.SUPPRESS,
+                         default=init_default('checker_name'),
                          help="Filter results by checker names. "
                               "The checker name can contain multiple * "
                               "quantifiers which matches any number of "
@@ -220,7 +230,7 @@ def __add_filtering_arguments(parser):
                          nargs='*',
                          dest="checker_msg",
                          metavar='CHECKER_MSG',
-                         default=argparse.SUPPRESS,
+                         default=init_default('checker_msg'),
                          help="Filter results by checker messages."
                               "The checker message can contain multiple * "
                               "quantifiers which matches any number of "
@@ -270,7 +280,7 @@ def __register_results(parser):
                              "runs. Use 'CodeChecker cmd runs' to get the "
                              "available runs.")
 
-    __add_filtering_arguments(parser)
+    __add_filtering_arguments(parser, DEFAULT_FILTER_VALUES)
 
 
 def __register_diff(parser):
@@ -310,7 +320,7 @@ def __register_diff(parser):
                              "run-a-1, run-a-2 and run-b-1 "
                              "then \"run-a*\" selects the first two.")
 
-    __add_filtering_arguments(parser)
+    __add_filtering_arguments(parser, DEFAULT_FILTER_VALUES)
 
     group = parser.add_argument_group("comparison modes")
     group = group.add_mutually_exclusive_group(required=True)
