@@ -60,7 +60,8 @@ COMPILE_OPTION_MAP_REGEX = {
     '-m.*': 0,
     '^-Wno-.*': 0,
     '^-m(32|64)$': 0,
-    '^--sysroot=': 0
+    '^--sysroot=': 0,
+    '^--gcc-toolchain=': 0
 }
 
 # Linker options.
