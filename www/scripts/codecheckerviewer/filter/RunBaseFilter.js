@@ -66,6 +66,10 @@ function (dom, declare, Deferred, SelectFilter) {
 
       var runData = CC_SERVICE.getRunData(runFilter);
       return runData.map(function (run) { return run.runId; });
+    },
+
+    getRunNames : function () {
+      return Object.keys(this.selectedItems);
     }
   });
 });
