@@ -546,18 +546,22 @@ function (declare, lang, Deferred, domClass, dom, domStyle, topic, Button,
 
       // Select initial base line and new check values which come from the
       // constructor.
-      if (this.baseline)
+      if (this.baseline) {
         this.baseline.forEach(function (runName) {
           that._runBaseLineFilter.select(runName);
         });
+        queryParams[that._runBaseLineFilter.class] = this.baseline;
+      }
 
-      if (this.newcheck)
+      if (this.newcheck) {
         this.newcheck.forEach(function (runName) {
           that._runNewCheckFilter.select(runName);
         });
+        queryParams[that._runNewCheckFilter.class] = this.newcheck;
+      }
 
       // Initalize only the current tab.
-      if (this.parent.tab === queryParams.tab)
+      if (this.parent.tab === queryParams.tab || this.openedByUserEvent)
         this.initAll(queryParams);
 
       this._subscribeTopics();
