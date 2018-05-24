@@ -466,6 +466,7 @@ def main(args):
         )
         __update_if_key_exists(args, parse_args, 'print_steps')
         __update_if_key_exists(args, parse_args, 'verbose')
+        __update_if_key_exists(args, parse_args, 'skipfile')
 
         parse_module = __load_module('parse')
         LOG.debug("Calling PARSE with args:")
