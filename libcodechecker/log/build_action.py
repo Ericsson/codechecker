@@ -156,7 +156,6 @@ class BuildAction(object):
         hash_content = []
         hash_content.extend(self.analyzer_options)
         hash_content.append(str(self._analyzer_type))
-        hash_content.append(self.output)
         hash_content.append(self.target)
         hash_content.extend(self.sources)
         return hashlib.sha1(''.join(hash_content)).hexdigest()
