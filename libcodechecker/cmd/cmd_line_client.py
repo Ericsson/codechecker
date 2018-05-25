@@ -483,7 +483,12 @@ def handle_diff_results(args):
                                'file': event.fileId,
                                'msg': event.msg,
                                'step': index + 1})
-            report_data.append(events)
+
+            report_data.append({
+                'events': events,
+                'path': report.checkedFile,
+                'reportHash': report.bugHash,
+                'checkerName': report.checkerId})
 
         return {'files': file_sources,
                 'reports': report_data}
@@ -527,7 +532,13 @@ def handle_diff_results(args):
                                    'msg':  element['message'],
                                    'step': index})
                     index += 1
-            report_data.append(events)
+
+            report_hash = report.main['issue_hash_content_of_line_in_context']
+            report_data.append({
+                'events': events,
+                'path': report.main['location']['file_name'],
+                'reportHash': report_hash,
+                'checkerName': report.main['check_name']})
 
         return {'files': file_sources,
                 'reports': report_data}
