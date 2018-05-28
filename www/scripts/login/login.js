@@ -10,6 +10,7 @@ define([
   'dojo/dom',
   'dojo/dom-construct',
   'dojo/dom-class',
+  'dojo/io-query',
   'dojo/keys',
   'dojo/on',
   'dijit/form/Button',
@@ -19,8 +20,8 @@ define([
   'dojox/widget/Standby',
   'codechecker/MessagePane',
   'codechecker/hashHelper'],
-function (declare, cookie, dom, domConstruct, domClass, keys, on, Button,
-  TextBox, BorderContainer, ContentPane, Standby, MessagePane, hash) {
+function (declare, cookie, dom, domConstruct, domClass, ioQuery, keys, on,
+  Button, TextBox, BorderContainer, ContentPane, Standby, MessagePane, hash) {
 
   // A stripped-down version of the "normal" CodeChecker GUI header, tailored
   // for a lightweight login window.
@@ -66,8 +67,17 @@ function (declare, cookie, dom, domConstruct, domClass, keys, on, Button,
           // Set the cookie in the browser.
           cookie(CC_AUTH_COOKIE_NAME, sessionToken, { path : '/' });
 
-          var returnTo = hash.getState('returnto') || '';
-          window.location = window.location.origin + '/' + returnTo;
+          var state = hash.getState();
+
+          var search = window.location.search;
+          if (search.charAt(0) === '?')
+            search = search.substring(1);
+
+          var searchParams = ioQuery.queryToObject(search);
+          var returnTo = searchParams['returnto'] || '';
+
+          window.location = window.location.origin + '/' + returnTo + '#'
+            + ioQuery.objectToQuery(state);
         }).fail(function (jsReq, status, exc) {
           if (status === "parsererror") {
             that._standBy.hide();
