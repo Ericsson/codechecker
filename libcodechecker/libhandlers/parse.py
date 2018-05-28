@@ -291,7 +291,7 @@ def main(args):
 
     skip_handler = None
     if 'skipfile' in args:
-        with open(args.skip_file, 'r') as skip_file:
+        with open(args.skipfile, 'r') as skip_file:
             skip_handler = SkipListHandler(skip_file.read())
 
     html_builder = None
