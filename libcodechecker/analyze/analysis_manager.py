@@ -536,7 +536,7 @@ def check(check_data):
                     called. Set up a timeout for the analysis.
                     """
                     timeout_cleanup[0] = util.setup_process_timeout(
-                        analyzer_process, analysis_timeout, signal.SIGKILL)
+                        analyzer_process, analysis_timeout, signal.SIGABRT)
             else:
                 def __create_timeout(analyzer_process):
                     # If no timeout is given by the client, this callback
