@@ -229,6 +229,17 @@ function (declare, cookie, topic, Lightbox, Dialog, Button, BorderContainer,
       });
     });
 
+    var reviewCommentDialog = new Dialog();
+
+    topic.subscribe('showReviewComment', function (reviewData) {
+      if (reviewData.author) {
+        var content = util.reviewStatusTooltipContent(reviewData);
+        docDialog.set('title', 'Review status');
+        docDialog.set('content', content);
+        docDialog.show();
+      }
+    });
+
     topic.subscribe('tab/allReports', function () {
       runsTab.selectChild(listOfAllReports);
     });

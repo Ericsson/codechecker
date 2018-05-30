@@ -215,7 +215,7 @@ function (declare, dom, style, Deferred, ObjectStore, Store, QueryResults,
       util.reviewStatusFromCodeToString(reviewStatus);
 
     return '<span title="' + status
-      + '" class="customIcon ' + className + '"></span>';
+      + '" class="link customIcon ' + className + '"></span>';
   }
 
   function checkerMessageFormatter(msg) {
@@ -302,6 +302,10 @@ function (declare, dom, style, Deferred, ObjectStore, Store, QueryResults,
 
         case 'checkerId':
           topic.publish('showDocumentation', item.checkerId);
+          break;
+
+        case 'reviewStatus':
+          topic.publish('showReviewComment', item.reviewData);
           break;
       }
     },
