@@ -315,7 +315,7 @@ function (declare, dom, style, Deferred, ObjectStore, Store, QueryResults,
         case 'reviewStatus':
           if (item.reviewData.author) {
             var content = util.reviewStatusTooltipContent(item.reviewData);
-            Tooltip.show(content.outerHTML, evt.target, ['below']);
+            Tooltip.show(content.outerHTML, evt.target, ['below', 'above']);
           }
           break;
       }
