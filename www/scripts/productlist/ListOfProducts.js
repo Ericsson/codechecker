@@ -276,6 +276,7 @@ function (declare, domClass, dom, ItemFileWriteStore, topic, DataGrid,
           that._addProductData(item);
         });
 
+        that.productsPane.set('tabCount', productList.length);
         that.onLoaded(productList);
       });
     },
@@ -409,7 +410,8 @@ function (declare, domClass, dom, ItemFileWriteStore, topic, DataGrid,
 
       this.listOfProductsGrid = new ListOfProductsGrid({
         id : 'productGrid',
-        infoPane : this.infoPane
+        infoPane : this.infoPane,
+        productsPane : this.productsPane
       });
 
       this.infoPane.set('listOfProductsGrid', this.listOfProductsGrid);

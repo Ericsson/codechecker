@@ -16,9 +16,11 @@ define([
   'dijit/layout/BorderContainer',
   'dijit/layout/ContentPane',
   'dojox/grid/DataGrid',
+  'codechecker/TabCount',
   'codechecker/util'],
 function (declare, dom, ItemFileWriteStore, topic, Dialog, Button,
-  RadioButton, TextBox, BorderContainer, ContentPane, DataGrid, util) {
+  RadioButton, TextBox, BorderContainer, ContentPane, DataGrid, TabCount,
+  util) {
 
   /**
    * This function helps to format a data grid cell with two radio buttons.
@@ -229,8 +231,7 @@ function (declare, dom, ItemFileWriteStore, topic, Dialog, Button,
     },
 
     _updateRunCount : function (num) {
-      this.parent._runCount.innerHTML = num;
-      this.parent.updateTitle();
+      this.parent.set('tabCount', num);
     },
 
     onLoaded : function (runDataList) {}
@@ -356,21 +357,9 @@ function (declare, dom, ItemFileWriteStore, topic, Dialog, Button,
     }
   });
 
-  return declare(BorderContainer, {
+  return declare([BorderContainer, TabCount], {
     postCreate : function () {
-      var that = this;
-
-      this._runCountWrapper = dom.create('span', {
-        class : 'run-count-wrapper',
-        innerHTML : this.get('title')
-      });
-
-      this._runCount = dom.create('span', {
-        class : 'run-count',
-        innerHTML : '?'
-      }, this._runCountWrapper);
-
-      this.updateTitle();
+      this.inherited(arguments);
 
       var showDelete = CC_AUTH_SERVICE.hasPermission(
         Permission.PRODUCT_STORE, util.createPermissionParams({
@@ -386,7 +375,7 @@ function (declare, dom, ItemFileWriteStore, topic, Dialog, Button,
         region : 'center',
         infoPane : runsInfoPane,
         parent : this,
-        onLoaded : that.onLoaded,
+        onLoaded : this.onLoaded,
         showDelete : showDelete
       });
 
@@ -394,10 +383,6 @@ function (declare, dom, ItemFileWriteStore, topic, Dialog, Button,
 
       this.addChild(runsInfoPane);
       this.addChild(listOfRunsGrid);
-    },
-
-    updateTitle : function () {
-      this.set('title', this._runCountWrapper.innerHTML);
     },
 
     onLoaded : function (runDataList) {}

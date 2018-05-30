@@ -11,9 +11,10 @@ define([
   'dijit/layout/ContentPane',
   'dijit/layout/TabContainer',
   'codechecker/HeaderPane',
+  'codechecker/TabCount',
   'products/ListOfProducts'],
 function (declare, Button, BorderContainer, ContentPane, TabContainer,
-  HeaderPane, ListOfProducts) {
+  HeaderPane, TabCount, ListOfProducts) {
 
   return function () {
 
@@ -40,17 +41,19 @@ function (declare, Button, BorderContainer, ContentPane, TabContainer,
     var productsTab = new TabContainer({ region : 'center' });
     layout.addChild(productsTab);
 
-    var productsPane = new ContentPane({
+    var productsPane = new (declare([ContentPane, TabCount], {
       title : 'All products',
       region : 'center'
-    });
+    }));
+
     productsTab.addChild(productsPane);
 
     //--- Center panel ---//
 
     var listOfProducts = new ListOfProducts({
       title : 'Products',
-      id : 'list-of-products'
+      id : 'list-of-products',
+      productsPane : productsPane
     });
 
     productsPane.addChild(listOfProducts);
