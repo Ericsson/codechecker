@@ -185,14 +185,12 @@ class OutputParser(object):
 
         while OutputParser.message_line_re.match(line) is None and \
                 OutputParser.note_line_re.match(line) is None:
-
             message_text = line.strip()
-            if message_text == '':
-                continue
 
-            message.fixits.append(Note(message.path, message.line,
-                                       line.find(message_text) + 1,
-                                       message_text))
+            if message_text != '':
+                message.fixits.append(Note(message.path, message.line,
+                                           line.find(message_text) + 1,
+                                           message_text))
             line = titer.next()
         return line
 
