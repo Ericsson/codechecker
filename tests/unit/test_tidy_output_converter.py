@@ -39,6 +39,7 @@ def setup_module():
             8, 12,
             'Division by zero',
             'clang-analyzer-core.DivideZero',
+            '           ^',
             None,
             [tidy_out_conv.Note(
                 os.path.abspath('files/test.cpp'),

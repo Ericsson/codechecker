@@ -194,9 +194,9 @@ html, body {
   border-radius: 5px;
 }
 
-.tag.fixit {
+.tag.fixed {
   display: inline-block;
-  background-color: #8a6d3b;
+  background-color: #5ba35f;
   padding: 2px 5px;
   color: white;
   text-transform: uppercase;
@@ -215,10 +215,10 @@ html, body {
   border: 1px solid #ebcccc;
 }
 
-.check-msg.fixit {
-  color: #8a6d3b;
-  background-color: #fcf8e3;
-  border: 1px solid #faebcc;
+.check-msg.fixed {
+  color: #5ba35f;
+  background-color: #e0f5e1;
+  border: 1px solid #b5fab5;
 }
 
 .check-msg.current {
@@ -242,8 +242,8 @@ html, body {
   background-color: #a94442;
 }
 
-.checker-enum.fixit {
-  background-color: #8a6d3b;
+.checker-enum.fixed {
+  background-color: #5ba35f;
 }
 
 .editorHeader {

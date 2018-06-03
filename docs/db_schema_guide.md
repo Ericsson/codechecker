@@ -26,7 +26,7 @@ version.
 
 ### **Step 1**: Update the database model
 
-The configuration database schema file can be found here: `libcodechecker/server/config_db_model.py`
+The configuration database schema file can be found here: `libcodechecker/server/database/config_db_model.py`
 
 ### **Step 2**: Check the alembic.ini configuration settings
 

@@ -434,7 +434,6 @@ def sort_results_query(query, sort_types, sort_type_map, order_type_map,
 def filter_unresolved_reports(q):
     """
     Filter reports which are unresolved.
-
     Note: review status of these reports are not in the SKIP_REVIEW_STATUSES
     list.
     """
@@ -541,8 +540,8 @@ class ThriftRequestHandler(object):
             args['config_db_session'] = session
 
             if not any([permissions.require_permission(
-                            perm, args, self.__auth_session)
-                        for perm in required]):
+                    perm, args, self.__auth_session)
+                    for perm in required]):
                 raise shared.ttypes.RequestFailed(
                     shared.ttypes.ErrorCode.UNAUTHORIZED,
                     "You are not authorized to execute this action.")
@@ -793,7 +792,7 @@ class ThriftRequestHandler(object):
 
                 if self.__product.driver_name == 'postgresql':
                     new_hashes = select([func.unnest(report_hashes)
-                                        .label('bug_id')]) \
+                                         .label('bug_id')]) \
                         .except_(base_hashes).alias('new_bugs')
                     return [res[0] for res in session.query(new_hashes)]
                 else:
@@ -809,7 +808,7 @@ class ThriftRequestHandler(object):
                                              chunk_size)]:
                         new_hashes_query = union_all(*[
                             select([bindparam('bug_id' + str(i), h)
-                                   .label('bug_id')])
+                                    .label('bug_id')])
                             for i, h in enumerate(chunk)])
                         q = select([new_hashes_query]).except_(base_hashes)
                         new_hashes.extend([res[0] for res in session.query(q)])
@@ -1448,10 +1447,10 @@ class ThriftRequestHandler(object):
             is_unique = report_filter is not None and report_filter.isUnique
             if is_unique:
                 q = session.query(func.max(Report.checker_id).label(
-                                      'checker_id'),
-                                  func.max(Report.severity).label(
-                                      'severity'),
-                                  Report.bug_id)
+                    'checker_id'),
+                    func.max(Report.severity).label(
+                    'severity'),
+                    Report.bug_id)
             else:
                 q = session.query(Report.checker_id,
                                   Report.severity,
@@ -1556,8 +1555,8 @@ class ThriftRequestHandler(object):
             is_unique = report_filter is not None and report_filter.isUnique
             if is_unique:
                 q = session.query(func.max(Report.checker_message).label(
-                                      'checker_message'),
-                                  Report.bug_id)
+                    'checker_message'),
+                    Report.bug_id)
             else:
                 q = session.query(Report.checker_message,
                                   func.count(Report.id))
@@ -2113,7 +2112,10 @@ class ThriftRequestHandler(object):
                 bug_paths, bug_events = \
                     store_handler.collect_paths_events(report, file_ids,
                                                        files)
-                report_path_hash = get_report_path_hash(report, files)
+                bug_fixits = store_handler.collect_fixits(report,
+                                                          file_ids, files)
+                report_path_hash = get_report_path_hash(report,
+                                                        files)
                 if report_path_hash in already_added:
                     LOG.debug('Not storing report. Already added')
                     LOG.debug(report)
@@ -2139,6 +2141,7 @@ class ThriftRequestHandler(object):
                     report.main,
                     bug_paths,
                     bug_events,
+                    bug_fixits,
                     detection_status,
                     run_history_time if detection_status == 'new' else
                     old_report.detected_at,

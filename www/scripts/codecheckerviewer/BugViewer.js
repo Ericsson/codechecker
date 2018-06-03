@@ -48,17 +48,17 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
   /**
    * Creates a bug step enumeration icon.
    * @param value {integer} - Content of the enumeration icon.
-   * @param type {error|fixit|info} - Class type of the enumeration icon.
+   * @param type {error|fixed|info} - Class type of the enumeration icon.
    */
   function createBugStepEnumeration(value, type) {
-    return dom.create('span', {
-      class : 'checker-enum ' + type,
-      innerHTML : value
-    });
+      return dom.create('span', {
+        class : 'checker-enum ' + type,
+        innerHTML : value
+      });
   }
 
   /**
-   * Parsing the bug step message and replace the `(fixit)` string with an icon.
+   * Parsing the bug step message and replace the `(fixed)` string with an icon.
    */
   function parseBugStepMsg(message) {
     var ret = message.replace(/(?:\r\n|\r|\n)/g, '<br>');
@@ -274,8 +274,8 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
           var left = that.codeMirror.defaultCharWidth() * bubble.startCol + 'px';
 
           var enumType = isResult
-            ? 'error' : bubble.msg.indexOf(' (fixit)') > -1
-            ? 'fixit' : 'info';
+          ? 'error' : bubble.msg.indexOf(' (fixed)') > -1
+          ? 'fixed' : 'info';
 
           var enumeration =
             createBugStepEnumeration(bubble.bugEventNumber, enumType).outerHTML;
@@ -861,8 +861,8 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
         var highlightData = that._highlightStep(highlightStack, step);
 
         var enumType = isResult
-          ? 'error' : step.msg.indexOf(' (fixit)') > -1
-          ? 'fixit' : 'info';
+          ? 'error' : step.msg.indexOf(' (fixed)') > -1
+          ? 'fixed' : 'info';
 
         var enumeration =
           createBugStepEnumeration(index + 1, enumType).outerHTML;

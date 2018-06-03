@@ -109,9 +109,20 @@ struct BugPathPos {
 }
 typedef list<BugPathPos> BugPath
 
+struct Fixit {
+  1: i64    Id,
+  2: i64    Line,
+  3: i64    Col,
+  4: string msg,
+  5: i64    fileId
+  6: i64    reportId,
+}
+typedef list<Fixit> Fixits
+
 struct ReportDetails {
   1: BugPathEvents pathEvents,
-  2: BugPath       executionPath
+  2: BugPath       executionPath,
+  3: Fixits        fixits
 }
 
 typedef string AnalyzerType

@@ -24,7 +24,8 @@ from codeCheckerDBAccess_v6 import ttypes
 from libcodechecker.logger import get_logger
 # TODO: This is a cross-subpackage import.
 from libcodechecker.server.database.run_db_model import AnalyzerStatistic, \
-    BugPathEvent, BugReportPoint, File, Run, RunHistory, Report, FileContent
+    BugPathEvent, BugReportPoint, Fixit, File, Run, RunHistory, Report, \
+    FileContent
 from libcodechecker.util import load_json_or_empty
 
 LOG = get_logger('system')
@@ -59,8 +60,8 @@ def metadata_info(metadata_file):
 
 def collect_paths_events(report, file_ids, files):
     """
-    This function creates the BugPathPos and BugPathEvent objects which belong
-    to a report.
+    This function creates the BugPathPos and BugPathEvent objects which
+    belong to a report.
 
     report -- A report object from the parsed plist file.
     file_ids -- A dictionary which maps the file paths to file IDs in the
@@ -142,6 +143,37 @@ def collect_paths_events(report, file_ids, files):
     return bug_paths, bug_events
 
 
+def collect_fixits(report, file_ids, files):
+    """
+    This function creates the Fixit objects which
+    belong to a report.
+
+    report -- A report object from the parsed plist file.
+    file_ids -- A dictionary which maps the file paths to file IDs in the
+                database.
+    files -- A list containing the file paths from the parsed plist file. The
+             order of this list must be the same as in the plist file.
+    """
+    bug_fixits = []
+
+    fixits = filter(lambda i: i.get('kind') == 'fixit', report.bug_path)
+
+    for fixit in fixits:
+        LOG.debug('Fixit ... ')
+        LOG.debug(fixit)
+        file_path = files[fixit['location']['file']]
+        zsanka = ttypes.Fixit(
+            fixit['location']['line'],
+            fixit['location']['col'],
+            fixit['message'],
+            file_ids[file_path])
+        LOG.debug(zsanka)
+        bug_fixits.append(zsanka)
+
+    LOG.debug(bug_fixits)
+    return bug_fixits
+
+
 def store_bug_events(session, bugevents, report_id):
     """
     """
@@ -167,6 +199,24 @@ def store_bug_path(session, bugpath, report_id):
                              piece.fileId,
                              report_id)
         session.add(brp)
+
+
+def store_bug_fixits(session, bugfixits, report_id):
+    for fixit in bugfixits:
+        fxt = Fixit(fixit.Id,
+                    fixit.Line,
+                    fixit.Col,
+                    fixit.msg,
+                    fixit.fileId,
+                    report_id)
+        LOG.debug('Fixit ...')
+        LOG.debug(fixit.Id)
+        LOG.debug(fixit.Line)
+        LOG.debug(fixit.Col)
+        LOG.debug(fixit.msg)
+        LOG.debug(fixit.fileId)
+        LOG.debug(report_id)
+        session.add(fxt)
 
 
 def is_same_event_path(report_id, events, session):
@@ -342,6 +392,7 @@ def addReport(session,
               main_section,
               bugpath,
               events,
+              fixits,
               detection_status,
               detection_time,
               severity_map):
@@ -374,6 +425,8 @@ def addReport(session,
         store_bug_path(session, bugpath, report.id)
         LOG.debug("storing events")
         store_bug_events(session, events, report.id)
+        LOG.debug("storing fixits")
+        store_bug_fixits(session, fixits, report.id)
 
         return report.id
 
@@ -394,9 +447,14 @@ def changePathAndEvents(session, run_id, report_path_map):
         .filter(BugReportPoint.report_id.in_(report_ids)) \
         .delete(synchronize_session=False)
 
-    for report_id, (bug_path, events) in report_path_map.items():
+    session.query(Fixit) \
+        .filter(Fixit.report_id.in_(report_ids)) \
+        .delete(synchronize_session=False)
+
+    for report_id, (bug_path, events, fixits) in report_path_map.items():
         store_bug_path(session, bug_path, report_id)
         store_bug_events(session, events, report_id)
+        store_bug_fixits(session, fixits, report_id)
 
 
 def addFileContent(session, filepath, content, content_hash, encoding):

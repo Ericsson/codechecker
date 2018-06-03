@@ -339,6 +339,32 @@ class ReviewStatus(Base):
     date = Column(DateTime, nullable=False)
 
 
+class Fixit(Base):
+    __tablename__ = 'fixits'
+
+    fixit_id = Column(Integer, autoincrement=True, primary_key=True)
+    line = Column(Integer, nullable=False)
+    column = Column(Integer, nullable=False)
+    message = Column(String, nullable=False)
+    file_id = Column(Integer, ForeignKey('files.id', deferrable=True,
+                                         initially="DEFERRED",
+                                         ondelete='CASCADE'),
+                     index=True)
+    report_id = Column(Integer, ForeignKey('reports.id', deferrable=True,
+                                           initially="DEFERRED",
+                                           ondelete='CASCADE'),
+                       index=True,
+                       primary_key=True)
+
+    def __init__(self, fixit_id, line, column, message, file_id, report_id):
+        self.fixit_id = fixit_id
+        self.line = line
+        self.column = column
+        self.message = message
+        self.file_id = file_id
+        self.report_id = report_id
+
+
 class SourceComponent(Base):
     __tablename__ = 'source_components'
 

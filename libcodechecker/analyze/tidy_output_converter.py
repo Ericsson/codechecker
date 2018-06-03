@@ -50,24 +50,35 @@ class Message(Note):
     Represents a clang-tidy message with an optional fixit message.
     """
 
-    def __init__(self, path, line, column, message, checker, fixits=None,
+    def __init__(self, path, line, column, message, checker,
+                 code_lines=None, arrow_lines=None, fixits=None,
                  notes=None):
         super(Message, self).__init__(path, line, column, message)
         self.checker = checker
+        self.code_lines = code_lines if code_lines else []
+        self.arrow_lines = arrow_lines if arrow_lines else []
         self.fixits = fixits if fixits else []
         self.notes = notes if notes else []
 
     def __eq__(self, other):
         return super(Message, self).__eq__(other) and \
             self.checker == other.checker and \
+            self.code_lines == other.code_lines and \
+            self.arrow_lines == other.arrow_lines and \
             self.fixits == other.fixits and \
             self.notes == other.notes
 
     def __str__(self):
-        return '%s, checker=%s, fixits=%s, notes=%s' % \
-               (super(Message, self).__str__(), self.checker,
-                [str(fixit) for fixit in self.fixits],
-                [str(note) for note in self.notes])
+        return '%s, checker=%s, code_lines=%s, arrow_lines=%s, ' \
+               'fixits=%s, notes=%s' % (super(Message, self).__str__(),
+                                        self.checker,
+                                        [str(fixed_message)
+                                         for fixed_message
+                                         in self.code_lines],
+                                        [str(arrow_line)
+                                         for arrow_line in self.arrow_lines],
+                                        [str(fixit) for fixit in self.fixits],
+                                        [str(note) for note in self.notes])
 
 
 class OutputParser(object):
@@ -157,8 +168,9 @@ class OutputParser(object):
             match.group('checker').strip())
 
         try:
-            line = next(titer)
-            line = self._parse_code(message, titer, line)
+            line = titer.next()
+            line = self._parse_code_lines(message, titer, line)
+            line = self._parse_arrow_lines(message, titer, line)
             line = self._parse_fixits(message, titer, line)
             line = self._parse_notes(message, titer, line)
 
@@ -167,27 +179,47 @@ class OutputParser(object):
             return message, ''
 
     @staticmethod
-    def _parse_code(message, titer, line):
-        # Eat code line.
-        if OutputParser.note_line_re.match(line) or \
-                OutputParser.message_line_re.match(line):
-            LOG.debug("Unexpected line: %s. Expected a code line!" % line)
-            return line
+    def _parse_code_lines(message, titer, line):
+        """Parses original code line."""
+        while OutputParser.note_line_re.match(line) or \
+                OutputParser.message_line_re.match(line) or '^' not in line:
 
-        # Eat arrow line.
-        # FIXME: range support?
-        line = next(titer)
-        if '^' not in line:
-            LOG.debug("Unexpected line: %s. Expected an arrow line!" % line)
-            return line
-        return next(titer)
+            message_text = line
+            if message_text == '':
+                continue
+
+            message.code_lines.append(Note(message.path, message.line,
+                                           line.find(
+                                               message_text) + 1,
+                                           message_text))
+
+            line = titer.next()
+        return line
+
+    @staticmethod
+    def _parse_arrow_lines(message, titer, line):
+        """Parses arrow line."""
+        while OutputParser.message_line_re.match(line) is None and \
+                OutputParser.note_line_re.match(line) is None and '^' in line:
+
+            message_text = line
+            if message_text == '':
+                continue
+
+            message.arrow_lines.append(Note(message.path, message.line,
+                                            line.find(message_text) + 1,
+                                            message_text))
+            line = titer.next()
+        return line
 
     @staticmethod
     def _parse_fixits(message, titer, line):
         """Parses fixit messages."""
 
         while OutputParser.message_line_re.match(line) is None and \
-                OutputParser.note_line_re.match(line) is None:
+                OutputParser.note_line_re.match(line) is None and \
+                '^' not in line:
+
             message_text = line.strip()
 
             if message_text != '':
@@ -200,8 +232,10 @@ class OutputParser(object):
     def _parse_notes(self, message, titer, line):
         """Parses note messages."""
 
-        while OutputParser.message_line_re.match(line) is None:
+        while OutputParser.message_line_re.match(line) is None and \
+                '^' not in line:
             match = OutputParser.note_line_re.match(line)
+
             if match is None:
                 LOG.debug("Unexpected line: %s" % line)
                 return next(titer)
@@ -210,8 +244,8 @@ class OutputParser(object):
                                       int(match.group('line')),
                                       int(match.group('column')),
                                       match.group('message').strip()))
-            line = next(titer)
-            line = self._parse_code(message, titer, line)
+            line = titer.next()
+            line = self._parse_code_lines(message, titer, line)
         return line
 
 
@@ -294,7 +328,7 @@ class PListConverter(object):
         diag['type'] = 'clang-tidy'
         diag['path'] = []
 
-        PListConverter._add_fixits(diag, message, fmap)
+        PListConverter._add_fixed_code_lines(diag, message, fmap)
         PListConverter._add_notes(diag, message, fmap)
 
         # The original message should be the last part of the path. This is
@@ -328,6 +362,14 @@ class PListConverter(object):
         }
 
     @staticmethod
+    def _create_fixit_from_note(note, fmap):
+        return {
+            'kind': 'fixit',
+            'location': PListConverter._create_location(note, fmap),
+            'message': note.message
+        }
+
+    @staticmethod
     def _create_edge(start_note, end_note, fmap):
         start_loc = PListConverter._create_location(start_note, fmap)
         end_loc = PListConverter._create_location(end_note, fmap)
@@ -337,16 +379,79 @@ class PListConverter(object):
         }
 
     @staticmethod
+    def _add_fixed_code_lines(diag, message, fmap):
+        """
+        Adds fixed things as events to the diagnostics.
+        """
+
+        for original in message.code_lines:
+            original_line = original.message
+
+            for arrow_line in message.arrow_lines:
+
+                if arrow_line.line == original.line and \
+                        arrow_line.column == original.column:
+
+                    for fixit in message.fixits:
+                        message_fixit = copy.deepcopy(fixit)
+
+                        received_fixits = fixit.message.split()
+
+                        first_fixit_start_position = arrow_line.message.find(
+                            '^')
+
+                        first_fixit_end_position = arrow_line.message.find(
+                            ' ', first_fixit_start_position)
+
+                        second_fixit_start_position = arrow_line.message.find(
+                            '~', first_fixit_end_position)
+
+                        second_fixit_end_position = arrow_line.message.rfind(
+                            '~', second_fixit_start_position) + 1
+
+                        if len(received_fixits) == 2:
+                            original_line = "".join(
+                                (original_line[:second_fixit_start_position],
+                                 received_fixits[1],
+                                 original_line[second_fixit_end_position-1:]))
+
+                        fixit = "".join(
+                            (original_line[:first_fixit_start_position],
+                             received_fixits[0],
+                             original_line[first_fixit_end_position:]))
+
+                        message_fixit.message = '%s (fixed)' % fixit.lstrip()
+                        message_fixit.column = len(fixit) - len(fixit.lstrip())
+
+                        diag['path'].append(
+                            PListConverter._create_fixit_from_note(
+                                message_fixit, fmap))
+                        break
+            break
+
+    @staticmethod
+    def _add_arrow_lines(diag, message, fmap):
+        """
+        Adds arrow lines as events to the diagnostics.
+        """
+
+        for arrow_line in message.arrow_lines:
+            message_fixit = copy.deepcopy(arrow_line)
+            message_fixit.message = '%s (fixit)' % arrow_line.message
+            diag['path'].append(PListConverter._create_event_from_note(
+                message_fixit, fmap))
+
+    @staticmethod
     def _add_fixits(diag, message, fmap):
         """
         Adds fixits as events to the diagnostics.
         """
 
         for fixit in message.fixits:
-            mf = copy.deepcopy(fixit)
-            mf.message = '%s (fixit)' % fixit.message
+            message_fixit = copy.deepcopy(fixit)
+            message_fixit.message = '%s (fixit)' % fixit.message
             diag['path'].append(PListConverter._create_event_from_note(
-                mf, fmap))
+                message_fixit, fmap))
 
     @staticmethod
     def _add_notes(diag, message, fmap):

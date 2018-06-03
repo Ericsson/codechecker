@@ -97,6 +97,7 @@ int f(int x) { return 1 / x; }
         files = set()
         files.update(map(lambda bp: bp.fileId, details.pathEvents))
         files.update(map(lambda bp: bp.fileId, details.executionPath))
+        files.update(map(lambda bp: bp.fileId, details.fixits))
 
         file_ids = set()
         for file_id in files:
