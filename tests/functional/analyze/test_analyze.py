@@ -315,7 +315,8 @@ class TestAnalyze(unittest.TestCase):
 
         # Create and run analyze command.
         analyze_cmd = [self._codechecker_cmd, "analyze", build_json,
-                       "--analyzers", "clangsa", "-o", self.report_dir]
+                       "--analyzers", "clangsa", "--verbose", "debug",
+                       "-o", self.report_dir]
 
         print(analyze_cmd)
         process = subprocess.Popen(
@@ -323,6 +324,8 @@ class TestAnalyze(unittest.TestCase):
             stderr=subprocess.PIPE, cwd=self.test_dir)
         out, err = process.communicate()
 
+        print(out)
+        print(err)
         errcode = process.returncode
         self.assertEquals(errcode, 0)
 
@@ -361,7 +364,8 @@ class TestAnalyze(unittest.TestCase):
         build_json = os.path.join(self.test_workspace, "build.json")
         failed_dir = os.path.join(self.report_dir, "failed")
         analyze_cmd = [self._codechecker_cmd, "analyze", build_json,
-                       "--analyzers", "clangsa", "-o", self.report_dir]
+                       "--analyzers", "clangsa", "--verbose", "debug",
+                       "-o", self.report_dir]
 
         source_file = os.path.join(self.test_dir, "failure.c")
         build_log = [{"directory": self.test_workspace,
