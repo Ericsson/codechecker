@@ -30,28 +30,6 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
   BorderContainer, Button, CheckBox, Select, SimpleTextarea, Tooltip,
   CommentView, HtmlTree, util, hashHelper) {
 
-  function resetJsPlumb(editor) {
-    if (editor.jsPlumbInstance)
-      editor.jsPlumbInstance.reset();
-
-    // The position of this DOM element is set to relative so jsPlumb lines work
-    // properly in the text view.
-    var jsPlumbParentElement
-      = query('.CodeMirror-lines', editor.codeMirror.getWrapperElement())[0];
-    style.set(jsPlumbParentElement, 'position', 'relative');
-
-    editor.jsPlumbInstance = jsPlumb.getInstance({
-      Container : jsPlumbParentElement,
-      Anchor : ['Perimeter', { shape : 'Ellipse' }],
-      Endpoint : ['Dot', { radius : 1 }],
-      PaintStyle : { stroke : '#a94442', strokeWidth : 2 },
-      Connector:[ "Bezier", { curviness: 10 }],
-      ConnectionsDetachable : false,
-      ConnectionOverlays : [['Arrow',
-        { location : 1, length : 10, width : 8 }]]
-    });
-  }
-
   function getFullHeight(element) {
     var computedStyle = style.getComputedStyle(element);
 
@@ -212,6 +190,33 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
       this._refresh();
     },
 
+    newJsPlumbInstance : function () {
+      this.resetJsPlumb();
+
+      // The position of this DOM element is set to relative so jsPlumb lines work
+      // properly in the text view.
+      var jsPlumbParentElement
+        = query('.CodeMirror-lines', this.codeMirror.getWrapperElement())[0];
+      style.set(jsPlumbParentElement, 'position', 'relative');
+
+      this.jsPlumbInstance = jsPlumb.getInstance({
+        Container : jsPlumbParentElement,
+        Anchor : ['Perimeter', { shape : 'Ellipse' }],
+        Endpoint : ['Dot', { radius : 1 }],
+        PaintStyle : { stroke : '#a94442', strokeWidth : 2 },
+        Connector:[ "Bezier", { curviness: 10 }],
+        ConnectionsDetachable : false,
+        ConnectionOverlays : [['Arrow',
+          { location : 1, length : 10, width : 8 }]]
+      });
+    },
+
+    resetJsPlumb : function () {
+      if (this.jsPlumbInstance) {
+        this.jsPlumbInstance.reset();
+      }
+    },
+
     drawBugPath : function (linesNeeded, bubblesNeeded) {
       var that = this;
 
@@ -349,7 +354,7 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
         that._lineMarks.forEach(function (mark) { mark.clear(); });
       });
       this._lineMarks = [];
-      resetJsPlumb(this);
+      this.resetJsPlumb();
     },
 
     highlightCurrentBubble : function (idx) {
@@ -395,6 +400,7 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
 
     _setContentAttr : function (content) {
       this.codeMirror.doc.setValue(content);
+      this.newJsPlumbInstance();
       this._refresh();
     },
 
@@ -483,7 +489,7 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
           return left.find().from.ch - right.find().from.ch;
         });
 
-      resetJsPlumb(this);
+      this.resetJsPlumb();
 
       var prev;
       this._lineMarks.forEach(function (textMarker) {
