@@ -106,6 +106,8 @@ function (declare, cookie, topic, Lightbox, Dialog, Button, BorderContainer,
     var currentProductName = util.atou(CURRENT_PRODUCT.displayedName_b64);
     document.title = currentProductName + ' - CodeChecker';
 
+    IS_ADMIN_OF_ANY_PRODUCT = CC_PROD_SERVICE.isAdministratorOfAnyProduct();
+
     //--- Back button to product list ---//
 
     var productListButton = new Button({

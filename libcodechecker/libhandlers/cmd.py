@@ -742,9 +742,10 @@ def __register_source_components(parser):
                             required=True,
                             help="Path to the source component file which "
                                  "contains multiple file paths. Each file "
-                                 "path start with a '+' (path should be "
-                                 "filtered) or '-' (path should not be "
-                                 "filtered) sign. E.g.: \n"
+                                 "path start with a '+' (results from this "
+                                 "path should be listed) or '-' (results from "
+                                 "this path should not be listed) sign. "
+                                 "E.g.: \n"
                                  "  +/a/b/x.cpp\n"
                                  "  -/a/b/\n"
                                  "Please see the User guide for more "

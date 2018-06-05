@@ -115,8 +115,10 @@
 }
 
 .bug-filters .clean,
-.bug-filters .cogwheel {
+.bug-filters .cogwheel,
+.bug-filters .edit {
   cursor: pointer;
+  color: #878d96;
 }
 
 .bug-filters .clean::before {
@@ -321,4 +323,8 @@
 .bug-filters .report-hash-filter-input {
   width: 100%;
   margin: 5px 0px;
+}
+
+.component-manager-wrapper .dijitBorderContainer-child {
+  border: 0px;
 }
