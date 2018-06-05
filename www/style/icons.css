@@ -361,3 +361,7 @@ span[class*="severity-"] {
 .icon-help:after {
   content : '?';
 }
+
+.customIcon.remove::before {
+  content: "\e01e";
+}

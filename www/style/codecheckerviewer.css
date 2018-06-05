@@ -314,9 +314,19 @@ html, body {
   text-align: center;
 }
 
+.review-comment-wrapper {
+  position: relative;
+}
+
+.review-comment-wrapper .remove {
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+
 .review-comment {
   margin-left: 5px;
-  cursor: help;
+  cursor: pointer;
   color: grey;
 }
 

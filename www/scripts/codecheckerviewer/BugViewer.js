@@ -1069,14 +1069,8 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
 
       this._reviewComment = dom.create('span', {
         class : 'customIcon review-comment',
-        mouseover : function () {
-          var content = util.reviewStatusTooltipContent(
-            that.reportData.reviewData);
-
-          Tooltip.show(content.outerHTML, this, ['below']);
-        },
-        mouseout : function () {
-          Tooltip.hide(this);
+        onclick : function () {
+          topic.publish('showReviewComment', that.reportData.reviewData);
         }
       });
 
