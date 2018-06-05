@@ -96,6 +96,16 @@ function (declare, cookie, dom, topic, Button, ContentPane, popup,
             return util.enumValueToKey(Permission, p);
           });
 
+        if (typeof CURRENT_PRODUCT !== 'undefined') {
+          var productPermissions =
+            CC_AUTH_SERVICE.getPermissionsForUser('PRODUCT', JSON.stringify({
+              productID : CURRENT_PRODUCT.id
+            }), filter).map(function (p) {
+              return util.enumValueToKey(Permission, p);
+            });
+          permissions = permissions.concat(productPermissions);
+        }
+
         if (permissions.length) {
           var permissionWrapper = dom.create('div', {
             class : 'permission-wrapper'
