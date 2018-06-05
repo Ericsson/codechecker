@@ -536,11 +536,11 @@ html, body {
   display: flex;
 }
 
-.run-count-wrapper {
+.tab-count-wrapper {
   padding: 10px;
 }
 
-.run-count {
+.tab-count {
   background-color: #7994a226;
   color: #5a6971;
   padding: 2px 5px;
