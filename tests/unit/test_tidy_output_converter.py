@@ -82,6 +82,39 @@ def setup_module():
             'clang-diagnostic-division-by-zero'),
     ]
 
+    # tidy2_v6.out Message/Note representation
+    tidy2_v6_repr = [
+        tidy_out_conv.Message(
+            os.path.abspath('files/test2.cpp'),
+            13, 12,
+            'Division by zero',
+            'clang-analyzer-core.DivideZero',
+            None,
+            [
+                tidy_out_conv.Note(
+                    os.path.abspath('files/test2.cpp'),
+                    9, 7,
+                    "Left side of '||' is false"),
+                tidy_out_conv.Note(
+                    os.path.abspath('files/test2.cpp'),
+                    9, 16,
+                    "Assuming 'x' is 0"),
+                tidy_out_conv.Note(
+                    os.path.abspath('files/test2.cpp'),
+                    9, 3,
+                    'Taking false branch'),
+                tidy_out_conv.Note(
+                    os.path.abspath('files/test2.cpp'),
+                    13, 12,
+                    'Division by zero')
+            ]),
+        tidy_out_conv.Message(
+            os.path.abspath('files/test2.cpp'),
+            13, 12,
+            'remainder by zero is undefined',
+            'clang-diagnostic-division-by-zero'),
+    ]
+
     # tidy3.out Message/Note representation
     tidy3_repr = [
         tidy_out_conv.Message(
@@ -129,6 +162,7 @@ def setup_module():
 
     TidyOutputParserTestCase.tidy1_repr = tidy1_repr
     TidyOutputParserTestCase.tidy2_repr = tidy2_repr
+    TidyOutputParserTestCase.tidy2_v6_repr = tidy2_v6_repr
     TidyOutputParserTestCase.tidy3_repr = tidy3_repr
     TidyPListConverterTestCase.tidy1_repr = tidy1_repr
     TidyPListConverterTestCase.tidy2_repr = tidy2_repr
@@ -176,12 +210,28 @@ class TidyOutputParserTestCase(unittest.TestCase):
         for message in messages:
             self.assertIn(message, self.tidy1_repr)
 
+    def test_tidy1_v6(self):
+        """Test the generated Messages of tidy1.out ClangTidy v6 output
+        file."""
+        messages = self.parser.parse_messages_from_file('tidy1_v6.out')
+        self.assertEqual(len(messages), len(self.tidy1_repr))
+        for message in messages:
+            self.assertIn(message, self.tidy1_repr)
+
     def test_tidy2(self):
         """Test the generated Messages of tidy2.out ClangTidy output file."""
         messages = self.parser.parse_messages_from_file('tidy2.out')
         self.assertEqual(len(messages), len(self.tidy2_repr))
         for message in messages:
             self.assertIn(message, self.tidy2_repr)
+
+    def test_tidy2_v6(self):
+        """Test the generated Messages of tidy2.out ClangTidy v6 output
+        file."""
+        messages = self.parser.parse_messages_from_file('tidy2_v6.out')
+        self.assertEqual(len(messages), len(self.tidy2_v6_repr))
+        for message in messages:
+            self.assertIn(message, self.tidy2_v6_repr)
 
     def test_tidy3(self):
         """Test the generated Messages of tidy3.out ClangTidy output file."""
