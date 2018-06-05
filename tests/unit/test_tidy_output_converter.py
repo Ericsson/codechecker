@@ -160,10 +160,54 @@ def setup_module():
             ])
     ]
 
+    # tidy5.out Message/Note representation
+    tidy5_repr = [
+        tidy_out_conv.Message(
+            os.path.abspath('files/test4.cpp'),
+            3, 26,
+            'identifier after literal will be treated '
+            'as a reserved user-defined literal suffix in C++11',
+            'clang-diagnostic-c++11-compat-reserved-user-defined-literal',
+            None, None),
+        tidy_out_conv.Message(
+            os.path.abspath('files/test4.cpp'),
+            10, 12,
+            'Division by zero',
+            'clang-analyzer-core.DivideZero',
+            None,
+            [tidy_out_conv.Note(
+                os.path.abspath('files/test4.cpp'),
+                10, 12,
+                'Division by zero')]),
+        tidy_out_conv.Message(
+            os.path.abspath('files/test4.cpp'),
+            10, 12,
+            'remainder by zero is undefined',
+            'clang-diagnostic-division-by-zero')
+    ]
+
+    # tidy5_v6.out Message/Note representation
+    tidy5_v6_repr = [
+        tidy_out_conv.Message(
+            os.path.abspath('files/test4.cpp'),
+            3, 26,
+            'invalid suffix on literal; C++11 requires a space '
+            'between literal and identifier',
+            'clang-diagnostic-reserved-user-defined-literal',
+            None, None),
+        tidy_out_conv.Message(
+            os.path.abspath('files/test4.cpp'),
+            10, 12,
+            'remainder by zero is undefined',
+            'clang-diagnostic-division-by-zero')
+    ]
+
     TidyOutputParserTestCase.tidy1_repr = tidy1_repr
     TidyOutputParserTestCase.tidy2_repr = tidy2_repr
     TidyOutputParserTestCase.tidy2_v6_repr = tidy2_v6_repr
     TidyOutputParserTestCase.tidy3_repr = tidy3_repr
+    TidyOutputParserTestCase.tidy5_repr = tidy5_repr
+    TidyOutputParserTestCase.tidy5_v6_repr = tidy5_v6_repr
     TidyPListConverterTestCase.tidy1_repr = tidy1_repr
     TidyPListConverterTestCase.tidy2_repr = tidy2_repr
     TidyPListConverterTestCase.tidy3_repr = tidy3_repr
@@ -250,6 +294,26 @@ class TidyOutputParserTestCase(unittest.TestCase):
         self.assertEqual(len(messages), len(self.tidy1_repr))
         for message in messages:
             self.assertIn(message, self.tidy1_repr)
+
+    def test_tidy5(self):
+        """
+        Test the grenerated Messages of tidy5.out ClangTidy output file.
+        This is an uncomplete file which is equal with tidy1.out except it's
+        missing the last two lines.
+        """
+        messages = self.parser.parse_messages_from_file('tidy5.out')
+        for message in messages:
+            self.assertIn(message, self.tidy5_repr)
+
+    def test_tidy5_v6(self):
+        """
+        Test the grenerated Messages of tidy5_v6.out ClangTidy output file.
+        This is an uncomplete file which is equal with tidy1.out except it's
+        missing the last two lines.
+        """
+        messages = self.parser.parse_messages_from_file('tidy5_v6.out')
+        for message in messages:
+            self.assertIn(message, self.tidy5_v6_repr)
 
 
 class TidyPListConverterTestCase(unittest.TestCase):
