@@ -23,15 +23,23 @@ Table of Contents
   * [Delete runs](#userguide-delete-runs)
   * [Sorting runs](#userguide-sorting-runs)
 * [Checker statistics](#userguide-checker-statistics)
+  * [Get statistics only for runs](#userguide-get-statistics-only-for-runs)
+  * [Uniqueing checker statistics](#userguide-checker-statistics-uniqueing)
 * [Analysis results](#userguide-analysis-results)
   * [Filtering](#userguide-filtering)
+    * [Clear report filters](#userguide-clear-report-filters)
+    * [Unique reports](#userguide-unique-reports)
+  * [Diff mode](#userguide-diff-mode)
+    * [Compare two different runs](#userguide-diff-runs)
+    * [Compare two different tagged versions of the same](#userguide-diff-tags)
+  * [Review status](#userguide-review-status)
   * [Detection status](#userguide-detection-status)
   * [Severity levels](#userguide-severity-levels)
 * [Bug view](#userguide-bug-view)
   * [Report navigation tree](#userguide-report-navigation-tree)
   * [Button pane](#userguide-button-pane)
-     * [Show documentation](#show-documentation)
-     * [Review status](#userguide-review-status)
+     * [Show documentation](#userguide-show-documentation)
+     * [Change review status](#userguide-change-review-status)
   * [Same reports](#userguide-same-reports)
   * [Bug path view](#userguide-bug-path-view)
   * [Comment](#userguide-comment)
@@ -79,7 +87,7 @@ the given user or group has the permission directly granted. (Users who only
 have a certain permission through permission inheritance are not shown with a
 tick.)
 
-![Global permissions](images/product_global_permissions.png)
+![Product permissions](images/product_permissions.png)
 
 Only the permissions you have rights to manage are shown in the dropdown.
 
@@ -98,6 +106,25 @@ You can do the following on this page:
 - [Sorting runs](#userguide-sorting-runs).
 
 ![Runs](images/runs.png)
+
+
+The meaning of the table columns:
+- **Diff** - In this column you can select two runs (*baseline* and *newcheck*)
+which will be compared to each other by click on the *Diff* button.
+- **Name** - Name of the run.
+- **Number of unresolved reports** - Number of non unique reports excluding
+*Resolved*, *False positive* and *Intentional* reports.
+- **Storage date** - Storage date of the runs.
+- **Analysis duration** - Duration of the analysis.
+- **Check command** - By clicking on *Show* text the check command will be shown
+in a pop-up window.
+- **Detection status** - Detection statuses are calculated based on the detection
+status values from the previous store where the reports are stored again with
+the same run name. When storing the results of a run from scratch then each
+report will have detection status of *New*.
+- **Version tag** - Latest version tag of the run.
+- **Delete** - In this column you can select multiple runs which will be removed
+by clicking on the *Delete* button.
 
 ## <a name="userguide-filter-runs"></a> Filter runs
 You can filter runs by run name using the input box above the run list table.
@@ -119,11 +146,27 @@ of the run list table. For example, you can sort the run list by the number of
 bugs or the run name.
 
 # <a name="userguide-checker-statistics"></a> Checker statistics
-A statistical overview can be seen under "Checker statistics" panel. In
-this table you can see the number of reports by checkers based on some
-attributes of the report like severity, and report status.
+A statistical overview can be seen under "Checker statistics" panel.
+Here you can see multiple tables: 
+- **Checker statistics** table shows the number of reports by checkers based on
+some attributes of the report like severity, and report status.
+- **Severity statistics** table shows the number of report by severity levels.
+
 
 ![Checker statistics](images/checker_statistics.png)
+
+## <a name="userguide-get-statistics-only-for-runs"></a> Get statistics only for runs
+We can get statistics only for specified runs by selecting multiple run names
+using the drop-down list above the statistic tables.
+
+![Get statistics only for runs](images/checker_statistics_filter.png)
+
+## <a name="userguide-checker-statistics-uniqueing"></a> Uniqueing checker statistics
+Checker statistics results can be uniqued by using the **Unique reports**
+checkbox. The same bug may appear several times if it is found on different
+control paths, i.e. through different function calls. By checking
+**Unique reports** a report appears only once even if it is found on several
+paths.
 
 # <a name="userguide-analysis-results"></a> Analysis results
 If you select a run at the [list of runs](#userguide-list-of-runs) view, you get
@@ -135,46 +178,96 @@ to this page. This page lists the analysis result for the given run.
 When opening the bug list view under "All reports" tab or by clicking a specific
 run or by opening "diff view" between two runs then the following filter options
 are available:
-- **Run name**: You can select one or more run names. The result list is
+- [**Unique reports**](#userguide-unique-reports) - You can uniqueing the
+reports by checking this.
+- **Baseline**
+  - **Run name** - You can select one or more run names. The result list is
 restricted on the findings in these runs. By selecting a specific run in the
 "runs" view this field is filled by default. In "All reports" tab no run is
 selected in which case the reports from all runs are visible.
-- [**Review status**](#userguide-review-status): You can select the reports with
-the given review status to check only *False positive*, *Unreviewed*, etc.
+  - **Run tag** - When runs are stored in update mode (i.e. on the same run
+name), then the specific runs can be tagged in order to be easier to identify
+them. By this field you can select the reports found during a specific run
+event.
+- [**Newcheck**](#userguide-diff-mode)
+  - **Run name** - Here you can select multiple run name which you want to
+compare against the baseline filter set.
+  - **Run tag** - Here you can select multiple run tags which you want to
+compare against the baseline filter set.
+  - **Diff type** - Here you can set if you'd like to see the bugs which appear
+only in the **Baseline**, **Newcheck** or both.
+- [**Review status**](#userguide-review-status) - You can select the reports
+with the given review status to check only *False positive*, *Unreviewed*, etc.
 reports.
-- [**Detection status**](#userguide-detection-status): You can select the
+- [**Detection status**](#userguide-detection-status) - You can select the
 reports with the given detection status to check only *Unresolved*, *Resolved*,
 etc. reports.
-- [**Severity**](#userguide-severity-levels): The nature of the bugs is sorted
+- [**Severity**](#userguide-severity-levels) - The nature of the bugs is sorted
 in different severity levels. For example, a division by zero or a null pointer
 dereference is more serious than an unused variable. By this field you can
 select the reports on the given severity levels.
-- **Run tag**: When runs are stored in update mode (i.e. on the same run name),
-then the specific runs can be tagged in order to be easier to identify them.
-By this field you can select the reports found during a specific run event.
-- **Detection date**: A date interval can also restrict the list of displayed
+- **Detection date** - A date interval can also restrict the list of displayed
 bug reports. In this field you can choose the date of detection or fixing.
-- **File**: You can choose a set of files to restrict the list of bug reports.
-- **Checker name**: If you are interested in specific type of bugs then here you
-can choose them.
-- **Checker message**: The static analysis tools provide a message to indicate
+- **File path**: You can choose a set of files to restrict the list of bug
+reports.
+- [**Source component**](https://github.com/Ericsson/codechecker/blob/master/docs/user_guide.md#source-components) -
+Here you can select multiple source components which are named collection of
+directories specified as directory filter.
+- **Checker name** - If you are interested in specific type of bugs then here
+you can choose them.
+- **Checker message** - The static analysis tools provide a message to indicate
 the reason of a specific bug. This message is also filterable.
-
-In "diff view" instead of "run name" you have the following filter fields:
-- **Baseline**: The runs against which you want to check the difference.
-- **Newcheck**: The runs which you want to compare against the baseline runs.
-- **Diff type**: Here you can set if you'd like to see the bugs which appear
-only in the **Baseline**, **Newcheck** or both.
 
 When you select a filter option on any field then a number indicates on the
 right side of the option the number of reports which belong to that specific
-option.
+option. If the report count could not be determined this value will be *N/A*.
 
+### <a name="userguide-clear-report-filters"></a>Clear report filters
+Filter options can be cleared separately by clicking on the trash icon beside
+a filter or all filters can be cleared by using *Clear All Filters* button at
+the top of the filter bar.
+
+![Clear report filters](images/clear_report_filters.png)
+
+### <a name="userguide-unique-reports"></a> Unique reports
 At the top of the filter panel there is a "Unique reports" checkbox. This
 narrows the report list to unique bug. The same bug may appear several times if
-it is found on different control paths, i.e. through different function calls.
-By checking "Unique reports" a report appears only once even if it is found on
-several paths.
+it is found on different control paths, i.e. through different function calls or
+in multiple runs. By checking "Unique reports" a report appears only once even
+if it is found on several paths.
+
+![Unique reports](images/unqiue_reports.png)
+
+## <a name="userguide-diff-mode"></a> Diff mode
+In diff mode you can calculate the difference between multiple analyses of the
+project, showing which bugs have been fixed and which are newly introduced or
+which can be fined in all runs.
+
+At the **Baseline** filter section you can select the run names and run tags
+against which you want to check the difference.
+
+At the **Newcheck** filter section you can select the run names and run tags
+which you want to compare against the *Baseline* runs and run tags.
+
+### <a name="userguide-diff-runs"></a> Compare two different runs
+![Compare two different runs](images/run_diff.png)
+
+### <a name="userguide-diff-tags"></a> Compare two different tagged versions of the same
+![Compare two different tagged versions of the same](images/run_tag_diff.png)
+
+## <a name="userguide-review-status"></a> Review status
+Reports can be assigned a review status of the following values:
+- <span class="customIcon review-status-unreviewed"></span> **Unreviewed**
+(_default_): Nobody has seen this report.
+- <span class="customIcon review-status-confirmed"></span> **Confirmed**:
+This is really a bug.
+- <span class="customIcon review-status-false-positive"></span>
+**False positive**: This is not a bug. Before marking a bug false positive
+you should read the [false positive how to](https://github.com/Ericsson/codechecker/blob/master/docs/false_positives.md).
+- <span class="customIcon review-status-intentional"></span> **Intentional**:
+This report is a bug but we don't want to fix it.
+
+For more information [see](#userguide-change-review-status).
 
 ## <a name="userguide-detection-status"></a> Detection status
 The detection status is the state of a bug report in a run. When
@@ -226,26 +319,15 @@ Button Pane contains several items which help you to change or get some
 property of the currently opened report. 
 ![Button pane](images/button_pane.png)
 
-### <a name="show-documentation"></a> Show documentation
+### <a name="userguide-show-documentation"></a> Show documentation
 Show Documentation button shows the documentation of the actual checker which
 identified by the currently opened report.
 ![Checker documentation](images/checker_documentation.png)
 
-### <a name="userguide-review-status"></a> Review status
-Reports can be assigned a review status of Unreviewed, Confirmed bug, False
-positive, Intentional, along with an optional comment on why this status was
-applied.
-- <span class="customIcon review-status-unreviewed"></span> **Unreviewed**
-(_default_): Nobody has seen this report.
-- <span class="customIcon review-status-confirmed-bug"></span> **Confirmed**:
-This is really a bug.
-- <span class="customIcon review-status-false-positive"></span>
-**False positive**: This is not a bug. Before marking a bug false positive
-you should read the [false positive how to](https://github.com/Ericsson/codechecker/blob/master/docs/false_positives.md).
-- <span class="customIcon review-status-intentional"></span> **Intentional**:
-This report is a bug but we don't want to fix it.
-
-We can change the review status from the default
+### <a name="userguide-change-review-status"></a> Change review status
+Reports can be assigned a review status of *Unreviewed*, *Confirmed*, *False
+positive*, *Intentional*, along with an optional comment on why this status was
+applied. We can change the review status from the default
 <span class="customIcon review-status-unreviewed"></span> _Unreviewed_ option
 to something else in the report details view above the file view.
 ![Unreviewed](images/review_status_unreviewed.png)
