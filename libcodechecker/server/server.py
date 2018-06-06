@@ -146,7 +146,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
         if self.server.manager.is_enabled and not auth_session \
                 and routing.is_protected_GET_entrypoint(path):
             # If necessary, prompt the user for authentication.
-            returnto = '#returnto=' + urllib.quote_plus(self.path.lstrip('/'))\
+            returnto = '?returnto=' + urllib.quote_plus(self.path.lstrip('/'))\
                 if self.path != '/' else ''
 
             self.send_response(307)  # 307 Temporary Redirect
