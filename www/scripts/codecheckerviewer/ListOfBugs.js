@@ -111,6 +111,11 @@ function (declare, dom, style, Deferred, ObjectStore, Store, QueryResults,
     query : function (query, options) {
       var deferred = new Deferred();
 
+      // It is possible that this method will be called before we set the
+      // correct filter parameters for example when we first open a run.
+      if (!query.reportFilter)
+        return deferred.reject("ERROR!");
+
       var that = this;
       CC_SERVICE.getRunResults(
         query.runIds,
@@ -351,12 +356,37 @@ function (declare, dom, style, Deferred, ObjectStore, Store, QueryResults,
         title : 'Bug Overview',
         iconClass : 'customIcon list-opened',
         onShow : function () {
-          that._grid.scrollToLastSelected();
-          hashHelper.setStateValues({
-            'report' : null,
-            'reportHash' : null,
-            'subtab' : null
-          });
+          // When opening a run first this onShow method will be called multiple
+          // times. That is the reason why we check that the show method is
+          // already in progress.
+          if (this._showInProgress)
+            return true;
+
+          this._showInProgress = true;
+          var state  = that._bugFilterView.getUrlState();
+          state.tab  = that.tab;
+          state.report = null;
+          state.reportHash = null;
+          state.subtab = null;
+
+          hashHelper.resetStateValues(state);
+
+          // If the filter has not been initalized then we should initalize it.
+          if (!that._bugFilterView.isInitalized()) {
+            if (that.baseline && !state.run)
+              state.run = this.baseline;
+            if (that.newcheck && !state.newcheck)
+              state.newcheck = that.newcheck;
+
+            var self = this;
+            setTimeout(function () {
+              that._bugFilterView.initAll(state);
+              that._grid.scrollToLastSelected();
+              self._showInProgress = false;
+            }, 0);
+          } else {
+            this._showInProgress = false;
+          }
         }
       });
 
@@ -411,7 +441,9 @@ function (declare, dom, style, Deferred, ObjectStore, Store, QueryResults,
 
       this.addChild(this._runHistory);
 
-      initByUrl(this._grid, this.tab);
+      var state = hashHelper.getState();
+      if (state.tab === that.tab && state.subtab !== that.subtab)
+        initByUrl(this._grid, this.tab);
     },
 
     _subscribeTopics : function () {
@@ -522,21 +554,7 @@ function (declare, dom, style, Deferred, ObjectStore, Store, QueryResults,
     },
 
     onShow : function () {
-      var state  = this._bugFilterView.getUrlState();
-      state.tab  = this.tab;
-      hashHelper.resetStateValues(state);
-
-      // If the filter has not been initalized then we should initalize it.
-      if (!this._bugFilterView.isInitalized()) {
-        if (this.baseline && !state.run)
-          state.run = this.baseline;
-        if (this.newcheck && !state.newcheck)
-          state.newcheck = this.newcheck;
-        this._bugFilterView.initAll(state);
-      }
-
-     //--- Call show method of the selected children ---//
-
+     // Call show method of the selected children.
      this.getChildren().forEach(function (child) {
        if (child.selected)
          child.onShow();
