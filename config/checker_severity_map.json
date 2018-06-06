@@ -199,7 +199,7 @@
   "misc-new-delete-overloads":                                  "MEDIUM",
   "misc-noexcept-move-constructor":                             "MEDIUM",
   "misc-non-copyable-objects":                                  "HIGH",
-  "misc-redundant-expression":                                  "HIGH",
+  "misc-redundant-expression":                                  "MEDIUM",
   "misc-sizeof-container":                                      "HIGH",
   "misc-sizeof-expression":                                     "HIGH",
   "misc-static-assert":                                         "LOW",
