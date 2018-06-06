@@ -384,13 +384,15 @@ function (declare, dom, style, Deferred, ObjectStore, Store, QueryResults,
       this._runHistory = new RunHistory({
         title : 'Run history',
         iconClass : 'customIcon run',
-        runData : this.runData,
+        baseline : this.baseline,
         bugOverView : this._bugOverview,
         bugFilterView : this._bugFilterView,
         parent : this,
         onShow : function () {
-          if (!this.initalized)
-            this.initRunHistory();
+          var baseline = that._bugFilterView._runBaseLineFilter.getRunNames();
+          var newcheck = that._bugFilterView._runNewCheckFilter.getRunNames();
+
+          this.initRunHistory(baseline.concat(newcheck));
 
           var state = hashHelper.getState();
 
@@ -399,7 +401,6 @@ function (declare, dom, style, Deferred, ObjectStore, Store, QueryResults,
             'subtab' : 'runHistory'
           });
           that.subtab = 'runHistory';
-          this.initalized = true;
         }
       });
 

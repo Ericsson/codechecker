@@ -16,6 +16,10 @@ define([
 function (declare, dom, topic, Dialog, Standby, ContentPane, hashHelper, util) {
 
   return declare(ContentPane, {
+    constructor : function () {
+      this.runNames = null;
+    },
+
     postCreate : function () {
       this._dialog = new Dialog({
         title : 'Check command',
@@ -29,10 +33,9 @@ function (declare, dom, topic, Dialog, Standby, ContentPane, hashHelper, util) {
       this.addChild(this._standBy);
     },
 
-    initRunHistory : function () {
+    getRunHistory : function (runIds) {
       var that = this;
 
-      var runIds = this.runData ? [this.runData.runId] : null;
       this._standBy.show();
       CC_SERVICE.getRunHistory(runIds, CC_OBJECTS.MAX_QUERY_SIZE, 0, null,
       function (historyData) {
@@ -41,9 +44,38 @@ function (declare, dom, topic, Dialog, Standby, ContentPane, hashHelper, util) {
       });
     },
 
+    initRunHistory : function (runNames) {
+      var that = this;
+
+      if (!runNames)
+        runNames = [];
+
+      // Check if we should update the current run history.
+      if (this.runNames && runNames.sort().toString() == this.runNames.sort().toString())
+        return;
+
+      this.runNames = runNames;
+
+      // Get run history.
+      if (runNames.length) {
+        var runFilter = new CC_OBJECTS.RunFilter();
+        runFilter.names = runNames;
+
+        var runData = CC_SERVICE.getRunData(runFilter, function (runData) {
+          var runIds = runData.map(function (run) { return run.runId; });
+          that.getRunHistory(runIds);
+        });
+      } else {
+        that.getRunHistory(null);
+      }
+    },
+
     // Renders the list of run histories.
     renderRunHistoryTable : function (historyData) {
       var that = this;
+
+      // Clear the DOM node.
+      dom.empty(this.domNode);
 
       var historyGroupByDate = {};
       historyData.forEach(function (data) {
