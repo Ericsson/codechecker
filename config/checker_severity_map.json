@@ -141,7 +141,7 @@
   "cppcoreguidelines-special-member-functions":                 "LOW",
   "google-build-explicit-make-pair":                            "MEDIUM",
   "google-build-namespaces":                                    "MEDIUM",
-  "google-build-using-namespace":                               "LOW",
+  "google-build-using-namespace":                               "STYLE",
   "google-default-arguments":                                   "LOW",
   "google-explicit-constructor":                                "MEDIUM",
   "google-global-names-in-headers":                             "HIGH",
