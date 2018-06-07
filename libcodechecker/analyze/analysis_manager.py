@@ -11,6 +11,7 @@ import codecs
 import glob
 import multiprocessing
 import os
+import shlex
 import shutil
 import signal
 import sys
@@ -19,6 +20,7 @@ import zipfile
 
 from libcodechecker import util
 from libcodechecker.analyze import analyzer_env
+from libcodechecker.analyze import gcc_toolchain
 from libcodechecker.analyze import plist_parser
 from libcodechecker.analyze.analyzers import analyzer_clangsa
 from libcodechecker.analyze.analyzers import analyzer_types
@@ -98,7 +100,7 @@ def worker_result_handler(results, metadata, output_path):
     metadata['result_source_files'].update(source_map)
 
 
-def create_dependencies(action):
+def create_dependencies(command, build_dir):
     """
     Transforms the given original build 'command' to a command that, when
     executed, is able to generate a dependency list.
@@ -128,7 +130,6 @@ def create_dependencies(action):
     if 'CC_LOGGER_GCC_LIKE' not in os.environ:
         os.environ['CC_LOGGER_GCC_LIKE'] = 'gcc:g++:clang:clang++:cc:c++'
 
-    command = action.original_command.split(' ')
     if any(binary_substring in command[0] for binary_substring
            in os.environ['CC_LOGGER_GCC_LIKE'].split(':')):
         # gcc and clang can generate makefile-style dependency list.
@@ -162,9 +163,15 @@ def create_dependencies(action):
 
         LOG.debug("Crafting build dependencies from GCC or Clang!")
 
+        # gcc does not have '--gcc-toolchain' argument it would fail if it is
+        # kept there.
+        # For clang it does not change the output, the include paths from
+        # the gcc-toolchain are not added to the output.
+        command = __eliminate_argument(command, '--gcc-toolchain')
+
         output, rc = util.call_command(command,
                                        env=os.environ,
-                                       cwd=action.directory)
+                                       cwd=build_dir)
         output = codecs.decode(output, 'utf-8', 'replace')
         if rc == 0:
             # Parse 'Makefile' syntax dependency output.
@@ -197,14 +204,39 @@ def init_worker(checked_num, action_num):
 
 def get_dependent_headers(buildaction, archive):
     LOG.debug("Generating dependent headers via compiler...")
+    command = shlex.split(buildaction.original_command)
     try:
-        dependencies = set(create_dependencies(buildaction))
+        dependencies = set(create_dependencies(command, buildaction.directory))
     except Exception as ex:
         LOG.debug("Couldn't create dependencies:")
         LOG.debug(str(ex))
         # TODO append with buildaction
         archive.writestr("no-sources", str(ex))
         dependencies = set()
+
+    toolchain = gcc_toolchain.toolchain_in_args(
+        shlex.split(buildaction.original_command))
+
+    if toolchain:
+        LOG.debug("Generating gcc-toolchain headers via toolchain compiler...")
+        try:
+            # Change the original compiler to the compiler from the
+            # toolchain.
+            toolchain_compiler = gcc_toolchain.get_toolchain_compiler(
+                toolchain, buildaction.lang)
+            if not toolchain_compiler:
+                raise Exception("Could not get the compiler "
+                                "from the gcc-toolchain.")
+            command[0] = toolchain_compiler
+            dependencies = dependencies.union(
+                set(create_dependencies(command, buildaction.directory)))
+        except Exception as ex:
+            LOG.debug("Couldn't create dependencies:")
+            LOG.debug(str(ex))
+            # TODO append with buildaction
+            archive.writestr("no-sources", str(ex))
+            dependencies = set()
+
     return dependencies
 
 
@@ -215,6 +247,7 @@ def collect_debug_data(zip_file, other_files, buildaction, out, err,
     Collect analysis and build system information which can be used
     to reproduce the failed analysis.
     """
+    LOG.debug("Collecting debug data")
     with zipfile.ZipFile(zip_file, 'w') as archive:
         LOG.debug("[ZIP] Writing analyzer STDOUT to /stdout")
         archive.writestr("stdout", out)
@@ -298,6 +331,11 @@ def collect_debug_data(zip_file, other_files, buildaction, out, err,
         archive.writestr("build-action", original_command)
         archive.writestr("analyzer-command", ' '.join(analyzer_cmd))
         archive.writestr("return-code", str(analyzer_returncode))
+
+        toolchain = gcc_toolchain.toolchain_in_args(
+            shlex.split(buildaction.original_command))
+        if toolchain:
+            archive.writestr("gcc-toolchain-path", toolchain)
 
 
 def save_output(base_file_name, out, err):

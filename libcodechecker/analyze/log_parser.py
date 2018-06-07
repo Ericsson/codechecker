@@ -13,6 +13,7 @@ import sys
 import traceback
 
 # TODO: This is a cross-subpackage import!
+from libcodechecker.analyze import gcc_toolchain
 from libcodechecker.log import build_action
 from libcodechecker.log import option_parser
 from libcodechecker.logger import get_logger
@@ -210,10 +211,9 @@ def remove_file_if_exists(filename):
 
 
 def parse_compile_commands_json(logfile, parseLogOptions):
-    # The add-compiler-defaults is a deprecated argument
-    # and we always perform target and include auto-detection.
-    add_compiler_defaults = True
-    LOG.debug('parse_compile_commands_json: ' + str(add_compiler_defaults))
+    """
+    logfile: is a compile command json
+    """
 
     output_path = parseLogOptions.output_path
     if output_path is not None:
@@ -277,11 +277,29 @@ def parse_compile_commands_json(logfile, parseLogOptions):
                 if not os.path.isdir(inc_dir):
                     compile_opts[i] = '-I' + \
                         os.path.join(entry['directory'], inc_dir)
+
         action.analyzer_options = compile_opts
 
         action.lang = results.lang
         action.target = results.arch
         action.output = results.output
+
+        add_compiler_defaults = True
+
+        # With gcc-toolchain a non default compiler toolchain can be set.
+        # Clang will search for include paths and libraries based on the
+        # gcc-toolchain parameter.
+        # Detecting extra include paths from the host compiler could
+        # conflict with this.
+
+        # For example if the compiler in the compile command is clang
+        # and gcc-toolchain is set we will get the include paths
+        # for clang and not for the compiler set in gcc-toolchain.
+        # This can cause missing headers during the analysis.
+
+        toolchain = gcc_toolchain.toolchain_in_args(action.analyzer_options)
+        if toolchain:
+            add_compiler_defaults = False
 
         # Store the compiler built in include paths and defines.
         if add_compiler_defaults and results.compiler:
@@ -328,8 +346,7 @@ def parse_compile_commands_json(logfile, parseLogOptions):
 
 def parse_log(logfilepath, parseLogOptions):
     '''
-    @param output_path: The report directory. Files with the compiler includes
-    and targets will be written into this dir if add_compiler_defaults is set.
+    logfilepath: the compile command json file which should be parsed.
     '''
     LOG.debug('Parsing log file: ' + logfilepath)
 

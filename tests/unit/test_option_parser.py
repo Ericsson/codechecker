@@ -194,3 +194,18 @@ class OptionParserTest(unittest.TestCase):
         build_cmd = "g++ {} main.cpp".format(' '.join(ignore))
         res = option_parser.parse_options(build_cmd)
         self.assertEqual(res.compile_opts, ["-fsyntax-only"])
+
+    def test_compiler_toolchain(self):
+        """
+        Test if compiler toolchain is parsed and forwarded properly.
+        """
+        source_files = ["main.cpp"]
+        compiler_options = ["--gcc-toolchain=/home/user/mygcctoolchain"]
+        build_cmd = "g++ -c " + \
+                    ' '.join(compiler_options) + ' ' + \
+                    ' '.join(source_files)
+
+        res = option_parser.parse_options(build_cmd)
+        print(res)
+        self.assertTrue(set(compiler_options) == set(res.compile_opts))
+        self.assertEqual(ActionType.COMPILE, res.action)
