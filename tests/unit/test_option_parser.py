@@ -189,7 +189,8 @@ class OptionParserTest(unittest.TestCase):
         self.assertEqual(ActionType.LINK, res.action)
 
     def test_ignore_flags(self):
-        ignore = ["-Werror", "-MT hello", "-M", "-fsyntax-only"]
+        ignore = ["-Werror", "-MT hello", "-M", "-fsyntax-only",
+                  "-mfloat-gprs=double", "-mfloat-gprs=yes"]
         build_cmd = "g++ {} main.cpp".format(' '.join(ignore))
         res = option_parser.parse_options(build_cmd)
         self.assertEqual(res.compile_opts, ["-fsyntax-only"])

@@ -148,7 +148,9 @@ IGNORED_OPTION_MAP_REGEX = {
     # Link Time Optimization:
     '^-flto': 0,
     # MicroBlaze Options:
-    '^-mxl': 0
+    '^-mxl': 0,
+    # PowerPC SPE Option:
+    '^-mfloat-gprs': 0
 }
 
 # Unknown options by clang, will be skipped.
