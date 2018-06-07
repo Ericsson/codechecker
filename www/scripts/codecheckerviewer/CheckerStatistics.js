@@ -6,6 +6,7 @@
 
 define([
   'dojo/_base/declare',
+  'dojo/_base/lang',
   'dojo/data/ItemFileWriteStore',
   'dojo/dom-construct',
   'dojo/Deferred',
@@ -18,11 +19,16 @@ define([
   'dojox/widget/Standby',
   'dijit/form/CheckBox',
   'dijit/layout/ContentPane',
+  'dijit/layout/BorderContainer',
+  'codechecker/CheckerStatisticsFilter',
   'codechecker/hashHelper',
+  'codechecker/filter/BugFilterView',
+  'codechecker/filter/FilterBase',
   'codechecker/util'],
-function (declare, ItemFileWriteStore, dom, Deferred, all, Memory, Observable,
-  topic, CheckedMultiSelect, DataGrid, Standby, CheckBox, ContentPane,
-  hashHelper, util) {
+function (declare, lang, ItemFileWriteStore, dom, Deferred, all, Memory,
+  Observable, topic, CheckedMultiSelect, DataGrid, Standby, CheckBox,
+  ContentPane, BorderContainer, CheckerStatisticsFilter, hashHelper,
+  BugFilterView, FilterBase, util) {
 
   function severityFormatter(severity) {
     var severity = util.severityFromCodeToString(severity);
@@ -40,137 +46,8 @@ function (declare, ItemFileWriteStore, dom, Deferred, all, Memory, Observable,
     return !num ? '' : '<span class="link">' + num + '</span>';
   }
 
-  var RunFilter = declare(CheckedMultiSelect, {
-    _updateSelection: function() {
-      this.inherited(arguments);
-
-      if(this.dropDown && this.dropDownButton){
-        var selectedOptions = this.options.filter(function (opt) {
-          return opt.selected;
-        });
-
-        var label = selectedOptions.length ? selectedOptions.length == 1
-            ? selectedOptions[0].label : "Multiple runs"
-            : this.label;
-
-        this.dropDownButton.set('label', label);
-      }
-    }
-  });
-
-  var FilterPane = declare(ContentPane, {
-    constructor : function () {
-      var that = this;
-
-      this._runStore = new Observable(new Memory({}));
-
-      this._runFilter = new RunFilter({
-        labelAttr : 'label',
-        label     : "Get statistics only for runs...",
-        multiple  : true,
-        dropDown  : true,
-        onChange  : function (state) {
-          that.selectedRuns = state;
-          this.changed = true;
-        },
-        onBlur : function () {
-          if (!this.changed)
-            return;
-
-          that.refreshGrids();
-          this.changed = false;
-        }
-      });
-
-      this.selectedRuns = null;
-      this.defaultUniqueValue = true;
-      this.isUnique = this.defaultUniqueValue;
-    },
-
-    postCreate : function () {
-      var that = this;
-
-      var state = hashHelper.getValues();
-      if (state.tab === 'statistics') {
-        if (state.run)
-          this.selectedRuns = state.run instanceof Array
-            ? state.run.map(function (run) { return run; })
-            : [state.run];
-        if (state['is-unique'] === 'off')
-          that.isUnique = false;
-      }
-
-      this.addChild(this._runFilter);
-
-      this._uniqueCheckBox = new CheckBox({
-        class : 'is-unique',
-        checked : this.isUnique,
-        onChange : function (isUnique) {
-          that.isUnique = isUnique;
-          that.refreshGrids();
-        }
-      });
-      dom.place(this._uniqueCheckBox.domNode, this.domNode);
-
-      this._uniqueCheckBoxLabel =
-        util.createLabelForUniqueCheckbox(this._uniqueCheckBox);
-    },
-
-    refreshGrids : function () {
-      var that = this;
-
-      var runIds = [];
-      this._runFilter.store.query({}).forEach(function (item) {
-        if (that.selectedRuns && that.selectedRuns.indexOf(item.label) !== -1)
-          runIds.push(item.value);
-      });
-
-      this.checkerStatisticsGrid.refreshGrid(runIds);
-      this.severityStatisticsGrid.refreshGrid(runIds);
-
-      this.updateURLState();
-    },
-
-    updateURLState : function () {
-      hashHelper.setStateValues({
-        'tab' : 'statistics',
-        'run' : this.selectedRuns,
-        'is-unique' : this.isUnique === this.defaultUniqueValue ? null : 'off'
-      });
-    },
-
-    loadRunStoreData : function () {
-      var that = this;
-
-      CC_SERVICE.getRunData(null, function (runs) {
-        runs.sort(function (a, b) {
-          if (a.name > b.name) return 1;
-          if (a.name < b.name) return -1;
-
-          return 0;
-        }).forEach(function (run) {
-          that._runStore.put({
-            id : run.name,
-            label : run.name,
-            value : run.runId
-          });
-        });
-
-        that._runFilter.set('store', that._runStore);
-
-        if (that.selectedRuns)
-          that._runFilter.set('value', that.selectedRuns);
-
-        that.checkerStatisticsGrid.refreshGrid();
-        that.severityStatisticsGrid.refreshGrid();
-      });
-    }
-  });
-
-  var CheckerStatistics = declare(DataGrid, {
+  var CheckerStatistics = declare([DataGrid, FilterBase], {
     constructor : function (args) {
-      dojo.safeMixin(this, args);
-
       this.store = new ItemFileWriteStore({
         data : { identifier : 'id', items : [] }
       });
@@ -207,14 +84,14 @@ function (declare, ItemFileWriteStore, dom, Deferred, all, Memory, Observable,
       // Clear the filters.
       filter.clearAll();
 
+      var statisticsFilterState = this.filter.getUrlState();
+      filter.getFilters().forEach(function (filter) {
+        filter.initByUrl(statisticsFilterState);
+      });
+      filter._isInitalized = true;
+
       // Select the checker name.
       filter._checkerNameFilter.select(item.checker);
-
-      // Select runs.
-      if (this.filterPane.selectedRuns)
-        this.filterPane.selectedRuns.forEach(function (runName) {
-          filter._runBaseLineFilter.select(runName);
-        });
 
       switch (evt.cell.field) {
         case 'checker':
@@ -262,7 +139,7 @@ function (declare, ItemFileWriteStore, dom, Deferred, all, Memory, Observable,
       topic.publish('tab/allReports');
     },
 
-    refreshGrid : function (runIds) {
+    refreshGrid : function (runIds, reportFilter) {
       var that = this;
 
       this.standBy.show();
@@ -276,10 +153,10 @@ function (declare, ItemFileWriteStore, dom, Deferred, all, Memory, Observable,
         }
       });
 
-      this._populateStatistics(runIds);
+      this._populateStatistics(runIds, reportFilter);
     },
 
-    _populateStatistics : function (runIds) {
+    _populateStatistics : function (runIds, reportFilter) {
       var that = this;
 
       var query = [
@@ -292,15 +169,13 @@ function (declare, ItemFileWriteStore, dom, Deferred, all, Memory, Observable,
       ].map(function (q) {
         var deferred = new Deferred();
 
-        var reportFilter = new CC_OBJECTS.ReportFilter();
-        reportFilter.isUnique = that.filterPane.isUnique;
-
+        var filter = lang.clone(reportFilter);
         if (q.field)
-          reportFilter[q.field] = q.values;
+          filter[q.field] = q.values;
 
         var limit = null;
         var offset = null;
-        CC_SERVICE.getCheckerCounts(runIds, reportFilter, null, limit, offset,
+        CC_SERVICE.getCheckerCounts(runIds, filter, null, limit, offset,
         function (res) {
           var obj = {};
           res.forEach(function (item) { obj[item.name] = item; });
@@ -330,6 +205,12 @@ function (declare, ItemFileWriteStore, dom, Deferred, all, Memory, Observable,
       });
     },
 
+    notify : function () {
+      var runIds = this.filter.getRunIds();
+      var reportFilter = this.filter.getReportFilter();
+      this.refreshGrid(runIds, reportFilter);
+    },
+
     exportToCSV : function () {
       this.store.fetch({
         onComplete : function (statistics) {
@@ -348,10 +229,8 @@ function (declare, ItemFileWriteStore, dom, Deferred, all, Memory, Observable,
     }
   });
 
-  var SeverityStatistics = declare(DataGrid, {
+  var SeverityStatistics = declare([DataGrid, FilterBase], {
     constructor : function (args) {
-      dojo.safeMixin(this, args);
-
       this.store = new ItemFileWriteStore({
         data : { identifier : 'id', items : [] }
       });
@@ -379,11 +258,11 @@ function (declare, ItemFileWriteStore, dom, Deferred, all, Memory, Observable,
        // Clear the filters.
       filter.clearAll();
 
-      // Select runs.
-      if (this.filterPane.selectedRuns)
-        this.filterPane.selectedRuns.forEach(function (runName) {
-          runNameFilter.select(runName);
-        });
+      var statisticsFilterState = this.filter.getUrlState();
+      filter.getFilters().forEach(function (filter) {
+        filter.initByUrl(statisticsFilterState);
+      });
+      filter._isInitalized = true;
 
       switch (evt.cell.field) {
         case 'severity':
@@ -399,7 +278,7 @@ function (declare, ItemFileWriteStore, dom, Deferred, all, Memory, Observable,
       topic.publish('tab/allReports');
     },
 
-    refreshGrid : function (runIds) {
+    refreshGrid : function (runIds, reportFilter) {
       var that = this;
 
       this.standBy.show();
@@ -413,14 +292,11 @@ function (declare, ItemFileWriteStore, dom, Deferred, all, Memory, Observable,
         }
       });
 
-      this._populateStatistics(runIds);
+      this._populateStatistics(runIds, reportFilter);
     },
 
-    _populateStatistics : function (runIds) {
+    _populateStatistics : function (runIds, reportFilter) {
       var that = this;
-
-      var reportFilter = new CC_OBJECTS.ReportFilter();
-      reportFilter.isUnique = this.filterPane.isUnique;
 
       var limit = null;
       var offset = null;
@@ -436,6 +312,12 @@ function (declare, ItemFileWriteStore, dom, Deferred, all, Memory, Observable,
         that.sort();
         that.standBy.hide();
       });
+    },
+
+    notify : function () {
+      var runIds = this.filter.getRunIds();
+      var reportFilter = this.filter.getReportFilter();
+      this.refreshGrid(runIds, reportFilter);
     },
 
     exportToCSV : function () {
@@ -454,7 +336,7 @@ function (declare, ItemFileWriteStore, dom, Deferred, all, Memory, Observable,
     }
   });
 
-  return declare(ContentPane, {
+  return declare(BorderContainer, {
     postCreate : function () {
       this._standBy = new Standby({
         color : '#ffffff',
@@ -463,43 +345,64 @@ function (declare, ItemFileWriteStore, dom, Deferred, all, Memory, Observable,
       });
       this.addChild(this._standBy);
 
+      //--- Statistics filter bar ---//
+
+      this._statisticsFilter = new CheckerStatisticsFilter({
+        class : 'bug-filters',
+        region : 'left',
+        style : 'width: 320px; padding: 0px;',
+        splitter : true,
+        parent : this,
+      });
+      this.addChild(this._statisticsFilter);
+
+      //--- Statistics table ---//
+
+      var centerPane = new ContentPane({
+        region : 'center'
+      });
+
+      //--- Checker statistics table ---//
+
       this._checkerStatistics = new CheckerStatistics({
         class : 'checker-statistics-list',
         bugFilterView : this.listOfAllReports._bugFilterView,
+        filter : this._statisticsFilter,
         standBy : this._standBy
       });
+      this._createHeader(centerPane, 'Checker statistics',
+        this._checkerStatistics);
+      centerPane.addChild(this._checkerStatistics);
+      this._statisticsFilter.register(this._checkerStatistics);
+
+      //--- Severity statistics table ---//
 
       this._severityStatistics = new SeverityStatistics({
         class : 'severity-statistics-list',
         bugFilterView : this.listOfAllReports._bugFilterView,
+        filter : this._statisticsFilter,
         standBy : this._standBy
       });
+      this._createHeader(centerPane, 'Severity statistics',
+        this._severityStatistics);
+      centerPane.addChild(this._severityStatistics);
+      this._statisticsFilter.register(this._severityStatistics);
 
-      this._filterPane = new FilterPane({
-        class : 'checker-statistics-filter',
-        checkerStatisticsGrid : this._checkerStatistics,
-        severityStatisticsGrid : this._severityStatistics
-      });
-
-      this._checkerStatistics.set('filterPane', this._filterPane);
-      this._severityStatistics.set('filterPane', this._filterPane);
-
-      this.addChild(this._filterPane);
-
-      this._createHeader(this, 'Checker statistics', this._checkerStatistics);
-      this.addChild(this._checkerStatistics);
-
-      this._createHeader(this, 'Severity statistics', this._severityStatistics);
-      this.addChild(this._severityStatistics);
+      this.addChild(centerPane);
     },
 
     onShow : function () {
       if (!this.initalized) {
         this.initalized = true;
 
-        this._filterPane.loadRunStoreData();
+        // Call the notify explicitly to initialize grid filters.
+        this._checkerStatistics.notify();
+        this._severityStatistics.notify();
       }
-      this._filterPane.updateURLState();
+
+      var state  = this._statisticsFilter.getUrlState();
+      state.tab  = this.tab;
+      hashHelper.resetStateValues(state);
     },
 
     _createHeader : function (parent, title, grid) {

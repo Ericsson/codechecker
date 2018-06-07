@@ -23,7 +23,11 @@ function (hash, ioQuery, topic, util) {
       hash(ioQuery.objectToQuery(state));
 
       var that = this;
-      setTimeout(function () { that.hashSetProgress = false; }, 0);
+
+      // In Firefox the following will be executed before hashchange event if
+      // the timeout value is zero. For this reason we set it to a higher
+      // value.
+      setTimeout(function () { that.hashSetProgress = false; }, 100);
     },
 
     /**
@@ -59,10 +63,13 @@ function (hash, ioQuery, topic, util) {
     setStateValues : function (obj, preventUpdateUrl) {
       var changed = false;
 
-      for (key in obj) {
+      for (var key in obj) {
         var value = obj[key];
 
         if (state[key] === value)
+          continue;
+
+        if (state[key] === undefined && value === null)
           continue;
 
         if (value === null) {

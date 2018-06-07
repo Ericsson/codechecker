@@ -164,7 +164,8 @@ function (declare, cookie, topic, Lightbox, Dialog, Button, BorderContainer,
       class : 'checker-statistics',
       title : 'Checker statistics',
       iconClass : 'customIcon statistics',
-      listOfAllReports : listOfAllReports
+      listOfAllReports : listOfAllReports,
+      tab : 'statistics'
     });
     runsTab.addChild(checkerStatisticsTab);
     runsTab.addChild(listOfAllReports);
