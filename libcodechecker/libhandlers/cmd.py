@@ -159,7 +159,7 @@ def __add_common_arguments(parser,
     logger.add_verbose_arguments(common_group)
 
 
-def __add_filtering_arguments(parser, defaults=None):
+def __add_filtering_arguments(parser, defaults=None, diff_mode=False):
     """
     Add some common filtering arguments to the given parser.
     """
@@ -169,6 +169,11 @@ def __add_filtering_arguments(parser, defaults=None):
             else argparse.SUPPRESS
 
     f_group = parser.add_argument_group('filter arguments')
+
+    warn_diff_mode = ""
+    if diff_mode:
+        warn_diff_mode = " This can be used only if basename or newname is " \
+                         "a run name (on the remote server)."
 
     f_group.add_argument('--report-hash',
                          nargs='*',
@@ -182,14 +187,16 @@ def __add_filtering_arguments(parser, defaults=None):
                          dest="review_status",
                          metavar='REVIEW_STATUS',
                          default=init_default('review_status'),
-                         help="Filter results by review statuses.")
+                         help="Filter results by review statuses." +
+                         warn_diff_mode)
 
     f_group.add_argument('--detection-status',
                          nargs='*',
                          dest="detection_status",
                          metavar='DETECTION_STATUS',
                          default=init_default('detection_status'),
-                         help="Filter results by detection statuses.")
+                         help="Filter results by detection statuses." +
+                         warn_diff_mode)
 
     f_group.add_argument('--severity',
                          nargs='*',
@@ -203,7 +210,8 @@ def __add_filtering_arguments(parser, defaults=None):
                          dest="tag",
                          metavar='TAG',
                          default=init_default('tag'),
-                         help="Filter results by version tag names.")
+                         help="Filter results by version tag names." +
+                         warn_diff_mode)
 
     f_group.add_argument('--file',
                          nargs='*',
@@ -244,7 +252,8 @@ def __add_filtering_arguments(parser, defaults=None):
                          dest="component",
                          metavar='COMPONENT',
                          default=argparse.SUPPRESS,
-                         help="Filter results by source components.")
+                         help="Filter results by source components." +
+                         warn_diff_mode)
 
     f_group.add_argument('-s', '--suppressed',
                          default=argparse.SUPPRESS,
@@ -306,7 +315,10 @@ def __register_diff(parser):
                         default=argparse.SUPPRESS,
                         help="The 'base' (left) side of the difference: this "
                              "analysis run is used as the initial state in "
-                             "the comparison. The basename can contain * "
+                             "the comparison. The parameter can be a run name "
+                             "(on the remote server) or a local report "
+                             "directory (result of the analyze command). In "
+                             "case of run name the the basename can contain * "
                              "quantifiers which matches any number of "
                              "characters (zero or more). So if you have "
                              "run-a-1, run-a-2 and run-b-1 "
@@ -330,7 +342,7 @@ def __register_diff(parser):
                              "run-a-1, run-a-2 and run-b-1 "
                              "then \"run-a*\" selects the first two.")
 
-    __add_filtering_arguments(parser, DEFAULT_FILTER_VALUES)
+    __add_filtering_arguments(parser, DEFAULT_FILTER_VALUES, True)
 
     group = parser.add_argument_group("comparison modes")
     group = group.add_mutually_exclusive_group(required=True)

@@ -121,12 +121,11 @@ def validate_filter_values(user_values, valid_values, value_type):
     return True
 
 
-def add_filter_conditions(client, report_filter, args):
+def check_filter_values(args):
     """
-    This function fills some attributes of the given report filter based on
-    the arguments which is provided in the command line.
+    Check if filter values are valid values. Returns values which are checked
+    or exit from the interpreter.
     """
-
     severities = checkers = file_path = dt_statuses = rw_statuses = None
 
     filter_str = args.filter if 'filter' in args else None
@@ -162,18 +161,39 @@ def add_filter_conditions(client, report_filter, args):
     values_to_check = [
         (severities, ttypes.Severity._NAMES_TO_VALUES, 'severity'),
         (dt_statuses, ttypes.DetectionStatus._NAMES_TO_VALUES,
-            'detection status'),
+         'detection status'),
         (rw_statuses, ttypes.ReviewStatus._NAMES_TO_VALUES,
-            'review status')]
+         'review status')]
 
     if not all(valid for valid in
                [validate_filter_values(*x) for x in values_to_check]):
         sys.exit(1)
+    return severities, checkers, file_path, dt_statuses, rw_statuses
+
+
+def add_filter_conditions(client, report_filter, args):
+    """
+    This function fills some attributes of the given report filter based on
+    the arguments which is provided in the command line.
+    """
+
+    severities, checkers, file_path, dt_statuses, rw_statuses = \
+        check_filter_values(args)
 
     if severities:
         report_filter.severity = map(
                 lambda x: ttypes.Severity._NAMES_TO_VALUES[x.upper()],
                 severities)
+
+    if dt_statuses:
+        report_filter.detectionStatus = map(
+            lambda x: ttypes.DetectionStatus._NAMES_TO_VALUES[x.upper()],
+            dt_statuses)
+
+    if rw_statuses:
+        report_filter.reviewStatus = map(
+            lambda x: ttypes.ReviewStatus._NAMES_TO_VALUES[x.upper()],
+            rw_statuses)
 
     if checkers:
         report_filter.checkerName = checkers
@@ -196,16 +216,6 @@ def add_filter_conditions(client, report_filter, args):
                                              run_history_filter)
         if run_histories:
             report_filter.runTag = [t.id for t in run_histories]
-
-    if dt_statuses:
-        report_filter.detectionStatus = map(
-            lambda x: ttypes.DetectionStatus._NAMES_TO_VALUES[x.upper()],
-            dt_statuses)
-
-    if rw_statuses:
-        report_filter.reviewStatus = map(
-            lambda x: ttypes.ReviewStatus._NAMES_TO_VALUES[x.upper()],
-            rw_statuses)
 
 # ---------------------------------------------------------------------------
 # Argument handlers for the 'CodeChecker cmd' subcommands.
@@ -298,42 +308,43 @@ def handle_diff_results(args):
     init_logger(args.verbose if 'verbose' in args else None)
     check_deprecated_arg_usage(args)
 
+    f_severities, f_checkers, f_file_path, _, _ = check_filter_values(args)
+
     context = generic_package_context.get_context()
 
-    def get_diff_results(client, baseids, report_filter, cmp_data):
-        add_filter_conditions(client, report_filter, args)
+    def skip_report_dir_result(report):
+        """
+        Returns True if the report should be skipped from the results based on
+        the given filter set.
+        """
+        if f_severities:
+            severity_name = context.severity_map.get(report.main['check_name'],
+                                                     'UNSPECIFIED')
+            if severity_name.lower() not in map(str.lower, f_severities):
+                return True
 
-        # Do not show resolved bugs in compare mode new.
-        if cmp_data.diffType == ttypes.DiffType.NEW:
-            report_filter.detectionStatus = [
-                ttypes.DetectionStatus.NEW,
-                ttypes.DetectionStatus.UNRESOLVED,
-                ttypes.DetectionStatus.REOPENED]
+        if f_checkers:
+            checker_name = report.main['check_name']
+            if not any([re.match(r'^' + c.replace("*", ".*") + '$',
+                                 checker_name, re.IGNORECASE)
+                        for c in f_checkers]):
+                return True
 
-        sort_mode = [(ttypes.SortMode(
-            ttypes.SortType.FILENAME,
-            ttypes.Order.ASC))]
-        limit = constants.MAX_QUERY_SIZE
-        offset = 0
+        if f_file_path:
+            file_path = report.files[int(report.main['location']['file'])]
+            if not any([re.match(r'^' + f.replace("*", ".*") + '$',
+                                 file_path, re.IGNORECASE)
+                        for f in f_file_path]):
+                return True
 
-        all_results = []
-        results = client.getRunResults(baseids,
-                                       limit,
-                                       offset,
-                                       sort_mode,
-                                       report_filter,
-                                       cmp_data)
+        if 'checker_msg' in args:
+            checker_msg = report.main['description']
+            if not any([re.match(r'^' + c.replace("*", ".*") + '$',
+                                 checker_msg, re.IGNORECASE)
+                        for c in args.checker_msg]):
+                return True
 
-        while results:
-            all_results.extend(results)
-            offset += limit
-            results = client.getRunResults(baseids,
-                                           limit,
-                                           offset,
-                                           sort_mode,
-                                           report_filter,
-                                           cmp_data)
-        return all_results
+        return False
 
     def get_report_dir_results(reportdir):
         all_reports = []
@@ -352,6 +363,9 @@ def handle_diff_results(args):
                                       "report!")
                             LOG.debug("Path hash: %s", path_hash)
                             LOG.debug(report)
+                            continue
+
+                        if skip_report_dir_result(report):
                             continue
 
                         processed_path_hashes.add(path_hash)
@@ -402,19 +416,17 @@ def handle_diff_results(args):
                                            None)
         return base_results
 
-    def get_diff_report_dir(client, baseids, report_dir, cmp_data):
-        filtered_reports = []
-        report_dir_results = get_report_dir_results(report_dir)
-        new_hashes = {}
+    def get_suppressed_reports(reports):
+        """
+        Returns suppressed reports.
+        """
         suppressed_in_code = []
-
-        for rep in report_dir_results:
-            bughash = rep.main['issue_hash_content_of_line_in_context']
+        for rep in reports:
+            bughash = rep.report_hash
             source_file = rep.main['location']['file_name']
             bug_line = rep.main['location']['line']
             checker_name = rep.main['check_name']
 
-            new_hashes[bughash] = rep
             sc_handler = SourceCodeCommentHandler(source_file)
             src_comment_data = sc_handler.filter_source_line_comments(
                 bug_line,
@@ -431,27 +443,182 @@ def handle_diff_results(args):
                     "for '{0}' checker in '{1}' at line {2}. "
                     "This bug will not be suppressed!".format(
                         checker_name, source_file, bug_line))
+        return suppressed_in_code
 
-        base_hashes = client.getDiffResultsHash(baseids,
-                                                new_hashes.keys(),
-                                                cmp_data.diffType)
+    def get_diff_type():
+        """
+        Returns Thrift DiffType value by processing the arguments.
+        """
+        if 'new' in args:
+            return ttypes.DiffType.NEW
 
-        if cmp_data.diffType == ttypes.DiffType.NEW or \
-           cmp_data.diffType == ttypes.DiffType.UNRESOLVED:
-            # Shows reports from the report dir which are not present in the
-            # baseline (NEW reports) or appear in both side (UNRESOLVED
-            # reports) and not suppressed in the code.
-            for result in report_dir_results:
-                h = result.main['issue_hash_content_of_line_in_context']
-                if h in base_hashes and h not in suppressed_in_code:
-                    filtered_reports.append(result)
-        elif cmp_data.diffType == ttypes.DiffType.RESOLVED:
-            # Show bugs in the baseline (server) which are not present in the
-            # report dir or suppressed.
-            results = get_diff_base_results(client, baseids, base_hashes,
+        if 'unresolved' in args:
+            return ttypes.DiffType.UNRESOLVED
+
+        if 'resolved' in args:
+            return ttypes.DiffType.RESOLVED
+
+        return None
+
+    def get_diff_local_dir_remote_run(client, report_dir, run_name):
+        """
+        Compares a local report directory with a remote run.
+        """
+        filtered_reports = []
+        report_dir_results = get_report_dir_results(
+            os.path.abspath(report_dir))
+        suppressed_in_code = get_suppressed_reports(report_dir_results)
+
+        diff_type = get_diff_type()
+        run_ids, run_names, _ = process_run_arg(run_name)
+        local_report_hashes = set([r.report_hash for r in report_dir_results])
+
+        if diff_type == ttypes.DiffType.NEW:
+            # Get report hashes which can be found only in the remote runs.
+            remote_hashes = \
+                client.getDiffResultsHash(run_ids,
+                                          local_report_hashes,
+                                          ttypes.DiffType.RESOLVED)
+
+            results = get_diff_base_results(client, run_ids,
+                                            remote_hashes,
                                             suppressed_in_code)
             for result in results:
                 filtered_reports.append(result)
+        elif diff_type == ttypes.DiffType.UNRESOLVED:
+            # Get remote hashes which can be found in the remote run and in the
+            # local report directory.
+            remote_hashes = \
+                client.getDiffResultsHash(run_ids,
+                                          local_report_hashes,
+                                          ttypes.DiffType.UNRESOLVED)
+            for result in report_dir_results:
+                rep_h = result.report_hash
+                if rep_h in remote_hashes and rep_h not in suppressed_in_code:
+                    filtered_reports.append(result)
+        elif diff_type == ttypes.DiffType.RESOLVED:
+            # Get remote hashes which can be found in the remote run and in the
+            # local report directory.
+            remote_hashes = \
+                client.getDiffResultsHash(run_ids,
+                                          local_report_hashes,
+                                          ttypes.DiffType.UNRESOLVED)
+            for result in report_dir_results:
+                if result.report_hash not in remote_hashes:
+                    filtered_reports.append(result)
+
+        return filtered_reports, run_names
+
+    def get_diff_remote_run_local_dir(client, run_name, report_dir):
+        """
+        Compares a remote run with a local report directory.
+        """
+        filtered_reports = []
+        report_dir_results = get_report_dir_results(
+            os.path.abspath(report_dir))
+        suppressed_in_code = get_suppressed_reports(report_dir_results)
+
+        diff_type = get_diff_type()
+        run_ids, run_names, _ = process_run_arg(run_name)
+        local_report_hashes = set([r.report_hash for r in report_dir_results])
+
+        remote_hashes = client.getDiffResultsHash(run_ids,
+                                                  local_report_hashes,
+                                                  diff_type)
+
+        if diff_type in [ttypes.DiffType.NEW, ttypes.DiffType.UNRESOLVED]:
+            # Shows reports from the report dir which are not present in
+            # the baseline (NEW reports) or appear in both side (UNRESOLVED
+            # reports) and not suppressed in the code.
+            for result in report_dir_results:
+                rep_h = result.report_hash
+                if rep_h in remote_hashes and rep_h not in suppressed_in_code:
+                    filtered_reports.append(result)
+        elif diff_type == ttypes.DiffType.RESOLVED:
+            # Show bugs in the baseline (server) which are not present in
+            # the report dir or suppressed.
+            results = get_diff_base_results(client,
+                                            run_ids,
+                                            remote_hashes,
+                                            suppressed_in_code)
+            for result in results:
+                filtered_reports.append(result)
+
+        return filtered_reports, run_names
+
+    def get_diff_remote_runs(client, basename, newname):
+        """
+        Compares two remote runs and returns the filtered results.
+        """
+        report_filter = ttypes.ReportFilter()
+        add_filter_conditions(client, report_filter, args)
+
+        base_ids, base_run_names, base_run_tags = process_run_arg(basename)
+        report_filter.runTag = base_run_tags
+
+        cmp_data = ttypes.CompareData()
+        cmp_data.diffType = get_diff_type()
+
+        new_ids, new_run_names, new_run_tags = process_run_arg(newname)
+        cmp_data.runIds = new_ids
+        cmp_data.runTag = new_run_tags
+
+        # Do not show resolved bugs in compare mode new.
+        if cmp_data.diffType == ttypes.DiffType.NEW:
+            report_filter.detectionStatus = [
+                ttypes.DetectionStatus.NEW,
+                ttypes.DetectionStatus.UNRESOLVED,
+                ttypes.DetectionStatus.REOPENED]
+
+        sort_mode = [(ttypes.SortMode(
+            ttypes.SortType.FILENAME,
+            ttypes.Order.ASC))]
+        limit = constants.MAX_QUERY_SIZE
+        offset = 0
+
+        all_results = []
+        results = client.getRunResults(base_ids,
+                                       limit,
+                                       offset,
+                                       sort_mode,
+                                       report_filter,
+                                       cmp_data)
+
+        while results:
+            all_results.extend(results)
+            offset += limit
+            results = client.getRunResults(base_ids,
+                                           limit,
+                                           offset,
+                                           sort_mode,
+                                           report_filter,
+                                           cmp_data)
+        return all_results, base_run_names, new_run_names
+
+    def get_diff_local_dirs(basename, newname):
+        """
+        Compares two report directories and returns the filtered results.
+        """
+        filtered_reports = []
+        base_results = get_report_dir_results(os.path.abspath(basename))
+        new_results = get_report_dir_results(os.path.abspath(newname))
+
+        base_hashes = set([res.report_hash for res in base_results])
+        new_hashes = set([res.report_hash for res in new_results])
+
+        diff_type = get_diff_type()
+        if diff_type == ttypes.DiffType.NEW:
+            for res in new_results:
+                if res.report_hash not in base_hashes:
+                    filtered_reports.append(res)
+        if diff_type == ttypes.DiffType.UNRESOLVED:
+            for res in new_results:
+                if res.report_hash in base_hashes:
+                    filtered_reports.append(res)
+        elif diff_type == ttypes.DiffType.RESOLVED:
+            for res in base_results:
+                if res.report_hash not in new_hashes:
+                    filtered_reports.append(res)
 
         return filtered_reports
 
@@ -639,23 +806,23 @@ def handle_diff_results(args):
                 ttypes.LinesInFilesRequested(fileId=key,
                                              lines=source_lines[key]))
 
-        source_line_contents = client.getLinesInSourceFileContents(
-            lines_in_files_requested, ttypes.Encoding.BASE64)
-
         for report in reports:
             if isinstance(report, Report):
                 # report is coming from a plist file.
                 bug_line = report.main['location']['line']
                 bug_col = report.main['location']['col']
-                sev = 'unknown'
                 checked_file = report.main['location']['file_name']\
                     + ':' + str(bug_line) + ":" + str(bug_col)
                 check_name = report.main['check_name']
+                sev = context.severity_map.get(check_name, 'UNSPECIFIED')
                 check_msg = report.main['description']
                 source_line =\
                     get_line_from_file(report.main['location']['file_name'],
                                        bug_line)
             else:
+                source_line_contents = client.getLinesInSourceFileContents(
+                    lines_in_files_requested, ttypes.Encoding.BASE64)
+
                 # report is of ReportData type coming from CodeChecker server.
                 bug_line = report.line
                 bug_col = report.column
@@ -667,11 +834,11 @@ def handle_diff_results(args):
                 check_name = report.checkerId
                 check_msg = report.checkerMsg
             rows.append(
-                (checked_file, check_name, sev, check_msg, source_line))
+                (sev, checked_file, check_msg, check_name, source_line))
         if output_format == 'plaintext':
             for row in rows:
-                print("{0}: {1} [{2}]\n{3}\n".format(row[0],
-                      row[3], row[1], row[4]))
+                print("[{0}] {1}: {2} [{3}]\n{4}\n".format(
+                    row[0], row[1], row[2], row[3], row[4]))
         else:
             print(twodim_to_str(output_format, header, rows))
 
@@ -686,72 +853,88 @@ def handle_diff_results(args):
 
         return run_histories[0] if len(run_histories) else None
 
-    client = setup_client(args.product_url)
+    def process_run_arg(run_arg_with_tag):
+        """
+        Process the argument and returns run ids a run tag ids.
+        The argument has the following format: <run_name>:<run_tag>
+        """
+        run_with_tag = run_arg_with_tag.split(':')
+        run_name = run_with_tag[0]
 
-    report_filter = ttypes.ReportFilter()
+        runs = get_runs(client, [run_name])
+        run_ids = map(lambda run: run.runId, runs)
+        run_names = map(lambda run: run.name, runs)
 
-    # Process base run names and tags.
-    run_with_tag = args.basename.split(':')
-    base_run_name = run_with_tag[0]
-
-    base_runs = get_runs(client, [base_run_name])
-    base_ids = map(lambda run: run.runId, base_runs)
-
-    # Set base run tag if it is available.
-    run_tag_name = run_with_tag[1] if len(run_with_tag) > 1 else None
-    if run_tag_name:
-        tag = get_run_tag(client, base_ids, run_tag_name)
-        report_filter.runTag = [tag.id] if tag else None
-
-    if len(base_ids) == 0:
-        LOG.warning("No run names match the given pattern: " + args.basename)
-        sys.exit(1)
-
-    LOG.info("Matching base runs: " +
-             ', '.join(map(lambda run: run.name, base_runs)))
-
-    cmp_data = ttypes.CompareData()
-    if 'new' in args:
-        cmp_data.diffType = ttypes.DiffType.NEW
-    elif 'unresolved' in args:
-        cmp_data.diffType = ttypes.DiffType.UNRESOLVED
-    elif 'resolved' in args:
-        cmp_data.diffType = ttypes.DiffType.RESOLVED
-
-    results = []
-    if os.path.isdir(args.newname):
-        # If newname is a valid directory we assume that it is a report dir and
-        # we are in local compare mode.
-        results = get_diff_report_dir(client, base_ids,
-                                      os.path.abspath(args.newname),
-                                      cmp_data)
-    else:
-        run_with_tag = args.newname.split(':')
-        new_run_name = run_with_tag[0]
+        # Set base run tag if it is available.
         run_tag_name = run_with_tag[1] if len(run_with_tag) > 1 else None
+        run_tags = None
+        if run_tag_name:
+            tag = get_run_tag(client, run_ids, run_tag_name)
+            run_tags = [tag.id] if tag else None
 
-        new_runs = get_runs(client, [new_run_name])
-        new_ids = map(lambda run: run.runId, new_runs)
-
-        if len(new_ids) == 0:
+        if not run_ids:
             LOG.warning(
-                "No run names match the given pattern: " + args.newname)
+                "No run names match the given pattern: " + run_arg_with_tag)
             sys.exit(1)
 
-        LOG.info("Matching new runs: " +
-                 ', '.join(map(lambda run: run.name, new_runs)))
+        LOG.info("Matching runs: %s",
+                 ', '.join(map(lambda run: run.name, runs)))
 
-        cmp_data.runIds = new_ids
-        if run_tag_name:
-            tag = get_run_tag(client, new_ids, run_tag_name)
-            cmp_data.runTag = [tag.id] if tag else None
+        return run_ids, run_names, run_tags
 
-        results = get_diff_results(client, base_ids, report_filter, cmp_data)
+    def print_diff_results(reports):
+        """
+        Print the results.
+        """
+        if reports:
+            print_reports(client, reports, args.output_format)
+        else:
+            LOG.info("No results.")
 
-    if len(results) == 0:
-        LOG.info("No results.")
+    client = None
+
+    # We set up the client if we are not comparing two local report directory.
+    if not os.path.isdir(args.basename) or not os.path.isdir(args.newname):
+        client = setup_client(args.product_url)
+
+    if os.path.isdir(args.basename) and os.path.isdir(args.newname):
+        reports = get_diff_local_dirs(args.basename, args.newname)
+        print_diff_results(reports)
+        LOG.info("Compared two local report directories %s and %s",
+                 os.path.abspath(args.basename),
+                 os.path.abspath(args.newname))
+    elif os.path.isdir(args.newname):
+        reports, base_run_names = \
+            get_diff_remote_run_local_dir(client,
+                                          args.basename,
+                                          os.path.abspath(args.newname))
+        print_diff_results(reports)
+        LOG.info("Compared remote run(s) %s (matching: %s) and local report "
+                 "directory %s",
+                 args.basename,
+                 ', '.join(base_run_names),
+                 os.path.abspath(args.newname))
+    elif os.path.isdir(args.basename):
+        reports, new_run_names = \
+            get_diff_local_dir_remote_run(client,
+                                          os.path.abspath(args.basename),
+                                          args.newname)
+        print_diff_results(reports)
+        LOG.info("Compared local report directory %s and remote run(s) %s "
+                 "(matching: %s).",
+                 os.path.abspath(args.basename),
+                 args.newname,
+                 ', '.join(new_run_names))
     else:
-        print_reports(client, results, args.output_format)
+        reports, base_run_names, new_run_names = \
+            get_diff_remote_runs(client, args.basename, args.newname)
+        print_diff_results(reports)
+        LOG.info("Compared multiple remote runs %s (matching: %s) and %s "
+                 "(matching: %s)",
+                 args.basename,
+                 ', '.join(base_run_names),
+                 args.newname,
+                 ', '.join(new_run_names))
 
 
 def handle_list_result_types(args):

@@ -1429,13 +1429,20 @@ filter arguments:
   --report-hash [REPORT_HASH [REPORT_HASH ...]]
                         Filter results by report hashes.
   --review-status [REVIEW_STATUS [REVIEW_STATUS ...]]
-                        Filter results by review statuses.
+                        Filter results by review statuses. This can be used
+                        only if basename or newname is a run name (on the
+                        remote server). (default: ['unreviewed', 'confirmed'])
   --detection-status [DETECTION_STATUS [DETECTION_STATUS ...]]
-                        Filter results by detection statuses.
+                        Filter results by detection statuses. This can be used
+                        only if basename or newname is a run name (on the
+                        remote server). (default: ['new', 'reopened',
+                        'unresolved'])
   --severity [SEVERITY [SEVERITY ...]]
                         Filter results by severities.
   --tag [TAG [TAG ...]]
-                        Filter results by version tag names.
+                        Filter results by version tag names. This can be used
+                        only if basename or newname is a run name (on the
+                        remote server).
   --file [FILE_PATH [FILE_PATH ...]]
                         Filter results by file path. The file path can contain
                         multiple * quantifiers which matches any number of
@@ -1451,7 +1458,9 @@ filter arguments:
                         can contain multiple * quantifiers which matches any
                         number of characters (zero or more).
   --component [COMPONENT [COMPONENT ...]]
-                        Filter results by source components.
+                        Filter results by source components. This can be used
+                        only if basename or newname is a run name (on the
+                        remote server).
   -s, --suppressed      DEPRECATED. Use the '--filter' option to get false
                         positive (suppressed) results. Show only suppressed
                         results instead of only unsuppressed ones.
