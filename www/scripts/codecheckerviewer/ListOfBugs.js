@@ -424,10 +424,8 @@ function (declare, dom, style, Deferred, ObjectStore, Store, QueryResults,
 
           this.initRunHistory(baseline.concat(newcheck));
 
-          var state = hashHelper.getState();
-
           hashHelper.resetStateValues({
-            'tab' : state.tab,
+            'tab' : that.tab,
             'subtab' : 'runHistory'
           });
           that.subtab = 'runHistory';
