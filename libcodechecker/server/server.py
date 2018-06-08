@@ -132,11 +132,10 @@ class RequestHandler(SimpleHTTPRequestHandler):
         """
 
         auth_session = self.__check_session_cookie()
-        LOG.info("{0}:{1} -- [{2}] GET {3}"
-                 .format(self.client_address[0],
-                         str(self.client_address[1]),
-                         auth_session.user if auth_session else 'Anonymous',
-                         self.path))
+        LOG.debug("%s:%s -- [%s] GET %s", self.client_address[0],
+                  str(self.client_address[1]),
+                  auth_session.user if auth_session else 'Anonymous',
+                  self.path)
 
         if auth_session is not None:
             self.auth_token = auth_session.token
@@ -292,8 +291,10 @@ class RequestHandler(SimpleHTTPRequestHandler):
                 raise ValueError(error_msg)
         else:
             # Send an error to the user.
+            db_stat = DBStatus._VALUES_TO_NAMES.get(product.db_status)
             error_msg = "'{0}' database connection " \
-                "failed!".format(product.endpoint)
+                "failed. DB status: {1}".format(product.endpoint,
+                                                str(db_stat))
             LOG.error(error_msg)
             raise ValueError(error_msg)
 
@@ -304,11 +305,9 @@ class RequestHandler(SimpleHTTPRequestHandler):
 
         client_host, client_port = self.client_address
         auth_session = self.__check_session_cookie()
-        LOG.info("{0}:{1} -- [{2}] POST {3}"
-                 .format(client_host,
-                         str(client_port),
-                         auth_session.user if auth_session else "Anonymous",
-                         self.path))
+        LOG.debug("%s:%s -- [%s] POST %s", client_host, str(client_port),
+                  auth_session.user if auth_session else "Anonymous",
+                  self.path)
 
         # Create new thrift handler.
         checker_md_docs = self.server.checker_md_docs

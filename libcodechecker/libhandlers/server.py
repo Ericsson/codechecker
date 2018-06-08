@@ -774,7 +774,7 @@ def server_init_start(args):
         db_status = prod_server.connect()
         if db_status != DBStatus.MISSING:
             db_status = prod_server.connect(init=True)
-            LOG.error(database_status.db_status_msg.get(db_status))
+            LOG.debug(database_status.db_status_msg.get(db_status))
             if db_status != DBStatus.OK:
                 LOG.error("Failed to configure default product")
                 sys.exit(1)
