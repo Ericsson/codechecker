@@ -64,7 +64,7 @@ Install
 For a detailed dependency list, please see [Requirements](docs/deps.md). The
 following commands are used to bootstrap CodeChecker on Ubuntu 16.04.1 LTS:
 
-~~~{.sh}
+```sh
 # Install mandatory dependencies for a development and analysis environment.
 # NOTE: clang-3.9 can be replaced by any later versions of LLVM/Clang.
 sudo apt-get install clang-3.9 build-essential curl doxygen gcc-multilib \
@@ -85,7 +85,7 @@ make package
 export PATH="$PWD/build/CodeChecker/bin:$PATH"
 
 cd ..
-~~~
+```
 
 #### Upgrading environment after system or Python upgrade
 
@@ -95,10 +95,10 @@ If you have upgraded your system's Python to a newer version (e.g. from
 out-of-the-box. To fix this issue, run the following command to upgrade your
 `checker_env` too:
 
-~~~{.sh}
+```sh
 cd ~/codechecker/venv
 virtualenv -p /usr/bin/python2.7 .
-~~~
+```
 
 ### Mac OS X
 
@@ -123,7 +123,7 @@ You can turn off SIP on El Capitan this way:
 The following commands are used to bootstrap CodeChecker on
 OS X El Capitan 10.11, macOS Sierra 10.12 and macOS High Sierra 10.13.
 
-~~~{.sh}
+```sh
 # Download and install dependencies.
 brew update
 brew install doxygen gcc git
@@ -149,7 +149,7 @@ make package
 export PATH="$PWD/build/CodeChecker/bin:$PATH"
 
 cd ..
-~~~
+```
 
 Check your first project
 ------------------------
@@ -168,19 +168,19 @@ the configuration file
 `runtime/analyzers` section, you must set the values, as shown below, to the
 binaries you intend to use.
 
-~~~{.json}
+```json
 "analyzers" : {
   "clangsa" : "/path/to/clang/bin/clang-4.0",
   "clang-tidy" : "/path/to/clang/bin/clang-tidy-3.8"
 },
-~~~
+```
 
 ### Setting up the environment in your Terminal
 
 These steps must always be taken in a new command prompt you wish to execute
 analysis in.
 
-~~~{.sh}
+```sh
 source ~/codechecker/venv/bin/activate
 
 # Path of CodeChecker package
@@ -194,7 +194,7 @@ export PATH=~/<user path>/llvm/tools/clang/tools/scan-build-py/bin:$PATH
 # Path of the built LLVM/Clang
 # NOTE: SKIP this line if clang is available in your PATH as an installed Linux package.
 export PATH=~/<user path>/build/bin:$PATH
-~~~
+```
 
 ### Check the test project
 
