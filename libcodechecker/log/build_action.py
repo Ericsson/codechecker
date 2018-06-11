@@ -21,7 +21,6 @@ class BuildAction(object):
         self._target = ''
         self._source_count = 0
         self._sources = []
-        self._skip = False
 
     def __str__(self):
         # For debugging.
@@ -134,14 +133,6 @@ class BuildAction(object):
     @target.setter
     def target(self, value):
         self._target = value
-
-    @property
-    def skip(self):
-        return self._skip
-
-    @skip.setter
-    def skip(self, value):
-        self._skip = value
 
     def __eq__(self, other):
         return other._original_command == self._original_command

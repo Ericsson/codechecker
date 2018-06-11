@@ -143,11 +143,14 @@ class LogParserTest(unittest.TestCase):
         self.assertEqual(list(build_action.sources)[0], r'/tmp/a b.cpp')
         self.assertEqual(build_action.lang, 'c++')
 
-    def test_skip_preproc(self):
+    def test_omit_preproc(self):
         """
-        Compiler preprocessor actions should be marked as skipped.
+        Compiler preprocessor actions should be omitted.
         """
         preprocessor_actions = StringIO('''[
+            {"directory": "/tmp",
+            "command": "g++ /tmp/a.cpp -c /tmp/a.cpp",
+            "file": "/tmp/a.cpp" },
             {"directory": "/tmp",
             "command": "g++ /tmp/a.cpp -E /tmp/a.cpp",
             "file": "/tmp/a.cpp" },
@@ -167,8 +170,10 @@ class LogParserTest(unittest.TestCase):
         build_actions = \
             log_parser.parse_compile_commands_json(preprocessor_actions,
                                                    ParseLogOptions())
-        for build_action in build_actions:
-            self.assertTrue(build_action.skip)
+        self.assertEqual(len(build_actions), 1)
+        self.assertTrue('-M' not in build_actions[0].original_command)
+        self.assertTrue('-E' not in build_actions[0].original_command)
+        self.assertTrue('-c' in build_actions[0].original_command)
 
     def test_keep_compile_and_dep(self):
         """ Keep the compile command if -MD is set.
@@ -183,10 +188,10 @@ class LogParserTest(unittest.TestCase):
         build_actions = \
             log_parser.parse_compile_commands_json(preprocessor_actions,
                                                    ParseLogOptions())
-        for build_action in build_actions:
-            self.assertFalse(build_action.skip)
+        self.assertEqual(len(build_actions), 1)
+        self.assertTrue('-MD' in build_actions[0].original_command)
 
-    def test_skip_dep_with_e(self):
+    def test_omit_dep_with_e(self):
         """ Skip the compile command if -MD is set together with -E. """
 
         preprocessor_actions = StringIO('''[
@@ -201,8 +206,7 @@ class LogParserTest(unittest.TestCase):
         build_actions = \
             log_parser.parse_compile_commands_json(preprocessor_actions,
                                                    ParseLogOptions())
-        for build_action in build_actions:
-            self.assertTrue(build_action.skip)
+        self.assertEqual(len(build_actions), 0)
 
     def test_include_rel_to_abs(self):
         """
