@@ -298,6 +298,49 @@ def add_arguments_to_parser(parser):
                                     "'<OUTPUT_DIR>/ctu-dir'. (These files "
                                     "will not be cleaned up in this mode.)")
 
+    if host_check.is_statistics_capable():
+        stat_opts = parser.add_argument_group(
+            "EXPERIMENTAL statistics analysis feature arguments",
+            "These arguments are only available if the Clang Static Analyzer "
+            "supports Statistics-based analysis "
+            "(e.g. statisticsCollector.ReturnValueCheck, "
+            "statisticsCollector.SpecialReturnValue checkers are available).")
+        stat_opts.add_argument('--stats-collect', '--stats-collect',
+                               action='store',
+                               default=argparse.SUPPRESS,
+                               dest='stats_output',
+                               help="EXPERIMENTAL feature. "
+                                    "Perform the first, 'collect' phase of "
+                                    "Statistical analysis. This phase "
+                                    "generates extra files needed by "
+                                    "statistics analysis, and "
+                                    "puts them into "
+                                    "'<STATS_OUTPUT>'."
+                                    " NOTE: If this argument is present, "
+                                    "CodeChecker will NOT execute the "
+                                    "analyzers!")
+
+        stat_opts.add_argument('--stats-use', '--stats-use',
+                               action='store',
+                               default=argparse.SUPPRESS,
+                               dest='stats_dir',
+                               help="EXPERIMENTAL feature. "
+                                    "Use the previously generated statistics "
+                                    "results for the analysis from the given "
+                                    "'<STATS_DIR>'.")
+
+        stat_opts.add_argument('--stats',
+                               action='store_true',
+                               default=argparse.SUPPRESS,
+                               dest='stats_enabled',
+                               help="EXPERIMENTAL feature. "
+                                    "Perform both phases of "
+                                    "Statistical analysis. This phase "
+                                    "generates extra files needed by "
+                                    "statistics analysis and enables "
+                                    "the statistical checkers. "
+                                    "No need to enable them explicitly.")
+
     checkers_opts = parser.add_argument_group(
         "checker configuration",
         "See 'codechecker-checkers' for the list of available checkers. "
@@ -443,6 +486,9 @@ def main(args):
                           'tidy_args_cfg_file',
                           'capture_analysis_output',
                           'ctu_phases',
+                          'stats_output',
+                          'stats_dir',
+                          'stats_enabled',
                           'enable_all',
                           'ordered_checkers',  # --enable and --disable.
                           'timeout'
