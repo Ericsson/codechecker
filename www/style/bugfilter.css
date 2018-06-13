@@ -27,19 +27,31 @@
 }
 
 /* Clear all button */
-.bug-filters .clear-all-btn {
+.bug-filters .clear-all-btn,
+.bug-filters .remove-all-btn {
   margin-left: 10px;
   margin-top: 5px;
   display: block;
 }
 
-.bug-filters .clear-all-btn > .dijitButtonNode {
+.bug-filters .clear-all-btn > .dijitButtonNode,
+.bug-filters .remove-all-btn > .dijitButtonNode {
   background-color: #fff;
   background-image: none;
 }
 
-.bug-filters .clear-all-btn:hover > .dijitButtonNode {
+.bug-filters .clear-all-btn:hover > .dijitButtonNode
+.bug-filters .remove-all-btn:hover > .dijitButtonNode {
   background-color: #007ea7;
+  color: white;
+}
+
+.bug-filters .remove-all-btn > .dijitButtonNode {
+  border: 1px solid #ec767f;
+}
+
+.bug-filters .remove-all-btn > .dijitButtonNode:hover {
+  background-color: #ec767f;
   color: white;
 }
 

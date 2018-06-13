@@ -71,6 +71,14 @@ class ThriftClientHelper(object):
         pass
 
     @ThriftClientCall
+    def removeRunReports(self, run_ids, report_filter, cmp_data):
+        pass
+
+    @ThriftClientCall
+    def removeRun(self, run_id):
+        pass
+
+    @ThriftClientCall
     def getSuppressedBugs(self, run_id):
         pass
 
