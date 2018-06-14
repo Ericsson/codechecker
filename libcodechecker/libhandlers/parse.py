@@ -8,7 +8,7 @@ Defines the CodeChecker action for parsing a set of analysis results into a
 human-readable format.
 """
 
-from collections import Counter
+from collections import defaultdict
 import argparse
 import json
 import os
@@ -24,7 +24,6 @@ from libcodechecker.analyze import plist_parser
 from libcodechecker.analyze.skiplist_handler import SkipListHandler
 from libcodechecker.report import Report, get_report_path_hash
 # TODO: This is a cross-subpackage reference...
-from libcodechecker.output_formatters import twodim_to_str
 
 LOG = logger.get_logger('system')
 
@@ -162,8 +161,7 @@ def add_arguments_to_parser(parser):
     parser.set_defaults(func=__handle)
 
 
-def parse(f, context, metadata_dict, suppress_handler, skip_handler, steps,
-          processed_path_hashes):
+def parse(plist_file, metadata_dict, rh, file_report_map):
     """
     Prints the results in the given file to the standard output in a human-
     readable format.
@@ -171,30 +169,23 @@ def parse(f, context, metadata_dict, suppress_handler, skip_handler, steps,
     Returns the report statistics collected by the result handler.
     """
 
-    if not f.endswith(".plist"):
-        LOG.debug("Skipping input file '" + f + "' as it is not a plist.")
-        return {}, set()
+    if not plist_file.endswith(".plist"):
+        LOG.debug("Skipping input file '%s' as it is not a plist.", plist_file)
+        return set()
 
-    LOG.debug("Parsing input file '" + f + "'")
+    LOG.debug("Parsing input file '%s'", plist_file)
 
-    rh = plist_parser.PlistToPlaintextFormatter(suppress_handler,
-                                                skip_handler,
-                                                context.severity_map,
-                                                processed_path_hashes)
-
-    rh.print_steps = steps
-
-    # Set some variables of the result handler to use the saved file.
-
-    analyzed_source_file = "UNKNOWN"
     if 'result_source_files' in metadata_dict and \
-            f in metadata_dict['result_source_files']:
+            plist_file in metadata_dict['result_source_files']:
         analyzed_source_file = \
-            metadata_dict['result_source_files'][f]
+            metadata_dict['result_source_files'][plist_file]
 
-    files, reports = rh.parse(f)
+        if analyzed_source_file not in file_report_map:
+            file_report_map[analyzed_source_file] = []
 
-    plist_mtime = util.get_last_mod_time(f)
+    files, reports = rh.parse(plist_file)
+
+    plist_mtime = util.get_last_mod_time(plist_file)
 
     changed_files = set()
     for source_file in files:
@@ -202,21 +193,23 @@ def parse(f, context, metadata_dict, suppress_handler, skip_handler, steps,
             # Failed to get the modification time for
             # a file mark it as changed.
             changed_files.add(source_file)
-            LOG.warning(source_file +
-                        ' is missing since the last analysis.')
+            LOG.warning('%s is missing since the last analysis.', source_file)
             continue
 
         file_mtime = util.get_last_mod_time(source_file)
         if file_mtime > plist_mtime:
             changed_files.add(source_file)
-            LOG.warning(source_file +
-                        ' did change since the last analysis.')
+            LOG.warning('%s did change since the last analysis.', source_file)
 
-    if changed_files:
-        return {}, changed_files
-    else:
-        report_stats = rh.write(files, reports, analyzed_source_file)
-        return report_stats, set()
+    if not changed_files:
+        for report in reports:
+            file_path = report.file_path
+            if file_path not in file_report_map:
+                file_report_map[file_path] = []
+
+            file_report_map[file_path].append(report)
+
+    return changed_files
 
 
 def main(args):
@@ -319,10 +312,6 @@ def main(args):
                               html_builder)
             continue
 
-        severity_stats = Counter({})
-        file_stats = Counter({})
-        report_count = Counter({})
-
         files = []
         metadata_dict = {}
         if os.path.isfile(input_path):
@@ -350,39 +339,19 @@ def main(args):
                      in file_names]
 
         file_change = set()
+        file_report_map = defaultdict(list)
+
+        rh = plist_parser.PlistToPlaintextFormatter(suppress_handler,
+                                                    skip_handler,
+                                                    context.severity_map,
+                                                    processed_path_hashes)
+        rh.print_steps = 'print_steps' in args
+
         for file_path in files:
-            report_stats, f_change = parse(file_path,
-                                           context,
-                                           metadata_dict,
-                                           suppress_handler,
-                                           skip_handler,
-                                           'print_steps' in args,
-                                           processed_path_hashes)
+            f_change = parse(file_path, metadata_dict, rh, file_report_map)
             file_change = file_change.union(f_change)
 
-            severity_stats.update(Counter(report_stats.get('severity',
-                                          {})))
-            file_stats.update(Counter(report_stats.get('files', {})))
-            report_count.update(Counter(report_stats.get('reports', {})))
-
-        print("\n----==== Summary ====----")
-        if file_stats:
-            vals = [[os.path.basename(k), v] for k, v in
-                    dict(file_stats).items()]
-            keys = ['Filename', 'Report count']
-            table = twodim_to_str('table', keys, vals, 1, True)
-            print(table)
-
-        if severity_stats:
-            vals = [[k, v] for k, v in dict(severity_stats).items()]
-            keys = ['Severity', 'Report count']
-            table = twodim_to_str('table', keys, vals, 1, True)
-            print(table)
-
-        report_count = dict(report_count).get("report_count", 0)
-        print("----=================----")
-        print("Total number of reports: {}".format(report_count))
-        print("----=================----")
+        rh.write(file_report_map)
 
         if file_change:
             changed_files = '\n'.join([' - ' + f for f in file_change])

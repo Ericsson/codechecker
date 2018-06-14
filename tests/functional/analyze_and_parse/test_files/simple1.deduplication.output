@@ -22,9 +22,8 @@ CHECK#CodeChecker check --build "make deduplication" --output $OUTPUT$ --quiet -
   return 2015 / x;
               ^
 
-Found 1 defect(s) while analyzing simple1.cpp
+Found 1 defect(s) in simple1.cpp
 
-Found no defects while analyzing simple1.cpp
 
 ----==== Summary ====----
 --------------------------

@@ -21,7 +21,7 @@ CHECK#CodeChecker check --build "make tidy_check" --output $OUTPUT$ --quiet --an
   int i = sizeof(c);
           ^
 
-Found 1 defect(s) while analyzing tidy_check.cpp
+Found 1 defect(s) in tidy_check.cpp
 
 
 ----==== Summary ====----

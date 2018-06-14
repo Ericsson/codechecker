@@ -21,7 +21,7 @@ CHECK#CodeChecker check --build "make saargs_forward" --output $OUTPUT$ --quiet 
   return *ptr;
          ^
 
-Found 1 defect(s) while analyzing saargs_forward.cpp
+Found 1 defect(s) in saargs_forward.cpp
 
 
 ----==== Summary ====----

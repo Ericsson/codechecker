@@ -147,7 +147,7 @@ class TestCtu(unittest.TestCase):
 
         cmd = [self._codechecker_cmd, 'parse', self.report_dir]
         output, _ = call_command(cmd, cwd=self.test_dir, env=self.env)
-        self.assertIn("no defects while analyzing lib.c", output)
-        self.assertIn("defect(s) while analyzing main.c", output)
+        self.assertIn("no defects in lib.c", output)
+        self.assertIn("defect(s) in main.c", output)
         self.assertIn("lib.c:3:", output)
         self.assertIn("[core.NullDereference]", output)

@@ -201,6 +201,10 @@ class Report(object):
     def files(self):
         return self.__files
 
+    @property
+    def file_path(self):
+        return self.__files[self.__main['location']['file']]
+
     def __str__(self):
         msg = json.dumps(self.__main, sort_keys=True, indent=2)
         msg += str(self.__files)

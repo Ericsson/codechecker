@@ -30,7 +30,7 @@ CHECK#CodeChecker check --build "make simple2" --output $OUTPUT$ --quiet --analy
     6, simple2.cpp:15:2: The value 0 is assigned to 'x'
     7, simple2.cpp:17:14: Division by zero
 
-Found 1 defect(s) while analyzing simple2.cpp
+Found 1 defect(s) in simple2.cpp
 
 
 ----==== Summary ====----

@@ -21,7 +21,7 @@ CHECK#CodeChecker check --build "make multi_error_suppress" --output $OUTPUT$ --
   return &x;
   ^
 
-Found 1 defect(s) while analyzing multi_error_suppress.cpp
+Found 1 defect(s) in multi_error_suppress.cpp
 
 
 ----==== Summary ====----
