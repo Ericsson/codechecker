@@ -68,7 +68,7 @@ following commands are used to bootstrap CodeChecker on Ubuntu 16.04.1 LTS:
 # Install mandatory dependencies for a development and analysis environment.
 # NOTE: clang-3.9 can be replaced by any later versions of LLVM/Clang.
 sudo apt-get install clang-3.9 build-essential curl doxygen gcc-multilib \
-  git python-virtualenv python-dev thrift-compiler
+  git python-virtualenv python-dev thrift-compiler npm
 
 # Check out CodeChecker source code.
 git clone https://github.com/Ericsson/CodeChecker.git --depth 1 ~/codechecker

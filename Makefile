@@ -2,6 +2,8 @@
 
 CURRENT_DIR = $(shell pwd)
 BUILD_DIR = $(CURRENT_DIR)/build
+BUILD_PACKAGE_ROOT = $(BUILD_DIR)/CodeChecker
+BUILD_WEB_PLUGIN_DIR = $(BUILD_PACKAGE_ROOT)/www/scripts/plugins
 
 # Root of the repository.
 ROOT = $(CURRENT_DIR)
@@ -34,7 +36,35 @@ thrift: build_dir
 userguide: build_dir
 	$(MAKE) -C www/userguide
 
-package: clean_package build_dir gen-docs thrift userguide build_plist_to_html
+install_vendor:
+	cd $(ROOT)/vendor && \
+	npm install
+
+build_common: build_dir gen-docs thrift userguide build_plist_to_html install_vendor
+
+$(ROOT)/vendor/yuicompressor.jar:
+	[ -f $(ROOT)/vendor/yuicompressor.jar ] && : || \
+	curl -sSfLk --get https://github.com/yui/yuicompressor/releases/download/v2.4.8/yuicompressor-2.4.8.jar \
+			 -z $(ROOT)/vendor/yuicompressor.jar \
+			 -o $(ROOT)/vendor/yuicompressor.jar
+
+build_dojo: install_vendor
+	ln -sf $(ROOT)/vendor/node_modules/dojo-util $(ROOT)/vendor/node_modules/util && \
+	cd $(ROOT)/vendor/ && \
+	./node_modules/util/buildscripts/build.sh profile=./codechecker.profile.js action=release
+
+release: build_common build_dojo $(ROOT)/vendor/yuicompressor.jar
+	mkdir -p $(BUILD_WEB_PLUGIN_DIR)/dojo && \
+	cp -R $(ROOT)/vendor/dojo-build/dojo $(BUILD_WEB_PLUGIN_DIR)/dojo && \
+	cp -R $(ROOT)/vendor/dojo-build/dijit $(BUILD_WEB_PLUGIN_DIR)/dojo && \
+	cp -R $(ROOT)/vendor/dojo-build/dojox $(BUILD_WEB_PLUGIN_DIR)/dojo && \
+	./scripts/build_package.py -r $(ROOT) -o $(BUILD_DIR) -b $(BUILD_DIR) --minify
+
+package: build_common
+	mkdir -p $(BUILD_WEB_PLUGIN_DIR)/dojo && \
+	cp -R $(ROOT)/vendor/node_modules/dojo $(BUILD_WEB_PLUGIN_DIR)/dojo && \
+	cp -R $(ROOT)/vendor/node_modules/dijit $(BUILD_WEB_PLUGIN_DIR)/dojo && \
+	cp -R $(ROOT)/vendor/node_modules/dojox $(BUILD_WEB_PLUGIN_DIR)/dojo && \
 	./scripts/build_package.py -r $(ROOT) -o $(BUILD_DIR) -b $(BUILD_DIR)
 
 build_dir:

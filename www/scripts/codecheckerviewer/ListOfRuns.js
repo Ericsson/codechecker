@@ -372,7 +372,6 @@ function (declare, dom, ItemFileWriteStore, topic, Dialog, Button,
       });
 
       var listOfRunsGrid = new ListOfRunsGrid({
-        region : 'center',
         infoPane : runsInfoPane,
         parent : this,
         onLoaded : this.onLoaded,
@@ -382,7 +381,14 @@ function (declare, dom, ItemFileWriteStore, topic, Dialog, Button,
       runsInfoPane.set('listOfRunsGrid', listOfRunsGrid);
 
       this.addChild(runsInfoPane);
-      this.addChild(listOfRunsGrid);
+
+      var gridWrapper = new ContentPane({
+        region : 'center',
+        style : 'border: 0; padding: 0'
+      });
+
+      gridWrapper.addChild(listOfRunsGrid);
+      this.addChild(gridWrapper);
     },
 
     onLoaded : function (runDataList) {}

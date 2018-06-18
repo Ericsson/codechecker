@@ -1,0 +1,22 @@
+{
+  "name": "CodeChecker",
+  "version": "1.0.0",
+  "author": "Ericsson",
+  "license": "NCSA",
+  "description": "CodeChecker WEB GUI",
+  "dependencies": {
+    "dojo": "1.13.0",
+    "dijit": "1.13.0",
+    "dojox": "1.13.0",
+    "dojo-util": "1.13.0",
+    "thrift": "0.9.3",
+    "codemirror": "5.25.0",
+    "marked": "0.3.3",
+    "jsplumb": "2.2.0",
+    "jquery": "3.1.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Ericsson/CodeChecker"
+  }
+}

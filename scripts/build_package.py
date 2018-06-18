@@ -21,7 +21,6 @@ try:
 except ImportError:
     import urllib.parse as urlparse
 import tarfile
-import tempfile
 import time
 
 from distutils.spawn import find_executable
@@ -94,17 +93,12 @@ def create_folder_layout(path, layout):
     """ Create package directory layout. """
 
     package_root = layout['root']
-    if os.path.exists(path):
-        LOG.info('Removing previous package')
-        if os.path.exists(package_root):
-            shutil.rmtree(package_root)
-    else:
-        os.makedirs(path)
+    if not os.path.exists(package_root):
+        os.makedirs(package_root)
 
     LOG.info('Creating package layout')
     LOG.debug(layout)
 
-    os.makedirs(package_root)
     for key, folder in layout.items():
         if key != 'root':
             try:
@@ -117,7 +111,23 @@ def create_folder_layout(path, layout):
                     sys.exit()
 
 
-def copy_tree(src, dst, skip=None):
+def yui_compress(source, destination, yui_compress_jar):
+    if not yui_compress_jar or not os.path.exists(yui_compress_jar):
+        return
+
+    # Not a javascript or css file.
+    if not source.endswith('.js') and not source.endswith('.css'):
+        return
+
+    minify_cmd = ['java', '-jar', yui_compress_jar, source, '-o', destination]
+    LOG.info("Compressing %s", destination)
+    ret = run_cmd(minify_cmd, None, None, silent=True)
+    if ret:
+        LOG.error('Failed to run: ' + ' '.join(minify_cmd))
+        return ret
+
+
+def copy_tree(src, dst, skip=None, yui_compress_jar=None):
     """ Copy file tree. """
 
     if not os.path.exists(dst):
@@ -130,230 +140,14 @@ def copy_tree(src, dst, skip=None):
             continue
 
         if os.path.isdir(source):
-            copy_tree(source, destination, skip)
+            copy_tree(source, destination, skip, yui_compress_jar)
         else:
             delta = os.stat(src).st_mtime - os.stat(dst).st_mtime
             if not os.path.exists(destination) or delta > 0:
-                shutil.copy2(source, destination)
-
-
-def handle_external_file(dep, clean, env, verbose):
-    """
-    Download (and if needed, extract) files from the given url.
-    Currently supports handling of files with the following extensions:
-      .tar.gz, .js, .css
-    """
-    supported_exts = {
-        'compressed': ['.tar.gz'],
-        'uncompressed': ['.js', '.css']
-    }
-
-    source_package = dep['source_package']
-    directory = dep['directory']
-    if clean and os.path.exists(directory):
-        LOG.debug('Removing directory ' + directory)
-        shutil.rmtree(directory)
-    else:
-        if os.path.exists(directory):
-            return
-
-    os.makedirs(directory)
-    download_cmd = []
-    download_cmd.extend(shlex.split(source_package['download_cmd']))
-    file_url = source_package['url']
-    download_cmd.append(file_url)
-
-    option = source_package['option']
-    download_cmd.append(option)
-
-    file_name = source_package['name']
-    download_cmd.append(file_name)
-
-    LOG.info('Downloading ...')
-    if run_cmd(download_cmd, directory, env, verbose):
-        LOG.error('Failed to get dependency')
-        sys.exit(1)
-
-    url_data = urlparse.urlparse(file_url)
-    head, file_name = os.path.split(url_data.path)
-
-    head, file_ext = os.path.splitext(file_name)
-    if file_ext == '.gz' and head.endswith('.tar'):
-        file_ext = '.tar.gz'
-
-    if file_ext in supported_exts['compressed']:
-        if file_ext == '.tar.gz':
-            file_name = os.path.join(directory, file_name)
-            with tarfile.open(file_name) as tar:
-                tar.extractall(directory)
-            os.remove(file_name)
-        else:
-            LOG.error('Unsupported file type')
-    elif file_ext in supported_exts['uncompressed']:
-        pass
-    else:
-        LOG.error('Unsupported file type')
-
-
-font_user_agents = {
-    'default': '""',
-    'eot': 'Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.1; Trident/4.0)',
-    'woff': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:27.0) '
-            'Gecko/20100101 Firefox/27.0',
-    'woff2': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:40.0) '
-             'Gecko/20100101 Firefox/40.0',
-    'svg': 'Mozilla/4.0 (iPad; CPU OS 4_0_1 like Mac OS X) AppleWebKit/534.46'
-           '(KHTML, like Gecko) Version/4.1 Mobile/9A405 Safari/7534.48.3',
-    'ttf': 'Mozilla/5.0 (Linux; Android 4.3; HTCONE Build/JSS15J) '
-           'AppleWebKit/534.30 (KHTML, like Gecko) Version/4.0 '
-           'Mobile Safari/534.30'}
-
-
-def handle_external_repository(dep, clean, env, verbose):
-    """ Download external repository. """
-    repository = dep['repository']
-    directory = dep['directory']
-    if clean and os.path.exists(directory):
-        LOG.debug('Removing directory ' + directory)
-        shutil.rmtree(directory)
-    else:
-        if os.path.exists(directory):
-            return
-
-    if repository['type'] == 'git':
-        directory = dep['directory']
-        if clean and os.path.exists(directory):
-            LOG.debug('Removing directory ' + directory)
-            shutil.rmtree(directory)
-        else:
-            if os.path.exists(directory):
-                return
-
-        git_cmd = ['git', 'clone', '--depth', '1', '--single-branch']
-
-        git_tag = repository.get('git_tag')
-        if git_tag:
-            git_cmd.append('-b')
-            git_cmd.append(git_tag)
-        git_cmd.append(repository.get('url'))
-        git_cmd.append(directory)
-
-        dir_name, _ = os.path.split(directory)
-        LOG.info('Downloading ...')
-        if run_cmd(git_cmd, dir_name, env=env, silent=verbose):
-            LOG.error('Failed to get dependency')
-            sys.exit(1)
-    elif repository['type'] == 'font_import':
-        # Download the font information from the given CSS file
-        source = repository.get('url')
-        font = repository.get('font')
-
-        if not os.path.exists(directory):
-            os.makedirs(directory)
-
-        if source:
-            tmp = tempfile.mkdtemp()
-            LOG.debug("Downloading font files " + source + " to " + tmp)
-            for fformat, agent in font_user_agents.items():
-                command = ['curl', '-sSfLk',
-                           '-A', agent,
-                           '--get', source,
-                           '-o', os.path.join(tmp,
-                                              fformat + '.css')]
-                if run_cmd(command, env=env):
-                    LOG.warning("Failed to download font CSS for {0} "
-                                "(format {1})".format(source, fformat))
-                    continue
-
-                LOG.debug("Font format " + fformat + " downloaded.")
-
-            localdefs = []
-            urls = []
-            for _, _, files in os.walk(tmp):
-                for fontcss in files:
-                    if fontcss == "default.css":
-                        continue
-
-                    font_type = fontcss.replace(".css", "")
-                    fontcss = os.path.join(tmp, fontcss)
-                    LOG.debug("Retrieving font for " + font + "(" +
-                              os.path.basename(fontcss) + ")")
-                    with open(fontcss, 'r') as css_file:
-                        css = css_file.read()
-
-                    for local_name in re.findall(r'local\(([\S ]+?)\)', css):
-                        if local_name not in localdefs:
-                            localdefs.append("local(" + local_name + ")")
-
-                    src = re.search(r'url\(([\S]+)\)( format\(([\S]+)\))?',
-                                    css)
-                    command = ['curl', '-sSfLk',
-                               '-A',
-                               font_user_agents[font_type],
-                               '--get', src.group(1),
-                               '-o', os.path.join(tmp,
-                                                  font + '.' + font_type)]
-                    if run_cmd(command, env=env):
-                        LOG.warning("Couldn't download font FILE for "
-                                    "{0}.{1}".format(font, font_type))
-                        continue
-
-                    if font_type == 'svg':
-                        # SVG fonts need a HTTP anchor to work,
-                        # i.e. Arial.svg#Arial, not just Arial.svg
-
-                        url_parsed = urlparse.urlparse(src.group(1))
-                        suffix = font_type + "#" + url_parsed.fragment
-                    else:
-                        suffix = font_type
-
-                    urls.append("url('" +
-                                os.path.join("..", "fonts",
-                                             font + '.' + suffix) +
-                                "')" + src.group(2) if src.group(2) else '')
-
-                    # Export the downloaded files
-                    basename = font + '.' + font_type
-                    shutil.copy(os.path.join(tmp, basename),
-                                os.path.join(directory, basename))
-
-            # Export "fixed" font information
-            localdefs = list(set(localdefs))
-            with open(os.path.join(tmp, "default.css"), 'r') as cssfile:
-                css = re.sub(r'(src:.*;)', "{SRCLINE}", cssfile.read())
-                css = css.replace("{SRCLINE}",
-                                  "src: " + ','.join(localdefs + urls)
-                                               .rstrip(',')
-                                               .replace(',', ',\n       ') +
-                                  ";")
-
-                with open(os.path.join(directory, "generated_fonts.css"),
-                          'w') as export:
-                    export.write(css)
-
-            shutil.rmtree(tmp)
-        else:
-            LOG.error('Font repository URL was not given!')
-    else:
-        LOG.error('Unsupported repository type')
-
-
-def handle_vendor_record(dep, clean, env, verbose):
-    """ Handle external project dependencies."""
-
-    LOG.info('Checking source: ' + dep['name'])
-
-    if dep.get('source_package') is None and dep.get('repository') is None:
-        LOG.error('Missing download for source dependency: ' + dep['name'])
-        sys.exit(1)
-
-    if dep.get('source_package'):
-        handle_external_file(dep, clean, env, verbose)
-
-    if dep.get('repository'):
-        handle_external_repository(dep, clean, env, verbose)
-
-    LOG.info('Done.')
+                if yui_compress_jar:
+                    yui_compress(source, destination, yui_compress_jar)
+                else:
+                    shutil.copy2(source, destination)
 
 
 def compress_to_tar(source_folder, target_folder, compress):
@@ -380,13 +174,6 @@ def compress_to_tar(source_folder, target_folder, compress):
             t.add(cfile, arcname=rename)
     t.close()
     return True
-
-
-def get_ext_package_data(deps, dep_name):
-    """ Search for a dependency in the list. """
-    for dep in deps:
-        if dep['name'] == dep_name:
-            return dep
 
 
 def build_package(repository_root, build_package_config, env=None):
@@ -419,20 +206,7 @@ def build_package(repository_root, build_package_config, env=None):
     package_root = os.path.join(output_dir, 'CodeChecker')
     package_layout['root'] = package_root
 
-    # Get external dependencies.
-    vendor_proj_config = os.path.join(repository_root, 'vendor_projects.json')
-    LOG.debug(vendor_proj_config)
-    with open(vendor_proj_config, 'r') as vendor_cfg:
-        vendor_proj_config = vendor_cfg.read()
-        vendor_projs = json.loads(vendor_proj_config)
-
     clean = build_package_config['clean']
-    for dep in vendor_projs:
-        dep['directory'] = os.path.join(repository_root, dep['directory'])
-        handle_vendor_record(dep, clean, env, verbose)
-
-    vendor_projects = {dep['name']: dep for dep in vendor_projs}
-
     LOG.info('Getting external dependency projects done.')
 
     # Create package folder layout.
@@ -493,6 +267,18 @@ def build_package(repository_root, build_package_config, env=None):
             else:
                 LOG.info('Skipping ld logger from package')
 
+    npm_modules = os.path.join(repository_root, 'vendor', 'node_modules')
+    yui_compress_jar = None
+
+    minify = build_package_config.get('minify')
+    if minify:
+        yui_compress_jar = os.path.join(repository_root, 'vendor',
+                                        'yuicompressor.jar')
+
+        if not os.path.exists(yui_compress_jar):
+            LOG.warn("YUI compressor can not be found at location %s",
+                     yui_compress_jar)
+
     # Plist to html library files.
     source = os.path.join(repository_root,
                           'vendor', 'plist_to_html', 'plist_to_html')
@@ -536,7 +322,9 @@ def build_package(repository_root, build_package_config, env=None):
     # The web viewer needs only the latest version
     target = os.path.join(package_root, package_layout['web_client'])
     copy_tree(os.path.join(generated_api_root, api_dirs[-1], 'gen-js'),
-              target)
+              target,
+              None,
+              yui_compress_jar)
 
     # CodeChecker library files.
     source = os.path.join(repository_root, 'libcodechecker')
@@ -554,70 +342,52 @@ def build_package(repository_root, build_package_config, env=None):
     copy_tree(source, target)
 
     # Thift js.
-    thrift_dep = vendor_projects['thrift']
-    thrift_root = os.path.join(repository_root, thrift_dep.get('directory'))
+    thrift_root = os.path.join(npm_modules, 'thrift')
     thift_js_files = os.path.join(thrift_root, 'lib', 'js', 'src')
     target = os.path.join(package_root, package_layout['js_thrift'])
-    copy_tree(thift_js_files, target)
+    copy_tree(thift_js_files, target, None, yui_compress_jar)
 
     # CodeMirror.
-    codemirror_dep = vendor_projects['codemirror']
-    codemirror_root = os.path.join(repository_root,
-                                   codemirror_dep.get('directory'))
+    codemirror_root = os.path.join(npm_modules, 'codemirror')
     target = os.path.join(package_root,
                           package_layout['web_client_codemirror'])
     copy_tree(codemirror_root, target)
 
-    # HighlightJs.
-    highlightjs_dep = vendor_projects['highlightjs']
-    highlightjs_root = os.path.join(repository_root,
-                                    highlightjs_dep.get('directory'))
-    target = os.path.join(package_root,
-                          package_layout['web_client_highlightjs'])
-    copy_tree(highlightjs_root, target)
-
-    # HighlightJs_css.
-    highlightjs_css_dep = vendor_projects['highlightjs_css']
-    highlightjs_css_root = os.path.join(repository_root,
-                                        highlightjs_css_dep.get('directory'))
-    target = os.path.join(package_root,
-                          package_layout['web_client_highlightjs'])
-    target = os.path.join(target, 'css')
-    copy_tree(highlightjs_css_root, target)
-
-    # Dojo.
-    dojo_dep = vendor_projects['dojotoolkit']
-    file_url = dojo_dep['source_package']['url']
-    url_data = urlparse.urlparse(file_url)
-    _, file_name = os.path.split(url_data.path)
-    head, _ = file_name.split('.tar.gz')
-
-    dojo_root = os.path.join(repository_root, dojo_dep.get('directory'))
-    dojo_root = os.path.join(dojo_root, head)
-    target = os.path.join(package_root, package_layout['web_client_dojo'])
-    copy_tree(dojo_root, target)
+    if minify:
+        [yui_compress(f_, f_, yui_compress_jar) for f_ in [
+            os.path.join(target, 'lib', 'codemirror.js'),
+            os.path.join(target, 'lib', 'codemirror.css'),
+            os.path.join(target, 'mode', 'clike', 'clike.js'),
+            os.path.join(target, 'addon', 'dialog', 'dialog.js'),
+            os.path.join(target, 'addon', 'dialog', 'dialog.css'),
+            os.path.join(target, 'addon', 'scroll', 'annotatescrollbar.js'),
+            os.path.join(target, 'addon', 'search', 'match-highlighter.js'),
+            os.path.join(target, 'addon', 'search', 'search.js'),
+            os.path.join(target, 'addon', 'search', 'searchcursor.js'),
+            os.path.join(target, 'addon', 'edit', 'matchbrackets.js'),
+            os.path.join(target, 'addon', 'fold', 'foldcode.js'),
+            os.path.join(target, 'addon', 'fold', 'foldgutter.js'),
+            os.path.join(target, 'addon', 'fold', 'foldgutter.css'),
+            os.path.join(target, 'addon', 'fold', 'brace-fold.js'),
+            os.path.join(target, 'addon', 'fold', 'xml-fold.js')
+        ]]
 
     # Marked.
-    marked_dep = vendor_projects['marked']
-    marked_root = os.path.join(repository_root, marked_dep.get('directory'))
+    marked_root = os.path.join(npm_modules, 'marked')
     target = os.path.join(package_root, package_layout['web_client_marked'])
     shutil.copy(os.path.join(marked_root, 'marked.min.js'), target)
 
     # JsPlumb.
-    jsplumb_dep = vendor_projects['jsplumb']
-    jsplumb_root = os.path.join(repository_root, jsplumb_dep.get('directory'))
+    jsplumb_root = os.path.join(npm_modules, 'jsplumb')
     target = os.path.join(package_root, package_layout['web_client_jsplumb'])
     jsplumb = os.path.join(jsplumb_root, 'dist', 'js',
                            'jsPlumb-2.2.0-min.js')
     shutil.copy(jsplumb, target)
 
     # Add jQuery for JsPlumb.
-    jquery_dep = vendor_projects['jquery']
-    jquery_root = os.path.join(repository_root, jquery_dep.get('directory'))
-    target = os.path.join(target, 'external')
-    if not os.path.exists(target):
-        os.mkdir(target)
-    jquery = os.path.join(jquery_root, 'jquery-3.1.1-min.js')
+    jquery_root = os.path.join(npm_modules, 'jquery')
+    target = os.path.join(package_root, package_layout['web_client_jquery'])
+    jquery = os.path.join(jquery_root, 'dist', 'jquery.min.js')
     shutil.copy(jquery, target)
 
     # config files
@@ -812,6 +582,11 @@ if __name__ == "__main__":
                         default="build",
                         help="The local dependency folder under which Thrift "
                              "and documentation files have been generated.")
+
+    parser.add_argument("--minify",
+                        action="store_true",
+                        dest='minify',
+                        help='Minify JavaScript/CSS files.')
 
     parser.add_argument("--clean",
                         action="store_true",
