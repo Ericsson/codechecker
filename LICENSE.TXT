@@ -1,4 +1,4 @@
-Open Source License
+University of Illinois/NCSA Open Source License
 
 Copyright (c) 2015 Ericsson.
 All rights reserved.
