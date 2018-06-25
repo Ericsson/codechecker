@@ -43,13 +43,6 @@ class NewLineDefaultHelpFormatter(argparse.ArgumentDefaultsHelpFormatter):
         return lines
 
 
-class RawDescriptionDefaultHelpFormatter(
-    argparse.RawDescriptionHelpFormatter,
-    argparse.ArgumentDefaultsHelpFormatter
-):
-    pass
-
-
 def valid_time(t):
     """
     Constructs a datetime from a 'year:month:day:hour:minute:second'-formatted
@@ -927,7 +920,7 @@ def add_arguments_to_parser(parser):
 
     results = subcommands.add_parser(
         'results',
-        formatter_class=RawDescriptionDefaultHelpFormatter,
+        formatter_class=util.RawDescriptionDefaultHelpFormatter,
         description="Show the individual analysis reports' summary.",
         help="List analysis result (finding) summary for a given run.",
         epilog='''Example scenario: List analysis results
@@ -953,7 +946,7 @@ Get analysis results for a run and filter the analysis results:
 
     diff = subcommands.add_parser(
         'diff',
-        formatter_class=RawDescriptionDefaultHelpFormatter,
+        formatter_class=util.RawDescriptionDefaultHelpFormatter,
         description="Compare two analysis runs to show the results that "
                     "differ between the two.",
         help="Compare two analysis runs and show the difference.",
@@ -977,7 +970,7 @@ by multiple severity values:
 
     sum_p = subcommands.add_parser(
         'sum',
-        formatter_class=RawDescriptionDefaultHelpFormatter,
+        formatter_class=util.RawDescriptionDefaultHelpFormatter,
         description="Show checker statistics for some analysis runs.",
         help="Show statistics of checkers.",
         epilog='''Example scenario: Get checker statistics

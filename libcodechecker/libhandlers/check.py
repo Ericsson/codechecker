@@ -18,6 +18,7 @@ from libcodechecker import logger
 from libcodechecker import host_check
 from libcodechecker import libhandlers
 from libcodechecker.analyze.analyzers import analyzer_types
+from libcodechecker.util import RawDescriptionDefaultHelpFormatter
 
 LOG = logger.get_logger('system')
 
@@ -60,28 +61,25 @@ def get_argparser_ctor_args():
 
     return {
         'prog': 'CodeChecker check',
-        'formatter_class': argparse.ArgumentDefaultsHelpFormatter,
+        'formatter_class': RawDescriptionDefaultHelpFormatter,
 
         # Description is shown when the command's help is queried directly
-        'description': "Run analysis for a project with printing results "
-                       "immediately on the standard output. Check only "
-                       "needs a build command or an already existing logfile "
-                       "and performs every step of doing the analysis in "
-                       "batch.",
+        'description': """
+Run analysis for a project with printing results immediately on the standard
+output. Check only needs a build command or an already existing logfile and
+performs every step of doing the analysis in batch.""",
 
         # Epilogue is shown after the arguments when the help is queried
         # directly.
-        'epilog': "If you wish to reuse the logfile resulting from executing "
-                  "the build, see 'codechecker-log'. To keep analysis "
-                  "results for later, see and use 'codechecker-analyze'. "
-                  "To print human-readable output from previously saved "
-                  "analysis results, see 'codechecker-parse'. 'CodeChecker "
-                  "check' exposes a wrapper calling these three commands "
-                  "in succession. Please make sure your build command "
-                  "actually builds the files -- it is advised to execute "
-                  "builds on empty trees, aka. after a 'make clean', as "
-                  "CodeChecker only analyzes files that had been used by the "
-                  "build system.",
+        'epilog': """
+If you wish to reuse the logfile resulting from executing the build, see
+'CodeChecker log'. To keep analysis results for later, see and use
+'CodeChecker analyze'. To print human-readable output from previously saved
+analysis results, see 'CodeChecker parse'. 'CodeChecker check' exposes a
+wrapper calling these three commands in succession. Please make sure your build
+command actually builds the files -- it is advised to execute builds on empty
+trees, aka. after a 'make clean', as CodeChecker only analyzes files that had
+been used by the build system.""",
 
         # Help is shown when the "parent" CodeChecker command lists the
         # individual subcommands.
@@ -137,9 +135,10 @@ def add_arguments_to_parser(parser):
 
     log_args = parser.add_argument_group(
         "log arguments",
-        "Specify how the build information database should be obtained. You "
-        "need to specify either an already existing log file, or a build "
-        "command which will be used to generate a log file on the fly.")
+        """
+Specify how the build information database should be obtained. You need to
+specify either an already existing log file, or a build command which will be
+used to generate a log file on the fly.""")
 
     log_args = log_args.add_mutually_exclusive_group(required=True)
 
@@ -300,15 +299,32 @@ def add_arguments_to_parser(parser):
 
     checkers_opts = parser.add_argument_group(
         "checker configuration",
-        "See 'codechecker-checkers' for the list of available checkers. "
-        "You can fine-tune which checkers to use in the analysis by setting "
-        "the enabled and disabled flags starting from the bigger groups "
-        "and going inwards, e.g. '-e core -d core.uninitialized -e "
-        "core.uninitialized.Assign' will enable every 'core' checker, but "
-        "only 'core.uninitialized.Assign' from the 'core.uninitialized' "
-        "group. Please consult the manual for details. Disabling certain "
-        "checkers - such as the 'core' group - is unsupported by the LLVM/"
-        "Clang community, and thus discouraged.")
+        """
+Checkers
+------------------------------------------------
+The analyzer performs checks that are categorized into families or "checkers".
+See 'CodeChecker checkers' for the list of available checkers. You can
+fine-tune which checkers to use in the analysis by setting the enabled and
+disabled flags starting from the bigger groups and going inwards, e.g.
+'-e core -d core.uninitialized -e core.uninitialized.Assign' will enable every
+'core' checker, but only 'core.uninitialized.Assign' from the
+'core.uninitialized' group. Please consult the manual for details. Disabling
+certain checkers - such as the 'core' group - is unsupported by the LLVM/Clang
+community, and thus discouraged.
+
+Compiler warnings
+------------------------------------------------
+Compiler warnings are diagnostic messages that report constructions that are
+not inherently erroneous but that are risky or suggest there may have been an
+error. Compiler warnings are named 'clang-diagnostic-<warning-option>', e.g.
+Clang warning controlled by '-Wliteral-conversion' will be reported with check
+name 'clang-diagnostic-literal-conversion'. You can fine-tune which warnings to
+use in the analysis by setting the enabled and disabled flags starting from the
+bigger groups and going inwards, e.g. '-e Wunused -d Wno-unused-parameter' will
+enable every 'unused' warnings except 'unused-parameter'. These flags should
+start with a capital 'W' or 'Wno-' prefix followed by the waning name (E.g.:
+'-e Wliteral-conversion', '-d Wno-literal-conversion'). For more information
+see: https://clang.llvm.org/docs/DiagnosticsReference.html.""")
 
     checkers_opts.add_argument('-e', '--enable',
                                dest="enable",

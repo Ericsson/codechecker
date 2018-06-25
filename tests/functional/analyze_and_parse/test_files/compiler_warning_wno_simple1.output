@@ -1,0 +1,40 @@
+NORMAL#CodeChecker log --output $LOGFILE$ --build "make compiler_warning_wno_simple" --quiet
+NORMAL#CodeChecker analyze $LOGFILE$ --output $OUTPUT$ --analyzers clang-tidy -e Wunused-variable
+NORMAL#CodeChecker parse $OUTPUT$
+CHECK#CodeChecker check --build "make compiler_warning_wno_simple" --output $OUTPUT$ --quiet --analyzers clang-tidy -e Wunused-variable
+--------------------------------------------------------------------------------
+[] - Starting build ...
+[] - Build finished successfully.
+[] - Starting static analysis ...
+[] - [1/1] clang-tidy analyzed compiler_warning.cpp successfully.
+[] - ----==== Summary ====----
+[] - Total analyzed compilation commands: 1
+[] - Successfully analyzed
+[] -   clang-tidy: 1
+[] - ----=================----
+[] - Analysis finished.
+[] - To view results in the terminal use the "CodeChecker parse" command.
+[] - To store results use the "CodeChecker store" command.
+[] - See --help and the user guide for further options about parsing and storing the reports.
+[] - ----=================----
+[UNSPECIFIED] compiler_warning.cpp:3:7: unused variable 'i' [clang-diagnostic-unused-variable]
+  int i;
+      ^
+
+Found 1 defect(s) while analyzing compiler_warning.cpp
+
+
+----==== Summary ====----
+-----------------------------------
+Filename             | Report count
+-----------------------------------
+compiler_warning.cpp |            1
+-----------------------------------
+--------------------------
+Severity    | Report count
+--------------------------
+UNSPECIFIED |            1
+--------------------------
+----=================----
+Total number of reports: 1
+----=================----
