@@ -326,7 +326,7 @@ def parse_compile_commands_json(logfile, parseLogOptions):
             action.target = compiler_target[results.compiler]
 
         if results.action != option_parser.ActionType.COMPILE:
-            action.skip = True
+            continue
 
         # TODO: Check arch.
         action.directory = entry['directory']
@@ -364,4 +364,4 @@ def parse_log(logfilepath, parseLogOptions):
 
     LOG.debug('Parsing log file done.')
 
-    return [build_action for build_action in actions if not build_action.skip]
+    return actions
