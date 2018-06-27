@@ -377,7 +377,7 @@ export CC_LOGGER_GCC_LIKE
 
 * Run `CodeChecker log`:
 ```bash
-CodeChecker log -o ../codechecker_myProject_build.log -b "bitbake myProject"
+CodeChecker log -o ../compile_commands.json -b "bitbake myProject"
 ```
 
 ## <a name="analyze"></a> 2. `analyze` mode
