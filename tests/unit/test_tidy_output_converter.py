@@ -202,11 +202,35 @@ def setup_module():
             'clang-diagnostic-division-by-zero')
     ]
 
+    # tidy6.out Message/Note representation
+    tidy6_repr = [
+        tidy_out_conv.Message(
+            os.path.abspath('files/test5.cpp'),
+            10, 9,
+            'no matching function for call to \'get_type\'',
+            'clang-diagnostic-error',
+            None,
+            [
+                tidy_out_conv.Note(
+                    os.path.abspath('files/test5.cpp'),
+                    2, 18,
+                    'candidate template ignored: substitution failure '
+                    '[with T = int *]: type \'int *\' cannot be used prior to '
+                    '\'::\' because it has no members'),
+                tidy_out_conv.Note(
+                    os.path.abspath('files/test5.cpp'),
+                    5, 6,
+                    'candidate template ignored: substitution failure '
+                    '[with T = int]: array size is negative'),
+            ]
+        )]
+
     TidyOutputParserTestCase.tidy1_repr = tidy1_repr
     TidyOutputParserTestCase.tidy2_repr = tidy2_repr
     TidyOutputParserTestCase.tidy2_v6_repr = tidy2_v6_repr
     TidyOutputParserTestCase.tidy3_repr = tidy3_repr
     TidyOutputParserTestCase.tidy5_repr = tidy5_repr
+    TidyOutputParserTestCase.tidy6_repr = tidy6_repr
     TidyOutputParserTestCase.tidy5_v6_repr = tidy5_v6_repr
     TidyPListConverterTestCase.tidy1_repr = tidy1_repr
     TidyPListConverterTestCase.tidy2_repr = tidy2_repr
@@ -314,6 +338,14 @@ class TidyOutputParserTestCase(unittest.TestCase):
         messages = self.parser.parse_messages_from_file('tidy5_v6.out')
         for message in messages:
             self.assertIn(message, self.tidy5_v6_repr)
+
+    def test_tidy6(self):
+        """
+        Test the generated Messages of tidy6.out ClangTidy output file.
+        """
+        messages = self.parser.parse_messages_from_file('tidy6.out')
+        for message in messages:
+            self.assertIn(message, self.tidy6_repr)
 
 
 class TidyPListConverterTestCase(unittest.TestCase):
