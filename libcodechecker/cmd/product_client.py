@@ -6,6 +6,9 @@
 """
 Argument handlers for the 'CodeChecker cmd product' subcommands.
 """
+from __future__ import absolute_import
+from __future__ import print_function
+from __future__ import division
 
 import base64
 import sys
@@ -18,7 +21,7 @@ from libcodechecker.output_formatters import twodim_to_str
 from libcodechecker.server.database import database_status
 from libcodechecker.util import split_server_url
 
-from cmd_line_client import CmdLineOutputEncoder
+from .cmd_line_client import CmdLineOutputEncoder
 
 # Needs to be set in the handler functions.
 LOG = None

@@ -10,6 +10,9 @@
 """
 Generate a new unit test based on the skeleton
 """
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
 
 import os
 import sys

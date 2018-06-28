@@ -3,6 +3,12 @@
 #   This file is distributed under the University of Illinois Open Source
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
+"""
+Helpers to store analysis reports.
+"""
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
 
 import base64
 from datetime import datetime

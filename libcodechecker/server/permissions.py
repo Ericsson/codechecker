@@ -8,6 +8,9 @@
 This module defines the list of permissions of a CodeChecker server, and
 provides the handling of permission matching and databases.
 """
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
 
 from abc import ABCMeta
 from abc import abstractmethod

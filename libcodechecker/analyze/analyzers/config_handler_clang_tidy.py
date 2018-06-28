@@ -3,6 +3,12 @@
 #   This file is distributed under the University of Illinois Open Source
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
+"""
+Config handler for Clang Tidy analyzer.
+"""
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
 
 import argparse
 import json

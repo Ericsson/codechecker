@@ -6,6 +6,9 @@
 """
 Helpers for determining triple arch of a compile action
 """
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
 
 import shlex
 

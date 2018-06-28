@@ -7,6 +7,9 @@
 Main server starts a http server which handles Thrift client
 and browser requests.
 """
+from __future__ import absolute_import
+from __future__ import print_function
+from __future__ import division
 import atexit
 import datetime
 import errno
@@ -48,14 +51,14 @@ from . import instance_manager
 from . import permissions
 from . import routing
 from . import session_manager
-from api.authentication import ThriftAuthHandler as AuthHandler_v6
-from api.bad_api_version import ThriftAPIMismatchHandler as BadAPIHandler
-from api.product_server import ThriftProductHandler as ProductHandler_v6
-from api.report_server import ThriftRequestHandler as ReportHandler_v6
-from database import database
-from database import db_cleanup
-from database.config_db_model import Product as ORMProduct
-from database.run_db_model import IDENTIFIER as RUN_META
+from .api.authentication import ThriftAuthHandler as AuthHandler_v6
+from .api.bad_api_version import ThriftAPIMismatchHandler as BadAPIHandler
+from .api.product_server import ThriftProductHandler as ProductHandler_v6
+from .api.report_server import ThriftRequestHandler as ReportHandler_v6
+from .database import database
+from .database import db_cleanup
+from .database.config_db_model import Product as ORMProduct
+from .database.run_db_model import IDENTIFIER as RUN_META
 
 LOG = get_logger('server')
 

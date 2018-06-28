@@ -8,6 +8,9 @@ Handler for the $COMMAND$ subcommand for CodeChecker. This module exposes
 the subcommand-specific argparse.ArgumentParser definitions and the method
 which should be ran as the subcommand's main method.
 """
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
 
 import argparse
 

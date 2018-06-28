@@ -7,6 +7,9 @@
 Contains housekeeping routines that are used to remove expired, obsolete,
 or dangling records from the database.
 """
+from __future__ import absolute_import
+from __future__ import print_function
+from __future__ import division
 
 from datetime import datetime, timedelta
 
@@ -14,7 +17,7 @@ from codeCheckerDBAccess_v6.ttypes import *
 
 from libcodechecker.logger import get_logger
 
-from run_db_model import *
+from .run_db_model import *
 
 LOG = get_logger('server')
 RUN_LOCK_TIMEOUT_IN_DATABASE = 30 * 60  # 30 minutes.

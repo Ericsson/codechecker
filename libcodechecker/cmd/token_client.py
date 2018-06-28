@@ -6,6 +6,9 @@
 """
 Argument handlers for the 'CodeChecker cmd token' subcommands.
 """
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
 
 from libcodechecker import logger
 from libcodechecker.libclient.client import setup_auth_client

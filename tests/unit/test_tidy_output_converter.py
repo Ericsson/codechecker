@@ -8,6 +8,9 @@
 This module tests the correctness of the OutputParser and PListConverter, which
 used in sequence transform a Clang Tidy output file to a plist file.
 """
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
 
 import copy
 import os

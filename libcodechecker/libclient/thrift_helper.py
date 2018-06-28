@@ -3,6 +3,12 @@
 #   This file is distributed under the University of Illinois Open Source
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
+"""
+Helper functions for Thrift api calls.
+"""
+from __future__ import absolute_import
+from __future__ import print_function
+from __future__ import division
 
 from thrift.transport import THttpClient
 from thrift.protocol import TJSONProtocol
@@ -13,7 +19,7 @@ from libcodechecker import util
 from libcodechecker.libclient.thrift_call import ThriftClientCall
 from libcodechecker.logger import get_logger
 
-from credential_manager import SESSION_COOKIE_NAME
+from .credential_manager import SESSION_COOKIE_NAME
 
 LOG = get_logger('system')
 

@@ -5,6 +5,9 @@
 # -----------------------------------------------------------------------------
 
 """ Test cases to trim a path by using prefixes. """
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
 
 import unittest
 

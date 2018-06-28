@@ -3,6 +3,14 @@
 #   This file is distributed under the University of Illinois Open Source
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
+"""
+Parse the compile_commands.json file.
+Get compiler specific include paths targets.
+"""
+
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
 
 import json
 import os

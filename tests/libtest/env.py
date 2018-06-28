@@ -3,6 +3,12 @@
 #   This file is distributed under the University of Illinois Open Source
 #   License. See LICENSE.TXT for details.
 # -----------------------------------------------------------------------------
+"""
+Test environment setup and configuration helpers.
+"""
+from __future__ import absolute_import
+from __future__ import print_function
+from __future__ import division
 
 from hashlib import sha256
 import os
@@ -14,9 +20,9 @@ import stat
 import subprocess
 import sys
 
-from thrift_client_to_db import get_auth_client
-from thrift_client_to_db import get_product_client
-from thrift_client_to_db import get_viewer_client
+from .thrift_client_to_db import get_auth_client
+from .thrift_client_to_db import get_product_client
+from .thrift_client_to_db import get_viewer_client
 
 from functional import PKG_ROOT
 from functional import REPO_ROOT

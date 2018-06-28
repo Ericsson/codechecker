@@ -16,6 +16,9 @@ Possible improvements:
     - modular option handling system configuring possibility from config file.
 
 """
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
 import os
 import re
 import shlex
@@ -383,7 +386,7 @@ def arg_check(it, result):
             def append_n(size):
                 target_list.append(it.item)
                 for _ in range(size):
-                    it.next()
+                    next(it)
                     target_list.append(it.item)
 
             if regex:
@@ -410,7 +413,7 @@ def arg_check(it, result):
                 if match is not None:
                     tmp = it.item
                     if match.group(1) == '':
-                        it.next()
+                        next(it)
                         tmp = tmp + it.item
                     target_list.append(tmp)
                     return True
@@ -423,7 +426,7 @@ def arg_check(it, result):
 
         def wrapped(value):
             if value == arg:
-                it.next()
+                next(it)
                 with open(it.item) as file:
                     for line in file:
                         target_list.append(line.strip())
@@ -439,7 +442,7 @@ def arg_check(it, result):
             def append_replacement(items):
                 for item in items:
                     target_list.append(item)
-                it.next()
+                next(it)
 
             if regex:
                 for pattern in table:
@@ -460,7 +463,7 @@ def arg_check(it, result):
             if (regex and regex_match(value, arg)) or value == arg:
                 tmp = attr_value
                 if attr_value is None:
-                    it.next()
+                    next(it)
                     tmp = it.item
                 setattr(obj, attr_name, tmp)
                 return True
@@ -474,7 +477,7 @@ def arg_check(it, result):
         def wrapped(value):
             def skip_n(size):
                 for _ in range(size):
-                    it.next()
+                    next(it)
 
             if regex:
                 for pattern in table:

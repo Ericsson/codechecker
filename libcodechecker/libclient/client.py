@@ -3,6 +3,12 @@
 #   This file is distributed under the University of Illinois Open Source
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
+"""
+Thrift client setup and configuration.
+"""
+from __future__ import absolute_import
+from __future__ import print_function
+from __future__ import division
 
 import getpass
 import json
@@ -20,7 +26,7 @@ from libcodechecker.version import CLIENT_API
 from . import authentication_helper
 from . import product_helper
 from . import thrift_helper
-from credential_manager import UserCredentials
+from .credential_manager import UserCredentials
 
 LOG = get_logger('system')
 

@@ -10,6 +10,9 @@ for the given build, using an external tool such as scan-build-py or ld-logger.
 This module contains the basic definitions for how 'CodeChecker log' is to be
 invoked and ran.
 """
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
 
 import argparse
 import os

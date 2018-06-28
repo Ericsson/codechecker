@@ -7,6 +7,9 @@
 """
 Result comparison helper functions for the tests.
 """
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
 
 
 def compare_res_with_bug(run_res, bug):

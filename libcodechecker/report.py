@@ -11,6 +11,9 @@ Multiple bug identification hash-es can be generated.
 All hash generation algorithms should be documented and implemented here.
 
 """
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
 import hashlib
 import json
 import os

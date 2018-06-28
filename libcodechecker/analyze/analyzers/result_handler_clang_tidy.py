@@ -3,6 +3,12 @@
 #   This file is distributed under the University of Illinois Open Source
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
+"""
+Result handler for Clang Tidy.
+"""
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
 
 from libcodechecker.analyze import tidy_output_converter
 from libcodechecker.analyze.analyzers.result_handler_base \

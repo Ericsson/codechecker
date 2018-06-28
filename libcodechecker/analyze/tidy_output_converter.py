@@ -7,6 +7,9 @@
 This module is responsible for parsing clang-tidy output and generating plist
 for the plist_parser module.
 """
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
 
 import copy
 import json
@@ -122,7 +125,7 @@ class OutputParser(object):
 
         titer = iter(tidy_out)
         try:
-            next_line = titer.next()
+            next_line = next(titer)
             while True:
                 message, next_line = self._parse_message(titer, next_line)
                 if message is not None:
@@ -144,7 +147,7 @@ class OutputParser(object):
 
         match = OutputParser.message_line_re.match(line)
         if match is None:
-            return None, titer.next()
+            return None, next(titer)
 
         message = Message(
             os.path.abspath(match.group('path')),
@@ -154,7 +157,7 @@ class OutputParser(object):
             match.group('checker').strip())
 
         try:
-            line = titer.next()
+            line = next(titer)
             line = self._parse_code(message, titer, line)
             line = self._parse_fixits(message, titer, line)
             line = self._parse_notes(message, titer, line)
@@ -173,11 +176,11 @@ class OutputParser(object):
 
         # Eat arrow line.
         # FIXME: range support?
-        line = titer.next()
+        line = next(titer)
         if '^' not in line:
             LOG.debug("Unexpected line: %s. Expected an arrow line!" % line)
             return line
-        return titer.next()
+        return next(titer)
 
     @staticmethod
     def _parse_fixits(message, titer, line):
@@ -191,7 +194,7 @@ class OutputParser(object):
                 message.fixits.append(Note(message.path, message.line,
                                            line.find(message_text) + 1,
                                            message_text))
-            line = titer.next()
+            line = next(titer)
         return line
 
     def _parse_notes(self, message, titer, line):
@@ -201,13 +204,13 @@ class OutputParser(object):
             match = OutputParser.note_line_re.match(line)
             if match is None:
                 LOG.debug("Unexpected line: %s" % line)
-                return titer.next()
+                return next(titer)
 
             message.notes.append(Note(os.path.abspath(match.group('path')),
                                       int(match.group('line')),
                                       int(match.group('column')),
                                       match.group('message').strip()))
-            line = titer.next()
+            line = next(titer)
             line = self._parse_code(message, titer, line)
         return line
 

@@ -8,6 +8,8 @@
 Calculates call statistics from analysis output
 """
 from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
 
 from StringIO import StringIO
 from collections import defaultdict
