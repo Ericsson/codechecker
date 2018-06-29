@@ -536,7 +536,6 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
 
     postCreate : function () {
       this.inherited(arguments);
-      this.loadBugStoreData();
 
       // When loaded from URL then report data is originally a number.
       // When loaded by clicking on a table row, then severity is already
@@ -545,15 +544,7 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
         this.reportData.severity
           = util.severityFromCodeToString(this.reportData.severity);
 
-      var isResolved =
-        this.reportData.detectionStatus === CC_OBJECTS.DetectionStatus.RESOLVED;
-
-      this.set('path', [
-        'root',
-        isResolved ? 'resolved' : this.reportData.severity,
-        this.reportData.reportId + '',
-        this.reportData.reportId + '_0'
-      ]);
+      this.loadBugStoreData();
 
       topic.publish("hooks/report/Opened", this.reportData);
       var that = this;
@@ -591,6 +582,9 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
       var fileFilter = new CC_OBJECTS.ReportFilter();
       fileFilter.filepath = [this.reportData.checkedFile];
 
+      var isResolved =
+        this.reportData.detectionStatus === CC_OBJECTS.DetectionStatus.RESOLVED;
+
       CC_SERVICE.getRunResults(
         this.runIds,
         CC_OBJECTS.MAX_QUERY_SIZE,
@@ -615,6 +609,14 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
             if (that.bugStore.query({ parent : severity.id }).length === 0)
               that.bugStore.remove(severity.id);
           });
+
+          that.set('path', [
+            'root',
+            isResolved ? 'resolved' : that.reportData.severity,
+            that.reportData.reportId + '',
+            that.reportData.reportId + '_0'
+          ]);
+
         });
     },
 
