@@ -50,7 +50,7 @@ def is_valid_product_endpoint(uripart):
     if uripart in NON_PRODUCT_ENDPOINTS:
         return False
 
-    pattern = r'^[A-Za-z0-9_]+$'
+    pattern = r'^[A-Za-z0-9_\-]+$'
     if not re.match(pattern, uripart):
         return False
 
