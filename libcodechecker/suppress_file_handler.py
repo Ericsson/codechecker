@@ -16,6 +16,9 @@ After removing the hash_value_type the generated format is:
 
 For backward compatibility the hash_value_type is an optional filed.
 """
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
 
 import codecs
 import os

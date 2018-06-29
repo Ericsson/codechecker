@@ -7,6 +7,9 @@
 Instance manager handles the state keeping of running CodeChecker instances
 for a particular user on the local machine.
 """
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
 
 import getpass
 import json

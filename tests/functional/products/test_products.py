@@ -8,6 +8,9 @@
 """
 Test product management related features.
 """
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
 
 import base64
 from copy import deepcopy

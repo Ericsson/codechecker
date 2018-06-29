@@ -6,6 +6,9 @@
 """
 Parser for PostgreSQL libpq password file.
 """
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
 
 
 def _match_field(line, field):

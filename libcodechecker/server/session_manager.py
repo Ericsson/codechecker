@@ -6,6 +6,9 @@
 """
 Handles the management of authentication sessions on the server's side.
 """
+from __future__ import absolute_import
+from __future__ import print_function
+from __future__ import division
 
 from datetime import datetime, timedelta
 import hashlib
@@ -15,7 +18,8 @@ from libcodechecker.util import check_file_owner_rw, load_json_or_empty, \
     generate_session_token
 from libcodechecker.version import SESSION_COOKIE_NAME as _SCN
 
-from database.config_db_model import Session as SessionRecord, SystemPermission
+from .database.config_db_model import Session as SessionRecord
+from .database.config_db_model import SystemPermission
 
 UNSUPPORTED_METHODS = []
 

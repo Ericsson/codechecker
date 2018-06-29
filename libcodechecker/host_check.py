@@ -3,6 +3,14 @@
 #   This file is distributed under the University of Illinois Open Source
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
+"""
+Functions to check the host machine and the analyzers for various
+features, dependecies and configurations.
+"""
+
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
 
 import os
 import re

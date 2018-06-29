@@ -5,6 +5,9 @@
 #   License. See LICENSE.TXT for details.
 # -----------------------------------------------------------------------------
 """ Run tag function test. """
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
 
 import json
 import os

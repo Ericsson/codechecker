@@ -29,6 +29,9 @@ With the newer clang releases more information is available in the plist files.
     for Clang versions before v3.7
 
 """
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
 
 from collections import defaultdict
 import math

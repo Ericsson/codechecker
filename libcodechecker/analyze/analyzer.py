@@ -6,6 +6,9 @@
 """
 Prepare and start different analysis types
 """
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
 
 import copy
 from multiprocessing import Manager
@@ -55,7 +58,7 @@ def create_actions_map(actions, manager):
         if act.source_count > 1:
             LOG.debug("Multiple sources for one build action: " +
                       str(act.sources))
-        source = os.path.join(act.directory, act.sources.next())
+        source = os.path.join(act.directory, next(act.sources))
         key = source, act.target
         if key in result:
             LOG.debug("Multiple entires in compile database "

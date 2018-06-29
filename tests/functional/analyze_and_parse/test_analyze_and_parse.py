@@ -5,6 +5,9 @@
 # -----------------------------------------------------------------------------
 
 """This module tests the CodeChecker 'analyze' and 'parse' feature."""
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
 
 import glob
 import os

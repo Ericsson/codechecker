@@ -22,6 +22,9 @@ With the newer clang releases more information is available in the plist files.
   - Report hash is available
 
 """
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
 
 import os
 import unittest

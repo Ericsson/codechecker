@@ -7,6 +7,9 @@
 Handles the management of stored user credentials and currently known session
 tokens.
 """
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
 
 import json
 import os

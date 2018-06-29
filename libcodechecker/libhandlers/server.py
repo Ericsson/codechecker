@@ -7,6 +7,9 @@
 Handler for the subcommand that is used to start and manage CodeChecker
 servers, which are used to query analysis report information.
 """
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
 
 import argparse
 import errno

@@ -7,6 +7,9 @@
 """
 Test if the subprocess timeout watcher works properly.
 """
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
 
 import signal
 import subprocess

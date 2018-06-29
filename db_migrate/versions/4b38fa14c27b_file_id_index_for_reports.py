@@ -8,6 +8,9 @@ Create Date: 2017-12-11 09:13:16.301478
 Add index for the file ids in the report table to speed up
 file cleanup.
 """
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
 
 # revision identifiers, used by Alembic.
 revision = '4b38fa14c27b'
