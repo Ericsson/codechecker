@@ -45,3 +45,6 @@ tags
 .tags
 TAGS
 .TAGS
+
+# direnv
+.envrc
