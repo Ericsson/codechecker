@@ -104,7 +104,6 @@ var BugViewer = {
     var events = report['events'];
     var lastBugEvent = events[events.length - 1];
     this.setCurrentBugEvent(lastBugEvent);
-    console.log(report);
     this.setCheckerName(report.checkerName);
 
     window.location.hash = '#reportHash=' + report.reportHash;

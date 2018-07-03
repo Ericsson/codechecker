@@ -56,7 +56,8 @@ class HtmlBuilder:
             'CODEMIRROR_CSS': 'codemirror.min.css',
             'CODEMIRROR_JS': 'codemirror.min.js',
             'CLIKE_JS': 'clike.min.js',
-            'BUG_VIEWER': 'bugviewer.js'
+            'BUG_VIEWER': 'bugviewer.js',
+            'BROWSER_SUPPORT': 'browsersupport.js'
         }
 
         # Get the HTML layout file content.
