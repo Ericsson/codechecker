@@ -915,6 +915,7 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
     _getTooltip : function (report) {
       var tooltip = '<div><b>Checker name</b>: ' + report.checkerId + '</div>'
         + '<div><b>Checker message</b>: ' + report.checkerMsg + '</div>'
+        + '<div><b>Report hash</b>: ' + report.bugHash + '</div>'
         + '<div><b>Bug path length</b>: '
         + formatBugPathLen(report.bugPathLength) + '</div>';
 

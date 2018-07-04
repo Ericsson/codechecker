@@ -146,7 +146,9 @@ def process_report_filter(session, report_filter):
         AND.append(or_(*OR))
 
     if report_filter.reportHash is not None:
-        AND.append(Report.bug_id.in_(report_filter.reportHash))
+        OR = [Report.bug_id.ilike(conv(rh))
+              for rh in report_filter.reportHash]
+        AND.append(or_(*OR))
 
     if report_filter.severity is not None:
         AND.append(Report.severity.in_(report_filter.severity))
