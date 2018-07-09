@@ -38,6 +38,8 @@
     </style>
 
     <script>
+      <$BROWSER_SUPPORT$>
+
       generateRedGreenGradientColor = function (value, max, opacity) {
         var red   = (255 * value) / max;
         var green = (255 * (max - value)) / max;
@@ -47,11 +49,15 @@
       }
 
       window.onload = function () {
-        document.querySelectorAll('.bug-path-length').forEach(
-        function (widget) {
-          widget.style.backgroundColor =
-            generateRedGreenGradientColor(widget.innerHTML, 20, 0.5);
-        });
+        if (!browserCompatible) {
+          setNonCompatibleBrowserMessage();
+        } else {
+          document.querySelectorAll('.bug-path-length').forEach(
+          function (widget) {
+            widget.style.backgroundColor =
+              generateRedGreenGradientColor(widget.innerHTML, 20, 0.5);
+          });
+        }
       }
     </script>
   </head>

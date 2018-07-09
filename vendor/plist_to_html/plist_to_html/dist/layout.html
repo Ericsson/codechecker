@@ -12,6 +12,8 @@
     </style>
 
     <script type="text/javascript">
+      <$BROWSER_SUPPORT$>
+
       /* <$CODEMIRROR_LICENSE$> */
       <$CODEMIRROR_JS$>
       <$CLIKE_JS$>
@@ -19,9 +21,13 @@
 
       var data = <$REPORT_DATA$>;
       window.onload = function() {
-        BugViewer.init(data.files, data.reports);
-        BugViewer.create();
-        BugViewer.initByUrl();
+        if (!browserCompatible) {
+          setNonCompatibleBrowserMessage();
+        } else {
+          BugViewer.init(data.files, data.reports);
+          BugViewer.create();
+          BugViewer.initByUrl();
+        }
       };
     </script>
   </head>
