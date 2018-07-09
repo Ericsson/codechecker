@@ -84,7 +84,7 @@ class OutputParser(object):
         # Column number followed by a ':' and a space.
         r'(?P<column>\d+?):\ '
         # Severity followed by a ':'.
-        r'(?P<severity>\w+):'
+        r'(?P<severity>(error|warning)):'
         # Checker message.
         r'(?P<message>[\S \t]+)\s*'
         # Checker name.
