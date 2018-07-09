@@ -21,7 +21,7 @@ CHECK#CodeChecker check --build "make source_code_comments" --output $OUTPUT$ --
   sizeof(43);
   ^
 
-Found 1 defect(s) while analyzing source_code_comments.cpp
+Found 1 defect(s) in source_code_comments.cpp
 
 
 ----==== Summary ====----

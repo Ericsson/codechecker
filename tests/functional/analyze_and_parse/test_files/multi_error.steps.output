@@ -33,7 +33,7 @@ CHECK#CodeChecker check --build "make multi_error" --output $OUTPUT$ --quiet --a
   Steps:
     1, multi_error.cpp:9:3: Value stored to 'y' is never read
 
-Found 2 defect(s) while analyzing multi_error.cpp
+Found 2 defect(s) in multi_error.cpp
 
 
 ----==== Summary ====----

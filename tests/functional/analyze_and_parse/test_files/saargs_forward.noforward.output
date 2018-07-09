@@ -17,7 +17,7 @@ CHECK#CodeChecker check --build "make saargs_forward" --output $OUTPUT$ --quiet 
 [] - To store results use the "CodeChecker store" command.
 [] - See --help and the user guide for further options about parsing and storing the reports.
 [] - ----=================----
-Found no defects while analyzing saargs_forward.cpp
+Found no defects in saargs_forward.cpp
 
 ----==== Summary ====----
 ----=================----

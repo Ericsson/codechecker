@@ -45,6 +45,7 @@ from libcodechecker import util
 from libcodechecker.logger import get_logger
 from libcodechecker.report import Report, generate_report_hash, \
     get_report_path_hash
+from libcodechecker.output_formatters import twodim_to_str
 from libcodechecker.source_code_comment_handler import \
     SourceCodeCommentHandler, skip_suppress_status
 
@@ -400,7 +401,7 @@ class PlistToPlaintextFormatter(object):
         finally:
             return files, reports
 
-    def write(self, files, reports, analyzed_source_file, output=sys.stdout):
+    def write(self, file_report_map, output=sys.stdout):
         """
         Format an already parsed plist report file to a more
         human readable format.
@@ -414,84 +415,101 @@ class PlistToPlaintextFormatter(object):
         file_stats = defaultdict(int)
         report_count = defaultdict(int)
 
-        report_num = len(reports)
-        if report_num > 0:
-            index_format = '    %%%dd, ' % \
-                           int(math.floor(math.log10(report_num)) + 1)
+        for file_path in sorted(file_report_map,
+                                key=lambda key: len(file_report_map[key])):
 
-        non_suppressed = 0
-        for report in reports:
-            path_hash = get_report_path_hash(report, files)
-            if path_hash in self._processed_path_hashes:
-                LOG.debug("Not showing report because it is a deduplication "
-                          "of an already processed report!")
-                LOG.debug("Path hash: %s", path_hash)
-                LOG.debug(report)
-                continue
+            non_suppressed = 0
+            sorted_reports = sorted(file_report_map[file_path],
+                                    key=lambda r: r.main['location']['line'])
 
-            self._processed_path_hashes.add(path_hash)
+            for report in sorted_reports:
+                path_hash = get_report_path_hash(report, report.files)
+                if path_hash in self._processed_path_hashes:
+                    LOG.debug("Not showing report because it is a "
+                              "deduplication of an already processed report!")
+                    LOG.debug("Path hash: %s", path_hash)
+                    LOG.debug(report)
+                    continue
 
-            events = [i for i in report.bug_path if i.get('kind') == 'event']
-            f_path = files[events[-1]['location']['file']]
-            if self.skiplist_handler and \
-                    self.skiplist_handler.should_skip(f_path):
-                LOG.debug("Skipped report in '%s'", f_path)
-                LOG.debug(report)
-                continue
+                self._processed_path_hashes.add(path_hash)
 
-            last_report_event = report.bug_path[-1]
-            source_file = files[last_report_event['location']['file']]
-            report_line = last_report_event['location']['line']
-            report_hash = report.main['issue_hash_content_of_line_in_context']
-            checker_name = report.main['check_name']
+                events = [i for i in report.bug_path
+                          if i.get('kind') == 'event']
+                f_path = report.files[events[-1]['location']['file']]
+                if self.skiplist_handler and \
+                        self.skiplist_handler.should_skip(f_path):
+                    LOG.debug("Skipped report in '%s'", f_path)
+                    LOG.debug(report)
+                    continue
 
-            if skip_report(report_hash, source_file, report_line,
-                           checker_name, self.src_comment_handler):
-                continue
+                last_report_event = report.bug_path[-1]
+                source_file = \
+                    report.files[last_report_event['location']['file']]
+                report_line = last_report_event['location']['line']
+                report_hash = \
+                    report.main['issue_hash_content_of_line_in_context']
+                checker_name = report.main['check_name']
 
-            file_stats[f_path] += 1
-            severity = self.__severity_map.get(checker_name,
-                                               'UNSPECIFIED')
-            severity_stats[severity] += 1
-            report_count["report_count"] += 1
+                if skip_report(report_hash, source_file, report_line,
+                               checker_name, self.src_comment_handler):
+                    continue
 
-            output.write(self.__format_bug_event(checker_name,
-                                                 severity,
-                                                 last_report_event,
-                                                 source_file))
-            output.write('\n')
-            output.write(self.__format_location(last_report_event,
-                                                source_file))
-            output.write('\n')
+                file_stats[f_path] += 1
+                severity = self.__severity_map.get(checker_name,
+                                                   'UNSPECIFIED')
+                severity_stats[severity] += 1
+                report_count["report_count"] += 1
 
-            if self.print_steps:
-                output.write('  Report hash: ' + report_hash + '\n')
-                output.write('  Steps:\n')
-                for index, event in enumerate(events):
-                    output.write(index_format % (index + 1))
-                    source_file = files[event['location']['file']]
-                    output.write(self.__format_bug_event(None,
-                                                         None,
-                                                         event,
-                                                         source_file))
-                    output.write('\n')
-            output.write('\n')
+                output.write(self.__format_bug_event(checker_name,
+                                                     severity,
+                                                     last_report_event,
+                                                     source_file))
+                output.write('\n')
+                output.write(self.__format_location(last_report_event,
+                                                    source_file))
+                output.write('\n')
 
-            non_suppressed += 1
+                if self.print_steps:
+                    output.write('  Report hash: ' + report_hash + '\n')
+                    output.write('  Steps:\n')
 
-        basefile_print = (' ' +
-                          os.path.basename(analyzed_source_file)) \
-            if analyzed_source_file and \
-            len(analyzed_source_file) > 0 else ''
+                    index_format = '    %%%dd, ' % \
+                                   int(math.floor(math.log10(len(events))) + 1)
 
-        if non_suppressed == 0:
-            output.write('Found no defects while analyzing%s\n' %
-                         (basefile_print))
-        else:
-            output.write(
-                'Found %d defect(s) while analyzing%s\n\n' %
-                (non_suppressed, basefile_print))
+                    for index, event in enumerate(events):
+                        output.write(index_format % (index + 1))
+                        source_file = report.files[event['location']['file']]
+                        output.write(self.__format_bug_event(None,
+                                                             None,
+                                                             event,
+                                                             source_file))
+                        output.write('\n')
+                output.write('\n')
 
-        return {"severity": severity_stats,
-                "files": file_stats,
-                "reports": report_count}
+                non_suppressed += 1
+
+            base_file = os.path.basename(file_path)
+            if non_suppressed == 0:
+                output.write('Found no defects in %s\n' % base_file)
+            else:
+                output.write('Found %d defect(s) in %s\n\n' %
+                             (non_suppressed, base_file))
+
+        print("\n----==== Summary ====----")
+        if file_stats:
+            vals = [[os.path.basename(k), v] for k, v in
+                    dict(file_stats).items()]
+            keys = ['Filename', 'Report count']
+            table = twodim_to_str('table', keys, vals, 1, True)
+            print(table)
+
+        if severity_stats:
+            vals = [[k, v] for k, v in dict(severity_stats).items()]
+            keys = ['Severity', 'Report count']
+            table = twodim_to_str('table', keys, vals, 1, True)
+            print(table)
+
+        report_count = dict(report_count).get("report_count", 0)
+        print("----=================----")
+        print("Total number of reports: {}".format(report_count))
+        print("----=================----")

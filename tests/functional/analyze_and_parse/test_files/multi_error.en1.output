@@ -21,7 +21,7 @@ CHECK#CodeChecker check --build "make multi_error" --output $OUTPUT$ --quiet --a
   return &x;
   ^
 
-Found 1 defect(s) while analyzing multi_error.cpp
+Found 1 defect(s) in multi_error.cpp
 
 
 ----==== Summary ====----
