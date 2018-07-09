@@ -18,6 +18,9 @@ import portalocker
 import psutil
 import socket
 import stat
+from libcodechecker.logger import get_logger
+
+LOG = get_logger('server')
 
 
 def __getInstanceDescriptorPath(folder=None):
@@ -70,10 +73,14 @@ def __rewriteInstanceFile(append, remove, folder=None):
         #
         # Also, we remove the records to the given PIDs, if any exists.
         append_pids = [i['pid'] for i in append]
-        instances = [i for i in json.load(f)
-                     if i['pid'] not in append_pids and
-                     (i['hostname'] + ":" + str(i['pid'])) not in remove and
-                     __checkInstance(i['hostname'], i['pid'])]
+        try:
+            instances = [i for i in json.load(f)
+                         if i['pid'] not in append_pids and
+                         (i['hostname'] + ":" + str(i['pid'])) not in remove and
+                         __checkInstance(i['hostname'], i['pid'])]
+        except ValueError:
+            LOG.error("Failed to load json file:")
+            LOG.error(f)
 
         instances = instances + append
 
