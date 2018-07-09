@@ -15,18 +15,23 @@ define([
   'dijit/form/Button',
   'dijit/layout/ContentPane',
   'codechecker/hashHelper',
+  'codechecker/filter/CheckerMessageFilter',
+  'codechecker/filter/CheckerNameFilter',
   'codechecker/filter/DateFilter',
   'codechecker/filter/DetectionStatusFilter',
   'codechecker/filter/DiffTypeFilter',
+  'codechecker/filter/FileFilter',
   'codechecker/filter/ReportCount',
   'codechecker/filter/RunBaseFilter',
   'codechecker/filter/RunHistoryTagFilter',
   'codechecker/filter/SelectFilter',
+  'codechecker/filter/SourceComponentFilter',
   'codechecker/filter/UniqueFilter',
   'codechecker/util'],
 function (declare, lang, Deferred, domClass, dom, domStyle, topic, Button,
-  ContentPane, hashHelper, DateFilter, DetectionStatusFilter, DiffTypeFilter,
-  ReportCount, RunBaseFilter, RunHistoryTagFilter, SelectFilter, UniqueFilter,
+  ContentPane, hashHelper, CheckerMessageFilter, CheckerNameFilter, DateFilter,
+  DetectionStatusFilter, DiffTypeFilter, FileFilter, ReportCount, RunBaseFilter,
+  RunHistoryTagFilter, SelectFilter, SourceComponentFilter, UniqueFilter,
   util) {
 
   var FilterToggle = declare(ContentPane, {
@@ -391,83 +396,25 @@ function (declare, lang, Deferred, domClass, dom, domStyle, topic, Button,
 
       //--- File filter ---//
 
-      this._fileFilter = new SelectFilter({
+      this._fileFilter = new FileFilter({
         class : 'filepath',
         title : 'File path',
         parent: this,
-        search : {
-          enable : true,
-          serverSide : true,
-          regex : true,
-          placeHolder : 'Search for files...'
-        },
-        labelFormatter : function (label) {
-          return '&lrm;' + label + '&lrm;';
-        },
         updateReportFilter : function (files) {
           that.reportFilter.filepath = files;
-        },
-        getItems : function (opt) {
-          opt = that.initReportFilterOptions(opt);
-          opt.reportFilter.filepath = opt.query ? opt.query : null;
-
-          var deferred = new Deferred();
-          CC_SERVICE.getFileCounts(opt.runIds, opt.reportFilter,
-          opt.cmpData, opt.limit, opt.offset, function (res) {
-            // Order the results alphabetically.
-            deferred.resolve(Object.keys(res).sort(function (a, b) {
-                if (a < b) return -1;
-                if (a > b) return 1;
-                return 0;
-            }).map(function (file) {
-              return {
-                value : file,
-                count : res[file]
-              };
-            }));
-          });
-          return deferred;
         }
       });
       this.register(this._fileFilter);
       this.addChild(this._fileFilter);
 
-      //--- Soruce component filter ---//
+      //--- Source component filter ---//
 
-      this._sourceComponentFilter = new SelectFilter({
+      this._sourceComponentFilter = new SourceComponentFilter({
         class : 'source-component',
         title : 'Source component',
         parent: this,
-        search : {
-          enable : true,
-          placeHolder : 'Search for source components...'
-        },
         updateReportFilter : function (components) {
           that.reportFilter.componentNames = components;
-        },
-        formatDescription : function (value) {
-          var list = dom.create('ul', { class : 'component-description'});
-          value.split('\n').forEach(function (item) {
-            dom.create('li', {
-              innerHTML : item,
-              class : 'component-item'
-            }, list);
-          });
-          return list.outerHTML;
-        },
-        getItems : function (opt) {
-          var that = this;
-
-          var deferred = new Deferred();
-          CC_SERVICE.getSourceComponents(null, function (res) {
-            deferred.resolve(res.map(function (component) {
-              return {
-                value : component.name,
-                description : that.formatDescription(component.value)
-              };
-            }));
-          });
-          return deferred;
         }
       });
       this.register(this._sourceComponentFilter);
@@ -475,32 +422,12 @@ function (declare, lang, Deferred, domClass, dom, domStyle, topic, Button,
 
       //--- Checker name filter ---//
 
-      this._checkerNameFilter = new SelectFilter({
+      this._checkerNameFilter = new CheckerNameFilter({
         class : 'checker-name',
         title : 'Checker name',
         parent: this,
-        search : {
-          enable : true,
-          placeHolder : 'Search for checker names...'
-        },
         updateReportFilter : function (checkerNames) {
           that.reportFilter.checkerName = checkerNames;
-        },
-        getItems : function (opt) {
-          opt = that.initReportFilterOptions(opt);
-          opt.reportFilter.checkerName = opt.query ? opt.query : null;
-
-          var deferred = new Deferred();
-          CC_SERVICE.getCheckerCounts(opt.runIds, opt.reportFilter,
-          opt.cmpData, opt.limit, opt.offset, function (res) {
-            deferred.resolve(res.map(function (checker) {
-              return {
-                value : checker.name,
-                count : checker.count
-              };
-            }));
-          });
-          return deferred;
         }
       });
       this.register(this._checkerNameFilter);
@@ -508,37 +435,12 @@ function (declare, lang, Deferred, domClass, dom, domStyle, topic, Button,
 
       //--- Checker message filter ---//
 
-      this._checkerMessageFilter = new SelectFilter({
+      this._checkerMessageFilter = new CheckerMessageFilter({
         class : 'checker-msg',
         title : 'Checker message',
         parent   : this,
-        search : {
-          enable : true,
-          serverSide : true,
-          regex : true,
-          placeHolder : 'Search for checker messages...'
-        },
         updateReportFilter : function (checkerMessages) {
           that.reportFilter.checkerMsg = checkerMessages;
-        },
-        getItems : function (opt) {
-          opt = that.initReportFilterOptions(opt);
-          opt.reportFilter.checkerMsg = opt.query ? opt.query : null;
-
-          if (opt.selected)
-            opt.reportFilter.checkerMsg = opt.selected;
-
-          var deferred = new Deferred();
-          CC_SERVICE.getCheckerMsgCounts(opt.runIds, opt.reportFilter,
-          opt.cmpData, opt.limit, opt.offset, function (res) {
-            deferred.resolve(Object.keys(res).map(function (msg) {
-              return {
-                value : msg,
-                count : res[msg]
-              };
-            }));
-          });
-          return deferred;
         }
       });
       this.register(this._checkerMessageFilter);
@@ -582,6 +484,9 @@ function (declare, lang, Deferred, domClass, dom, domStyle, topic, Button,
         that.initAll(state);
       });
     },
+
+    // Returns the list of registered filters.
+    getFilters : function () { return this._filters; },
 
     // Returns report filter options of the current filter set.
     getReportFilter : function () { return this.reportFilter; },
@@ -632,7 +537,7 @@ function (declare, lang, Deferred, domClass, dom, domStyle, topic, Button,
       if (!queryParams) queryParams = {};
 
       if (!this.isInitalized()) {
-        if (!queryParams.newcheck)
+        if (!queryParams.newcheck && this._newCheckFilterToggle)
           this._newCheckFilterToggle.hide();
 
         // Set default values if the tab has not been initalized before and if
