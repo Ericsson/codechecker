@@ -21,6 +21,7 @@ Table of Contents
     * [Toggling checkers](#toggling-checkers)
       * [Checker profiles](#checker-profiles)
       * [`--enable-all`](#enable-all)
+    * [Toggling compiler warnings](#toggling-warnings)
     * [Cross Translation Unit (CTU) analysis mode](#ctu)
     * [Statistical analysis mode](#statistical)
   * [`parse`](#parse)
@@ -651,6 +652,32 @@ which will be enabled after all.
 
 Disabling certain checkers - such as the `core` group - is unsupported by
 the LLVM/Clang community, and thus discouraged.
+
+### <a name="toggling-warnings"></a> Toggling compiler warnings
+Compiler warnings are diagnostic messages that report constructions that are
+not inherently erroneous but that are risky or suggest there may have been an
+error. Compiler warnings are named `clang-diagnostic-<warning-option>`, e.g.
+Clang warning controlled by `-Wliteral-conversion` will be reported with check
+name `clang-diagnostic-literal-conversion`.
+You can fine-tune which warnings to use in the analysis by setting the enabled
+and disabled flags starting from the bigger groups and going inwards. For
+example
+
+~~~
+--enable Wunused --disable Wno-unused-parameter
+~~~
+or
+~~~
+--enable Wunused --disable Wunused-parameter
+~~~
+will enable every `unused` warnings except `unused-parameter`. These flags
+should start with a capital `W` or `Wno-` prefix followed by the warning name
+(E.g.: `-e Wliteral-conversion`, `-d Wno-literal-conversion` or
+`-d Wliteral-conversion`). To turn off a compiler warning you can use the
+negative form beginning with `Wno-` (e.g.: `--disable Wno-literal-conversion`)
+or you can use the positive form beginning with `W` (e.g.:
+`--enable Wliteral-conversion`). For more information see:
+https://clang.llvm.org/docs/DiagnosticsReference.html
 
 
 #### <a name="checker-profiles"></a> Checker profiles

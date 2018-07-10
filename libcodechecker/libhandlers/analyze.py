@@ -22,6 +22,7 @@ from libcodechecker import host_check
 from libcodechecker.analyze import analyzer
 from libcodechecker.analyze import log_parser
 from libcodechecker.analyze.analyzers import analyzer_types
+from libcodechecker.util import RawDescriptionDefaultHelpFormatter
 
 LOG = logger.get_logger('system')
 
@@ -64,20 +65,19 @@ def get_argparser_ctor_args():
 
     return {
         'prog': 'CodeChecker analyze',
-        'formatter_class': argparse.ArgumentDefaultsHelpFormatter,
+        'formatter_class': RawDescriptionDefaultHelpFormatter,
 
         # Description is shown when the command's help is queried directly
-        'description': "Use the previously created JSON Compilation Database "
-                       "to perform an analysis on the project, outputting "
-                       "analysis results in a machine-readable format.",
+        'description': """
+Use the previously created JSON Compilation Database to perform an analysis on
+the project, outputting analysis results in a machine-readable format.""",
 
         # Epilogue is shown after the arguments when the help is queried
         # directly.
-        'epilog': "Compilation databases can be created by instrumenting your "
-                  "project's build via 'codechecker-log'. To transform the "
-                  "results of the analysis to a human-friendly format, please "
-                  "see the commands 'codechecker-parse' or "
-                  "'codechecker-store'.",
+        'epilog': """
+Compilation databases can be created by instrumenting your project's build via
+'CodeChecker log'. To transform the results of the analysis to a human-friendly
+format, please see the commands 'CodeChecker parse' or 'CodeChecker store'.""",
 
         # Help is shown when the "parent" CodeChecker command lists the
         # individual subcommands.
@@ -334,15 +334,32 @@ def add_arguments_to_parser(parser):
 
     checkers_opts = parser.add_argument_group(
         "checker configuration",
-        "See 'codechecker-checkers' for the list of available checkers. "
-        "You can fine-tune which checkers to use in the analysis by setting "
-        "the enabled and disabled flags starting from the bigger groups "
-        "and going inwards, e.g. '-e core -d core.uninitialized -e "
-        "core.uninitialized.Assign' will enable every 'core' checker, but "
-        "only 'core.uninitialized.Assign' from the 'core.uninitialized' "
-        "group. Please consult the manual for details. Disabling certain "
-        "checkers - such as the 'core' group - is unsupported by the LLVM/"
-        "Clang community, and thus discouraged.")
+        """
+Checkers
+------------------------------------------------
+The analyzer performs checks that are categorized into families or "checkers".
+See 'CodeChecker checkers' for the list of available checkers. You can
+fine-tune which checkers to use in the analysis by setting the enabled and
+disabled flags starting from the bigger groups and going inwards, e.g.
+'-e core -d core.uninitialized -e core.uninitialized.Assign' will enable every
+'core' checker, but only 'core.uninitialized.Assign' from the
+'core.uninitialized' group. Please consult the manual for details. Disabling
+certain checkers - such as the 'core' group - is unsupported by the LLVM/Clang
+community, and thus discouraged.
+
+Compiler warnings
+------------------------------------------------
+Compiler warnings are diagnostic messages that report constructions that are
+not inherently erroneous but that are risky or suggest there may have been an
+error. Compiler warnings are named 'clang-diagnostic-<warning-option>', e.g.
+Clang warning controlled by '-Wliteral-conversion' will be reported with check
+name 'clang-diagnostic-literal-conversion'. You can fine-tune which warnings to
+use in the analysis by setting the enabled and disabled flags starting from the
+bigger groups and going inwards, e.g. '-e Wunused -d Wno-unused-parameter' will
+enable every 'unused' warnings except 'unused-parameter'. These flags should
+start with a capital 'W' or 'Wno-' prefix followed by the waning name (E.g.:
+'-e Wliteral-conversion', '-d Wno-literal-conversion'). For more information
+see: https://clang.llvm.org/docs/DiagnosticsReference.html.""")
 
     checkers_opts.add_argument('-e', '--enable',
                                dest="enable",

@@ -51,7 +51,8 @@ class TestDetectionStatus(unittest.TestCase):
         self._source_file = "main.cpp"
 
         # Init project dir.
-        makefile = "all:\n\t$(CXX) -c main.cpp -o /dev/null\n"
+        makefile = "all:\n\t$(CXX) -c main.cpp -Wno-division-by-zero " \
+                   "-Wno-unused-value -o /dev/null\n"
         project_info = {
             "name": "hello",
             "clean_cmd": "",

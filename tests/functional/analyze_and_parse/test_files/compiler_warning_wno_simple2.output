@@ -1,0 +1,25 @@
+NORMAL#CodeChecker log --output $LOGFILE$ --build "make compiler_warning_unused" --quiet
+NORMAL#CodeChecker analyze $LOGFILE$ --output $OUTPUT$ --analyzers clang-tidy -d Wno-unused
+NORMAL#CodeChecker parse $OUTPUT$
+CHECK#CodeChecker check --build "make compiler_warning_unused" --output $OUTPUT$ --quiet --analyzers clang-tidy -d Wno-unused
+--------------------------------------------------------------------------------
+[] - Starting build ...
+[] - Build finished successfully.
+[] - Starting static analysis ...
+[] - [1/1] clang-tidy analyzed compiler_warning.cpp successfully.
+[] - ----==== Summary ====----
+[] - Total analyzed compilation commands: 1
+[] - Successfully analyzed
+[] -   clang-tidy: 1
+[] - ----=================----
+[] - Analysis finished.
+[] - To view results in the terminal use the "CodeChecker parse" command.
+[] - To store results use the "CodeChecker store" command.
+[] - See --help and the user guide for further options about parsing and storing the reports.
+[] - ----=================----
+Found no defects while analyzing compiler_warning.cpp
+
+----==== Summary ====----
+----=================----
+Total number of reports: 0
+----=================----

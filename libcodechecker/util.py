@@ -10,6 +10,7 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
+import argparse
 import datetime
 import hashlib
 import json
@@ -59,6 +60,17 @@ class DBSession(object):
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self.__session:
             self.__session.close()
+
+
+class RawDescriptionDefaultHelpFormatter(
+        argparse.RawDescriptionHelpFormatter,
+        argparse.ArgumentDefaultsHelpFormatter
+):
+    """
+    Adds default values to argument help and retains any formatting in
+    descriptions.
+    """
+    pass
 
 
 def get_free_port():
