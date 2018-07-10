@@ -365,7 +365,33 @@ class SessionManager:
             for ldap_conf in ldap_authorities:
                 if cc_ldap.auth_user(ldap_conf, username, password):
                     groups = cc_ldap.get_groups(ldap_conf, username, password)
+                    self.__update_groups(username, groups)
                     return {'username': username, 'groups': groups}
+
+        return False
+
+    def __update_groups(self, user_name, groups):
+        """
+        Updates group field of the users tokens.
+        """
+        if not self.__database_connection:
+            return None
+
+        transaction = None
+        try:
+            # Try the database, if it is connected.
+            transaction = self.__database_connection()
+            transaction.query(SessionRecord) \
+                .filter(SessionRecord.user_name == user_name) \
+                .update({SessionRecord.groups: ';'.join(groups)})
+            transaction.commit()
+            return True
+        except Exception as e:
+            LOG.error("Couldn't check login in the database: ")
+            LOG.error(str(e))
+        finally:
+            if transaction:
+                transaction.close()
 
         return False
 
