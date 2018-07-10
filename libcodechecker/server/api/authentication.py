@@ -277,7 +277,8 @@ class ThriftAuthHandler(object):
         with DBSession(self.__config_db) as session:
             token = generate_session_token()
             user = self.getLoggedInUser()
-            session_token = Session(token, user, None, description, False)
+            groups = ';'.join(self.__auth_session.groups)
+            session_token = Session(token, user, groups, description, False)
 
             session.add(session_token)
             session.commit()
