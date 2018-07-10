@@ -472,8 +472,12 @@ function (declare, dom, style, Deferred, ObjectStore, Store, QueryResults,
         if (sender && sender !== that._grid)
           return;
 
-        if (reportData !== null && !(reportData instanceof CC_OBJECTS.ReportData))
-          reportData = CC_SERVICE.getReport(reportData);
+        if (reportData !== null &&
+            !(reportData instanceof CC_OBJECTS.ReportData)) {
+          try {
+            reportData = CC_SERVICE.getReport(reportData);
+          } catch (ex) { console.warn(ex); }
+        }
 
         var getAndUseReportHash = reportHash && (!reportData ||
           reportData.reportId === null || reportData.bugHash !== reportHash);
@@ -484,7 +488,7 @@ function (declare, dom, style, Deferred, ObjectStore, Store, QueryResults,
           reportFilter.reportHash = [reportHash];
           reportFilter.isUnique = false;
 
-          if (reportData)
+          if (reportData && reportData.checkedFile)
             reportFilter.filepath = ['*' + reportData.checkedFile];
 
           // We set a sort option to select a report which has the shortest
@@ -515,6 +519,16 @@ function (declare, dom, style, Deferred, ObjectStore, Store, QueryResults,
         }
 
         that.reportData = reportData;
+
+        // No report has been found.
+        if (!reportData) {
+          console.warn('No report can be found: ' + reportHash);
+          hashHelper.setStateValues({
+            'reportHash' : null,
+            'report' : null
+          });
+          return;
+        }
 
         var filename = reportData.checkedFile.substr(
           reportData.checkedFile.lastIndexOf('/') + 1);
