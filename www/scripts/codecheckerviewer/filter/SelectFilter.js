@@ -43,7 +43,7 @@ function (declare, dom, Standby, ContentPane, Tooltip, FilterBase,
     },
 
     // Initalize filter header with a clear and list available option ability.
-    initHeader : function () {
+    initHeader : function (disableClean, disableEdit) {
       var that = this;
 
       //--- Filter header ---//
@@ -59,32 +59,36 @@ function (declare, dom, Standby, ContentPane, Tooltip, FilterBase,
 
       //--- Clear filter ---//
 
-      this._clean = dom.create('span', {
-        class : 'customIcon clean',
-        onclick : function () {
-          that.clear();
-          that.notifyOthers();
-        }
-      }, this._options);
+      if (!disableClean) {
+        this._clean = dom.create('span', {
+          class : 'customIcon clean',
+          onclick : function () {
+            that.clear();
+            that.notifyOthers();
+          }
+        }, this._options);
+      }
 
       //--- Filter options ---//
 
-      this._edit = dom.create('span', {
-        class : 'customIcon cogwheel',
-        onclick : function () {
-          that._filterTooltip.show();
-        }
-      }, this._options);
+      if (!disableEdit) {
+        this._edit = dom.create('span', {
+          class : 'customIcon cogwheel',
+          onclick : function () {
+            that._filterTooltip.show();
+          }
+        }, this._options);
 
-      this._filterTooltip = new FilterTooltip({
-        class : this.class,
-        around : this._edit,
-        search : this.search,
-        reportFilter : this,
-        noAvailableTooltipItemMsg : this.noAvailableTooltipItemMsg
-          ? this.noAvailableTooltipItemMsg
-          : 'No items'
-      });
+        this._filterTooltip = new FilterTooltip({
+          class : this.class,
+          around : this._edit,
+          search : this.search,
+          reportFilter : this,
+          noAvailableTooltipItemMsg : this.noAvailableTooltipItemMsg
+            ? this.noAvailableTooltipItemMsg
+            : 'No items'
+        });
+      }
     },
 
     // Get available filter items.

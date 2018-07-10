@@ -313,7 +313,12 @@
   cursor: pointer;
 }
 
-.bug-filters .detection-status .warn {
+.bug-filters .warn {
   color: #e92625;
   margin-left: 5px;
+}
+
+.bug-filters .report-hash-filter-input {
+  width: 100%;
+  margin: 5px 0px;
 }

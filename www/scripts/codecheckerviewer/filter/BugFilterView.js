@@ -22,6 +22,7 @@ define([
   'codechecker/filter/DiffTypeFilter',
   'codechecker/filter/FileFilter',
   'codechecker/filter/ReportCount',
+  'codechecker/filter/ReportHashFilter',
   'codechecker/filter/RunBaseFilter',
   'codechecker/filter/RunHistoryTagFilter',
   'codechecker/filter/SelectFilter',
@@ -30,9 +31,9 @@ define([
   'codechecker/util'],
 function (declare, lang, Deferred, domClass, dom, domStyle, topic, Button,
   ContentPane, hashHelper, CheckerMessageFilter, CheckerNameFilter, DateFilter,
-  DetectionStatusFilter, DiffTypeFilter, FileFilter, ReportCount, RunBaseFilter,
-  RunHistoryTagFilter, SelectFilter, SourceComponentFilter, UniqueFilter,
-  util) {
+  DetectionStatusFilter, DiffTypeFilter, FileFilter, ReportCount,
+  ReportHashFilter, RunBaseFilter, RunHistoryTagFilter, SelectFilter,
+  SourceComponentFilter, UniqueFilter, util) {
 
   var FilterToggle = declare(ContentPane, {
     class : 'filter-toggle',
@@ -139,6 +140,19 @@ function (declare, lang, Deferred, domClass, dom, domStyle, topic, Button,
       });
       this.register(this._reportCount);
       this.addChild(this._reportCount);
+
+      //--- Report hash filter ---//
+
+      this._reportHashFilter = new ReportHashFilter({
+        class    : 'report-hash',
+        title    : 'Report Hash',
+        parent   : this,
+        updateReportFilter : function (state) {
+          that.reportFilter.reportHash = state ? [ state + '*' ] : null;
+        }
+      });
+      this.register(this._reportHashFilter);
+      this.addChild(this._reportHashFilter);
 
       //--- Baseline filter wrapper ---//
 

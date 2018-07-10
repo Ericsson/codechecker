@@ -245,11 +245,16 @@ function (declare, dom, style, Deferred, ObjectStore, Store, QueryResults,
     return d.outerHTML;
   }
 
+  function reportHashFormatter(reportHash) {
+    return '<span title="' + reportHash + '">' + reportHash + '</span>';
+  }
+
   var ListOfBugsGrid = declare([DataGrid, FilterBase], {
     constructor : function () {
       var width = (100 / 5).toString() + '%';
 
       this.structure = [
+        { name : 'Report hash', field : 'bugHash', cellClasses : 'compact ltr', formatter: reportHashFormatter },
         { name : 'File', field : 'file', cellClasses : 'compact', width : '100%', formatter: fileFormatter },
         { name : 'Message', field : 'checkerMsg', width : '100%', formatter : checkerMessageFormatter },
         { name : 'Checker name', field : 'checkerId', width : '50%', formatter: checkerNameFormatter },
