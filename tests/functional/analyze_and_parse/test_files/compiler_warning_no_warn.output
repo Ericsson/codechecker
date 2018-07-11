@@ -17,7 +17,7 @@ CHECK#CodeChecker check --build "make compiler_warning_simple" --output $OUTPUT$
 [] - To store results use the "CodeChecker store" command.
 [] - See --help and the user guide for further options about parsing and storing the reports.
 [] - ----=================----
-Found no defects while analyzing compiler_warning.cpp
+Found no defects in compiler_warning.cpp
 
 ----==== Summary ====----
 ----=================----

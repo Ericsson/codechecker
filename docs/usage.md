@@ -159,7 +159,7 @@ You can print detailed results (including the control flow) in command line by r
 ```
 CodeChecker parse --print-steps ./reports
 ...
-Found no defects while analyzing grid-view.c
+Found no defects in grid-view.c
 [MEDIUM] /home/ednikru/work/codechecker/play/tmux/log.c:89:1: Opened File never closed. Potential Resource leak [alpha.unix.Stream]
 }
 ^
@@ -168,7 +168,7 @@ Found no defects while analyzing grid-view.c
     1, log.c:80:6: Assuming 'log_level' is equal to 0
     2, log.c:89:1: Opened File never closed. Potential Resource leak
 
-Found 1 defect(s) while analyzing log.c
+Found 1 defect(s) in log.c
 ...
 ```
 
@@ -513,9 +513,9 @@ inline int div_h(){int *p; *p=4;};
     1, lib.h:1:20: 'p' declared without an initial value
     2, lib.h:1:30: Dereference of undefined pointer value
 
-Found 1 defect(s) while analyzing lib.c
+Found 1 defect(s) in lib.c
 
-Found no defects while analyzing a.c
+Found no defects in a.c
 [HIGH] lib.c:3:11: Division by zero [core.DivideZero]
   return 1/b;
           ^
@@ -526,7 +526,7 @@ Found no defects while analyzing a.c
     3, lib.c:2:1: Entered call from 'h'
     4, lib.c:3:11: Division by zero
 
-Found 1 defect(s) while analyzing b.c
+Found 1 defect(s) in b.c
 
 [HIGH] lib.c:3:11: Division by zero [core.DivideZero]
   return 1/b;
@@ -538,10 +538,10 @@ Found 1 defect(s) while analyzing b.c
     3, lib.c:2:1: Entered call from 'f'
     4, lib.c:3:11: Division by zero
 
-Found 1 defect(s) while analyzing a.c
+Found 1 defect(s) in a.c
 
-Found no defects while analyzing b.c
-Found no defects while analyzing lib.c
+Found no defects in b.c
+Found no defects in lib.c
 
 ----==== Summary ====----
 -----------------------
