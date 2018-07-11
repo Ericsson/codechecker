@@ -21,7 +21,7 @@ CHECK#CodeChecker check --build "make compiler_warning_wno_simple" --output $OUT
   int i;
       ^
 
-Found 1 defect(s) while analyzing compiler_warning.cpp
+Found 1 defect(s) in compiler_warning.cpp
 
 
 ----==== Summary ====----
