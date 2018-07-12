@@ -298,9 +298,7 @@ function (declare, lang, ItemFileWriteStore, dom, Deferred, all, Memory,
     _populateStatistics : function (runIds, reportFilter) {
       var that = this;
 
-      var limit = null;
-      var offset = null;
-      CC_SERVICE.getSeverityCounts(runIds, reportFilter, null, limit, offset,
+      CC_SERVICE.getSeverityCounts(runIds, reportFilter, null,
       function (res) {
         for (key in res) {
           that.store.newItem({
