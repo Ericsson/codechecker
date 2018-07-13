@@ -1,0 +1,40 @@
+NORMAL#CodeChecker log --output $LOGFILE$ --build "make saargs_forward_multiple" --quiet
+NORMAL#CodeChecker analyze $LOGFILE$ --output $OUTPUT$ --analyzers clangsa --saargs "saargs_forward_multiple.saargs.txt"
+NORMAL#CodeChecker parse $OUTPUT$
+CHECK#CodeChecker check --build "make saargs_forward_multiple" --output $OUTPUT$ --quiet --analyzers clangsa --saargs "saargs_forward_multiple.saargs.txt"
+-----------------------------------------------
+[] - Starting build ...
+[] - Build finished successfully.
+[] - Starting static analysis ...
+[] - [1/1] clangsa analyzed saargs_forward_multiple.cpp successfully.
+[] - ----==== Summary ====----
+[] - Total analyzed compilation commands: 1
+[] - Successfully analyzed
+[] -   clangsa: 1
+[] - ----=================----
+[] - Analysis finished.
+[] - To view results in the terminal use the "CodeChecker parse" command.
+[] - To store results use the "CodeChecker store" command.
+[] - See --help and the user guide for further options about parsing and storing the reports.
+[] - ----=================----
+[HIGH] saargs_forward_multiple.cpp:11:10: Dereference of null pointer (loaded from variable 'ptr') [core.NullDereference]
+  return *ptr;
+         ^
+
+Found 1 defect(s) in saargs_forward_multiple.cpp
+
+
+----==== Summary ====----
+------------------------------------------
+Filename                    | Report count
+------------------------------------------
+saargs_forward_multiple.cpp |            1
+------------------------------------------
+-----------------------
+Severity | Report count
+-----------------------
+HIGH     |            1
+-----------------------
+----=================----
+Total number of reports: 1
+----=================----

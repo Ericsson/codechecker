@@ -16,6 +16,8 @@ tidy_check:
 	$(CXX) -w tidy_check.cpp -o /dev/null
 saargs_forward:
 	$(CXX) -w -std=c++11 saargs_forward.cpp -o /dev/null
+saargs_forward_multiple:
+	$(CXX) -w -std=c++11 saargs_forward_multiple.cpp -o /dev/null
 source_code_comments:
 	$(CXX) -w source_code_comments.cpp -Wno-unused-value -o /dev/null
 deduplication:
