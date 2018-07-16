@@ -12,6 +12,7 @@ from __future__ import division
 from __future__ import absolute_import
 
 import base64
+import codecs
 from collections import defaultdict
 from datetime import datetime, timedelta
 import hashlib
@@ -517,7 +518,9 @@ def handle_diff_results(args):
             for f in report.files:
                 if f not in fname_to_fid:
                     try:
-                        content = open(f, 'r').read()
+                        with codecs.open(f, 'r', 'UTF-8',
+                                         errors='replace') as source_data:
+                            content = source_data.read()
                     except (OSError, IOError):
                         content = f + " NOT FOUND."
                     file_sources[findex] = {'id': findex,
