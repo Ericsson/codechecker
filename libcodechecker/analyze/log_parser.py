@@ -170,8 +170,14 @@ def get_compiler_includes(parseLogOptions, compiler, lang, compile_opts,
     # The first sysroot flag found among the compilation options is added
     # to the command below to give a more precise default include list.
     # Absence of any sysroot flags results in an empty string.
-    sysroot = next(
-        (item for item in compile_opts if item.startswith("--sysroot=")), "")
+    sysroot = ""
+    for i, item in enumerate(compile_opts):
+        if item.startswith("--sysroot"):
+            # len("--sysroot") == 9
+            # len("--sysroot=") == 10
+            sysroot = compile_opts[i + 1] if len(item) == 9 else item[10:]
+            sysroot = "--sysroot=" + sysroot
+            break
 
     cmd = compiler + " " + ' '.join(extra_opts) + " -E -x " + lang + \
         " " + sysroot + " - -v "
