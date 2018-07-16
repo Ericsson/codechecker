@@ -183,6 +183,9 @@ def add_filter_conditions(client, report_filter, args):
     if 'component' in args:
         report_filter.componentNames = args.component
 
+    if 'report_hash' in args:
+        report_filter.reportHash = args.report_hash
+
     if file_path:
         report_filter.filepath = file_path
 

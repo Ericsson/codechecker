@@ -1426,6 +1426,8 @@ Results can be filtered by using separate filter options of `results`, `diff`,
 `sum`, etc. commands.
 ~~~~~~~~~~~~~~~~~~~~~
 filter arguments:
+  --report-hash [REPORT_HASH [REPORT_HASH ...]]
+                        Filter results by report hashes.
   --review-status [REVIEW_STATUS [REVIEW_STATUS ...]]
                         Filter results by review statuses.
   --detection-status [DETECTION_STATUS [DETECTION_STATUS ...]]
@@ -1613,6 +1615,7 @@ name, summary.
 
 ~~~~~~~~~~~~~~~~~~~~~
 usage: CodeChecker cmd results [-h]
+                               [--report-hash [REPORT_HASH [REPORT_HASH ...]]]
                                [--review-status [REVIEW_STATUS [REVIEW_STATUS ...]]]
                                [--detection-status [DETECTION_STATUS [DETECTION_STATUS ...]]]
                                [--severity [SEVERITY [SEVERITY ...]]]
@@ -1665,6 +1668,7 @@ from the comparison of two runs.
 
 ~~~~~~~~~~~~~~~~~~~~~
 usage: CodeChecker cmd diff [-h] -b BASE_RUN -n NEW_RUN
+                            [--report-hash [REPORT_HASH [REPORT_HASH ...]]]
                             [--review-status [REVIEW_STATUS [REVIEW_STATUS ...]]]
                             [--detection-status [DETECTION_STATUS [DETECTION_STATUS ...]]]
                             [--severity [SEVERITY [SEVERITY ...]]]
@@ -1737,6 +1741,7 @@ https://docs.python.org/2/library/re.html#regular-expression-syntax.
 ~~~~~~~~~~~~~~~~~~~~~
 usage: CodeChecker cmd sum [-h] (-n RUN_NAME [RUN_NAME ...] | -a)
                            [--disable-unique]
+                           [--report-hash [REPORT_HASH [REPORT_HASH ...]]]
                            [--review-status [REVIEW_STATUS [REVIEW_STATUS ...]]]
                            [--detection-status [DETECTION_STATUS [DETECTION_STATUS ...]]]
                            [--severity [SEVERITY [SEVERITY ...]]]

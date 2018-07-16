@@ -170,6 +170,13 @@ def __add_filtering_arguments(parser, defaults=None):
 
     f_group = parser.add_argument_group('filter arguments')
 
+    f_group.add_argument('--report-hash',
+                         nargs='*',
+                         dest="report_hash",
+                         metavar='REPORT_HASH',
+                         default=init_default('report_hash'),
+                         help="Filter results by report hashes.")
+
     f_group.add_argument('--review-status',
                          nargs='*',
                          dest="review_status",
