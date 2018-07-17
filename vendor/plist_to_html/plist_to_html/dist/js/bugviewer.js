@@ -181,7 +181,7 @@ var BugViewer = {
       }
 
       var msg = document.createElement('span');
-      msg.innerHTML = bugEvent.msg;
+      msg.innerHTML = bugEvent.msg.replace(/(?:\r\n|\r|\n)/g, '<br>');
       element.appendChild(msg);
 
       var nextBugEvent = bugEvent.step;

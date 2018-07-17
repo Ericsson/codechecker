@@ -218,7 +218,7 @@ def plist_to_html(file_path, output_path, html_builder,
     Prints the results in the given file to HTML file.
 
     Returns the skipped plist files because of source
-    file conent change.
+    file content change.
     """
     changed_source = set()
     file_paths = []

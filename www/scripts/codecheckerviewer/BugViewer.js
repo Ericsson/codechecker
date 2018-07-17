@@ -61,7 +61,7 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
    * Parsing the bug step message and replace the `(fixit)` string with an icon.
    */
   function parseBugStepMsg(message) {
-    var ret = message;
+    var ret = message.replace(/(?:\r\n|\r|\n)/g, '<br>');
 
     if (message.indexOf('(fixit)') > -1)
       ret = '<span class="tag fixit">fixit</span>'
