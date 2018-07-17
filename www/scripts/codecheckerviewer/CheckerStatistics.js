@@ -351,6 +351,7 @@ function (declare, lang, ItemFileWriteStore, dom, Deferred, all, Memory,
         style : 'width: 320px; padding: 0px;',
         splitter : true,
         parent : this,
+        openedByUserEvent : this.openedByUserEvent
       });
       this.addChild(this._statisticsFilter);
 
@@ -393,9 +394,11 @@ function (declare, lang, ItemFileWriteStore, dom, Deferred, all, Memory,
       if (!this.initalized) {
         this.initalized = true;
 
-        // Call the notify explicitly to initialize grid filters.
-        this._checkerStatistics.notify();
-        this._severityStatistics.notify();
+        if (!this._statisticsFilter.isInitalized()) {
+          this._statisticsFilter.initAll();
+        } else {
+          this._statisticsFilter.notifyAll();
+        }
       }
 
       var state  = this._statisticsFilter.getUrlState();
