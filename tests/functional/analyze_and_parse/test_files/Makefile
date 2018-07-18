@@ -13,7 +13,7 @@ simple1:
 simple2:
 	$(CXX) -w simple2.cpp -o /dev/null
 tidy_check:
-	$(CXX) -w tidy_check.cpp -o /dev/null
+	$(CXX) -w tidy_check.cpp -o /dev/null -Wno-all -Wno-extra
 saargs_forward:
 	$(CXX) -w -std=c++11 saargs_forward.cpp -o /dev/null
 source_code_comments:
@@ -22,7 +22,7 @@ deduplication:
 	$(CXX) -w -DVAR=1 simple1.cpp -o /dev/null
 	$(CXX) -w -DVAR=2 simple1.cpp -o /dev/null
 compiler_warning_simple:
-	$(CXX) -w compiler_warning.cpp -o /dev/null
+	$(CXX) -w compiler_warning.cpp -o /dev/null -Wno-all -Wno-extra
 compiler_warning_wno_simple:
 	$(CXX) -w compiler_warning.cpp -Wno-unused-variable -o /dev/null
 compiler_warning_wno_group:
