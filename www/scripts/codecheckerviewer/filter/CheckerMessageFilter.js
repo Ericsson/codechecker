@@ -14,7 +14,8 @@ function (declare, Deferred, SelectFilter) {
       enable : true,
       serverSide : true,
       regex : true,
-      placeHolder : 'Search for checker messages...'
+      regexLabel : 'Filter by wildcard pattern (e.g.: *deref*): ',
+      placeHolder : 'Search for checker messages (e.g.: *deref*)...'
     },
 
     getItems : function (opt) {

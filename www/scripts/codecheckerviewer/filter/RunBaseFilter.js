@@ -15,7 +15,8 @@ function (dom, declare, Deferred, SelectFilter) {
       enable : true,
       serverSide : true,
       regex : true,
-      placeHolder : 'Search for run names...'
+      regexLabel : 'Filter by wildcard pattern (e.g.: myrun*): ',
+      placeHolder : 'Search for run names (e.g.: myrun*)...'
     },
 
     getItems : function (opt) {

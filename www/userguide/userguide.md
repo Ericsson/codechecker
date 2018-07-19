@@ -218,6 +218,10 @@ you can choose them.
 - **Checker message** - The static analysis tools provide a message to indicate
 the reason of a specific bug. This message is also filterable.
 
+Run name may contain `*` quantifiers which matches any number of characters
+(zero or more). So if you have `run_1_a_name`, `run_2_b_name`, `run_2_c_name`,
+`run_3_d_name` then `run_2*` will select `run_2_b_name` and `run_2_c_name`.
+
 When you select a filter option on any field then a number indicates on the
 right side of the option the number of reports which belong to that specific
 option. If the report count could not be determined this value will be *N/A*.
