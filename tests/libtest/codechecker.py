@@ -407,10 +407,10 @@ def start_or_get_server():
                                       'viewer_product': 'Default'},
                                      default_path)
 
-    # Wait for server to start and connect to database.
-    # We give a bit of grace period here as a separate subcommand needs to
-    # attach.
-    time.sleep(10)
+        # Wait for server to start and connect to database.
+        # We give a bit of grace period here as a separate subcommand needs to
+        # attach.
+        time.sleep(10)
 
     return {
         'viewer_host': 'localhost',
