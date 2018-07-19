@@ -316,7 +316,7 @@ def addReport(session,
     try:
 
         checker_name = main_section['check_name']
-        severity_name = severity_map.get(checker_name, 'UNSPECIFIED')
+        severity_name = severity_map.get(checker_name)
         severity = ttypes.Severity._NAMES_TO_VALUES[severity_name]
 
         report = Report(run_id,
