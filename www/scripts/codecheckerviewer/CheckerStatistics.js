@@ -55,12 +55,11 @@ function (declare, lang, ItemFileWriteStore, dom, Deferred, all, Memory,
       this.structure = [
         { name : 'Checker', field : 'checker', width : '100%', formatter : checkerNameFormatter},
         { name : 'Severity', field : 'severity', styles : 'text-align: center;', width : '15%', formatter : severityFormatter},
-        { name : '<span class="customIcon detection-status-unresolved"></span> All reports', field : 'reports', width : '20%', formatter : numberFormatter},
-        { name : '<span class="customIcon detection-status-resolved"></span> Resolved', field : 'resolved', width : '20%', formatter : numberFormatter},
         { name : '<span class="customIcon review-status-unreviewed"></span> Unreviewed', field : 'unreviewed', width : '20%', formatter : numberFormatter},
         { name : '<span class="customIcon review-status-confirmed"></span>Confirmed bug', field : 'confirmed', width : '20%', formatter : numberFormatter},
         { name : '<span class="customIcon review-status-false-positive"></span> False positive', field : 'falsePositive', width : '20%', formatter : numberFormatter},
-        { name : "<span class= \"customIcon review-status-intentional\"></span>Intentional", field : 'intentional', width : '20%', formatter : numberFormatter}
+        { name : "<span class= \"customIcon review-status-intentional\"></span>Intentional", field : 'intentional', width : '20%', formatter : numberFormatter},
+        { name : '<span class="customIcon detection-status-unresolved"></span> All reports', field : 'reports', width : '20%', formatter : numberFormatter}
       ];
 
       this.focused = true;
@@ -100,12 +99,6 @@ function (declare, lang, ItemFileWriteStore, dom, Deferred, all, Memory,
         case 'severity':
           filter._severityFilter.select(
             filter._severityFilter.stateConverter(item.severity[0]));
-          break;
-        case 'resolved':
-          if (!item.resolved[0]) return;
-
-          detectionFilter.select(detectionFilter.stateConverter(
-            CC_OBJECTS.DetectionStatus.RESOLVED));
           break;
         case 'unreviewed':
           if (!item.unreviewed[0]) return;
@@ -164,8 +157,7 @@ function (declare, lang, ItemFileWriteStore, dom, Deferred, all, Memory,
         {field : 'reviewStatus', values : [CC_OBJECTS.ReviewStatus.UNREVIEWED]},
         {field : 'reviewStatus', values : [CC_OBJECTS.ReviewStatus.CONFIRMED]},
         {field : 'reviewStatus', values : [CC_OBJECTS.ReviewStatus.FALSE_POSITIVE]},
-        {field : 'reviewStatus', values : [CC_OBJECTS.ReviewStatus.INTENTIONAL]},
-        {field : 'detectionStatus', values : [CC_OBJECTS.DetectionStatus.RESOLVED]}
+        {field : 'reviewStatus', values : [CC_OBJECTS.ReviewStatus.INTENTIONAL]}
       ].map(function (q) {
         var deferred = new Deferred();
 
@@ -196,8 +188,7 @@ function (declare, lang, ItemFileWriteStore, dom, Deferred, all, Memory,
             unreviewed    : res[1][key] !== undefined ? res[1][key].count : 0,
             confirmed     : res[2][key] !== undefined ? res[2][key].count : 0,
             falsePositive : res[3][key] !== undefined ? res[3][key].count : 0,
-            intentional   : res[4][key] !== undefined ? res[4][key].count : 0,
-            resolved      : res[5][key] !== undefined ? res[5][key].count : 0
+            intentional   : res[4][key] !== undefined ? res[4][key].count : 0
           });
         });
         that.sort();

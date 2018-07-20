@@ -25,17 +25,20 @@ define([
   'codechecker/filter/FileFilter',
   'codechecker/filter/ReportCount',
   'codechecker/filter/ReportHashFilter',
+  'codechecker/filter/ReviewStatusFilter',
   'codechecker/filter/RunBaseFilter',
   'codechecker/filter/RunHistoryTagFilter',
   'codechecker/filter/SelectFilter',
+  'codechecker/filter/SeverityFilter',
   'codechecker/filter/SourceComponentFilter',
   'codechecker/filter/UniqueFilter',
   'codechecker/util'],
 function (declare, lang, Deferred, domClass, dom, domStyle, topic,
   ConfirmDialog, Dialog, Button, ContentPane, hashHelper, CheckerMessageFilter,
   CheckerNameFilter, DateFilter, DetectionStatusFilter, DiffTypeFilter,
-  FileFilter, ReportCount, ReportHashFilter, RunBaseFilter, RunHistoryTagFilter,
-  SelectFilter, SourceComponentFilter, UniqueFilter, util) {
+  FileFilter, ReportCount, ReportHashFilter, ReviewStatusFilter, RunBaseFilter,
+  RunHistoryTagFilter, SelectFilter, SeverityFilter, SourceComponentFilter,
+  UniqueFilter, util) {
 
   var FilterToggle = declare(ContentPane, {
     class : 'filter-toggle',
@@ -312,51 +315,12 @@ function (declare, lang, Deferred, domClass, dom, domStyle, topic,
 
       //--- Review status filter ---//
 
-      this._reviewStatusFilter = new SelectFilter({
+      this._reviewStatusFilter = new ReviewStatusFilter({
         class : 'review-status',
         title : 'Review status',
         parent   : this,
         updateReportFilter : function (reviewStatuses) {
           that.reportFilter.reviewStatus = reviewStatuses;
-        },
-        stateConverter : function (value) {
-          var status = util.enumValueToKey(
-            CC_OBJECTS.ReviewStatus, parseInt(value)).replace('_', ' ');
-          return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
-        },
-        stateDecoder : function (key) {
-          return CC_OBJECTS.ReviewStatus[key.replace(' ', '_').toUpperCase()];
-        },
-        defaultValues : function () {
-          var state = {};
-          state[this.class] = [
-            CC_OBJECTS.ReviewStatus.UNREVIEWED,
-            CC_OBJECTS.ReviewStatus.CONFIRMED
-          ].map(this.stateConverter);
-
-          return state;
-        },
-        getIconClass : function (value) {
-          var statusCode = this.stateDecoder(value);
-          return 'customIcon ' + util.reviewStatusCssClass(statusCode);
-        },
-        getItems : function (opt) {
-          opt = that.initReportFilterOptions(opt);
-          opt.reportFilter.reviewStatus = null;
-
-          var deferred = new Deferred();
-          CC_SERVICE.getReviewStatusCounts(opt.runIds, opt.reportFilter,
-          opt.cmpData, function (res) {
-            deferred.resolve(Object.keys(CC_OBJECTS.ReviewStatus).map(
-              function (key) {
-                var value = CC_OBJECTS.ReviewStatus[key];
-                return {
-                  value : util.reviewStatusFromCodeToString(value),
-                  count : res[value] !== undefined ? res[value] : 0
-                };
-            }));
-          });
-          return deferred;
         }
       });
       this.register(this._reviewStatusFilter);
@@ -377,44 +341,12 @@ function (declare, lang, Deferred, domClass, dom, domStyle, topic,
 
       //--- Severity filter ---//
 
-      this._severityFilter = new SelectFilter({
+      this._severityFilter = new SeverityFilter({
         class : 'severity',
         title : 'Severity',
         parent   : this,
         updateReportFilter : function (severities) {
           that.reportFilter.severity = severities;
-        },
-        stateConverter : function (value) {
-          var status = util.enumValueToKey(
-            CC_OBJECTS.Severity, parseInt(value));
-          return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
-        },
-        stateDecoder : function (key) {
-          return CC_OBJECTS.Severity[key.toUpperCase()];
-        },
-        getIconClass : function (value) {
-          return 'customIcon icon-severity-' + value.toLowerCase();
-        },
-        getItems : function (opt) {
-          opt = that.initReportFilterOptions(opt);
-          opt.reportFilter.severity = null;
-
-          var deferred = new Deferred();
-          CC_SERVICE.getSeverityCounts(opt.runIds, opt.reportFilter,
-          opt.cmpData, function (res) {
-            deferred.resolve(Object.keys(CC_OBJECTS.Severity).sort(
-              function (a, b) {
-                return CC_OBJECTS.Severity[a] < CC_OBJECTS.Severity[b];
-              }).map(function (key) {
-                var value = CC_OBJECTS.Severity[key];
-                return {
-                  value : key[0] + key.slice(1).toLowerCase(),
-                  count : res[value] !== undefined ? res[value] : 0
-                };
-              }));
-          });
-
-          return deferred;
         }
       });
       this.register(this._severityFilter);
