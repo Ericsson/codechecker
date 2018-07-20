@@ -45,6 +45,12 @@ function (declare, lang, dom, Button, hashHelper, BugFilterView,
       this._uniqueFilter = new UniqueFilter({
         class : 'is-unique',
         parent : this,
+        defaultValue : true,
+        defaultValues : function () {
+          var state = {};
+          state[this.class] = this.defaultValue ? 'on' : 'off';
+          return state;
+        },
         updateReportFilter : function (isUnique) {
           that.reportFilter.isUnique = isUnique;
         }
