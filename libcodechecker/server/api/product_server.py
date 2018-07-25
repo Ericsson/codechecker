@@ -27,7 +27,7 @@ from libcodechecker.server import permissions
 from libcodechecker.server.database.config_db_model import IDENTIFIER, \
     Product, ProductPermission
 from libcodechecker.server.database.database import SQLServer, conv
-from libcodechecker.server.database.run_db_model import Run
+from libcodechecker.server.database.run_db_model import Run, RunLock
 from libcodechecker.server.routing import is_valid_product_endpoint
 
 LOG = get_logger('server')
@@ -102,9 +102,16 @@ class ThriftProductHandler(object):
 
         server_product.connect()
         num_of_runs = 0
+        runs_in_progress = set()
         latest_store_to_product = ""
         if server_product.db_status == shared.ttypes.DBStatus.OK:
             run_db_session = server_product.session_factory()
+            run_locks = run_db_session.query(RunLock.name) \
+                .filter(RunLock.locked_at.isnot(None)) \
+                .all()
+
+            runs_in_progress = set([run_lock[0] for run_lock in run_locks])
+
             num_of_runs = run_db_session.query(Run).count()
             if num_of_runs:
                 last_updated_run = run_db_session.query(Run) \
@@ -142,7 +149,8 @@ class ThriftProductHandler(object):
             accessible=product_access,
             administrating=product_admin,
             databaseStatus=server_product.db_status,
-            admins=[admin.name for admin in admins])
+            admins=[admin.name for admin in admins],
+            runStoreInProgress=runs_in_progress)
 
     @timeit
     def getPackageVersion(self):
