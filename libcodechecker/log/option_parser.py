@@ -153,8 +153,9 @@ IGNORED_OPTION_MAP_REGEX = {
     '^-flto': 0,
     # MicroBlaze Options:
     '^-mxl': 0,
-    # PowerPC SPE Option:
-    '^-mfloat-gprs': 0
+    # PowerPC SPE Options:
+    '^-mfloat-gprs': 0,
+    '^-mabi': 0
 }
 
 # Unknown options by clang, will be skipped.
