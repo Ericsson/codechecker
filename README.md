@@ -138,8 +138,7 @@ git clone https://github.com/Ericsson/CodeChecker.git --depth 1 ~/codechecker
 cd ~/codechecker
 
 # Create a Python virtualenv and set it as your environment.
-make venv
-make add_osx_extras_to_venv
+make venv_osx
 source $PWD/venv/bin/activate
 
 # Build and install a CodeChecker package.

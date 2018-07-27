@@ -116,7 +116,7 @@ sudo apt-get install libldap2-dev libsasl2-dev libssl-dev
 source ~/checker_env/bin/activate
 
 # install required python modules
-pip install -r .ci/auth_requirements
+pip install -r requirements_py/auth/requirements.txt
 ~~~
 
 #### <a name="pam-authentication"></a> <i>PAM</i> authentication

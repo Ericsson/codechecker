@@ -111,13 +111,13 @@ test_clean:
 	rm -rf build/workspace
 
 # Use the proper requirement file for the given test configuration
-test_matrix_sqlite: VENV_DEV_REQ_FILE = .ci/basic_python_requirements
+test_matrix_sqlite: VENV_DEV_REQ_FILE = requirements_py/requirements.txt
 test_matrix_sqlite: pycodestyle test_unit test_sqlite
 
-test_matrix_psql_psycopg2: VENV_DEV_REQ_FILE = .ci/python_requirements_psql_psycopg2
+test_matrix_psql_psycopg2: VENV_DEV_REQ_FILE = requirements_py/db_psycopg2/requirements.txt
 test_matrix_psql_psycopg2: pycodestyle test_unit test_psql_psycopg2
 
-test_matrix_psql_pg8000: VENV_DEV_REQ_FILE = .ci/python_requirements_psql_pg8000
+test_matrix_psql_pg8000: VENV_DEV_REQ_FILE = requirements_py/db_pg8000/requirements.txt
 test_matrix_psql_pg8000: pycodestyle test_unit test_psql_pg8000
 
 clean_travis:

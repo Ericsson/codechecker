@@ -9,10 +9,10 @@ ROOT = $(CURRENT_DIR)
 ACTIVATE_RUNTIME_VENV ?= . venv/bin/activate
 ACTIVATE_DEV_VENV ?= . venv_dev/bin/activate
 
-VENV_REQ_FILE ?= .ci/basic_python_requirements
-VENV_DEV_REQ_FILE ?= .ci/python_requirements
+VENV_REQ_FILE ?= requirements_py/requirements.txt
+VENV_DEV_REQ_FILE ?= requirements_py/dev/requirements.txt
 
-OSX_EXTRAS_VENV_REQ_FILE ?= .ci/osx_extra_python_requirements
+OSX_VENV_REQ_FILE ?= requirements_py/osx/requirements.txt
 
 default: package
 
@@ -48,9 +48,10 @@ venv:
 	virtualenv -p python2 venv && \
 		$(ACTIVATE_RUNTIME_VENV) && pip install -r $(VENV_REQ_FILE)
 
-add_osx_extras_to_venv:
-	# Run the extra build package.
-	$(ACTIVATE_RUNTIME_VENV) && pip install -r $(OSX_EXTRAS_VENV_REQ_FILE)
+venv_osx:
+	# Create a virtual environment which can be used to run the build package.
+	virtualenv -p python2 venv && \
+		$(ACTIVATE_RUNTIME_VENV) && pip install -r $(OSX_VENV_REQ_FILE)
 
 clean_venv:
 	rm -rf venv
