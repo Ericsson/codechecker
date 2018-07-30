@@ -10,6 +10,141 @@
 <div class="separator"></div>
 
 <div class="blocks">
+  <h2>Highlights of <a href="https://github.com/Ericsson/codechecker/releases/tag/v6.8.0" class="link">CodeChecker 6.8.0</a> release</h2>
+
+  <div class="items">
+    <div class="intro-row">
+      <h3>Filter results by report hash</h3>
+      <div class="content">
+        <div class="intro-col intro-col-left col-md-2">
+          We are showing report hash for each report at the <i>Bug overview</i>
+          page and now it is possible to filter run results by report hash on
+          the GUI and at the command line too.
+        </div>
+        <div class="intro-col intro-col-right col-md-2">
+          <a href="/images/report_hash_filter.png" data-dojo-type="dojox.image.Lightbox" title="Report hash filter">
+            <img src="/images/report_hash_filter.png" alt="Report hash filter" />
+          </a>
+        </div>
+        <div class="clear example">
+          <b>Examples:</b>
+          <ul>
+            <li>
+              <span class="code">CodeChecker cmd results my_run --report-hash
+                7084350547fcde43061bd1390ec169a9
+              </span>
+            </li>
+            <li>
+              <span class="code">CodeChecker cmd diff -b run1 -n run2
+                --unresolved --severity high medium --report-hash
+                7084350547fcde43061bd1390ec169a9</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="intro-row">
+      <h3>New filters at Checker statistics</h3>
+      <div class="content">
+        <div class="intro-col intro-col-left col-md-2">
+          We can get statistics only for specified runs, files, checker names
+          etc. using the filter bar beside the statistic tables.
+        </div>
+        <div class="intro-col intro-col-right col-md-2">
+          <a href="/images/checker_statistics.png" data-dojo-type="dojox.image.Lightbox" title="Statistics filter">
+            <img src="/images/checker_statistics.png" alt="Statistics filter" />
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="intro-row">
+      <h3>Delete filtered run results</h3>
+      <div class="content">
+        <div class="intro-col intro-col-left col-md-2">
+          It is possible to remove old, unneeded filtered reports by clicking on
+          the <span class="code">Remove filtered reports</span> button at the
+          top of the filter bar.
+        </div>
+        <div class="intro-col intro-col-right col-md-2">
+          <a href="/images/remove_filtered_reports.png" data-dojo-type="dojox.image.Lightbox" title="Delete filtered run results">
+            <img src="/images/remove_filtered_reports.png" alt="Delete filtered run results" />
+          </a>
+        </div>
+      </div>
+    </div>
+
+     <div class="intro-row">
+      <h3>Support managing source component on the GUI</h3>
+      <div class="content">
+        <div class="intro-col intro-col-left col-md-2">
+          Source components can be managed on the GUI at the Report filter bar
+          after clicking on the pencil icon at the Source component filter. A
+          pop-up window will be opened where you can add, edit or remove
+          existing source components.
+        </div>
+        <div class="intro-col intro-col-right col-md-2">
+          <a href="/images/list_of_source_components.png" data-dojo-type="dojox.image.Lightbox" title="Source component UI management">
+            <img src="/images/list_of_source_components.png" alt="Source component UI management" />
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="intro-row">
+      <h3>Fine gain control of Clang warnings</h3>
+      <div class="content">
+        <div class="intro-col intro-col-left">
+          Compiler warnings are diagnostic messages that report constructions
+          that are not inherently erroneous but that are risky or suggest there
+          may have been an error. You can fine-tune which warnings to use in
+          the analysis by setting the enabled and disabled flags. These flags
+          should start with a capital <span class="code">W</span> or
+          <span class="code">Wno-</span> prefix followed by the warning name.
+          <div class="example">
+            <b>Examples:</b>
+            <ul>
+              <li>
+                <span class="code">CodeChecker analyze /path/to/build.log
+                  -o /path/to/output/dir --enable Wunused
+                  --disable Wno-unused-parameter
+                </span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="intro-row">
+      <h3>Allow comparison of two report directories</h3>
+      <div class="content">
+        <div class="intro-col intro-col-left">
+          Now we are able to compare two report directories the same way as
+          remote runs by using CodChecker command line.
+        </div>
+      </div>
+      <div class="clear example">
+          <b>Examples:</b>
+          <ul>
+            <li>
+              <span class="code">CodeChecker cmd diff
+                -b /path/to/report_dir_base
+                -n /path/to/report_dir_new --new
+              </span>
+            </li>
+          </ul>
+        </div>
+    </div>
+
+  </div>
+</div>
+
+
+<div class="separator"></div>
+
+<div class="blocks">
   <h2>Highlights of <a href="https://github.com/Ericsson/codechecker/releases/tag/v6.7.0" class="link">CodeChecker 6.7.0</a> release</h2>
   
   <div class="items">
@@ -26,8 +161,8 @@
             <img src="/images/component_filter.png" alt="Component filter" />
           </a>
         </div>
-        <div class="clear">
-          Examples:
+        <div class="clear example">
+          <b>Examples:</b>
           <ul>
             <li>
               Create a new component: <span class="code">CodeChecker cmd
@@ -82,20 +217,22 @@
         <div class="intro-col intro-col-left">
           Create separate filter options for <span class="code">CodeChecker cmd
           results</span> and <span class="code">CodeChecker cmd diff</span>
-          command line options to be more consistent with the UI.<br/>
-          Examples:
-          <ul>
-            <li>
-              <span class="code">CodeChecker cmd results my_run --severity
-                  critical high medium --file "/home/username/my_project/*"</span>
-            </li>
-            <li>
-              <span class="code">CodeChecker cmd diff -b run1 -n run2
-                --unresolved --severity high medium --review-status
-                unreviewed confirmed</span>
-            </li>
-          </ul>
-          For more information <a href="https://github.com/Ericsson/codechecker/blob/master/docs/user_guide.md#cmd">see</a>.
+          command line options to be more consistent with the UI.
+          <div class="example">
+            <b>Examples:</b>
+            <ul>
+              <li>
+                <span class="code">CodeChecker cmd results my_run --severity
+                    critical high medium --file "/home/username/my_project/*"</span>
+              </li>
+              <li>
+                <span class="code">CodeChecker cmd diff -b run1 -n run2
+                  --unresolved --severity high medium --review-status
+                  unreviewed confirmed</span>
+              </li>
+            </ul>
+            For more information <a href="https://github.com/Ericsson/codechecker/blob/master/docs/user_guide.md#cmd">see</a>.
+          </div>
         </div>
       </div>
     </div>
@@ -109,19 +246,21 @@
           It is obviously not a good idea to store passwords in text files.
           Instead of this the user is able to generate a
           token from command line, that can be used to authenticate in the name
-          of his/her name.<br/>
-          Examples:
-          <ul>
-            <li>
-              Create a new token: <span class="code">CodeChecker cmd token new
-                --description "Description of my token"</span>
-            </li>
-            <li>
-              List my personal access tokens: <span class="code">CodeChecker
-              cmd token list</span>
-            </li>
-          </ul>
-          For more information <a href="https://github.com/Ericsson/codechecker/blob/master/docs/authentication.md#personal-access-token">see</a>.
+          of his/her name.
+          <div class="example">
+            <b>Examples:</b>
+            <ul>
+              <li>
+                Create a new token: <span class="code">CodeChecker cmd token new
+                  --description "Description of my token"</span>
+              </li>
+              <li>
+                List my personal access tokens: <span class="code">CodeChecker
+                cmd token list</span>
+              </li>
+            </ul>
+            For more information <a href="https://github.com/Ericsson/codechecker/blob/master/docs/authentication.md#personal-access-token">see</a>.
+          </div>
         </div>
       </div>
     </div>
