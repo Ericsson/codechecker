@@ -628,6 +628,8 @@ class Product(object):
                          self.endpoint)
                 db_cleanup.remove_expired_run_locks(db.session)
                 db_cleanup.remove_unused_files(db.session)
+                db_cleanup.upgrade_severity_levels(db.session,
+                                                   self.__context.severity_map)
                 db.session.commit()
                 LOG.info("Garbage collection finished.")
                 return True

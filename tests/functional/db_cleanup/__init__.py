@@ -36,7 +36,8 @@ def setup_package():
         'workspace': TEST_WORKSPACE,
         'checkers': [],
         'viewer_host': 'localhost',
-        'viewer_product': 'db_cleanup'
+        'viewer_product': 'db_cleanup',
+        'reportdir': os.path.join(TEST_WORKSPACE, 'reports')
     }
 
     env.export_test_cfg(TEST_WORKSPACE, {'codechecker_cfg': codechecker_cfg})

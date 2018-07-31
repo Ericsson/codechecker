@@ -284,6 +284,16 @@ class Context(object):
 
     @property
     def checkers_severity_map_file(self):
+        # Get severity map file from the environment.
+        if 'CC_SEVERITY_MAP_FILE' in os.environ:
+            severity_map_file = os.environ.get('CC_SEVERITY_MAP_FILE')
+
+            LOG.warning("Severity map file set through the "
+                        "'CC_SEVERITY_MAP_FILE' environment variable: %s",
+                        severity_map_file)
+
+            return severity_map_file
+
         return os.path.join(self._package_root,
                             self.pckg_layout['checkers_severity_map_file'])
 
