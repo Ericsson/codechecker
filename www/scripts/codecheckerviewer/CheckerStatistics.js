@@ -58,7 +58,7 @@ function (declare, lang, ItemFileWriteStore, dom, Deferred, all, Memory,
         { name : '<span class="customIcon detection-status-unresolved"></span> All reports', field : 'reports', width : '20%', formatter : numberFormatter},
         { name : '<span class="customIcon detection-status-resolved"></span> Resolved', field : 'resolved', width : '20%', formatter : numberFormatter},
         { name : '<span class="customIcon review-status-unreviewed"></span> Unreviewed', field : 'unreviewed', width : '20%', formatter : numberFormatter},
-        { name : '<span class="customIcon review-status-confirmed-bug"></span>Confirmed bug', field : 'confirmed', width : '20%', formatter : numberFormatter},
+        { name : '<span class="customIcon review-status-confirmed"></span>Confirmed bug', field : 'confirmed', width : '20%', formatter : numberFormatter},
         { name : '<span class="customIcon review-status-false-positive"></span> False positive', field : 'falsePositive', width : '20%', formatter : numberFormatter},
         { name : "<span class= \"customIcon review-status-intentional\"></span>Intentional", field : 'intentional', width : '20%', formatter : numberFormatter}
       ];
