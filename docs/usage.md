@@ -16,6 +16,7 @@ Table of Contents
 * [Step 5: Fine tune Analysis configuration](#step-5)
   * [Ignore modules from your analysis](#ignore-modules)
   * [Enable/Disable Checkers](#enable-disable-checkers)
+  * [Configure Checkers](#configure-checkers)
   * [Identify files that failed analysis](#identify-files)
 * [Step 6: Integrate CodeChecker into your CI loop](#step-6)
   * [Storing & Updating runs](#storing-runs)
@@ -240,6 +241,10 @@ For example to enable alpha checkers additionally to the defaults
 ```
  CodeChecker analyze -e alpha  -b "make" -i ./skip.file" -o ./reports
 ```
+
+### <a name="configure-checkers"></a> Configure Checkers
+
+See [Configure Clang Static Analyzer and checkers](/docs/checker_and_analyzer_configuration.md) documentation for a detailed description.
 
 ### <a name="identify-files"></a> Identify files that failed analysis
 After execution of
