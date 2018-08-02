@@ -224,9 +224,9 @@ def remove_file_if_exists(filename):
         os.remove(filename)
 
 
-def parse_compile_commands_json(logfile, parseLogOptions):
+def parse_compile_commands_json(log_data, parseLogOptions):
     """
-    logfile: is a compile command json
+    log_data: content of a compile command json.
     """
 
     output_path = parseLogOptions.output_path
@@ -239,13 +239,11 @@ def parse_compile_commands_json(logfile, parseLogOptions):
     actions = []
     filtered_build_actions = {}
 
-    data = load_json_or_empty(logfile, {})
-
     compiler_includes = {}
     compiler_target = {}
 
     counter = 0
-    for entry in data:
+    for entry in log_data:
         sourcefile = entry['file']
 
         if not os.path.isabs(sourcefile):
@@ -364,17 +362,17 @@ def parse_log(logfilepath, parseLogOptions):
     """
     LOG.debug('Parsing log file: ' + logfilepath)
 
-    with open(logfilepath) as logfile:
-        try:
-            actions = parse_compile_commands_json(logfile, parseLogOptions)
-        except (ValueError, KeyError, TypeError) as ex:
-            if os.stat(logfilepath).st_size == 0:
-                LOG.error('The compile database is empty.')
-            else:
-                LOG.error('The compile database is not valid.')
-            LOG.debug(traceback.format_exc())
-            LOG.debug(ex)
-            sys.exit(1)
+    try:
+        data = load_json_or_empty(logfilepath, {})
+        actions = parse_compile_commands_json(data, parseLogOptions)
+    except (ValueError, KeyError, TypeError) as ex:
+        if os.stat(logfilepath).st_size == 0:
+            LOG.error('The compile database is empty.')
+        else:
+            LOG.error('The compile database is not valid.')
+        LOG.debug(traceback.format_exc())
+        LOG.debug(ex)
+        sys.exit(1)
 
     LOG.debug('Parsing log file done.')
 

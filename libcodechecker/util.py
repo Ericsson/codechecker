@@ -13,21 +13,21 @@ from __future__ import absolute_import
 import argparse
 import datetime
 import hashlib
+import io
 import json
 import os
-import portalocker
 import re
 import shutil
 import signal
 import socket
 import stat
 import subprocess
-import sys
 import tempfile
 import uuid
 
 from threading import Timer
 
+import portalocker
 import psutil
 
 from libcodechecker.logger import get_logger
@@ -570,7 +570,7 @@ def load_json_or_empty(path, default=None, kind=None, lock=False):
 
     ret = default
     try:
-        with open(path, 'r') as handle:
+        with io.open(path, 'r') as handle:
             if lock:
                 portalocker.lock(handle, portalocker.LOCK_SH)
 
@@ -578,13 +578,18 @@ def load_json_or_empty(path, default=None, kind=None, lock=False):
 
             if lock:
                 portalocker.unlock(handle)
-    except IOError as ex:
-        LOG.warning("Failed to open {0} file: {1}"
-                    .format(kind if kind else 'json', path))
+    except OSError as ex:
+        LOG.warning("Failed to open %s file: %s",
+                    kind if kind else 'json',
+                    path)
         LOG.warning(ex)
     except ValueError as ex:
-        LOG.warning("'{1}' is not a valid {0} file."
-                    .format(kind if kind else 'json', path))
+        LOG.warning("'%s' is not a valid %s file.",
+                    kind if kind else 'json',
+                    path)
+        LOG.warning(ex)
+    except TypeError as ex:
+        LOG.warning('Failed to process json file: %s', path)
         LOG.warning(ex)
 
     return ret
