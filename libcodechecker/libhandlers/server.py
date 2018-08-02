@@ -605,7 +605,7 @@ def __instance_management(args):
             head = ['Workspace', 'Computer host', 'View port']
 
         rows = []
-        for instance in instance_manager.get_instances():
+        for instance in instances:
             if not instances_on_multiple_hosts:
                 rows.append((instance['workspace'], str(instance['port'])))
             else:
@@ -825,8 +825,7 @@ def server_init_start(args):
     checker_md_docs = os.path.join(context.doc_root, 'checker_md_docs')
     checker_md_docs_map = os.path.join(checker_md_docs,
                                        'checker_doc_map.json')
-    with open(checker_md_docs_map, 'r') as dFile:
-        checker_md_docs_map = json.load(dFile)
+    checker_md_docs_map = util.load_json_or_empty(checker_md_docs_map, {})
 
     package_data = {'www_root': context.www_root,
                     'doc_root': context.doc_root,

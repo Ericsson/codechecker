@@ -15,12 +15,14 @@ import datetime
 import hashlib
 import json
 import os
+import portalocker
 import re
 import shutil
 import signal
 import socket
 import stat
 import subprocess
+import sys
 import tempfile
 import uuid
 
@@ -546,7 +548,6 @@ def check_file_owner_rw(file_to_check):
         True if only the owner can read or write the file.
         False if other users or groups can read or write the file.
     """
-
     mode = os.stat(file_to_check)[stat.ST_MODE]
     if mode & stat.S_IRGRP \
             or mode & stat.S_IWGRP \
@@ -561,7 +562,7 @@ def check_file_owner_rw(file_to_check):
     return True
 
 
-def load_json_or_empty(path, default=None, kind=None):
+def load_json_or_empty(path, default=None, kind=None, lock=False):
     """
     Load the contents of the given file as a JSON and return it's value,
     or default if the file can't be loaded.
@@ -570,13 +571,21 @@ def load_json_or_empty(path, default=None, kind=None):
     ret = default
     try:
         with open(path, 'r') as handle:
+            if lock:
+                portalocker.lock(handle, portalocker.LOCK_SH)
+
             ret = json.loads(handle.read())
-    except IOError:
+
+            if lock:
+                portalocker.unlock(handle)
+    except IOError as ex:
         LOG.warning("Failed to open {0} file: {1}"
                     .format(kind if kind else 'json', path))
-    except ValueError:
+        LOG.warning(ex)
+    except ValueError as ex:
         LOG.warning("'{1}' is not a valid {0} file."
                     .format(kind if kind else 'json', path))
+        LOG.warning(ex)
 
     return ret
 

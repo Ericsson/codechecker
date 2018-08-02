@@ -25,6 +25,7 @@ from libcodechecker.analyze import gcc_toolchain
 from libcodechecker.log import build_action
 from libcodechecker.log import option_parser
 from libcodechecker.logger import get_logger
+from libcodechecker.util import load_json_or_empty
 
 LOG = get_logger('buildlogger')
 
@@ -142,16 +143,15 @@ def dump_compiler_info(output_path, filename, data):
     filename = os.path.join(output_path, filename)
     all_data = dict()
     if os.path.exists(filename):
-        with open(filename, 'r') as f:
-            all_data = json.load(f)
+        all_data = load_json_or_empty(filename)
+
     all_data.update(data)
     with open(filename, 'w') as f:
         f.write(json.dumps(all_data))
 
 
 def load_compiler_info(filename, compiler):
-    with open(filename, 'r') as f:
-        data = json.load(f)
+    data = load_json_or_empty(filename, {})
     value = data.get(compiler)
     if value is None:
         LOG.error("Could not find compiler %s in file %s" %
@@ -239,7 +239,7 @@ def parse_compile_commands_json(logfile, parseLogOptions):
     actions = []
     filtered_build_actions = {}
 
-    data = json.load(logfile)
+    data = load_json_or_empty(logfile, {})
 
     compiler_includes = {}
     compiler_target = {}
@@ -359,9 +359,9 @@ def parse_compile_commands_json(logfile, parseLogOptions):
 
 
 def parse_log(logfilepath, parseLogOptions):
-    '''
+    """
     logfilepath: the compile command json file which should be parsed.
-    '''
+    """
     LOG.debug('Parsing log file: ' + logfilepath)
 
     with open(logfilepath) as logfile:

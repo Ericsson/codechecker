@@ -323,9 +323,8 @@ def main(args):
         elif os.path.isdir(input_path):
             metadata_file = os.path.join(input_path, "metadata.json")
             if os.path.exists(metadata_file):
-                with open(metadata_file, 'r') as metadata:
-                    metadata_dict = json.load(metadata)
-                    LOG.debug(metadata_dict)
+                metadata_dict = util.load_json_or_empty(metadata_file)
+                LOG.debug(metadata_dict)
 
                 if 'working_directory' in metadata_dict:
                     working_dir = metadata_dict['working_directory']

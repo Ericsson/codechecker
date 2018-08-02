@@ -22,7 +22,8 @@ from libcodechecker import host_check
 from libcodechecker.analyze import analyzer
 from libcodechecker.analyze import log_parser
 from libcodechecker.analyze.analyzers import analyzer_types
-from libcodechecker.util import RawDescriptionDefaultHelpFormatter
+from libcodechecker.util import RawDescriptionDefaultHelpFormatter, \
+    load_json_or_empty
 
 LOG = logger.get_logger('system')
 
@@ -488,10 +489,9 @@ def main(args):
     # Update metadata dictionary with old values.
     metadata_file = os.path.join(args.output_path, 'metadata.json')
     if os.path.exists(metadata_file):
-        with open(metadata_file, 'r') as data:
-            metadata_prev = json.load(data)
-            metadata['result_source_files'] =\
-                metadata_prev['result_source_files']
+        metadata_prev = load_json_or_empty(metadata_file)
+        metadata['result_source_files'] = \
+            metadata_prev['result_source_files']
 
     analyzer.perform_analysis(args, context, actions, metadata)
 

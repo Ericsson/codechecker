@@ -159,8 +159,7 @@ def __get_run_name(input_list):
     for input_path in input_list:
         metafile = os.path.join(input_path, "metadata.json")
         if os.path.isdir(input_path) and os.path.exists(metafile):
-            with open(metafile, 'r') as metadata:
-                metajson = json.load(metadata)
+            metajson = util.load_json_or_empty(metafile)
 
             if 'name' in metajson:
                 names.append(metajson['name'])

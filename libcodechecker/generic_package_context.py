@@ -12,7 +12,6 @@ from __future__ import division
 from __future__ import absolute_import
 
 from collections import Mapping
-import json
 import os
 import sys
 
@@ -20,6 +19,7 @@ from libcodechecker import db_version
 from libcodechecker import logger
 # TODO: Refers subpackage library
 from libcodechecker.analyze.analyzers import analyzer_types
+from libcodechecker.util import load_json_or_empty
 
 LOG = logger.get_logger('system')
 
@@ -89,13 +89,8 @@ class Context(object):
 
         self._codechecker_workspace = os.environ.get('codechecker_workspace')
 
-        try:
-            with open(self.checkers_severity_map_file) as severity_file:
-                self._severity_map = SeverityMap(json.load(severity_file))
-        except (IOError, ValueError):
-            LOG.warning("{0} doesn't exist or not JSON format. Severity "
-                        "levels will not be available!"
-                        .format(self.checkers_severity_map_file))
+        self._severity_map = SeverityMap(
+            load_json_or_empty(self.checkers_severity_map_file, {}))
 
         # Get generic package specific environment variables.
         self.logger_bin = os.environ.get(env_vars['cc_logger_bin'])
@@ -108,48 +103,37 @@ class Context(object):
         """
         Get the package version from the version config file.
         """
-        try:
-            with open(self.version_file, 'r') as vfile:
-                vfile_data = json.loads(vfile.read())
+        vfile_data = load_json_or_empty(self.version_file)
 
-            package_version = vfile_data['version']
-            package_build_date = vfile_data['package_build_date']
-            package_git_hash = vfile_data['git_hash']
-            package_git_tag = vfile_data['git_describe']['tag']
-            package_git_dirtytag = vfile_data['git_describe']['dirty']
-            product_database_version = vfile_data['product_db_version']
-            run_database_version = vfile_data['run_db_version']
-
-            self.__package_version = package_version['major'] + '.' + \
-                package_version['minor'] + '.' + \
-                package_version['revision']
-            self.__product_db_version_info = db_version.DBVersionInfo(
-                product_database_version['major'],
-                product_database_version['minor'])
-            self.__run_db_version_info = db_version.DBVersionInfo(
-                run_database_version['major'],
-                run_database_version['minor'])
-
-            self.__package_build_date = package_build_date
-            self.__package_git_hash = package_git_hash
-
-            self.__package_git_tag = package_git_tag
-            if (LOG.getEffectiveLevel() == logger.DEBUG or
-                    LOG.getEffectiveLevel() ==
-                    logger.DEBUG_ANALYZER):
-                self.__package_git_tag = package_git_dirtytag
-
-        except ValueError as verr:
-            # db_version is required to know if the db schema is compatible.
-            LOG.error('Failed to get version info from the version file.')
-            LOG.error(verr)
+        if not vfile_data:
             sys.exit(1)
 
-        except IOError as ioerr:
-            LOG.error('Failed to read version config file: ' +
-                      self.version_file)
-            LOG.error(ioerr)
-            sys.exit(1)
+        package_version = vfile_data['version']
+        package_build_date = vfile_data['package_build_date']
+        package_git_hash = vfile_data['git_hash']
+        package_git_tag = vfile_data['git_describe']['tag']
+        package_git_dirtytag = vfile_data['git_describe']['dirty']
+        product_database_version = vfile_data['product_db_version']
+        run_database_version = vfile_data['run_db_version']
+
+        self.__package_version = package_version['major'] + '.' + \
+            package_version['minor'] + '.' + \
+            package_version['revision']
+        self.__product_db_version_info = db_version.DBVersionInfo(
+            product_database_version['major'],
+            product_database_version['minor'])
+        self.__run_db_version_info = db_version.DBVersionInfo(
+            run_database_version['major'],
+            run_database_version['minor'])
+
+        self.__package_build_date = package_build_date
+        self.__package_git_hash = package_git_hash
+
+        self.__package_git_tag = package_git_tag
+        if (LOG.getEffectiveLevel() == logger.DEBUG or
+                LOG.getEffectiveLevel() ==
+                logger.DEBUG_ANALYZER):
+            self.__package_git_tag = package_git_dirtytag
 
     def __populate_analyzers(self):
         compiler_binaries = self.pckg_layout.get('analyzers')
@@ -371,8 +355,10 @@ def get_context():
 
     pckg_config_file = os.path.join(package_root, "config", "config.json")
     LOG.debug('Reading config: ' + pckg_config_file)
-    with open(pckg_config_file, 'r') as cfg:
-        cfg_dict = json.loads(cfg.read())
+    cfg_dict = load_json_or_empty(pckg_config_file)
+
+    if not cfg_dict:
+        sys.exit(1)
 
     LOG.debug(cfg_dict)
 
@@ -381,8 +367,10 @@ def get_context():
     layout_cfg_file = os.path.join(package_root, "config",
                                    "package_layout.json")
     LOG.debug(layout_cfg_file)
-    with open(layout_cfg_file, 'r') as lcfg:
-        lcfg_dict = json.loads(lcfg.read())
+    lcfg_dict = load_json_or_empty(layout_cfg_file)
+
+    if not lcfg_dict:
+        sys.exit(1)
 
     # Merge static and runtime layout.
     layout_config = lcfg_dict['static'].copy()

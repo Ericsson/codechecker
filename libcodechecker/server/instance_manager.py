@@ -19,6 +19,8 @@ import psutil
 import socket
 import stat
 
+from libcodechecker.util import load_json_or_empty
+
 
 def __getInstanceDescriptorPath(folder=None):
     if not folder:
@@ -112,13 +114,6 @@ def get_instances(folder=None):
     # This method does NOT write the descriptor file.
 
     descriptor = __getInstanceDescriptorPath(folder)
-    instances = []
-    if os.path.exists(descriptor):
-        with open(descriptor, 'r') as f:
-            portalocker.lock(f, portalocker.LOCK_SH)
-            instances = [i for i in json.load(f) if __checkInstance(
-                i['hostname'],
-                i['pid'])]
-            portalocker.unlock(f)
+    instances = load_json_or_empty(descriptor, {}, lock=True)
 
-    return instances
+    return [i for i in instances if __checkInstance(i['hostname'], i['pid'])]

@@ -26,6 +26,7 @@ from libcodechecker.logger import get_logger
 # TODO: This is a cross-subpackage import.
 from libcodechecker.server.database.run_db_model import BugPathEvent, \
     BugReportPoint, File, Run, RunHistory, Report, FileContent
+from libcodechecker.util import load_json_or_empty
 
 LOG = get_logger('system')
 
@@ -38,8 +39,7 @@ def metadata_info(metadata_file):
     if not os.path.isfile(metadata_file):
         return check_commands, check_durations
 
-    with open(metadata_file, 'r') as metadata:
-        metadata_dict = json.load(metadata)
+    metadata_dict = load_json_or_empty(metadata_file, {})
 
     if 'command' in metadata_dict:
         check_commands.append(metadata_dict['command'])
