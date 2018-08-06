@@ -418,6 +418,7 @@ html, body {
 
 .mbox.mbox-error {
   border-color: #e92625;
+  padding: 5px;
 }
 
 .mbox.mbox-error .heading {
@@ -657,4 +658,46 @@ html, body {
 
 .tab-new-features-label {
   font-weight: bold;
+}
+
+/* Form labels */
+
+.formElement {
+  display: block;
+  margin: 2px;
+  padding: 4px;
+}
+
+.formElement .formLabel {
+  display: inline-block;
+  margin-left: 5px;
+  padding-right: 6px;
+  width: 200px;
+}
+
+.formElement .formLabel.bold {
+  font-weight: bold;
+}
+
+/* Source Component Manager */
+.source-component-manager .component-name,
+.source-component-manager .component-value,
+.source-component-manager .component-description {
+  width: 50%;
+}
+
+.component-dialog .formLabel {
+  width: 100px;
+}
+
+.source-component-manager .edit,
+.source-component-manager .delete {
+  cursor: pointer;
+}
+
+.source-component-manager .edit {
+  color: #5b6169;
+}
+.source-component-manager .delete {
+  color: #d63434;
 }

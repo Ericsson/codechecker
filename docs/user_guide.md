@@ -1507,8 +1507,9 @@ optional arguments:
   -i COMPONENT_FILE, --import COMPONENT_FILE
                         Path to the source component file which contains
                         multiple file paths. Each file path start with a '+'
-                        (path should be filtered) or '-' (path should not be
-                        filtered) sign. E.g.:
+                        (results from this path should be listed) or '-'
+                        (results from this path should not be listed) sign.
+                        E.g.:
                         +/a/b/x.cpp
                         -/a/b/
                         Please see the User guide for more information.

@@ -116,23 +116,6 @@ span.product-avatar {
 
 /*** Product configuration dialog ***/
 
-.formElement {
-  display: block;
-  margin: 2px;
-  padding: 4px;
-}
-
-.formElement .formLabel {
-  display: inline-block;
-  margin-left: 5px;
-  padding-right: 6px;
-  width: 200px;
-}
-
-.formElement .formLabel.bold {
-  font-weight: bold;
-}
-
 .formElement .form-input {
   width: 350px;
 }
