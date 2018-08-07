@@ -358,8 +358,9 @@ use in the analysis by setting the enabled and disabled flags starting from the
 bigger groups and going inwards, e.g. '-e Wunused -d Wno-unused-parameter' will
 enable every 'unused' warnings except 'unused-parameter'. These flags should
 start with a capital 'W' or 'Wno-' prefix followed by the waning name (E.g.:
-'-e Wliteral-conversion', '-d Wno-literal-conversion'). For more information
-see: https://clang.llvm.org/docs/DiagnosticsReference.html.""")
+'-e Wliteral-conversion', '-d Wno-literal-conversion'). By default '-Wall' and
+'-Wextra' warnings are enabled. For more information see:
+https://clang.llvm.org/docs/DiagnosticsReference.html.""")
 
     checkers_opts.add_argument('-e', '--enable',
                                dest="enable",

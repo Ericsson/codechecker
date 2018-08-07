@@ -1,17 +1,17 @@
 all:
-	$(CXX) -c call_and_message.cpp
-	$(CXX) -c divide_zero.cpp -Wno-division-by-zero
-	$(CXX) -c divide_zero_duplicate.cpp
-	$(CXX) -c file_to_be_skipped.cpp
-	$(CXX) -c has\ a\ space.cpp
-	$(CXX) -c new_delete.cpp
-	$(CXX) -c null_dereference.cpp
-	$(CXX) -c stack_address_escape.cpp
-	$(CXX) -c skip_header.cpp -Wno-division-by-zero
-	$(CXX) -c path_begin1.cpp -Wno-return-type
-	$(CXX) -c path_begin2.cpp -Wno-return-type
-	$(CXX) -c -DVAR=2 path_begin.cpp -Wno-return-type
-	$(CXX) -c -DVAR=1 path_begin.cpp -Wno-return-type
+	$(CXX) -c call_and_message.cpp -Wno-all -Wno-extra
+	$(CXX) -c divide_zero.cpp -Wno-all -Wno-extra -Wno-division-by-zero
+	$(CXX) -c divide_zero_duplicate.cpp -Wno-all -Wno-extra
+	$(CXX) -c file_to_be_skipped.cpp -Wno-all -Wno-extra
+	$(CXX) -c has\ a\ space.cpp -Wno-all -Wno-extra
+	$(CXX) -c new_delete.cpp -Wno-all -Wno-extra
+	$(CXX) -c null_dereference.cpp -Wno-all -Wno-extra
+	$(CXX) -c stack_address_escape.cpp -Wno-all -Wno-extra
+	$(CXX) -c skip_header.cpp -Wno-all -Wno-extra -Wno-division-by-zero
+	$(CXX) -c path_begin1.cpp -Wno-all -Wno-extra
+	$(CXX) -c path_begin2.cpp -Wno-all -Wno-extra
+	$(CXX) -c -DVAR=2 path_begin.cpp -Wno-all -Wno-extra
+	$(CXX) -c -DVAR=1 path_begin.cpp -Wno-all -Wno-extra
 clean:
 	rm -f call_and_message.o
 	rm -f divide_zero.o

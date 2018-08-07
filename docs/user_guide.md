@@ -677,7 +677,9 @@ should start with a capital `W` or `Wno-` prefix followed by the warning name
 negative form beginning with `Wno-` (e.g.: `--disable Wno-literal-conversion`)
 or you can use the positive form beginning with `W` (e.g.:
 `--enable Wliteral-conversion`). For more information see:
-https://clang.llvm.org/docs/DiagnosticsReference.html
+https://clang.llvm.org/docs/DiagnosticsReference.html.
+
+**Note**: by default `-Wall` and `-Wextra` warnings are enabled.
 
 
 #### <a name="checker-profiles"></a> Checker profiles

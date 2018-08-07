@@ -120,6 +120,9 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
 
             analyzer_cmd.append('-Qunused-arguments')
 
+            # Enable these compiler warnings by default.
+            analyzer_cmd.extend(['-Wall', '-Wextra'])
+
             # Set language.
             analyzer_cmd.extend(['-x', self.buildaction.lang])
 
