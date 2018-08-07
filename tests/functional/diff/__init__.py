@@ -100,6 +100,9 @@ def setup_package():
         sys.exit(1)
     print("First analysis of the test project was successful.")
 
+    dir_util.copy_tree(codechecker_cfg['reportdir'],
+                       os.path.join(TEST_WORKSPACE, 'reports_baseline'))
+
     ret = project.clean(test_project, test_env)
     if ret:
         sys.exit(ret)
@@ -123,15 +126,6 @@ def setup_package():
     altered_file = os.path.join(test_project_path_altered,
                                 "call_and_message.cpp")
     insert_suppression(altered_file)
-
-    # Run the second analysis results
-    # into a report directory
-    ret = codechecker.analyze(codechecker_cfg,
-                              test_project_name_new,
-                              test_project_path_altered)
-    if ret:
-        sys.exit(1)
-    print("CodeChecker analyze of test project was successful.")
 
     test_project_name_update = project_info['name'] + '_' + uuid.uuid4().hex
     codechecker_cfg['tag'] = 't1'

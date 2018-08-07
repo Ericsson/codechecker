@@ -70,6 +70,8 @@ class Diff(unittest.TestCase):
 
         self._codechecker_cmd = env.codechecker_cmd()
         self._report_dir = os.path.join(test_workspace, "reports")
+        self._report_dir_baseline = os.path.join(test_workspace,
+                                                 "reports_baseline")
         self._test_config = env.import_test_cfg(test_workspace)
         self._run_names = env.get_run_names(test_workspace)
         self._html_reports = os.path.join(test_workspace, "html_reports")
@@ -557,94 +559,175 @@ class Diff(unittest.TestCase):
         count = len(re.findall(r'\[core\.StackAddressEscape\]', out))
         self.assertEqual(count, 3)
 
-    def test_local_compare_res_count_resovled(self):
+    def test_local_cmp_count_resolved(self):
         """
         Count the resolved results with no filter in local compare mode.
         """
-        base_run_name = self._run_names[0]
-        diff_cmd = [self._codechecker_cmd, "cmd", "diff",
-                    "--resolved",
-                    "--url", self._url,
-                    "-b", base_run_name,
-                    "-n", self._report_dir
-                    ]
-        print(diff_cmd)
-        process = subprocess.Popen(
-            diff_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-            env=self._test_config['codechecker_cfg']['check_env'],
-            cwd=os.environ['TEST_WORKSPACE'])
-        out, err = process.communicate()
-        print(out+err)
+        def test_local_compare(baseline, newcheck):
+            diff_cmd = [self._codechecker_cmd, "cmd", "diff",
+                        "--resolved",
+                        "--url", self._url,
+                        "-b", baseline,
+                        "-n", newcheck
+                        ]
+            print(diff_cmd)
+            process = subprocess.Popen(
+                diff_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                env=self._test_config['codechecker_cfg']['check_env'],
+                cwd=os.environ['TEST_WORKSPACE'])
+            out, err = process.communicate()
+            print(out+err)
 
-        # # 3 disappeared core.StackAddressEscape issues
-        count = len(re.findall(r'\[core\.StackAddressEscape\]', out))
-        self.assertEqual(count, 3)
+            # 3 disappeared core.StackAddressEscape issues
+            count = len(re.findall(r'\[core\.StackAddressEscape\]', out))
+            self.assertEqual(count, 3)
 
-    def test_local_compare_res_count_unresovled(self):
+        test_local_compare(self._run_names[0], self._report_dir)
+        test_local_compare(self._report_dir_baseline, self._run_names[1])
+        test_local_compare(self._report_dir_baseline, self._report_dir)
+
+    def test_local_cmp_count_unres(self):
         """
         Count the unresolved results with no filter in local compare mode.
         """
-        base_run_name = self._run_names[0]
-        diff_cmd = [self._codechecker_cmd, "cmd", "diff",
-                    "--unresolved",
-                    "--url", self._url,
-                    "-b", base_run_name,
-                    "-n", self._report_dir
-                    ]
-        print(diff_cmd)
-        process = subprocess.Popen(
-            diff_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-            env=self._test_config['codechecker_cfg']['check_env'],
-            cwd=os.environ['TEST_WORKSPACE'])
-        out, err = process.communicate()
-        print(out+err)
+        def test_local_compare(baseline, newcheck):
+            diff_cmd = [self._codechecker_cmd, "cmd", "diff",
+                        "--unresolved",
+                        "--url", self._url,
+                        "-b", baseline,
+                        "-n", newcheck
+                        ]
+            print(diff_cmd)
+            process = subprocess.Popen(
+                diff_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                env=self._test_config['codechecker_cfg']['check_env'],
+                cwd=os.environ['TEST_WORKSPACE'])
+            out, err = process.communicate()
+            print(out+err)
 
-        # # 3 disappeared core.StackAddressEscape issues
-        count = len(re.findall(r'\[core\.DivideZero\]', out))
-        self.assertEqual(count, 10)
-        count = len(re.findall(r'\[deadcode\.DeadStores\]', out))
-        self.assertEqual(count, 6)
-        count = len(re.findall(r'\[core\.NullDereference\]', out))
-        self.assertEqual(count, 4)
-        count = len(re.findall(r'\[cplusplus\.NewDelete\]', out))
-        self.assertEqual(count, 5)
-        count = len(re.findall(r'\[unix\.Malloc\]', out))
-        self.assertEqual(count, 1)
+            # # 3 disappeared core.StackAddressEscape issues
+            count = len(re.findall(r'\[core\.DivideZero\]', out))
+            self.assertEqual(count, 10)
+            count = len(re.findall(r'\[deadcode\.DeadStores\]', out))
+            self.assertEqual(count, 6)
+            count = len(re.findall(r'\[core\.NullDereference\]', out))
+            self.assertEqual(count, 4)
+            count = len(re.findall(r'\[cplusplus\.NewDelete\]', out))
+            self.assertEqual(count, 5)
+            count = len(re.findall(r'\[unix\.Malloc\]', out))
+            self.assertEqual(count, 1)
 
-    def test_local_compare_res_count_unresovled_regex(self):
+        test_local_compare(self._run_names[0], self._report_dir)
+        test_local_compare(self._report_dir_baseline, self._run_names[1])
+        test_local_compare(self._report_dir_baseline, self._report_dir)
+
+    def test_local_cmp_count_unres_rgx(self):
         """
         Count the unresolved results with no filter in local compare mode.
         """
+        def test_local_compare(baseline, newcheck):
+            diff_cmd = [self._codechecker_cmd, "cmd", "diff",
+                        "--unresolved",
+                        "--url", self._url,
+                        "-b", baseline,
+                        "-n", newcheck
+                        ]
+            print(diff_cmd)
+            process = subprocess.Popen(
+                diff_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                env=self._test_config['codechecker_cfg']['check_env'],
+                cwd=os.environ['TEST_WORKSPACE'])
+            out, err = process.communicate()
+            print(out+err)
+
+            # # 3 disappeared core.StackAddressEscape issues
+            count = len(re.findall(r'\[core\.DivideZero\]', out))
+            self.assertEqual(count, 10)
+            count = len(re.findall(r'\[deadcode\.DeadStores\]', out))
+            self.assertEqual(count, 6)
+            count = len(re.findall(r'\[core\.NullDereference\]', out))
+            self.assertEqual(count, 4)
+            count = len(re.findall(r'\[cplusplus\.NewDelete\]', out))
+            self.assertEqual(count, 5)
+            count = len(re.findall(r'\[unix\.Malloc\]', out))
+            self.assertEqual(count, 1)
+
         base_run_name = self._run_names[0]
 
         # Change test_files_blablabla to test_*_blablabla
         base_run_name = base_run_name.replace('files', '*')
 
-        diff_cmd = [self._codechecker_cmd, "cmd", "diff",
-                    "--unresolved",
-                    "--url", self._url,
-                    "-b", base_run_name,
-                    "-n", self._report_dir
-                    ]
-        print(diff_cmd)
-        process = subprocess.Popen(
-            diff_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-            env=self._test_config['codechecker_cfg']['check_env'],
-            cwd=os.environ['TEST_WORKSPACE'])
-        out, err = process.communicate()
-        print(out+err)
+        test_local_compare(base_run_name, self._report_dir)
+        test_local_compare(self._report_dir_baseline, self._run_names[1])
+        test_local_compare(self._report_dir_baseline, self._report_dir)
 
-        # # 3 disappeared core.StackAddressEscape issues
-        count = len(re.findall(r'\[core\.DivideZero\]', out))
-        self.assertEqual(count, 10)
-        count = len(re.findall(r'\[deadcode\.DeadStores\]', out))
-        self.assertEqual(count, 6)
-        count = len(re.findall(r'\[core\.NullDereference\]', out))
-        self.assertEqual(count, 4)
-        count = len(re.findall(r'\[cplusplus\.NewDelete\]', out))
-        self.assertEqual(count, 5)
-        count = len(re.findall(r'\[unix\.Malloc\]', out))
-        self.assertEqual(count, 1)
+    def test_local_cmp_filter_unres(self):
+        """
+        Filter unresolved results in local compare mode.
+        """
+        def get_filtered_output(filters=None):
+            diff_cmd = [self._codechecker_cmd, "cmd", "diff",
+                        "--unresolved",
+                        "--url", self._url,
+                        "-b", self._report_dir_baseline,
+                        "-n", self._report_dir
+                        ]
+            if filters:
+                diff_cmd.extend(filters)
+
+            print(diff_cmd)
+            process = subprocess.Popen(
+                diff_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                env=self._test_config['codechecker_cfg']['check_env'],
+                cwd=os.environ['TEST_WORKSPACE'])
+            out, err = process.communicate()
+            print(out+err)
+            return out
+
+        # Filter by severity levels.
+        res = get_filtered_output(['--severity', 'low'])
+        self.assertEqual(len(re.findall(r'\[LOW\]', res)), 6)
+        self.assertEqual(len(re.findall(r'\[HIGH\]', res)), 0)
+
+        res = get_filtered_output(['--severity', 'high'])
+        self.assertEqual(len(re.findall(r'\[LOW\]', res)), 0)
+        self.assertEqual(len(re.findall(r'\[HIGH\]', res)), 19)
+
+        res = get_filtered_output(['--severity', 'high', 'low'])
+        self.assertEqual(len(re.findall(r'\[LOW\]', res)), 6)
+        self.assertEqual(len(re.findall(r'\[HIGH\]', res)), 19)
+
+        res = get_filtered_output()
+        self.assertEqual(len(re.findall(r'\[LOW\]', res)), 6)
+        self.assertEqual(len(re.findall(r'\[HIGH\]', res)), 19)
+
+        # Filter by file path.
+        res = get_filtered_output(['--file', '*divide_zero.cpp'])
+        self.assertEqual(len(re.findall(r'divide_zero.cpp', res)), 4)
+        self.assertEqual(len(re.findall(r'new_delete.cpp', res)), 0)
+
+        res = get_filtered_output(['--file',
+                                   'divide_zero.cpp',  # Exact match.
+                                   '*new_delete.cpp'])
+        self.assertEqual(len(re.findall(r'divide_zero.cpp', res)), 0)
+        self.assertEqual(len(re.findall(r'new_delete.cpp', res)), 6)
+
+        # Filter by checker name.
+        res = get_filtered_output(['--checker-name', 'core.NullDereference'])
+        self.assertEqual(len(re.findall(r'core.NullDereference', res)), 4)
+
+        res = get_filtered_output(['--checker-name', 'core.*'])
+        self.assertEqual(len(re.findall(r'core.*', res)), 14)
+
+        # Filter by checker message (case insensitive).
+        res = get_filtered_output(['--checker-msg', 'division by*'])
+        self.assertEqual(len(re.findall(r'Division by.*', res)), 10)
+
+        # Filter by multiple filter set.
+        res = get_filtered_output(['--file', '*divide_zero.cpp',
+                                   '--severity', 'high'])
+        self.assertEqual(len(re.findall(r'divide_zero.cpp', res)), 2)
+        self.assertEqual(len(re.findall(r'\[HIGH\]', res)), 2)
 
     def test_max_compound_select(self):
         """
