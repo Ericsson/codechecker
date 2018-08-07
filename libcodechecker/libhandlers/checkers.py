@@ -219,8 +219,7 @@ def main(args):
             if 'details' not in args:
                 rows.append([checker_name])
             else:
-                severity = context.severity_map.get(checker_name,
-                                                    'UNSPECIFIED')
+                severity = context.severity_map.get(checker_name)
                 rows.append([enabled, checker_name, analyzer,
                              severity, description])
 

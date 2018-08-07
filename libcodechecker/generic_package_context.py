@@ -11,6 +11,7 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
+from collections import Mapping
 import json
 import os
 import sys
@@ -21,6 +22,30 @@ from libcodechecker import logger
 from libcodechecker.analyze.analyzers import analyzer_types
 
 LOG = logger.get_logger('system')
+
+
+class SeverityMap(Mapping):
+    """
+    A dictionary which maps checker names to severity levels.
+    If a key is not found in the map and the checker name is a compiler warning
+    it will return severity level of MEDIUM.
+    """
+
+    def __init__(self, *args, **kwargs):
+        self.store = dict(*args, **kwargs)
+
+    def __getitem__(self, key):
+        # Key is not specified in the store and it is a compiler warning.
+        if key not in self.store and key.startswith('clang-diagnostic-'):
+            return "MEDIUM"
+
+        return self.store[key] if key in self.store else 'UNSPECIFIED'
+
+    def __iter__(self):
+        return iter(self.store)
+
+    def __len__(self):
+        return len(self.store)
 
 
 # -----------------------------------------------------------------------------
@@ -38,8 +63,7 @@ class Context(object):
 
         self._package_root = package_root
         self._codechecker_workspace = None
-        self._severity_map = dict()
-
+        self._severity_map = SeverityMap()
         self.__package_version = None
         self.__product_db_version_info = None
         self.__run_db_version_info = None
@@ -67,7 +91,7 @@ class Context(object):
 
         try:
             with open(self.checkers_severity_map_file) as severity_file:
-                self._severity_map = json.load(severity_file)
+                self._severity_map = SeverityMap(json.load(severity_file))
         except (IOError, ValueError):
             LOG.warning("{0} doesn't exist or not JSON format. Severity "
                         "levels will not be available!"

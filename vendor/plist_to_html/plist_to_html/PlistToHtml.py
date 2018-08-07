@@ -86,8 +86,7 @@ class HtmlBuilder:
         # Add severity levels for reports.
         for report in report_data['reports']:
             checker = report['checkerName']
-            report['severity'] = \
-                self._severity_map.get(checker, 'UNSPECIFIED')
+            report['severity'] = self._severity_map.get(checker)
 
         self.generated_html_reports[output_path] = report_data['reports']
         content = self._layout.replace('<$REPORT_DATA$>',

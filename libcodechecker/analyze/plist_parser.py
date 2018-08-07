@@ -455,8 +455,7 @@ class PlistToPlaintextFormatter(object):
                     continue
 
                 file_stats[f_path] += 1
-                severity = self.__severity_map.get(checker_name,
-                                                   'UNSPECIFIED')
+                severity = self.__severity_map.get(checker_name)
                 severity_stats[severity] += 1
                 report_count["report_count"] += 1
 
