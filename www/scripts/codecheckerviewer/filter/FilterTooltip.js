@@ -178,7 +178,8 @@ function (declare, domClass, dom, keys, Standby, TextBox, popup, Tooltip,
           if (opt.filter && that.search.serverSide && that.search.regex) {
             that.cachedIems.unshift({
               value : opt.filter,
-              isRegexSearchItem : true
+              isRegexSearchItem : true,
+              label : that.search.regexLabel || 'Filter by wildcard pattern: '
             });
           }
 
@@ -206,7 +207,7 @@ function (declare, domClass, dom, keys, Standby, TextBox, popup, Tooltip,
         }, this._selectMenuList);
       } else {
         items.forEach(function (item) {
-          var label = (item.isRegexSearchItem ? 'Filter by RegEx: ' : '');
+          var label = (item.isRegexSearchItem ? item.label : '');
           label += that.reportFilter.labelFormatter
             ? that.reportFilter.labelFormatter(item.value)
             : item.value;

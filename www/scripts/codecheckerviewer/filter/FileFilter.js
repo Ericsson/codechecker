@@ -15,7 +15,8 @@ function (dom, declare, Deferred, SelectFilter) {
       enable : true,
       serverSide : true,
       regex : true,
-      placeHolder : 'Search for files...'
+      regexLabel : 'Filter by wildcard pattern (e.g.: */src/*): ',
+      placeHolder : 'Search for files (e.g.: */src/*)...'
     },
 
     labelFormatter : function (label) {
