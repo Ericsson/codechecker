@@ -33,20 +33,10 @@ class HtmlBuilder:
     """
     Helper class to create html file from a report data.
     """
-    def __init__(self, layout_dir, checkers_severity_map_file=None):
-        self._severity_map = dict()
+    def __init__(self, layout_dir, severity_map=None):
+        self._severity_map = severity_map if severity_map else {}
         self.layout_dir = layout_dir
-        self.checkers_severity_map_file = checkers_severity_map_file
         self.generated_html_reports = {}
-
-        if self.checkers_severity_map_file:
-            try:
-                with open(self.checkers_severity_map_file) as severity_file:
-                    self._severity_map = json.load(severity_file)
-            except (IOError, ValueError):
-                print("{0} doesn't exist or not JSON format. Severity "
-                      "levels will not be available!".format(
-                          self.checkers_severity_map_file))
 
         # Mapping layout tags to files.
         self._layout_tag_files = {
