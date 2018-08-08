@@ -318,8 +318,7 @@ def handle_diff_results(args):
         the given filter set.
         """
         if f_severities:
-            severity_name = context.severity_map.get(report.main['check_name'],
-                                                     'UNSPECIFIED')
+            severity_name = context.severity_map.get(report.main['check_name'])
             if severity_name.lower() not in map(str.lower, f_severities):
                 return True
 
@@ -730,7 +729,7 @@ def handle_diff_results(args):
         """
         html_builder = PlistToHtml.HtmlBuilder(
             context.path_plist_to_html_dist,
-            context.checkers_severity_map_file)
+            context.severity_map)
 
         file_report_map = defaultdict(list)
         for report in reports:
@@ -814,7 +813,7 @@ def handle_diff_results(args):
                 checked_file = report.main['location']['file_name']\
                     + ':' + str(bug_line) + ":" + str(bug_col)
                 check_name = report.main['check_name']
-                sev = context.severity_map.get(check_name, 'UNSPECIFIED')
+                sev = context.severity_map.get(check_name)
                 check_msg = report.main['description']
                 source_line =\
                     get_line_from_file(report.main['location']['file_name'],

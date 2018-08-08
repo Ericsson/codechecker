@@ -305,7 +305,7 @@ def main(args):
             if not html_builder:
                 html_builder = \
                     PlistToHtml.HtmlBuilder(context.path_plist_to_html_dist,
-                                            context.checkers_severity_map_file)
+                                            context.severity_map)
 
             LOG.info("Generating html output files:")
             PlistToHtml.parse(input_path,
