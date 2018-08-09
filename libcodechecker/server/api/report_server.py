@@ -464,6 +464,34 @@ def get_report_hashes(session, run_ids, tag_ids):
     return set([t[0] for t in q])
 
 
+def check_remove_runs_lock(session, run_ids):
+    """
+    Check if there is an existing lock on the given runs, which has not
+    expired yet. If so, the run cannot be deleted, as someone is assumed to
+    be storing into it.
+    """
+    locks_expired_at = datetime.now() - timedelta(
+        seconds=db_cleanup.RUN_LOCK_TIMEOUT_IN_DATABASE)
+
+    run_locks = session.query(RunLock.name) \
+        .filter(RunLock.locked_at >= locks_expired_at)
+
+    if run_ids:
+        run_locks = run_locks.filter(Run.id.in_(run_ids))
+
+    run_locks = run_locks \
+        .outerjoin(Run,
+                   Run.name == RunLock.name) \
+        .all()
+
+    if run_locks:
+        raise shared.ttypes.RequestFailed(
+            shared.ttypes.ErrorCode.DATABASE,
+            "Can not remove results because the following runs "
+            "are locked: {0}".format(
+                ', '.join([r[0] for r in run_locks])))
+
+
 class ThriftRequestHandler(object):
     """
     Connect to database and handle thrift client requests.
@@ -1758,51 +1786,88 @@ class ThriftRequestHandler(object):
         failed = False
         for run_id in run_ids:
             try:
-                with DBSession(self.__Session) as session:
-                    LOG.debug('Run id to delete: ' + str(run_id))
-
-                    run_to_delete = session.query(Run).get(run_id)
-                    if not run_to_delete.can_delete:
-                        LOG.debug("Can't delete " + str(run_id))
-                        continue
-
-                    # Check if there is an existing lock on the given run name,
-                    # which has not expired yet. If so, the run cannot be
-                    # deleted, as someone is assumed to be storing into it.
-                    locks_expired_at = datetime.now() - \
-                        timedelta(
-                             seconds=db_cleanup.RUN_LOCK_TIMEOUT_IN_DATABASE)
-                    lock = session.query(RunLock) \
-                        .filter(RunLock.name == run_to_delete.name,
-                                RunLock.locked_at >= locks_expired_at) \
-                        .one_or_none()
-                    if lock:
-                        LOG.info("Can't delete '{0}' as it is locked."
-                                 .format(run_to_delete.name))
-                        continue
-
-                    run_to_delete.can_delete = False
-                    # Commmit the can_delete flag.
-                    session.commit()
-
-                    session.query(Run)\
-                        .filter(Run.id == run_id)\
-                        .delete(synchronize_session=False)
-
-                    # Delete files and contents that are not present
-                    # in any bug paths.
-                    db_cleanup.remove_unused_files(session)
-                    session.commit()
-                    session.close()
-
+                self.removeRun(run_id)
             except Exception as ex:
                 LOG.error("Failed to remove run: " + str(run_id))
                 LOG.error(ex)
                 failed = True
-
         return not failed
 
-    # -----------------------------------------------------------------------
+    @exc_to_thrift_reqfail
+    @timeit
+    def removeRunReports(self, run_ids, report_filter, cmp_data):
+        self.__require_store()
+
+        if not run_ids:
+            run_ids = []
+
+        if cmp_data and cmp_data.runIds:
+            run_ids.extend(cmp_data.runIds)
+
+        with DBSession(self.__Session) as session:
+            check_remove_runs_lock(session, run_ids)
+
+            try:
+                diff_hashes = None
+                if cmp_data:
+                    diff_hashes, _ = self._cmp_helper(session,
+                                                      run_ids,
+                                                      report_filter,
+                                                      cmp_data)
+                    if not diff_hashes:
+                        # There is no difference.
+                        return True
+
+                filter_expression = process_report_filter(session,
+                                                          report_filter)
+
+                q = session.query(Report.id) \
+                    .outerjoin(File, Report.file_id == File.id) \
+                    .outerjoin(ReviewStatus,
+                               ReviewStatus.bug_hash == Report.bug_id) \
+                    .filter(filter_expression)
+
+                if run_ids:
+                    q = q.filter(Report.run_id.in_(run_ids))
+
+                if cmp_data:
+                    q = q.filter(Report.bug_id.in_(diff_hashes))
+
+                reports_to_delete = [r[0] for r in q]
+                if len(reports_to_delete) != 0:
+                    session.query(Report) \
+                        .filter(Report.id.in_(reports_to_delete)) \
+                        .delete(synchronize_session=False)
+
+                # Delete files and contents that are not present
+                # in any bug paths.
+                db_cleanup.remove_unused_files(session)
+                session.commit()
+                session.close()
+                return True
+            except Exception as ex:
+                session.rollback()
+                LOG.error("Database cleanup failed.")
+                LOG.error(ex)
+                return False
+
+    @exc_to_thrift_reqfail
+    @timeit
+    def removeRun(self, run_id):
+        self.__require_store()
+
+        # Remove the whole run.
+        with DBSession(self.__Session) as session:
+            check_remove_runs_lock(session, [run_id])
+
+            session.query(Run) \
+                .filter(Run.id == run_id) \
+                .delete(synchronize_session=False)
+            session.commit()
+            session.close()
+
+        return True
+
     @exc_to_thrift_reqfail
     def getSuppressFile(self):
         """

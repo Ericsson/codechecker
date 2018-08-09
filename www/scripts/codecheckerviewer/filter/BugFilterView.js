@@ -12,6 +12,8 @@ define([
   'dojo/dom-construct',
   'dojo/dom-style',
   'dojo/topic',
+  'dijit/ConfirmDialog',
+  'dijit/Dialog',
   'dijit/form/Button',
   'dijit/layout/ContentPane',
   'codechecker/hashHelper',
@@ -29,11 +31,11 @@ define([
   'codechecker/filter/SourceComponentFilter',
   'codechecker/filter/UniqueFilter',
   'codechecker/util'],
-function (declare, lang, Deferred, domClass, dom, domStyle, topic, Button,
-  ContentPane, hashHelper, CheckerMessageFilter, CheckerNameFilter, DateFilter,
-  DetectionStatusFilter, DiffTypeFilter, FileFilter, ReportCount,
-  ReportHashFilter, RunBaseFilter, RunHistoryTagFilter, SelectFilter,
-  SourceComponentFilter, UniqueFilter, util) {
+function (declare, lang, Deferred, domClass, dom, domStyle, topic,
+  ConfirmDialog, Dialog, Button, ContentPane, hashHelper, CheckerMessageFilter,
+  CheckerNameFilter, DateFilter, DetectionStatusFilter, DiffTypeFilter,
+  FileFilter, ReportCount, ReportHashFilter, RunBaseFilter, RunHistoryTagFilter,
+  SelectFilter, SourceComponentFilter, UniqueFilter, util) {
 
   var FilterToggle = declare(ContentPane, {
     class : 'filter-toggle',
@@ -106,6 +108,15 @@ function (declare, lang, Deferred, domClass, dom, domStyle, topic, Button,
       //--- Clear all filter button ---//
 
       this._topBarPane = dom.create('div', { class : 'top-bar'}, this.domNode);
+      this._removeAllButton = new Button({
+        class : 'remove-all-btn',
+        label : 'Remove Filtered Reports',
+        onClick : function () {
+          that._removeDialog.show();
+        }
+      });
+      dom.place(this._removeAllButton.domNode, this._topBarPane);
+
       this._clearAllButton = new Button({
         class   : 'clear-all-btn',
         label   : 'Clear All Filters',
@@ -113,7 +124,32 @@ function (declare, lang, Deferred, domClass, dom, domStyle, topic, Button,
           that.clearAll();
           that.notifyAll();
         }
-      }, this._topBarPane);
+      });
+      dom.place(this._clearAllButton.domNode, this._topBarPane);
+
+      this._removeDialog = new ConfirmDialog({
+        title     : 'Remove filtered results',
+        content   : 'Are you sure you want to remove all filtered results?',
+        handleFailure : function (message) {
+          new Dialog({
+            title : 'Failure!',
+            content : message
+          }).show();
+        },
+        onExecute : function () {
+          var self = this;
+          CC_SERVICE.removeRunReports(that.runIds, that.reportFilter,
+            that.cmpData, function (res) {
+              if (res) {
+                that.notifyAll();
+              } else {
+                self.handleFailure('Failed to remove run results!');
+              }
+            }).fail(function (jsReq, status, exc) {
+              self.handleFailure(exc.message);
+            });
+        }
+      });
 
       //--- Unique reports filter ---//
 

@@ -297,7 +297,15 @@ function (declare, dom, ItemFileWriteStore, topic, Dialog, Button,
             }
           });
 
-          CC_SERVICE.removeRunResults(that.deleteRunIds, function (success) {});
+          that.deleteRunIds.forEach(function (runId) {
+            CC_SERVICE.removeRun(runId, function () {}).fail(
+            function (jsReq, status, exc) {
+              new Dialog({
+                title : 'Failure!',
+                content : exc.message
+              }).show();
+            });
+          });
 
           that.deleteRunIds = [];
           that.update();

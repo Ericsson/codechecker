@@ -382,9 +382,23 @@ service codeCheckerDBAccess {
   string getPackageVersion();
 
   // remove bug results from the database
+  // !!! DEPRECATED !!!
+  // Use removeRun to remove the whole run or removeRunReports to remove
+  // filtered run results.
   // PERMISSION: PRODUCT_STORE
   bool removeRunResults(1: list<i64> runIds)
+
+  // remove bug results from the database
+  // PERMISSION: PRODUCT_STORE
+  bool removeRunReports(1: list<i64>    runIds,
+                        2: ReportFilter reportFilter,
+                        3: CompareData  cmpData)
                         throws (1: shared.RequestFailed requestError),
+
+  // Remove run from the database.
+  // PERMISSION: PRODUCT_STORE
+  bool removeRun(1: i64 runId)
+                 throws (1: shared.RequestFailed requestError),
 
   // get the suppress file path set by the command line
   // returns empty string if not set

@@ -1116,9 +1116,9 @@ def handle_remove_run_results(args):
         def condition(name, runid, date):
             return False
 
-    client.removeRunResults([run.runId for run
-                            in client.getRunData(None)
-                            if condition(run.name, run.runId, run.runDate)])
+    for run_id in [run.runId for run in client.getRunData(None)
+                   if condition(run.name, run.runId, run.runDate)]:
+        client.removeRun(run_id)
 
     LOG.info("Done.")
 
