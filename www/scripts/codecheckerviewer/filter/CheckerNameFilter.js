@@ -12,7 +12,10 @@ function (declare, Deferred, SelectFilter) {
   return declare(SelectFilter, {
     search : {
       enable : true,
-      placeHolder : 'Search for checker names...'
+      serverSide : true,
+      regex : true,
+      regexLabel : 'Filter by wildcard pattern (e.g.: core*): ',
+      placeHolder : 'Search for checker names (e.g.: core*)...'
     },
 
     getItems : function (opt) {
@@ -21,7 +24,7 @@ function (declare, Deferred, SelectFilter) {
 
       var deferred = new Deferred();
       CC_SERVICE.getCheckerCounts(opt.runIds, opt.reportFilter,
-      opt.cmpData, opt.limit, opt.offset, function (res) {
+      opt.cmpData, null, 0, function (res) {
         deferred.resolve(res.map(function (checker) {
           return {
             value : checker.name,
