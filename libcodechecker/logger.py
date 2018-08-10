@@ -48,7 +48,7 @@ package_root = os.environ.get('CC_PACKAGE_ROOT', '')
 DEFAULT_LOG_CFG_FILE = os.path.join(package_root, 'config', 'logger.conf')
 
 
-# Default config wich can be used if reading log config from a
+# Default config which can be used if reading log config from a
 # file fails.
 DEFAULT_LOG_CONFIG = '''{
   "version": 1,

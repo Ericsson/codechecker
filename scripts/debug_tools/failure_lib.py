@@ -35,7 +35,7 @@ def change_paths(string, pathModifierFun):
     result = []
     i = 0
     while i < len(string):
-        # Everything is a path wich starts with a '/' and there is a whitespace
+        # Everything is a path which starts with a '/' and there is a whitespace
         # after that.
         # Note, this supports only POSIX paths.
         if string[i] == '/':

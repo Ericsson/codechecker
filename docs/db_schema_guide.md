@@ -122,7 +122,7 @@ previous version and there will be no data loss.
 ### Migration at server start
 
 Schema migration can be done at server start. The database for the config
-and product databases will be automatically checked. If there are databases wich can
+and product databases will be automatically checked. If there are databases which can
 be upgraded you will be asked if you want to upgrade the schema to the latest
 version.
 

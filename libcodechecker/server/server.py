@@ -617,7 +617,7 @@ class Product(object):
 
     def cleanup_run_db(self):
         """
-        Cleanup the run database wich belongs to this product.
+        Cleanup the run database which belongs to this product.
         """
         connection_str = self.__connection_string
         prod_db = \
