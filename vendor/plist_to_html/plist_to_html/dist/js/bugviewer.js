@@ -10,6 +10,34 @@ var BugViewer = {
   init : function (files, reports) {
     this._files = files;
     this._reports = reports;
+
+    this.initEscapeChars();
+  },
+
+  initEscapeChars : function () {
+    this.escapeChars = {
+      ' ' : 'nbsp',
+      '<' : 'lt',
+      '>' : 'gt',
+      '"' : 'quot',
+      '&' : 'amp'
+    };
+
+    var regexString = '[';
+    for (var key in this.escapeChars) {
+      regexString += key;
+    }
+    regexString += ']';
+
+    this.escapeRegExp = new RegExp( regexString, 'g');
+  },
+
+  escapeHTML : function (str) {
+    var that = this;
+
+    return str.replace(this.escapeRegExp, function (m) {
+      return '&' + that.escapeChars[m] + ';';
+    });
   },
 
   initByUrl : function () {
@@ -181,7 +209,9 @@ var BugViewer = {
       }
 
       var msg = document.createElement('span');
-      msg.innerHTML = bugEvent.msg.replace(/(?:\r\n|\r|\n)/g, '<br>');
+      msg.innerHTML = that.escapeHTML(bugEvent.msg)
+        .replace(/(?:\r\n|\r|\n)/g, '<br>');
+
       element.appendChild(msg);
 
       var nextBugEvent = bugEvent.step;
