@@ -1793,6 +1793,17 @@ class ThriftRequestHandler(object):
                 failed = True
         return not failed
 
+    def __removeReports(self, session, report_ids, chunk_size=500):
+        """
+        Removing reports in chunks.
+        """
+        for r_ids in [report_ids[i:i + chunk_size] for
+                      i in range(0, len(report_ids),
+                                 chunk_size)]:
+            session.query(Report) \
+                .filter(Report.id.in_(r_ids)) \
+                .delete(synchronize_session=False)
+
     @exc_to_thrift_reqfail
     @timeit
     def removeRunReports(self, run_ids, report_filter, cmp_data):
@@ -1835,9 +1846,7 @@ class ThriftRequestHandler(object):
 
                 reports_to_delete = [r[0] for r in q]
                 if len(reports_to_delete) != 0:
-                    session.query(Report) \
-                        .filter(Report.id.in_(reports_to_delete)) \
-                        .delete(synchronize_session=False)
+                    self.__removeReports(session, reports_to_delete)
 
                 # Delete files and contents that are not present
                 # in any bug paths.
@@ -2149,9 +2158,7 @@ class ThriftRequestHandler(object):
                     report.fixed_at = run_history_time
 
         if len(reports_to_delete) != 0:
-            session.query(Report) \
-                .filter(Report.id.in_(reports_to_delete)) \
-                .delete(synchronize_session=False)
+            self.__removeReports(session, list(reports_to_delete))
 
     @staticmethod
     @exc_to_thrift_reqfail
