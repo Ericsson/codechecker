@@ -469,7 +469,7 @@ function (locale, dom, style, json) {
       document.body.removeChild(link);
     },
 
-    createLabelForUniqueCheckbox(uniqueCheckBox) {
+    createLabelForUniqueCheckbox : function (uniqueCheckBox) {
       return dom.create('label', {
         for : uniqueCheckBox.get('id'),
         innerHTML : 'Unique reports <i class="icon-help"></i>',

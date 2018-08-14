@@ -628,7 +628,7 @@ function (declare, lang, Deferred, domClass, dom, domStyle, topic,
     },
 
     // Clears all filter.
-    clearAll() {
+    clearAll : function () {
       this._filters.forEach(function (filter) {
         filter.clear();
       });
