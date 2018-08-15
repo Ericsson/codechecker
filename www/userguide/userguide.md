@@ -23,10 +23,11 @@ Table of Contents
   * [Delete runs](#userguide-delete-runs)
   * [Sorting runs](#userguide-sorting-runs)
 * [Checker statistics](#userguide-checker-statistics)
-  * [Get statistics only for runs](#userguide-get-statistics-only-for-runs)
+  * [Filtering statistics](#userguide-filter-statistics)
   * [Uniqueing checker statistics](#userguide-checker-statistics-uniqueing)
 * [Analysis results](#userguide-analysis-results)
   * [Filtering](#userguide-filtering)
+    * [Remove filtered reports](#userguide-remove-filtered-reports)
     * [Clear report filters](#userguide-clear-report-filters)
     * [Unique reports](#userguide-unique-reports)
   * [Diff mode](#userguide-diff-mode)
@@ -35,6 +36,7 @@ Table of Contents
   * [Review status](#userguide-review-status)
   * [Detection status](#userguide-detection-status)
   * [Severity levels](#userguide-severity-levels)
+  * [Manage source components](#userguide-manage-source-components)
 * [Bug view](#userguide-bug-view)
   * [Report navigation tree](#userguide-report-navigation-tree)
   * [Button pane](#userguide-button-pane)
@@ -155,18 +157,16 @@ some attributes of the report like severity, and report status.
 
 ![Checker statistics](images/checker_statistics.png)
 
-## <a name="userguide-get-statistics-only-for-runs"></a> Get statistics only for runs
-We can get statistics only for specified runs by selecting multiple run names
-using the drop-down list above the statistic tables.
-
-![Get statistics only for runs](images/checker_statistics_filter.png)
+## <a name="userguide-filter-statistics"></a> Filtering statistics
+We can get statistics only for specified runs, files, checker names etc. by
+using the filter bar beside the statistic tables. For more information check
+the report filtering [section](#userguide-filtering).
 
 ## <a name="userguide-checker-statistics-uniqueing"></a> Uniqueing checker statistics
-Checker statistics results can be uniqued by using the **Unique reports**
-checkbox. The same bug may appear several times if it is found on different
-control paths, i.e. through different function calls. By checking
-**Unique reports** a report appears only once even if it is found on several
-paths.
+The same bug may appear several times if it is found on different execution
+paths, i.e. through different function calls. By checking **Unique reports** a
+report appears only once even if it is found on several paths. By default
+uniqueing is enabled for statistics.
 
 # <a name="userguide-analysis-results"></a> Analysis results
 If you select a run at the [list of runs](#userguide-list-of-runs) view, you get
@@ -180,6 +180,8 @@ run or by opening "diff view" between two runs then the following filter options
 are available:
 - [**Unique reports**](#userguide-unique-reports) - You can uniqueing the
 reports by checking this.
+- **Report hash** - Every report has a unique (hash) identifier called Report
+Identifier (RI) which can be filtered by using this input box.
 - **Baseline**
   - **Run name** - You can select one or more run names. The result list is
 restricted on the findings in these runs. By selecting a specific run in the
@@ -225,6 +227,16 @@ Run name may contain `*` quantifiers which matches any number of characters
 When you select a filter option on any field then a number indicates on the
 right side of the option the number of reports which belong to that specific
 option. If the report count could not be determined this value will be *N/A*.
+
+### <a name="userguide-remove-filtered-reports"></a>Remove filtered reports
+Filtered reports can be removed by clicking on the **Remove filtered reports**
+button at the top of the filter bar.
+
+**!!!WARNING!!!** Once you have removed filtered reports it can not be undone.
+Please make sure that you want to remove all filtered results before clicking
+on this button.
+
+![Remove filtered reports](images/remove_filtered_reports.png)
 
 ### <a name="userguide-clear-report-filters"></a>Clear report filters
 Filter options can be cleared separately by clicking on the trash icon beside
@@ -298,6 +310,18 @@ We are mapping checker names to different severity levels:
 - <span class="customIcon icon-severity-high"></span> **High**:
 (E.g. _core.DivideZero, core.NullDereference, cplusplus.NewDelete, etc._)
 - <span class="customIcon icon-severity-critical"></span> **Critical**
+
+## <a name="userguide-manage-source-components"></a> Manage source components
+Source components are named collections of directory filters. Source components
+can be managed only by administrators after clicking on the pencil icon at the
+Source component filter.
+
+![Manage source components](images/manage_source_components.png)
+
+A pop-up window will be opened where you can add, edit or remove existing
+source components.
+
+![List of source components](images/list_of_source_components.png)
 
 # <a name="userguide-bug-view"></a> Bug view
 At this page you can navigate between reports and check the errors what
