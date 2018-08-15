@@ -25,6 +25,7 @@ from libcodechecker import logger
 from libcodechecker import util
 from libcodechecker.analyze import plist_parser
 from libcodechecker.analyze.skiplist_handler import SkipListHandler
+from libcodechecker.output_formatters import twodim_to_str
 from libcodechecker.report import Report, get_report_path_hash
 # TODO: This is a cross-subpackage reference...
 
@@ -354,7 +355,29 @@ def main(args):
             f_change = parse(file_path, metadata_dict, rh, file_report_map)
             file_change = file_change.union(f_change)
 
-        rh.write(file_report_map)
+        report_stats = rh.write(file_report_map)
+        severity_stats = report_stats.get('severity')
+        file_stats = report_stats.get('files')
+        reports_stats = report_stats.get('reports')
+
+        print("\n----==== Summary ====----")
+        if file_stats:
+            vals = [[os.path.basename(k), v] for k, v in
+                    dict(file_stats).items()]
+            keys = ['Filename', 'Report count']
+            table = twodim_to_str('table', keys, vals, 1, True)
+            print(table)
+
+        if severity_stats:
+            vals = [[k, v] for k, v in dict(severity_stats).items()]
+            keys = ['Severity', 'Report count']
+            table = twodim_to_str('table', keys, vals, 1, True)
+            print(table)
+
+        report_count = reports_stats.get("report_count", 0)
+        print("----=================----")
+        print("Total number of reports: {}".format(report_count))
+        print("----=================----")
 
         if file_change:
             changed_files = '\n'.join([' - ' + f for f in file_change])

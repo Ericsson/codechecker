@@ -45,7 +45,6 @@ from libcodechecker import util
 from libcodechecker.logger import get_logger
 from libcodechecker.report import Report, generate_report_hash, \
     get_report_path_hash
-from libcodechecker.output_formatters import twodim_to_str
 from libcodechecker.source_code_comment_handler import \
     SourceCodeCommentHandler, skip_suppress_status
 
@@ -494,21 +493,6 @@ class PlistToPlaintextFormatter(object):
                 output.write('Found %d defect(s) in %s\n\n' %
                              (non_suppressed, base_file))
 
-        print("\n----==== Summary ====----")
-        if file_stats:
-            vals = [[os.path.basename(k), v] for k, v in
-                    dict(file_stats).items()]
-            keys = ['Filename', 'Report count']
-            table = twodim_to_str('table', keys, vals, 1, True)
-            print(table)
-
-        if severity_stats:
-            vals = [[k, v] for k, v in dict(severity_stats).items()]
-            keys = ['Severity', 'Report count']
-            table = twodim_to_str('table', keys, vals, 1, True)
-            print(table)
-
-        report_count = dict(report_count).get("report_count", 0)
-        print("----=================----")
-        print("Total number of reports: {}".format(report_count))
-        print("----=================----")
+        return {"severity": severity_stats,
+                "files":  file_stats,
+                "reports": report_count}
