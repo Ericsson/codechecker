@@ -114,6 +114,9 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
             LOG.debug(config.analyzer_extra_arguments)
             analyzer_cmd.append(config.analyzer_extra_arguments)
 
+            if config.checker_config:
+                analyzer_cmd.append('-config="' + config.checker_config + '"')
+
             analyzer_cmd.append(self.source_file)
 
             analyzer_cmd.append("--")

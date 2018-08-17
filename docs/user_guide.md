@@ -198,6 +198,7 @@ usage: CodeChecker check [-h] [-o OUTPUT_DIR] [-q] [-f]
                          [--add-compiler-defaults]
                          [--saargs CLANGSA_ARGS_CFG_FILE]
                          [--tidyargs TIDY_ARGS_CFG_FILE] [--timeout TIMEOUT]
+                         [--tidy-config TIDY_CONFIG] [--timeout TIMEOUT]
                          [-e checker/group/profile] [-d checker/group/profile]
                          [--print-steps]
                          [--verbose {info,debug,debug_analyzer}]
@@ -241,6 +242,7 @@ analyzer arguments:
   --capture-analysis-output
   --saargs CLANGSA_ARGS_CFG_FILE
   --tidyargs TIDY_ARGS_CFG_FILE
+  --tidy-config TIDY_CONFIG
   --timeout TIMEOUT
 
 cross translation unit analysis arguments:
@@ -409,6 +411,7 @@ usage: CodeChecker analyze [-h] [-j JOBS] [-i SKIPFILE] -o OUTPUT_PATH
                            [--capture-analysis-output]
                            [--saargs CLANGSA_ARGS_CFG_FILE]
                            [--tidyargs TIDY_ARGS_CFG_FILE] [--timeout TIMEOUT]
+                           [--tidy-config TIDY_CONFIG] [--timeout TIMEOUT]
                            [-e checker/group/profile]
                            [-d checker/group/profile] [--enable-all]
                            [--verbose {info,debug,debug_analyzer}]
@@ -522,6 +525,11 @@ analyzer arguments:
   --tidyargs TIDY_ARGS_CFG_FILE
                         File containing argument which will be forwarded
                         verbatim for Clang-Tidy.
+  --tidy-config TIDY_CONFIG
+                        A file in YAML format containing the configuration of
+                        clang-tidy checkers. The file can be dumped by
+                        'CodeChecker analyzers --dump-config clang-tidy'
+                        command.
   --timeout TIMEOUT     The amount of time (in seconds) that each analyzer can
                         spend, individually, to analyze the project. If the
                         analysis of a particular file takes longer than this
@@ -1133,6 +1141,15 @@ optional arguments:
                         ones.
   --details             Show details about the analyzers, not just their
                         names.
+  --dump-config {clangsa,clang-tidy}
+                        Dump the available checker options for the given
+                        analyzer to the standard output. Currently only clang-
+                        tidy supports this option. The output can be
+                        redirected to a file named .clang-tidy. If this file
+                        is placed to the project directory then the options
+                        are applied to the files under that directory. This
+                        config file can also be provided via 'CodeChecker
+                        analyze' and 'CodeChecker check' commands.
   -o {rows,table,csv,json}, --output {rows,table,csv,json}
                         Specify the format of the output list. (default: rows)
   --verbose {info,debug,debug_analyzer}

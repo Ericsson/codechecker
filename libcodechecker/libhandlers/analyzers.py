@@ -19,7 +19,7 @@ from libcodechecker import generic_package_context
 from libcodechecker import output_formatters
 from libcodechecker.analyze.analyzers import analyzer_types
 
-LOG = logger.get_logger('analyze')
+LOG = logger.get_logger('system')
 
 
 def get_argparser_ctor_args():
@@ -47,6 +47,11 @@ def add_arguments_to_parser(parser):
     Add the subcommand's arguments to the given argparse.ArgumentParser.
     """
 
+    context = generic_package_context.get_context()
+    working, _ = analyzer_types.check_supported_analyzers(
+        analyzer_types.supported_analyzers,
+        context)
+
     parser.add_argument('--all',
                         dest="all",
                         action='store_true',
@@ -62,6 +67,21 @@ def add_arguments_to_parser(parser):
                         required=False,
                         help="Show details about the analyzers, not just "
                              "their names.")
+
+    parser.add_argument('--dump-config',
+                        dest='dump_config',
+                        required=False,
+                        choices=list(working),
+                        help="Dump the available checker options for the "
+                             "given analyzer to the standard output. "
+                             "Currently only clang-tidy supports this option. "
+                             "The output can be redirected to a file named "
+                             ".clang-tidy. If this file is placed to the "
+                             "project directory then the options are applied "
+                             "to the files under that directory. This config "
+                             "file can also be provided via "
+                             "'CodeChecker analyze' and 'CodeChecker check' "
+                             "commands.")
 
     parser.add_argument('-o', '--output',
                         dest='output_format',
@@ -85,6 +105,17 @@ def main(args):
         analyzer_types.check_supported_analyzers(
             analyzer_types.supported_analyzers,
             context)
+
+    if args.dump_config:
+        binary = context.analyzer_binaries.get(args.dump_config)
+
+        if args.dump_config == 'clang-tidy':
+            subprocess.call([binary, '-dump-config', '-checks=*'])
+        elif args.dump_config == 'clangsa':
+            # TODO: Not supported by ClangSA yet!
+            LOG.warning("'--dump-config clangsa' is not supported yet.")
+
+        return
 
     if args.output_format not in ['csv', 'json']:
         if 'details' not in args:
