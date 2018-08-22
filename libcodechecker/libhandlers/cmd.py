@@ -761,12 +761,18 @@ def __register_source_components(parser):
                             required=True,
                             help="Path to the source component file which "
                                  "contains multiple file paths. Each file "
-                                 "path start with a '+' (results from this "
-                                 "path should be listed) or '-' (results from "
-                                 "this path should not be listed) sign. "
+                                 "path should start with a '+' or '-' sign. "
+                                 "Results will be listed only from paths with "
+                                 "a '+' sign. "
+                                 "Results will not be listed from paths with "
+                                 "a '-' sign. Let's assume there are three "
+                                 "directories: test_files, test_data and "
+                                 "test_config. In the given example only the "
+                                 "results from the test_files and test_data "
+                                 "directories will be listed.\n"
                                  "E.g.: \n"
-                                 "  +/a/b/x.cpp\n"
-                                 "  -/a/b/\n"
+                                 "  +*/test*/*\n"
+                                 "  -*/test_dat*/*\n"
                                  "Please see the User guide for more "
                                  "information.")
 

@@ -1542,33 +1542,49 @@ optional arguments:
                         source component.
   -i COMPONENT_FILE, --import COMPONENT_FILE
                         Path to the source component file which contains
-                        multiple file paths. Each file path start with a '+'
-                        (results from this path should be listed) or '-'
-                        (results from this path should not be listed) sign.
+                        multiple file paths. Each file path should start with
+                        a '+' or '-' sign.Results will be listed only from
+                        paths with a '+' sign. Results will not be listed from
+                        paths with a '-' sign. Let's assume there are three
+                        directories: test_files, test_data and test_config. In
+                        the given example only the results from the test_files
+                        and test_data directories will be listed.
                         E.g.:
-                        +/a/b/x.cpp
-                        -/a/b/
+                        +*/test*/*
+                        -*/test_dat*/*
                         Please see the User guide for more information.
+
 ~~~~~~~~~~~~~~~~~~~~~
 
 ##### <a name="component-file"></a> Format of component file
 
 Source component helps us to filter run results by multiple file paths.
 
-Each line in the source component file begins with a `-` or a `+`, followed by
+Each line in the source component file should begin with a `+` or a `-`, followed by
 a path glob pattern:
- * `-` means that if a file matches a pattern it should **not** be filtered
- * `+` means that it should be filtered.
+ * `+` ONLY results from the matching file paths will be listed
+ * `-` results from the matching file paths will not be listed
 
 Example:
+~~~~~~~~~~~~~~~~~~~~~
+-/dont/list/results/in/directory/*
+-/dont/list/this.file
++/dir/list/in/directory/*
++/dir/list.this.file
+~~~~~~~~~~~~~~~~~~~~~
+Results will be listed only from `/dir/list/in/directory/*` and from the
+`/dir/list.this.file`.
+In this case removing the `-` rules would not change the list of results.
 
+Example 2:
 ~~~~~~~~~~~~~~~~~~~~~
--/dont/filter/files/in/directory/*
--/dont/filter/this.file
--/dir/*
-+/dir/filter/in/directory/*
-+/dir/filter.this.file
++*/test*
++*/test_files/*
++*/test_data/*
+-*/test_p*
 ~~~~~~~~~~~~~~~~~~~~~
+Results will be listed only from the directories which name begin with
+`test` except the results form the directories which name begin with `test_p`.
 
 Note: the order of the source component value is not important. E.g.:
 ~~~~~~~~~~~~~~~~~~~~~
