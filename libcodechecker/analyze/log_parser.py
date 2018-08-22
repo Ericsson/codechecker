@@ -37,8 +37,7 @@ COMPILE_OPTS_FWD_TO_DEFAULTS_GETTER = frozenset(
     ['^-m(32|64)',
      '^-std=.*'])
 
-compiler_includes_dump_file = "compiler_includes.json"
-compiler_target_dump_file = "compiler_target.json"
+compiler_info_dump_file = "compiler_info.json"
 
 
 def get_compiler_err(cmd):
@@ -139,24 +138,24 @@ def parse_compiler_target(lines):
     return target
 
 
-def dump_compiler_info(output_path, filename, data):
-    filename = os.path.join(output_path, filename)
+def dump_compiler_info(filename, compiler, attr, data):
     all_data = dict()
     if os.path.exists(filename):
         all_data = load_json_or_empty(filename)
-
-    all_data.update(data)
+    if compiler not in all_data:
+        all_data[compiler] = dict()
+    all_data[compiler].update({attr: data})
     with open(filename, 'w') as f:
-        f.write(json.dumps(all_data))
+        json.dump(all_data, f)
 
 
-def load_compiler_info(filename, compiler):
+def load_compiler_info(filename, compiler, attr):
     data = load_json_or_empty(filename, {})
     value = data.get(compiler)
     if value is None:
         LOG.error("Could not find compiler %s in file %s" %
                   (compiler, filename))
-    return value
+    return value.get(attr) if isinstance(value, dict) else value
 
 
 def get_compiler_includes(parseLogOptions, compiler, lang, compile_opts,
@@ -188,13 +187,15 @@ def get_compiler_includes(parseLogOptions, compiler, lang, compile_opts,
         err = get_compiler_err(cmd)
     else:
         err = load_compiler_info(parseLogOptions.compiler_includes_file,
-                                 compiler)
+                                 compiler,
+                                 'includes')
 
     if parseLogOptions.output_path is not None:
         LOG.debug("Dumping default includes " + compiler)
-        dump_compiler_info(parseLogOptions.output_path,
-                           compiler_includes_dump_file,
-                           {compiler: err})
+        dump_compiler_info(compiler_info_dump_file,
+                           compiler,
+                           'includes',
+                           err)
     return prepend_isystem_and_normalize(
         filter_compiler_includes(parse_compiler_includes(err)))
 
@@ -210,12 +211,14 @@ def get_compiler_target(parseLogOptions, compiler):
         err = get_compiler_err(cmd)
     else:
         err = load_compiler_info(parseLogOptions.compiler_target_file,
-                                 compiler)
+                                 compiler,
+                                 'target')
 
     if parseLogOptions.output_path is not None:
-        dump_compiler_info(parseLogOptions.output_path,
-                           compiler_target_dump_file,
-                           {compiler: err})
+        dump_compiler_info(compiler_info_dump_file,
+                           compiler,
+                           'target',
+                           err)
     return parse_compiler_target(err)
 
 
@@ -231,10 +234,10 @@ def parse_compile_commands_json(log_data, parseLogOptions):
 
     output_path = parseLogOptions.output_path
     if output_path is not None:
-        remove_file_if_exists(os.path.join(output_path,
-                                           compiler_includes_dump_file))
-        remove_file_if_exists(os.path.join(output_path,
-                                           compiler_target_dump_file))
+        global compiler_info_dump_file
+        compiler_info_dump_file = os.path.join(output_path,
+                                               compiler_info_dump_file)
+        remove_file_if_exists(compiler_info_dump_file)
 
     actions = []
     filtered_build_actions = {}

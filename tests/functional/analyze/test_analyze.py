@@ -139,18 +139,13 @@ class TestAnalyze(unittest.TestCase):
         errcode = process.returncode
         self.assertEquals(errcode, 0)
 
-        from libcodechecker.analyze.log_parser import\
-            compiler_includes_dump_file
-        from libcodechecker.analyze.log_parser import compiler_target_dump_file
-        includes_File = os.path.join(reports_dir, compiler_includes_dump_file)
-        target_File = os.path.join(reports_dir, compiler_target_dump_file)
-        self.assertEquals(os.path.exists(includes_File), True)
-        self.assertEquals(os.path.exists(target_File), True)
-        self.assertNotEqual(os.stat(includes_File).st_size, 0)
-        self.assertNotEqual(os.stat(target_File).st_size, 0)
+        from libcodechecker.analyze.log_parser import compiler_info_dump_file
+        info_File = os.path.join(reports_dir, compiler_info_dump_file)
+        self.assertEquals(os.path.exists(info_File), True)
+        self.assertNotEqual(os.stat(info_File).st_size, 0)
 
         # Test the validity of the json files.
-        with open(includes_File, 'r') as f:
+        with open(info_File, 'r') as f:
             try:
                 data = json.load(f)
                 self.assertEquals(len(data), 2)
@@ -158,16 +153,7 @@ class TestAnalyze(unittest.TestCase):
                 self.assertTrue("gcc" in data)
             except ValueError:
                 self.fail("json.load should successfully parse the file %s"
-                          % includes_File)
-        with open(target_File, 'r') as f:
-            try:
-                data = json.load(f)
-                self.assertEquals(len(data), 2)
-                self.assertTrue("clang" in data)
-                self.assertTrue("gcc" in data)
-            except ValueError:
-                self.fail("json.load should successfully parse the file %s"
-                          % target_File)
+                          % info_File)
 
     def test_compiler_includes_file_is_loaded(self):
         '''

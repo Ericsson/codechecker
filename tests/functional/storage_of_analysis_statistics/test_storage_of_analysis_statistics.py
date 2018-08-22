@@ -158,8 +158,7 @@ int main()
 
             # Check that analyzer files exist in the uploaded zip.
             analyzer_files = ['compile_cmd.json',
-                              'compiler_includes.json',
-                              'compiler_target.json',
+                              'compiler_info.json',
                               'metadata.json']
             for analyzer_file in analyzer_files:
                 orig_file = os.path.join(self._reports_dir, analyzer_file)
