@@ -81,7 +81,7 @@
     "homepage":"http://dojotoolkit.org/",
     "source_package":{
       "download_cmd":"curl",
-      "url":"http://download.dojotoolkit.org/release-1.10.4/dojo-release-1.10.4.tar.gz",
+      "url":"https://download.dojotoolkit.org/release-1.10.4/dojo-release-1.10.4.tar.gz",
       "option":"-o",
       "name":"dojo-release-1.10.4.tar.gz"
     }
