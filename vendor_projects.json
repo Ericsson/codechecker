@@ -32,7 +32,7 @@
     "source_package":{
       "download_cmd":"curl",
       "url":"https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.25.0/codemirror.min.js",
-      "option":"-o",
+      "option":["-sSL"],
       "name":"codemirror.min.js"
     }
   },
@@ -57,7 +57,7 @@
     "source_package":{
       "download_cmd":"curl",
       "url":"https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js",
-      "option":"-o",
+      "option":["-sSL"],
       "name":"jquery-3.1.1-min.js"
     }
   },
@@ -82,7 +82,7 @@
     "source_package":{
       "download_cmd":"curl",
       "url":"https://download.dojotoolkit.org/release-1.10.4/dojo-release-1.10.4.tar.gz",
-      "option":"-o",
+      "option":["-sSL"],
       "name":"dojo-release-1.10.4.tar.gz"
     }
   },
@@ -95,7 +95,7 @@
     "source_package":{
       "download_cmd":"curl",
       "url":"http://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.0.0/highlight.min.js",
-      "option":"-o",
+      "option":["-sSL"],
       "name":"highlight.min.js"
     }
   },
@@ -108,7 +108,7 @@
     "source_package":{
       "download_cmd":"curl",
       "url":"http://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.0.0/styles/xcode.min.css",
-      "option":"-o",
+      "option":["-sSL"],
       "name":"xcode.min.css"
     }
   }
