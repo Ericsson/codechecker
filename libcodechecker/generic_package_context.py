@@ -234,6 +234,11 @@ class Context(object):
                             self.pckg_layout['plist_to_html_dist_path'])
 
     @property
+    def path_standard_detector(self):
+        return os.path.join(self.package_root,
+                            self.pckg_layout['standard_detector_path'])
+
+    @property
     def compiler_resource_dir(self):
         resource_dir = self.pckg_layout.get('compiler_resource_dir')
         if not resource_dir:

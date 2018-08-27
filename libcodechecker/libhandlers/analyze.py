@@ -453,14 +453,17 @@ class ParseLogOptions:
             self.output_path = None
             self.compiler_includes_file = None
             self.compiler_target_file = None
+            self.compiler_info_file = None
         else:
             self.output_path = getattr(args, 'output_path', None)
             self.compiler_includes_file =\
                 getattr(args, 'compiler_includes_file', None)
             self.compiler_target_file =\
                 getattr(args, 'compiler_target_file', None)
+            self.compiler_info_file =\
+                getattr(args, 'compiler_info_file', None)
 
-            if getattr(args, 'compiler_info_file', None) is not None:
+            if self.compiler_info_file:
                 self.compiler_includes_file = args.compiler_info_file
                 self.compiler_target_file = args.compiler_info_file
 
