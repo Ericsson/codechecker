@@ -536,6 +536,10 @@ used to specify which analyzer tool should be used (by default, all supported
 are used). The tools are completely independent, so either can be omitted if
 not present as they are provided by different binaries.
 
+See [Configure Clang Static Analyzer and checkers](/docs/checker_and_analyzer_configuration.md) documentation for
+a more detailed description how to use the `saargs` and `tidyargs` arguments.
+
+
 #### <a name="include-path"></a> Compiler-specific include path and define detection (cross compilation)
 
 Some of the include paths are hardcoded during compiler build. If a (cross)
