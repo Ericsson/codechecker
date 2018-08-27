@@ -186,8 +186,12 @@ def handle_external_file(dep, clean, env, verbose):
     if file_ext in supported_exts['compressed']:
         if file_ext == '.tar.gz':
             file_name = os.path.join(directory, file_name)
-            with tarfile.open(file_name) as tar:
-                tar.extractall(directory)
+            try:
+                with tarfile.open(file_name) as tar:
+                    tar.extractall(directory)
+            except tarfile.ReadError:
+                LOG.exception("Failed to extract: %s", file_name)
+                sys.exit(1)
             os.remove(file_name)
         else:
             LOG.error('Unsupported file type')
