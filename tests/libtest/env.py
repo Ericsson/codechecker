@@ -306,6 +306,31 @@ def enable_auth(workspace):
     os.chmod(root_file, stat.S_IRUSR | stat.S_IWUSR)
 
 
+def enable_storage_of_analysis_statistics(workspace):
+    """
+    Enables storing analysis statistics information for the server.
+    """
+
+    server_config_filename = "server_config.json"
+
+    cc_package = codechecker_package()
+    original_auth_cfg = os.path.join(cc_package,
+                                     'config',
+                                     server_config_filename)
+
+    shutil.copy(original_auth_cfg, workspace)
+
+    server_cfg_file = os.path.join(workspace,
+                                   server_config_filename)
+
+    scfg_dict = util.load_json_or_empty(server_cfg_file, {})
+    scfg_dict["store"]["analysis_statistics_dir"] = \
+        os.path.join(workspace, 'analysis_statistics')
+
+    with open(server_cfg_file, 'w') as scfg:
+        json.dump(scfg_dict, scfg, indent=2, sort_keys=True)
+
+
 def enable_ssl(workspace):
     """
     Create a dummy ssl-enabled server config.

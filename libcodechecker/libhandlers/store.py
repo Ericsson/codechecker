@@ -21,6 +21,7 @@ import tempfile
 import zipfile
 import zlib
 
+from codeCheckerDBAccess_v6.ttypes import StoreLimitKind
 from shared.ttypes import Permission, RequestFailed, ErrorCode
 
 from libcodechecker import logger
@@ -300,6 +301,111 @@ def assemble_zip(inputs, zip_file, client):
             map(lambda f_: " - " + f_, missing_source_files)))
 
 
+def get_analysis_statistics(inputs, limits):
+    """
+    Collects analysis statistics information and returns them.
+    """
+    statistics_files = []
+    for input_path in inputs:
+        input_path = os.path.abspath(input_path)
+
+        if not os.path.exists(input_path):
+            raise OSError(errno.ENOENT,
+                          "Input path does not exist", input_path)
+
+        dirs = []
+        if os.path.isfile(input_path):
+            files = [input_path]
+        else:
+            _, dirs, files = next(os.walk(input_path), ([], [], []))
+
+        for inp_f in files:
+            if inp_f == 'compile_cmd.json':
+                compilation_db = os.path.join(input_path, inp_f)
+                compilation_db_size = \
+                    limits.get(StoreLimitKind.COMPILATION_DATABASE_SIZE)
+
+                if os.stat(compilation_db).st_size > compilation_db_size:
+                    LOG.debug("Compilation database is too big (max: %s).",
+                              sizeof_fmt(compilation_db_size))
+                else:
+                    LOG.debug("Copying file '%s' to analyzer statistics "
+                              "ZIP...", compilation_db)
+                    statistics_files.append(compilation_db)
+            elif inp_f in ['compiler_includes.json',
+                           'compiler_target.json',
+                           'metadata.json']:
+                analyzer_file = os.path.join(input_path, inp_f)
+                statistics_files.append(analyzer_file)
+        for inp_dir in dirs:
+            if inp_dir == 'failed':
+                failure_zip_limit = limits.get(StoreLimitKind.FAILURE_ZIP_SIZE)
+
+                failed_dir = os.path.join(input_path, inp_dir)
+                _, _, files = next(os.walk(failed_dir), ([], [], []))
+                failed_files_size = 0
+                for f in files:
+                    failure_zip = os.path.join(failed_dir, f)
+                    failure_zip_size = os.stat(failure_zip).st_size
+                    failed_files_size += failure_zip_size
+
+                    if failed_files_size > failure_zip_limit:
+                        LOG.debug("We reached the limit of maximum uploadable "
+                                  "failure zip size (max: %s).",
+                                  sizeof_fmt(failure_zip_limit))
+                        break
+                    else:
+                        LOG.debug("Copying failure zip file '%s' to analyzer "
+                                  "statistics ZIP...", failure_zip)
+                        statistics_files.append(failure_zip)
+
+        return statistics_files
+
+
+def storing_analysis_statistics(client, inputs, run_name):
+    """
+    Collects and stores analysis statistics information on the server.
+    """
+    _, zip_file = tempfile.mkstemp('.zip')
+    LOG.debug("Will write failed store ZIP to '%s'...", zip_file)
+
+    try:
+        limits = client.getAnalysisStatisticsLimits()
+        statistics_files = get_analysis_statistics(inputs, limits)
+
+        if not statistics_files:
+            LOG.debug("No analyzer statistics information can be found in the "
+                      "report directory.")
+            return False
+
+        # Write statistics files to the ZIP file.
+        with zipfile.ZipFile(zip_file, 'a', allowZip64=True) as zipf:
+            for stat_file in statistics_files:
+                zipf.write(stat_file)
+
+        # Compressing .zip file
+        with open(zip_file, 'rb') as source:
+            compressed = zlib.compress(source.read(),
+                                       zlib.Z_BEST_COMPRESSION)
+
+        with open(zip_file, 'wb') as target:
+            target.write(compressed)
+
+        LOG.debug("[ZIP] Analysis statistics zip written at '%s'", zip_file)
+
+        with open(zip_file, 'rb') as zf:
+            b64zip = base64.b64encode(zf.read())
+
+        # Store analysis statistics on the server
+        return client.storeAnalysisStatistics(run_name, b64zip)
+
+    except Exception as ex:
+        LOG.debug("Storage of analysis statistics zip has been failed: %s", ex)
+
+    finally:
+        os.remove(zip_file)
+
+
 def main(args):
     """
     Store the defect results in the specified input list as bug reports in the
@@ -381,6 +487,10 @@ def main(args):
                             b64zip,
                             'force' in args,
                             trim_path_prefixes)
+
+        # Storing analysis statistics if the server allows them.
+        if client.allowsStoringAnalysisStatistics():
+            storing_analysis_statistics(client, args.input, args.name)
 
         LOG.info("Storage finished successfully.")
     except RequestFailed as reqfail:

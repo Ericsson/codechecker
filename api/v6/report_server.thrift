@@ -72,6 +72,10 @@ enum SortType {
   BUG_PATH_LENGTH,
 }
 
+enum StoreLimitKind {
+  FAILURE_ZIP_SIZE,         // Maximum size of the collected failed zips which can be store on the server.
+  COMPILATION_DATABASE_SIZE // Limit of the compilation database file size.
+}
 
 struct SourceFileData {
   1: i64             fileId,
@@ -515,4 +519,25 @@ service codeCheckerDBAccess {
                    6: list<string> trimPathPrefixes)
                    throws (1: shared.RequestFailed requestError),
 
+  // Returns true if analysis statistics information can be sent to the server,
+  // otherwise it returns false.
+  // PERMISSION: PRODUCT_STORE
+  bool allowsStoringAnalysisStatistics()
+                                       throws (1: shared.RequestFailed requestError),
+
+  // Returns size limit for each server configuration parameter.
+  // The first key of the map is the limit type, the second is the actual limit
+  // value in bytes.
+  // PERMISSION: PRODUCT_STORE
+  map<StoreLimitKind, i64> getAnalysisStatisticsLimits()
+                                                       throws (1: shared.RequestFailed requestError),
+
+  // This function stores analysis statistics information on the server in a
+  // directory which specified in the configuration file of the server. These
+  // information are sent in a ZIP file where the ZIP file has to be compressed
+  // and sent as a base64 encoded string.
+  // PERMISSION: PRODUCT_STORE
+  bool storeAnalysisStatistics(1: string runName
+                               2: string zipfile)
+                               throws (1: shared.RequestFailed requestError),
 }

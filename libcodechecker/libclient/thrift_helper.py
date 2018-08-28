@@ -156,3 +156,15 @@ class ThriftClientHelper(object):
     def massStoreRun(self, name, tag, version, zipdir, force,
                      trim_path_prefixes):
         pass
+
+    @ThriftClientCall
+    def allowsStoringAnalysisStatistics(self):
+        pass
+
+    @ThriftClientCall
+    def getAnalysisStatisticsLimits(self):
+        pass
+
+    @ThriftClientCall
+    def storeAnalysisStatistics(self, run_name, zip_file):
+        pass

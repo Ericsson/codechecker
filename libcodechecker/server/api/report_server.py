@@ -2340,3 +2340,57 @@ class ThriftRequestHandler(object):
                     "Multiple source code comment can be found with the same "
                     "checker name for same bug!",
                     wrong_src_code_comments)
+
+    @exc_to_thrift_reqfail
+    @timeit
+    def allowsStoringAnalysisStatistics(self):
+        self.__require_store()
+
+        return True if self.__manager.get_analysis_statistics_dir() else False
+
+    @exc_to_thrift_reqfail
+    @timeit
+    def getAnalysisStatisticsLimits(self):
+        self.__require_store()
+
+        cfg = dict()
+
+        # Get the limit of failure zip size.
+        failure_zip_size = self.__manager.get_failure_zip_size()
+        if failure_zip_size:
+            cfg[ttypes.StoreLimitKind.FAILURE_ZIP_SIZE] = failure_zip_size
+
+        # Get the limit of compilation database size.
+        compilation_database_size = \
+            self.__manager.get_compilation_database_size()
+        if compilation_database_size:
+            cfg[ttypes.StoreLimitKind.COMPILATION_DATABASE_SIZE] = \
+                compilation_database_size
+
+        return cfg
+
+    @exc_to_thrift_reqfail
+    @timeit
+    def storeAnalysisStatistics(self, run_name, b64zip):
+        self.__require_store()
+
+        report_dir_store = self.__manager.get_analysis_statistics_dir()
+        if report_dir_store:
+            try:
+                product_dir = os.path.join(report_dir_store,
+                                           self.__product.endpoint)
+
+                # Create report store directory.
+                if not os.path.exists(product_dir):
+                    os.makedirs(product_dir)
+
+                run_zip_file = os.path.join(product_dir, run_name + '.zip')
+                with open(run_zip_file, 'w') as run_zip:
+                    run_zip.write(zlib.decompress(
+                        base64.b64decode(b64zip)))
+                return True
+            except Exception as ex:
+                LOG.error(ex.message)
+                return False
+
+        return False

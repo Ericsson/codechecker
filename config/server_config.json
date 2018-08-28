@@ -1,5 +1,12 @@
 {
   "max_run_count": null,
+  "store": {
+    "analysis_statistics_dir": null,
+    "limit": {
+      "failure_zip_size": 52428800,
+      "compilation_database_size": 104857600
+    }
+  },
   "authentication": {
     "enabled" : false,
     "realm_name" : "CodeChecker Privileged server",
