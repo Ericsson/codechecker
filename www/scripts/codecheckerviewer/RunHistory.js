@@ -11,9 +11,11 @@ define([
   'dijit/Dialog',
   'dojox/widget/Standby',
   'dijit/layout/ContentPane',
+  'codechecker/AnalyzerStatisticsDialog',
   'codechecker/hashHelper',
   'codechecker/util'],
-function (declare, dom, topic, Dialog, Standby, ContentPane, hashHelper, util) {
+function (declare, dom, topic, Dialog, Standby, ContentPane,
+  AnalyzerStatisticsDialog, hashHelper, util) {
 
   return declare(ContentPane, {
     constructor : function () {
@@ -25,6 +27,8 @@ function (declare, dom, topic, Dialog, Standby, ContentPane, hashHelper, util) {
         title : 'Check command',
         style : 'max-width: 75%;'
       });
+
+      this._analyzerStatDialog = new AnalyzerStatisticsDialog();
 
       this._standBy = new Standby({
         target : this.domNode,
@@ -111,7 +115,7 @@ function (declare, dom, topic, Dialog, Standby, ContentPane, hashHelper, util) {
 
           dom.create('span', { class : 'time', innerHTML : time }, wrapper);
 
-          var runNameWrapper = dom.create('span', { class : 'run-name-wrapper', title: 'Run name'}, wrapper);
+          var runNameWrapper = dom.create('span', { class : 'wrapper', title: 'Run name'}, wrapper);
           dom.create('span', { class : 'customIcon run-name' }, runNameWrapper);
           dom.create('span', { class : 'run-name', innerHTML : data.runName }, runNameWrapper);
 
@@ -120,19 +124,50 @@ function (declare, dom, topic, Dialog, Standby, ContentPane, hashHelper, util) {
             dom.place(runTag, wrapper);
           }
 
-          var userWrapper = dom.create('span', {class : 'user-wrapper', title: 'User name' }, wrapper);
+          var userWrapper = dom.create('span', {class : 'wrapper', title: 'User name' }, wrapper);
           dom.create('span', { class : 'customIcon user' }, userWrapper);
           dom.create('span', { class : 'user', innerHTML : data.user }, userWrapper);
 
-          if (data.checkCommand)
+          // CodeChecker client version.
+          if (data.codeCheckerVersion) {
+            var versionWrapper = dom.create('span', {
+              class : 'wrapper',
+              title: 'CodeChecker version'
+            }, wrapper);
+
             dom.create('span', {
-              class : 'check-command link',
+              class : 'customIcon version'
+            }, versionWrapper);
+
+            dom.create('span', {
+              innerHTML : data.codeCheckerVersion
+            }, versionWrapper);
+          }
+
+          // Analyzer statistics.
+          if (Object.keys(data.analyzerStatistics).length) {
+            dom.create('span', {
+              class : 'wrapper link',
+              innerHTML : '<i class="customIcon statistics"></i> '
+                        + 'Analyzer statistics',
+              onclick : function () {
+                that._analyzerStatDialog.show(data.analyzerStatistics);
+              }
+            }, history);
+          }
+
+          // Check command.
+          if (data.checkCommand) {
+            dom.create('span', {
+              class : 'check-command wrapper link',
               innerHTML : 'Check command',
               onclick : function () {
+                that._dialog.set('title', 'Check command');
                 that._dialog.set('content', data.checkCommand);
                 that._dialog.show();
               }
             }, history);
+          }
         })
       });
     },

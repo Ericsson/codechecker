@@ -36,7 +36,24 @@ from libcodechecker.logger import get_logger
 LOG = get_logger('analyzer')
 
 
-def worker_result_handler(results, metadata, output_path):
+def print_analyzer_statistic_summary(statistics, status, msg=None):
+    """
+    Print analyzer statistic summary for the given status code with the given
+    section heading message.
+    """
+    has_status = sum([res.get(status, 0) for res in
+                      [statistics[i] for i in statistics]])
+
+    if has_status and msg:
+        LOG.info(msg)
+
+    for analyzer_type, res in statistics.items():
+        successful = res[status]
+        if successful:
+            LOG.info('  ' + analyzer_type + ': ' + str(successful))
+
+
+def worker_result_handler(results, metadata, output_path, analyzer_binaries):
     """
     Print the analysis summary.
     """
@@ -44,34 +61,45 @@ def worker_result_handler(results, metadata, output_path):
     if metadata is None:
         metadata = {}
 
-    successful_analysis = defaultdict(int)
-    failed_analysis = defaultdict(int)
     skipped_num = 0
     reanalyzed_num = 0
+    statistics = {}
 
-    for res, skipped, reanalyzed, analyzer_type, _ in results:
+    for res, skipped, reanalyzed, analyzer_type, _, sources in results:
         if skipped:
             skipped_num += 1
         else:
             if reanalyzed:
                 reanalyzed_num += 1
 
+            if analyzer_type not in statistics:
+                analyzer_bin = analyzer_binaries[analyzer_type]
+                analyzer_version = \
+                    metadata.get('versions', {}).get(analyzer_bin)
+
+                statistics[analyzer_type] = {
+                    "failed": 0,
+                    "failed_sources": [],
+                    "successful": 0,
+                    "version": analyzer_version
+                }
+
             if res == 0:
-                successful_analysis[analyzer_type] += 1
+                statistics[analyzer_type]['successful'] += 1
             else:
-                failed_analysis[analyzer_type] += 1
+                statistics[analyzer_type]['failed'] += 1
+                statistics[analyzer_type]['failed_sources'].extend(sources)
 
     LOG.info("----==== Summary ====----")
     LOG.info("Total analyzed compilation commands: %s", str(len(results)))
-    if successful_analysis:
-        LOG.info("Successfully analyzed")
-        for analyzer_type, res in successful_analysis.items():
-            LOG.info('  ' + analyzer_type + ': ' + str(res))
 
-    if failed_analysis:
-        LOG.info("Failed to analyze")
-        for analyzer_type, res in failed_analysis.items():
-            LOG.info('  ' + analyzer_type + ': ' + str(res))
+    print_analyzer_statistic_summary(statistics,
+                                     'successful',
+                                     'Successfully analyzed')
+
+    print_analyzer_statistic_summary(statistics,
+                                     'failed',
+                                     'Failed to analyze')
 
     if reanalyzed_num:
         LOG.info("Reanalyzed compilation commands: " + str(reanalyzed_num))
@@ -79,9 +107,8 @@ def worker_result_handler(results, metadata, output_path):
         LOG.info("Skipped compilation commands: " + str(skipped_num))
     LOG.info("----=================----")
 
-    metadata['successful'] = successful_analysis
-    metadata['failed'] = failed_analysis
     metadata['skipped'] = skipped_num
+    metadata['analyzer_statistics'] = statistics
 
     # check() created the result .plist files and additional, per-analysis
     # meta information in forms of .plist.source files.
@@ -705,12 +732,13 @@ def check(check_data):
         progress_checked_num.value += 1
 
         return return_codes, skipped, reanalyzed, action.analyzer_type, \
-            result_file
+            result_file, list(action.sources)
 
     except Exception as e:
         LOG.debug_analyzer(str(e))
         traceback.print_exc(file=sys.stdout)
-        return 1, skipped, reanalyzed, action.analyzer_type, None
+        return 1, skipped, reanalyzed, action.analyzer_type, None, \
+            list(action.sources)
 
 
 def start_workers(actions_map, actions, context, analyzer_config_map,
@@ -785,7 +813,8 @@ def start_workers(actions_map, actions, context, analyzer_config_map,
                        analyzed_actions,
                        1,
                        callback=lambda results: worker_result_handler(
-                           results, metadata, output_path)
+                           results, metadata, output_path,
+                           context.analyzer_binaries)
                        ).get(float('inf'))
 
         pool.close()

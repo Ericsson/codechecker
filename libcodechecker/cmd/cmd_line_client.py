@@ -235,17 +235,32 @@ def handle_list_runs(args):
         print(CmdLineOutputEncoder().encode(results))
 
     else:  # plaintext, csv
-        header = ['Name', 'Number of reports', 'Storage date', 'Version tag',
-                  'Duration']
+        header = ['Name', 'Number of unresolved reports',
+                  'Analyzer statistics', 'Storage date', 'Version tag',
+                  'Duration', 'CodeChecker version']
         rows = []
         for run in runs:
             duration = str(timedelta(seconds=run.duration)) \
                 if run.duration > -1 else 'Not finished'
+
+            analyzer_statistics = []
+            for analyzer in run.analyzerStatistics:
+                stat = run.analyzerStatistics[analyzer]
+                num_of_all_files = stat.successful + stat.failed
+                analyzer_statistics.append(analyzer + ' (' +
+                                           str(num_of_all_files) + '/' +
+                                           str(stat.successful) + ')')
+
+            codechecker_version = run.codeCheckerVersion \
+                if run.codecheckerVersion else ''
+
             rows.append((run.name,
                          str(run.resultCount),
+                         ', '.join(analyzer_statistics),
                          run.runDate,
                          run.versionTag if run.versionTag else '',
-                         duration))
+                         duration,
+                         codechecker_version))
 
         print(twodim_to_str(args.output_format, header, rows))
 
@@ -1178,12 +1193,23 @@ def handle_list_run_histories(args):
     if args.output_format == 'json':
         print(CmdLineOutputEncoder().encode(run_history))
     else:  # plaintext, csv
-        header = ['Date', 'Run name', 'Version tag', 'User']
+        header = ['Date', 'Run name', 'Version tag', 'User',
+                  'CodeChecker version', 'Analyzer statistics']
         rows = []
         for h in run_history:
+            analyzer_statistics = []
+            for analyzer in h.analyzerStatistics:
+                stat = h.analyzerStatistics[analyzer]
+                num_of_all_files = stat.successful + stat.failed
+                analyzer_statistics.append(analyzer + ' (' +
+                                           str(num_of_all_files) + '/' +
+                                           str(stat.successful) + ')')
+
             rows.append((h.time,
                          h.runName,
                          h.versionTag if h.versionTag else '',
-                         h.user))
+                         h.user,
+                         h.codeCheckerVersion if h.codeCheckerVersion else '',
+                         ', '.join(analyzer_statistics)))
 
         print(twodim_to_str(args.output_format, header, rows))

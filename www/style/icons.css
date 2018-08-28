@@ -365,3 +365,19 @@ span[class*="severity-"] {
 .customIcon.remove::before {
   content: "\e01e";
 }
+
+.customIcon.version {
+  display: inline-block;
+  text-align: center;
+  border-radius: 50%;
+  background-color: #73a7b9;
+  color: white;
+}
+
+.customIcon.version:after {
+  content : 'v';
+}
+
+.customIcon.check:before {
+  content: "\e01d";
+}

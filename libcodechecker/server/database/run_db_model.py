@@ -106,6 +106,32 @@ class RunLock(Base):
         return datetime.now() > self.when_expires(grace_seconds)
 
 
+class AnalyzerStatistic(Base):
+    __tablename__ = 'analyzer_statistics'
+
+    id = Column(Integer, autoincrement=True, primary_key=True)
+    run_history_id = Column(Integer,
+                            ForeignKey('run_histories.id',
+                                       deferrable=True,
+                                       initially="DEFERRED",
+                                       ondelete='CASCADE'),
+                            index=True)
+    analyzer_type = Column(String)
+    version = Column(Binary)
+    successful = Column(Integer)
+    failed = Column(Integer)
+    failed_files = Column(Binary, nullable=True)
+
+    def __init__(self, run_history_id, analyzer_type, version, successful,
+                 failed, failed_files):
+        self.run_history_id = run_history_id
+        self.analyzer_type = analyzer_type
+        self.version = version
+        self.successful = successful
+        self.failed = failed
+        self.failed_files = failed_files
+
+
 class RunHistory(Base):
     __tablename__ = 'run_histories'
 
@@ -118,17 +144,22 @@ class RunHistory(Base):
     user = Column(String, nullable=False)
     time = Column(DateTime, nullable=False)
     check_command = Column(Binary)
+    cc_version = Column(String, nullable=True)
 
     run = relationship(Run, uselist=False)
+    analyzer_statistics = relationship(AnalyzerStatistic,
+                                       lazy="joined")
 
     __table_args__ = (UniqueConstraint('run_id', 'version_tag'),)
 
-    def __init__(self, run_id, version_tag, user, time, check_command):
+    def __init__(self, run_id, version_tag, user, time, check_command,
+                 cc_version):
         self.run_id = run_id
         self.version_tag = version_tag
         self.user = user
         self.time = time
         self.check_command = check_command
+        self.cc_version = cc_version
 
 
 class FileContent(Base):
