@@ -240,6 +240,7 @@ class Report(Base):
     severity = Column(Integer)
     line = Column(Integer)
     column = Column(Integer)
+    path_length = Column(Integer)
 
     # TODO: multiple messages to multiple source locations?
     checker_message = Column(String)
@@ -261,7 +262,7 @@ class Report(Base):
     # Priority/severity etc...
     def __init__(self, run_id, bug_id, file_id, checker_message, checker_id,
                  checker_cat, bug_type, line, column, severity,
-                 detection_status, detection_date):
+                 detection_status, detection_date, path_length):
         self.run_id = run_id
         self.file_id = file_id
         self.bug_id = bug_id
@@ -274,6 +275,7 @@ class Report(Base):
         self.line = line
         self.column = column
         self.detected_at = detection_date
+        self.path_length = path_length
 
 
 class Comment(Base):

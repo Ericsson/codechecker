@@ -393,7 +393,7 @@ def get_sort_map(sort_types, is_unique=False):
     sort_type_map = {
         SortType.FILENAME: [(File.filepath, 'filepath'),
                             (Report.line, 'line')],
-        SortType.BUG_PATH_LENGTH: [('bug_path_length', 'bug_path_length')],
+        SortType.BUG_PATH_LENGTH: [(Report.path_length, 'bug_path_length')],
         SortType.CHECKER_NAME: [(Report.checker_id, 'checker_id')],
         SortType.SEVERITY: [(Report.severity, 'severity')],
         SortType.REVIEW_STATUS: [(ReviewStatus.status, 'rw_status')],
@@ -806,20 +806,12 @@ class ThriftRequestHandler(object):
 
             filter_expression = process_report_filter(session, report_filter)
 
-            path_len_q = session.query(BugPathEvent.report_id,
-                                       func.count(BugPathEvent.report_id)
-                                       .label('path_length')) \
-                .group_by(BugPathEvent.report_id) \
-                .subquery()
-
             is_unique = report_filter is not None and report_filter.isUnique
             if is_unique:
                 sort_types, sort_type_map, order_type_map = \
                     get_sort_map(sort_types, True)
 
-                selects = [func.max(Report.id).label('id'),
-                           func.min(path_len_q.c.path_length)
-                               .label('bug_path_length')]
+                selects = [func.max(Report.id).label('id')]
                 for sort in sort_types:
                     sorttypes = sort_type_map.get(sort.type)
                     for sorttype in sorttypes:
@@ -834,15 +826,12 @@ class ThriftRequestHandler(object):
                                                       cmp_data,
                                                       diff_hashes)
                 unique_reports = unique_reports \
-                    .outerjoin(path_len_q,
-                               path_len_q.c.report_id == Report.id) \
                     .group_by(Report.bug_id) \
                     .subquery()
 
                 # Sort the results
                 sorted_reports = \
-                    session.query(unique_reports.c.id,
-                                  unique_reports.c.bug_path_length)
+                    session.query(unique_reports.c.id)
 
                 sorted_reports = sort_results_query(sorted_reports,
                                                     sort_types,
@@ -858,7 +847,7 @@ class ThriftRequestHandler(object):
                                   Report.severity, Report.detected_at,
                                   Report.fixed_at, ReviewStatus,
                                   File.filename, File.filepath,
-                                  sorted_reports.c.bug_path_length) \
+                                  Report.path_length) \
                     .outerjoin(File, Report.file_id == File.id) \
                     .outerjoin(ReviewStatus,
                                ReviewStatus.bug_hash == Report.bug_id) \
@@ -896,13 +885,10 @@ class ThriftRequestHandler(object):
                                   Report.severity, Report.detected_at,
                                   Report.fixed_at, ReviewStatus,
                                   File.filepath,
-                                  path_len_q.c.path_length
-                                      .label('bug_path_length')) \
+                                  Report.path_length) \
                     .outerjoin(File, Report.file_id == File.id) \
                     .outerjoin(ReviewStatus,
                                ReviewStatus.bug_hash == Report.bug_id) \
-                    .outerjoin(path_len_q,
-                               path_len_q.c.report_id == Report.id) \
                     .filter(filter_expression)
 
                 if run_ids:
