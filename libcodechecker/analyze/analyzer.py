@@ -11,10 +11,11 @@ from __future__ import division
 from __future__ import absolute_import
 
 import copy
-from multiprocessing import Manager
+from multiprocessing.managers import SyncManager
 import os
 import shlex
 import shutil
+import signal
 import subprocess
 import time
 
@@ -105,6 +106,16 @@ def __get_skip_handler(args):
         LOG.debug_analyzer('Skip file was not set in the command line')
 
 
+def __mgr_init():
+    """
+    This function is set for the SyncManager object which handles shared data
+    structures among the processes of the pool. Ignoring the SIGINT signal is
+    necessary in the manager object so it doesn't terminate before the
+    termination of the process pool.
+    """
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
+
+
 def perform_analysis(args, context, actions, metadata):
     """
     Perform static analysis via the given (or if not, all) analyzers,
@@ -162,7 +173,8 @@ def perform_analysis(args, context, actions, metadata):
 
     # Use Manager to create data objects which can be
     # safely shared between processes.
-    manager = Manager()
+    manager = SyncManager()
+    manager.start(__mgr_init)
 
     config_map = manager.dict(config_map)
     actions_map = create_actions_map(actions, manager)
@@ -195,7 +207,8 @@ def perform_analysis(args, context, actions, metadata):
                                               args.jobs,
                                               skip_handler,
                                               ctu_data,
-                                              statistics_data)
+                                              statistics_data,
+                                              manager)
 
     if 'stats_output' in args and args.stats_output:
         return
@@ -219,7 +232,8 @@ def perform_analysis(args, context, actions, metadata):
                                        args.timeout if 'timeout' in args
                                        else None,
                                        ctu_reanalyze_on_failure,
-                                       statistics_data)
+                                       statistics_data,
+                                       manager)
         LOG.info("Analysis finished.")
         LOG.info("To view results in the terminal use the "
                  "\"CodeChecker parse\" command.")
@@ -247,3 +261,5 @@ def perform_analysis(args, context, actions, metadata):
 
     if ctu_collect and ctu_analyze:
         shutil.rmtree(ctu_dir, ignore_errors=True)
+
+    manager.shutdown()

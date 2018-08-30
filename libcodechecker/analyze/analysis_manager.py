@@ -716,7 +716,7 @@ def check(check_data):
 def start_workers(actions_map, actions, context, analyzer_config_map,
                   jobs, output_path, skip_handler, metadata,
                   quiet_analyze, capture_analysis_output, timeout,
-                  ctu_reanalyze_on_failure, statistics_data):
+                  ctu_reanalyze_on_failure, statistics_data, manager):
     """
     Start the workers in the process pool.
     For every build action there is worker which makes the analysis.
@@ -726,6 +726,7 @@ def start_workers(actions_map, actions, context, analyzer_config_map,
     def signal_handler(*arg, **kwarg):
         try:
             pool.terminate()
+            manager.shutdown()
         finally:
             sys.exit(1)
 
