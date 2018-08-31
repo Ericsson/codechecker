@@ -1,5 +1,7 @@
 [![Build status](https://travis-ci.org/Ericsson/codechecker.png?branch=master)](https://travis-ci.org/Ericsson/codechecker)
 [![Gitter](https://badges.gitter.im/codecheckerHQ/Lobby.svg)](https://gitter.im/codecheckerHQ/Lobby?utm_source=share-link&utm_medium=link&utm_campaign=share-link)
+[![Code Quality: Python](https://img.shields.io/lgtm/grade/python/g/Ericsson/codechecker.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/Ericsson/codechecker/context:python)
+[![Total Alerts](https://img.shields.io/lgtm/alerts/g/Ericsson/codechecker.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/Ericsson/codechecker/alerts)
 
 CodeChecker
 ===========
