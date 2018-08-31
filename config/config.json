@@ -12,7 +12,8 @@
   "available_profiles": {
       "default" : "High-quality standard checks with a low false positive rate.",
       "sensitive" : "Default checks + more comprehensive checks with a low false positive rate.",
-      "extreme" : "Sensitive checks + more comprehensive checks with a manageable false positive rate."
+      "extreme" : "Sensitive checks + more comprehensive checks with a manageable false positive rate.",
+      "portability" : "Checks that aim to detect code issues emerging from platform differences (eg. between 32-bit and 64-bit architectures)."
   },
   "checker_config": {
       "clangsa_checkers" : {
@@ -69,7 +70,7 @@
         "nullability.NullablePassedToNonnull" : ["sensitive", "extreme"],
         "nullability.NullableReturnedFromNonnull" : ["sensitive", "extreme"],
         "optin.mpi.MPI-Checker" : ["sensitive", "extreme"],
-        "optin.portability.UnixAPI" : ["default", "sensitive", "extreme"],
+        "optin.portability.UnixAPI" : ["default", "sensitive", "extreme", "portability"],
         "security.FloatLoopCounter" : ["default", "sensitive", "extreme"],
         "security.insecureAPI.UncheckedReturn" : ["default", "sensitive", "extreme"],
         "security.insecureAPI.getpw" : ["default", "sensitive", "extreme"],
@@ -146,7 +147,7 @@
         "misc-lambda-function-name" : ["default", "sensitive", "extreme"],
         "misc-macro-repeated-side-effects" : ["default", "sensitive", "extreme"],
         "misc-misplaced-const" : ["default", "sensitive", "extreme"],
-        "misc-misplaced-widening-cast" : ["default", "sensitive", "extreme"],
+        "misc-misplaced-widening-cast" : ["default", "sensitive", "extreme", "portability"],
         "misc-move-const-arg" : ["default", "sensitive", "extreme"],
         "misc-move-constructor-init" : ["default", "sensitive", "extreme"],
         "misc-move-forwarding-reference" : ["default", "sensitive", "extreme"],
