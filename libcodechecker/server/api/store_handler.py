@@ -33,7 +33,6 @@ LOG = get_logger('system')
 def metadata_info(metadata_file):
     check_commands = []
     check_durations = []
-    skip_file_lines = []
 
     if not os.path.isfile(metadata_file):
         return check_commands, check_durations

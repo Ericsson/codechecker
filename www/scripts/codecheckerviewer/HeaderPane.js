@@ -30,7 +30,7 @@ function (declare, cookie, dom, topic, Button, ContentPane, popup,
         id : 'logo-container'
       }, this.domNode);
 
-      var logo = dom.create('span', { id : 'logo' }, logoContainer);
+      dom.create('span', { id : 'logo' }, logoContainer);
 
       var logoText = dom.create('div', {
         id : 'logo-text',
@@ -39,7 +39,7 @@ function (declare, cookie, dom, topic, Button, ContentPane, popup,
 
       //--- Title ---//
 
-      var title = dom.create('span', {
+      dom.create('span', {
         id : 'logo-title',
         innerHTML : this.get('title')
       }, logoText);
@@ -110,7 +110,7 @@ function (declare, cookie, dom, topic, Button, ContentPane, popup,
           var permissionWrapper = dom.create('div', {
             class : 'permission-wrapper'
           }, profileMenu);
-          var permissonTitle = dom.create('div', {
+          dom.create('div', {
             class : 'permission-title',
             innerHTML : 'Permissions:'
           }, permissionWrapper);
@@ -153,7 +153,7 @@ function (declare, cookie, dom, topic, Button, ContentPane, popup,
         var avatar = util.createAvatar(user);
         dom.place(avatar, avatarWrapper);
 
-        var userName = dom.create('span', {
+        dom.create('span', {
           class : 'user-name',
           innerHTML : user
         }, loggedIn);

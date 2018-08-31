@@ -35,9 +35,9 @@ function (declare, cookie, dom, domConstruct, domClass, ioQuery, keys, on,
         id : 'logo-container'
       }, this.domNode);
 
-      var logo = domConstruct.create('span', { id : 'logo' }, logoContainer);
+      domConstruct.create('span', { id : 'logo' }, logoContainer);
 
-      var logoText = domConstruct.create('div', {
+      domConstruct.create('div', {
         id : 'logo-text',
         innerHTML : 'CodeChecker'
       }, logoContainer);
@@ -154,7 +154,7 @@ function (declare, cookie, dom, domConstruct, domClass, ioQuery, keys, on,
           var cntPrompt = domConstruct.create('div', {
             class : 'formElement'
           }, this.containerNode);
-          var lblPrompt = domConstruct.create('span', {
+          domConstruct.create('span', {
             class     : 'login-prompt',
             style     : 'width: 100%',
             innerHTML : this.loginPrompt
@@ -165,7 +165,7 @@ function (declare, cookie, dom, domConstruct, domClass, ioQuery, keys, on,
           var cntUser = domConstruct.create('div', {
             class : 'formElement'
           }, this.containerNode);
-          var lblUser = domConstruct.create('label', {
+          domConstruct.create('label', {
             class     : 'formLabel bold',
             innerHTML : "Username: ",
             for       : 'username'
@@ -175,7 +175,7 @@ function (declare, cookie, dom, domConstruct, domClass, ioQuery, keys, on,
           var cntPass = domConstruct.create('div', {
             class : 'formElement'
           }, this.containerNode);
-          var lblPass = domConstruct.create('label', {
+          domConstruct.create('label', {
             class     : 'formLabel bold',
             innerHTML : "Password: ",
             for       : 'password'

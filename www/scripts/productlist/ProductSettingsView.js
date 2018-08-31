@@ -465,8 +465,6 @@ function (declare, domAttr, domClass, domConstruct, Dialog, Button,
      * user.
      */
     setAdminLevel : function (adminLevel) {
-      var that = this;
-
       this._btnSqlite.set('disabled', adminLevel < 2);
       this._btnPostgres.set('disabled', adminLevel < 2);
 

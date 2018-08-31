@@ -17,8 +17,6 @@ function (declare, topic, Dialog, DropDownMenu, DropDownButton, MenuItem) {
     postCreate : function () {
       this.inherited(arguments);
 
-      var that = this;
-
       this.addChild(new MenuItem({
         label : 'CodeChecker @ GitHub',
         onClick : function () {

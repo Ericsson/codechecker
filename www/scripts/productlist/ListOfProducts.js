@@ -218,7 +218,7 @@ function (declare, domClass, dom, ItemFileWriteStore, topic, DataGrid,
 
       var dbStatus = item.databaseStatus;
 
-      dbStatusMsg = util.dbStatusFromCodeToString(dbStatus);
+      var dbStatusMsg = util.dbStatusFromCodeToString(dbStatus);
 
       if (dbStatus !== DBStatus.OK || !item.accessible) {
         name = '<span class="product-error">'

@@ -267,7 +267,6 @@ function (declare, dom, ItemFileWriteStore, topic, Dialog, Button,
         class    : 'diff-btn',
         disabled : true,
         onClick  : function () {
-          var runName = that.baseline.name;
           topic.publish('openRun', {
             baseline : that.baseline.name,
             newcheck : that.newcheck.name,

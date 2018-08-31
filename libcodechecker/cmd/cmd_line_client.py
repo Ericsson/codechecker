@@ -16,7 +16,6 @@ import codecs
 from collections import defaultdict
 from datetime import datetime, timedelta
 import hashlib
-import json
 import os
 import re
 import sys

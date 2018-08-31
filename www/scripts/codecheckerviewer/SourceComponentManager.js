@@ -86,7 +86,7 @@ function (dom, domAttr, domClass, declare, ItemFileWriteStore, DataGrid,
           }
 
           if (!that.isValidComponentValue(componentValue)) {
-            return that.showError('Component value format is invalid! Every'
+            return that.showError('Component value format is invalid! Every '
               + 'line should start with + or - sign followed by one or more '
               + 'character.');
           }

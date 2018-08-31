@@ -10,7 +10,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import division
 
-from datetime import datetime, timedelta
+from datetime import datetime
 import hashlib
 
 from libcodechecker.logger import get_logger
@@ -578,9 +578,8 @@ class SessionManager:
             return local_session
 
         self.invalidate(token)
-        return None
 
-        return local_session
+        return None
 
     def invalidate_local_session(self, token):
         """

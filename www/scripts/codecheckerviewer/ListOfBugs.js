@@ -27,28 +27,6 @@ function (declare, dom, style, Deferred, ObjectStore, Store, QueryResults,
   topic, BorderContainer, TabContainer, Tooltip, DataGrid, BugViewer,
   BugFilterView, FilterBase, RunHistory, hashHelper, util) {
 
-  function getRunData(runIds, runNames) {
-    var runFilter = new CC_OBJECTS.RunFilter();
-
-      if (runIds) {
-        if (!(runIds instanceof Array))
-          runIds = [runIds];
-
-        runFilter.ids = runIds;
-      }
-
-      if (runNames) {
-        if (!(runNames instanceof Array))
-          runNames = [runNames];
-
-        runFilter.names = runNames;
-        runFilter.exactMatch = true;
-      }
-
-    var runData = CC_SERVICE.getRunData(runFilter);
-    return runData.length ? runData[0] : null;
-  }
-
   function initByUrl(grid, tab) {
     var state = hashHelper.getValues();
 
@@ -251,8 +229,6 @@ function (declare, dom, style, Deferred, ObjectStore, Store, QueryResults,
 
   var ListOfBugsGrid = declare([DataGrid, FilterBase], {
     constructor : function () {
-      var width = (100 / 5).toString() + '%';
-
       this.structure = [
         { name : 'Report hash', field : 'bugHash', cellClasses : 'compact ltr', formatter: reportHashFormatter },
         { name : 'File', field : 'file', cellClasses : 'compact', width : '100%', formatter: fileFormatter },
@@ -505,7 +481,7 @@ function (declare, dom, style, Deferred, ObjectStore, Store, QueryResults,
           if (opt.cmpData && opt.cmpData.runIds)
             runIds = runIds.concat(opt.cmpData.runIds);
 
-          reports = CC_SERVICE.getRunResults(runIds.length ? runIds : null,
+          var reports = CC_SERVICE.getRunResults(runIds.length ? runIds : null,
             CC_OBJECTS.MAX_QUERY_SIZE, 0, [sortMode], reportFilter, null);
           reportData = reports[0];
         }
