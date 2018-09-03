@@ -312,10 +312,16 @@ def __build_clangsa_config_handler(args, context):
 
     try:
         with open(args.clangsa_args_cfg_file, 'rb') as sa_cfg:
+            sa_args = re.sub(r'\$\((.*?)\)',
+                             __replace_env_var(args.clangsa_args_cfg_file),
+                             sa_cfg.read().strip()).split(' ')
+
+            # For backward compatibility we filter out -Xclang options.
+            filtered_sa_args = filter(lambda x: x != '-Xclang', sa_args)
+
+            # We -Xclang flag before every value of configuration switch.
             config_handler.analyzer_extra_arguments = \
-                re.sub(r'\$\((.*?)\)',
-                       __replace_env_var(args.clangsa_args_cfg_file),
-                       sa_cfg.read().strip())
+                ' '.join(['-Xclang ' + arg for arg in filtered_sa_args])
     except IOError as ioerr:
         LOG.debug_analyzer(ioerr)
     except AttributeError as aerr:
