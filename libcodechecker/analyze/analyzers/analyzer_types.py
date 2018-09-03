@@ -10,6 +10,7 @@ Supported analyzer types.
 from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
+import io
 import os
 import platform
 import re
@@ -382,6 +383,20 @@ def __build_clang_tidy_config_handler(args, context):
         LOG.debug_analyzer(ioerr)
     except AttributeError as aerr:
         # No clang tidy arguments file was given in the command line.
+        LOG.debug_analyzer(aerr)
+
+    try:
+        # The config file dumped by clang-tidy contains "..." at the end. This
+        # has to be emitted, otherwise -config flag of clang-tidy can't consume
+        # it.
+        with io.open(args.tidy_config, 'rb') as tidy_config:
+            lines = tidy_config.readlines()
+            lines = filter(lambda x: x != '...\n', lines)
+            config_handler.checker_config = ''.join(lines)
+    except IOError as ioerr:
+        LOG.debug_analyzer(ioerr)
+    except AttributeError as aerr:
+        # No clang tidy config file was given in the command line.
         LOG.debug_analyzer(aerr)
 
     analyzer = construct_analyzer_type(CLANG_TIDY, config_handler, None)

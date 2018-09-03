@@ -243,6 +243,16 @@ used to generate a log file on the fly.""")
                                     "forwarded verbatim for the Clang-Tidy "
                                     "analyzer.")
 
+    analyzer_opts.add_argument('--tidy-config',
+                               dest='tidy_config',
+                               required=False,
+                               default=argparse.SUPPRESS,
+                               help="A file in YAML format containing the "
+                                    "configuration of clang-tidy checkers. "
+                                    "The file can be dumped by "
+                                    "'CodeChecker analyzers --dump-config "
+                                    "clang-tidy' command.")
+
     analyzer_opts.add_argument('--timeout',
                                type=int,
                                dest='timeout',
@@ -504,6 +514,7 @@ def main(args):
                           'add_compiler_defaults',
                           'clangsa_args_cfg_file',
                           'tidy_args_cfg_file',
+                          'tidy_config',
                           'capture_analysis_output',
                           'ctu_phases',
                           'stats_output',

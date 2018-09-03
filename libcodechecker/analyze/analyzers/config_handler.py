@@ -32,6 +32,7 @@ class AnalyzerConfigHandler(object):
         self.__analyzer_plugins_dir = None
         self.__compiler_resource_dir = ''
         self.__analyzer_extra_arguments = ''
+        self.__checker_config = ''
 
         # The key is the checker name, the value is a tuple.
         # False if disabled (should be by default).
@@ -141,3 +142,17 @@ class AnalyzerConfigHandler(object):
         Extra arguments forwarded to the analyzer without modification.
         """
         self.__analyzer_extra_arguments = value
+
+    @property
+    def checker_config(self):
+        """
+        Configuration of the analyzers' checkers.
+        """
+        return self.__checker_config
+
+    @checker_config.setter
+    def checker_config(self, value):
+        """
+        Configuration of the analyzers' checkers.
+        """
+        self.__checker_config = value
