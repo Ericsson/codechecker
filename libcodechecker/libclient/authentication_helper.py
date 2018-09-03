@@ -12,8 +12,6 @@ from __future__ import division
 
 from thrift.transport import THttpClient
 from thrift.protocol import TJSONProtocol
-from thrift.protocol.TProtocol import TProtocolException
-from thrift.Thrift import TApplicationException
 
 from Authentication_v6 import codeCheckerAuthentication
 

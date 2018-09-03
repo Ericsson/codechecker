@@ -252,7 +252,6 @@ function (declare, lang, ItemFileWriteStore, dom, Deferred, all, Memory,
       var item = this.getItem(evt.rowIndex);
 
       var filter = this.bugFilterView;
-      var runNameFilter = filter._runBaseLineFilter;
       var severityFilter = filter._severityFilter;
 
        // Clear the filters.
@@ -300,7 +299,7 @@ function (declare, lang, ItemFileWriteStore, dom, Deferred, all, Memory,
 
       CC_SERVICE.getSeverityCounts(runIds, reportFilter, null,
       function (res) {
-        for (key in res) {
+        for (var key in res) {
           that.store.newItem({
             id : key,
             severity : key,

@@ -547,8 +547,6 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
       this.loadBugStoreData();
 
       topic.publish("hooks/report/Opened", this.reportData);
-      var that = this;
-
     },
 
     /**
@@ -623,8 +621,6 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
     onClick : function (item) {
       if (!item.isLeaf)
         return;
-
-      var that = this;
 
       if (item.bugPathEvent) {
         var fileId = item.bugPathEvent.fileId;

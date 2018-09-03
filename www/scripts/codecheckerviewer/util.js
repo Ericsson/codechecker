@@ -186,8 +186,7 @@ function (locale, dom, style, json) {
           hour   = minute * 60,
           day    = hour * 24,
           week   = day * 7,
-          month  = day * 30,
-          year   = day * 365;
+          month  = day * 30;
 
       var fuzzy;
 
@@ -313,9 +312,10 @@ function (locale, dom, style, json) {
       var avatar = dom.create('div', { class : 'avatar'});
       style.set(avatar, 'background-color', this.strToColor(name));
 
-      var avatarLabel = name.charAt(0).toUpperCase();
-      var avatarContent = dom.create('div', {
-        class : 'avatar-content', innerHTML: avatarLabel }, avatar);
+      dom.create('div', {
+        class : 'avatar-content',
+        innerHTML: name.charAt(0).toUpperCase()
+      }, avatar);
 
       return avatar;
     },
@@ -369,7 +369,7 @@ function (locale, dom, style, json) {
 
       //--- Review comment ---//
 
-      var message = dom.create('span', {
+      dom.create('span', {
         class : 'time',
         innerHTML: review.comment.replace(/(?:\r\n|\r|\n)/g, '<br />')
       }, content);

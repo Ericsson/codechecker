@@ -14,7 +14,7 @@ function (declare, Tree) {
 
   return declare(Tree, {
     _createTreeNode : function (args) {
-      node = new HtmlTreeNode(args);
+      var node = new HtmlTreeNode(args);
 
       if (args.item.backgroundColor) {
         node.domNode.style.backgroundColor = args.item.backgroundColor;

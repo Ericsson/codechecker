@@ -61,7 +61,7 @@ function (declare, dom, topic, Dialog, Standby, ContentPane, hashHelper, util) {
         var runFilter = new CC_OBJECTS.RunFilter();
         runFilter.names = runNames;
 
-        var runData = CC_SERVICE.getRunData(runFilter, function (runData) {
+        CC_SERVICE.getRunData(runFilter, function (runData) {
           var runIds = runData.map(function (run) { return run.runId; });
           that.getRunHistory(runIds);
         });
@@ -89,11 +89,6 @@ function (declare, dom, topic, Dialog, Standby, ContentPane, hashHelper, util) {
 
         historyGroupByDate[groupDate].push(data);
       });
-
-      var filter = this.bugFilterView;
-      var dateFilter = filter._detectionDateFilter;
-      var dsFilter = filter._detectionStatusFilter;
-      var runFilter = filter._runBaseLineFilter;
 
       Object.keys(historyGroupByDate).forEach(function (key) {
         var group = dom.create('div', { class : 'history-group' }, that.domNode);
@@ -130,7 +125,7 @@ function (declare, dom, topic, Dialog, Standby, ContentPane, hashHelper, util) {
           dom.create('span', { class : 'user', innerHTML : data.user }, userWrapper);
 
           if (data.checkCommand)
-            var checkCommand = dom.create('span', {
+            dom.create('span', {
               class : 'check-command link',
               innerHTML : 'Check command',
               onclick : function () {

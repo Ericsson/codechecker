@@ -24,14 +24,6 @@ function (declare, cookie, topic, Lightbox, Dialog, Button, BorderContainer,
   ContentPane, TabContainer, CheckerStatistics, hashHelper, HeaderPane,
   ListOfBugs, ListOfRuns, util) {
 
-  var runDataList = null;
-
-  function findRunData(runName) {
-    return util.findInArray(runDataList, function (runData) {
-      return runData.name === runName;
-    });
-  }
-
   function initByUrl() {
     var state = hashHelper.getValues();
 
@@ -134,8 +126,7 @@ function (declare, cookie, topic, Lightbox, Dialog, Button, BorderContainer,
     var listOfRuns = new ListOfRuns({
       title : 'Runs',
       iconClass : 'customIcon run-name',
-      onLoaded : function (runDataParam) {
-        runDataList = runDataParam;
+      onLoaded : function () {
         initByUrl();
       },
       onShow : function () {
@@ -232,8 +223,6 @@ function (declare, cookie, topic, Lightbox, Dialog, Button, BorderContainer,
         docDialog.show();
       });
     });
-
-    var reviewCommentDialog = new Dialog();
 
     topic.subscribe('showReviewComment', function (reviewData) {
       if (reviewData.author) {
