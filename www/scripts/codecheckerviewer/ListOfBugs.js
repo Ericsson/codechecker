@@ -392,6 +392,10 @@ function (declare, dom, style, Deferred, ObjectStore, Store, QueryResults,
           } else {
             this._showInProgress = false;
           }
+
+          if (that._grid.rowCount === 0)
+            // Call the notify explicitly to initalize grid filters.
+            that._grid.notify();
         }
       });
 
@@ -410,9 +414,6 @@ function (declare, dom, style, Deferred, ObjectStore, Store, QueryResults,
       });
       this._grid.set('bugFilterView', this._bugFilterView);
       this._bugFilterView.register(this._grid);
-
-      // Call the notify explicitly to initalize grid filters.
-      this._grid.notify();
 
       //--- Run history ---//
 
