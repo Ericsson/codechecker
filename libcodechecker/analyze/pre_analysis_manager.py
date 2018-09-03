@@ -149,7 +149,7 @@ def pre_analyze(params):
 
 
 def run_pre_analysis(actions, context, analyzer_config_map,
-                     jobs, skip_handler, ctu_data, statistics_data):
+                     jobs, skip_handler, ctu_data, statistics_data, manager):
     """
     Run multiple pre analysis jobs before the actual analysis.
     """
@@ -162,6 +162,7 @@ def run_pre_analysis(actions, context, analyzer_config_map,
     def signal_handler(*arg, **kwarg):
         try:
             pool.terminate()
+            manager.shutdown()
         finally:
             sys.exit(1)
 
