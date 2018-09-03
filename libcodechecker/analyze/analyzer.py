@@ -190,6 +190,25 @@ def perform_analysis(args, context, actions, metadata):
         statistics_data = manager.dict({'stats_out_dir':
                                         args.stats_output})
 
+    if 'stats_min_sample_count' in args and statistics_data:
+        if args.stats_min_sample_count > 1:
+            statistics_data['stats_min_sample_count'] =\
+                args.stats_min_sample_count
+        else:
+            LOG.error("stats_min_sample_count"
+                      "must be greater than 1.")
+            return
+
+    if 'stats_relevance_threshold' in args and statistics_data:
+        if (args.stats_relevance_threshold < 1 and
+                args.stats_relevance_threshold > 0):
+            statistics_data['stats_relevance_threshold'] =\
+                args.stats_relevance_threshold
+        else:
+            LOG.error("stats-relevance-threshold must be"
+                      " greater than 0 and smaller than 1.")
+            return
+
     skip_handler = __get_skip_handler(args)
     if ctu_collect or statistics_data:
         ctu_data = None

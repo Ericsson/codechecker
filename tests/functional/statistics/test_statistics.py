@@ -100,6 +100,34 @@ class TestSkeleton(unittest.TestCase):
         self.assertIn('SpecialReturn.yaml', stat_files)
         self.assertIn('UncheckedReturn.yaml', stat_files)
 
+    def test_stats_collect_params(self):
+        """
+        Testing collection parameters
+        """
+        if not self.stats_capable:
+            self.skipTest(NO_STATISTICS_MESSAGE)
+
+        test_project_path = self._testproject_data['project_path']
+        stats_dir = os.path.join(test_project_path, 'stats')
+        cmd = [self._codechecker_cmd, 'analyze', '--stats-collect', stats_dir,
+               'compile_command.json',
+               '--stats-min-sample-count', '10',
+               '--stats-relevance-threshold', '0.8',
+               '-o', 'reports']
+        output, err = call_command(cmd, cwd=test_project_path, env=self.env)
+        print(output)
+        print(err)
+        analyze_msg = "Starting static analysis"
+        self.assertNotIn(analyze_msg, output)
+        stat_files = os.listdir(stats_dir)
+        print(stat_files)
+        self.assertIn('SpecialReturn.yaml', stat_files)
+        self.assertIn('UncheckedReturn.yaml', stat_files)
+        with open(os.path.join(stats_dir,
+                               'UncheckedReturn.yaml'), 'r') as statfile:
+            unchecked_stats = statfile.read()
+        self.assertIn("c:@F@readFromFile#*1C#*C#", unchecked_stats)
+
     def test_stats_use(self):
         """
         Use the already collected statistics for the analysis.
