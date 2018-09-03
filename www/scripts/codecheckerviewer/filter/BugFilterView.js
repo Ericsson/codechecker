@@ -108,15 +108,6 @@ function (declare, lang, Deferred, domClass, dom, domStyle, topic,
       //--- Clear all filter button ---//
 
       this._topBarPane = dom.create('div', { class : 'top-bar'}, this.domNode);
-      this._removeAllButton = new Button({
-        class : 'remove-all-btn',
-        label : 'Remove Filtered Reports',
-        onClick : function () {
-          that._removeDialog.show();
-        }
-      });
-      dom.place(this._removeAllButton.domNode, this._topBarPane);
-
       this._clearAllButton = new Button({
         class   : 'clear-all-btn',
         label   : 'Clear All Filters',
@@ -129,7 +120,6 @@ function (declare, lang, Deferred, domClass, dom, domStyle, topic,
 
       this._removeDialog = new ConfirmDialog({
         title     : 'Remove filtered results',
-        content   : 'Are you sure you want to remove all filtered results?',
         handleFailure : function (message) {
           new Dialog({
             title : 'Failure!',
@@ -495,6 +485,33 @@ function (declare, lang, Deferred, domClass, dom, domStyle, topic,
       });
       this.register(this._checkerMessageFilter);
       this.addChild(this._checkerMessageFilter);
+
+      var hasStore = CC_AUTH_SERVICE.hasPermission(
+        Permission.PRODUCT_STORE, util.createPermissionParams({
+          productID : CURRENT_PRODUCT.id
+        }));
+
+      //--- Footer bar ---//
+
+      if (hasStore) {
+        this._footerBarPane = dom.create('div', {
+          class : 'footer-bar'
+        }, this.domNode);
+
+        this._removeAllButton = new Button({
+          class : 'remove-all-btn',
+          label : 'Remove Filtered Reports',
+          onClick : function () {
+            var count = that._reportCount.getReportCount();
+            var content = 'Are you sure you want to remove all filtered '
+                        + 'results?  <b class="error">' + count + '</b> '
+                        + 'report(s) will be removed!';
+            that._removeDialog.set('content', content);
+            that._removeDialog.show();
+          }
+        });
+        dom.place(this._removeAllButton.domNode, this._footerBarPane);
+      }
 
       // Select initial base line and new check values which come from the
       // constructor.

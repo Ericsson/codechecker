@@ -14,6 +14,10 @@ html, body {
   display: none !important;
 }
 
+.error {
+  color: #e92625;
+}
+
 #mainLayout {
   height: 100%;
 }

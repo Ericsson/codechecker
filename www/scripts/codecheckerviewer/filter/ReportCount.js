@@ -10,6 +10,10 @@ define([
   'codechecker/filter/FilterBase'],
 function (dom, declare, FilterBase) {
   return declare(FilterBase, {
+    constructor : function () {
+      this._reportCount = 0;
+    },
+
     postCreate : function () {
       var wrapper = dom.create('span', {
         class : 'report-count-wrapper'
@@ -17,10 +21,19 @@ function (dom, declare, FilterBase) {
 
       dom.create('i', { class : 'customIcon bug' }, wrapper);
 
-      this._reportCount = dom.create('span', {
+      this._reportCountWrapper = dom.create('span', {
         class : 'count',
-        innerHTML : 0
+        innerHTML : this._reportCount
       }, wrapper);
+    },
+
+    getReportCount : function () {
+      return this._reportCount;
+    },
+
+    setReportCount : function (count) {
+      this._reportCount = count;
+      this._reportCountWrapper.innerHTML = count;
     },
 
     notify : function () {
@@ -31,7 +44,7 @@ function (dom, declare, FilterBase) {
       var that = this;
       CC_SERVICE.getRunResultCount(runIds, reportFilter, cmpData,
       function (count) {
-        that._reportCount.innerHTML = count;
+        that.setReportCount(count);
       });
     }
   });
