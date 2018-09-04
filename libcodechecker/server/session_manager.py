@@ -163,6 +163,9 @@ class SessionManager:
         self.__max_run_count = scfg_dict['max_run_count'] \
             if 'max_run_count' in scfg_dict else None
 
+        self.__report_dir_store = None
+
+        self.__store_config = scfg_dict.get('store', {})
         self.__auth_config = scfg_dict['authentication']
 
         if force_auth:
@@ -510,6 +513,30 @@ class SessionManager:
         we can upload unlimited number of runs.
         """
         return self.__max_run_count
+
+    def get_analysis_statistics_dir(self):
+        """
+        Get directory where the compressed analysis statistics files should be
+        stored. If the value is None it means we do not want to store
+        analysis statistics information on the server.
+        """
+
+        return self.__store_config.get('analysis_statistics_dir')
+
+    def get_failure_zip_size(self):
+        """
+        Maximum size of the collected failed zips which can be store on the
+        server.
+        """
+        limit = self.__store_config.get('limit', {})
+        return limit.get('failure_zip_size')
+
+    def get_compilation_database_size(self):
+        """
+        Limit of the compilation database file size.
+        """
+        limit = self.__store_config.get('limit', {})
+        return limit.get('compilation_database_size')
 
     def __get_local_session_from_db(self, token):
         """
