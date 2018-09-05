@@ -213,28 +213,32 @@ def process_report_filter(session, report_filter):
 
     if report_filter.componentNames is not None:
         OR = []
+
         for component_name in report_filter.componentNames:
             skip, include = get_component_values(session, component_name)
 
             skip_q, include_q = None, None
-            if skip:
-                and_q = [not_(File.filepath.ilike(conv(fp))) for fp in skip]
-                skip_q = select([File.id]).where(and_(*and_q))
 
             if include:
-                and_q = [File.filepath.ilike(conv(fp)) for fp in include]
+                and_q = [File.filepath.like(conv(fp)) for fp in include]
                 include_q = select([File.id]).where(or_(*and_q))
+
+            if skip:
+                and_q = [(File.filepath.like(conv(fp))) for fp in skip]
+                skip_q = select([File.id]).where(or_(*and_q))
 
             file_ids = []
             if skip and include:
-                skip_q = skip_q.union(include_q).alias('component')
+                skip_q = include_q.except_(skip_q).alias('component')
                 file_ids = session.query(skip_q) \
                     .distinct() \
                     .all()
-            elif skip:
-                file_ids = session.query(skip_q.alias('skip')).all()
             elif include:
                 file_ids = session.query(include_q.alias('include')).all()
+            elif skip:
+                and_q = [not_(File.filepath.like(conv(fp))) for fp in skip]
+                skip_q = select([File.id]).where(and_(*and_q))
+                file_ids = session.query(skip_q.alias('skip')).all()
 
             OR.append(or_(File.id.in_([f_id[0] for f_id in file_ids])))
         AND.append(or_(*OR))

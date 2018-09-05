@@ -97,14 +97,12 @@ class TestComponent(unittest.TestCase):
             {
                 'name': 'complex1',
                 'value': '\n'.join(['+*/divide_zero.cpp',
-                                    '-*/call_and_message.cpp',
-                                    '-*'])
+                                    '-*/call_and_message.cpp'])
             },
             {
                 'name': 'complex2',
                 'value': '\n'.join(['+*/null_dereference.cpp',
-                                    '-*/new_delete.cpp',
-                                    '-*'])
+                                    '-*/new_delete.cpp'])
             },
             {
                 'name': 'exclude_all',
@@ -188,11 +186,12 @@ class TestComponent(unittest.TestCase):
                               r.checkedFile.endswith('new_delete.cpp')]
         self.assertEqual(len(new_delete_reports), 0)
 
-        # Check that reports which can be found in file what the source
-        # component does not includes or excludes are in the filtered results.
+        # No reports should be listed which is not in an inclusion or if
+        # it is an exclusion filter.
+
         divide_zero_reports = [r for r in run_results if
                                r.checkedFile.endswith('null_dereference.cpp')]
-        self.assertNotEqual(len(divide_zero_reports), 0)
+        self.assertEqual(len(divide_zero_reports), 0)
 
         self.__remove_source_component(test_component['name'])
 
@@ -237,11 +236,11 @@ class TestComponent(unittest.TestCase):
                                 r.checkedFile.endswith('call_and_message.cpp')]
         self.assertEqual(len(call_and_msg_reports), 0)
 
-        # Check that reports which can be found in file what the source
-        # component does not includes or excludes are in the filtered results.
+        # No reports should be listed which is not in an inclusion or if
+        # it is in an exclusion filter.
         divide_zero_reports = [r for r in run_results if
                                r.checkedFile.endswith('path_begin.cpp')]
-        self.assertNotEqual(len(divide_zero_reports), 0)
+        self.assertEqual(len(divide_zero_reports), 0)
 
         self.__remove_source_component(test_component['name'])
 
@@ -263,6 +262,7 @@ class TestComponent(unittest.TestCase):
 
         r_filter = ReportFilter(componentNames=[test_component1['name'],
                                                 test_component2['name']])
+
         run_results = self._cc_client.getRunResults(None,
                                                     500,
                                                     0,
