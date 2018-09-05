@@ -150,26 +150,26 @@ class LogParserTest(unittest.TestCase):
         """
         Compiler preprocessor actions should be omitted.
         """
-        preprocessor_actions = StringIO('''[
+        preprocessor_actions = [
             {"directory": "/tmp",
-            "command": "g++ /tmp/a.cpp -c /tmp/a.cpp",
-            "file": "/tmp/a.cpp" },
+             "command": "g++ /tmp/a.cpp -c /tmp/a.cpp",
+             "file": "/tmp/a.cpp"},
             {"directory": "/tmp",
-            "command": "g++ /tmp/a.cpp -E /tmp/a.cpp",
-            "file": "/tmp/a.cpp" },
+             "command": "g++ /tmp/a.cpp -E /tmp/a.cpp",
+             "file": "/tmp/a.cpp"},
             {"directory": "/tmp",
-            "command": "g++ /tmp/a.cpp -MT /tmp/a.cpp",
-            "file": "/tmp/a.cpp" },
+             "command": "g++ /tmp/a.cpp -MT /tmp/a.cpp",
+             "file": "/tmp/a.cpp"},
             {"directory": "/tmp",
-            "command": "g++ /tmp/a.cpp -MM /tmp/a.cpp",
-            "file": "/tmp/a.cpp" },
+             "command": "g++ /tmp/a.cpp -MM /tmp/a.cpp",
+             "file": "/tmp/a.cpp"},
             {"directory": "/tmp",
-            "command": "g++ /tmp/a.cpp -MF /tmp/a.cpp",
-            "file": "/tmp/a.cpp" },
+             "command": "g++ /tmp/a.cpp -MF /tmp/a.cpp",
+             "file": "/tmp/a.cpp"},
             {"directory": "/tmp",
-            "command": "g++ /tmp/a.cpp -M /tmp/a.cpp",
-            "file": "/tmp/a.cpp" }]
-        ''')
+             "command": "g++ /tmp/a.cpp -M /tmp/a.cpp",
+             "file": "/tmp/a.cpp"}]
+
         build_actions = \
             log_parser.parse_compile_commands_json(preprocessor_actions,
                                                    ParseLogOptions())
@@ -182,11 +182,10 @@ class LogParserTest(unittest.TestCase):
         """ Keep the compile command if -MD is set.
         Dependency generation is done as a side effect of the compilation.
         """
-        preprocessor_actions = StringIO('''[
+        preprocessor_actions = [
             {"directory": "/tmp",
-            "command": "g++ /tmp/a.cpp -MD /tmp/a.cpp",
-            "file": "/tmp/a.cpp" }]
-        ''')
+             "command": "g++ /tmp/a.cpp -MD /tmp/a.cpp",
+             "file": "/tmp/a.cpp"}]
 
         build_actions = \
             log_parser.parse_compile_commands_json(preprocessor_actions,
@@ -197,14 +196,13 @@ class LogParserTest(unittest.TestCase):
     def test_omit_dep_with_e(self):
         """ Skip the compile command if -MD is set together with -E. """
 
-        preprocessor_actions = StringIO('''[
+        preprocessor_actions = [
             {"directory": "/tmp",
-            "command": "g++ /tmp/a.cpp -MD -E /tmp/a.cpp",
-            "file": "/tmp/a.cpp" },
+             "command": "g++ /tmp/a.cpp -MD -E /tmp/a.cpp",
+             "file": "/tmp/a.cpp"},
             {"directory": "/tmp",
-            "command": "g++ /tmp/a.cpp -E -MD /tmp/a.cpp",
-            "file": "/tmp/a.cpp" } ]
-        ''')
+             "command": "g++ /tmp/a.cpp -E -MD /tmp/a.cpp",
+             "file": "/tmp/a.cpp"}]
 
         build_actions = \
             log_parser.parse_compile_commands_json(preprocessor_actions,

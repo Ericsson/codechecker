@@ -2322,8 +2322,8 @@ class ThriftRequestHandler(object):
                         LOG.error("Failed to open skip file")
                         LOG.error(err)
 
-                with open(content_hash_file) as chash_file:
-                    filename_to_hash = json.load(chash_file)
+                filename_to_hash = util.load_json_or_empty(content_hash_file,
+                                                           {})
 
                 file_path_to_id = self.__store_source_files(source_root,
                                                             filename_to_hash,

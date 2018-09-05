@@ -74,8 +74,7 @@ class BuildCmdTestNose(unittest.TestCase):
                        "command": buildcmd + " -c " + self.src_file_path,
                        "file": self.src_file_path}
 
-        compile_cmds = [compile_cmd]
-        return json.dumps(compile_cmds)
+        return [compile_cmd]
 
     def __get_comp_actions(self, compile_cmd):
         """
@@ -83,9 +82,8 @@ class BuildCmdTestNose(unittest.TestCase):
         to return the compilation actions.
         """
         comp_cmd_json = self.__get_cmp_json(compile_cmd)
-        with closing(StringIO(comp_cmd_json)) as text:
-            return log_parser.parse_compile_commands_json(text,
-                                                          ParseLogOptions())
+        return log_parser.parse_compile_commands_json(comp_cmd_json,
+                                                      ParseLogOptions())
 
     def test_buildmgr(self):
         """

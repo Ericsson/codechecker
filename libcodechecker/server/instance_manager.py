@@ -14,28 +14,31 @@ from __future__ import absolute_import
 import getpass
 import json
 import os
-import portalocker
 import psutil
 import socket
 import stat
 
+import portalocker
 
-def __getInstanceDescriptorPath(folder=None):
+from libcodechecker.util import load_json_or_empty
+
+
+def __get_instance_descriptor_path(folder=None):
     if not folder:
         folder = os.path.expanduser("~")
 
     return os.path.join(folder, ".codechecker.instances.json")
 
 
-def __makeInstanceDescriptorFile(folder=None):
-    descriptor = __getInstanceDescriptorPath(folder)
+def __make_instance_descriptor_file(folder=None):
+    descriptor = __get_instance_descriptor_path(folder)
     if not os.path.exists(descriptor):
         with open(descriptor, 'w') as f:
             json.dump([], f)
         os.chmod(descriptor, stat.S_IRUSR | stat.S_IWUSR)
 
 
-def __checkInstance(hostname, pid):
+def __check_instance(hostname, pid):
     """Check if the given process on the system is a valid, running CodeChecker
     for the current user."""
 
@@ -55,32 +58,34 @@ def __checkInstance(hostname, pid):
         return False
 
 
-def __rewriteInstanceFile(append, remove, folder=None):
-    """This helper method reads the user's instance descriptor and manages it
-    eliminating dead records, appending new ones and reserialising the file."""
+def __rewrite_instance_file(append, remove, folder=None):
+    """
+    This helper method reads the user's instance descriptor and manages it
+    eliminating dead records, appending new ones and re-serialising the file.
+    """
+    __make_instance_descriptor_file(folder)
 
-    __makeInstanceDescriptorFile(folder)
-    with open(__getInstanceDescriptorPath(folder), 'r+') as f:
-        portalocker.lock(f, portalocker.LOCK_EX)
+    append_pids = [i['pid'] for i in append]
 
-        # After reading, check every instance if they are still valid and
-        # make sure PID does not collide accidentally with the
-        # to-be-registered instances, if any exists in the append list as it
-        # would cause duplication.
-        #
-        # Also, we remove the records to the given PIDs, if any exists.
-        append_pids = [i['pid'] for i in append]
-        instances = [i for i in json.load(f)
-                     if i['pid'] not in append_pids and
-                     (i['hostname'] + ":" + str(i['pid'])) not in remove and
-                     __checkInstance(i['hostname'], i['pid'])]
+    # After reading, check every instance if they are still valid and
+    # make sure PID does not collide accidentally with the
+    # to-be-registered instances, if any exists in the append list as it
+    # would cause duplication.
+    #
+    # Also, we remove the records to the given PIDs, if any exists.
+    instances = [i for i in get_instances(folder)
+                 if i['pid'] not in append_pids and
+                 (i['hostname'] + ":" + str(i['pid'])) not in remove]
+
+    with open(__get_instance_descriptor_path(folder), 'w') as instance_file:
+        portalocker.lock(instance_file, portalocker.LOCK_EX)
 
         instances = instances + append
 
-        f.seek(0)
-        f.truncate()
-        json.dump(instances, f, indent=2)
-        portalocker.unlock(f)
+        instance_file.seek(0)
+        instance_file.truncate()
+        json.dump(instances, instance_file, indent=2)
+        portalocker.unlock(instance_file)
 
 
 def register(pid, workspace, port, folder=None):
@@ -89,12 +94,12 @@ def register(pid, workspace, port, folder=None):
     descriptor.
     """
 
-    __rewriteInstanceFile([{"pid": pid,
-                            "hostname": socket.gethostname(),
-                            "workspace": workspace,
-                            "port": port}],
-                          [],
-                          folder)
+    __rewrite_instance_file([{"pid": pid,
+                              "hostname": socket.gethostname(),
+                              "workspace": workspace,
+                              "port": port}],
+                            [],
+                            folder)
 
 
 def unregister(pid, folder=None):
@@ -103,7 +108,9 @@ def unregister(pid, folder=None):
     descriptor.
     """
 
-    __rewriteInstanceFile([], [socket.gethostname() + ":" + str(pid)], folder)
+    __rewrite_instance_file([],
+                            [socket.gethostname() + ":" + str(pid)],
+                            folder)
 
 
 def get_instances(folder=None):
@@ -111,14 +118,7 @@ def get_instances(folder=None):
 
     # This method does NOT write the descriptor file.
 
-    descriptor = __getInstanceDescriptorPath(folder)
-    instances = []
-    if os.path.exists(descriptor):
-        with open(descriptor, 'r') as f:
-            portalocker.lock(f, portalocker.LOCK_SH)
-            instances = [i for i in json.load(f) if __checkInstance(
-                i['hostname'],
-                i['pid'])]
-            portalocker.unlock(f)
+    descriptor = __get_instance_descriptor_path(folder)
+    instances = load_json_or_empty(descriptor, {}, lock=True)
 
-    return instances
+    return [i for i in instances if __check_instance(i['hostname'], i['pid'])]
