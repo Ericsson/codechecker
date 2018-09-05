@@ -329,7 +329,8 @@ def addReport(session,
                         main_section['location']['col'],
                         severity,
                         detection_status,
-                        detection_time)
+                        detection_time,
+                        len(events))
 
         session.add(report)
         session.flush()
