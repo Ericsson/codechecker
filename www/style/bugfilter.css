@@ -34,6 +34,11 @@
   display: block;
 }
 
+.bug-filters .remove-all-btn {
+  margin: 10px 5px;
+  float: right;
+}
+
 .bug-filters .clear-all-btn > .dijitButtonNode,
 .bug-filters .remove-all-btn > .dijitButtonNode {
   background-color: #fff;
