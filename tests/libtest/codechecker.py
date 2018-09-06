@@ -418,6 +418,20 @@ def start_or_get_server():
     }
 
 
+def wait_for_server_start(stdoutfile):
+    print("Waiting for server start reading file " + stdoutfile)
+    n = 0
+    while (True):
+        if os.path.isfile(stdoutfile):
+            with open(stdoutfile) as f:
+                out = f.read()
+                if "Server waiting for client requests" in out:
+                    return
+        time.sleep(1)
+        n += 1
+        print("Waiting for server to start for " + str(n) + " seconds...")
+
+
 # This server uses multiple custom servers, which are brought up here
 # and torn down by the package itself --- it does not connect to the
 # test run's "master" server.
@@ -425,7 +439,14 @@ def start_server(codechecker_cfg, event, server_args=None):
     """Start the CodeChecker server."""
     def start_server_proc(event, server_cmd, checking_env):
         """Target function for starting the CodeChecker server."""
-        proc = subprocess.Popen(server_cmd, env=checking_env)
+        # Redirecting stdout to a file
+        server_stdout = os.path.join(codechecker_cfg['workspace'],
+                                     str(os.getpid()) + ".out")
+        print("Redirecting server output to " + server_stdout)
+        server_out = open(server_stdout, "w")
+        proc = subprocess.Popen(server_cmd, env=checking_env,
+                                stdout=server_out,
+                                stderr=server_out)
 
         # Blocking termination until event is set.
         event.wait()
@@ -445,9 +466,9 @@ def start_server(codechecker_cfg, event, server_args=None):
         args=(event, server_cmd, codechecker_cfg['check_env']))
 
     server_proc.start()
-
-    # Wait for server to start and connect to database.
-    time.sleep(5)
+    server_output_file = os.path.join(codechecker_cfg['workspace'],
+                                      str(server_proc.pid) + ".out")
+    wait_for_server_start(server_output_file)
 
     return {
         'viewer_host': 'localhost',
