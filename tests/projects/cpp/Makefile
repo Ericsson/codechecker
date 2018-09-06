@@ -12,7 +12,7 @@ all:
 	$(CXX) -c path_begin2.cpp -Wno-all -Wno-extra
 	$(CXX) -c -DVAR=2 path_begin.cpp -Wno-all -Wno-extra
 	$(CXX) -c -DVAR=1 path_begin.cpp -Wno-all -Wno-extra
-	$(CXX) -c statistical_checkers.c -Wno-all -Wno-extra
+	$(CC) -c statistical_checkers.c -Wno-all -Wno-extra
 clean:
 	rm -f call_and_message.o
 	rm -f divide_zero.o
