@@ -343,6 +343,32 @@ def add_arguments_to_parser(parser):
                                     "the statistical checkers. "
                                     "No need to enable them explicitly.")
 
+        stat_opts.add_argument('--stats-min-sample-count',
+                               action='store',
+                               default="10",
+                               type=int,
+                               dest='stats_min_sample_count',
+                               help="EXPERIMENTAL feature. "
+                                    "Minimum number of samples (function call"
+                                    " occurrences) to be collected"
+                                    " for a statistics to be relevant "
+                                    "'<MIN-SAMPLE-COUNT>'.")
+
+        stat_opts.add_argument('--stats-relevance-threshold',
+                               action='store',
+                               default="0.85",
+                               type=float,
+                               dest='stats_relevance_threshold',
+                               help="EXPERIMENTAL feature. "
+                                    "The minimum ratio of calls of function "
+                                    "f that must have a certain property "
+                                    "property to consider it true for that "
+                                    "function (calculated as calls "
+                                    "with a property/all calls)."
+                                    " CodeChecker will warn for"
+                                    " calls of f do not have that property."
+                                    "'<RELEVANCE_THRESHOLD>'.")
+
     checkers_opts = parser.add_argument_group(
         "checker configuration",
         """

@@ -353,6 +353,30 @@ used to generate a log file on the fly.""")
                                     "the statistical checkers. "
                                     "No need to enable them explicitly.")
 
+        stat_opts.add_argument('--stats-min-sample-count',
+                               action='store',
+                               default="10",
+                               type=int,
+                               dest='stats_min_sample_count',
+                               help="EXPERIMENTAL feature. "
+                                    "Minimum number of samples (function call"
+                                    " occurrences) to be collected"
+                                    " for a statistics to be relevant.")
+
+        stat_opts.add_argument('--stats-relevance-threshold',
+                               action='store',
+                               default="0.85",
+                               type=float,
+                               dest='stats_relevance_threshold',
+                               help="EXPERIMENTAL feature. "
+                                    "The minimum ratio of calls of function "
+                                    "f that must have a certain property "
+                                    "property to consider it true for that "
+                                    "function (calculated as calls "
+                                    "with a property/all calls)."
+                                    " CodeChecker will warn for"
+                                    " calls of f do not have that property.")
+
     checkers_opts = parser.add_argument_group(
         "checker configuration",
         """
@@ -520,6 +544,8 @@ def main(args):
                           'stats_output',
                           'stats_dir',
                           'stats_enabled',
+                          'stats_relevance_threshold',
+                          'stats_min_sample_count',
                           'enable_all',
                           'ordered_checkers',  # --enable and --disable.
                           'timeout'

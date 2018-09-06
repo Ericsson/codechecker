@@ -44,12 +44,8 @@ def build_stat_coll_cmd(action, config, source, environ):
                     "-Xclang", "-load",
                     "-Xclang", plugin])
 
-    # Enable text only output for later parsing.
-    analyzer_mode = 'text'
     cmd.extend(['-Xclang',
-                '-analyzer-opt-analyze-headers',
-                '-Xclang',
-                '-analyzer-output=' + analyzer_mode])
+                '-analyzer-opt-analyze-headers'])
 
     cmd.append(config.analyzer_extra_arguments)
     cmd.extend(action.analyzer_options)
@@ -97,13 +93,18 @@ class SpecialReturnValueCollector(object):
     # Checker name which runs the analysis.
     checker_analyze = 'statisticsbased.SpecialReturnValue'
 
-    def __init__(self):
+    def __init__(self, stats_min_sample_count,
+                 stats_relevance_threshold):
+
+        self.stats_min_sample_count = stats_min_sample_count
+        self.stats_relevance_threshold = stats_relevance_threshold
         # Matching these lines
         """"/.../x.c:551:12: warning:
             Special Return Value:/.../x.c:551:12,parsedate,0,0
         """
         ptrn = \
-            r'.*Special Return Value:.*:[0-9]*:[0-9]*.*,(.*),([0,1]),([0,1])'
+            r'.*warning: Special Return Value:'\
+            '.*:[0-9]*:[0-9]*.*,(.*),([0,1]),([0,1])'
         self.special_ret_val_regexp = re.compile(ptrn)
 
         # collected statistics
@@ -153,28 +154,23 @@ class SpecialReturnValueCollector(object):
             self.stats['nof_negative'][func] += int(ret_negative)
             self.stats['nof_null'][func] += int(ret_null)
 
-    def filter_stats(self, threshold=0.85, min_occurence_count=1):
+    def filter_stats(self):
 
         neg = []
         null = []
         stats = self.stats
         total = stats.get('total')
 
-        if threshold > 1:
-            LOG.warning("Statistics threshold should be under 1")
-
         for key in sorted(stats.get('total').keys()):
-
             negative_ratio = stats['nof_negative'][key]/stats['total'][key]
-            if (threshold < negative_ratio < 1 and
-                    total[key] >= min_occurence_count):
+            if (self.stats_relevance_threshold < negative_ratio < 1 and
+                    total[key] >= self.stats_min_sample_count):
                 neg.append(key)
 
             null_ratio = stats['nof_null'][key]/stats['total'][key]
-            if (threshold < null_ratio < 1 and
-                    total[key] >= min_occurence_count):
+            if (self.stats_relevance_threshold < null_ratio < 1 and
+                    total[key] >= self.stats_min_sample_count):
                 null.append(key)
-
         return neg, null
 
     def get_yaml(self):
@@ -209,8 +205,11 @@ class ReturnValueCollector(object):
     # Checker name which runs the analysis.
     checker_analyze = 'statisticsbased.UncheckedReturnValue'
 
-    def __init__(self):
+    def __init__(self, stats_min_sample_count,
+                 stats_relevance_threshold):
 
+        self.stats_min_sample_count = stats_min_sample_count
+        self.stats_relevance_threshold = stats_relevance_threshold
         # Matching these lines
         """
         /.../x.c:551:12:
@@ -218,7 +217,8 @@ class ReturnValueCollector(object):
         """
 
         self.ret_val_regexp = \
-            re.compile(r'.*Return Value Check:.*:[0-9]*:[0-9]*.*,(.*),([0,1])')
+            re.compile(r'.*warning: Return Value Check:'
+                       '.*:[0-9]*:[0-9]*.*,(.*),([0,1])')
 
         self.stats = {'total': defaultdict(int),
                       'nof_unchecked': defaultdict(int)}
@@ -260,22 +260,19 @@ class ReturnValueCollector(object):
             self.stats['total'][func] += 1
             self.stats['nof_unchecked'][func] += int(checked)
 
-    def filter_stats(self, threshold=0.85, min_occurence_count=1):
+    def filter_stats(self):
         """
         Filter the collected statistics based on the threshold.
         Return a lisf of function names where the return value
         was unchecked above the threshold.
         """
-        if threshold > 1:
-            LOG.warning("Statistics threshold should be under 1")
-
         unchecked_functions = []
         total = self.stats.get('total')
         for key in sorted(total):
             checked_ratio = 1 - \
                     self.stats['nof_unchecked'][key]/self.stats['total'][key]
-            if (threshold < checked_ratio < 1 and
-                    total[key] >= min_occurence_count):
+            if (self.stats_relevance_threshold < checked_ratio < 1 and
+                    self.stats['total'][key] >= self.stats_min_sample_count):
                 unchecked_functions.append(key)
         return unchecked_functions
 
@@ -293,7 +290,8 @@ class ReturnValueCollector(object):
         return stats_yaml.getvalue()
 
 
-def postprocess_stats(clang_output_dir, stats_dir):
+def postprocess_stats(clang_output_dir, stats_dir, stats_min_sample_count,
+                      stats_relevance_threshold):
     """
     Read the clang analyzer outputs where the statistics emitter checkers
     were enabled and collect the statistics.
@@ -326,16 +324,19 @@ def postprocess_stats(clang_output_dir, stats_dir):
     if not len(clang_outs):
         LOG.warning("No output files were found to collect statistics.")
         return
-
-    ret_collector = ReturnValueCollector()
-    special_ret_collector = SpecialReturnValueCollector()
+    ret_collector = ReturnValueCollector(stats_min_sample_count,
+                                         stats_relevance_threshold)
+    special_ret_collector =\
+        SpecialReturnValueCollector(stats_min_sample_count,
+                                    stats_relevance_threshold)
 
     for clang_output in clang_outs:
         with open(clang_output, 'r') as out:
+            clang_output = ""
             for line in out:
+                clang_output += line + "\n"
                 ret_collector.process_line(line)
                 special_ret_collector.process_line(line)
-
     LOG.debug("Collecting statistics finished.")
 
     # Write out statistics.

@@ -216,7 +216,12 @@ def run_pre_analysis(actions, context, analyzer_config_map,
         stats_in = statistics_data.get('stat_tmp_dir')
         stats_out = statistics_data.get('stats_out_dir')
 
-        statistics_collector.postprocess_stats(stats_in, stats_out)
+        statistics_collector.postprocess_stats(stats_in, stats_out,
+                                               statistics_data.get(
+                                                   'stats_min_sample_count'),
+                                               statistics_data.get(
+                                                   'stats_relevance_threshold')
+                                               )
 
         if os.path.exists(stats_in):
             LOG.debug('Cleaning up temporary statistics directory')

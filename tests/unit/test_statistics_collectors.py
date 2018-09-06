@@ -34,7 +34,7 @@ class statistics_collectorsTest(unittest.TestCase):
                       ]
 
         special_ret_collector = \
-            statistics_collector.SpecialReturnValueCollector()
+            statistics_collector.SpecialReturnValueCollector(10, 0.85)
 
         for l in test_input:
             special_ret_collector.process_line(l)
@@ -87,7 +87,7 @@ class statistics_collectorsTest(unittest.TestCase):
                         ]
 
         special_ret_collector = \
-            statistics_collector.SpecialReturnValueCollector()
+            statistics_collector.SpecialReturnValueCollector(10, 0.85)
 
         for l in test_ret_neg:
             special_ret_collector.process_line(l)
@@ -119,7 +119,7 @@ class statistics_collectorsTest(unittest.TestCase):
                         " Return Value Check:/.../x.c:551:12,parsedate,0",
                         ]
 
-        ret_val_collector = statistics_collector.ReturnValueCollector()
+        ret_val_collector = statistics_collector.ReturnValueCollector(10, 0.85)
 
         for l in test_ret_neg:
             ret_val_collector.process_line(l)
@@ -154,7 +154,7 @@ class statistics_collectorsTest(unittest.TestCase):
                         " Return Value Check:/.../x.c:551:12,parsedate,1",
                         ]
 
-        ret_val_collector = statistics_collector.ReturnValueCollector()
+        ret_val_collector = statistics_collector.ReturnValueCollector(10, 0.85)
 
         for l in test_ret_neg:
             ret_val_collector.process_line(l)
