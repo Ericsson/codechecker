@@ -578,6 +578,11 @@ def load_json_or_empty(path, default=None, kind=None, lock=False):
 
             if lock:
                 portalocker.unlock(handle)
+    except IOError as ex:
+        LOG.warning("Failed to open %s file: %s",
+                    kind if kind else 'json',
+                    path)
+        LOG.warning(ex)
     except OSError as ex:
         LOG.warning("Failed to open %s file: %s",
                     kind if kind else 'json',
