@@ -69,14 +69,14 @@ def exc_to_thrift_reqfail(func):
         except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
             # Convert SQLAlchemy exceptions.
             msg = str(alchemy_ex)
-            LOG.error(func_name + ":\n" + msg)
+            LOG.warning("%s:\n%s", func_name, msg)
             raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
                                               msg)
         except shared.ttypes.RequestFailed as rf:
-            LOG.error(rf.message)
+            LOG.warning(rf.message)
             raise
         except Exception as ex:
-            LOG.error(ex.message)
+            LOG.warning(ex.message)
             raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.GENERAL,
                                               ex.message)
 

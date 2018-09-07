@@ -113,9 +113,9 @@ class _Session(object):
                     record.last_access = self.last_access
                     transaction.commit()
             except Exception as e:
-                LOG.error("Couldn't update usage timestamp of {0}"
-                          .format(self.token))
-                LOG.error(str(e))
+                LOG.warning("Couldn't update usage timestamp of {0}"
+                            .format(self.token))
+                LOG.warning(str(e))
             finally:
                 if transaction:
                     transaction.close()
