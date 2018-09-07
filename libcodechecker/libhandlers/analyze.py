@@ -128,16 +128,24 @@ def add_arguments_to_parser(parser):
                         dest="compiler_includes_file",
                         required=False,
                         default=None,
-                        help="Read the compiler includes from the specified "
-                             "file rather than invoke the compiler "
+                        help="DEPRECATED. Read the compiler includes from the "
+                             "specified file rather than invoke the compiler "
                              "executable.")
 
     parser.add_argument('--compiler-target-file',
                         dest="compiler_target_file",
                         required=False,
                         default=None,
-                        help="Read the compiler target from the specified "
-                             "file rather than invoke the compiler "
+                        help="DEPRECATED. Read the compiler target from the "
+                             "specified file rather than invoke the compiler "
+                             "executable.")
+
+    parser.add_argument('--compiler-info-file',
+                        dest="compiler_info_file",
+                        required=False,
+                        default=None,
+                        help="Read the compiler includes and target from the "
+                             "specified file rather than invoke the compiler "
                              "executable.")
 
     parser.add_argument('-t', '--type', '--output-format',
@@ -445,12 +453,19 @@ class ParseLogOptions:
             self.output_path = None
             self.compiler_includes_file = None
             self.compiler_target_file = None
+            self.compiler_info_file = None
         else:
             self.output_path = getattr(args, 'output_path', None)
             self.compiler_includes_file =\
                 getattr(args, 'compiler_includes_file', None)
             self.compiler_target_file =\
                 getattr(args, 'compiler_target_file', None)
+            self.compiler_info_file =\
+                getattr(args, 'compiler_info_file', None)
+
+            if self.compiler_info_file:
+                self.compiler_includes_file = args.compiler_info_file
+                self.compiler_target_file = args.compiler_info_file
 
 
 def main(args):

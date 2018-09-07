@@ -105,11 +105,11 @@ class TestAnalyze(unittest.TestCase):
 
         # Create a compilation database.
         build_log = [{"directory": self.test_workspace,
-                      "command": "gcc -c " + source_file,
+                      "command": "g++ -c " + source_file,
                       "file": source_file
                       },
                      {"directory": self.test_workspace,
-                      "command": "clang -c " + source_file,
+                      "command": "clang++ -c " + source_file,
                       "file": source_file
                       }
                      ]
@@ -139,35 +139,21 @@ class TestAnalyze(unittest.TestCase):
         errcode = process.returncode
         self.assertEquals(errcode, 0)
 
-        from libcodechecker.analyze.log_parser import\
-            compiler_includes_dump_file
-        from libcodechecker.analyze.log_parser import compiler_target_dump_file
-        includes_File = os.path.join(reports_dir, compiler_includes_dump_file)
-        target_File = os.path.join(reports_dir, compiler_target_dump_file)
-        self.assertEquals(os.path.exists(includes_File), True)
-        self.assertEquals(os.path.exists(target_File), True)
-        self.assertNotEqual(os.stat(includes_File).st_size, 0)
-        self.assertNotEqual(os.stat(target_File).st_size, 0)
+        from libcodechecker.analyze.log_parser import compiler_info_dump_file
+        info_File = os.path.join(reports_dir, compiler_info_dump_file)
+        self.assertEquals(os.path.exists(info_File), True)
+        self.assertNotEqual(os.stat(info_File).st_size, 0)
 
         # Test the validity of the json files.
-        with open(includes_File, 'r') as f:
+        with open(info_File, 'r') as f:
             try:
                 data = json.load(f)
                 self.assertEquals(len(data), 2)
-                self.assertTrue("clang" in data)
-                self.assertTrue("gcc" in data)
+                self.assertTrue("clang++" in data)
+                self.assertTrue("g++" in data)
             except ValueError:
                 self.fail("json.load should successfully parse the file %s"
-                          % includes_File)
-        with open(target_File, 'r') as f:
-            try:
-                data = json.load(f)
-                self.assertEquals(len(data), 2)
-                self.assertTrue("clang" in data)
-                self.assertTrue("gcc" in data)
-            except ValueError:
-                self.fail("json.load should successfully parse the file %s"
-                          % target_File)
+                          % info_File)
 
     def test_compiler_includes_file_is_loaded(self):
         '''
@@ -183,7 +169,7 @@ class TestAnalyze(unittest.TestCase):
         # Contents of build log.
         build_log = [
                      {"directory": self.test_workspace,
-                      "command": "clang -c " + source_file,
+                      "command": "clang++ -c " + source_file,
                       "file": source_file
                       }
                      ]
@@ -199,7 +185,7 @@ class TestAnalyze(unittest.TestCase):
         with open(compiler_includes_file, 'w') as source:
             source.write(
                 # Raw string literal, cannot break the line:
-                r"""{"clang": "\"\n#include \"...\" search starts here:\n"""\
+                r"""{"clang++": "\"\n#include \"...\" search starts here:\n"""\
                 r"""#include <...> search starts here:\n"""\
                 r""" /TEST_FAKE_INCLUDE_DIR"}"""
             )
@@ -231,7 +217,7 @@ class TestAnalyze(unittest.TestCase):
         # Contents of build log.
         build_log = [
                      {"directory": self.test_workspace,
-                      "command": "clang -c " + source_file,
+                      "command": "clang++ -c " + source_file,
                       "file": source_file
                       }
                      ]
@@ -247,7 +233,7 @@ class TestAnalyze(unittest.TestCase):
         with open(compiler_target_file, 'w') as source:
             source.write(
                 # Raw string literal, cannot break the line:
-                r"""{"clang": "Target: TEST_FAKE_TARGET\nConfigured with"}"""
+                r"""{"clang++": "Target: TEST_FAKE_TARGET\nConfigured with"}"""
             )
 
         # Create analyze command.
@@ -411,7 +397,7 @@ class TestAnalyze(unittest.TestCase):
 
         # Create a compilation database.
         build_log = [{"directory": self.test_workspace,
-                      "command": "gcc -c " + source_file,
+                      "command": "g++ -c " + source_file,
                       "file": source_file
                       }]
 

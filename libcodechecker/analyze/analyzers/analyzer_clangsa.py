@@ -212,6 +212,11 @@ class ClangSA(analyzer_base.SourceAnalyzer):
 
             analyzer_cmd.extend(self.buildaction.compiler_includes)
 
+            if not next((x for x in analyzer_cmd if x.startswith('-std=') or
+                        x.startswith('--std')),
+                        False):
+                analyzer_cmd.append(self.buildaction.compiler_standard)
+
             analyzer_cmd.append(self.source_file)
 
             return analyzer_cmd

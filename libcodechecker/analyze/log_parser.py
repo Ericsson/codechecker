@@ -18,6 +18,7 @@ import re
 import shlex
 import subprocess
 import sys
+import tempfile
 import traceback
 
 # TODO: This is a cross-subpackage import!
@@ -37,8 +38,12 @@ COMPILE_OPTS_FWD_TO_DEFAULTS_GETTER = frozenset(
     ['^-m(32|64)',
      '^-std=.*'])
 
-compiler_includes_dump_file = "compiler_includes.json"
-compiler_target_dump_file = "compiler_target.json"
+compiler_info_dump_file = "compiler_info.json"
+
+
+def remove_file_if_exists(filename):
+    if os.path.isfile(filename):
+        os.remove(filename)
 
 
 def get_compiler_err(cmd):
@@ -139,24 +144,24 @@ def parse_compiler_target(lines):
     return target
 
 
-def dump_compiler_info(output_path, filename, data):
-    filename = os.path.join(output_path, filename)
+def dump_compiler_info(filename, compiler, attr, data):
     all_data = dict()
     if os.path.exists(filename):
         all_data = load_json_or_empty(filename)
-
-    all_data.update(data)
+    if compiler not in all_data:
+        all_data[compiler] = dict()
+    all_data[compiler].update({attr: data})
     with open(filename, 'w') as f:
-        f.write(json.dumps(all_data))
+        json.dump(all_data, f)
 
 
-def load_compiler_info(filename, compiler):
+def load_compiler_info(filename, compiler, attr):
     data = load_json_or_empty(filename, {})
     value = data.get(compiler)
     if value is None:
         LOG.error("Could not find compiler %s in file %s" %
                   (compiler, filename))
-    return value
+    return value.get(attr) if isinstance(value, dict) else value
 
 
 def get_compiler_includes(parseLogOptions, compiler, lang, compile_opts,
@@ -188,13 +193,15 @@ def get_compiler_includes(parseLogOptions, compiler, lang, compile_opts,
         err = get_compiler_err(cmd)
     else:
         err = load_compiler_info(parseLogOptions.compiler_includes_file,
-                                 compiler)
+                                 compiler,
+                                 'includes')
 
     if parseLogOptions.output_path is not None:
         LOG.debug("Dumping default includes " + compiler)
-        dump_compiler_info(parseLogOptions.output_path,
-                           compiler_includes_dump_file,
-                           {compiler: err})
+        dump_compiler_info(compiler_info_dump_file,
+                           compiler,
+                           'includes',
+                           err)
     return prepend_isystem_and_normalize(
         filter_compiler_includes(parse_compiler_includes(err)))
 
@@ -210,18 +217,103 @@ def get_compiler_target(parseLogOptions, compiler):
         err = get_compiler_err(cmd)
     else:
         err = load_compiler_info(parseLogOptions.compiler_target_file,
-                                 compiler)
+                                 compiler,
+                                 'target')
 
     if parseLogOptions.output_path is not None:
-        dump_compiler_info(parseLogOptions.output_path,
-                           compiler_target_dump_file,
-                           {compiler: err})
+        dump_compiler_info(compiler_info_dump_file,
+                           compiler,
+                           'target',
+                           err)
     return parse_compiler_target(err)
 
 
-def remove_file_if_exists(filename):
-    if os.path.isfile(filename):
-        os.remove(filename)
+def get_compiler_standard(parseLogOptions, compiler, lang):
+    """
+    Returns the default compiler standard of the given compiler. The standard
+    is determined by the values of __STDC_VERSION__ and __cplusplus predefined
+    macros. These values are integers indicating the date of the standard.
+    However, GCC supports a GNU extension for each standard. For sake of
+    generality we return the GNU extended standard, since it should be a
+    superset of the non-extended one, thus applicable in a more general manner.
+    """
+    VERSION_C = u"""
+#ifdef __STDC_VERSION__
+#  if __STDC_VERSION__ >= 201710L
+#    error CC_FOUND_STANDARD_VER#17
+#  elif __STDC_VERSION__ >= 201112L
+#    error CC_FOUND_STANDARD_VER#11
+#  elif __STDC_VERSION__ >= 199901L
+#    error CC_FOUND_STANDARD_VER#99
+#  elif __STDC_VERSION__ >= 199409L
+#    error CC_FOUND_STANDARD_VER#94
+#  else
+#    error CC_FOUND_STANDARD_VER#90
+#  endif
+#else
+#  error CC_FOUND_STANDARD_VER#90
+#endif
+    """
+
+    VERSION_CPP = u"""
+#ifdef __cplusplus
+#  if __cplusplus >= 201703L
+#    error CC_FOUND_STANDARD_VER#17
+#  elif __cplusplus >= 201402L
+#    error CC_FOUND_STANDARD_VER#14
+#  elif __cplusplus >= 201103L
+#    error CC_FOUND_STANDARD_VER#11
+#  elif __cplusplus >= 199711L
+#    error CC_FOUND_STANDARD_VER#98
+#  else
+#    error CC_FOUND_STANDARD_VER#98
+#  endif
+#else
+#  error CC_FOUND_STANDARD_VER#98
+#endif
+    """
+
+    standard = ""
+    if parseLogOptions.compiler_info_file is None:
+        with tempfile.NamedTemporaryFile(
+                suffix=('.c' if lang == 'c' else '.cpp')) as source:
+
+            with source.file as f:
+                f.write(VERSION_C if lang == 'c' else VERSION_CPP)
+
+            try:
+                proc = subprocess.Popen([compiler, source.name],
+                                        stdout=subprocess.PIPE,
+                                        stderr=subprocess.PIPE)
+                _, err = proc.communicate()  # Wait for execution.
+
+                finding = re.search('CC_FOUND_STANDARD_VER#(.+)', err)
+
+                if finding:
+                    standard = finding.group(1)
+            except OSError:
+                LOG.error("Error during the compilation of compiler standard "
+                          "detector.")
+
+        if standard:
+            if standard == '94':
+                # Special case for C94 standard.
+                standard = '-std=iso9899:199409'
+            else:
+                standard = \
+                    '-std=gnu' + ('' if lang == 'c' else '++') + standard
+    else:
+        standard = load_compiler_info(parseLogOptions.compiler_info_file,
+                                      compiler,
+                                      'default_standard')
+
+    if parseLogOptions.output_path is not None and standard:
+        dump_compiler_info(compiler_info_dump_file,
+                           compiler,
+                           'default_standard',
+                           standard)
+
+    return standard
 
 
 def parse_compile_commands_json(log_data, parseLogOptions):
@@ -231,16 +323,17 @@ def parse_compile_commands_json(log_data, parseLogOptions):
 
     output_path = parseLogOptions.output_path
     if output_path is not None:
-        remove_file_if_exists(os.path.join(output_path,
-                                           compiler_includes_dump_file))
-        remove_file_if_exists(os.path.join(output_path,
-                                           compiler_target_dump_file))
+        global compiler_info_dump_file
+        compiler_info_dump_file = os.path.join(output_path,
+                                               compiler_info_dump_file)
+        remove_file_if_exists(compiler_info_dump_file)
 
     actions = []
     filtered_build_actions = {}
 
     compiler_includes = {}
     compiler_target = {}
+    compiler_standard = {}
 
     counter = 0
     for entry in log_data:
@@ -334,7 +427,13 @@ def parse_compile_commands_json(log_data, parseLogOptions):
                 compiler_target[results.compiler] = \
                     get_compiler_target(parseLogOptions, results.compiler)
 
+            if not (results.compiler in compiler_standard):
+                compiler_standard[results.compiler] = \
+                    get_compiler_standard(parseLogOptions, results.compiler,
+                                          results.lang)
+
             action.compiler_includes = compiler_includes[results.compiler]
+            action.compiler_standard = compiler_standard[results.compiler]
             action.target = compiler_target[results.compiler]
 
         if results.action != option_parser.ActionType.COMPILE:

@@ -139,6 +139,11 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
 
             analyzer_cmd.extend(self.buildaction.compiler_includes)
 
+            if not next((x for x in analyzer_cmd if x.startswith('-std=') or
+                        x.startswith('--std')),
+                        False):
+                analyzer_cmd.append(self.buildaction.compiler_standard)
+
             analyzer_cmd.extend(compiler_warnings)
 
             return analyzer_cmd
