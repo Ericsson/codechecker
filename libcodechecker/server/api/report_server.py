@@ -14,6 +14,7 @@ import base64
 import codecs
 from collections import defaultdict
 from datetime import datetime, timedelta
+import io
 import json
 import os
 import sys
@@ -1260,8 +1261,12 @@ class ThriftRequestHandler(object):
             md_file = self.__checker_doc_map.get(checkerId)
             if md_file:
                 md_file = os.path.join(self.__checker_md_docs, md_file)
-                with open(md_file, 'r') as md_content:
-                    missing_doc = md_content.read()
+                try:
+                    with io.open(md_file, 'r') as md_content:
+                        missing_doc = md_content.read()
+                except (IOError, OSError) as oerr:
+                    LOG.warning("Failed to read checker documentation: %s",
+                                md_file)
 
             return missing_doc
 
