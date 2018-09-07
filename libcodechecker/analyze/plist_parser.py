@@ -136,22 +136,21 @@ def parse_plist(path, source_root=None, allow_plist_update=True):
             # report hash field is filled.
             plistlib.writePlist(plist, path)
     except (ExpatError, TypeError, AttributeError) as err:
-        LOG.error('Failed to process plist file: ' + path +
-                  ' wrong file format?')
-        LOG.error(err)
+        LOG.warning('Failed to process plist file: %s wrong file format?',
+                    path)
+        LOG.warning(err)
     except IndexError as iex:
-        LOG.error('Indexing error during processing plist file ' +
-                  path)
-        LOG.error(type(iex))
-        LOG.error(repr(iex))
+        LOG.warning('Indexing error during processing plist file %s', path)
+        LOG.warning(type(iex))
+        LOG.warning(repr(iex))
         _, _, exc_traceback = sys.exc_info()
         traceback.print_tb(exc_traceback, limit=1, file=sys.stdout)
     except Exception as ex:
-        LOG.error('Error during processing reports from the plist file: ' +
-                  path)
+        LOG.warning('Error during processing reports from the plist file: %s',
+                    path)
         traceback.print_exc()
-        LOG.error(type(ex))
-        LOG.error(ex)
+        LOG.warning(type(ex))
+        LOG.warning(ex)
     finally:
         return files, reports
 

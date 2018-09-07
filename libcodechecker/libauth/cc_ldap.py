@@ -278,18 +278,19 @@ def auth_user(ldap_config, username=None, credentials=None):
     Authenticate a user.
     """
     if not username or not credentials:
-        LOG.error('No username or credential is provided for authentication.')
+        LOG.warning('No username or credential is provided for'
+                    ' authentication.')
         return False
 
     account_base = ldap_config.get('accountBase')
     if account_base is None:
-        LOG.error('Account base needs to be configured to query users')
+        LOG.warning('Account base needs to be configured to query users')
         return False
 
     account_pattern = ldap_config.get('accountPattern')
     if account_pattern is None:
-        LOG.error('No account pattern is defined to search for users.')
-        LOG.error('Please configure one.')
+        LOG.warning('No account pattern is defined to search for users.')
+        LOG.warning('Please configure one.')
         return False
 
     account_pattern = account_pattern.replace('$USN$', username)
@@ -320,9 +321,9 @@ def auth_user(ldap_config, username=None, credentials=None):
                               account_scope)
 
         if user_dn is None:
-            LOG.error("DN lookup failed for user name: '%s'!", username)
+            LOG.warning("DN lookup failed for user name: '%s'!", username)
             if service_user is None:
-                LOG.error('Anonymous bind might not be enabled.')
+                LOG.warning('Anonymous bind might not be enabled.')
             return False
 
     # Bind with the user's DN to check the password given by the user.

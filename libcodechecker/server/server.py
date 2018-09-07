@@ -434,7 +434,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
         except Exception as exn:
             # Convert every Exception to the proper format which can be parsed
             # by the Thrift clients expecting JSON responses.
-            LOG.error(exn.message)
+            LOG.warning(exn.message)
             import traceback
             traceback.print_exc()
             ex = TApplicationException(TApplicationException.INTERNAL_ERROR,
