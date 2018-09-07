@@ -14,15 +14,18 @@ define([
   'codechecker/filter/CheckerMessageFilter',
   'codechecker/filter/CheckerNameFilter',
   'codechecker/filter/DateFilter',
+  'codechecker/filter/DetectionStatusFilter',
   'codechecker/filter/FileFilter',
   'codechecker/filter/ReportCount',
   'codechecker/filter/RunBaseFilter',
   'codechecker/filter/RunHistoryTagFilter',
+  'codechecker/filter/SeverityFilter',
   'codechecker/filter/SourceComponentFilter',
   'codechecker/filter/UniqueFilter'],
 function (declare, lang, dom, Button, hashHelper, BugFilterView,
-  CheckerMessageFilter, CheckerNameFilter, DateFilter, FileFilter, ReportCount,
-  RunBaseFilter, RunHistoryTagFilter, SourceComponentFilter, UniqueFilter) {
+  CheckerMessageFilter, CheckerNameFilter, DateFilter, DetectionStatusFilter,
+  FileFilter, ReportCount, RunBaseFilter, RunHistoryTagFilter, SeverityFilter,
+  SourceComponentFilter, UniqueFilter) {
 
   return declare(BugFilterView, {
     postCreate : function () {
@@ -53,6 +56,11 @@ function (declare, lang, dom, Button, hashHelper, BugFilterView,
         },
         updateReportFilter : function (isUnique) {
           that.reportFilter.isUnique = isUnique;
+
+          if (isUnique)
+            that._detectionStatusFilter.notAvailable();
+          else
+            that._detectionStatusFilter.available();
         }
       });
       this.register(this._uniqueFilter);
@@ -98,6 +106,32 @@ function (declare, lang, dom, Button, hashHelper, BugFilterView,
       });
       this.register(this._runHistoryTagFilter);
       this.addChild(this._runHistoryTagFilter);
+
+      //--- Detection status filter ---//
+
+      this._detectionStatusFilter = new DetectionStatusFilter({
+        class : 'detection-status',
+        title : 'Detection status',
+        parent   : this,
+        updateReportFilter : function (detectionStatuses) {
+          that.reportFilter.detectionStatus = detectionStatuses;
+        }
+      });
+      this.register(this._detectionStatusFilter);
+      this.addChild(this._detectionStatusFilter);
+
+      //--- Severity filter ---//
+
+      this._severityFilter = new SeverityFilter({
+        class : 'severity',
+        title : 'Severity',
+        parent   : this,
+        updateReportFilter : function (severities) {
+          that.reportFilter.severity = severities;
+        }
+      });
+      this.register(this._severityFilter);
+      this.addChild(this._severityFilter);
 
       //--- Detection date filter ---//
 
