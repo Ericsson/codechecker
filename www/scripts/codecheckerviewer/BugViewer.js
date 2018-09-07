@@ -142,9 +142,16 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
               return r.runId === reportData.runId;
             })[0];
 
+            var status = util.detectionStatusFromCodeToString(
+              reportData.detectionStatus);
+
+            var statusIcon = '<i class="customIcon detection-status-'
+              + status.toLowerCase() + '"></i>';
+
             return {
-              label : run.name + ':' + filename + ':L' + reportData.line
-                    + ' [' + formatBugPathLen(reportData.bugPathLength) + ']',
+              label : statusIcon + run.name + ':' + filename + ':L'
+                    + reportData.line + ' ['
+                    + formatBugPathLen(reportData.bugPathLength) + ']',
               value : reportData.reportId
             };
           });
