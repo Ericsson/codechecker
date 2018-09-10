@@ -705,3 +705,21 @@ html, body {
 .source-component-manager .delete {
   color: #d63434;
 }
+
+.run-name-labels > .label {
+  font-weight: bold;
+  padding: 2px 5px;
+  border-radius: 4px;
+  margin-left: 5px;
+  font-size: 0.7em;
+}
+
+.run-name-labels > .ctu {
+  color: #007ea7;
+  border: 1px solid #007ea7;
+}
+
+.run-name-labels > .stats {
+  color: #669603;
+  border: 1px solid #669603;
+}

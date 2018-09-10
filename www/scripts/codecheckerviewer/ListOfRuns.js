@@ -78,6 +78,28 @@ function (declare, dom, ItemFileWriteStore, topic, Dialog, Button,
       + num + '</span>'
   }
 
+  function runNameFormatter(args) {
+    var runData = args.runData;
+
+    var label = '<span class="link">' + runData.name + '</span>';
+
+    var ctuEnabled = runData.runCmd.indexOf('--ctu') !== -1;
+    var statsEnabled = runData.runCmd.indexOf('--stats') !== -1;
+    if (ctuEnabled || statsEnabled) {
+      label += '<span class="run-name-labels">';
+      if (ctuEnabled) {
+        label += '<span class="label ctu">ctu</span>';
+      }
+
+      if (statsEnabled) {
+        label += '<span class="label stats">stats</span>';
+      }
+      label += '</span>';
+    }
+
+    return label;
+  }
+
   var ListOfRunsGrid = declare(DataGrid, {
     constructor : function () {
       this.store = new ItemFileWriteStore({
@@ -86,7 +108,7 @@ function (declare, dom, ItemFileWriteStore, topic, Dialog, Button,
 
       this.structure = [
         { name : 'Diff', field : 'diff', styles : 'text-align: center;', formatter : diffBtnFormatter},
-        { name : 'Name', field : 'name', styles : 'text-align: left;', width : '100%' },
+        { name : 'Name', field : 'name', styles : 'text-align: left;', width : '100%', formatter: runNameFormatter },
         { name : '<span title="' + util.getTooltip('numOfUnresolved') + '">Number of unresolved reports</span>', field : 'numberofbugs', formatter: numberOfUnresolvedBugsFormatter, styles : 'text-align: center;', width : '20%' },
         { name : 'Storage date', field : 'date', styles : 'text-align: center;', width : '30%' },
         { name : 'Analysis duration', field : 'duration', styles : 'text-align: center;' },
@@ -194,7 +216,7 @@ function (declare, dom, ItemFileWriteStore, topic, Dialog, Button,
       this.store.newItem({
         id           : runData.runId,
         runid        : runData.runId,
-        name         : '<span class="link">' + runData.name + '</span>',
+        name         : { 'runData' : runData },
         versionTag   : { runName : runData.name,
                          versionTag : runData.versionTag },
         date         : util.prettifyDate(runData.runDate),
