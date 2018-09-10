@@ -114,26 +114,41 @@ struct ReportDetails {
   2: BugPath       executionPath
 }
 
+typedef string AnalyzerType
+
+struct AnalyzerStatistics {
+  1: string        version,         // Version information of the analyzer.
+  2: i64           failed,          // Number of files which failed to analyze.
+  3: i64           successful,      // Number of successfully analyzed files.
+  4: list<string>  failedFilePaths, // List of file paths which failed to analyze.
+}
+
+typedef map<AnalyzerType, AnalyzerStatistics> AnalyzerStatisticsData
+
 struct RunData {
-  1: i64                       runId,        // Unique id of the run.
-  2: string                    runDate,      // Date of the run last updated.
-  3: string                    name,         // Human-given identifier.
-  4: i64                       duration,     // Duration of the run (-1 if not finished).
-  5: i64                       resultCount,  // Number of unresolved results (review status is not FALSE_POSITIVE or INTENTIONAL) in the run.
-  6: string                    runCmd,       // The used check command.
+  1: i64                       runId,                // Unique id of the run.
+  2: string                    runDate,              // Date of the run last updated.
+  3: string                    name,                 // Human-given identifier.
+  4: i64                       duration,             // Duration of the run (-1 if not finished).
+  5: i64                       resultCount,          // Number of unresolved results (review status is not FALSE_POSITIVE or INTENTIONAL) in the run.
+  6: string                    runCmd,               // The used check command.
   7: map<DetectionStatus, i32> detectionStatusCount, // Number of reports with a particular detection status.
-  8: string                    versionTag    // Version tag of the latest run.
+  8: string                    versionTag,           // Version tag of the latest run.
+  9: string                    codeCheckerVersion,   // CodeChecker client version of the latest analysis.
+  10: AnalyzerStatisticsData   analyzerStatistics,   // Statistics for each analyzers.
 }
 typedef list<RunData> RunDataList
 
 struct RunHistoryData {
-  1: i64       runId,        // Unique id of the run.
-  2: string    runName,      // Name of the run.
-  3: string    versionTag,   // Version tag of the report.
-  4: string    user,         // User name who analysed the run.
-  5: string    time,         // Date time when the run was analysed.
-  6: i64       id,           // Id of the run history tag.
-  7: string    checkCommand, // Check command.
+  1: i64                     runId,              // Unique id of the run.
+  2: string                  runName,            // Name of the run.
+  3: string                  versionTag,         // Version tag of the report.
+  4: string                  user,               // User name who analysed the run.
+  5: string                  time,               // Date time when the run was analysed.
+  6: i64                     id,                 // Id of the run history tag.
+  7: string                  checkCommand,       // Check command.
+  8: string                  codeCheckerVersion, // CodeChecker client version of the latest analysis.
+  9: AnalyzerStatisticsData  analyzerStatistics, // Statistics for analyzers.
 }
 typedef list<RunHistoryData> RunHistoryDataList
 

@@ -16,11 +16,12 @@ define([
   'dijit/layout/BorderContainer',
   'dijit/layout/ContentPane',
   'dojox/grid/DataGrid',
+  'codechecker/AnalyzerStatisticsDialog',
   'codechecker/TabCount',
   'codechecker/util'],
 function (declare, dom, ItemFileWriteStore, topic, Dialog, Button,
-  RadioButton, TextBox, BorderContainer, ContentPane, DataGrid, TabCount,
-  util) {
+  RadioButton, TextBox, BorderContainer, ContentPane, DataGrid,
+  AnalyzerStatisticsDialog, TabCount, util) {
 
   /**
    * This function helps to format a data grid cell with two radio buttons.
@@ -100,6 +101,44 @@ function (declare, dom, ItemFileWriteStore, topic, Dialog, Button,
     return label;
   }
 
+  function analyzerStatisticsFormatter(stats) {
+    var ul = dom.create('ul', { class: 'analyzer-statistics' });
+
+    Object.keys(stats).forEach(function (analyzer) {
+      var items = dom.create('ul', { class : 'items' });
+
+      if (stats[analyzer].successful) {
+        var successLi = dom.create('li', {
+          title : 'Number of successfully analyzed files.'
+        }, items);
+
+        dom.create('i', { class : 'customIcon check' }, successLi);
+        dom.create('span', {
+          class : 'num',
+          innerHTML : '(' + stats[analyzer].successful + ')'
+        }, successLi);
+      }
+
+      if (stats[analyzer].failed) {
+        var failedLi = dom.create('li', {
+          title : 'Number of files which failed to analyze.'
+        }, items);
+
+        dom.create('i', { class : 'customIcon remove' }, failedLi);
+        dom.create('span', {
+          class : 'num link',
+          innerHTML : '(' + stats[analyzer].failed + ')'
+        }, failedLi);
+      }
+
+      dom.create('li', {
+        innerHTML : analyzer + ': ' + items.outerHTML
+      }, ul);
+    });
+
+    return ul.outerHTML;
+  }
+
   var ListOfRunsGrid = declare(DataGrid, {
     constructor : function () {
       this.store = new ItemFileWriteStore({
@@ -110,11 +149,13 @@ function (declare, dom, ItemFileWriteStore, topic, Dialog, Button,
         { name : 'Diff', field : 'diff', styles : 'text-align: center;', formatter : diffBtnFormatter},
         { name : 'Name', field : 'name', styles : 'text-align: left;', width : '100%', formatter: runNameFormatter },
         { name : '<span title="' + util.getTooltip('numOfUnresolved') + '">Number of unresolved reports</span>', field : 'numberofbugs', formatter: numberOfUnresolvedBugsFormatter, styles : 'text-align: center;', width : '20%' },
-        { name : 'Storage date', field : 'date', styles : 'text-align: center;', width : '30%' },
+        { name : '<span title="' + util.getTooltip('detectionStatus') + '">Detection status</span>', field : 'detectionstatus', styles : 'text-align: center;', width : '30%' },
+        { name : 'Analyzer statistics', field : 'analyzerStatistics', styles : 'text-align: center;', width : '30%', formatter : analyzerStatisticsFormatter },
+        { name : 'Storage date', field : 'date', styles : 'text-align: center;', width : '25%' },
         { name : 'Analysis duration', field : 'duration', styles : 'text-align: center;' },
         { name : 'Check command', field : 'checkcmd', styles : 'text-align: center;' },
-        { name : '<span title="' + util.getTooltip('detectionStatus') + '">Detection status</span>', field : 'detectionstatus', styles : 'text-align: center;', width : '30%' },
         { name : '<span title="' + util.getTooltip('versionTag') + '">Version tag</span>', field : 'versionTag', formatter : versionTagFormatter },
+        { name : 'CodeChecker version', field : 'codeCheckerVersion' },
         { name : 'Delete', field : 'del', styles : 'text-align: center;', type : 'dojox.grid.cells.Bool', editable : true }
       ];
 
@@ -125,9 +166,20 @@ function (declare, dom, ItemFileWriteStore, topic, Dialog, Button,
       this.rowsPerPage = CC_OBJECTS.MAX_QUERY_SIZE;
 
       this._dialog = new Dialog({
-        title : 'Check command',
-        style : 'max-width: 75%;'
+        style : 'max-width: 75%; min-width: 25%'
       });
+
+      this._analyzerStatDialog = new AnalyzerStatisticsDialog();
+    },
+
+    canSort : function (inSortInfo) {
+      var cell = this.getCell(Math.abs(inSortInfo) - 1);
+
+      return cell.field === 'name' ||
+             cell.field === 'numberofbugs'   ||
+             cell.field === 'date' ||
+             cell.field === 'duration'    ||
+             cell.field === 'codeCheckerVersion';
     },
 
     postCreate : function () {
@@ -167,8 +219,17 @@ function (declare, dom, ItemFileWriteStore, topic, Dialog, Button,
           break;
 
         case 'checkcmd':
+          this._dialog.set('title', 'Check command');
           this._dialog.set('content', item.runData[0].runCmd);
           this._dialog.show();
+
+          break;
+
+        case 'analyzerStatistics':
+          var stats = item.runData[0].analyzerStatistics;
+          if (Object.keys(stats).length) {
+            this._analyzerStatDialog.show(item.runData[0].analyzerStatistics);
+          }
 
           break;
       }
@@ -226,7 +287,9 @@ function (declare, dom, ItemFileWriteStore, topic, Dialog, Button,
         checkcmd     : '<span class="link">Show</span>',
         del          : false,
         diff         : { 'runData' : runData, 'listOfRunsGrid' : this },
-        detectionstatus : prettifyStatus(runData.detectionStatusCount)
+        detectionstatus : prettifyStatus(runData.detectionStatusCount),
+        codeCheckerVersion : runData.codeCheckerVersion,
+        analyzerStatistics : runData.analyzerStatistics,
       });
     },
 

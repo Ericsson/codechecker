@@ -45,7 +45,7 @@ from libcodechecker.server.database import db_cleanup
 from libcodechecker.server.database.config_db_model import Product
 from libcodechecker.server.database.database import conv
 from libcodechecker.server.database.run_db_model import \
-    Report, ReviewStatus, File, Run, RunHistory, \
+    AnalyzerStatistic, Report, ReviewStatus, File, Run, RunHistory, \
     RunLock, Comment, BugPathEvent, BugReportPoint, \
     FileContent, SourceComponent
 from libcodechecker.util import DBSession
@@ -588,17 +588,19 @@ class ThriftRequestHandler(object):
             stmt = filter_unresolved_reports(stmt) \
                 .group_by(Report.run_id).subquery()
 
-            tag_q = session.query(RunHistory.run_id,
+            tag_q = session.query(RunHistory.id,
+                                  RunHistory.run_id,
                                   func.max(RunHistory.id).label(
                                       'run_history_id'),
                                   func.max(RunHistory.time).label(
                                       'run_history_time')) \
-                .filter(RunHistory.version_tag.isnot(None)) \
+                .order_by(RunHistory.time.desc()) \
                 .group_by(RunHistory.run_id) \
                 .subquery()
 
             q = session.query(Run,
                               RunHistory.version_tag,
+                              RunHistory.cc_version,
                               stmt.c.report_count)
 
             if run_filter is not None:
@@ -616,35 +618,69 @@ class ThriftRequestHandler(object):
             q = q.outerjoin(stmt, Run.id == stmt.c.run_id) \
                 .outerjoin(tag_q, Run.id == tag_q.c.run_id) \
                 .outerjoin(RunHistory,
-                           RunHistory.id == tag_q.c.run_history_id) \
+                           RunHistory.id == tag_q.c.id) \
                 .group_by(Run.id,
                           RunHistory.version_tag,
                           stmt.c.report_count) \
                 .order_by(Run.date)
 
+            # Get report count for each detection statuses.
             status_q = session.query(Report.run_id,
                                      Report.detection_status,
-                                     func.count(Report.bug_id)) \
-                .group_by(Report.run_id, Report.detection_status)
+                                     func.count(Report.bug_id))
+
+            if run_filter and run_filter.ids is not None:
+                status_q = status_q.filter(Report.run_id.in_(run_filter.ids))
+
+            status_q = status_q.group_by(Report.run_id,
+                                         Report.detection_status)
 
             status_sum = defaultdict(defaultdict)
             for run_id, status, count in status_q:
                 status_sum[run_id][detection_status_enum(status)] = count
 
+            # Get analyzer statistics.
+            analyzer_statistics = defaultdict(lambda: defaultdict())
+            stat_q = session.query(AnalyzerStatistic,
+                                   Run.id)
+
+            if run_filter and run_filter.ids is not None:
+                stat_q = stat_q.filter(Run.id.in_(run_filter.ids))
+
+            stat_q = stat_q \
+                .outerjoin(RunHistory,
+                           RunHistory.id == AnalyzerStatistic.run_history_id) \
+                .outerjoin(Run,
+                           Run.id == RunHistory.run_id)
+
+            for stat, run_id in stat_q:
+                failed_files = zlib.decompress(stat.failed_files).split('\n') \
+                    if stat.failed_files else None
+                analyzer_version = zlib.decompress(stat.version) \
+                    if stat.version else None
+
+                analyzer_statistics[run_id][stat.analyzer_type] = \
+                    ttypes.AnalyzerStatistics(version=analyzer_version,
+                                              failed=stat.failed,
+                                              failedFilePaths=failed_files,
+                                              successful=stat.successful)
+
             results = []
 
-            for instance, version_tag, reportCount in q:
-                if reportCount is None:
-                    reportCount = 0
+            for instance, tag, cc_version, report_count in q:
+                if report_count is None:
+                    report_count = 0
 
                 results.append(RunData(instance.id,
                                        str(instance.date),
                                        instance.name,
                                        instance.duration,
-                                       reportCount,
+                                       report_count,
                                        instance.command,
                                        status_sum[instance.id],
-                                       version_tag))
+                                       tag,
+                                       cc_version,
+                                       analyzer_statistics[instance.id]))
             return results
 
     @exc_to_thrift_reqfail
@@ -672,6 +708,21 @@ class ThriftRequestHandler(object):
             for history in res:
                 check_command = zlib.decompress(history.check_command) \
                   if history.check_command else None
+
+                analyzer_statistics = {}
+                for stat in history.analyzer_statistics:
+                    failed_files = zlib.decompress(stat.failed_files) \
+                        .split('\n') if stat.failed_files else None
+                    analyzer_version = zlib.decompress(stat.version) \
+                        if stat.version else None
+
+                    analyzer_statistics[stat.analyzer_type] = \
+                        ttypes.AnalyzerStatistics(
+                            version=analyzer_version,
+                            failed=stat.failed,
+                            failedFilePaths=failed_files,
+                            successful=stat.successful)
+
                 results.append(RunHistoryData(
                     id=history.id,
                     runId=history.run.id,
@@ -679,7 +730,9 @@ class ThriftRequestHandler(object):
                     versionTag=history.version_tag,
                     user=history.user,
                     time=str(history.time),
-                    checkCommand=check_command))
+                    checkCommand=check_command,
+                    codeCheckerVersion=history.cc_version,
+                    analyzerStatistics=analyzer_statistics))
 
             return results
 
@@ -2326,7 +2379,7 @@ class ThriftRequestHandler(object):
 
                 run_history_time = datetime.now()
 
-                check_commands, check_durations = \
+                check_commands, check_durations, cc_version, statistics = \
                     store_handler.metadata_info(metadata_file)
 
                 if len(check_commands) == 0:
@@ -2369,7 +2422,9 @@ class ThriftRequestHandler(object):
                                                          else 'Anonymous',
                                                          run_history_time,
                                                          version,
-                                                         force)
+                                                         force,
+                                                         cc_version,
+                                                         statistics)
 
                     self.__store_reports(session,
                                          report_dir,

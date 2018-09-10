@@ -13,7 +13,6 @@ from __future__ import absolute_import
 import base64
 from datetime import datetime
 from hashlib import sha256
-import json
 import os
 import zlib
 
@@ -24,8 +23,8 @@ from codeCheckerDBAccess_v6 import ttypes
 
 from libcodechecker.logger import get_logger
 # TODO: This is a cross-subpackage import.
-from libcodechecker.server.database.run_db_model import BugPathEvent, \
-    BugReportPoint, File, Run, RunHistory, Report, FileContent
+from libcodechecker.server.database.run_db_model import AnalyzerStatistic, \
+    BugPathEvent, BugReportPoint, File, Run, RunHistory, Report, FileContent
 from libcodechecker.util import load_json_or_empty
 
 LOG = get_logger('system')
@@ -34,9 +33,11 @@ LOG = get_logger('system')
 def metadata_info(metadata_file):
     check_commands = []
     check_durations = []
+    cc_version = None
+    analyzer_statistics = {}
 
     if not os.path.isfile(metadata_file):
-        return check_commands, check_durations
+        return check_commands, check_durations, cc_version, analyzer_statistics
 
     metadata_dict = load_json_or_empty(metadata_file, {})
 
@@ -46,7 +47,14 @@ def metadata_info(metadata_file):
         check_durations.append(
             float(metadata_dict['timestamps']['end'] -
                   metadata_dict['timestamps']['begin']))
-    return check_commands, check_durations
+
+    # Get CodeChecker version.
+    cc_version = metadata_dict.get('versions', {}).get('codechecker')
+
+    # Get analyzer statistics.
+    analyzer_statistics = metadata_dict.get('analyzer_statistics', {})
+
+    return check_commands, check_durations, cc_version, analyzer_statistics
 
 
 def collect_paths_events(report, file_ids, files):
@@ -197,7 +205,8 @@ def is_same_event_path(report_id, events, session):
 
 
 def addCheckerRun(session, command, name, tag, username,
-                  run_history_time, version, force):
+                  run_history_time, version, force, codechecker_version,
+                  statistics):
     """
     Store checker run related data to the database.
     By default updates the results if name already exists.
@@ -256,8 +265,34 @@ def addCheckerRun(session, command, name, tag, username,
         compressed_command = zlib.compress(command,
                                            zlib.Z_BEST_COMPRESSION)
         run_history = RunHistory(run_id, tag, username, run_history_time,
-                                 compressed_command)
+                                 compressed_command, codechecker_version)
         session.add(run_history)
+        session.flush()
+
+        # Create entry for analyzer statistics.
+        for analyzer_type, res in statistics.items():
+            version = res.get('version')
+            successful = res.get('successful')
+            failed = res.get('failed')
+            failed_sources = res.get('failed_sources')
+
+            analyzer_version = None
+            if version:
+                analyzer_version = zlib.compress(version,
+                                                 zlib.Z_BEST_COMPRESSION)
+
+            compressed_files = None
+            if failed_sources:
+                compressed_files = zlib.compress('\n'.join(failed_sources),
+                                                 zlib.Z_BEST_COMPRESSION)
+
+            analyzer_statistics = AnalyzerStatistic(run_history.id,
+                                                    analyzer_type,
+                                                    analyzer_version,
+                                                    successful,
+                                                    failed,
+                                                    compressed_files)
+            session.add(analyzer_statistics)
 
         session.flush()
         return run_id

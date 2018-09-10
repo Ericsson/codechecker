@@ -36,13 +36,14 @@
   margin-right: 10px;
 }
 
-.history .run-name-wrapper,
-.history .tag-wrapper,
-.history .user-wrapper,
-.history .check-command {
+.history .wrapper {
   margin-left: 5px;
 }
 
 .history .customIcon {
   color: #73a7b9;
+}
+
+.dijitDialog ul.failed-files {
+  margin: 0;
 }

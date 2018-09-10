@@ -723,3 +723,83 @@ html, body {
   color: #669603;
   border: 1px solid #669603;
 }
+
+/* Analyzer statistics */
+td .analyzer-statistics {
+  cursor: pointer;
+}
+
+ul.analyzer-statistics,
+ul.analyzer-statistics .items {
+  padding: 0;
+  margin: 0;
+}
+
+ul.analyzer-statistics h3 {
+  margin: 0;
+  background-color: #7fbed3;
+  padding: 5px;
+  color: white;
+}
+
+ul.analyzer-statistics .items {
+  display: inline-block;
+}
+
+ul.analyzer-statistics .items > li {
+  display: inline;
+  margin-right: 5px;
+}
+
+ul.analyzer-statistics .num {
+  color: #767676;
+  padding-left: 2px;
+}
+
+ul.analyzer-statistics .link {
+  color: #007ea7;
+}
+
+.analyzer-statistics .check {
+  color: #587549;
+}
+
+.analyzer-statistics .remove {
+  color: #964739;
+}
+
+.dijitDialog ul.analyzer-statistics {
+  overflow: auto;
+  height: 450px;
+}
+
+.dijitDialog ul.analyzer-statistics > li {
+  margin-bottom: 10px;
+}
+
+.dijitDialog ul.analyzer-statistics .items > li {
+  display: block;
+}
+
+.dijitDialog ul.analyzer-statistics .items {
+  margin-left: 10px;
+}
+
+.dijitDialog ul.analyzer-statistics .customIcon {
+  margin: 0;
+}
+
+.dijitDialog ul.analyzer-statistics .num {
+  color: white;
+  padding: 0px 5px;
+  text-align: center;
+  font-weight: bold;
+}
+
+.dijitDialog ul.analyzer-statistics .failed .num {
+  background-color: red;
+}
+
+.dijitDialog ul.analyzer-statistics .successful .num {
+  background-color: green;
+}
