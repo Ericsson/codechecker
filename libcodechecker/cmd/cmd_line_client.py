@@ -252,7 +252,7 @@ def handle_list_runs(args):
                                            str(stat.successful) + ')')
 
             codechecker_version = run.codeCheckerVersion \
-                if run.codecheckerVersion else ''
+                if run.codeCheckerVersion else ''
 
             rows.append((run.name,
                          str(run.resultCount),
