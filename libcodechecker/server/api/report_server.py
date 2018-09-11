@@ -588,13 +588,11 @@ class ThriftRequestHandler(object):
             stmt = filter_unresolved_reports(stmt) \
                 .group_by(Report.run_id).subquery()
 
-            tag_q = session.query(RunHistory.id,
-                                  RunHistory.run_id,
+            tag_q = session.query(RunHistory.run_id,
                                   func.max(RunHistory.id).label(
                                       'run_history_id'),
                                   func.max(RunHistory.time).label(
                                       'run_history_time')) \
-                .order_by(RunHistory.time.desc()) \
                 .group_by(RunHistory.run_id) \
                 .subquery()
 
@@ -618,9 +616,10 @@ class ThriftRequestHandler(object):
             q = q.outerjoin(stmt, Run.id == stmt.c.run_id) \
                 .outerjoin(tag_q, Run.id == tag_q.c.run_id) \
                 .outerjoin(RunHistory,
-                           RunHistory.id == tag_q.c.id) \
+                           RunHistory.id == tag_q.c.run_history_id) \
                 .group_by(Run.id,
                           RunHistory.version_tag,
+                          RunHistory.cc_version,
                           stmt.c.report_count) \
                 .order_by(Run.date)
 
