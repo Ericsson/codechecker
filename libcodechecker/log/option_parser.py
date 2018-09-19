@@ -144,7 +144,9 @@ IGNORED_OPTION_MAP = {
     # '-Werror', '-pedantic-errors' the analysis with Clang can fail even
     # if the compilation passes with GCC.
     '-Werror': 0,
-    '-pedantic-errors': 0
+    '-pedantic-errors': 0,
+    # Skip paired Xclang options like "-Xclang -mllvm".
+    '-Xclang': 1
 }
 
 IGNORED_OPTION_MAP_REGEX = {
