@@ -519,6 +519,7 @@ function (declare, dom, style, Deferred, ObjectStore, Store, QueryResults,
           listOfBugsGrid : that._grid,
           onShow : function () {
             hashHelper.setStateValues({
+              'tab' : that.tab,
               'reportHash' : reportData.bugHash,
               'report' : reportData.reportId,
               'subtab' : reportData.bugHash
