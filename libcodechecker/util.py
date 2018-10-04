@@ -498,7 +498,7 @@ def get_line(file_name, line_no):
     string.
     """
     try:
-        with open(file_name, 'U') as source_file:
+        with io.open(file_name) as source_file:
             for line in source_file:
                 line_no -= 1
                 if line_no == 0:
