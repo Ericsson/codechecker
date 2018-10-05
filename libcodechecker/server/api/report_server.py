@@ -48,7 +48,7 @@ from libcodechecker.server.database.run_db_model import \
     AnalyzerStatistic, Report, ReviewStatus, File, Run, RunHistory, \
     RunLock, Comment, BugPathEvent, BugReportPoint, \
     FileContent, SourceComponent
-from libcodechecker.util import DBSession
+from libcodechecker.util import DBSession, slugify
 
 from . import store_handler
 
@@ -2504,13 +2504,16 @@ class ThriftRequestHandler(object):
                 if not os.path.exists(product_dir):
                     os.makedirs(product_dir)
 
+                # Removes and replaces special characters in the run name.
+                run_name = slugify(run_name)
+
                 run_zip_file = os.path.join(product_dir, run_name + '.zip')
                 with open(run_zip_file, 'w') as run_zip:
                     run_zip.write(zlib.decompress(
                         base64.b64decode(b64zip)))
                 return True
             except Exception as ex:
-                LOG.error(ex.message)
+                LOG.error(str(ex))
                 return False
 
         return False
