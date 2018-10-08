@@ -270,7 +270,6 @@ def __replace_env_var(cfg_file):
 
 
 def __get_compiler_resource_dir(context, analyzer_binary):
-    resource_dir = ''
     if len(context.compiler_resource_dir) > 0:
         resource_dir = context.compiler_resource_dir
     # If not set then ask the binary for the resource dir.

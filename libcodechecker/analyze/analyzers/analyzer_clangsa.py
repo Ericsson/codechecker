@@ -104,8 +104,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
 
         self.__checker_configs.append(checker_cfg)
 
-    @staticmethod
-    def get_analyzer_checkers(config_handler, env):
+    def get_analyzer_checkers(self, config_handler, env):
         """
         Return the list of the supported checkers.
         """
