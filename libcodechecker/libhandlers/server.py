@@ -13,7 +13,6 @@ from __future__ import absolute_import
 
 import argparse
 import errno
-import json
 import os
 import socket
 import sys
@@ -24,8 +23,8 @@ from sqlalchemy.orm import sessionmaker
 
 from shared.ttypes import DBStatus
 
-from libcodechecker import generic_package_context
-from libcodechecker import generic_package_suppress_handler
+from libcodechecker import package_context
+from libcodechecker import suppress_handler
 from libcodechecker import host_check
 from libcodechecker import logger
 from libcodechecker import output_formatters
@@ -679,7 +678,7 @@ def server_init_start(args):
         LOG.info("'--force-authentication' was passed as a command-line "
                  "option. The server will ask for users to authenticate!")
 
-    context = generic_package_context.get_context()
+    context = package_context.get_context()
     context.codechecker_workspace = args.config_directory
     context.db_username = args.dbusername
 
@@ -833,7 +832,7 @@ def server_init_start(args):
                     'checker_md_docs_map': checker_md_docs_map,
                     'version': context.package_git_tag}
 
-    suppress_handler = generic_package_suppress_handler. \
+    suppr_handler = suppress_handler. \
         GenericSuppressHandler(None, False)
 
     try:
@@ -841,7 +840,7 @@ def server_init_start(args):
                             package_data,
                             args.view_port,
                             cfg_sql_server,
-                            suppress_handler,
+                            suppr_handler,
                             args.listen_address,
                             'force_auth' in args,
                             args.skip_db_cleanup,

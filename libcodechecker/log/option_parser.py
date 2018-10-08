@@ -260,99 +260,27 @@ class OptionParserResult(object):
     or clang tidy after filtering or changing the original compiler arguments.
     """
     def __init__(self):
-        self._action = ActionType.COMPILE
-        self._compile_opts = []
-        self._link_opts = []
-        self._files = []
-        self._arch = ''
-        self._target = ''
-        self._lang = None
-        self._output = ''
-        self._compiler = None
+        self.action = ActionType.COMPILE
+        self.compile_opts = []
+        self.link_opts = []
+        self.files = []
+        self.arch = ''
+        self.target = ''
+        self.lang = None
+        self.output = ''
+        self.compiler = None
 
     def __str__(self):
         return ('action_type: {}\ncompiler options: {}\n'
                 'linker options: {}\nfiles: {}\narch: {}\n'
                 'lang: {}\nout: {}\n') \
-            .format(ActionType.to_string(self._action),
-                    ' '.join(self._compile_opts),
-                    ' '.join(self._link_opts),
-                    ' '.join(self._files),
-                    self._arch,
-                    self._lang,
-                    self._output)
-
-    @property
-    def compiler(self):
-        return self._compiler
-
-    @compiler.setter
-    def compiler(self, value):
-        self._compiler = value
-
-    @property
-    def action(self):
-        return self._action
-
-    @action.setter
-    def action(self, value):
-        self._action = value
-
-    @property
-    def compile_opts(self):
-        return self._compile_opts
-
-    @compile_opts.setter
-    def compile_opts(self, value):
-        self._compile_opts = value
-
-    @property
-    def link_opts(self):
-        return self._link_opts
-
-    @link_opts.setter
-    def link_opts(self, value):
-        self._link_opts = value
-
-    @property
-    def files(self):
-        return self._files
-
-    @files.setter
-    def files(self, value):
-        self._files = value
-
-    @property
-    def arch(self):
-        return self._arch
-
-    @arch.setter
-    def arch(self, value):
-        self._arch = value
-
-    @property
-    def target(self):
-        return self._target
-
-    @target.setter
-    def target(self, value):
-        self._target = value
-
-    @property
-    def lang(self):
-        return self._lang
-
-    @lang.setter
-    def lang(self, value):
-        self._lang = value
-
-    @property
-    def output(self):
-        return self._output
-
-    @output.setter
-    def output(self, value):
-        self._output = value
+            .format(ActionType.to_string(self.action),
+                    ' '.join(self.compile_opts),
+                    ' '.join(self.link_opts),
+                    ' '.join(self.files),
+                    self.arch,
+                    self.lang,
+                    self.output)
 
 
 class OptionIterator(object):

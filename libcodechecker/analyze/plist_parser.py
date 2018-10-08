@@ -333,24 +333,10 @@ class PlistToPlaintextFormatter(object):
 
         self.__analyzer_type = analyzer_type
         self.__severity_map = severity_map
-        self.__print_steps = False
+        self.print_steps = False
         self.src_comment_handler = src_comment_handler
         self.skiplist_handler = skip_handler
         self._processed_path_hashes = processed_path_hashes
-
-    @property
-    def print_steps(self):
-        """
-        Print the multiple steps for a bug if there is any.
-        """
-        return self.__print_steps
-
-    @print_steps.setter
-    def print_steps(self, value):
-        """
-        Print the multiple steps for a bug if there is any.
-        """
-        self.__print_steps = value
 
     @staticmethod
     def __format_location(event, source_file):

@@ -14,7 +14,7 @@ import argparse
 import json
 
 from libcodechecker import logger
-from libcodechecker import generic_package_context
+from libcodechecker import package_context
 from libcodechecker import output_formatters
 from libcodechecker import version
 
@@ -62,7 +62,7 @@ def main(args):
     """
     logger.setup_logger(args.verbose if 'verbose' in args else None)
 
-    context = generic_package_context.get_context()
+    context = package_context.get_context()
 
     server_versions = ['{0}.{1}'.format(major, minor) for
                        major, minor in version.SUPPORTED_VERSIONS.items()]

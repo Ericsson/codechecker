@@ -28,11 +28,11 @@ class AnalyzerConfigHandler(object):
 
     def __init__(self):
 
-        self.__analyzer_binary = None
-        self.__analyzer_plugins_dir = None
-        self.__compiler_resource_dir = ''
-        self.__analyzer_extra_arguments = ''
-        self.__checker_config = ''
+        self.analyzer_binary = None
+        self.analyzer_plugins_dir = None
+        self.compiler_resource_dir = ''
+        self.analyzer_extra_arguments = ''
+        self.checker_config = ''
 
         # The key is the checker name, the value is a tuple.
         # False if disabled (should be by default).
@@ -41,37 +41,15 @@ class AnalyzerConfigHandler(object):
         self.__available_checkers = collections.OrderedDict()
 
     @property
-    def analyzer_plugins_dir(self):
-        """
-        Get directory from where shared objects with checkers should be loaded.
-        """
-        return self.__analyzer_plugins_dir
-
-    @analyzer_plugins_dir.setter
-    def analyzer_plugins_dir(self, value):
-        """
-        Set the directory where shared objects with checkers can be found.
-        """
-        self.__analyzer_plugins_dir = value
-
-    @property
     def analyzer_plugins(self):
         """
         Full path of the analyzer plugins.
         """
-        plugin_dir = self.__analyzer_plugins_dir
+        plugin_dir = self.analyzer_plugins_dir
         analyzer_plugins = [os.path.join(plugin_dir, f)
                             for f in os.listdir(plugin_dir)
                             if os.path.isfile(os.path.join(plugin_dir, f))]
         return analyzer_plugins
-
-    @property
-    def analyzer_binary(self):
-        return self.__analyzer_binary
-
-    @analyzer_binary.setter
-    def analyzer_binary(self, value):
-        self.__analyzer_binary = value
 
     @abstractmethod
     def get_checker_configs(self):
@@ -114,45 +92,3 @@ class AnalyzerConfigHandler(object):
         Return the checkers.
         """
         return self.__available_checkers
-
-    @property
-    def compiler_resource_dir(self):
-        """
-        Get compiler resource directories.
-        """
-        return self.__compiler_resource_dir
-
-    @compiler_resource_dir.setter
-    def compiler_resource_dir(self, resource_dir):
-        """
-        Set compiler resource directories.
-        """
-        self.__compiler_resource_dir = resource_dir
-
-    @property
-    def analyzer_extra_arguments(self):
-        """
-        Extra arguments forwarded to the analyzer without modification.
-        """
-        return self.__analyzer_extra_arguments
-
-    @analyzer_extra_arguments.setter
-    def analyzer_extra_arguments(self, value):
-        """
-        Extra arguments forwarded to the analyzer without modification.
-        """
-        self.__analyzer_extra_arguments = value
-
-    @property
-    def checker_config(self):
-        """
-        Configuration of the analyzers' checkers.
-        """
-        return self.__checker_config
-
-    @checker_config.setter
-    def checker_config(self, value):
-        """
-        Configuration of the analyzers' checkers.
-        """
-        self.__checker_config = value

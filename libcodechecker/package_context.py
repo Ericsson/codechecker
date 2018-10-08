@@ -62,7 +62,7 @@ class Context(object):
         self.env_vars = env_vars
 
         self._package_root = package_root
-        self._codechecker_workspace = None
+        self.codechecker_workspace = None
         self._severity_map = SeverityMap()
         self.__package_version = None
         self.__product_db_version_info = None
@@ -87,7 +87,7 @@ class Context(object):
         """
         self._package_root = os.environ.get(env_vars['env_package_root'])
 
-        self._codechecker_workspace = os.environ.get('codechecker_workspace')
+        self.codechecker_workspace = os.environ.get('codechecker_workspace')
 
         self._severity_map = SeverityMap(
             load_json_or_empty(self.checkers_severity_map_file, {}))
@@ -339,14 +339,6 @@ class Context(object):
     @db_username.setter
     def db_username(self, value):
         self._db_username = value
-
-    @property
-    def codechecker_workspace(self):
-        return self._codechecker_workspace
-
-    @codechecker_workspace.setter
-    def codechecker_workspace(self, value):
-        self._codechecker_workspace = value
 
     @property
     def severity_map(self):

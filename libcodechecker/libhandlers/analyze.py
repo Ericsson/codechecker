@@ -17,7 +17,7 @@ import shutil
 import sys
 
 from libcodechecker import logger
-from libcodechecker import generic_package_context
+from libcodechecker import package_context
 from libcodechecker import host_check
 from libcodechecker.analyze import analyzer
 from libcodechecker.analyze import log_parser
@@ -523,7 +523,7 @@ def main(args):
                  "valid compilation commands. No analysis needed...")
         sys.exit(1)
 
-    context = generic_package_context.get_context()
+    context = package_context.get_context()
     metadata = {'action_num': len(actions),
                 'command': sys.argv,
                 'versions': {

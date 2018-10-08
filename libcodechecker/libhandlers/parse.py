@@ -13,14 +13,13 @@ from __future__ import absolute_import
 
 from collections import defaultdict
 import argparse
-import json
 import os
 import sys
 
 from plist_to_html import PlistToHtml
 
-from libcodechecker import generic_package_context
-from libcodechecker import generic_package_suppress_handler
+from libcodechecker import package_context
+from libcodechecker import suppress_handler
 from libcodechecker import logger
 from libcodechecker import util
 from libcodechecker.analyze import plist_parser
@@ -224,7 +223,7 @@ def main(args):
 
     logger.setup_logger(args.verbose if 'verbose' in args else None)
 
-    context = generic_package_context.get_context()
+    context = package_context.get_context()
 
     # To ensure the help message prints the default folder properly,
     # the 'default' for 'args.input' is a string, not a list.
@@ -234,7 +233,7 @@ def main(args):
 
     original_cwd = os.getcwd()
 
-    suppress_handler = None
+    suppr_handler = None
     if 'suppress' in args:
         __make_handler = False
         if not os.path.isfile(args.suppress):
@@ -251,7 +250,7 @@ def main(args):
             __make_handler = True
 
         if __make_handler:
-            suppress_handler = generic_package_suppress_handler.\
+            suppr_handler = suppress_handler.\
                 GenericSuppressHandler(args.suppress,
                                        'create_suppress' in args)
     elif 'create_suppress' in args:
@@ -280,7 +279,7 @@ def main(args):
                                         source_file,
                                         report_line,
                                         checker_name,
-                                        suppress_handler)
+                                        suppr_handler)
         if not skip:
             processed_path_hashes.add(path_hash)
 
@@ -344,7 +343,7 @@ def main(args):
         file_change = set()
         file_report_map = defaultdict(list)
 
-        rh = plist_parser.PlistToPlaintextFormatter(suppress_handler,
+        rh = plist_parser.PlistToPlaintextFormatter(suppr_handler,
                                                     skip_handler,
                                                     context.severity_map,
                                                     processed_path_hashes)

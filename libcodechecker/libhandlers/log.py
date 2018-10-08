@@ -17,7 +17,7 @@ from __future__ import absolute_import
 import argparse
 import os
 
-from libcodechecker import generic_package_context
+from libcodechecker import package_context
 from libcodechecker import logger
 from libcodechecker.log import build_manager
 from libcodechecker.log.host_check import check_intercept
@@ -102,7 +102,7 @@ def main(args):
     if os.path.exists(args.logfile):
         os.remove(args.logfile)
 
-    context = generic_package_context.get_context()
+    context = package_context.get_context()
     build_manager.perform_build_command(args.logfile,
                                         args.command,
                                         context,
