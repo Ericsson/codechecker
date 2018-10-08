@@ -137,15 +137,11 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             # Checker order matters.
             config = self.config_handler
 
-            analyzer_cmd = [config.analyzer_binary]
-
-            # Do not warn about the unused gcc/g++ arguments.
-            analyzer_cmd.append('-Qunused-arguments')
-
-            analyzer_cmd.append('--analyze')
-
-            # Turn off clang hardcoded checkers list.
-            analyzer_cmd.append('--analyzer-no-default-checks')
+            analyzer_cmd = [config.analyzer_binary, '--analyze',
+                            # Do not warn about the unused gcc/g++ arguments.
+                            '-Qunused-arguments',
+                            # Turn off clang hardcoded checkers list.
+                            '--analyzer-no-default-checks']
 
             for plugin in config.analyzer_plugins:
                 analyzer_cmd.extend(["-Xclang", "-plugin",
@@ -157,9 +153,8 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             analyzer_cmd.extend(['-Xclang',
                                  '-analyzer-opt-analyze-headers',
                                  '-Xclang',
-                                 '-analyzer-output=' + analyzer_mode])
-
-            analyzer_cmd.extend(['-o', analyzer_output_file])
+                                 '-analyzer-output=' + analyzer_mode,
+                                 '-o', analyzer_output_file])
 
             # Checker configuration arguments needs to be set before
             # the checkers.

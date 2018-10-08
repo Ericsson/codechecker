@@ -285,14 +285,13 @@ class PListConverter(object):
         Creates a new plist diagnostic from a single clang-tidy message.
         """
 
-        diag = {}
-        diag['location'] = PListConverter._create_location(message, fmap)
-        diag['check_name'] = message.checker
-        diag['description'] = message.message
-        diag['category'] = PListConverter._get_checker_category(
-            message.checker)
-        diag['type'] = 'clang-tidy'
-        diag['path'] = []
+        diag = {'location': PListConverter._create_location(message, fmap),
+                'check_name': message.checker,
+                'description': message.message,
+                'category': PListConverter._get_checker_category(
+                    message.checker),
+                'type': 'clang-tidy',
+                'path': []}
 
         PListConverter._add_fixits(diag, message, fmap)
         PListConverter._add_notes(diag, message, fmap)

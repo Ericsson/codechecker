@@ -1460,7 +1460,6 @@ class ThriftRequestHandler(object):
             q = filter_report_filter(q, filter_expression, run_ids, cmp_data,
                                      diff_hashes)
 
-            unique_checker_q = None
             if is_unique:
                 q = q.group_by(Report.bug_id).subquery()
                 unique_checker_q = session.query(q.c.checker_id,
@@ -1517,7 +1516,6 @@ class ThriftRequestHandler(object):
             q = filter_report_filter(q, filter_expression, run_ids, cmp_data,
                                      diff_hashes)
 
-            severities = None
             if is_unique:
                 q = q.group_by(Report.bug_id).subquery()
                 severities = session.query(q.c.severity,
@@ -1565,7 +1563,6 @@ class ThriftRequestHandler(object):
             q = filter_report_filter(q, filter_expression, run_ids, cmp_data,
                                      diff_hashes)
 
-            checker_messages = None
             if is_unique:
                 q = q.group_by(Report.bug_id).subquery()
                 checker_messages = session.query(q.c.checker_message,
@@ -1618,7 +1615,6 @@ class ThriftRequestHandler(object):
             q = filter_report_filter(q, filter_expression, run_ids, cmp_data,
                                      diff_hashes)
 
-            review_statuses = None
             if is_unique:
                 q = q.group_by(Report.bug_id).subquery()
                 review_statuses = session.query(func.max(q.c.bug_id),
@@ -2038,7 +2034,6 @@ class ThriftRequestHandler(object):
                 # record in the database or we need to add one.
 
                 LOG.debug(file_name + ' not found or already stored.')
-                fid = None
                 with DBSession(self.__Session) as session:
                     fid = store_handler.addFileRecord(session,
                                                       trimmed_file_path,

@@ -64,9 +64,9 @@ def get_compiler_err(cmd):
 
 
 def parse_compiler_includes(lines):
-    '''
+    """
     Parse the compiler include paths from a string
-    '''
+    """
     start_mark = "#include <...> search starts here:"
     end_mark = "End of search list."
 
@@ -187,7 +187,6 @@ def get_compiler_includes(parseLogOptions, compiler, lang, compile_opts,
     cmd = compiler + " " + ' '.join(extra_opts) + " -E -x " + lang + \
         " " + sysroot + " - -v "
 
-    err = ""
     if parseLogOptions.compiler_includes_file is None:
         LOG.debug("Retrieving default includes via '" + cmd + "'")
         err = get_compiler_err(cmd)
@@ -210,7 +209,6 @@ def get_compiler_target(parseLogOptions, compiler):
     """
     Returns the target triple of the given compiler as a string.
     """
-    err = ""
     if parseLogOptions.compiler_target_file is None:
         cmd = compiler + ' -v'
         LOG.debug("Retrieving target platform information via '" + cmd + "'")

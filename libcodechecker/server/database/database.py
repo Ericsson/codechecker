@@ -34,7 +34,7 @@ from shared.ttypes import DBStatus
 LOG = get_logger('system')
 
 
-class DBContext():
+class DBContext:
     """
     Simple helper class to setup and sql engine, a database session
     and a connection.
@@ -59,7 +59,7 @@ class DBContext():
         except Exception as ex:
             LOG.debug("Connection error")
             LOG.debug(ex)
-            self.error = DBStatus.FAILED_TO_CONNECT
+            self.db_error = DBStatus.FAILED_TO_CONNECT
 
         return self
 

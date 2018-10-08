@@ -29,14 +29,9 @@ def build_stat_coll_cmd(action, config, source, environ):
     Build the statistics collector analysis command.
     """
 
-    cmd = [config.analyzer_binary]
-    cmd.append('-c')
-    cmd.extend(['-x', action.lang])
-
-    # Do not warn about the unused gcc/g++ arguments.
-    cmd.append('-Qunused-arguments')
-
-    cmd.append('--analyze')
+    cmd = [config.analyzer_binary, '-c', '-x', action.lang, '--analyze',
+           # Do not warn about the unused gcc/g++ arguments.
+           '-Qunused-arguments']
 
     for plugin in config.analyzer_plugins:
         cmd.extend(["-Xclang", "-plugin",

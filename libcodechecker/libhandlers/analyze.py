@@ -446,10 +446,10 @@ https://clang.llvm.org/docs/DiagnosticsReference.html.""")
 
 
 class ParseLogOptions:
-    " Options for log parsing. "
+    """ Options for log parsing. """
 
     def __init__(self, args=None):
-        if (args is None):
+        if args is None:
             self.output_path = None
             self.compiler_includes_file = None
             self.compiler_target_file = None

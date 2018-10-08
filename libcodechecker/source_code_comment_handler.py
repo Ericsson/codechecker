@@ -232,8 +232,6 @@ class SourceCodeCommentHandler(object):
 
                 orig_review_comment = ' '.join(rev).strip()
 
-                review_comment = ''
-
                 if rev[0].strip().startswith('//'):
                     review_comment = orig_review_comment.replace('//', '')
                 else:

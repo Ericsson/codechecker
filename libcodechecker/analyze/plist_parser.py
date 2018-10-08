@@ -233,7 +233,6 @@ def remove_report_from_plist(plist_content, skip_handler):
     diagnostic section (control, event ...) nodes should be
     re indexed to use the proper file array indexes!!!
     """
-    new_data = {}
     try:
         report_data = plistlib.readPlistFromString(plist_content)
     except (ExpatError, TypeError, AttributeError) as ex:
@@ -253,8 +252,7 @@ def remove_report_from_plist(plist_content, skip_handler):
         _, kept_diagnostics = fids_in_path(report_data, file_ids_to_remove)
         report_data['diagnostics'] = kept_diagnostics
 
-        new_data = report_data
-        res = plistlib.writePlistToString(new_data)
+        res = plistlib.writePlistToString(report_data)
         return res
 
     except KeyError:

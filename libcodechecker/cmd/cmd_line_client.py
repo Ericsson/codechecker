@@ -747,7 +747,6 @@ def handle_diff_results(args):
 
         file_report_map = defaultdict(list)
         for report in reports:
-            file_path = ""
             if isinstance(report, Report):
                 file_path = report.main['location']['file_name']
             else:
