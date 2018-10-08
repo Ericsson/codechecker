@@ -49,6 +49,7 @@ class DBContext(object):
         self.db_engine = None
         self.db_session = None
         self.db_connection = None
+        self.db_error = None
 
     def __enter__(self):
         self.db_error = None
