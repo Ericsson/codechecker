@@ -32,6 +32,7 @@ class SourceAnalyzer(object):
     def __init__(self, config_handler, buildaction):
         self.__config_handler = config_handler
         self.__build_action = buildaction
+        # Currently analyzed source file.
         self.source_file = ''
         self.__checkers = []
 

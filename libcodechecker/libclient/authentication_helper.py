@@ -24,7 +24,7 @@ from .credential_manager import SESSION_COOKIE_NAME
 LOG = get_logger('system')
 
 
-class ThriftAuthHelper:
+class ThriftAuthHelper(object):
     def __init__(self, protocol, host, port, uri,
                  session_token=None):
         self.__host = host

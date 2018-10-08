@@ -34,7 +34,7 @@ from shared.ttypes import DBStatus
 LOG = get_logger('system')
 
 
-class DBContext:
+class DBContext(object):
     """
     Simple helper class to setup and sql engine, a database session
     and a connection.
