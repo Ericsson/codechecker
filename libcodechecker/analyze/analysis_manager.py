@@ -9,7 +9,6 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
-import codecs
 import glob
 import multiprocessing
 import os
@@ -24,6 +23,7 @@ from libcodechecker import util
 from libcodechecker.analyze import analyzer_env
 from libcodechecker.analyze import gcc_toolchain
 from libcodechecker.analyze import plist_parser
+from libcodechecker.analyze import tu_collector
 from libcodechecker.analyze.analyzers import analyzer_clangsa
 from libcodechecker.analyze.analyzers import analyzer_types
 from libcodechecker.analyze.statistics_collector \
@@ -129,97 +129,6 @@ def worker_result_handler(results, metadata, output_path, analyzer_binaries):
     metadata['result_source_files'].update(source_map)
 
 
-def create_dependencies(command, build_dir):
-    """
-    Transforms the given original build 'command' to a command that, when
-    executed, is able to generate a dependency list.
-    """
-
-    def __eliminate_argument(arg_vect, opt_string, has_arg=False):
-        """
-        This call eliminates the parameters matching the given option string,
-        along with its argument coming directly after the opt-string if any,
-        from the command. The argument can possibly be separated from the flag.
-        """
-        while True:
-            option_index = next(
-                (i for i, c in enumerate(arg_vect)
-                 if c.startswith(opt_string)), None)
-
-            if option_index:
-                separate = 1 if has_arg and \
-                    len(arg_vect[option_index]) == len(opt_string) else 0
-                arg_vect = arg_vect[0:option_index] + \
-                    arg_vect[option_index + separate + 1:]
-            else:
-                break
-
-        return arg_vect
-
-    if 'CC_LOGGER_GCC_LIKE' not in os.environ:
-        os.environ['CC_LOGGER_GCC_LIKE'] = 'gcc:g++:clang:clang++:cc:c++'
-
-    if any(binary_substring in command[0] for binary_substring
-           in os.environ['CC_LOGGER_GCC_LIKE'].split(':')):
-        # gcc and clang can generate makefile-style dependency list.
-
-        # If an output file is set, the dependency is not written to the
-        # standard output but rather into the given file.
-        # We need to first eliminate the output from the command.
-        command = __eliminate_argument(command, '-o', True)
-        command = __eliminate_argument(command, '--output', True)
-
-        # Remove potential dependency-file-generator options from the string
-        # too. These arguments found in the logged build command would derail
-        # us and generate dependencies, e.g. into the build directory used.
-        command = __eliminate_argument(command, '-MM')
-        command = __eliminate_argument(command, '-MF', True)
-        command = __eliminate_argument(command, '-MP')
-        command = __eliminate_argument(command, '-MT', True)
-        command = __eliminate_argument(command, '-MQ', True)
-        command = __eliminate_argument(command, '-MD')
-        command = __eliminate_argument(command, '-MMD')
-
-        # Clang contains some extra options.
-        command = __eliminate_argument(command, '-MJ', True)
-        command = __eliminate_argument(command, '-MV')
-
-        # Build out custom invocation for dependency generation.
-        command = [command[0], '-E', '-M', '-MT', '__dummy'] + command[1:]
-
-        # Remove empty arguments
-        command = [i for i in command if i]
-
-        LOG.debug("Crafting build dependencies from GCC or Clang!")
-
-        # gcc does not have '--gcc-toolchain' argument it would fail if it is
-        # kept there.
-        # For clang it does not change the output, the include paths from
-        # the gcc-toolchain are not added to the output.
-        command = __eliminate_argument(command, '--gcc-toolchain')
-
-        output, rc = util.call_command(command,
-                                       env=os.environ,
-                                       cwd=build_dir)
-        output = codecs.decode(output, 'utf-8', 'replace')
-        if rc == 0:
-            # Parse 'Makefile' syntax dependency output.
-            dependencies = output.replace('__dummy: ', '') \
-                .replace('\\', '') \
-                .replace('  ', '') \
-                .replace(' ', '\n')
-
-            # The dependency list already contains the source file's path.
-            return [dep for dep in dependencies.split('\n') if dep != ""]
-        else:
-            raise IOError("Failed to generate dependency list for " +
-                          ' '.join(command) + "\n\nThe original output was: " +
-                          output)
-    else:
-        raise ValueError("Cannot generate dependency list for build "
-                         "command '" + ' '.join(command) + "'")
-
-
 # Progress reporting.
 progress_checked_num = None
 progress_actions = None
@@ -229,44 +138,6 @@ def init_worker(checked_num, action_num):
     global progress_checked_num, progress_actions
     progress_checked_num = checked_num
     progress_actions = action_num
-
-
-def get_dependent_headers(buildaction, archive):
-    LOG.debug("Generating dependent headers via compiler...")
-    command = shlex.split(buildaction.original_command)
-    try:
-        dependencies = set(create_dependencies(command, buildaction.directory))
-    except Exception as ex:
-        LOG.debug("Couldn't create dependencies:")
-        LOG.debug(str(ex))
-        # TODO append with buildaction
-        archive.writestr("no-sources", str(ex))
-        dependencies = set()
-
-    toolchain = gcc_toolchain.toolchain_in_args(
-        shlex.split(buildaction.original_command))
-
-    if toolchain:
-        LOG.debug("Generating gcc-toolchain headers via toolchain compiler...")
-        try:
-            # Change the original compiler to the compiler from the
-            # toolchain.
-            toolchain_compiler = gcc_toolchain.get_toolchain_compiler(
-                toolchain, buildaction.lang)
-            if not toolchain_compiler:
-                raise Exception("Could not get the compiler "
-                                "from the gcc-toolchain.")
-            command[0] = toolchain_compiler
-            dependencies = dependencies.union(
-                set(create_dependencies(command, buildaction.directory)))
-        except Exception as ex:
-            LOG.debug("Couldn't create dependencies:")
-            LOG.debug(str(ex))
-            # TODO append with buildaction
-            archive.writestr("no-sources", str(ex))
-            dependencies = set()
-
-    return dependencies
 
 
 def collect_debug_data(zip_file, other_files, buildaction, out, err,
@@ -284,8 +155,12 @@ def collect_debug_data(zip_file, other_files, buildaction, out, err,
         LOG.debug("[ZIP] Writing analyzer STDERR to /stderr")
         archive.writestr("stderr", err)
 
-        dependencies = get_dependent_headers(buildaction,
-                                             archive)
+        dependencies, err = tu_collector.get_dependent_headers(
+            buildaction.original_command,
+            buildaction.directory)
+
+        if err:
+            archive.writestr('no-sources', err)
 
         mentioned_files_dependent_files = set()
         for of in other_files:
@@ -295,10 +170,13 @@ def collect_debug_data(zip_file, other_files, buildaction, out, err,
             key = mentioned_file, action_target
             mentioned_file_action = actions_map.get(key)
             if mentioned_file_action is not None:
-                mentioned_file_deps = get_dependent_headers(
-                    mentioned_file_action, archive)
+                mentioned_file_deps, err = tu_collector.get_dependent_headers(
+                    mentioned_file_action.original_command,
+                    mentioned_file_action.directory)
                 mentioned_files_dependent_files.\
                     update(mentioned_file_deps)
+                if err:
+                    archive.writestr('no-sources', err)
             else:
                 LOG.debug("Could not find %s in build actions.", key)
 
