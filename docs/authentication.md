@@ -49,11 +49,15 @@ is handled.
 
     After this many login attempts made towards the server, it will perform an
     automatic cleanup of old, expired sessions.
+    This option can be changed and reloaded without server restart by using the
+    `--reload` option of CodeChecker server command.
  * `session_lifetime`
 
     (in seconds) The lifetime of the session sets that after this many seconds
     since last session access the session is permanently invalidated.
 
+    This option can be changed and reloaded without server restart by using the
+    `--reload` option of CodeChecker server command.
  * `refresh_time`
 
     (in seconds) Refresh time of the local session objects. We use local session
@@ -64,6 +68,8 @@ is handled.
     seconds since last session access the local session is permanently
     invalidated.
 
+    This option can be changed and reloaded without server restart by using the
+    `--reload` option of CodeChecker server command.
 If the server is shut down, every session is **immediately** invalidated. The
 running sessions are only stored in the server's memory, they are not written
 to storage.
@@ -76,6 +82,10 @@ Users are authenticated if **any** authentication method successfully
 authenticates them. Authentications are attempted in the order they are
 described here: *dicitonary* takes precedence, *pam* is a secondary and *ldap*
 is a tertiary backend, if enabled.
+
+Only `refresh_time`, `session_lifetime` and `logins_until_cleanup` options can
+be changed and reloaded without server restart by using the `--reload`
+option of `CodeChecker server` command.
 
 ### <a name="dictionary-authentication"></a> <i>Dictionary</i> authentication
 
