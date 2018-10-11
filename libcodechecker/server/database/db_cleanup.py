@@ -24,7 +24,7 @@ RUN_LOCK_TIMEOUT_IN_DATABASE = 30 * 60  # 30 minutes.
 
 
 def remove_expired_run_locks(session):
-    LOG.info("Garbage collection of expired run locks started...")
+    LOG.debug("Garbage collection of expired run locks started...")
 
     locks_expired_at = datetime.now() - timedelta(
         seconds=RUN_LOCK_TIMEOUT_IN_DATABASE)
@@ -33,11 +33,11 @@ def remove_expired_run_locks(session):
         .filter(RunLock.locked_at < locks_expired_at) \
         .delete(synchronize_session=False)
 
-    LOG.info("Garbage collection of expired run locks finished.")
+    LOG.debug("Garbage collection of expired run locks finished.")
 
 
 def remove_unused_files(session):
-    LOG.info("Garbage collection of dangling files started...")
+    LOG.debug("Garbage collection of dangling files started...")
 
     bpe_files = session.query(BugPathEvent.file_id) \
         .group_by(BugPathEvent.file_id) \
@@ -59,4 +59,4 @@ def remove_unused_files(session):
         .filter(FileContent.content_hash.notin_(files)) \
         .delete(synchronize_session=False)
 
-    LOG.info("Garbage collection of dangling files finished.")
+    LOG.debug("Garbage collection of dangling files finished.")

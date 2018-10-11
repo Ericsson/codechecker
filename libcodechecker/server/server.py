@@ -628,9 +628,12 @@ class Product(object):
                                                       env=self.__check_env)
         with database.DBContext(prod_db) as db:
             try:
+                LOG.info("Garbage collection for product '%s' started...",
+                         self.endpoint)
                 db_cleanup.remove_expired_run_locks(db.session)
                 db_cleanup.remove_unused_files(db.session)
                 db.session.commit()
+                LOG.info("Garbage collection finished.")
                 return True
             except Exception as ex:
                 db.session.rollback()
