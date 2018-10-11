@@ -167,13 +167,14 @@ fail to start.
 
 ### Check if migration is possible
 
-With the `CodeChecker server --db-status all` the database statuses for all of the
-product databases can be checked.
+With the `CodeChecker server --db-status all` the database statuses for all of
+the product databases can be checked.
 
 ### Product migration
 
 Schema upgrade can be done for each product independently or in a row for all
-of the products with the `CodeChecker server --db-upgrade-schema PRODUCT_NAME` command.
+of the products with the `CodeChecker server --db-upgrade-schema PRODUCT_NAME`
+command.
 
 ```sh
 $ CodeChecker server --db-upgrade-schema Default
@@ -193,9 +194,11 @@ Database is OK.
 ```
 
 Schema upgrade can be done for multiple products in a row if the
-`CodeChecker server --db-upgrade-schema all` command is used.
-A prompt will ask for user input for each product, no schema
-modification is done without asking the user.
+`CodeChecker server --db-upgrade-schema all` command is used. A prompt will ask
+for user input for each product, no schema modification is done without asking
+the user.
+If you want to do the migration without user interaction you can use the
+`--db-force-upgrade` option of the server command.
 
 # Further reading
 

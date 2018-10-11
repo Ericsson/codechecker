@@ -1390,6 +1390,10 @@ Database management arguments.:
                         all of the products.NOTE: Before migration it is
                         advised to create a full backup of the product
                         databases.
+  --db-force-upgrade    Force the server to do database migration without user
+                        interaction. NOTE: Please use with caution and before
+                        automatic migration it is advised to create a full
+                        backup of the product databases.
 ~~~~~~~~~~~~~~~~~~~~~
 
 

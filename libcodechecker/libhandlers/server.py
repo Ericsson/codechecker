@@ -292,10 +292,22 @@ def add_arguments_to_parser(parser):
                                 help="Name of the product to upgrade to the "
                                      "latest database schema available in "
                                      "the package. Use 'all' to upgrade all "
-                                     "of the products."
+                                     "of the products. "
                                      "NOTE: Before migration it is advised"
                                      " to create a full backup of "
                                      "the product databases.")
+
+    database_mgmnt.add_argument('--db-force-upgrade',
+                                dest='force_upgrade',
+                                action='store_true',
+                                default=argparse.SUPPRESS,
+                                required=False,
+                                help="Force the server to do database "
+                                     "migration without user interaction. "
+                                     "NOTE: Please use with caution and "
+                                     "before automatic migration it is "
+                                     "advised to create a full backup of the "
+                                     "product databases.")
 
     logger.add_verbose_arguments(parser)
 
@@ -505,7 +517,8 @@ def __db_status_check(cfg_sql_server, context, product_name=None):
     return 0
 
 
-def __db_migration(cfg_sql_server, context, product_to_upgrade='all'):
+def __db_migration(cfg_sql_server, context, product_to_upgrade='all',
+                   force_upgrade=False):
     """
     Handle database management.
     Schema checking and migration.
@@ -560,7 +573,7 @@ def __db_migration(cfg_sql_server, context, product_to_upgrade='all'):
         if db_status == DBStatus.SCHEMA_MISSING:
             question = 'Do you want to initialize a new schema for ' \
                         + product.endpoint + '? Y(es)/n(o) '
-            if util.get_user_input(question):
+            if force_upgrade or util.get_user_input(question):
                 ret = db.connect(init=True)
                 msg = database_status.db_status_msg.get(
                     ret, 'Unknown database status')
@@ -570,7 +583,7 @@ def __db_migration(cfg_sql_server, context, product_to_upgrade='all'):
         elif db_status == DBStatus.SCHEMA_MISMATCH_OK:
             question = 'Do you want to upgrade to new schema for ' \
                         + product.endpoint + '? Y(es)/n(o) '
-            if util.get_user_input(question):
+            if force_upgrade or util.get_user_input(question):
                 LOG.info("Upgrading schema ...")
                 ret = db.upgrade()
                 LOG.info("Done.")
@@ -707,6 +720,8 @@ def server_init_start(args):
         LOG.debug("No schema upgrade is possible.")
         sys.exit(1)
 
+    force_upgrade = True if 'force_upgrade' in args else False
+
     if db_status == DBStatus.SCHEMA_MISMATCH_OK:
         LOG.debug("Configuration database schema mismatch.")
         LOG.debug("Schema upgrade is possible.")
@@ -720,7 +735,7 @@ def server_init_start(args):
 
         question = 'Do you want to upgrade to the new schema?' \
                    ' Y(es)/n(o) '
-        if util.get_user_input(question):
+        if force_upgrade or util.get_user_input(question):
             print("Upgrading schema ...")
             ret = cfg_sql_server.upgrade()
             msg = database_status.db_status_msg.get(
@@ -750,7 +765,7 @@ def server_init_start(args):
     try:
         if args.product_to_upgrade:
             ret = __db_migration(cfg_sql_server, context,
-                                 args.product_to_upgrade)
+                                 args.product_to_upgrade, force_upgrade)
             sys.exit(ret)
     except AttributeError:
         LOG.debug('Product upgrade was not in the arguments.')
@@ -801,7 +816,7 @@ def server_init_start(args):
     if upgrade_available:
         print_prod_status(prod_statuses)
         LOG.warning("Multiple products can be upgraded, make a backup!")
-        __db_migration(cfg_sql_server, context)
+        __db_migration(cfg_sql_server, context, 'all', force_upgrade)
 
     prod_statuses = check_product_db_status(cfg_sql_server, context)
     print_prod_status(prod_statuses)
