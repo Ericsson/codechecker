@@ -4,11 +4,19 @@
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
 import codecs
+import json
 import logging
 import os
+import random
 import re
 import shlex
+import string
 import subprocess
+import zipfile
+
+
+def __random_string(l):
+    return ''.join(random.choice(string.ascii_lowercase) for i in range(l))
 
 
 def __get_toolchain_compiler(command):
@@ -154,7 +162,6 @@ def get_dependent_headers(command, build_dir, collect_toolchain=True):
         logging.debug("Couldn't create dependencies:")
         logging.debug(str(ex))
         error += str(ex)
-        # TODO append with buildaction
 
     toolchain_compiler = __get_toolchain_compiler(command)
 
@@ -169,6 +176,68 @@ def get_dependent_headers(command, build_dir, collect_toolchain=True):
             logging.debug("Couldn't create dependencies:")
             logging.debug(str(ex))
             error += str(ex)
-            # TODO append with buildaction
 
     return dependencies, error
+
+
+def zip_tu_files(zip_file, compilation_database, write_mode='w'):
+    """
+    Collects all files to a zip file which are required for the compilation of
+    the translation units described by the given compilation database.
+    If there are some files which couldn't be collected then a "no-sources"
+    file will contain the error message of its reason.
+    The function returns the set of files.
+
+    zip_file -- A file name or a file object.
+    compilation_database -- Either a path of the compilation database JSON file
+                            or a list of the parsed JSON.
+    write_mode -- The file opening mode of the zip_file. In case of 'a' the new
+                  files are appended to the existing zip file, in case of 'w'
+                  the files are added to a clean zip file.
+    """
+    if isinstance(compilation_database, str) or \
+            isinstance(compilation_database, unicode):
+        with open(compilation_database) as f:
+            compilation_database = json.load(f)
+
+    no_sources = 'no-sources'
+    tu_files = set()
+    error_messages = ''
+
+    for buildaction in compilation_database:
+        files, err = get_dependent_headers(
+            buildaction['command'],
+            buildaction['directory'])
+
+        tu_files |= files
+
+        if err:
+            error_messages += buildaction['file'] + '\n' \
+                + '-' * len(buildaction['file']) + '\n' + err + '\n'
+
+    if write_mode == 'a' and os.path.isfile(zip_file):
+        with zipfile.ZipFile(zip_file) as archive:
+            try:
+                archive.getinfo(no_sources)
+            except KeyError:
+                pass
+            else:
+                no_sources = 'no-sources_' + __random_string(5)
+
+    with zipfile.ZipFile(zip_file, write_mode) as archive:
+        for tu_file in tu_files:
+            archive_path = os.path.join('sources-root', tu_file.lstrip('/'))
+
+            try:
+                archive.getinfo(archive_path)
+            except KeyError:
+                pass
+            else:
+                logging.debug("'{}' is already in the ZIP file, won't add it "
+                              "again!".format(archive_path))
+                continue
+
+            archive.write(tu_file, archive_path, zipfile.ZIP_DEFLATED)
+
+        if error_messages:
+            archive.writestr(no_sources, error_messages)
