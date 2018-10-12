@@ -55,8 +55,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
         if not self.checkers:
             analyzer_binary = config_handler.analyzer_binary
 
-            command = [analyzer_binary, "-list-checks", "-checks='*'", "-",
-                       "--"]
+            command = [analyzer_binary, "-list-checks", "-checks='*'"]
 
             try:
                 command = shlex.split(' '.join(command))
