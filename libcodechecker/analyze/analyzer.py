@@ -200,8 +200,7 @@ def perform_analysis(args, context, actions, metadata):
             return
 
     if 'stats_relevance_threshold' in args and statistics_data:
-        if (args.stats_relevance_threshold < 1 and
-                args.stats_relevance_threshold > 0):
+        if 1 > args.stats_relevance_threshold > 0:
             statistics_data['stats_relevance_threshold'] =\
                 args.stats_relevance_threshold
         else:

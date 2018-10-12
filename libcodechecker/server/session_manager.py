@@ -121,7 +121,7 @@ class _Session(object):
                     transaction.close()
 
 
-class SessionManager:
+class SessionManager(object):
     """
     Provides the functionality required to handle user authentication on a
     CodeChecker server.

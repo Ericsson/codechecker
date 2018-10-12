@@ -9,7 +9,6 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
-from collections import defaultdict
 import codecs
 import glob
 import multiprocessing
@@ -41,8 +40,8 @@ def print_analyzer_statistic_summary(statistics, status, msg=None):
     Print analyzer statistic summary for the given status code with the given
     section heading message.
     """
-    has_status = sum([res.get(status, 0) for res in
-                      [statistics[i] for i in statistics]])
+    has_status = sum((res.get(status, 0) for res in
+                      (statistics[i] for i in statistics)))
 
     if has_status and msg:
         LOG.info(msg)

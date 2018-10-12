@@ -62,7 +62,7 @@ class Context(object):
         self.env_vars = env_vars
 
         self._package_root = package_root
-        self._codechecker_workspace = None
+        self.codechecker_workspace = None
         self._severity_map = SeverityMap()
         self.__package_version = None
         self.__product_db_version_info = None
@@ -74,6 +74,8 @@ class Context(object):
         self.logger_bin = None
         self.logger_file = None
         self.logger_compilers = None
+
+        self.db_username = None
 
         # Get package specific environment variables.
         self.set_env(env_vars)
@@ -87,7 +89,7 @@ class Context(object):
         """
         self._package_root = os.environ.get(env_vars['env_package_root'])
 
-        self._codechecker_workspace = os.environ.get('codechecker_workspace')
+        self.codechecker_workspace = os.environ.get('codechecker_workspace')
 
         self._severity_map = SeverityMap(
             load_json_or_empty(self.checkers_severity_map_file, {}))
@@ -243,39 +245,32 @@ class Context(object):
         resource_dir = self.pckg_layout.get('compiler_resource_dir')
         if not resource_dir:
             return ""
+        if os.path.isabs(resource_dir):
+            return resource_dir
         else:
-            if os.path.isabs(resource_dir):
-                return resource_dir
-            else:
-                return os.path.join(self._package_root, resource_dir)
+            return os.path.join(self._package_root, resource_dir)
 
     @property
     def path_env_extra(self):
-        extra_paths = self.pckg_layout.get('path_env_extra')
-        if not extra_paths:
-            return []
-        else:
-            paths = []
-            for path in extra_paths:
-                if os.path.isabs(path):
-                    paths.append(path)
-                else:
-                    paths.append(os.path.join(self._package_root, path))
-            return paths
+        extra_paths = self.pckg_layout.get('path_env_extra', [])
+        paths = []
+        for path in extra_paths:
+            if os.path.isabs(path):
+                paths.append(path)
+            else:
+                paths.append(os.path.join(self._package_root, path))
+        return paths
 
     @property
     def ld_lib_path_extra(self):
-        extra_lib = self.pckg_layout.get('ld_lib_path_extra')
-        if not extra_lib:
-            return []
-        else:
-            ld_paths = []
-            for path in extra_lib:
-                if os.path.isabs(path):
-                    ld_paths.append(path)
-                else:
-                    ld_paths.append(os.path.join(self._package_root, path))
-            return ld_paths
+        extra_lib = self.pckg_layout.get('ld_lib_path_extra', [])
+        ld_paths = []
+        for path in extra_lib:
+            if os.path.isabs(path):
+                ld_paths.append(path)
+            else:
+                ld_paths.append(os.path.join(self._package_root, path))
+        return ld_paths
 
     @property
     def analyzer_binaries(self):
@@ -331,22 +326,6 @@ class Context(object):
     def config_migration_root(self):
         return os.path.join(self._package_root,
                             self.pckg_layout['config_db_migrate'])
-
-    @property
-    def db_username(self):
-        return self._db_username
-
-    @db_username.setter
-    def db_username(self, value):
-        self._db_username = value
-
-    @property
-    def codechecker_workspace(self):
-        return self._codechecker_workspace
-
-    @codechecker_workspace.setter
-    def codechecker_workspace(self, value):
-        self._codechecker_workspace = value
 
     @property
     def severity_map(self):

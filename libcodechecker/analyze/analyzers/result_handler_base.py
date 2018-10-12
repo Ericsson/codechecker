@@ -51,13 +51,13 @@ class ResultHandler(object):
         """
         self.__workspace = workspace
 
-        self.__analyzer_cmd = []
-        self.__analyzer_stdout = ''
-        self.__analyzer_stderr = ''
-        self.__severity_map = {}
-        self.__skiplist_handler = None
-        self.__analyzed_source_file = None
-        self.__analyzer_returncode = 1
+        self.analyzer_cmd = []
+        self.analyzer_stdout = ''
+        self.analyzer_stderr = ''
+        self.severity_map = {}
+        self.skiplist_handler = None
+        self.analyzed_source_file = None
+        self.analyzer_returncode = 1
         self.__buildaction = action
 
         self.__result_file = None
@@ -69,108 +69,12 @@ class ResultHandler(object):
         return self.__buildaction
 
     @property
-    def analyzer_cmd(self):
-        """
-        Set the analyzer cmd.
-        """
-        return self.__analyzer_cmd
-
-    @analyzer_cmd.setter
-    def analyzer_cmd(self, cmd):
-        """
-        Set the analyzer cmd.
-        """
-        self.__analyzer_cmd = cmd
-
-    @property
-    def skiplist_handler(self):
-        """
-        """
-        return self.__skiplist_handler
-
-    @skiplist_handler.setter
-    def skiplist_handler(self, handler):
-        """
-        Used to check if analyzer result should be
-        handled or just skipped.
-        """
-        self.__skiplist_handler = handler
-
-    @property
-    def severity_map(self):
-        """
-        Severity map for each checker.
-        """
-        return self.__severity_map
-
-    @severity_map.setter
-    def severity_map(self, value):
-        """
-        Severity map for each checker.
-        """
-        self.__severity_map = value
-
-    @property
     def workspace(self):
         """
         Workspace where the analysis results and temporarily generated files
         should go.
         """
         return self.__workspace
-
-    @property
-    def analyzer_returncode(self):
-        """
-        """
-        return self.__analyzer_returncode
-
-    @analyzer_returncode.setter
-    def analyzer_returncode(self, return_code):
-        """
-        """
-        self.__analyzer_returncode = return_code
-
-    @property
-    def analyzer_stdout(self):
-        """
-        Get the stdout from the analyzer.
-        """
-        return self.__analyzer_stdout
-
-    @analyzer_stdout.setter
-    def analyzer_stdout(self, stdout):
-        """
-        Set the stdout of the analyzer.
-        """
-        self.__analyzer_stdout = stdout
-
-    @property
-    def analyzer_stderr(self):
-        """
-        Get stderr of the analyzer.
-        """
-        return self.__analyzer_stderr
-
-    @analyzer_stderr.setter
-    def analyzer_stderr(self, stderr):
-        """
-        Set the stderr of the analyzer.
-        """
-        self.__analyzer_stderr = stderr
-
-    @property
-    def analyzed_source_file(self):
-        """
-        The source file which is analyzed.
-        """
-        return self.__analyzed_source_file
-
-    @analyzed_source_file.setter
-    def analyzed_source_file(self, file_path):
-        """
-        The source file which is analyzed.
-        """
-        self.__analyzed_source_file = file_path
 
     @property
     def analyzer_result_file(self):

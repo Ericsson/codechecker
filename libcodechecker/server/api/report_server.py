@@ -15,7 +15,6 @@ import codecs
 from collections import defaultdict
 from datetime import datetime, timedelta
 import io
-import json
 import os
 import sys
 import tempfile
@@ -30,7 +29,7 @@ import shared
 from codeCheckerDBAccess_v6 import constants, ttypes
 from codeCheckerDBAccess_v6.ttypes import *
 
-from libcodechecker import generic_package_context
+from libcodechecker import package_context
 from libcodechecker.source_code_comment_handler import \
     SourceCodeCommentHandler, SKIP_REVIEW_STATUSES
 from libcodechecker import util
@@ -1460,7 +1459,6 @@ class ThriftRequestHandler(object):
             q = filter_report_filter(q, filter_expression, run_ids, cmp_data,
                                      diff_hashes)
 
-            unique_checker_q = None
             if is_unique:
                 q = q.group_by(Report.bug_id).subquery()
                 unique_checker_q = session.query(q.c.checker_id,
@@ -1517,7 +1515,6 @@ class ThriftRequestHandler(object):
             q = filter_report_filter(q, filter_expression, run_ids, cmp_data,
                                      diff_hashes)
 
-            severities = None
             if is_unique:
                 q = q.group_by(Report.bug_id).subquery()
                 severities = session.query(q.c.severity,
@@ -1565,7 +1562,6 @@ class ThriftRequestHandler(object):
             q = filter_report_filter(q, filter_expression, run_ids, cmp_data,
                                      diff_hashes)
 
-            checker_messages = None
             if is_unique:
                 q = q.group_by(Report.bug_id).subquery()
                 checker_messages = session.query(q.c.checker_message,
@@ -1618,7 +1614,6 @@ class ThriftRequestHandler(object):
             q = filter_report_filter(q, filter_expression, run_ids, cmp_data,
                                      diff_hashes)
 
-            review_statuses = None
             if is_unique:
                 q = q.group_by(Report.bug_id).subquery()
                 review_statuses = session.query(func.max(q.c.bug_id),
@@ -2038,7 +2033,6 @@ class ThriftRequestHandler(object):
                 # record in the database or we need to add one.
 
                 LOG.debug(file_name + ' not found or already stored.')
-                fid = None
                 with DBSession(self.__Session) as session:
                     fid = store_handler.addFileRecord(session,
                                                       trimmed_file_path,
@@ -2342,7 +2336,7 @@ class ThriftRequestHandler(object):
         with DBSession(self.__Session) as session:
             ThriftRequestHandler.__store_run_lock(session, name, user)
 
-        context = generic_package_context.get_context()
+        context = package_context.get_context()
 
         wrong_src_code_comments = []
         try:

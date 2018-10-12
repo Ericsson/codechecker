@@ -25,7 +25,7 @@ from plist_to_html import PlistToHtml
 
 from codeCheckerDBAccess_v6 import constants, ttypes
 
-from libcodechecker import generic_package_context
+from libcodechecker import package_context
 from libcodechecker import logger
 from libcodechecker import suppress_file_handler
 from libcodechecker.analyze import plist_parser
@@ -324,7 +324,7 @@ def handle_diff_results(args):
 
     f_severities, f_checkers, f_file_path, _, _ = check_filter_values(args)
 
-    context = generic_package_context.get_context()
+    context = package_context.get_context()
 
     def skip_report_dir_result(report):
         """
@@ -747,7 +747,6 @@ def handle_diff_results(args):
 
         file_report_map = defaultdict(list)
         for report in reports:
-            file_path = ""
             if isinstance(report, Report):
                 file_path = report.main['location']['file_name']
             else:

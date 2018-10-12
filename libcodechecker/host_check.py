@@ -16,7 +16,7 @@ import os
 import re
 import subprocess
 
-from libcodechecker import generic_package_context
+from libcodechecker import package_context
 from libcodechecker.logger import get_logger
 from libcodechecker.analyze import analyzer_env
 from libcodechecker.analyze.analyzers import analyzer_types
@@ -27,7 +27,7 @@ LOG = get_logger('system')
 def is_ctu_capable():
     """ Detects if the current clang is CTU compatible. """
 
-    context = generic_package_context.get_context()
+    context = package_context.get_context()
     ctu_func_map_cmd = context.ctu_func_map_cmd
     try:
         version = subprocess.check_output([ctu_func_map_cmd, '-version'])
@@ -38,7 +38,7 @@ def is_ctu_capable():
 
 def is_statistics_capable():
     """ Detects if the current clang is Statistics compatible. """
-    context = generic_package_context.get_context()
+    context = package_context.get_context()
 
     analyzer = "clangsa"
     enabled_analyzers = [analyzer]
