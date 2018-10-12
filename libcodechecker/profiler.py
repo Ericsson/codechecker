@@ -95,7 +95,7 @@ def profileit(function):
         prof.disable()
         sortby = 'cumulative'
 
-        prof_data = StringIO.StringIO()
+        prof_data = StringIO()
         ps = pstats.Stats(prof, stream=prof_data).sort_stats(sortby)
         ps.print_stats()
         LOG.debug(prof_data.getvalue())
