@@ -175,11 +175,6 @@ class ClangSA(analyzer_base.SourceAnalyzer):
                                  '-Xclang', 'notes-as-events=true'])
 
             if config.ctu_dir and not self.__disable_ctu:
-                # ctu-clang5 compatibility
-                analyzer_cmd.extend(['-Xclang', '-analyzer-config',
-                                     '-Xclang',
-                                     'xtu-dir=' + self.get_ctu_dir()])
-                # ctu-clang6 compatibility (5.0 and 6.0 options work together)
                 analyzer_cmd.extend(
                     ['-Xclang', '-analyzer-config', '-Xclang',
                      'experimental-enable-naive-ctu-analysis=true',
