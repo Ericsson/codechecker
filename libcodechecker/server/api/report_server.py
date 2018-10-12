@@ -1314,7 +1314,8 @@ class ThriftRequestHandler(object):
             if md_file:
                 md_file = os.path.join(self.__checker_md_docs, md_file)
                 try:
-                    with io.open(md_file, 'r') as md_content:
+                    with io.open(md_file, errors='replace',
+                                 mode='r') as md_content:
                         missing_doc = md_content.read()
                 except (IOError, OSError) as oerr:
                     LOG.warning("Failed to read checker documentation: %s",

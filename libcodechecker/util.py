@@ -498,7 +498,7 @@ def get_line(file_name, line_no):
     string.
     """
     try:
-        with io.open(file_name) as source_file:
+        with io.open(file_name, errors='replace', mode='r') as source_file:
             for line in source_file:
                 line_no -= 1
                 if line_no == 0:
@@ -570,7 +570,7 @@ def load_json_or_empty(path, default=None, kind=None, lock=False):
 
     ret = default
     try:
-        with io.open(path, 'r') as handle:
+        with io.open(path, errors='replace', mode='r') as handle:
             if lock:
                 portalocker.lock(handle, portalocker.LOCK_SH)
 
