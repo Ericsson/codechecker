@@ -37,16 +37,16 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
         Skip clang static analyzer checkers.
         Store them to checkers.
         """
+        pattern = re.compile(r'^\S+$')
         for line in tidy_output.splitlines():
             line = line.strip()
-            if re.match(r'^Enabled checks:', line) or line == '':
+            if line.startswith('Enabled checks:') or line == '':
                 continue
             elif line.startswith('clang-analyzer-'):
                 continue
-            else:
-                match = re.match(r'^\S+$', line)
-                if match:
-                    self.checkers.append((match.group(0), ''))
+            match = pattern.match(line)
+            if match:
+                self.checkers.append((match.group(0), ''))
 
     def get_analyzer_checkers(self, config_handler, env):
         """
