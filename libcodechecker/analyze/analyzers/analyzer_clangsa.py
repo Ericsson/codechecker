@@ -241,7 +241,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         regex_for_ctu_ast_load = re.compile(
             r"ANALYZE \(CTU loaded AST for source file\): (.*)")
 
-        paths = []
+        paths = set()
 
         ctu_ast_dir = os.path.join(self.get_ctu_dir(), "ast")
 
@@ -250,9 +250,9 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             if match:
                 path = match.group(1)
                 if ctu_ast_dir in path:
-                    paths.append(path[len(ctu_ast_dir):])
+                    paths.add(path[len(ctu_ast_dir):])
 
-        return set(paths)
+        return paths
 
     @classmethod
     def resolve_missing_binary(cls, configured_binary, env):
