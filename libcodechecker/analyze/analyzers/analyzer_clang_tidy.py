@@ -105,8 +105,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
                 else:
                     checkers_cmdline += ',-' + checker_name
 
-            analyzer_cmd.append("-checks='" + checkers_cmdline.lstrip(',') +
-                                "'")
+            analyzer_cmd.append("-checks='%s'" % checkers_cmdline.lstrip(','))
 
             LOG.debug(config.analyzer_extra_arguments)
             analyzer_cmd.append(config.analyzer_extra_arguments)
