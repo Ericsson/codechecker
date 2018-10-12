@@ -20,7 +20,10 @@ import stat
 
 import portalocker
 
+from libcodechecker.logger import get_logger
 from libcodechecker.util import load_json_or_empty
+
+LOG = get_logger('system')
 
 
 def __get_instance_descriptor_path(folder=None):
@@ -67,18 +70,27 @@ def __rewrite_instance_file(append, remove, folder=None):
 
     append_pids = [i['pid'] for i in append]
 
-    # After reading, check every instance if they are still valid and
-    # make sure PID does not collide accidentally with the
-    # to-be-registered instances, if any exists in the append list as it
-    # would cause duplication.
-    #
-    # Also, we remove the records to the given PIDs, if any exists.
-    instances = [i for i in get_instances(folder)
-                 if i['pid'] not in append_pids and
-                 (i['hostname'] + ":" + str(i['pid'])) not in remove]
-
-    with open(__get_instance_descriptor_path(folder), 'w') as instance_file:
+    instance_descriptor_file = __get_instance_descriptor_path(folder)
+    with open(instance_descriptor_file, 'r+') as instance_file:
         portalocker.lock(instance_file, portalocker.LOCK_EX)
+
+        instances = []
+        try:
+            instances = json.loads(instance_file.read())
+        except (ValueError, TypeError) as ex:
+            LOG.warning('Failed to process json file: %s',
+                        instance_descriptor_file)
+            LOG.warning(ex)
+
+        # After reading, check every instance if they are still valid and
+        # make sure PID does not collide accidentally with the
+        # to-be-registered instances, if any exists in the append list as it
+        # would cause duplication.
+        #
+        # Also, we remove the records to the given PIDs, if any exists.
+        instances = [i for i in instances
+                     if i['pid'] not in append_pids and
+                     (i['hostname'] + ":" + str(i['pid'])) not in remove]
 
         instances = instances + append
 
