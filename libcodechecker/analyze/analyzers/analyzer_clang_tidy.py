@@ -62,7 +62,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
                 result = subprocess.check_output(command, env=env)
                 self.__parse_checkers(result)
             except (subprocess.CalledProcessError, OSError):
-                return {}
+                return []
 
         return self.checkers
 
