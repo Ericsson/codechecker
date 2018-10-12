@@ -97,8 +97,6 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
                         compiler_warnings.append('-W' + warning_name)
                     else:
                         compiler_warnings.append('-Wno-' + warning_name)
-                        checkers_cmdline += ',-clang-diagnostic-' + \
-                                            warning_name
 
                     continue
 
