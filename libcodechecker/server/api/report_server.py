@@ -2381,11 +2381,10 @@ class ThriftRequestHandler(object):
                 check_commands, check_durations, cc_version, statistics = \
                     store_handler.metadata_info(metadata_file)
 
-                if len(check_commands) == 0:
-                    command = ' '.join(sys.argv)
-                elif len(check_commands) == 1:
+                command = ''
+                if len(check_commands) == 1:
                     command = ' '.join(check_commands[0])
-                else:
+                elif len(check_commands) > 1:
                     command = "multiple analyze calls: " + \
                               '; '.join([' '.join(com)
                                          for com in check_commands])
