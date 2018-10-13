@@ -127,7 +127,8 @@ def __gather_dependencies(command, build_dir):
             .replace(' ', '\n')
 
         # The dependency list already contains the source file's path.
-        return [dep for dep in dependencies.splitlines() if dep != ""]
+        return [os.path.join(build_dir, dep) for dep in
+                dependencies.splitlines() if dep != ""]
     else:
         raise IOError(output)
 
@@ -180,6 +181,31 @@ def get_dependent_headers(command, build_dir, collect_toolchain=True):
     return dependencies, error
 
 
+def add_sources_to_zip(zip_file, files):
+    """
+    This function adds source files to the ZIP file if those are not present
+    yet. The files will be placed to the "sources-root" directory under the ZIP
+    file.
+
+    zip_file -- A ZIP file name as a string.
+    files -- A file path or an iterable of file paths.
+    """
+    if isinstance(files, str):
+        files = [files]
+
+    with zipfile.ZipFile(zip_file, 'a') as archive:
+        for f in files:
+            archive_path = os.path.join('sources-root', f.lstrip('/'))
+
+            try:
+                archive.getinfo(archive_path)
+            except KeyError:
+                archive.write(f, archive_path, zipfile.ZIP_DEFLATED)
+            else:
+                logging.debug("'{}' is already in the ZIP file, won't add it "
+                              "again!".format(f))
+
+
 def zip_tu_files(zip_file, compilation_database, write_mode='w'):
     """
     Collects all files to a zip file which are required for the compilation of
@@ -225,19 +251,7 @@ def zip_tu_files(zip_file, compilation_database, write_mode='w'):
                 no_sources = 'no-sources_' + __random_string(5)
 
     with zipfile.ZipFile(zip_file, write_mode) as archive:
-        for tu_file in tu_files:
-            archive_path = os.path.join('sources-root', tu_file.lstrip('/'))
-
-            try:
-                archive.getinfo(archive_path)
-            except KeyError:
-                pass
-            else:
-                logging.debug("'{}' is already in the ZIP file, won't add it "
-                              "again!".format(archive_path))
-                continue
-
-            archive.write(tu_file, archive_path, zipfile.ZIP_DEFLATED)
-
         if error_messages:
             archive.writestr(no_sources, error_messages)
+
+    add_sources_to_zip(zip_file, tu_files)

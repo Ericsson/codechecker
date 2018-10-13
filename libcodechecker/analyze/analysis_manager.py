@@ -140,108 +140,6 @@ def init_worker(checked_num, action_num):
     progress_actions = action_num
 
 
-def collect_debug_data(zip_file, other_files, buildaction, out, err,
-                       original_command, analyzer_cmd, analyzer_returncode,
-                       action_directory, action_target, actions_map):
-    """
-    Collect analysis and build system information which can be used
-    to reproduce the failed analysis.
-    """
-    LOG.debug("Collecting debug data")
-    with zipfile.ZipFile(zip_file, 'w') as archive:
-        LOG.debug("[ZIP] Writing analyzer STDOUT to /stdout")
-        archive.writestr("stdout", out)
-
-        LOG.debug("[ZIP] Writing analyzer STDERR to /stderr")
-        archive.writestr("stderr", err)
-
-        dependencies, err = tu_collector.get_dependent_headers(
-            buildaction.original_command,
-            buildaction.directory)
-
-        if err:
-            archive.writestr('no-sources', err)
-
-        mentioned_files_dependent_files = set()
-        for of in other_files:
-            mentioned_file = os.path.abspath(
-                os.path.join(action_directory, of))
-            # Use the target of the original build action.
-            key = mentioned_file, action_target
-            mentioned_file_action = actions_map.get(key)
-            if mentioned_file_action is not None:
-                mentioned_file_deps, err = tu_collector.get_dependent_headers(
-                    mentioned_file_action.original_command,
-                    mentioned_file_action.directory)
-                mentioned_files_dependent_files.\
-                    update(mentioned_file_deps)
-                if err:
-                    archive.writestr('no-sources', err)
-            else:
-                LOG.debug("Could not find %s in build actions.", key)
-
-        dependencies.update(other_files)
-        dependencies.update(mentioned_files_dependent_files)
-
-        # `dependencies` might contain absolute and relative paths
-        # for the same file, so make everything absolute by
-        # joining with the the absolute action.directory.
-        # If `dependent_source` is absolute it remains absolute
-        # after the join, as documented on docs.python.org .
-        dependencies_copy = set()
-        for dependent_source in dependencies:
-            dependent_source = os.path.join(action_directory,
-                                            dependent_source)
-            dependencies_copy.add(dependent_source)
-        dependencies = dependencies_copy
-
-        LOG.debug("Writing dependent files to archive.")
-        for dependent_source in dependencies:
-
-            LOG.debug("[ZIP] Writing %s to the archive.", dependent_source)
-            archive_subpath = dependent_source.lstrip('/')
-
-            archive_path = os.path.join('sources-root',
-                                        archive_subpath)
-            try:
-                _ = archive.getinfo(archive_path)
-                LOG.debug("[ZIP] '%s' is already in the ZIP "
-                          "file, won't add it again!", archive_path)
-                continue
-            except KeyError:
-                # If the file is already contained in the ZIP,
-                # a valid object is returned, otherwise a KeyError
-                # is raised.
-                pass
-
-            try:
-                archive.write(dependent_source,
-                              archive_path,
-                              zipfile.ZIP_DEFLATED)
-            except Exception as ex:
-                # In certain cases, the output could contain
-                # invalid tokens (such as error messages that were
-                # printed even though the dependency generation
-                # returned 0).
-                LOG.debug("[ZIP] Couldn't write, because %s", str(ex))
-                archive.writestr(
-                    os.path.join('failed-sources-root',
-                                 archive_subpath),
-                    "Couldn't write this file, because:\n" +
-                    str(ex))
-
-        LOG.debug("[ZIP] Writing extra information...")
-
-        archive.writestr("build-action", original_command)
-        archive.writestr("analyzer-command", ' '.join(analyzer_cmd))
-        archive.writestr("return-code", str(analyzer_returncode))
-
-        toolchain = gcc_toolchain.toolchain_in_args(
-            shlex.split(buildaction.original_command))
-        if toolchain:
-            archive.writestr("gcc-toolchain-path", toolchain)
-
-
 def save_output(base_file_name, out, err):
     try:
         if out:
@@ -372,14 +270,14 @@ def handle_success(rh, result_file, result_base, skip_handler,
                                             skip_handler)
 
 
-def handle_failure(source_analyzer, rh, action, zip_file,
-                   result_base, actions_map):
+def handle_failure(source_analyzer, rh, zip_file, result_base, actions_map):
     """
     If the analysis fails a debug zip is packed together which contains
     build, analysis information and source files to be able to
     reproduce the failed analysis.
     """
     other_files = set()
+    action = rh.buildaction
 
     try:
         LOG.debug("Fetching other dependent files from analyzer "
@@ -396,17 +294,49 @@ def handle_failure(source_analyzer, rh, action, zip_file,
                   "from analyzer output:")
         LOG.debug(str(ex))
 
-    collect_debug_data(zip_file,
-                       other_files,
-                       rh.buildaction,
-                       rh.analyzer_stdout,
-                       rh.analyzer_stderr,
-                       action.original_command,
-                       rh.analyzer_cmd,
-                       rh.analyzer_returncode,
-                       action.directory,
-                       action.target,
-                       actions_map)
+    LOG.debug("Collecting debug data")
+
+    buildactions = [{
+        'file': action.source,
+        'command': action.original_command,
+        'directory': action.directory}]
+
+    for of in other_files:
+        mentioned_file = os.path.abspath(os.path.join(action.directory, of))
+        key = mentioned_file, action.target
+        mentioned_file_action = actions_map.get(key)
+        if mentioned_file_action is not None:
+            buildactions.append({
+                'file': mentioned_file_action.source,
+                'command': mentioned_file_action.original_command,
+                'directory': mentioned_file_action.directory})
+        else:
+            LOG.debug("Could not find %s in build actions.", key)
+
+    tu_collector.zip_tu_files(zip_file, buildactions)
+
+    # TODO: What about the dependencies of the other_files?
+    tu_collector.add_sources_to_zip(
+        zip_file,
+        map(lambda path: os.path.join(action.directory, path), other_files))
+
+    with zipfile.ZipFile(zip_file, 'a') as archive:
+        LOG.debug("[ZIP] Writing analyzer STDOUT to /stdout")
+        archive.writestr("stdout", rh.analyzer_stdout)
+
+        LOG.debug("[ZIP] Writing analyzer STDERR to /stderr")
+        archive.writestr("stderr", rh.analyzer_stderr)
+
+        LOG.debug("[ZIP] Writing extra information...")
+        archive.writestr("build-action", action.original_command)
+        archive.writestr("analyzer-command", ' '.join(rh.analyzer_cmd))
+        archive.writestr("return-code", str(rh.analyzer_returncode))
+
+        toolchain = gcc_toolchain.toolchain_in_args(
+            shlex.split(action.original_command))
+        if toolchain:
+            archive.writestr("gcc-toolchain-path", toolchain)
+
     LOG.debug("ZIP file written at '%s'", zip_file)
 
     # Remove files that successfully analyzed earlier on.
@@ -553,8 +483,8 @@ def check(check_data):
                     LOG.error("\n%s", rh.analyzer_stdout)
                     LOG.error("\n%s", rh.analyzer_stderr)
 
-                handle_failure(source_analyzer, rh, action, zip_file,
-                               result_base, actions_map)
+                handle_failure(source_analyzer, rh, zip_file, result_base,
+                               actions_map)
 
                 if ctu_active and ctu_reanalyze_on_failure:
                     LOG.error("Try to reanalyze without CTU")
@@ -594,8 +524,8 @@ def check(check_data):
 
                         zip_file = result_base + '.zip'
                         zip_file = os.path.join(failed_dir, zip_file)
-                        handle_failure(source_analyzer, rh, action,
-                                       zip_file, result_base, actions_map)
+                        handle_failure(source_analyzer, rh, zip_file,
+                                       result_base, actions_map)
 
             if not quiet_output_on_stdout:
                 if rh.analyzer_returncode:
