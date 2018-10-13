@@ -37,16 +37,16 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
         Skip clang static analyzer checkers.
         Store them to checkers.
         """
+        pattern = re.compile(r'^\S+$')
         for line in tidy_output.splitlines():
             line = line.strip()
-            if re.match(r'^Enabled checks:', line) or line == '':
+            if line.startswith('Enabled checks:') or line == '':
                 continue
             elif line.startswith('clang-analyzer-'):
                 continue
-            else:
-                match = re.match(r'^\S+$', line)
-                if match:
-                    self.checkers.append((match.group(0), ''))
+            match = pattern.match(line)
+            if match:
+                self.checkers.append((match.group(0), ''))
 
     def get_analyzer_checkers(self, config_handler, env):
         """
@@ -55,15 +55,14 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
         if not self.checkers:
             analyzer_binary = config_handler.analyzer_binary
 
-            command = [analyzer_binary, "-list-checks", "-checks='*'", "-",
-                       "--"]
+            command = [analyzer_binary, "-list-checks", "-checks='*'"]
 
             try:
                 command = shlex.split(' '.join(command))
                 result = subprocess.check_output(command, env=env)
                 self.__parse_checkers(result)
             except (subprocess.CalledProcessError, OSError):
-                return {}
+                return []
 
         return self.checkers
 
@@ -98,8 +97,6 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
                         compiler_warnings.append('-W' + warning_name)
                     else:
                         compiler_warnings.append('-Wno-' + warning_name)
-                        checkers_cmdline += ',-clang-diagnostic-' + \
-                                            warning_name
 
                     continue
 
@@ -108,8 +105,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
                 else:
                     checkers_cmdline += ',-' + checker_name
 
-            analyzer_cmd.append("-checks='" + checkers_cmdline.lstrip(',') +
-                                "'")
+            analyzer_cmd.append("-checks='%s'" % checkers_cmdline.lstrip(','))
 
             LOG.debug(config.analyzer_extra_arguments)
             analyzer_cmd.append(config.analyzer_extra_arguments)

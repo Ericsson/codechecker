@@ -39,7 +39,7 @@ def parse_checkers(clangsa_output):
     checkers_list = []
     checker_name = None
     for line in clangsa_output.splitlines():
-        if re.match(r'^CHECKERS:', line) or line == '':
+        if line.startswith('CHECKERS:') or line == '':
             continue
         elif checker_name and not re.match(r'^\s\s\S', line):
             # Collect description for the checker name.
@@ -63,9 +63,9 @@ class ClangSA(analyzer_base.SourceAnalyzer):
     Constructs clang static analyzer commands.
     """
     def __init__(self, config_handler, buildaction):
+        super(ClangSA, self).__init__(config_handler, buildaction)
         self.__disable_ctu = False
         self.__checker_configs = []
-        super(ClangSA, self).__init__(config_handler, buildaction)
 
     def is_ctu_available(self):
         """
@@ -73,10 +73,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         If the ctu_dir is set in the config, the analyzer is capable to
         run ctu analysis.
         """
-        config = self.config_handler
-        if config.ctu_dir:
-            return True
-        return False
+        return bool(self.config_handler.ctu_dir)
 
     def is_ctu_enabled(self):
         """
@@ -121,7 +118,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
                                              env=env)
             return parse_checkers(result)
         except (subprocess.CalledProcessError, OSError):
-            return {}
+            return []
 
     def construct_analyzer_cmd(self, result_handler):
         """
@@ -178,11 +175,6 @@ class ClangSA(analyzer_base.SourceAnalyzer):
                                  '-Xclang', 'notes-as-events=true'])
 
             if config.ctu_dir and not self.__disable_ctu:
-                # ctu-clang5 compatibility
-                analyzer_cmd.extend(['-Xclang', '-analyzer-config',
-                                     '-Xclang',
-                                     'xtu-dir=' + self.get_ctu_dir()])
-                # ctu-clang6 compatibility (5.0 and 6.0 options work together)
                 analyzer_cmd.extend(
                     ['-Xclang', '-analyzer-config', '-Xclang',
                      'experimental-enable-naive-ctu-analysis=true',
@@ -244,7 +236,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         regex_for_ctu_ast_load = re.compile(
             r"ANALYZE \(CTU loaded AST for source file\): (.*)")
 
-        paths = []
+        paths = set()
 
         ctu_ast_dir = os.path.join(self.get_ctu_dir(), "ast")
 
@@ -253,9 +245,9 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             if match:
                 path = match.group(1)
                 if ctu_ast_dir in path:
-                    paths.append(path[len(ctu_ast_dir):])
+                    paths.add(path[len(ctu_ast_dir):])
 
-        return set(paths)
+        return paths
 
     @classmethod
     def resolve_missing_binary(cls, configured_binary, env):
