@@ -16,24 +16,25 @@ import zipfile
 
 
 def __random_string(l):
+    """
+    This function returns a random string of ASCII lowercase characters with
+    the given length.
+    """
     return ''.join(random.choice(string.ascii_lowercase) for i in range(l))
 
 
 def __get_toolchain_compiler(command):
-    tcpath = None
-
+    """
+    Clang can be given a GCC toolchain so that the standard libs of that GCC
+    are used. This function returns the path of the GCC toolchain compiler.
+    """
     for cmp_opt in command:
-        if '--gcc-toolchain' in cmp_opt:
-            tcpath = \
-                re.match(r"^--gcc-toolchain=(?P<tcpath>.*)$",
-                         cmp_opt).group('tcpath')
-            break
-
-    if tcpath:
-        return os.path.join(tcpath,
-                            'bin',
-                            # TODO: What ahout cpp?
-                            'g++' if '++' in command[0] else 'gcc')
+        tcpath = re.match(r"^--gcc-toolchain=(?P<tcpath>.*)$", cmp_opt)
+        if tcpath:
+            is_cpp = '++' in command[0] or 'cpp' in command[0]
+            return os.path.join(tcpath.group('tcpath'),
+                                'bin',
+                                'g++' if is_cpp else 'gcc')
 
 
 def __gather_dependencies(command, build_dir):
@@ -69,7 +70,7 @@ def __gather_dependencies(command, build_dir):
 
         return arg_vect
 
-    if isinstance(command, str) or isinstance(command, unicode):
+    if isinstance(command, basestring):
         command = shlex.split(command)
 
     # gcc and clang can generate makefile-style dependency list.
@@ -151,7 +152,7 @@ def get_dependent_headers(command, build_dir, collect_toolchain=True):
 
     logging.debug("Generating dependent headers via compiler...")
 
-    if isinstance(command, str) or isinstance(command, unicode):
+    if isinstance(command, basestring):
         command = shlex.split(command)
 
     dependencies = set()
@@ -195,15 +196,15 @@ def add_sources_to_zip(zip_file, files):
 
     with zipfile.ZipFile(zip_file, 'a') as archive:
         for f in files:
-            archive_path = os.path.join('sources-root', f.lstrip('/'))
+            archive_path = os.path.join('sources-root', f.lstrip(os.sep))
 
             try:
                 archive.getinfo(archive_path)
             except KeyError:
                 archive.write(f, archive_path, zipfile.ZIP_DEFLATED)
             else:
-                logging.debug("'{}' is already in the ZIP file, won't add it "
-                              "again!".format(f))
+                logging.debug("'%s' is already in the ZIP file, won't add it "
+                              "again!", f)
 
 
 def zip_tu_files(zip_file, compilation_database, write_mode='w'):
@@ -221,8 +222,7 @@ def zip_tu_files(zip_file, compilation_database, write_mode='w'):
                   files are appended to the existing zip file, in case of 'w'
                   the files are added to a clean zip file.
     """
-    if isinstance(compilation_database, str) or \
-            isinstance(compilation_database, unicode):
+    if isinstance(compilation_database, basestring):
         with open(compilation_database) as f:
             compilation_database = json.load(f)
 
@@ -250,8 +250,8 @@ def zip_tu_files(zip_file, compilation_database, write_mode='w'):
             else:
                 no_sources = 'no-sources_' + __random_string(5)
 
-    with zipfile.ZipFile(zip_file, write_mode) as archive:
-        if error_messages:
+    if error_messages:
+        with zipfile.ZipFile(zip_file, write_mode) as archive:
             archive.writestr(no_sources, error_messages)
 
     add_sources_to_zip(zip_file, tu_files)
