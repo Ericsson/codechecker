@@ -111,6 +111,11 @@ def perform_build_command(logfile, command, context, keep_link, silent=False):
         LOG.error("Calling original build command failed.")
         LOG.error(str(ex))
         sys.exit(1)
+    finally:
+        # Removing flock lock file.
+        logfile_lock = logfile + '.lock'
+        if os.path.exists(logfile_lock):
+            os.remove(logfile_lock)
 
 
 def default_compilation_db(workspace_path, run_name):
