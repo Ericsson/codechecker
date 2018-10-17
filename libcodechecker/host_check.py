@@ -47,9 +47,8 @@ def is_statistics_capable():
                                                         enabled_analyzers)
 
     clangsa_cfg = cfg_handlers[analyzer]
-    analyzer = analyzer_types.construct_analyzer_type(analyzer,
-                                                      clangsa_cfg,
-                                                      None)
+    analyzer = analyzer_types.supported_analyzers[analyzer](clangsa_cfg,
+                                                            None)
 
     check_env = analyzer_env.get_check_env(context.path_env_extra,
                                            context.ld_lib_path_extra)
