@@ -19,6 +19,7 @@ from libcodechecker.logger import get_logger
 from libcodechecker.util import get_binary_in_path
 from libcodechecker.analyze.analyzer_env import\
     extend_analyzer_cmd_with_resource_dir
+from libcodechecker.analyze.analyzers import result_handler_clang_tidy
 
 LOG = get_logger('analyzer')
 
@@ -198,3 +199,15 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
         if clangtidy:
             LOG.debug("Using '" + clangtidy + "' for Clang-tidy!")
         return clangtidy
+
+    def construct_result_handler(self, buildaction, report_output,
+                                 severity_map, skiplist_handler):
+        """
+        See base class for docs.
+        """
+        res_handler = result_handler_clang_tidy.ClangTidyPlistToFile(
+            buildaction, report_output)
+
+        res_handler.severity_map = severity_map
+        res_handler.skiplist_handler = skiplist_handler
+        return res_handler

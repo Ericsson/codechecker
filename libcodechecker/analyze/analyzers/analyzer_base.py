@@ -53,7 +53,7 @@ class SourceAnalyzer(object):
         """
         Construct the analyzer command.
         """
-        pass
+        raise NotImplementedError("Subclasses should implement this!")
 
     @classmethod
     def resolve_missing_binary(cls, configured_binary, env):
@@ -61,7 +61,7 @@ class SourceAnalyzer(object):
         In case of the configured binary for the analyzer is not found in the
         PATH, this method is used to find a callable binary.
         """
-        pass
+        raise NotImplementedError("Subclasses should implement this!")
 
     @abstractmethod
     def get_analyzer_mentioned_files(self, output):
@@ -70,7 +70,17 @@ class SourceAnalyzer(object):
         its standard outputs, which should be analyzer_stdout or
         analyzer_stderr from a result handler.
         """
-        pass
+        raise NotImplementedError("Subclasses should implement this!")
+
+    @abstractmethod
+    def construct_result_handler(self, buildaction, report_output,
+                                 severity_map, skiplist_handler):
+        """
+        This method constructs the class that is responsible to handle the
+        results of the analysis. The result should be a subclass of
+        ResultHandler
+        """
+        raise NotImplementedError("Subclasses should implement this!")
 
     def analyze(self, analyzer_cmd, res_handler, env=None, proc_callback=None):
         """
@@ -103,7 +113,7 @@ class SourceAnalyzer(object):
         """
         Return the checkers available in the analyzer.
         """
-        pass
+        raise NotImplementedError("Subclasses should implement this!")
 
     @staticmethod
     def run_proc(command, env=None, cwd=None, proc_callback=None):

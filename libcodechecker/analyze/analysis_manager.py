@@ -450,7 +450,7 @@ def prepare_check(source, action, analyzer_config_map, output_dir,
 
     # The result handler for analysis is an empty result handler
     # which only returns metadata, but can't process the results.
-    rh = analyzer_types.construct_analyze_handler(action,
+    rh = source_analyzer.construct_result_handler(action,
                                                   output_dir,
                                                   severity_map,
                                                   skip_handler)

@@ -22,8 +22,6 @@ from libcodechecker.analyze.analyzers import analyzer_clang_tidy
 from libcodechecker.analyze.analyzers import analyzer_clangsa
 from libcodechecker.analyze.analyzers import config_handler_clang_tidy
 from libcodechecker.analyze.analyzers import config_handler_clangsa
-from libcodechecker.analyze.analyzers import result_handler_base
-from libcodechecker.analyze.analyzers import result_handler_clang_tidy
 from libcodechecker.logger import get_logger
 
 LOG = get_logger('analyzer')
@@ -423,28 +421,3 @@ def build_config_handlers(args, context, enabled_analyzers):
         analyzer_config_map[ea] = config_handler
 
     return analyzer_config_map
-
-
-def construct_analyze_handler(buildaction,
-                              report_output,
-                              severity_map,
-                              skiplist_handler):
-    """
-    Construct an empty (base) ResultHandler which is capable of returning
-    analyzer worker statuses to the caller method, but does not provide
-    actual parsing and processing of results, instead only saves the analysis
-    results.
-    """
-    if buildaction.analyzer_type not in supported_analyzers:
-        return None
-
-    if buildaction.analyzer_type == CLANG_SA:
-        res_handler = result_handler_base.ResultHandler(buildaction,
-                                                        report_output)
-    elif buildaction.analyzer_type == CLANG_TIDY:
-        res_handler = result_handler_clang_tidy.ClangTidyPlistToFile(
-            buildaction, report_output)
-
-    res_handler.severity_map = severity_map
-    res_handler.skiplist_handler = skiplist_handler
-    return res_handler
