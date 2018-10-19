@@ -438,11 +438,11 @@ def prepare_check(source, action, analyzer_config_map, output_dir,
 
         source_analyzer.add_checker_config(stats_cfg)
 
-        source_analyzer.config_handler.enable_checker(
-            SpecialReturnValueCollector.checker_analyze)
+        source_analyzer.config_handler.set_checker_enabled(
+            SpecialReturnValueCollector.checker_analyze, True)
 
-        source_analyzer.config_handler.enable_checker(
-            ReturnValueCollector.checker_analyze)
+        source_analyzer.config_handler.set_checker_enabled(
+            ReturnValueCollector.checker_analyze, True)
 
     # Source is the currently analyzed source file
     # there can be more in one buildaction.

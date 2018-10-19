@@ -172,7 +172,7 @@ def initialize_checkers(config_handler,
             # Turn default checkers on.
             for checker_name, profile_list in checker_config.items():
                 if 'default' in profile_list:
-                    config_handler.enable_checker(checker_name)
+                    config_handler.set_checker_enabled(checker_name, True)
 
     # If enable_all is given, almost all checkers should be enabled.
     if enable_all:
@@ -182,12 +182,12 @@ def initialize_checkers(config_handler,
                     not checker_name.startswith("osx."):
                 # There are a few exceptions, though, which still need to
                 # be manually enabled by the user: alpha and debug.
-                config_handler.enable_checker(checker_name)
+                config_handler.set_checker_enabled(checker_name, True)
 
             if checker_name.startswith("osx.") and \
                     platform.system() == 'Darwin':
                 # OSX checkers are only enable-all'd if we are on OSX.
-                config_handler.enable_checker(checker_name)
+                config_handler.set_checker_enabled(checker_name, True)
 
     # Set user defined enabled or disabled checkers from the command line.
     if cmdline_checkers:
@@ -217,22 +217,16 @@ def initialize_checkers(config_handler,
                               .format(package_root))
                     sys.exit(1)
 
-                profile_checkers = [name for name, profile_list
+                profile_checkers = (name for name, profile_list
                                     in checker_config.items()
-                                    if profile_name in profile_list]
+                                    if profile_name in profile_list)
                 for checker_name in profile_checkers:
-                    if enabled:
-                        config_handler.enable_checker(checker_name)
-                    else:
-                        config_handler.disable_checker(checker_name)
+                    config_handler.set_checker_enabled(checker_name, enabled)
 
             # The identifier is a checker(-group) name.
             else:
                 checker_name = identifier
-                if enabled:
-                    config_handler.enable_checker(checker_name)
-                else:
-                    config_handler.disable_checker(checker_name)
+                config_handler.set_checker_enabled(checker_name, enabled)
 
 
 def __replace_env_var(cfg_file):

@@ -65,27 +65,15 @@ class AnalyzerConfigHandler(object):
         """
         self.__available_checkers[checker_name] = (enabled, description)
 
-    def enable_checker(self, checker_name, description=None):
+    def set_checker_enabled(self, checker_name, enabled):
         """
         Enable checker, keep description if already set.
         """
         for ch_name, values in self.__available_checkers.items():
-            if ch_name.startswith(checker_name):
+            if ch_name.startswith(checker_name) or \
+               ch_name.endswith(checker_name):
                 _, description = values
-                self.__available_checkers[ch_name] = (True, description)
-            # FIXME use regex to match checker names.
-            if ch_name.endswith(checker_name):
-                _, description = values
-                self.__available_checkers[ch_name] = (True, description)
-
-    def disable_checker(self, checker_name, description=None):
-        """
-        Disable checker, keep description if already set.
-        """
-        for ch_name, values in self.__available_checkers.items():
-            if ch_name.startswith(checker_name):
-                _, description = values
-                self.__available_checkers[ch_name] = (False, description)
+                self.__available_checkers[ch_name] = (enabled, description)
 
     def checks(self):
         """
