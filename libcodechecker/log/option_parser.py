@@ -28,10 +28,11 @@ from libcodechecker.logger import get_logger
 LOG = get_logger('buildlogger')
 
 # Compiler options in the following format
-# argument_name: number of parameters sepearated by space.
+# argument_name: number of parameters separated by space.
 
 COMPILE_OPTION_MAP = {
     '-nostdinc': 0,
+    '-nostdinc++': 0,
     '--sysroot': 1,
     '--include': 1,
     '-pedantic': 0,
