@@ -112,7 +112,7 @@ class ClangTidyConfigHandler(config_handler.AnalyzerConfigHandler):
 
         return res
 
-    def set_checker_enabled(self, checker_name, enabled):
+    def set_checker_enabled(self, checker_name, enabled=True):
         """
         Enable checker, keep description if already set.
         """

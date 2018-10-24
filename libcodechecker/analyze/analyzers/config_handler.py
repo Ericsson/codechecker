@@ -65,7 +65,7 @@ class AnalyzerConfigHandler(object):
         """
         self.__available_checkers[checker_name] = (enabled, description)
 
-    def set_checker_enabled(self, checker_name, enabled):
+    def set_checker_enabled(self, checker_name, enabled=True):
         """
         Enable checker, keep description if already set.
         """
