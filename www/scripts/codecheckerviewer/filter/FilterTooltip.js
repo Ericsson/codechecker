@@ -18,6 +18,12 @@ define([
 function (declare, domClass, dom, keys, Standby, TextBox, popup, Tooltip,
   TooltipDialog, ContentPane) {
 
+  function htmlToString(html) {
+    var tmp = document.createElement('div');
+    tmp.innerHTML = html;
+    return tmp.textContent || tmp.innerText || '';
+  }
+
   return declare(ContentPane, {
     // Default limit of the filter queries.
     defaultQueryFilterSize : 10,
@@ -209,7 +215,7 @@ function (declare, domClass, dom, keys, Standby, TextBox, popup, Tooltip,
         items.forEach(function (item) {
           var label = (item.isRegexSearchItem ? item.label : '');
           label += that.reportFilter.labelFormatter
-            ? that.reportFilter.labelFormatter(item.value)
+            ? that.reportFilter.labelFormatter(item.value, item)
             : item.value;
 
           var iconClass = that.reportFilter.getIconClass(item.value, item);
@@ -234,7 +240,7 @@ function (declare, domClass, dom, keys, Standby, TextBox, popup, Tooltip,
           that.itemsDom[item.value] = dom.create('div', {
             class     : classes.join(' '),
             innerHTML : content,
-            title : label,
+            title : htmlToString(label),
             onclick : function () {
               that.toggle(item.value, item);
             },

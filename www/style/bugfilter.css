@@ -317,6 +317,12 @@
   color: #007ea7;
 }
 
+.run-tag .select-menu-item .time {
+  color: grey;
+  margin-left: 5px;
+  font-style: italic;
+}
+
 /* Filter toggler */
 
 .filter-toggle > .dijitContentPane {

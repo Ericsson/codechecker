@@ -1764,7 +1764,7 @@ class ThriftRequestHandler(object):
                            count_q.c.run_history_id == RunHistory.id) \
                 .filter(RunHistory.version_tag.isnot(None)) \
                 .group_by(tag_q.c.run_history_id) \
-                .order_by('run_name')
+                .order_by(RunHistory.time.desc())
 
             for _, run_name, tag_id, version_time, tag, count in q:
                 if tag:
