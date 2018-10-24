@@ -112,24 +112,13 @@ class ClangTidyConfigHandler(config_handler.AnalyzerConfigHandler):
 
         return res
 
-    def enable_checker(self, checker_name, description=None):
+    def set_checker_enabled(self, checker_name, enabled=True):
         """
         Enable checker, keep description if already set.
         """
-        if checker_name.startswith("W"):
-            self.add_checker(checker_name, True, None)
-            return
-
-        super(ClangTidyConfigHandler, self).enable_checker(checker_name,
-                                                           description)
-
-    def disable_checker(self, checker_name, description=None):
-        """
-        Disable checker, keep description if already set.
-        """
         if checker_name.startswith("Wno-") or checker_name.startswith("W"):
-            self.add_checker(checker_name, False, None)
+            self.add_checker(checker_name, enabled, None)
             return
 
-        super(ClangTidyConfigHandler, self).disable_checker(checker_name,
-                                                            description)
+        super(ClangTidyConfigHandler, self).set_checker_enabled(checker_name,
+                                                                enabled)

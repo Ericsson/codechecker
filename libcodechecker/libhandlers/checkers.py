@@ -172,9 +172,8 @@ def main(args):
     for analyzer in working:
         config_handler = analyzer_config_map.get(analyzer)
         source_analyzer = \
-            analyzer_types.construct_analyzer_type(analyzer,
-                                                   config_handler,
-                                                   None)
+            analyzer_types.supported_analyzers[analyzer](config_handler,
+                                                         None)
 
         checkers = source_analyzer.get_analyzer_checkers(config_handler,
                                                          analyzer_environment)

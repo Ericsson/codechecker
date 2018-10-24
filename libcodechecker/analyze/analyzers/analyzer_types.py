@@ -22,8 +22,6 @@ from libcodechecker.analyze.analyzers import analyzer_clang_tidy
 from libcodechecker.analyze.analyzers import analyzer_clangsa
 from libcodechecker.analyze.analyzers import config_handler_clang_tidy
 from libcodechecker.analyze.analyzers import config_handler_clangsa
-from libcodechecker.analyze.analyzers import result_handler_base
-from libcodechecker.analyze.analyzers import result_handler_clang_tidy
 from libcodechecker.logger import get_logger
 
 LOG = get_logger('analyzer')
@@ -31,7 +29,8 @@ LOG = get_logger('analyzer')
 CLANG_SA = 'clangsa'
 CLANG_TIDY = 'clang-tidy'
 
-supported_analyzers = {CLANG_SA, CLANG_TIDY}
+supported_analyzers = {CLANG_SA: analyzer_clangsa.ClangSA,
+                       CLANG_TIDY: analyzer_clang_tidy.ClangTidy}
 
 
 def check_supported_analyzers(analyzers, context):
@@ -58,6 +57,7 @@ def check_supported_analyzers(analyzers, context):
         if analyzer_name not in supported_analyzers:
             failed_analyzers.add((analyzer_name,
                                   "Analyzer unsupported by CodeChecker."))
+            continue
 
         # Get the compiler binary to check if it can run.
         available_analyzer = True
@@ -68,12 +68,8 @@ def check_supported_analyzers(analyzers, context):
             available_analyzer = False
         elif not os.path.isabs(analyzer_bin):
             # If the analyzer is not in an absolute path, try to find it...
-            if analyzer_name == CLANG_SA:
-                found_bin = analyzer_clangsa.ClangSA. \
-                    resolve_missing_binary(analyzer_bin, check_env)
-            elif analyzer_name == CLANG_TIDY:
-                found_bin = analyzer_clang_tidy.ClangTidy. \
-                    resolve_missing_binary(analyzer_bin, check_env)
+            found_bin = supported_analyzers[analyzer_name].\
+                resolve_missing_binary(analyzer_bin, check_env)
 
             # found_bin is an absolute path, an executable in one of the
             # PATH folders.
@@ -86,13 +82,10 @@ def check_supported_analyzers(analyzers, context):
                           .format(analyzer_bin, analyzer_name, found_bin))
                 context.analyzer_binaries[analyzer_name] = found_bin
 
-            if not found_bin or \
-                    not host_check.check_clang(found_bin, check_env):
-                # If analyzer_bin is not False here, the resolver found one.
-                failed_analyzers.add((analyzer_name,
-                                      "Couldn't run analyzer binary."))
-                available_analyzer = False
-        elif not host_check.check_clang(analyzer_bin, check_env):
+            analyzer_bin = found_bin
+
+        if not analyzer_bin or \
+           not host_check.check_clang(analyzer_bin, check_env):
             # Analyzers unavailable under absolute paths are deliberately a
             # configuration problem.
             failed_analyzers.add((analyzer_name,
@@ -105,26 +98,6 @@ def check_supported_analyzers(analyzers, context):
     return enabled_analyzers, failed_analyzers
 
 
-def construct_analyzer_type(analyzer_type, config_handler, buildaction):
-    """
-    Construct a specific analyzer based on the type.
-    """
-
-    LOG.debug_analyzer('Constructing ' + analyzer_type + '  analyzer')
-    if analyzer_type == CLANG_SA:
-        analyzer = analyzer_clangsa.ClangSA(config_handler,
-                                            buildaction)
-        return analyzer
-
-    elif analyzer_type == CLANG_TIDY:
-        analyzer = analyzer_clang_tidy.ClangTidy(config_handler,
-                                                 buildaction)
-        return analyzer
-
-    LOG.error('Unsupported analyzer type: ' + analyzer_type)
-    return None
-
-
 def construct_analyzer(buildaction,
                        analyzer_config_map):
     """
@@ -135,9 +108,13 @@ def construct_analyzer(buildaction,
         # Get the proper config handler for this analyzer type.
         config_handler = analyzer_config_map.get(analyzer_type)
 
-        analyzer = construct_analyzer_type(analyzer_type,
-                                           config_handler,
-                                           buildaction)
+        LOG.debug_analyzer('Constructing ' + analyzer_type + '  analyzer')
+        if analyzer_type in supported_analyzers:
+            analyzer = supported_analyzers[analyzer_type](config_handler,
+                                                          buildaction)
+        else:
+            analyzer = None
+            LOG.error('Unsupported analyzer type: ' + analyzer_type)
         return analyzer
 
     except Exception as ex:
@@ -187,15 +164,15 @@ def initialize_checkers(config_handler,
     if checker_config:
         # Check whether a default profile exists.
         profile_lists = checker_config.values()
-        all_profiles = [
-            profile for check_list in profile_lists for profile in check_list]
+        all_profiles = (
+            profile for check_list in profile_lists for profile in check_list)
         if 'default' not in all_profiles:
             LOG.warning("No default profile found!")
         else:
             # Turn default checkers on.
             for checker_name, profile_list in checker_config.items():
                 if 'default' in profile_list:
-                    config_handler.enable_checker(checker_name)
+                    config_handler.set_checker_enabled(checker_name)
 
     # If enable_all is given, almost all checkers should be enabled.
     if enable_all:
@@ -205,12 +182,12 @@ def initialize_checkers(config_handler,
                     not checker_name.startswith("osx."):
                 # There are a few exceptions, though, which still need to
                 # be manually enabled by the user: alpha and debug.
-                config_handler.enable_checker(checker_name)
+                config_handler.set_checker_enabled(checker_name)
 
             if checker_name.startswith("osx.") and \
                     platform.system() == 'Darwin':
                 # OSX checkers are only enable-all'd if we are on OSX.
-                config_handler.enable_checker(checker_name)
+                config_handler.set_checker_enabled(checker_name)
 
     # Set user defined enabled or disabled checkers from the command line.
     if cmdline_checkers:
@@ -240,22 +217,16 @@ def initialize_checkers(config_handler,
                               .format(package_root))
                     sys.exit(1)
 
-                profile_checkers = [name for name, profile_list
+                profile_checkers = (name for name, profile_list
                                     in checker_config.items()
-                                    if profile_name in profile_list]
+                                    if profile_name in profile_list)
                 for checker_name in profile_checkers:
-                    if enabled:
-                        config_handler.enable_checker(checker_name)
-                    else:
-                        config_handler.disable_checker(checker_name)
+                    config_handler.set_checker_enabled(checker_name, enabled)
 
             # The identifier is a checker(-group) name.
             else:
                 checker_name = identifier
-                if enabled:
-                    config_handler.enable_checker(checker_name)
-                else:
-                    config_handler.disable_checker(checker_name)
+                config_handler.set_checker_enabled(checker_name, enabled)
 
 
 def __replace_env_var(cfg_file):
@@ -270,7 +241,7 @@ def __replace_env_var(cfg_file):
 
 
 def __get_compiler_resource_dir(context, analyzer_binary):
-    if len(context.compiler_resource_dir) > 0:
+    if context.compiler_resource_dir:
         resource_dir = context.compiler_resource_dir
     # If not set then ask the binary for the resource dir.
     else:
@@ -321,7 +292,7 @@ def __build_clangsa_config_handler(args, context):
         # No clangsa arguments file was given in the command line.
         LOG.debug_analyzer(aerr)
 
-    analyzer = construct_analyzer_type(CLANG_SA, config_handler, None)
+    analyzer = supported_analyzers[CLANG_SA](config_handler, None)
 
     checkers = analyzer.get_analyzer_checkers(config_handler, check_env)
 
@@ -365,13 +336,8 @@ def __build_clang_tidy_config_handler(args, context):
         check_env['PATH'] = os.path.dirname(config_handler.analyzer_binary)
     clang_bin = analyzer_clangsa.ClangSA.resolve_missing_binary('clang',
                                                                 check_env)
-    if os.path.isfile(clang_bin):
-        config_handler.compiler_resource_dir =\
-            __get_compiler_resource_dir(context, clang_bin)
-    else:
-        config_handler.compiler_resource_dir =\
-            __get_compiler_resource_dir(context,
-                                        config_handler.analyzer_binary)
+    config_handler.compiler_resource_dir =\
+        __get_compiler_resource_dir(context, clang_bin)
 
     try:
         with open(args.tidy_args_cfg_file, 'rb') as tidy_cfg:
@@ -398,7 +364,7 @@ def __build_clang_tidy_config_handler(args, context):
         # No clang tidy config file was given in the command line.
         LOG.debug_analyzer(aerr)
 
-    analyzer = construct_analyzer_type(CLANG_TIDY, config_handler, None)
+    analyzer = supported_analyzers[CLANG_TIDY](config_handler, None)
     check_env = analyzer_env.get_check_env(context.path_env_extra,
                                            context.ld_lib_path_extra)
 
@@ -444,32 +410,8 @@ def build_config_handlers(args, context, enabled_analyzers):
         elif ea == CLANG_TIDY:
             config_handler = __build_clang_tidy_config_handler(args, context)
         else:
+            config_handler = None
             LOG.debug("Unhandled analyzer: " + str(ea))
         analyzer_config_map[ea] = config_handler
 
     return analyzer_config_map
-
-
-def construct_analyze_handler(buildaction,
-                              report_output,
-                              severity_map,
-                              skiplist_handler):
-    """
-    Construct an empty (base) ResultHandler which is capable of returning
-    analyzer worker statuses to the caller method, but does not provide
-    actual parsing and processing of results, instead only saves the analysis
-    results.
-    """
-    if buildaction.analyzer_type not in supported_analyzers:
-        return None
-
-    if buildaction.analyzer_type == CLANG_SA:
-        res_handler = result_handler_base.ResultHandler(buildaction,
-                                                        report_output)
-    elif buildaction.analyzer_type == CLANG_TIDY:
-        res_handler = result_handler_clang_tidy.ClangTidyPlistToFile(
-            buildaction, report_output)
-
-    res_handler.severity_map = severity_map
-    res_handler.skiplist_handler = skiplist_handler
-    return res_handler
