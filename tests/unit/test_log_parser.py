@@ -211,14 +211,13 @@ class LogParserTest(unittest.TestCase):
 
     def test_include_rel_to_abs(self):
         """
-        Test working directory prepending to non-existent
-        (probably relative) include paths.
+        Test working directory prepending to relative include paths.
         """
         logfile = os.path.join(self.__test_files, "include.json")
 
         build_action = log_parser.parse_log(logfile, ParseLogOptions())[0]
 
         self.assertEqual(len(build_action.analyzer_options), 3)
-        self.assertEqual(build_action.analyzer_options[0], '-I/tmp/../include')
-        self.assertEqual(build_action.analyzer_options[1], '-I/tmp/../include')
+        self.assertEqual(build_action.analyzer_options[0], '-I/include')
+        self.assertEqual(build_action.analyzer_options[1], '-I/include')
         self.assertEqual(build_action.analyzer_options[2], '-I/tmp')

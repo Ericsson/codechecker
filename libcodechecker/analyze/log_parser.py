@@ -370,16 +370,16 @@ def parse_compile_commands_json(log_data, parseLogOptions):
 
         action.original_command = command
 
-        # If the original include directory could not be found
-        # in the filesystem, it is possible that it was provided
-        # relative to the working directory in the compile json.
+        # If the include directory is given as relative path then the working
+        # directory is prepended.
         compile_opts = results.compile_opts
         for i, opt in enumerate(compile_opts):
             if opt.startswith('-I'):
                 inc_dir = opt[2:].strip()
-                if not os.path.isdir(inc_dir):
+                if not os.path.isabs(inc_dir):
                     compile_opts[i] = '-I' + \
-                        os.path.join(entry['directory'], inc_dir)
+                        os.path.normpath(os.path.join(
+                            entry['directory'], inc_dir))
 
         action.analyzer_options = compile_opts
 
