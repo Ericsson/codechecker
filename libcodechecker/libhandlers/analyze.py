@@ -261,8 +261,8 @@ def add_arguments_to_parser(parser):
             "cross translation unit analysis arguments",
             """
 These arguments are only available if the Clang Static Analyzer supports
-Cross-TU analysis. By default, no CTU analysis is run when 'CodeChecker analyze'
-is called.""")
+Cross-TU analysis. By default, no CTU analysis is run when
+'CodeChecker analyze' is called.""")
 
         ctu_modes = ctu_opts.add_mutually_exclusive_group()
         ctu_modes.add_argument('--ctu', '--ctu-all',
