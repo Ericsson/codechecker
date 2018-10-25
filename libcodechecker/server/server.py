@@ -257,8 +257,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
 
         SimpleHTTPRequestHandler.do_GET(self)  # Actual serving of file.
 
-    @staticmethod
-    def __check_prod_db(product):
+    def __check_prod_db(self, product_endpoint):
         """
         Check the product database status.
         Try to reconnect in some cases.
@@ -267,14 +266,15 @@ class RequestHandler(SimpleHTTPRequestHandler):
         with the error message if something is wrong with the database.
         """
 
+        product = self.server.get_product(product_endpoint)
         if not product:
-            error_msg = "The product " + str(product) + " does not exists"
-            LOG.error(error_msg)
-            raise ValueError(error_msg)
+            raise ValueError(
+                "The product with the given endpoint '{0}' does "
+                "not exist!".format(product_endpoint))
 
         if product.db_status == DBStatus.OK:
             # No reconnect needed.
-            return
+            return product
 
         # Try to reconnect in these cases.
         # Do not try to reconnect if there is a schema mismatch.
@@ -301,6 +301,8 @@ class RequestHandler(SimpleHTTPRequestHandler):
                                                 str(db_stat))
             LOG.error(error_msg)
             raise ValueError(error_msg)
+
+        return product
 
     def do_POST(self):
         """
@@ -354,8 +356,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
             if product_endpoint:
                 # The current request came through a product route, and not
                 # to the main endpoint.
-                product = self.server.get_product(product_endpoint)
-                self.__check_prod_db(product)
+                product = self.__check_prod_db(product_endpoint)
 
             version_supported = routing.is_supported_version(api_ver)
             if version_supported:
@@ -388,8 +389,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
                         if product_endpoint:
                             # The current request came through a
                             # product route, and not to the main endpoint.
-                            product = self.server.get_product(product_endpoint)
-                            self.__check_prod_db(product)
+                            product = self.__check_prod_db(product_endpoint)
 
                         acc_handler = ReportHandler_v6(
                             self.server.manager,
@@ -435,11 +435,11 @@ class RequestHandler(SimpleHTTPRequestHandler):
         except Exception as exn:
             # Convert every Exception to the proper format which can be parsed
             # by the Thrift clients expecting JSON responses.
-            LOG.warning(exn.message)
+            LOG.warning(str(exn))
             import traceback
             traceback.print_exc()
             ex = TApplicationException(TApplicationException.INTERNAL_ERROR,
-                                       exn.message)
+                                       str(exn))
             fname, _, seqid = iprot.readMessageBegin()
             oprot.writeMessageBegin(fname, TMessageType.EXCEPTION, seqid)
             ex.write(oprot)
