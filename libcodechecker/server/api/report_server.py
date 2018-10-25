@@ -76,9 +76,10 @@ def exc_to_thrift_reqfail(func):
             LOG.warning(rf.message)
             raise
         except Exception as ex:
-            LOG.warning(ex.message)
+            msg = str(ex)
+            LOG.warning(msg)
             raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.GENERAL,
-                                              ex.message)
+                                              msg)
 
     return wrapper
 
