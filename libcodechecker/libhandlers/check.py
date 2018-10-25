@@ -269,9 +269,10 @@ used to generate a log file on the fly.""")
     if host_check.is_ctu_capable():
         ctu_opts = parser.add_argument_group(
             "cross translation unit analysis arguments",
-            "These arguments are only available if the Clang Static Analyzer "
-            "supports Cross-TU analysis. By default, no CTU analysis is run "
-            "when 'CodeChecker analyze' is called.")
+            """
+These arguments are only available if the Clang Static Analyzer supports
+Cross-TU analysis. By default, no CTU analysis is run when 'CodeChecker check'
+is called.""")
 
         ctu_modes = ctu_opts.add_mutually_exclusive_group()
 
@@ -313,10 +314,11 @@ used to generate a log file on the fly.""")
     if host_check.is_statistics_capable():
         stat_opts = parser.add_argument_group(
             "EXPERIMENTAL statistics analysis feature arguments",
-            "These arguments are only available if the Clang Static Analyzer "
-            "supports Statistics-based analysis "
-            "(e.g. statisticsCollector.ReturnValueCheck, "
-            "statisticsCollector.SpecialReturnValue checkers are available).")
+            """
+These arguments are only available if the Clang Static Analyzer supports
+Statistics-based analysis (e.g. statisticsCollector.ReturnValueCheck,
+statisticsCollector.SpecialReturnValue checkers are available).""")
+
         stat_opts.add_argument('--stats-collect', '--stats-collect',
                                action='store',
                                default=argparse.SUPPRESS,
