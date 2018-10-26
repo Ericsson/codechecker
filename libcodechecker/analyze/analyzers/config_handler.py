@@ -55,9 +55,9 @@ class AnalyzerConfigHandler(object):
     @abstractmethod
     def get_checker_configs(self):
         """
-        Return a list of (checker_name, key, key_valye) tuples.
+        Return a list of (checker_name, key, key_value) tuples.
         """
-        pass
+        raise NotImplementedError("Subclasses should implement this!")
 
     def add_checker(self, checker_name, enabled, description):
         """

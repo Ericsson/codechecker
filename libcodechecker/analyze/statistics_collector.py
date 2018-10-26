@@ -24,7 +24,7 @@ from libcodechecker.logger import get_logger
 LOG = get_logger('analyzer')
 
 
-def build_stat_coll_cmd(action, config, source, environ):
+def build_stat_coll_cmd(action, config, source):
     """
     Build the statistics collector analysis command.
     """

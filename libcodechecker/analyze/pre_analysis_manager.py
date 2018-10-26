@@ -38,8 +38,7 @@ def collect_statistics(action, source, config, environ, statistics_data):
     """
     cmd, can_collect = statistics_collector.build_stat_coll_cmd(action,
                                                                 config,
-                                                                source,
-                                                                environ)
+                                                                source)
 
     if not can_collect:
         LOG.debug('Can not collect statistical data.')
@@ -49,7 +48,7 @@ def collect_statistics(action, source, config, environ, statistics_data):
     LOG.debug_analyzer(cmd)
 
     ret_code, analyzer_out, analyzer_err = \
-        analyzer_base.SourceAnalyzer.run_proc(cmdstr)
+        analyzer_base.SourceAnalyzer.run_proc(cmdstr, env=environ)
 
     LOG.debug(analyzer_out)
     LOG.debug(analyzer_err)
