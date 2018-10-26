@@ -16,7 +16,6 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 import io
 import os
-import sys
 import tempfile
 import zipfile
 import zlib

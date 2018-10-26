@@ -19,14 +19,15 @@ import subprocess
 from libcodechecker import package_context
 from libcodechecker.logger import get_logger
 from libcodechecker.analyze import analyzer_env
-from libcodechecker.analyze.analyzers import analyzer_types
+from libcodechecker.analyze.analyzers.analyzer_clangsa import ClangSA
+from libcodechecker.analyze.analyzers.analyzer_types \
+    import check_supported_analyzers
 
 LOG = get_logger('system')
 
 
 def is_ctu_capable():
     """ Detects if the current clang is CTU compatible. """
-
     context = package_context.get_context()
     ctu_func_map_cmd = context.ctu_func_map_cmd
     try:
@@ -40,15 +41,8 @@ def is_statistics_capable():
     """ Detects if the current clang is Statistics compatible. """
     context = package_context.get_context()
 
-    analyzer = "clangsa"
-    enabled_analyzers = [analyzer]
-    cfg_handlers = analyzer_types.build_config_handlers({},
-                                                        context,
-                                                        enabled_analyzers)
-
-    clangsa_cfg = cfg_handlers[analyzer]
-    analyzer = analyzer_types.supported_analyzers[analyzer](clangsa_cfg,
-                                                            None)
+    clangsa_cfg = ClangSA.construct_config_handler([], context)
+    analyzer = ClangSA(clangsa_cfg, None)
 
     check_env = analyzer_env.get_check_env(context.path_env_extra,
                                            context.ld_lib_path_extra)
@@ -70,7 +64,6 @@ def check_zlib():
     possible the the compression fails which is required to
     store data into the database.
     """
-
     try:
         import zlib
         zlib.compress('Compress this')

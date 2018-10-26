@@ -99,7 +99,7 @@ def extend_analyzer_cmd_with_resource_dir(analyzer_cmd,
     and describes our intentions more cleanly if we just simply disable the
     inludes from the resource dir.
     """
-    if len(compiler_resource_dir) == 0:
+    if not compiler_resource_dir:
         return
 
     resource_inc = compiler_resource_dir

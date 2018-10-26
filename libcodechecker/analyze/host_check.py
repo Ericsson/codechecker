@@ -67,11 +67,14 @@ def has_analyzer_feature(clang_bin, feature, env=None):
             raise
 
 
-def get_resource_dir(clang_bin, env=None):
+def get_resource_dir(clang_bin, context, env=None):
     """
     Returns the resource_dir of Clang or None if the switch is not supported by
     Clang.
     """
+    if context.compiler_resource_dir:
+        return context.compiler_resource_dir
+    # If not set then ask the binary for the resource dir.
     cmd = [clang_bin, "-print-resource-dir"]
     LOG.debug('run: "' + ' '.join(cmd) + '"')
     try:

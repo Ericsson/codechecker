@@ -50,9 +50,6 @@ class SourceAnalyzer(object):
 
     @abstractmethod
     def construct_analyzer_cmd(self, result_handler):
-        """
-        Construct the analyzer command.
-        """
         raise NotImplementedError("Subclasses should implement this!")
 
     @classmethod
@@ -61,6 +58,11 @@ class SourceAnalyzer(object):
         In case of the configured binary for the analyzer is not found in the
         PATH, this method is used to find a callable binary.
         """
+        raise NotImplementedError("Subclasses should implement this!")
+
+    @classmethod
+    def construct_config_handler(cls, args, context):
+        """ Should return a subclass of AnalyzerConfigHandler."""
         raise NotImplementedError("Subclasses should implement this!")
 
     @abstractmethod

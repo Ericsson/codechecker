@@ -685,3 +685,14 @@ def slugify(text):
     norm_text = re.sub(r'([\s]+|[\/]+)', '_', norm_text)
 
     return norm_text
+
+
+def replace_env_var(cfg_file):
+    def replacer(matchobj):
+        env_var = matchobj.group(1)
+        if env_var not in os.environ:
+            LOG.error(env_var + ' environment variable not set in ' + cfg_file)
+            return ''
+        return os.environ[env_var]
+
+    return replacer

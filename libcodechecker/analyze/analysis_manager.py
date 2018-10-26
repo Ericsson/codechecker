@@ -424,7 +424,8 @@ def prepare_check(source, action, analyzer_config_map, output_dir,
         # Needs to be called before construct_analyzer_cmd
         source_analyzer.disable_ctu()
 
-    if action.analyzer_type == analyzer_types.CLANG_SA and statistics_data:
+    if action.analyzer_type == analyzer_clangsa.ClangSA.ANALYZER_NAME and \
+       statistics_data:
         # WARNING! Statistical checkers are only supported by Clang
         # Static Analyzer right now.
         stats_dir = statistics_data['stats_out_dir']

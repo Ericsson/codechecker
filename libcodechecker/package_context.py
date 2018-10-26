@@ -18,7 +18,8 @@ import sys
 from libcodechecker import db_version
 from libcodechecker import logger
 # TODO: Refers subpackage library
-from libcodechecker.analyze.analyzers import analyzer_types
+from libcodechecker.analyze.analyzers.analyzer_clangsa import ClangSA
+from libcodechecker.analyze.analyzers.analyzer_clang_tidy import ClangTidy
 from libcodechecker.util import load_json_or_empty
 
 LOG = logger.get_logger('system')
@@ -144,8 +145,8 @@ class Context(object):
             # will be checked later.
             # Key naming in the dict should be the same as in
             # the supported analyzers list.
-            self.__analyzers[analyzer_types.CLANG_SA] = 'clang'
-            self.__analyzers[analyzer_types.CLANG_TIDY] = 'clang-tidy'
+            self.__analyzers[ClangSA.ANALYZER_NAME] = 'clang'
+            self.__analyzers[ClangTidy.ANALYZER_NAME] = 'clang-tidy'
         else:
             for name, value in compiler_binaries.items():
                 if os.path.isabs(value):
