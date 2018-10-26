@@ -123,8 +123,8 @@ def ldap_error_handler():
     try:
         yield
     except ldap.INVALID_CREDENTIALS:
-        LOG.error("Invalid credentials, please recheck "
-                  "your authentication configuration.")
+        LOG.warning("Invalid credentials, please recheck "
+                    "your authentication configuration.")
         raise
 
     except ldap.FILTER_ERROR:
