@@ -314,12 +314,13 @@ def get_compiler_standard(parseLogOptions, compiler, lang):
     return standard
 
 
-def parse_compile_commands_json(log_data, parseLogOptions):
+def parse_compile_commands_json(log_data, parse_log_options,
+                                skip_handler=None):
     """
     log_data: content of a compile command json.
     """
 
-    output_path = parseLogOptions.output_path
+    output_path = parse_log_options.output_path
     if output_path is not None:
         global compiler_info_dump_file
         compiler_info_dump_file = os.path.join(output_path,
@@ -342,6 +343,9 @@ def parse_compile_commands_json(log_data, parseLogOptions):
             # JSON Compilation Database as a relative path.
             sourcefile = os.path.join(os.path.abspath(entry['directory']),
                                       sourcefile)
+
+        if skip_handler and skip_handler.should_skip(sourcefile):
+            continue
 
         lang = option_parser.get_language(sourcefile[sourcefile.rfind('.'):])
 
@@ -417,17 +421,17 @@ def parse_compile_commands_json(log_data, parseLogOptions):
                             extra_opts.append(comp_opt)
 
                 compiler_includes[results.compiler] = \
-                    get_compiler_includes(parseLogOptions, results.compiler,
+                    get_compiler_includes(parse_log_options, results.compiler,
                                           results.lang, results.compile_opts,
                                           extra_opts)
 
             if not (results.compiler in compiler_target):
                 compiler_target[results.compiler] = \
-                    get_compiler_target(parseLogOptions, results.compiler)
+                    get_compiler_target(parse_log_options, results.compiler)
 
             if not (results.compiler in compiler_standard):
                 compiler_standard[results.compiler] = \
-                    get_compiler_standard(parseLogOptions, results.compiler,
+                    get_compiler_standard(parse_log_options, results.compiler,
                                           results.lang)
 
             action.compiler_includes = compiler_includes[results.compiler]
@@ -453,7 +457,7 @@ def parse_compile_commands_json(log_data, parseLogOptions):
     return actions
 
 
-def parse_log(logfilepath, parseLogOptions):
+def parse_log(logfilepath, parse_log_options, skip_handler=None):
     """
     logfilepath: the compile command json file which should be parsed.
     """
@@ -461,7 +465,8 @@ def parse_log(logfilepath, parseLogOptions):
 
     try:
         data = load_json_or_empty(logfilepath, {})
-        actions = parse_compile_commands_json(data, parseLogOptions)
+        actions = parse_compile_commands_json(data, parse_log_options,
+                                              skip_handler)
     except (ValueError, KeyError, TypeError) as ex:
         if os.stat(logfilepath).st_size == 0:
             LOG.error('The compile database is empty.')
