@@ -19,6 +19,7 @@ import os
 import posixpath
 from random import sample
 import shutil
+import signal
 import socket
 import ssl
 import sys
@@ -726,6 +727,22 @@ class CCSimpleHttpServer(HTTPServer):
             LOG.error("Couldn't start the server: " + e.__str__())
             raise
 
+    def terminate(self):
+        """
+        Terminating the server.
+        """
+        try:
+            LOG.info("Shutting down...")
+            self.server_close()
+            self.__engine.dispose()
+
+            self.__request_handlers.terminate()
+            self.__request_handlers.join()
+        except Exception as ex:
+            LOG.error("Failed to shut down the WEB server!")
+            LOG.error(str(ex))
+            sys.exit(1)
+
     def process_request_thread(self, request, client_address):
         try:
             # Finish_request instantiates request handler class.
@@ -951,6 +968,18 @@ def start_server(config_directory, package_data, port, config_sql_server,
                                      context,
                                      check_env,
                                      manager)
+
+    def signal_handler(*args, **kwargs):
+        """
+        Handle SIGTERM to stop the server running.
+        """
+        LOG.info("Received shutdown request.")
+        http_server.terminate()
+        LOG.info("WEB server is shut down.")
+        sys.exit(0)
+
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
 
     try:
         instance_manager.register(os.getpid(),

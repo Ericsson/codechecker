@@ -104,7 +104,7 @@ def main(subcommand=None):
             os.kill(proc_pid, signal.SIGINT)
 
         _remove_tmp()
-        sys.exit(1)
+        sys.exit(0)
 
     signal.signal(signal.SIGTERM, signal_term_handler)
     signal.signal(signal.SIGINT, signal_term_handler)
