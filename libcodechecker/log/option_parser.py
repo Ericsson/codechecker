@@ -161,6 +161,8 @@ IGNORED_OPTION_MAP_REGEX = {
     '^-mabi': 0
 }
 
+IGNORED_OPTION_MAP_REGEX_MERGED = ['|'.join(IGNORED_OPTION_MAP_REGEX)]
+
 # Unknown options by clang, will be skipped.
 
 UNKNOWN_OPTIONS_MAP_REGEX = {
@@ -234,6 +236,8 @@ UNKNOWN_OPTIONS_MAP_REGEX = {
     # quality of analysis.
     '^-DNDEBUG$': 0
 }
+
+UNKNOWN_OPTIONS_MAP_REGEX_MERGED = ['|'.join(UNKNOWN_OPTIONS_MAP_REGEX)]
 
 
 class ActionType(object):
@@ -425,9 +429,9 @@ def arg_check(it, result):
     # Defines handler functions for tables and single options.
     arg_collection = [
         append_replacement_to_list(REPLACE_OPTIONS_MAP, result.compile_opts),
-        skip(UNKNOWN_OPTIONS_MAP_REGEX, True),
+        skip(UNKNOWN_OPTIONS_MAP_REGEX_MERGED, True),
         skip(IGNORED_OPTION_MAP),
-        skip(IGNORED_OPTION_MAP_REGEX, True),
+        skip(IGNORED_OPTION_MAP_REGEX_MERGED, True),
         set_attr('-x', result, 'lang'),
         set_attr('-o', result, 'output'),
         set_attr('-arch', result, 'arch'),
