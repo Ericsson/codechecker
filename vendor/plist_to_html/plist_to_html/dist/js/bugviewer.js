@@ -184,7 +184,7 @@ var BugViewer = {
         return;
 
       var left = that._codeMirror.defaultCharWidth() * bugEvent.col + 'px';
-      var type = i == that._currentReport.length - 1 ? 'error' : 'info';
+      var type = i == that._currentReport.events.length - 1 ? 'error' : 'info';
 
       var element = document.createElement('div');
       element.setAttribute('style', 'margin-left: ' + left);
@@ -215,7 +215,7 @@ var BugViewer = {
       element.appendChild(msg);
 
       var nextBugEvent = bugEvent.step;
-      if (nextBugEvent < that._currentReport.length) {
+      if (nextBugEvent < that._currentReport.events.length) {
         var nextBug = document.createElement('span');
         nextBug.setAttribute('class', 'arrow right-arrow');
         nextBug.addEventListener('click', function () {
