@@ -1,7 +1,6 @@
 {
   "readability-static-accessed-through-instance":               "STYLE",
   "bugprone-virtual-near-miss":                                 "MEDIUM",
-  "bugprone-misplaced-operator-in-strlen-in-alloc":             "MEDIUM",
   "bugprone-integer-division":                                  "MEDIUM",
   "bugprone-copy-constructor-init":                             "MEDIUM",
   "optin.portability.UnixAPI":                                  "MEDIUM",
