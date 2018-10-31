@@ -107,7 +107,8 @@ class ClangSA(analyzer_base.SourceAnalyzer):
 
         self.__checker_configs.append(checker_cfg)
 
-    def get_analyzer_checkers(self, config_handler, env):
+    @classmethod
+    def get_analyzer_checkers(cls, config_handler, env):
         """
         Return the list of the supported checkers.
         """
@@ -331,9 +332,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             # No clangsa arguments file was given in the command line.
             LOG.debug_analyzer(aerr)
 
-        analyzer = ClangSA(handler, None)
-
-        checkers = analyzer.get_analyzer_checkers(handler, check_env)
+        checkers = ClangSA.get_analyzer_checkers(handler, check_env)
 
         # Read clang-sa checkers from the config file.
         clang_sa_checkers = context.checker_config.get(cls.ANALYZER_NAME +

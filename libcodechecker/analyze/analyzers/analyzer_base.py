@@ -34,11 +34,6 @@ class SourceAnalyzer(object):
         self.__build_action = buildaction
         # Currently analyzed source file.
         self.source_file = ''
-        self.__checkers = []
-
-    @property
-    def checkers(self):
-        return self.__checkers
 
     @property
     def buildaction(self):
@@ -110,8 +105,8 @@ class SourceAnalyzer(object):
             res_handler.analyzer_returncode = 1
             return res_handler
 
-    @abstractmethod
-    def get_analyzer_checkers(self, config_handler, env):
+    @classmethod
+    def get_analyzer_checkers(cls, config_handler, env):
         """
         Return the checkers available in the analyzer.
         """

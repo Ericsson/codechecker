@@ -42,12 +42,11 @@ def is_statistics_capable():
     context = package_context.get_context()
 
     clangsa_cfg = ClangSA.construct_config_handler([], context)
-    analyzer = ClangSA(clangsa_cfg, None)
 
     check_env = analyzer_env.get_check_env(context.path_env_extra,
                                            context.ld_lib_path_extra)
 
-    checkers = analyzer.get_analyzer_checkers(clangsa_cfg, check_env)
+    checkers = ClangSA.get_analyzer_checkers(clangsa_cfg, check_env)
 
     stat_checkers_pattern = re.compile(r'.+statisticscollector.+')
 

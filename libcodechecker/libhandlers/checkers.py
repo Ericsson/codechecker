@@ -171,12 +171,11 @@ def main(args):
     rows = []
     for analyzer in working:
         config_handler = analyzer_config_map.get(analyzer)
-        source_analyzer = \
-            analyzer_types.supported_analyzers[analyzer](config_handler,
-                                                         None)
+        analyzer_class = \
+            analyzer_types.supported_analyzers[analyzer]
 
-        checkers = source_analyzer.get_analyzer_checkers(config_handler,
-                                                         analyzer_environment)
+        checkers = analyzer_class.get_analyzer_checkers(config_handler,
+                                                        analyzer_environment)
         default_checker_cfg = context.checker_config.get(
             analyzer + '_checkers')
 
