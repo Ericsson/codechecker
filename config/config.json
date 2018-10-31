@@ -18,7 +18,6 @@
   "checker_config": {
       "clangsa_checkers" : {
         "core.NonnilStringConstants": ["default", "sensitive", "extreme"],
-        "alpha.cplusplus.DeleteWithNonVirtualDtor" : ["default", "sensitive", "extreme"],
         "alpha.core.BoolAssignment" : ["sensitive", "extreme"],
         "alpha.core.CallAndMessageUnInitRefArg" : ["extreme"],
         "alpha.core.CastSize" : ["sensitive", "extreme"],
@@ -28,7 +27,7 @@
         "alpha.core.IdenticalExpr" : ["extreme"],
         "alpha.core.SizeofPtr" : ["sensitive", "extreme"],
         "alpha.core.TestAfterDivZero" : ["sensitive", "extreme"],
-        "alpha.cplusplus.DeleteWithNonVirtualDtor" : ["sensitive", "extreme"],
+        "alpha.cplusplus.DeleteWithNonVirtualDtor" : ["default", "sensitive", "extreme"],
         "alpha.cplusplus.IteratorRange" : [],
         "alpha.cplusplus.MisusedMovedObject" : ["sensitive", "extreme"],
         "alpha.security.ArrayBound" : ["extreme"],
