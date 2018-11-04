@@ -12,6 +12,11 @@ import hashlib
 
 
 class BuildAction(object):
+    LINK = 0
+    COMPILE = 1
+    PREPROCESS = 2
+    INFO = 3
+
     def __init__(self, build_action_id=0):
         self._id = build_action_id
         # Filtered list of options.

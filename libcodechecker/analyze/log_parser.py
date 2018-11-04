@@ -352,7 +352,6 @@ def parse_compile_commands_json(log_data, parse_log_options,
         if not lang:
             continue
 
-        action = build_action.BuildAction(counter)
         if 'command' in entry:
             command = entry['command']
 
@@ -362,34 +361,28 @@ def parse_compile_commands_json(log_data, parse_log_options,
             # This would be messed up later on by options_parser, so need a
             # fix here. (Should be removed once we are sure noone uses this
             # intercept-build anymore!)
-            if r'\"' in command:
-                command = command.replace(r'\"', '"')
+            #if r'\"' in command:
+            #    command = command.replace(r'\"', '"')
         elif 'arguments' in entry:
             # Newest versions of intercept-build create an argument vector
             # instead of a command string.
             command = ' '.join(entry['arguments'])
         else:
             raise KeyError("No valid 'command' or 'arguments' entry found!")
-        results = option_parser.parse_options(command)
+        action = option_parser.parse_options(command)
 
         action.original_command = command
+        action.lang = lang  # TODO: This should go to option_parser.
 
         # If the include directory is given as relative path then the working
         # directory is prepended.
-        compile_opts = results.compile_opts
-        for i, opt in enumerate(compile_opts):
+        for i, opt in enumerate(action.analyzer_options):
             if opt.startswith('-I'):
                 inc_dir = opt[2:].strip()
                 if not os.path.isabs(inc_dir):
-                    compile_opts[i] = '-I' + \
+                    action.analyzer_options[i] = '-I' + \
                         os.path.normpath(os.path.join(
                             entry['directory'], inc_dir))
-
-        action.analyzer_options = compile_opts
-
-        action.lang = results.lang
-        action.target = results.arch
-        action.output = results.output
 
         add_compiler_defaults = True
 
@@ -409,8 +402,8 @@ def parse_compile_commands_json(log_data, parse_log_options,
             add_compiler_defaults = False
 
         # Store the compiler built in include paths and defines.
-        if add_compiler_defaults and results.compiler:
-            if not (results.compiler in compiler_includes):
+        if add_compiler_defaults and action.compiler:
+            if action.compiler not in compiler_includes:
                 # Fetch defaults from the compiler,
                 # make sure we use the correct architecture.
                 extra_opts = []
@@ -420,30 +413,30 @@ def parse_compile_commands_json(log_data, parse_log_options,
                         if re.match(pattern, comp_opt):
                             extra_opts.append(comp_opt)
 
-                compiler_includes[results.compiler] = \
-                    get_compiler_includes(parse_log_options, results.compiler,
-                                          results.lang, results.compile_opts,
-                                          extra_opts)
+                compiler_includes[action.compiler] = \
+                    get_compiler_includes(parse_log_options, action.compiler,
+                                          action.lang,
+                                          action.analyzer_options, extra_opts)
 
-            if not (results.compiler in compiler_target):
-                compiler_target[results.compiler] = \
-                    get_compiler_target(parse_log_options, results.compiler)
+            if action.compiler not in compiler_target:
+                compiler_target[action.compiler] = \
+                    get_compiler_target(parse_log_options, action.compiler)
 
-            if not (results.compiler in compiler_standard):
-                compiler_standard[results.compiler] = \
-                    get_compiler_standard(parse_log_options, results.compiler,
-                                          results.lang)
+            if action.compiler not in compiler_standard:
+                compiler_standard[action.compiler] = \
+                    get_compiler_standard(parse_log_options, action.compiler,
+                                          action.lang)
 
-            action.compiler_includes = compiler_includes[results.compiler]
-            action.compiler_standard = compiler_standard[results.compiler]
-            action.target = compiler_target[results.compiler]
+            action.compiler_includes = compiler_includes[action.compiler]
+            action.compiler_standard = compiler_standard[action.compiler]
+            action.target = compiler_target[action.compiler]
 
-        if results.action != option_parser.ActionType.COMPILE:
+        if action.action_type != build_action.BuildAction.COMPILE:
             continue
 
         # TODO: Check arch.
         action.directory = entry['directory']
-        action.sources = sourcefile
+        action.sources = sourcefile  # TODO: This should go to option_parser.
         # Filter out duplicate compilation commands.
         unique_key = action.cmp_key
         if filtered_build_actions.get(unique_key) is None:
