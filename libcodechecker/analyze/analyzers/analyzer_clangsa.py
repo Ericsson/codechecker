@@ -173,8 +173,8 @@ class ClangSA(analyzer_base.SourceAnalyzer):
                                          '-analyzer-checker=' + checker_name])
                 else:
                     analyzer_cmd.extend(['-Xclang',
-                                         '-analyzer-disable-checker',
-                                         '-Xclang', checker_name])
+                                         '-analyzer-disable-checker=' +
+                                         checker_name])
 
             # Get analyzer notes as events from clang.
             analyzer_cmd.extend(['-Xclang',
