@@ -24,6 +24,7 @@ from libcodechecker.analyze import log_parser
 from libcodechecker.analyze.analyzers import analyzer_types
 from libcodechecker.util import RawDescriptionDefaultHelpFormatter, \
     load_json_or_empty
+from libcodechecker.analyze import skiplist_handler
 
 LOG = logger.get_logger('system')
 
@@ -470,6 +471,37 @@ class ParseLogOptions:
                 self.compiler_target_file = args.compiler_info_file
 
 
+def __get_skip_handler(args):
+    """
+    Initialize and return a skiplist handler if
+    there is a skip list file in the arguments.
+    """
+    try:
+        if args.skipfile:
+            LOG.debug_analyzer("Creating skiplist handler.")
+            with open(args.skipfile) as skip_file:
+                return skiplist_handler.SkipListHandler(skip_file.read())
+    except AttributeError:
+        LOG.debug_analyzer('Skip file was not set in the command line')
+
+    return None
+
+
+def __update_skip_file(args):
+    """
+    Remove previous skip file if there was any.
+    """
+    skip_file_to_send = os.path.join(args.output_path, 'skip_file')
+
+    if os.path.exists(skip_file_to_send):
+        os.remove(skip_file_to_send)
+
+    if 'skipfile' in args:
+        LOG.debug("Copying skip file %s to %s",
+                  args.skipfile, skip_file_to_send)
+        shutil.copyfile(args.skipfile, skip_file_to_send)
+
+
 def main(args):
     """
     Perform analysis on the given logfiles and store the results in a machine-
@@ -510,6 +542,9 @@ def main(args):
     LOG.debug("args: " + str(args))
     LOG.debug("Output will be stored to: '" + args.output_path + "'")
 
+    # Process the skip list if present.
+    skip_handler = __get_skip_handler(args)
+
     # Parse the JSON CCDBs and retrieve the compile commands.
     actions = []
     for log_file in args.logfile:
@@ -519,7 +554,8 @@ def main(args):
             continue
 
         parseLogOptions = ParseLogOptions(args)
-        actions += log_parser.parse_log(log_file, parseLogOptions)
+        actions += log_parser.parse_log(log_file, parseLogOptions,
+                                        skip_handler)
     if len(actions) == 0:
         LOG.info("None of the specified build log files contained "
                  "valid compilation commands. No analysis needed...")
@@ -546,7 +582,9 @@ def main(args):
         metadata['result_source_files'] = \
             metadata_prev['result_source_files']
 
-    analyzer.perform_analysis(args, context, actions, metadata)
+    analyzer.perform_analysis(args, skip_handler, context, actions, metadata)
+
+    __update_skip_file(args)
 
     LOG.debug("Analysis metadata write to '" + metadata_file + "'")
     with open(metadata_file, 'w') as metafile:

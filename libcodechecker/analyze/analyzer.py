@@ -23,7 +23,6 @@ from libcodechecker.logger import get_logger
 from libcodechecker.analyze import analysis_manager
 from libcodechecker.analyze import analyzer_env
 from libcodechecker.analyze import pre_analysis_manager
-from libcodechecker.analyze import skiplist_handler
 from libcodechecker.analyze.analyzers import analyzer_types
 
 
@@ -92,20 +91,6 @@ def __get_analyzer_version(context, analyzer_config_map):
     return versions
 
 
-def __get_skip_handler(args):
-    """
-    Initialize and return a skiplist handler if
-    there is a skip list file in the arguments.
-    """
-    try:
-        if args.skipfile:
-            LOG.debug_analyzer("Creating skiplist handler.")
-            with open(args.skipfile) as skip_file:
-                return skiplist_handler.SkipListHandler(skip_file.read())
-    except AttributeError:
-        LOG.debug_analyzer('Skip file was not set in the command line')
-
-
 def __mgr_init():
     """
     This function is set for the SyncManager object which handles shared data
@@ -116,7 +101,39 @@ def __mgr_init():
     signal.signal(signal.SIGINT, signal.SIG_IGN)
 
 
-def perform_analysis(args, context, actions, metadata):
+def __get_statistics_data(args, manager):
+    statistics_data = None
+
+    if 'stats_enabled' in args and args.stats_enabled:
+        statistics_data = manager.dict({
+            'stats_out_dir': os.path.join(args.output_path, "stats")})
+
+    if 'stats_output' in args and args.stats_output:
+        statistics_data = manager.dict({'stats_out_dir':
+                                        args.stats_output})
+
+    if 'stats_min_sample_count' in args and statistics_data:
+        if args.stats_min_sample_count > 1:
+            statistics_data['stats_min_sample_count'] =\
+                args.stats_min_sample_count
+        else:
+            LOG.error("stats_min_sample_count"
+                      "must be greater than 1.")
+            return None
+
+    if 'stats_relevance_threshold' in args and statistics_data:
+        if 1 > args.stats_relevance_threshold > 0:
+            statistics_data['stats_relevance_threshold'] =\
+                args.stats_relevance_threshold
+        else:
+            LOG.error("stats-relevance-threshold must be"
+                      " greater than 0 and smaller than 1.")
+            return None
+
+    return statistics_data
+
+
+def perform_analysis(args, skip_handler, context, actions, metadata):
     """
     Perform static analysis via the given (or if not, all) analyzers,
     in the given analysis context for the supplied build actions.
@@ -132,13 +149,13 @@ def perform_analysis(args, context, actions, metadata):
     ctu_analyze = False
     ctu_dir = ''
     if 'ctu_phases' in args:
-        ctu_collect = args.ctu_phases[0]
-        ctu_analyze = args.ctu_phases[1]
         ctu_dir = os.path.join(args.output_path, 'ctu-dir')
         args.ctu_dir = ctu_dir
         if analyzer_types.CLANG_SA not in analyzers:
             LOG.error("CTU can only be used with the clang static analyzer.")
             return
+        ctu_collect = args.ctu_phases[0]
+        ctu_analyze = args.ctu_phases[1]
 
     if 'stats_enabled' in args and args.stats_enabled:
         if analyzer_types.CLANG_SA not in analyzers:
@@ -180,35 +197,8 @@ def perform_analysis(args, context, actions, metadata):
     actions_map = create_actions_map(actions, manager)
 
     # Setting to not None value will enable statistical analysis features.
-    statistics_data = None
+    statistics_data = __get_statistics_data(args, manager)
 
-    if 'stats_enabled' in args and args.stats_enabled:
-        statistics_data = manager.dict({
-            'stats_out_dir': os.path.join(args.output_path, "stats")})
-
-    if 'stats_output' in args and args.stats_output:
-        statistics_data = manager.dict({'stats_out_dir':
-                                        args.stats_output})
-
-    if 'stats_min_sample_count' in args and statistics_data:
-        if args.stats_min_sample_count > 1:
-            statistics_data['stats_min_sample_count'] =\
-                args.stats_min_sample_count
-        else:
-            LOG.error("stats_min_sample_count"
-                      "must be greater than 1.")
-            return
-
-    if 'stats_relevance_threshold' in args and statistics_data:
-        if 1 > args.stats_relevance_threshold > 0:
-            statistics_data['stats_relevance_threshold'] =\
-                args.stats_relevance_threshold
-        else:
-            LOG.error("stats-relevance-threshold must be"
-                      " greater than 0 and smaller than 1.")
-            return
-
-    skip_handler = __get_skip_handler(args)
     if ctu_collect or statistics_data:
         ctu_data = None
         if ctu_collect or ctu_analyze:
@@ -265,17 +255,6 @@ def perform_analysis(args, context, actions, metadata):
 
     metadata['timestamps'] = {'begin': start_time,
                               'end': end_time}
-
-    # Remove previous skip file if there was any.
-    skip_file_to_send = os.path.join(args.output_path, 'skip_file')
-
-    if os.path.exists(skip_file_to_send):
-        os.remove(skip_file_to_send)
-
-    if 'skipfile' in args:
-        LOG.debug("Copying skip file %s to %s",
-                  args.skipfile, skip_file_to_send)
-        shutil.copyfile(args.skipfile, skip_file_to_send)
 
     if ctu_collect and ctu_analyze:
         shutil.rmtree(ctu_dir, ignore_errors=True)
