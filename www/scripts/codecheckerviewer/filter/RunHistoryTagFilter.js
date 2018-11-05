@@ -17,6 +17,16 @@ function (dom, declare, Deferred, SelectFilter, util) {
       placeHolder : 'Search for run tags...'
     },
 
+    labelFormatter : function (value, item) {
+      var label = value;
+      if (item && item.time) {
+        label += ' <span class="time">(' + util.prettifyDate(item.time)
+          + ')</span>';
+      }
+
+      return label;
+    },
+
     getItems : function (opt) {
       var opt = this.initReportFilterOptions(opt);
       opt.reportFilter.runTag = opt.query ? opt.query : null;
@@ -29,7 +39,8 @@ function (dom, declare, Deferred, SelectFilter, util) {
           return {
             ids   : [tag.id],
             value : tagName,
-            count : tag.count
+            count : tag.count,
+            time : tag.time
           };
         }));
       });
