@@ -47,7 +47,7 @@ def process_reports(repo_dir, reports, report_url):
         elif read:
             issues[-1].append(line)
 
-    result = 1 if issues == 0 else -1
+    result = -1 if issues else 1
     report = ""
     if report_url:
         report = " Html report of the run is available at %s." % report_url
