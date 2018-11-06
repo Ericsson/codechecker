@@ -192,15 +192,17 @@ here. For example the CTU related arguments are documented at `analyze`
 subcommand.
 
 ~~~~~~~~~~~~~~~~~~~~~
-usage: CodeChecker check [-h] [-o OUTPUT_DIR] [-q] [-f]
-                         (-b COMMAND | -l LOGFILE) [-j JOBS] [-i SKIPFILE]
+usage: CodeChecker check [-h] [-o OUTPUT_DIR] [-t {plist}] [-q] [-f]
+                         (-b COMMAND | -l LOGFILE) [-j JOBS] [-c]
+                         [--report-hash {context-free}] [-i SKIPFILE]
                          [--analyzers ANALYZER [ANALYZER ...]]
-                         [--add-compiler-defaults]
+                         [--add-compiler-defaults] [--capture-analysis-output]
                          [--saargs CLANGSA_ARGS_CFG_FILE]
-                         [--tidyargs TIDY_ARGS_CFG_FILE] [--timeout TIMEOUT]
+                         [--tidyargs TIDY_ARGS_CFG_FILE]
                          [--tidy-config TIDY_CONFIG] [--timeout TIMEOUT]
+                         [--ctu | --ctu-collect | --ctu-analyze]
                          [-e checker/group/profile] [-d checker/group/profile]
-                         [--print-steps]
+                         [--enable-all] [--print-steps]
                          [--verbose {info,debug,debug_analyzer}]
 
 Run analysis for a project with printing results immediately on the standard
@@ -236,6 +238,7 @@ analyzer arguments:
 
   -j JOBS, --jobs JOBS
   -c, --clean
+  --report-hash {context-free}
   -i SKIPFILE, --ignore SKIPFILE, --skip SKIPFILE
   --analyzers ANALYZER [ANALYZER ...]
   --add-compiler-defaults
@@ -407,13 +410,19 @@ below:
 
 ~~~~~~~~~~~~~~~~~~~~~
 usage: CodeChecker analyze [-h] [-j JOBS] [-i SKIPFILE] -o OUTPUT_PATH
-                           [-t {plist}] [-q] [-c] [-n NAME]
+                           [--compiler-includes-file COMPILER_INCLUDES_FILE]
+                           [--compiler-target-file COMPILER_TARGET_FILE]
+                           [--compiler-info-file COMPILER_INFO_FILE]
+                           [-t {plist}] [-q] [-c]
+                           [--report-hash {context-free}] [-n NAME]
                            [--analyzers ANALYZER [ANALYZER ...]]
                            [--add-compiler-defaults]
                            [--capture-analysis-output]
                            [--saargs CLANGSA_ARGS_CFG_FILE]
-                           [--tidyargs TIDY_ARGS_CFG_FILE] [--timeout TIMEOUT]
+                           [--tidyargs TIDY_ARGS_CFG_FILE]
                            [--tidy-config TIDY_CONFIG] [--timeout TIMEOUT]
+                           [--ctu | --ctu-collect | --ctu-analyze]
+                           [--ctu-reanalyze-on-failure]
                            [-e checker/group/profile]
                            [-d checker/group/profile] [--enable-all]
                            [--verbose {info,debug,debug_analyzer}]
@@ -448,6 +457,15 @@ optional arguments:
                         directory. (By default, CodeChecker would keep reports
                         and overwrites only those files that were update by
                         the current build command).
+ --report-hash {context-free}
+                        EXPERIMENTAL feature. Specify the hash calculation
+                        method for reports. If this option is not set, the
+                        default calculation method for Clang Static Analyzer
+                        will be context sensitive and for Clang Tidy it will
+                        be context insensitive. If this option is set to
+                        'context-free' bugs will be identified with the
+                        CodeChecker generated context free hash for every
+                        analyzers. USE WISELY AND AT YOUR OWN RISK!
   -n NAME, --name NAME  Annotate the run analysis with a custom name in the
                         created metadata file.
   --verbose {info,debug,debug_analyzer}

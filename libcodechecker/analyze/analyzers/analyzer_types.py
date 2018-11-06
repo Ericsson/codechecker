@@ -264,6 +264,9 @@ def __build_clangsa_config_handler(args, context):
     config_handler.compiler_resource_dir =\
         __get_compiler_resource_dir(context, config_handler.analyzer_binary)
 
+    config_handler.report_hash = args.report_hash \
+        if 'report_hash' in args else None
+
     check_env = analyzer_env.get_check_env(context.path_env_extra,
                                            context.ld_lib_path_extra)
 
