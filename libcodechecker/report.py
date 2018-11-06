@@ -86,7 +86,9 @@ def generate_report_hash(path, source_file, check_name):
         from_col = m_loc.get('col')
         until_col = m_loc.get('col')
 
-        line_content = get_line(source_file, source_line)
+        # WARNING!!! Changing the error handling type for encoding errors
+        # can influence the hash content!
+        line_content = get_line(source_file, source_line, errors='ignore')
 
         if line_content == '' and not os.path.isfile(source_file):
             LOG.error("Failed to generate report hash.")

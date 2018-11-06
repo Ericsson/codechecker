@@ -490,21 +490,31 @@ def escape_like(string, escape_char='*'):
                  .replace('_', escape_char + '_')
 
 
-def get_line(file_name, line_no):
+def get_line(file_name, line_no, errors='replace'):
     """
     Return the given line from the file. If line_no is larger than the number
     of lines in the file then empty string returns.
     If the file can't be opened for read, the function also returns empty
     string.
+
+    Try to encode every file as utf-8 to read the line content do not depend
+    on the platform settings. By default locale.getpreferredencoding() is used
+    which depends on the platform.
+    Encoding errors are handled by replacing the character with '?'.
+
+    Changing the encoding error can influence the hash content!
     """
     try:
-        with io.open(file_name) as source_file:
+        with io.open(file_name, mode='r',
+                     encoding='utf-8',
+                     errors=errors) as source_file:
             for line in source_file:
                 line_no -= 1
                 if line_no == 0:
                     return line
             return ''
     except IOError:
+        LOG.error("Failed to open file %s", file_name)
         return ''
 
 
