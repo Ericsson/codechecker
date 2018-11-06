@@ -229,6 +229,9 @@ def addCheckerRun(session, command, name, tag, username,
 
             LOG.info('Removing previous analysis results ...')
             session.delete(run)
+            # Not flushing after delete leads to a constraint violation error
+            # later, when adding run entity with the same name as the old one.
+            session.flush()
 
             checker_run = Run(name, version, command)
             session.add(checker_run)
