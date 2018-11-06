@@ -561,7 +561,7 @@ class Product(object):
         Initiates the actual connection to the database configured for the
         product.
 
-        Eeach time the connect is called the db_status is updated.
+        Each time the connect is called the db_status is updated.
         """
 
         LOG.debug("Checking '{0}' database.".
@@ -581,7 +581,6 @@ class Product(object):
 
         try:
             LOG.debug("Trying to connect to the database")
-            db_status = sql_server.connect()
 
             # Create the SQLAlchemy engine.
             self.__engine = sql_server.create_engine()
@@ -590,7 +589,7 @@ class Product(object):
             self.__session = sessionmaker(bind=self.__engine)
 
             self.__engine.execute('SELECT 1')
-            self.__db_status = db_status
+            self.__db_status = sql_server.check_schema()
             self.__last_connect_attempt = None
 
             if self.__db_status == DBStatus.SCHEMA_MISSING and init_db:
