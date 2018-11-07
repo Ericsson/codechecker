@@ -284,7 +284,7 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
             style : 'margin-left: ' + left,
             class : 'check-msg ' + enumType,
             idx : bubble.bugEventNumber,
-            innerHTML : (bubbles.length !== 1 ? enumeration : '')
+            innerHTML : enumeration
                       + parseBugStepMsg(entities.encode(bubble.msg))
           });
 
