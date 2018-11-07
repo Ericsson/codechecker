@@ -109,6 +109,13 @@ def main(subcommand=None):
     signal.signal(signal.SIGTERM, signal_term_handler)
     signal.signal(signal.SIGINT, signal_term_handler)
 
+    def signal_reload_handler(sig, frame):
+        global proc_pid
+        if proc_pid:
+            os.kill(proc_pid, signal.SIGHUP)
+
+    signal.signal(signal.SIGHUP, signal_reload_handler)
+
     try:
         run_codechecker(checker_env, subcommand)
     finally:

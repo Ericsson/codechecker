@@ -980,6 +980,14 @@ def start_server(config_directory, package_data, port, config_sql_server,
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
 
+    def reload_signal_handler(*args, **kwargs):
+        """
+        Reloads server configuration file.
+        """
+        manager.reload_config()
+
+    signal.signal(signal.SIGHUP, reload_signal_handler)
+
     try:
         instance_manager.register(os.getpid(),
                                   os.path.abspath(

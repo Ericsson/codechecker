@@ -12,6 +12,7 @@ from __future__ import division
 
 from datetime import datetime
 import hashlib
+import json
 
 from libcodechecker.logger import get_logger
 from libcodechecker.util import check_file_owner_rw, load_json_or_empty, \
@@ -49,8 +50,8 @@ class _Session(object):
         self.user = username
         self.groups = groups
 
-        self.__session_lifetime = session_lifetime
-        self.__refresh_time = refresh_time if refresh_time else None
+        self.session_lifetime = session_lifetime
+        self.refresh_time = refresh_time if refresh_time else None
         self.__root = is_root
         self.__database = database
         self.__can_expire = can_expire
@@ -67,11 +68,11 @@ class _Session(object):
         """
         Returns if the refresh time of the session is expired.
         """
-        if not self.__refresh_time:
+        if not self.refresh_time:
             return True
 
         return (datetime.now() - self.last_access).total_seconds() > \
-            self.__refresh_time
+            self.refresh_time
 
     @property
     def is_alive(self):
@@ -83,7 +84,7 @@ class _Session(object):
             return True
 
         return (datetime.now() - self.last_access).total_seconds() <= \
-            self.__session_lifetime
+            self.session_lifetime
 
     def revalidate(self):
         """
@@ -144,27 +145,15 @@ class SessionManager(object):
         self.__logins_since_prune = 0
         self.__sessions = []
         self.__session_salt = hashlib.sha1(session_salt).hexdigest()
+        self.__configuration_file = configuration_file
 
-        LOG.debug(configuration_file)
-        scfg_dict = load_json_or_empty(configuration_file, {},
-                                       'server configuration')
-        if scfg_dict != {}:
-            check_file_owner_rw(configuration_file)
-        else:
-            # If the configuration dict is empty, it means a JSON couldn't
-            # have been parsed from it.
-            raise ValueError("Server configuration file was invalid, or "
-                             "empty.")
+        scfg_dict = self.__get_config_dict()
 
         # FIXME: Refactor this. This is irrelevant to authentication config,
         # so it should NOT be handled by session_manager. A separate config
         # handler for the server's stuff should be created, that can properly
         # instantiate SessionManager with the found configuration.
-        self.__max_run_count = scfg_dict['max_run_count'] \
-            if 'max_run_count' in scfg_dict else None
-
-        self.__report_dir_store = None
-
+        self.__max_run_count = scfg_dict.get('max_run_count', None)
         self.__store_config = scfg_dict.get('store', {})
         self.__auth_config = scfg_dict['authentication']
 
@@ -221,6 +210,71 @@ class SessionManager(object):
                                 "authentication backends are configured... "
                                 "Falling back to no authentication.")
                     self.__auth_config['enabled'] = False
+
+    def __get_config_dict(self):
+        """
+        Get server config information from the configuration file. Raise
+        ValueError if the configuration file is invalid.
+        """
+        LOG.debug(self.__configuration_file)
+        cfg_dict = load_json_or_empty(self.__configuration_file, {},
+                                      'server configuration')
+        if cfg_dict != {}:
+            check_file_owner_rw(self.__configuration_file)
+        else:
+            # If the configuration dict is empty, it means a JSON couldn't
+            # have been parsed from it.
+            raise ValueError("Server configuration file was invalid, or "
+                             "empty.")
+        return cfg_dict
+
+    def reload_config(self):
+        LOG.info("Reload server configuration file...")
+        try:
+            cfg_dict = self.__get_config_dict()
+
+            prev_max_run_count = self.__max_run_count
+            new_max_run_count = cfg_dict.get('max_run_count', None)
+            if prev_max_run_count != new_max_run_count:
+                self.__max_run_count = new_max_run_count
+                LOG.debug("Changed '%s' value from %s to %s", 'max_run_count',
+                          prev_max_run_count, new_max_run_count)
+
+            prev_store_config = json.dumps(self.__store_config, sort_keys=True,
+                                           indent=2)
+            new_store_config_val = cfg_dict.get('store', {})
+            new_store_config = json.dumps(new_store_config_val, sort_keys=True,
+                                          indent=2)
+            if prev_store_config != new_store_config:
+                self.__store_config = new_store_config_val
+                LOG.debug("Updating 'store' config from %s to %s",
+                          prev_store_config, new_store_config)
+
+            update_sessions = False
+            auth_fields_to_update = ['session_lifetime', 'refresh_time',
+                                     'logins_until_cleanup']
+            for field in auth_fields_to_update:
+                if field in self.__auth_config:
+                    prev_value = self.__auth_config[field]
+                    new_value = cfg_dict['authentication'].get(field, 0)
+                    if prev_value != new_value:
+                        self.__auth_config[field] = new_value
+                        LOG.debug("Changed '%s' value from %s to %s",
+                                  field, prev_value, new_value)
+                        update_sessions = True
+
+            if update_sessions:
+                # Update configuration options of the already existing
+                # sessions.
+                for session in self.__sessions:
+                    session.session_lifetime = \
+                        self.__auth_config['session_lifetime']
+                    session.refresh_time = self.__auth_config['refresh_time']
+
+            LOG.info("Done.")
+        except ValueError as ex:
+            LOG.error("Couldn't reload server configuration file")
+            LOG.error(str(ex))
 
     @property
     def is_enabled(self):

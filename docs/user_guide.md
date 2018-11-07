@@ -1343,6 +1343,8 @@ SSL will be automatically enabled.
 ~~~~~~~~~~~~~~~~~~~~~
 running server management:
   -l, --list            List the servers that has been started by you.
+  -r, --reload          Sends the CodeChecker server process a SIGHUP signal,
+                        causing it to reread it's configuration files.
   -s, --stop            Stops the server associated with the given view-port
                         and workspace.
   --stop-all            Stops all of your running CodeChecker server
@@ -1365,6 +1367,11 @@ CodeChecker server -w ~/my_codechecker_workspace -p 8002 --stop
 ~~~~~~~~~~~~~~~~~~~~~
 
 `--stop-all` will stop every running server that is printed by `--list`.
+
+`CodeChecker server --reload` command allows you to changing configuration-file
+options that do not require a complete restart to take effect. For more
+information which option can be reloaded see
+[server config](docs/server_config.md).
 
 ### <a name="manage-server-database-upgrade"></a> Manage server database upgrades
 

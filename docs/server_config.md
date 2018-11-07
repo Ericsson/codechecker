@@ -24,9 +24,15 @@ stored on the server for a product.
 If this field is not present in the config file or the value of this field is a
 negative value, run storage becomes unlimited.
 
+This option can be changed and reloaded without server restart by using the
+`--reload` option of CodeChecker server command.
+
 ## Storage
 The `store` section of the config file controls storage specific options for the
 server and command line.
+
+All sub-values of this option can be changed and reloaded without server restart
+by using the `--reload` option of CodeChecker server command.
 
 ### Directory of analysis statistics
 The `analysis_statistics_dir` option specifies a directory where analysis
@@ -52,5 +58,5 @@ size of uploadable compilation database file in *bytes*.
 *Default value*: 104857600 bytes = 100 MB
 
 ## Authentication
-For authentication configuration options see the
-[Authentication](authentication.md) documentation.
+For authentication configuration options and which options can be reloaded see
+the [Authentication](authentication.md) documentation.

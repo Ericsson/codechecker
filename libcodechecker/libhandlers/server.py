@@ -14,6 +14,7 @@ from __future__ import absolute_import
 import argparse
 import errno
 import os
+import signal
 import socket
 import sys
 
@@ -238,6 +239,15 @@ def add_arguments_to_parser(parser):
                                 required=False,
                                 help="List the servers that has been started "
                                      "by you.")
+
+    instance_mgmnt.add_argument('-r', '--reload',
+                                dest="reload",
+                                action='store_true',
+                                default=argparse.SUPPRESS,
+                                required=False,
+                                help="Sends the CodeChecker server process a "
+                                     "SIGHUP signal, causing it to reread "
+                                     "it's configuration files.")
 
     # TODO: '-s' was removed from 'quickcheck', it shouldn't be here either?
     instance_mgmnt.add_argument('-s', '--stop',
@@ -653,6 +663,31 @@ def __instance_management(args):
                 raise
 
 
+def __reload_config(args):
+    """
+    Sends the CodeChecker server process a SIGHUP signal, causing it to
+    reread it's configuration files.
+    """
+    for i in instance_manager.get_instances():
+        if i['hostname'] != socket.gethostname():
+            continue
+
+        # A RELOAD only reloads the server associated with the given workspace
+        # and view-port.
+        if 'reload' in args and \
+                not (i['port'] == args.view_port and
+                     os.path.abspath(i['workspace']) ==
+                     os.path.abspath(args.config_directory)):
+            continue
+
+        try:
+            os.kill(i['pid'], signal.SIGHUP)
+        except Exception:
+            LOG.error("Couldn't reload configuration file for process PID #%s",
+                      str(i['pid']))
+            raise
+
+
 def server_init_start(args):
     """
     Start or manage a CodeChecker report server.
@@ -660,6 +695,10 @@ def server_init_start(args):
 
     if 'list' in args or 'stop' in args or 'stop_all' in args:
         __instance_management(args)
+        sys.exit(0)
+
+    if 'reload' in args:
+        __reload_config(args)
         sys.exit(0)
 
     # Actual server starting from this point.
