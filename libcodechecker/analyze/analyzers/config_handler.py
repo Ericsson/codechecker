@@ -33,6 +33,7 @@ class AnalyzerConfigHandler(object):
         self.compiler_resource_dir = ''
         self.analyzer_extra_arguments = ''
         self.checker_config = ''
+        self.report_hash = None
 
         # The key is the checker name, the value is a tuple.
         # False if disabled (should be by default).

@@ -176,6 +176,22 @@ def add_arguments_to_parser(parser):
                              "reports and overwrites only those files that "
                              "were update by the current build command).")
 
+    parser.add_argument('--report-hash',
+                        dest="report_hash",
+                        default=argparse.SUPPRESS,
+                        required=False,
+                        choices=['context-free'],
+                        help="EXPERIMENTAL feature. "
+                             "Specify the hash calculation method for "
+                             "reports. If this option is not set, the default "
+                             "calculation method for Clang Static Analyzer "
+                             "will be context sensitive and for Clang Tidy it "
+                             "will be context insensitive. If this option is "
+                             "set to 'context-free' bugs will be identified "
+                             "with the CodeChecker generated context free "
+                             "hash for every analyzers. USE WISELY AND AT "
+                             "YOUR OWN RISK!")
+
     parser.add_argument('-n', '--name',
                         dest="name",
                         required=False,

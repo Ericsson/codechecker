@@ -23,7 +23,8 @@ from libcodechecker.logger import get_logger
 from libcodechecker.util import get_binary_in_path
 from libcodechecker.analyze.analyzer_env import\
     extend_analyzer_cmd_with_resource_dir
-from libcodechecker.analyze.analyzers import result_handler_base
+from libcodechecker.analyze.analyzers.result_handler_clangsa import \
+    ResultHandlerClangSA
 
 LOG = get_logger('analyzer')
 
@@ -278,9 +279,10 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         """
         See base class for docs.
         """
-        res_handler = result_handler_base.ResultHandler(buildaction,
-                                                        report_output)
+        res_handler = ResultHandlerClangSA(buildaction, report_output)
 
+        res_handler.report_hash = self.config_handler.report_hash
         res_handler.severity_map = severity_map
         res_handler.skiplist_handler = skiplist_handler
+
         return res_handler
