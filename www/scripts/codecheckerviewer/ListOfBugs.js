@@ -88,6 +88,7 @@ function (declare, dom, style, Deferred, ObjectStore, Store, QueryResults,
 
     query : function (query, options) {
       var deferred = new Deferred();
+      deferred.total = query.total;
 
       // It is possible that this method will be called before we set the
       // correct filter parameters for example when we first open a run.
@@ -251,10 +252,21 @@ function (declare, dom, style, Deferred, ObjectStore, Store, QueryResults,
     },
 
     notify : function () {
+      var runIds = this.bugFilterView.getRunIds();
+      var reportFilter = this.bugFilterView.getReportFilter();
+      var cmpData = this.bugFilterView.getCmpData();
+
+      var total = new Deferred();
+      CC_SERVICE.getRunResultCount(runIds, reportFilter, cmpData,
+        function (count) {
+          total.resolve(count);
+        });
+
       this.setQuery({
-        runIds : this.bugFilterView.getRunIds(),
-        reportFilter : this.bugFilterView.getReportFilter(),
-        cmpData : this.bugFilterView.getCmpData()
+        runIds : runIds,
+        reportFilter : reportFilter,
+        cmpData : cmpData,
+        total : total
       });
     },
 
