@@ -1764,7 +1764,7 @@ class ThriftRequestHandler(object):
                 .outerjoin(count_q,
                            count_q.c.run_history_id == RunHistory.id) \
                 .filter(RunHistory.version_tag.isnot(None)) \
-                .group_by(tag_q.c.run_history_id) \
+                .group_by(tag_q.c.run_history_id, RunHistory.time) \
                 .order_by(RunHistory.time.desc())
 
             for _, run_name, tag_id, version_time, tag, count in q:
