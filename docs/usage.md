@@ -27,7 +27,7 @@ Table of Contents
   * [Programmer checking new bugs in the code after local edit (and compare it to a central database)](#compare)
   * [Setting up user authentication](#authentication)
 * [Updating CodeChecker to new version](#upgrade)
-* [Unique Report Identifier](#unique-report-indentifier)
+* [Unique Report Identifier](#unique-report-identifier)
 * [Listing and Counting Reports](#listing-reports)
   * [How reports are counted?](#how-report-are-counted)
   * [Report Uniqueing](#report-uniqueing)
@@ -105,7 +105,7 @@ accessible when `CodeChecker analyze` or `check` is invoked.**
  The analysis can be run for only the changed files and the `report-directory` will be
  correctly updated with the new results.
  
- ```
+```
  cd tmux
  make clean
  CodeChecker check -b "make" -o reports
@@ -449,7 +449,7 @@ If you run into database migration warnings during the server start please
 check our [database schema upgrade guide's](db_schema_guide.md)
 `Database upgrade for running servers` section.
 
-# <a name="unique-report-indentifier"></a> Unique Report Identifier (RI)
+# <a name="unique-report-identifier"></a> Unique Report Identifier (RI)
 
 Each report has a unique (hash) identifier generated from checker name
 and the location of the finding: column number, textual content of the line,
