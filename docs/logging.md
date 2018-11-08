@@ -1,6 +1,6 @@
 # Log configuration
 
-## Command line
+# Command line
 
 Command line flag can be used to turn in CodeChecker debug mode. The different
 subcommands can be given a `-v` flag which needs a parameter. Possible values
@@ -8,23 +8,23 @@ are `debug`, `debug_analyzer` and `info`. Default is `info`.
 
 `debug_analyzer` switches analyzer related logs on:
 
-~~~~~~~~~~~~~~~~~~~~~
+```sh
 CodeChecker check <name> -b <build_command> --verbose debug_analyzer
-~~~~~~~~~~~~~~~~~~~~~
+```
 
 Turning on CodeChecker debug level logging is possible for the most
 subcommands:
 
-~~~~~~~~~~~~~~~~~~~~~
+```sh
 CodeChecker check <name> -b <build_command> --verbose debug
 CodeChecker server -v <view_port> --verbose debug
-~~~~~~~~~~~~~~~~~~~~~
+```
 
-## Change log configuration for the server
+# Change log configuration for the server
 
 The log level for a server can be changed in two ways.
 
-### 1. At the server start
+## 1. At the server start
 
 Debug log can be enabled like this at the server start.
 ```
@@ -33,7 +33,7 @@ Codechecker server ... --verbose debug
 
 The log levels can not be changed after the server was started.
 
-### 2. While the server is running
+## 2. While the server is running
 
 The log configuration can be changed for a running server if it was started
 in an environment where the `CC_LOG_CONFIG_PORT` environment variable is set.
@@ -44,7 +44,7 @@ CC_LOG_CONFIG_PORT='8888' Codechecker server ...
 The running server will accept log configurations on the configured `8888` port.
 This way the log configuration can be changed without a server restart.
 
-#### Sending new configuration to a running server
+### Sending new configuration to a running server
 
 Sending a new configuration to the server can be done easily with
 `scripts/send_log_config.py` like this:
@@ -55,7 +55,7 @@ Sending a new configuration to the server can be done easily with
 Sending a configuration can be done only on the same machine where the server was started. See further
 details [here](https://docs.python.org/2/library/logging.config.html#logging.config.listen).
 
-## Example debug log configuration with multiple handlers
+# Example debug log configuration with multiple handlers
 
 For more information see: [logging-cookbook](https://docs.python.org/2/howto/logging-cookbook.html) or
 [logging.config](https://docs.python.org/2/library/logging.config.html)

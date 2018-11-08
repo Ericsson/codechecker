@@ -10,23 +10,23 @@ the results stored on a server.
 Table of Contents
 =================
 * [Server-side configuration](#server-side-configuration)
-  * [<i>Dictionary</i> authentication](#dictionary-authentication)
-  * [External authentication methods](#external-auth-methods)
-    * [<i>PAM</i> authentication](#pam-authentication)
-    * [<i>LDAP</i> authentication](#ldap-authentication)
-      * [Configuration options](#configuration-options)
+    * [<i>Dictionary</i> authentication](#dictionary-authentication)
+    * [External authentication methods](#external-auth-methods)
+        * [<i>PAM</i> authentication](#pam-authentication)
+        * [<i>LDAP</i> authentication](#ldap-authentication)
+            * [Configuration options](#configuration-options)
 * [Client-side configuration](#client-side-configuration)
-  * [Web-browser client](#web-browser-client)
-  * [Command-line client](#command-line-client)
-    * [Preconfigured credentials](#preconfigured-credentials)
-    * [Automatic login](#automatic-login)
-    * [Currently active tokens](#currently-active-tokens)
+    * [Web-browser client](#web-browser-client)
+    * [Command-line client](#command-line-client)
+        * [Preconfigured credentials](#preconfigured-credentials)
+        * [Automatic login](#automatic-login)
+        * [Currently active tokens](#currently-active-tokens)
 * [Personal access token](#personal-access-token)
-  * [`new`](#new-personal-access-token)
-  * [`list`](#list-personal-access-token)
-  * [`del`](#remove-personal-access-token)
+    * [`new`](#new-personal-access-token)
+    * [`list`](#list-personal-access-token)
+    * [`del`](#remove-personal-access-token)
 
-## <a name="server-side-configuration"></a> Server-side configuration
+# Server-side configuration <a name="server-side-configuration"></a>
 
 The server's configuration is stored in the server's *workspace* folder, in
 `server_config.json`. This file is created, at the first start of the server,
@@ -87,7 +87,7 @@ Only `refresh_time`, `session_lifetime` and `logins_until_cleanup` options can
 be changed and reloaded without server restart by using the `--reload`
 option of `CodeChecker server` command.
 
-### <a name="dictionary-authentication"></a> <i>Dictionary</i> authentication
+## <i>Dictionary</i> authentication <a name="dictionary-authentication"></a>
 
 The `authentication.method_dictionary` contains a plaintext `username:password`
 credentials for authentication. If the user's login matches any of the
@@ -110,7 +110,7 @@ the user belongs to.
 }
 ~~~
 
-### <a name="external-auth-methods"></a> External authentication methods
+## External authentication methods <a name="external-auth-methods"></a>
 
 External authentication methods connect to a privilege manager to authenticate
 users against.
@@ -129,7 +129,7 @@ source ~/checker_env/bin/activate
 pip install -r requirements_py/auth/requirements.txt
 ~~~
 
-#### <a name="pam-authentication"></a> <i>PAM</i> authentication
+### <i>PAM</i> authentication <a name="pam-authentication"></a>
 
 To access the server via PAM authentication, the user must provide valid
 username and password which is accepted by PAM.
@@ -157,7 +157,7 @@ access the server.
 }
 ~~~
 
-#### <a name="ldap-authentication"></a> <i>LDAP</i> authentication
+### <i>LDAP</i> authentication <a name="ldap-authentication"></a>
 
 CodeChecker also supports *LDAP*-based authentication. The
 `authentication.method_ldap` section contains the configuration for LDAP
@@ -170,7 +170,7 @@ Servers are connected to and queries are executed in the order they appear in
 the configuration file. Because of this, it is not advised to list too many
 servers as it can elongate the authentication process.
 
-##### <a name="configuration-options"></a> Configuration options
+#### Configuration options <a name="configuration-options"></a>
 
  * `connection_url`
 
@@ -223,9 +223,9 @@ servers as it can elongate the authentication process.
    Group query pattern used LDAP query expression to find the group objects
    a user is a member of. It must contain a `$USERDN$` pattern. 
    `$USERDN$` will be automatically replaced by the queried user account DN.
-   
+
  * `groupNameAttr`
- 	
+
    The attribute of the group object which contains the name of the group. 
 
  * `groupScope`
@@ -270,16 +270,16 @@ servers as it can elongate the authentication process.
 
 ----
 
-## <a name="client-side-configuration"></a> Client-side configuration
+# Client-side configuration <a name="client-side-configuration"></a>
 
-### <a name="web-browser-client"></a> Web-browser client
+## Web-browser client <a name="web-browser-client"></a>
 
 Authentication in the web browser is handled via standard *HTTP Authenticate*
 headers, the browser will prompt the user to supply their credentials.
 
 For browser authentication to work, cookies must be enabled!
 
-### <a name="command-line-client"></a> Command-line client
+## Command-line client <a name="command-line-client"></a>
 
 The `CodeChecker cmd` client needs to be authenticated for a server before any
 data communication could take place.
@@ -292,7 +292,7 @@ by using the package's `config/session_client.json` as an example.
 > access this file. Executing `chmod 0600 ~/.codechecker_passwords.json` will
 > limit access to your user only.
 
-~~~~~~~~~~~~~~~~~~~~~
+```
 usage: CodeChecker cmd login [-h] [-u USERNAME] [-d] [--host HOST] [-p PORT]
                              [--verbose {info,debug,debug_analyzer}]
 
@@ -313,7 +313,7 @@ common arguments:
   -p PORT, --port PORT  The port the server is running on. (default: 8001)
   --verbose {info,debug,debug_analyzer}
                         Set verbosity level.
-~~~~~~~~~~~~~~~~~~~~~
+```
 
 The user can log in onto the server by issuing the command `CodeChecker cmd
 login -h host -p port -u username -pw passphrase`. After receiving an
@@ -323,7 +323,7 @@ given; otherwise, *Invalid access* is shown instead of real data.
 Privileged session expire after a set amount of time. To log out manually,
 issue the command `CodeChecker cmd login -h host -p port --logout`.
 
-#### <a name="preconfigured-credentials"></a> Preconfigured credentials
+### Preconfigured credentials <a name="preconfigured-credentials"></a>
 
 To alleviate the need for supplying authentication in the command-line every
 time a server is connected to, users can pre-configure their credentials to be
@@ -361,7 +361,7 @@ Is it possible to generate a token from command line which can be used to
 authenticate in the name of the given user. This way no need to store passwords
 in text files. For more information [see](#personal-access-token).
 
-#### <a name="automatic-login"></a> Automatic login
+### Automatic login <a name="automatic-login"></a>
 
 If authentication is required by the server and the user hasn't logged in but
 there are saved credentials for the server, `CodeChecker cmd` will
@@ -369,12 +369,12 @@ automatically try to log in.
 
 This behaviour can be disabled by setting `client_autologin` to `false`.
 
-#### <a name="currently-active-tokens"></a> Currently active tokens
+### Currently active tokens <a name="currently-active-tokens"></a>
 
 The user's currently active sessions' token are stored in the
 `~/.codechecker.session.json`.
 
-## <a name="personal-access-token"></a> Personal access token
+# Personal access token <a name="personal-access-token"></a>
 Command line clients can authenticate itself using the username/password stored
 in the [`.codechecker.passwords.json`](#preconfigured-credentials). It is
 obviously not a good idea to store passwords in text files. Instead of this the
@@ -394,8 +394,8 @@ Personal tokens can be written instead of the user's password in the
 }
 ```
 
-### <a name="new-personal-access-token"></a> New personal access token (`new`)
-~~~~~~~~~~~~~~~~~~~~~
+## New personal access token <a name="new-personal-access-token"></a>
+```
 usage: CodeChecker cmd token new [-h] [--description DESCRIPTION]
                                  [--url SERVER_URL]
                                  [--verbose {info,debug,debug_analyzer}]
@@ -407,11 +407,11 @@ optional arguments:
   --description DESCRIPTION
                         A custom textual description to be shown alongside the
                         token.
-~~~~~~~~~~~~~~~~~~~~~
+```
 
-### <a name="list-personal-access-token"></a> List personal access tokens (`list`)
+## List personal access tokens <a name="list-personal-access-token"></a>
 
-~~~~~~~~~~~~~~~~~~~~~
+```
 usage: CodeChecker cmd token list [-h] [--url SERVER_URL]
                                   [-o {plaintext,html,rows,table,csv,json}]
                                   [-e EXPORT_DIR] [-c]
@@ -421,10 +421,10 @@ List the available personal access tokens.
 
 optional arguments:
   -h, --help            show this help message and exit
-~~~~~~~~~~~~~~~~~~~~~
+```
 
-### <a name="remove-personal-access-token"></a> Remove personal access token (`del`)
-~~~~~~~~~~~~~~~~~~~~~
+## Remove personal access token <a name="remove-personal-access-token"></a>
+```
 usage: CodeChecker cmd token del [-h] [--url SERVER_URL]
                                  [--verbose {info,debug,debug_analyzer}]
                                  TOKEN
@@ -433,4 +433,4 @@ Removes the specified access token.
 
 positional arguments:
   TOKEN                 Personal access token which will be deleted.
-~~~~~~~~~~~~~~~~~~~~~
+```

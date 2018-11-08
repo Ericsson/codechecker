@@ -142,7 +142,7 @@ release will show you if database upgrade is needed for the new release.
 NOTE: Use the same arguments which were used to start the server to check
 the status. It is required to find the used configuration database.
 
- ```sh
+```sh
 $ CodeChecker server --db-status all
 [15:01] - Checking configuration database ...
 [15:01] - Database is OK.

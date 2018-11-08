@@ -18,13 +18,13 @@ Table of Contents
 * [Jenkins requirements](#jenkins-requirements)
 * [Gerrit Trigger plugin setup](#gerrit-plugin-setup)
 * [Configuring the Jenkins job](#configuring-the-jenkins-job)
-  * [Source Code Managament](#jenkins-source-code-management)
-  * [Build Triggers](#jenkins-build-triggers)
-  * [Gerrit Trigger](#jenkins-gerrit-trigger)
-  * [Build Environment](#jenkins-build-environment)
-  * [Build](#jenkins-build)
+    * [Source Code Managament](#jenkins-source-code-management)
+    * [Build Triggers](#jenkins-build-triggers)
+    * [Gerrit Trigger](#jenkins-gerrit-trigger)
+    * [Build Environment](#jenkins-build-environment)
+    * [Build](#jenkins-build)
 
-## <a name="gerrit-requirements"></a> Gerrit requirements
+# Gerrit requirements <a name="gerrit-requirements"></a>
 On Gerrit, a user with the following privileges must be present:
 * Read
 * Label Code-Review
@@ -33,7 +33,7 @@ On Gerrit, a user with the following privileges must be present:
 If the user is about to clone from Gerrit through SSH, its SSH Public Key
 (generated on the CI machine) has to be added to Gerrit.
 
-## <a name="jenkins-requirements"></a> Jenkins requirements
+# Jenkins requirements <a name="jenkins-requirements"></a>
 Required plugins
 * Git plugin
 * Gerrit Trigger plugin
@@ -47,7 +47,7 @@ Requirements of the Jenkins machine
 * Python >= 2.7
 * Access to Gerrit (i.e. proper firewall settings)
 
-## <a name="gerrit-plugin-setup"></a> Gerrit Trigger plugin setup
+# Gerrit Trigger plugin setup <a name="gerrit-plugin-setup"></a>
 If Gerrit Trigger plugin is installed correctly, its settings
 should be available under Manage Jenkins.
 At Gerrit Connection Setting a working connection must be defined
@@ -66,12 +66,13 @@ In the REST API section the user performing the Gerrit review must be added,
 with `Enable Code-Review` and `Enable Verified` set to enabled.
 
 Here is the config that worked best for us:
-![Reporting values](/docs/images/gerrit_jenkins/gerrit_plugin_values.png)
-![REST API](/docs/images/gerrit_jenkins/gerrit_plugin_restapi.png)
+![Reporting values](images/gerrit_jenkins/gerrit_plugin_values.png)
+![REST API](images/gerrit_jenkins/gerrit_plugin_restapi.png)
 
-## <a name="configuring-the-jenkins-job"></a> Configuring the Jenkins job
+# Configuring the Jenkins job <a name="configuring-the-jenkins-job"></a>
 The job is configured as a freestyle project.
-### <a name="jenkins-source-code-management"></a> Source Code Management
+
+## Source Code Management <a name="jenkins-source-code-management"></a>
 In the job's configuration menu set `Source Code Management` to `Git`.  The
 `Repository URL` is the link of the repo that has to be checked. Add new or set
 from the list the credentials of the user who can clone and review the changes.
@@ -85,9 +86,9 @@ from the `Choosing strategy` list.
 If needed, the subdirectory used to check out the repo could be also defined
 as an `Additional Behaviour`.
 
-![Source Code Management configuration](/docs/images/gerrit_jenkins/source_code_management.png)
+![Source Code Management configuration](images/gerrit_jenkins/source_code_management.png)
 
-### <a name="jenkins-gerrit-trigger"></a> Gerrit Trigger
+## Gerrit Trigger <a name="jenkins-gerrit-trigger"></a>
 `Build Triggers` should be set to `Gerrit event`. This opens the Gerrit Trigger
 configuration form.
 In the `Choose a Server` field, the server that has been already configured in 
@@ -108,21 +109,21 @@ Type should be Path and Pattern should be the location of your project
 
 `Branches` should be set to Type - Path and Pattern - `**`.
 
-![Gerrit Trigger configuration](/docs/images/gerrit_jenkins/build_trigger.png)
+![Gerrit Trigger configuration](images/gerrit_jenkins/build_trigger.png)
 
-### <a name="jenkins-build-environment"></a> Build Environment
+## Build Environment <a name="jenkins-build-environment"></a>
 It is advised to delete the workspace before starting a new build.
 It is also possible to delete only part of it, by applying patterns
 for the files to be deleted. This is useful if the workspace contains 
 dependencies which are not cloned with the project (e.g. CodeChecker binary).
 
-### <a name="jenkins-build"></a> Build
+## Build <a name="jenkins-build"></a>
 All of the followings are added as separate build steps. Note that the two HTTP
 Requests and the Environment Injection could be replaced by `curl` in the
 Execute Shell part. We decided to use these plugins in order to prevent
 storing the reporting Gerrit user's password in the script.
 
-#### HTTP Request (get the changes)
+### HTTP Request (get the changes)
 To query the list of the changed files from Gerrit, add a `HTTP Request` build
 step.
 The `URL` should be the Gerrit [revision files endpoint](https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#list-files),
@@ -135,9 +136,9 @@ and content-type.
 In the `Response` section, set `Output response` to the file
 that is parsed in the following build step.
 
-![HTTP Request configuration (get the changes)](/docs/images/gerrit_jenkins/http_request_changed_files.png)
+![HTTP Request configuration (get the changes)](images/gerrit_jenkins/http_request_changed_files.png)
 
-#### Execute shell
+### Execute shell
 In this shell, the project is logged and analyzed by CodeChecker.
 A CodeChecker skipfile is generated from the file containing the changes 
 (see previous section). This is done by the `create_skipfile.py` script. 
@@ -209,13 +210,13 @@ CodeChecker parse -i skipfile cc_reports |
 
 ~~~~~~
 
-#### Inject environment variable
+### Inject environment variable
 To load the previously crafted review message as an environment variable,
 add an Inject environment variables build step. The file path is the 
 path of the file written at the end of the execute shell step, 
 while the content field can remain empty.
 
-#### HTTP Request (send the review)
+### HTTP Request (send the review)
 To send the crafted Gerrit review, add a `HTTP Request` build step.
 The `URL` should be the Gerrit
 [revision set review endpoint](https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#set-review),
@@ -229,4 +230,4 @@ and content-type.
 The request's `body` should be set to the environment variable that was
 injected before, which contains the review message.
 
-![HTTP Request configuration (send the review)](/docs/images/gerrit_jenkins/http_request_post_review.png)
+![HTTP Request configuration (send the review)](images/gerrit_jenkins/http_request_post_review.png)
