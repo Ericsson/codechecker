@@ -1,39 +1,35 @@
-Thrift API
-==========
+# Thrift API
 These APIs should be used by the clients connecting to the server to store and
 get results.
 
 Any new client should only interact with the database through these APIs.
 
-Table of Contents
-=================
+# Table of Contents
 * [Available APIs](#available-apis)
-  * [Report server](#report-server-api)
-  * [Authentication system](#authentication-system-api)
-  * [Product management system](#product-management-system-api)
+    * [Report server](#report-server-api)
+    * [Authentication system](#authentication-system-api)
+    * [Product management system](#product-management-system-api)
 * [API versioning](#api-versioning)
-  * [How to add new API versions](#how-to-add-new-api-versions)
-    * [Minor API improvements](#minor-api-improvements)
-    * [Major API changes](#major-api-changes)
-  * [How to delete API versions](#how-to-delete-api-versions)
+    * [How to add new API versions](#how-to-add-new-api-versions)
+        * [Minor API improvements](#minor-api-improvements)
+        * [Major API changes](#major-api-changes)
+    * [How to delete API versions](#how-to-delete-api-versions)
 
-<a name="available-apis"></a> Available APIs
---------------
+# Available APIs <a name="available-apis"></a>
 
-### <a name="report-server-api"></a> Report server API
+## Report server API <a name="report-server-api"></a>
 The report server API should be used by any client to view or store analysis
 results.
 
-### <a name="authentication-system-api"></a> Authentication system API
+## Authentication system API <a name="authentication-system-api"></a>
 The authentication layer is used for supporting privileged-access only access
 and permission management.
 
-### <a name="product-management-system-api"></a> Product management system API
+## Product management system API <a name="product-management-system-api"></a>
 The product management layer is responsible for handling requests about the
 different products and their configuration.
 
-<a name="api-versioning"></a> API versioning
---------------
+# API versioning <a name="api-versioning"></a>
 
 CodeChecker supports some backward compatibility between API versions.
 
@@ -49,9 +45,9 @@ For example:
 Executing `make thrift` in the main folder of CodeChecker will automatically
 build each API version to the `build/` dir.
 
-### <a name="how-to-add-new-api-versions"></a> How to add new API versions
+## How to add new API versions <a name="how-to-add-new-api-versions"></a>
 
-#### <a name="minor-api-improvements"></a> Minor API improvements
+### Minor API improvements <a name="minor-api-improvements"></a>
 
 For minor changes, these changes should go into the **existing** API files,
 with appropriate Thrift-based versioning for `struct`s where necessary.
@@ -67,7 +63,7 @@ already existing functions, only extend the API:
  2. Change the `www/scripts/version.js` file to represent the newest version,
  e.g. `6.1`.
 
-#### <a name="major-api-changes"></a> Major API changes
+### Major API changes <a name="major-api-changes"></a>
 
 For major changes, a **new** API must be defined. Start by creating a full
 copy of the previous version's API to a new folder, e.g. `v7`.
@@ -97,7 +93,7 @@ copy of the previous version's API to a new folder, e.g. `v7`.
  are routed to be handled by these new handlers. (Keep the formatting of
  imported names akin to those already in the file.)
 
-### <a name="how-to-delete-api-versions"></a> How to delete API versions
+## How to delete API versions <a name="how-to-delete-api-versions"></a>
 
 Only major API versions can be deleted.
 
