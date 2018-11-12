@@ -20,8 +20,8 @@ from libcodechecker import logger
 from libcodechecker import package_context
 from libcodechecker import host_check
 from libcodechecker.analyze import analyzer
-from libcodechecker.analyze import log_parser
 from libcodechecker.analyze.analyzers import analyzer_types
+from libcodechecker.log import log_parser
 from libcodechecker.util import RawDescriptionDefaultHelpFormatter, \
     load_json_or_empty
 from libcodechecker.analyze import skiplist_handler
@@ -124,30 +124,6 @@ def add_arguments_to_parser(parser):
                         required=True,
                         default=argparse.SUPPRESS,
                         help="Store the analysis output in the given folder.")
-
-    parser.add_argument('--compiler-includes-file',
-                        dest="compiler_includes_file",
-                        required=False,
-                        default=None,
-                        help="DEPRECATED. Read the compiler includes from the "
-                             "specified file rather than invoke the compiler "
-                             "executable.")
-
-    parser.add_argument('--compiler-target-file',
-                        dest="compiler_target_file",
-                        required=False,
-                        default=None,
-                        help="DEPRECATED. Read the compiler target from the "
-                             "specified file rather than invoke the compiler "
-                             "executable.")
-
-    parser.add_argument('--compiler-info-file',
-                        dest="compiler_info_file",
-                        required=False,
-                        default=None,
-                        help="Read the compiler includes and target from the "
-                             "specified file rather than invoke the compiler "
-                             "executable.")
 
     parser.add_argument('-t', '--type', '--output-format',
                         dest="output_format",
@@ -465,29 +441,6 @@ https://clang.llvm.org/docs/DiagnosticsReference.html.""")
     parser.set_defaults(func=main)
 
 
-class ParseLogOptions:
-    """ Options for log parsing. """
-
-    def __init__(self, args=None):
-        if args is None:
-            self.output_path = None
-            self.compiler_includes_file = None
-            self.compiler_target_file = None
-            self.compiler_info_file = None
-        else:
-            self.output_path = getattr(args, 'output_path', None)
-            self.compiler_includes_file =\
-                getattr(args, 'compiler_includes_file', None)
-            self.compiler_target_file =\
-                getattr(args, 'compiler_target_file', None)
-            self.compiler_info_file =\
-                getattr(args, 'compiler_info_file', None)
-
-            if self.compiler_info_file:
-                self.compiler_includes_file = args.compiler_info_file
-                self.compiler_target_file = args.compiler_info_file
-
-
 def __get_skip_handler(args):
     """
     Initialize and return a skiplist handler if
@@ -500,8 +453,6 @@ def __get_skip_handler(args):
                 return skiplist_handler.SkipListHandler(skip_file.read())
     except AttributeError:
         LOG.debug_analyzer('Skip file was not set in the command line')
-
-    return None
 
 
 def __update_skip_file(args):
@@ -570,9 +521,10 @@ def main(args):
                       "exist!")
             continue
 
-        parseLogOptions = ParseLogOptions(args)
-        actions += log_parser.parse_log(log_file, parseLogOptions,
-                                        skip_handler)
+        actions += log_parser.parse_log(
+            load_json_or_empty(log_file),
+            skip_handler,
+            os.path.join(args.output_path, 'compiler_info.json'))
     if len(actions) == 0:
         LOG.info("None of the specified build log files contained "
                  "valid compilation commands. No analysis needed...")

@@ -22,9 +22,8 @@ except ImportError:
     from io import BytesIO as StringIO
 
 from libcodechecker.log import build_manager
-from libcodechecker.analyze import log_parser
+from libcodechecker.log import log_parser
 from libcodechecker.analyze.analyzers import analyzer_base
-from libcodechecker.libhandlers.analyze import ParseLogOptions
 
 
 class BuildCmdTestNose(unittest.TestCase):
@@ -76,15 +75,6 @@ class BuildCmdTestNose(unittest.TestCase):
 
         return [compile_cmd]
 
-    def __get_comp_actions(self, compile_cmd):
-        """
-        Generate a compilation command json file and parse it
-        to return the compilation actions.
-        """
-        comp_cmd_json = self.__get_cmp_json(compile_cmd)
-        return log_parser.parse_compile_commands_json(comp_cmd_json,
-                                                      ParseLogOptions())
-
     def test_buildmgr(self):
         """
         Check some simple command to be executed by
@@ -103,7 +93,7 @@ class BuildCmdTestNose(unittest.TestCase):
         compile_cmd = self.compiler + \
             ' -DDEBUG \'-DMYPATH="/this/some/path/"\''
 
-        comp_actions = self.__get_comp_actions(compile_cmd)
+        comp_actions = log_parser.parse_log(self.__get_cmp_json(compile_cmd))
 
         for comp_action in comp_actions:
             for source in comp_action.sources:
@@ -129,7 +119,7 @@ class BuildCmdTestNose(unittest.TestCase):
         If the escaping fails the source file will not compile.
         """
         compile_cmd = self.compiler + ''' '-DMYPATH=\"/some/other/path\"' '''
-        comp_actions = self.__get_comp_actions(compile_cmd)
+        comp_actions = log_parser.parse_log(self.__get_cmp_json(compile_cmd))
 
         for comp_action in comp_actions:
             for source in comp_action.sources:

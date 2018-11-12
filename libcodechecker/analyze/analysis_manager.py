@@ -732,13 +732,13 @@ def check(check_data):
         progress_checked_num.value += 1
 
         return return_codes, skipped, reanalyzed, action.analyzer_type, \
-            result_file, list(action.sources)
+            result_file, action.sources
 
     except Exception as e:
         LOG.debug_analyzer(str(e))
         traceback.print_exc(file=sys.stdout)
         return 1, skipped, reanalyzed, action.analyzer_type, None, \
-            list(action.sources)
+            action.sources
 
 
 def start_workers(actions_map, actions, context, analyzer_config_map,

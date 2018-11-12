@@ -56,10 +56,10 @@ def create_actions_map(actions, manager):
     result = manager.dict()
 
     for act in actions:
-        if act.source_count > 1:
+        if len(act.sources) > 1:
             LOG.debug("Multiple sources for one build action: " +
                       str(act.sources))
-        source = os.path.join(act.directory, next(act.sources))
+        source = os.path.join(act.directory, act.sources[0])
         key = source, act.target
         if key in result:
             LOG.debug("Multiple entires in compile database "

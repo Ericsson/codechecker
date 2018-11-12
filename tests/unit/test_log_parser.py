@@ -13,9 +13,8 @@ import os
 import unittest
 from StringIO import StringIO
 
-from libcodechecker.analyze import log_parser
-from libcodechecker.log import option_parser
-from libcodechecker.libhandlers.analyze import ParseLogOptions
+from libcodechecker.log import log_parser
+from libcodechecker.util import load_json_or_empty
 
 
 class LogParserTest(unittest.TestCase):
@@ -52,11 +51,10 @@ class LogParserTest(unittest.TestCase):
         # option_parser, so here we aim for a non-failing stalemate of the
         # define being considered a file and ignored, for now.
 
-        build_action = log_parser.parse_log(logfile, ParseLogOptions())[0]
-        results = option_parser.parse_options(build_action.original_command)
+        build_action = log_parser.parse_log(load_json_or_empty(logfile))[0]
 
-        self.assertEqual(' '.join(results.files),
-                         r'"-DVARIABLE="some value"" /tmp/a.cpp')
+        self.assertEqual(' '.join(build_action.sources),
+                         r'/tmp/-DVARIABLE="some /tmp/value /tmp/a.cpp')
         self.assertEqual(len(build_action.analyzer_options), 0)
 
     def test_new_ldlogger(self):
@@ -72,20 +70,20 @@ class LogParserTest(unittest.TestCase):
         # Logfile contains -DVARIABLE="some value"
         # and --target=x86_64-linux-gnu.
 
-        build_action = log_parser.parse_log(logfile, ParseLogOptions())[0]
+        build_action = log_parser.parse_log(load_json_or_empty(logfile))[0]
 
-        self.assertEqual(list(build_action.sources)[0], r'/tmp/a.cpp')
+        self.assertEqual(build_action.sources[0], r'/tmp/a.cpp')
         self.assertEqual(len(build_action.analyzer_options), 1)
         self.assertTrue(len(build_action.target) > 0)
         self.assertEqual(build_action.analyzer_options[0],
-                         r'-DVARIABLE="\"some value"\"')
+                         r'-DVARIABLE="some value"')
 
         # Test source file with spaces.
         logfile = os.path.join(self.__test_files, "ldlogger-new-space.json")
 
-        build_action = log_parser.parse_log(logfile, ParseLogOptions())[0]
+        build_action = log_parser.parse_log(load_json_or_empty(logfile))[0]
 
-        self.assertEqual(list(build_action.sources)[0], r'/tmp/a b.cpp')
+        self.assertEqual(build_action.sources[0], r'/tmp/a b.cpp')
         self.assertEqual(build_action.lang, 'c++')
 
     def test_old_intercept_build(self):
@@ -99,20 +97,20 @@ class LogParserTest(unittest.TestCase):
         #
         # The define is passed to the analyzer properly.
 
-        build_action = log_parser.parse_log(logfile, ParseLogOptions())[0]
+        build_action = log_parser.parse_log(load_json_or_empty(logfile))[0]
 
-        self.assertEqual(list(build_action.sources)[0], r'/tmp/a.cpp')
+        self.assertEqual(build_action.sources[0], r'/tmp/a.cpp')
         self.assertEqual(len(build_action.analyzer_options), 1)
         self.assertTrue(len(build_action.target) > 0)
         self.assertEqual(build_action.analyzer_options[0],
-                         r'-DVARIABLE="\"some value"\"')
+                         r'-DVARIABLE="some value"')
 
         # Test source file with spaces.
         logfile = os.path.join(self.__test_files, "intercept-old-space.json")
 
-        build_action = log_parser.parse_log(logfile, ParseLogOptions())[0]
+        build_action = log_parser.parse_log(load_json_or_empty(logfile))[0]
 
-        self.assertEqual(list(build_action.sources)[0], r'/tmp/a b.cpp')
+        self.assertEqual(build_action.sources[0], r'/tmp/a b.cpp')
         self.assertEqual(build_action.lang, 'c++')
 
     def test_new_intercept_build(self):
@@ -130,20 +128,20 @@ class LogParserTest(unittest.TestCase):
         #
         # The define is passed to the analyzer properly.
 
-        build_action = log_parser.parse_log(logfile, ParseLogOptions())[0]
+        build_action = log_parser.parse_log(load_json_or_empty(logfile))[0]
 
-        self.assertEqual(list(build_action.sources)[0], r'/tmp/a.cpp')
+        self.assertEqual(build_action.sources[0], r'/tmp/a.cpp')
         self.assertEqual(len(build_action.analyzer_options), 1)
         self.assertTrue(len(build_action.target) > 0)
         self.assertEqual(build_action.analyzer_options[0],
-                         r'-DVARIABLE="\"some value"\"')
+                         r'-DVARIABLE="some value"')
 
         # Test source file with spaces.
         logfile = os.path.join(self.__test_files, "intercept-new-space.json")
 
-        build_action = log_parser.parse_log(logfile, ParseLogOptions())[0]
+        build_action = log_parser.parse_log(load_json_or_empty(logfile))[0]
 
-        self.assertEqual(list(build_action.sources)[0], r'/tmp/a b.cpp')
+        self.assertEqual(build_action.sources[0], r'/tmp/a b.cpp')
         self.assertEqual(build_action.lang, 'c++')
 
     def test_omit_preproc(self):
@@ -170,9 +168,7 @@ class LogParserTest(unittest.TestCase):
              "command": "g++ /tmp/a.cpp -M /tmp/a.cpp",
              "file": "/tmp/a.cpp"}]
 
-        build_actions = \
-            log_parser.parse_compile_commands_json(preprocessor_actions,
-                                                   ParseLogOptions())
+        build_actions = log_parser.parse_log(preprocessor_actions)
         self.assertEqual(len(build_actions), 1)
         self.assertTrue('-M' not in build_actions[0].original_command)
         self.assertTrue('-E' not in build_actions[0].original_command)
@@ -187,9 +183,7 @@ class LogParserTest(unittest.TestCase):
              "command": "g++ /tmp/a.cpp -MD /tmp/a.cpp",
              "file": "/tmp/a.cpp"}]
 
-        build_actions = \
-            log_parser.parse_compile_commands_json(preprocessor_actions,
-                                                   ParseLogOptions())
+        build_actions = log_parser.parse_log(preprocessor_actions)
         self.assertEqual(len(build_actions), 1)
         self.assertTrue('-MD' in build_actions[0].original_command)
 
@@ -204,9 +198,7 @@ class LogParserTest(unittest.TestCase):
              "command": "g++ /tmp/a.cpp -E -MD /tmp/a.cpp",
              "file": "/tmp/a.cpp"}]
 
-        build_actions = \
-            log_parser.parse_compile_commands_json(preprocessor_actions,
-                                                   ParseLogOptions())
+        build_actions = log_parser.parse_log(preprocessor_actions)
         self.assertEqual(len(build_actions), 0)
 
     def test_include_rel_to_abs(self):
@@ -215,9 +207,10 @@ class LogParserTest(unittest.TestCase):
         """
         logfile = os.path.join(self.__test_files, "include.json")
 
-        build_action = log_parser.parse_log(logfile, ParseLogOptions())[0]
+        build_action = log_parser.parse_log(load_json_or_empty(logfile))[0]
 
-        self.assertEqual(len(build_action.analyzer_options), 3)
-        self.assertEqual(build_action.analyzer_options[0], '-I/include')
-        self.assertEqual(build_action.analyzer_options[1], '-I/include')
-        self.assertEqual(build_action.analyzer_options[2], '-I/tmp')
+        self.assertEqual(len(build_action.analyzer_options), 4)
+        self.assertEqual(build_action.analyzer_options[0], '-I')
+        self.assertEqual(build_action.analyzer_options[1], '/include')
+        self.assertEqual(build_action.analyzer_options[2], '-I/include')
+        self.assertEqual(build_action.analyzer_options[3], '-I/tmp')

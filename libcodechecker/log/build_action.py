@@ -28,19 +28,18 @@ class BuildAction(object):
         self.output = ''
         self.lang = None
         self.target = ''
-        self.source_count = 0
-        self._sources = []
+        self.sources = []
 
     def __str__(self):
         # For debugging.
         return ('Id: {0} ,\nOriginal command: {1},\n'
                 'Analyzer type: {2},\n Analyzer options: {3},\n'
                 'Directory: {4},\nOutput: {5},\nLang: {6},\nTarget: {7},\n'
-                'Source count {8},\nSources: {9}'). \
+                'Sources: {8}'). \
             format(self._id, self._original_command,
                    self.analyzer_type, self.analyzer_options,
                    self.directory, self.output, self.lang, self.target,
-                   self.source_count, self._sources)
+                   self.sources)
 
     @property
     def id(self):
@@ -59,16 +58,6 @@ class BuildAction(object):
     @original_command.setter
     def original_command(self, value):
         self._original_command = value
-
-    @property
-    def sources(self):
-        for source in self._sources:
-            yield source
-
-    @sources.setter
-    def sources(self, value):
-        self._sources.append(value)
-        self.source_count += 1
 
     def __eq__(self, other):
         return other._original_command == self._original_command
