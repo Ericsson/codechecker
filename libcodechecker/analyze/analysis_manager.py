@@ -554,9 +554,6 @@ def check(check_data):
         analyzer_environment, ctu_reanalyze_on_failure, \
         output_dirs, statistics_data = check_data
 
-    skipped = False
-    reanalyzed = False
-
     failed_dir = output_dirs["failed"]
     success_dir = output_dirs["success"]
 
@@ -564,21 +561,20 @@ def check(check_data):
         # If one analysis fails the check fails.
         return_codes = 0
         skipped = False
+        reanalyzed = False
 
         result_file = ''
-        for source in action.sources:
 
-            # If there is no skiplist handler there was no skip list file
-            # in the command line.
-            # C++ file skipping is handled here.
-            source_file_name = os.path.basename(source)
+        # If there is no skiplist handler there was no skip list file
+        # in the command line.
+        # C++ file skipping is handled here.
+        source_file_name = os.path.basename(action.source)
 
-            if skip_handler and skip_handler.should_skip(source):
-                LOG.debug_analyzer(source_file_name + ' is skipped')
-                skipped = True
-                continue
-
-            source = util.escape_source_path(source)
+        if skip_handler and skip_handler.should_skip(action.source):
+            LOG.debug_analyzer(source_file_name + ' is skipped')
+            skipped = True
+        else:
+            source = util.escape_source_path(action.source)
 
             source_analyzer, analyzer_cmd, rh, reanalyzed = \
                 prepare_check(source, action, analyzer_config_map,
@@ -732,13 +728,13 @@ def check(check_data):
         progress_checked_num.value += 1
 
         return return_codes, skipped, reanalyzed, action.analyzer_type, \
-            result_file, action.sources
+            result_file, action.source
 
     except Exception as e:
         LOG.debug_analyzer(str(e))
         traceback.print_exc(file=sys.stdout)
         return 1, skipped, reanalyzed, action.analyzer_type, None, \
-            action.sources
+            action.source
 
 
 def start_workers(actions_map, actions, context, analyzer_config_map,

@@ -25,19 +25,15 @@ class OptionParserTest(unittest.TestCase):
         """
         Test the build command of a simple file.
         """
-        source_files = ["main.cpp"]
-        build_cmd = "g++ -o main -fno-merge-const-bfstores " +\
-                    ' '.join(source_files)
         action = {
             'file': 'main.cpp',
-            'command': "g++ -o main -fno-merge-const-bfstores " +
-                       ' '.join(source_files),
+            'command': "g++ -o main -fno-merge-const-bfstores main.cpp",
             'directory': ''}
 
         res = log_parser.parse_options(action)
         print(res)
         self.assertFalse("-fno-merge-const-bfstores" in res.analyzer_options)
-        self.assertTrue(set(source_files) == set(res.sources))
+        self.assertTrue('main.cpp' == res.source)
         self.assertTrue(BuildAction.COMPILE, res.action_type)
         self.assertEquals(0, len(res.analyzer_options))
 
@@ -45,47 +41,43 @@ class OptionParserTest(unittest.TestCase):
         """
         Test the build command of multiple files.
         """
-        source_files = ["lib.cpp", "main.cpp"]
         action = {
             'file': 'main.cpp',
-            'command': "g++ -o main " + ' '.join(source_files),
+            'command': "g++ -o main main.cpp lib.cpp",
             'directory': ''}
 
         res = log_parser.parse_options(action)
         print(res)
-        self.assertTrue(set(source_files) == set(res.sources))
+        self.assertTrue('main.cpp' == res.source)
         self.assertEquals(BuildAction.COMPILE, res.action_type)
 
     def test_compile_onefile(self):
         """
         Test the compiler command of one file.
         """
-        source_files = ["main.cpp"]
         action = {
             'file': 'main.cpp',
-            'command': "g++ -c " + ' '.join(source_files),
+            'command': "g++ -c main.cpp",
             'directory': ''}
 
         res = log_parser.parse_options(action)
         print(res)
-        self.assertTrue(set(source_files) == set(res.sources))
+        self.assertTrue('main.cpp' == res.source)
         self.assertEquals(BuildAction.COMPILE, res.action_type)
 
     def test_preprocess_onefile(self):
         """
         Test the preprocess command of one file.
         """
-        source_files = ["main.c"]
-        build_cmd = "gcc -E " + ' '.join(source_files)
         action = {
             'file': 'main.c',
-            'command': "gcc -E " + ' '.join(source_files),
+            'command': "gcc -E main.c",
             'directory': ''}
 
         res = log_parser.parse_options(action)
         print(res)
 
-        self.assertTrue(set(source_files) == set(res.sources))
+        self.assertTrue('main.c' == res.source)
         self.assertEqual(BuildAction.PREPROCESS, res.action_type)
 
     def test_compile_lang(self):
@@ -93,17 +85,16 @@ class OptionParserTest(unittest.TestCase):
         Test if the compilation language is
         detected correctly from the command line.
         """
-        source_files = ["main.c"]
         lang = 'c'
         action = {
             'file': 'main.c',
-            'command': "gcc -c -x " + lang + " " + ' '.join(source_files),
+            'command': "gcc -c -x " + lang + ' main.c',
             'directory': ''}
 
         res = log_parser.parse_options(action)
         print(res)
 
-        self.assertTrue(set(source_files) == set(res.sources))
+        self.assertTrue('main.c' == res.source)
         self.assertEqual(lang, res.lang)
         self.assertEqual(BuildAction.COMPILE, res.action_type)
 
@@ -112,18 +103,17 @@ class OptionParserTest(unittest.TestCase):
         Test if the compilation architecture is
         detected correctly from the command line.
         """
-        source_files = ["main.c"]
         arch = 'x86_64'
         action = {
             'file': 'main.c',
-            'command': "gcc -c -arch " + arch + " " + ' '.join(source_files),
+            'command': "gcc -c -arch " + arch + ' main.c',
             'directory': ''
         }
 
         res = log_parser.parse_options(action)
         print(res)
 
-        self.assertTrue(set(source_files) == set(res.sources))
+        self.assertTrue('main.c' == res.source)
         self.assertEqual(arch, res.target)
         self.assertEqual(BuildAction.COMPILE, res.action_type)
 
@@ -178,7 +168,7 @@ class OptionParserTest(unittest.TestCase):
         print(res)
         print(compiler_options)
         print(res.analyzer_options)
-        self.assertTrue(set(source_files) == set(res.sources))
+        self.assertTrue('main.cpp' == res.source)
         self.assertTrue(set(compiler_options) == set(res.analyzer_options))
         self.assertEqual(BuildAction.COMPILE, res.action_type)
 
@@ -217,7 +207,7 @@ class OptionParserTest(unittest.TestCase):
 
         res = log_parser.parse_options(action)
         print(res)
-        self.assertTrue(set(object_files) == set(res.sources))
+        self.assertTrue('' == res.source)
         self.assertTrue(set(compiler_options) == set(res.analyzer_options))
         self.assertEqual(BuildAction.LINK, res.action_type)
 

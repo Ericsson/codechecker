@@ -22,7 +22,6 @@ from libcodechecker.analyze import gcc_toolchain
 from libcodechecker.log import build_action
 from libcodechecker.log.build_action import BuildAction
 from libcodechecker.logger import get_logger
-from libcodechecker.util import load_json_or_empty
 
 LOG = get_logger('buildlogger')
 
@@ -151,7 +150,9 @@ IGNORED_PARAM_OPTIONS = {
     re.compile('--serialize-diagnostics'): 1,
     re.compile('-framework'): 1,
     # Skip paired Xclang options like "-Xclang -mllvm".
-    re.compile('-Xclang'): 1
+    re.compile('-Xclang'): 1,
+    # Darwin linker can be given a file with lists the sources for linking.
+    re.compile('-filelist'): 1
 }
 
 
@@ -233,8 +234,7 @@ class ImplicitCompilerInfo(object):
         include_paths = []
 
         do_append = False
-        for line in lines.splitlines(True):
-            line = line.strip()
+        for line in lines.splitlines():
             if line.startswith(end_mark):
                 break
             if do_append:
@@ -470,34 +470,6 @@ def get_language(extension):
     return mapping.get(extension)
 
 
-def merge_space_files(sources, filename):
-    sub = filename.split()
-    ls = len(sub)
-
-    if ls == 0:
-        return
-
-    i = 0
-    while i < len(sources) - ls + 1:
-        if sources[i:i + ls] == sub:
-            del sources[i:i + ls]
-            sources.insert(i, filename)
-        i += 1
-
-
-def __append_from_file(flag_iterator, buildaction):
-    if flag_iterator.item == '-filelist':
-        next(flag_iterator)
-
-        with open(flag_iterator.item) as f:
-            for line in f:
-                buildaction.sources.append(line.strip())
-
-        return True
-
-    return False
-
-
 def __collect_compile_opts(flag_iterator, buildaction):
     """
     This function collects the compilation (i.e. not linker or preprocessor)
@@ -533,13 +505,12 @@ def __collect_compile_opts(flag_iterator, buildaction):
     return False
 
 
-def __collect_sources(flag_iterator, buildaction):
+def __skip_sources(flag_iterator, _):
     """
-    This function collects the compiled source file names (i.e. the arguments
-    which don't start with a dash character) to the buildaction object.
+    This function skips the compiled source file names (i.e. the arguments
+    which don't start with a dash character).
     """
     if flag_iterator.item[0] != '-':
-        buildaction.sources.append(flag_iterator.item.strip('"'))
         return True
 
     return False
@@ -622,7 +593,7 @@ def __replace(flag_iterator, buildaction):
     return bool(value)
 
 
-def __skip(flag_iterator, buildaction):
+def __skip(flag_iterator, _):
     """
     This function skips the flag pointed by the given flag_iterator with its
     parameters if any.
@@ -675,8 +646,7 @@ def parse_options(compilation_db_entry):
         __collect_compile_opts,
         __determine_action_type,
         __replace,
-        __append_from_file,
-        __collect_sources,
+        __skip_sources,
         __get_arch,
         __get_language,
         __get_output]
@@ -689,23 +659,18 @@ def parse_options(compilation_db_entry):
             pass
             # print('Unhandled argument: ' + it.item)
 
-    def abs_path_maker(p):
-        return os.path.normpath(
-            os.path.join(compilation_db_entry['directory'], p))
+    buildaction.source = os.path.normpath(
+        os.path.join(compilation_db_entry['directory'],
+                     compilation_db_entry['file']))
 
-    merge_space_files(buildaction.sources, compilation_db_entry['file'])
-    buildaction.sources = map(abs_path_maker, buildaction.sources)
+    # In case the file attribute in the entry is empty.
+    if buildaction.source == '.':
+        buildaction.source = ''
 
-    compiled_file = abs_path_maker(compilation_db_entry['file'])
-    if compiled_file != '.' and compiled_file not in buildaction.sources:
-        buildaction.sources.append(compiled_file)
-
-    for source_file in buildaction.sources:
-        lang = get_language(os.path.splitext(source_file)[1])
-        if lang:
-            if buildaction.lang is None:
-                buildaction.lang = lang
-            break
+    lang = get_language(os.path.splitext(buildaction.source)[1])
+    if lang:
+        if buildaction.lang is None:
+            buildaction.lang = lang
     else:
         buildaction.action_type = BuildAction.LINK
 
@@ -730,17 +695,18 @@ def parse_log(compilation_database,
                           targets, default standard version).
     """
     try:
-        filtered_build_actions = {}
+        filtered_build_actions = set()
         implicit_compiler_info = ImplicitCompilerInfo()
 
         for entry in compilation_database:
+            if skip_handler and skip_handler.should_skip(entry['file']):
+                continue
+
             action = parse_options(entry)
 
             if not action.lang:
                 continue
             if action.action_type != build_action.BuildAction.COMPILE:
-                continue
-            if skip_handler and skip_handler.should_skip(action.sources[0]):
                 continue
 
             # With gcc-toolchain a non default compiler toolchain can be set.
@@ -762,15 +728,14 @@ def parse_log(compilation_database,
                 implicit_compiler_info.set_implicit_compiler_info(action)
 
             # Filter out duplicate compilation commands.
-            if action.cmp_key not in filtered_build_actions:
-                filtered_build_actions[action.cmp_key] = action
+            filtered_build_actions.add(action)
 
         if compiler_info_file:
             with open(compiler_info_file, 'w') as f:
                 json.dump(implicit_compiler_info.get_implicit_compiler_info(),
                           f)
 
-        return [ba for _, ba in filtered_build_actions.items()]
+        return list(filtered_build_actions)
     except (ValueError, KeyError, TypeError) as ex:
         if os.stat(logfilepath).st_size == 0:
             LOG.error('The compile database is empty.')
@@ -781,5 +746,3 @@ def parse_log(compilation_database,
         sys.exit(1)
 
     LOG.debug('Parsing log file done.')
-
-    return actions

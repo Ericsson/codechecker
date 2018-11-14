@@ -96,21 +96,20 @@ class BuildCmdTestNose(unittest.TestCase):
         comp_actions = log_parser.parse_log(self.__get_cmp_json(compile_cmd))
 
         for comp_action in comp_actions:
-            for source in comp_action.sources:
-                cmd = [self.compiler]
-                cmd.extend(comp_action.analyzer_options)
-                cmd.append(str(source))
-                cwd = comp_action.directory
+            cmd = [self.compiler]
+            cmd.extend(comp_action.analyzer_options)
+            cmd.append(str(comp_action.source))
+            cwd = comp_action.directory
 
-                print(cmd)
-                print(cwd)
+            print(cmd)
+            print(cwd)
 
-                ret_val, stdout, stderr = analyzer_base.SourceAnalyzer \
-                    .run_proc(' '.join(cmd), cwd=cwd)
+            ret_val, stdout, stderr = analyzer_base.SourceAnalyzer \
+                .run_proc(' '.join(cmd), cwd=cwd)
 
-                print(stdout)
-                print(stderr)
-                self.assertEqual(ret_val, 0)
+            print(stdout)
+            print(stderr)
+            self.assertEqual(ret_val, 0)
 
     def test_analyzer_ansic_double_quote(self):
         """
@@ -122,19 +121,18 @@ class BuildCmdTestNose(unittest.TestCase):
         comp_actions = log_parser.parse_log(self.__get_cmp_json(compile_cmd))
 
         for comp_action in comp_actions:
-            for source in comp_action.sources:
-                cmd = [self.compiler]
-                cmd.extend(comp_action.analyzer_options)
-                cmd.append(str(source))
-                cwd = comp_action.directory
+            cmd = [self.compiler]
+            cmd.extend(comp_action.analyzer_options)
+            cmd.append(str(comp_action.source))
+            cwd = comp_action.directory
 
-                print(cmd)
-                print(cwd)
+            print(cmd)
+            print(cwd)
 
-                ret_val, stdout, stderr = analyzer_base.SourceAnalyzer \
-                    .run_proc(' '.join(cmd), cwd=cwd)
+            ret_val, stdout, stderr = analyzer_base.SourceAnalyzer \
+                .run_proc(' '.join(cmd), cwd=cwd)
 
-                print(stdout)
-                print(stderr)
+            print(stdout)
+            print(stderr)
 
-                self.assertEqual(ret_val, 0)
+            self.assertEqual(ret_val, 0)
