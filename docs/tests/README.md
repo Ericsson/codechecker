@@ -1,5 +1,7 @@
 # Running tests
 
+__At least Clang 7.0 and Clant-tidy 7.0 is required to run the tests.__  
+
 **Before running the tests the CodeChecker package needs to be built!**
 ~~~~~~{.sh}
 # Build the package

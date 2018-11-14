@@ -27,5 +27,23 @@ Javascript dependencies are automatically downloaded based on the ext_source_dep
   * [Dojotoolkit](https://dojotoolkit.org/) (BSD) - main framework for the web UI
   * [Highlightjs](https://highlightjs.org/) (BSD) - required for highlighting the source code
 
+#### Install newer clang versions (Ubuntu 18.04 Bionic)
+
+If clang-7 or clang-tidy-7 package is not available for your Debian or Ubuntu
+distribution yet you can use the [official llvm packages](https://apt.llvm.org/).
+
+```sh
+apt-get update && apt-get install -y software-properties-common wget && \
+    wget -qO - https://apt.llvm.org/llvm-snapshot.gpg.key| apt-key add - && \
+    add-apt-repository "deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-7 main"
+
+sudo apt-get install clang-7 clang-tidy-7
+
+# Set clang and clang-tidy to point to clang-7 and clang-tidy-7
+update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-7 100 && \
+update-alternatives --install /usr/bin/clang clang /usr/bin/clang-7 100 && \
+update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-7 100
+```
+
 #### PostgreSQL
 For the additional PostgreSQL dependencies see the [PostgreSQL setup](postgresql_setup.md) documentation.

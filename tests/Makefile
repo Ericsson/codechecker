@@ -73,9 +73,11 @@ test_functional: test_sqlite test_psql
 test_functional_novenv: test_sqlite_novenv test_psql_novenv
 
 test_sqlite: venv_dev
+		python tests/check_clang.py || exit 1;
 		$(ACTIVATE_DEV_VENV) && $(FUNCTIONAL_TEST_CMD)
 
 test_sqlite_novenv:
+		python tests/check_clang.py || exit 1;
 		$(FUNCTIONAL_TEST_CMD)
 
 test_psql: test_psql_psycopg2 test_psql_pg8000
@@ -83,6 +85,7 @@ test_psql: test_psql_psycopg2 test_psql_pg8000
 test_psql_novenv: test_psql_psycopg2_novenv test_psql_pg8000_novenv
 
 test_psql_psycopg2: venv_dev
+	python tests/check_clang.py || exit 1;
 	$(ACTIVATE_DEV_VENV) && \
 		$(DBUNAME) $(DBPORT) $(PSYCOPG2) $(MAKE_DB_CMD) && \
 		$(PSQL) $(DBUNAME) $(DBPORT) $(PSYCOPG2) \
@@ -90,12 +93,14 @@ test_psql_psycopg2: venv_dev
 		$(DBUNAME) $(DBPORT) $(PSYCOPG2) $(DROP_DB_CMD)
 
 test_psql_psycopg2_novenv:
+		python tests/check_clang.py || exit 1;
 		$(DBUNAME) $(DBPORT) $(PSYCOPG2) $(MAKE_DB_CMD) && \
 		$(PSQL) $(DBUNAME) $(DBPORT) $(PSYCOPG2) \
 		$(FUNCTIONAL_TEST_CMD) && \
 		$(DBUNAME) $(DBPORT) $(PSYCOPG2) $(DROP_DB_CMD)
 
 test_psql_pg8000: venv_dev
+	python tests/check_clang.py || exit 1;
 	$(ACTIVATE_DEV_VENV) && \
 		$(DBUNAME) $(DBPORT) $(PG8000) $(MAKE_DB_CMD) && \
 		$(PSQL) $(DBUNAME) $(DBPORT) $(PG8000) \
@@ -103,6 +108,7 @@ test_psql_pg8000: venv_dev
 		$(DBUNAME) $(DBPORT) $(PG8000) $(DROP_DB_CMD)
 
 test_psql_pg8000_novenv:
+		python tests/check_clang.py || exit 1;
 		$(DBUNAME) $(DBPORT) $(PG8000) $(MAKE_DB_CMD) && \
 		$(PSQL) $(DBUNAME) $(DBPORT) $(PG8000) \
 		$(FUNCTIONAL_TEST_CMD) && \

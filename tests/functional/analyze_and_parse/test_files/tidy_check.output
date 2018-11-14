@@ -1,7 +1,7 @@
 NORMAL#CodeChecker log --output $LOGFILE$ --build "make tidy_check" --quiet
-NORMAL#CodeChecker analyze $LOGFILE$ --output $OUTPUT$ --analyzers clang-tidy --disable misc --enable misc-sizeof-expression
+NORMAL#CodeChecker analyze $LOGFILE$ --output $OUTPUT$ --analyzers clang-tidy --disable misc --enable bugprone-sizeof-expression
 NORMAL#CodeChecker parse $OUTPUT$
-CHECK#CodeChecker check --build "make tidy_check" --output $OUTPUT$ --quiet --analyzers clang-tidy --disable misc --enable misc-sizeof-expression
+CHECK#CodeChecker check --build "make tidy_check" --output $OUTPUT$ --quiet --analyzers clang-tidy --disable misc --enable bugprone-sizeof-expression
 --------------------------------------------------------------------------------
 [] - Starting build ...
 [] - Build finished successfully.
@@ -17,7 +17,7 @@ CHECK#CodeChecker check --build "make tidy_check" --output $OUTPUT$ --quiet --an
 [] - To store results use the "CodeChecker store" command.
 [] - See --help and the user guide for further options about parsing and storing the reports.
 [] - ----=================----
-[HIGH] tidy_check.cpp:3:11: suspicious usage of 'sizeof(char*)'; do you mean 'strlen'? [misc-sizeof-expression]
+[HIGH] tidy_check.cpp:3:11: suspicious usage of 'sizeof(char*)'; do you mean 'strlen'? [bugprone-sizeof-expression]
   int i = sizeof(c);
           ^
 
