@@ -1,9 +1,22 @@
+#!/usr/bin/env python
 # -------------------------------------------------------------------------
 #                     The CodeChecker Infrastructure
 #   This file is distributed under the University of Illinois Open Source
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
+"""
+Sometimes it might be useful to collect the source files constituting a
+translation unit. This script does this action based on a compilation database
+JSON file. The output of the script is a ZIP package with the collected
+sources.
+"""
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
+
+import argparse
 import codecs
+import fnmatch
 import json
 import logging
 import os
@@ -12,6 +25,7 @@ import re
 import shlex
 import string
 import subprocess
+import sys
 import zipfile
 
 
@@ -132,6 +146,11 @@ def __gather_dependencies(command, build_dir):
                 dependencies.splitlines() if dep != ""]
     else:
         raise IOError(output)
+
+
+def __filter_compilation_db(compilation_db, filt):
+    return filter(lambda action: fnmatch.fnmatch(action['file'], filt),
+                  compilation_db)
 
 
 def get_dependent_headers(command, build_dir, collect_toolchain=True):
@@ -255,3 +274,71 @@ def zip_tu_files(zip_file, compilation_database, write_mode='w'):
             archive.writestr(no_sources, error_messages)
 
     add_sources_to_zip(zip_file, tu_files)
+
+
+def main():
+    # --- Handling of command line arguments --- #
+
+    parser = argparse.ArgumentParser(
+        description="This script collects all the source files constituting "
+                    "specific translation units. The files are written to a "
+                    "ZIP file which will contain the sources preserving the "
+                    "original directory hierarchy.")
+
+    log_args = parser.add_argument_group(
+        "log arguments",
+        """
+Specify how the build information database should be obtained. You need to
+specify either an already existing log file, or a build command which will be
+used to generate a log file on the fly.""")
+    log_args = log_args.add_mutually_exclusive_group(required=True)
+
+    log_args.add_argument('-b', '--build', type=str, dest='command',
+                          help="Execute and record a build command. Build "
+                               "commands can be simple calls to 'g++' or "
+                               "'clang++'.")
+    log_args.add_argument('-l', '--logfile', type=str, dest='logfile',
+                          help="Use an already existing JSON compilation "
+                               "command database file specified at this path.")
+
+    parser.add_argument('-z', '--zip', dest='zip', type=str, required=True,
+                        help="Output ZIP file.")
+    parser.add_argument('-f', '--filter', dest='filter',
+                        type=str, required=False,
+                        help="This flag restricts the collection on the build "
+                             "actions of which the compiled source file "
+                             "matches this path. E.g.: /path/to/*/files")
+
+    args = parser.parse_args()
+
+    # --- Checking the existence of input files. --- #
+
+    if args.logfile and not os.path.isfile(args.logfile):
+        print("Compilation database file doesn't exist: {}".format(
+            args.logfile))
+        sys.exit(1)
+
+    # --- Do the job. --- #
+
+    if args.logfile:
+        with open(args.logfile) as f:
+            compilation_db = json.load(f)
+
+        if args.filter:
+            compilation_db = filter(
+                lambda action: fnmatch.fnmatch(action['file'], args.filter),
+                compilation_db)
+    else:
+        if args.filter:
+            print('Warning: In case of using build command the filter has no '
+                  'effect.')
+        compilation_db = [{
+            'file': '',
+            'command': args.command,
+            'directory': os.getcwd()}]
+
+    zip_tu_files(args.zip, compilation_db)
+
+
+if __name__ == "__main__":
+    main()

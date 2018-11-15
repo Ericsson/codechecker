@@ -23,7 +23,6 @@ from libcodechecker import util
 from libcodechecker.analyze import analyzer_env
 from libcodechecker.analyze import gcc_toolchain
 from libcodechecker.analyze import plist_parser
-from libcodechecker.analyze import tu_collector
 from libcodechecker.analyze.analyzers import analyzer_clangsa
 from libcodechecker.analyze.analyzers import analyzer_types
 from libcodechecker.analyze.statistics_collector \
@@ -31,6 +30,7 @@ from libcodechecker.analyze.statistics_collector \
 from libcodechecker.analyze.statistics_collector \
     import ReturnValueCollector
 from libcodechecker.logger import get_logger
+from tu_collector import tu_collector
 
 LOG = get_logger('analyzer')
 

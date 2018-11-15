@@ -26,9 +26,9 @@ test_novenv: pycodestyle test_unit_novenv test_functional_novenv
 
 pycodestyle: venv_dev
 	$(ACTIVATE_DEV_VENV) && \
-	pycodestyle bin libcodechecker scripts tests vendor/plist_to_html
+	pycodestyle bin libcodechecker scripts tests vendor/plist_to_html vendor/tu_collector
 
-UNIT_TEST_CMD = nosetests $(NOSECFG) tests/unit
+UNIT_TEST_CMD = $(REPO_ROOT) nosetests $(NOSECFG) tests/unit
 
 CODECHECKER_CMD = $(BUILD_DIR)/CodeChecker/bin/CodeChecker
 SHUTDOWN_SERVER_CMD = echo "Shutting down server..."; \
