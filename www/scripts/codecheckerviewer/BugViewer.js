@@ -242,25 +242,61 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
 
       CC_SERVICE.getReportDetails(this.reportData.reportId,
       function (reportDetails) {
-        var points = reportDetails.executionPath.filter(filterFunction);
-        var pathEvents = reportDetails.pathEvents;
-        pathEvents.map(function (evt, index) {
-          evt.bugEventNumber = index + 1;
-        });
-
-        var bubbles = pathEvents.filter(filterFunction);
-
-        // This is needed because CodeChecker gives different positions.
-        points.forEach(function (point) { --point.startCol; });
-        points.forEach(function (bubble) { --bubble.startCol; });
-
         if (bubblesNeeded) {
+          var pathEvents = reportDetails.pathEvents;
+          pathEvents.map(function (evt, index) {
+            evt.bugEventNumber = index + 1;
+          });
+
+          var bubbles = pathEvents.filter(filterFunction);
+          bubbles.forEach(function (bubble) { --bubble.startCol; });
+
+          var extraPathEvents =
+            reportDetails.extendedData.filter(filterFunction);
+          extraPathEvents.forEach(function (e) { --e.startCol; });
+
+          that.addExtraPathEvents(extraPathEvents);
           that.addBubbles(bubbles, pathEvents.length);
           that.addOtherFileBubbles(reportDetails.executionPath);
         }
 
-        if (linesNeeded)
+        if (linesNeeded) {
+          var points = reportDetails.executionPath.filter(filterFunction);
+          points.forEach(function (point) { --point.startCol; });
+
           that.addLines(points);
+        }
+      });
+    },
+
+    getExtraPathEventMessage : function (event) {
+      var message =
+        entities.encode(event.message).replace(/(?:\r\n|\r|\n)/g, '<br>');
+
+      if (event.type === CC_OBJECTS.ExtendedReportDataType.MACRO) {
+        return '<span class="tag macro">macro expansion</span>' + message;
+      } else if (event.type === CC_OBJECTS.ExtendedReportDataType.NOTE) {
+        return '<span class="tag note">note</span>' + message;
+      }
+    },
+
+    addExtraPathEvents : function (events) {
+      var that = this;
+      events.forEach(function (event) {
+        var left =
+          that.codeMirror.defaultCharWidth() * event.startCol + 'px';
+
+        var myClass =
+          util.reportExtendedTypeFromCodeToString(event.type).toLowerCase();
+
+        var element = dom.create('div', {
+          style : 'margin-left: ' + left,
+          class : 'check-msg ' + myClass,
+          innerHTML : that.getExtraPathEventMessage(event)
+        });
+
+        that._lineWidgets.push(that.codeMirror.addLineWidget(
+          event.startLine - 1, element));
       });
     },
 
@@ -342,10 +378,10 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
       var that = this;
 
       that.codeMirror.operation(function () {
-        points.forEach(function (p, i) {
+        points.forEach(function (p) {
           that._lineMarks.push(that.codeMirror.doc.markText(
-            { line : p.startLine - 1, ch : p.startCol + 1 },
-            { line : p.endLine - 1,   ch : p.endCol       },
+            { line : p.startLine - 1, ch : p.startCol },
+            { line : p.endLine - 1,   ch : p.endCol   },
             { className : 'checkerstep' }));
         });
       });

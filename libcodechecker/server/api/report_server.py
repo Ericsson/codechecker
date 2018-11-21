@@ -45,8 +45,12 @@ from libcodechecker.server.database.database import conv
 from libcodechecker.server.database.run_db_model import \
     AnalyzerStatistic, Report, ReviewStatus, File, Run, RunHistory, \
     RunLock, Comment, BugPathEvent, BugReportPoint, \
-    FileContent, SourceComponent
+    FileContent, SourceComponent, ExtendedReportData
 from libcodechecker.util import DBSession, slugify
+
+from .thrift_enum_helper import detection_status_enum, \
+    detection_status_str, review_status_enum, review_status_str, \
+    report_extended_data_type_enum
 
 from . import store_handler
 
@@ -298,48 +302,15 @@ def bugreportpoint_db_to_api(brp):
         fileId=brp.file_id)
 
 
-def detection_status_enum(status):
-    if status == 'new':
-        return DetectionStatus.NEW
-    elif status == 'resolved':
-        return DetectionStatus.RESOLVED
-    elif status == 'unresolved':
-        return DetectionStatus.UNRESOLVED
-    elif status == 'reopened':
-        return DetectionStatus.REOPENED
-
-
-def detection_status_str(status):
-    if status == DetectionStatus.NEW:
-        return 'new'
-    elif status == DetectionStatus.RESOLVED:
-        return 'resolved'
-    elif status == DetectionStatus.UNRESOLVED:
-        return 'unresolved'
-    elif status == DetectionStatus.REOPENED:
-        return 'reopened'
-
-
-def review_status_str(status):
-    if status == ttypes.ReviewStatus.UNREVIEWED:
-        return 'unreviewed'
-    elif status == ttypes.ReviewStatus.CONFIRMED:
-        return 'confirmed'
-    elif status == ttypes.ReviewStatus.FALSE_POSITIVE:
-        return 'false_positive'
-    elif status == ttypes.ReviewStatus.INTENTIONAL:
-        return 'intentional'
-
-
-def review_status_enum(status):
-    if status == 'unreviewed':
-        return ttypes.ReviewStatus.UNREVIEWED
-    elif status == 'confirmed':
-        return ttypes.ReviewStatus.CONFIRMED
-    elif status == 'false_positive':
-        return ttypes.ReviewStatus.FALSE_POSITIVE
-    elif status == 'intentional':
-        return ttypes.ReviewStatus.INTENTIONAL
+def extended_data_db_to_api(erd):
+    return ttypes.ExtendedReportData(
+        type=report_extended_data_type_enum(erd.type),
+        startLine=erd.line_begin,
+        startCol=erd.col_begin,
+        endLine=erd.line_end,
+        endCol=erd.col_end,
+        message=erd.message,
+        fileId=erd.file_id)
 
 
 def unzip(b64zip, output_dir):
@@ -1119,7 +1090,21 @@ class ThriftRequestHandler(object):
                 bug_point.filePath = file_path
                 bug_point_list.append(bug_point)
 
-            return ReportDetails(bug_events_list, bug_point_list)
+            # Get extended report data.
+            extended_data_list = []
+            q = session.query(ExtendedReportData, File.filepath) \
+                .filter(ExtendedReportData.report_id == report.id) \
+                .outerjoin(File,
+                           File.id == ExtendedReportData.file_id)
+
+            for data, file_path in q:
+                extended_data = extended_data_db_to_api(data)
+                extended_data.filePath = file_path
+                extended_data_list.append(extended_data)
+
+            return ReportDetails(pathEvents=bug_events_list,
+                                 executionPath=bug_point_list,
+                                 extendedData=extended_data_list)
 
     def _setReviewStatus(self, report_id, status, message, session):
         """
@@ -2150,7 +2135,7 @@ class ThriftRequestHandler(object):
                 if skip_handler.should_skip(source_file):
                     continue
 
-                bug_paths, bug_events = \
+                bug_paths, bug_events, bug_extended_data = \
                     store_handler.collect_paths_events(report, file_ids,
                                                        files)
                 report_path_hash = get_report_path_hash(report, files)
@@ -2179,6 +2164,7 @@ class ThriftRequestHandler(object):
                     report.main,
                     bug_paths,
                     bug_events,
+                    bug_extended_data,
                     detection_status,
                     run_history_time if detection_status == 'new' else
                     old_report.detected_at,

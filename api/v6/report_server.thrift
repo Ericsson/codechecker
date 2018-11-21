@@ -77,6 +77,12 @@ enum StoreLimitKind {
   COMPILATION_DATABASE_SIZE // Limit of the compilation database file size.
 }
 
+enum ExtendedReportDataType {
+  NOTE  = 0,
+  MACRO = 10,
+  FIXIT = 20,
+}
+
 struct SourceFileData {
   1: i64             fileId,
   2: string          filePath,
@@ -109,9 +115,22 @@ struct BugPathPos {
 }
 typedef list<BugPathPos> BugPath
 
+struct ExtendedReportData {
+  1: ExtendedReportDataType type,
+  2: i64    startLine,
+  3: i64    startCol,
+  4: i64    endLine,
+  5: i64    endCol,
+  6: string message,
+  7: i64    fileId
+  8: string filePath
+}
+typedef list<ExtendedReportData> ExtendedReportDataList
+
 struct ReportDetails {
   1: BugPathEvents pathEvents,
-  2: BugPath       executionPath
+  2: BugPath       executionPath,
+  3: optional ExtendedReportDataList extendedData,
 }
 
 typedef string AnalyzerType
