@@ -24,7 +24,8 @@ test: pycodestyle test_unit test_functional test_build_logger
 
 test_novenv: pycodestyle test_unit_novenv test_functional_novenv
 
-pycodestyle:
+pycodestyle: venv_dev
+	$(ACTIVATE_DEV_VENV) && \
 	pycodestyle bin libcodechecker scripts tests vendor/plist_to_html
 
 UNIT_TEST_CMD = nosetests $(NOSECFG) tests/unit
