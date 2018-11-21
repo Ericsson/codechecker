@@ -1,3 +1,9 @@
+// -------------------------------------------------------------------------
+//                     The CodeChecker Infrastructure
+//   This file is distributed under the University of Illinois Open Source
+//   License. See LICENSE.TXT for details.
+// -------------------------------------------------------------------------
+
 var BugViewer = {
   _files : [],
   _reports : [],
@@ -110,7 +116,7 @@ var BugViewer = {
       severity.className = 'severity-' + report.severity.toLowerCase();
 
       item.appendChild(severity);
-      item.appendChild(document.createTextNode(lastBugEvent.msg));
+      item.appendChild(document.createTextNode(lastBugEvent.message));
 
       item.addEventListener('click', function () {
         that.navigate(report, item);
@@ -139,9 +145,10 @@ var BugViewer = {
 
   setCurrentBugEvent : function (event) {
     this._currentBugEvent = event;
-    this.setSourceFileData(this._files[event.file]);
+    this.setSourceFileData(this._files[event.location.file]);
+    this.drawBugPath();
 
-    this.jumpTo(event.line, 0)
+    this.jumpTo(event.location.line, 0);
   },
 
   setCheckerName : function (checkerName) {
@@ -149,12 +156,14 @@ var BugViewer = {
   },
 
   setSourceFileData : function (file) {
+    if (this._sourceFileData && file.id === this._sourceFileData.id) {
+      return;
+    }
+
     this._sourceFileData = file;
     this._filepath.innerHTML = file.path;
     this._codeMirror.doc.setValue(file.content);
     this._refresh();
-
-    this.drawBugPath();
   },
 
   _refresh : function () {
@@ -173,18 +182,63 @@ var BugViewer = {
     this._lineWidgets = [];
   },
 
+  getMessage : function (event, kind) {
+    if (kind === 'macro') {
+      var name = 'macro expansion' + (event.name ? ': ' + event.name : '');
+
+      return '<span class="tag macro">' + name + '</span>'
+        + this.escapeHTML(event.expansion).replace(/(?:\r\n|\r|\n)/g, '<br>');
+    } else if (kind === 'note') {
+      return '<span class="tag note">note</span>'
+        +  this.escapeHTML(event.message).replace(/(?:\r\n|\r|\n)/g, '<br>');
+    }
+  },
+
+  addExtraPathEvents : function (events, kind) {
+    var that = this;
+
+    if (!events) {
+      return;
+    }
+
+    events.forEach(function (event) {
+      if (event.location.file !== that._currentBugEvent.location.file) {
+        return;
+      }
+
+      var left =
+        that._codeMirror.defaultCharWidth() * event.location.col + 'px';
+
+      var element = document.createElement('div');
+      element.setAttribute('style', 'margin-left: ' + left);
+      element.setAttribute('class', 'check-msg ' + kind);
+
+      var msg = document.createElement('span');
+      msg.innerHTML = that.getMessage(event, kind);
+      element.appendChild(msg);
+
+      that._lineWidgets.push(that._codeMirror.addLineWidget(
+        event.location.line - 1, element));
+    });
+  },
+
   drawBugPath : function () {
     var that = this;
 
     this.clearBubbles();
 
+    this.addExtraPathEvents(this._currentReport.macros, 'macro');
+    this.addExtraPathEvents(this._currentReport.notes, 'note');
+
+    // Processing bug path events.
     var currentEvents = this._currentReport.events;
-    currentEvents.forEach(function (bugEvent, i) {
-      if (bugEvent.file !== that._currentBugEvent.file)
+    currentEvents.forEach(function (event, step) {
+      if (event.location.file !== that._currentBugEvent.location.file)
         return;
 
-      var left = that._codeMirror.defaultCharWidth() * bugEvent.col + 'px';
-      var type = i == that._currentReport.events.length - 1 ? 'error' : 'info';
+      var left =
+        that._codeMirror.defaultCharWidth() * event.location.col + 'px';
+      var type = step === currentEvents.length - 1 ? 'error' : 'info';
 
       var element = document.createElement('div');
       element.setAttribute('style', 'margin-left: ' + left);
@@ -192,34 +246,34 @@ var BugViewer = {
 
       var enumeration = document.createElement('span');
       enumeration.setAttribute('class', 'checker-enum ' + type);
-      enumeration.innerHTML = bugEvent.step;
+      enumeration.innerHTML = step + 1;
 
       if (currentEvents.length > 1)
         element.appendChild(enumeration);
 
-      var prevBugEvent = bugEvent.step - 1;
+      var prevBugEvent = step - 1;
       if (prevBugEvent > 0) {
         var prevBug = document.createElement('span');
         prevBug.setAttribute('class', 'arrow left-arrow');
         prevBug.addEventListener('click', function () {
-          var event = that._currentReport.events[prevBugEvent - 1];
+          var event = currentEvents[prevBugEvent - 1];
           that.setCurrentBugEvent(event);
         });
         element.appendChild(prevBug);
       }
 
       var msg = document.createElement('span');
-      msg.innerHTML = that.escapeHTML(bugEvent.msg)
+      msg.innerHTML = that.escapeHTML(event.message)
         .replace(/(?:\r\n|\r|\n)/g, '<br>');
 
       element.appendChild(msg);
 
-      var nextBugEvent = bugEvent.step;
-      if (nextBugEvent < that._currentReport.events.length) {
+      var nextBugEvent = step + 1;
+      if (nextBugEvent < currentEvents.length) {
         var nextBug = document.createElement('span');
         nextBug.setAttribute('class', 'arrow right-arrow');
         nextBug.addEventListener('click', function () {
-          var event = that._currentReport.events[nextBugEvent];
+          var event = currentEvents[nextBugEvent];
           that.setCurrentBugEvent(event);
         });
         element.appendChild(nextBug);
@@ -227,7 +281,7 @@ var BugViewer = {
 
 
       that._lineWidgets.push(that._codeMirror.addLineWidget(
-        bugEvent.line - 1, element));
+        event.location.line - 1, element));
     });
   },
 
