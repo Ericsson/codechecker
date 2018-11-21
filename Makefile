@@ -60,7 +60,7 @@ venv_dev:
 	# Create a virtual environment for development.
 	virtualenv -p python2 venv_dev && \
 		$(ACTIVATE_DEV_VENV) && pip install -r $(VENV_DEV_REQ_FILE) && \
-		pip install -r tests/requirements.txt
+		pip install -r requirements_py/test/requirements.txt
 
 clean_venv_dev:
 	rm -rf venv_dev

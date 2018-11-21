@@ -1,3 +1,0 @@
-mockldap
-nose
-pycodestyle
