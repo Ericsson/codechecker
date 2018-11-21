@@ -43,6 +43,7 @@ before_install:
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install doxygen; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install llvm@3.9; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew upgrade boost; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install thrift@0.9; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PATH=/usr/local/Cellar/thrift@0.9/0.9.3/bin:$PATH; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then which thrift; fi
