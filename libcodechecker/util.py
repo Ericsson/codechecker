@@ -671,7 +671,7 @@ def generate_session_token():
     """
     Returns a random session token.
     """
-    return uuid.UUID(bytes=os.urandom(16)).__str__().replace('-', '')
+    return uuid.UUID(bytes=os.urandom(16)).hex
 
 
 def slugify(text):
