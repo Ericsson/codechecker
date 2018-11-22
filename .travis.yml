@@ -22,17 +22,17 @@ matrix:
       python: "2.7"
       env: DATABASE=psql_pg8000
     - os: osx
-      osx_image: xcode8
+      osx_image: xcode9.4
       sudo: false
       language: generic
       env: DATABASE=sqlite
     - os: osx
-      osx_image: xcode8
+      osx_image: xcode9.4
       sudo: false
       language: generic
       env: DATABASE=psql_psycopg2
     - os: osx
-      osx_image: xcode8
+      osx_image: xcode9.4
       sudo: false
       language: generic
       env: DATABASE=psql_pg8000
