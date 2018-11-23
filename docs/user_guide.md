@@ -282,7 +282,7 @@ output arguments:
 
 Several subcommands, such as `store` and `cmd` need a connection specification
 on which server and for which *Product* (read more [about
-products](/docs/products.md)) an action, such as report storage or result
+products](products.md)) an action, such as report storage or result
 retrieving, should be done.
 
 This is done via the `PRODUCT_URL` where indicated in the subcommand, which
@@ -296,7 +296,7 @@ whether or not a more secure SSL/TLS-wrapped `https` protocol should be used.
 If omitted, the default value is `http`. The second part is the host and the
 port the server listens on. After a `/`, the unique endpoint of the product
 must be given, this is case-sensitive. This unique endpoint is configured and
-allocated when the [product is created](/docs/products.md), by the server's
+allocated when the [product is created](products.md), by the server's
 administrators. The product must exist and be properly configured before any
 normal operation could be done on it.
 
@@ -564,7 +564,7 @@ used to specify which analyzer tool should be used (by default, all supported
 are used). The tools are completely independent, so either can be omitted if
 not present as they are provided by different binaries.
 
-See [Configure Clang Static Analyzer and checkers](/docs/checker_and_analyzer_configuration.md) documentation for
+See [Configure Clang Static Analyzer and checkers](checker_and_analyzer_configuration.md) documentation for
 a more detailed description how to use the `saargs` and `tidyargs` arguments.
 
 
@@ -1389,13 +1389,13 @@ CodeChecker server -w ~/my_codechecker_workspace -p 8002 --stop
 `CodeChecker server --reload` command allows you to changing configuration-file
 options that do not require a complete restart to take effect. For more
 information which option can be reloaded see
-[server config](docs/server_config.md).
+[server config](server_config.md).
 
 ### <a name="manage-server-database-upgrade"></a> Manage server database upgrades
 
 Use these arguments to manage the database versions handled by the server.
 For a more detailed description about the schema upgrade check out the
-[schema migration guide](docs/db_schema_guide.md).
+[schema migration guide](db_schema_guide.md).
 
 ~~~~~~~~~~~~~~~~~~~~~
 Database management arguments.:

@@ -48,3 +48,6 @@ TAGS
 
 # direnv
 .envrc
+
+# mkdocs
+site

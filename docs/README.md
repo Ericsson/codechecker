@@ -1,19 +1,17 @@
 [![Build status](https://travis-ci.org/Ericsson/codechecker.png?branch=master)](https://travis-ci.org/Ericsson/codechecker)
 [![Gitter](https://badges.gitter.im/codecheckerHQ/Lobby.svg)](https://gitter.im/codecheckerHQ/Lobby?utm_source=share-link&utm_medium=link&utm_campaign=share-link)
 
-CodeChecker
-===========
+# CodeChecker
 
 **CodeChecker** is a static analysis infrastructure built on the [LLVM/Clang
 Static Analyzer](http://clang-analyzer.llvm.org) toolchain, replacing
 [`scan-build`](http://clang-analyzer.llvm.org/scan-build.html) in a Linux or
 macOS (OS X) development environment.
 
-![Web interface showing list of analysed projects and bugs](docs/images/demo.gif)
+![Web interface showing list of analysed projects and bugs](images/demo.gif)
 
 
-Main features
--------------
+# Main features
 
   * Support for multiple analyzers, currently
     [_Clang Static Analyzer_](http://clang-analyzer.llvm.org/) and
@@ -41,27 +39,25 @@ Main features
     server-client communication used for storing and querying of discovered
     defects
   * Support for multiple bug visualisation frontends, such as the web
-    application, a [command-line tool](docs/usage.md) and an
+    application, a [command-line tool](usage.md) and an
     [Eclipse plugin](http://github.com/Ericsson/CodeCheckerEclipsePlugin)
 
 
-User Documentation
-------------------
+# User documentation
 
-  * [Getting started (How-To with examples)](docs/usage.md)
-  * [User guide](docs/user_guide.md)
-  * [Requiring credentials to view analysis results](docs/authentication.md)
-  * [Overview about connecting multiple analysis run databases](docs/products.md)
-  * [Permission management](docs/permissions.md)
-  * [Usage of PostgreSQL database](docs/postgresql_setup.md)
-  * [How to deal with false positives](docs/false_positives.md)
+* [Getting started (How-To with examples)](usage.md)
+* [User guide](user_guide.md)
+* [Requiring credentials to view analysis results](authentication.md)
+* [Overview about connecting multiple analysis run databases](products.md)
+* [Permission management](permissions.md)
+* [Usage of PostgreSQL database](postgresql_setup.md)
+* [How to deal with false positives](false_positives.md)
 
-Install
--------
+# Install guide
 
-### Linux
+## Linux
 
-For a detailed dependency list, please see [Requirements](docs/deps.md). The
+For a detailed dependency list, please see [Requirements](deps.md). The
 following commands are used to bootstrap CodeChecker on Ubuntu 16.04.1 LTS:
 
 ```sh
@@ -87,7 +83,7 @@ export PATH="$PWD/build/CodeChecker/bin:$PATH"
 cd ..
 ```
 
-#### Upgrading environment after system or Python upgrade
+### Upgrading environment after system or Python upgrade
 
 If you have upgraded your system's Python to a newer version (e.g. from
 `2.7.6` to `2.7.12` &ndash; this is the case when upgrading Ubuntu from
@@ -100,7 +96,7 @@ cd ~/codechecker/venv
 virtualenv -p /usr/bin/python2.7 .
 ```
 
-### Mac OS X
+## Mac OS X
 
 In OSX environment the intercept-build tool from
 [scan-build](https://github.com/rizsotto/scan-build) is used to log the
@@ -150,10 +146,9 @@ export PATH="$PWD/build/CodeChecker/bin:$PATH"
 cd ..
 ```
 
-Check your first project
-------------------------
+# Check your first project
 
-### Configuring Clang version
+## Configuring Clang version
 
 _Clang_ and/or _Clang-Tidy_ must be available on your system before you can
 run analysis on a project. CodeChecker automatically detects and uses the
@@ -174,7 +169,7 @@ binaries you intend to use.
 },
 ```
 
-### Setting up the environment in your Terminal
+## Setting up the environment in your Terminal
 
 These steps must always be taken in a new command prompt you wish to execute
 analysis in.
@@ -195,8 +190,7 @@ export PATH=~/<user path>/llvm/tools/clang/tools/scan-build-py/bin:$PATH
 export PATH=~/<user path>/build/bin:$PATH
 ```
 
-### Check the test project
-
+## Check the test project
 
 Analyze your project with the `check` command:
 
@@ -219,13 +213,12 @@ Store your analysis reports onto the server to be able to use the Web Viewer.
     CodeChecker store ~/results -n my-project
 
 
-### View results
+## View results
 
 Open the [CodeChecker Web Viewer](http://localhost:8001) in your browser, and
 you should be greeted with a web application showing you the analysis results.
 
-Important limitations with older Clang versions
------------------------------------------------
+# Important limitations with older Clang versions
 
 Clang `3.6` or earlier releases are **NOT** supported due to CodeChecker
 relying on features not available in those releases.
@@ -239,20 +232,45 @@ If you have Clang `3.7` installed you might see the following warning message:
    method is applied for Clang-Tidy results too, because Clang-Tidy does not
    support bug identifier hash generation currently.
 
-Developer Documentation
------------------------
+# Useful Documentation
 
-  * [Requirements, external source dependencies](docs/deps.md)
-  * [Architecture overview](docs/architecture.md)
-  * [Package layout](docs/package_layout.md)
-  * [Checker documentation](docs/checker_docs.md)
-  * [Thrift interface](api/README.md)
-  * [Feature overview of command-line and Web
-    interface](docs/feature_comparison.md)
-  * [Package and integration tests](tests/README.md)
-  * [Database schema migration](docs/db_schema_guide.md)
-  * A high-level overview about the infrastructure is available amongst the
-    [2015Euro LLVM Conference](http://llvm.org/devmtg/2015-04) presentations.<br/>
-    **Dániel KRUPP, György ORBÁN, Gábor HORVÁTH and Bence BABATI**:<br/>
-    [_Industrial Experiences with the Clang Static Analysis Toolset_](http://llvm.org/devmtg/2015-04/slides/Clang_static_analysis_toolset_final.pdf)
+## Feature overview
+
+* [CodeChecker feature overview](feature_comparison.md)
+
+## Static analysis
+
+* [False Positives](false_positives.md)
+* [Checker and Static Analyzer configuration](checker_and_analyzer_configuration.md)
+* [Checker documentation](checker_docs.md)
+* [GCC incompatibilities](gcc_incompatibilities.md)
+
+## Security configuration
+* [Authentication](authentication.md)
+* [Permissions](permissions.md)
+
+## Continuous Integration (CI)
+* [Jenkins Gerrit integration](jenkins_gerrit_integration.md)
+* [Daily Scripts](script_daily.md)
+
+## Database configuration
+* [PostgreSQL setup](postgresql_setup.md)
+* [Schema Guide](db_schema_guide.md)
+
+## Server configuration
+* [Products](products.md)
+* [Logging](logging.md)
+
+## Developer documentations
+* [Architecture](architecture.md)
+* [Package layout](package_layout.md)
+* [Dependencies](deps.md)
+* [Thrift interface](api/README.md)
+* [Package and integration tests](tests/README.md)
+
+## Conference papers, presentations
+* A high-level overview about the infrastructure is available amongst the
+  [2015Euro LLVM Conference](http://llvm.org/devmtg/2015-04) presentations.<br/>
+  **Dániel KRUPP, György ORBÁN, Gábor HORVÁTH and Bence BABATI**:<br/>
+  [_Industrial Experiences with the Clang Static Analysis Toolset_](http://llvm.org/devmtg/2015-04/slides/Clang_static_analysis_toolset_final.pdf)
 
