@@ -12,10 +12,10 @@ from __future__ import division
 from __future__ import absolute_import
 
 import base64
-import codecs
 from collections import defaultdict
 from datetime import datetime, timedelta
 import hashlib
+import io
 import os
 import re
 import sys
@@ -720,8 +720,8 @@ def handle_diff_results(args):
             for file_index, file_path in enumerate(report.files):
                 if file_index not in file_sources:
                     try:
-                        with codecs.open(file_path, 'r', 'UTF-8',
-                                         errors='ignore') as source_data:
+                        with io.open(file_path, 'r', encoding='UTF-8',
+                                     errors='ignore') as source_data:
                             content = source_data.read()
                     except (OSError, IOError):
                         content = file_path + " NOT FOUND."

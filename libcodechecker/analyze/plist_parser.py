@@ -366,6 +366,31 @@ class PlistToPlaintextFormatter(object):
                                      event['message'])
 
     @staticmethod
+    def __format_bug_note(note, source_file):
+        """
+        Format bug notes.
+        """
+        loc = note['location']
+        file_name = os.path.basename(source_file)
+        return '%s:%d:%d: %s' % (file_name,
+                                 loc['line'],
+                                 loc['col'],
+                                 note['message'])
+
+    @staticmethod
+    def __format_macro_expansion(macro, source_file):
+        """
+        Format macro expansions.
+        """
+        loc = macro['location']
+        file_name = os.path.basename(source_file)
+        return "%s:%d:%d: Macro '%s' expanded to '%s'" % (file_name,
+                                                          loc['line'],
+                                                          loc['col'],
+                                                          macro['name'],
+                                                          macro['expansion'])
+
+    @staticmethod
     def parse(plist_file):
         """
         Parse a plist report file.
@@ -416,7 +441,7 @@ class PlistToPlaintextFormatter(object):
                 self._processed_path_hashes.add(path_hash)
 
                 events = [i for i in report.bug_path
-                          if i.get('kind') == 'event']
+                          if i.get('kind') in ('event', 'macro_expansion')]
                 f_path = report.files[events[-1]['location']['file']]
                 if self.skiplist_handler and \
                         self.skiplist_handler.should_skip(f_path):
@@ -452,6 +477,24 @@ class PlistToPlaintextFormatter(object):
 
                 if self.print_steps:
                     output.write('  Report hash: ' + report_hash + '\n')
+
+                    # Print out notes.
+                    notes = report.notes
+                    if notes:
+                        output.write('  Notes:\n')
+
+                        index_format = '    %%%dd, ' % \
+                                       int(math.floor(
+                                           math.log10(len(notes))) + 1)
+
+                        for index, note in enumerate(notes):
+                            output.write(index_format % (index + 1))
+                            source_file = report.files[
+                                note['location']['file']]
+                            output.write(self.__format_bug_note(note,
+                                                                source_file))
+                            output.write('\n')
+
                     output.write('  Steps:\n')
 
                     index_format = '    %%%dd, ' % \
@@ -460,10 +503,15 @@ class PlistToPlaintextFormatter(object):
                     for index, event in enumerate(events):
                         output.write(index_format % (index + 1))
                         source_file = report.files[event['location']['file']]
-                        output.write(self.__format_bug_event(None,
-                                                             None,
-                                                             event,
-                                                             source_file))
+                        if event.kind == 'macro_expansion':
+                            output.write(
+                                self.__format_macro_expansion(event,
+                                                              source_file))
+                        else:
+                            output.write(self.__format_bug_event(None,
+                                                                 None,
+                                                                 event,
+                                                                 source_file))
                         output.write('\n')
                 output.write('\n')
 
