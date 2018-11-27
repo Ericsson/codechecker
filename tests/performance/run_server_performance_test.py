@@ -29,31 +29,6 @@ FINISH = False
 PROCESSES = []
 
 
-def finish_test(signum, frame):
-    print('-----> Performance test stops. '
-          'Please wait for stopping all subprocesses. <-----')
-
-    global FINISH
-    FINISH = True
-
-    global PROCESSES
-    for proc in PROCESSES:
-        try:
-            proc.terminate()
-        except OSError:
-            pass
-
-    sys.exit("Performance test has timed out or killed.")
-
-
-def f(signum, frame):
-    pass
-
-
-signal.signal(signal.SIGINT, finish_test)
-signal.signal(signal.SIGUSR1, f)
-
-
 def return_duration(func):
     """
     This decorator makes the applied function return its original return value
@@ -368,6 +343,29 @@ def main():
     VERBOSE = args.verbose
 
     stat = StatManager()
+
+    def finish_test(signum, frame):
+        print('-----> Performance test stops. '
+              'Please wait for stopping all subprocesses. <-----')
+
+        global FINISH
+        FINISH = True
+
+        global PROCESSES
+        for proc in PROCESSES:
+            try:
+                proc.terminate()
+            except OSError:
+                pass
+
+        stat.print_stats(args.output)
+        sys.exit("Performance test has timed out or killed.")
+
+    def f(signum, frame):
+        pass
+
+    signal.signal(signal.SIGINT, finish_test)
+    signal.signal(signal.SIGUSR1, f)
 
     print(os.environ['PATH'])
     threads = [threading.Thread(
