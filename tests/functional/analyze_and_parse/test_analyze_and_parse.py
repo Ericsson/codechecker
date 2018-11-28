@@ -12,12 +12,14 @@ from __future__ import absolute_import
 import glob
 import os
 import re
+import shutil
 import subprocess
 import unittest
 
 from subprocess import CalledProcessError
 
 from libtest import env
+from libtest import project
 
 
 class AnalyzeParseTestCaseMeta(type):
@@ -68,6 +70,24 @@ class AnalyzeParseTestCase(unittest.TestCase):
         cls.test_dir = os.path.join(
             os.path.dirname(__file__), 'test_files')
 
+        # Copy test projects and replace file path in plist files.
+        test_projects = ['notes', 'macros']
+        for test_project in test_projects:
+            test_project_path = os.path.join(cls.test_workspaces['NORMAL'],
+                                             "test_files", test_project)
+            shutil.copytree(project.path(test_project), test_project_path)
+
+            for test_file in os.listdir(test_project_path):
+                if test_file.endswith(".plist"):
+                    test_file_path = os.path.join(test_project_path, test_file)
+                    with open(test_file_path, 'r+') as plist_file:
+                        content = plist_file.read()
+                        new_content = content.replace("$FILE_PATH$",
+                                                      test_project_path)
+                        plist_file.seek(0)
+                        plist_file.truncate()
+                        plist_file.write(new_content)
+
         # Change working dir to testfile dir so CodeChecker can be run easily.
         cls.__old_pwd = os.getcwd()
         os.chdir(cls.test_dir)
@@ -104,6 +124,10 @@ class AnalyzeParseTestCase(unittest.TestCase):
                 break
 
         commands = [line.strip() for line in lines[:dash_index]]
+        current_commands = [c for c in commands if c.split('#')[0] == mode]
+        if not current_commands:
+            return
+
         correct_output = ''.join(lines[dash_index + 1:])
 
         run_name = os.path.basename(path).replace(".output", "")
@@ -112,13 +136,9 @@ class AnalyzeParseTestCase(unittest.TestCase):
 
         try:
             output = []
-            for command in commands:
+            for command in current_commands:
                 split = command.split('#')
-                cmode, command = split[0], ''.join(split[1:])
-
-                if cmode != mode:
-                    # Ignore the command if its MODE does not match.
-                    continue
+                command = ''.join(split[1:])
 
                 command = command.replace("$LOGFILE$",
                                           os.path.join(workspace,
@@ -126,6 +146,8 @@ class AnalyzeParseTestCase(unittest.TestCase):
                 command = command.replace("$OUTPUT$",
                                           os.path.join(workspace,
                                                        run_name, "reports"))
+                command = command.replace("$WORKSPACE$", workspace)
+
                 result = subprocess.check_output(
                     ['bash', '-c', command], env=self.env, cwd=self.test_dir)
                 output += result.splitlines(True)

@@ -1,0 +1,28 @@
+NORMAL#CodeChecker parse $WORKSPACE$/test_files/notes/notes.plist --print-steps
+--------------------------------------------------------------------------------
+[LOW] notes.cpp:3:23: Duplicate code detected [alpha.clone.CloneChecker]
+int max(int a, int b) { // expected-warning{{Duplicate code detected}}
+                      ^
+  Report hash: 3d15184f38c5fa57e479b744fe3f5035
+  Notes:
+    1, notes.cpp:10:28: Similar code here
+  Steps:
+    1, notes.cpp:3:23: Duplicate code detected
+
+Found 1 defect(s) in notes.cpp
+
+
+----==== Summary ====----
+------------------------
+Filename  | Report count
+------------------------
+notes.cpp |            1
+------------------------
+-----------------------
+Severity | Report count
+-----------------------
+LOW      |            1
+-----------------------
+----=================----
+Total number of reports: 1
+----=================----
