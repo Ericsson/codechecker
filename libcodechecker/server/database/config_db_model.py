@@ -17,7 +17,7 @@ import sys
 from sqlalchemy import MetaData, Column, Integer, Enum, String, Boolean, \
     ForeignKey, CHAR, DateTime, Text
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.sql.expression import true
+from sqlalchemy.sql.expression import false, true
 
 from libcodechecker.server import permissions
 
@@ -54,13 +54,19 @@ class Product(Base):
     description = Column(Text)
     run_limit = Column(Integer)
 
+    # Disable review status change on UI.
+    is_review_status_change_disabled = Column(Boolean,
+                                              server_default=false())
+
     def __init__(self, endpoint, conn_str, name=None, description=None,
-                 run_limit=None):
+                 run_limit=None, is_review_status_change_disabled=False):
         self.endpoint = endpoint
         self.connection = conn_str
         self.display_name = name if name else endpoint
         self.description = description
         self.run_limit = run_limit
+        self.is_review_status_change_disabled = \
+            True if is_review_status_change_disabled else False
 
 
 def __get_permission_names(scope=None):

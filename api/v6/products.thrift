@@ -27,6 +27,7 @@ struct ProductConfiguration {
   4:          string             description_b64,
   5: optional DatabaseConnection connection,
   6:          i64                runLimit,
+  7: optional bool               isReviewStatusChangeDisabled,
 }
 typedef list<ProductConfiguration> ProductConfigurations
 

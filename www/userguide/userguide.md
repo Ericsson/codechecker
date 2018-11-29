@@ -16,6 +16,8 @@ Table of Contents
 
 * [Products](#userguide-products)
   * [Managing products](#userguide-managing-products)
+    * [Disable review status change](#userguide-disable-review-status-change)
+    * [Remove a product](#userguide-remove-product)
   * [Managing permissions](#userguide-managing-permissions)
 * [List of runs](#userguide-list-of-runs)
   * [Filter runs](#userguide-filter-runs)
@@ -72,6 +74,11 @@ configuration.
 
 ![Edit product](images/edit_product.png)
 
+### <a name="userguide-disable-review-status-change"></a> Disable review status change
+Review status change can be disabled on the WEB UI to force programmers to use
+inline code comments.
+
+### <a name="userguide-remove-product"></a> Remove a product
 Products can be deleted by clicking on the red trash bin. This way the product
 is only unmounted from the server (losing access control data and connection),
 but **no analysis results are deleted**.
