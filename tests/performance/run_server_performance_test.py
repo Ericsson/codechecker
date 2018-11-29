@@ -361,11 +361,7 @@ def main():
         stat.print_stats(args.output)
         sys.exit("Performance test has timed out or killed.")
 
-    def f(signum, frame):
-        pass
-
     signal.signal(signal.SIGINT, finish_test)
-    signal.signal(signal.SIGUSR1, f)
 
     print(os.environ['PATH'])
     threads = [threading.Thread(
@@ -379,6 +375,10 @@ def main():
     if args.timeout > 0:
         threading.Timer(args.timeout,
                         lambda: os.kill(os.getpid(), signal.SIGINT)).start()
+
+    # This command hangs the process until a signal is emitted. This signal may
+    # come either from the user by hitting Ctrl-C or by the simulate_user()
+    # function when it is completed.
     signal.pause()
 
     for t in threads:
