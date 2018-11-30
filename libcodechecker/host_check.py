@@ -37,6 +37,8 @@ def is_ctu_capable(context):
 
 def is_statistics_capable(context):
     """ Detects if the current clang is Statistics compatible. """
+    # Resolve potentially missing binaries.
+    check_supported_analyzers([ClangSA.ANALYZER_NAME], context)
     clangsa_cfg = ClangSA.construct_config_handler([], context)
 
     check_env = analyzer_env.get_check_env(context.path_env_extra,
