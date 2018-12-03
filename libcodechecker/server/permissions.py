@@ -145,7 +145,7 @@ class PermissionHandler(object):
     # control flow that are shared for every permission handler
     # (such as handling default_enabled), but these don't access any
     # database backend.
-    def add_permission(self, auth_name, is_group=False):
+    def add_permission(self, auth_name, is_group=False, user_name='Anonymous'):
         """
         Registers the current permission for the given authentication
         identifier, which is either a username, or a group name, depending on
@@ -158,9 +158,9 @@ class PermissionHandler(object):
         added = self._add_perm_impl(auth_name, is_group)
 
         if added:
-            LOG.info("Permission '{0}' added for {1} '{2}'."
-                     .format(self._perm_name, 'group' if is_group else 'user',
-                             auth_name))
+            LOG.info("Permission '%s' added for %s '%s' by '%s'.",
+                     self._perm_name, 'group' if is_group else 'user',
+                     auth_name, user_name)
 
             # Set the invariant for default_enable.
             if self._permission.default_enable:
@@ -173,12 +173,12 @@ class PermissionHandler(object):
                         (is_group and len(users) == 1 and len(groups) == 1):
                     self._rem_perm_impl("*", False)
         else:
-            LOG.info("Permission '{0}' already added for {1} '{2}'!".format(
-                self._perm_name,
-                'group' if is_group else 'user',
-                auth_name))
+            LOG.info("Permission '%s' already added for %s '%s'!",
+                     self._perm_name, 'group' if is_group else 'user',
+                     auth_name)
 
-    def remove_permission(self, auth_name, is_group=False):
+    def remove_permission(self, auth_name, is_group=False,
+                          user_name='Anonymous'):
         """
         Removes the current permission from the given authentication
         identifier.
@@ -190,9 +190,9 @@ class PermissionHandler(object):
         removed = self._rem_perm_impl(auth_name, is_group)
 
         if removed:
-            LOG.info("Permission '{0}' removed from {1} '{2}'."
-                     .format(self._perm_name, 'group' if is_group else 'user',
-                             auth_name))
+            LOG.info("Permission '%s' removed from %s '%s' by '%s'.",
+                     self._perm_name, 'group' if is_group else 'user',
+                     auth_name, user_name)
 
             # Set the invariant for default_enable.
             if self._permission.default_enable:
@@ -200,10 +200,9 @@ class PermissionHandler(object):
                 if len(users) == 0 and len(groups) == 0:
                     self._add_perm_impl("*", False)
         else:
-            LOG.info("Permission '{0}' already removed from {1} '{2}'!".format(
-                self._perm_name,
-                'group' if is_group else 'user',
-                auth_name))
+            LOG.info("Permission '%s' already removed from %s '%s'!",
+                     self._perm_name, 'group' if is_group else 'user',
+                     auth_name)
 
     def has_permission(self, auth_session):
         """

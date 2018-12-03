@@ -198,8 +198,8 @@ class RequestHandler(SimpleHTTPRequestHandler):
                 # queries for web resources are '/prod/style...' as
                 # opposed to '/style...', which would result in 'style'
                 # being considered product name.
-                LOG.debug("Redirecting user from /{0} to /{0}/index.html"
-                          .format(product_endpoint))
+                LOG.info("Redirecting user from /{0} to /{0}/index.html"
+                         .format(product_endpoint))
 
                 # WARN: Browsers cache '308 Permanent Redirect' responses,
                 # in the event of debugging this, use Private Browsing!
@@ -227,8 +227,8 @@ class RequestHandler(SimpleHTTPRequestHandler):
                 only_product = self.server.get_only_product()
                 if only_product:
                     if only_product.db_status == DBStatus.OK:
-                        LOG.debug("Redirecting '/' to ONLY product '/{0}'"
-                                  .format(only_product.endpoint))
+                        LOG.info("Redirecting '/' to ONLY product '/{0}'"
+                                 .format(only_product.endpoint))
 
                         self.send_response(307)  # 307 Temporary Redirect
                         self.send_header("Location",
@@ -236,7 +236,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
                         self.end_headers()
                         return
                     else:
-                        LOG.debug("ONLY product '/{0}' has database issues..."
+                        LOG.error("ONLY product '/{0}' has database issues..."
                                   .format(only_product.endpoint))
 
                         self.send_response(307)  # 307 Temporary Redirect
@@ -248,10 +248,6 @@ class RequestHandler(SimpleHTTPRequestHandler):
                 # serve the product list.
                 LOG.debug("Serving product list as homepage.")
                 self.path = '/products.html'
-            else:
-                # The path requested does not specify a product: it is most
-                # likely a resource file.
-                LOG.debug("Serving resource '{0}'".format(self.path))
 
             self.send_response(200)  # 200 OK
 
@@ -311,9 +307,9 @@ class RequestHandler(SimpleHTTPRequestHandler):
 
         client_host, client_port = self.client_address
         auth_session = self.__check_session_cookie()
-        LOG.debug("%s:%s -- [%s] POST %s", client_host, str(client_port),
-                  auth_session.user if auth_session else "Anonymous",
-                  self.path)
+        LOG.info("%s:%s -- [%s] POST %s", client_host, str(client_port),
+                 auth_session.user if auth_session else "Anonymous",
+                 self.path)
 
         # Create new thrift handler.
         checker_md_docs = self.server.checker_md_docs

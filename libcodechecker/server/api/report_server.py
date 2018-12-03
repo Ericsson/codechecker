@@ -530,6 +530,12 @@ class ThriftRequestHandler(object):
             'productID': product.id
         }
 
+    def __get_username(self):
+        """
+        Returns the actually logged in user name.
+        """
+        return self.__auth_session.user if self.__auth_session else "Anonymous"
+
     def __require_permission(self, required):
         """
         Helper method to raise an UNAUTHORIZED exception if the user does not
@@ -1121,8 +1127,7 @@ class ThriftRequestHandler(object):
                 review_status = ReviewStatus()
                 review_status.bug_hash = report.bug_id
 
-            user = self.__auth_session.user \
-                if self.__auth_session else "Anonymous"
+            user = self.__get_username()
 
             review_status.status = review_status_str(status)
             review_status.author = user
@@ -1147,6 +1152,10 @@ class ThriftRequestHandler(object):
         with DBSession(self.__Session) as session:
             res = self._setReviewStatus(report_id, status, message, session)
             session.commit()
+
+            LOG.info("Review status of report '%s' was changed to '%s' by %s.",
+                     report_id, review_status_str(status),
+                     self.__get_username())
 
         return res
 
@@ -1211,8 +1220,7 @@ class ThriftRequestHandler(object):
         with DBSession(self.__Session) as session:
             report = session.query(Report).get(report_id)
             if report:
-                user = self.__auth_session.user\
-                    if self.__auth_session else "Anonymous"
+                user = self.__get_username()
                 comment = Comment(report.bug_id,
                                   user,
                                   comment_data.message,
@@ -1240,8 +1248,7 @@ class ThriftRequestHandler(object):
         self.__require_access()
         with DBSession(self.__Session) as session:
 
-            user = self.__auth_session.user \
-                if self.__auth_session else "Anonymous"
+            user = self.__get_username()
 
             comment = session.query(Comment).get(comment_id)
             if comment:
@@ -1270,8 +1277,7 @@ class ThriftRequestHandler(object):
         """
         self.__require_access()
 
-        user = self.__auth_session.user \
-            if self.__auth_session else "Anonymous"
+        user = self.__get_username()
 
         with DBSession(self.__Session) as session:
 
@@ -1283,6 +1289,11 @@ class ThriftRequestHandler(object):
                         'Unathorized comment modification!')
                 session.delete(comment)
                 session.commit()
+
+                LOG.info("Comment '%s...' was removed from bug hash '%s' by "
+                         "'%s'.", comment.message[:10], comment.bug_hash,
+                         self.__get_username())
+
                 return True
             else:
                 msg = 'Comment id ' + str(comment_id) + \
@@ -1917,6 +1928,8 @@ class ThriftRequestHandler(object):
             session.commit()
             session.close()
 
+            LOG.info("Run '%s' was removed by '%s'.", run_id,
+                     self.__get_username())
         return True
 
     @exc_to_thrift_reqfail
@@ -1992,6 +2005,8 @@ class ThriftRequestHandler(object):
             if component:
                 session.delete(component)
                 session.commit()
+                LOG.info("Source component '%s' has been removed by '%s'",
+                         name, self.__get_username())
                 return True
             else:
                 msg = 'Source component ' + str(name) + \
@@ -2407,12 +2422,12 @@ class ThriftRequestHandler(object):
                               .format(name, run_lock.locked_at))
 
                     # Actual store operation begins here.
+                    user_name = self.__get_username()
                     run_id = store_handler.addCheckerRun(session,
                                                          command,
                                                          name,
                                                          tag,
-                                                         user if user
-                                                         else 'Anonymous',
+                                                         user_name,
                                                          run_history_time,
                                                          version,
                                                          force,

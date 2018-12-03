@@ -77,6 +77,9 @@ class ThriftAuthHandler(object):
     @timeit
     def performLogin(self, auth_method, auth_string):
         if auth_method == "Username:Password":
+            user_name, _ = auth_string.split(':')
+            LOG.info("'%s' logged in.", user_name)
+
             session = self.__manager.create_or_get_session(auth_string)
 
             if session:
@@ -92,6 +95,7 @@ class ThriftAuthHandler(object):
 
     @timeit
     def destroySession(self):
+        LOG.info("'%s' logged out.", self.getLoggedInUser())
         token = None
         if self.__auth_session:
             token = self.__auth_session.token
@@ -223,7 +227,8 @@ class ThriftAuthHandler(object):
                     .format(perm.name))
 
             handler = make_handler(perm, params)
-            handler.add_permission(auth_name, is_group)
+            handler.add_permission(auth_name, is_group,
+                                   user_name=self.getLoggedInUser())
 
             session.commit()
             return True
@@ -245,7 +250,8 @@ class ThriftAuthHandler(object):
                     .format(perm.name))
 
             handler = make_handler(perm, params)
-            handler.remove_permission(auth_name, is_group)
+            handler.remove_permission(auth_name, is_group,
+                                      user_name=self.getLoggedInUser())
 
             session.commit()
             return True
@@ -283,6 +289,9 @@ class ThriftAuthHandler(object):
             session.add(session_token)
             session.commit()
 
+            LOG.info("New personal access token '%s...' has been generated "
+                     "by '%s'.", token[:5], self.getLoggedInUser())
+
             return SessionTokenData(token,
                                     description,
                                     str(session_token.last_access))
@@ -312,6 +321,9 @@ class ThriftAuthHandler(object):
 
             # Invalidate the local session by token.
             self.__manager.invalidate_local_session(token)
+
+            LOG.info("Personal access token '%s...' has been removed by '%s'.",
+                     token[:5], self.getLoggedInUser())
 
             return True
 
