@@ -447,6 +447,9 @@ Each report has a unique (hash) identifier generated from checker name
 and the location of the finding: column number, textual content of the line,
 enclosing scope of the bug location (function signature, class, namespace).
 
+See a more detailed description in the [analyzer report identification
+documentation](report_identification.md).
+
 # Listing and Counting Reports <a name="listing-reports"></a>
 
 ## How reports are counted? <a name="how-report-are-counted"></a>
