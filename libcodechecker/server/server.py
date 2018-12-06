@@ -69,7 +69,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
     Handle thrift and browser requests
     Simply modified and extended version of SimpleHTTPRequestHandler
     """
-    auth_token = None
+    auth_session = None
 
     def __init__(self, request, client_address, server):
         BaseHTTPRequestHandler.__init__(self,
@@ -122,12 +122,20 @@ class RequestHandler(SimpleHTTPRequestHandler):
         # in every response if any.
         # This will update the the session cookie
         # on the clients to the newest.
-        if self.auth_token:
-            self.send_header(
-                "Set-Cookie",
-                "{0}={1}; Path=/".format(
-                    session_manager.SESSION_COOKIE_NAME,
-                    self.auth_token))
+        if self.auth_session:
+            token = self.auth_session.token
+            if token:
+                self.send_header(
+                    "Set-Cookie",
+                    "{0}={1}; Path=/".format(
+                        session_manager.SESSION_COOKIE_NAME,
+                        token))
+
+            # Set the current user name in the header.
+            user_name = self.auth_session.user
+            if user_name:
+                self.send_header("X-User", user_name)
+
         SimpleHTTPRequestHandler.end_headers(self)
 
     def do_GET(self):
@@ -135,18 +143,15 @@ class RequestHandler(SimpleHTTPRequestHandler):
         Handles the browser access (GET requests).
         """
 
-        auth_session = self.__check_session_cookie()
+        self.auth_session = self.__check_session_cookie()
         LOG.debug("%s:%s -- [%s] GET %s", self.client_address[0],
                   str(self.client_address[1]),
-                  auth_session.user if auth_session else 'Anonymous',
+                  self.auth_session.user if self.auth_session else 'Anonymous',
                   self.path)
-
-        if auth_session is not None:
-            self.auth_token = auth_session.token
 
         product_endpoint, path = routing.split_client_GET_request(self.path)
 
-        if self.server.manager.is_enabled and not auth_session \
+        if self.server.manager.is_enabled and not self.auth_session \
                 and routing.is_protected_GET_entrypoint(path):
             # If necessary, prompt the user for authentication.
             returnto = '?returnto=' + urllib.quote_plus(self.path.lstrip('/'))\
@@ -306,9 +311,9 @@ class RequestHandler(SimpleHTTPRequestHandler):
         """
 
         client_host, client_port = self.client_address
-        auth_session = self.__check_session_cookie()
+        self.auth_session = self.__check_session_cookie()
         LOG.info("%s:%s -- [%s] POST %s", client_host, str(client_port),
-                 auth_session.user if auth_session else "Anonymous",
+                 self.auth_session.user if self.auth_session else "Anonymous",
                  self.path)
 
         # Create new thrift handler.
@@ -332,7 +337,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
 
         if self.server.manager.is_enabled and \
                 not self.path.endswith('/Authentication') and \
-                not auth_session:
+                not self.auth_session:
             # Bail out if the user is not authenticated...
             # This response has the possibility of melting down Thrift clients,
             # but the user is expected to properly authenticate first.
@@ -362,13 +367,13 @@ class RequestHandler(SimpleHTTPRequestHandler):
                     if request_endpoint == 'Authentication':
                         auth_handler = AuthHandler_v6(
                             self.server.manager,
-                            auth_session,
+                            self.auth_session,
                             self.server.config_session)
                         processor = AuthAPI_v6.Processor(auth_handler)
                     elif request_endpoint == 'Products':
                         prod_handler = ProductHandler_v6(
                             self.server,
-                            auth_session,
+                            self.auth_session,
                             self.server.config_session,
                             product,
                             version)
@@ -391,7 +396,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
                             self.server.manager,
                             product.session_factory,
                             product,
-                            auth_session,
+                            self.auth_session,
                             self.server.config_session,
                             checker_md_docs,
                             checker_md_docs_map,
