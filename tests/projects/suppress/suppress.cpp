@@ -27,14 +27,14 @@ void foo4()
 void foo5()
 {
   // codechecker_suppress [all] foo5 all
-  // codechecker_confirmed [misc-sizeof-expression] foo5 simple
+  // codechecker_confirmed [bugprone-sizeof-expression] foo5 simple
   sizeof(44);
 }
 
 void foo6()
 {
-  // codechecker_suppress [all, misc-sizeof-expression] foo6 multiple
-  // codechecker_confirmed [misc-sizeof-expression] foo6 simple
+  // codechecker_suppress [all, bugprone-sizeof-expression] foo6 multiple
+  // codechecker_confirmed [bugprone-sizeof-expression] foo6 simple
   sizeof(45);
 }
 

@@ -1,7 +1,7 @@
 NORMAL#CodeChecker log --output $LOGFILE$ --build "make source_code_comments" --quiet
-NORMAL#CodeChecker analyze $LOGFILE$ --output $OUTPUT$ --analyzers clang-tidy
+NORMAL#CodeChecker analyze $LOGFILE$ --output $OUTPUT$ --analyzers clang-tidy --enable bugprone-sizeof-expression
 NORMAL#CodeChecker parse $OUTPUT$
-CHECK#CodeChecker check --build "make source_code_comments" --output $OUTPUT$ --quiet --analyzers clang-tidy
+CHECK#CodeChecker check --build "make source_code_comments" --output $OUTPUT$ --quiet --analyzers clang-tidy --enable bugprone-sizeof-expression
 --------------------------------------------------------------------------------
 [] - Starting build ...
 [] - Build finished successfully.
@@ -17,7 +17,7 @@ CHECK#CodeChecker check --build "make source_code_comments" --output $OUTPUT$ --
 [] - To store results use the "CodeChecker store" command.
 [] - See --help and the user guide for further options about parsing and storing the reports.
 [] - ----=================----
-[HIGH] source_code_comments.cpp:13:3: suspicious usage of 'sizeof(K)'; did you mean 'K'? [misc-sizeof-expression]
+[HIGH] source_code_comments.cpp:13:3: suspicious usage of 'sizeof(K)'; did you mean 'K'? [bugprone-sizeof-expression]
   sizeof(43);
   ^
 

@@ -57,14 +57,16 @@ macOS (OS X) development environment.
 
 ## Linux
 
-For a detailed dependency list, please see [Requirements](deps.md). The
-following commands are used to bootstrap CodeChecker on Ubuntu 16.04.1 LTS:
+For a detailed dependency list, and for instructions
+on how to install newer clang and clang-tidy versions
+please see [Requirements](deps.md).
+The following commands are used to bootstrap CodeChecker on Ubuntu 18.04 LTS:
 
 ```sh
 # Install mandatory dependencies for a development and analysis environment.
-# NOTE: clang-3.9 can be replaced by any later versions of LLVM/Clang.
-sudo apt-get install clang-3.9 build-essential curl doxygen gcc-multilib \
-  git python-virtualenv python-dev thrift-compiler
+# NOTE: clang or clang-tidy can be replaced by any later versions of LLVM/Clang.
+sudo apt-get install clang clang-tidy build-essential curl doxygen gcc-multilib \
+      git python-virtualenv python-dev thrift-compiler
 
 # Check out CodeChecker source code.
 git clone https://github.com/Ericsson/CodeChecker.git --depth 1 ~/codechecker
@@ -123,7 +125,9 @@ OS X El Capitan 10.11, macOS Sierra 10.12 and macOS High Sierra 10.13.
 # Download and install dependencies.
 brew update
 brew install doxygen gcc git
-brew install llvm@3.9
+
+# Install the latest clang see: https://formulae.brew.sh/formula/llvm
+brew install llvm@7
 
 # Install Thrift 0.9.3 (Note: the general Thrift version is 0.10.0 on macOS High Sierra 10.13)
 brew unlink thrift
