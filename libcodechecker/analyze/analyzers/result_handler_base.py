@@ -45,7 +45,7 @@ class ResultHandler(object):
     __metaclass__ = ABCMeta
     # Handle the output stdout, or plist or both for an analyzer.
 
-    def __init__(self, action, workspace):
+    def __init__(self, action, workspace, report_hash_type=None):
         """
         Put the temporary files for the workspace.
         """
@@ -61,6 +61,11 @@ class ResultHandler(object):
         self.__buildaction = action
 
         self.__result_file = None
+
+        # Report hash type can influence the post processing
+        # of the results by rewriting the generated
+        # report id (hash) values.
+        self.report_hash_type = report_hash_type
 
     @property
     def buildaction(self):

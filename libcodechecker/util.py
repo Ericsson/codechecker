@@ -504,10 +504,10 @@ def get_line(file_name, line_no, errors='ignore'):
                 line_no -= 1
                 if line_no == 0:
                     return line
-            return ''
+            return u''
     except IOError:
         LOG.error("Failed to open file %s", file_name)
-        return ''
+        return u''
 
 
 class TemporaryDirectory:
