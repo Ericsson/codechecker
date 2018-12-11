@@ -23,8 +23,8 @@ from libcodechecker.analyze import analyzer_env
 from libcodechecker.analyze import ctu_manager
 from libcodechecker.analyze import statistics_collector
 from libcodechecker.analyze.analyzers import analyzer_base
-from libcodechecker.analyze.analyzers import analyzer_types
 from libcodechecker.analyze.analyzers import ctu_triple_arch
+from libcodechecker.analyze.analyzers.analyzer_clangsa import ClangSA
 from libcodechecker.logger import get_logger
 
 
@@ -38,8 +38,7 @@ def collect_statistics(action, source, config, environ, statistics_data):
     """
     cmd, can_collect = statistics_collector.build_stat_coll_cmd(action,
                                                                 config,
-                                                                source,
-                                                                environ)
+                                                                source)
 
     if not can_collect:
         LOG.debug('Can not collect statistical data.')
@@ -49,7 +48,7 @@ def collect_statistics(action, source, config, environ, statistics_data):
     LOG.debug_analyzer(cmd)
 
     ret_code, analyzer_out, analyzer_err = \
-        analyzer_base.SourceAnalyzer.run_proc(cmdstr)
+        analyzer_base.SourceAnalyzer.run_proc(cmdstr, env=environ)
 
     LOG.debug(analyzer_out)
     LOG.debug(analyzer_err)
@@ -99,7 +98,7 @@ def pre_analyze(params):
     for source in action.sources:
         if skip_handler and skip_handler.should_skip(source):
             continue
-        if action.analyzer_type != analyzer_types.CLANG_SA:
+        if action.analyzer_type != ClangSA.ANALYZER_NAME:
             continue
 
         _, source_filename = os.path.split(source)
@@ -110,7 +109,7 @@ def pre_analyze(params):
                  (progress_checked_num.value,
                   progress_actions.value, source_filename))
 
-        config = analyzer_config_map.get(analyzer_types.CLANG_SA)
+        config = analyzer_config_map.get(ClangSA.ANALYZER_NAME)
 
         try:
             if ctu_data:

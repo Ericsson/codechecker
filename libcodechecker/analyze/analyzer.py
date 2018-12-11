@@ -24,6 +24,7 @@ from libcodechecker.analyze import analysis_manager
 from libcodechecker.analyze import analyzer_env
 from libcodechecker.analyze import pre_analysis_manager
 from libcodechecker.analyze.analyzers import analyzer_types
+from libcodechecker.analyze.analyzers.analyzer_clangsa import ClangSA
 
 
 LOG = get_logger('analyzer')
@@ -151,14 +152,14 @@ def perform_analysis(args, skip_handler, context, actions, metadata):
     if 'ctu_phases' in args:
         ctu_dir = os.path.join(args.output_path, 'ctu-dir')
         args.ctu_dir = ctu_dir
-        if analyzer_types.CLANG_SA not in analyzers:
+        if ClangSA.ANALYZER_NAME not in analyzers:
             LOG.error("CTU can only be used with the clang static analyzer.")
             return
         ctu_collect = args.ctu_phases[0]
         ctu_analyze = args.ctu_phases[1]
 
     if 'stats_enabled' in args and args.stats_enabled:
-        if analyzer_types.CLANG_SA not in analyzers:
+        if ClangSA.ANALYZER_NAME not in analyzers:
             LOG.debug("Statistics can only be used with "
                       "the Clang Static Analyzer.")
             return
@@ -208,7 +209,7 @@ def perform_analysis(args, skip_handler, context, actions, metadata):
                                      'tmpExternalFnMaps'})
 
         pre_analyze = [a for a in actions
-                       if a.analyzer_type == analyzer_types.CLANG_SA]
+                       if a.analyzer_type == ClangSA.ANALYZER_NAME]
         pre_analysis_manager.run_pre_analysis(pre_analyze,
                                               context,
                                               config_map,

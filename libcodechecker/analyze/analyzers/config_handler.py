@@ -14,6 +14,8 @@ from __future__ import absolute_import
 from abc import ABCMeta, abstractmethod
 import collections
 import os
+import platform
+import sys
 
 from libcodechecker.logger import get_logger
 
@@ -55,9 +57,9 @@ class AnalyzerConfigHandler(object):
     @abstractmethod
     def get_checker_configs(self):
         """
-        Return a list of (checker_name, key, key_valye) tuples.
+        Return a list of (checker_name, key, key_value) tuples.
         """
-        pass
+        raise NotImplementedError("Subclasses should implement this!")
 
     def add_checker(self, checker_name, enabled, description):
         """
@@ -81,3 +83,108 @@ class AnalyzerConfigHandler(object):
         Return the checkers.
         """
         return self.__available_checkers
+
+    def __gen_name_variations(self):
+        """
+        Generate all applicable name variations from the given checker list.
+        """
+        checker_names = (name for name in self.__available_checkers)
+        reserved_names = []
+
+        for name in checker_names:
+            delim = '.' if '.' in name else '-'
+            parts = name.split(delim)
+            # Creates a list of variations from a checker name, e.g.
+            # ['security', 'security.insecureAPI', 'security.insecureAPI.gets']
+            # from 'security.insecureAPI.gets' or
+            # ['misc', 'misc-dangling', 'misc-dangling-handle']
+            # from 'misc-dangling-handle'.
+            v = [delim.join(parts[:(i + 1)]) for i in range(len(parts))]
+            reserved_names += v
+
+        return reserved_names
+
+    def initialize_checkers(self,
+                            available_profiles,
+                            package_root,
+                            checkers,
+                            checker_config=None,
+                            cmdline_checkers=None,
+                            enable_all=False):
+        """
+        Initializes the checker list for the specified config handler based on
+        given checker profiles, commandline arguments and the
+        analyzer-retrieved checker list.
+        """
+
+        # By default disable all checkers.
+        for checker_name, description in checkers:
+            self.add_checker(checker_name, False, description)
+
+        # Set default enabled or disabled checkers, based on the config file.
+        if checker_config:
+            # Check whether a default profile exists.
+            profiles = checker_config.values()
+            all_profile_names = (
+                profile for check_list in profiles for profile in check_list)
+            if 'default' not in all_profile_names:
+                LOG.warning("No default profile found!")
+            else:
+                # Turn default checkers on.
+                for checker_name, profile_list in checker_config.items():
+                    if 'default' in profile_list:
+                        self.set_checker_enabled(checker_name)
+
+        # If enable_all is given, almost all checkers should be enabled.
+        if enable_all:
+            for checker_name, enabled in checkers:
+                if not checker_name.startswith("alpha.") and \
+                        not checker_name.startswith("debug.") and \
+                        not checker_name.startswith("osx."):
+                    # There are a few exceptions, though, which still need to
+                    # be manually enabled by the user: alpha and debug.
+                    self.set_checker_enabled(checker_name)
+
+                if checker_name.startswith("osx.") and \
+                        platform.system() == 'Darwin':
+                    # OSX checkers are only enable-all'd if we are on OSX.
+                    self.set_checker_enabled(checker_name)
+
+        # Set user defined enabled or disabled checkers from the command line.
+        if cmdline_checkers:
+
+            # Construct a list of reserved checker names.
+            # (It is used to check if a profile name is valid.)
+            reserved_names = self.__gen_name_variations()
+
+            for identifier, enabled in cmdline_checkers:
+
+                # The identifier is a profile name.
+                if identifier in available_profiles:
+                    profile_name = identifier
+
+                    if profile_name == "list":
+                        LOG.error("'list' is a reserved profile keyword. ")
+                        LOG.error("Please choose another profile name in "
+                                  "'{0}'/config/config.json and rebuild."
+                                  .format(package_root))
+                        sys.exit(1)
+
+                    if profile_name in reserved_names:
+                        LOG.error("Profile name '" + profile_name + "'"
+                                  " conflicts with a checker(-group) name.")
+                        LOG.error("Please choose another profile name in "
+                                  "'{0}'/config/config.json and rebuild."
+                                  .format(package_root))
+                        sys.exit(1)
+
+                    profile_checkers = (name for name, profile_list
+                                        in checker_config.items()
+                                        if profile_name in profile_list)
+                    for checker_name in profile_checkers:
+                        self.set_checker_enabled(checker_name, enabled)
+
+                # The identifier is a checker(-group) name.
+                else:
+                    checker_name = identifier
+                    self.set_checker_enabled(checker_name, enabled)

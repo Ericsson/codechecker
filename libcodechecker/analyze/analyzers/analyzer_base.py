@@ -34,11 +34,6 @@ class SourceAnalyzer(object):
         self.__build_action = buildaction
         # Currently analyzed source file.
         self.source_file = ''
-        self.__checkers = []
-
-    @property
-    def checkers(self):
-        return self.__checkers
 
     @property
     def buildaction(self):
@@ -50,9 +45,6 @@ class SourceAnalyzer(object):
 
     @abstractmethod
     def construct_analyzer_cmd(self, result_handler):
-        """
-        Construct the analyzer command.
-        """
         raise NotImplementedError("Subclasses should implement this!")
 
     @classmethod
@@ -61,6 +53,11 @@ class SourceAnalyzer(object):
         In case of the configured binary for the analyzer is not found in the
         PATH, this method is used to find a callable binary.
         """
+        raise NotImplementedError("Subclasses should implement this!")
+
+    @classmethod
+    def construct_config_handler(cls, args, context):
+        """ Should return a subclass of AnalyzerConfigHandler."""
         raise NotImplementedError("Subclasses should implement this!")
 
     @abstractmethod
@@ -108,8 +105,8 @@ class SourceAnalyzer(object):
             res_handler.analyzer_returncode = 1
             return res_handler
 
-    @abstractmethod
-    def get_analyzer_checkers(self, config_handler, env):
+    @classmethod
+    def get_analyzer_checkers(cls, config_handler, env):
         """
         Return the checkers available in the analyzer.
         """

@@ -273,7 +273,8 @@ def add_arguments_to_parser(parser):
                                     "the analysis is considered as a failed "
                                     "one.")
 
-    if host_check.is_ctu_capable():
+    context = package_context.get_context()
+    if host_check.is_ctu_capable(context):
         ctu_opts = parser.add_argument_group(
             "cross translation unit analysis arguments",
             """
@@ -326,7 +327,7 @@ Cross-TU analysis. By default, no CTU analysis is run when
                                    "same translation unit without "
                                    "Cross-TU enabled.")
 
-    if host_check.is_statistics_capable():
+    if host_check.is_statistics_capable(context):
         stat_opts = parser.add_argument_group(
             "EXPERIMENTAL statistics analysis feature arguments",
             """

@@ -1,6 +1,5 @@
 {
   "environment_variables": {
-      "env_package_root" : "CC_PACKAGE_ROOT",
       "env_path" : "PATH",
       "env_ld_lib_path" : "LD_LIBRARY_PATH",
       "cc_logger_bin" : "CC_LOGGER_BIN",

@@ -500,7 +500,7 @@ def parse_options(args):
             break
 
     if result_map.lang:
-        LOG.debug("Detected language" + result_map.lang)
+        LOG.debug("Detected language: " + result_map.lang)
 
     # If there are no source files in the compilation argument
     # handle it as a link command.

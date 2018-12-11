@@ -18,7 +18,8 @@ import sys
 from libcodechecker import db_version
 from libcodechecker import logger
 # TODO: Refers subpackage library
-from libcodechecker.analyze.analyzers import analyzer_types
+from libcodechecker.analyze.analyzers.analyzer_clangsa import ClangSA
+from libcodechecker.analyze.analyzers.analyzer_clang_tidy import ClangTidy
 from libcodechecker.util import load_json_or_empty
 
 LOG = logger.get_logger('system')
@@ -62,8 +63,8 @@ class Context(object):
         self.env_vars = env_vars
 
         self._package_root = package_root
-        self.codechecker_workspace = None
-        self._severity_map = SeverityMap()
+        self._severity_map = SeverityMap(
+            load_json_or_empty(self.checkers_severity_map_file, {}))
         self.__package_version = None
         self.__product_db_version_info = None
         self.__run_db_version_info = None
@@ -75,8 +76,6 @@ class Context(object):
         self.logger_file = None
         self.logger_compilers = None
 
-        self.db_username = None
-
         # Get package specific environment variables.
         self.set_env(env_vars)
 
@@ -87,13 +86,6 @@ class Context(object):
         """
         Get the environment variables.
         """
-        self._package_root = os.environ.get(env_vars['env_package_root'])
-
-        self.codechecker_workspace = os.environ.get('codechecker_workspace')
-
-        self._severity_map = SeverityMap(
-            load_json_or_empty(self.checkers_severity_map_file, {}))
-
         # Get generic package specific environment variables.
         self.logger_bin = os.environ.get(env_vars['cc_logger_bin'])
         self.logger_file = os.environ.get(env_vars['cc_logger_file'])
@@ -144,14 +136,11 @@ class Context(object):
             # will be checked later.
             # Key naming in the dict should be the same as in
             # the supported analyzers list.
-            self.__analyzers[analyzer_types.CLANG_SA] = 'clang'
-            self.__analyzers[analyzer_types.CLANG_TIDY] = 'clang-tidy'
+            self.__analyzers[ClangSA.ANALYZER_NAME] = 'clang'
+            self.__analyzers[ClangTidy.ANALYZER_NAME] = 'clang-tidy'
         else:
             for name, value in compiler_binaries.items():
-                if os.path.isabs(value):
-                    # Check if it is an absolute path.
-                    self.__analyzers[name] = value
-                elif os.path.dirname(value):
+                if os.path.dirname(value):
                     # Check if it is a package relative path.
                     self.__analyzers[name] = os.path.join(self._package_root,
                                                           value)
@@ -245,20 +234,14 @@ class Context(object):
         resource_dir = self.pckg_layout.get('compiler_resource_dir')
         if not resource_dir:
             return ""
-        if os.path.isabs(resource_dir):
-            return resource_dir
-        else:
-            return os.path.join(self._package_root, resource_dir)
+        return os.path.join(self._package_root, resource_dir)
 
     @property
     def path_env_extra(self):
         extra_paths = self.pckg_layout.get('path_env_extra', [])
         paths = []
         for path in extra_paths:
-            if os.path.isabs(path):
-                paths.append(path)
-            else:
-                paths.append(os.path.join(self._package_root, path))
+            paths.append(os.path.join(self._package_root, path))
         return paths
 
     @property
@@ -266,10 +249,7 @@ class Context(object):
         extra_lib = self.pckg_layout.get('ld_lib_path_extra', [])
         ld_paths = []
         for path in extra_lib:
-            if os.path.isabs(path):
-                ld_paths.append(path)
-            else:
-                ld_paths.append(os.path.join(self._package_root, path))
+            ld_paths.append(os.path.join(self._package_root, path))
         return ld_paths
 
     @property
@@ -363,10 +343,7 @@ def get_context():
     LOG.debug(layout_config)
 
     try:
-        return Context(package_root,
-                       layout_config,
-                       cfg_dict)
-
+        return Context(package_root, layout_config, cfg_dict)
     except KeyError as kerr:
         LOG.error(kerr)
         sys.exit(1)

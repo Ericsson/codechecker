@@ -16,15 +16,17 @@ import re
 import shlex
 import subprocess
 
-from libcodechecker.analyze.analyzers import analyzer_base
-from libcodechecker.analyze.analyzers import ctu_triple_arch
 from libcodechecker.analyze import analyzer_env
-from libcodechecker.logger import get_logger
-from libcodechecker.util import get_binary_in_path
-from libcodechecker.analyze.analyzer_env import\
-    extend_analyzer_cmd_with_resource_dir
+from libcodechecker.analyze import host_check
+from libcodechecker.analyze.analyzers import analyzer_base
+from libcodechecker.analyze.analyzers import config_handler_clangsa
+from libcodechecker.analyze.analyzers import ctu_triple_arch
 from libcodechecker.analyze.analyzers.result_handler_clangsa import \
     ResultHandlerClangSA
+from libcodechecker.analyze.analyzer_env import \
+    extend_analyzer_cmd_with_resource_dir
+from libcodechecker.logger import get_logger
+from libcodechecker.util import get_binary_in_path, replace_env_var
 
 LOG = get_logger('analyzer')
 
@@ -64,6 +66,8 @@ class ClangSA(analyzer_base.SourceAnalyzer):
     """
     Constructs clang static analyzer commands.
     """
+    ANALYZER_NAME = 'clangsa'
+
     def __init__(self, config_handler, buildaction):
         super(ClangSA, self).__init__(config_handler, buildaction)
         self.__disable_ctu = False
@@ -103,7 +107,8 @@ class ClangSA(analyzer_base.SourceAnalyzer):
 
         self.__checker_configs.append(checker_cfg)
 
-    def get_analyzer_checkers(self, config_handler, env):
+    @classmethod
+    def get_analyzer_checkers(cls, config_handler, env):
         """
         Return the list of the supported checkers.
         """
@@ -168,8 +173,8 @@ class ClangSA(analyzer_base.SourceAnalyzer):
                                          '-analyzer-checker=' + checker_name])
                 else:
                     analyzer_cmd.extend(['-Xclang',
-                                         '-analyzer-disable-checker',
-                                         '-Xclang', checker_name])
+                                         '-analyzer-disable-checker=' +
+                                         checker_name])
 
             # Get analyzer notes as events from clang.
             analyzer_cmd.extend(['-Xclang',
@@ -286,3 +291,66 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         res_handler.skiplist_handler = skiplist_handler
 
         return res_handler
+
+    @classmethod
+    def construct_config_handler(cls, args, context):
+        handler = config_handler_clangsa.ClangSAConfigHandler()
+        handler.analyzer_plugins_dir = context.checker_plugin
+        handler.analyzer_binary = context.analyzer_binaries.get(
+            cls.ANALYZER_NAME)
+        handler.compiler_resource_dir = \
+            host_check.get_resource_dir(handler.analyzer_binary, context)
+
+        handler.report_hash = args.report_hash \
+            if 'report_hash' in args else None
+
+        check_env = analyzer_env.get_check_env(context.path_env_extra,
+                                               context.ld_lib_path_extra)
+
+        if 'ctu_phases' in args:
+            handler.ctu_dir = os.path.join(args.output_path,
+                                           args.ctu_dir)
+
+            handler.ctu_has_analyzer_display_ctu_progress = \
+                host_check.has_analyzer_feature(
+                    context.analyzer_binaries.get(cls.ANALYZER_NAME),
+                    '-analyzer-display-ctu-progress',
+                    check_env)
+            handler.log_file = args.logfile
+            handler.path_env_extra = context.path_env_extra
+            handler.ld_lib_path_extra = context.ld_lib_path_extra
+
+        try:
+            with open(args.clangsa_args_cfg_file, 'rb') as sa_cfg:
+                handler.analyzer_extra_arguments = \
+                    re.sub(r'\$\((.*?)\)',
+                           replace_env_var(args.clangsa_args_cfg_file),
+                           sa_cfg.read().strip())
+        except IOError as ioerr:
+            LOG.debug_analyzer(ioerr)
+        except AttributeError as aerr:
+            # No clangsa arguments file was given in the command line.
+            LOG.debug_analyzer(aerr)
+
+        checkers = ClangSA.get_analyzer_checkers(handler, check_env)
+
+        # Read clang-sa checkers from the config file.
+        clang_sa_checkers = context.checker_config.get(cls.ANALYZER_NAME +
+                                                       '_checkers')
+
+        try:
+            cmdline_checkers = args.ordered_checkers
+        except AttributeError:
+            LOG.debug_analyzer('No checkers were defined in '
+                               'the command line for ' + cls.ANALYZER_NAME)
+            cmdline_checkers = None
+
+        handler.initialize_checkers(
+            context.available_profiles,
+            context.package_root,
+            checkers,
+            clang_sa_checkers,
+            cmdline_checkers,
+            'enable_all' in args and args.enable_all)
+
+        return handler
