@@ -701,7 +701,7 @@ def check(check_data):
                     if rh.analyzer_returncode == 0:
                         handle_success(rh, result_file, result_base,
                                        skip_handler, capture_analysis_output,
-                                       success_dir, zipfile)
+                                       success_dir)
 
                         msg = "[{0}/{1}] {2} analyzed {3} without" \
                             " CTU successfully.".format(
