@@ -327,10 +327,7 @@ def expand_whole_protocol_and_port(protocol=None, port=None):
     connection protocols understood by CodeChecker.
     """
 
-    proto, portnum = None, None
     if protocol:
-        proto = protocol
-
         if protocol == 'http':
             portnum = 80
         elif protocol == 'https':
@@ -339,13 +336,13 @@ def expand_whole_protocol_and_port(protocol=None, port=None):
             raise ValueError("'{0}' is not a protocol understood by "
                              "CodeChecker".format(protocol))
     else:
-        proto = 'http'
+        protocol = 'http'
         portnum = 8001
 
     if port:
         portnum = port
 
-    return proto, portnum
+    return protocol, portnum
 
 
 def split_server_url(url):
