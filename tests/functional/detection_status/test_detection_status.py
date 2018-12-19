@@ -119,18 +119,23 @@ int main()
         with open(os.path.join(self._test_dir, self._source_file), 'w') as f:
             f.write(self.sources[version])
 
-        codechecker.check(self._codechecker_cfg,
-                          'hello',
-                          self._test_dir)
+    def _check_source_file(self, cfg):
+        codechecker.check(cfg, 'hello', self._test_dir)
 
     def test_same_file_change(self):
         """
         This tests the change of the detection status of bugs when the file
         content changes.
         """
+        runs = self._cc_client.getRunData(None)
+
+        if runs:
+            run_id = max(map(lambda run: run.runId, runs))
+            self._cc_client.removeRun(run_id)
 
         # Check the first file version
         self._create_source_file(0)
+        self._check_source_file(self._codechecker_cfg)
 
         runs = self._cc_client.getRunData(None)
         run_id = max(map(lambda run: run.runId, runs))
@@ -149,6 +154,7 @@ int main()
 
         # Check the second file version
         self._create_source_file(1)
+        self._check_source_file(self._codechecker_cfg)
         reports = self._cc_client.getRunResults([run_id],
                                                 100,
                                                 0,
@@ -169,6 +175,7 @@ int main()
 
         # Check the third file version
         self._create_source_file(2)
+        self._check_source_file(self._codechecker_cfg)
         reports = self._cc_client.getRunResults([run_id],
                                                 100,
                                                 0,
@@ -215,6 +222,7 @@ int main()
 
         # Check the second file version again
         self._create_source_file(1)
+        self._check_source_file(self._codechecker_cfg)
         reports = self._cc_client.getRunResults([run_id],
                                                 100,
                                                 0,
@@ -236,6 +244,7 @@ int main()
 
         # Check the fourth file version
         self._create_source_file(3)
+        self._check_source_file(self._codechecker_cfg)
         reports = self._cc_client.getRunResults([run_id],
                                                 100,
                                                 0,
@@ -264,15 +273,18 @@ int main()
                 self.assertIn(report.bugHash,
                               ['ac147b31a745d91be093bd70bbc5567c'])
 
-    def test_z_check_without_metadata(self):
+    def test_check_without_metadata(self):
         """
         This test checks whether the storage works without a metadata.json.
-        The name of the test contains a "z" character at the beginning. The
-        test run in alphabetical order and it is necessary to run previous
-        tests before this one.
         """
         runs = self._cc_client.getRunData(None)
-        run_id = max(map(lambda run: run.runId, runs))
+        if runs:
+            run_id = max(map(lambda run: run.runId, runs))
+
+            # Remove the run.
+            self._cc_client.removeRun(run_id)
+
+        self._create_source_file(0)
 
         codechecker.analyze(self._codechecker_cfg,
                             'hello',
@@ -288,6 +300,9 @@ int main()
 
         codechecker.store(self._codechecker_cfg, 'hello')
 
+        runs = self._cc_client.getRunData(None)
+        run_id = max(map(lambda run: run.runId, runs))
+
         reports = self._cc_client.getRunResults([run_id],
                                                 100,
                                                 0,
@@ -295,4 +310,57 @@ int main()
                                                 None,
                                                 None)
 
-        self.assertEqual(len(reports), 6)
+        self.assertEqual(len(reports), 2)
+
+    def test_detection_status_off(self):
+        """
+        This test checks reports which have detection status of 'Off'.
+        """
+        runs = self._cc_client.getRunData(None)
+        if runs:
+            run_id = max(map(lambda run: run.runId, runs))
+
+            # Remove the run.
+            self._cc_client.removeRun(run_id)
+
+        cfg = dict(self._codechecker_cfg)
+
+        self._create_source_file(0)
+        self._check_source_file(cfg)
+
+        self._create_source_file(1)
+        self._check_source_file(cfg)
+
+        reports = self._cc_client.getRunResults(None,
+                                                100,
+                                                0,
+                                                [],
+                                                None,
+                                                None)
+        offed_reports = [r for r in reports
+                         if r.detectionStatus == DetectionStatus.OFF]
+        self.assertEqual(len(offed_reports), 0)
+
+        unavail_reports = [r for r in reports
+                           if r.detectionStatus == DetectionStatus.UNAVAILABLE]
+        self.assertEqual(len(unavail_reports), 0)
+
+        cfg['checkers'] = ['-d', 'core.DivideZero']
+
+        self._create_source_file(1)
+        self._check_source_file(cfg)
+
+        reports = self._cc_client.getRunResults(None,
+                                                100,
+                                                0,
+                                                [],
+                                                None,
+                                                None)
+        print(reports)
+        offed_reports = [r for r in reports
+                         if r.detectionStatus == DetectionStatus.OFF]
+        self.assertEqual(len(offed_reports), 1)
+
+        unavail_reports = [r for r in reports
+                           if r.detectionStatus == DetectionStatus.UNAVAILABLE]
+        self.assertEqual(len(unavail_reports), 0)

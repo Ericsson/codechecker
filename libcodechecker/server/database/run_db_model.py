@@ -321,6 +321,8 @@ class Report(Base):
                                    'unresolved',
                                    'resolved',
                                    'reopened',
+                                   'off',
+                                   'unavailable',
                                    name='detection_status'))
 
     detected_at = Column(DateTime, nullable=False)

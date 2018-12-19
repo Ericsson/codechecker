@@ -39,9 +39,11 @@ def metadata_info(metadata_file):
     check_durations = []
     cc_version = None
     analyzer_statistics = {}
+    checkers = {}
 
     if not os.path.isfile(metadata_file):
-        return check_commands, check_durations, cc_version, analyzer_statistics
+        return check_commands, check_durations, cc_version, \
+               analyzer_statistics, checkers
 
     metadata_dict = load_json_or_empty(metadata_file, {})
 
@@ -58,7 +60,10 @@ def metadata_info(metadata_file):
     # Get analyzer statistics.
     analyzer_statistics = metadata_dict.get('analyzer_statistics', {})
 
-    return check_commands, check_durations, cc_version, analyzer_statistics
+    checkers = metadata_dict.get('checkers', {})
+
+    return check_commands, check_durations, cc_version, analyzer_statistics, \
+        checkers
 
 
 def collect_paths_events(report, file_ids, files):

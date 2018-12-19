@@ -412,11 +412,12 @@ def filter_unresolved_reports(q):
     Filter reports which are unresolved.
 
     Note: review status of these reports are not in the SKIP_REVIEW_STATUSES
-    list.
+    list and detection statuses are not in skip_detection_statuses.
     """
     skip_review_status = SKIP_REVIEW_STATUSES
+    skip_detection_statuses = ['resolved', 'off', 'unavailable']
 
-    return q.filter(Report.fixed_at.is_(None)) \
+    return q.filter(Report.detection_status.notin_(skip_detection_statuses)) \
             .filter(or_(ReviewStatus.status.is_(None),
                         ReviewStatus.status.notin_(skip_review_status))) \
             .outerjoin(ReviewStatus,
@@ -2093,7 +2094,8 @@ class ThriftRequestHandler(object):
 
     def __store_reports(self, session, report_dir, source_root, run_id,
                         file_path_to_id, run_history_time, severity_map,
-                        wrong_src_code_comments, skip_handler):
+                        wrong_src_code_comments, skip_handler,
+                        checkers):
         """
         Parse up and store the plist report files.
         """
@@ -2108,6 +2110,32 @@ class ThriftRequestHandler(object):
 
         already_added = set()
         new_bug_hashes = set()
+
+        # Get checker names which was enabled during the analysis.
+        enabled_checkers = set()
+        disabled_checkers = set()
+        for analyzer_checkers in checkers.values():
+            if isinstance(analyzer_checkers, dict):
+                for checker_name, enabled in analyzer_checkers.iteritems():
+                    if enabled:
+                        enabled_checkers.add(checker_name)
+                    else:
+                        disabled_checkers.add(checker_name)
+            else:
+                enabled_checkers.update(analyzer_checkers)
+
+        def checker_is_unavailable(checker_name):
+            """
+            Returns True if the given checker is unavailable.
+
+            We filter out checkers which start with 'clang-diagnostic-' because
+            these are warnings and the warning list is not available right now.
+
+            FIXME: using the 'diagtool' could be a solution later so the
+            client can send the warning list to the server.
+            """
+            return not checker_name.startswith('clang-diagnostic-') and \
+                enabled_checkers and checker_name not in enabled_checkers
 
         # Processing PList files.
         _, _, report_files = next(os.walk(report_dir), ([], [], []))
@@ -2130,6 +2158,7 @@ class ThriftRequestHandler(object):
 
             # Store report.
             for report in reports:
+                checker_name = report.main['check_name']
 
                 source_file = files[report.main['location']['file']]
                 if skip_handler.should_skip(source_file):
@@ -2149,13 +2178,21 @@ class ThriftRequestHandler(object):
                 LOG.debug("Storing report")
                 bug_id = report.main[
                     'issue_hash_content_of_line_in_context']
+
+                detection_status = 'new'
+                detected_at = run_history_time
+
                 if bug_id in hash_map_reports:
                     old_report = hash_map_reports[bug_id][0]
                     old_status = old_report.detection_status
                     detection_status = 'reopened' \
                         if old_status == 'resolved' else 'unresolved'
-                else:
-                    detection_status = 'new'
+                    detected_at = old_report.detected_at
+
+                if checker_name in disabled_checkers:
+                    detection_status = 'off'
+                elif checker_is_unavailable(checker_name):
+                    detection_status = 'unavailable'
 
                 report_id = store_handler.addReport(
                     session,
@@ -2166,8 +2203,7 @@ class ThriftRequestHandler(object):
                     bug_events,
                     bug_extended_data,
                     detection_status,
-                    run_history_time if detection_status == 'new' else
-                    old_report.detected_at,
+                    detected_at,
                     severity_map)
 
                 new_bug_hashes.add(bug_id)
@@ -2181,7 +2217,6 @@ class ThriftRequestHandler(object):
                 if os.path.isfile(source_file_name):
                     sc_handler = SourceCodeCommentHandler(source_file_name)
 
-                    checker_name = report.main['check_name']
                     report_line = last_report_event['location']['line']
                     source_file = os.path.basename(file_name)
 
@@ -2226,7 +2261,14 @@ class ThriftRequestHandler(object):
                     if report.fixed_at:
                         continue
 
-                    report.detection_status = 'resolved'
+                    checker = report.checker_id
+                    if checker in disabled_checkers:
+                        report.detection_status = 'off'
+                    elif checker_is_unavailable(checker):
+                        report.detection_status = 'unavailable'
+                    else:
+                        report.detection_status = 'resolved'
+
                     report.fixed_at = run_history_time
 
         if len(reports_to_delete) != 0:
@@ -2404,8 +2446,8 @@ class ThriftRequestHandler(object):
 
                 run_history_time = datetime.now()
 
-                check_commands, check_durations, cc_version, statistics = \
-                    store_handler.metadata_info(metadata_file)
+                check_commands, check_durations, cc_version, statistics, \
+                    checkers = store_handler.metadata_info(metadata_file)
 
                 command = ''
                 if len(check_commands) == 1:
@@ -2458,7 +2500,8 @@ class ThriftRequestHandler(object):
                                          run_history_time,
                                          context.severity_map,
                                          wrong_src_code_comments,
-                                         skip_handler)
+                                         skip_handler,
+                                         checkers)
 
                     store_handler.setRunDuration(session,
                                                  run_id,

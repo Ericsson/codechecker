@@ -15,9 +15,6 @@ from codeCheckerDBAccess_v6.ttypes import DetectionStatus, ReviewStatus, \
 
 
 def detection_status_enum(status):
-    """
-    Returns the given detection status Thrift enum value.
-    """
     if status == 'new':
         return DetectionStatus.NEW
     elif status == 'resolved':
@@ -26,12 +23,13 @@ def detection_status_enum(status):
         return DetectionStatus.UNRESOLVED
     elif status == 'reopened':
         return DetectionStatus.REOPENED
+    elif status == 'off':
+        return DetectionStatus.OFF
+    elif status == 'unavailable':
+        return DetectionStatus.UNAVAILABLE
 
 
 def detection_status_str(status):
-    """
-    Converts the given detection status to string.
-    """
     if status == DetectionStatus.NEW:
         return 'new'
     elif status == DetectionStatus.RESOLVED:
@@ -40,6 +38,10 @@ def detection_status_str(status):
         return 'unresolved'
     elif status == DetectionStatus.REOPENED:
         return 'reopened'
+    elif status == DetectionStatus.OFF:
+        return 'off'
+    elif status == DetectionStatus.UNAVAILABLE:
+        return 'unavailable'
 
 
 def review_status_str(status):

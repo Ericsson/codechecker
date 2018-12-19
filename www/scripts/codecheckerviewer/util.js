@@ -20,8 +20,8 @@ function (locale, dom, style, json) {
                     + "the reports are stored again with the same run name. "
                     + "When storing the results of a run from scratch then "
                     + "each report will have detection status of 'New'.",
-    numOfUnresolved : "Number of non unique reports excluding Resolved, "
-                    + "False positive and Intentional reports",
+    numOfUnresolved : "Number of non unique reports excluding Resolved, Off, "
+                    + "Unavailable, False positive and Intentional reports",
     versionTag      : "Latest version tag of this run."
   };
 
@@ -276,6 +276,10 @@ function (locale, dom, style, json) {
           return 'Unresolved';
         case CC_OBJECTS.DetectionStatus.REOPENED:
           return 'Reopened';
+        case CC_OBJECTS.DetectionStatus.OFF:
+          return 'Off';
+        case CC_OBJECTS.DetectionStatus.UNAVAILABLE:
+          return 'Unavailable';
         default:
           console.error(
             'Non existing detection status code: ',
