@@ -15,27 +15,29 @@ class BuildAction(object):
     """
     The objects of this class hold information which is the input of the
     analyzer engines.
-
-    !!!WARNING!!!
-    This class defines a mutable type, however, it has a __hash__() method. It
-    is against the "hashable" concept, since it leads to undefined behavior.
     """
+
+    __slots__ = ['analyzer_options',
+                 'compiler_includes',
+                 'compiler_standard',
+                 'analyzer_type',
+                 'original_command',
+                 'directory',
+                 'output',
+                 'lang',
+                 'target',
+                 'source',
+                 'action_type']
+
     LINK = 0
     COMPILE = 1
     PREPROCESS = 2
     INFO = 3
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         # Filtered list of options.
-        self.analyzer_options = []
-        self.compiler_includes = []
-        self.analyzer_type = -1
-        self.original_command = ''
-        self.directory = ''
-        self.output = ''
-        self.lang = None
-        self.target = ''
-        self.source = ''
+        for slot in BuildAction.__slots__:
+            super(BuildAction, self).__setattr__(slot, kwargs[slot])
 
     def __str__(self):
         # For debugging.
@@ -47,6 +49,11 @@ class BuildAction(object):
                    self.analyzer_type, self.analyzer_options,
                    self.directory, self.output, self.lang, self.target,
                    self.source)
+
+    def __setattr__(self, attr, value):
+        if hasattr(self, attr) and getattr(self, attr) != value:
+            raise AttributeError("BuildAction is immutable")
+        super(BuildAction, self).__setattr__(attr, value)
 
     def __eq__(self, other):
         return other._original_command == self._original_command
@@ -63,3 +70,8 @@ class BuildAction(object):
         hash_content.append(self.target)
         hash_content.append(self.source)
         return hash(hashlib.sha1(''.join(hash_content)).hexdigest())
+
+    def with_attr(self, attr, value):
+        details = {key: getattr(self, key) for key in BuildAction.__slots__}
+        details[attr] = value
+        return BuildAction(**details)

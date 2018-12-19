@@ -19,7 +19,6 @@ import traceback
 
 # TODO: This is a cross-subpackage import!
 from libcodechecker.analyze import gcc_toolchain
-from libcodechecker.log import build_action
 from libcodechecker.log.build_action import BuildAction
 from libcodechecker.logger import get_logger
 
@@ -283,44 +282,47 @@ class ImplicitCompilerInfo(object):
             result.append(include_dir)
         return result
 
-    def get_compiler_includes(self, action):
+    def get_compiler_includes(self, compiler, language, compiler_flags):
         """
         Returns a list of default includes of the given compiler.
 
-        action -- A BuildAction object containing the details of compilation.
+        compiler -- The compiler binary of which the implicit include paths are
+                    fetched.
+        language -- The programming lenguage being compiled (e.g. 'c' or 'c++')
+        compiler_flags -- A list of compiler flags which may affect the list
+                          of implicit compiler include paths, like -std=,
+                          --sysroot= or -m32, -m64.
         """
-        # The first sysroot flag found among the compilation options is added
-        # to the command below to give a more precise default include list.
-        # Absence of any sysroot flags results in an empty string.
-        sysroot = ""
-        for i, item in enumerate(action.analyzer_options):
-            if item.startswith("--sysroot"):
-                # len("--sysroot") == 9
-                # len("--sysroot=") == 10
-                sysroot = action.analyzer_options[i + 1] \
-                    if len(item) == 9 else item[10:]
-                sysroot = "--sysroot=" + sysroot
-
         # If these options are present in the original build command, they must
         # be forwarded to get_compiler_includes and get_compiler_defines so the
         # resulting includes point to the target that was used in the build.
         pattern = re.compile('-m(32|64)|-std=')
-        extra_opts = filter(pattern.match, action.analyzer_options)
-        cmd = action.compiler + " " + ' '.join(extra_opts) \
-            + " -E -x " + action.lang + " " + sysroot + " - -v "
+        extra_opts = filter(pattern.match, compiler_flags)
+
+        pos = next((pos for pos, val in enumerate(compiler_flags)
+                   if val.startswith('--sysroot')), None)
+        if pos is not None:
+            if compiler_flags[pos] == '--sysroot':
+                extra_opts.append('--sysroot=' + compiler_flags[pos + 1])
+            else:
+                extra_opts.append(compiler_flags[pos])
+
+        cmd = compiler + " " + ' '.join(extra_opts) \
+            + " -E -x " + language + " - -v "
 
         include_dirs = self.__filter_compiler_includes(
             self.__parse_compiler_includes(self.__get_compiler_err(cmd)))
 
         return ["-isystem " + os.path.normpath(idir) for idir in include_dirs]
 
-    def get_compiler_target(self, action):
+    def get_compiler_target(self, compiler):
         """
         Returns the target triple of the given compiler as a string.
 
-        action -- A BuildAction object containing the details of compilation.
+        compiler -- The compiler binary of which the target architecture is
+                    fetched.
         """
-        lines = self.__get_compiler_err(action.compiler + ' -v')
+        lines = self.__get_compiler_err(compiler + ' -v')
 
         target_label = "Target:"
         target = ""
@@ -332,7 +334,7 @@ class ImplicitCompilerInfo(object):
 
         return target
 
-    def get_compiler_standard(self, action):
+    def get_compiler_standard(self, compiler, language):
         """
         Returns the default compiler standard of the given compiler. The
         standard is determined by the values of __STDC_VERSION__ and
@@ -341,6 +343,10 @@ class ImplicitCompilerInfo(object):
         standard. For sake of generality we return the GNU extended standard,
         since it should be a superset of the non-extended one, thus applicable
         in a more general manner.
+
+        compiler -- The compiler binary of which the default compiler standard
+                    is fetched.
+        language -- The programming lenguage being compiled (e.g. 'c' or 'c++')
         """
         VERSION_C = u"""
 #ifdef __STDC_VERSION__
@@ -380,13 +386,13 @@ class ImplicitCompilerInfo(object):
 
         standard = ""
         with tempfile.NamedTemporaryFile(
-                suffix=('.c' if action.lang == 'c' else '.cpp')) as source:
+                suffix=('.c' if language == 'c' else '.cpp')) as source:
 
             with source.file as f:
-                f.write(VERSION_C if action.lang == 'c' else VERSION_CPP)
+                f.write(VERSION_C if language == 'c' else VERSION_CPP)
 
             try:
-                proc = subprocess.Popen([action.compiler, source.name],
+                proc = subprocess.Popen([compiler, source.name],
                                         stdout=subprocess.PIPE,
                                         stderr=subprocess.PIPE)
                 _, err = proc.communicate()  # Wait for execution.
@@ -405,25 +411,31 @@ class ImplicitCompilerInfo(object):
                 standard = '-std=iso9899:199409'
             else:
                 standard = '-std=gnu' \
-                         + ('' if action.lang == 'c' else '++') \
+                         + ('' if language == 'c' else '++') \
                          + standard
 
         return standard
 
-    def set_implicit_compiler_info(self, action):
-        if action.compiler not in self.compiler_includes:
-            self.compiler_includes[action.compiler] = \
-                self.get_compiler_includes(action)
-        if action.compiler not in self.compiler_target:
-            self.compiler_target[action.compiler] = \
-                self.get_compiler_target(action)
-        if action.compiler not in self.compiler_standard:
-            self.compiler_standard[action.compiler] = \
-                self.get_compiler_standard(action)
+    def set_implicit_compiler_info(self, details):
+        if details['compiler'] not in self.compiler_includes:
+            self.compiler_includes[details['compiler']] = \
+                self.get_compiler_includes(details['compiler'],
+                                           details['lang'],
+                                           details['analyzer_options'])
+        if details['compiler'] not in self.compiler_target:
+            self.compiler_target[details['compiler']] = \
+                self.get_compiler_target(details['compiler'])
+        if details['compiler'] not in self.compiler_standard:
+            self.compiler_standard[details['compiler']] = \
+                self.get_compiler_standard(details['compiler'],
+                                           details['lang'])
 
-        action.compiler_includes = self.compiler_includes[action.compiler]
-        action.compiler_standard = self.compiler_standard[action.compiler]
-        action.target = self.compiler_target[action.compiler]
+        details['compiler_includes'] = details['compiler_includes'] or \
+            self.compiler_includes[details['compiler']]
+        details['compiler_standard'] = details['compiler_standard'] or \
+            self.compiler_standard[details['compiler']]
+        details['target'] = details['target'] or \
+            self.compiler_target[details['compiler']]
 
     def get_implicit_compiler_info(self):
         result = defaultdict(dict)
@@ -470,13 +482,13 @@ def get_language(extension):
     return mapping.get(extension)
 
 
-def __collect_compile_opts(flag_iterator, buildaction):
+def __collect_compile_opts(flag_iterator, details):
     """
     This function collects the compilation (i.e. not linker or preprocessor)
     flags to the buildaction.
     """
     if COMPILE_OPTIONS.match(flag_iterator.item):
-        buildaction.analyzer_options.append(flag_iterator.item)
+        details['analyzer_options'].append(flag_iterator.item)
         return True
 
     m = COMPILE_OPTIONS_MERGED.match(flag_iterator.item)
@@ -493,12 +505,12 @@ def __collect_compile_opts(flag_iterator, buildaction):
 
         if flag == '-I':
             param = os.path.normpath(
-                os.path.join(buildaction.directory, param))
+                os.path.join(details['directory'], param))
 
         if together:
-            buildaction.analyzer_options.append(flag + param)
+            details['analyzer_options'].append(flag + param)
         else:
-            buildaction.analyzer_options.extend([flag, param])
+            details['analyzer_options'].extend([flag, param])
 
         return True
 
@@ -516,25 +528,25 @@ def __skip_sources(flag_iterator, _):
     return False
 
 
-def __determine_action_type(flag_iterator, buildaction):
+def __determine_action_type(flag_iterator, details):
     """
     This function determines whether this is a preprocessing, compilation or
     linking action and sets it in the buildaction object.
     """
     if flag_iterator.item == '-c':
-        buildaction.action_type = BuildAction.COMPILE
+        details['action_type'] = BuildAction.COMPILE
         return True
     elif flag_iterator.item.startswith('-print-prog-name'):
-        buildaction.action_type = BuildAction.INFO
+        details['action_type'] = BuildAction.INFO
         return True
     elif PRECOMPILATION_OPTION.match(flag_iterator.item):
-        buildaction.action_type = BuildAction.PREPROCESS
+        details['action_type'] = BuildAction.PREPROCESS
         return True
 
     return False
 
 
-def __get_arch(flag_iterator, buildaction):
+def __get_arch(flag_iterator, details):
     """
     This function consumes -arch flag which is followed by the target
     architecture. This is then collected to the buildaction object.
@@ -545,13 +557,13 @@ def __get_arch(flag_iterator, buildaction):
     # Where do we use this architecture during analysis and why?
     if flag_iterator.item == '-arch':
         next(flag_iterator)
-        buildaction.target = flag_iterator.item
+        details['target'] = flag_iterator.item
         return True
 
     return False
 
 
-def __get_language(flag_iterator, buildaction):
+def __get_language(flag_iterator, details):
     """
     This function consumes -x flag which is followed by the language. This
     language is then collected to the buildaction object.
@@ -560,26 +572,26 @@ def __get_language(flag_iterator, buildaction):
     # command with different languages.
     if flag_iterator.item == '-x':
         next(flag_iterator)
-        buildaction.lang = flag_iterator.item
+        details['lang'] = flag_iterator.item
         return True
 
     return False
 
 
-def __get_output(flag_iterator, buildaction):
+def __get_output(flag_iterator, details):
     """
     This function consumes -o flag which is followed by the output file of the
     action. This file is then collected to the buildaction object.
     """
     if flag_iterator.item == '-o':
         next(flag_iterator)
-        buildaction.output = flag_iterator.item
+        details['output'] = flag_iterator.item
         return True
 
     return False
 
 
-def __replace(flag_iterator, buildaction):
+def __replace(flag_iterator, details):
     """
     This function extends the analyzer options list with the corresponding
     replacement based on REPLACE_OPTIONS_MAP if the flag_iterator is currently
@@ -588,7 +600,7 @@ def __replace(flag_iterator, buildaction):
     value = REPLACE_OPTIONS_MAP.get(flag_iterator.item)
 
     if value:
-        buildaction.analyzer_options.extend(value)
+        details['analyzer_options'].extend(value)
 
     return bool(value)
 
@@ -621,13 +633,23 @@ def parse_options(compilation_db_entry):
                             directory.
     """
 
-    buildaction = BuildAction()
+    details = {
+        'analyzer_options': [],
+        'compiler_includes': [],
+        'compiler_standard': '',
+        'analyzer_type': -1,
+        'original_command': '',
+        'directory': '',
+        'output': '',
+        'lang': None,
+        'target': '',
+        'source': ''}
 
     if 'arguments' in compilation_db_entry:
         gcc_command = compilation_db_entry['arguments']
-        buildaction.original_command = ' '.join(gcc_command)
+        details['original_command'] = ' '.join(gcc_command)
     elif 'command' in compilation_db_entry:
-        buildaction.original_command = compilation_db_entry['command']
+        details['original_command'] = compilation_db_entry['command']
         gcc_command = compilation_db_entry['command'] \
             .replace(r'\"', '"') \
             .replace(r'"', r'"\"')
@@ -635,11 +657,11 @@ def parse_options(compilation_db_entry):
     else:
         raise KeyError("No valid 'command' or 'arguments' entry found!")
 
-    buildaction.directory = compilation_db_entry['directory']
-    buildaction.action_type = buildaction.COMPILE
-    buildaction.compiler = gcc_command[0]
-    if '++' in buildaction.compiler or 'cpp' in buildaction.compiler:
-        buildaction.lang = 'c++'
+    details['directory'] = compilation_db_entry['directory']
+    details['action_type'] = BuildAction.COMPILE
+    details['compiler'] = gcc_command[0]
+    if '++' in details['compiler'] or 'cpp' in details['compiler']:
+        details['lang'] = 'c++'
 
     flag_transformers = [
         __skip,
@@ -653,28 +675,47 @@ def parse_options(compilation_db_entry):
 
     for it in OptionIterator(gcc_command[1:]):
         for flag_transformer in flag_transformers:
-            if flag_transformer(it, buildaction):
+            if flag_transformer(it, details):
                 break
         else:
             pass
             # print('Unhandled argument: ' + it.item)
 
-    buildaction.source = os.path.normpath(
+    details['source'] = os.path.normpath(
         os.path.join(compilation_db_entry['directory'],
                      compilation_db_entry['file']))
 
     # In case the file attribute in the entry is empty.
-    if buildaction.source == '.':
-        buildaction.source = ''
+    if details['source'] == '.':
+        details['source'] = ''
 
-    lang = get_language(os.path.splitext(buildaction.source)[1])
+    lang = get_language(os.path.splitext(details['source'])[1])
     if lang:
-        if buildaction.lang is None:
-            buildaction.lang = lang
+        if details['lang'] is None:
+            details['lang'] = lang
     else:
-        buildaction.action_type = BuildAction.LINK
+        details['action_type'] = BuildAction.LINK
 
-    return buildaction
+    # With gcc-toolchain a non default compiler toolchain can be set. Clang
+    # will search for include paths and libraries based on the gcc-toolchain
+    # parameter. Detecting extra include paths from the host compiler could
+    # conflict with this.
+
+    # For example if the compiler in the compile command is clang and
+    # gcc-toolchain is set we will get the include paths for clang and not for
+    # the compiler set in gcc-toolchain. This can cause missing headers during
+    # the analysis.
+
+    implicit_compiler_info = ImplicitCompilerInfo()
+
+    toolchain = \
+        gcc_toolchain.toolchain_in_args(details['analyzer_options'])
+
+    # Store the compiler built in include paths and defines.
+    if not toolchain:
+        implicit_compiler_info.set_implicit_compiler_info(details)
+
+    return BuildAction(**details)
 
 
 def parse_log(compilation_database,
@@ -695,8 +736,8 @@ def parse_log(compilation_database,
                           targets, default standard version).
     """
     try:
-        filtered_build_actions = set()
         implicit_compiler_info = ImplicitCompilerInfo()
+        filtered_build_actions = set()
 
         for entry in compilation_database:
             if skip_handler and skip_handler.should_skip(entry['file']):
@@ -706,26 +747,8 @@ def parse_log(compilation_database,
 
             if not action.lang:
                 continue
-            if action.action_type != build_action.BuildAction.COMPILE:
+            if action.action_type != BuildAction.COMPILE:
                 continue
-
-            # With gcc-toolchain a non default compiler toolchain can be set.
-            # Clang will search for include paths and libraries based on the
-            # gcc-toolchain parameter.
-            # Detecting extra include paths from the host compiler could
-            # conflict with this.
-
-            # For example if the compiler in the compile command is clang
-            # and gcc-toolchain is set we will get the include paths
-            # for clang and not for the compiler set in gcc-toolchain.
-            # This can cause missing headers during the analysis.
-
-            toolchain = \
-                gcc_toolchain.toolchain_in_args(action.analyzer_options)
-
-            # Store the compiler built in include paths and defines.
-            if not toolchain:
-                implicit_compiler_info.set_implicit_compiler_info(action)
 
             # Filter out duplicate compilation commands.
             filtered_build_actions.add(action)

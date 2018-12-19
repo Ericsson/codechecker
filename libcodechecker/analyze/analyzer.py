@@ -10,7 +10,6 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
-import copy
 from multiprocessing.managers import SyncManager
 import os
 import shlex
@@ -39,9 +38,7 @@ def prepare_actions(actions, enabled_analyzers):
 
     for ea in enabled_analyzers:
         for action in actions:
-            new_action = copy.deepcopy(action)
-            new_action.analyzer_type = ea
-            res.append(new_action)
+            res.append(action.with_attr('analyzer_type', ea))
     return res
 
 
