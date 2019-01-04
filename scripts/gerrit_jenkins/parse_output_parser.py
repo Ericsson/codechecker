@@ -45,7 +45,7 @@ def process_reports(repo_dir, reports, report_url):
         elif line == '\n':
             read = False
         elif read:
-            issues[-1].append(line)
+            issues[-1].append(line.replace('"', '\\"'))
 
     result = -1 if issues else 1
     report = ""
