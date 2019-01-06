@@ -1,0 +1,9 @@
+version: '3.6'  
+services:  
+  controller:
+    image: codechecker
+    command: tail -F /dev/null
+    build:
+      context: .
+    volumes:
+      - /private/tmp/workspace:/workspace
