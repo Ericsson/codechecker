@@ -17,7 +17,8 @@ RUN apt-get update \
        doxygen \
        gcc-multilib \
        git \
-       python-virtualenv \
+       python-pip \
+       python-setuptools \
        python-dev \
        libsasl2-dev \
        libldap2-dev \
@@ -30,4 +31,7 @@ COPY . /codechecker
 
 WORKDIR "/codechecker"
 
-CMD ["make", "venv_dev", "pycodestyle", "package", "test_unit", "test_sqlite"]
+RUN pip install wheel
+RUN pip install -r requirements_py/requirements.txt
+
+RUN make package
