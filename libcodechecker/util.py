@@ -18,7 +18,6 @@ import json
 import os
 import re
 import shutil
-import signal
 import socket
 import stat
 import subprocess
@@ -202,8 +201,21 @@ def call_command(command, env=None, cwd=None):
         return oerr.strerror, oerr.errno
 
 
+def kill_process_tree(parent_pid, recursive=False):
+    proc = psutil.Process(parent_pid)
+    children = proc.children(recursive)
+
+    # Send a SIGTERM (Ctrl-C) to the main process
+    proc.terminate()
+
+    # If children processes don't stop gracefully in time,
+    # slaughter them by force.
+    __, still_alive = psutil.wait_procs(children, timeout=5)
+    for p in still_alive:
+        p.kill()
+
+
 def setup_process_timeout(proc, timeout,
-                          signal_at_timeout=signal.SIGTERM,
                           failure_callback=None):
     """
     Setup a timeout on a process. After `timeout` seconds, the process is
@@ -214,8 +226,6 @@ def setup_process_timeout(proc, timeout,
     :param timeout: The timeout the process is allowed to run for, in seconds.
       This timeout is counted down some moments after calling
       setup_process_timeout(), and due to OS scheduling, might not be exact.
-    :param signal_at_timeout: The signal to use when the process exceeds the
-      timeout.
     :param failure_callback: An optional function which is called when the
       process is killed by the timeout. This is called with no arguments
       passed.
@@ -238,9 +248,9 @@ def setup_process_timeout(proc, timeout,
         """
         LOG.debug("Process {0} has ran for too long, killing it!"
                   .format(watch['pid']))
-        os.kill(watch['pid'], signal_at_timeout)
         watch['counting'] = False
         watch['killed'] = True
+        kill_process_tree(watch['pid'], True)
 
         if failure_callback:
             failure_callback()
@@ -281,20 +291,6 @@ def setup_process_timeout(proc, timeout,
         return watch['killed']
 
     return __cleanup_timeout
-
-
-def kill_process_tree(parent_pid):
-    proc = psutil.Process(parent_pid)
-    children = proc.children()
-
-    # Send a SIGTERM (Ctrl-C) to the main process
-    proc.terminate()
-
-    # If children processes don't stop gracefully in time,
-    # slaughter them by force.
-    __, still_alive = psutil.wait_procs(children, timeout=5)
-    for p in still_alive:
-        p.kill()
 
 
 def get_default_workspace():
