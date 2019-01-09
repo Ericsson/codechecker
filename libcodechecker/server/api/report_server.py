@@ -1130,7 +1130,7 @@ class ThriftRequestHandler(object):
 
             review_status.status = review_status_str(status)
             review_status.author = user
-            review_status.message = message
+            review_status.message = message.encode('utf8')
             review_status.date = datetime.now()
 
             session.add(review_status)
