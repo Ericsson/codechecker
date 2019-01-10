@@ -71,12 +71,16 @@ def setup_package():
 def teardown_package():
     """Stop the CodeChecker server and clean up after the tests."""
 
-    # Let the remaining CodeChecker servers die.
-    EVENT_1.set()
-
     # TODO If environment variable is set keep the workspace
     # and print out the path.
     global TEST_WORKSPACE
+
+    check_env = env.import_test_cfg(TEST_WORKSPACE)[
+        'codechecker_cfg']['check_env']
+    codechecker.remove_test_package_product(TEST_WORKSPACE, check_env)
+
+    # Let the remaining CodeChecker servers die.
+    EVENT_1.set()
 
     # The custom server stated in a separate home needs to be waited, so it
     # can properly execute its finalizers.

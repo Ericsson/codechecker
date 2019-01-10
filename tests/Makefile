@@ -43,8 +43,7 @@ SHUTDOWN_SERVER_CMD = echo "Shutting down server..."; \
 # shut down servers.
 EXIT_ERROR = { ${SHUTDOWN_SERVER_CMD}; exit 1; }
 
-FUNCTIONAL_TEST_CMD = $(CLEAR_WORKSPACE_CMD) && \
-		$(REPO_ROOT) $(CLANG_VERSION) $(TEST_PROJECT) \
+FUNCTIONAL_TEST_CMD = $(REPO_ROOT) $(CLANG_VERSION) $(TEST_PROJECT) \
 		nosetests $(NOSECFG) tests/functional \
 		&& { ${SHUTDOWN_SERVER_CMD}; } || ${EXIT_ERROR}
 
@@ -54,7 +53,7 @@ MAKE_DB_CMD = bash -c 'psql -h localhost \
 
 DROP_DB_CMD = bash -c 'psql -h localhost \
 		-p $${TEST_DBPORT} -U $${TEST_DBUSERNAME} postgres \
-		-c "DROP DATABASE codechecker_config_$${CODECHECKER_DB_DRIVER}"'
+		-c "DROP DATABASE IF EXISTS codechecker_config_$${CODECHECKER_DB_DRIVER}"'
 
 run_test: venv_dev
 	$(ACTIVATE_DEV_VENV) && \
@@ -74,11 +73,11 @@ test_functional_novenv: test_sqlite_novenv test_psql_novenv
 
 test_sqlite: venv_dev
 		python tests/check_clang.py || exit 1;
-		$(ACTIVATE_DEV_VENV) && $(FUNCTIONAL_TEST_CMD)
+		$(ACTIVATE_DEV_VENV) && $(CLEAR_WORKSPACE_CMD) && $(FUNCTIONAL_TEST_CMD)
 
 test_sqlite_novenv:
 		python tests/check_clang.py || exit 1;
-		$(FUNCTIONAL_TEST_CMD)
+		$(CLEAR_WORKSPACE_CMD) && $(FUNCTIONAL_TEST_CMD)
 
 test_psql: test_psql_psycopg2 test_psql_pg8000
 
@@ -87,14 +86,18 @@ test_psql_novenv: test_psql_psycopg2_novenv test_psql_pg8000_novenv
 test_psql_psycopg2: venv_dev
 	python tests/check_clang.py || exit 1;
 	$(ACTIVATE_DEV_VENV) && \
+		$(DBUNAME) $(DBPORT) $(PSYCOPG2) $(DROP_DB_CMD) && \
 		$(DBUNAME) $(DBPORT) $(PSYCOPG2) $(MAKE_DB_CMD) && \
+		$(CLEAR_WORKSPACE_CMD) && \
 		$(PSQL) $(DBUNAME) $(DBPORT) $(PSYCOPG2) \
 		$(FUNCTIONAL_TEST_CMD) && \
 		$(DBUNAME) $(DBPORT) $(PSYCOPG2) $(DROP_DB_CMD)
 
 test_psql_psycopg2_novenv:
 		python tests/check_clang.py || exit 1;
+		$(DBUNAME) $(DBPORT) $(PSYCOPG2) $(DROP_DB_CMD) && \
 		$(DBUNAME) $(DBPORT) $(PSYCOPG2) $(MAKE_DB_CMD) && \
+				$(CLEAR_WORKSPACE_CMD) && \
 		$(PSQL) $(DBUNAME) $(DBPORT) $(PSYCOPG2) \
 		$(FUNCTIONAL_TEST_CMD) && \
 		$(DBUNAME) $(DBPORT) $(PSYCOPG2) $(DROP_DB_CMD)
@@ -102,14 +105,18 @@ test_psql_psycopg2_novenv:
 test_psql_pg8000: venv_dev
 	python tests/check_clang.py || exit 1;
 	$(ACTIVATE_DEV_VENV) && \
+		$(DBUNAME) $(DBPORT) $(PG8000) $(DROP_DB_CMD) && \
 		$(DBUNAME) $(DBPORT) $(PG8000) $(MAKE_DB_CMD) && \
+		$(CLEAR_WORKSPACE_CMD) && \
 		$(PSQL) $(DBUNAME) $(DBPORT) $(PG8000) \
 		$(FUNCTIONAL_TEST_CMD) && \
 		$(DBUNAME) $(DBPORT) $(PG8000) $(DROP_DB_CMD)
 
 test_psql_pg8000_novenv:
 		python tests/check_clang.py || exit 1;
+		$(DBUNAME) $(DBPORT) $(PSYCOPG2) $(DROP_DB_CMD) && \
 		$(DBUNAME) $(DBPORT) $(PG8000) $(MAKE_DB_CMD) && \
+		$(CLEAR_WORKSPACE_CMD) && \
 		$(PSQL) $(DBUNAME) $(DBPORT) $(PG8000) \
 		$(FUNCTIONAL_TEST_CMD) && \
 		$(DBUNAME) $(DBPORT) $(PG8000) $(DROP_DB_CMD)
