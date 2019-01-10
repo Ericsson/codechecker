@@ -14,8 +14,7 @@ import platform
 import subprocess
 
 import prepare_compile_cmd
-import prepare_compiler_includes
-import prepare_compiler_target
+import prepare_compiler_info
 import prepare_analyzer_cmd
 
 
@@ -84,29 +83,19 @@ if __name__ == '__main__':
                     args.sources_root),
                 indent=4))
 
-    compiler_includes_debug = "compiler_includes_DEBUG.json"
-    with open(compiler_includes_debug, 'w') as f:
+    compiler_info_debug = "compiler_info_DEBUG.json"
+    with open(compiler_info_debug, 'w') as f:
         f.write(
             json.dumps(
-                prepare_compiler_includes.prepare(
-                    os.path.join(args.report_dir, "compiler_includes.json"),
-                    args.sources_root),
-                indent=4))
-
-    compiler_target_debug = "compiler_target_DEBUG.json"
-    with open(compiler_target_debug, 'wb') as f:
-        f.write(
-            json.dumps(
-                prepare_compiler_target.prepare(
-                    os.path.join(args.report_dir, "compiler_target.json"),
+                prepare_compiler_info.prepare(
+                    os.path.join(args.report_dir, "compiler_info.json"),
                     args.sources_root),
                 indent=4))
 
     # ctu-collect
     out = execute(["CodeChecker", "analyze", "--ctu-collect",
                    compile_cmd_debug,
-                   "--compiler-includes-file", compiler_includes_debug,
-                   "--compiler-target-file", compiler_target_debug,
+                   "--compiler-info-file", compiler_info_debug,
                    "-o", "report_debug",
                    "--verbose", "debug"])
 

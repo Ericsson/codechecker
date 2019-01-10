@@ -12,6 +12,7 @@ from __future__ import absolute_import
 
 import json
 import os
+import re
 import subprocess
 
 
@@ -40,6 +41,12 @@ def change_paths(string, pathModifierFun):
         # Note, this supports only POSIX paths.
         if string[i] == '/':
             path, path_end = find_path_end(string, i)
+            # Make sure that the prospective output folder exists.
+            pattern = re.compile('[\s\S]*-o *\Z')
+            if pattern.match(string[:i]):
+                out_dir = "./sources-root" + os.path.dirname(path)
+                if not os.path.isdir(out_dir):
+                    os.mkdir(out_dir)
             path = pathModifierFun(path)
             result += path
             i = path_end - 1
