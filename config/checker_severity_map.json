@@ -105,6 +105,7 @@
   "bugprone-misplaced-operator-in-strlen-in-alloc":             "MEDIUM",
   "bugprone-misplaced-widening-cast":                           "HIGH",
   "bugprone-multiple-statement-macro":                          "MEDIUM",
+  "bugprone-parent-virtual-call":                               "MEDIUM",
   "bugprone-sizeof-expression":                                 "HIGH",
   "bugprone-sizeof-container":                                  "HIGH",
   "bugprone-string-constructor":                                "HIGH",

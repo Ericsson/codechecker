@@ -107,6 +107,7 @@
         "bugprone-misplaced-widening-cast" : ["default", "sensitive", "extreme", "portability"],
         "bugprone-move-forwarding-reference" : ["default", "sensitive", "extreme"],
         "bugprone-multiple-statement-macro" : ["sensitive", "extreme"],
+        "bugprone-parent-virtual-call": ["sensitive", "extreme"],
         "bugprone-sizeof-container" : ["default", "sensitive", "extreme"],
         "bugprone-sizeof-expression" : ["default", "sensitive", "extreme"],
         "bugprone-string-constructor" : ["default", "sensitive", "extreme"],
