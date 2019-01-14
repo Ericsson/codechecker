@@ -1310,12 +1310,13 @@ class ThriftRequestHandler(object):
 
         missing_doc = "No documentation found for checker: " + checkerId + \
                       "\n\nPlease refer to the documentation at the "
-        sa_link = "http://clang-analyzer.llvm.org/available_checks.html"
-        tidy_link = "http://clang.llvm.org/extra/clang-tidy/checks/list.html"
 
         if "." in checkerId:
+            sa_link = "http://clang-analyzer.llvm.org/available_checks.html"
             missing_doc += "[ClangSA](" + sa_link + ")"
         elif "-" in checkerId:
+            tidy_link = "http://clang.llvm.org/extra/clang-tidy/checks/" + \
+                      checkerId + ".html"
             missing_doc += "[ClangTidy](" + tidy_link + ")"
         missing_doc += " homepage."
 
