@@ -165,13 +165,16 @@ def handle_external_file(dep, clean, env, verbose):
     file_url = source_package['url']
     download_cmd.append(file_url)
 
-    option = source_package['option']
-    download_cmd.append(option)
+    option = source_package.get('option', [])
+    download_cmd.extend(option)
 
+    download_cmd.append('-o')
     file_name = source_package['name']
     download_cmd.append(file_name)
 
     LOG.info('Downloading ...')
+    LOG.info(' '.join(download_cmd))
+
     if run_cmd(download_cmd, directory, env, verbose):
         LOG.error('Failed to get dependency')
         sys.exit(1)
