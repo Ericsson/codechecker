@@ -702,7 +702,7 @@ def handle_diff_results(args):
                 if f not in fname_to_fid:
                     try:
                         with codecs.open(f, 'r', 'UTF-8',
-                                         errors='replace') as source_data:
+                                         errors='ignore') as source_data:
                             content = source_data.read()
                     except (OSError, IOError):
                         content = f + " NOT FOUND."

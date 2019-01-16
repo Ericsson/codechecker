@@ -181,7 +181,7 @@ def get_report_data_from_plist(plist, skip_report_handler=None):
             if file_id not in file_sources:
                 file_path = files[file_id]
                 with codecs.open(file_path, 'r', 'UTF-8',
-                                 errors='replace') as source_data:
+                                 errors='ignore') as source_data:
                     file_sources[file_id] = {'id': file_id,
                                              'path': file_path,
                                              'content': source_data.read()}
