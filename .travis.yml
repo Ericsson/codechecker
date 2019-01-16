@@ -30,12 +30,16 @@ matrix:
       osx_image: xcode9.4
       sudo: false
       language: generic
-      env: DATABASE=psql_psycopg2
+      env:
+        - DATABASE=psql_psycopg2
+        - POSTGRESQL_VERSION=9.6
     - os: osx
       osx_image: xcode9.4
       sudo: false
       language: generic
-      env: DATABASE=psql_pg8000
+      env:
+        - DATABASE=psql_pg8000
+        - POSTGRESQL_VERSION=9.6
 
 before_install:
     # Download macOS specific extra dependencies.
@@ -57,15 +61,14 @@ before_install:
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then which clang; ln -s $(which clang) $HOME/clang; fi
 
     # PostgreSQL is not started automatically on macOS.
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PG_DATA=$(brew --prefix)/var/postgres; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pg_ctl -w start -l postgres.log --pgdata ${PG_DATA}; cat postgres.log; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then cat postgres.log; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then createuser -s postgres; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then rm -rf /usr/local/var/postgres; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then initdb /usr/local/var/postgres; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew services start postgres; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then while ! pg_isready; do sleep 1; done; createuser -s postgres; fi
 
 install:
     - pip install nose pycodestyle
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pip install virtualenv; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then cat postgres.log; fi
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-7 100; fi
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-7 100; fi
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-7 100; fi
