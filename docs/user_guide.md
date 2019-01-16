@@ -1696,11 +1696,12 @@ optional arguments:
                         this argument is not supplied it will show the history
                         for all runs. This has the following format:
                         "<run_name_1> <run_name_2> <run_name_3>" where run
-                        names can be a Pythonregex expression. So if you have
-                        run_1_a_name, run_2_b_name, run_2_c_name, run_3_d_name
-                        then "run_2* run_3_d_name" shows history for the last
-                        three runs. Use 'CodeChecker cmd runs' to get the
-                        available runs.
+                        names can contain multiple * quantifiers which matches
+                        any number of characters (zero or more). So if you
+                        have run_1_a_name, run_2_b_name, run_2_c_name,
+                        run_3_d_name then "run_2* run_3_d_name" shows history
+                        for the last three runs. Use 'CodeChecker cmd runs' to
+                        get the available runs.
 ~~~~~~~~~~~~~~~~~~~~~
 
 ### <a name="cmd-results"></a> List analysis results' summary (`results`)
@@ -1857,10 +1858,12 @@ optional arguments:
                         Names of the analysis runs to show result count
                         breakdown for. This has the following format:
                         <run_name_1>:<run_name_2>:<run_name_3> where run names
-                        can be a Python regex expression. So if you have
+                        can contain multiple * quantifiers which matches any
+                        number of characters (zero or more). So if you have
                         run_1_a_name, run_2_b_name, run_2_c_name, run_3_d_name
-                        then "run_2*:run_3_d_name"selects the last three runs.
-                        Use 'CodeChecker cmd runs' to get the available runs.
+                        then "run_2*:run_3_d_name" selects the last three
+                        runs. Use 'CodeChecker cmd runs' to get the available
+                        runs.
   -a, --all             Show breakdown for all analysis runs.
   --disable-unique      List all bugs even if these end up in the same bug
                         location, but reached through different paths. By
