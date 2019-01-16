@@ -1674,6 +1674,18 @@ usage: CodeChecker cmd runs [-h] [--url PRODUCT_URL]
                             [--verbose {info,debug,debug_analyzer}]
 
 List the analysis runs available on the server.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -n [RUN_NAME [RUN_NAME ...]], --name [RUN_NAME [RUN_NAME ...]]
+                        Names of the analysis runs. If this argument is not
+                        supplied it will show all runs. This has the following
+                        format: "<run_name_1> <run_name_2> <run_name_3>" where
+                        run names can contain multiple * quantifiers which
+                        matches any number of characters (zero or more). So if
+                        you have run_1_a_name, run_2_b_name, run_2_c_name,
+                        run_3_d_name then "run_2* run_3_d_name" shows the last
+                        three runs.
 ~~~~~~~~~~~~~~~~~~~~~
 
 ### <a name="cmd-history"></a> List of run histories (`history`)

@@ -75,16 +75,25 @@ def setup_package():
     codechecker_cfg.update(server_access)
 
     # Generate a unique name for this test run.
-    test_project_name = project_info['name'] + '_' + uuid.uuid4().hex
+    test_project_name_1 = project_info['name'] + '1_' + uuid.uuid4().hex
 
     ret = codechecker.check(codechecker_cfg,
-                            test_project_name,
+                            test_project_name_1,
                             project.path(test_project))
     if ret:
         sys.exit(1)
     print("Analyzing the test project was successful.")
 
-    codechecker_cfg['run_names'] = [test_project_name]
+    test_project_name_2 = project_info['name'] + '2_' + uuid.uuid4().hex
+
+    ret = codechecker.check(codechecker_cfg,
+                            test_project_name_2,
+                            project.path(test_project))
+    if ret:
+        sys.exit(1)
+    print("Analyzing the test project was successful.")
+
+    codechecker_cfg['run_names'] = [test_project_name_1, test_project_name_2]
 
     test_config['codechecker_cfg'] = codechecker_cfg
 

@@ -226,7 +226,13 @@ def handle_list_runs(args):
     init_logger(args.verbose if 'verbose' in args else None)
 
     client = setup_client(args.product_url)
-    runs = client.getRunData(None)
+
+    run_filter = None
+    if 'names' in args:
+        run_filter = ttypes.RunFilter()
+        run_filter.names = args.names
+
+    runs = client.getRunData(run_filter)
 
     if args.output_format == 'json':
         results = []
