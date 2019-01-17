@@ -400,13 +400,14 @@ def __register_sum(parser):
                             help="Names of the analysis runs to show result "
                                  "count breakdown for. This has the following "
                                  "format: <run_name_1>:<run_name_2>:"
-                                 "<run_name_3> where run names can be a "
-                                 "Python regex expression. So if you have "
-                                 "run_1_a_name, run_2_b_name, run_2_c_name, "
-                                 "run_3_d_name then \"run_2*:run_3_d_name\""
-                                 "selects the last three runs. Use "
-                                 "'CodeChecker cmd runs' to get the available "
-                                 "runs.")
+                                 "<run_name_3> where run names can contain "
+                                 "multiple * quantifiers which matches any "
+                                 "number of characters (zero or more). So if "
+                                 "you have run_1_a_name, run_2_b_name, "
+                                 "run_2_c_name, run_3_d_name then "
+                                 "\"run_2*:run_3_d_name\" selects the last "
+                                 "three runs. Use 'CodeChecker cmd runs' to "
+                                 "get the available runs.")
 
     name_group.add_argument('-a', '--all',
                             dest="all_results",
@@ -857,12 +858,14 @@ def __register_run_histories(parser):
                              "If this argument is not supplied it will show "
                              "the history for all runs. This has the "
                              "following format: \"<run_name_1> <run_name_2> "
-                             "<run_name_3>\" where run names can be a Python"
-                             "regex expression. So if you have run_1_a_name, "
-                             "run_2_b_name, run_2_c_name, run_3_d_name "
-                             "then \"run_2* run_3_d_name\" shows history for "
-                             "the last three runs. Use 'CodeChecker cmd runs' "
-                             "to get the available runs.")
+                             "<run_name_3>\" where run names can contain "
+                             "multiple * quantifiers which matches any number "
+                             "of characters (zero or more). So if you have "
+                             "run_1_a_name, run_2_b_name, run_2_c_name, "
+                             "run_3_d_name then \"run_2* run_3_d_name\" shows "
+                             "history for the last three runs. Use "
+                             "'CodeChecker cmd runs' to get the available "
+                             "runs.")
 
 
 def __register_token(parser):
