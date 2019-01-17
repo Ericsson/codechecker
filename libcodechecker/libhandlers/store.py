@@ -275,7 +275,10 @@ def assemble_zip(inputs, zip_file, client):
             LOG.warning("There is no report to store. After uploading these "
                         "results the previous reports become resolved.")
 
-        necessary_hashes = client.getMissingContentHashes(hash_to_file.keys())
+        file_hashes = hash_to_file.keys()
+        necessary_hashes = client.getMissingContentHashes(file_hashes) \
+            if file_hashes else []
+
         for f, h in file_to_hash.items():
             if h in necessary_hashes:
                 LOG.debug("File contents for '{0}' needed by the server"

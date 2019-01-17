@@ -123,41 +123,41 @@ def process_report_filter(session, report_filter):
         return text('')
 
     AND = []
-    if report_filter.filepath is not None:
+    if report_filter.filepath:
         OR = [File.filepath.ilike(conv(fp))
               for fp in report_filter.filepath]
 
         AND.append(or_(*OR))
 
-    if report_filter.checkerMsg is not None:
+    if report_filter.checkerMsg:
         OR = [Report.checker_message.ilike(conv(cm))
               for cm in report_filter.checkerMsg]
         AND.append(or_(*OR))
 
-    if report_filter.checkerName is not None:
+    if report_filter.checkerName:
         OR = [Report.checker_id.ilike(conv(cn))
               for cn in report_filter.checkerName]
         AND.append(or_(*OR))
 
-    if report_filter.runName is not None:
+    if report_filter.runName:
         OR = [Run.name.ilike(conv(rn))
               for rn in report_filter.runName]
         AND.append(or_(*OR))
 
-    if report_filter.reportHash is not None:
+    if report_filter.reportHash:
         OR = [Report.bug_id.ilike(conv(rh))
               for rh in report_filter.reportHash]
         AND.append(or_(*OR))
 
-    if report_filter.severity is not None:
+    if report_filter.severity:
         AND.append(Report.severity.in_(report_filter.severity))
 
-    if report_filter.detectionStatus is not None:
+    if report_filter.detectionStatus:
         dst = list(map(detection_status_str,
                        report_filter.detectionStatus))
         AND.append(Report.detection_status.in_(dst))
 
-    if report_filter.reviewStatus is not None:
+    if report_filter.reviewStatus:
         OR = [ReviewStatus.status.in_(
             list(map(review_status_str, report_filter.reviewStatus)))]
 
@@ -191,7 +191,7 @@ def process_report_filter(session, report_filter):
             OR.append(Report.detected_at < date)
         AND.append(or_(*OR))
 
-    if report_filter.runHistoryTag is not None:
+    if report_filter.runHistoryTag:
         OR = []
         for history_date in report_filter.runHistoryTag:
             date = datetime.strptime(history_date,
@@ -200,7 +200,7 @@ def process_report_filter(session, report_filter):
                 Report.fixed_at.is_(None), Report.fixed_at >= date)))
         AND.append(or_(*OR))
 
-    if report_filter.runTag is not None:
+    if report_filter.runTag:
         OR = []
         for tag_id in report_filter.runTag:
             history = session.query(RunHistory).get(tag_id)
@@ -211,7 +211,7 @@ def process_report_filter(session, report_filter):
                                     Report.fixed_at >= history.time))))
         AND.append(or_(*OR))
 
-    if report_filter.componentNames is not None:
+    if report_filter.componentNames:
         OR = []
 
         for component_name in report_filter.componentNames:
@@ -240,7 +240,13 @@ def process_report_filter(session, report_filter):
                 skip_q = select([File.id]).where(and_(*and_q))
                 file_ids = session.query(skip_q.alias('skip')).all()
 
-            OR.append(or_(File.id.in_([f_id[0] for f_id in file_ids])))
+            if file_ids:
+                OR.append(or_(File.id.in_([f_id[0] for f_id in file_ids])))
+            else:
+                # File id list can be empty for example when the user skips
+                # everything.
+                OR.append(False)
+
         AND.append(or_(*OR))
 
     filter_expr = and_(*AND)
@@ -607,9 +613,9 @@ class ThriftRequestHandler(object):
                               stmt.c.report_count)
 
             if run_filter is not None:
-                if run_filter.ids is not None:
+                if run_filter.ids:
                     q = q.filter(Run.id.in_(run_filter.ids))
-                if run_filter.names is not None:
+                if run_filter.names:
                     if run_filter.exactMatch:
                         q = q.filter(Run.name.in_(run_filter.names))
                     else:
@@ -699,7 +705,7 @@ class ThriftRequestHandler(object):
             if run_ids:
                 res = res.filter(RunHistory.run_id.in_(run_ids))
 
-            if run_history_filter:
+            if run_history_filter and run_history_filter.tagNames:
                 res = res.filter(RunHistory.version_tag.in_(
                     run_history_filter.tagNames))
 
@@ -793,8 +799,11 @@ class ThriftRequestHandler(object):
                     return []
 
                 base_hashes = session.query(Report.bug_id.label('bug_id')) \
-                    .outerjoin(File, Report.file_id == File.id) \
-                    .filter(Report.run_id.in_(run_ids))
+                    .outerjoin(File, Report.file_id == File.id)
+
+                if run_ids:
+                    base_hashes = \
+                        base_hashes.filter(Report.run_id.in_(run_ids))
 
                 if self.__product.driver_name == 'postgresql':
                     new_hashes = select([func.unnest(report_hashes)
@@ -822,17 +831,19 @@ class ThriftRequestHandler(object):
                     return new_hashes
             elif diff_type == DiffType.RESOLVED:
                 results = session.query(Report.bug_id) \
-                    .filter(Report.run_id.in_(run_ids)) \
-                    .filter(Report.bug_id.notin_(report_hashes)) \
-                    .all()
+                    .filter(Report.bug_id.notin_(report_hashes))
+
+                if run_ids:
+                    results = results.filter(Report.run_id.in_(run_ids))
 
                 return [res[0] for res in results]
 
             elif diff_type == DiffType.UNRESOLVED:
                 results = session.query(Report.bug_id) \
-                    .filter(Report.run_id.in_(run_ids)) \
-                    .filter(Report.bug_id.in_(report_hashes)) \
-                    .all()
+                    .filter(Report.bug_id.in_(report_hashes))
+
+                if run_ids:
+                    results = results.filter(Report.run_id.in_(run_ids))
 
                 return [res[0] for res in results]
 
@@ -2018,6 +2029,10 @@ class ThriftRequestHandler(object):
     @timeit
     def getMissingContentHashes(self, file_hashes):
         self.__require_store()
+
+        if not file_hashes:
+            return []
+
         with DBSession(self.__Session) as session:
 
             q = session.query(FileContent) \

@@ -296,7 +296,7 @@ class TestComponent(unittest.TestCase):
 
     def test_filter_report_by_excluding_all_results_component(self):
         """
-        Test report filter by component which excludes all reportrs.
+        Test report filter by component which excludes all reports.
         """
         test_component = self.components[5]
 
