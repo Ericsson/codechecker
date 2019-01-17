@@ -1096,7 +1096,9 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
         }
       }));
 
-      this.addChild(this._reviewStatusSelector);
+      if (!CC_SERVICE.isReviewStatusChangeDisabled()) {
+        this.addChild(this._reviewStatusSelector);
+      }
 
       //--- Review status comment message. ---//
 

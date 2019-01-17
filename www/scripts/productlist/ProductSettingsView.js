@@ -11,6 +11,7 @@ define([
   'dojo/dom-construct',
   'dijit/Dialog',
   'dijit/form/Button',
+  'dijit/form/CheckBox',
   'dijit/form/NumberTextBox',
   'dijit/form/RadioButton',
   'dijit/form/SimpleTextarea',
@@ -21,7 +22,7 @@ define([
   'codechecker/MessagePane',
   'codechecker/util',
   'products/PermissionList'],
-function (declare, domAttr, domClass, domConstruct, Dialog, Button,
+function (declare, domAttr, domClass, domConstruct, Dialog, Button, CheckBox,
   NumberTextBox, RadioButton, SimpleTextarea, TextBox, ValidationTextBox,
   ContentPane, TabContainer, MessagePane, util, PermissionList) {
 
@@ -67,7 +68,8 @@ function (declare, domAttr, domClass, domConstruct, Dialog, Button,
    */
   var FIELD_RANK_SHOW_RULES = {
     0 : ['submit'],
-    /* PRODUCT_ADMIN */ 1 : ['name', 'description'],
+    /* PRODUCT_ADMIN */ 1 : ['name', 'description',
+                             'isReviewStatusChangeDisabled'],
     /* SUPERUSER */     2 : ['endpoint', 'dbengine', 'dbhost', 'dbport',
                              'dbuser', 'dbpass', 'dbname', 'runlimit']
   };
@@ -121,6 +123,14 @@ function (declare, domAttr, domClass, domConstruct, Dialog, Button,
         },
         onChange : function () {
           that._setConfigValue('runlimit', this.value);
+        }
+      });
+
+      this._disableReviewStatusChange = new CheckBox({
+        name        : 'disable-review-status-change',
+        value       : null,
+        onChange : function (disabled) {
+          that._setConfigValue('isReviewStatusChangeDisabled', disabled);
         }
       });
 
@@ -281,6 +291,9 @@ function (declare, domAttr, domClass, domConstruct, Dialog, Button,
       var product = new CC_PROD_OBJECTS.ProductConfiguration({
         endpoint: args['endpoint'],
         runLimit: args['runlimit'] ? args['runlimit'] : null,
+        isReviewStatusChangeDisabled: args['isReviewStatusChangeDisabled']
+                                    ? args['isReviewStatusChangeDisabled']
+                                    : false,
         displayedName_b64: util.utoa(name),
         description_b64: util.utoa(description),
         connection: dbConnection
@@ -432,6 +445,8 @@ function (declare, domAttr, domClass, domConstruct, Dialog, Button,
 
       setCfg(this._txtProdEndpoint, 'endpoint', productAPIObj.endpoint);
       setCfg(this._txtRunLimit, 'runlimit', productAPIObj.runLimit);
+      setCfg(this._disableReviewStatusChange, 'isReviewStatusChangeDisabled',
+        productAPIObj.isReviewStatusChangeDisabled);
       setCfg(this._txtProdName, 'name',
              util.atou(productAPIObj.displayedName_b64));
 
@@ -502,6 +517,8 @@ function (declare, domAttr, domClass, domConstruct, Dialog, Button,
       this._placeFormElement(this._txtProdName, 'name', "Display name");
       this._placeFormElement(this._txtProdDescr, 'description', "Description");
       this._placeFormElement(this._txtRunLimit, 'runlimit', "Run limit");
+      this._placeFormElement(this._disableReviewStatusChange,
+        'isReviewStatusChangeDisabled', "Disable review status change");
 
       //--- The database configuration selector is special ---//
 

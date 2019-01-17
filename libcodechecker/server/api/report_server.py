@@ -1155,10 +1155,25 @@ class ThriftRequestHandler(object):
 
     @exc_to_thrift_reqfail
     @timeit
+    def isReviewStatusChangeDisabled(self):
+        """
+        Return True if review status change is disabled.
+        """
+        with DBSession(self.__config_database) as session:
+            product = session.query(Product).get(self.__product.id)
+            return product.is_review_status_change_disabled
+
+    @exc_to_thrift_reqfail
+    @timeit
     def changeReviewStatus(self, report_id, status, message):
         """
         Change review status of the bug by report id.
         """
+        if self.isReviewStatusChangeDisabled():
+            msg = "Review status change is disabled!"
+            raise shared.ttypes.RequestFailed(
+                shared.ttypes.ErrorCode.GENERAL, msg)
+
         with DBSession(self.__Session) as session:
             res = self._setReviewStatus(report_id, status, message, session)
             session.commit()

@@ -359,6 +359,11 @@ service codeCheckerDBAccess {
                                                           2: Encoding encoding)
                                                           throws (1: shared.RequestFailed requestError),
 
+  // Return true if review status change is disabled.
+  // PERMISSION: PRODUCT_ACCESS or PRODUCT_STORE
+  bool isReviewStatusChangeDisabled()
+                                    throws (1: shared.RequestFailed requestError),
+
   // change review status of a bug.
   // PERMISSION: PRODUCT_ACCESS or PRODUCT_STORE
   bool changeReviewStatus(1: i64          reportId,

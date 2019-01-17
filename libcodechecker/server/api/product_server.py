@@ -313,13 +313,17 @@ class ThriftProductHandler(object):
             descr = base64.b64encode(product.description.encode('utf-8')) \
                 if product.description else None
 
+            is_review_status_change_disabled = \
+                product.is_review_status_change_disabled
+
             prod = ttypes.ProductConfiguration(
                 id=product.id,
                 endpoint=product.endpoint,
                 displayedName_b64=name,
                 description_b64=descr,
                 connection=dbc,
-                runLimit=product.run_limit)
+                runLimit=product.run_limit,
+                isReviewStatusChangeDisabled=is_review_status_change_disabled)
 
             return prod
 
@@ -402,6 +406,8 @@ class ThriftProductHandler(object):
             .from_cmdline_args(conn_str_args, IDENTIFIER, None, False, None) \
             .get_connection_string()
 
+        is_rws_change_disabled = product.isReviewStatusChangeDisabled
+
         # Create the product's entity in the database.
         try:
             orm_prod = Product(
@@ -409,7 +415,8 @@ class ThriftProductHandler(object):
                 conn_str=conn_str,
                 name=displayed_name,
                 description=description,
-                run_limit=product.runLimit)
+                run_limit=product.runLimit,
+                is_review_status_change_disabled=is_rws_change_disabled)
 
             LOG.debug("Attempting database connection to new product...")
 
@@ -613,6 +620,8 @@ class ThriftProductHandler(object):
             # Update the settings in the database.
             product.endpoint = new_config.endpoint
             product.run_limit = new_config.runLimit
+            product.is_review_status_change_disabled = \
+                new_config.isReviewStatusChangeDisabled
             product.connection = conn_str
             product.display_name = displayed_name
             product.description = description
