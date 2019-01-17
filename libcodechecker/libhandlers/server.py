@@ -587,6 +587,7 @@ def __db_migration(cfg_sql_server, context, product_to_upgrade='all',
                 ret = db.connect(init=True)
                 msg = database_status.db_status_msg.get(
                     ret, 'Unknown database status')
+                LOG.info(msg)
             else:
                 LOG.info("No schema initialization was done.")
 
@@ -599,6 +600,7 @@ def __db_migration(cfg_sql_server, context, product_to_upgrade='all',
                 LOG.info("Done.")
                 msg = database_status.db_status_msg.get(
                     ret, 'Unknown database status')
+                LOG.info(msg)
             else:
                 LOG.info("No schema migration was done.")
 

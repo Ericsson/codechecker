@@ -173,7 +173,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
             # Line number followed by a ':'.
             r'(?P<line>\d+?):'
             # Column number followed by a ':' and a space.
-            r'(?P<column>\d+?):\ ')
+            r'(?P<column>\d+?): ')
 
         paths = []
 

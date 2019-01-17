@@ -82,7 +82,7 @@ class OutputParser(object):
         # Line number followed by a ':'.
         r'(?P<line>\d+?):'
         # Column number followed by a ':' and a space.
-        r'(?P<column>\d+?):\ '
+        r'(?P<column>\d+?): '
         # Severity followed by a ':'.
         r'(?P<severity>(error|warning)):'
         # Checker message.
@@ -97,7 +97,7 @@ class OutputParser(object):
         # Line number followed by a ':'.
         r'(?P<line>\d+?):'
         # Column number followed by a ':' and a space.
-        r'(?P<column>\d+?):\ '
+        r'(?P<column>\d+?): '
         # Severity == note.
         r'note:'
         # Checker message.

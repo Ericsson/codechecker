@@ -187,7 +187,6 @@ def perform_auth_for_handler(protocol, manager, host, port,
 
     if auth_response.requiresAuthentication and \
             not auth_response.sessionStillActive:
-        print_err = False
 
         if manager.is_autologin_enabled():
             auto_auth_string = manager.get_auth_string(host, port)
@@ -210,25 +209,20 @@ def perform_auth_for_handler(protocol, manager, host, port,
                     LOG.info("Authentication successful.")
                     return session_token
                 except shared.ttypes.RequestFailed:
-                    print_err = True
-            else:
-                print_err = True
-        else:
-            print_err = True
+                    pass
 
-        if print_err:
-            if manager.is_autologin_enabled():
-                LOG.error("Invalid pre-configured credentials.")
-                LOG.error("Your password has been changed or personal access "
-                          "token has been removed which is used by your "
-                          "\"~/.codechecker.passwords.json\" file. Please "
-                          "remove or change invalid credentials.")
-            else:
-                LOG.error("Access denied. This server requires "
-                          "authentication.")
-                LOG.error("Please log in onto the server using 'CodeChecker "
-                          "cmd login'.")
-            sys.exit(1)
+        if manager.is_autologin_enabled():
+            LOG.error("Invalid pre-configured credentials.")
+            LOG.error("Your password has been changed or personal access "
+                      "token has been removed which is used by your "
+                      "\"~/.codechecker.passwords.json\" file. Please "
+                      "remove or change invalid credentials.")
+        else:
+            LOG.error("Access denied. This server requires "
+                      "authentication.")
+            LOG.error("Please log in onto the server using 'CodeChecker "
+                      "cmd login'.")
+        sys.exit(1)
 
 
 def setup_product_client(protocol, host, port, product_name=None):
