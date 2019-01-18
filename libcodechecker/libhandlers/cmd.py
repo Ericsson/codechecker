@@ -841,6 +841,29 @@ def __register_login(parser):
                              "session.")
 
 
+def __register_runs(parser):
+    """
+    Add argparse subcommand parser for the "list runs by run name" action.
+    """
+
+    parser.add_argument('-n', '--name',
+                        type=str,
+                        nargs='*',
+                        dest="names",
+                        metavar='RUN_NAME',
+                        default=argparse.SUPPRESS,
+                        required=False,
+                        help="Names of the analysis runs. If this argument is "
+                             "not supplied it will show all runs. This has "
+                             "the  following format: \"<run_name_1> "
+                             "<run_name_2> <run_name_3>\" where run names can "
+                             "contain multiple * quantifiers which matches "
+                             "any number of characters (zero or more). So if "
+                             "you have run_1_a_name, run_2_b_name, "
+                             "run_2_c_name, run_3_d_name then \"run_2* "
+                             "run_3_d_name\" shows the last three runs.")
+
+
 def __register_run_histories(parser):
     """
     Add argparse subcommand parser for the "list run histories by run name"
@@ -938,6 +961,7 @@ def add_arguments_to_parser(parser):
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         description="List the analysis runs available on the server.",
         help="List the available analysis runs.")
+    __register_runs(runs)
     runs.set_defaults(func=cmd_line_client.handle_list_runs)
     __add_common_arguments(runs, has_matrix_output=True)
 
