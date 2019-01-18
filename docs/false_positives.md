@@ -16,24 +16,24 @@ This guide introduces tips and tricks how to make the code easier to analyze.
 
 Table of Contents
 =================
- * [What target to analyze?](#what-target-to-analyze)
- * [Infeasible path](#infeasible-path)
-   * [Correlated conditions](#correlated-conditions)
-   * [Partial functions](#partial-functions)
-   * [Loops](#loops)
-   * [Prefer standard functions](#prefer-standard-functions)
-   * [Use `const` whenever possible](#use-const)
-   * [Do not turn off `core` checks](#do-not-turn-off-core-checks)
-   * [Suppress specific dead store warnings](#suppress-specific-dead-store-warnings)
-   * [Alternative implementations](#alternative-implementations)
- * [Defensive checks](#defensive-checks)
- * [Syntax based checks](#syntax-based-checks)
- * [Suppress or skip results](#suppress-or-skip-results)
-   * [3rd party code](#third-party-code)
-   * [Authored code](#authored-code)
-   * [Unauthored code](#unauthored-code)
+  * [What target to analyze?](#what-target-to-analyze)
+  * [Infeasible path](#infeasible-path)
+     * [Correlated conditions](#correlated-conditions)
+     * [Partial functions](#partial-functions)
+     * [Loops](#loops)
+     * [Prefer standard functions](#prefer-standard-functions)
+     * [Use `const` whenever possible](#use-const)
+     * [Do not turn off `core` checks](#do-not-turn-off-core-checks)
+     * [Suppress specific dead store warnings](#suppress-specific-dead-store-warnings)
+     * [Alternative implementations](#alternative-implementations)
+  * [Defensive checks](#defensive-checks)
+  * [Syntax based checks](#syntax-based-checks)
+  * [Suppress or skip results](#suppress-or-skip-results)
+     * [3rd party code](#third-party-code)
+     * [Authored code](#authored-code)
+     * [Unauthored code](#unauthored-code)
 
-## <a name="what-target-to-analyze"></a> What target to analyze?
+# What target to analyze? <a name="what-target-to-analyze"></a>
 
 Usually, a project has multiple build targets for different purposes. There
 might be multiple targets for multiple architectures, releases, debugging.
@@ -48,7 +48,7 @@ both to improve precision and avoid false positives. For details read the
 guide of the [analyzer](https://clang-analyzer.llvm.org/annotations.html#custom_assertions).
 
 
-## <a name="infeasible-path"></a> Infeasible path
+## Infeasible path <a name="infeasible-path"></a>
 
 One of the most frequent source of false positives is analyzing infeasible 
 execution path of the program. Every report on such a path is false positive.
@@ -65,7 +65,7 @@ in action.
 * Prefer standard functions to custom solutions
 * Do not turn off `core` checks
 
-### <a name="correlated-conditions"></a> Correlated conditions
+### Correlated conditions <a name="correlated-conditions"></a>
 
 The analyzer might not be able to detect that two conditions are mutually 
 exclusive. Let us consider the following false positive:
@@ -95,7 +95,7 @@ if (nontrivial condition) {
 }
 ```
 
-### <a name="partial-functions"></a> Partial functions
+### Partial functions <a name="partial-functions"></a>
 
 Some functions only work on a set of possible input values. This precondition
 is unknown to the analyzer unless it is expressed explicitly in the code.
@@ -147,7 +147,7 @@ int f(MyEnum Val) {
 }
 ```
 
-### <a name="loops"></a> Loops
+### Loops <a name="loops"></a>
 
 Some loops are guaranteed to execute at least once and this is a dynamic
 invariant of the program.
@@ -231,7 +231,7 @@ if (a > 1 && b > 1 && c > 1) {
 
 Do not forget to update the body of the loop if necessary.
 
-### <a name="prefer-standard-functions"></a> Prefer standard functions
+### Prefer standard functions <a name="prefer-standard-functions"></a>
 
 The analyzer models the behavior of some standard functions but it has
 no knowledge about the semantics of custom made functions declared in a
@@ -269,7 +269,7 @@ The result is easier to read for other developers who might not be familiar
 with the custom version of the function. The standard library functions also
 tend to be faster and more correct than custom solutions.
 
-### <a name="use-const"></a> Use `const` whenever possible
+### Use `const` whenever possible <a name="use-const"></a>
 
 It is useful to tell the analyzer when the state is not going to change.
 This will make the analysis more precise and the code more readable.
@@ -304,13 +304,13 @@ static void f(void) {
 }
 ```
 
-### <a name="do-not-turn-off-core-checks"></a> Do not turn off `core` checks
+### Do not turn off `core` checks <a name="do-not-turn-off-core-checks"></a>
 
 Checks in the static analyzer are usually not just reporting issues but
 also help modelling language constructs and library functions. You should never
 turn off checks from the `core` package.
 
-### <a name="suppress-specific-dead-store-warnings"></a> Suppress specific dead store warnings
+### Suppress specific dead store warnings <a name="suppress-specific-dead-store-warnings"></a>
 
 How to suppress a specific dead store warning from the Clang Static Analyzer
 and more useful tips can be found [here](https://clang-analyzer.llvm.org/faq.html).
@@ -340,7 +340,7 @@ void foo() {
 }
 ```
 
-### <a name="alternative-implementations"></a> Alternative implementations
+### Alternative implementations <a name="alternative-implementations"></a>
 
 If there are huge source of false positives due to the analyzer can not model a
 function properly you could either disable the analyzer to analyze that
@@ -375,7 +375,7 @@ the analyzer better. Note that the compiler might generate the same code
 for the two implementations, so it might make sense to use only the more
 obvious one.
 
-## <a name="defensive-checks"></a> Defensive checks
+## Defensive checks <a name="defensive-checks"></a>
 
 This section is an odd one because we describe a technique to reduce false
 negatives rather than false positives. 
@@ -455,7 +455,7 @@ compromise the static analysis. Excluding those checks from the analysis
 might not only increase the useful results from the analyzer but also reduce
 the analysis time on that code.
 
-## <a name="syntax-based-checks"></a> Syntax based checks
+## Syntax based checks <a name="syntax-based-checks"></a>
 
 Clang-Tidy has lots of useful syntax based checks. Some of these checks
 find bug-prone code snippets. When these snippets are intentional, usually
@@ -464,7 +464,6 @@ it is hard to give a general guideline, because the details are different for
 each check. The documentation of the check might contain hints how to
 express intention more clearly. Let us look at an example:
 
-  
 ```cpp
 double f(int i) {
   return 32 / (2 + i); // Warning, integer division, loss of precision.
@@ -484,13 +483,13 @@ point value the loss of precision during integer division is intentional.
 Adding a comment why this is intentional would make this even clearer.
 Such edits makes the code easier to understand for fellow developers. 
 
-## <a name="suppress-or-skip-results"></a> Suppress or skip results
+# Suppress or skip results <a name="suppress-or-skip-results"></a>
 
 When none of the above works, we can still resort to suppressing a particular
 finding. There are multiple ways to do this and it is important to choose the
 right one.
 
-### <a name="third-party-code"></a> 3rd party code
+## 3rd party code <a name="third-party-code"></a>
 
 We usually have no control over 3rd party code and are not interested in the
 findings in such code. CodeChecker supports skipping certain files
@@ -498,7 +497,7 @@ findings in such code. CodeChecker supports skipping certain files
 This might also make the analysis faster. For details, see the
 [user guide](user_guide.md#skip).
 
-### <a name="authored-code"></a> Authored code
+## Authored code <a name="authored-code"></a>
 
 If you have control over the code we advise to use in source code suppression.
 This has the advantage of the code and the suppression evolving together and
@@ -508,7 +507,7 @@ finding is considered false positive! With a future version of the analyzer
 these suppression comments might be no longer required. Comments might help in
 the reevaluation. For details, see the [user guide](user_guide.md#suppression-code).
 
-### <a name="unauthored-code"></a> Unauthored code
+## Unauthored code <a name="unauthored-code"></a>
 
 If you do not have control over the code for some reason you can suppress 
 issues using the web user interface. 

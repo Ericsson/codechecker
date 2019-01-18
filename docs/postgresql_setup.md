@@ -15,16 +15,16 @@ Table of Contents
 
 ## <a name="list-of-runtime-dependencies"></a> List of runtime dependencies
 
-  *  [PostgreSQL](http://www.postgresql.org) (> `9.3.5`)
-     (optional)
-  *  At least one database connector library for PostgreSQL support required:
-     - [psycopg2](http://initd.org/psycopg) (> `2.5.4`) or
-     - [pg8000](https://github.com/mfenniak/pg8000) (>= `1.10.0`)
-     - [PyPi psycopg2](https://pypi.python.org/pypi/psycopg2/2.6.1)
-       **(Requires `lbpq`!)**
-     - [PyPi pg8000](https://pypi.python.org/pypi/pg8000)
+ *  [PostgreSQL](http://www.postgresql.org) (> `9.3.5`)
+    (optional)
+ *  At least one database connector library for PostgreSQL support required:
+    - [psycopg2](http://initd.org/psycopg) (> `2.5.4`) or
+    - [pg8000](https://github.com/mfenniak/pg8000) (>= `1.10.0`)
+    - [PyPi psycopg2](https://pypi.python.org/pypi/psycopg2/2.6.1)
+      **(Requires `lbpq`!)**
+    - [PyPi pg8000](https://pypi.python.org/pypi/pg8000)
 
-## <a name="installing-dependencies"></a> Installing dependencies and setting up a server
+# Installing dependencies and setting up a server <a name="installing-dependencies"></a>
 Tested on Ubuntu LTS `14.04.2`.
 
 ~~~~~~{.sh}
@@ -86,7 +86,7 @@ export PATH="$PWD/build/CodeChecker/bin:$PATH"
 Once the package is installed and the PostgreSQL server is running, a
 CodeChecker server can be started by specifying the **configuration**
 database's connection arguments. (Read more about the [`CodeChecker server`
-command](/docs/user_guide.md#7-server-mode).)
+command](user_guide.md#7-server-mode).)
 
 The `codechecker_config` database will contain server-specific configurations.
 
@@ -96,7 +96,7 @@ CodeChecker server --postgresql \
   --db-username codechecker --db-name codechecker_config
 ~~~~~~
 
-## <a name="creating-analysis-databases"></a> Creating analysis databases
+# Creating analysis databases <a name="creating-analysis-databases"></a>
 
 At least one additional database must be created in which analysis reports
 will be stored. (Unlike the default SQLite mode, creation of this *Default*
@@ -116,7 +116,7 @@ psql -c "GRANT ALL PRIVILEGES ON DATABASE default_product TO codechecker;"
 For a product to be set up by the server, an empty database with rights given
 must exist **in advance**. Once the database is created, a product can be
 added via `CodeChecker cmd products add`, or
-[via the Web interface](/docs/products.md#managing-products-through-the-web-interface).
+[via the Web interface](products.md#managing-products-through-the-web-interface).
 
 ~~~~~~{.sh}
 CodeChecker cmd products add Default --name "Default Product" \
