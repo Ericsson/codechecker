@@ -99,6 +99,28 @@ function (locale, dom, style, json) {
     },
 
     /**
+     * Converts a Thrift API ExtendedReportDataType to human readable string.
+     *
+     * @param {String|Number} extendedDataType Thrift API
+     * ExtendedReportDataType id.
+     * @return Human readable report extended data type string.
+     */
+    reportExtendedTypeFromCodeToString : function (extendedDataType) {
+      switch (parseInt(extendedDataType)) {
+        case CC_OBJECTS.ExtendedReportDataType.MACRO:
+          return 'Macro';
+        case CC_OBJECTS.ExtendedReportDataType.NOTE:
+          return 'Note';
+        case CC_OBJECTS.ExtendedReportDataType.FIXIT:
+          return 'Fixit';
+        default:
+          console.warn('Non existing report extended data code: ',
+            extendedDataType);
+          return 'Unknown';
+      }
+    },
+
+    /**
      * This function creates a hexadecimal color from a string.
      */
     strToColor : function (str) {

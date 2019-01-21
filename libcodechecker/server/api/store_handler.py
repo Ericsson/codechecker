@@ -24,8 +24,12 @@ from codeCheckerDBAccess_v6 import ttypes
 from libcodechecker.logger import get_logger
 # TODO: This is a cross-subpackage import.
 from libcodechecker.server.database.run_db_model import AnalyzerStatistic, \
-    BugPathEvent, BugReportPoint, File, Run, RunHistory, Report, FileContent
+    BugPathEvent, BugReportPoint, File, Run, RunHistory, Report, FileContent, \
+    ExtendedReportData
+
 from libcodechecker.util import load_json_or_empty
+
+from .thrift_enum_helper import report_extended_data_type_str
 
 LOG = get_logger('system')
 
@@ -75,6 +79,7 @@ def collect_paths_events(report, file_ids, files):
     """
     bug_paths = []
     bug_events = []
+    bug_extended_data = []
 
     events = filter(lambda i: i.get('kind') == 'event', report.bug_path)
 
@@ -86,6 +91,9 @@ def collect_paths_events(report, file_ids, files):
     # the source of the first arrow before the loop.
     report_path = filter(lambda i: i.get('kind') == 'control',
                          report.bug_path)
+
+    macros = filter(lambda i: i.get('kind') == 'macro_expansion',
+                    report.bug_path)
 
     if report_path:
         start_range = report_path[0]['edges'][0]['start']
@@ -139,7 +147,49 @@ def collect_paths_events(report, file_ids, files):
             event['message'],
             file_ids[file_path]))
 
-    return bug_paths, bug_events
+    for macro in macros:
+        file_path = files[macro['location']['file']]
+
+        start_loc = macro['location']
+        end_loc = macro['location']
+        # Range can provide more precise location information.
+        # Use that if available.
+        ranges = macro.get("ranges")
+        if ranges:
+            start_loc = ranges[0][0]
+            end_loc = ranges[0][1]
+
+        bug_extended_data.append(ttypes.ExtendedReportData(
+            ttypes.ExtendedReportDataType.MACRO,
+            start_loc['line'],
+            start_loc['col'],
+            end_loc['line'],
+            end_loc['col'],
+            macro['expansion'],
+            file_ids[file_path]))
+
+    for note in report.notes:
+        file_path = files[note['location']['file']]
+
+        start_loc = note['location']
+        end_loc = note['location']
+        # Range can provide more precise location information.
+        # Use that if available.
+        ranges = note.get("ranges")
+        if ranges:
+            start_loc = ranges[0][0]
+            end_loc = ranges[0][1]
+
+        bug_extended_data.append(ttypes.ExtendedReportData(
+            ttypes.ExtendedReportDataType.NOTE,
+            start_loc['line'],
+            start_loc['col'],
+            end_loc['line'],
+            end_loc['col'],
+            note['message'],
+            file_ids[file_path]))
+
+    return bug_paths, bug_events, bug_extended_data,
 
 
 def store_bug_events(session, bugevents, report_id):
@@ -167,6 +217,23 @@ def store_bug_path(session, bugpath, report_id):
                              piece.fileId,
                              report_id)
         session.add(brp)
+
+
+def store_extended_bug_data(session, extended_data, report_id):
+    """
+    Add extended bug data objects to the database session.
+    """
+    for data in extended_data:
+        data_type = report_extended_data_type_str(data.type)
+        red = ExtendedReportData(data.startLine,
+                                 data.startCol,
+                                 data.endLine,
+                                 data.endCol,
+                                 data.message,
+                                 data.fileId,
+                                 report_id,
+                                 data_type)
+        session.add(red)
 
 
 def is_same_event_path(report_id, events, session):
@@ -345,6 +412,7 @@ def addReport(session,
               main_section,
               bugpath,
               events,
+              bug_extended_data,
               detection_status,
               detection_time,
               severity_map):
@@ -377,6 +445,8 @@ def addReport(session,
         store_bug_path(session, bugpath, report.id)
         LOG.debug("storing events")
         store_bug_events(session, events, report.id)
+        LOG.debug("storing extended report data")
+        store_extended_bug_data(session, bug_extended_data, report.id)
 
         return report.id
 

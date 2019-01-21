@@ -96,9 +96,10 @@ class StoreHandler(unittest.TestCase):
                                 endLine=7, fileId=2)
         ]
 
-        path1, events1 = store_handler.collect_paths_events(reports[0],
-                                                            file_ids,
-                                                            files)
+        path1, events1, _ = store_handler.collect_paths_events(reports[0],
+                                                               file_ids,
+                                                               files)
+
         self.assertEqual(path1, report1_path)
         self.assertEqual(events1, report1_events)
 
@@ -110,9 +111,9 @@ class StoreHandler(unittest.TestCase):
                                 endLine=8, fileId=1)
         ]
 
-        path2, events2 = store_handler.collect_paths_events(reports[1],
-                                                            file_ids,
-                                                            files)
+        path2, events2, _ = store_handler.collect_paths_events(reports[1],
+                                                               file_ids,
+                                                               files)
         self.assertEqual(path2, report2_path)
         self.assertEqual(events2, report2_events)
 
@@ -136,8 +137,8 @@ class StoreHandler(unittest.TestCase):
                                 endLine=14, fileId=1)
         ]
 
-        path, events = store_handler.collect_paths_events(reports[2],
-                                                          file_ids,
-                                                          files)
+        path, events, _ = store_handler.collect_paths_events(reports[2],
+                                                             file_ids,
+                                                             files)
         self.assertEqual(path, report3_path)
         self.assertEqual(events, report3_events)

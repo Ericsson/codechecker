@@ -9,7 +9,7 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 import argparse
-import codecs
+import io
 import json
 import os
 import plistlib
@@ -25,7 +25,7 @@ def get_last_mod_time(file_path):
 
 
 def get_file_content(filename):
-    with codecs.open(filename, 'r', 'UTF-8') as f:
+    with io.open(filename, 'r', encoding='UTF-8', errors='replace') as f:
         return f.read()
 
 
@@ -82,7 +82,8 @@ class HtmlBuilder:
         content = self._layout.replace('<$REPORT_DATA$>',
                                        json.dumps(report_data))
 
-        with codecs.open(output_path, 'w+', 'UTF-8') as html_output:
+        with io.open(output_path, 'w+', encoding='UTF-8',
+                     errors='replace') as html_output:
             html_output.write(content)
 
     def create_index_html(self, output_dir):
@@ -136,15 +137,16 @@ class HtmlBuilder:
                               os.path.basename(html_file),
                               report['reportHash'],
                               report['path'],
-                              events[-1]['line'],
+                              events[-1]['location']['line'],
                               severity.lower(),
                               checker,
-                              events[-1]['msg'],
+                              events[-1]['message'],
                               len(events))
 
         content = self._index.replace('<$TABLE_REPORTS$>', table_reports)
         output_path = os.path.join(output_dir, 'index.html')
-        with codecs.open(output_path, 'w+', 'UTF-8') as html_output:
+        with io.open(output_path, 'w+', encoding='UTF-8',
+                     errors='replace') as html_output:
             html_output.write(content)
 
 
@@ -154,9 +156,22 @@ def get_report_data_from_plist(plist, skip_report_handler=None):
     from the plist.
     """
     files = plist['files']
-
     reports = []
     file_sources = {}
+
+    def update_source_file(file_id):
+        """
+        Updates file source data by file id if the given file hasn't been
+        processed.
+        """
+        if file_id not in file_sources:
+            file_path = files[file_id]
+            with io.open(file_path, 'r', encoding='UTF-8',
+                         errors='ignore') as source_data:
+                file_sources[file_id] = {'id': file_id,
+                                         'path': file_path,
+                                         'content': source_data.read()}
+
     for diag in plist['diagnostics']:
         bug_path_items = [item for item in diag['path']]
 
@@ -173,26 +188,34 @@ def get_report_data_from_plist(plist, skip_report_handler=None):
                                                        files):
             continue
 
-        events = [i for i in bug_path_items if i.get('kind') == 'event']
+        # Processing bug path events and macro expansions.
+        macros = []
+        events = []
+        for path in bug_path_items:
+            kind = path.get('kind')
+            if kind == 'event':
+                events.append({'location': path['location'],
+                               'message': path['message']})
+            elif kind == 'macro_expansion':
+                macros.append({'location': path['location'],
+                               'expansion': path['expansion'],
+                               'name': path['name']})
+            else:
+                continue
 
-        report_events = []
-        for index, event in enumerate(events):
-            file_id = event['location']['file']
-            if file_id not in file_sources:
-                file_path = files[file_id]
-                with codecs.open(file_path, 'r', 'UTF-8',
-                                 errors='ignore') as source_data:
-                    file_sources[file_id] = {'id': file_id,
-                                             'path': file_path,
-                                             'content': source_data.read()}
+            update_source_file(path['location']['file'])
 
-            report_events.append({'line': event.location['line'],
-                                  'col':  event.location['col'],
-                                  'file': event.location['file'],
-                                  'msg':  event.message,
-                                  'step': index + 1})
+        # Processing notes.
+        notes = []
+        for note in diag.get('notes', []):
+            notes.append({'location': note['location'],
+                          'message': note['message']})
 
-        reports.append({'events': report_events,
+            update_source_file(note['location']['file'])
+
+        reports.append({'events': events,
+                        'macros': macros,
+                        'notes': notes,
                         'path': source_file,
                         'reportHash': report_hash,
                         'checkerName': checker_name})

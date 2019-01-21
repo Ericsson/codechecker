@@ -251,6 +251,48 @@ class BugReportPoint(Base):
         self.report_id = report_id
 
 
+class ExtendedReportData(Base):
+    """
+    Store extra information which can help to understand or fix a report.
+    """
+    __tablename__ = 'extended_report_data'
+
+    id = Column(Integer, autoincrement=True, primary_key=True)
+
+    report_id = Column(Integer, ForeignKey('reports.id', deferrable=True,
+                                           initially="DEFERRED",
+                                           ondelete='CASCADE'),
+                       index=True)
+
+    file_id = Column(Integer, ForeignKey('files.id', deferrable=True,
+                                         initially="DEFERRED",
+                                         ondelete='CASCADE'), index=True)
+
+    type = Column(Enum('note',
+                       'macro',
+                       'fixit',
+                       name='extended_data_type'))
+
+    line_begin = Column(Integer)
+    col_begin = Column(Integer)
+    line_end = Column(Integer)
+    col_end = Column(Integer)
+
+    message = Column(String)
+
+    def __init__(self, line_begin, col_begin, line_end, col_end,
+                 message, file_id, report_id, data_type):
+
+        self.line_begin = line_begin
+        self.col_begin = col_begin
+        self.line_end = line_end
+        self.col_end = col_end
+        self.message = message
+        self.file_id = file_id
+        self.report_id = report_id
+        self.type = data_type
+
+
 class Report(Base):
     __tablename__ = 'reports'
 

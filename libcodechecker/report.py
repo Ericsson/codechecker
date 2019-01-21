@@ -207,6 +207,10 @@ class Report(object):
         return self.__bug_path
 
     @property
+    def notes(self):
+        return self.__main.get('notes', [])
+
+    @property
     def files(self):
         return self.__files
 

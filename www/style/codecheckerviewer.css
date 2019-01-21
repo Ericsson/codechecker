@@ -221,6 +221,18 @@ html, body {
   border: 1px solid #faebcc;
 }
 
+.check-msg.macro {
+  background-color: #d7dac2;
+  color: #4f5c6d;
+  border: 1px solid #d7dac2;
+}
+
+.check-msg.note {
+  background-color: #d7d7d7;
+  color: #4f5c6d;
+  border: 1px solid #bfbfbf;
+}
+
 .check-msg.current {
   border: 2px dashed #3692ff;
 }
@@ -244,6 +256,26 @@ html, body {
 
 .checker-enum.fixit {
   background-color: #8a6d3b;
+}
+
+.check-msg .tag {
+  padding: 1px 5px;
+  text-align: center;
+  border-radius: 2px;
+  margin-right: 5px;
+  text-decoration: inherit;
+}
+
+.check-msg .tag.macro {
+  background-color: #83876a;
+  color: white;
+  text-transform: capitalize;
+}
+
+.check-msg .tag.note {
+  background-color: #9299a1;
+  color: white;
+  text-transform: capitalize;
 }
 
 .editorHeader {

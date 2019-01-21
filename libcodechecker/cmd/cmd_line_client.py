@@ -12,10 +12,10 @@ from __future__ import division
 from __future__ import absolute_import
 
 import base64
-import codecs
 from collections import defaultdict
 from datetime import datetime, timedelta
 import hashlib
+import io
 import os
 import re
 import sys
@@ -671,18 +671,39 @@ def handle_diff_results(args):
 
             details = client.getReportDetails(report.reportId)
             events = []
-            for index, event in enumerate(details.pathEvents):
+            for event in details.pathEvents:
                 file_sources[event.fileId] = cached_report_file_lookup(
                     file_cache, event.fileId)
 
-                events.append({'line': event.startLine,
-                               'col': event.startCol,
-                               'file': event.fileId,
-                               'msg': event.msg,
-                               'step': index + 1})
+                location = {'line': event.startLine,
+                            'col': event.startCol,
+                            'file': event.fileId}
+
+                events.append({'location': location,
+                               'message': event.msg})
+
+            # Get extended data.
+            macros = []
+            notes = []
+            for extended_data in details.extendedData:
+                file_sources[extended_data.fileId] = cached_report_file_lookup(
+                    file_cache, extended_data.fileId)
+
+                location = {'line': extended_data.startLine,
+                            'col': extended_data.startCol,
+                            'file': extended_data.fileId}
+
+                if extended_data.type == ttypes.ExtendedReportDataType.MACRO:
+                    macros.append({'location': location,
+                                   'expansion': event.msg})
+                elif extended_data.type == ttypes.ExtendedReportDataType.NOTE:
+                    notes.append({'location': location,
+                                  'message': event.msg})
 
             report_data.append({
                 'events': events,
+                'macros': macros,
+                'notes': notes,
                 'path': report.checkedFile,
                 'reportHash': report.bugHash,
                 'checkerName': report.checkerId})
@@ -696,45 +717,46 @@ def handle_diff_results(args):
         to report data events for the HTML plist parser.
         """
         file_sources = {}
-        fname_to_fid = {}
         report_data = []
-        findex = 0
 
         for report in reports:
             # Not all report in this list may refer to the same files
             # thus we need to create a single file list with
             # all files from all reports.
-            for f in report.files:
-                if f not in fname_to_fid:
+            for file_index, file_path in enumerate(report.files):
+                if file_index not in file_sources:
                     try:
-                        with codecs.open(f, 'r', 'UTF-8',
-                                         errors='ignore') as source_data:
+                        with io.open(file_path, 'r', encoding='UTF-8',
+                                     errors='ignore') as source_data:
                             content = source_data.read()
                     except (OSError, IOError):
-                        content = f + " NOT FOUND."
-                    file_sources[findex] = {'id': findex,
-                                            'path': f,
-                                            'content': content}
-                    fname_to_fid[f] = findex
-                    findex += 1
+                        content = file_path + " NOT FOUND."
+                    file_sources[file_index] = {'id': file_index,
+                                                'path': file_path,
+                                                'content': content}
 
             events = []
-            pathElements = report.bug_path
-            index = 1
-            for element in pathElements:
-                if element['kind'] == 'event':
-                    fname = report.files[element['location']['file']]
-                    new_fid = fname_to_fid[fname]
-                    events.append({'line': element['location']['line'],
-                                   'col':  element['location']['col'],
-                                   'file': new_fid,
-                                   'msg':  element['message'],
-                                   'step': index})
-                    index += 1
+            macros = []
+            for element in report.bug_path:
+                kind = element['kind']
+                if kind == 'event':
+                    events.append({'location': element['location'],
+                                   'message':  element['message']})
+                elif kind == 'macro_expansion':
+                    macros.append({'location': element['location'],
+                                   'expansion': element['expansion'],
+                                   'name': element['name']})
+
+            notes = []
+            for note in report.notes:
+                notes.append({'location': note['location'],
+                              'message': note['message']})
 
             report_hash = report.main['issue_hash_content_of_line_in_context']
             report_data.append({
                 'events': events,
+                'macros': macros,
+                'notes': notes,
                 'path': report.main['location']['file_name'],
                 'reportHash': report_hash,
                 'checkerName': report.main['check_name']})
