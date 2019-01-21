@@ -217,9 +217,15 @@ function (declare, cookie, topic, Lightbox, Dialog, Button, BorderContainer,
     var docDialog = new Dialog();
 
     topic.subscribe('showDocumentation', function (checkerId) {
+      var markedOptions = {
+            highlight: function(code) {
+              return hljs.highlightAuto(code).value;
+            },
+          };
+
       CC_SERVICE.getCheckerDoc(checkerId, function (documentation) {
         docDialog.set('title', 'Documentation for <b>' + checkerId + '</b>');
-        docDialog.set('content', marked(documentation));
+        docDialog.set('content', marked(documentation, markedOptions));
         docDialog.show();
       });
     });
