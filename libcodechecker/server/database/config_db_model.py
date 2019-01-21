@@ -149,6 +149,20 @@ class Session(Base):
         self.last_access = datetime.now()
 
 
+class Configuration(Base):
+    __tablename__ = 'server_configurations'
+
+    id = Column(Integer, autoincrement=True, primary_key=True)
+    config_key = Column(String,
+                        nullable=False)
+
+    config_value = Column(String)
+
+    def __init__(self, config_key, config_value):
+        self.config_key = config_key
+        self.config_value = config_value
+
+
 IDENTIFIER = {
     'identifier': "ConfigDatabase",
     'orm_meta': CC_META,

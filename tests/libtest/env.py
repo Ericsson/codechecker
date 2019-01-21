@@ -21,6 +21,7 @@ import subprocess
 import sys
 
 from .thrift_client_to_db import get_auth_client
+from .thrift_client_to_db import get_config_client
 from .thrift_client_to_db import get_product_client
 from .thrift_client_to_db import get_viewer_client
 
@@ -202,6 +203,28 @@ def setup_product_client(workspace,
                               uri=uri,
                               auto_handle_connection=auto_handle_connection,
                               session_token=session_token, protocol=proto)
+
+
+def setup_config_client(workspace,
+                        uri='/Configuration',
+                        auto_handle_connection=True,
+                        session_token=None, proto='http'):
+
+    codechecker_cfg = import_test_cfg(workspace)['codechecker_cfg']
+    port = codechecker_cfg['viewer_port']
+    host = codechecker_cfg['viewer_host']
+
+    if session_token is None:
+        session_token = get_session_token(workspace)
+
+    if session_token == '_PROHIBIT':
+        session_token = None
+
+    return get_config_client(port=port,
+                             host=host,
+                             uri=uri,
+                             auto_handle_connection=auto_handle_connection,
+                             session_token=session_token, protocol=proto)
 
 
 def repository_root():

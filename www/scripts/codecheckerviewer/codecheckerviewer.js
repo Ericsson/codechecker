@@ -87,6 +87,13 @@ function (declare, cookie, topic, Lightbox, Dialog, Button, BorderContainer,
 
     CC_PROD_OBJECTS = codeCheckerProductManagement_v6;
 
+    CC_CONF_SERVICE =
+      new codeCheckerConfiguration_v6.configurationServiceClient(
+        new Thrift.Protocol(
+          new Thrift.Transport("v" + CC_API_VERSION + "/Configuration")));
+
+    CC_CONF_OBJECTS = codeCheckerConfiguration_v6;
+
     //----------------------------- Main layout ------------------------------//
 
     var layout = new BorderContainer({ id : 'mainLayout' });

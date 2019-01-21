@@ -41,6 +41,7 @@ from thrift.Thrift import TMessageType
 
 from shared.ttypes import DBStatus
 from Authentication_v6 import codeCheckerAuthentication as AuthAPI_v6
+from Configuration_v6 import configurationService as ConfigAPI_v6
 from codeCheckerDBAccess_v6 import codeCheckerDBAccess as ReportAPI_v6
 from ProductManagement_v6 import codeCheckerProductService as ProductAPI_v6
 
@@ -54,6 +55,7 @@ from . import routing
 from . import session_manager
 from .api.authentication import ThriftAuthHandler as AuthHandler_v6
 from .api.bad_api_version import ThriftAPIMismatchHandler as BadAPIHandler
+from .api.config_handler import ThriftConfigHandler as ConfigHandler_v6
 from .api.product_server import ThriftProductHandler as ProductHandler_v6
 from .api.report_server import ThriftRequestHandler as ReportHandler_v6
 from .database import database
@@ -334,7 +336,8 @@ class RequestHandler(SimpleHTTPRequestHandler):
         oprot = output_protocol_factory.getProtocol(otrans)
 
         if self.server.manager.is_enabled and \
-                not self.path.endswith('/Authentication') and \
+                not self.path.endswith(('/Authentication',
+                                        '/Configuration')) and \
                 not self.auth_session:
             # Bail out if the user is not authenticated...
             # This response has the possibility of melting down Thrift clients,
@@ -366,6 +369,11 @@ class RequestHandler(SimpleHTTPRequestHandler):
                             self.auth_session,
                             self.server.config_session)
                         processor = AuthAPI_v6.Processor(auth_handler)
+                    elif request_endpoint == 'Configuration':
+                        conf_handler = ConfigHandler_v6(
+                            self.auth_session,
+                            self.server.config_session)
+                        processor = ConfigAPI_v6.Processor(conf_handler)
                     elif request_endpoint == 'Products':
                         prod_handler = ProductHandler_v6(
                             self.server,
