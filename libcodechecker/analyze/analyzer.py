@@ -10,7 +10,6 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
-import copy
 from multiprocessing.managers import SyncManager
 import os
 import shlex
@@ -39,9 +38,7 @@ def prepare_actions(actions, enabled_analyzers):
 
     for ea in enabled_analyzers:
         for action in actions:
-            new_action = copy.deepcopy(action)
-            new_action.analyzer_type = ea
-            res.append(new_action)
+            res.append(action.with_attr('analyzer_type', ea))
     return res
 
 
@@ -56,11 +53,7 @@ def create_actions_map(actions, manager):
     result = manager.dict()
 
     for act in actions:
-        if act.source_count > 1:
-            LOG.debug("Multiple sources for one build action: " +
-                      str(act.sources))
-        source = os.path.join(act.directory, next(act.sources))
-        key = source, act.target
+        key = act.source, act.target
         if key in result:
             LOG.debug("Multiple entires in compile database "
                       "with the same (source, target) pair: (%s, %s)" % key)

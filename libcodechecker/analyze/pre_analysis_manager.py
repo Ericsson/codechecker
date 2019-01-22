@@ -95,56 +95,55 @@ def pre_analyze(params):
 
     progress_checked_num.value += 1
 
-    for source in action.sources:
-        if skip_handler and skip_handler.should_skip(source):
-            continue
-        if action.analyzer_type != ClangSA.ANALYZER_NAME:
-            continue
+    if skip_handler and skip_handler.should_skip(action.source):
+        return
+    if action.analyzer_type != ClangSA.ANALYZER_NAME:
+        return
 
-        _, source_filename = os.path.split(source)
+    _, source_filename = os.path.split(action.source)
 
-        source = util.escape_source_path(source)
+    action.source = util.escape_source_path(action.source)
 
-        LOG.info("[%d/%d] %s" %
-                 (progress_checked_num.value,
-                  progress_actions.value, source_filename))
+    LOG.info("[%d/%d] %s" %
+             (progress_checked_num.value,
+              progress_actions.value, source_filename))
 
-        config = analyzer_config_map.get(ClangSA.ANALYZER_NAME)
+    config = analyzer_config_map.get(ClangSA.ANALYZER_NAME)
 
-        try:
-            if ctu_data:
-                LOG.debug("running CTU pre analysis")
-                ctu_temp_fnmap_folder = ctu_data.get('ctu_temp_fnmap_folder')
+    try:
+        if ctu_data:
+            LOG.debug("running CTU pre analysis")
+            ctu_temp_fnmap_folder = ctu_data.get('ctu_temp_fnmap_folder')
 
-                triple_arch = \
-                    ctu_triple_arch.get_triple_arch(action, source,
-                                                    config,
-                                                    analyzer_environment)
-                ctu_manager.generate_ast(triple_arch, action, source,
-                                         config, analyzer_environment)
-                ctu_manager.map_functions(triple_arch, action, source, config,
-                                          analyzer_environment,
-                                          context.ctu_func_map_cmd,
-                                          ctu_temp_fnmap_folder)
+            triple_arch = \
+                ctu_triple_arch.get_triple_arch(action, action.source,
+                                                config,
+                                                analyzer_environment)
+            ctu_manager.generate_ast(triple_arch, action, action.source,
+                                     config, analyzer_environment)
+            ctu_manager.map_functions(triple_arch, action, action.source,
+                                      config, analyzer_environment,
+                                      context.ctu_func_map_cmd,
+                                      ctu_temp_fnmap_folder)
 
-        except Exception as ex:
-            LOG.debug_analyzer(str(ex))
-            traceback.print_exc(file=sys.stdout)
-            raise
+    except Exception as ex:
+        LOG.debug_analyzer(str(ex))
+        traceback.print_exc(file=sys.stdout)
+        raise
 
-        try:
-            if statistics_data:
-                LOG.debug("running statistics pre analysis")
-                collect_statistics(action,
-                                   source,
-                                   config,
-                                   analyzer_environment,
-                                   statistics_data)
+    try:
+        if statistics_data:
+            LOG.debug("running statistics pre analysis")
+            collect_statistics(action,
+                               action.source,
+                               config,
+                               analyzer_environment,
+                               statistics_data)
 
-        except Exception as ex:
-            LOG.debug_analyzer(str(ex))
-            traceback.print_exc(file=sys.stdout)
-            raise
+    except Exception as ex:
+        LOG.debug_analyzer(str(ex))
+        traceback.print_exc(file=sys.stdout)
+        raise
 
 
 def run_pre_analysis(actions, context, analyzer_config_map,

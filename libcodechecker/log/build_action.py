@@ -12,64 +12,53 @@ import hashlib
 
 
 class BuildAction(object):
-    def __init__(self, build_action_id=0):
-        self._id = build_action_id
+    """
+    The objects of this class hold information which is the input of the
+    analyzer engines.
+    """
+
+    __slots__ = ['analyzer_options',
+                 'compiler_includes',
+                 'compiler_standard',
+                 'analyzer_type',
+                 'original_command',
+                 'directory',
+                 'output',
+                 'lang',
+                 'target',
+                 'source',
+                 'action_type']
+
+    LINK = 0
+    COMPILE = 1
+    PREPROCESS = 2
+    INFO = 3
+
+    def __init__(self, **kwargs):
         # Filtered list of options.
-        self.analyzer_options = []
-        self.compiler_includes = []
-        self.analyzer_type = -1
-        self._original_command = ''
-        self.directory = ''
-        self.output = ''
-        self.lang = None
-        self.target = ''
-        self.source_count = 0
-        self._sources = []
+        for slot in BuildAction.__slots__:
+            super(BuildAction, self).__setattr__(slot, kwargs[slot])
 
     def __str__(self):
         # For debugging.
-        return ('Id: {0} ,\nOriginal command: {1},\n'
-                'Analyzer type: {2},\n Analyzer options: {3},\n'
-                'Directory: {4},\nOutput: {5},\nLang: {6},\nTarget: {7},\n'
-                'Source count {8},\nSources: {9}'). \
-            format(self._id, self._original_command,
+        return ('\nOriginal command: {0},\n'
+                'Analyzer type: {1},\n Analyzer options: {2},\n'
+                'Directory: {3},\nOutput: {4},\nLang: {5},\nTarget: {6},\n'
+                'Source: {7}'). \
+            format(self.original_command,
                    self.analyzer_type, self.analyzer_options,
                    self.directory, self.output, self.lang, self.target,
-                   self.source_count, self._sources)
+                   self.source)
 
-    @property
-    def id(self):
-        return self._id
-
-    @property
-    def original_command(self):
-        return self._original_command
-
-    @property
-    def original_command_hash(self):
-        hash_object = hashlib.sha1(self._original_command)
-        hex_dig = hash_object.hexdigest()
-        return hex_dig
-
-    @original_command.setter
-    def original_command(self, value):
-        self._original_command = value
-
-    @property
-    def sources(self):
-        for source in self._sources:
-            yield source
-
-    @sources.setter
-    def sources(self, value):
-        self._sources.append(value)
-        self.source_count += 1
+    def __setattr__(self, attr, value):
+        if hasattr(self, attr) and getattr(self, attr) != value:
+            raise AttributeError("BuildAction is immutable")
+        super(BuildAction, self).__setattr__(attr, value)
 
     def __eq__(self, other):
         return other._original_command == self._original_command
 
-    @property
-    def cmp_key(self):
+    def __hash__(self):
         """
         If the compilation database contains the same compilation action
         multiple times it should be checked only once.
@@ -79,5 +68,10 @@ class BuildAction(object):
         hash_content.extend(self.analyzer_options)
         hash_content.append(str(self.analyzer_type))
         hash_content.append(self.target)
-        hash_content.extend(self.sources)
-        return hashlib.sha1(''.join(hash_content)).hexdigest()
+        hash_content.append(self.source)
+        return hash(hashlib.sha1(''.join(hash_content)).hexdigest())
+
+    def with_attr(self, attr, value):
+        details = {key: getattr(self, key) for key in BuildAction.__slots__}
+        details[attr] = value
+        return BuildAction(**details)

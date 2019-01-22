@@ -139,8 +139,7 @@ class TestAnalyze(unittest.TestCase):
         errcode = process.returncode
         self.assertEquals(errcode, 0)
 
-        from libcodechecker.analyze.log_parser import compiler_info_dump_file
-        info_File = os.path.join(reports_dir, compiler_info_dump_file)
+        info_File = os.path.join(reports_dir, 'compiler_info.json')
         self.assertEquals(os.path.exists(info_File), True)
         self.assertNotEqual(os.stat(info_File).st_size, 0)
 
@@ -154,100 +153,6 @@ class TestAnalyze(unittest.TestCase):
             except ValueError:
                 self.fail("json.load should successfully parse the file %s"
                           % info_File)
-
-    def test_compiler_includes_file_is_loaded(self):
-        '''
-        Test that the compiler includes file is read when the specific command
-        line switch is there.
-        '''
-        reports_dir = self.report_dir
-        build_json = os.path.join(self.test_workspace, "build_simple.json")
-        source_file = os.path.join(self.test_workspace, "simple.cpp")
-        compiler_includes_file = os.path.join(self.test_workspace,
-                                              "compiler_includes_file.json")
-
-        # Contents of build log.
-        build_log = [
-                     {"directory": self.test_workspace,
-                      "command": "clang++ -c " + source_file,
-                      "file": source_file
-                      }
-                     ]
-        with open(build_json, 'w') as outfile:
-            json.dump(build_log, outfile)
-
-        # Test file contents.
-        simple_file_content = "int main() { return 0; }"
-        # Write content to the test file.
-        with open(source_file, 'w') as source:
-            source.write(simple_file_content)
-
-        with open(compiler_includes_file, 'w') as source:
-            source.write(
-                # Raw string literal, cannot break the line:
-                r"""{"clang++": "\"\n#include \"...\" search starts here:\n"""\
-                r"""#include <...> search starts here:\n"""\
-                r""" /TEST_FAKE_INCLUDE_DIR"}"""
-            )
-
-        # Create analyze command.
-        analyze_cmd = [self._codechecker_cmd, "analyze", build_json,
-                       "--compiler-includes-file", compiler_includes_file,
-                       "--verbose", "debug",
-                       "-o", reports_dir]
-        # Run analyze.
-        process = subprocess.Popen(
-            analyze_cmd, stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE, cwd=self.test_dir)
-        out, _ = process.communicate()
-
-        self.assertTrue("-isystem /TEST_FAKE_INCLUDE_DIR" in out)
-
-    def test_compiler_target_file_is_loaded(self):
-        '''
-        Test that the compiler target file is read when the specific command
-        line switch is there
-        '''
-        reports_dir = self.report_dir
-        build_json = os.path.join(self.test_workspace, "build_simple.json")
-        source_file = os.path.join(self.test_workspace, "simple.cpp")
-        compiler_target_file = os.path.join(self.test_workspace,
-                                            "compiler_target_file.json")
-
-        # Contents of build log.
-        build_log = [
-                     {"directory": self.test_workspace,
-                      "command": "clang++ -c " + source_file,
-                      "file": source_file
-                      }
-                     ]
-        with open(build_json, 'w') as outfile:
-            json.dump(build_log, outfile)
-
-        # Test file contents.
-        simple_file_content = "int main() { return 0; }"
-        # Write content to the test file.
-        with open(source_file, 'w') as source:
-            source.write(simple_file_content)
-
-        with open(compiler_target_file, 'w') as source:
-            source.write(
-                # Raw string literal, cannot break the line:
-                r"""{"clang++": "Target: TEST_FAKE_TARGET\nConfigured with"}"""
-            )
-
-        # Create analyze command.
-        analyze_cmd = [self._codechecker_cmd, "analyze", build_json,
-                       "--compiler-target-file", compiler_target_file,
-                       "--verbose", "debug",
-                       "-o", reports_dir]
-        # Run analyze.
-        process = subprocess.Popen(
-            analyze_cmd, stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE, cwd=self.test_dir)
-        out, _ = process.communicate()
-
-        self.assertTrue("--target=TEST_FAKE_TARGET" in out)
 
     def test_capture_analysis_output(self):
         """
