@@ -35,6 +35,10 @@ def get_compile_command(action, config, source='', output=''):
         cmd.extend(['-o', output])
     if source:
         cmd.append(source)
+
+    if all(not opt.startswith('-std=') for opt in action.analyzer_options):
+        cmd.append(action.compiler_standard)
+
     return cmd
 
 
