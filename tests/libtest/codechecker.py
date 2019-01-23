@@ -387,7 +387,16 @@ def start_or_get_server():
         server_cmd = serv_cmd(config_dir, port, pg_config)
 
         print("Starting server...")
-        subprocess.Popen(server_cmd, env=env.test_env(config_dir))
+        server_stdout = os.path.join(config_dir,
+                                     str(os.getpid()) + ".out")
+
+        with open(server_stdout, "w") as server_out:
+            subprocess.Popen(server_cmd,
+                             stdout=server_out,
+                             stderr=server_out,
+                             env=env.test_env(config_dir))
+
+            wait_for_server_start(server_stdout)
 
         if pg_config:
             # The behaviour is that CodeChecker servers only configure a
@@ -407,11 +416,6 @@ def start_or_get_server():
                                       'viewer_product': 'Default'},
                                      default_path)
 
-        # Wait for server to start and connect to database.
-        # We give a bit of grace period here as a separate subcommand needs to
-        # attach.
-        time.sleep(10)
-
     return {
         'viewer_host': 'localhost',
         'viewer_port': port
@@ -421,7 +425,7 @@ def start_or_get_server():
 def wait_for_server_start(stdoutfile):
     print("Waiting for server start reading file " + stdoutfile)
     n = 0
-    while (True):
+    while True:
         if os.path.isfile(stdoutfile):
             with open(stdoutfile) as f:
                 out = f.read()
@@ -443,17 +447,17 @@ def start_server(codechecker_cfg, event, server_args=None):
         server_stdout = os.path.join(codechecker_cfg['workspace'],
                                      str(os.getpid()) + ".out")
         print("Redirecting server output to " + server_stdout)
-        server_out = open(server_stdout, "w")
-        proc = subprocess.Popen(server_cmd, env=checking_env,
-                                stdout=server_out,
-                                stderr=server_out)
+        with open(server_stdout, "w") as server_out:
+            proc = subprocess.Popen(server_cmd, env=checking_env,
+                                    stdout=server_out,
+                                    stderr=server_out)
 
-        # Blocking termination until event is set.
-        event.wait()
+            # Blocking termination until event is set.
+            event.wait()
 
-        # If proc is still running, stop it.
-        if proc.poll() is None:
-            proc.terminate()
+            # If proc is still running, stop it.
+            if proc.poll() is None:
+                proc.terminate()
 
     server_cmd = serv_cmd(codechecker_cfg['workspace'],
                           str(codechecker_cfg['viewer_port']),

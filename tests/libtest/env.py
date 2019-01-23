@@ -97,16 +97,36 @@ def del_database(dbname, env=None):
     if pg_config:
         pg_config['dbname'] = dbname
 
-        psql_command = ['psql',
-                        '-h', pg_config['dbaddress'],
-                        '-p', str(pg_config['dbport']),
-                        '-d', 'postgres',
-                        '-c', "DROP DATABASE \"" + pg_config['dbname'] + "\""]
-        if 'dbusername' in pg_config:
-            psql_command += ['-U', pg_config['dbusername']]
+        remove_cmd = """
+            UPDATE pg_database
+            SET datallowconn='false'
+            WHERE datname='{0}';
 
-        print(psql_command)
-        subprocess.call(psql_command, env=env)
+            SELECT pg_terminate_backend(pid)
+            FROM pg_stat_activity
+            WHERE datname='{0}';
+
+            DROP DATABASE "{0}";
+        """.format(dbname)
+
+        with tempfile.NamedTemporaryFile(suffix='.sql') as sql_file:
+            sql_file.write(remove_cmd)
+            sql_file.flush()
+
+            psql_command = ['psql',
+                            '-h', pg_config['dbaddress'],
+                            '-p', str(pg_config['dbport']),
+                            '-d', 'postgres',
+                            '-f', sql_file.name]
+
+            if 'dbusername' in pg_config:
+                psql_command += ['-U', pg_config['dbusername']]
+
+            print(' '.join(psql_command))
+            subprocess.call(psql_command,
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.STDOUT,
+                            env=env)
 
 
 def clang_to_test():

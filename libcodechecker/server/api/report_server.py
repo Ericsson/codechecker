@@ -22,7 +22,7 @@ import zlib
 
 import sqlalchemy
 from sqlalchemy.sql.expression import or_, and_, not_, func, \
-    asc, desc, text, union_all, select, bindparam, literal_column
+    asc, desc, text, union_all, select, bindparam, literal_column, cast
 
 import shared
 from codeCheckerDBAccess_v6 import constants, ttypes
@@ -1694,8 +1694,12 @@ class ThriftRequestHandler(object):
 
             stmt = stmt.subquery()
 
+            # When using pg8000, 1 cannot be passed as parameter to the count
+            # function. This is the reason why we have to convert it to
+            # Integer (see: https://github.com/mfenniak/pg8000/issues/110)
+            count_int = cast(1, sqlalchemy.Integer)
             report_count = session.query(stmt.c.file_id,
-                                         func.count(1).label(
+                                         func.count(count_int).label(
                                              'report_count')) \
                 .group_by(stmt.c.file_id)
 
