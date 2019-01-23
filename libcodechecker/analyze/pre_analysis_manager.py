@@ -102,8 +102,6 @@ def pre_analyze(params):
 
     _, source_filename = os.path.split(action.source)
 
-    action.source = util.escape_source_path(action.source)
-
     LOG.info("[%d/%d] %s" %
              (progress_checked_num.value,
               progress_actions.value, source_filename))

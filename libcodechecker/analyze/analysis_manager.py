@@ -405,7 +405,7 @@ def is_ctu_active(source_analyzer):
         source_analyzer.is_ctu_enabled()
 
 
-def prepare_check(source, action, analyzer_config_map, output_dir,
+def prepare_check(action, analyzer_config_map, output_dir,
                   severity_map, skip_handler, statistics_data,
                   disable_ctu=False):
     """
@@ -447,7 +447,7 @@ def prepare_check(source, action, analyzer_config_map, output_dir,
 
     # Source is the currently analyzed source file
     # there can be more in one buildaction.
-    source_analyzer.source_file = source
+    source_analyzer.source_file = action.source
 
     # The result handler for analysis is an empty result handler
     # which only returns metadata, but can't process the results.
@@ -461,7 +461,7 @@ def prepare_check(source, action, analyzer_config_map, output_dir,
     # analyzer command is constructed.
     # The analyzer output file is based on the currently
     # analyzed source.
-    rh.analyzed_source_file = source
+    rh.analyzed_source_file = action.source
 
     if os.path.exists(rh.analyzer_result_file):
         reanalyzed = True
@@ -574,10 +574,8 @@ def check(check_data):
             LOG.debug_analyzer(source_file_name + ' is skipped')
             skipped = True
         else:
-            source = util.escape_source_path(action.source)
-
             source_analyzer, analyzer_cmd, rh, reanalyzed = \
-                prepare_check(source, action, analyzer_config_map,
+                prepare_check(action, analyzer_config_map,
                               output_dir, context.severity_map,
                               skip_handler, statistics_data)
 
@@ -679,7 +677,7 @@ def check(check_data):
                     LOG.error("Try to reanalyze without CTU")
                     # Try to reanalyze with CTU disabled.
                     source_analyzer, analyzer_cmd, rh, reanalyzed = \
-                        prepare_check(source, action,
+                        prepare_check(action,
                                       analyzer_config_map,
                                       output_dir,
                                       context.severity_map,

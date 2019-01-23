@@ -689,6 +689,13 @@ def parse_options(compilation_db_entry):
     if details['source'] == '.':
         details['source'] = ''
 
+    # Escape the spaces in the source path, but make sure not to
+    # over-escape already escaped spaces. A filename containing a space
+    # character should be passed to the analyzers escaped, otherwise it would
+    # be considered multiple command line arguments.
+    details['source'] = \
+        r'\ '.join(details['source'].replace(r'\ ', ' ').split(' '))
+
     lang = get_language(os.path.splitext(details['source'])[1])
     if lang:
         if details['lang'] is None:

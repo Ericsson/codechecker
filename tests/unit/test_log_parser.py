@@ -82,7 +82,7 @@ class LogParserTest(unittest.TestCase):
 
         build_action = log_parser.parse_log(load_json_or_empty(logfile))[0]
 
-        self.assertEqual(build_action.source, r'/tmp/a b.cpp')
+        self.assertEqual(build_action.source, r'/tmp/a\ b.cpp')
         self.assertEqual(build_action.lang, 'c++')
 
     def test_old_intercept_build(self):
@@ -109,7 +109,7 @@ class LogParserTest(unittest.TestCase):
 
         build_action = log_parser.parse_log(load_json_or_empty(logfile))[0]
 
-        self.assertEqual(build_action.source, r'/tmp/a b.cpp')
+        self.assertEqual(build_action.source, r'/tmp/a\ b.cpp')
         self.assertEqual(build_action.lang, 'c++')
 
     def test_new_intercept_build(self):
@@ -140,7 +140,7 @@ class LogParserTest(unittest.TestCase):
 
         build_action = log_parser.parse_log(load_json_or_empty(logfile))[0]
 
-        self.assertEqual(build_action.source, r'/tmp/a b.cpp')
+        self.assertEqual(build_action.source, r'/tmp/a\ b.cpp')
         self.assertEqual(build_action.lang, 'c++')
 
     def test_omit_preproc(self):
