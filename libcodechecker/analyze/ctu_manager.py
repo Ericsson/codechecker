@@ -106,7 +106,8 @@ def generate_ast(triple_arch, action, source, config, env):
             pass
 
     cmd = ctu_triple_arch.get_compile_command(action, config, source)
-    cmd.extend(['-emit-ast', '-w', '-o', ast_path])
+    # __clang__analyzer__ macro needs to be set in the imported TUs too.
+    cmd.extend(['-emit-ast', '-D__clang_analyzer__', '-w', '-o', ast_path])
 
     cmdstr = ' '.join(cmd)
     LOG.debug_analyzer("Generating AST using '%s'" % cmdstr)
