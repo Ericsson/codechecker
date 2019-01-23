@@ -19,7 +19,7 @@ import sqlalchemy as sa
 def upgrade():
     op.add_column('products', sa.Column('is_review_status_change_disabled',
                                         sa.Boolean(),
-                                        server_default=sa.text(u'false')))
+                                        server_default=sa.sql.false()))
 
 
 def downgrade():
