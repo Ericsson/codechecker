@@ -56,7 +56,7 @@ class BuildAction(object):
         super(BuildAction, self).__setattr__(attr, value)
 
     def __eq__(self, other):
-        return other._original_command == self._original_command
+        return other.original_command == self.original_command
 
     def __hash__(self):
         """
