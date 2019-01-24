@@ -628,13 +628,19 @@ def check(check_data):
 
             ctu_active = is_ctu_active(source_analyzer)
 
-            ctu_suffix = 'CTU'
+            ctu_suffix = '_CTU'
             zip_suffix = ctu_suffix if ctu_active else ''
 
-            zip_file = result_base + zip_suffix + '.zip'
+            failure_type = "_unknown"
+            if rh.analyzer_returncode == 1:
+                failure_type = "_compile_error"
+            elif rh.analyzer_returncode == 254:
+                failure_type = "_crash"
+
+            zip_file = result_base + zip_suffix + failure_type + '.zip'
             zip_file = os.path.join(failed_dir, zip_file)
 
-            ctu_zip_file = result_base + ctu_suffix + '.zip'
+            ctu_zip_file = result_base + ctu_suffix + failure_type + '.zip'
             ctu_zip_file = os.path.join(failed_dir, ctu_zip_file)
 
             return_codes = rh.analyzer_returncode
