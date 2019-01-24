@@ -179,6 +179,8 @@ def add_filter_conditions(client, report_filter, args):
     severities, checkers, file_path, dt_statuses, rw_statuses = \
         check_filter_values(args)
 
+    report_filter.isUnique = args.uniqueing == 'on'
+
     if severities:
         report_filter.severity = map(
                 lambda x: ttypes.Severity._NAMES_TO_VALUES[x.upper()],
@@ -310,12 +312,19 @@ def handle_list_results(args):
         rows = []
         for res in all_results:
             bug_line = res.line
-            checked_file = res.checkedFile + ' @ ' + str(bug_line)
+            checked_file = res.checkedFile
+            if bug_line is not None:
+                checked_file += ' @ ' + str(bug_line)
+
             sev = ttypes.Severity._VALUES_TO_NAMES[res.severity]
             rw_status = \
                 ttypes.ReviewStatus._VALUES_TO_NAMES[res.reviewData.status]
-            dt_status = \
-                ttypes.DetectionStatus._VALUES_TO_NAMES[res.detectionStatus]
+
+            dt_status = 'N/A'
+
+            status = res.detectionStatus
+            if status is not None:
+                dt_status = ttypes.DetectionStatus._VALUES_TO_NAMES[status]
 
             rows.append((checked_file, res.checkerId, sev,
                          res.checkerMsg, rw_status, dt_status))
@@ -837,7 +846,7 @@ def handle_diff_results(args):
 
         source_lines = defaultdict(set)
         for report in reports:
-            if not isinstance(report, Report):
+            if not isinstance(report, Report) and report.line is not None:
                 source_lines[report.fileId].add(report.line)
 
         lines_in_files_requested = []
@@ -847,6 +856,7 @@ def handle_diff_results(args):
                                              lines=source_lines[key]))
 
         for report in reports:
+            source_line = ''
             if isinstance(report, Report):
                 # report is coming from a plist file.
                 bug_line = report.main['location']['line']
@@ -860,19 +870,22 @@ def handle_diff_results(args):
                     get_line_from_file(report.main['location']['file_name'],
                                        bug_line)
             else:
-                source_line_contents = client.getLinesInSourceFileContents(
-                    lines_in_files_requested, ttypes.Encoding.BASE64)
-
                 # report is of ReportData type coming from CodeChecker server.
                 bug_line = report.line
                 bug_col = report.column
                 sev = ttypes.Severity._VALUES_TO_NAMES[report.severity]
-                checked_file = report.checkedFile + ':' + str(bug_line) +\
-                    ":" + str(bug_col)
-                source_line = base64.b64decode(
-                    source_line_contents[report.fileId][bug_line])
+                checked_file = report.checkedFile
+                if bug_line is not None:
+                    checked_file += ':' + str(bug_line) + ":" + str(bug_col)
+
                 check_name = report.checkerId
                 check_msg = report.checkerMsg
+
+                if lines_in_files_requested:
+                    source_line_contents = client.getLinesInSourceFileContents(
+                        lines_in_files_requested, ttypes.Encoding.BASE64)
+                    source_line = base64.b64decode(
+                        source_line_contents[report.fileId][bug_line])
             rows.append(
                 (sev, checked_file, check_msg, check_name, source_line))
         if output_format == 'plaintext':
@@ -982,11 +995,13 @@ def handle_list_result_types(args):
     init_logger(args.verbose if 'verbose' in args else None)
     check_deprecated_arg_usage(args)
 
-    is_unique = 'disable_unique' not in args
+    if 'disable_unique' in args:
+        LOG.warning("--disable-unique option is deprecated. Please use the "
+                    "'--uniqueing on' option to get uniqueing results.")
+        args.uniqueing = 'off'
 
     def get_statistics(client, run_ids, field, values):
         report_filter = ttypes.ReportFilter()
-        report_filter.isUnique = is_unique
         add_filter_conditions(client, report_filter, args)
 
         setattr(report_filter, field, values)
@@ -1011,7 +1026,6 @@ def handle_list_result_types(args):
             sys.exit(1)
 
     all_checkers_report_filter = ttypes.ReportFilter()
-    all_checkers_report_filter.isUnique = is_unique
     add_filter_conditions(client, all_checkers_report_filter, args)
 
     all_checkers = client.getCheckerCounts(run_ids,
@@ -1038,7 +1052,6 @@ def handle_list_result_types(args):
 
     # Get severity counts
     report_filter = ttypes.ReportFilter()
-    report_filter.isUnique = is_unique
     add_filter_conditions(client, report_filter, args)
 
     sev_count = client.getSeverityCounts(run_ids, report_filter, None)
