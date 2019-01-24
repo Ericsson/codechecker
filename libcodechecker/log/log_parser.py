@@ -237,6 +237,7 @@ class ImplicitCompilerInfo(object):
             if line.startswith(end_mark):
                 break
             if do_append:
+                line = line.strip()
                 # On OSX there are framework includes,
                 # where we need to strip the "(framework directory)" string.
                 # For instance:
