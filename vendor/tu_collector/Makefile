@@ -17,3 +17,6 @@ package:
 
 clean:
 	rm -rf $(BUILD_DIR)
+
+test:
+	REPO_ROOT=$(REPO_ROOT) nosetests tests
