@@ -211,6 +211,10 @@ class Report(object):
         return self.__main.get('notes', [])
 
     @property
+    def macro_expansions(self):
+        return self.__main.get('macro_expansions', [])
+
+    @property
     def files(self):
         return self.__files
 

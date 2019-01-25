@@ -42,17 +42,6 @@
       </array>
     </dict>
     <dict>
-     <key>kind</key><string>macro_expansion</string>
-     <key>location</key>
-     <dict>
-      <key>line</key><integer>6</integer>
-      <key>col</key><integer>3</integer>
-      <key>file</key><integer>0</integer>
-     </dict>
-     <key>name</key><string>SET_PTR_VAR_TO_NULL</string>
-     <key>expansion</key><string>ptr = 0</string>
-    </dict>
-    <dict>
      <key>kind</key><string>event</string>
      <key>location</key>
      <dict>
@@ -145,6 +134,19 @@
      <string>Dereference of null pointer (loaded from variable &apos;ptr&apos;)</string>
     </dict>
    </array>
+   <key>macro_expansions</key>
+   <array>
+    <dict>
+     <key>location</key>
+     <dict>
+      <key>line</key><integer>6</integer>
+      <key>col</key><integer>3</integer>
+      <key>file</key><integer>0</integer>
+     </dict>
+     <key>name</key><string>SET_PTR_VAR_TO_NULL</string>
+     <key>expansion</key><string>ptr = 0</string>
+    </dict>
+   </array>
    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;ptr&apos;)</string>
    <key>category</key><string>Logic error</string>
    <key>type</key><string>Dereference of null pointer</string>
@@ -159,16 +161,6 @@
    <key>line</key><integer>7</integer>
    <key>col</key><integer>8</integer>
    <key>file</key><integer>0</integer>
-  </dict>
-  <key>ExecutedLines</key>
-  <dict>
-   <key>0</key>
-   <array>
-    <integer>24</integer>
-    <integer>25</integer>
-    <integer>26</integer>
-    <integer>27</integer>
-   </array>
   </dict>
   </dict>
  </array>

@@ -188,22 +188,26 @@ def get_report_data_from_plist(plist, skip_report_handler=None):
                                                        files):
             continue
 
-        # Processing bug path events and macro expansions.
-        macros = []
+        # Processing bug path events.
         events = []
         for path in bug_path_items:
             kind = path.get('kind')
             if kind == 'event':
                 events.append({'location': path['location'],
                                'message': path['message']})
-            elif kind == 'macro_expansion':
-                macros.append({'location': path['location'],
-                               'expansion': path['expansion'],
-                               'name': path['name']})
             else:
                 continue
 
             update_source_file(path['location']['file'])
+
+        # Processing macro expansions.
+        macros = []
+        for macro in diag.get('macro_expansions', []):
+            macros.append({'location': macro['location'],
+                           'expansion': macro['expansion'],
+                           'name': macro['name']})
+
+            update_source_file(macro['location']['file'])
 
         # Processing notes.
         notes = []

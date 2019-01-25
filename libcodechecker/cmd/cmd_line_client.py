@@ -736,16 +736,17 @@ def handle_diff_results(args):
                                                 'content': content}
 
             events = []
-            macros = []
             for element in report.bug_path:
                 kind = element['kind']
                 if kind == 'event':
                     events.append({'location': element['location'],
                                    'message':  element['message']})
-                elif kind == 'macro_expansion':
-                    macros.append({'location': element['location'],
-                                   'expansion': element['expansion'],
-                                   'name': element['name']})
+
+            macros = []
+            for macro in report.macro_expansions:
+                macros.append({'location': macro['location'],
+                               'expansion': macro['expansion'],
+                               'name': macro['name']})
 
             notes = []
             for note in report.notes:
