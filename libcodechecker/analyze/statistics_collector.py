@@ -31,7 +31,8 @@ def build_stat_coll_cmd(action, config, source):
 
     cmd = [config.analyzer_binary, '-c', '-x', action.lang, '--analyze',
            # Do not warn about the unused gcc/g++ arguments.
-           '-Qunused-arguments']
+           '-Qunused-arguments',
+           '--analyzer-output', 'text']
 
     for plugin in config.analyzer_plugins:
         cmd.extend(["-Xclang", "-plugin",
