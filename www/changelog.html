@@ -10,6 +10,63 @@
 <div class="separator"></div>
 
 <div class="blocks">
+  <h2>Highlights of <a href="https://github.com/Ericsson/codechecker/releases/tag/v6.9.0" class="link">CodeChecker 6.9.0</a> release</h2>
+
+  <div class="items">
+    <div class="intro-row">
+      <h3>Show macro definitions and notes</h3>
+      <div class="content">
+        <div class="intro-col intro-col-left col-md-2">
+          If a bug path goes through a macro, it is impossible to understand
+          the bug path, since macro definitions cannot be resolved. Now we show
+          macro expansion and notes in the web UI if your Clang version
+          supports it.
+        </div>
+        <div class="intro-col intro-col-right col-md-2">
+          <a href="/images/macro_expansion.png" data-dojo-type="dojox.image.Lightbox" title="Macro expansion">
+            <img src="/images/macro_expansion.png" alt="Macro expansion" />
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="items">
+    <div class="intro-row">
+      <h3>New detection status types</h3>
+      <div class="content">
+        <div class="intro-col intro-col-left">
+          We added 2 new detection types:
+          <ul>
+            <li><b>Off</b> (<i class="customIcon detection-status-off"></i>)-
+              were reported by a checker that is switched off during the
+              analysis.</li>
+            <li><b>Unavailable</b> (<i class="customIcon detection-status-unavailable"></i>)-
+              were reported by a checker that does not exists anymore because
+              it was removed or renamed.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="items">
+    <div class="intro-row">
+      <h3>Disable review status change on the WEB UI</h3>
+      <div class="content">
+        <div class="intro-col intro-col-left">
+          We can disable review status change in the web UI for each product to
+          force programmers to use inline source code comments.
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="separator"></div>
+
+<div class="blocks">
   <h2>Highlights of <a href="https://github.com/Ericsson/codechecker/releases/tag/v6.8.0" class="link">CodeChecker 6.8.0</a> release</h2>
 
   <div class="items">
