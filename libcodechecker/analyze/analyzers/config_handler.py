@@ -166,16 +166,16 @@ class AnalyzerConfigHandler(object):
                     if profile_name == "list":
                         LOG.error("'list' is a reserved profile keyword. ")
                         LOG.error("Please choose another profile name in "
-                                  "'{0}'/config/config.json and rebuild."
-                                  .format(package_root))
+                                  "'%s'/config/config.json and rebuild.",
+                                  package_root)
                         sys.exit(1)
 
                     if profile_name in reserved_names:
-                        LOG.error("Profile name '" + profile_name + "'"
-                                  " conflicts with a checker(-group) name.")
+                        LOG.error("Profile name '%s' conflicts with a "
+                                  "checker(-group) name.", profile_name)
                         LOG.error("Please choose another profile name in "
-                                  "'{0}'/config/config.json and rebuild."
-                                  .format(package_root))
+                                  "'%s'/config/config.json and rebuild.",
+                                  package_root)
                         sys.exit(1)
 
                     profile_checkers = (name for name, profile_list

@@ -38,23 +38,22 @@ def ThriftClientCall(function):
             return res
         except shared.ttypes.RequestFailed as reqfailure:
             if reqfailure.errorCode == shared.ttypes.ErrorCode.DATABASE:
-                LOG.error('Database error on server')
-                LOG.error(str(reqfailure.message))
+                LOG.error('Database error on server\n%s',
+                          str(reqfailure.message))
             elif reqfailure.errorCode ==\
                     shared.ttypes.ErrorCode.AUTH_DENIED:
-                LOG.error('Authentication denied')
-                LOG.error(str(reqfailure.message))
+                LOG.error('Authentication denied\n %s',
+                          str(reqfailure.message))
             elif reqfailure.errorCode ==\
                     shared.ttypes.ErrorCode.UNAUTHORIZED:
-                LOG.error('Unauthorized to access')
-                LOG.error(str(reqfailure.message))
+                LOG.error('Unauthorized to access\n %s',
+                          str(reqfailure.message))
             elif reqfailure.errorCode ==\
                     shared.ttypes.ErrorCode.API_MISMATCH:
-                LOG.error('Client/server API mismatch')
-                LOG.error(str(reqfailure.message))
+                LOG.error('Client/server API mismatch\n %s',
+                          str(reqfailure.message))
             else:
-                LOG.error('API call error: ' + funcName)
-                LOG.error(str(reqfailure))
+                LOG.error('API call error: %s\n%s', funcName, str(reqfailure))
 
             raise
         except TApplicationException as ex:

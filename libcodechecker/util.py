@@ -101,8 +101,8 @@ def is_localhost(address):
     try:
         valid_values.append(socket.gethostbyname(socket.gethostname()))
     except (socket.herror, socket.gaierror):
-        LOG.debug("Failed to get IP address for hostname '{0}'"
-                  .format(socket.gethostname()))
+        LOG.debug("Failed to get IP address for hostname '%s'",
+                  socket.gethostname())
 
     return address in valid_values
 
@@ -118,8 +118,8 @@ def get_tmp_dir_hash():
     dir_hash = hashlib.md5()
     dir_hash.update(data)
 
-    LOG.debug('The generated temporary directory hash is %s.'
-              % dir_hash.hexdigest())
+    LOG.debug('The generated temporary directory hash is %s.',
+              dir_hash.hexdigest())
 
     return dir_hash.hexdigest()
 
@@ -183,7 +183,7 @@ def call_command(command, env=None, cwd=None):
     """ Call an external command and return with (output, return_code)."""
 
     try:
-        LOG.debug('Run ' + ' '.join(command))
+        LOG.debug('Run %s', ' '.join(command))
         out = subprocess.check_output(command,
                                       bufsize=-1,
                                       env=env,
@@ -192,7 +192,7 @@ def call_command(command, env=None, cwd=None):
         LOG.debug(out)
         return out, 0
     except subprocess.CalledProcessError as ex:
-        LOG.debug('Running command "' + ' '.join(command) + '" Failed.')
+        LOG.debug('Running command "%s" Failed.', ' '.join(command))
         LOG.debug(str(ex.returncode))
         LOG.debug(ex.output)
         return ex.output, ex.returncode
@@ -246,8 +246,8 @@ def setup_process_timeout(proc, timeout,
         """
         Helper function to execute the killing of a hung process.
         """
-        LOG.debug("Process {0} has ran for too long, killing it!"
-                  .format(watch['pid']))
+        LOG.debug("Process %s has ran for too long, killing it!",
+                  watch['pid'])
         watch['counting'] = False
         watch['killed'] = True
         kill_process_tree(watch['pid'], True)
@@ -258,7 +258,7 @@ def setup_process_timeout(proc, timeout,
     timer = Timer(timeout, __kill)
     watch['timer'] = timer
 
-    LOG.debug("Setup timeout of {1} for PID {0}".format(proc.pid, timeout))
+    LOG.debug("Setup timeout of %s for PID %s", proc.pid, timeout)
     timer.start()
     watch['counting'] = True
 
@@ -356,7 +356,7 @@ def split_server_url(url):
       hostname           (means: http://hostname:8001)
     """
 
-    LOG.debug("Parsing server url '{0}'".format(url))
+    LOG.debug("Parsing server url '%s'", url)
     protocol, url = __strip_protocol_from_url(url)
 
     # A valid product_url looks like this: 'http://localhost:8001/Product'.
@@ -377,8 +377,8 @@ def split_server_url(url):
     except Exception:
         raise ValueError("The specified server URL is invalid.")
 
-    LOG.debug("Result: With '{0}' on server '{1}:{2}'"
-              .format(protocol, host, port))
+    LOG.debug("Result: With '%s' on server '%s:%s'",
+              protocol, host, port)
 
     return protocol, host, port
 
@@ -404,7 +404,7 @@ def split_product_url(url):
       hostname/ProductEndpoint  (means: http://hostname:8001/ProductEndpoint)
     """
 
-    LOG.debug("Parsing product url '{0}'".format(url))
+    LOG.debug("Parsing product url '%s'", url)
     protocol, url = __strip_protocol_from_url(url)
 
     # A valid product_url looks like this: 'http://localhost:8001/Product'.
@@ -444,8 +444,8 @@ def split_product_url(url):
     except Exception:
         raise ValueError("The specified product URL is invalid.")
 
-    LOG.debug("Result: With '{0}' on server '{1}:{2}', product '{3}'"
-              .format(protocol, host, port, product_name))
+    LOG.debug("Result: With '%s' on server '%s:%s', product '%s'",
+              protocol, host, port, product_name)
 
     return protocol, host, port, product_name
 
@@ -555,11 +555,11 @@ def check_file_owner_rw(file_to_check):
             or mode & stat.S_IWGRP \
             or mode & stat.S_IROTH \
             or mode & stat.S_IWOTH:
-        LOG.warning("'{0}' is readable by users other than you! "
+        LOG.warning("'%s' is readable by users other than you! "
                     "This poses a risk of leaking sensitive "
                     "information, such as passwords, session tokens, etc.!\n"
-                    "Please 'chmod 0600 {0}' so only you can access the file."
-                    .format(file_to_check))
+                    "Please 'chmod 0600 %s' so only you can access the file.",
+                    file_to_check, file_to_check)
         return False
     return True
 
@@ -675,7 +675,8 @@ def replace_env_var(cfg_file):
     def replacer(matchobj):
         env_var = matchobj.group(1)
         if env_var not in os.environ:
-            LOG.error(env_var + ' environment variable not set in ' + cfg_file)
+            LOG.error('%s environment variable not set in %s', env_var,
+                      cfg_file)
             return ''
         return os.environ[env_var]
 

@@ -49,7 +49,7 @@ def print_analyzer_statistic_summary(statistics, status, msg=None):
     for analyzer_type, res in statistics.items():
         successful = res[status]
         if successful:
-            LOG.info('  ' + analyzer_type + ': ' + str(successful))
+            LOG.info("  %s: %s", analyzer_type, successful)
 
 
 def worker_result_handler(results, metadata, output_path, analyzer_binaries):
@@ -90,7 +90,7 @@ def worker_result_handler(results, metadata, output_path, analyzer_binaries):
                 statistics[analyzer_type]['failed_sources'].extend(sources)
 
     LOG.info("----==== Summary ====----")
-    LOG.info("Total analyzed compilation commands: %s", str(len(results)))
+    LOG.info("Total analyzed compilation commands: %d", len(results))
 
     print_analyzer_statistic_summary(statistics,
                                      'successful',
@@ -101,9 +101,9 @@ def worker_result_handler(results, metadata, output_path, analyzer_binaries):
                                      'Failed to analyze')
 
     if reanalyzed_num:
-        LOG.info("Reanalyzed compilation commands: " + str(reanalyzed_num))
+        LOG.info("Reanalyzed compilation commands: %d", reanalyzed_num)
     if skipped_num:
-        LOG.info("Skipped compilation commands: " + str(skipped_num))
+        LOG.info("Skipped compilation commands: %d", skipped_num)
     LOG.info("----=================----")
 
     metadata['skipped'] = skipped_num
@@ -300,8 +300,7 @@ def collect_debug_data(zip_file, other_files, buildaction, out, err,
                 mentioned_files_dependent_files.\
                     update(mentioned_file_deps)
             else:
-                LOG.debug("Could not find {0} in build actions."
-                          .format(key))
+                LOG.debug("Could not find %s in build actions.", key)
 
         dependencies.update(other_files)
         dependencies.update(mentioned_files_dependent_files)
@@ -320,17 +319,16 @@ def collect_debug_data(zip_file, other_files, buildaction, out, err,
 
         LOG.debug("Writing dependent files to archive.")
         for dependent_source in dependencies:
-            LOG.debug("[ZIP] Writing '" + dependent_source + "' "
-                      "to the archive.")
+
+            LOG.debug("[ZIP] Writing %s to the archive.", dependent_source)
             archive_subpath = dependent_source.lstrip('/')
 
             archive_path = os.path.join('sources-root',
                                         archive_subpath)
             try:
                 _ = archive.getinfo(archive_path)
-                LOG.debug("[ZIP] '{0}' is already in the ZIP "
-                          "file, won't add it again!"
-                          .format(archive_path))
+                LOG.debug("[ZIP] '%s' is already in the ZIP "
+                          "file, won't add it again!", archive_path)
                 continue
             except KeyError:
                 # If the file is already contained in the ZIP,
@@ -347,8 +345,7 @@ def collect_debug_data(zip_file, other_files, buildaction, out, err,
                 # invalid tokens (such as error messages that were
                 # printed even though the dependency generation
                 # returned 0).
-                LOG.debug("[ZIP] Couldn't write, because " +
-                          str(ex))
+                LOG.debug("[ZIP] Couldn't write, because %s", str(ex))
                 archive.writestr(
                     os.path.join('failed-sources-root',
                                  archive_subpath),
@@ -532,7 +529,7 @@ def handle_failure(source_analyzer, rh, action, zip_file,
                        action.directory,
                        action.target,
                        actions_map)
-    LOG.debug("ZIP file written at '" + zip_file + "'")
+    LOG.debug("ZIP file written at '%s'", zip_file)
 
     # Remove files that successfully analyzed earlier on.
     plist_file = result_base + ".plist"
@@ -571,8 +568,9 @@ def check(check_data):
         source_file_name = os.path.basename(action.source)
 
         if skip_handler and skip_handler.should_skip(action.source):
-            LOG.debug_analyzer(source_file_name + ' is skipped')
+            LOG.debug_analyzer('%s is skipped', source_file_name)
             skipped = True
+
         else:
             source_analyzer, analyzer_cmd, rh, reanalyzed = \
                 prepare_check(action, analyzer_config_map,
@@ -612,7 +610,7 @@ def check(check_data):
             # If execution reaches this line, the analyzer process has quit.
             if timeout_cleanup[0]():
                 LOG.warning("Analyzer ran too long, exceeding time limit "
-                            "of {0} seconds.".format(analysis_timeout))
+                            "of %d seconds.", analysis_timeout)
                 LOG.warning("Considering this analysis as failed...")
                 rh.analyzer_returncode = -1
                 rh.analyzer_stderr = (">>> CodeChecker: Analysis timed out "
@@ -651,9 +649,9 @@ def check(check_data):
                 handle_success(rh, result_file, result_base,
                                skip_handler, capture_analysis_output,
                                success_dir)
-                LOG.info("[%d/%d] %s analyzed %s successfully." %
-                         (progress_checked_num.value, progress_actions.value,
-                          action.analyzer_type, source_file_name))
+                LOG.info("[%d/%d] %s analyzed %s successfully.",
+                         progress_checked_num.value, progress_actions.value,
+                         action.analyzer_type, source_file_name)
 
                 if skip_handler:
                     # We need to check the plist content because skipping
@@ -662,13 +660,14 @@ def check(check_data):
                                                         skip_handler)
 
             else:
-                LOG.error("Analyzing '" + source_file_name + "' with " +
-                          action.analyzer_type +
-                          " CTU" if ctu_active else " " + "failed.")
+                LOG.error("Analyzing %s with %s %s filed'",
+                          source_file_name,
+                          action.analyzer_type,
+                          "CTU" if ctu_active else "")
 
                 if not quiet_output_on_stdout:
-                    LOG.error('\n' + rh.analyzer_stdout)
-                    LOG.error('\n' + rh.analyzer_stderr)
+                    LOG.error("\n%s", rh.analyzer_stdout)
+                    LOG.error("\n%s", rh.analyzer_stderr)
 
                 handle_failure(source_analyzer, rh, action, zip_file,
                                result_base, actions_map)
@@ -697,18 +696,17 @@ def check(check_data):
                                        skip_handler, capture_analysis_output,
                                        success_dir)
 
-                        msg = "[{0}/{1}] {2} analyzed {3} without" \
-                            " CTU successfully.".format(
-                                progress_checked_num.value,
-                                progress_actions.value,
-                                action.analyzer_type,
-                                source_file_name)
+                        LOG.info("[%d/%d] %s analyzed %s without"
+                                 " CTU successfully.",
+                                 progress_checked_num.value,
+                                 progress_actions.value,
+                                 action.analyzer_type,
+                                 source_file_name)
 
-                        LOG.info(msg)
                     else:
-                        LOG.error("Analyzing '" + source_file_name +
-                                  "' with " + action.analyzer_type +
-                                  " without CTU failed.")
+
+                        LOG.error("Analyzing '%s' with %s without CTU failed.",
+                                  source_file_name, action.analyzer_type)
 
                         zip_file = result_base + '.zip'
                         zip_file = os.path.join(failed_dir, zip_file)
@@ -717,11 +715,11 @@ def check(check_data):
 
             if not quiet_output_on_stdout:
                 if rh.analyzer_returncode:
-                    LOG.error('\n' + rh.analyzer_stdout)
-                    LOG.error('\n' + rh.analyzer_stderr)
+                    LOG.error('\n%s', rh.analyzer_stdout)
+                    LOG.error('\n%s', rh.analyzer_stderr)
                 else:
-                    LOG.debug_analyzer('\n' + rh.analyzer_stdout)
-                    LOG.debug_analyzer('\n' + rh.analyzer_stderr)
+                    LOG.debug_analyzer('\n%s', rh.analyzer_stdout)
+                    LOG.debug_analyzer('\n%s', rh.analyzer_stderr)
 
         progress_checked_num.value += 1
 

@@ -58,8 +58,7 @@ def get_checker_name(diagnostic, path=""):
     """
     checker_name = diagnostic.get('check_name')
     if not checker_name:
-        LOG.warning("Check name wasn't found in the plist file '%s'. "
-                    % path)
+        LOG.warning("Check name wasn't found in the plist file '%s'. ", path)
         checker_name = "unknown"
     return checker_name
 
@@ -85,7 +84,7 @@ def parse_plist(path, source_root=None, allow_plist_update=True):
     Parse the reports from a plist file.
     One plist file can contain multiple reports.
     """
-    LOG.debug("Parsing plist: " + path)
+    LOG.debug("Parsing plist: %s", path)
 
     reports = []
     files = []
@@ -311,9 +310,9 @@ def skip_report(report_hash, source_file, report_line, checker_name,
 
     elif len(src_comment_data) > 1:
         LOG.warning("Multiple source code comment can be found "
-                    "for '{0}' checker in '{1}' at line {2}. "
-                    "This bug will not be suppressed!".format(
-                        checker_name, source_file, report_line))
+                    "for '%s' checker in '%s' at line %d. "
+                    "This bug will not be suppressed!",
+                    checker_name, source_file, report_line)
     return False
 
 

@@ -66,7 +66,7 @@ def check_run_names(client, check_names):
     missing_name = False
     for name in check_names:
         if not run_info.get(name):
-            LOG.warning("The run named '" + name + "' was not found.")
+            LOG.warning("The run named '%s' was not found.", name)
             missing_name = True
 
     if missing_name:
@@ -109,11 +109,10 @@ def validate_filter_values(user_values, valid_values, value_type):
 
     if non_valid_values:
         invalid_values = ','.join(map(lambda x: x.lower(), non_valid_values))
-        LOG.error('Invalid {0} value(s): {1}'
-                  .format(value_type, invalid_values))
+        LOG.error('Invalid %s value(s): %s', value_type, invalid_values)
 
         valid_values = ','.join(map(lambda x: x.lower(), valid_values.keys()))
-        LOG.error('Valid values are: {0}'.format(valid_values))
+        LOG.error('Valid values are: %s', valid_values)
 
         return False
 
@@ -371,7 +370,7 @@ def handle_diff_results(args):
         for filename in os.listdir(reportdir):
             if filename.endswith(".plist"):
                 file_path = os.path.join(reportdir, filename)
-                LOG.debug("Parsing:" + file_path)
+                LOG.debug("Parsing: %s", file_path)
                 try:
                     files, reports = plist_parser.parse_plist(file_path)
                     for report in reports:
@@ -453,15 +452,14 @@ def handle_diff_results(args):
 
             if len(src_comment_data) == 1:
                 suppressed_in_code.append(bughash)
-                LOG.debug("Bug " + bughash +
-                          "is suppressed in code. file:" + source_file +
-                          "Line "+str(bug_line))
+                LOG.debug("Bug %s is suppressed in code. file: %s Line %s",
+                          bughash, source_file, bug_line)
             elif len(src_comment_data) > 1:
                 LOG.warning(
                     "Multiple source code comment can be found "
-                    "for '{0}' checker in '{1}' at line {2}. "
-                    "This bug will not be suppressed!".format(
-                        checker_name, source_file, bug_line))
+                    "for '%s' checker in '%s' at line %s. "
+                    "This bug will not be suppressed!",
+                    checker_name, source_file, bug_line)
         return suppressed_in_code
 
     def get_diff_type():
@@ -914,7 +912,7 @@ def handle_diff_results(args):
 
         if not run_ids:
             LOG.warning(
-                "No run names match the given pattern: " + run_arg_with_tag)
+                "No run names match the given pattern: %s", run_arg_with_tag)
             sys.exit(1)
 
         LOG.info("Matching runs: %s",

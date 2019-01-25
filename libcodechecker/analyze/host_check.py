@@ -33,14 +33,13 @@ def check_clang(compiler_bin, env):
         if not res:
             return True
 
-        LOG.debug_analyzer('Failed to run: "' + ' '.join(clang_version_cmd) +
-                           '"')
+        LOG.debug_analyzer('Failed to run: "%s"', ' '.join(clang_version_cmd))
         return False
 
     except OSError as oerr:
         if oerr.errno == errno.ENOENT:
             LOG.error(oerr)
-            LOG.error('Failed to run: "' + ' '.join(clang_version_cmd) + '"')
+            LOG.error('Failed to run: "%s"', ' '.join(clang_version_cmd))
             return False
 
 
@@ -50,7 +49,7 @@ def has_analyzer_feature(clang_bin, feature, env=None):
         inputFile.flush()
         cmd = [clang_bin, "-x", "c", "--analyze",
                "-Xclang", feature, inputFile.name, "-o", "-"]
-        LOG.debug('run: "' + ' '.join(cmd) + '"')
+        LOG.debug('run: "%s"', ' '.join(cmd))
         try:
             proc = subprocess.Popen(cmd,
                                     stdout=subprocess.PIPE,
@@ -58,12 +57,12 @@ def has_analyzer_feature(clang_bin, feature, env=None):
                                     env=env
                                     )
             out, err = proc.communicate()
-            LOG.debug("stdout:\n" + out)
-            LOG.debug("stderr:\n" + err)
+            LOG.debug("stdout:\n%s", out)
+            LOG.debug("stderr:\n%s", err)
 
             return proc.returncode == 0
         except OSError:
-            LOG.error('Failed to run: "' + ' '.join(cmd) + '"')
+            LOG.error('Failed to run: "%s"', ' '.join(cmd))
             raise
 
 
@@ -76,7 +75,7 @@ def get_resource_dir(clang_bin, context, env=None):
         return context.compiler_resource_dir
     # If not set then ask the binary for the resource dir.
     cmd = [clang_bin, "-print-resource-dir"]
-    LOG.debug('run: "' + ' '.join(cmd) + '"')
+    LOG.debug('run: "%s"', ' '.join(cmd))
     try:
         proc = subprocess.Popen(cmd,
                                 stdout=subprocess.PIPE,
@@ -84,13 +83,13 @@ def get_resource_dir(clang_bin, context, env=None):
                                 env=env)
         out, err = proc.communicate()
 
-        LOG.debug("stdout:\n" + out)
-        LOG.debug("stderr:\n" + err)
+        LOG.debug("stdout:\n%s", out)
+        LOG.debug("stderr:\n%s", err)
 
         if proc.returncode == 0:
             return out.decode("utf-8").rstrip()
         else:
             return None
     except OSError:
-        LOG.error('Failed to run: "' + ' '.join(cmd) + '"')
+        LOG.error('Failed to run: "%s"', ' '.join(cmd))
         raise

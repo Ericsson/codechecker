@@ -318,7 +318,7 @@ def get_context():
     package_root = os.environ['CC_PACKAGE_ROOT']
 
     pckg_config_file = os.path.join(package_root, "config", "config.json")
-    LOG.debug('Reading config: ' + pckg_config_file)
+    LOG.debug('Reading config: %s', pckg_config_file)
     cfg_dict = load_json_or_empty(pckg_config_file)
 
     if not cfg_dict:

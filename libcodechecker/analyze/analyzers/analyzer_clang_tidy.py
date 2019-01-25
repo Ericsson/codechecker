@@ -191,7 +191,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
         PATH, this method is used to find a callable binary.
         """
 
-        LOG.debug(configured_binary + " not found in path for ClangTidy!")
+        LOG.debug("%s not found in path for ClangTidy!", configured_binary)
 
         if os.path.isabs(configured_binary):
             # Do not autoresolve if the path is an absolute path as there
@@ -204,7 +204,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
                                        env)
 
         if clangtidy:
-            LOG.debug("Using '" + clangtidy + "' for Clang-tidy!")
+            LOG.debug("Using '%s' for Clang-tidy!", clangtidy)
         return clangtidy
 
     def construct_result_handler(self, buildaction, report_output,
@@ -276,7 +276,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
             cmdline_checkers = args.ordered_checkers
         except AttributeError:
             LOG.debug_analyzer('No checkers were defined in '
-                               'the command line for ' +
+                               'the command line for %s',
                                cls.ANALYZER_NAME)
             cmdline_checkers = None
 

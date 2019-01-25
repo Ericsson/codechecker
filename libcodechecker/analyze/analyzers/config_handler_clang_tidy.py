@@ -65,7 +65,7 @@ class ClangTidyConfigHandler(config_handler.AnalyzerConfigHandler):
          ]
         }
         """
-        LOG.debug("Tidy extra args: " + self.analyzer_extra_arguments)
+        LOG.debug("Tidy extra args: %s", self.analyzer_extra_arguments)
 
         res = []
 

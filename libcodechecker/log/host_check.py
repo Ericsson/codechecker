@@ -35,16 +35,16 @@ def check_intercept(env):
         if not res:
             return True
         else:
-            LOG.debug('Failed to run: "' + ' '.join(intercept_cmd) + '"')
+            LOG.debug('Failed to run: "%s"', ' '.join(intercept_cmd))
             return False
     except subprocess.CalledProcessError:
-        LOG.debug('Failed to run: "' + ' '.join(intercept_cmd) + '", process '
-                  'returned non-zero exit code.')
+        LOG.debug('Failed to run: "%s", process returned non-zero exit code.',
+                  ' '.join(intercept_cmd))
         return False
     except OSError as oerr:
         if oerr.errno == errno.ENOENT:
             # Not just intercept-build can be used for logging.
             # It is possible that another build logger is available.
             LOG.debug(oerr)
-            LOG.debug('Failed to run: "' + ' '.join(intercept_cmd) + '"')
+            LOG.debug('Failed to run: "%s"', ' '.join(intercept_cmd))
             return False

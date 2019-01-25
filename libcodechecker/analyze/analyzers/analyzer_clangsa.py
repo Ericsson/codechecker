@@ -258,7 +258,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         PATH, this method is used to find a callable binary.
         """
 
-        LOG.debug(configured_binary + " not found in path for ClangSA!")
+        LOG.debug("%s not found in path for ClangSA!", configured_binary)
 
         if os.path.isabs(configured_binary):
             # Do not autoresolve if the path is an absolute path as there
@@ -271,7 +271,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
                                    env)
 
         if clang:
-            LOG.debug("Using '" + clang + "' for ClangSA!")
+            LOG.debug("Using '%s' for ClangSA!", clang)
         return clang
 
     def construct_result_handler(self, buildaction, report_output,
@@ -337,7 +337,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             cmdline_checkers = args.ordered_checkers
         except AttributeError:
             LOG.debug_analyzer('No checkers were defined in '
-                               'the command line for ' + cls.ANALYZER_NAME)
+                               'the command line for %s', cls.ANALYZER_NAME)
             cmdline_checkers = None
 
         handler.initialize_checkers(

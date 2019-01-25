@@ -182,8 +182,8 @@ def main(args):
         profile_checkers = None
         if 'profile' in args:
             if args.profile not in context.available_profiles:
-                LOG.error("Checker profile '" + args.profile +
-                          "' does not exist!")
+                LOG.error("Checker profile '%s' does not exist!",
+                          args.profile)
                 LOG.error("To list available profiles, use '--profile list'.")
                 return
 
@@ -221,7 +221,7 @@ def main(args):
                                               header, rows))
 
     for analyzer_binary, reason in errored:
-        LOG.error("Failed to get checkers for '" + analyzer_binary +
-                  "'! The error reason was: '" + reason + "'")
+        LOG.error("Failed to get checkers for '%s'!"
+                  "The error reason was: '%s'", analyzer_binary, reason)
         LOG.error("Please check your installation and the "
                   "'config/package_layout.json' file!")

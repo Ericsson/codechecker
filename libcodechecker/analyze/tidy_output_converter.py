@@ -171,14 +171,14 @@ class OutputParser(object):
         # Eat code line.
         if OutputParser.note_line_re.match(line) or \
                 OutputParser.message_line_re.match(line):
-            LOG.debug("Unexpected line: %s. Expected a code line!" % line)
+            LOG.debug("Unexpected line: %s. Expected a code line!", line)
             return line
 
         # Eat arrow line.
         # FIXME: range support?
         line = next(titer)
         if '^' not in line:
-            LOG.debug("Unexpected line: %s. Expected an arrow line!" % line)
+            LOG.debug("Unexpected line: %s. Expected an arrow line!", line)
             return line
         return next(titer)
 
@@ -203,7 +203,7 @@ class OutputParser(object):
         while OutputParser.message_line_re.match(line) is None:
             match = OutputParser.note_line_re.match(line)
             if match is None:
-                LOG.debug("Unexpected line: %s" % line)
+                LOG.debug("Unexpected line: %s", line)
                 return next(titer)
 
             message.notes.append(Note(os.path.abspath(match.group('path')),

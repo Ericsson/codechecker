@@ -41,7 +41,7 @@ class Timer(object):
     def __exit__(self, timer_type, value, traceback):
         after = datetime.now()
         time_diff = after - self.before
-        LOG.debug('['+str(time_diff.total_seconds()) + 's] ' + self.block_name)
+        LOG.debug('[%ss] %s', str(time_diff.total_seconds()), self.block_name)
 
 
 def timeit(function):
@@ -59,7 +59,7 @@ def timeit(function):
         res = function(*args, **kwargs)
         after = datetime.now()
         timediff = after - before
-        LOG.debug('['+str(timediff.total_seconds())+'s] ' + func_name)
+        LOG.debug('[%ss] %s', str(timediff.total_seconds()), func_name)
         return res
 
     def release_wrapper(*args, **kwargs):
@@ -89,7 +89,7 @@ def profileit(function):
     def wrapper(*args, **kwargs):
 
         prof = cProfile.Profile()
-        LOG.debug('Profiling: ' + function_name)
+        LOG.debug('Profiling: %s', function_name)
         prof.enable()
         res = function(*args, **kwargs)
         prof.disable()

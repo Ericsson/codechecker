@@ -85,7 +85,7 @@ class SourceAnalyzer(object):
         """
         LOG.debug('Running analyzer ...')
 
-        LOG.debug_analyzer('\n' + ' '.join(analyzer_cmd))
+        LOG.debug_analyzer('\n%s', ' '.join(analyzer_cmd))
 
         res_handler.analyzer_cmd = analyzer_cmd
         analyzer_cmd = ' '.join(analyzer_cmd)

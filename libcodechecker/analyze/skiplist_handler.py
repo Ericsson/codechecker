@@ -61,7 +61,7 @@ class SkipListHandler(object):
         valid_lines = []
         for line in skip_lines:
             if len(line) < 2 or line[0] not in ['-', '+']:
-                LOG.warning("Skipping malformed skipfile pattern: " + line)
+                LOG.warning("Skipping malformed skipfile pattern: %s", line)
                 continue
 
             valid_lines.append(line)

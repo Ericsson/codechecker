@@ -151,11 +151,11 @@ def get_user_dn(con,
         if user_data:
             # User found use the user DN from the first result.
             user_dn = user_data[0][0]
-            LOG.debug("Found user: " + user_dn)
+            LOG.debug("Found user: %s", user_dn)
             return user_dn
 
-    LOG.debug("Searching for user failed with pattern: " + account_pattern)
-    LOG.debug("Account base DN:" + account_base_dn)
+    LOG.debug("Searching for user failed with pattern: %s", account_pattern)
+    LOG.debug("Account base DN: %s", account_base_dn)
     return None
 
 
@@ -217,7 +217,7 @@ class LDAPConnection(object):
 
         self.connection = ldap.initialize(ldap_server)
 
-        LOG.debug('Binding to LDAP server with user: ' + who if who else '')
+        LOG.debug('Binding to LDAP server with user: %s', who if who else '')
 
         try:
             with ldap_error_handler():
@@ -226,7 +226,7 @@ class LDAPConnection(object):
                     res = self.connection.simple_bind_s()
                     LOG.debug(res)
                 else:
-                    LOG.debug("Binding with credential: " + who)
+                    LOG.debug("Binding with credential: %s", who)
                     res = self.connection.simple_bind_s(who, cred)
                     whoami = self.connection.whoami_s()
                     LOG.debug(res)
@@ -331,7 +331,7 @@ def auth_user(ldap_config, username=None, credentials=None):
     LOG.debug("Creating USER connection...")
     with LDAPConnection(ldap_config, user_dn, credentials) as connection:
         if not connection:
-            LOG.info("User: " + username + " cannot be authenticated.")
+            LOG.info("User: %s cannot be authenticated.", username)
 
         return connection is not None
 
@@ -363,7 +363,7 @@ def get_groups(ldap_config, username, credentials):
         service_user = username
         service_cred = credentials
 
-    LOG.debug("creating LDAP connection. service user" + service_user)
+    LOG.debug("creating LDAP connection. service user %s", service_user)
     with LDAPConnection(ldap_config, service_user, service_cred) as connection:
         if connection is None:
             LOG.error('Please check your LDAP server '
@@ -404,8 +404,8 @@ def get_groups(ldap_config, username, credentials):
         group_name_attr = group_name_attr.encode('ascii', 'ignore')
         attr_list = [group_name_attr]
 
-        LOG.debug("Performing LDAP search for group:" + group_pattern +
-                  "Group Name Attr:" + group_name_attr)
+        LOG.debug("Performing LDAP search for group: %s Group Name Attr: %s",
+                  group_pattern, group_name_attr)
 
         groups = []
         try:

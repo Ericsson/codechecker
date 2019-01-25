@@ -175,7 +175,7 @@ class SQLServer(object):
 
                 mcontext = migration.MigrationContext.configure(db.connection)
                 database_schema_revision = mcontext.get_current_revision()
-                LOG.debug("Schema revision in the database: " +
+                LOG.debug("Schema revision in the database: %s",
                           str(database_schema_revision))
 
                 if database_schema_revision is None:
@@ -207,7 +207,7 @@ class SQLServer(object):
                 mcontext = migration.MigrationContext.configure(
                     db.connection)
                 database_schema_revision = mcontext.get_current_revision()
-                LOG.debug("Schema revision in the database: " +
+                LOG.debug("Schema revision in the database: %s",
                           str(database_schema_revision))
 
                 if database_schema_revision is None:
@@ -272,8 +272,8 @@ class SQLServer(object):
                 if db.error:
                     return db.error
 
-                LOG.debug("Update/create database schema for {0}"
-                          .format(self.__model_meta['identifier']))
+                LOG.debug("Update/create database schema for %s",
+                          self.__model_meta['identifier'])
                 LOG.debug("Creating new database session")
 
                 cfg = config.Config()
@@ -433,7 +433,7 @@ class SQLServer(object):
         else:
             LOG.debug("Using SQLite:")
             data_file = os.path.abspath(args['sqlite'])
-            LOG.debug("Database at " + data_file)
+            LOG.debug("Database at %s", data_file)
             return SQLiteDatabase(data_file, model_meta,
                                   migration_root, run_env=env)
 
@@ -494,8 +494,8 @@ class PostgreSQLServer(SQLServer):
 
         LOG.debug("Connecting to database...")
 
-        LOG.debug("Checking if database is running at [{0}:{1}]"
-                  .format(self.host, str(self.port)))
+        LOG.debug("Checking if database is running at [%s:%s]",
+                  self.host, str(self.port))
 
         if self.user:
             # Try to connect to a specific database

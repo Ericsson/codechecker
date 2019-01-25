@@ -489,7 +489,7 @@ def main(args):
         try:
             module = libhandlers.load_module(name)
         except ImportError:
-            LOG.error("Couldn't import subcommand '" + name + "'.")
+            LOG.error("Couldn't import subcommand '%s'", name)
             raise
 
         return module

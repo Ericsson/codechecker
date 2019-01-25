@@ -39,7 +39,7 @@ def check_preconfigured_username(username, host, port):
         LOG.error("No username supplied! Please specify the "
                   "username in your "
                   "\"~/.codechecker.passwords.json\" file for "
-                  "%s:%s.", host, port)
+                  "%s:%d.", host, port)
         sys.exit(1)
 
 
@@ -144,11 +144,10 @@ def handle_auth(protocol, host, port, username, login=False):
             check_preconfigured_username(username, host, port)
         else:
             LOG.info("Logging in using credentials from command line...")
-            pwd = getpass.getpass("Please provide password for user '{0}': "
-                                  .format(username))
+            pwd = getpass.getpass("Please provide password for user '%s': ",
+                                  username)
 
-        LOG.debug("Trying to login as {0} to {1}:{2}"
-                  .format(username, host, port))
+        LOG.debug("Trying to login as %s to %s:%d", username, host, port)
         try:
             session_token = auth_client.performLogin("Username:Password",
                                                      username + ":" +
@@ -196,7 +195,7 @@ def perform_auth_for_handler(protocol, manager, host, port,
                 username = auto_auth_string.split(':')[0]
                 check_preconfigured_username(username, host, port)
 
-                LOG.debug("Trying to login as '%s' to '%s:%s'", username,
+                LOG.debug("Trying to login as '%s' to '%s:%d'", username,
                           host, port)
 
                 # Try to automatically log in with a saved credential
@@ -249,9 +248,9 @@ def setup_product_client(protocol, host, port, product_name=None):
         # which means we can't communicate with the server orderly.
         if not product_client.getPackageVersion() or \
                 not product_client.getCurrentProduct():
-            LOG.error("The product '{0}' cannot be communicated with. It "
+            LOG.error("The product '%s' cannot be communicated with. It "
                       "either doesn't exist, or the server's configuration "
-                      "is bogus.".format(product_name))
+                      "is bogus.", product_name)
             sys.exit(1)
 
     return product_client
@@ -295,8 +294,8 @@ def setup_client(product_url, product_client=False):
                                 "is badly configured."
 
     if product_error_str:
-        LOG.error("The given product '{0}' can not be used! {1}"
-                  .format(product_name, product_error_str))
+        LOG.error("The given product '%s' can not be used! %s", product_name,
+                  product_error_str)
         sys.exit(1)
 
     if product_client:

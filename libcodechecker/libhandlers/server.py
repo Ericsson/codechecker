@@ -436,7 +436,7 @@ def print_prod_status(prod_status):
                                                   header,
                                                   rows,
                                                   sort_by_column_number=0)
-    LOG.info('Status of products:\n{0}'.format(prod_status))
+    LOG.info('Status of products:\n%s', prod_status)
 
 
 def get_schema_version_from_package(migration_root):
@@ -508,15 +508,14 @@ def __db_status_check(cfg_sql_server, context, product_name=None):
     if not product_name:
         return 0
 
-    LOG.debug("Checking database status for " + product_name +
-              " product.")
+    LOG.debug("Checking database status for %s product.", product_name)
 
     prod_statuses = check_product_db_status(cfg_sql_server, context)
 
     if product_name != 'all':
         avail = prod_statuses.get(product_name)
         if not avail:
-            LOG.error("No product was found with this endpoint: " +
+            LOG.error("No product was found with this endpoint: %s",
                       str(product_name))
             return 1
 
@@ -533,7 +532,7 @@ def __db_migration(cfg_sql_server, context, product_to_upgrade='all',
     Handle database management.
     Schema checking and migration.
     """
-    LOG.info("Preparing schema upgrade for " + str(product_to_upgrade))
+    LOG.info("Preparing schema upgrade for %s", str(product_to_upgrade))
     product_name = product_to_upgrade
 
     prod_statuses = check_product_db_status(cfg_sql_server, context)
@@ -542,7 +541,7 @@ def __db_migration(cfg_sql_server, context, product_to_upgrade='all',
     if product_name != 'all':
         avail = prod_statuses.get(product_name)
         if not avail:
-            LOG.error("No product was found with this endpoint: " +
+            LOG.error("No product was found with this endpoint: %s",
                       product_name)
             return 1
         prod_to_upgrade.append(product_name)
@@ -561,7 +560,7 @@ def __db_migration(cfg_sql_server, context, product_to_upgrade='all',
                                         context.ld_lib_path_extra)
     for prod in prod_to_upgrade:
         LOG.info("========================")
-        LOG.info("Checking: " + prod)
+        LOG.info("Checking: %s", prod)
         engine = cfg_sql_server.create_engine()
         config_session = sessionmaker(bind=engine)
         sess = config_session()
@@ -656,12 +655,12 @@ def __instance_management(args):
 
             try:
                 util.kill_process_tree(i['pid'])
-                LOG.info("Stopped CodeChecker server running on port {0} "
-                         "in workspace {1} (PID: {2})".
-                         format(i['port'], i['workspace'], i['pid']))
+                LOG.info("Stopped CodeChecker server running on port %s "
+                         "in workspace %s (PID: %s)",
+                         i['port'], i['workspace'], i['pid'])
             except Exception:
                 # Let the exception come out if the commands fail
-                LOG.error("Couldn't stop process PID #" + str(i['pid']))
+                LOG.error("Couldn't stop process PID #%s", str(i['pid']))
                 raise
 
 
@@ -842,8 +841,8 @@ def server_init_start(args):
         server.add_initial_run_database(
             cfg_sql_server, product_conn_string)
 
-        LOG.info("Product 'Default' at '{0}' created and set up."
-                 .format(default_product_path))
+        LOG.info("Product 'Default' at '%s' created and set up.",
+                 default_product_path)
 
     prod_statuses = check_product_db_status(cfg_sql_server, context)
 
@@ -905,8 +904,8 @@ def server_init_start(args):
     except socket.error as err:
         if err.errno == errno.EADDRINUSE:
             LOG.error("Server can't be started, maybe the given port number "
-                      "({}) is already used. Check the connection "
-                      "parameters.".format(args.view_port))
+                      "(%s) is already used. Check the connection "
+                      "parameters.", args.view_port)
             sys.exit(1)
         else:
             raise
