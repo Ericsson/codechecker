@@ -426,9 +426,6 @@ below:
 
 ```
 usage: CodeChecker analyze [-h] [-j JOBS] [-i SKIPFILE] -o OUTPUT_PATH
-                           [--compiler-includes-file COMPILER_INCLUDES_FILE]
-                           [--compiler-target-file COMPILER_TARGET_FILE]
-                           [--compiler-info-file COMPILER_INFO_FILE]
                            [-t {plist}] [-q] [-c]
                            [--report-hash {context-free}] [-n NAME]
                            [--analyzers ANALYZER [ANALYZER ...]]
