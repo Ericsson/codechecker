@@ -695,6 +695,11 @@ def parse_options(compilation_db_entry):
         details['original_command'] = ' '.join(gcc_command)
     elif 'command' in compilation_db_entry:
         details['original_command'] = compilation_db_entry['command']
+        # This is needed so shlex.split() leaves the quotation mark in the
+        # output list:
+        # gcc -DHELLO="hello world" main.cpp
+        # -->
+        # ['gcc', '-DHELLO="hello world"', 'main.cpp']
         gcc_command = compilation_db_entry['command'] \
             .replace(r'\"', '"') \
             .replace(r'"', r'"\"')
@@ -763,6 +768,11 @@ def parse_options(compilation_db_entry):
 
     toolchain = \
         gcc_toolchain.toolchain_in_args(details['analyzer_options'])
+
+    # Quotation marks must be preserved when passed to the analyzers, so these
+    # have to be escaped.
+    details['analyzer_options'] = \
+        map(lambda x: x.replace('"', r'"\"'), details['analyzer_options'])
 
     # Store the compiler built in include paths and defines.
     if not toolchain and 'ccache' not in details['compiler']:

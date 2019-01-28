@@ -75,7 +75,7 @@ class LogParserTest(unittest.TestCase):
         self.assertEqual(len(build_action.analyzer_options), 1)
         self.assertTrue(len(build_action.target) > 0)
         self.assertEqual(build_action.analyzer_options[0],
-                         r'-DVARIABLE="some value"')
+                         r'-DVARIABLE="\"some value"\"')
 
         # Test source file with spaces.
         logfile = os.path.join(self.__test_files, "ldlogger-new-space.json")
@@ -102,7 +102,7 @@ class LogParserTest(unittest.TestCase):
         self.assertEqual(len(build_action.analyzer_options), 1)
         self.assertTrue(len(build_action.target) > 0)
         self.assertEqual(build_action.analyzer_options[0],
-                         r'-DVARIABLE="some value"')
+                         r'-DVARIABLE="\"some value"\"')
 
         # Test source file with spaces.
         logfile = os.path.join(self.__test_files, "intercept-old-space.json")
@@ -133,7 +133,7 @@ class LogParserTest(unittest.TestCase):
         self.assertEqual(len(build_action.analyzer_options), 1)
         self.assertTrue(len(build_action.target) > 0)
         self.assertEqual(build_action.analyzer_options[0],
-                         r'-DVARIABLE="some value"')
+                         r'-DVARIABLE="\"some value"\"')
 
         # Test source file with spaces.
         logfile = os.path.join(self.__test_files, "intercept-new-space.json")
