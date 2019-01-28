@@ -8,6 +8,7 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 from collections import defaultdict
+from distutils.spawn import find_executable
 import json
 import os
 import re
@@ -205,6 +206,15 @@ class ImplicitCompilerInfo(object):
     compiler_includes = {}
     compiler_target = {}
     compiler_standard = {}
+
+    compiler_isexecutable = {}
+
+    def is_executable_compiler(self, compiler):
+        if compiler not in self.compiler_isexecutable:
+            self.compiler_isexecutable[compiler] = \
+                find_executable(compiler) is not None
+
+        return self.compiler_isexecutable[compiler]
 
     def __get_compiler_err(self, cmd):
         """
@@ -483,6 +493,40 @@ def get_language(extension):
     return mapping.get(extension)
 
 
+def determine_compiler(gcc_command, implicit_compiler_info):
+    """
+    This function determines the compiler from the given compilation command.
+    If the first part of the gcc_command is ccache invocation then the rest
+    should be a compilete compilation command.
+
+    CCache may have two forms:
+    1. ccache g++ main.cpp
+    2. ccache main.cpp
+    In the first case this function drops "ccache" from gcc_command and returns
+    the next compiler name.
+    In the second case the compiler can be given by config files or an
+    environment variable. Currently we don't handle this version, and in this
+    case the compiler remanis "ccache" and the gcc_command is not changed.
+
+    gcc_command -- A split build action as a list which may or may not start
+                   with ccache.
+
+    TODO: The second case could be handled if there was a way for querying the
+    used compiler from ccache. This can be configured for ccache in config
+    files or environment variables.
+    """
+    if 'ccache' in gcc_command[0]:
+        gcc_like = os.environ.get('CC_LOGGER_GCC_LIKE')
+        if gcc_like:
+            if all(l not in gcc_command[1] for l in gcc_like.split(':')):
+                return gcc_command[0]
+
+        if implicit_compiler_info.is_executable_compiler(gcc_command[1]):
+            return gcc_command[1]
+
+    return gcc_command[0]
+
+
 def __collect_compile_opts(flag_iterator, details):
     """
     This function collects the compilation (i.e. not linker or preprocessor)
@@ -658,9 +702,12 @@ def parse_options(compilation_db_entry):
     else:
         raise KeyError("No valid 'command' or 'arguments' entry found!")
 
+    implicit_compiler_info = ImplicitCompilerInfo()
+
     details['directory'] = compilation_db_entry['directory']
     details['action_type'] = BuildAction.COMPILE
-    details['compiler'] = gcc_command[0]
+    details['compiler'] = determine_compiler(gcc_command,
+                                             implicit_compiler_info)
     if '++' in details['compiler'] or 'cpp' in details['compiler']:
         details['lang'] = 'c++'
 
@@ -714,13 +761,11 @@ def parse_options(compilation_db_entry):
     # the compiler set in gcc-toolchain. This can cause missing headers during
     # the analysis.
 
-    implicit_compiler_info = ImplicitCompilerInfo()
-
     toolchain = \
         gcc_toolchain.toolchain_in_args(details['analyzer_options'])
 
     # Store the compiler built in include paths and defines.
-    if not toolchain:
+    if not toolchain and 'ccache' not in details['compiler']:
         implicit_compiler_info.set_implicit_compiler_info(details)
 
     return BuildAction(**details)

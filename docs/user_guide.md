@@ -9,6 +9,7 @@ Table of Contents
 * [Available CodeChecker subcommands](#available-commands)
     * [`log`](#log)
         * [BitBake](#bitbake)
+        * [CCache](#ccache)
     * [`analyze`](#analyze)
         * [_Skip_ file](#skip)
             * [Absolute path examples](#skip-abs-example)
@@ -386,6 +387,22 @@ export CC_LOGGER_GCC_LIKE
 ```bash
 CodeChecker log -o ../compile_commands.json -b "bitbake myProject"
 ```
+
+### CCache
+If your build system setup uses CCache then it can be logged too. If
+`CC_LOGGER_GCC_LIKE` contains "cc" or "ccache" directly then these actions will
+also be logged. Depending on CCache configuration there are two forms how it
+can be used:
+```bash
+ccache g++ -DHELLO=world main.cpp
+ccache -DHELLO=world main.cpp
+```
+The compiler may or may not follow `ccache` command. If the compiler is missing
+then the used compiler can be configured in a config file or an environment
+variable.
+
+Currently CodeChecker supports only the first case where the compiler name is
+also included in the build command.
 
 ## `analyze` <a name="analyze"></a>
 
