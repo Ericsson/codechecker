@@ -375,6 +375,7 @@ below:
 
 ```
 usage: CodeChecker analyze [-h] [-j JOBS] [-i SKIPFILE] -o OUTPUT_PATH
+                           [--compiler-info-file COMPILER_INFO_FILE]
                            [-t {plist}] [-q] [-c]
                            [--compile-uniqueing COMPILE_UNIQUEING]
                            [--report-hash {context-free}] [-n NAME]
@@ -384,6 +385,8 @@ usage: CodeChecker analyze [-h] [-j JOBS] [-i SKIPFILE] -o OUTPUT_PATH
                            [--saargs CLANGSA_ARGS_CFG_FILE]
                            [--tidyargs TIDY_ARGS_CFG_FILE]
                            [--tidy-config TIDY_CONFIG] [--timeout TIMEOUT]
+                           [--ctu | --ctu-collect | --ctu-analyze]
+                           [--ctu-reanalyze-on-failure]
                            [-e checker/group/profile]
                            [-d checker/group/profile] [--enable-all]
                            [--verbose {info,debug,debug_analyzer}]
@@ -409,6 +412,10 @@ optional arguments:
                         User guide on how a Skipfile should be laid out.
   -o OUTPUT_PATH, --output OUTPUT_PATH
                         Store the analysis output in the given folder.
+  --compiler-info-file COMPILER_INFO_FILE
+                        Read the compiler includes and target from the
+                        specified file rather than invoke the compiler
+                        executable.
   -t {plist}, --type {plist}, --output-format {plist}
                         Specify the format the analysis results should use.
                         (default: plist)
@@ -570,6 +577,13 @@ to the analyzers:
 
  - `-m32` (32-bit build)
  - `-m64` (64-bit build)
+
+GCC specific hard-coded values are detected during the analysis and
+recorded int the `<report-directory>/compiler_info.json`.
+
+If you want to run the analysis with a specific compiler configuration
+instead of the auto-detection you can pass that to the
+`--compiler-info-file compiler_info.json` parameter.
 
 #### Forwarding compiler options <a name="forwarding-compiler-options"></a>
 
