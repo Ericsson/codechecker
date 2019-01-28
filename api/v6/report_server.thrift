@@ -20,7 +20,9 @@ enum DetectionStatus {
   NEW,         // The report appeared amongst the analysis results in the latest store.
   RESOLVED,    // The report has disappeared at the latest store.
   UNRESOLVED,  // The report has been seen multiple times in the previous stores, and it is still visible (not fixed).
-  REOPENED     // The report has been RESOLVED in the past, but for some reason, appeared again.
+  REOPENED,    // The report has been RESOLVED in the past, but for some reason, appeared again.
+  OFF,         // Were reported by a checker that is switched off during the analysis.
+  UNAVAILABLE, // Were reported by a checker that does not exists anymore because it was removed or renamed.
 }
 
 enum DiffType {

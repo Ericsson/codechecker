@@ -304,6 +304,11 @@ the bug report can't be found after the subsequent storage.
 when the bug report is still among the results after the subsequent storage.
 - <span class="customIcon detection-status-reopened"></span> **Reopened**: when
 a resolved bug appears again.
+- <span class="customIcon detection-status-off"></span> **Off**: were reported
+by a checker that is switched off during the analysis.
+- <span class="customIcon detection-status-unavailable"></span> **Unavailable**:
+were reported by a checker that does not exists anymore because it was removed
+or renamed.
 
 ## <a name="userguide-severity-levels"></a> Severity levels
 We are mapping checker names to different severity levels:

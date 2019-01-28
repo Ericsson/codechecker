@@ -183,6 +183,16 @@
   color: #ff0000;
 }
 
+.detection-status-off::before {
+  content: "\e9b6";
+  color: #4e4e4e;
+}
+
+.detection-status-unavailable::before {
+  content: "\e01e";
+  color: #737373;
+}
+
 /* Comment icons */
 
 .customIcon.edit:before {

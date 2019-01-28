@@ -594,8 +594,8 @@ Lets take run *A* and run *B* and take the diff between run *A* and *B*,
 where *A* is the baseline.
 
 The base of the comparison are the reports that are not in
-*detection status* "Resolved" and not in *review status* "False Positive"
-and "Intentional".
+*detection status* "Resolved", "Off", "Unavailable" and not in *review status*
+"False Positive" and "Intentional".
 So all reports that are "active" in the runs.
 
 * Reports only in B (new reports):  

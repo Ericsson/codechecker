@@ -166,13 +166,11 @@ def perform_analysis(args, skip_handler, context, actions, metadata):
 
     metadata['checkers'] = {}
     for analyzer in analyzers:
-        metadata['checkers'][analyzer] = []
+        metadata['checkers'][analyzer] = {}
 
         for check, data in config_map[analyzer].checks().items():
             enabled, _ = data
-            if not enabled:
-                continue
-            metadata['checkers'][analyzer].append(check)
+            metadata['checkers'][analyzer].update({check: enabled})
 
     if ctu_collect:
         shutil.rmtree(ctu_dir, ignore_errors=True)
