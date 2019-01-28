@@ -206,17 +206,18 @@ class ImplicitCompilerInfo(object):
     compiler_includes = {}
     compiler_target = {}
     compiler_standard = {}
-
     compiler_isexecutable = {}
 
-    def is_executable_compiler(self, compiler):
-        if compiler not in self.compiler_isexecutable:
-            self.compiler_isexecutable[compiler] = \
+    @staticmethod
+    def is_executable_compiler(compiler):
+        if compiler not in ImplicitCompilerInfo.compiler_isexecutable:
+            ImplicitCompilerInfo.compiler_isexecutable[compiler] = \
                 find_executable(compiler) is not None
 
-        return self.compiler_isexecutable[compiler]
+        return ImplicitCompilerInfo.compiler_isexecutable[compiler]
 
-    def __get_compiler_err(self, cmd):
+    @staticmethod
+    def __get_compiler_err(cmd):
         """
         Returns the stderr of a compiler invocation as string.
         """
@@ -233,7 +234,8 @@ class ImplicitCompilerInfo(object):
             LOG.error("Error during process execution: " + cmd + '\n' +
                       oerr.strerror + "\n")
 
-    def __parse_compiler_includes(self, lines):
+    @staticmethod
+    def __parse_compiler_includes(lines):
         """
         Parse the compiler include paths from a string
         """
@@ -263,7 +265,8 @@ class ImplicitCompilerInfo(object):
 
         return include_paths
 
-    def __filter_compiler_includes(self, include_dirs):
+    @staticmethod
+    def __filter_compiler_includes(include_dirs):
         """
         Filter the list of compiler includes.
         We want to elide GCC's include-fixed and instrinsic directory.
@@ -293,7 +296,8 @@ class ImplicitCompilerInfo(object):
             result.append(include_dir)
         return result
 
-    def get_compiler_includes(self, compiler, language, compiler_flags):
+    @staticmethod
+    def get_compiler_includes(compiler, language, compiler_flags):
         """
         Returns a list of default includes of the given compiler.
 
@@ -321,19 +325,21 @@ class ImplicitCompilerInfo(object):
         cmd = compiler + " " + ' '.join(extra_opts) \
             + " -E -x " + language + " - -v "
 
-        include_dirs = self.__filter_compiler_includes(
-            self.__parse_compiler_includes(self.__get_compiler_err(cmd)))
+        ICI = ImplicitCompilerInfo
+        include_dirs = ICI.__filter_compiler_includes(
+            ICI.__parse_compiler_includes(ICI.__get_compiler_err(cmd)))
 
         return ["-isystem " + os.path.normpath(idir) for idir in include_dirs]
 
-    def get_compiler_target(self, compiler):
+    @staticmethod
+    def get_compiler_target(compiler):
         """
         Returns the target triple of the given compiler as a string.
 
         compiler -- The compiler binary of which the target architecture is
                     fetched.
         """
-        lines = self.__get_compiler_err(compiler + ' -v')
+        lines = ImplicitCompilerInfo.__get_compiler_err(compiler + ' -v')
 
         target_label = "Target:"
         target = ""
@@ -345,7 +351,8 @@ class ImplicitCompilerInfo(object):
 
         return target
 
-    def get_compiler_standard(self, compiler, language):
+    @staticmethod
+    def get_compiler_standard(compiler, language):
         """
         Returns the default compiler standard of the given compiler. The
         standard is determined by the values of __STDC_VERSION__ and
@@ -427,35 +434,40 @@ class ImplicitCompilerInfo(object):
 
         return standard
 
-    def set_implicit_compiler_info(self, details):
-        if details['compiler'] not in self.compiler_includes:
-            self.compiler_includes[details['compiler']] = \
-                self.get_compiler_includes(details['compiler'],
-                                           details['lang'],
-                                           details['analyzer_options'])
-        if details['compiler'] not in self.compiler_target:
-            self.compiler_target[details['compiler']] = \
-                self.get_compiler_target(details['compiler'])
-        if details['compiler'] not in self.compiler_standard:
-            self.compiler_standard[details['compiler']] = \
-                self.get_compiler_standard(details['compiler'],
-                                           details['lang'])
+    @staticmethod
+    def set(details):
+        ICI = ImplicitCompilerInfo
+
+        if details['compiler'] not in ICI.compiler_includes:
+            ICI.compiler_includes[details['compiler']] = \
+                ICI.get_compiler_includes(details['compiler'],
+                                          details['lang'],
+                                          details['analyzer_options'])
+        if details['compiler'] not in ICI.compiler_target:
+            ICI.compiler_target[details['compiler']] = \
+                ICI.get_compiler_target(details['compiler'])
+        if details['compiler'] not in ICI.compiler_standard:
+            ICI.compiler_standard[details['compiler']] = \
+                ICI.get_compiler_standard(details['compiler'],
+                                          details['lang'])
 
         details['compiler_includes'] = details['compiler_includes'] or \
-            self.compiler_includes[details['compiler']]
+            ICI.compiler_includes[details['compiler']]
         details['compiler_standard'] = details['compiler_standard'] or \
-            self.compiler_standard[details['compiler']]
+            ICI.compiler_standard[details['compiler']]
         details['target'] = details['target'] or \
-            self.compiler_target[details['compiler']]
+            ICI.compiler_target[details['compiler']]
 
-    def get_implicit_compiler_info(self):
+    @staticmethod
+    def get():
+        ICI = ImplicitCompilerInfo
+
         result = defaultdict(dict)
-
-        for compiler, includes in self.compiler_includes.items():
+        for compiler, includes in ICI.compiler_includes.items():
             result[compiler]['includes'] = includes
-        for compiler, target in self.compiler_target.items():
+        for compiler, target in ICI.compiler_target.items():
             result[compiler]['target'] = target
-        for compiler, standard in self.compiler_standard.items():
+        for compiler, standard in ICI.compiler_standard.items():
             result[compiler]['default_standard'] = standard
 
         return result
@@ -493,7 +505,7 @@ def get_language(extension):
     return mapping.get(extension)
 
 
-def determine_compiler(gcc_command, implicit_compiler_info):
+def determine_compiler(gcc_command):
     """
     This function determines the compiler from the given compilation command.
     If the first part of the gcc_command is ccache invocation then the rest
@@ -521,7 +533,7 @@ def determine_compiler(gcc_command, implicit_compiler_info):
             if all(l not in gcc_command[1] for l in gcc_like.split(':')):
                 return gcc_command[0]
 
-        if implicit_compiler_info.is_executable_compiler(gcc_command[1]):
+        if ImplicitCompilerInfo.is_executable_compiler(gcc_command[1]):
             return gcc_command[1]
 
     return gcc_command[0]
@@ -707,12 +719,9 @@ def parse_options(compilation_db_entry):
     else:
         raise KeyError("No valid 'command' or 'arguments' entry found!")
 
-    implicit_compiler_info = ImplicitCompilerInfo()
-
     details['directory'] = compilation_db_entry['directory']
     details['action_type'] = BuildAction.COMPILE
-    details['compiler'] = determine_compiler(gcc_command,
-                                             implicit_compiler_info)
+    details['compiler'] = determine_compiler(gcc_command)
     if '++' in details['compiler'] or 'cpp' in details['compiler']:
         details['lang'] = 'c++'
 
@@ -776,7 +785,7 @@ def parse_options(compilation_db_entry):
 
     # Store the compiler built in include paths and defines.
     if not toolchain and 'ccache' not in details['compiler']:
-        implicit_compiler_info.set_implicit_compiler_info(details)
+        ImplicitCompilerInfo.set(details)
 
     return BuildAction(**details)
 
@@ -799,7 +808,6 @@ def parse_log(compilation_database,
                           targets, default standard version).
     """
     try:
-        implicit_compiler_info = ImplicitCompilerInfo()
         filtered_build_actions = set()
 
         for entry in compilation_database:
@@ -818,8 +826,7 @@ def parse_log(compilation_database,
 
         if compiler_info_file:
             with open(compiler_info_file, 'w') as f:
-                json.dump(implicit_compiler_info.get_implicit_compiler_info(),
-                          f)
+                json.dump(ImplicitCompilerInfo.get(), f)
 
         return list(filtered_build_actions)
     except (ValueError, KeyError, TypeError) as ex:
