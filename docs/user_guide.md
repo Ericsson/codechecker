@@ -427,6 +427,7 @@ below:
 
 ```
 usage: CodeChecker analyze [-h] [-j JOBS] [-i SKIPFILE] -o OUTPUT_PATH
+                           [--compiler-info-file COMPILER_INFO_FILE]
                            [-t {plist}] [-q] [-c]
                            [--report-hash {context-free}] [-n NAME]
                            [--analyzers ANALYZER [ANALYZER ...]]
@@ -462,6 +463,10 @@ optional arguments:
                         User guide on how a Skipfile should be laid out.
   -o OUTPUT_PATH, --output OUTPUT_PATH
                         Store the analysis output in the given folder.
+  --compiler-info-file COMPILER_INFO_FILE
+                        Read the compiler includes and target from the
+                        specified file rather than invoke the compiler
+                        executable.
   -t {plist}, --type {plist}, --output-format {plist}
                         Specify the format the analysis results should use.
                         (default: plist)

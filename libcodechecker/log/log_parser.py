@@ -22,6 +22,7 @@ import traceback
 from libcodechecker.analyze import gcc_toolchain
 from libcodechecker.log.build_action import BuildAction
 from libcodechecker.logger import get_logger
+from libcodechecker.util import load_json_or_empty
 
 LOG = get_logger('buildlogger')
 
@@ -435,21 +436,39 @@ class ImplicitCompilerInfo(object):
         return standard
 
     @staticmethod
-    def set(details):
+    def load_compiler_info(filename, compiler):
+        contents = load_json_or_empty(filename, {})
+        compiler_info = contents.get(compiler)
+        if compiler_info is None:
+            LOG.error("Could not find compiler %s in file %s",
+                      compiler, filename)
+
+        ICI = ImplicitCompilerInfo
+        ICI.compiler_includes[compiler] = compiler_info.get('includes')
+        ICI.compiler_standard[compiler] = compiler_info.get('default_standard')
+        ICI.compiler_target[compiler] = compiler_info.get('target')
+
+    @staticmethod
+    def set(details, dump_path):
         ICI = ImplicitCompilerInfo
 
-        if details['compiler'] not in ICI.compiler_includes:
-            ICI.compiler_includes[details['compiler']] = \
-                ICI.get_compiler_includes(details['compiler'],
-                                          details['lang'],
-                                          details['analyzer_options'])
-        if details['compiler'] not in ICI.compiler_target:
-            ICI.compiler_target[details['compiler']] = \
-                ICI.get_compiler_target(details['compiler'])
-        if details['compiler'] not in ICI.compiler_standard:
-            ICI.compiler_standard[details['compiler']] = \
-                ICI.get_compiler_standard(details['compiler'],
-                                          details['lang'])
+        if not os.path.isdir(dump_path):
+            # Compiler info file exists.
+            ICI.load_compiler_info(dump_path, details['compiler'])
+        else:
+            # Invoke compiler to gather implicit compiler info.
+            if details['compiler'] not in ICI.compiler_includes:
+                ICI.compiler_includes[details['compiler']] = \
+                    ICI.get_compiler_includes(details['compiler'],
+                                              details['lang'],
+                                              details['analyzer_options'])
+            if details['compiler'] not in ICI.compiler_standard:
+                ICI.compiler_standard[details['compiler']] = \
+                    ICI.get_compiler_standard(details['compiler'],
+                                              details['lang'])
+            if details['compiler'] not in ICI.compiler_target:
+                ICI.compiler_target[details['compiler']] = \
+                    ICI.get_compiler_target(details['compiler'])
 
         details['compiler_includes'] = details['compiler_includes'] or \
             ICI.compiler_includes[details['compiler']]
@@ -511,7 +530,7 @@ def determine_compiler(gcc_command):
     """
     This function determines the compiler from the given compilation command.
     If the first part of the gcc_command is ccache invocation then the rest
-    should be a compilete compilation command.
+    should be a complete compilation command.
 
     CCache may have two forms:
     1. ccache g++ main.cpp
@@ -681,7 +700,7 @@ def __skip(flag_iterator, _):
     return False
 
 
-def parse_options(compilation_db_entry):
+def parse_options(compilation_db_entry, dump_path='.'):
     """
     This function parses a GCC compilation action and returns a BuildAction
     object which can be the input of Clang analyzer tools.
@@ -690,6 +709,8 @@ def parse_options(compilation_db_entry):
                             file, i.e. a dictionary with the compilation
                             command, the compiled file and the current working
                             directory.
+    dump_path -- Contains either the path to a compiler info file, or a path
+                 to the output directory, if such a file does not exist (yet).
     """
 
     details = {
@@ -787,14 +808,12 @@ def parse_options(compilation_db_entry):
 
     # Store the compiler built in include paths and defines.
     if not toolchain and 'ccache' not in details['compiler']:
-        ImplicitCompilerInfo.set(details)
+        ImplicitCompilerInfo.set(details, dump_path)
 
     return BuildAction(**details)
 
 
-def parse_log(compilation_database,
-              skip_handler=None,
-              compiler_info_file=None):
+def parse_log(compilation_database, dump_path, skip_handler=None):
     """
     compilation_database -- A compilation database as a list of dict objects.
                             These object should contain "file", "dictionary"
@@ -802,12 +821,16 @@ def parse_log(compilation_database,
                             by "arguments" which is a split command. Older
                             versions of intercept-build provide the build
                             command this way.
+    dump_path -- Holds one of two paths, either a
+                 (a) path to a pre-existing dump file that should be read for
+                     implicit compiler data (implicit include paths,
+                     architecture targets, default standard version), or
+                 (b) path to the output directory. In this case, compiler data
+                     will be dumped to a default 'compiler_info.json' file in
+                     this directory.
     skip_handler -- A SkipListHandler object which helps to skip build actions
                     that shouldn't be analyzed. The build actions described by
                     this handler will not be the part of the result list.
-    compiler_info_file -- An optional filename where implicit compiler data
-                          is dumped (implicit include paths, architecture
-                          targets, default standard version).
     """
     try:
         filtered_build_actions = set()
@@ -816,7 +839,7 @@ def parse_log(compilation_database,
             if skip_handler and skip_handler.should_skip(entry['file']):
                 continue
 
-            action = parse_options(entry)
+            action = parse_options(entry, dump_path)
 
             if not action.lang:
                 continue
@@ -826,8 +849,10 @@ def parse_log(compilation_database,
             # Filter out duplicate compilation commands.
             filtered_build_actions.add(action)
 
-        if compiler_info_file:
-            with open(compiler_info_file, 'w') as f:
+        if os.path.isdir(dump_path):
+            # We have no compiler info file and have to construct it.
+            dump_file = os.path.join(dump_path, 'compiler_info.json')
+            with open(dump_file, 'w') as f:
                 json.dump(ImplicitCompilerInfo.get(), f)
 
         LOG.debug('Parsing log file done.')

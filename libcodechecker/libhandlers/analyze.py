@@ -124,6 +124,14 @@ def add_arguments_to_parser(parser):
                         default=argparse.SUPPRESS,
                         help="Store the analysis output in the given folder.")
 
+    parser.add_argument('--compiler-info-file',
+                        dest="compiler_info_file",
+                        required=False,
+                        default=argparse.SUPPRESS,
+                        help="Read the compiler includes and target from the "
+                             "specified file rather than invoke the compiler "
+                             "executable.")
+
     parser.add_argument('-t', '--type', '--output-format',
                         dest="output_format",
                         required=False,
@@ -512,6 +520,12 @@ def main(args):
     # Process the skip list if present.
     skip_handler = __get_skip_handler(args)
 
+    if 'compiler_info_file' in args:
+        LOG.debug("Compiler info is read from: %s", args.compiler_info_file)
+        dump_path = args.compiler_info_file
+    else:
+        dump_path = args.output_path
+
     # Parse the JSON CCDBs and retrieve the compile commands.
     actions = []
     for log_file in args.logfile:
@@ -521,9 +535,8 @@ def main(args):
             continue
 
         actions += log_parser.parse_log(
-            load_json_or_empty(log_file),
-            skip_handler,
-            os.path.join(args.output_path, 'compiler_info.json'))
+            load_json_or_empty(log_file), dump_path, skip_handler)
+
     if not actions:
         LOG.info("None of the specified build log files contained "
                  "valid compilation commands. No analysis needed...")

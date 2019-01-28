@@ -154,6 +154,52 @@ class TestAnalyze(unittest.TestCase):
                 self.fail("json.load should successfully parse the file %s"
                           % info_File)
 
+    def test_compiler_info_file_is_loaded(self):
+        '''
+        Test that compiler info file is loaded if option is set.
+        '''
+        reports_dir = self.report_dir
+        build_json = os.path.join(self.test_workspace, "build_simple.json")
+        source_file = os.path.join(self.test_workspace, "simple.cpp")
+        compiler_info_file = os.path.join(self.test_workspace,
+                                          "compiler_info.json")
+
+        # Create a compilation database.
+        build_log = [{"directory": self.test_workspace,
+                      "command": "clang++ -c " + source_file,
+                      "file": source_file}]
+
+        with open(build_json, 'w') as outfile:
+            json.dump(build_log, outfile)
+
+        # Test file contents
+        simple_file_content = "int main() { return 0; }"
+
+        # Write content to the test file
+        with open(source_file, 'w') as source:
+            source.write(simple_file_content)
+
+        with open(compiler_info_file, 'w') as source:
+            source.write('{"clang++": {"default_standard": "-std=FAKE_STD", '
+                         '"target": "FAKE_TARGET", "includes": ["-isystem '
+                         '/FAKE_INCLUDE_DIR"]}}')
+
+        # Create analyze command.
+        analyze_cmd = [self._codechecker_cmd, "analyze", build_json,
+                       "--compiler-info-file", compiler_info_file,
+                       "--analyzers", "clangsa", "--verbose", "debug",
+                       "-o", reports_dir]
+
+        # Run analyze.
+        process = subprocess.Popen(
+            analyze_cmd, stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE, cwd=self.test_dir)
+        out, _ = process.communicate()
+
+        self.assertTrue("-std=FAKE_STD" in out)
+        self.assertTrue("--target=FAKE_TARGET" in out)
+        self.assertTrue("-isystem /FAKE_INCLUDE_DIR" in out)
+
     def test_capture_analysis_output(self):
         """
         Test if reports/success/<output_file>.[stdout,stderr].txt
