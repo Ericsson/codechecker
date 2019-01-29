@@ -441,7 +441,7 @@ class PlistToPlaintextFormatter(object):
                 self._processed_path_hashes.add(path_hash)
 
                 events = [i for i in report.bug_path
-                          if i.get('kind') in ('event', 'macro_expansion')]
+                          if i.get('kind') == 'event']
                 f_path = report.files[events[-1]['location']['file']]
                 if self.skiplist_handler and \
                         self.skiplist_handler.should_skip(f_path):
@@ -478,6 +478,23 @@ class PlistToPlaintextFormatter(object):
                 if self.print_steps:
                     output.write('  Report hash: ' + report_hash + '\n')
 
+                    # Print out macros.
+                    macros = report.macro_expansions
+                    if macros:
+                        output.write('  Macro expansions:\n')
+
+                        index_format = '    %%%dd, ' % \
+                                       int(math.floor(
+                                           math.log10(len(macros))) + 1)
+
+                        for index, macro in enumerate(macros):
+                            output.write(index_format % (index + 1))
+                            source = report.files[
+                                macro['location']['file']]
+                            output.write(self.__format_macro_expansion(macro,
+                                                                       source))
+                            output.write('\n')
+
                     # Print out notes.
                     notes = report.notes
                     if notes:
@@ -503,15 +520,10 @@ class PlistToPlaintextFormatter(object):
                     for index, event in enumerate(events):
                         output.write(index_format % (index + 1))
                         source_file = report.files[event['location']['file']]
-                        if event.kind == 'macro_expansion':
-                            output.write(
-                                self.__format_macro_expansion(event,
-                                                              source_file))
-                        else:
-                            output.write(self.__format_bug_event(None,
-                                                                 None,
-                                                                 event,
-                                                                 source_file))
+                        output.write(self.__format_bug_event(None,
+                                                             None,
+                                                             event,
+                                                             source_file))
                         output.write('\n')
                 output.write('\n')
 

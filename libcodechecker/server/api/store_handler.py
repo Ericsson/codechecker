@@ -97,9 +97,6 @@ def collect_paths_events(report, file_ids, files):
     report_path = filter(lambda i: i.get('kind') == 'control',
                          report.bug_path)
 
-    macros = filter(lambda i: i.get('kind') == 'macro_expansion',
-                    report.bug_path)
-
     if report_path:
         start_range = report_path[0]['edges'][0]['start']
         start1_line = start_range[0]['line']
@@ -152,7 +149,7 @@ def collect_paths_events(report, file_ids, files):
             event['message'],
             file_ids[file_path]))
 
-    for macro in macros:
+    for macro in report.macro_expansions:
         file_path = files[macro['location']['file']]
 
         start_loc = macro['location']
