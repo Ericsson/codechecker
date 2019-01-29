@@ -571,3 +571,9 @@ def main(args):
         LOG.debug("Compilation database JSON file is the same.")
     except Exception:
         LOG.debug("Copying compilation database JSON file failed.")
+
+    try:
+        from libcodechecker import analyzer_statistics
+        analyzer_statistics.collect(metadata, "analyze")
+    except Exception:
+        pass
