@@ -835,3 +835,27 @@ ul.analyzer-statistics .link {
 .dijitDialog ul.analyzer-statistics .successful .num {
   background-color: green;
 }
+
+.arrow {
+  border: solid black;
+  border-width: 0 3px 3px 0;
+  display: inline-block;
+  padding: 3px;
+  cursor: pointer;
+  margin: 0px 5px;
+}
+
+.arrow:hover {
+  border: solid #437ea8;
+  border-width: 0 3px 3px 0;
+}
+
+.left-arrow {
+  transform: rotate(135deg);
+  -webkit-transform: rotate(135deg);
+}
+
+.right-arrow {
+  transform: rotate(-45deg);
+  -webkit-transform: rotate(-45deg);
+}

@@ -248,15 +248,12 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
             evt.bugEventNumber = index + 1;
           });
 
-          var bubbles = pathEvents.filter(filterFunction);
-          bubbles.forEach(function (bubble) { --bubble.startCol; });
-
           var extraPathEvents =
             reportDetails.extendedData.filter(filterFunction);
           extraPathEvents.forEach(function (e) { --e.startCol; });
 
           that.addExtraPathEvents(extraPathEvents);
-          that.addBubbles(bubbles, pathEvents.length);
+          that.addBubbles(pathEvents);
           that.addOtherFileBubbles(reportDetails.executionPath);
         }
 
@@ -300,34 +297,79 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
       });
     },
 
-    addBubbles : function (bubbles, numOfPathEvents) {
+    addBubbles : function (events) {
       var that = this;
 
-      that.codeMirror.operation(function () {
-        bubbles.forEach(function (bubble, i) {
-          var isResult = bubble.bugEventNumber === numOfPathEvents;
+      this.codeMirror.operation(function () {
+        events.forEach(function (event, step) {
+          if (event.fileId !== that.sourceFileData.fileId)
+            return;
 
-          var left = that.codeMirror.defaultCharWidth() * bubble.startCol + 'px';
+          var isResult = step === events.length - 1;
+
+          var left = that.codeMirror.defaultCharWidth() * event.startCol + 'px';
 
           var enumType = isResult
-            ? 'error' : bubble.msg.indexOf(' (fixit)') > -1
+            ? 'error' : event.msg.indexOf(' (fixit)') > -1
             ? 'fixit' : 'info';
-
-          var enumeration =
-            createBugStepEnumeration(bubble.bugEventNumber, enumType).outerHTML;
 
           var element = dom.create('div', {
             style : 'margin-left: ' + left,
             class : 'check-msg ' + enumType,
-            idx : bubble.bugEventNumber,
-            innerHTML : enumeration
-                      + parseBugStepMsg(entities.encode(bubble.msg))
+            idx : event.bugEventNumber
           });
 
+          var enumeration =
+            createBugStepEnumeration(event.bugEventNumber, enumType);
+
+          element.appendChild(enumeration);
+
+          var prevBugEvent = step - 1;
+          if (step > 0) {
+            var prevBug = document.createElement('span');
+            prevBug.setAttribute('class', 'arrow left-arrow');
+            prevBug.addEventListener('click', function () {
+              var event = events[prevBugEvent];
+              that.setBugEvent(event);
+            });
+            element.appendChild(prevBug);
+          }
+
+          var msg = document.createElement('span');
+          msg.innerHTML = parseBugStepMsg(entities.encode(event.msg));
+
+          element.appendChild(msg);
+
+          var nextBugEvent = step + 1;
+          if (nextBugEvent < events.length) {
+            var nextBug = document.createElement('span');
+            nextBug.setAttribute('class', 'arrow right-arrow');
+            nextBug.addEventListener('click', function () {
+              var event = events[nextBugEvent];
+              that.setBugEvent(event);
+            });
+            element.appendChild(nextBug);
+          }
+
           that._lineWidgets.push(that.codeMirror.addLineWidget(
-            bubble.startLine - 1, element));
+            event.startLine - 1, element));
         });
       });
+    },
+
+    setBugEvent : function (event) {
+      if (!this.sourceFileData ||
+           this.sourceFileData.fileId !== event.fileId
+      ) {
+        this.set(
+          'sourceFileData',
+          CC_SERVICE.getSourceFileData(event.fileId, true));
+
+        this.drawBugPath();
+      }
+
+      this.jumpTo(event.startLine, event.startCol);
+      this.highlightCurrentBubble(event.bugEventNumber);
     },
 
     addOtherFileBubbles : function (path) {
