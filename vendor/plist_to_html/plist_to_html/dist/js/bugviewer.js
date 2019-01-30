@@ -252,11 +252,11 @@ var BugViewer = {
         element.appendChild(enumeration);
 
       var prevBugEvent = step - 1;
-      if (prevBugEvent > 0) {
+      if (step > 0) {
         var prevBug = document.createElement('span');
         prevBug.setAttribute('class', 'arrow left-arrow');
         prevBug.addEventListener('click', function () {
-          var event = currentEvents[prevBugEvent - 1];
+          var event = currentEvents[prevBugEvent];
           that.setCurrentBugEvent(event);
         });
         element.appendChild(prevBug);
