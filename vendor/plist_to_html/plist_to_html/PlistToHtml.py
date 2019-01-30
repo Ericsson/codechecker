@@ -353,7 +353,7 @@ def __add_arguments_to_parser(parser):
                         required=True,
                         help="Generate HTML output files in the given folder.")
 
-    curr_file_dir = os.path.dirname(os.path.abspath(__file__))
+    curr_file_dir = os.path.dirname(os.path.realpath(__file__))
     parser.add_argument('-l', '--layout',
                         dest="layout_dir",
                         required=False,
