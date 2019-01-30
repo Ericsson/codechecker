@@ -137,18 +137,28 @@ var BugViewer = {
     this._currentReport = report;
     var events = report['events'];
     var lastBugEvent = events[events.length - 1];
-    this.setCurrentBugEvent(lastBugEvent);
+    this.setCurrentBugEvent(lastBugEvent, events.length - 1);
     this.setCheckerName(report.checkerName);
 
     window.location.hash = '#reportHash=' + report.reportHash;
   },
 
-  setCurrentBugEvent : function (event) {
+  setCurrentBugEvent : function (event, idx) {
     this._currentBugEvent = event;
     this.setSourceFileData(this._files[event.location.file]);
     this.drawBugPath();
 
     this.jumpTo(event.location.line, 0);
+    this.highlightBugEvent(event, idx);
+  },
+
+  highlightBugEvent : function (event, idx) {
+    this._lineWidgets.forEach(function (widget) {
+      var lineIdx = widget.node.getAttribute('idx');
+      if (parseInt(lineIdx) === idx) {
+        widget.node.classList.add('current');
+      }
+    });
   },
 
   setCheckerName : function (checkerName) {
@@ -243,6 +253,7 @@ var BugViewer = {
       var element = document.createElement('div');
       element.setAttribute('style', 'margin-left: ' + left);
       element.setAttribute('class', 'check-msg ' + type);
+      element.setAttribute('idx', step);
 
       var enumeration = document.createElement('span');
       enumeration.setAttribute('class', 'checker-enum ' + type);
@@ -257,7 +268,7 @@ var BugViewer = {
         prevBug.setAttribute('class', 'arrow left-arrow');
         prevBug.addEventListener('click', function () {
           var event = currentEvents[prevBugEvent];
-          that.setCurrentBugEvent(event);
+          that.setCurrentBugEvent(event, prevBugEvent);
         });
         element.appendChild(prevBug);
       }
@@ -274,7 +285,7 @@ var BugViewer = {
         nextBug.setAttribute('class', 'arrow right-arrow');
         nextBug.addEventListener('click', function () {
           var event = currentEvents[nextBugEvent];
-          that.setCurrentBugEvent(event);
+          that.setCurrentBugEvent(event, nextBugEvent);
         });
         element.appendChild(nextBug);
       }
