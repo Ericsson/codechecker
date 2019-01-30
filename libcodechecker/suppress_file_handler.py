@@ -92,7 +92,7 @@ def get_suppress_data(suppress_file):
             continue
 
         if line.strip() != '':
-            LOG.warning('Malformed suppress line: ' + line)
+            LOG.warning('Malformed suppress line: %s', line)
 
     return suppress_data
 
@@ -102,7 +102,7 @@ def write_to_suppress_file(suppress_file, value, file_name, comment='',
                            status='false_positive'):
     comment = comment.decode('UTF-8')
 
-    LOG.debug('Processing suppress file: ' + suppress_file)
+    LOG.debug('Processing suppress file: %s', suppress_file)
 
     try:
         with codecs.open(suppress_file, 'r', 'UTF-8') as s_file:
@@ -116,7 +116,7 @@ def write_to_suppress_file(suppress_file, value, file_name, comment='',
                          suppress_data)
 
             if res:
-                LOG.debug("Already found in\n %s" % suppress_file)
+                LOG.debug("Already found in\n %s", suppress_file)
                 return True
 
         s_file = codecs.open(suppress_file, 'a', 'UTF-8')
@@ -131,7 +131,7 @@ def write_to_suppress_file(suppress_file, value, file_name, comment='',
 
     except Exception as ex:
         LOG.error(str(ex))
-        LOG.error("Failed to write: %s" % suppress_file)
+        LOG.error("Failed to write: %s", suppress_file)
         return False
 
 
@@ -141,7 +141,7 @@ def remove_from_suppress_file(suppress_file, value, file_name):
     Old and new format is supported.
     """
 
-    LOG.debug('Removing ' + value + ' from \n' + suppress_file)
+    LOG.debug('Removing %s from \n%s', value, suppress_file)
 
     try:
         s_file = codecs.open(suppress_file, 'r+', 'UTF-8')
@@ -186,5 +186,5 @@ def remove_from_suppress_file(suppress_file, value, file_name):
 
     except Exception as ex:
         LOG.error(str(ex))
-        LOG.error("Failed to write: %s" % suppress_file)
+        LOG.error("Failed to write: %s", suppress_file)
         return False

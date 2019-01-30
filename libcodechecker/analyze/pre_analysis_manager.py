@@ -53,11 +53,11 @@ def collect_statistics(action, source, config, environ, statistics_data):
     LOG.debug(analyzer_out)
     LOG.debug(analyzer_err)
     if ret_code:
-        LOG.error("Failed to collect statistics for " + source)
+        LOG.error("Failed to collect statistics for %s", source)
         return ret_code
 
-    LOG.debug("Running statistics collectors for " +
-              source + " was successful")
+    LOG.debug("Running statistics collectors for %s was sucesssful.",
+              source)
 
     _, source_filename = os.path.split(source)
 
@@ -102,9 +102,9 @@ def pre_analyze(params):
 
     _, source_filename = os.path.split(action.source)
 
-    LOG.info("[%d/%d] %s" %
-             (progress_checked_num.value,
-              progress_actions.value, source_filename))
+    LOG.info("[%d/%d] %s",
+             progress_checked_num.value,
+             progress_actions.value, source_filename)
 
     config = analyzer_config_map.get(ClangSA.ANALYZER_NAME)
 

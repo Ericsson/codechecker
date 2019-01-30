@@ -110,7 +110,7 @@ def generate_ast(triple_arch, action, source, config, env):
     cmd.extend(['-emit-ast', '-D__clang_analyzer__', '-w', '-o', ast_path])
 
     cmdstr = ' '.join(cmd)
-    LOG.debug_analyzer("Generating AST using '%s'" % cmdstr)
+    LOG.debug_analyzer("Generating AST using '%s'", cmdstr)
     ret_code, _, err = analyzer_base.SourceAnalyzer.run_proc(cmdstr,
                                                              env,
                                                              action.directory)
@@ -147,7 +147,7 @@ def map_functions(triple_arch, action, source, config, env,
     cmd.insert(2, '--')
 
     cmdstr = ' '.join(cmd)
-    LOG.debug_analyzer("Generating function map using '%s'" % cmdstr)
+    LOG.debug_analyzer("Generating function map using '%s'", cmdstr)
     ret_code, stdout, err \
         = analyzer_base.SourceAnalyzer.run_proc(cmdstr,
                                                 env,

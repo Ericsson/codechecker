@@ -57,7 +57,7 @@ def perform_build_command(logfile, command, context, keep_link, silent=False):
 
     try:
         original_env_file = os.environ['CODECHECKER_ORIGINAL_BUILD_ENV']
-        LOG.debug_analyzer('Loading original build env from: ' +
+        LOG.debug_analyzer('Loading original build env from: %s',
                            original_env_file)
 
         with open(original_env_file, 'rb') as env_file:
@@ -102,7 +102,7 @@ def perform_build_command(logfile, command, context, keep_link, silent=False):
 
         if ret_code == 0:
             LOG.info("Build finished successfully.")
-            LOG.debug_analyzer("The logfile is: " + logfile)
+            LOG.debug_analyzer("The logfile is: %s", logfile)
         else:
             LOG.info("Build failed.")
             sys.exit(ret_code)

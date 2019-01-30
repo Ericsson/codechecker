@@ -185,9 +185,8 @@ class SourceCodeCommentHandler(object):
         for a bug line.
         """
         source_file = self.__source_file
-        LOG.debug("Checking for source code comments in the source file '{0}'"
-                  "at line {1}".format(self.__source_file,
-                                       bug_line))
+        LOG.debug("Checking for source code comments in the source file '%s'"
+                  "at line %s", self.__source_file, bug_line)
 
         previous_line_num = bug_line - 1
 
@@ -313,15 +312,15 @@ class SourceCodeCommentHandler(object):
 
         # More than one source code comment found for this line.
         if not len(checker_name_comments):
-            LOG.debug("No source code comments are found for checker "
-                      "'{0}'".format(checker_name))
+            LOG.debug("No source code comments are found for checker %s",
+                      checker_name)
         elif len(checker_name_comments) > 1:
-            LOG.debug("Multiple source code comment can be found for '{0}' "
-                      "checker in '{1}' at line {2}.".format(
-                          checker_name, self.__source_file, bug_line))
+            LOG.debug("Multiple source code comment can be found for '%s' "
+                      "checker in '%s' at line %s.", checker_name,
+                      self.__source_file, bug_line)
             LOG.debug(checker_name_comments)
         else:
             LOG.debug("The following source code comment is found for"
-                      "checker '{0}': {1}".format(checker_name,
-                                                  checker_name_comments[0]))
+                      "checker '%s': %s", checker_name,
+                      checker_name_comments[0])
         return checker_name_comments

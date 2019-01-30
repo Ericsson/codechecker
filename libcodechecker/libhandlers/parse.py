@@ -244,8 +244,8 @@ def main(args):
                     LOG.info("Will write source-code suppressions to "
                              "suppress file.")
             else:
-                LOG.warning("Suppress file '" + args.suppress + "' given, but "
-                            "it does not exist -- will not suppress anything.")
+                LOG.warning("Suppress file '%s' given, but it does not exist"
+                            " -- will not suppress anything.", args.suppress)
         else:
             __make_handler = True
 
@@ -296,7 +296,7 @@ def main(args):
 
         input_path = os.path.abspath(input_path)
         os.chdir(original_cwd)
-        LOG.debug("Parsing input argument: '" + input_path + "'")
+        LOG.debug("Parsing input argument: '%s'", input_path)
 
         export = args.export if 'export' in args else None
         if export is not None and export == 'html':
@@ -380,10 +380,10 @@ def main(args):
         if file_change:
             changed_files = '\n'.join([' - ' + f for f in file_change])
             LOG.warning("The following source file contents changed since the "
-                        "latest analysis:\n{0}\nMultiple reports were not "
+                        "latest analysis:\n%s\nMultiple reports were not "
                         "shown and skipped from the statistics. Please "
                         "analyze your project again to update the "
-                        "reports!".format(changed_files))
+                        "reports!", changed_files)
 
     os.chdir(original_cwd)
 

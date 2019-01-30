@@ -56,7 +56,7 @@ def handle_add_component(args):
     source_component = client.getSourceComponents([args.name])
 
     if len(source_component):
-        LOG.info("The source component '{0}' already exist!".format(args.name))
+        LOG.info("The source component '%s' already exist!", args.name)
 
         question = 'Do you want to update? Y(es)/n(o) '
         if not get_user_input(question):
@@ -102,8 +102,7 @@ def handle_del_component(args):
     source_component = client.getSourceComponents([args.name])
 
     if not source_component:
-        LOG.error("The source component '{0}' does not exist!"
-                  .format(args.name))
+        LOG.error("The source component '%s' does not exist!", args.name)
         sys.exit(1)
 
     success = client.removeSourceComponent(args.name)

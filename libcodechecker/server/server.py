@@ -170,8 +170,8 @@ class RequestHandler(SimpleHTTPRequestHandler):
             product = self.server.get_product(product_endpoint)
             if not product:
                 # Give an error if the user tries to access an invalid product.
-                LOG.info("Product endpoint '{0}' does not exist."
-                         .format(product_endpoint))
+                LOG.info("Product endpoint '%s' does not exist.",
+                         product_endpoint)
                 self.send_error(
                     404,
                     "The product {0} does not exist."
@@ -186,9 +186,8 @@ class RequestHandler(SimpleHTTPRequestHandler):
                                    DBStatus.SCHEMA_INIT_ERROR]
                 # If the product is not connected, try reconnecting...
                 if product.db_status in reconnect_cases:
-                    LOG.error("Request's product '{0}' is not connected! "
-                              "Attempting reconnect..."
-                              .format(product_endpoint))
+                    LOG.error("Request's product '%s' is not connected! "
+                              "Attempting reconnect...", product_endpoint)
                     product.connect()
                     if product.db_status != DBStatus.OK:
                         # If the reconnection fails,
@@ -203,8 +202,8 @@ class RequestHandler(SimpleHTTPRequestHandler):
                 # queries for web resources are '/prod/style...' as
                 # opposed to '/style...', which would result in 'style'
                 # being considered product name.
-                LOG.info("Redirecting user from /{0} to /{0}/index.html"
-                         .format(product_endpoint))
+                LOG.info("Redirecting user from /%s to /%s/index.html",
+                         product_endpoint, product_endpoint)
 
                 # WARN: Browsers cache '308 Permanent Redirect' responses,
                 # in the event of debugging this, use Private Browsing!
@@ -232,8 +231,8 @@ class RequestHandler(SimpleHTTPRequestHandler):
                 only_product = self.server.get_only_product()
                 if only_product:
                     if only_product.db_status == DBStatus.OK:
-                        LOG.info("Redirecting '/' to ONLY product '/{0}'"
-                                 .format(only_product.endpoint))
+                        LOG.info("Redirecting '/' to ONLY product '/%s'",
+                                 only_product.endpoint)
 
                         self.send_response(307)  # 307 Temporary Redirect
                         self.send_header("Location",
@@ -241,8 +240,8 @@ class RequestHandler(SimpleHTTPRequestHandler):
                         self.end_headers()
                         return
                     else:
-                        LOG.error("ONLY product '/{0}' has database issues..."
-                                  .format(only_product.endpoint))
+                        LOG.error("ONLY product '/%s' has database issues...",
+                                  only_product.endpoint)
 
                         self.send_response(307)  # 307 Temporary Redirect
                         self.send_header("Location", '/products.html')
@@ -283,9 +282,8 @@ class RequestHandler(SimpleHTTPRequestHandler):
         if product.db_status in [DBStatus.FAILED_TO_CONNECT,
                                  DBStatus.MISSING,
                                  DBStatus.SCHEMA_INIT_ERROR]:
-            LOG.error("Request's product '{0}' is not connected! "
-                      "Attempting reconnect..."
-                      .format(product.endpoint))
+            LOG.error("Request's product '%s' is not connected! "
+                      "Attempting reconnect...", product.endpoint)
             product.connect()
             if product.db_status != DBStatus.OK:
                 # If the reconnection fails send an error to the user.
@@ -341,10 +339,8 @@ class RequestHandler(SimpleHTTPRequestHandler):
             # Bail out if the user is not authenticated...
             # This response has the possibility of melting down Thrift clients,
             # but the user is expected to properly authenticate first.
-
-            LOG.debug(client_host + ":" + str(client_port) +
-                      " Invalid access, credentials not found " +
-                      "- session refused.")
+            LOG.debug("%s:%s Invalid access, credentials not found "
+                      "- session refused.", client_host, str(client_port))
             self.send_error(401)
             return
 
@@ -565,8 +561,7 @@ class Product(object):
         Each time the connect is called the db_status is updated.
         """
 
-        LOG.debug("Checking '{0}' database.".
-                  format(self.endpoint))
+        LOG.debug("Checking '%s' database.", self.endpoint)
 
         sql_server = database.SQLServer.from_connection_string(
             self.__connection_string,
@@ -598,8 +593,8 @@ class Product(object):
                 self.__db_status = sql_server.connect(init_db)
 
         except Exception as ex:
-            LOG.error("The database for product '{0}' cannot be connected to."
-                      .format(self.endpoint))
+            LOG.error("The database for product '%s' cannot be connected to.",
+                      self.endpoint)
             LOG.error(ex.message)
             self.__db_status = DBStatus.FAILED_TO_CONNECT
             self.__last_connect_attempt = (datetime.datetime.now(), ex.message)
@@ -700,8 +695,7 @@ class CCSimpleHttpServer(HTTPServer):
         if not skip_db_cleanup:
             for endpoint, product in self.__products.items():
                 if not product.cleanup_run_db():
-                    LOG.warning("Cleaning database for " +
-                                endpoint + " Failed.")
+                    LOG.warning("Cleaning database for %s Failed.", endpoint)
 
         self.__request_handlers = ThreadPool(processes=10)
         try:
@@ -712,19 +706,19 @@ class CCSimpleHttpServer(HTTPServer):
             ssl_cert_file = os.path.join(config_directory, "cert.pem")
             if os.path.isfile(ssl_key_file) and os.path.isfile(ssl_cert_file):
                 LOG.info("Initiating SSL. Server listening on secure socket.")
-                LOG.debug("Using cert file:"+ssl_cert_file)
-                LOG.debug("Using key file:"+ssl_key_file)
+                LOG.debug("Using cert file: %s", ssl_cert_file)
+                LOG.debug("Using key file: %s", ssl_key_file)
                 self.socket = ssl.wrap_socket(self.socket, server_side=True,
                                               keyfile=ssl_key_file,
                                               certfile=ssl_cert_file)
 
             else:
-                LOG.info("Searching for SSL key at {0}, cert at {1}, "
-                         "not found...".format(ssl_key_file, ssl_cert_file))
+                LOG.info("Searching for SSL key at %s, cert at %s, "
+                         "not found...", ssl_key_file, ssl_cert_file)
                 LOG.info("Falling back to simple, insecure HTTP.")
 
         except Exception as e:
-            LOG.error("Couldn't start the server: " + e.__str__())
+            LOG.error("Couldn't start the server: %s", e.__str__())
             raise
 
     def terminate(self):
@@ -773,7 +767,7 @@ class CCSimpleHttpServer(HTTPServer):
             LOG.debug("This product is already configured!")
             return
 
-        LOG.debug("Setting up product '{0}'".format(orm_product.endpoint))
+        LOG.debug("Setting up product '%s'", orm_product.endpoint)
 
         prod = Product(orm_product,
                        self.context,

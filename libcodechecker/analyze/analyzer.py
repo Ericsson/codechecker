@@ -56,7 +56,8 @@ def create_actions_map(actions, manager):
         key = act.source, act.target
         if key in result:
             LOG.debug("Multiple entires in compile database "
-                      "with the same (source, target) pair: (%s, %s)" % key)
+                      "with the same (source, target) pair: (%s, %s)",
+                      act.source, act.target)
         result[key] = act
     return result
 
@@ -79,7 +80,8 @@ def __get_analyzer_version(context, analyzer_config_map):
                                              env=check_env)
             versions[analyzer_bin] = output
         except (subprocess.CalledProcessError, OSError) as oerr:
-            LOG.warning("Failed to get analyzer version: " + ' '.join(version))
+            LOG.warning("Failed to get analyzer version: %s",
+                        ' '.join(version))
             LOG.warning(oerr.strerror)
 
     return versions
@@ -175,7 +177,7 @@ def perform_analysis(args, skip_handler, context, actions, metadata):
     if ctu_collect:
         shutil.rmtree(ctu_dir, ignore_errors=True)
     elif ctu_analyze and not os.path.exists(ctu_dir):
-        LOG.error("CTU directory:'" + ctu_dir + "' does not exist.")
+        LOG.error("CTU directory: '%s' does not exist.", ctu_dir)
         return
 
     start_time = time.time()
@@ -243,7 +245,7 @@ def perform_analysis(args, skip_handler, context, actions, metadata):
         LOG.info("----=================----")
 
     end_time = time.time()
-    LOG.info("Analysis length: " + str(end_time - start_time) + " sec.")
+    LOG.info("Analysis length: %s sec.", end_time - start_time)
 
     metadata['timestamps'] = {'begin': start_time,
                               'end': end_time}

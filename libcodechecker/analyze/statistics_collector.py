@@ -120,7 +120,7 @@ class SpecialReturnValueCollector(object):
         Return the checker config parameter for the analyzer checker.
         """
         if not os.path.exists(SpecialReturnValueCollector.stats_file(path)):
-            LOG.debug('No checker statistics file was found for ' +
+            LOG.debug('No checker statistics file was found for %s',
                       SpecialReturnValueCollector.checker_analyze)
             return []
         else:
@@ -229,7 +229,7 @@ class ReturnValueCollector(object):
         Return the checker config parameter for the analyzer checker.
         """
         if not os.path.exists(ReturnValueCollector.stats_file(path)):
-            LOG.debug('No checker statistics file was found for ' +
+            LOG.debug('No checker statistics file was found for %s',
                       ReturnValueCollector.checker_analyze)
             return []
         else:
@@ -337,11 +337,11 @@ def postprocess_stats(clang_output_dir, stats_dir, stats_min_sample_count,
 
     # Write out statistics.
     unchecked_yaml = ReturnValueCollector.stats_file(stats_dir)
-    LOG.debug("Writing out statistics to " + unchecked_yaml)
+    LOG.debug("Writing out statistics to %s", unchecked_yaml)
     with open(unchecked_yaml, 'w') as uyaml:
         uyaml.write(ret_collector.get_yaml())
 
     special_ret_yaml = SpecialReturnValueCollector.stats_file(stats_dir)
-    LOG.debug("Writing out statistics to " + special_ret_yaml)
+    LOG.debug("Writing out statistics to %s", special_ret_yaml)
     with open(special_ret_yaml, 'w') as uyaml:
         uyaml.write(special_ret_collector.get_yaml())

@@ -133,8 +133,7 @@ def handle_del_product(args):
                 if product.endpoint == args.endpoint]
 
     if len(products) == 0:
-        LOG.error("The product '{0}' does not exist!"
-                  .format(args.endpoint))
+        LOG.error("The product '%s' does not exist!", args.endpoint)
         return
 
     success = client.removeProduct(products[0].id)

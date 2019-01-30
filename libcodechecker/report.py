@@ -92,7 +92,7 @@ def generate_report_hash(path, source_file, check_name):
 
         if line_content == '' and not os.path.isfile(source_file):
             LOG.error("Failed to generate report hash.")
-            LOG.error('%s does not exists!' % source_file)
+            LOG.error('%s does not exists!', source_file)
 
         file_name = os.path.basename(source_file)
         msg = main_section.get('message')
