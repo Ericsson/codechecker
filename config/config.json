@@ -17,7 +17,6 @@
   "checker_config": {
       "clangsa_checkers" : {
         "alpha.core.BoolAssignment" : ["sensitive", "extreme"],
-        "alpha.core.CallAndMessageUnInitRefArg" : ["extreme"],
         "alpha.core.CastSize" : ["sensitive", "extreme"],
         "alpha.core.Conversion" : ["sensitive", "extreme"],
         "alpha.core.DynamicTypeChecker" : ["sensitive", "extreme"],
