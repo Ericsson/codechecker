@@ -666,7 +666,7 @@ def check(check_data):
                                                         skip_handler)
 
             else:
-                LOG.error("Analyzing %s with %s %s filed'",
+                LOG.error("Analyzing %s with %s %s failed!",
                           source_file_name,
                           action.analyzer_type,
                           "CTU" if ctu_active else "")
