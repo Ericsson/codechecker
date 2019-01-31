@@ -182,6 +182,13 @@ class ClangSA(analyzer_base.SourceAnalyzer):
                                          '-analyzer-disable-checker=' +
                                          checker_name])
 
+            # Needed for the iterator checkers.
+            analyzer_cmd.extend(['-Xclang',
+                                 '-analyzer-config',
+                                 '-Xclang',
+                                 'aggressive-binary-operation-simplification'
+                                 '=true'])
+
             if config.ctu_dir and not self.__disable_ctu:
                 analyzer_cmd.extend(
                     ['-Xclang', '-analyzer-config', '-Xclang',
