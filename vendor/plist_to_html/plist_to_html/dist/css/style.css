@@ -131,6 +131,10 @@ div.container {
   border: 1px solid #bfbfbf;
 }
 
+.check-msg.current {
+  border: 2px dashed #3692ff;
+}
+
 .check-msg .tag {
   padding: 1px 5px;
   text-align: center;
