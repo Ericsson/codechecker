@@ -1395,6 +1395,11 @@ Results can be filtered by using separate filter options of `results`, `diff`,
 `sum`, etc. commands.
 ```
 filter arguments:
+  --uniqueing {on,off}  The same bug may appear several times if it is found
+                        on different execution paths, i.e. through different
+                        function calls. By turning on uniqueing a report
+                        appears only once even if it is found on several
+                        paths.
   --report-hash [REPORT_HASH [REPORT_HASH ...]]
                         Filter results by report hashes.
   --review-status [REVIEW_STATUS [REVIEW_STATUS ...]]
@@ -1622,7 +1627,7 @@ Prints basic information about analysis results, such as location, checker
 name, summary.
 
 ```
-usage: CodeChecker cmd results [-h]
+usage: CodeChecker cmd results [-h] [--uniqueing {on,off}]
                                [--report-hash [REPORT_HASH [REPORT_HASH ...]]]
                                [--review-status [REVIEW_STATUS [REVIEW_STATUS ...]]]
                                [--detection-status [DETECTION_STATUS [DETECTION_STATUS ...]]]
@@ -1675,7 +1680,7 @@ This mode shows analysis results (in the same format as `results`) does, but
 from the comparison of two runs.
 
 ```
-usage: CodeChecker cmd diff [-h] -b BASE_RUN -n NEW_RUN
+usage: CodeChecker cmd diff [-h] -b BASE_RUN -n NEW_RUN [--uniqueing {on,off}]
                             [--report-hash [REPORT_HASH [REPORT_HASH ...]]]
                             [--review-status [REVIEW_STATUS [REVIEW_STATUS ...]]]
                             [--detection-status [DETECTION_STATUS [DETECTION_STATUS ...]]]
@@ -1748,7 +1753,7 @@ https://docs.python.org/2/library/re.html#regular-expression-syntax.
 
 ```
 usage: CodeChecker cmd sum [-h] (-n RUN_NAME [RUN_NAME ...] | -a)
-                           [--disable-unique]
+                           [--disable-unique] [--uniqueing {on,off}]
                            [--report-hash [REPORT_HASH [REPORT_HASH ...]]]
                            [--review-status [REVIEW_STATUS [REVIEW_STATUS ...]]]
                            [--detection-status [DETECTION_STATUS [DETECTION_STATUS ...]]]
@@ -1777,10 +1782,12 @@ optional arguments:
                         runs. Use 'CodeChecker cmd runs' to get the available
                         runs.
   -a, --all             Show breakdown for all analysis runs.
-  --disable-unique      List all bugs even if these end up in the same bug
-                        location, but reached through different paths. By
-                        uniqueing the bugs a report will be appeared only once
-                        even if it is found on several paths.
+  --disable-unique      DEPRECATED. Use the '--uniqueing' option to get
+                        uniqueing results. List all bugs even if these end up
+                        in the same bug location, but reached through
+                        different paths. By uniqueing the bugs a report will
+                        be appeared only once even if it is found on several
+                        paths.
 ```
 
 #### Example <a name="cmd-sum-example"></a>

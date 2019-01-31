@@ -26,7 +26,8 @@ from libcodechecker.cmd import source_component_client, token_client
 
 DEFAULT_FILTER_VALUES = {
     'review_status': ['unreviewed', 'confirmed'],
-    'detection_status': ['new', 'reopened', 'unresolved']
+    'detection_status': ['new', 'reopened', 'unresolved'],
+    'uniqueing': 'off'
 }
 
 
@@ -174,6 +175,17 @@ def __add_filtering_arguments(parser, defaults=None, diff_mode=False):
     if diff_mode:
         warn_diff_mode = " This can be used only if basename or newname is " \
                          "a run name (on the remote server)."
+
+    f_group.add_argument('--uniqueing',
+                         dest="uniqueing",
+                         required=False,
+                         default=init_default('uniqueing'),
+                         choices=['on', 'off'],
+                         help="The same bug may appear several times if it is "
+                              "found on different execution paths, i.e. "
+                              "through different function calls. By turning "
+                              "on uniqueing a report appears only once even "
+                              "if it is found on several paths.")
 
     f_group.add_argument('--report-hash',
                          nargs='*',
@@ -419,13 +431,15 @@ def __register_sum(parser):
                         dest="disable_unique",
                         action='store_true',
                         default=argparse.SUPPRESS,
-                        help="List all bugs even if these end up in the same "
-                             "bug location, but reached through different "
-                             "paths. By uniqueing the bugs a report will be "
-                             "appeared only once even if it is found on "
-                             "several paths.")
+                        help="DEPRECATED. Use the '--uniqueing' option to "
+                             "get uniqueing results. List all bugs even if "
+                             "these end up in the same bug location, but "
+                             "reached through different paths. By uniqueing "
+                             "the bugs a report will be appeared only once "
+                             "even if it is found on several paths.")
 
-    __add_filtering_arguments(parser)
+    default_filter_values = {'uniqueing': 'on'}
+    __add_filtering_arguments(parser, default_filter_values)
 
 
 def __register_delete(parser):
