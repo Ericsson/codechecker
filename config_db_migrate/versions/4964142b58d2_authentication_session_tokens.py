@@ -29,7 +29,7 @@ def upgrade():
         sa.Column('description', sa.String(), nullable=True),
         sa.Column('can_expire',
                   sa.Boolean(),
-                  server_default=sa.text(u'true'),
+                  server_default=sa.sql.true(),
                   nullable=True),
         sa.PrimaryKeyConstraint('id', name=op.f('pk_auth_sessions')),
         sa.UniqueConstraint('token', name=op.f('uq_auth_sessions_token')))
