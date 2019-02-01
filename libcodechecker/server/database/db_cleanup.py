@@ -13,6 +13,9 @@ from __future__ import division
 
 from datetime import datetime, timedelta
 
+import sqlalchemy
+from sqlalchemy.sql.expression import bindparam, union_all, select, cast
+
 from codeCheckerDBAccess_v6.ttypes import *
 
 from libcodechecker.logger import get_logger
@@ -60,3 +63,56 @@ def remove_unused_files(session):
         .delete(synchronize_session=False)
 
     LOG.debug("Garbage collection of dangling files finished.")
+
+
+def upgrade_severity_levels(session, severity_map):
+    """
+    Updates the potentially changed severities at the reports.
+    """
+    LOG.debug("Upgrading severity levels started...")
+
+    # Create a sql query from the severity map.
+    severity_map_q = union_all(*[
+        select([cast(bindparam('checker_id' + str(i), str(checker_id))
+                .label('checker_id'), sqlalchemy.String),
+                cast(bindparam('severity' + str(i), Severity._NAMES_TO_VALUES[
+                    severity_map[checker_id]])
+               .label('severity'), sqlalchemy.Integer)])
+        for i, checker_id in enumerate(severity_map)]) \
+        .alias('new_severities')
+
+    checker_ids = severity_map.keys()
+
+    # Get checkers which has been changed.
+    changed_checker_q = select([Report.checker_id, Report.severity]) \
+        .group_by(Report.checker_id, Report.severity) \
+        .where(Report.checker_id.in_(checker_ids)) \
+        .except_(session.query(severity_map_q)).alias('changed_severites')
+
+    changed_checkers = session.query(changed_checker_q.c.checker_id,
+                                     changed_checker_q.c.severity)
+
+    # Update severity levels of checkers.
+    if changed_checkers:
+        updated_checker_ids = set()
+        for checker_id, severity_old in changed_checkers:
+            severity_new = severity_map.get(checker_id, 'UNSPECIFIED')
+            severity_id = Severity._NAMES_TO_VALUES[severity_new]
+
+            LOG.info("Upgrading severity level of '%s' checker from %s to %s",
+                     checker_id,
+                     Severity._VALUES_TO_NAMES[severity_old],
+                     severity_new)
+
+            if checker_id in updated_checker_ids:
+                continue
+
+            session.query(Report) \
+                .filter(Report.checker_id == checker_id) \
+                .update({Report.severity: severity_id})
+
+            updated_checker_ids.add(checker_id)
+
+        session.commit()
+
+    LOG.debug("Upgrading of severity levels finished...")

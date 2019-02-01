@@ -11,10 +11,12 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
+import io
 import json
 import multiprocessing
 import os
 import unittest
+from shutil import copyfile, rmtree
 import time
 
 from codeCheckerDBAccess_v6.ttypes import *
@@ -39,6 +41,18 @@ class TestDbCleanup(unittest.TestCase):
         except os.error:
             # Directory already exists.
             pass
+
+        cc_package = env.codechecker_package()
+        original_severity_cfg = os.path.join(cc_package,
+                                             'config',
+                                             'checker_severity_map.json')
+
+        self.workspace_severity_cfg = os.path.join(self.test_workspace,
+                                                   'checker_severity_map.json')
+        copyfile(original_severity_cfg, self.workspace_severity_cfg)
+
+        self.codechecker_cfg['check_env']['CC_SEVERITY_MAP_FILE'] = \
+            self.workspace_severity_cfg
 
     def __create_test_dir(self):
         makefile = "all:\n\t$(CXX) -c a/main.cpp -o /dev/null\n"
@@ -106,7 +120,28 @@ int f(int x) { return 1 / x; }
 
         return file_ids
 
-    @unittest.skip("Work in progress")
+    def __check_serverity_of_reports(self):
+        """
+        This will check whether reports in the database has the same severity
+        levels as in the severity map config file.
+        """
+        run_filter = RunFilter()
+        run_filter.names = ['db_cleanup_test']
+        run_filter.exactMatch = True
+
+        runs = self._cc_client.getRunData(run_filter)
+        run_id = runs[0].runId
+
+        reports \
+            = self._cc_client.getRunResults([run_id], 10, 0, [], None, None)
+
+        with open(self.workspace_severity_cfg, 'r') as severity_cgf_file:
+            severity_map = json.load(severity_cgf_file)
+            for report in reports:
+                severity_id = severity_map.get(report.checkerId, 'UNSPECIFIED')
+                self.assertEqual(Severity._VALUES_TO_NAMES[report.severity],
+                                 severity_id)
+
     def test_garbage_file_collection(self):
         event = multiprocessing.Event()
         event.clear()
@@ -132,7 +167,13 @@ int f(int x) { return 1 / x; }
         self.__create_test_dir()
         files_in_report_before = self.__get_files_in_report()
 
+        # Checker severity levels.
+        self.__check_serverity_of_reports()
+
         self.__rename_project_dir()
+
+        # Delete previous analysis report directory.
+        rmtree(self.codechecker_cfg['reportdir'])
 
         files_in_report_after = self.__get_files_in_report()
 
@@ -140,6 +181,16 @@ int f(int x) { return 1 / x; }
         time.sleep(5)
 
         event.clear()
+
+        # Change severity level of core.DivideZero to LOW.
+        with io.open(self.workspace_severity_cfg, 'r+') as severity_cgf_file:
+            severity_map = json.load(severity_cgf_file)
+            severity_map['core.DivideZero'] = 'LOW'
+
+            severity_cgf_file.seek(0)
+            severity_cgf_file.truncate()
+            severity_cgf_file.write(unicode(json.dumps(severity_map)))
+
         self.codechecker_cfg['viewer_port'] = env.get_free_port()
         env.export_test_cfg(self.test_workspace,
                             {'codechecker_cfg': self.codechecker_cfg})
@@ -160,6 +211,9 @@ int f(int x) { return 1 / x; }
         for file_id in files_in_report_before:
             f = self._cc_client.getSourceFileData(file_id, False, None)
             self.assertIsNone(f.fileId)
+
+        # Checker severity levels.
+        self.__check_serverity_of_reports()
 
         event.set()
         time.sleep(5)
