@@ -34,7 +34,7 @@ thrift: build_dir
 userguide: build_dir
 	$(MAKE) -C www/userguide
 
-package: clean_package build_dir gen-docs thrift userguide build_plist_to_html
+package: clean_package build_dir gen-docs thrift userguide build_plist_to_html build_tu_collector
 	./scripts/build_package.py -r $(ROOT) -o $(BUILD_DIR) -b $(BUILD_DIR)
 
 build_dir:
@@ -42,6 +42,9 @@ build_dir:
 
 build_plist_to_html:
 	$(MAKE) -C vendor/plist_to_html
+
+build_tu_collector:
+	$(MAKE) -C vendor/tu_collector
 
 venv:
 	# Create a virtual environment which can be used to run the build package.
@@ -67,7 +70,7 @@ clean_venv_dev:
 
 clean: clean_package clean_vendor
 
-clean_package: clean_userguide clean_plist_to_html
+clean_package: clean_userguide clean_plist_to_html clean_tu_collector
 	rm -rf $(BUILD_DIR)
 	rm -rf gen-docs
 	find . -name "*.pyc" -delete
@@ -86,3 +89,6 @@ clean_userguide:
 
 clean_plist_to_html:
 	rm -rf vendor/plist_to_html/build
+
+clean_tu_collector:
+	rm -rf vendor/tu_collector/build

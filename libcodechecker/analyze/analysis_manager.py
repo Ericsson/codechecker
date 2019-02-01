@@ -9,7 +9,6 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
-import codecs
 import glob
 import multiprocessing
 import os
@@ -31,6 +30,7 @@ from libcodechecker.analyze.statistics_collector \
 from libcodechecker.analyze.statistics_collector \
     import ReturnValueCollector
 from libcodechecker.logger import get_logger
+from tu_collector import tu_collector
 
 LOG = get_logger('analyzer')
 
@@ -129,97 +129,6 @@ def worker_result_handler(results, metadata, output_path, analyzer_binaries):
     metadata['result_source_files'].update(source_map)
 
 
-def create_dependencies(command, build_dir):
-    """
-    Transforms the given original build 'command' to a command that, when
-    executed, is able to generate a dependency list.
-    """
-
-    def __eliminate_argument(arg_vect, opt_string, has_arg=False):
-        """
-        This call eliminates the parameters matching the given option string,
-        along with its argument coming directly after the opt-string if any,
-        from the command. The argument can possibly be separated from the flag.
-        """
-        while True:
-            option_index = next(
-                (i for i, c in enumerate(arg_vect)
-                 if c.startswith(opt_string)), None)
-
-            if option_index:
-                separate = 1 if has_arg and \
-                    len(arg_vect[option_index]) == len(opt_string) else 0
-                arg_vect = arg_vect[0:option_index] + \
-                    arg_vect[option_index + separate + 1:]
-            else:
-                break
-
-        return arg_vect
-
-    if 'CC_LOGGER_GCC_LIKE' not in os.environ:
-        os.environ['CC_LOGGER_GCC_LIKE'] = 'gcc:g++:clang:clang++:cc:c++'
-
-    if any(binary_substring in command[0] for binary_substring
-           in os.environ['CC_LOGGER_GCC_LIKE'].split(':')):
-        # gcc and clang can generate makefile-style dependency list.
-
-        # If an output file is set, the dependency is not written to the
-        # standard output but rather into the given file.
-        # We need to first eliminate the output from the command.
-        command = __eliminate_argument(command, '-o', True)
-        command = __eliminate_argument(command, '--output', True)
-
-        # Remove potential dependency-file-generator options from the string
-        # too. These arguments found in the logged build command would derail
-        # us and generate dependencies, e.g. into the build directory used.
-        command = __eliminate_argument(command, '-MM')
-        command = __eliminate_argument(command, '-MF', True)
-        command = __eliminate_argument(command, '-MP')
-        command = __eliminate_argument(command, '-MT', True)
-        command = __eliminate_argument(command, '-MQ', True)
-        command = __eliminate_argument(command, '-MD')
-        command = __eliminate_argument(command, '-MMD')
-
-        # Clang contains some extra options.
-        command = __eliminate_argument(command, '-MJ', True)
-        command = __eliminate_argument(command, '-MV')
-
-        # Build out custom invocation for dependency generation.
-        command = [command[0], '-E', '-M', '-MT', '__dummy'] + command[1:]
-
-        # Remove empty arguments
-        command = [i for i in command if i]
-
-        LOG.debug("Crafting build dependencies from GCC or Clang!")
-
-        # gcc does not have '--gcc-toolchain' argument it would fail if it is
-        # kept there.
-        # For clang it does not change the output, the include paths from
-        # the gcc-toolchain are not added to the output.
-        command = __eliminate_argument(command, '--gcc-toolchain')
-
-        output, rc = util.call_command(command,
-                                       env=os.environ,
-                                       cwd=build_dir)
-        output = codecs.decode(output, 'utf-8', 'replace')
-        if rc == 0:
-            # Parse 'Makefile' syntax dependency output.
-            dependencies = output.replace('__dummy: ', '') \
-                .replace('\\', '') \
-                .replace('  ', '') \
-                .replace(' ', '\n')
-
-            # The dependency list already contains the source file's path.
-            return [dep for dep in dependencies.split('\n') if dep != ""]
-        else:
-            raise IOError("Failed to generate dependency list for " +
-                          ' '.join(command) + "\n\nThe original output was: " +
-                          output)
-    else:
-        raise ValueError("Cannot generate dependency list for build "
-                         "command '" + ' '.join(command) + "'")
-
-
 # Progress reporting.
 progress_checked_num = None
 progress_actions = None
@@ -229,139 +138,6 @@ def init_worker(checked_num, action_num):
     global progress_checked_num, progress_actions
     progress_checked_num = checked_num
     progress_actions = action_num
-
-
-def get_dependent_headers(buildaction, archive):
-    LOG.debug("Generating dependent headers via compiler...")
-    command = shlex.split(buildaction.original_command)
-    try:
-        dependencies = set(create_dependencies(command, buildaction.directory))
-    except Exception as ex:
-        LOG.debug("Couldn't create dependencies:")
-        LOG.debug(str(ex))
-        # TODO append with buildaction
-        archive.writestr("no-sources", str(ex))
-        dependencies = set()
-
-    toolchain = gcc_toolchain.toolchain_in_args(
-        shlex.split(buildaction.original_command))
-
-    if toolchain:
-        LOG.debug("Generating gcc-toolchain headers via toolchain compiler...")
-        try:
-            # Change the original compiler to the compiler from the
-            # toolchain.
-            toolchain_compiler = gcc_toolchain.get_toolchain_compiler(
-                toolchain, buildaction.lang)
-            if not toolchain_compiler:
-                raise Exception("Could not get the compiler "
-                                "from the gcc-toolchain.")
-            command[0] = toolchain_compiler
-            dependencies = dependencies.union(
-                set(create_dependencies(command, buildaction.directory)))
-        except Exception as ex:
-            LOG.debug("Couldn't create dependencies:")
-            LOG.debug(str(ex))
-            # TODO append with buildaction
-            archive.writestr("no-sources", str(ex))
-            dependencies = set()
-
-    return dependencies
-
-
-def collect_debug_data(zip_file, other_files, buildaction, out, err,
-                       original_command, analyzer_cmd, analyzer_returncode,
-                       action_directory, action_target, actions_map):
-    """
-    Collect analysis and build system information which can be used
-    to reproduce the failed analysis.
-    """
-    LOG.debug("Collecting debug data")
-    with zipfile.ZipFile(zip_file, 'w') as archive:
-        LOG.debug("[ZIP] Writing analyzer STDOUT to /stdout")
-        archive.writestr("stdout", out)
-
-        LOG.debug("[ZIP] Writing analyzer STDERR to /stderr")
-        archive.writestr("stderr", err)
-
-        dependencies = get_dependent_headers(buildaction,
-                                             archive)
-
-        mentioned_files_dependent_files = set()
-        for of in other_files:
-            mentioned_file = os.path.abspath(
-                os.path.join(action_directory, of))
-            # Use the target of the original build action.
-            key = mentioned_file, action_target
-            mentioned_file_action = actions_map.get(key)
-            if mentioned_file_action is not None:
-                mentioned_file_deps = get_dependent_headers(
-                    mentioned_file_action, archive)
-                mentioned_files_dependent_files.\
-                    update(mentioned_file_deps)
-            else:
-                LOG.debug("Could not find %s in build actions.", key)
-
-        dependencies.update(other_files)
-        dependencies.update(mentioned_files_dependent_files)
-
-        # `dependencies` might contain absolute and relative paths
-        # for the same file, so make everything absolute by
-        # joining with the the absolute action.directory.
-        # If `dependent_source` is absolute it remains absolute
-        # after the join, as documented on docs.python.org .
-        dependencies_copy = set()
-        for dependent_source in dependencies:
-            dependent_source = os.path.join(action_directory,
-                                            dependent_source)
-            dependencies_copy.add(dependent_source)
-        dependencies = dependencies_copy
-
-        LOG.debug("Writing dependent files to archive.")
-        for dependent_source in dependencies:
-
-            LOG.debug("[ZIP] Writing %s to the archive.", dependent_source)
-            archive_subpath = dependent_source.lstrip('/')
-
-            archive_path = os.path.join('sources-root',
-                                        archive_subpath)
-            try:
-                _ = archive.getinfo(archive_path)
-                LOG.debug("[ZIP] '%s' is already in the ZIP "
-                          "file, won't add it again!", archive_path)
-                continue
-            except KeyError:
-                # If the file is already contained in the ZIP,
-                # a valid object is returned, otherwise a KeyError
-                # is raised.
-                pass
-
-            try:
-                archive.write(dependent_source,
-                              archive_path,
-                              zipfile.ZIP_DEFLATED)
-            except Exception as ex:
-                # In certain cases, the output could contain
-                # invalid tokens (such as error messages that were
-                # printed even though the dependency generation
-                # returned 0).
-                LOG.debug("[ZIP] Couldn't write, because %s", str(ex))
-                archive.writestr(
-                    os.path.join('failed-sources-root',
-                                 archive_subpath),
-                    "Couldn't write this file, because:\n" +
-                    str(ex))
-
-        LOG.debug("[ZIP] Writing extra information...")
-
-        archive.writestr("build-action", original_command)
-        archive.writestr("analyzer-command", ' '.join(analyzer_cmd))
-        archive.writestr("return-code", str(analyzer_returncode))
-
-        toolchain = gcc_toolchain.toolchain_in_args(
-            shlex.split(buildaction.original_command))
-        if toolchain:
-            archive.writestr("gcc-toolchain-path", toolchain)
 
 
 def save_output(base_file_name, out, err):
@@ -494,14 +270,14 @@ def handle_success(rh, result_file, result_base, skip_handler,
                                             skip_handler)
 
 
-def handle_failure(source_analyzer, rh, action, zip_file,
-                   result_base, actions_map):
+def handle_failure(source_analyzer, rh, zip_file, result_base, actions_map):
     """
     If the analysis fails a debug zip is packed together which contains
     build, analysis information and source files to be able to
     reproduce the failed analysis.
     """
     other_files = set()
+    action = rh.buildaction
 
     try:
         LOG.debug("Fetching other dependent files from analyzer "
@@ -518,17 +294,49 @@ def handle_failure(source_analyzer, rh, action, zip_file,
                   "from analyzer output:")
         LOG.debug(str(ex))
 
-    collect_debug_data(zip_file,
-                       other_files,
-                       rh.buildaction,
-                       rh.analyzer_stdout,
-                       rh.analyzer_stderr,
-                       action.original_command,
-                       rh.analyzer_cmd,
-                       rh.analyzer_returncode,
-                       action.directory,
-                       action.target,
-                       actions_map)
+    LOG.debug("Collecting debug data")
+
+    buildactions = [{
+        'file': action.source,
+        'command': action.original_command,
+        'directory': action.directory}]
+
+    for of in other_files:
+        mentioned_file = os.path.abspath(os.path.join(action.directory, of))
+        key = mentioned_file, action.target
+        mentioned_file_action = actions_map.get(key)
+        if mentioned_file_action is not None:
+            buildactions.append({
+                'file': mentioned_file_action.source,
+                'command': mentioned_file_action.original_command,
+                'directory': mentioned_file_action.directory})
+        else:
+            LOG.debug("Could not find %s in build actions.", key)
+
+    tu_collector.zip_tu_files(zip_file, buildactions)
+
+    # TODO: What about the dependencies of the other_files?
+    tu_collector.add_sources_to_zip(
+        zip_file,
+        map(lambda path: os.path.join(action.directory, path), other_files))
+
+    with zipfile.ZipFile(zip_file, 'a') as archive:
+        LOG.debug("[ZIP] Writing analyzer STDOUT to /stdout")
+        archive.writestr("stdout", rh.analyzer_stdout)
+
+        LOG.debug("[ZIP] Writing analyzer STDERR to /stderr")
+        archive.writestr("stderr", rh.analyzer_stderr)
+
+        LOG.debug("[ZIP] Writing extra information...")
+        archive.writestr("build-action", action.original_command)
+        archive.writestr("analyzer-command", ' '.join(rh.analyzer_cmd))
+        archive.writestr("return-code", str(rh.analyzer_returncode))
+
+        toolchain = gcc_toolchain.toolchain_in_args(
+            shlex.split(action.original_command))
+        if toolchain:
+            archive.writestr("gcc-toolchain-path", toolchain)
+
     LOG.debug("ZIP file written at '%s'", zip_file)
 
     # Remove files that successfully analyzed earlier on.
@@ -675,8 +483,8 @@ def check(check_data):
                     LOG.error("\n%s", rh.analyzer_stdout)
                     LOG.error("\n%s", rh.analyzer_stderr)
 
-                handle_failure(source_analyzer, rh, action, zip_file,
-                               result_base, actions_map)
+                handle_failure(source_analyzer, rh, zip_file, result_base,
+                               actions_map)
 
                 if ctu_active and ctu_reanalyze_on_failure:
                     LOG.error("Try to reanalyze without CTU")
@@ -716,8 +524,8 @@ def check(check_data):
 
                         zip_file = result_base + '.zip'
                         zip_file = os.path.join(failed_dir, zip_file)
-                        handle_failure(source_analyzer, rh, action,
-                                       zip_file, result_base, actions_map)
+                        handle_failure(source_analyzer, rh, zip_file,
+                                       result_base, actions_map)
 
             if not quiet_output_on_stdout:
                 if rh.analyzer_returncode:

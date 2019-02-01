@@ -20,15 +20,15 @@ CLEAR_WORKSPACE_CMD = rm -rf $(BUILD_DIR)/workspace
 # Nose test runner configuration options.
 NOSECFG = --config .noserc
 
-test: pycodestyle test_unit test_functional test_build_logger
+test: pycodestyle test_unit test_functional test_build_logger test_tu_collector
 
 test_novenv: pycodestyle test_unit_novenv test_functional_novenv
 
 pycodestyle: venv_dev
 	$(ACTIVATE_DEV_VENV) && \
-	pycodestyle bin libcodechecker scripts tests vendor/plist_to_html
+	pycodestyle bin libcodechecker scripts tests vendor/plist_to_html vendor/tu_collector
 
-UNIT_TEST_CMD = nosetests $(NOSECFG) tests/unit
+UNIT_TEST_CMD = $(REPO_ROOT) nosetests $(NOSECFG) tests/unit
 
 CODECHECKER_CMD = $(BUILD_DIR)/CodeChecker/bin/CodeChecker
 SHUTDOWN_SERVER_CMD = echo "Shutting down server..."; \
@@ -140,3 +140,6 @@ clean_travis:
 
 test_build_logger:
 	cd vendor/build-logger; make -f Makefile.manual test
+
+test_tu_collector:
+	cd vendor/tu_collector; $(REPO_ROOT) make test

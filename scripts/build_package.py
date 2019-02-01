@@ -527,6 +527,31 @@ def build_package(repository_root, build_package_config, env=None):
     os.symlink(plist_to_html_symlink, 'plist-to-html')
     os.chdir(curr_dir)
 
+    # TU collector files.
+    source = os.path.join(repository_root,
+                          'vendor', 'tu_collector', 'tu_collector')
+    target = os.path.join(package_root,
+                          package_layout['lib_tu_collector'])
+    copy_tree(source, target)
+
+    # Building TU collector.
+    tu_collector_path = build_package_config['tu_collector_path']
+    tu_collector_build = os.path.join(tu_collector_path, 'build')
+
+    # Copy TU collector files.
+    target = os.path.join(package_root,
+                          package_layout['tu_collector'])
+
+    copy_tree(tu_collector_build, target)
+
+    curr_dir = os.getcwd()
+    os.chdir(os.path.join(package_root, package_layout['bin']))
+    tu_collector_symlink = os.path.join('../',
+                                        package_layout['tu_collector'],
+                                        'bin', 'tu-collector')
+    os.symlink(tu_collector_symlink, 'tu-collector')
+    os.chdir(curr_dir)
+
     # Copy Python API stubs.
     generated_api_root = os.path.join(build_dir, 'thrift')
     target = os.path.join(package_root, package_layout['gencodechecker'])
@@ -845,6 +870,10 @@ if __name__ == "__main__":
     plist_to_html_group.add_argument("--plist-to-html", action="store",
                                      dest="plist_to_html_path",
                                      help="Plist to html source path.")
+    tu_collector_group = parser.add_argument_group('tu-collector')
+    tu_collector_group.add_argument("--tu-collector", action="store",
+                                    dest="tu_collector_path",
+                                    help="TU collector source path.")
 
     parser.add_argument("--compress", action="store",
                         dest="compress", default=False,
@@ -877,5 +906,10 @@ if __name__ == "__main__":
                                              'plist_to_html')
 
     build_package_config['plist_to_html_path'] = default_plist_to_html_dir
+
+    # Set TU collector tool directory.
+    build_package_config['tu_collector_path'] = os.path.join(repository_root,
+                                                             'vendor',
+                                                             'tu_collector')
 
     build_package(repository_root, build_package_config)
