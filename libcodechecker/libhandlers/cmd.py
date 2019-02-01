@@ -267,6 +267,28 @@ def __add_filtering_arguments(parser, defaults=None, diff_mode=False):
                          help="Filter results by source components." +
                          warn_diff_mode)
 
+    f_group.add_argument('--detected-at',
+                         type=valid_time,
+                         dest="detected_at",
+                         metavar='TIMESTAMP',
+                         default=argparse.SUPPRESS,
+                         help="Filter results by detection date. The format "
+                              " of TIMESTAMP is "
+                              "'year:month:day:hour:minute:second' (the "
+                              "\"time\" part can be omitted, in which case "
+                              "midnight (00:00:00) is used).")
+
+    f_group.add_argument('--fixed-at',
+                         type=valid_time,
+                         dest="fixed_at",
+                         metavar='TIMESTAMP',
+                         default=argparse.SUPPRESS,
+                         help="Filter results by fix date. The format "
+                              " of TIMESTAMP is "
+                              "'year:month:day:hour:minute:second' (the "
+                              "\"time\" part can be omitted, in which case "
+                              "midnight (00:00:00) is used).")
+
     f_group.add_argument('-s', '--suppressed',
                          default=argparse.SUPPRESS,
                          dest="suppressed",

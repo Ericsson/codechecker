@@ -1435,6 +1435,15 @@ filter arguments:
                         Filter results by source components. This can be used
                         only if basename or newname is a run name (on the
                         remote server).
+  --detected-at TIMESTAMP
+                        Filter results by detection date. The format of
+                        TIMESTAMP is 'year:month:day:hour:minute:second' (the
+                        "time" part can be omitted, in which case midnight
+                        (00:00:00) is used).
+  --fixed-at TIMESTAMP  Filter results by fix date. The format of TIMESTAMP is
+                        'year:month:day:hour:minute:second' (the "time" part
+                        can be omitted, in which case midnight (00:00:00) is
+                        used).
   -s, --suppressed      DEPRECATED. Use the '--filter' option to get false
                         positive (suppressed) results. Show only suppressed
                         results instead of only unsuppressed ones.
@@ -1636,8 +1645,10 @@ usage: CodeChecker cmd results [-h] [--uniqueing {on,off}]
                                [--file [FILE_PATH [FILE_PATH ...]]]
                                [--checker-name [CHECKER_NAME [CHECKER_NAME ...]]]
                                [--checker-msg [CHECKER_MSG [CHECKER_MSG ...]]]
-                               [--component [COMPONENT [COMPONENT ...]]] [-s]
-                               [--filter FILTER] [--url PRODUCT_URL]
+                               [--component [COMPONENT [COMPONENT ...]]]
+                               [--detected-at TIMESTAMP]
+                               [--fixed-at TIMESTAMP] [-s] [--filter FILTER]
+                               [--url PRODUCT_URL]
                                [-o {plaintext,rows,table,csv,json}]
                                [--verbose {info,debug,debug_analyzer}]
                                RUN_NAMES
@@ -1689,8 +1700,9 @@ usage: CodeChecker cmd diff [-h] -b BASE_RUN -n NEW_RUN [--uniqueing {on,off}]
                             [--file [FILE_PATH [FILE_PATH ...]]]
                             [--checker-name [CHECKER_NAME [CHECKER_NAME ...]]]
                             [--checker-msg [CHECKER_MSG [CHECKER_MSG ...]]]
-                            [--component [COMPONENT [COMPONENT ...]]] [-s]
-                            [--filter FILTER]
+                            [--component [COMPONENT [COMPONENT ...]]]
+                            [--detected-at TIMESTAMP] [--fixed-at TIMESTAMP]
+                            [-s] [--filter FILTER]
                             (--new | --resolved | --unresolved)
                             [--url PRODUCT_URL]
                             [-o {plaintext,rows,table,csv,json,html}]
@@ -1762,8 +1774,9 @@ usage: CodeChecker cmd sum [-h] (-n RUN_NAME [RUN_NAME ...] | -a)
                            [--file [FILE_PATH [FILE_PATH ...]]]
                            [--checker-name [CHECKER_NAME [CHECKER_NAME ...]]]
                            [--checker-msg [CHECKER_MSG [CHECKER_MSG ...]]]
-                           [--component [COMPONENT [COMPONENT ...]]] [-s]
-                           [--filter FILTER] [--url PRODUCT_URL]
+                           [--component [COMPONENT [COMPONENT ...]]]
+                           [--detected-at TIMESTAMP] [--fixed-at TIMESTAMP]
+                           [-s] [--filter FILTER] [--url PRODUCT_URL]
                            [-o {plaintext,rows,table,csv,json}]
                            [--verbose {info,debug,debug_analyzer}]
 
