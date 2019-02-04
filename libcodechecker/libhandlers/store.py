@@ -306,8 +306,18 @@ def assemble_zip(inputs, zip_file, client):
 def get_analysis_statistics(inputs, limits):
     """
     Collects analysis statistics information and returns them.
+
+    This function will return the path of failed zips and the following files:
+      - compile_cmd.json
+      - compiler_includes.json
+      - compiler_target.json
+      - metadata.json
+
+    If the input directory doesn't contain any failed zip this function will
+    return and empty list.
     """
     statistics_files = []
+    has_failed_zip = False
     for input_path in inputs:
         input_path = os.path.abspath(input_path)
 
@@ -360,8 +370,9 @@ def get_analysis_statistics(inputs, limits):
                         LOG.debug("Copying failure zip file '%s' to analyzer "
                                   "statistics ZIP...", failure_zip)
                         statistics_files.append(failure_zip)
+                        has_failed_zip = True
 
-        return statistics_files
+        return statistics_files if has_failed_zip else []
 
 
 def storing_analysis_statistics(client, inputs, run_name):
