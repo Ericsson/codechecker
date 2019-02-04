@@ -336,6 +336,7 @@ def get_analysis_statistics(inputs, limits):
                     statistics_files.append(compilation_db)
             elif inp_f in ['compiler_includes.json',
                            'compiler_target.json',
+                           'compiler_info.json',
                            'metadata.json']:
                 analyzer_file = os.path.join(input_path, inp_f)
                 statistics_files.append(analyzer_file)
