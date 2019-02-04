@@ -162,7 +162,7 @@ int main()
                               'metadata.json']
             for analyzer_file in analyzer_files:
                 orig_file = os.path.join(self._reports_dir, analyzer_file)
-                uploaded_file = os.path.join(zip_dir, orig_file)
+                uploaded_file = os.path.join(zip_dir, orig_file.lstrip(os.sep))
                 self.assertTrue(os.path.exists(uploaded_file))
 
             # Check that failed zips exist in the uploaded zip.
