@@ -20,6 +20,7 @@ import os
 import re
 import sys
 import shutil
+import time
 
 from plist_to_html import PlistToHtml
 
@@ -45,6 +46,17 @@ def init_logger(level, logger_name='system'):
     logger.setup_logger(level)
     global LOG
     LOG = logger.get_logger(logger_name)
+
+
+def str_to_timestamp(date_str):
+    """
+    Return timestamp parsed from the given string parameter.
+    """
+    dateformat = '%Y-%m-%d %H:%M:%S.%f'
+    date_time = date_str if isinstance(date_str, datetime) else \
+        datetime.strptime(date_str, dateformat)
+
+    return time.mktime(date_time.timetuple())
 
 
 def check_run_names(client, check_names):
@@ -216,6 +228,13 @@ def add_filter_conditions(client, report_filter, args):
                                              run_history_filter)
         if run_histories:
             report_filter.runTag = [t.id for t in run_histories]
+
+    if 'detected_at' in args:
+        report_filter.firstDetectionDate = \
+            int(str_to_timestamp(args.detected_at))
+
+    if 'fixed_at' in args:
+        report_filter.fixDate = int(str_to_timestamp(args.fixed_at))
 
 # ---------------------------------------------------------------------------
 # Argument handlers for the 'CodeChecker cmd' subcommands.
