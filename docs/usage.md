@@ -453,6 +453,9 @@ enclosing scope of the bug location (function signature, class, namespace).
 
 ## Listing and Counting Reports <a name="listing-reports"></a>
 
+See a more detailed description in the [analyzer report identification
+documentation](report_identification.md).
+
 ### How reports are counted? <a name="how-report-are-counted"></a>
 
 You can list analysis reports in two ways:

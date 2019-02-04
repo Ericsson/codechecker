@@ -14,9 +14,14 @@ All hash generation algorithms should be documented and implemented here.
 from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
+
 import hashlib
 import json
 import os
+import plistlib
+import sys
+import traceback
+from xml.parsers.expat import ExpatError
 
 from libcodechecker.logger import get_logger
 from libcodechecker.util import get_line
@@ -151,6 +156,87 @@ def generate_report_hash(path, source_file, check_name):
         return ''
 
 
+def remove_whitespace(line_content, old_col):
+    """
+    This function removes white spaces from the line content parameter and
+    calculates the new line location.
+    Returns the line content without white spaces and the new column number.
+    E.g.:
+    line_content = "  int foo = 17;   sizeof(43);  "
+                                      ^
+                                      |- bug_col = 18
+    content_begin = "  int foo = 17;   "
+    content_begin_strip = "intfoo=17;"
+    line_strip_len = 18 - 10 => 8
+    ''.join(line_content.split()) => "intfoo=17;sizeof(43);"
+                                                ^
+                                                |- until_col - line_strip_len
+                                                       18    -     8
+                                                             = 10
+    """
+    content_begin = line_content[:old_col]
+    content_begin_strip = u''.join(content_begin.split())
+    line_strip_len = len(content_begin) - len(content_begin_strip)
+
+    return ''.join(line_content.split()), \
+           old_col - line_strip_len
+
+
+def generate_report_hash_no_bugpath(main_section, source_file):
+    """
+    !!! NOT Compatible with the old hash generation method
+
+    High level overview of the hash content:
+     * file_name from the main diag section
+     * checker message
+     * line content from the source file if can be read up
+     * column numbers from the main diag sections location
+     * whitespaces from the beginning of the source content are removed
+
+    """
+
+    try:
+        m_loc = main_section.get('location')
+        source_line = m_loc.get('line')
+
+        from_col = m_loc.get('col')
+        until_col = m_loc.get('col')
+
+        # WARNING!!! Changing the error handling type for encoding errors
+        # can influence the hash content!
+        line_content = get_line(source_file, source_line, errors='ignore')
+
+        # Remove whitespaces so the hash will be independet of the
+        # source code indentation.
+        line_content, new_col = \
+            remove_whitespace(line_content, from_col)
+        # Update the column number in sync with the
+        # removed whitespaces.
+        until_col = until_col - (from_col-new_col)
+        from_col = new_col
+
+        if line_content == '' and not os.path.isfile(source_file):
+            LOG.error("Failed to include soruce line in the report hash.")
+            LOG.error('%s does not exists!', source_file)
+
+        file_name = os.path.basename(source_file)
+        msg = main_section.get('description')
+
+        hash_content = [file_name,
+                        msg,
+                        line_content,
+                        str(from_col),
+                        str(until_col)]
+
+        string_to_hash = '|||'.join(hash_content)
+        return hashlib.md5(string_to_hash.encode()).hexdigest()
+
+    except Exception as ex:
+        LOG.error("Hash generation failed")
+        LOG.error(ex)
+        return ''
+
+
 def get_report_path_hash(report, files):
     """
     Returns path hash for the given report. This can be used to filter
@@ -226,3 +312,39 @@ class Report(object):
         msg = json.dumps(self.__main, sort_keys=True, indent=2)
         msg += str(self.__files)
         return msg
+
+
+def use_context_free_hashes(path):
+    """
+    Override issue hash in the given file by using context free hashes.
+    """
+    try:
+        plist = plistlib.readPlist(path)
+
+        files = plist['files']
+
+        for diag in plist['diagnostics']:
+            file_path = files[diag['location']['file']]
+
+            report_hash = generate_report_hash_no_bugpath(diag, file_path)
+            diag['issue_hash_content_of_line_in_context'] = report_hash
+
+        if plist['diagnostics']:
+            plistlib.writePlist(plist, path)
+
+    except (ExpatError, TypeError, AttributeError) as err:
+        LOG.warning('Failed to process plist file: %s wrong file format?',
+                    path)
+        LOG.warning(err)
+    except IndexError as iex:
+        LOG.warning('Indexing error during processing plist file %s', path)
+        LOG.warning(type(iex))
+        LOG.warning(repr(iex))
+        _, _, exc_traceback = sys.exc_info()
+        traceback.print_tb(exc_traceback, limit=1, file=sys.stdout)
+    except Exception as ex:
+        LOG.warning('Error during processing reports from the plist file: %s',
+                    path)
+        traceback.print_exc()
+        LOG.warning(type(ex))
+        LOG.warning(ex)

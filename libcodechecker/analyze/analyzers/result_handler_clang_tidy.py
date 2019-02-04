@@ -10,6 +10,7 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
+from libcodechecker import report
 from libcodechecker.analyze import tidy_output_converter
 from libcodechecker.analyze.analyzers.result_handler_base \
     import ResultHandler
@@ -46,3 +47,6 @@ class ClangTidyPlistToFile(ResultHandler):
         LOG.debug_analyzer(self.analyzer_stdout)
         tidy_stdout = self.analyzer_stdout.splitlines()
         generate_plist_from_tidy_result(output_file, tidy_stdout)
+
+        if self.report_hash_type == 'context-free':
+            report.use_context_free_hashes(output_file)
