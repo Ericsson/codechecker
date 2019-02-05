@@ -237,10 +237,14 @@ function (declare, domClass, dom, keys, Standby, TextBox, popup, Tooltip,
           if (that.reportFilter.isSelected(item.value)) classes.push('selected');
           if (item.isRegexSearchItem) classes.push('regex-item');
 
+          var tooltip = that.reportFilter.getTooltip
+            ? that.reportFilter.getTooltip(item.value)
+            : htmlToString(label);
+
           that.itemsDom[item.value] = dom.create('div', {
             class     : classes.join(' '),
             innerHTML : content,
-            title : htmlToString(label),
+            title : tooltip,
             onclick : function () {
               that.toggle(item.value, item);
             },

@@ -187,6 +187,7 @@ function (declare, dom, Standby, ContentPane, Tooltip, FilterBase,
           label : label,
           iconClass : that.getIconClass(value),
           iconStyle : that.getIconStyle ? that.getIconStyle(value) : null,
+          tooltip : that.getTooltip ? that.getTooltip(value) : null,
           options : options,
           onClick : function () {
             that.deselect(value);
