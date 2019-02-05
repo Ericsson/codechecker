@@ -23,7 +23,7 @@ function (declare, dom, ContentPane) {
 
       this._labelWrapper = dom.create('span', {
         class : 'label',
-        title : this.label,
+        title : this.tooltip ? this.tooltip : this.label,
         innerHTML : this.label
       }, this.domNode);
 

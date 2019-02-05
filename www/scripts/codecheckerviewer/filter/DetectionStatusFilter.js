@@ -16,6 +16,23 @@ function (dom, domClass, declare, Deferred, SelectFilter, util) {
     notAvailableMsg : 'Not available in uniqueing mode! Several detection '
                     + 'statuses could belong to the same bug!',
 
+    tooltips : {},
+
+    constructor : function () {
+      this.tooltips[CC_OBJECTS.DetectionStatus.NEW] =
+        'New report compared to previous run.';
+      this.tooltips[CC_OBJECTS.DetectionStatus.UNRESOLVED] =
+        'A report still persists in the latest run.';
+      this.tooltips[CC_OBJECTS.DetectionStatus.RESOLVED] =
+        'The reported bug has been resolved.';
+      this.tooltips[CC_OBJECTS.DetectionStatus.REOPENED] =
+        'A formerly disappeared report is detected again.';
+      this.tooltips[CC_OBJECTS.DetectionStatus.OFF] =
+        'No longer reported due to switched off checker.';
+      this.tooltips[CC_OBJECTS.DetectionStatus.UNAVAILABLE] =
+        'No longer reported due unavailable checker.';
+    },
+
     postCreate : function () {
       this.inherited(arguments);
 
@@ -76,6 +93,10 @@ function (dom, domClass, declare, Deferred, SelectFilter, util) {
         }));
       });
       return deferred;
+    },
+
+    getTooltip : function (key) {
+      return this.tooltips[CC_OBJECTS.DetectionStatus[key.toUpperCase()]];
     },
 
     notAvailable : function () {
