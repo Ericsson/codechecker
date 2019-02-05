@@ -67,7 +67,7 @@ def build_stat_coll_cmd(action, config, source):
         cmd.append("--target=" + action.target)
     extend_analyzer_cmd_with_resource_dir(cmd,
                                           config.compiler_resource_dir)
-    cmd.extend(action.compiler_includes)
+    cmd.extend(action.compiler_includes[action.lang])
 
     if source:
         cmd.append(source)

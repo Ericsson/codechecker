@@ -27,7 +27,7 @@ def get_compile_command(action, config, source='', output=''):
         cmd.append("--target=" + action.target)
     extend_analyzer_cmd_with_resource_dir(cmd,
                                           config.compiler_resource_dir)
-    cmd.extend(action.compiler_includes)
+    cmd.extend(action.compiler_includes[action.lang])
     cmd.append('-c')
     cmd.extend(['-x', action.lang])
     cmd.extend(config.analyzer_extra_arguments)
@@ -38,7 +38,7 @@ def get_compile_command(action, config, source='', output=''):
         cmd.append(source)
 
     if all(not opt.startswith('-std=') for opt in action.analyzer_options):
-        cmd.append(action.compiler_standard)
+        cmd.append(action.compiler_standard[action.lang])
 
     return cmd
 

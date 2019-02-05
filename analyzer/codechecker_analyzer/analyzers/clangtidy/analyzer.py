@@ -143,12 +143,14 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
             extend_analyzer_cmd_with_resource_dir(analyzer_cmd,
                                                   config.compiler_resource_dir)
 
-            analyzer_cmd.extend(self.buildaction.compiler_includes)
+            analyzer_cmd.extend(
+                self.buildaction.compiler_includes[self.buildaction.lang])
 
             if not next((x for x in analyzer_cmd if x.startswith('-std=') or
                         x.startswith('--std')),
                         False):
-                analyzer_cmd.append(self.buildaction.compiler_standard)
+                analyzer_cmd.append(
+                    self.buildaction.compiler_standard[self.buildaction.lang])
 
             analyzer_cmd.extend(compiler_warnings)
 

@@ -197,7 +197,7 @@ class ImplicitCompilerInfo(object):
     """
     # TODO: These dicts are mapping compiler to the corresponding information.
     # It may not be enough to use the compiler as a key, because the implicit
-    # information depends on other data like language or target architecture.
+    # information depends on other data like target architecture.
     compiler_includes = {}
     compiler_target = {}
     compiler_standard = {}
@@ -327,7 +327,6 @@ class ImplicitCompilerInfo(object):
         ICI = ImplicitCompilerInfo
         include_dirs = ICI.__filter_compiler_includes(
             ICI.__parse_compiler_includes(ICI.__get_compiler_err(cmd)))
-
         return ["-isystem " + os.path.normpath(idir) for idir in include_dirs]
 
     @staticmethod
@@ -435,25 +434,53 @@ class ImplicitCompilerInfo(object):
 
     @staticmethod
     def set(details):
+        """
+        Collect compiler information and set on details.
+        """
         ICI = ImplicitCompilerInfo
 
+        # Get compiler includes for C and CPP compilation.
         if details['compiler'] not in ICI.compiler_includes:
-            ICI.compiler_includes[details['compiler']] = \
+            ICI.compiler_includes[details['compiler']] = {}
+            ICI.compiler_includes[details['compiler']]['c'] = \
                 ICI.get_compiler_includes(details['compiler'],
-                                          details['lang'],
+                                          'c',
                                           details['analyzer_options'])
+
+            ICI.compiler_includes[details['compiler']]['c++'] = \
+                ICI.get_compiler_includes(details['compiler'],
+                                          'c++',
+                                          details['analyzer_options'])
+
+        # Default compilation target for the compiler.
         if details['compiler'] not in ICI.compiler_target:
             ICI.compiler_target[details['compiler']] = \
                 ICI.get_compiler_target(details['compiler'])
-        if details['compiler'] not in ICI.compiler_standard:
-            ICI.compiler_standard[details['compiler']] = \
-                ICI.get_compiler_standard(details['compiler'],
-                                          details['lang'])
 
-        details['compiler_includes'] = details['compiler_includes'] or \
-            ICI.compiler_includes[details['compiler']]
-        details['compiler_standard'] = details['compiler_standard'] or \
-            ICI.compiler_standard[details['compiler']]
+        # Get compiler standards for C and CPP too.
+        if details['compiler'] not in ICI.compiler_standard:
+            ICI.compiler_standard[details['compiler']] = {}
+            ICI.compiler_standard[details['compiler']]['c'] = \
+                ICI.get_compiler_standard(details['compiler'],
+                                          'c')
+            ICI.compiler_standard[details['compiler']]['c++'] = \
+                ICI.get_compiler_standard(details['compiler'],
+                                          'c++')
+
+        details['compiler_includes']['c'] = \
+            details['compiler_includes'].get('c') or \
+            ICI.compiler_includes[details['compiler']]['c']
+        details['compiler_includes']['c++'] = \
+            details['compiler_includes'].get('c++') or \
+            ICI.compiler_includes[details['compiler']]['c++']
+
+        details['compiler_standard']['c'] = \
+            details['compiler_standard'].get('c') or \
+            ICI.compiler_standard[details['compiler']]['c']
+        details['compiler_standard']['c++'] = \
+            details['compiler_standard'].get('c++') or \
+            ICI.compiler_standard[details['compiler']]['c++']
+
         details['target'] = details['target'] or \
             ICI.compiler_target[details['compiler']]
 
@@ -712,8 +739,8 @@ def parse_options(compilation_db_entry):
 
     details = {
         'analyzer_options': [],
-        'compiler_includes': [],
-        'compiler_standard': '',
+        'compiler_includes': {},  # For each language C/C++.
+        'compiler_standard': {},  # For each language C/C++.
         'analyzer_type': -1,
         'original_command': '',
         'directory': '',
