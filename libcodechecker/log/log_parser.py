@@ -828,14 +828,14 @@ def parse_log(compilation_database,
             with open(compiler_info_file, 'w') as f:
                 json.dump(ImplicitCompilerInfo.get(), f)
 
+        LOG.debug('Parsing log file done.')
         return list(filtered_build_actions)
+
     except (ValueError, KeyError, TypeError) as ex:
-        if os.stat(logfilepath).st_size == 0:
+        if not compilation_database:
             LOG.error('The compile database is empty.')
         else:
             LOG.error('The compile database is not valid.')
         LOG.debug(traceback.format_exc())
         LOG.debug(ex)
         sys.exit(1)
-
-    LOG.debug('Parsing log file done.')
