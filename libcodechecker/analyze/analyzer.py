@@ -24,6 +24,10 @@ from libcodechecker.analyze import analyzer_env
 from libcodechecker.analyze import pre_analysis_manager
 from libcodechecker.analyze.analyzers import analyzer_types
 from libcodechecker.analyze.analyzers.analyzer_clangsa import ClangSA
+from libcodechecker.analyze.statistics_collector \
+    import SpecialReturnValueCollector
+from libcodechecker.analyze.statistics_collector \
+    import ReturnValueCollector
 
 
 LOG = get_logger('analyzer')
@@ -161,6 +165,13 @@ def perform_analysis(args, skip_handler, context, actions, metadata):
 
     actions = prepare_actions(actions, analyzers)
     config_map = analyzer_types.build_config_handlers(args, context, analyzers)
+
+    if 'stats_enabled' in args:
+        config_map[ClangSA.ANALYZER_NAME].set_checker_enabled(
+            SpecialReturnValueCollector.checker_analyze)
+
+        config_map[ClangSA.ANALYZER_NAME].set_checker_enabled(
+            ReturnValueCollector.checker_analyze)
 
     # Save some metadata information.
     versions = __get_analyzer_version(context, config_map)

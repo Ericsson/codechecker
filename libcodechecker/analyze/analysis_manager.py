@@ -27,8 +27,6 @@ from libcodechecker.analyze.analyzers import analyzer_clangsa
 from libcodechecker.analyze.analyzers import analyzer_types
 from libcodechecker.analyze.statistics_collector \
     import SpecialReturnValueCollector
-from libcodechecker.analyze.statistics_collector \
-    import ReturnValueCollector
 from libcodechecker.logger import get_logger
 from tu_collector import tu_collector
 
@@ -211,12 +209,6 @@ def prepare_check(action, analyzer_config_map, output_dir,
             SpecialReturnValueCollector.checker_analyze_cfg(stats_dir)
 
         source_analyzer.add_checker_config(stats_cfg)
-
-        source_analyzer.config_handler.set_checker_enabled(
-            SpecialReturnValueCollector.checker_analyze)
-
-        source_analyzer.config_handler.set_checker_enabled(
-            ReturnValueCollector.checker_analyze)
 
     # Source is the currently analyzed source file
     # there can be more in one buildaction.
