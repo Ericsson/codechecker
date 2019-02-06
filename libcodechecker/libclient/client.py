@@ -144,8 +144,8 @@ def handle_auth(protocol, host, port, username, login=False):
             check_preconfigured_username(username, host, port)
         else:
             LOG.info("Logging in using credentials from command line...")
-            pwd = getpass.getpass("Please provide password for user '%s': ",
-                                  username)
+            pwd = getpass.getpass(
+                "Please provide password for user '{}': ".format(username))
 
         LOG.debug("Trying to login as %s to %s:%d", username, host, port)
         try:
