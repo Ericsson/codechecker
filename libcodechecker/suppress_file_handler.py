@@ -112,7 +112,7 @@ def write_to_suppress_file(suppress_file, value, file_name, comment='',
             # File is not empty.
 
             res = filter(lambda x: (x[0] == value and x[1] == file_name) or
-                                   (x[0] == value and x[1] == ''),
+                         (x[0] == value and x[1] == ''),
                          suppress_data)
 
             if res:

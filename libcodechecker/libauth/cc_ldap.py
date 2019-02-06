@@ -422,5 +422,5 @@ def get_groups(ldap_config, username, credentials):
             LOG.debug(groups)
             return groups
         except Exception:
-            LOG.error("Cannot get ldap groups for user: " + username)
+            LOG.error("Cannot get ldap groups for user: %s", username)
             return []

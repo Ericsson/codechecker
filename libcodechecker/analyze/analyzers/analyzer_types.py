@@ -68,9 +68,9 @@ def check_supported_analyzers(analyzers, context):
             # calling the binary without any search would have resulted in
             # the same binary being called, it's NOT a "not found".
             if found_bin and os.path.basename(found_bin) != analyzer_bin:
-                LOG.debug("Configured binary '{0}' for analyzer '{1}' was "
-                          "not found, but environment PATH contains '{2}'."
-                          .format(analyzer_bin, analyzer_name, found_bin))
+                LOG.debug("Configured binary '%s' for analyzer '%s' was "
+                          "not found, but environment PATH contains '%s'.",
+                          analyzer_bin, analyzer_name, found_bin)
                 context.analyzer_binaries[analyzer_name] = found_bin
 
             analyzer_bin = found_bin

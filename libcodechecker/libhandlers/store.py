@@ -180,8 +180,8 @@ def res_handler(results):
     Summary about the parsing and storage results.
     """
     LOG.info("Finished processing and storing reports.")
-    LOG.info("Failed: " + str(results.count(1)) + "/" + str(len(results)))
-    LOG.info("Successful " + str(results.count(0)) + "/" + str(len(results)))
+    LOG.info("Failed: %d/%d", results.count(1), len(results))
+    LOG.info("Successful %d/%d", results.count(0), len(results))
 
 
 def assemble_zip(inputs, zip_file, client):
@@ -217,7 +217,7 @@ def assemble_zip(inputs, zip_file, client):
 
             return missing_files
         except Exception as ex:
-            LOG.error('Parsing the plist failed: ' + str(ex))
+            LOG.error('Parsing the plist failed: %s', str(ex))
 
     plist_report_files = []
 
@@ -239,9 +239,8 @@ def assemble_zip(inputs, zip_file, client):
             if f.endswith(".plist"):
                 missing_files = collect_file_hashes_from_plist(plist_file)
                 if not missing_files:
-                    LOG.debug(
-                        "Copying file '{0}' to ZIP assembly dir..."
-                        .format(plist_file))
+                    LOG.debug("Copying file '%s' to ZIP assembly dir...",
+                              plist_file)
                     plist_report_files.append(os.path.join(input_path, f))
                 else:
                     LOG.warning("Skipping '%s' because it refers "
@@ -261,8 +260,8 @@ def assemble_zip(inputs, zip_file, client):
     if changed_files:
         changed_files = '\n'.join([' - ' + f for f in changed_files])
         LOG.warning("The following source file contents changed since the "
-                    "latest analysis:\n{0}\nPlease analyze your project "
-                    "again to update the reports!".format(changed_files))
+                    "latest analysis:\n%s\nPlease analyze your project "
+                    "again to update the reports!", changed_files)
         sys.exit(1)
 
     with zipfile.ZipFile(zip_file, 'a', allowZip64=True) as zipf:
@@ -281,8 +280,7 @@ def assemble_zip(inputs, zip_file, client):
 
         for f, h in file_to_hash.items():
             if h in necessary_hashes:
-                LOG.debug("File contents for '{0}' needed by the server"
-                          .format(f))
+                LOG.debug("File contents for '%s' needed by the server", f)
 
                 zipf.write(f, os.path.join('root', f.lstrip('/')))
 
@@ -296,7 +294,7 @@ def assemble_zip(inputs, zip_file, client):
     with open(zip_file, 'wb') as target:
         target.write(compressed)
 
-    LOG.debug("[ZIP] Mass store zip written at '{0}'".format(zip_file))
+    LOG.debug("[ZIP] Mass store zip written at '%s'", zip_file)
 
     if missing_source_files:
         LOG.warning("Missing source files: \n%s", '\n'.join(
@@ -467,24 +465,24 @@ def main(args):
         auth_client, Permission.PRODUCT_STORE, {'productID': product_id})
     if not has_perm:
         LOG.error("You are not authorised to store analysis results in "
-                  "product '{0}'".format(product_name))
+                  "product '%s'", product_name)
         sys.exit(1)
 
     # Setup connection to the remote server.
     client = libclient.setup_client(args.product_url, product_client=False)
 
-    LOG.debug("Initializing client connecting to {0}:{1}/{2} done."
-              .format(host, port, product_name))
+    LOG.debug("Initializing client connecting to %s:%d/%s done.",
+              host, port, product_name)
 
     _, zip_file = tempfile.mkstemp('.zip')
-    LOG.debug("Will write mass store ZIP to '{0}'...".format(zip_file))
+    LOG.debug("Will write mass store ZIP to '%s'...", zip_file)
 
     try:
         assemble_zip(args.input, zip_file, client)
 
         if os.stat(zip_file).st_size > MAX_UPLOAD_SIZE:
-            LOG.error("The result list to upload is too big (max: {})."
-                      .format(sizeof_fmt(MAX_UPLOAD_SIZE)))
+            LOG.error("The result list to upload is too big (max: %s).",
+                      sizeof_fmt(MAX_UPLOAD_SIZE))
             sys.exit(1)
 
         with open(zip_file, 'rb') as zf:
@@ -515,10 +513,10 @@ def main(args):
                                   [c.split('|') for c in reqfail.extraInfo])
             LOG.warning("Setting the review statuses for some reports failed "
                         "because of non valid source code comments: "
-                        "{0}\n {1}".format(reqfail.message, table))
+                        "%s\n %s", reqfail.message, table)
         sys.exit(1)
     except Exception as ex:
-        LOG.info("Storage failed: " + str(ex))
+        LOG.info("Storage failed: %s", str(ex))
         sys.exit(1)
     finally:
         os.remove(zip_file)

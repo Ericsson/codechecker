@@ -210,7 +210,7 @@ def kill_process_tree(parent_pid, recursive=False):
 
     # If children processes don't stop gracefully in time,
     # slaughter them by force.
-    __, still_alive = psutil.wait_procs(children, timeout=5)
+    _, still_alive = psutil.wait_procs(children, timeout=5)
     for p in still_alive:
         p.kill()
 
@@ -510,7 +510,7 @@ def get_line(file_name, line_no, errors='ignore'):
         return u''
 
 
-class TemporaryDirectory:
+class TemporaryDirectory():
     def __init__(self, suffix='', prefix='tmp', tmp_dir=None):
         self._closed = False
         self.name = tempfile.mkdtemp(suffix, prefix, tmp_dir)
