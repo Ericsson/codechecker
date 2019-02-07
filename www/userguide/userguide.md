@@ -48,6 +48,8 @@ Table of Contents
   * [Bug path view](#userguide-bug-path-view)
   * [Comment](#userguide-comment)
 * [Run history](#userguide-run-history)
+* [Server configuration](#userguide-server-config)
+  * [Notification banner](#userguide-notification)
 
 # <a name="userguide-user-guide"></a> Products
 The product system allows a single CodeChecker server to serve multiple separate
@@ -416,3 +418,17 @@ happened during a storage process under the same run name. This way you can list
 the reports' state in the selected run event.
 
 ![Run history](images/run_history.png)
+
+# <a name="userguide-server-config"></a> Server Configuration
+## <a name="userguide-notification"></a> Global Notification banner
+There is an option to set a global notification text, that will show on top of every page over the CodeChecker logo. For every connecting client. 
+
+![Notification](images/notification.png)
+
+You can edit this alert on the products page, after enabling administration buttons, with "Edit announcement" button, but **Super User** permissions are necessary.
+
+![Products](images/products.png)
+
+You can remove the current notification by saving an empty text.
+
+![Notification Dialog](images/notificaiton_dialog.png)
