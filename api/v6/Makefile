@@ -13,3 +13,4 @@ api:
 	thrift $(THRIFT_OPTS) $(TARGET_PY) $(TARGET_JS) authentication.thrift
 	thrift $(THRIFT_OPTS) $(TARGET_PY) $(TARGET_JS) products.thrift
 	thrift $(THRIFT_OPTS) $(TARGET_PY) $(TARGET_JS) report_server.thrift
+	thrift $(THRIFT_OPTS) $(TARGET_PY) $(TARGET_JS) configuration.thrift

@@ -19,15 +19,27 @@ define([
   'dijit/layout/ContentPane',
   'dojox/widget/Standby',
   'codechecker/MessagePane',
-  'codechecker/hashHelper'],
+  'codechecker/hashHelper',
+  'codechecker/util'],
 function (declare, cookie, dom, domConstruct, domClass, ioQuery, keys, on,
-  Button, TextBox, BorderContainer, ContentPane, Standby, MessagePane, hash) {
+  Button, TextBox, BorderContainer, ContentPane, Standby, MessagePane, hash, util) {
 
   // A stripped-down version of the "normal" CodeChecker GUI header, tailored
   // for a lightweight login window.
   var HeaderPane = declare(ContentPane, {
     postCreate : function () {
       this.inherited(arguments);
+
+      //--- Notification bar ---//
+
+      var notificationContainer = domConstruct.create('div', {
+        id : 'notification-container'
+      }, this.domNode);
+
+      var notificationText = domConstruct.create('div', {
+        id : 'notification-text',
+        innerHTML : util.atou(CC_CONF_SERVICE.getNotificationBannerText())
+      }, notificationContainer);
 
       //--- Logo ---//
 
@@ -213,6 +225,13 @@ function (declare, cookie, dom, domConstruct, domClass, ioQuery, keys, on,
           new Thrift.Transport("/v" + CC_API_VERSION + "/Authentication")));
 
     CC_AUTH_OBJECTS = codeCheckerAuthentication_v6;
+
+    CC_CONF_SERVICE =
+      new codeCheckerConfiguration_v6.configurationServiceClient(
+        new Thrift.Protocol(
+          new Thrift.Transport("v" + CC_API_VERSION + "/Configuration")));
+
+    CC_CONF_OBJECTS = codeCheckerConfiguration_v6;
 
     //----------------------------- Main layout ------------------------------//
 

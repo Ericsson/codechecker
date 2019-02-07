@@ -24,6 +24,17 @@ function (declare, cookie, dom, topic, Button, ContentPane, popup,
 
       var that = this;
 
+      //--- Notification bar ---//
+
+      var notificationContainer = dom.create('div', {
+        id : 'notification-container'
+      }, this.domNode);
+
+      dom.create('div', {
+        id : 'notification-text',
+        innerHTML : util.atou(CC_CONF_SERVICE.getNotificationBannerText())
+      }, notificationContainer);
+
       //--- Logo ---//
 
       var logoContainer = dom.create('div', {

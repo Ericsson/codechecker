@@ -7,6 +7,7 @@
 define([
   'dojo/_base/declare',
   'dojo/dom-class',
+  'dojo/dom',
   'dojo/dom-construct',
   'dojo/data/ItemFileWriteStore',
   'dojo/topic',
@@ -18,11 +19,32 @@ define([
   'dijit/layout/ContentPane',
   'codechecker/util',
   'products/PermissionList',
-  'products/ProductSettingsView'],
-function (declare, domClass, dom, ItemFileWriteStore, topic, DataGrid,
+  'products/ProductSettingsView',
+  'products/NotificationView'],
+function (declare, domClass, domBase, dom, ItemFileWriteStore, topic, DataGrid,
   ConfirmDialog, Dialog, Button, TextBox, ContentPane, util, PermissionList,
-  ProductSettingsView) {
+  ProductSettingsView, NotificationView) {
 
+  var NotificationDialog = declare(ConfirmDialog, {
+    constructor : function() {
+      this.notificationView = new NotificationView();
+    },
+
+    onExecute : function() {
+      var node = domBase.byId('notification-text');
+        if(node){
+          var input = this.notificationView._txtAlert.get('value');
+          node.innerHTML = input;
+          CC_CONF_SERVICE.setNotificationBannerText(util.utoa(input));
+        }
+    },
+
+    postCreate : function() {
+      this.inherited(arguments);
+      this.addChild(this.notificationView);
+    }
+
+  });
   //--- Global (server-wide) permission configuration dialog ---//
 
   var SystemPermissionsDialog = declare(ConfirmDialog, {
@@ -360,6 +382,18 @@ function (declare, domClass, dom, ItemFileWriteStore, topic, DataGrid,
         style : "float:right"
       }, this.domNode);
 
+      //--- Edit Notification header button ---//
+
+      this._sysNotifBtn = new Button({
+        label    : 'Edit announcement',
+        class    : 'system-perms-btn invisible',
+        onClick  : function () {
+          that.notificationDialog.show();
+        }
+      });
+      dom.place(this._sysNotifBtn.domNode, rightBtnWrapper);
+
+
       //--- Edit permissions button ---//
 
       this._sysPermsBtn = new Button({
@@ -397,6 +431,7 @@ function (declare, domClass, dom, ItemFileWriteStore, topic, DataGrid,
       this.set('adminLevel', adminLevel);
 
       // Permissions and new product can only be clicked if SUPERUSER.
+      domClass.toggle(this._sysNotifBtn.domNode, 'invisible', adminLevel < 2);
       domClass.toggle(this._sysPermsBtn.domNode, 'invisible', adminLevel < 2);
       domClass.toggle(this._newBtn.domNode, 'invisible', adminLevel < 2);
     }
@@ -435,6 +470,9 @@ function (declare, domClass, dom, ItemFileWriteStore, topic, DataGrid,
 
       this.infoPane.set('productSettingsView', productSettingsView);
       this.listOfProductsGrid.set('productSettingsView', productSettingsView);
+
+      var notificationDialog = new NotificationDialog();
+      this.infoPane.set('notificationDialog', notificationDialog);
 
       var systemPermissionsDialog = new SystemPermissionsDialog({
         title  : 'Global permissions'

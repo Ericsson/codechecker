@@ -218,6 +218,31 @@ class CCProductHelper(ThriftAPIHelper):
         return partial(self._thrift_client_call, attr)
 
 
+class CCConfigHelper(ThriftAPIHelper):
+
+    def __init__(self, proto, host, port, uri, auto_handle_connection=True,
+                 session_token=None):
+
+        from Configuration_v6 import configurationService
+        from libcodechecker.libclient.credential_manager \
+            import SESSION_COOKIE_NAME
+
+        full_uri = '/v' + VERSION + uri
+        url = util.create_product_url(proto, host, port,
+                                      full_uri)
+        transport = THttpClient.THttpClient(url)
+        protocol = TJSONProtocol.TJSONProtocol(transport)
+        client = configurationService.Client(protocol)
+        if session_token:
+            headers = {'Cookie': SESSION_COOKIE_NAME + '=' + session_token}
+            transport.setCustomHeaders(headers)
+        super(CCConfigHelper, self).__init__(transport,
+                                             client, auto_handle_connection)
+
+    def __getattr__(self, attr):
+        return partial(self._thrift_client_call, attr)
+
+
 def get_all_run_results(client, run_id, sort_mode=None, filters=None):
     """
     Get all the results for a run.
@@ -273,3 +298,11 @@ def get_product_client(port, host='localhost', product=None, uri='/Products',
     return CCProductHelper(protocol, host, port, product, uri,
                            auto_handle_connection,
                            session_token)
+
+
+def get_config_client(port, host='localhost', uri='/Configuration',
+                      auto_handle_connection=True, session_token=None,
+                      protocol='http'):
+    return CCConfigHelper(protocol, host, port, uri,
+                          auto_handle_connection,
+                          session_token)
