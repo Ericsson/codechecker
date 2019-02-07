@@ -766,7 +766,7 @@ def server_init_start(args):
         LOG.debug("Configuration database schema mismatch.")
         LOG.debug("Schema upgrade is possible.")
         LOG.warning("Please note after migration only "
-                    "newer CodeChecker versions can be used"
+                    "newer CodeChecker versions can be used "
                     "to start the server")
         LOG.warning("It is advised to make a full backup of your "
                     "configuration database")
