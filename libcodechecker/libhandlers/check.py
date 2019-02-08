@@ -18,7 +18,6 @@ import shutil
 import tempfile
 
 from libcodechecker import logger
-from libcodechecker import host_check
 from libcodechecker import libhandlers
 from libcodechecker import package_context
 from libcodechecker.analyze.analyzers import analyzer_types
@@ -286,7 +285,7 @@ used to generate a log file on the fly.""")
                                     "one.")
 
     context = package_context.get_context()
-    if host_check.is_ctu_capable(context):
+    if analyzer_types.is_ctu_capable(context):
         ctu_opts = parser.add_argument_group(
             "cross translation unit analysis arguments",
             """
@@ -331,7 +330,7 @@ is called.""")
                                     "'<OUTPUT_DIR>/ctu-dir'. (These files "
                                     "will not be cleaned up in this mode.)")
 
-    if host_check.is_statistics_capable(context):
+    if analyzer_types.is_statistics_capable(context):
         stat_opts = parser.add_argument_group(
             "EXPERIMENTAL statistics analysis feature arguments",
             """

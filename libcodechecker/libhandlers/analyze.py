@@ -18,7 +18,6 @@ import sys
 
 from libcodechecker import logger
 from libcodechecker import package_context
-from libcodechecker import host_check
 from libcodechecker import skiplist_handler
 from libcodechecker.analyze import analyzer
 from libcodechecker.analyze.analyzers import analyzer_types
@@ -250,7 +249,7 @@ def add_arguments_to_parser(parser):
                                     "one.")
 
     context = package_context.get_context()
-    if host_check.is_ctu_capable(context):
+    if analyzer_types.is_ctu_capable(context):
         ctu_opts = parser.add_argument_group(
             "cross translation unit analysis arguments",
             """
@@ -303,7 +302,7 @@ Cross-TU analysis. By default, no CTU analysis is run when
                                    "same translation unit without "
                                    "Cross-TU enabled.")
 
-    if host_check.is_statistics_capable(context):
+    if analyzer_types.is_statistics_capable(context):
         stat_opts = parser.add_argument_group(
             "EXPERIMENTAL statistics analysis feature arguments",
             """
