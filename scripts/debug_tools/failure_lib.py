@@ -49,7 +49,7 @@ def change_paths(string, pathModifierFun):
     return ''.join(result)
 
 
-class IncludePathModifier:
+class IncludePathModifier(object):
     def __init__(self, sources_root):
         self.sources_root = sources_root
 

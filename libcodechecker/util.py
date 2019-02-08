@@ -510,7 +510,7 @@ def get_line(file_name, line_no, errors='ignore'):
         return u''
 
 
-class TemporaryDirectory():
+class TemporaryDirectory(object):
     def __init__(self, suffix='', prefix='tmp', tmp_dir=None):
         self._closed = False
         self.name = tempfile.mkdtemp(suffix, prefix, tmp_dir)
