@@ -31,7 +31,7 @@ from libcodechecker import logger
 from libcodechecker import output_formatters
 from libcodechecker import database_status
 from libcodechecker import util
-from libcodechecker.analyze import analyzer_env
+from libcodechecker.env import get_check_env
 from libcodechecker.server import instance_manager
 from libcodechecker.server import server
 from libcodechecker.server.database import database
@@ -478,8 +478,8 @@ def check_product_db_status(cfg_sql_server, context):
                  DBStatus.SCHEMA_INIT_ERROR,
                  DBStatus.SCHEMA_MISSING]
 
-    cc_env = analyzer_env.get_check_env(context.path_env_extra,
-                                        context.ld_lib_path_extra)
+    cc_env = get_check_env(context.path_env_extra,
+                           context.ld_lib_path_extra)
     prod_status = {}
     for pd in products:
         db = database.SQLServer.from_connection_string(pd.connection,
@@ -556,8 +556,8 @@ def __db_migration(cfg_sql_server, context, product_to_upgrade='all',
     LOG.warning("It is advised to make a full backup of your "
                 "run databases.")
 
-    cc_env = analyzer_env.get_check_env(context.path_env_extra,
-                                        context.ld_lib_path_extra)
+    cc_env = get_check_env(context.path_env_extra,
+                           context.ld_lib_path_extra)
     for prod in prod_to_upgrade:
         LOG.info("========================")
         LOG.info("Checking: %s", prod)
@@ -735,8 +735,8 @@ def server_init_start(args):
     context.codechecker_workspace = args.config_directory
     context.db_username = args.dbusername
 
-    check_env = analyzer_env.get_check_env(context.path_env_extra,
-                                           context.ld_lib_path_extra)
+    check_env = get_check_env(context.path_env_extra,
+                              context.ld_lib_path_extra)
 
     cfg_sql_server = database.SQLServer.from_cmdline_args(
         vars(args), CONFIG_META, context.config_migration_root,

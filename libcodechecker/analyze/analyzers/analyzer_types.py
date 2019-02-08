@@ -15,10 +15,10 @@ import os
 import re
 import subprocess
 
-from libcodechecker.analyze import analyzer_env
 from libcodechecker.analyze import host_check
 from libcodechecker.analyze.analyzers.analyzer_clang_tidy import ClangTidy
 from libcodechecker.analyze.analyzers.analyzer_clangsa import ClangSA
+from libcodechecker.env import get_check_env
 from libcodechecker.logger import get_logger
 
 LOG = get_logger('analyzer')
@@ -43,8 +43,8 @@ def is_statistics_capable(context):
     check_supported_analyzers([ClangSA.ANALYZER_NAME], context)
     clangsa_cfg = ClangSA.construct_config_handler([], context)
 
-    check_env = analyzer_env.get_check_env(context.path_env_extra,
-                                           context.ld_lib_path_extra)
+    check_env = get_check_env(context.path_env_extra,
+                              context.ld_lib_path_extra)
 
     checkers = ClangSA.get_analyzer_checkers(clangsa_cfg, check_env)
 
@@ -69,8 +69,8 @@ def check_supported_analyzers(analyzers, context):
      and failed is a list of (analyzer, reason) tuple.
     """
 
-    check_env = analyzer_env.get_check_env(context.path_env_extra,
-                                           context.ld_lib_path_extra)
+    check_env = get_check_env(context.path_env_extra,
+                              context.ld_lib_path_extra)
 
     analyzer_binaries = context.analyzer_binaries
 

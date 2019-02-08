@@ -14,7 +14,6 @@ import re
 import shlex
 import subprocess
 
-from libcodechecker.analyze import analyzer_env
 from libcodechecker.analyze import host_check
 from libcodechecker.analyze.analyzers import analyzer_base
 from libcodechecker.analyze.analyzers import config_handler_clang_tidy
@@ -22,6 +21,7 @@ from libcodechecker.analyze.analyzers import result_handler_clang_tidy
 from libcodechecker.analyze.analyzers.analyzer_clangsa import ClangSA
 from libcodechecker.analyze.analyzer_env import \
     extend_analyzer_cmd_with_resource_dir
+from libcodechecker.env import get_check_env
 from libcodechecker.logger import get_logger
 from libcodechecker.util import get_binary_in_path, replace_env_var
 
@@ -228,8 +228,8 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
         # FIXME We cannot get the resource dir from the clang-tidy binary,
         # therefore we get a sibling clang binary which of clang-tidy.
         # TODO Support "clang-tidy -print-resource-dir" .
-        check_env = analyzer_env.get_check_env(context.path_env_extra,
-                                               context.ld_lib_path_extra)
+        check_env = get_check_env(context.path_env_extra,
+                                  context.ld_lib_path_extra)
         # Overwrite PATH to contain only the parent of the clang binary.
         if os.path.isabs(handler.analyzer_binary):
             check_env['PATH'] = os.path.dirname(handler.analyzer_binary)
@@ -263,8 +263,8 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
             # No clang tidy config file was given in the command line.
             LOG.debug_analyzer(aerr)
 
-        check_env = analyzer_env.get_check_env(context.path_env_extra,
-                                               context.ld_lib_path_extra)
+        check_env = get_check_env(context.path_env_extra,
+                                  context.ld_lib_path_extra)
 
         checkers = ClangTidy.get_analyzer_checkers(handler, check_env)
 

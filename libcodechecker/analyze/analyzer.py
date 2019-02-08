@@ -20,7 +20,6 @@ import time
 
 from libcodechecker.logger import get_logger
 from libcodechecker.analyze import analysis_manager
-from libcodechecker.analyze import analyzer_env
 from libcodechecker.analyze import pre_analysis_manager
 from libcodechecker.analyze.analyzers import analyzer_types
 from libcodechecker.analyze.analyzers.analyzer_clangsa import ClangSA
@@ -28,6 +27,7 @@ from libcodechecker.analyze.statistics_collector \
     import SpecialReturnValueCollector
 from libcodechecker.analyze.statistics_collector \
     import ReturnValueCollector
+from libcodechecker.env import get_check_env
 
 
 LOG = get_logger('analyzer')
@@ -70,8 +70,8 @@ def __get_analyzer_version(context, analyzer_config_map):
     """
     Get the path and the version of the analyzer binaries.
     """
-    check_env = analyzer_env.get_check_env(context.path_env_extra,
-                                           context.ld_lib_path_extra)
+    check_env = get_check_env(context.path_env_extra,
+                              context.ld_lib_path_extra)
 
     # Get the analyzer binaries from the config_map which
     # contains only the checked and available analyzers.

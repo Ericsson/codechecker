@@ -16,7 +16,6 @@ import re
 import shlex
 import subprocess
 
-from libcodechecker.analyze import analyzer_env
 from libcodechecker.analyze import host_check
 from libcodechecker.analyze.analyzers import analyzer_base
 from libcodechecker.analyze.analyzers import config_handler_clangsa
@@ -25,6 +24,7 @@ from libcodechecker.analyze.analyzers.result_handler_clangsa import \
     ResultHandlerClangSA
 from libcodechecker.analyze.analyzer_env import \
     extend_analyzer_cmd_with_resource_dir
+from libcodechecker.env import get_check_env
 from libcodechecker.logger import get_logger
 from libcodechecker.util import get_binary_in_path, replace_env_var
 
@@ -225,8 +225,8 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         Returns the path of the ctu directory (containing the triple).
         """
         config = self.config_handler
-        env = analyzer_env.get_check_env(config.path_env_extra,
-                                         config.ld_lib_path_extra)
+        env = get_check_env(config.path_env_extra,
+                            config.ld_lib_path_extra)
         triple_arch = ctu_triple_arch.get_triple_arch(self.buildaction,
                                                       self.source_file,
                                                       config, env)
@@ -306,8 +306,8 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         handler.report_hash = args.report_hash \
             if 'report_hash' in args else None
 
-        check_env = analyzer_env.get_check_env(context.path_env_extra,
-                                               context.ld_lib_path_extra)
+        check_env = get_check_env(context.path_env_extra,
+                                  context.ld_lib_path_extra)
 
         if 'ctu_phases' in args:
             handler.ctu_dir = os.path.join(args.output_path,
