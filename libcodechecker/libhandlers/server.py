@@ -29,12 +29,12 @@ from libcodechecker import suppress_handler
 from libcodechecker import host_check
 from libcodechecker import logger
 from libcodechecker import output_formatters
+from libcodechecker import database_status
 from libcodechecker import util
 from libcodechecker.analyze import analyzer_env
 from libcodechecker.server import instance_manager
 from libcodechecker.server import server
 from libcodechecker.server.database import database
-from libcodechecker.server.database import database_status
 from libcodechecker.server.database.config_db_model \
     import IDENTIFIER as CONFIG_META
 from libcodechecker.server.database.config_db_model \
