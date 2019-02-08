@@ -28,12 +28,11 @@ import shared
 from codeCheckerDBAccess_v6 import constants, ttypes
 from codeCheckerDBAccess_v6.ttypes import *
 
-from libcodechecker import package_context, plist_parser
+from libcodechecker import package_context, plist_parser, skiplist_handler
 from libcodechecker.source_code_comment_handler import \
     SourceCodeCommentHandler, SKIP_REVIEW_STATUSES
 from libcodechecker import util
 # TODO: Cross-subpackage import here.
-from libcodechecker.analyze import skiplist_handler
 from libcodechecker.logger import get_logger
 from libcodechecker.profiler import timeit
 from libcodechecker.report import get_report_path_hash

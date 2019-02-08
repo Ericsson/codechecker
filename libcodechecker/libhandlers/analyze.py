@@ -19,12 +19,12 @@ import sys
 from libcodechecker import logger
 from libcodechecker import package_context
 from libcodechecker import host_check
+from libcodechecker import skiplist_handler
 from libcodechecker.analyze import analyzer
 from libcodechecker.analyze.analyzers import analyzer_types
 from libcodechecker.log import log_parser
 from libcodechecker.util import RawDescriptionDefaultHelpFormatter, \
     load_json_or_empty
-from libcodechecker.analyze import skiplist_handler
 
 LOG = logger.get_logger('system')
 
