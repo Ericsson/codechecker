@@ -28,7 +28,7 @@ from libcodechecker import logger
 from libcodechecker import package_context
 from libcodechecker import host_check
 from libcodechecker import util
-from libcodechecker.analyze import plist_parser
+from libcodechecker import plist_parser
 from libcodechecker.libclient import client as libclient
 from libcodechecker.output_formatters import twodim_to_str
 from libcodechecker.util import sizeof_fmt

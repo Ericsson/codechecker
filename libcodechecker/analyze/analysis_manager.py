@@ -19,10 +19,9 @@ import sys
 import traceback
 import zipfile
 
-from libcodechecker import util
+from libcodechecker import util, plist_parser
 from libcodechecker.analyze import analyzer_env
 from libcodechecker.analyze import gcc_toolchain
-from libcodechecker.analyze import plist_parser
 from libcodechecker.analyze.analyzers import analyzer_clangsa
 from libcodechecker.analyze.analyzers import analyzer_types
 from libcodechecker.analyze.statistics_collector \

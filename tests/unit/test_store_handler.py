@@ -11,8 +11,8 @@ from __future__ import absolute_import
 import os
 import unittest
 
+from libcodechecker import plist_parser
 from libcodechecker.server.api import store_handler
-from libcodechecker.analyze import plist_parser
 
 from codeCheckerDBAccess_v6 import ttypes
 

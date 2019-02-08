@@ -29,7 +29,7 @@ from codeCheckerDBAccess_v6 import constants, ttypes
 from libcodechecker import package_context
 from libcodechecker import logger
 from libcodechecker import suppress_file_handler
-from libcodechecker.analyze import plist_parser
+from libcodechecker import plist_parser
 from libcodechecker.libclient.client import handle_auth
 from libcodechecker.libclient.client import setup_client
 from libcodechecker.output_formatters import twodim_to_str
