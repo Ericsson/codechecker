@@ -57,8 +57,7 @@ def ThriftClientCall(function):
 
             raise
         except TApplicationException as ex:
-            LOG.error("Internal server error.")
-            LOG.error(ex.message)
+            LOG.exception("Internal server error.")
         except TProtocolException as ex:
             if ex.type == TProtocolException.UNKNOWN:
                 LOG.error('Unknown thrift error')
@@ -73,8 +72,7 @@ def ThriftClientCall(function):
             LOG.error(funcName)
             LOG.error(args)
             LOG.error(kwargs)
-            LOG.error(ex.message)
-            LOG.error("Request failed.")
+            LOG.exception("Request failed.")
             sys.exit(1)
         except socket.error as serr:
             LOG.error("Connection failed.")
