@@ -18,8 +18,6 @@ import sys
 from libcodechecker import db_version
 from libcodechecker import logger
 # TODO: Refers subpackage library
-from libcodechecker.analyze.analyzers.analyzer_clangsa import ClangSA
-from libcodechecker.analyze.analyzers.analyzer_clang_tidy import ClangTidy
 from libcodechecker.util import load_json_or_empty
 
 LOG = logger.get_logger('system')
@@ -131,21 +129,13 @@ class Context(object):
 
     def __populate_analyzers(self):
         compiler_binaries = self.pckg_layout.get('analyzers')
-        if not compiler_binaries:
-            # Set default analyzers assume they are in the PATH
-            # will be checked later.
-            # Key naming in the dict should be the same as in
-            # the supported analyzers list.
-            self.__analyzers[ClangSA.ANALYZER_NAME] = 'clang'
-            self.__analyzers[ClangTidy.ANALYZER_NAME] = 'clang-tidy'
-        else:
-            for name, value in compiler_binaries.items():
-                if os.path.dirname(value):
-                    # Check if it is a package relative path.
-                    self.__analyzers[name] = os.path.join(self._package_root,
-                                                          value)
-                else:
-                    self.__analyzers[name] = value
+        for name, value in compiler_binaries.items():
+            if os.path.dirname(value):
+                # Check if it is a package relative path.
+                self.__analyzers[name] = os.path.join(self._package_root,
+                                                      value)
+            else:
+                self.__analyzers[name] = value
 
     @property
     def checker_config(self):

@@ -19,14 +19,13 @@ import sys
 import traceback
 import zipfile
 
-from libcodechecker import util
-from libcodechecker.analyze import analyzer_env
+from libcodechecker import util, plist_parser
 from libcodechecker.analyze import gcc_toolchain
-from libcodechecker.analyze import plist_parser
 from libcodechecker.analyze.analyzers import analyzer_clangsa
 from libcodechecker.analyze.analyzers import analyzer_types
 from libcodechecker.analyze.statistics_collector \
     import SpecialReturnValueCollector
+from libcodechecker.env import get_check_env
 from libcodechecker.logger import get_logger
 from tu_collector import tu_collector
 
@@ -590,9 +589,8 @@ def start_workers(actions_map, actions, context, analyzer_config_map,
                    'failed': failed_dir}
 
     # Construct analyzer env.
-    analyzer_environment = analyzer_env.get_check_env(
-        context.path_env_extra,
-        context.ld_lib_path_extra)
+    analyzer_environment = get_check_env(context.path_env_extra,
+                                         context.ld_lib_path_extra)
 
     actions, skipped_actions = skip_cpp(actions, skip_handler)
 

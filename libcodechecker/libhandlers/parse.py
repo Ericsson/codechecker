@@ -22,8 +22,8 @@ from libcodechecker import package_context
 from libcodechecker import suppress_handler
 from libcodechecker import logger
 from libcodechecker import util
-from libcodechecker.analyze import plist_parser
-from libcodechecker.analyze.skiplist_handler import SkipListHandler
+from libcodechecker import plist_parser
+from libcodechecker.skiplist_handler import SkipListHandler
 from libcodechecker.output_formatters import twodim_to_str
 from libcodechecker.report import Report, get_report_path_hash
 # TODO: This is a cross-subpackage reference...

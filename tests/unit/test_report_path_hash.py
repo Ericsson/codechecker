@@ -11,7 +11,7 @@ from __future__ import absolute_import
 import os
 import unittest
 
-from libcodechecker.analyze import plist_parser
+from libcodechecker import plist_parser
 from libcodechecker.report import get_report_path_hash
 
 

@@ -19,12 +19,12 @@ import traceback
 import uuid
 
 from libcodechecker import util
-from libcodechecker.analyze import analyzer_env
 from libcodechecker.analyze import ctu_manager
 from libcodechecker.analyze import statistics_collector
 from libcodechecker.analyze.analyzers import analyzer_base
 from libcodechecker.analyze.analyzers import ctu_triple_arch
 from libcodechecker.analyze.analyzers.analyzer_clangsa import ClangSA
+from libcodechecker.env import get_check_env
 from libcodechecker.logger import get_logger
 
 
@@ -89,9 +89,8 @@ def pre_analyze(params):
     action, context, analyzer_config_map, skip_handler, \
         ctu_data, statistics_data = params
 
-    analyzer_environment = analyzer_env.get_check_env(
-        context.path_env_extra,
-        context.ld_lib_path_extra)
+    analyzer_environment = get_check_env(context.path_env_extra,
+                                         context.ld_lib_path_extra)
 
     progress_checked_num.value += 1
 

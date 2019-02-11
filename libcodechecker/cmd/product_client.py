@@ -15,10 +15,10 @@ import sys
 
 from ProductManagement_v6.ttypes import *
 
-from libcodechecker.libclient.client import setup_product_client
 from libcodechecker import logger
+from libcodechecker import database_status
+from libcodechecker.libclient.client import setup_product_client
 from libcodechecker.output_formatters import twodim_to_str
-from libcodechecker.server.database import database_status
 from libcodechecker.util import split_server_url
 
 from .cmd_line_client import CmdLineOutputEncoder
