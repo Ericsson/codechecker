@@ -320,8 +320,8 @@ def unzip(b64zip, output_dir):
     the name of the extracted directory.
     """
     with tempfile.NamedTemporaryFile(suffix='.zip') as zip_file:
-        LOG.debug("Unzipping mass storage ZIP '{0}' to '{1}'..."
-                  .format(zip_file.name, output_dir))
+        LOG.debug("Unzipping mass storage ZIP '%s' to '%s'...",
+                  zip_file.name, output_dir)
 
         zip_file.write(zlib.decompress(base64.b64decode(b64zip)))
         with zipfile.ZipFile(zip_file, 'r', allowZip64=True) as zipf:
@@ -829,10 +829,8 @@ class ThriftRequestHandler(object):
         self.__require_access()
         max_query_limit = constants.MAX_QUERY_SIZE
         if limit > max_query_limit:
-            LOG.debug('Query limit ' + str(limit) +
-                      ' was larger than max query limit ' +
-                      str(max_query_limit) + ', setting limit to ' +
-                      str(max_query_limit))
+            LOG.debug('Query limit %d was larger than max query limit %d,'
+                      ' setting limit to %d', limit, max_query_limit, max)
             limit = max_query_limit
 
         with DBSession(self.__Session) as session:
@@ -1857,7 +1855,7 @@ class ThriftRequestHandler(object):
             try:
                 self.removeRun(run_id)
             except Exception as ex:
-                LOG.error("Failed to remove run: " + str(run_id))
+                LOG.error("Failed to remove run: %s", run_id)
                 LOG.error(ex)
                 failed = True
         return not failed
@@ -2059,7 +2057,7 @@ class ThriftRequestHandler(object):
             source_file_name = os.path.join(source_root,
                                             file_name.strip("/"))
             source_file_name = os.path.realpath(source_file_name)
-            LOG.debug("Storing source file: " + source_file_name)
+            LOG.debug("Storing source file: %s", source_file_name)
             trimmed_file_path = util.trim_path_prefixes(file_name,
                                                         trim_path_prefixes)
 
@@ -2074,12 +2072,11 @@ class ThriftRequestHandler(object):
                                                       trimmed_file_path,
                                                       file_hash)
                 if not fid:
-                    LOG.error("File ID for " + source_file_name +
-                              " is not found in the DB with " +
-                              "content hash " + file_hash +
-                              ". Missing from ZIP?")
+                    LOG.error("File ID for %s is not found in the DB with "
+                              "content hash %s. Missing from ZIP?",
+                              source_file_name, file_hash)
                 file_path_to_id[file_name] = fid
-                LOG.debug(str(fid) + " fileid found")
+                LOG.debug("%d fileid found", fid)
                 continue
 
             with codecs.open(source_file_name, 'r',
@@ -2147,13 +2144,13 @@ class ThriftRequestHandler(object):
             if not f.endswith('.plist'):
                 continue
 
-            LOG.debug("Parsing input file '" + f + "'")
+            LOG.debug("Parsing input file '%s'", f)
 
             try:
                 files, reports = plist_parser.parse_plist(
                     os.path.join(report_dir, f), source_root)
             except Exception as ex:
-                LOG.error('Parsing the plist failed: ' + str(ex))
+                LOG.error('Parsing the plist failed: %s', str(ex))
                 continue
 
             file_ids = {}
@@ -2243,16 +2240,16 @@ class ThriftRequestHandler(object):
                     elif len(src_comment_data) > 1:
                         LOG.warning(
                             "Multiple source code comment can be found "
-                            "for '{0}' checker in '{1}' at line {2}. "
-                            "This bug will not be suppressed!".format(
-                                checker_name, source_file, report_line))
+                            "for '%s' checker in '%s' at line %s. "
+                            "This bug will not be suppressed!",
+                            checker_name, source_file, report_line)
 
                         wrong_src_code = "{0}|{1}|{2}".format(source_file,
                                                               report_line,
                                                               checker_name)
                         wrong_src_code_comments.append(wrong_src_code)
 
-                LOG.debug("Storing done for report " + str(report_id))
+                LOG.debug("Storing done for report %d", report_id)
 
         reports_to_delete = set()
         for bug_hash, reports in hash_map_reports.items():
@@ -2311,9 +2308,8 @@ class ThriftRequestHandler(object):
             username = run_lock.username if run_lock.username is not None \
                 else "another user"
 
-            LOG.info("Refusing to store into run '{0}' as it is locked by "
-                     "{1}. Lock will expire at '{2}'."
-                     .format(name, username, when))
+            LOG.info("Refusing to store into run '%s' as it is locked by "
+                     "%s. Lock will expire at '%s'.", name, username, when)
             raise shared.ttypes.RequestFailed(
                 shared.ttypes.ErrorCode.DATABASE,
                 "The run named '{0}' is being stored into by {1}. If the "
@@ -2340,9 +2336,9 @@ class ThriftRequestHandler(object):
             # the run locked, as the data changed while the transaction was
             # waiting, as another run wholly completed.
 
-            LOG.info("Run '{0}' got locked while current transaction "
-                     "tried to acquire a lock. Considering run as locked."
-                     .format(name))
+            LOG.info("Run '%s' got locked while current transaction "
+                     "tried to acquire a lock. Considering run as locked.",
+                     name)
             raise shared.ttypes.RequestFailed(
                 shared.ttypes.ErrorCode.DATABASE,
                 "The run named '{0}' is being stored into by another "
@@ -2376,8 +2372,8 @@ class ThriftRequestHandler(object):
         # Session that handles constraints on the run.
         with DBSession(self.__Session) as session:
             if max_run_count:
-                LOG.debug("Check the maximum number of allowed runs which is "
-                          "{0}".format(max_run_count))
+                LOG.debug("Check the maximum number of allowed "
+                          "runs which is %d", max_run_count)
 
                 run = session.query(Run) \
                     .filter(Run.name == run_name) \
@@ -2421,7 +2417,7 @@ class ThriftRequestHandler(object):
             with util.TemporaryDirectory() as zip_dir:
                 unzip(b64zip, zip_dir)
 
-                LOG.debug("Using unzipped folder '{0}'".format(zip_dir))
+                LOG.debug("Using unzipped folder '%s'", zip_dir)
 
                 source_root = os.path.join(zip_dir, 'root')
                 report_dir = os.path.join(zip_dir, 'reports')
@@ -2480,8 +2476,8 @@ class ThriftRequestHandler(object):
                     # sure that the execution of the SQL statement is not
                     # optimised away and the fetched row is not garbage
                     # collected.
-                    LOG.debug("Storing into run '{0}' locked at '{1}'."
-                              .format(name, run_lock.locked_at))
+                    LOG.debug("Storing into run '%s' locked at '%s'.",
+                              name, run_lock.locked_at)
 
                     # Actual store operation begins here.
                     user_name = self.__get_username()

@@ -8,9 +8,9 @@ CHECK#CodeChecker check --build "make compiler_warning_wno_group" --output $OUTP
 [] - Starting static analysis ...
 [] - [1/1] clang-tidy analyzed compiler_warning.cpp successfully.
 [] - ----==== Summary ====----
-[] - Total analyzed compilation commands: 1
 [] - Successfully analyzed
 [] -   clang-tidy: 1
+[] - Total analyzed compilation commands: 1
 [] - ----=================----
 [] - Analysis finished.
 [] - To view results in the terminal use the "CodeChecker parse" command.

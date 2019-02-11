@@ -237,7 +237,7 @@ class SessionManager(object):
             new_max_run_count = cfg_dict.get('max_run_count', None)
             if prev_max_run_count != new_max_run_count:
                 self.__max_run_count = new_max_run_count
-                LOG.debug("Changed '%s' value from %s to %s", 'max_run_count',
+                LOG.debug("Changed 'max_run_count' value from %s to %s",
                           prev_max_run_count, new_max_run_count)
 
             prev_store_config = json.dumps(self.__store_config, sort_keys=True,
@@ -694,8 +694,7 @@ class SessionManager(object):
 
             return True
         except Exception as e:
-            LOG.error("Couldn't invalidate session for token {0}"
-                      .format(token))
+            LOG.error("Couldn't invalidate session for token %s", token)
             LOG.error(str(e))
         finally:
             if transaction:

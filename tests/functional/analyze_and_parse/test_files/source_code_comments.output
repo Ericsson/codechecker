@@ -8,9 +8,9 @@ CHECK#CodeChecker check --build "make source_code_comments" --output $OUTPUT$ --
 [] - Starting static analysis ...
 [] - [1/1] clang-tidy analyzed source_code_comments.cpp successfully.
 [] - ----==== Summary ====----
-[] - Total analyzed compilation commands: 1
 [] - Successfully analyzed
 [] -   clang-tidy: 1
+[] - Total analyzed compilation commands: 1
 [] - ----=================----
 [] - Analysis finished.
 [] - To view results in the terminal use the "CodeChecker parse" command.

@@ -93,10 +93,10 @@ class ThriftProductHandler(object):
 
         server_product = self.__server.get_product(product.endpoint)
         if not server_product:
-            LOG.info("Product '{0}' was found in the configuration "
+            LOG.info("Product '%s' was found in the configuration "
                      "database but no database connection was "
-                     "present. Mounting analysis run database..."
-                     .format(product.endpoint))
+                     "present. Mounting analysis run database...",
+                     product.endpoint)
             self.__server.add_product(product)
             server_product = self.__server.get_product(product.endpoint)
 
@@ -199,9 +199,9 @@ class ThriftProductHandler(object):
                 # same configuration database. In this case, the product is
                 # no longer valid, yet the current server keeps a connection
                 # object up.
-                LOG.info("{0} products were removed but server is still "
-                         "connected to them. Disconnecting these...".format(
-                             self.__server.num_products - num_all_products))
+                LOG.info("%d products were removed but server is still "
+                         "connected to them. Disconnecting these...",
+                         self.__server.num_products - num_all_products)
 
                 all_products = session.query(Product).all()
                 self.__server.remove_products_except([prod.endpoint for prod
@@ -280,8 +280,7 @@ class ThriftProductHandler(object):
             session = self.__session()
             product = session.query(Product).get(product_id)
             if product is None:
-                msg = "Product with ID {0} does not exist!".format(product_id)
-                LOG.error(msg)
+                LOG.error("Product with ID %d does not exist!", product_id)
                 raise shared.ttypes.RequestFailed(
                     shared.ttypes.ErrorCode.DATABASE, msg)
 
@@ -343,7 +342,7 @@ class ThriftProductHandler(object):
         self.__require_permission([permissions.SUPERUSER])
 
         session = None
-        LOG.info("User requested add product '{0}'".format(product.endpoint))
+        LOG.info("User requested add product '%s'", product.endpoint)
 
         if not is_valid_product_endpoint(product.endpoint):
             msg = "The specified endpoint is invalid."
@@ -491,8 +490,8 @@ class ThriftProductHandler(object):
             self.__permission_args['productID'] = product.id
             self.__require_permission([permissions.PRODUCT_ADMIN])
 
-            LOG.info("User requested edit product '{0}'"
-                     .format(product.endpoint))
+            LOG.info("User requested edit product '%s'",
+                     product.endpoint)
 
             dbc = new_config.connection
             if not dbc:
@@ -509,14 +508,13 @@ class ThriftProductHandler(object):
                         shared.ttypes.ErrorCode.GENERAL, msg)
 
                 if self.__server.get_product(new_config.endpoint):
-                    msg = "A product endpoint '/{0}' is already configured!" \
-                          .format(product.endpoint)
-                    LOG.error(msg)
+                    LOG.error("A product endpoint '/%s' is already"
+                              "configured!", product.endpoint)
                     raise shared.ttypes.RequestFailed(
                         shared.ttypes.ErrorCode.GENERAL, msg)
 
-                LOG.info("User renamed product '{0}' to '{1}'"
-                         .format(product.endpoint, new_config.endpoint))
+                LOG.info("User renamed product '%s' to '%s'",
+                         product.endpoint, new_config.endpoint)
 
             # Some values come encoded as Base64, decode these.
             displayed_name = base64.b64decode(new_config.displayedName_b64) \
@@ -662,13 +660,11 @@ class ThriftProductHandler(object):
             session = self.__session()
             product = session.query(Product).get(product_id)
             if product is None:
-                msg = "Product with ID {0} does not exist!".format(product_id)
-                LOG.error(msg)
+                LOG.erorr("Product with ID %d does not exist!", product_id)
                 raise shared.ttypes.RequestFailed(
                     shared.ttypes.ErrorCode.DATABASE, msg)
 
-            LOG.info("User requested to remove product '{0}'"
-                     .format(product.endpoint))
+            LOG.info("User requested to remove product '%s'", product.endpoint)
             self.__server.remove_product(product.endpoint)
 
             session.delete(product)

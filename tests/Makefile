@@ -20,13 +20,17 @@ CLEAR_WORKSPACE_CMD = rm -rf $(BUILD_DIR)/workspace
 # Nose test runner configuration options.
 NOSECFG = --config .noserc
 
-test: pycodestyle test_unit test_functional test_build_logger test_tu_collector
+test: pycodestyle pylint test_unit test_functional test_build_logger test_tu_collector
 
-test_novenv: pycodestyle test_unit_novenv test_functional_novenv
+test_novenv: pycodestyle pylint test_unit_novenv test_functional_novenv
 
 pycodestyle: venv_dev
 	$(ACTIVATE_DEV_VENV) && \
 	pycodestyle bin libcodechecker scripts tests vendor/plist_to_html vendor/tu_collector
+
+pylint: venv_dev
+	$(ACTIVATE_DEV_VENV) && \
+	pylint bin libcodechecker scripts tests vendor/plist_to_html vendor/tu_collector --disable=all --enable=logging-format-interpolation
 
 UNIT_TEST_CMD = $(REPO_ROOT) nosetests $(NOSECFG) tests/unit
 

@@ -9,9 +9,9 @@ CHECK#CodeChecker check --build "make deduplication" --output $OUTPUT$ --quiet -
 [] - [1/2] clangsa analyzed simple1.cpp successfully.
 [] - [2/2] clangsa analyzed simple1.cpp successfully.
 [] - ----==== Summary ====----
-[] - Total analyzed compilation commands: 2
 [] - Successfully analyzed
 [] -   clangsa: 2
+[] - Total analyzed compilation commands: 2
 [] - ----=================----
 [] - Analysis finished.
 [] - To view results in the terminal use the "CodeChecker parse" command.

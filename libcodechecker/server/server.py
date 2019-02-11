@@ -846,7 +846,7 @@ class CCSimpleHttpServer(HTTPServer):
             raise ValueError("The product with the given endpoint '{0}' does "
                              "not exist!".format(endpoint))
 
-        LOG.info("Disconnecting product '{0}'".format(endpoint))
+        LOG.info("Disconnecting product '%s'", endpoint)
         product.teardown()
 
         del self.__products[endpoint]
@@ -887,7 +887,7 @@ def __make_root_file(root_file):
 
     sha = sha256(username + ':' + password).hexdigest()
     with open(root_file, 'w') as f:
-        LOG.debug("Save root SHA256 '{0}'".format(sha))
+        LOG.debug("Save root SHA256 '%s'", sha)
         f.write(sha)
 
     # This file should be only readable by the process owner, and noone else.
@@ -904,8 +904,7 @@ def start_server(config_directory, package_data, port, config_sql_server,
     """
     LOG.debug("Starting CodeChecker server...")
 
-    LOG.debug("Using suppress file '{0}'"
-              .format(suppress_handler.suppress_file))
+    LOG.debug("Using suppress file '%s'", suppress_handler.suppress_file)
 
     server_addr = (listen_address, port)
 
@@ -919,10 +918,10 @@ def start_server(config_directory, package_data, port, config_sql_server,
         try:
             with open(root_file, 'r') as f:
                 root_sha = f.read()
-            LOG.debug("Root digest is '{0}'".format(root_sha))
+            LOG.debug("Root digest is '%s'", root_sha)
         except IOError:
-            LOG.info("Cannot open root file '{0}' even though it exists"
-                     .format(root_file))
+            LOG.info("Cannot open root file '%s' even though it exists",
+                     root_file)
             root_sha = __make_root_file(root_file)
 
     # Check whether configuration file exists, create an example if not.
@@ -935,15 +934,14 @@ def start_server(config_directory, package_data, port, config_sql_server,
         example_cfg_file = os.path.join(os.environ['CC_PACKAGE_ROOT'],
                                         'config', 'server_config.json')
         if os.path.exists(session_cfg_file):
-            LOG.info("Renaming '{0}' to '{1}'. Please check the example "
-                     "configuration file ('{2}') or the user guide for more "
-                     "information.".format(session_cfg_file,
-                                           server_cfg_file,
-                                           example_cfg_file))
+            LOG.info("Renaming '%s' to '%s'. Please check the example "
+                     "configuration file ('%s') or the user guide for more "
+                     "information.", session_cfg_file,
+                     server_cfg_file, example_cfg_file)
             os.rename(session_cfg_file, server_cfg_file)
         else:
             LOG.info("CodeChecker server's example configuration file "
-                     "created at '{0}'".format(server_cfg_file))
+                     "created at '%s'", server_cfg_file)
             shutil.copyfile(example_cfg_file, server_cfg_file)
 
     try:
@@ -1001,8 +999,8 @@ def start_server(config_directory, package_data, port, config_sql_server,
     except IOError as ex:
         LOG.debug(ex.strerror)
 
-    LOG.info("Server waiting for client requests on [{0}:{1}]"
-             .format(listen_address, str(port)))
+    LOG.info("Server waiting for client requests on [%s:%d]",
+             listen_address, port)
 
     def unregister_handler(pid):
         """

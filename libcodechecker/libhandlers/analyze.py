@@ -500,8 +500,8 @@ def main(args):
         shutil.rmtree(ctu_dir)
 
     if 'clean' in args and os.path.isdir(args.output_path):
-        LOG.info("Previous analysis results in '{0}' have been removed, "
-                 "overwriting with current result".format(args.output_path))
+        LOG.info("Previous analysis results in '%s' have been removed, "
+                 "overwriting with current result", args.output_path)
         shutil.rmtree(args.output_path)
 
     if not os.path.exists(args.output_path):
@@ -517,15 +517,15 @@ def main(args):
     actions = []
     for log_file in args.logfile:
         if not os.path.exists(log_file):
-            LOG.error("The specified logfile '" + log_file + "' does not "
-                      "exist!")
+            LOG.error("The specified logfile '%s' does not exist!",
+                      log_file)
             continue
 
         actions += log_parser.parse_log(
             load_json_or_empty(log_file),
             skip_handler,
             os.path.join(args.output_path, 'compiler_info.json'))
-    if len(actions) == 0:
+    if actions == 0:
         LOG.info("None of the specified build log files contained "
                  "valid compilation commands. No analysis needed...")
         sys.exit(1)
@@ -555,7 +555,7 @@ def main(args):
 
     __update_skip_file(args)
 
-    LOG.debug("Analysis metadata write to '" + metadata_file + "'")
+    LOG.debug("Analysis metadata write to '%s'", metadata_file)
     with open(metadata_file, 'w') as metafile:
         json.dump(metadata, metafile)
 

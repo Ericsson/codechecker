@@ -88,8 +88,6 @@ def worker_result_handler(results, metadata, output_path, analyzer_binaries):
                 statistics[analyzer_type]['failed_sources'].extend(sources)
 
     LOG.info("----==== Summary ====----")
-    LOG.info("Total analyzed compilation commands: %d", len(results))
-
     print_analyzer_statistic_summary(statistics,
                                      'successful',
                                      'Successfully analyzed')
@@ -102,7 +100,6 @@ def worker_result_handler(results, metadata, output_path, analyzer_binaries):
         LOG.info("Reanalyzed compilation commands: %d", reanalyzed_num)
     if skipped_num:
         LOG.info("Skipped compilation commands: %d", skipped_num)
-    LOG.info("----=================----")
 
     metadata['skipped'] = skipped_num
     metadata['analyzer_statistics'] = statistics
@@ -344,7 +341,6 @@ def check(check_data):
 
     skiplist handler is None if no skip file was configured.
     """
-
     actions_map, action, context, analyzer_config_map, \
         output_dir, skip_handler, quiet_output_on_stdout, \
         capture_analysis_output, analysis_timeout, \
@@ -357,186 +353,199 @@ def check(check_data):
     try:
         # If one analysis fails the check fails.
         return_codes = 0
-        skipped = False
         reanalyzed = False
 
         result_file = ''
 
-        # If there is no skiplist handler there was no skip list file
-        # in the command line.
-        # C++ file skipping is handled here.
+        source_analyzer, analyzer_cmd, rh, reanalyzed = \
+            prepare_check(action, analyzer_config_map,
+                          output_dir, context.severity_map,
+                          skip_handler, statistics_data)
+
+        # The analyzer invocation calls __create_timeout as a callback
+        # when the analyzer starts. This callback creates the timeout
+        # watcher over the analyzer process, which in turn returns a
+        # function, that can later be used to check if the analyzer quit
+        # because we killed it due to a timeout.
+        #
+        # We need to capture the "function pointer" returned by
+        # setup_process_timeout as reference, so that we may call it
+        # later. To work around scoping issues, we use a list here so the
+        # "function pointer" is captured by reference.
+        timeout_cleanup = [lambda: False]
+
+        if analysis_timeout and analysis_timeout > 0:
+            def __create_timeout(analyzer_process):
+                """
+                Once the analyzer process is started, this method is
+                called. Set up a timeout for the analysis.
+                """
+                timeout_cleanup[0] = util.setup_process_timeout(
+                    analyzer_process, analysis_timeout)
+        else:
+            def __create_timeout(analyzer_process):
+                # If no timeout is given by the client, this callback
+                # shouldn't do anything.
+                pass
+
+        # Fills up the result handler with the analyzer information.
+        source_analyzer.analyze(analyzer_cmd, rh, analyzer_environment,
+                                __create_timeout)
+
+        # If execution reaches this line, the analyzer process has quit.
+        if timeout_cleanup[0]():
+            LOG.warning("Analyzer ran too long, exceeding time limit "
+                        "of %d seconds.", analysis_timeout)
+            LOG.warning("Considering this analysis as failed...")
+            rh.analyzer_returncode = -1
+            rh.analyzer_stderr = (">>> CodeChecker: Analysis timed out "
+                                  "after {0} seconds. <<<\n{1}") \
+                .format(analysis_timeout, rh.analyzer_stderr)
+
+        # If source file contains escaped spaces ("\ " tokens), then
+        # clangSA writes the plist file with removing this escape
+        # sequence, whereas clang-tidy does not. We rewrite the file
+        # names to contain no escape sequences for every analyzer.
+        result_file = rh.analyzer_result_file.replace(r'\ ', ' ')
+        result_base = os.path.basename(result_file)
+
+        ctu_active = is_ctu_active(source_analyzer)
+
+        ctu_suffix = '_CTU'
+        zip_suffix = ctu_suffix if ctu_active else ''
+
+        failure_type = "_unknown"
+        if rh.analyzer_returncode == 1:
+            failure_type = "_compile_error"
+        elif rh.analyzer_returncode == 254:
+            failure_type = "_crash"
+
+        zip_file = result_base + zip_suffix + failure_type + '.zip'
+        zip_file = os.path.join(failed_dir, zip_file)
+
+        ctu_zip_file = result_base + ctu_suffix + failure_type + '.zip'
+        ctu_zip_file = os.path.join(failed_dir, ctu_zip_file)
+
+        return_codes = rh.analyzer_returncode
+
         source_file_name = os.path.basename(action.source)
 
-        if skip_handler and skip_handler.should_skip(action.source):
-            LOG.debug_analyzer('%s is skipped', source_file_name)
-            skipped = True
+        if rh.analyzer_returncode == 0:
+
+            # Remove the previously generated error file.
+            if os.path.exists(zip_file):
+                os.remove(zip_file)
+
+            # Remove the previously generated CTU error file.
+            if os.path.exists(ctu_zip_file):
+                os.remove(ctu_zip_file)
+
+            handle_success(rh, result_file, result_base,
+                           skip_handler, capture_analysis_output,
+                           success_dir)
+            LOG.info("[%d/%d] %s analyzed %s successfully.",
+                     progress_checked_num.value, progress_actions.value,
+                     action.analyzer_type, source_file_name)
+
+            if skip_handler:
+                # We need to check the plist content because skipping
+                # reports in headers can be done only this way.
+                plist_parser.skip_report_from_plist(result_file,
+                                                    skip_handler)
 
         else:
-            source_analyzer, analyzer_cmd, rh, reanalyzed = \
-                prepare_check(action, analyzer_config_map,
-                              output_dir, context.severity_map,
-                              skip_handler, statistics_data)
-
-            # The analyzer invocation calls __create_timeout as a callback
-            # when the analyzer starts. This callback creates the timeout
-            # watcher over the analyzer process, which in turn returns a
-            # function, that can later be used to check if the analyzer quit
-            # because we killed it due to a timeout.
-            #
-            # We need to capture the "function pointer" returned by
-            # setup_process_timeout as reference, so that we may call it
-            # later. To work around scoping issues, we use a list here so the
-            # "function pointer" is captured by reference.
-            timeout_cleanup = [lambda: False]
-
-            if analysis_timeout and analysis_timeout > 0:
-                def __create_timeout(analyzer_process):
-                    """
-                    Once the analyzer process is started, this method is
-                    called. Set up a timeout for the analysis.
-                    """
-                    timeout_cleanup[0] = util.setup_process_timeout(
-                        analyzer_process, analysis_timeout)
-            else:
-                def __create_timeout(analyzer_process):
-                    # If no timeout is given by the client, this callback
-                    # shouldn't do anything.
-                    pass
-
-            # Fills up the result handler with the analyzer information.
-            source_analyzer.analyze(analyzer_cmd, rh, analyzer_environment,
-                                    __create_timeout)
-
-            # If execution reaches this line, the analyzer process has quit.
-            if timeout_cleanup[0]():
-                LOG.warning("Analyzer ran too long, exceeding time limit "
-                            "of %d seconds.", analysis_timeout)
-                LOG.warning("Considering this analysis as failed...")
-                rh.analyzer_returncode = -1
-                rh.analyzer_stderr = (">>> CodeChecker: Analysis timed out "
-                                      "after {0} seconds. <<<\n{1}") \
-                    .format(analysis_timeout, rh.analyzer_stderr)
-
-            # If source file contains escaped spaces ("\ " tokens), then
-            # clangSA writes the plist file with removing this escape
-            # sequence, whereas clang-tidy does not. We rewrite the file
-            # names to contain no escape sequences for every analyzer.
-            result_file = rh.analyzer_result_file.replace(r'\ ', ' ')
-            result_base = os.path.basename(result_file)
-
-            ctu_active = is_ctu_active(source_analyzer)
-
-            ctu_suffix = '_CTU'
-            zip_suffix = ctu_suffix if ctu_active else ''
-
-            failure_type = "_unknown"
-            if rh.analyzer_returncode == 1:
-                failure_type = "_compile_error"
-            elif rh.analyzer_returncode == 254:
-                failure_type = "_crash"
-
-            zip_file = result_base + zip_suffix + failure_type + '.zip'
-            zip_file = os.path.join(failed_dir, zip_file)
-
-            ctu_zip_file = result_base + ctu_suffix + failure_type + '.zip'
-            ctu_zip_file = os.path.join(failed_dir, ctu_zip_file)
-
-            return_codes = rh.analyzer_returncode
-            if rh.analyzer_returncode == 0:
-
-                # Remove the previously generated error file.
-                if os.path.exists(zip_file):
-                    os.remove(zip_file)
-
-                # Remove the previously generated CTU error file.
-                if os.path.exists(ctu_zip_file):
-                    os.remove(ctu_zip_file)
-
-                handle_success(rh, result_file, result_base,
-                               skip_handler, capture_analysis_output,
-                               success_dir)
-                LOG.info("[%d/%d] %s analyzed %s successfully.",
-                         progress_checked_num.value, progress_actions.value,
-                         action.analyzer_type, source_file_name)
-
-                if skip_handler:
-                    # We need to check the plist content because skipping
-                    # reports in headers can be done only this way.
-                    plist_parser.skip_report_from_plist(result_file,
-                                                        skip_handler)
-
-            else:
-                LOG.error("Analyzing %s with %s %s failed!",
-                          source_file_name,
-                          action.analyzer_type,
-                          "CTU" if ctu_active else "")
-
-                if not quiet_output_on_stdout:
-                    LOG.error("\n%s", rh.analyzer_stdout)
-                    LOG.error("\n%s", rh.analyzer_stderr)
-
-                handle_failure(source_analyzer, rh, zip_file, result_base,
-                               actions_map)
-
-                if ctu_active and ctu_reanalyze_on_failure:
-                    LOG.error("Try to reanalyze without CTU")
-                    # Try to reanalyze with CTU disabled.
-                    source_analyzer, analyzer_cmd, rh, reanalyzed = \
-                        prepare_check(action,
-                                      analyzer_config_map,
-                                      output_dir,
-                                      context.severity_map,
-                                      skip_handler,
-                                      statistics_data,
-                                      True)
-
-                    # Fills up the result handler with
-                    # the analyzer information.
-                    source_analyzer.analyze(analyzer_cmd,
-                                            rh,
-                                            analyzer_environment)
-
-                    return_codes = rh.analyzer_returncode
-                    if rh.analyzer_returncode == 0:
-                        handle_success(rh, result_file, result_base,
-                                       skip_handler, capture_analysis_output,
-                                       success_dir)
-
-                        LOG.info("[%d/%d] %s analyzed %s without"
-                                 " CTU successfully.",
-                                 progress_checked_num.value,
-                                 progress_actions.value,
-                                 action.analyzer_type,
-                                 source_file_name)
-
-                    else:
-
-                        LOG.error("Analyzing '%s' with %s without CTU failed.",
-                                  source_file_name, action.analyzer_type)
-
-                        zip_file = result_base + '.zip'
-                        zip_file = os.path.join(failed_dir, zip_file)
-                        handle_failure(source_analyzer, rh, zip_file,
-                                       result_base, actions_map)
+            LOG.error("Analyzing %s with %s %s failed!",
+                      source_file_name,
+                      action.analyzer_type,
+                      "CTU" if ctu_active else "")
 
             if not quiet_output_on_stdout:
-                if rh.analyzer_returncode:
-                    LOG.error('\n%s', rh.analyzer_stdout)
-                    LOG.error('\n%s', rh.analyzer_stderr)
+                LOG.error("\n%s", rh.analyzer_stdout)
+                LOG.error("\n%s", rh.analyzer_stderr)
+
+            handle_failure(source_analyzer, rh, zip_file, result_base,
+                           actions_map)
+
+            if ctu_active and ctu_reanalyze_on_failure:
+                LOG.error("Try to reanalyze without CTU")
+                # Try to reanalyze with CTU disabled.
+                source_analyzer, analyzer_cmd, rh, reanalyzed = \
+                    prepare_check(action,
+                                  analyzer_config_map,
+                                  output_dir,
+                                  context.severity_map,
+                                  skip_handler,
+                                  statistics_data,
+                                  True)
+
+                # Fills up the result handler with
+                # the analyzer information.
+                source_analyzer.analyze(analyzer_cmd,
+                                        rh,
+                                        analyzer_environment)
+
+                return_codes = rh.analyzer_returncode
+                if rh.analyzer_returncode == 0:
+                    handle_success(rh, result_file, result_base,
+                                   skip_handler, capture_analysis_output,
+                                   success_dir)
+
+                    LOG.info("[%d/%d] %s analyzed %s without"
+                             " CTU successfully.",
+                             progress_checked_num.value,
+                             progress_actions.value,
+                             action.analyzer_type,
+                             source_file_name)
+
                 else:
-                    LOG.debug_analyzer('\n%s', rh.analyzer_stdout)
-                    LOG.debug_analyzer('\n%s', rh.analyzer_stderr)
+
+                    LOG.error("Analyzing '%s' with %s without CTU failed.",
+                              source_file_name, action.analyzer_type)
+
+                    zip_file = result_base + '.zip'
+                    zip_file = os.path.join(failed_dir, zip_file)
+                    handle_failure(source_analyzer, rh, zip_file,
+                                   result_base, actions_map)
+
+        if not quiet_output_on_stdout:
+            if rh.analyzer_returncode:
+                LOG.error('\n%s', rh.analyzer_stdout)
+                LOG.error('\n%s', rh.analyzer_stderr)
+            else:
+                LOG.debug_analyzer('\n%s', rh.analyzer_stdout)
+                LOG.debug_analyzer('\n%s', rh.analyzer_stderr)
 
         progress_checked_num.value += 1
 
-        return return_codes, skipped, reanalyzed, action.analyzer_type, \
+        return return_codes, False, reanalyzed, action.analyzer_type, \
             result_file, action.source
 
     except Exception as e:
         LOG.debug_analyzer(str(e))
         traceback.print_exc(file=sys.stdout)
-        return 1, skipped, reanalyzed, action.analyzer_type, None, \
+        return 1, False, reanalyzed, action.analyzer_type, None, \
             action.source
+
+
+def skip_cpp(compile_actions, skip_handler):
+    """If there is no skiplist handler there was no skip list file in
+       the command line.
+       C++ file skipping is handled here.
+    """
+
+    if not skip_handler:
+        return compile_actions, []
+
+    analyze = []
+    skip = []
+    for compile_action in compile_actions:
+
+        if skip_handler and skip_handler.should_skip(compile_action.source):
+            skip.append(compile_action)
+        else:
+            analyze.append(compile_action)
+
+    return analyze, skip
 
 
 def start_workers(actions_map, actions, context, analyzer_config_map,
@@ -585,43 +594,54 @@ def start_workers(actions_map, actions, context, analyzer_config_map,
         context.path_env_extra,
         context.ld_lib_path_extra)
 
-    try:
-        # Workaround, equivalent of map.
-        # The main script does not get signal
-        # while map or map_async function is running.
-        # It is a python bug, this does not happen if a timeout is specified;
-        # then receive the interrupt immediately.
+    actions, skipped_actions = skip_cpp(actions, skip_handler)
 
-        analyzed_actions = [(actions_map,
-                             build_action,
-                             context,
-                             analyzer_config_map,
-                             output_path,
-                             skip_handler,
-                             quiet_analyze,
-                             capture_analysis_output,
-                             timeout,
-                             analyzer_environment,
-                             ctu_reanalyze_on_failure,
-                             output_dirs,
-                             statistics_data)
-                            for build_action in actions]
+    analyzed_actions = [(actions_map,
+                         build_action,
+                         context,
+                         analyzer_config_map,
+                         output_path,
+                         skip_handler,
+                         quiet_analyze,
+                         capture_analysis_output,
+                         timeout,
+                         analyzer_environment,
+                         ctu_reanalyze_on_failure,
+                         output_dirs,
+                         statistics_data)
+                        for build_action in actions]
 
-        pool.map_async(check,
-                       analyzed_actions,
-                       1,
-                       callback=lambda results: worker_result_handler(
-                           results, metadata, output_path,
-                           context.analyzer_binaries)
-                       ).get(float('inf'))
+    if analyzed_actions:
+        try:
 
-        pool.close()
-    except Exception:
-        pool.terminate()
-        raise
-    finally:
-        pool.join()
+            # Workaround, equivalent of map.
+            # The main script does not get signal
+            # while map or map_async function is running.
+            # It is a python bug, this does not happen if a timeout is
+            # specified, then receive the interrupt immediately.
+            pool.map_async(check,
+                           analyzed_actions,
+                           1,
+                           callback=lambda results: worker_result_handler(
+                               results, metadata, output_path,
+                               context.analyzer_binaries)
+                           ).get(float('inf'))
 
+            pool.close()
+        except Exception:
+            pool.terminate()
+            raise
+        finally:
+            pool.join()
+    else:
+        LOG.info("----==== Summary ====----")
+
+    for skp in skipped_actions:
+        LOG.debug_analyzer("%s is skipped", skp.source)
+
+    LOG.info("Total analyzed compilation commands: %d", len(analyzed_actions))
+
+    LOG.info("----=================----")
     if not os.listdir(success_dir):
         shutil.rmtree(success_dir)
 
