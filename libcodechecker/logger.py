@@ -14,7 +14,6 @@ import json
 import logging
 from logging import config
 import os
-import string
 
 
 # The logging leaves can be accesses without
@@ -111,7 +110,8 @@ def validate_loglvl(log_level):
     Should return a valid log level name
     """
     log_level = log_level.upper()
-    if log_level not in map(string.upper, CMDLINE_LOG_LEVELS):
+
+    if log_level not in {lev.upper() for lev in CMDLINE_LOG_LEVELS}:
         return "INFO"
 
     return log_level
