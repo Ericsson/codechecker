@@ -66,7 +66,8 @@ class PathOptions(object):
 
 def prepare(analyzer_command_file, pathOptions):
     res = lib.change_paths(get_first_line_of_file(analyzer_command_file),
-                           AnalyzerCommandPathModifier(pathOptions))
+                           AnalyzerCommandPathModifier(pathOptions),
+                           skip_output=True)
 
     if '-nobuiltininc' not in res:
         return res

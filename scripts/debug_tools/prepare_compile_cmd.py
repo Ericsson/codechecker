@@ -16,8 +16,8 @@ import failure_lib as lib
 
 def existsInSourcesRoot(entry, sources_root):
     """
-    Returns true if the given file in the compile commands really available
-    in the sources-root dir
+    Return true if the given file in the compile commands is really available
+    in the sources-root dir.
     """
     if os.path.isabs(entry['file']):
         real_path = os.path.join(
@@ -36,7 +36,7 @@ def existsInSourcesRoot(entry, sources_root):
 def prepare(compile_command_json, sources_root):
     """
     Read a compile cmd json file and change all paths with a prefix
-    (sources_root).  Returns the modified json data.
+    (sources_root). Returns the modified json data.
     """
     json_data = lib.load_json_file(compile_command_json)
     result_json = []

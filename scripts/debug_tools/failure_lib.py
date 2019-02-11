@@ -28,7 +28,7 @@ def find_path_end(string, path_begin):
     return path, path_end
 
 
-def change_paths(string, pathModifierFun):
+def change_paths(string, pathModifierFun, skip_output=False):
     """
     Scan through the string and possibly replace all found paths.
     Returns the modified string.
@@ -44,7 +44,8 @@ def change_paths(string, pathModifierFun):
             # Make sure that the prospective output folder exists.
             pattern = re.compile(r'[\s\S]*-o *\Z')
             if pattern.match(string[:i]):
-                out_dir = "./sources-root" + os.path.dirname(path)
+                out_dir = os.path.join("./sources-root",
+                                       '.' + os.path.dirname(path))
                 if not os.path.isdir(out_dir):
                     os.makedirs(out_dir)
             path = pathModifierFun(path)
