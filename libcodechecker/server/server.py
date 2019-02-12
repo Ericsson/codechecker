@@ -601,11 +601,10 @@ class Product(object):
                 self.__db_status = sql_server.connect(init_db)
 
         except Exception as ex:
-            LOG.error("The database for product '%s' cannot be connected to.",
-                      self.endpoint)
-            LOG.error(ex.message)
+            LOG.exception("The database for product '%s' cannot be"
+                          " connected to.", self.endpoint)
             self.__db_status = DBStatus.FAILED_TO_CONNECT
-            self.__last_connect_attempt = (datetime.datetime.now(), ex.message)
+            self.__last_connect_attempt = (datetime.datetime.now(), str(ex))
 
     def teardown(self):
         """

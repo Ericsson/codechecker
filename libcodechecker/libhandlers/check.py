@@ -601,7 +601,7 @@ def main(args):
     except ImportError:
         LOG.error("Check failed: couldn't import a library.")
     except Exception as ex:
-        LOG.error("Running check failed. " + ex.message)
+        LOG.exception("Running check failed.")
         import traceback
         traceback.print_exc()
     finally:
