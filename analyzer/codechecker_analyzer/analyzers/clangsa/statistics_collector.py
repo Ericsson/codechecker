@@ -11,8 +11,8 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
-from StringIO import StringIO
 from collections import defaultdict
+import io
 import os
 import re
 
@@ -173,18 +173,18 @@ class SpecialReturnValueCollector(object):
         """
         FIXME proper yaml generation.
         """
-        stats_yaml = StringIO()
+        stats_yaml = io.StringIO()
 
-        stats_yaml.write("#\n")
-        stats_yaml.write("# SpecialReturn metadata format 1.0\n")
+        stats_yaml.write(u"#\n")
+        stats_yaml.write(u"# SpecialReturn metadata format 1.0\n")
         neg, null = self.filter_stats()
 
         for n in neg:
             stats_yaml.write(
-                "{name: " + n + ", relation: LT, value: 0}\n")
+                u"{name: " + n + ", relation: LT, value: 0}\n")
         for n in null:
             stats_yaml.write(
-                "{name: " + n + ", relation: EQ, value: 0}\n")
+                u"{name: " + n + ", relation: EQ, value: 0}\n")
 
         return stats_yaml.getvalue()
 
@@ -276,12 +276,12 @@ class ReturnValueCollector(object):
         """
         FIXME proper yaml generation.
         """
-        stats_yaml = StringIO()
+        stats_yaml = io.StringIO()
 
-        stats_yaml.write("#\n")
-        stats_yaml.write("# UncheckedReturn metadata format 1.0\n")
+        stats_yaml.write(u"#\n")
+        stats_yaml.write(u"# UncheckedReturn metadata format 1.0\n")
         for function_name in self.filter_stats():
-            stats_yaml.write("- " + function_name + '\n')
+            stats_yaml.write(u"- " + function_name + '\n')
 
         return stats_yaml.getvalue()
 
@@ -327,7 +327,7 @@ def postprocess_stats(clang_output_dir, stats_dir, stats_min_sample_count,
                                     stats_relevance_threshold)
 
     for clang_output in clang_outs:
-        with open(clang_output, 'r') as out:
+        with io.open(clang_output, 'r', encoding="utf-8") as out:
             clang_output = ""
             for line in out:
                 clang_output += line + "\n"
@@ -338,10 +338,10 @@ def postprocess_stats(clang_output_dir, stats_dir, stats_min_sample_count,
     # Write out statistics.
     unchecked_yaml = ReturnValueCollector.stats_file(stats_dir)
     LOG.debug("Writing out statistics to %s", unchecked_yaml)
-    with open(unchecked_yaml, 'w') as uyaml:
+    with io.open(unchecked_yaml, 'w', encoding="utf-8") as uyaml:
         uyaml.write(ret_collector.get_yaml())
 
     special_ret_yaml = SpecialReturnValueCollector.stats_file(stats_dir)
     LOG.debug("Writing out statistics to %s", special_ret_yaml)
-    with open(special_ret_yaml, 'w') as uyaml:
+    with io.open(special_ret_yaml, 'w', encoding="utf-8") as uyaml:
         uyaml.write(special_ret_collector.get_yaml())
