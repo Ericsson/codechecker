@@ -2,6 +2,10 @@
 
 CURRENT_DIR = $(shell pwd)
 BUILD_DIR = $(CURRENT_DIR)/build
+VENDOR_DIR = $(CURRENT_DIR)/vendor
+
+CC_BUILD_DIR = $(BUILD_DIR)/CodeChecker
+CC_BUILD_WEB_PLUGINS_DIR = $(CC_BUILD_DIR)/www/scripts/plugins
 
 # Root of the repository.
 ROOT = $(CURRENT_DIR)
@@ -34,8 +38,11 @@ thrift: build_dir
 userguide: build_dir
 	$(MAKE) -C www/userguide
 
-package: clean_package build_dir gen-docs thrift userguide build_plist_to_html build_tu_collector
+package: clean_package build_dir gen-docs thrift userguide build_plist_to_html build_tu_collector build_vendor
 	./scripts/build_package.py -r $(ROOT) -o $(BUILD_DIR) -b $(BUILD_DIR)
+
+build_vendor:
+	$(MAKE) -C $(VENDOR_DIR) build BUILD_DIR=$(CC_BUILD_WEB_PLUGINS_DIR)
 
 build_dir:
 	mkdir -p $(BUILD_DIR)
@@ -76,13 +83,7 @@ clean_package: clean_userguide clean_plist_to_html clean_tu_collector
 	find . -name "*.pyc" -delete
 
 clean_vendor:
-	rm -rf vendor/codemirror
-	rm -rf vendor/dojotoolkit
-	rm -rf vendor/fonts
-	rm -rf vendor/highlightjs
-	rm -rf vendor/jsplumb
-	rm -rf vendor/marked
-	rm -rf vendor/thrift
+	$(MAKE) -C $(VENDOR_DIR) clean_vendor
 
 clean_userguide:
 	rm -rf www/userguide/gen-docs

@@ -11,6 +11,7 @@ Makefile.local
 vendor/*
 !vendor/build-logger
 !vendor/plist_to_html
+!vendor/Makefile
 
 # build-logger build dir
 vendor/build-logger/build/
