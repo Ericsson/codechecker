@@ -836,7 +836,7 @@ class CCSimpleHttpServer(HTTPServer):
         Returns the Product object for the only product connected to by the
         server, or None, if there are 0 or >= 2 products managed.
         """
-        return self.__products.items()[0][1] if self.num_products == 1 \
+        return list(self.__products.items())[0][1] if self.num_products == 1 \
             else None
 
     def remove_product(self, endpoint):
