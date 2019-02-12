@@ -29,7 +29,7 @@ def get_file_content(filename):
         return f.read()
 
 
-class HtmlBuilder:
+class HtmlBuilder(object):
     """
     Helper class to create html file from a report data.
     """

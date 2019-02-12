@@ -30,7 +30,7 @@ pycodestyle: venv_dev
 
 pylint: venv_dev
 	$(ACTIVATE_DEV_VENV) && \
-	pylint bin libcodechecker scripts tests vendor/plist_to_html vendor/tu_collector --disable=all --enable=logging-format-interpolation
+	pylint bin libcodechecker scripts tests vendor/plist_to_html vendor/tu_collector --disable=all --enable=logging-format-interpolation,old-style-class
 
 UNIT_TEST_CMD = $(REPO_ROOT) nosetests $(NOSECFG) tests/unit
 

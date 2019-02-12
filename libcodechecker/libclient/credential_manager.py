@@ -26,7 +26,7 @@ LOG = get_logger('system')
 SESSION_COOKIE_NAME = _SCN
 
 
-class UserCredentials:
+class UserCredentials(object):
 
     def __init__(self):
         LOG.debug("Loading clientside session config.")
