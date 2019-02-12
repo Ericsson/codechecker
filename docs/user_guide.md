@@ -49,6 +49,7 @@ Table of Contents
         * [`results` (List analysis results' summary)](#cmd-results)
             * [Example](#cmd-results-example)
         * [`diff` (Show differences between two runs)](#cmd-diff)
+          * [Example](#cmd-diff-example)
         * [`sum` (Show summarised count of results)](#cmd-sum)
             * [Example](#cmd-sum-example)
         * [`del` (Remove analysis runs)](#cmd-del)
@@ -1743,11 +1744,16 @@ The command can be used in *local* or *remote* compare modes.
 
 In *local mode* the results of a local analysis (see `CodeChecker analyze`)
 can be compared to the results stored (see `CodeChecker store`) on a remote
-CodeChecker server:
+CodeChecker server or two local report directories can be compared:
 
-```sh
-CodeChecker cmd diff -p 8001 --basename my_project --newname ./my_updated_plists --new
-```
+- Compare a local analysis directory and a remote run:
+  ```sh
+  CodeChecker cmd diff -p 8001 --basename my_project --newname ./my_updated_plists --new
+  ```
+- Compare two local analysis directories:
+  ```sh
+  CodeChecker cmd diff --basename ./my_updated_plists_base --newname ./my_updated_plists_new --new
+  ```
 
 In *remote* compare mode, two runs stored on a remote CodeChecker server can
 be compared to each other:
@@ -1756,10 +1762,97 @@ be compared to each other:
 CodeChecker cmd diff -p 8001 --basename my_project --newname my_new_checkin --new
 ```
 
-There is opportunity to compare a run to multiple baselines. You can simply
-provide a regular expression by `-b` flag which covers the required run names.
-The Python regex syntax has to be used:
-https://docs.python.org/2/library/re.html#regular-expression-syntax.
+**Note**: unique report identifiers are used to compare analysis results. For
+more information see [analyzer report identification](report_identification.md)
+documentation.
+
+#### Example <a name="cmd-diff-example"></a>
+Let's assume you have the following C++ code:
+```cpp
+int foo(int z)
+{
+  if (z == 0)
+    return 1 / z; // Division by zero
+
+  return 0;
+}
+
+int bar(int x)
+{
+  int y;
+  y = x % 2; // deadcode.DeadStores
+
+  return x % 2;
+}
+```
+If you log (`CodeChecker log -o compile_command.json -b "g++ example.cpp"`),
+analyze (`CodeChecker analyze -o ./test_report_dir compile_command.json`) and
+parse (`CodeChecker parse ./test_report_dir`) this code with CodeChecker you
+will get a `Division by zero` warning in the `foo` function and a
+`deadcode.DeadStores` warning in the `bar` function.
+
+Let's store it to a running CodeChecker server with run name `test_run_name`
+(`CodeChecker store -n test_run_name ./test_report_dir`).
+
+Now let's fix one of the previous warning in the `foo` function and create a
+new function which contains a new warning:
+```cpp
+int foo(int z)
+{
+  if (z != 0)
+    return 1 / z;
+
+  return 0;
+}
+
+int bar(int x)
+{
+  int y;
+  y = x % 2; // deadcode.DeadStores
+
+  return x % 2;
+}
+
+void baz(int *p)
+{
+  if (!p)
+    *p = 0; // core.NullDereference
+}
+```
+Analyze the above code again with CodeChecker to the same report
+directory (`CodeChecker analyze -o ./test_report_dir compile_command.json`).
+If you parse the results (`CodeChecker parse ./test_report_dir`) you will get
+a `deadcode.DeadStores` warning in the `bar` function and a
+`core.NullDereference` warning in the `baz` function but the previous warning
+in the `foo` function will be disappeared because we fixed it.
+
+Now let's compare our local report directory (`test_report_dir`)
+to the results stored on a remote CodeChecker server previously
+(`test_run_name`). We have 3 options:
+  - Show results that didn't exist in the remote run but appear in the local
+  report directory (`new`):
+  `CodeChecker cmd diff --basename test_run_name --newname ./test_report_dir --new`
+
+  ```
+  [HIGH] example.cpp:20:8: Dereference of null pointer (loaded from variable 'p') [core.NullDereference]
+    *p = 0; // core.NullDereference
+  ```
+  - Show results that existed in the remote run but disappeared from the local
+  report directory run (`resolved`):
+  `CodeChecker cmd diff --basename test_run_name --newname ./test_report_dir --resolved`
+
+  ```
+  [HIGH] example.cpp:4:14: Division by zero [core.DivideZero]
+    return 1 / z; // Division by zero
+  ```
+  - Show results that appear in both the remote run and the local report
+  directory too (`unresolved`):
+  `CodeChecker cmd diff --basename test_run_name --newname ./test_report_dir --unresolved`
+
+  ```
+  [LOW] example.cpp:12:3: Value stored to 'y' is never read [deadcode.DeadStores]
+    y = x % 2; // deadcode.DeadStores
+  ```
 
 ### Show summarised count of results (`sum`) <a name="cmd-sum"></a>
 
