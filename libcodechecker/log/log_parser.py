@@ -478,9 +478,11 @@ class OptionIterator(object):
         self._item = None
         self._it = iter(args)
 
-    def next(self):
+    def __next__(self):
         self._item = next(self._it)
         return self
+
+    next = __next__
 
     def __iter__(self):
         return self
