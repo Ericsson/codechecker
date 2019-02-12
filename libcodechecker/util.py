@@ -157,7 +157,7 @@ def get_binary_in_path(basename_list, versioning_pattern, env):
     elif len(binaries) == 1:
         # Return the first found (earliest in PATH) binary for the only
         # found binary name group.
-        return binaries.values()[0][0]
+        return list(binaries.values())[0][0]
     else:
         keys = list(binaries.keys())
         keys.sort()
