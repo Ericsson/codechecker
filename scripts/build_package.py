@@ -21,7 +21,6 @@ try:
 except ImportError:
     import urllib.parse as urlparse
 import tarfile
-import time
 
 from distutils.spawn import find_executable
 
@@ -341,89 +340,6 @@ def build_package(repository_root, build_package_config, env=None):
     source = os.path.join(repository_root, 'config')
     target = os.path.join(package_root, package_layout['config'])
     copy_tree(source, target)
-
-    version_file = os.path.join(target, 'version.json')
-    LOG.debug('Extending version file: ' + version_file)
-
-    with open(version_file) as v_file:
-        version_json_data = json.load(v_file)
-
-    git_hash = ''
-    try:
-        git_hash_cmd = ['git', 'rev-parse', 'HEAD']
-        git_hash = subprocess.check_output(git_hash_cmd,
-                                           cwd=repository_root)
-        git_hash = str(git_hash.rstrip())
-    except subprocess.CalledProcessError as cperr:
-        LOG.warning('Failed to get last commit hash.')
-        LOG.warning(str(cperr))
-    except OSError as oerr:
-        LOG.warning('Failed to run command:' + ' '.join(git_hash_cmd))
-        LOG.warning(str(oerr))
-        sys.exit(1)
-
-    version = version_json_data['version']
-    version_string = str(version['major'])
-    if int(version['minor']) != 0 or int(version['revision']) != 0:
-        version_string += ".{0}".format(version['minor'])
-    if int(version['revision']) != 0:
-        version_string += ".{0}".format(version['revision'])
-
-    git_describe = git_describe_dirty = version_string
-    try:
-        # The tag only (vX.Y.Z)
-        git_describe_cmd = ['git', 'describe', '--always', '--tags',
-                            '--abbrev=0']
-        git_describe = subprocess.check_output(git_describe_cmd,
-                                               cwd=repository_root)
-        git_describe = str(git_describe.rstrip())
-
-        # The full dirty hash (vX.Y.Z-n-gabcdef0-tainted)
-        git_describe_cmd = ['git', 'describe', '--always', '--tags',
-                            '--dirty=-tainted']
-        git_describe_dirty = subprocess.check_output(git_describe_cmd,
-                                                     cwd=repository_root)
-        git_describe_dirty = str(git_describe_dirty.rstrip())
-
-        # Always replace the Git tag with the manually configured version
-        # information -- but keep the "tainted" flag (if the working directory
-        # differs from a commit) information visible, along with the
-        # abbreviated command hash.
-        # (This makes the tag compiled into the package improper, but this
-        # is a design decision of the developer team!)
-        git_tag = version_string
-        git_tag_dirty = git_describe_dirty.replace(git_describe,
-                                                   version_string)
-    except subprocess.CalledProcessError as cperr:
-        LOG.warning('Failed to get last commit describe.')
-        LOG.warning(str(cperr))
-    except OSError as oerr:
-        LOG.warning('Failed to run command:' + ' '.join(git_describe_cmd))
-        LOG.warning(str(oerr))
-        sys.exit(1)
-
-    version_json_data['git_hash'] = git_hash
-    version_json_data['git_describe'] = {'tag': git_tag,
-                                         'dirty': git_tag_dirty}
-
-    time_now = time.strftime("%Y-%m-%dT%H:%M")
-    version_json_data['package_build_date'] = time_now
-
-    # Rewrite version config file with the extended data.
-    with open(version_file, 'w') as v_file:
-        v_file.write(
-            json.dumps(version_json_data, sort_keys=True, indent=4))
-
-    # Show version information on the command-line.
-    LOG.debug(json.dumps(version_json_data, sort_keys=True, indent=2))
-    LOG.info("This is CodeChecker v{0} ({1})"
-             .format(version_string, git_hash))
-    # Show the original, Git-given describe information.
-    LOG.info("Built from Git tags: {0} ({1})"
-             .format(git_describe, git_describe_dirty))
-    # Show the touched-up version information that uses the configuration file.
-    LOG.info("Baked with Git tag information merged with configured version: "
-             "{0} ({1})".format(git_tag, git_tag_dirty))
 
     # CodeChecker main scripts.
     LOG.debug('Copy main codechecker files')
