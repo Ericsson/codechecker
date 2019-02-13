@@ -102,9 +102,9 @@ class Context(object):
 
         package_version = vfile_data['version']
         package_build_date = vfile_data['package_build_date']
-        package_git_hash = vfile_data['git_hash']
-        package_git_tag = vfile_data['git_describe']['tag']
-        package_git_dirtytag = vfile_data['git_describe']['dirty']
+        package_git_hash = vfile_data.get('git_hash')
+        package_git_tag = vfile_data.get('git_describe', {}).get('tag')
+        package_git_dirtytag = vfile_data.get('git_describe', {}).get('dirty')
         product_database_version = vfile_data['product_db_version']
         run_database_version = vfile_data['run_db_version']
 
@@ -344,6 +344,7 @@ def get_context():
 
     try:
         return Context(package_root, layout_config, cfg_dict)
-    except KeyError as kerr:
-        LOG.error(kerr)
+    except KeyError:
+        import traceback
+        traceback.print_exc()
         sys.exit(1)
