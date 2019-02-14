@@ -136,7 +136,7 @@ if __name__ == "__main__":
 
     args = vars(parser.parse_args())
 
-    if 'verbose' in args:
+    if 'verbose' in args and args['verbose']:
         LOG.setLevel(logging.DEBUG)
 
     extend_version_file(args['repository'], args['build_dir'])

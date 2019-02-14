@@ -91,7 +91,7 @@ if __name__ == "__main__":
 
     args = vars(parser.parse_args())
 
-    if 'verbose' in args:
+    if 'verbose' in args and args['verbose']:
         LOG.setLevel(logging.DEBUG)
 
     if isinstance(args['input'], str):
