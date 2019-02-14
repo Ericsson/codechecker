@@ -40,7 +40,8 @@ userguide: build_dir
 
 package: clean_package build_dir gen-docs thrift userguide build_plist_to_html build_tu_collector build_vendor
 	./scripts/build_package.py -r $(ROOT) -o $(BUILD_DIR) -b $(BUILD_DIR) && \
-	./scripts/build/extend_version_file.py -r $(ROOT) -b $(BUILD_DIR)
+	./scripts/build/extend_version_file.py -r $(ROOT) -b $(BUILD_DIR) && \
+	./scripts/build/create_commands.py -b $(BUILD_DIR) $(ROOT)/bin
 
 build_vendor:
 	$(MAKE) -C $(VENDOR_DIR) build BUILD_DIR=$(CC_BUILD_WEB_PLUGINS_DIR)

@@ -341,45 +341,6 @@ def build_package(repository_root, build_package_config, env=None):
     target = os.path.join(package_root, package_layout['config'])
     copy_tree(source, target)
 
-    # CodeChecker main scripts.
-    LOG.debug('Copy main codechecker files')
-    source = os.path.join(repository_root, 'bin')
-    target = os.path.join(package_root, package_layout['bin'])
-    target_cc = os.path.join(package_root, package_layout['cc_bin'])
-
-    available_commands = []
-
-    for _, _, files in os.walk(source):
-        for f in files:
-            if not f.endswith(".py"):
-                # Non-py files use the environment to appear as python files,
-                # they go into the folder in PATH as they are entrypoints.
-                if f.startswith("codechecker-"):
-                    commandname = f.replace("codechecker-", "")
-                    available_commands.append(commandname)
-                    with open(os.path.join(source, f), 'r') as file:
-                        if file.readline().strip() ==\
-                                "# DO_NOT_INSTALL_TO_PATH":
-
-                            LOG.info("Registering subcommand '{0}'"
-                                     .format(commandname))
-                            # If the file is marked not to install, do not
-                            # install it. This happens with entry points whom
-                            # should not act as "lowercase" entries, but
-                            # the subcommand exists as an available command.
-                            continue
-
-                    LOG.info("Registering subcommand '{0}' installed to PATH"
-                             .format(commandname))
-                shutil.copy2(os.path.join(source, f), target)
-            else:
-                # .py files are Python code that must run in a valid env.
-                shutil.copy2(os.path.join(source, f), target_cc)
-
-    available_commands.sort()
-    with open(os.path.join(target_cc, 'commands.json'), 'w') as commands:
-        json.dump(available_commands, commands, sort_keys=True)
-
     # CodeChecker web client.
     LOG.debug('Copy web client files')
     source = os.path.join(repository_root, 'www')
