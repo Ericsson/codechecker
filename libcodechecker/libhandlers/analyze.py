@@ -524,7 +524,7 @@ def main(args):
             load_json_or_empty(log_file),
             skip_handler,
             os.path.join(args.output_path, 'compiler_info.json'))
-    if actions == 0:
+    if not actions:
         LOG.info("None of the specified build log files contained "
                  "valid compilation commands. No analysis needed...")
         sys.exit(1)
