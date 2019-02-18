@@ -12,7 +12,10 @@ CC_BUILD_DOCS_DIR = $(CC_BUILD_WEB_DIR)/docs
 CC_BUILD_WEB_PLUGINS_DIR = $(CC_BUILD_SCRIPTS_DIR)/plugins
 CC_BUILD_API_DIR = $(CC_BUILD_SCRIPTS_DIR)/codechecker-api
 CC_BUILD_LIB_DIR = $(CC_BUILD_DIR)/lib/python2.7
+CC_BUILD_LIBCC_DIR = $(CC_BUILD_LIB_DIR)/libcodechecker
 CC_BUILD_GEN_DIR = $(CC_BUILD_LIB_DIR)/gencodechecker
+
+CC_ANALYZER = $(CURRENT_DIR)/analyzer
 
 # Root of the repository.
 ROOT = $(CURRENT_DIR)
@@ -68,7 +71,14 @@ package: clean_package build_dir gen-docs thrift userguide build_plist_to_html b
 	cp -r $(BUILD_DIR)/thrift/v*/gen-js/* $(CC_BUILD_API_DIR)
 
 	# Copy libraries.
-	cp -r $(ROOT)/libcodechecker $(CC_BUILD_LIB_DIR)
+	mkdir -p $(CC_BUILD_LIBCC_DIR) && \
+	cp -r $(ROOT)/libcodechecker/* $(CC_BUILD_LIBCC_DIR) && \
+	cp -r $(CC_ANALYZER)/cmd/* $(CC_BUILD_LIBCC_DIR)/libhandlers && \
+	cp -r $(CC_ANALYZER)/codechecker $(CC_BUILD_LIB_DIR)
+
+	# Copy sub-commands.
+	cp $(ROOT)/bin/* $(CC_BUILD_DIR)/bin && \
+	cp $(CC_ANALYZER)/bin/* $(CC_BUILD_DIR)/bin
 
 	# Copy documentation files.
 	mkdir -p $(CC_BUILD_DOCS_DIR) && \
@@ -80,7 +90,9 @@ package: clean_package build_dir gen-docs thrift userguide build_plist_to_html b
 	cp -r $(ROOT)/config $(CC_BUILD_DIR) && \
 	./scripts/build/extend_version_file.py -r $(ROOT) -b $(BUILD_DIR) && \
 	mkdir -p $(CC_BUILD_DIR)/cc_bin && \
-	./scripts/build/create_commands.py -b $(BUILD_DIR) $(ROOT)/bin
+	./scripts/build/create_commands.py -b $(BUILD_DIR) \
+		$(ROOT)/bin \
+		$(CC_ANALYZER)/bin
 
 	# Copy web client files.
 	mkdir -p $(CC_BUILD_WEB_DIR) && \
@@ -190,3 +202,10 @@ clean_plist_to_html:
 
 clean_tu_collector:
 	rm -rf vendor/tu_collector/build
+
+clean_travis:
+	# Clean CodeChecker config files stored in the users home directory.
+	rm -rf ~/.codechecker*
+
+test_analyzer:
+	$(MAKE) -C $(CC_ANALYZER) test

@@ -17,8 +17,6 @@ import os
 import signal
 import sys
 
-from shared.ttypes import RequestFailed
-
 from libcodechecker import libhandlers
 
 
@@ -97,12 +95,6 @@ output.
     except KeyboardInterrupt as kb_err:
         print(str(kb_err))
         print("Interrupted by user...")
-        sys.exit(1)
-
-    except RequestFailed as thrift_ex:
-        print("Server error.")
-        print("Error code: " + str(thrift_ex.errorCode))
-        print("Error message: " + str(thrift_ex.message))
         sys.exit(1)
 
     # Handle all exception, but print stacktrace. It is needed for atexit.

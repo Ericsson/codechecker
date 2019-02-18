@@ -13,7 +13,6 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
-import nose
 import os
 import subprocess
 import tempfile
@@ -53,6 +52,8 @@ class TUCollectorTest(unittest.TestCase):
         os.remove(zip_file_name)
 
         self.assertTrue(
-            any(map(lambda path: path.endswith('/main.cpp'), files)))
+            any(map(lambda path: path.endswith(os.path.join('/', 'main.cpp')),
+                    files)))
         self.assertTrue(
-            any(map(lambda path: path.endswith('/vector'), files)))
+            any(map(lambda path: path.endswith(os.path.join('/', 'vector')),
+                    files)))
