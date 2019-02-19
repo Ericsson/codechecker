@@ -7,6 +7,12 @@ services:
 matrix:
   include:
     - os: linux
+      name: "Analyzer test cases"
+      sudo: required
+      dist: xenial
+      python: "2.7"
+      env: CC_MODULE=analyzer
+    - os: linux
       sudo: required
       dist: xenial
       python: "2.7"
@@ -21,6 +27,12 @@ matrix:
       dist: xenial
       python: "2.7"
       env: DATABASE=psql_pg8000
+    - os: osx
+      osx_image: xcode9.4
+      name: "Analyzer test cases"
+      sudo: false
+      language: generic
+      env: CC_MODULE=analyzer
     - os: osx
       osx_image: xcode9.4
       sudo: false
@@ -95,5 +107,15 @@ addons:
 script:
     - make clean_travis
     - make package
-    - if [[ ! -z "$DATABASE" ]]; then make test_matrix_${DATABASE}; else make test; fi
+    - >
+      if [[ "$CC_MODULE" = "analyzer" ]]; then
+        make -C analyzer test_unit test_functional test_tu_collector;
+        if [[ "$TRAVIS_OS_NAME" = "linux" ]]; then
+          make -C analyzer test_build_logger
+        fi
+      elif [[ ! -z "$DATABASE" ]]; then
+        make test_matrix_${DATABASE};
+      else
+        make test;
+      fi
     - make clean_travis

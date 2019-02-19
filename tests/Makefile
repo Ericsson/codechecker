@@ -20,7 +20,7 @@ CLEAR_WORKSPACE_CMD = rm -rf $(BUILD_DIR)/workspace
 # Nose test runner configuration options.
 NOSECFG = --config .noserc
 
-test: pycodestyle pylint test_unit test_functional test_build_logger test_tu_collector
+test: pycodestyle pylint test_unit test_functional
 
 test_novenv: pycodestyle pylint test_unit_novenv test_functional_novenv
 
@@ -76,11 +76,11 @@ test_functional: test_sqlite test_psql
 test_functional_novenv: test_sqlite_novenv test_psql_novenv
 
 test_sqlite: venv_dev
-		python tests/check_clang.py || exit 1;
+		python $(ROOT)/scripts/test/check_clang.py || exit 1;
 		$(ACTIVATE_DEV_VENV) && $(CLEAR_WORKSPACE_CMD) && $(FUNCTIONAL_TEST_CMD)
 
 test_sqlite_novenv:
-		python tests/check_clang.py || exit 1;
+		python $(ROOT)/scripts/test/check_clang.py || exit 1;
 		$(CLEAR_WORKSPACE_CMD) && $(FUNCTIONAL_TEST_CMD)
 
 test_psql: test_psql_psycopg2 test_psql_pg8000
@@ -88,7 +88,7 @@ test_psql: test_psql_psycopg2 test_psql_pg8000
 test_psql_novenv: test_psql_psycopg2_novenv test_psql_pg8000_novenv
 
 test_psql_psycopg2: venv_dev
-	python tests/check_clang.py || exit 1;
+	python $(ROOT)/scripts/test/check_clang.py || exit 1;
 	$(ACTIVATE_DEV_VENV) && \
 		$(DBUNAME) $(DBPORT) $(PSYCOPG2) $(DROP_DB_CMD) && \
 		$(DBUNAME) $(DBPORT) $(PSYCOPG2) $(MAKE_DB_CMD) && \
@@ -98,7 +98,7 @@ test_psql_psycopg2: venv_dev
 		$(DBUNAME) $(DBPORT) $(PSYCOPG2) $(DROP_DB_CMD)
 
 test_psql_psycopg2_novenv:
-		python tests/check_clang.py || exit 1;
+		python $(ROOT)/scripts/test/check_clang.py || exit 1;
 		$(DBUNAME) $(DBPORT) $(PSYCOPG2) $(DROP_DB_CMD) && \
 		$(DBUNAME) $(DBPORT) $(PSYCOPG2) $(MAKE_DB_CMD) && \
 				$(CLEAR_WORKSPACE_CMD) && \
@@ -107,7 +107,7 @@ test_psql_psycopg2_novenv:
 		$(DBUNAME) $(DBPORT) $(PSYCOPG2) $(DROP_DB_CMD)
 
 test_psql_pg8000: venv_dev
-	python tests/check_clang.py || exit 1;
+	python $(ROOT)/scripts/test/check_clang.py || exit 1;
 	$(ACTIVATE_DEV_VENV) && \
 		$(DBUNAME) $(DBPORT) $(PG8000) $(DROP_DB_CMD) && \
 		$(DBUNAME) $(DBPORT) $(PG8000) $(MAKE_DB_CMD) && \
@@ -117,7 +117,7 @@ test_psql_pg8000: venv_dev
 		$(DBUNAME) $(DBPORT) $(PG8000) $(DROP_DB_CMD)
 
 test_psql_pg8000_novenv:
-		python tests/check_clang.py || exit 1;
+		python $(ROOT)/scripts/test/check_clang.py || exit 1;
 		$(DBUNAME) $(DBPORT) $(PSYCOPG2) $(DROP_DB_CMD) && \
 		$(DBUNAME) $(DBPORT) $(PG8000) $(MAKE_DB_CMD) && \
 		$(CLEAR_WORKSPACE_CMD) && \
@@ -137,13 +137,3 @@ test_matrix_psql_psycopg2: pycodestyle test_unit test_psql_psycopg2
 
 test_matrix_psql_pg8000: VENV_DEV_REQ_FILE = requirements_py/db_pg8000/requirements.txt
 test_matrix_psql_pg8000: pycodestyle test_unit test_psql_pg8000
-
-clean_travis:
-	# Clean CodeChecker config files stored in the users home directory.
-	rm -rf ~/.codechecker*
-
-test_build_logger:
-	cd vendor/build-logger; make -f Makefile.manual test
-
-test_tu_collector:
-	cd vendor/tu_collector; $(REPO_ROOT) make test
