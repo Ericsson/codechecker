@@ -15,6 +15,9 @@ CC_BUILD_LIB_DIR = $(CC_BUILD_DIR)/lib/python2.7
 CC_BUILD_LIBCC_DIR = $(CC_BUILD_LIB_DIR)/libcodechecker
 CC_BUILD_GEN_DIR = $(CC_BUILD_LIB_DIR)/gencodechecker
 
+CC_WEB_SERVER = $(CURRENT_DIR)/webserver
+CC_SERVER = $(CC_WEB_SERVER)/server/
+CC_CLIENT = $(CC_WEB_SERVER)/client/
 CC_ANALYZER = $(CURRENT_DIR)/analyzer
 
 # Root of the repository.
@@ -23,15 +26,7 @@ ROOT = $(CURRENT_DIR)
 ACTIVATE_RUNTIME_VENV ?= . venv/bin/activate
 ACTIVATE_DEV_VENV ?= . venv_dev/bin/activate
 
-VENV_REQ_FILE ?= requirements_py/requirements.txt
-VENV_DEV_REQ_FILE ?= requirements_py/dev/requirements.txt
-
-OSX_VENV_REQ_FILE ?= requirements_py/osx/requirements.txt
-
 default: package
-
-# Test running related targets.
-include tests/Makefile
 
 gen-docs: build_dir
 	doxygen ./Doxyfile.in && \
@@ -43,10 +38,10 @@ thrift: build_dir
 
 	mkdir $(BUILD_DIR)/thrift
 
-	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C api/
+	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_WEB_SERVER)/api/
 
 userguide: build_dir
-	$(MAKE) -C www/userguide
+	$(MAKE) -C $(CC_SERVER)/www/userguide
 
 package: clean_package build_dir gen-docs thrift userguide build_plist_to_html build_tu_collector build_vendor
 	# Create directory structure.
@@ -72,9 +67,14 @@ package: clean_package build_dir gen-docs thrift userguide build_plist_to_html b
 
 	# Copy libraries.
 	mkdir -p $(CC_BUILD_LIBCC_DIR) && \
+	mkdir -p $(CC_BUILD_LIB_DIR)/codechecker && \
 	cp -r $(ROOT)/libcodechecker/* $(CC_BUILD_LIBCC_DIR) && \
 	cp -r $(CC_ANALYZER)/cmd/* $(CC_BUILD_LIBCC_DIR)/libhandlers && \
-	cp -r $(CC_ANALYZER)/codechecker $(CC_BUILD_LIB_DIR)
+	cp -r $(CC_ANALYZER)/codechecker/* $(CC_BUILD_LIB_DIR)/codechecker && \
+	cp -r $(CC_SERVER)/cmd/* $(CC_BUILD_LIBCC_DIR)/libhandlers && \
+	cp -r $(CC_SERVER)/codechecker/* $(CC_BUILD_LIB_DIR)/codechecker && \
+	cp -r $(CC_CLIENT)/cmd/* $(CC_BUILD_LIBCC_DIR)/libhandlers && \
+	cp -r $(CC_CLIENT)/codechecker/* $(CC_BUILD_LIB_DIR)/codechecker
 
 	# Copy sub-commands.
 	cp $(ROOT)/bin/* $(CC_BUILD_DIR)/bin && \
@@ -92,11 +92,13 @@ package: clean_package build_dir gen-docs thrift userguide build_plist_to_html b
 	mkdir -p $(CC_BUILD_DIR)/cc_bin && \
 	./scripts/build/create_commands.py -b $(BUILD_DIR) \
 		$(ROOT)/bin \
+		$(CC_SERVER)/bin \
+		$(CC_CLIENT)/bin \
 		$(CC_ANALYZER)/bin
 
 	# Copy web client files.
 	mkdir -p $(CC_BUILD_WEB_DIR) && \
-	cp -r $(ROOT)/www/* $(CC_BUILD_WEB_DIR) && \
+	cp -r $(CC_SERVER)/www/* $(CC_BUILD_WEB_DIR) && \
 	mv $(CC_BUILD_WEB_DIR)/userguide/images/* $(CC_BUILD_WEB_DIR)/images && \
 	rm -rf $(CC_BUILD_WEB_DIR)/userguide/images
 
@@ -104,8 +106,7 @@ package: clean_package build_dir gen-docs thrift userguide build_plist_to_html b
 	mv $(CC_BUILD_WEB_DIR)/userguide/gen-docs $(CC_BUILD_WEB_DIR)/userguide/doc
 
 	# Copy database migration files.
-	cp -r $(ROOT)/config_db_migrate $(CC_BUILD_LIB_DIR)/config_migrate && \
-	cp -r $(ROOT)/db_migrate $(CC_BUILD_LIB_DIR)/run_migrate
+	cp -r $(CC_SERVER)/migrations $(CC_BUILD_LIB_DIR)
 
 	# Copy license file.
 	cp $(ROOT)/LICENSE.TXT $(CC_BUILD_DIR)
@@ -151,7 +152,7 @@ else
 endif
 
 build_vendor:
-	$(MAKE) -C $(VENDOR_DIR) build BUILD_DIR=$(CC_BUILD_WEB_PLUGINS_DIR)
+	$(MAKE) -C $(CC_SERVER)/vendor build BUILD_DIR=$(CC_BUILD_WEB_PLUGINS_DIR)
 
 build_dir:
 	mkdir -p $(BUILD_DIR)
@@ -165,12 +166,16 @@ build_tu_collector:
 venv:
 	# Create a virtual environment which can be used to run the build package.
 	virtualenv -p python2 venv && \
-		$(ACTIVATE_RUNTIME_VENV) && pip install -r $(VENV_REQ_FILE)
+		$(ACTIVATE_RUNTIME_VENV) && \
+		pip install -r $(CC_ANALYZER)/requirements.txt && \
+		pip install -r $(CC_WEB_SERVER)/requirements.txt
 
 venv_osx:
 	# Create a virtual environment which can be used to run the build package.
 	virtualenv -p python2 venv && \
-		$(ACTIVATE_RUNTIME_VENV) && pip install -r $(OSX_VENV_REQ_FILE)
+		$(ACTIVATE_RUNTIME_VENV) && \
+		pip install -r $(CC_ANALYZER)/requirements_py/osx/requirements.txt && \
+		pip install -r $(CC_WEB_SERVER)/requirements_py/osx/requirements.txt
 
 clean_venv:
 	rm -rf venv
@@ -178,8 +183,11 @@ clean_venv:
 venv_dev:
 	# Create a virtual environment for development.
 	virtualenv -p python2 venv_dev && \
-		$(ACTIVATE_DEV_VENV) && pip install -r $(VENV_DEV_REQ_FILE) && \
-		pip install -r requirements_py/test/requirements.txt
+		$(ACTIVATE_DEV_VENV) && \
+		pip install -r $(CC_ANALYZER)/requirements_py/dev/requirements.txt && \
+		pip install -r $(CC_ANALYZER)/requirements_py/test/requirements.txt && \
+		pip install -r $(CC_WEB_SERVER)/requirements_py/dev/requirements.txt && \
+		pip install -r $(CC_WEB_SERVER)/requirements_py/test/requirements.txt
 
 clean_venv_dev:
 	rm -rf venv_dev
@@ -193,6 +201,7 @@ clean_package: clean_userguide clean_plist_to_html clean_tu_collector
 
 clean_vendor:
 	$(MAKE) -C $(VENDOR_DIR) clean_vendor
+	$(MAKE) -C $(CC_SERVER)/vendor clean_vendor
 
 clean_userguide:
 	rm -rf www/userguide/gen-docs
@@ -209,3 +218,6 @@ clean_travis:
 
 test_analyzer:
 	$(MAKE) -C $(CC_ANALYZER) test
+
+test_server:
+	$(MAKE) -C $(CC_WEB_SERVER) test
