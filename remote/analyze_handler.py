@@ -36,7 +36,7 @@ class AnalyzeStatus(Enum):
     POSTANALYZE_FAILED = 'POSTANALYZE_FAILED'
 
 
-def preAnalyze(analyze_id, part_number):
+def preAnalyze(analyze_id, part_number, workspace):
     """
     This method extract sources and return some necessary parameter.
     """
@@ -46,7 +46,7 @@ def preAnalyze(analyze_id, part_number):
     file_name = 'source'
     file_extension = '.zip'
 
-    file_path = os.path.join(WORKSPACE, analyze_id)
+    file_path = os.path.join(workspace, analyze_id)
 
     source_file_without_extension = file_name + '_' + str(part_number)
     source_file_with_extension = source_file_without_extension + file_extension
@@ -140,7 +140,7 @@ def analyze(analyze_id, analyze_dir_path, build_command, read_in_file_path):
             text_file.write(str(returncode))
 
 
-def postAnalyze(analyze_id, part_number):
+def postAnalyze(analyze_id, part_number, workspace):
     """
     This method collect outputs and compress those to a single zip file.
     """
@@ -150,7 +150,7 @@ def postAnalyze(analyze_id, part_number):
     file_name = 'source'
     file_extension = '.zip'
 
-    file_path = os.path.join(WORKSPACE, analyze_id)
+    file_path = os.path.join(workspace, analyze_id)
 
     source_file_without_extension = file_name + '_' + str(part_number)
 
@@ -183,8 +183,6 @@ def main():
 
     args = parser.parse_args()
 
-    WORKSPACE = args.workspace
-
     scheduler = sched.scheduler(time.time, time.sleep)
 
     def check_queue():
@@ -200,7 +198,7 @@ def main():
             analyze_id, part_number = str(task).split('-')
             try:
                 analyze_dir_path, build_command, file_to_analyze_path = preAnalyze(
-                    analyze_id, part_number)
+                    analyze_id, part_number, args.workspace)
             except Exception:
                 REDIS_DATABASE.hset(analyze_id, 'state',
                                     AnalyzeStatus.PREANALYZE_FAILED.name)
@@ -215,7 +213,7 @@ def main():
                 LOGGER.error("Failed to read in file path.")
 
             try:
-                postAnalyze(analyze_id, part_number)
+                postAnalyze(analyze_id, part_number, args.workspace)
             except Exception:
                 REDIS_DATABASE.hset(analyze_id, 'state',
                                     AnalyzeStatus.PREANALYZE_FAILED.name)

@@ -35,3 +35,5 @@ RUN pip install wheel
 RUN pip install -r requirements_py/requirements.txt
 
 RUN make package
+
+CMD ["python2", "remote/analyze_handler.py"]
