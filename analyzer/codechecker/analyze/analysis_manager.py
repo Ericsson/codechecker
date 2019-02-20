@@ -84,7 +84,7 @@ def worker_result_handler(results, metadata, output_path, analyzer_binaries):
                 statistics[analyzer_type]['successful'] += 1
             else:
                 statistics[analyzer_type]['failed'] += 1
-                statistics[analyzer_type]['failed_sources'].extend(sources)
+                statistics[analyzer_type]['failed_sources'].append(sources)
 
     LOG.info("----==== Summary ====----")
     print_analyzer_statistic_summary(statistics,
