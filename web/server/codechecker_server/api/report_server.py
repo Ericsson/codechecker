@@ -2545,43 +2545,46 @@ class ThriftRequestHandler(object):
         session.delete(run_lock)
         session.commit()
 
-    def __check_run_limit(self, run_name):
+    def __check_run_limit(self, run_name, product_run_limit):
         """
         Checks the maximum allowed of uploadable runs for the current product.
         """
         max_run_count = self.__manager.get_max_run_count()
 
-        with DBSession(self.__config_database) as session:
-            product = session.query(Product).get(self.__product.id)
-            if product.run_limit:
-                max_run_count = product.run_limit
+        # If max_run_count field is not present in the config file, disable
+        # the limitation of run storage fully.
+        if not max_run_count:
+            return
+
+        # If run limitation is set by the product, use this.
+        if product_run_limit:
+            max_run_count = product_run_limit
 
         # Session that handles constraints on the run.
         with DBSession(self.__Session) as session:
-            if max_run_count:
-                LOG.debug("Check the maximum number of allowed "
-                          "runs which is %d", max_run_count)
+            LOG.debug("Check the maximum number of allowed "
+                      "runs which is %d", max_run_count)
 
-                run = session.query(Run) \
-                    .filter(Run.name == run_name) \
-                    .one_or_none()
+            run = session.query(Run) \
+                .filter(Run.name == run_name) \
+                .one_or_none()
 
-                # If max_run_count is not set in the config file, it will allow
-                # the user to upload unlimited runs.
+            # If max_run_count is not set in the config file, it will allow
+            # the user to upload unlimited runs.
 
-                run_count = session.query(Run.id).count()
+            run_count = session.query(Run.id).count()
 
-                # If we are not updating a run or the run count is reached the
-                # limit it will throw an exception.
-                if not run and run_count >= max_run_count:
-                    remove_run_count = run_count - max_run_count + 1
-                    raise codechecker_api_shared.ttypes.RequestFailed(
-                        codechecker_api_shared.ttypes.ErrorCode.GENERAL,
-                        'You reached the maximum number of allowed runs '
-                        '({0}/{1})! Please remove at least {2} run(s) before '
-                        'you try it again.'.format(run_count,
-                                                   max_run_count,
-                                                   remove_run_count))
+            # If we are not updating a run or the run count is reached the
+            # limit it will throw an exception.
+            if not run and run_count >= max_run_count:
+                remove_run_count = run_count - max_run_count + 1
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.GENERAL,
+                    'You reached the maximum number of allowed runs '
+                    '({0}/{1})! Please remove at least {2} run(s) before '
+                    'you try it again.'.format(run_count,
+                                               max_run_count,
+                                               remove_run_count))
 
     @exc_to_thrift_reqfail
     @timeit
@@ -2591,8 +2594,11 @@ class ThriftRequestHandler(object):
 
         user = self.__auth_session.user if self.__auth_session else None
 
+        with DBSession(self.__config_database) as session:
+            product = session.query(Product).get(self.__product.id)
+
         # Check constraints of the run.
-        self.__check_run_limit(name)
+        self.__check_run_limit(name, product.run_limit)
 
         with DBSession(self.__Session) as session:
             ThriftRequestHandler.__store_run_lock(session, name, user)
