@@ -10,7 +10,7 @@ DBUNAME ?= TEST_DBUSERNAME=postgres
 
 # Test project configuration, tests are run on these files.
 CLANG_VERSION ?= TEST_CLANG_VERSION=stable
-TEST_PROJECT ?= TEST_PROJ=$(ROOT)/tests/projects
+TEST_PROJECT ?= TEST_PROJ=$(CURRENT_DIR)/tests/projects
 
 REPO_ROOT ?= REPO_ROOT=$(ROOT)
 WORKSPACE = $(BUILD_DIR)/workspace
