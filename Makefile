@@ -200,7 +200,6 @@ clean_package: clean_userguide clean_plist_to_html clean_tu_collector
 	find . -name "*.pyc" -delete
 
 clean_vendor:
-	$(MAKE) -C $(VENDOR_DIR) clean_vendor
 	$(MAKE) -C $(CC_SERVER)/vendor clean_vendor
 
 clean_userguide:
