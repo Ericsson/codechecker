@@ -215,6 +215,18 @@ clean_travis:
 	# Clean CodeChecker config files stored in the users home directory.
 	rm -rf ~/.codechecker*
 
+pylint: venv_dev
+	$(MAKE) -C $(CC_ANALYZER) pylint && \
+	$(MAKE) -C $(CC_WEB_SERVER) pylint && \
+	pylint bin libcodechecker scripts \
+	  --disable=all \
+	  --enable=logging-format-interpolation,old-style-class
+
+pycodestyle: venv_dev
+	$(MAKE) -C $(CC_ANALYZER) pycodestyle && \
+	$(MAKE) -C $(CC_WEB_SERVER) pycodestyle && \
+	pycodestyle bin libcodechecker scripts
+
 test: test_analyzer test_server
 
 test_analyzer:

@@ -24,13 +24,20 @@ test: pycodestyle pylint test_unit test_functional
 
 test_novenv: pycodestyle pylint test_unit_novenv test_functional_novenv
 
+PYCODESTYLE_TEST_CMD = pycodestyle client/bin server/bin client/codechecker \
+  server/codechecker tests
+
 pycodestyle: venv_dev
-	$(ACTIVATE_DEV_VENV) && \
-	pycodestyle client/bin server/bin client/codechecker server/codechecker tests
+	$(ACTIVATE_DEV_VENV) && $(PYCODESTYLE_TEST_CMD)
+
+PYLINT_TEST_CMD = pylint client/bin server/bin client/codechecker \
+  server/codechecker tests \
+	--rcfile=$(ROOT)/.pylintrc
+  --disable=all \
+  --enable=logging-format-interpolation,old-style-class
 
 pylint: venv_dev
-	$(ACTIVATE_DEV_VENV) && \
-	pylint client/bin server/bin client/codechecker server/codechecker tests --disable=all --enable=logging-format-interpolation,old-style-class
+	$(ACTIVATE_DEV_VENV) && $(PYLINT_TEST_CMD)
 
 UNIT_TEST_CMD = $(REPO_ROOT) nosetests $(NOSECFG) tests/unit
 
