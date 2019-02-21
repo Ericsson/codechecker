@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python2
 """
 Copy CodeChecker entry point sub-commands.
 """
@@ -39,7 +39,7 @@ def copy_entry_points(input_dirs, build_dir):
                     available_commands.append(command_name)
 
                     skip_content = "# DO_NOT_INSTALL_TO_PATH"
-                    with open(input_file, 'r', encoding='utf-8') as file:
+                    with open(input_file, 'r') as file:
                         if file.readline().strip() == skip_content:
                             LOG.info("Registering sub-command '%s'",
                                      command_name)
@@ -60,7 +60,7 @@ def copy_entry_points(input_dirs, build_dir):
     available_commands.sort()
 
     commands_json = os.path.join(target_cc, 'commands.json')
-    with open(commands_json, 'w', encoding='utf-8') as commands:
+    with open(commands_json, 'w') as commands:
         json.dump(available_commands, commands, sort_keys=True)
 
 
