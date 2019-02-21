@@ -1,7 +1,7 @@
 # Environment variables to run tests.
 
 # Test project configuration, tests are run on these files.
-TEST_PROJECT ?= TEST_PROJ=$(ROOT)/tests/projects
+TEST_PROJECT ?= TEST_PROJ=$(CURRENT_DIR)/tests/projects
 
 REPO_ROOT ?= REPO_ROOT=$(ROOT)
 
