@@ -13,16 +13,19 @@ matrix:
       python: "2.7"
       env: CC_MODULE=analyzer
     - os: linux
+      name: "Server/client test cases (sqlite)"
       sudo: required
       dist: xenial
       python: "2.7"
       env: DATABASE=sqlite
     - os: linux
+      name: "Server/client test cases (psycopg2)"
       sudo: required
       dist: xenial
       python: "2.7"
       env: DATABASE=psql_psycopg2
     - os: linux
+      name: "Server/client test cases (pg8000)"
       sudo: required
       dist: xenial
       python: "2.7"
@@ -35,11 +38,13 @@ matrix:
       env: CC_MODULE=analyzer
     - os: osx
       osx_image: xcode9.4
+      name: "Server/client test cases (sqlite)"
       sudo: false
       language: generic
       env: DATABASE=sqlite
     - os: osx
       osx_image: xcode9.4
+      name: "Server/client test cases (psycopg2)"
       sudo: false
       language: generic
       env:
@@ -47,6 +52,7 @@ matrix:
         - POSTGRESQL_VERSION=9.6
     - os: osx
       osx_image: xcode9.4
+      name: "Server/client test cases (pg8000)"
       sudo: false
       language: generic
       env:
@@ -114,7 +120,7 @@ script:
           make -C analyzer test_build_logger
         fi
       elif [[ ! -z "$DATABASE" ]]; then
-        make test_matrix_${DATABASE};
+        make -C webserver test_matrix_${DATABASE};
       else
         make test;
       fi

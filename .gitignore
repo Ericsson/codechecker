@@ -12,13 +12,17 @@ vendor/*
 !vendor/build-logger
 !vendor/plist_to_html
 !vendor/Makefile
+!vendor/Makefile
+webserver/server/vendor/*
+!webserver/server/vendor/Makefile
+
 
 # build-logger build dir
 vendor/build-logger/build/
 
 # doxygen generated files
 gen-docs/
-www/userguide/gen-docs/
+webserver/server/www/userguide/gen-docs/
 
 # thrift generated files
 thrift_api/gen-js/
