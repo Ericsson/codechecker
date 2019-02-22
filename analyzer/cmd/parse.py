@@ -18,7 +18,7 @@ import sys
 
 from plist_to_html import PlistToHtml
 
-from libcodechecker import package_context
+from codechecker import analyzer_context
 from libcodechecker import suppress_handler
 from libcodechecker import logger
 from libcodechecker import util
@@ -223,7 +223,7 @@ def main(args):
 
     logger.setup_logger(args.verbose if 'verbose' in args else None)
 
-    context = package_context.get_context()
+    context = analyzer_context.get_context()
 
     # To ensure the help message prints the default folder properly,
     # the 'default' for 'args.input' is a string, not a list.

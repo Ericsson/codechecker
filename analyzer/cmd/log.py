@@ -20,7 +20,7 @@ import os
 from codechecker.buildlog import build_manager
 from codechecker.buildlog.host_check import check_intercept
 
-from libcodechecker import package_context
+from codechecker import analyzer_context
 from libcodechecker import logger
 
 
@@ -103,7 +103,7 @@ def main(args):
     if os.path.exists(args.logfile):
         os.remove(args.logfile)
 
-    context = package_context.get_context()
+    context = analyzer_context.get_context()
     build_manager.perform_build_command(args.logfile,
                                         args.command,
                                         context,

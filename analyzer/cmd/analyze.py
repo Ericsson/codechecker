@@ -19,9 +19,9 @@ import sys
 from codechecker.analyze import analyzer
 from codechecker.analyze.analyzers import analyzer_types
 from codechecker.buildlog import log_parser
+from codechecker import analyzer_context
 
 from libcodechecker import logger
-from libcodechecker import package_context
 from libcodechecker import skiplist_handler
 from libcodechecker.util import RawDescriptionDefaultHelpFormatter, \
     load_json_or_empty
@@ -249,7 +249,7 @@ def add_arguments_to_parser(parser):
                                     "the analysis is considered as a failed "
                                     "one.")
 
-    context = package_context.get_context()
+    context = analyzer_context.get_context()
     if analyzer_types.is_ctu_capable(context):
         ctu_opts = parser.add_argument_group(
             "cross translation unit analysis arguments",
@@ -530,7 +530,7 @@ def main(args):
                  "valid compilation commands. No analysis needed...")
         sys.exit(1)
 
-    context = package_context.get_context()
+    context = analyzer_context.get_context()
     metadata = {'action_num': len(actions),
                 'command': sys.argv,
                 'versions': {

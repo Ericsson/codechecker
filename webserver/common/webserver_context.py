@@ -17,7 +17,6 @@ import sys
 
 from libcodechecker import db_version
 from libcodechecker import logger
-# TODO: Refers subpackage library
 from libcodechecker.util import load_json_or_empty
 
 LOG = logger.get_logger('system')
@@ -52,13 +51,8 @@ class Context(object):
     """ Generic package specific context. """
 
     def __init__(self, package_root, pckg_layout, cfg_dict):
-        env_vars = cfg_dict['environment_variables']
-        self.__checker_config = cfg_dict['checker_config']
-        self.__available_profiles = cfg_dict['available_profiles']
-
         # Get the common environment variables.
         self.pckg_layout = pckg_layout
-        self.env_vars = env_vars
 
         self._package_root = package_root
         self._severity_map = SeverityMap(
@@ -68,28 +62,8 @@ class Context(object):
         self.__run_db_version_info = None
         self.__package_build_date = None
         self.__package_git_hash = None
-        self.__analyzers = {}
-
-        self.logger_bin = None
-        self.logger_file = None
-        self.logger_compilers = None
-
-        # Get package specific environment variables.
-        self.set_env(env_vars)
 
         self.__set_version()
-        self.__populate_analyzers()
-
-    def set_env(self, env_vars):
-        """
-        Get the environment variables.
-        """
-        # Get generic package specific environment variables.
-        self.logger_bin = os.environ.get(env_vars['cc_logger_bin'])
-        self.logger_file = os.environ.get(env_vars['cc_logger_file'])
-        self.logger_compilers = os.environ.get(env_vars['cc_logger_compiles'])
-        self.ld_preload = os.environ.get(env_vars['ld_preload'])
-        self.ld_lib_path = env_vars['env_ld_lib_path']
 
     def __set_version(self):
         """
@@ -127,24 +101,6 @@ class Context(object):
                 logger.DEBUG_ANALYZER):
             self.__package_git_tag = package_git_dirtytag
 
-    def __populate_analyzers(self):
-        compiler_binaries = self.pckg_layout.get('analyzers')
-        for name, value in compiler_binaries.items():
-            if os.path.dirname(value):
-                # Check if it is a package relative path.
-                self.__analyzers[name] = os.path.join(self._package_root,
-                                                      value)
-            else:
-                self.__analyzers[name] = value
-
-    @property
-    def checker_config(self):
-        return self.__checker_config
-
-    @property
-    def available_profiles(self):
-        return self.__available_profiles
-
     @property
     def version(self):
         return self.__package_version
@@ -175,56 +131,9 @@ class Context(object):
                             self.pckg_layout['version_file'])
 
     @property
-    def env_var_cc_logger_bin(self):
-        return self.env_vars['cc_logger_bin']
-
-    @property
-    def env_var_ld_preload(self):
-        return self.env_vars['ld_preload']
-
-    @property
-    def env_var_cc_logger_compiles(self):
-        return self.env_vars['cc_logger_compiles']
-
-    @property
-    def env_var_cc_logger_file(self):
-        return self.env_vars['cc_logger_file']
-
-    @property
-    def path_logger_bin(self):
-        return os.path.join(self.package_root,
-                            self.pckg_layout['ld_logger_bin'])
-
-    @property
-    def path_logger_lib(self):
-        return os.path.join(self.package_root,
-                            self.pckg_layout['ld_logger_lib_path'])
-
-    @property
-    def logger_lib_name(self):
-        return self.pckg_layout['ld_logger_lib_name']
-
-    @property
-    def path_plist_to_html_bin(self):
-        return os.path.join(self.package_root,
-                            self.pckg_layout['plist_to_html_bin'])
-
-    @property
     def path_plist_to_html_dist(self):
         return os.path.join(self.package_root,
                             self.pckg_layout['plist_to_html_dist_path'])
-
-    @property
-    def path_standard_detector(self):
-        return os.path.join(self.package_root,
-                            self.pckg_layout['standard_detector_path'])
-
-    @property
-    def compiler_resource_dir(self):
-        resource_dir = self.pckg_layout.get('compiler_resource_dir')
-        if not resource_dir:
-            return ""
-        return os.path.join(self._package_root, resource_dir)
 
     @property
     def path_env_extra(self):
@@ -243,34 +152,8 @@ class Context(object):
         return ld_paths
 
     @property
-    def analyzer_binaries(self):
-        return self.__analyzers
-
-    @property
-    def ctu_func_map_cmd(self):
-        ctu_func_mapping = self.pckg_layout['ctu_func_map_cmd']
-
-        if os.path.dirname(ctu_func_mapping):
-            # If it is a relative path, it is by definition relative to
-            # the package_root, just like how analyzers are set up.
-            ctu_func_mapping = os.path.join(self._package_root,
-                                            ctu_func_mapping)
-
-        return ctu_func_mapping
-
-    @property
     def package_root(self):
         return self._package_root
-
-    @property
-    def checker_plugin(self):
-        return os.path.join(self._package_root,
-                            self.pckg_layout['plugin'])
-
-    @property
-    def gdb_config_file(self):
-        return os.path.join(self._package_root,
-                            self.pckg_layout['gdb_config_file'])
 
     @property
     def checkers_severity_map_file(self):

@@ -11,10 +11,12 @@ from __future__ import division
 from __future__ import absolute_import
 
 import argparse
+import json
+
+from codechecker import analyzer_context
 
 from libcodechecker import logger
 from libcodechecker import output_formatters
-from libcodechecker.libhandlers import analyzer_version, webserver_version
 
 
 def get_argparser_ctor_args():
@@ -24,16 +26,17 @@ def get_argparser_ctor_args():
     """
 
     return {
-        'prog': 'CodeChecker version',
+        'prog': 'CodeChecker analyzer version',
         'formatter_class': argparse.ArgumentDefaultsHelpFormatter,
 
         # Description is shown when the command's help is queried directly
-        'description': "Print the version of CodeChecker package that is "
-                       "being used.",
+        'description': "Print the version of CodeChecker analyzer package "
+                       "that is being used.",
 
         # Help is shown when the "parent" CodeChecker command lists the
         # individual subcommands.
-        'help': "Print the version of CodeChecker package that is being used."
+        'help': "Print the version of CodeChecker analyzer package that is "
+                "being used."
     }
 
 
@@ -53,6 +56,31 @@ def add_arguments_to_parser(parser):
     parser.set_defaults(func=main)
 
 
+def print_version(output_format=None):
+    """
+    Print analyzer version information in the given format.
+    """
+    context = analyzer_context.get_context()
+
+    rows = [
+        ("Base package version", context.version),
+        ("Package build date", context.package_build_date),
+        ("Git commit ID (hash)", context.package_git_hash),
+        ("Git tag information", context.package_git_tag)
+    ]
+
+    if output_format != "json":
+        print(output_formatters.twodim_to_str(output_format,
+                                              ["Kind", "Version"],
+                                              rows))
+    elif output_format == "json":
+        # Use a special JSON format here, instead of
+        # [ {"kind": "something", "version": "0.0.0"}, {"kind": "foo", ... } ]
+        # do
+        # { "something": "0.0.0", "foo": ... }
+        print(json.dumps(dict(rows)))
+
+
 def main(args):
     """
     Get and print the version information from the version config
@@ -60,14 +88,4 @@ def main(args):
     """
     logger.setup_logger(args.verbose if 'verbose' in args else None)
 
-    output_format = args.output_format
-
-    # Print analyzer version information.
-    print("CodeChecker analyzer version:")
-    analyzer_version.print_version(output_format)
-
-    print("\n")
-
-    # Print web server version information.
-    print("CodeChecker web server version:")
-    webserver_version.print_version(output_format)
+    print_version(args.output_format)

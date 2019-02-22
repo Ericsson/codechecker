@@ -11,10 +11,13 @@ from __future__ import division
 from __future__ import absolute_import
 
 import argparse
+import json
+
+from codechecker import webserver_context
 
 from libcodechecker import logger
 from libcodechecker import output_formatters
-from libcodechecker.libhandlers import analyzer_version, webserver_version
+from libcodechecker import version
 
 
 def get_argparser_ctor_args():
@@ -24,16 +27,17 @@ def get_argparser_ctor_args():
     """
 
     return {
-        'prog': 'CodeChecker version',
+        'prog': 'CodeChecker webserver version',
         'formatter_class': argparse.ArgumentDefaultsHelpFormatter,
 
         # Description is shown when the command's help is queried directly
-        'description': "Print the version of CodeChecker package that is "
-                       "being used.",
+        'description': "Print the version of CodeChecker server package that "
+                       "is being used.",
 
         # Help is shown when the "parent" CodeChecker command lists the
         # individual subcommands.
-        'help': "Print the version of CodeChecker package that is being used."
+        'help': "Print the version of CodeChecker server package that is "
+                "being used."
     }
 
 
@@ -53,6 +57,41 @@ def add_arguments_to_parser(parser):
     parser.set_defaults(func=main)
 
 
+def print_version(output_format=None):
+    """
+    Print web server version information in the given format.
+    """
+    context = webserver_context.get_context()
+
+    server_versions = ['{0}.{1}'.format(major, minor) for
+                       major, minor in version.SUPPORTED_VERSIONS.items()]
+
+    if output_format != 'json':
+        server_versions = ', '.join(server_versions)
+
+    rows = [
+        ("Base package version", context.version),
+        ("Package build date", context.package_build_date),
+        ("Git commit ID (hash)", context.package_git_hash),
+        ("Git tag information", context.package_git_tag),
+        ("Configuration schema", str(context.product_db_version_info)),
+        ("Database schema", str(context.run_db_version_info)),
+        ("Server supported API (Thrift)", server_versions),
+        ("Client API (Thrift)", version.CLIENT_API)
+    ]
+
+    if output_format != "json":
+        print(output_formatters.twodim_to_str(output_format,
+                                              ["Kind", "Version"],
+                                              rows))
+    elif output_format == "json":
+        # Use a special JSON format here, instead of
+        # [ {"kind": "something", "version": "0.0.0"}, {"kind": "foo", ... } ]
+        # do
+        # { "something": "0.0.0", "foo": ... }
+        print(json.dumps(dict(rows)))
+
+
 def main(args):
     """
     Get and print the version information from the version config
@@ -60,14 +99,4 @@ def main(args):
     """
     logger.setup_logger(args.verbose if 'verbose' in args else None)
 
-    output_format = args.output_format
-
-    # Print analyzer version information.
-    print("CodeChecker analyzer version:")
-    analyzer_version.print_version(output_format)
-
-    print("\n")
-
-    # Print web server version information.
-    print("CodeChecker web server version:")
-    webserver_version.print_version(output_format)
+    print_version(args.output_format)
