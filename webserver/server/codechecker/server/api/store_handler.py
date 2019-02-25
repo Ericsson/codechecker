@@ -342,18 +342,20 @@ def addCheckerRun(session, command, name, tag, username,
 
         # Create entry for analyzer statistics.
         for analyzer_type, res in statistics.items():
-            version = res.get('version')
+            analyzer_version = res.get('version', None)
             successful = res.get('successful')
             failed = res.get('failed')
             failed_sources = res.get('failed_sources')
 
-            analyzer_version = None
-            if version:
+            if analyzer_version:
                 analyzer_version = zlib.compress(version,
                                                  zlib.Z_BEST_COMPRESSION)
 
             compressed_files = None
             if failed_sources:
+                if version == '6.9.0':
+                    failed_sources = ['Unavailable in CodeChecker 6.9.0!']
+
                 compressed_files = zlib.compress('\n'.join(failed_sources),
                                                  zlib.Z_BEST_COMPRESSION)
 
