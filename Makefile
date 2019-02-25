@@ -231,10 +231,10 @@ test_unit_novenv:
 	$(MAKE) -C $(CC_ANALYZER) test_unit_novenv
 	$(MAKE) -C $(CC_WEB_SERVER) test_unit_novenv
 
-test_functional:
+test_functional: package
 	$(MAKE) -C $(CC_ANALYZER) test_functional
 	$(MAKE) -C $(CC_WEB_SERVER) test_functional
 
-test_functional_novenv:
+test_functional_novenv: package
 	$(MAKE) -C $(CC_ANALYZER) test_functional_novenv
 	$(MAKE) -C $(CC_WEB_SERVER) test_functional_novenv
