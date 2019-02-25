@@ -215,8 +215,26 @@ clean_travis:
 	# Clean CodeChecker config files stored in the users home directory.
 	rm -rf ~/.codechecker*
 
+test: test_analyzer test_server
+
 test_analyzer:
 	$(MAKE) -C $(CC_ANALYZER) test
 
 test_server:
 	$(MAKE) -C $(CC_WEB_SERVER) test
+
+test_unit:
+	$(MAKE) -C $(CC_ANALYZER) test_unit
+	$(MAKE) -C $(CC_WEB_SERVER) test_unit
+
+test_unit_novenv:
+	$(MAKE) -C $(CC_ANALYZER) test_unit_novenv
+	$(MAKE) -C $(CC_WEB_SERVER) test_unit_novenv
+
+test_functional:
+	$(MAKE) -C $(CC_ANALYZER) test_functional
+	$(MAKE) -C $(CC_WEB_SERVER) test_functional
+
+test_functional_novenv:
+	$(MAKE) -C $(CC_ANALYZER) test_functional_novenv
+	$(MAKE) -C $(CC_WEB_SERVER) test_functional_novenv
