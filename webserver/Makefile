@@ -12,6 +12,7 @@ VENV_DEV_REQ_FILE ?= requirements_py/dev/requirements.txt
 VENV_TEST_REQ_FILE ?= requirements_py/test/requirements.txt
 
 include tests/Makefile
+include server/tests/Makefile
 
 thrift: build_dir
 	if [ -d "$(BUILD_DIR)/thrift" ]; then rm -rf $(BUILD_DIR)/thrift; fi

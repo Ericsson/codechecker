@@ -32,8 +32,6 @@ pylint: venv_dev
 	$(ACTIVATE_DEV_VENV) && \
 	pylint client/bin server/bin client/codechecker server/codechecker tests --disable=all --enable=logging-format-interpolation,old-style-class
 
-UNIT_TEST_CMD = $(REPO_ROOT) nosetests $(NOSECFG) tests/unit
-
 CODECHECKER_CMD = $(BUILD_DIR)/CodeChecker/bin/CodeChecker
 SHUTDOWN_SERVER_CMD = echo "Shutting down server..."; \
     HOME="$(WORKSPACE)" ${CODECHECKER_CMD} server -l; \
@@ -65,11 +63,9 @@ run_test: venv_dev
 		nosetests $(NOSECFG) $(ROOT)/server/${TEST} \
 		&& { ${SHUTDOWN_SERVER_CMD}; } || ${EXIT_ERROR}
 
-test_unit: venv_dev thrift
-	$(ACTIVATE_DEV_VENV) && $(UNIT_TEST_CMD)
+test_unit: test_unit_server
 
-test_unit_novenv: thrift
-	$(UNIT_TEST_CMD)
+test_unit_novenv: test_unit_novenv_server
 
 test_functional: test_sqlite test_psql
 
