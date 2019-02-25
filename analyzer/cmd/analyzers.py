@@ -15,9 +15,9 @@ import argparse
 import subprocess
 
 from codechecker.analyze.analyzers import analyzer_types
+from codechecker import analyzer_context
 
 from libcodechecker import logger
-from libcodechecker import package_context
 from libcodechecker import output_formatters
 
 LOG = logger.get_logger('system')
@@ -48,7 +48,7 @@ def add_arguments_to_parser(parser):
     Add the subcommand's arguments to the given argparse.ArgumentParser.
     """
 
-    context = package_context.get_context()
+    context = analyzer_context.get_context()
     working, _ = analyzer_types.check_supported_analyzers(
         analyzer_types.supported_analyzers,
         context)
@@ -101,7 +101,7 @@ def main(args):
     """
     logger.setup_logger(args.verbose if 'verbose' in args else None)
 
-    context = package_context.get_context()
+    context = analyzer_context.get_context()
     working, errored = \
         analyzer_types.check_supported_analyzers(
             analyzer_types.supported_analyzers,

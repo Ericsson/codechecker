@@ -25,9 +25,9 @@ from codeCheckerDBAccess_v6.ttypes import StoreLimitKind
 from shared.ttypes import Permission, RequestFailed, ErrorCode
 
 from codechecker.client import client as libclient
+from codechecker import webserver_context
 
 from libcodechecker import logger
-from libcodechecker import package_context
 from libcodechecker import host_check
 from libcodechecker import util
 from libcodechecker import plist_parser
@@ -489,7 +489,7 @@ def main(args):
         with open(zip_file, 'rb') as zf:
             b64zip = base64.b64encode(zf.read())
 
-        context = package_context.get_context()
+        context = webserver_context.get_context()
 
         trim_path_prefixes = args.trim_path_prefix if \
             'trim_path_prefix' in args else None

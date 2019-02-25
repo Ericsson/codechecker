@@ -34,7 +34,7 @@ from codechecker.server.database.config_db_model \
 from codechecker.server.database.run_db_model \
     import IDENTIFIER as RUN_META
 
-from libcodechecker import package_context
+from codechecker import webserver_context
 from libcodechecker import suppress_handler
 from libcodechecker import host_check
 from libcodechecker import logger
@@ -731,7 +731,7 @@ def server_init_start(args):
         LOG.info("'--force-authentication' was passed as a command-line "
                  "option. The server will ask for users to authenticate!")
 
-    context = package_context.get_context()
+    context = webserver_context.get_context()
     context.codechecker_workspace = args.config_directory
     context.db_username = args.dbusername
 

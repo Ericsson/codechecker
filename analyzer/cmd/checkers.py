@@ -15,7 +15,7 @@ import os
 
 from codechecker.analyze.analyzers import analyzer_types
 
-from libcodechecker import package_context
+from codechecker import analyzer_context
 from libcodechecker import logger
 from libcodechecker import output_formatters
 from libcodechecker.env import get_check_env
@@ -44,7 +44,7 @@ def get_argparser_ctor_args():
         # directly.
         'epilog': "The list of checkers that are enabled of disabled by "
                   "default can be edited by editing the file '" +
-                  os.path.join(package_context.get_context()
+                  os.path.join(analyzer_context.get_context()
                                .package_root, 'config', 'config.json') + "'.",
 
         # Help is shown when the "parent" CodeChecker command lists the
@@ -123,7 +123,7 @@ def main(args):
         if 'analyzers' in args \
         else analyzer_types.supported_analyzers
 
-    context = package_context.get_context()
+    context = analyzer_context.get_context()
     working, errored = analyzer_types.check_supported_analyzers(analyzers,
                                                                 context)
 

@@ -28,7 +28,7 @@ from codeCheckerDBAccess_v6 import constants, ttypes
 
 from ..client.client import handle_auth, setup_client
 
-from libcodechecker import package_context
+from codechecker import webserver_context
 from libcodechecker import logger
 from libcodechecker import suppress_file_handler
 from libcodechecker import plist_parser
@@ -357,7 +357,7 @@ def handle_diff_results(args):
 
     f_severities, f_checkers, f_file_path, _, _ = check_filter_values(args)
 
-    context = package_context.get_context()
+    context = webserver_context.get_context()
 
     def skip_report_dir_result(report):
         """

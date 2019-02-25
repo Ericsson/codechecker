@@ -18,10 +18,10 @@ import shutil
 import tempfile
 
 from codechecker.analyze.analyzers import analyzer_types
+from codechecker import analyzer_context
 
 from libcodechecker import logger
 from libcodechecker import libhandlers
-from libcodechecker import package_context
 from libcodechecker.util import RawDescriptionDefaultHelpFormatter
 
 LOG = logger.get_logger('system')
@@ -285,7 +285,7 @@ used to generate a log file on the fly.""")
                                     "the analysis is considered as a failed "
                                     "one.")
 
-    context = package_context.get_context()
+    context = analyzer_context.get_context()
     if analyzer_types.is_ctu_capable(context):
         ctu_opts = parser.add_argument_group(
             "cross translation unit analysis arguments",

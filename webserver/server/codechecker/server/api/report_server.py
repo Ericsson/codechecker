@@ -28,7 +28,8 @@ import shared
 from codeCheckerDBAccess_v6 import constants, ttypes
 from codeCheckerDBAccess_v6.ttypes import *
 
-from libcodechecker import package_context, plist_parser, skiplist_handler
+from codechecker import webserver_context
+from libcodechecker import plist_parser, skiplist_handler
 from libcodechecker.source_code_comment_handler import \
     SourceCodeCommentHandler, SKIP_REVIEW_STATUSES
 from libcodechecker import util
@@ -2409,7 +2410,7 @@ class ThriftRequestHandler(object):
         with DBSession(self.__Session) as session:
             ThriftRequestHandler.__store_run_lock(session, name, user)
 
-        context = package_context.get_context()
+        context = webserver_context.get_context()
 
         wrong_src_code_comments = []
         try:
