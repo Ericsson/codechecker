@@ -45,9 +45,9 @@ from Configuration_v6 import configurationService as ConfigAPI_v6
 from codeCheckerDBAccess_v6 import codeCheckerDBAccess as ReportAPI_v6
 from ProductManagement_v6 import codeCheckerProductService as ProductAPI_v6
 
+from codechecker.version import get_version_str
 from libcodechecker.logger import get_logger
 from libcodechecker.util import get_tmp_dir_hash
-from libcodechecker.version import get_version_str
 
 from . import instance_manager
 from . import permissions

@@ -25,10 +25,9 @@ from codeCheckerDBAccess_v6.ttypes import StoreLimitKind
 from shared.ttypes import Permission, RequestFailed, ErrorCode
 
 from codechecker.client import client as libclient
-from codechecker import webserver_context
+from codechecker import webserver_context, host_check
 
 from libcodechecker import logger
-from libcodechecker import host_check
 from libcodechecker import util
 from libcodechecker import plist_parser
 from libcodechecker.output_formatters import twodim_to_str

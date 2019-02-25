@@ -24,8 +24,8 @@ from sqlalchemy.engine.url import URL, make_url
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import NullPool
 
-from libcodechecker import host_check
-from libcodechecker import pgpass
+from codechecker import host_check, pgpass
+
 from libcodechecker import util
 from libcodechecker.logger import get_logger
 
