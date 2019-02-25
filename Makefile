@@ -80,7 +80,7 @@ package: clean_package build_dir gen-docs thrift userguide build_plist_to_html b
 	mkdir -p $(CC_BUILD_DOCS_DIR) && \
 	mkdir -p $(CC_BUILD_DOCS_DIR)/checker_md_docs && \
 	cp -r $(BUILD_DIR)/gen-docs/html/* $(CC_BUILD_DOCS_DIR) && \
-	cp -r $(ROOT)/docs/checker_docs/* $(CC_BUILD_DOCS_DIR)/checker_md_docs/
+	cp -r $(ROOT)/docs/web/checker_docs/* $(CC_BUILD_DOCS_DIR)/checker_md_docs/
 
 	# Copy config files and extend 'version.json' file with git information.
 	cp -r $(ROOT)/config $(CC_BUILD_DIR) && \

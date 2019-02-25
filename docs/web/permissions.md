@@ -113,7 +113,7 @@ to `A`.
 
 # Available permissions <a name="available-permissions"></a>
 
-> Developer guide: See the [API documentation](/api/README.md) for the list of
+> Developer guide: See the [API documentation](../api/README.md) for the list of
 > permissions and which API call requires which permission exactly.
 
 ## Server-wide (global) permissions <a name="global-permissions"></a>
