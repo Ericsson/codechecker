@@ -17,10 +17,9 @@ import subprocess
 import sys
 from uuid import uuid4
 
-from codechecker.analyze import analyzer_env
-
 from libcodechecker.logger import get_logger
 
+from .. import analyzer_env
 from . import host_check
 
 LOG = get_logger('buildlogger')

@@ -18,11 +18,9 @@ import sys
 import tempfile
 import traceback
 
-# TODO: This is a cross-subpackage import!
-from codechecker.analyze import gcc_toolchain
-
 from libcodechecker.logger import get_logger
 
+from .. import gcc_toolchain
 from .build_action import BuildAction
 
 LOG = get_logger('buildlogger')

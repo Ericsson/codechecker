@@ -13,7 +13,7 @@ from __future__ import absolute_import
 import argparse
 import json
 
-from codechecker import analyzer_context
+from codechecker_analyzer import analyzer_context
 
 from libcodechecker import logger
 from libcodechecker import output_formatters

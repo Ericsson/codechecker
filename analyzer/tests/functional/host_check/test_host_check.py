@@ -12,7 +12,7 @@ from __future__ import absolute_import
 
 import unittest
 
-import codechecker.analyze.host_check as hc
+import codechecker_analyzer.host_check as hc
 
 
 class Test_has_analyzer_feature(unittest.TestCase):

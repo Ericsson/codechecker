@@ -14,8 +14,8 @@ from __future__ import absolute_import
 import argparse
 import subprocess
 
-from codechecker.analyze.analyzers import analyzer_types
-from codechecker import analyzer_context
+from codechecker_analyzer import analyzer_context
+from codechecker_analyzer.analyzers import analyzer_types
 
 from libcodechecker import logger
 from libcodechecker import output_formatters

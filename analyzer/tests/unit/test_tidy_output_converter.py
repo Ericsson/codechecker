@@ -21,7 +21,7 @@ try:
 except ImportError:
     from io import BytesIO as StringIO
 
-import codechecker.analyze.tidy_output_converter as tidy_out_conv
+import codechecker_analyzer.tidy_output_converter as tidy_out_conv
 
 OLD_PWD = None
 

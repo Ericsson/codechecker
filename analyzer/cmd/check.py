@@ -17,8 +17,8 @@ import os
 import shutil
 import tempfile
 
-from codechecker.analyze.analyzers import analyzer_types
-from codechecker import analyzer_context
+from codechecker_analyzer import analyzer_context
+from codechecker_analyzer.analyzers import analyzer_types
 
 from libcodechecker import logger
 from libcodechecker import libhandlers

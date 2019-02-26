@@ -15,7 +15,7 @@ import shutil
 import unittest
 import zipfile
 
-from codechecker.analyze import host_check
+from codechecker_analyzer import host_check
 
 from libtest import env
 from libtest import project
