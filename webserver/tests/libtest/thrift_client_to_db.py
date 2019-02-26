@@ -22,8 +22,8 @@ from thrift.Thrift import TApplicationException
 
 import shared
 
+from codechecker.version import CLIENT_API as VERSION
 from libcodechecker import util
-from libcodechecker.version import CLIENT_API as VERSION
 
 
 class ThriftAPIHelper(object):

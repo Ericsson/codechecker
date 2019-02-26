@@ -34,12 +34,11 @@ from codechecker.server.database.config_db_model \
 from codechecker.server.database.run_db_model \
     import IDENTIFIER as RUN_META
 
-from codechecker import webserver_context
+from codechecker import webserver_context, database_status, host_check
+
 from libcodechecker import suppress_handler
-from libcodechecker import host_check
 from libcodechecker import logger
 from libcodechecker import output_formatters
-from libcodechecker import database_status
 from libcodechecker import util
 from libcodechecker.env import get_check_env
 

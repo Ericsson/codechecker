@@ -13,11 +13,10 @@ from __future__ import absolute_import
 import argparse
 import json
 
-from codechecker import webserver_context
+from codechecker import webserver_context, version
 
 from libcodechecker import logger
 from libcodechecker import output_formatters
-from libcodechecker import version
 
 
 def get_argparser_ctor_args():

@@ -12,9 +12,9 @@ from __future__ import absolute_import
 
 import shared
 
+from codechecker.version import get_version_str
 from libcodechecker.logger import get_logger
 from libcodechecker.profiler import timeit
-from libcodechecker.version import get_version_str
 
 LOG = get_logger('system')
 

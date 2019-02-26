@@ -19,9 +19,9 @@ from thrift.Thrift import TApplicationException
 import shared
 from Authentication_v6 import ttypes as AuthTypes
 
+from codechecker.version import CLIENT_API
 from libcodechecker.logger import get_logger
 from libcodechecker.util import split_product_url
-from libcodechecker.version import CLIENT_API
 
 from . import authentication_helper
 from . import product_helper
