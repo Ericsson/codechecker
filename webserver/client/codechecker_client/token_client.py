@@ -10,11 +10,11 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
-from ..client.client import setup_auth_client
-
 from libcodechecker import logger
 from libcodechecker.output_formatters import twodim_to_str
 from libcodechecker.util import CmdLineOutputEncoder, split_server_url
+
+from .client import setup_auth_client
 
 # Needs to be set in the handler functions.
 LOG = None

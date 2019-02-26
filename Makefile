@@ -76,7 +76,7 @@ package: clean_package build_dir gen-docs thrift userguide build_plist_to_html b
 	cp -r $(CC_SERVER)/cmd/* $(CC_BUILD_LIBCC_DIR)/libhandlers && \
 	cp -r $(CC_SERVER)/codechecker/* $(CC_BUILD_LIB_DIR)/codechecker && \
 	cp -r $(CC_CLIENT)/cmd/* $(CC_BUILD_LIBCC_DIR)/libhandlers && \
-	cp -r $(CC_CLIENT)/codechecker/* $(CC_BUILD_LIB_DIR)/codechecker
+	cp -r $(CC_CLIENT)/codechecker_client $(CC_BUILD_LIB_DIR)
 
 	# Copy sub-commands.
 	cp $(ROOT)/bin/* $(CC_BUILD_DIR)/bin && \

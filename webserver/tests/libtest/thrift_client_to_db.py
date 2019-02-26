@@ -118,7 +118,7 @@ class CCViewerHelper(ThriftAPIHelper):
         # Import only if necessary; some tests may not add this to PYTHONPATH.
         from codeCheckerDBAccess_v6 import codeCheckerDBAccess
         from codeCheckerDBAccess_v6.constants import MAX_QUERY_SIZE
-        from codechecker.client.credential_manager import SESSION_COOKIE_NAME
+        from codechecker_client.credential_manager import SESSION_COOKIE_NAME
 
         self.max_query_size = MAX_QUERY_SIZE
         url = util.create_product_url(protocol, host, port,
@@ -173,7 +173,7 @@ class CCAuthHelper(ThriftAPIHelper):
                  session_token=None):
         # Import only if necessary; some tests may not add this to PYTHONPATH.
         from Authentication_v6 import codeCheckerAuthentication
-        from codechecker.client.credential_manager import SESSION_COOKIE_NAME
+        from codechecker_client.credential_manager import SESSION_COOKIE_NAME
         url = util.create_product_url(proto, host, port,
                                       '/v' + VERSION + uri)
         transport = THttpClient.THttpClient(url)
@@ -196,7 +196,7 @@ class CCProductHelper(ThriftAPIHelper):
                  session_token=None):
         # Import only if necessary; some tests may not add this to PYTHONPATH.
         from ProductManagement_v6 import codeCheckerProductService
-        from codechecker.client.credential_manager import SESSION_COOKIE_NAME
+        from codechecker_client.credential_manager import SESSION_COOKIE_NAME
         full_uri = '/v' + VERSION + uri
         if product:
             full_uri = '/' + product + full_uri
@@ -221,7 +221,7 @@ class CCConfigHelper(ThriftAPIHelper):
                  session_token=None):
 
         from Configuration_v6 import configurationService
-        from codechecker.client.credential_manager import SESSION_COOKIE_NAME
+        from codechecker_client.credential_manager import SESSION_COOKIE_NAME
 
         full_uri = '/v' + VERSION + uri
         url = util.create_product_url(proto, host, port,

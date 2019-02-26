@@ -12,11 +12,11 @@ from __future__ import absolute_import
 
 import sys
 
-from ..client.client import setup_client
-
 from libcodechecker import logger
 from libcodechecker.output_formatters import twodim_to_str
 from libcodechecker.util import get_user_input, CmdLineOutputEncoder
+
+from .client import setup_client
 
 # Needs to be set in the handler functions.
 LOG = None

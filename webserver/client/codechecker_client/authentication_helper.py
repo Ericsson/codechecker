@@ -15,11 +15,11 @@ from thrift.protocol import TJSONProtocol
 
 from Authentication_v6 import codeCheckerAuthentication
 
-from .thrift_call import ThriftClientCall
 from libcodechecker import util
 from libcodechecker.logger import get_logger
 
 from .credential_manager import SESSION_COOKIE_NAME
+from .thrift_call import ThriftClientCall
 
 LOG = get_logger('system')
 

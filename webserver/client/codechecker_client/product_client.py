@@ -15,14 +15,13 @@ import sys
 
 from ProductManagement_v6.ttypes import *
 
-from ..client.client import setup_product_client
-
 from codechecker_web.shared import database_status
 
 from libcodechecker import logger
 from libcodechecker.output_formatters import twodim_to_str
 from libcodechecker.util import split_server_url
 
+from .client import setup_product_client
 from .cmd_line_client import CmdLineOutputEncoder
 
 # Needs to be set in the handler functions.

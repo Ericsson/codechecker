@@ -16,9 +16,9 @@ import getpass
 import datetime
 import sys
 
-from codechecker.cmdhelper import cmd_line_client
-from codechecker.cmdhelper import product_client
-from codechecker.cmdhelper import source_component_client, token_client
+from codechecker_client import cmd_line_client
+from codechecker_client import product_client
+from codechecker_client import source_component_client, token_client
 
 from libcodechecker import logger
 from libcodechecker import output_formatters

@@ -26,8 +26,6 @@ from plist_to_html import PlistToHtml
 
 from codeCheckerDBAccess_v6 import constants, ttypes
 
-from ..client.client import handle_auth, setup_client
-
 from codechecker_web.shared import webserver_context
 from libcodechecker import logger
 from libcodechecker import suppress_file_handler
@@ -37,6 +35,7 @@ from libcodechecker.report import Report, get_report_path_hash
 from libcodechecker.source_code_comment_handler import SourceCodeCommentHandler
 from libcodechecker.util import split_server_url, CmdLineOutputEncoder
 
+from .client import handle_auth, setup_client
 
 # Needs to be set in the handler functions.
 LOG = None

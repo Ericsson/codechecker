@@ -24,7 +24,7 @@ import zlib
 from codeCheckerDBAccess_v6.ttypes import StoreLimitKind
 from shared.ttypes import Permission, RequestFailed, ErrorCode
 
-from codechecker.client import client as libclient
+from codechecker_client import client as libclient
 from codechecker_web.shared import webserver_context, host_check
 
 from libcodechecker import logger
