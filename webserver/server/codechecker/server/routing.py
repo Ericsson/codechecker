@@ -13,7 +13,7 @@ from __future__ import absolute_import
 import re
 import urlparse
 
-from codechecker.version import SUPPORTED_VERSIONS
+from codechecker_web.shared.version import SUPPORTED_VERSIONS
 
 # A list of top-level path elements under the webserver root
 # which should not be considered as a product route.

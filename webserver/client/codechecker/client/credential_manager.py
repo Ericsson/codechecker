@@ -17,7 +17,7 @@ import stat
 
 import portalocker
 
-from codechecker.version import SESSION_COOKIE_NAME as _SCN
+from codechecker_web.shared.version import SESSION_COOKIE_NAME as _SCN
 from libcodechecker.logger import get_logger
 from libcodechecker.util import check_file_owner_rw
 from libcodechecker.util import load_json_or_empty

@@ -34,7 +34,8 @@ from codechecker.server.database.config_db_model \
 from codechecker.server.database.run_db_model \
     import IDENTIFIER as RUN_META
 
-from codechecker import webserver_context, database_status, host_check
+from codechecker_web.shared import webserver_context, database_status, \
+    host_check
 
 from libcodechecker import suppress_handler
 from libcodechecker import logger

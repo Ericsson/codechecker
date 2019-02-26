@@ -14,7 +14,7 @@ from datetime import datetime
 import hashlib
 import json
 
-from codechecker.version import SESSION_COOKIE_NAME as _SCN
+from codechecker_web.shared.version import SESSION_COOKIE_NAME as _SCN
 from libcodechecker.logger import get_logger
 from libcodechecker.util import check_file_owner_rw, load_json_or_empty, \
     generate_session_token

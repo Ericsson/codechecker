@@ -17,7 +17,7 @@ from ProductManagement_v6.ttypes import *
 
 from ..client.client import setup_product_client
 
-from codechecker import database_status
+from codechecker_web.shared import database_status
 
 from libcodechecker import logger
 from libcodechecker.output_formatters import twodim_to_str

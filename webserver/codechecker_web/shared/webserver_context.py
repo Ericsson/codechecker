@@ -15,7 +15,7 @@ from collections import Mapping
 import os
 import sys
 
-from codechecker import db_version
+from codechecker_web.shared import db_version
 
 from libcodechecker import logger
 from libcodechecker.util import load_json_or_empty

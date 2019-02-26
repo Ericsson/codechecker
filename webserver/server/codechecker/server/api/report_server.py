@@ -28,7 +28,7 @@ import shared
 from codeCheckerDBAccess_v6 import constants, ttypes
 from codeCheckerDBAccess_v6.ttypes import *
 
-from codechecker import webserver_context
+from codechecker_web.shared import webserver_context
 from libcodechecker import plist_parser, skiplist_handler
 from libcodechecker.source_code_comment_handler import \
     SourceCodeCommentHandler, SKIP_REVIEW_STATUSES

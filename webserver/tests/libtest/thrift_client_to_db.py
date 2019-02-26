@@ -22,7 +22,7 @@ from thrift.Thrift import TApplicationException
 
 import shared
 
-from codechecker.version import CLIENT_API as VERSION
+from codechecker_web.shared.version import CLIENT_API as VERSION
 from libcodechecker import util
 
 

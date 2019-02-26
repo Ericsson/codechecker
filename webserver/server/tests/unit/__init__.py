@@ -27,3 +27,4 @@ sys.path.append(os.path.join(
     PKG_ROOT, __PACKAGE_LAYOUT['static']['gencodechecker']))
 
 sys.path.append(REPO_ROOT)
+sys.path.append(os.path.join(REPO_ROOT, 'webserver'))

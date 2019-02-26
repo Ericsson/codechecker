@@ -28,7 +28,7 @@ from codeCheckerDBAccess_v6 import constants, ttypes
 
 from ..client.client import handle_auth, setup_client
 
-from codechecker import webserver_context
+from codechecker_web.shared import webserver_context
 from libcodechecker import logger
 from libcodechecker import suppress_file_handler
 from libcodechecker import plist_parser

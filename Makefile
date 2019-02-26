@@ -71,7 +71,7 @@ package: clean_package build_dir gen-docs thrift userguide build_plist_to_html b
 	cp -r $(ROOT)/libcodechecker/* $(CC_BUILD_LIBCC_DIR) && \
 	cp -r $(CC_ANALYZER)/cmd/* $(CC_BUILD_LIBCC_DIR)/libhandlers && \
 	cp -r $(CC_ANALYZER)/codechecker_analyzer $(CC_BUILD_LIB_DIR) && \
-	cp -r $(CC_WEB_SERVER)/common/* $(CC_BUILD_LIB_DIR)/codechecker && \
+	cp -r $(CC_WEB_SERVER)/codechecker_web $(CC_BUILD_LIB_DIR) && \
 	cp -r $(CC_WEB_SERVER)/cmd/* $(CC_BUILD_LIBCC_DIR)/libhandlers && \
 	cp -r $(CC_SERVER)/cmd/* $(CC_BUILD_LIBCC_DIR)/libhandlers && \
 	cp -r $(CC_SERVER)/codechecker/* $(CC_BUILD_LIB_DIR)/codechecker && \
