@@ -18,4 +18,4 @@ CC = os.path.join(THIS_PATH, "CodeChecker")
 CodeChecker = imp.load_source('CodeChecker', CC)
 
 # Execute CC's main script with the current subcommand.
-CodeChecker.main("webserver-version")
+CodeChecker.main("web-version")

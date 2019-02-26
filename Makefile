@@ -15,9 +15,9 @@ CC_BUILD_LIB_DIR = $(CC_BUILD_DIR)/lib/python2.7
 CC_BUILD_LIBCC_DIR = $(CC_BUILD_LIB_DIR)/libcodechecker
 CC_BUILD_GEN_DIR = $(CC_BUILD_LIB_DIR)/gencodechecker
 
-CC_WEB_SERVER = $(CURRENT_DIR)/webserver
-CC_SERVER = $(CC_WEB_SERVER)/server/
-CC_CLIENT = $(CC_WEB_SERVER)/client/
+CC_WEB = $(CURRENT_DIR)/web
+CC_SERVER = $(CC_WEB)/server/
+CC_CLIENT = $(CC_WEB)/client/
 CC_ANALYZER = $(CURRENT_DIR)/analyzer
 
 # Root of the repository.
@@ -38,7 +38,7 @@ thrift: build_dir
 
 	mkdir $(BUILD_DIR)/thrift
 
-	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_WEB_SERVER)/api/
+	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_WEB)/api/
 
 userguide: build_dir
 	$(MAKE) -C $(CC_SERVER)/www/userguide
@@ -71,8 +71,8 @@ package: clean_package build_dir gen-docs thrift userguide build_plist_to_html b
 	cp -r $(ROOT)/libcodechecker/* $(CC_BUILD_LIBCC_DIR) && \
 	cp -r $(CC_ANALYZER)/cmd/* $(CC_BUILD_LIBCC_DIR)/libhandlers && \
 	cp -r $(CC_ANALYZER)/codechecker_analyzer $(CC_BUILD_LIB_DIR) && \
-	cp -r $(CC_WEB_SERVER)/codechecker_web $(CC_BUILD_LIB_DIR) && \
-	cp -r $(CC_WEB_SERVER)/cmd/* $(CC_BUILD_LIBCC_DIR)/libhandlers && \
+	cp -r $(CC_WEB)/codechecker_web $(CC_BUILD_LIB_DIR) && \
+	cp -r $(CC_WEB)/cmd/* $(CC_BUILD_LIBCC_DIR)/libhandlers && \
 	cp -r $(CC_SERVER)/cmd/* $(CC_BUILD_LIBCC_DIR)/libhandlers && \
 	cp -r $(CC_SERVER)/codechecker_server $(CC_BUILD_LIB_DIR) && \
 	cp -r $(CC_CLIENT)/cmd/* $(CC_BUILD_LIBCC_DIR)/libhandlers && \
@@ -94,7 +94,7 @@ package: clean_package build_dir gen-docs thrift userguide build_plist_to_html b
 	mkdir -p $(CC_BUILD_DIR)/cc_bin && \
 	./scripts/build/create_commands.py -b $(BUILD_DIR) \
 		$(ROOT)/bin \
-		$(CC_WEB_SERVER)/bin \
+		$(CC_WEB)/bin \
 		$(CC_SERVER)/bin \
 		$(CC_CLIENT)/bin \
 		$(CC_ANALYZER)/bin
@@ -168,14 +168,14 @@ venv:
 	virtualenv -p python2 venv && \
 		$(ACTIVATE_RUNTIME_VENV) && \
 		pip install -r $(CC_ANALYZER)/requirements.txt && \
-		pip install -r $(CC_WEB_SERVER)/requirements.txt
+		pip install -r $(CC_WEB)/requirements.txt
 
 venv_osx:
 	# Create a virtual environment which can be used to run the build package.
 	virtualenv -p python2 venv && \
 		$(ACTIVATE_RUNTIME_VENV) && \
 		pip install -r $(CC_ANALYZER)/requirements_py/osx/requirements.txt && \
-		pip install -r $(CC_WEB_SERVER)/requirements_py/osx/requirements.txt
+		pip install -r $(CC_WEB)/requirements_py/osx/requirements.txt
 
 clean_venv:
 	rm -rf venv
@@ -186,8 +186,8 @@ venv_dev:
 		$(ACTIVATE_DEV_VENV) && \
 		pip install -r $(CC_ANALYZER)/requirements_py/dev/requirements.txt && \
 		pip install -r $(CC_ANALYZER)/requirements_py/test/requirements.txt && \
-		pip install -r $(CC_WEB_SERVER)/requirements_py/dev/requirements.txt && \
-		pip install -r $(CC_WEB_SERVER)/requirements_py/test/requirements.txt
+		pip install -r $(CC_WEB)/requirements_py/dev/requirements.txt && \
+		pip install -r $(CC_WEB)/requirements_py/test/requirements.txt
 
 clean_venv_dev:
 	rm -rf venv_dev
@@ -217,14 +217,14 @@ clean_travis:
 
 pylint: venv_dev
 	$(MAKE) -C $(CC_ANALYZER) pylint && \
-	$(MAKE) -C $(CC_WEB_SERVER) pylint && \
+	$(MAKE) -C $(CC_WEB) pylint && \
 	pylint bin libcodechecker scripts \
 	  --disable=all \
 	  --enable=logging-format-interpolation,old-style-class
 
 pycodestyle: venv_dev
 	$(MAKE) -C $(CC_ANALYZER) pycodestyle && \
-	$(MAKE) -C $(CC_WEB_SERVER) pycodestyle && \
+	$(MAKE) -C $(CC_WEB) pycodestyle && \
 	pycodestyle bin libcodechecker scripts
 
 test: test_analyzer test_server
@@ -233,20 +233,20 @@ test_analyzer:
 	$(MAKE) -C $(CC_ANALYZER) test
 
 test_server:
-	$(MAKE) -C $(CC_WEB_SERVER) test
+	$(MAKE) -C $(CC_WEB) test
 
 test_unit:
 	$(MAKE) -C $(CC_ANALYZER) test_unit
-	$(MAKE) -C $(CC_WEB_SERVER) test_unit
+	$(MAKE) -C $(CC_WEB) test_unit
 
 test_unit_novenv:
 	$(MAKE) -C $(CC_ANALYZER) test_unit_novenv
-	$(MAKE) -C $(CC_WEB_SERVER) test_unit_novenv
+	$(MAKE) -C $(CC_WEB) test_unit_novenv
 
 test_functional: package
 	$(MAKE) -C $(CC_ANALYZER) test_functional
-	$(MAKE) -C $(CC_WEB_SERVER) test_functional
+	$(MAKE) -C $(CC_WEB) test_functional
 
 test_functional_novenv: package
 	$(MAKE) -C $(CC_ANALYZER) test_functional_novenv
-	$(MAKE) -C $(CC_WEB_SERVER) test_functional_novenv
+	$(MAKE) -C $(CC_WEB) test_functional_novenv

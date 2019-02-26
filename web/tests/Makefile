@@ -24,15 +24,22 @@ test: pycodestyle pylint test_unit test_functional
 
 test_novenv: pycodestyle pylint test_unit_novenv test_functional_novenv
 
-PYCODESTYLE_TEST_CMD = pycodestyle client/bin server/bin client/codechecker \
-  server/codechecker tests
+PYCODESTYLE_TEST_CMD = pycodestyle \
+  --exclude=server/codechecker_server/migrations \
+  bin cmd codechecker_web tests \
+  client/bin client/codechecker_client client/cmd \
+  server/bin server/codechecker_server server/cmd server/tests \
+  tests
 
 pycodestyle: venv_dev
 	$(ACTIVATE_DEV_VENV) && $(PYCODESTYLE_TEST_CMD)
 
-PYLINT_TEST_CMD = pylint client/bin server/bin client/codechecker \
-  server/codechecker tests \
-	--rcfile=$(ROOT)/.pylintrc
+PYLINT_TEST_CMD = pylint bin/codechecker-web-version cmd/web_version.py \
+  codechecker_web \
+  client/cmd/cmd.py client/cmd/store.py client/codechecker_client \
+  server/bin/codechecker-server server/cmd/server.py \
+  server/codechecker_server server/tests/unit \
+	--rcfile=$(ROOT)/.pylintrc \
   --disable=all \
   --enable=logging-format-interpolation,old-style-class
 
@@ -67,7 +74,7 @@ DROP_DB_CMD = bash -c 'psql -h localhost \
 run_test: venv_dev
 	$(ACTIVATE_DEV_VENV) && \
 		$(REPO_ROOT) $(CLANG_VERSION) $(TEST_PROJECT) \
-		nosetests $(NOSECFG) $(ROOT)/webserver/${TEST} \
+		nosetests $(NOSECFG) $(ROOT)/web/${TEST} \
 		&& { ${SHUTDOWN_SERVER_CMD}; } || ${EXIT_ERROR}
 
 test_unit: test_unit_server
