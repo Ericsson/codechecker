@@ -15,7 +15,7 @@ import subprocess
 import time
 import unittest
 
-from codechecker.server import instance_manager
+from codechecker_server import instance_manager
 
 from libtest import env
 from libtest.codechecker import start_server

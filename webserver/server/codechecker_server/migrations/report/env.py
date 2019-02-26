@@ -12,17 +12,15 @@ config = context.config
 # Add your model's MetaData object here
 # for 'autogenerate' support.
 try:
-    from codechecker.server.database.config_db_model import Base
+    from codechecker_server.database.run_db_model import Base
 except ImportError:
     # Assume we are in the source directory
     import sys
     import os
-    sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
-                                                 "../build/thrift/v6/gen-py")))
 
     sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
-                                                 "..")))
-    from codechecker.server.database.config_db_model import Base
+                                                 "..", "..", "..")))
+    from codechecker_server.database.run_db_model import Base
 
 target_metadata = Base.metadata
 

@@ -14,7 +14,7 @@ import unittest
 
 from mockldap import MockLdap
 
-from codechecker.server.auth import cc_ldap
+from codechecker_server.auth import cc_ldap
 
 
 class CCLDAPTest(unittest.TestCase):

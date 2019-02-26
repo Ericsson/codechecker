@@ -74,7 +74,7 @@ package: clean_package build_dir gen-docs thrift userguide build_plist_to_html b
 	cp -r $(CC_WEB_SERVER)/codechecker_web $(CC_BUILD_LIB_DIR) && \
 	cp -r $(CC_WEB_SERVER)/cmd/* $(CC_BUILD_LIBCC_DIR)/libhandlers && \
 	cp -r $(CC_SERVER)/cmd/* $(CC_BUILD_LIBCC_DIR)/libhandlers && \
-	cp -r $(CC_SERVER)/codechecker/* $(CC_BUILD_LIB_DIR)/codechecker && \
+	cp -r $(CC_SERVER)/codechecker_server $(CC_BUILD_LIB_DIR) && \
 	cp -r $(CC_CLIENT)/cmd/* $(CC_BUILD_LIBCC_DIR)/libhandlers && \
 	cp -r $(CC_CLIENT)/codechecker_client $(CC_BUILD_LIB_DIR)
 
@@ -107,9 +107,6 @@ package: clean_package build_dir gen-docs thrift userguide build_plist_to_html b
 
 	# Rename gen-docs to doc.
 	mv $(CC_BUILD_WEB_DIR)/userguide/gen-docs $(CC_BUILD_WEB_DIR)/userguide/doc
-
-	# Copy database migration files.
-	cp -r $(CC_SERVER)/migrations $(CC_BUILD_LIB_DIR)
 
 	# Copy license file.
 	cp $(ROOT)/LICENSE.TXT $(CC_BUILD_DIR)

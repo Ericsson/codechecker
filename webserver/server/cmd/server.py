@@ -24,14 +24,13 @@ from sqlalchemy.orm import sessionmaker
 
 from shared.ttypes import DBStatus
 
-from codechecker.server import instance_manager
-from codechecker.server import server
-from codechecker.server.database import database
-from codechecker.server.database.config_db_model \
+from codechecker_server import instance_manager, server
+from codechecker_server.database import database
+from codechecker_server.database.config_db_model \
     import IDENTIFIER as CONFIG_META
-from codechecker.server.database.config_db_model \
+from codechecker_server.database.config_db_model \
     import Product as ORMProduct
-from codechecker.server.database.run_db_model \
+from codechecker_server.database.run_db_model \
     import IDENTIFIER as RUN_META
 
 from codechecker_web.shared import webserver_context, database_status, \

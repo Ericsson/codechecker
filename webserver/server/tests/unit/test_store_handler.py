@@ -13,7 +13,7 @@ import unittest
 
 from codeCheckerDBAccess_v6 import ttypes
 
-from codechecker.server.api import store_handler
+from codechecker_server.api import store_handler
 from libcodechecker import plist_parser
 
 

@@ -11,8 +11,8 @@ from __future__ import absolute_import
 
 import unittest
 
-from codechecker.server.routing import split_client_GET_request
-from codechecker.server.routing import split_client_POST_request
+from codechecker_server.routing import split_client_GET_request
+from codechecker_server.routing import split_client_POST_request
 
 
 def GET(path):
