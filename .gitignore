@@ -29,9 +29,9 @@ thrift_api/gen-js/
 thrift_api/gen-py/
 
 # object and binary files for tests
-tests/projects/**/*.o
-tests/projects/**/a.out
-tests/projects/objc/DeallocUseAfterFreeErrors
+**/tests/projects/**/*.o
+**/tests/projects/**/a.out
+**/tests/projects/objc/DeallocUseAfterFreeErrors
 
 # idea files
 .idea/
