@@ -14,7 +14,6 @@ import argparse
 
 from libcodechecker import logger
 from libcodechecker import output_formatters
-from libcodechecker.libhandlers import analyzer_version, webserver_version
 
 
 def get_argparser_ctor_args():
@@ -62,12 +61,25 @@ def main(args):
 
     output_format = args.output_format
 
-    # Print analyzer version information.
-    print("CodeChecker analyzer version:")
-    analyzer_version.print_version(output_format)
+    has_analyzer_version = False
+    try:
+        from libcodechecker.libhandlers import analyzer_version
+        has_analyzer_version = True
 
-    print("\n")
+        # Print analyzer version information.
+        print("CodeChecker analyzer version:")
+        analyzer_version.print_version(output_format)
+    except Exception:
+        pass
 
-    # Print web server version information.
-    print("CodeChecker web server version:")
-    webserver_version.print_version(output_format)
+    try:
+        from libcodechecker.libhandlers import webserver_version
+
+        if has_analyzer_version:
+            print()  # Print a new line to separate version information.
+
+        # Print web server version information.
+        print("CodeChecker web server version:")
+        webserver_version.print_version(output_format)
+    except Exception:
+        pass
