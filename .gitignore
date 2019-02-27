@@ -9,7 +9,7 @@ Makefile.local
 
 # external sources
 vendor/*
-!vendor/build-logger
+!analyzer/tools/build-logger
 !vendor/plist_to_html
 !vendor/Makefile
 !vendor/Makefile
@@ -18,7 +18,7 @@ web/server/vendor/*
 
 
 # build-logger build dir
-vendor/build-logger/build/
+analyzer/tools/build-logger/build/
 
 # doxygen generated files
 gen-docs/

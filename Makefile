@@ -114,17 +114,17 @@ package: clean_package build_dir gen-docs thrift userguide build_plist_to_html b
 package_ld_logger:
 	mkdir -p $(CC_BUILD_DIR)/ld_logger && \
 	mkdir -p $(CC_BUILD_DIR)/bin && \
-	cp -r vendor/build-logger/build/* $(CC_BUILD_DIR)/ld_logger && \
+	cp -r $(CC_ANALYZER)/tools/build-logger/build/* $(CC_BUILD_DIR)/ld_logger && \
 	ln -s $(CC_BUILD_DIR)/ld_logger/bin/ldlogger $(CC_BUILD_DIR)/bin/ldlogger
 
 build_ld_logger:
-	$(MAKE) -C vendor/build-logger -f Makefile.manual 2> /dev/null
+	$(MAKE) -C $(CC_ANALYZER)/tools/build-logger -f Makefile.manual 2> /dev/null
 
 build_ld_logger_x86:
-	$(MAKE) -C vendor/build-logger -f Makefile.manual pack32bit 2> /dev/null
+	$(MAKE) -C $(CC_ANALYZER)/tools/build-logger -f Makefile.manual pack32bit 2> /dev/null
 
 build_ld_logger_x64:
-	$(MAKE) -C vendor/build-logger -f Makefile.manual pack64bit 2> /dev/null
+	$(MAKE) -C $(CC_ANALYZER)/tools/build-logger -f Makefile.manual pack64bit 2> /dev/null
 
 # NOTE: extra spaces are allowed and ignored at the beginning of the
 # conditional directive line, but a tab is not allowed.

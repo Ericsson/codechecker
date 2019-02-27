@@ -49,7 +49,7 @@ test_functional_novenv:
 	$(FUNCTIONAL_TEST_CMD)
 
 test_build_logger:
-	make -C $(ROOT)/vendor/build-logger -f Makefile.manual test
+	make -C tools/build-logger -f Makefile.manual test
 
 test_tu_collector:
 	$(ACTIVATE_DEV_VENV) && \
