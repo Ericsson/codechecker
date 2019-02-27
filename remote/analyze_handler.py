@@ -13,6 +13,8 @@ import redis
 import sched
 import time
 import argparse
+import hashlib
+import json
 
 from enum import Enum
 
@@ -55,25 +57,44 @@ def preAnalyze(analyze_id, part_number, workspace):
 
     analyze_dir_path = os.path.join(file_path, source_file_without_extension)
 
-    with zipfile.ZipFile(zip_file_path) as zf:
+    with zipfile.ZipFile(zip_file_path) as zip_file:
         try:
-            zf.extractall(analyze_dir_path)
+            zip_file.extractall(analyze_dir_path)
         except Exception:
-            LOGGER.error("Failed to extract all files from the ZIP.")
+            LOGGER.error('Failed to extract all files from the ZIP.')
 
-    command_file_path = os.path.join(
-        analyze_dir_path, 'sources-root', 'build_command')
+        list_of_other_files = ['sources-root/build_command',
+                               'sources-root/file_path',
+                               'sources-root/skipped_file_list']
 
-    with open(command_file_path) as build_action:
+        if (len(zip_file.namelist()) > 0):
+            LOGGER.info('Load files to Redis: ' % zip_file.namelist())
+            for file_name in zip_file.namelist():
+                if file_name not in list_of_other_files:
+                    LOGGER.info(os.path.join(analyze_dir_path, file_name))
+                    with open(os.path.join(analyze_dir_path, file_name), 'rb') as file:
+                        bytes = file.read()
+                        readable_hash = hashlib.md5(bytes).hexdigest()
+                        try:
+                            REDIS_DATABASE.set(readable_hash, bytes)
+                            LOGGER.info(REDIS_DATABASE.get(readable_hash))
+                        except Exception:
+                            LOGGER.error(
+                                'Failed to read in file %s' % file_name)
+
+    sources_root_path = os.path.join(analyze_dir_path, 'sources-root')
+
+    build_command_file_path = os.path.join(sources_root_path, 'build_command')
+
+    with open(build_command_file_path) as build_action:
         try:
             build_command = build_action.readline()
         except Exception:
             REDIS_DATABASE.hset(analyze_id, 'state',
                                 AnalyzeStatus.PREANALYZE_FAILED.name)
-            LOGGER.error("Failed to read in build command.")
+            LOGGER.error('Failed to read in build command.')
 
-    file_to_analyze_path = os.path.join(
-        analyze_dir_path, 'sources-root', 'file_path')
+    file_to_analyze_path = os.path.join(sources_root_path, 'file_path')
 
     with open(file_to_analyze_path) as read_in_file:
         try:
@@ -81,7 +102,34 @@ def preAnalyze(analyze_id, part_number, workspace):
         except Exception:
             REDIS_DATABASE.hset(analyze_id, 'state',
                                 AnalyzeStatus.PREANALYZE_FAILED.name)
-            LOGGER.error("Failed to read in file path.")
+            LOGGER.error('Failed to read in file path.')
+
+    skipped_file_list_path = os.path.join(
+        sources_root_path, 'skipped_file_list')
+
+    with open(skipped_file_list_path) as read_in_skipped_file_list:
+        try:
+            skipped_file_list = read_in_skipped_file_list.readline()
+        except Exception:
+            REDIS_DATABASE.hset(analyze_id, 'state',
+                                AnalyzeStatus.PREANALYZE_FAILED.name)
+            LOGGER.error('Failed to read in skipped file list.')
+
+    skipped_file_list = json.loads(skipped_file_list)
+
+    for file_path in skipped_file_list:
+        LOGGER.info('Restore file to %s' % file_path)
+        LOGGER.info(analyze_dir_path)
+        LOGGER.info(os.path.join(analyze_dir_path, file_path))
+        if not os.path.exists(os.path.dirname(file_path)):
+            try:
+                os.makedirs(os.path.dirname(file_path))
+            except OSError:
+                LOGGER.error('Failed to create directories.')
+
+        with open(os.path.join(analyze_dir_path, file_path), 'wb+') as file_to_write_out:
+            file_to_write_out.write(
+                REDIS_DATABASE.get(skipped_file_list[file_path]))
 
     return analyze_dir_path, build_command, read_in_file_path
 
@@ -107,7 +155,7 @@ def analyze(analyze_id, analyze_dir_path, build_command, read_in_file_path):
     command.append("-o")
     command.append("%s" % os.path.join(analyze_dir_path, 'output'))
 
-    LOGGER.debug("CodeChecker command: %s" % command)
+    LOGGER.debug('CodeChecker command: %s' % command)
 
     REDIS_DATABASE.hset(analyze_id, 'state',
                         AnalyzeStatus.ANALYZE_IN_PROGRESS.name)
@@ -120,7 +168,7 @@ def analyze(analyze_id, analyze_dir_path, build_command, read_in_file_path):
     stdout, stderr = process.communicate()
     returncode = process.wait()
 
-    LOGGER.debug("Command output: \n%s" % stdout)
+    LOGGER.debug('Command output: \n%s' % stdout)
 
     with open("stdout", "w") as text_file:
         text_file.write(stdout)
@@ -129,12 +177,12 @@ def analyze(analyze_id, analyze_dir_path, build_command, read_in_file_path):
         REDIS_DATABASE.hset(analyze_id, 'state',
                             AnalyzeStatus.ANALYZE_FAILED.name)
 
-        LOGGER.debug("Error output: %s" % stderr)
+        LOGGER.debug('Error output: %s' % stderr)
 
         with open("stderr", "w") as text_file:
             text_file.write(stderr)
 
-        LOGGER.debug("Return code: %s" % returncode)
+        LOGGER.debug('Return code: %s' % returncode)
 
         with open("returncode", "w") as text_file:
             text_file.write(str(returncode))
@@ -187,22 +235,23 @@ def main():
 
     def check_queue():
         scheduler.enter(10, 1, check_queue, ())
-        LOGGER.info("Check task queue in Redis.")
+        LOGGER.info('Check task queue in Redis.')
         tasks = REDIS_DATABASE.lrange('ANALYSES_QUEUE', 0, -1)
 
         task = REDIS_DATABASE.lpop('ANALYSES_QUEUE')
 
         if task is not None:
             LOGGER.info(
-                "Got a task: %s, starting analyze it, leftover tasks %s" % (task, len(tasks)))
+                'Got a task: %s, starting analyze it, leftover tasks %s' % (task, len(tasks)))
             analyze_id, part_number = str(task).split('-')
+
             try:
                 analyze_dir_path, build_command, file_to_analyze_path = preAnalyze(
-                    analyze_id, part_number, args.workspace)
+                        analyze_id, part_number, args.workspace)
             except Exception:
                 REDIS_DATABASE.hset(analyze_id, 'state',
                                     AnalyzeStatus.PREANALYZE_FAILED.name)
-                LOGGER.error("Failed pre-analyze step to read in file path.")
+                LOGGER.error('Failed pre-analyze step to read in file path.')
 
             try:
                 analyze(analyze_id, analyze_dir_path,
@@ -210,17 +259,17 @@ def main():
             except Exception:
                 REDIS_DATABASE.hset(analyze_id, 'state',
                                     AnalyzeStatus.ANALYZE_FAILED.name)
-                LOGGER.error("Failed to read in file path.")
+                LOGGER.error('Failed to read in file path.')
 
             try:
                 postAnalyze(analyze_id, part_number, args.workspace)
             except Exception:
                 REDIS_DATABASE.hset(analyze_id, 'state',
                                     AnalyzeStatus.PREANALYZE_FAILED.name)
-                LOGGER.error("Failed to read in file path.")
+                LOGGER.error('Failed to read in file path.')
 
         else:
-            LOGGER.info("No task.")
+            LOGGER.info('No task.')
 
     def schedule():
         # check analyses queue in every 10 seconds
