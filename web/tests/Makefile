@@ -26,19 +26,19 @@ test_novenv: pycodestyle pylint test_unit_novenv test_functional_novenv
 
 PYCODESTYLE_TEST_CMD = pycodestyle \
   --exclude=server/codechecker_server/migrations \
-  bin cmd codechecker_web tests \
-  client/bin client/codechecker_client client/cmd \
-  server/bin server/codechecker_server server/cmd server/tests \
+  bin codechecker_web tests \
+  client/bin client/codechecker_client \
+  server/bin server/codechecker_server server/tests \
   tests
 
 pycodestyle: venv_dev
 	$(ACTIVATE_DEV_VENV) && $(PYCODESTYLE_TEST_CMD)
 
-PYLINT_TEST_CMD = pylint bin/codechecker-web-version cmd/web_version.py \
+PYLINT_TEST_CMD = pylint bin/codechecker-web-version \
   codechecker_web \
-  client/cmd/cmd.py client/cmd/store.py client/codechecker_client \
-  server/bin/codechecker-server server/cmd/server.py \
-  server/codechecker_server server/tests/unit \
+  client/bin/codechecker-cmd client/bin/codechecker-store \
+  client/codechecker_client \
+  server/bin/codechecker-server server/codechecker_server server/tests/unit \
 	--rcfile=$(ROOT)/.pylintrc \
   --disable=all \
   --enable=logging-format-interpolation,old-style-class

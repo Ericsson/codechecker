@@ -63,7 +63,7 @@ def main(args):
 
     has_analyzer_version = False
     try:
-        from libcodechecker.libhandlers import analyzer_version
+        from codechecker_analyzer.cmd import analyzer_version
         has_analyzer_version = True
 
         # Print analyzer version information.
@@ -73,13 +73,13 @@ def main(args):
         pass
 
     try:
-        from libcodechecker.libhandlers import webserver_version
+        from codechecker_web.cmd import web_version
 
         if has_analyzer_version:
             print()  # Print a new line to separate version information.
 
         # Print web server version information.
-        print("CodeChecker web server version:")
-        webserver_version.print_version(output_format)
+        print("CodeChecker web version:")
+        web_version.print_version(output_format)
     except Exception:
         pass

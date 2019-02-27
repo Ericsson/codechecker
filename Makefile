@@ -69,13 +69,9 @@ package: clean_package build_dir gen-docs thrift userguide build_plist_to_html b
 	mkdir -p $(CC_BUILD_LIBCC_DIR) && \
 	mkdir -p $(CC_BUILD_LIB_DIR)/codechecker && \
 	cp -r $(ROOT)/libcodechecker/* $(CC_BUILD_LIBCC_DIR) && \
-	cp -r $(CC_ANALYZER)/cmd/* $(CC_BUILD_LIBCC_DIR)/libhandlers && \
 	cp -r $(CC_ANALYZER)/codechecker_analyzer $(CC_BUILD_LIB_DIR) && \
 	cp -r $(CC_WEB)/codechecker_web $(CC_BUILD_LIB_DIR) && \
-	cp -r $(CC_WEB)/cmd/* $(CC_BUILD_LIBCC_DIR)/libhandlers && \
-	cp -r $(CC_SERVER)/cmd/* $(CC_BUILD_LIBCC_DIR)/libhandlers && \
 	cp -r $(CC_SERVER)/codechecker_server $(CC_BUILD_LIB_DIR) && \
-	cp -r $(CC_CLIENT)/cmd/* $(CC_BUILD_LIBCC_DIR)/libhandlers && \
 	cp -r $(CC_CLIENT)/codechecker_client $(CC_BUILD_LIB_DIR)
 
 	# Copy sub-commands.
@@ -93,11 +89,11 @@ package: clean_package build_dir gen-docs thrift userguide build_plist_to_html b
 	./scripts/build/extend_version_file.py -r $(ROOT) -b $(BUILD_DIR) && \
 	mkdir -p $(CC_BUILD_DIR)/cc_bin && \
 	./scripts/build/create_commands.py -b $(BUILD_DIR) \
-		$(ROOT)/bin \
-		$(CC_WEB)/bin \
-		$(CC_SERVER)/bin \
-		$(CC_CLIENT)/bin \
-		$(CC_ANALYZER)/bin
+		$(ROOT)/bin:libcodechecker/cmd \
+		$(CC_WEB)/bin:codechecker_web/cmd \
+		$(CC_SERVER)/bin:codechecker_server/cmd \
+		$(CC_CLIENT)/bin:codechecker_client/cmd \
+		$(CC_ANALYZER)/bin:codechecker_analyzer/cmd
 
 	# Copy web client files.
 	mkdir -p $(CC_BUILD_WEB_DIR) && \
