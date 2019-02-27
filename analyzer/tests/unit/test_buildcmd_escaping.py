@@ -19,9 +19,9 @@ try:
 except ImportError:
     from io import BytesIO as StringIO
 
-from codechecker.analyze.analyzers import analyzer_base
-from codechecker.buildlog import build_manager
-from codechecker.buildlog import log_parser
+from codechecker_analyzer.analyzers import analyzer_base
+from codechecker_analyzer.buildlog import build_manager
+from codechecker_analyzer.buildlog import log_parser
 
 
 class BuildCmdTestNose(unittest.TestCase):

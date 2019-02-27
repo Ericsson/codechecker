@@ -11,7 +11,7 @@ from __future__ import absolute_import
 
 import unittest
 
-from codechecker.analyze import statistics_collector
+from codechecker_analyzer import statistics_collector
 
 
 class statistics_collectorsTest(unittest.TestCase):

@@ -12,7 +12,7 @@ from __future__ import absolute_import
 import os
 import unittest
 
-from codechecker.buildlog import log_parser
+from codechecker_analyzer.buildlog import log_parser
 
 from libcodechecker.util import load_json_or_empty
 

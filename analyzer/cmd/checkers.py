@@ -13,9 +13,9 @@ from __future__ import absolute_import
 import argparse
 import os
 
-from codechecker.analyze.analyzers import analyzer_types
+from codechecker_analyzer import analyzer_context
+from codechecker_analyzer.analyzers import analyzer_types
 
-from codechecker import analyzer_context
 from libcodechecker import logger
 from libcodechecker import output_formatters
 from libcodechecker.env import get_check_env

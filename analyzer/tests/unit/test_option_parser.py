@@ -11,8 +11,8 @@ from __future__ import absolute_import
 
 import unittest
 
-from codechecker.buildlog import log_parser
-from codechecker.buildlog.build_action import BuildAction
+from codechecker_analyzer.buildlog import log_parser
+from codechecker_analyzer.buildlog.build_action import BuildAction
 
 
 class OptionParserTest(unittest.TestCase):

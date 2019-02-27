@@ -16,10 +16,9 @@ import os
 import shutil
 import sys
 
-from codechecker.analyze import analyzer
-from codechecker.analyze.analyzers import analyzer_types
-from codechecker.buildlog import log_parser
-from codechecker import analyzer_context
+from codechecker_analyzer import analyzer, analyzer_context
+from codechecker_analyzer.analyzers import analyzer_types
+from codechecker_analyzer.buildlog import log_parser
 
 from libcodechecker import logger
 from libcodechecker import skiplist_handler

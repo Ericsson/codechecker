@@ -13,7 +13,7 @@ from __future__ import absolute_import
 import shlex
 import unittest
 
-from codechecker.analyze import gcc_toolchain
+from codechecker_analyzer import gcc_toolchain
 
 
 class GCCToolchainTest(unittest.TestCase):

@@ -17,10 +17,10 @@ from __future__ import absolute_import
 import argparse
 import os
 
-from codechecker.buildlog import build_manager
-from codechecker.buildlog.host_check import check_intercept
+from codechecker_analyzer import analyzer_context
+from codechecker_analyzer.buildlog import build_manager
+from codechecker_analyzer.buildlog.host_check import check_intercept
 
-from codechecker import analyzer_context
 from libcodechecker import logger
 
 

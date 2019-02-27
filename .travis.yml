@@ -120,7 +120,7 @@ script:
           make -C analyzer test_build_logger
         fi
       elif [[ ! -z "$DATABASE" ]]; then
-        make -C webserver test_matrix_${DATABASE};
+        make -C web test_matrix_${DATABASE};
       else
         make test;
       fi
