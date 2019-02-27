@@ -53,4 +53,4 @@ test_build_logger:
 
 test_tu_collector:
 	$(ACTIVATE_DEV_VENV) && \
-	$(REPO_ROOT) make -C $(ROOT)/vendor/tu_collector test
+	$(REPO_ROOT) make -C $(ROOT)/tools/tu_collector test

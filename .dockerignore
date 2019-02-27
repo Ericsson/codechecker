@@ -6,7 +6,7 @@ Makefile.local
 # external sources
 vendor/*
 !analyzer/tools/build-logger
-!vendor/plist_to_html
+!tools/plist_to_html
 
 # build-logger build dir
 analyzer/tools/build-logger/build/

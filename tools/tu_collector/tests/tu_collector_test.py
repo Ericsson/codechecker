@@ -27,7 +27,7 @@ class TUCollectorTest(unittest.TestCase):
         PKG_ROOT = os.path.join(os.environ['REPO_ROOT'],
                                 'build', 'CodeChecker')
         TU_COLLECTOR_DIR = os.path.join(os.environ['REPO_ROOT'],
-                                        'vendor', 'tu_collector')
+                                        'tools', 'tu_collector')
 
         self._codechecker_cmd = os.path.join(PKG_ROOT, 'bin', 'CodeChecker')
         self._test_proj_dir = os.path.join(TU_COLLECTOR_DIR,

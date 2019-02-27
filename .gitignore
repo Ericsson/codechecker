@@ -7,17 +7,15 @@ venv
 venv_dev
 Makefile.local
 
+# tools
+tools/plist_to_html/build
+tools/tu_collector/build
+
 # external sources
-vendor/*
-!analyzer/tools/build-logger
-!vendor/plist_to_html
-!vendor/Makefile
-!vendor/Makefile
 web/server/vendor/*
 !web/server/vendor/Makefile
 
-
-# build-logger build dir
+# build-logger
 analyzer/tools/build-logger/build/
 
 # doxygen generated files
