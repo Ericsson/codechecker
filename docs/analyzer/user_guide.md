@@ -79,13 +79,13 @@ subcommand.
 ```
 usage: CodeChecker check [-h] [-o OUTPUT_DIR] [-t {plist}] [-q] [-f]
                          (-b COMMAND | -l LOGFILE) [-j JOBS] [-c]
+                         [--compile-uniqueing COMPILE_UNIQUEING]
                          [--report-hash {context-free}] [-i SKIPFILE]
                          [--analyzers ANALYZER [ANALYZER ...]]
                          [--add-compiler-defaults] [--capture-analysis-output]
                          [--saargs CLANGSA_ARGS_CFG_FILE]
                          [--tidyargs TIDY_ARGS_CFG_FILE]
                          [--tidy-config TIDY_CONFIG] [--timeout TIMEOUT]
-                         [--ctu | --ctu-collect | --ctu-analyze]
                          [-e checker/group/profile] [-d checker/group/profile]
                          [--enable-all] [--print-steps]
                          [--verbose {info,debug,debug_analyzer}]
@@ -95,7 +95,7 @@ output. Check only needs a build command or an already existing logfile and
 performs every step of doing the analysis in batch.
 
 optional arguments:
-  -h, --help
+  -h, --help            show this help message and exit
   -o OUTPUT_DIR, --output OUTPUT_DIR
                         Store the analysis output in the given folder. If it
                         is not given then the results go into a temporary
@@ -112,55 +112,141 @@ optional arguments:
                         files not affected by the analysis, and only
                         incrementally update defect reports for source files
                         that were analysed.)
+  --compile-uniqueing COMPILE_UNIQUEING
+                        Specify the method the compilation actions in the
+                        compilation database are uniqued before analysis. CTU
+                        analysis works properly only if there is exactly one
+                        compilation action per source file. none(default in
+                        non CTU mode): no uniqueing is done. strict: no
+                        uniqueing is done, and an error is given if there is
+                        more than one compilation action for a source file.
+                        alpha(default in CTU mode): If there is more than one
+                        compilation action for a source file, only the one is
+                        kept that belongs to the alphabetically first
+                        compilation target. If none of the above given, this
+                        parameter should be a python regular expression.If
+                        there is more than one compilation action for a
+                        source, only the one is kept which matches the given
+                        python regex. If more than one matches an error is
+                        given. The whole compilation action text is searched
+                        for match. (default: none)
   --verbose {info,debug,debug_analyzer}
+                        Set verbosity level.
 
 log arguments:
+  
+  Specify how the build information database should be obtained. You need to
+  specify either an already existing log file, or a build command which will be
+  used to generate a log file on the fly.
 
   -b COMMAND, --build COMMAND
+                        Execute and record a build command. Build commands can
+                        be simple calls to 'g++' or 'clang++' or 'make', but a
+                        more complex command, or the call of a custom script
+                        file is also supported.
   -l LOGFILE, --logfile LOGFILE
+                        Use an already existing JSON compilation command
+                        database file specified at this path.
 
 analyzer arguments:
-
-  -j JOBS, --jobs JOBS
-  -c, --clean
+  -j JOBS, --jobs JOBS  Number of threads to use in analysis. More threads
+                        mean faster analysis at the cost of using more memory.
+                        (default: 1)
+  -c, --clean           Delete analysis reports stored in the output
+                        directory. (By default, CodeChecker would keep reports
+                        and overwrites only those files that were update by
+                        the current build command).
   --report-hash {context-free}
+                        EXPERIMENTAL feature. Specify the hash calculation
+                        method for reports. If this option is not set, the
+                        default calculation method for Clang Static Analyzer
+                        will be context sensitive and for Clang Tidy it will
+                        be context insensitive. If this option is set to
+                        'context-free' bugs will be identified with the
+                        CodeChecker generated context free hash for every
+                        analyzers. USE WISELY AND AT YOUR OWN RISK!
   -i SKIPFILE, --ignore SKIPFILE, --skip SKIPFILE
+                        Path to the Skipfile dictating which project files
+                        should be omitted from analysis. Please consult the
+                        User guide on how a Skipfile should be laid out.
   --analyzers ANALYZER [ANALYZER ...]
+                        Run analysis only with the analyzers specified.
+                        Currently supported analyzers are: clangsa, clang-
+                        tidy.
   --add-compiler-defaults
+                        DEPRECATED. Always True. Retrieve compiler-specific
+                        configuration from the analyzers themselves, and use
+                        them with Clang. This is used when the compiler on the
+                        system is special, e.g. when doing cross-compilation.
   --capture-analysis-output
+                        Store standard output and standard error of successful
+                        analyzer invocations into the '<OUTPUT_DIR>/success'
+                        directory.
   --saargs CLANGSA_ARGS_CFG_FILE
+                        File containing argument which will be forwarded
+                        verbatim for the Clang Static analyzer.
   --tidyargs TIDY_ARGS_CFG_FILE
+                        File containing argument which will be forwarded
+                        verbatim for the Clang-Tidy analyzer.
   --tidy-config TIDY_CONFIG
-  --timeout TIMEOUT
-
-cross translation unit analysis arguments:
-  These arguments are only available if the Clang Static Analyzer supports
-  Cross-TU analysis. By default, no CTU analysis is run when 'CodeChecker
-  analyze' is called.
-
-  --ctu, --ctu-all
-  --ctu-collect
-  --ctu-analyze
-  --ctu-on-the-fly
-
-statistical analysis arguments:
-  This is an EXPERIMENTAL feature.These arguments are only available if the Clang Static Analyzer supports
-  Statistical analysis. By default, no Statistical analysis is run when 'CodeChecker
-  analyze' is called.
-
-  --stats
-  --stats-collect
-  --stats-use
-  --stats-min-sample-count
-  --stats-relevance-threshold
+                        A file in YAML format containing the configuration of
+                        clang-tidy checkers. The file can be dumped by
+                        'CodeChecker analyzers --dump-config clang-tidy'
+                        command.
+  --timeout TIMEOUT     The amount of time (in seconds) that each analyzer can
+                        spend, individually, to analyze the project. If the
+                        analysis of a particular file takes longer than this
+                        time, the analyzer is killed and the analysis is
+                        considered as a failed one.
 
 checker configuration:
+  
+  Checkers
+  ------------------------------------------------
+  The analyzer performs checks that are categorized into families or "checkers".
+  See 'CodeChecker checkers' for the list of available checkers. You can
+  fine-tune which checkers to use in the analysis by setting the enabled and
+  disabled flags starting from the bigger groups and going inwards, e.g.
+  '-e core -d core.uninitialized -e core.uninitialized.Assign' will enable every
+  'core' checker, but only 'core.uninitialized.Assign' from the
+  'core.uninitialized' group. Please consult the manual for details. Disabling
+  certain checkers - such as the 'core' group - is unsupported by the LLVM/Clang
+  community, and thus discouraged.
+  
+  Compiler warnings
+  ------------------------------------------------
+  Compiler warnings are diagnostic messages that report constructions that are
+  not inherently erroneous but that are risky or suggest there may have been an
+  error. Compiler warnings are named 'clang-diagnostic-<warning-option>', e.g.
+  Clang warning controlled by '-Wliteral-conversion' will be reported with check
+  name 'clang-diagnostic-literal-conversion'. You can fine-tune which warnings to
+  use in the analysis by setting the enabled and disabled flags starting from the
+  bigger groups and going inwards, e.g. '-e Wunused -d Wno-unused-parameter' will
+  enable every 'unused' warnings except 'unused-parameter'. These flags should
+  start with a capital 'W' or 'Wno-' prefix followed by the waning name (E.g.:
+  '-e Wliteral-conversion', '-d Wno-literal-conversion'). By default '-Wall' and
+  '-Wextra' warnings are enabled. For more information see:
+  https://clang.llvm.org/docs/DiagnosticsReference.html.
 
   -e checker/group/profile, --enable checker/group/profile
+                        Set a checker (or checker group) to BE USED in the
+                        analysis.
   -d checker/group/profile, --disable checker/group/profile
+                        Set a checker (or checker group) to BE PROHIBITED from
+                        use in the analysis.
+  --enable-all          Force the running analyzers to use almost every
+                        checker available. The checker groups 'alpha.',
+                        'debug.' and 'osx.' (on Linux) are NOT enabled
+                        automatically and must be EXPLICITLY specified.
+                        WARNING! Enabling all checkers might result in the
+                        analysis losing precision and stability, and could
+                        even result in a total failure of the analysis. USE
+                        WISELY AND AT YOUR OWN RISK!
 
 output arguments:
-  --print-steps
+  --print-steps         Print the steps the analyzers took in finding the
+                        reported defect.
+
 ```
 
 # Available CodeChecker analyzer subcommands <a name="available-analyzer-commands"></a>
@@ -279,6 +365,7 @@ below:
 ```
 usage: CodeChecker analyze [-h] [-j JOBS] [-i SKIPFILE] -o OUTPUT_PATH
                            [-t {plist}] [-q] [-c]
+                           [--compile-uniqueing COMPILE_UNIQUEING]
                            [--report-hash {context-free}] [-n NAME]
                            [--analyzers ANALYZER [ANALYZER ...]]
                            [--add-compiler-defaults]
@@ -286,8 +373,6 @@ usage: CodeChecker analyze [-h] [-j JOBS] [-i SKIPFILE] -o OUTPUT_PATH
                            [--saargs CLANGSA_ARGS_CFG_FILE]
                            [--tidyargs TIDY_ARGS_CFG_FILE]
                            [--tidy-config TIDY_CONFIG] [--timeout TIMEOUT]
-                           [--ctu | --ctu-collect | --ctu-analyze]
-                           [--ctu-reanalyze-on-failure]
                            [-e checker/group/profile]
                            [-d checker/group/profile] [--enable-all]
                            [--verbose {info,debug,debug_analyzer}]
@@ -322,7 +407,25 @@ optional arguments:
                         directory. (By default, CodeChecker would keep reports
                         and overwrites only those files that were update by
                         the current build command).
- --report-hash {context-free}
+  --compile-uniqueing COMPILE_UNIQUEING
+                        Specify the method the compilation actions in the
+                        compilation database are uniqued before analysis. CTU
+                        analysis works properly only if there is exactly one
+                        compilation action per source file. none(default in
+                        non CTU mode): no uniqueing is done. strict: no
+                        uniqueing is done, and an error is given if there is
+                        more than one compilation action for a source file.
+                        alpha(default in CTU mode): If there is more than one
+                        compilation action for a source file, only the one is
+                        kept that belongs to the alphabetically first
+                        compilation target. If none of the above given, this
+                        parameter should be a python regular expression.If
+                        there is more than one compilation action for a
+                        source, only the one is kept which matches the given
+                        python regex. If more than one matches an error is
+                        given. The whole compilation action text is searched
+                        for match. (default: none)
+  --report-hash {context-free}
                         EXPERIMENTAL feature. Specify the hash calculation
                         method for reports. If this option is not set, the
                         default calculation method for Clang Static Analyzer
