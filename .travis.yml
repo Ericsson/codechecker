@@ -94,6 +94,17 @@ install:
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then update-alternatives --display clang; fi
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then update-alternatives --display clang-tidy; fi
 
+# Run brew cleanup at before_cache stage otherwise, the cache will grow
+# indefinitely as new package versions are released.
+before_cache:
+  - brew cleanup
+
+# Cache downloaded bottles (binary packages) to speed up our build process.
+# See: https://stackoverflow.com/questions/39930171/cache-brew-builds-with-travis-ci
+cache:
+  directories:
+    - $HOME/Library/Caches/Homebrew
+
 addons:
     apt:
         sources:
