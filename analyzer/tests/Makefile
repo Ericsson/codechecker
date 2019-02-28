@@ -49,8 +49,8 @@ test_functional_novenv:
 	$(FUNCTIONAL_TEST_CMD)
 
 test_build_logger:
-	make -C $(ROOT)/vendor/build-logger -f Makefile.manual test
+	make -C tools/build-logger -f Makefile.manual test
 
 test_tu_collector:
 	$(ACTIVATE_DEV_VENV) && \
-	$(REPO_ROOT) make -C $(ROOT)/vendor/tu_collector test
+	$(REPO_ROOT) make -C $(ROOT)/tools/tu_collector test

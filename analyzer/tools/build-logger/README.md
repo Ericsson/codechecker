@@ -7,7 +7,6 @@ This tool can capture the build process and generate a
 
 To build the project execute
 ~~~~~~~
-cd vendor/build-logger
 make -f Makefile.manual
 ~~~~~~~
 

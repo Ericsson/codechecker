@@ -50,13 +50,13 @@ package: clean_package build_dir gen-docs thrift userguide build_plist_to_html b
 	mkdir -p $(CC_BUILD_PLUGIN_DIR)
 
 	# Copy plist-to-html files.
-	cp -r $(ROOT)/vendor/plist_to_html/plist_to_html $(CC_BUILD_LIB_DIR) && \
-	cp -r $(ROOT)/vendor/plist_to_html/build $(CC_BUILD_DIR)/plist_to_html && \
+	cp -r $(ROOT)/tools/plist_to_html/plist_to_html $(CC_BUILD_LIB_DIR) && \
+	cp -r $(ROOT)/tools/plist_to_html/build $(CC_BUILD_DIR)/plist_to_html && \
 	ln -s $(CC_BUILD_DIR)/plist_to_html/bin/plist-to-html $(CC_BUILD_DIR)/bin/plist-to-html
 
 	# Copy tu_collector files.
-	cp -r $(ROOT)/vendor/tu_collector/tu_collector $(CC_BUILD_LIB_DIR) && \
-	cp -r $(ROOT)/vendor/tu_collector/build $(CC_BUILD_DIR)/tu_collector && \
+	cp -r $(ROOT)/tools/tu_collector/tu_collector $(CC_BUILD_LIB_DIR) && \
+	cp -r $(ROOT)/tools/tu_collector/build $(CC_BUILD_DIR)/tu_collector && \
 	ln -s $(CC_BUILD_DIR)/tu_collector/bin/tu-collector $(CC_BUILD_DIR)/bin/tu-collector
 
 	# Copy generated thrift files.
@@ -69,13 +69,9 @@ package: clean_package build_dir gen-docs thrift userguide build_plist_to_html b
 	mkdir -p $(CC_BUILD_LIBCC_DIR) && \
 	mkdir -p $(CC_BUILD_LIB_DIR)/codechecker && \
 	cp -r $(ROOT)/libcodechecker/* $(CC_BUILD_LIBCC_DIR) && \
-	cp -r $(CC_ANALYZER)/cmd/* $(CC_BUILD_LIBCC_DIR)/libhandlers && \
 	cp -r $(CC_ANALYZER)/codechecker_analyzer $(CC_BUILD_LIB_DIR) && \
 	cp -r $(CC_WEB)/codechecker_web $(CC_BUILD_LIB_DIR) && \
-	cp -r $(CC_WEB)/cmd/* $(CC_BUILD_LIBCC_DIR)/libhandlers && \
-	cp -r $(CC_SERVER)/cmd/* $(CC_BUILD_LIBCC_DIR)/libhandlers && \
 	cp -r $(CC_SERVER)/codechecker_server $(CC_BUILD_LIB_DIR) && \
-	cp -r $(CC_CLIENT)/cmd/* $(CC_BUILD_LIBCC_DIR)/libhandlers && \
 	cp -r $(CC_CLIENT)/codechecker_client $(CC_BUILD_LIB_DIR)
 
 	# Copy sub-commands.
@@ -93,11 +89,11 @@ package: clean_package build_dir gen-docs thrift userguide build_plist_to_html b
 	./scripts/build/extend_version_file.py -r $(ROOT) -b $(BUILD_DIR) && \
 	mkdir -p $(CC_BUILD_DIR)/cc_bin && \
 	./scripts/build/create_commands.py -b $(BUILD_DIR) \
-		$(ROOT)/bin \
-		$(CC_WEB)/bin \
-		$(CC_SERVER)/bin \
-		$(CC_CLIENT)/bin \
-		$(CC_ANALYZER)/bin
+		$(ROOT)/bin:libcodechecker/cmd \
+		$(CC_WEB)/bin:codechecker_web/cmd \
+		$(CC_SERVER)/bin:codechecker_server/cmd \
+		$(CC_CLIENT)/bin:codechecker_client/cmd \
+		$(CC_ANALYZER)/bin:codechecker_analyzer/cmd
 
 	# Copy web client files.
 	mkdir -p $(CC_BUILD_WEB_DIR) && \
@@ -114,17 +110,17 @@ package: clean_package build_dir gen-docs thrift userguide build_plist_to_html b
 package_ld_logger:
 	mkdir -p $(CC_BUILD_DIR)/ld_logger && \
 	mkdir -p $(CC_BUILD_DIR)/bin && \
-	cp -r vendor/build-logger/build/* $(CC_BUILD_DIR)/ld_logger && \
+	cp -r $(CC_ANALYZER)/tools/build-logger/build/* $(CC_BUILD_DIR)/ld_logger && \
 	ln -s $(CC_BUILD_DIR)/ld_logger/bin/ldlogger $(CC_BUILD_DIR)/bin/ldlogger
 
 build_ld_logger:
-	$(MAKE) -C vendor/build-logger -f Makefile.manual 2> /dev/null
+	$(MAKE) -C $(CC_ANALYZER)/tools/build-logger -f Makefile.manual 2> /dev/null
 
 build_ld_logger_x86:
-	$(MAKE) -C vendor/build-logger -f Makefile.manual pack32bit 2> /dev/null
+	$(MAKE) -C $(CC_ANALYZER)/tools/build-logger -f Makefile.manual pack32bit 2> /dev/null
 
 build_ld_logger_x64:
-	$(MAKE) -C vendor/build-logger -f Makefile.manual pack64bit 2> /dev/null
+	$(MAKE) -C $(CC_ANALYZER)/tools/build-logger -f Makefile.manual pack64bit 2> /dev/null
 
 # NOTE: extra spaces are allowed and ignored at the beginning of the
 # conditional directive line, but a tab is not allowed.
@@ -158,10 +154,10 @@ build_dir:
 	mkdir -p $(BUILD_DIR)
 
 build_plist_to_html:
-	$(MAKE) -C vendor/plist_to_html
+	$(MAKE) -C tools/plist_to_html
 
 build_tu_collector:
-	$(MAKE) -C vendor/tu_collector
+	$(MAKE) -C tools/tu_collector
 
 venv:
 	# Create a virtual environment which can be used to run the build package.
@@ -206,10 +202,10 @@ clean_userguide:
 	rm -rf www/userguide/gen-docs
 
 clean_plist_to_html:
-	rm -rf vendor/plist_to_html/build
+	rm -rf tools/plist_to_html/build
 
 clean_tu_collector:
-	rm -rf vendor/tu_collector/build
+	rm -rf tools/tu_collector/build
 
 clean_travis:
 	# Clean CodeChecker config files stored in the users home directory.

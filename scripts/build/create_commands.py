@@ -18,7 +18,7 @@ LOG.setLevel(logging.INFO)
 LOG.addHandler(log_handler)
 
 
-def copy_entry_points(input_dirs, build_dir):
+def copy_entry_points(input_data, build_dir):
     """
     Copy CodeChecker entry point sub-commands.
     """
@@ -26,8 +26,11 @@ def copy_entry_points(input_dirs, build_dir):
     package_bin = os.path.join(package_root, 'bin')
     target_cc = os.path.join(package_root, 'cc_bin')
 
-    available_commands = []
-    for input_dir in input_dirs:
+    available_commands = {}
+    for i in input_data:
+        module_name = i.split(':')[1]
+        input_dir = i.split(':')[0]
+
         for input_file in glob.glob(os.path.join(input_dir, '*')):
             file_name = os.path.basename(input_file)
             if not file_name.endswith(".py"):
@@ -36,7 +39,10 @@ def copy_entry_points(input_dirs, build_dir):
                 # entry points.
                 if file_name.startswith("codechecker-"):
                     command_name = file_name.replace("codechecker-", "")
-                    available_commands.append(command_name)
+
+                    file_name = command_name.replace('-', '_')
+                    module_path = module_name + '/' + file_name + '.py'
+                    available_commands[command_name] = module_path
 
                     skip_content = "# DO_NOT_INSTALL_TO_PATH"
                     with open(input_file, 'r') as file:
@@ -57,11 +63,9 @@ def copy_entry_points(input_dirs, build_dir):
                 # .py files are Python code that must run in a valid env.
                 shutil.copy2(input_file, target_cc)
 
-    available_commands.sort()
-
     commands_json = os.path.join(target_cc, 'commands.json')
     with open(commands_json, 'w') as commands:
-        json.dump(available_commands, commands, sort_keys=True)
+        json.dump(available_commands, commands, sort_keys=True, indent=2)
 
 
 if __name__ == "__main__":
@@ -76,7 +80,10 @@ if __name__ == "__main__":
                         nargs='+',
                         metavar='folder',
                         help="List of directories which contains CodeChecker "
-                              "sub-commands")
+                             "sub-commands. The format of sub-commands is: "
+                             "<sub-command-name>:<module-name>, where "
+                             "<module-name> is the module where the "
+                             "sub-command can be found.")
 
     parser.add_argument('-b', '--build-dir',
                         required=True,

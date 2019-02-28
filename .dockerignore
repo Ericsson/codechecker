@@ -5,11 +5,11 @@ Makefile.local
 
 # external sources
 vendor/*
-!vendor/build-logger
-!vendor/plist_to_html
+!analyzer/tools/build-logger
+!tools/plist_to_html
 
 # build-logger build dir
-vendor/build-logger/build/
+analyzer/tools/build-logger/build/
 
 # doxygen generated files
 gen-docs/

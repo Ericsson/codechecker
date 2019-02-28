@@ -21,7 +21,6 @@ from codechecker_analyzer import analyzer_context
 from codechecker_analyzer.analyzers import analyzer_types
 
 from libcodechecker import logger
-from libcodechecker import libhandlers
 from libcodechecker.util import RawDescriptionDefaultHelpFormatter
 
 LOG = logger.get_logger('system')
@@ -484,16 +483,6 @@ def main(args):
 
     logger.setup_logger(args.verbose if 'verbose' in args else None)
 
-    def __load_module(name):
-        """Loads the given subcommand's definition from the libs."""
-        try:
-            module = libhandlers.load_module(name)
-        except ImportError:
-            LOG.error("Couldn't import subcommand '%s'", name)
-            raise
-
-        return module
-
     def __update_if_key_exists(source, target, key):
         """Append the source Namespace's element with 'key' to target with
         the same key, but only if it exists."""
@@ -532,7 +521,7 @@ def main(args):
             __update_if_key_exists(args, log_args, 'quiet')
             __update_if_key_exists(args, log_args, 'verbose')
 
-            log_module = __load_module('log')
+            import codechecker_analyzer.cmd.log as log_module
             LOG.debug("Calling LOG with args:")
             LOG.debug(log_args)
 
@@ -579,7 +568,7 @@ def main(args):
             setattr(analyze_args, 'clean', True)
         __update_if_key_exists(args, analyze_args, 'verbose')
 
-        analyze_module = __load_module('analyze')
+        import codechecker_analyzer.cmd.analyze as analyze_module
         LOG.debug("Calling ANALYZE with args:")
         LOG.debug(analyze_args)
 
@@ -594,7 +583,7 @@ def main(args):
         __update_if_key_exists(args, parse_args, 'verbose')
         __update_if_key_exists(args, parse_args, 'skipfile')
 
-        parse_module = __load_module('parse')
+        import codechecker_analyzer.cmd.parse as parse_module
         LOG.debug("Calling PARSE with args:")
         LOG.debug(parse_args)
 

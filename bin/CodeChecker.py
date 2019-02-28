@@ -12,12 +12,39 @@ from __future__ import division
 from __future__ import absolute_import
 
 import argparse
+import imp
 import json
 import os
 import signal
 import sys
 
-from libcodechecker import libhandlers
+
+def add_subcommand(subparsers, sub_cmd, cmd_module_path):
+    """
+    Load the subcommand module and then add the subcommand to the available
+    subcommands in the given subparsers collection.
+
+    subparsers has to be the return value of the add_parsers() method on an
+    argparse.ArgumentParser.
+    """
+    m_path, m_name = os.path.split(cmd_module_path)
+    module_name = os.path.splitext(m_name)[0]
+
+    cc_bin = os.path.dirname(os.path.realpath(__file__))
+    full_module_path = os.path.join(cc_bin, '..', 'lib', 'python2.7', m_path)
+
+    # Load the module named as the argument.
+    cmd_file, cmd_path, cmd_descr = imp.find_module(module_name,
+                                                    [full_module_path])
+    command_module = imp.load_module(module_name,
+                                     cmd_file, cmd_path, cmd_descr)
+
+    # Now that the module is loaded, construct an ArgumentParser for it.
+    sc_parser = subparsers.add_parser(
+        sub_cmd, **command_module.get_argparser_ctor_args())
+
+    # Run the method which adds the arguments to the subcommand's handler.
+    command_module.add_arguments_to_parser(sc_parser)
 
 
 def main(subcommands=None):
@@ -76,12 +103,12 @@ output.
                 if first_command in subcommands:
 
                     # Consider only the given command as an available one.
-                    subcommands = [first_command]
+                    subcommands = {first_command: subcommands[first_command]}
 
             for subcommand in subcommands:
-
                 try:
-                    libhandlers.add_subcommand(subparsers, str(subcommand))
+                    add_subcommand(subparsers, subcommand,
+                                   subcommands[subcommand])
                 except (IOError, ImportError):
                     print("Couldn't import module for subcommand '" +
                           subcommand + "'... ignoring.")
