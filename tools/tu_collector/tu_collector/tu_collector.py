@@ -29,6 +29,15 @@ import sys
 import zipfile
 
 
+LOG = logging.getLogger('tu_collector')
+
+msg_formatter = logging.Formatter('[%(levelname)s] - %(message)s')
+log_handler = logging.StreamHandler()
+log_handler.setFormatter(msg_formatter)
+LOG.setLevel(logging.DEBUG)
+LOG.addHandler(log_handler)
+
+
 def __random_string(l):
     """
     This function returns a random string of ASCII lowercase characters with
@@ -121,6 +130,7 @@ def __gather_dependencies(command, build_dir):
     # For clang it does not change the output, the include paths from
     # the gcc-toolchain are not added to the output.
     command = __eliminate_argument(command, '--gcc-toolchain')
+    LOG.debug(command)
 
     try:
         output = subprocess.check_output(command,
@@ -134,6 +144,8 @@ def __gather_dependencies(command, build_dir):
         output, rc = oerr.strerror, oerr.errno
 
     output = codecs.decode(output, 'utf-8', 'replace')
+    LOG.debug(output)
+
     if rc == 0:
         # Parse 'Makefile' syntax dependency output.
         dependencies = output.replace('__dummy: ', '') \
@@ -169,7 +181,7 @@ def get_dependent_headers(command, build_dir, collect_toolchain=True):
                          are also collected in case this parameter is True.
     """
 
-    logging.debug("Generating dependent headers via compiler...")
+    LOG.debug("Generating dependent headers via compiler...")
 
     if isinstance(command, basestring):
         command = shlex.split(command)
@@ -180,24 +192,25 @@ def get_dependent_headers(command, build_dir, collect_toolchain=True):
     try:
         dependencies |= set(__gather_dependencies(command, build_dir))
     except Exception as ex:
-        logging.debug("Couldn't create dependencies:")
-        logging.debug(str(ex))
+        LOG.debug("Couldn't create dependencies:")
+        LOG.debug(str(ex))
         error += str(ex)
 
     toolchain_compiler = __get_toolchain_compiler(command)
 
     if collect_toolchain and toolchain_compiler:
-        logging.debug("Generating gcc-toolchain headers via toolchain "
-                      "compiler...")
+        LOG.debug("Generating gcc-toolchain headers via toolchain "
+                  "compiler...")
         try:
             # Change the original compiler to the compiler from the toolchain.
             command[0] = toolchain_compiler
             dependencies |= set(__gather_dependencies(command, build_dir))
         except Exception as ex:
-            logging.debug("Couldn't create dependencies:")
-            logging.debug(str(ex))
+            LOG.debug("Couldn't create dependencies:")
+            LOG.debug(str(ex))
             error += str(ex)
 
+    LOG.debug(dependencies)
     return dependencies, error
 
 
@@ -222,8 +235,8 @@ def add_sources_to_zip(zip_file, files):
             except KeyError:
                 archive.write(f, archive_path, zipfile.ZIP_DEFLATED)
             else:
-                logging.debug("'%s' is already in the ZIP file, won't add it "
-                              "again!", f)
+                LOG.debug("'%s' is already in the ZIP file, won't add it "
+                          "again!", f)
 
 
 def zip_tu_files(zip_file, compilation_database, write_mode='w'):
@@ -293,29 +306,47 @@ specify either an already existing log file, or a build command which will be
 used to generate a log file on the fly.""")
     log_args = log_args.add_mutually_exclusive_group(required=True)
 
-    log_args.add_argument('-b', '--build', type=str, dest='command',
+    log_args.add_argument('-b', '--build',
+                          type=str,
+                          dest='command',
                           help="Execute and record a build command. Build "
                                "commands can be simple calls to 'g++' or "
                                "'clang++'.")
-    log_args.add_argument('-l', '--logfile', type=str, dest='logfile',
+
+    log_args.add_argument('-l', '--logfile',
+                          type=str,
+                          dest='logfile',
                           help="Use an already existing JSON compilation "
                                "command database file specified at this path.")
 
-    parser.add_argument('-z', '--zip', dest='zip', type=str, required=True,
+    parser.add_argument('-z', '--zip',
+                        dest='zip',
+                        type=str,
+                        required=True,
                         help="Output ZIP file.")
-    parser.add_argument('-f', '--filter', dest='filter',
-                        type=str, required=False,
+
+    parser.add_argument('-f', '--filter',
+                        dest='filter',
+                        type=str,
+                        required=False,
                         help="This flag restricts the collection on the build "
                              "actions of which the compiled source file "
                              "matches this path. E.g.: /path/to/*/files")
 
+    parser.add_argument('-v', '--verbose',
+                        action='store_true',
+                        dest='verbose',
+                        help="Set verbosity level.")
+
     args = parser.parse_args()
+
+    if 'verbose' in args and args['verbose']:
+        LOG.setLevel(logging.DEBUG)
 
     # --- Checking the existence of input files. --- #
 
     if args.logfile and not os.path.isfile(args.logfile):
-        print("Compilation database file doesn't exist: {}".format(
-            args.logfile))
+        LOG.error("Compilation database file doesn't exist: %s", args.logfile)
         sys.exit(1)
 
     # --- Do the job. --- #
@@ -330,8 +361,8 @@ used to generate a log file on the fly.""")
                 compilation_db)
     else:
         if args.filter:
-            print('Warning: In case of using build command the filter has no '
-                  'effect.')
+            LOG.warnig('Warning: In case of using build command the filter '
+                       'has no effect.')
         compilation_db = [{
             'file': '',
             'command': args.command,
