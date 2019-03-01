@@ -20,9 +20,9 @@ from codechecker_client import cmd_line_client
 from codechecker_client import product_client
 from codechecker_client import source_component_client, token_client
 
-from libcodechecker import logger
-from libcodechecker import output_formatters
-from libcodechecker import util
+from codechecker_common import logger
+from codechecker_common import output_formatters
+from codechecker_common import util
 
 
 DEFAULT_FILTER_VALUES = {

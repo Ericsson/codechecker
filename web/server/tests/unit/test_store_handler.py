@@ -13,8 +13,9 @@ import unittest
 
 from codeCheckerDBAccess_v6 import ttypes
 
+from codechecker_common import plist_parser
+
 from codechecker_server.api import store_handler
-from libcodechecker import plist_parser
 
 
 class StoreHandler(unittest.TestCase):

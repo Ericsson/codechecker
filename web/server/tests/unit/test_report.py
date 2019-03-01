@@ -12,7 +12,7 @@ from __future__ import unicode_literals
 
 import unittest
 
-from libcodechecker.report import remove_whitespace
+from codechecker_common.report import remove_whitespace
 
 
 class RemoveWhitespace(unittest.TestCase):

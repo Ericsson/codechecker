@@ -18,8 +18,8 @@ import signal
 import subprocess
 import time
 
-from libcodechecker.logger import get_logger
-from libcodechecker.env import get_check_env
+from codechecker_common.logger import get_logger
+from codechecker_common.env import get_check_env
 
 from . import analysis_manager, pre_analysis_manager
 from .analyzers import analyzer_types

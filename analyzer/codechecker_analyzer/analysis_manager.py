@@ -19,10 +19,11 @@ import sys
 import traceback
 import zipfile
 
-from libcodechecker import util, plist_parser
-from libcodechecker.env import get_check_env
-from libcodechecker.logger import get_logger
 from tu_collector import tu_collector
+
+from codechecker_common import util, plist_parser
+from codechecker_common.env import get_check_env
+from codechecker_common.logger import get_logger
 
 from . import gcc_toolchain
 from .analyzers import analyzer_clangsa

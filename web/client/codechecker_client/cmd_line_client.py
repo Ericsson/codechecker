@@ -26,14 +26,16 @@ from plist_to_html import PlistToHtml
 
 from codeCheckerDBAccess_v6 import constants, ttypes
 
+from codechecker_common import logger
+from codechecker_common import suppress_file_handler
+from codechecker_common import plist_parser
+from codechecker_common.output_formatters import twodim_to_str
+from codechecker_common.report import Report, get_report_path_hash
+from codechecker_common.source_code_comment_handler import \
+    SourceCodeCommentHandler
+from codechecker_common.util import split_server_url, CmdLineOutputEncoder
+
 from codechecker_web.shared import webserver_context
-from libcodechecker import logger
-from libcodechecker import suppress_file_handler
-from libcodechecker import plist_parser
-from libcodechecker.output_formatters import twodim_to_str
-from libcodechecker.report import Report, get_report_path_hash
-from libcodechecker.source_code_comment_handler import SourceCodeCommentHandler
-from libcodechecker.util import split_server_url, CmdLineOutputEncoder
 
 from .client import handle_auth, setup_client
 

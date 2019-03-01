@@ -15,9 +15,9 @@ import sqlalchemy
 
 from Configuration_v6.ttypes import *
 
-from libcodechecker.logger import get_logger
-from libcodechecker.profiler import timeit
-from libcodechecker.util import DBSession
+from codechecker_common.logger import get_logger
+from codechecker_common.profiler import timeit
+from codechecker_common.util import DBSession
 
 from ..database.config_db_model import Configuration
 

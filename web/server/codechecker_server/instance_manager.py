@@ -20,8 +20,8 @@ import stat
 
 import portalocker
 
-from libcodechecker.logger import get_logger
-from libcodechecker.util import load_json_or_empty
+from codechecker_common.logger import get_logger
+from codechecker_common.util import load_json_or_empty
 
 LOG = get_logger('system')
 

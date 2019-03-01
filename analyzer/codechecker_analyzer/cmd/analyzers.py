@@ -17,8 +17,8 @@ import subprocess
 from codechecker_analyzer import analyzer_context
 from codechecker_analyzer.analyzers import analyzer_types
 
-from libcodechecker import logger
-from libcodechecker import output_formatters
+from codechecker_common import logger
+from codechecker_common import output_formatters
 
 LOG = logger.get_logger('system')
 

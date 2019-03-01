@@ -14,7 +14,8 @@ from __future__ import absolute_import
 import os
 import unittest
 
-from libcodechecker.source_code_comment_handler import SourceCodeCommentHandler
+from codechecker_common.source_code_comment_handler import \
+    SourceCodeCommentHandler
 
 
 class SourceCodeCommentTestCase(unittest.TestCase):

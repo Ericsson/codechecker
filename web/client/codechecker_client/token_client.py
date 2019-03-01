@@ -10,9 +10,9 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
-from libcodechecker import logger
-from libcodechecker.output_formatters import twodim_to_str
-from libcodechecker.util import CmdLineOutputEncoder, split_server_url
+from codechecker_common import logger
+from codechecker_common.output_formatters import twodim_to_str
+from codechecker_common.util import CmdLineOutputEncoder, split_server_url
 
 from .client import setup_auth_client
 

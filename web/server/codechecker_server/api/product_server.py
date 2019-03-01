@@ -20,9 +20,9 @@ from sqlalchemy.sql.expression import and_
 import shared
 from ProductManagement_v6 import ttypes
 
-from libcodechecker import util
-from libcodechecker.logger import get_logger
-from libcodechecker.profiler import timeit
+from codechecker_common import util
+from codechecker_common.logger import get_logger
+from codechecker_common.profiler import timeit
 
 from .. import permissions
 from ..database.config_db_model import IDENTIFIER, Product, ProductPermission

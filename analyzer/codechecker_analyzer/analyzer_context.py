@@ -15,8 +15,8 @@ from collections import Mapping
 import os
 import sys
 
-from libcodechecker import logger
-from libcodechecker.util import load_json_or_empty
+from codechecker_common import logger
+from codechecker_common.util import load_json_or_empty
 
 LOG = logger.get_logger('system')
 

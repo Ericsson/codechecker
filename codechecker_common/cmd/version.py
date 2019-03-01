@@ -12,8 +12,8 @@ from __future__ import absolute_import
 
 import argparse
 
-from libcodechecker import logger
-from libcodechecker import output_formatters
+from codechecker_common import logger
+from codechecker_common import output_formatters
 
 
 def get_argparser_ctor_args():

@@ -13,8 +13,7 @@ import os
 import unittest
 
 from codechecker_analyzer.buildlog import log_parser
-
-from libcodechecker.util import load_json_or_empty
+from codechecker_common.util import load_json_or_empty
 
 
 class LogParserTest(unittest.TestCase):

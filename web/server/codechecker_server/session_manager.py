@@ -14,10 +14,11 @@ from datetime import datetime
 import hashlib
 import json
 
-from codechecker_web.shared.version import SESSION_COOKIE_NAME as _SCN
-from libcodechecker.logger import get_logger
-from libcodechecker.util import check_file_owner_rw, load_json_or_empty, \
+from codechecker_common.logger import get_logger
+from codechecker_common.util import check_file_owner_rw, load_json_or_empty, \
     generate_session_token
+
+from codechecker_web.shared.version import SESSION_COOKIE_NAME as _SCN
 
 from .database.config_db_model import Session as SessionRecord
 from .database.config_db_model import SystemPermission

@@ -17,8 +17,8 @@ import os
 import plistlib
 import re
 
-from libcodechecker.logger import get_logger
-from libcodechecker.report import generate_report_hash
+from codechecker_common.logger import get_logger
+from codechecker_common.report import generate_report_hash
 
 LOG = get_logger('analyzer.tidy')
 

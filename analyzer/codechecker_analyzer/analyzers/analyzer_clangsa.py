@@ -16,9 +16,9 @@ import re
 import shlex
 import subprocess
 
-from libcodechecker.env import get_check_env
-from libcodechecker.logger import get_logger
-from libcodechecker.util import get_binary_in_path, replace_env_var
+from codechecker_common.env import get_check_env
+from codechecker_common.logger import get_logger
+from codechecker_common.util import get_binary_in_path, replace_env_var
 
 from .. import host_check
 from ..analyzer_env import extend_analyzer_cmd_with_resource_dir

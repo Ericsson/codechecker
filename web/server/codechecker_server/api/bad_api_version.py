@@ -13,8 +13,8 @@ from __future__ import absolute_import
 import shared
 
 from codechecker_web.shared.version import get_version_str
-from libcodechecker.logger import get_logger
-from libcodechecker.profiler import timeit
+from codechecker_common.logger import get_logger
+from codechecker_common.profiler import timeit
 
 LOG = get_logger('system')
 

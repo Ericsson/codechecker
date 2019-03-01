@@ -11,8 +11,8 @@ from __future__ import absolute_import
 import os
 import unittest
 
-from libcodechecker import plist_parser
-from libcodechecker.report import get_report_path_hash
+from codechecker_common import plist_parser
+from codechecker_common.report import get_report_path_hash
 
 
 class ReportPathHashHandler(unittest.TestCase):

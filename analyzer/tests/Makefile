@@ -12,12 +12,12 @@ test: test_unit test_functional test_build_logger test_tu_collector
 
 test_novenv: test_unit_novenv test_functional_novenv
 
-PYCODESTYLE_TEST_CMD = pycodestyle bin cmd codechecker tests
+PYCODESTYLE_TEST_CMD = pycodestyle bin codechecker_analyzer tests
 
 pycodestyle: venv_dev
 	$(ACTIVATE_DEV_VENV) && $(PYCODESTYLE_TEST_CMD)
 
-PYLINT_TEST_CMD = pylint bin cmd codechecker tests \
+PYLINT_TEST_CMD = pylint ./bin ./cmd ./codechecker_analyzer ./tests \
 	--rcfile=$(ROOT)/.pylintrc \
   --disable=all \
   --enable=logging-format-interpolation,old-style-class

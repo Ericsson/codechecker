@@ -10,8 +10,8 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
-from libcodechecker import report
-from libcodechecker.logger import get_logger
+from codechecker_common import report
+from codechecker_common.logger import get_logger
 
 from .. import tidy_output_converter
 

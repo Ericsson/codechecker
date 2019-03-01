@@ -24,8 +24,9 @@ import codecs
 import os
 import re
 
-from libcodechecker.logger import get_logger
-from libcodechecker.source_code_comment_handler import SourceCodeCommentHandler
+from codechecker_common.logger import get_logger
+from codechecker_common.source_code_comment_handler import \
+    SourceCodeCommentHandler
 
 LOG = get_logger('system')
 

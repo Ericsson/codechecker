@@ -11,7 +11,6 @@ from __future__ import division
 from __future__ import absolute_import
 
 import json
-from libcodechecker import util
 import multiprocessing
 import os
 import shlex
@@ -19,6 +18,8 @@ import stat
 import subprocess
 from subprocess import CalledProcessError
 import time
+
+from codechecker_common import util
 
 from . import env
 from . import project

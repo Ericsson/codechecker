@@ -16,7 +16,7 @@ from collections import defaultdict
 import os
 import re
 
-from libcodechecker.logger import get_logger
+from codechecker_common.logger import get_logger
 
 from .analyzer_env import extend_analyzer_cmd_with_resource_dir
 

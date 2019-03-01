@@ -21,7 +21,7 @@ from codechecker_analyzer import analyzer_context
 from codechecker_analyzer.buildlog import build_manager
 from codechecker_analyzer.buildlog.host_check import check_intercept
 
-from libcodechecker import logger
+from codechecker_common import logger
 
 
 def get_argparser_ctor_args():

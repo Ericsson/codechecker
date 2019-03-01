@@ -28,7 +28,7 @@ from .thrift_client_to_db import get_viewer_client
 from functional import PKG_ROOT
 from functional import REPO_ROOT
 
-from libcodechecker import util
+from codechecker_common import util
 
 
 def get_free_port():

@@ -17,7 +17,8 @@ import subprocess
 import unittest
 import zipfile
 
-from libcodechecker.util import TemporaryDirectory
+from codechecker_common.util import TemporaryDirectory
+
 from libtest import codechecker
 from libtest import env
 

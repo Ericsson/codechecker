@@ -20,9 +20,9 @@ from codechecker_analyzer import analyzer, analyzer_context
 from codechecker_analyzer.analyzers import analyzer_types
 from codechecker_analyzer.buildlog import log_parser
 
-from libcodechecker import logger
-from libcodechecker import skiplist_handler
-from libcodechecker.util import RawDescriptionDefaultHelpFormatter, \
+from codechecker_common import logger
+from codechecker_common import skiplist_handler
+from codechecker_common.util import RawDescriptionDefaultHelpFormatter, \
     load_json_or_empty
 
 LOG = logger.get_logger('system')

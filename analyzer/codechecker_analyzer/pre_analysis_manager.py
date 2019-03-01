@@ -18,8 +18,8 @@ import sys
 import traceback
 import uuid
 
-from libcodechecker.env import get_check_env
-from libcodechecker.logger import get_logger
+from codechecker_common.env import get_check_env
+from codechecker_common.logger import get_logger
 
 from . import ctu_manager
 from . import statistics_collector
