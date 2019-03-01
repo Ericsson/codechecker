@@ -12,7 +12,6 @@ CC_BUILD_DOCS_DIR = $(CC_BUILD_WEB_DIR)/docs
 CC_BUILD_WEB_PLUGINS_DIR = $(CC_BUILD_SCRIPTS_DIR)/plugins
 CC_BUILD_API_DIR = $(CC_BUILD_SCRIPTS_DIR)/codechecker-api
 CC_BUILD_LIB_DIR = $(CC_BUILD_DIR)/lib/python2.7
-CC_BUILD_LIBCC_DIR = $(CC_BUILD_LIB_DIR)/libcodechecker
 CC_BUILD_GEN_DIR = $(CC_BUILD_LIB_DIR)/gencodechecker
 
 CC_WEB = $(CURRENT_DIR)/web
@@ -66,9 +65,8 @@ package: clean_package build_dir gen-docs thrift userguide build_plist_to_html b
 	cp -r $(BUILD_DIR)/thrift/v*/gen-js/* $(CC_BUILD_API_DIR)
 
 	# Copy libraries.
-	mkdir -p $(CC_BUILD_LIBCC_DIR) && \
 	mkdir -p $(CC_BUILD_LIB_DIR)/codechecker && \
-	cp -r $(ROOT)/libcodechecker/* $(CC_BUILD_LIBCC_DIR) && \
+	cp -r $(ROOT)/codechecker_common $(CC_BUILD_LIB_DIR) && \
 	cp -r $(CC_ANALYZER)/codechecker_analyzer $(CC_BUILD_LIB_DIR) && \
 	cp -r $(CC_WEB)/codechecker_web $(CC_BUILD_LIB_DIR) && \
 	cp -r $(CC_SERVER)/codechecker_server $(CC_BUILD_LIB_DIR) && \
@@ -89,7 +87,7 @@ package: clean_package build_dir gen-docs thrift userguide build_plist_to_html b
 	./scripts/build/extend_version_file.py -r $(ROOT) -b $(BUILD_DIR) && \
 	mkdir -p $(CC_BUILD_DIR)/cc_bin && \
 	./scripts/build/create_commands.py -b $(BUILD_DIR) \
-		$(ROOT)/bin:libcodechecker/cmd \
+		$(ROOT)/bin:codechecker_common/cmd \
 		$(CC_WEB)/bin:codechecker_web/cmd \
 		$(CC_SERVER)/bin:codechecker_server/cmd \
 		$(CC_CLIENT)/bin:codechecker_client/cmd \
@@ -214,14 +212,14 @@ clean_travis:
 pylint: venv_dev
 	$(MAKE) -C $(CC_ANALYZER) pylint && \
 	$(MAKE) -C $(CC_WEB) pylint && \
-	pylint bin libcodechecker scripts \
+	pylint ./bin ./codechecker_common ./scripts \
 	  --disable=all \
 	  --enable=logging-format-interpolation,old-style-class
 
 pycodestyle: venv_dev
 	$(MAKE) -C $(CC_ANALYZER) pycodestyle && \
 	$(MAKE) -C $(CC_WEB) pycodestyle && \
-	pycodestyle bin libcodechecker scripts
+	pycodestyle bin codechecker_common scripts
 
 test: test_analyzer test_server
 

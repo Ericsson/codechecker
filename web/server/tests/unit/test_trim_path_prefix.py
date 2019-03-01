@@ -11,7 +11,7 @@ from __future__ import absolute_import
 
 import unittest
 
-from libcodechecker.util import trim_path_prefixes
+from codechecker_common.util import trim_path_prefixes
 
 
 class TrimPathPrefixTestCase(unittest.TestCase):

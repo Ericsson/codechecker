@@ -18,7 +18,7 @@ import unittest
 
 import psutil
 
-from libcodechecker.util import setup_process_timeout
+from codechecker_common.util import setup_process_timeout
 
 
 class subprocess_timeoutTest(unittest.TestCase):

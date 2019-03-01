@@ -15,7 +15,7 @@ import os
 import shutil
 import tempfile
 
-from libcodechecker.logger import get_logger
+from codechecker_common.logger import get_logger
 
 from .analyzers import analyzer_base
 from .analyzers import ctu_triple_arch

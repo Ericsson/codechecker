@@ -12,10 +12,10 @@ from __future__ import absolute_import
 
 import os
 
-from libcodechecker import suppress_file_handler
-from libcodechecker.source_code_comment_handler import \
+from codechecker_common import suppress_file_handler
+from codechecker_common.source_code_comment_handler import \
     BaseSourceCodeCommentHandler, skip_suppress_status
-from libcodechecker.logger import get_logger
+from codechecker_common.logger import get_logger
 
 # Warning! this logger should only be used in this module.
 LOG = get_logger('system')

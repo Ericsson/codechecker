@@ -23,8 +23,8 @@ import sys
 import traceback
 from xml.parsers.expat import ExpatError
 
-from libcodechecker.logger import get_logger
-from libcodechecker.util import get_line
+from codechecker_common.logger import get_logger
+from codechecker_common.util import get_line
 
 LOG = get_logger('report')
 

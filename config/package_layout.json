@@ -22,7 +22,6 @@
     "lib_plist_to_html": "lib/python2.7/plist_to_html",
     "tu_collector": "tu_collector",
     "lib_tu_collector": "lib/python2.7/tu_collector",
-    "libcodechecker": "lib/python2.7/libcodechecker",
     "gencodechecker": "lib/python2.7/gencodechecker",
     "run_db_migrate": "lib/python2.7/codechecker_server/migrations/report",
     "config_db_migrate": "lib/python2.7/codechecker_server/migrations/config"

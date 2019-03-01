@@ -21,8 +21,8 @@ try:
 except ImportError:
     from io import BytesIO as StringIO
 
-from libcodechecker import logger
-from libcodechecker.logger import get_logger
+from codechecker_common import logger
+from codechecker_common.logger import get_logger
 
 LOG = get_logger('profiler')
 

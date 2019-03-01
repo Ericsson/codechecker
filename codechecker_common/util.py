@@ -29,7 +29,7 @@ from threading import Timer
 import portalocker
 import psutil
 
-from libcodechecker.logger import get_logger
+from codechecker_common.logger import get_logger
 
 LOG = get_logger('system')
 

@@ -21,8 +21,8 @@ import sqlalchemy
 import shared
 from codeCheckerDBAccess_v6 import ttypes
 
-from libcodechecker.logger import get_logger
-from libcodechecker.util import load_json_or_empty
+from codechecker_common.logger import get_logger
+from codechecker_common.util import load_json_or_empty
 
 from ..database.run_db_model import AnalyzerStatistic, \
     BugPathEvent, BugReportPoint, File, Run, RunHistory, Report, FileContent, \

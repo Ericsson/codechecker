@@ -18,7 +18,7 @@ from sqlalchemy.sql.expression import bindparam, union_all, select, cast
 
 from codeCheckerDBAccess_v6.ttypes import *
 
-from libcodechecker.logger import get_logger
+from codechecker_common.logger import get_logger
 
 from .run_db_model import *
 

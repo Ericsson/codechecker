@@ -12,9 +12,9 @@ from __future__ import absolute_import
 
 import sys
 
-from libcodechecker import logger
-from libcodechecker.output_formatters import twodim_to_str
-from libcodechecker.util import get_user_input, CmdLineOutputEncoder
+from codechecker_common import logger
+from codechecker_common.output_formatters import twodim_to_str
+from codechecker_common.util import get_user_input, CmdLineOutputEncoder
 
 from .client import setup_client
 

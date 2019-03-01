@@ -17,7 +17,7 @@ import subprocess
 import sys
 from uuid import uuid4
 
-from libcodechecker.logger import get_logger
+from codechecker_common.logger import get_logger
 
 from .. import analyzer_env
 from . import host_check

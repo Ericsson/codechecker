@@ -20,13 +20,13 @@ from plist_to_html import PlistToHtml
 
 from codechecker_analyzer import analyzer_context
 
-from libcodechecker import suppress_handler
-from libcodechecker import logger
-from libcodechecker import util
-from libcodechecker import plist_parser
-from libcodechecker.skiplist_handler import SkipListHandler
-from libcodechecker.output_formatters import twodim_to_str
-from libcodechecker.report import Report, get_report_path_hash
+from codechecker_common import suppress_handler
+from codechecker_common import logger
+from codechecker_common import util
+from codechecker_common import plist_parser
+from codechecker_common.skiplist_handler import SkipListHandler
+from codechecker_common.output_formatters import twodim_to_str
+from codechecker_common.report import Report, get_report_path_hash
 
 LOG = logger.get_logger('system')
 

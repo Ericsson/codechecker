@@ -11,7 +11,7 @@ from __future__ import absolute_import
 
 import unittest
 
-from libcodechecker.util import slugify
+from codechecker_common.util import slugify
 
 
 class SlugifyFileNameTestCase(unittest.TestCase):

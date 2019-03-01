@@ -15,8 +15,8 @@ import os
 import re
 import subprocess
 
-from libcodechecker.env import get_check_env
-from libcodechecker.logger import get_logger
+from codechecker_common.env import get_check_env
+from codechecker_common.logger import get_logger
 
 from .. import host_check
 

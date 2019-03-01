@@ -18,7 +18,7 @@ import sys
 import tempfile
 import traceback
 
-from libcodechecker.logger import get_logger
+from codechecker_common.logger import get_logger
 
 from .. import gcc_toolchain
 from .build_action import BuildAction

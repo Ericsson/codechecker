@@ -15,8 +15,8 @@ from thrift.protocol import TJSONProtocol
 
 from ProductManagement_v6 import codeCheckerProductService
 
-from libcodechecker import util
-from libcodechecker.logger import get_logger
+from codechecker_common import util
+from codechecker_common.logger import get_logger
 
 from .thrift_call import ThriftClientCall
 from .credential_manager import SESSION_COOKIE_NAME

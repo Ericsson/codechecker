@@ -41,11 +41,11 @@ import sys
 import traceback
 from xml.parsers.expat import ExpatError
 
-from libcodechecker import util
-from libcodechecker.logger import get_logger
-from libcodechecker.report import Report, generate_report_hash, \
+from codechecker_common import util
+from codechecker_common.logger import get_logger
+from codechecker_common.report import Report, generate_report_hash, \
     get_report_path_hash
-from libcodechecker.source_code_comment_handler import \
+from codechecker_common.source_code_comment_handler import \
     SourceCodeCommentHandler, skip_suppress_status
 
 LOG = get_logger('report')

@@ -13,7 +13,7 @@ from __future__ import absolute_import
 import os
 import unittest
 
-from libcodechecker.util import get_line
+from codechecker_common.util import get_line
 
 
 class GetLineTest(unittest.TestCase):

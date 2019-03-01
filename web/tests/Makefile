@@ -34,11 +34,12 @@ PYCODESTYLE_TEST_CMD = pycodestyle \
 pycodestyle: venv_dev
 	$(ACTIVATE_DEV_VENV) && $(PYCODESTYLE_TEST_CMD)
 
-PYLINT_TEST_CMD = pylint bin/codechecker-web-version \
-  codechecker_web \
-  client/bin/codechecker-cmd client/bin/codechecker-store \
-  client/codechecker_client \
-  server/bin/codechecker-server server/codechecker_server server/tests/unit \
+PYLINT_TEST_CMD = pylint ./bin/codechecker-web-version \
+  ./codechecker_web \
+  ./client/bin/codechecker-cmd ./client/bin/codechecker-store \
+  ./client/codechecker_client \
+  ./server/bin/codechecker-server ./server/codechecker_server \
+  ./server/tests/unit \
 	--rcfile=$(ROOT)/.pylintrc \
   --disable=all \
   --enable=logging-format-interpolation,old-style-class
