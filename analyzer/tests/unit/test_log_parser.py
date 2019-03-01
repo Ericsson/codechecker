@@ -53,7 +53,7 @@ class LogParserTest(unittest.TestCase):
         build_action = log_parser.parse_log(load_json_or_empty(logfile))[0]
 
         self.assertEqual(build_action.source, r'/tmp/a.cpp')
-        self.assertEqual(len(build_action.analyzer_options), 0)
+        self.assertEqual(len(build_action.analyzer_options), 1)
 
     def test_new_ldlogger(self):
         """
@@ -74,14 +74,14 @@ class LogParserTest(unittest.TestCase):
         self.assertEqual(len(build_action.analyzer_options), 1)
         self.assertTrue(len(build_action.target) > 0)
         self.assertEqual(build_action.analyzer_options[0],
-                         r'-DVARIABLE="\"some value"\"')
+                         r'-DVARIABLE=some value')
 
         # Test source file with spaces.
         logfile = os.path.join(self.__test_files, "ldlogger-new-space.json")
 
         build_action = log_parser.parse_log(load_json_or_empty(logfile))[0]
 
-        self.assertEqual(build_action.source, r'/tmp/a\ b.cpp')
+        self.assertEqual(build_action.source, r'/tmp/a b.cpp')
         self.assertEqual(build_action.lang, 'c++')
 
     def test_old_intercept_build(self):
@@ -101,14 +101,14 @@ class LogParserTest(unittest.TestCase):
         self.assertEqual(len(build_action.analyzer_options), 1)
         self.assertTrue(len(build_action.target) > 0)
         self.assertEqual(build_action.analyzer_options[0],
-                         r'-DVARIABLE="\"some value"\"')
+                         r'-DVARIABLE="some')
 
         # Test source file with spaces.
         logfile = os.path.join(self.__test_files, "intercept-old-space.json")
 
         build_action = log_parser.parse_log(load_json_or_empty(logfile))[0]
 
-        self.assertEqual(build_action.source, r'/tmp/a\ b.cpp')
+        self.assertEqual(build_action.source, '/tmp/a b.cpp')
         self.assertEqual(build_action.lang, 'c++')
 
     def test_new_intercept_build(self):
@@ -132,14 +132,14 @@ class LogParserTest(unittest.TestCase):
         self.assertEqual(len(build_action.analyzer_options), 1)
         self.assertTrue(len(build_action.target) > 0)
         self.assertEqual(build_action.analyzer_options[0],
-                         r'-DVARIABLE="\"some value"\"')
+                         r'-DVARIABLE="some value"')
 
         # Test source file with spaces.
         logfile = os.path.join(self.__test_files, "intercept-new-space.json")
 
         build_action = log_parser.parse_log(load_json_or_empty(logfile))[0]
 
-        self.assertEqual(build_action.source, r'/tmp/a\ b.cpp')
+        self.assertEqual(build_action.source, '/tmp/a b.cpp')
         self.assertEqual(build_action.lang, 'c++')
 
     def test_omit_preproc(self):

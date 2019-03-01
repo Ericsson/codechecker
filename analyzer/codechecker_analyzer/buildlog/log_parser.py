@@ -716,15 +716,7 @@ def parse_options(compilation_db_entry):
         details['original_command'] = ' '.join(gcc_command)
     elif 'command' in compilation_db_entry:
         details['original_command'] = compilation_db_entry['command']
-        # This is needed so shlex.split() leaves the quotation mark in the
-        # output list:
-        # gcc -DHELLO="hello world" main.cpp
-        # -->
-        # ['gcc', '-DHELLO="hello world"', 'main.cpp']
-        gcc_command = compilation_db_entry['command'] \
-            .replace(r'\"', '"') \
-            .replace(r'"', r'"\"')
-        gcc_command = shlex.split(gcc_command)
+        gcc_command = shlex.split(compilation_db_entry['command'])
     else:
         raise KeyError("No valid 'command' or 'arguments' entry found!")
 
@@ -763,13 +755,6 @@ def parse_options(compilation_db_entry):
     if details['source'] == '.':
         details['source'] = ''
 
-    # Escape the spaces in the source path, but make sure not to
-    # over-escape already escaped spaces. A filename containing a space
-    # character should be passed to the analyzers escaped, otherwise it would
-    # be considered multiple command line arguments.
-    details['source'] = \
-        r'\ '.join(details['source'].replace(r'\ ', ' ').split(' '))
-
     lang = get_language(os.path.splitext(details['source'])[1])
     if lang:
         if details['lang'] is None:
@@ -789,11 +774,6 @@ def parse_options(compilation_db_entry):
 
     toolchain = \
         gcc_toolchain.toolchain_in_args(details['analyzer_options'])
-
-    # Quotation marks must be preserved when passed to the analyzers, so these
-    # have to be escaped.
-    details['analyzer_options'] = \
-        map(lambda x: x.replace('"', r'"\"'), details['analyzer_options'])
 
     # Store the compiler built in include paths and defines.
     if not toolchain and 'ccache' not in details['compiler']:

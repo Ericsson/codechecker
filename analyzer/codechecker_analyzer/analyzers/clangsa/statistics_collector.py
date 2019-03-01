@@ -43,7 +43,7 @@ def build_stat_coll_cmd(action, config, source):
     cmd.extend(['-Xclang',
                 '-analyzer-opt-analyze-headers'])
 
-    cmd.append(config.analyzer_extra_arguments)
+    cmd.extend(config.analyzer_extra_arguments)
     cmd.extend(action.analyzer_options)
 
     # Enable the statistics collector checkers only.

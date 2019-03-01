@@ -88,7 +88,6 @@ class SourceAnalyzer(object):
         LOG.debug_analyzer('\n%s', ' '.join(analyzer_cmd))
 
         res_handler.analyzer_cmd = analyzer_cmd
-        analyzer_cmd = ' '.join(analyzer_cmd)
         try:
             ret_code, stdout, stderr \
                 = SourceAnalyzer.run_proc(analyzer_cmd,
@@ -128,9 +127,8 @@ class SourceAnalyzer(object):
                 sys.exit(os.EX_OK)
 
         signal.signal(signal.SIGINT, signal_handler)
-        cmd = shlex.split(command)
 
-        proc = subprocess.Popen(cmd,
+        proc = subprocess.Popen(command,
                                 bufsize=-1,
                                 env=env,
                                 preexec_fn=os.setsid,

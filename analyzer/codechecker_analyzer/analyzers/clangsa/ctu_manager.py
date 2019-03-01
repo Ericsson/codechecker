@@ -112,7 +112,7 @@ def generate_ast(triple_arch, action, source, config, env):
 
     cmdstr = ' '.join(cmd)
     LOG.debug_analyzer("Generating AST using '%s'", cmdstr)
-    ret_code, _, err = analyzer_base.SourceAnalyzer.run_proc(cmdstr,
+    ret_code, _, err = analyzer_base.SourceAnalyzer.run_proc(cmd,
                                                              env,
                                                              action.directory)
     if ret_code != 0:
@@ -150,7 +150,7 @@ def map_functions(triple_arch, action, source, config, env,
     cmdstr = ' '.join(cmd)
     LOG.debug_analyzer("Generating function map using '%s'", cmdstr)
     ret_code, stdout, err \
-        = analyzer_base.SourceAnalyzer.run_proc(cmdstr,
+        = analyzer_base.SourceAnalyzer.run_proc(cmd,
                                                 env,
                                                 action.directory)
     if ret_code != 0:
