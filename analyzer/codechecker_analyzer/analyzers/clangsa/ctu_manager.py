@@ -17,8 +17,8 @@ import tempfile
 
 from codechecker_common.logger import get_logger
 
-from .analyzers import analyzer_base
-from .analyzers import ctu_triple_arch
+from .. import analyzer_base
+from . import ctu_triple_arch
 
 LOG = get_logger('analyzer')
 

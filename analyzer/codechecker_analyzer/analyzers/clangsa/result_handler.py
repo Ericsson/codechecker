@@ -13,7 +13,7 @@ from __future__ import absolute_import
 from codechecker_common import report
 from codechecker_common.logger import get_logger
 
-from .result_handler_base import ResultHandler
+from ..result_handler_base import ResultHandler
 
 LOG = get_logger('report')
 

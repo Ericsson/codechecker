@@ -18,7 +18,8 @@ import re
 
 from codechecker_common.logger import get_logger
 
-from .analyzer_env import extend_analyzer_cmd_with_resource_dir
+from codechecker_analyzer.analyzer_env import \
+    extend_analyzer_cmd_with_resource_dir
 
 LOG = get_logger('analyzer')
 

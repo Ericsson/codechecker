@@ -18,13 +18,15 @@ from codechecker_common.env import get_check_env
 from codechecker_common.logger import get_logger
 from codechecker_common.util import get_binary_in_path, replace_env_var
 
-from .. import host_check
-from ..analyzer_env import extend_analyzer_cmd_with_resource_dir
+from codechecker_analyzer import host_check
+from codechecker_analyzer.analyzer_env import \
+    extend_analyzer_cmd_with_resource_dir
 
-from . import analyzer_base
-from . import config_handler_clang_tidy
-from . import result_handler_clang_tidy
-from .analyzer_clangsa import ClangSA
+from .. import analyzer_base
+from ..clangsa.analyzer import ClangSA
+
+from . import config_handler
+from . import result_handler
 
 LOG = get_logger('analyzer')
 
@@ -213,7 +215,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
         """
         See base class for docs.
         """
-        res_handler = result_handler_clang_tidy.ClangTidyPlistToFile(
+        res_handler = result_handler.ClangTidyPlistToFile(
             buildaction, report_output, self.config_handler.report_hash)
 
         res_handler.severity_map = severity_map
@@ -222,7 +224,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
 
     @classmethod
     def construct_config_handler(cls, args, context):
-        handler = config_handler_clang_tidy.ClangTidyConfigHandler()
+        handler = config_handler.ClangTidyConfigHandler()
         handler.analyzer_binary = context.analyzer_binaries.get(
             cls.ANALYZER_NAME)
 

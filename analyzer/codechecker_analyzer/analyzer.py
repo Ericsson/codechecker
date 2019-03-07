@@ -23,9 +23,10 @@ from codechecker_common.env import get_check_env
 
 from . import analysis_manager, pre_analysis_manager
 from .analyzers import analyzer_types
-from .analyzers.analyzer_clangsa import ClangSA
-from .statistics_collector import SpecialReturnValueCollector
-from .statistics_collector import ReturnValueCollector
+from .analyzers.clangsa.analyzer import ClangSA
+from .analyzers.clangsa.statistics_collector import \
+    SpecialReturnValueCollector
+from .analyzers.clangsa.statistics_collector import ReturnValueCollector
 
 LOG = get_logger('analyzer')
 
