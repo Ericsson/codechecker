@@ -7,13 +7,7 @@ VENDOR_DIR = $(CURRENT_DIR)/vendor
 CC_BUILD_DIR = $(BUILD_DIR)/CodeChecker
 CC_BUILD_BIN_DIR = $(CC_BUILD_DIR)/bin
 CC_BUILD_WEB_DIR = $(CC_BUILD_DIR)/www
-CC_BUILD_PLUGIN_DIR = $(CC_BUILD_DIR)/plugin
-CC_BUILD_SCRIPTS_DIR = $(CC_BUILD_WEB_DIR)/scripts
-CC_BUILD_DOCS_DIR = $(CC_BUILD_WEB_DIR)/docs
-CC_BUILD_WEB_PLUGINS_DIR = $(CC_BUILD_SCRIPTS_DIR)/plugins
-CC_BUILD_API_DIR = $(CC_BUILD_SCRIPTS_DIR)/codechecker-api
 CC_BUILD_LIB_DIR = $(CC_BUILD_DIR)/lib/python2.7
-CC_BUILD_GEN_DIR = $(CC_BUILD_LIB_DIR)/codechecker_api
 
 CC_WEB = $(CURRENT_DIR)/web
 CC_SERVER = $(CC_WEB)/server/
@@ -30,38 +24,28 @@ ACTIVATE_DEV_VENV ?= . venv_dev/bin/activate
 
 default: package
 
-gen-docs: build_dir
-	doxygen ./Doxyfile.in && \
-	cp -a ./gen-docs $(BUILD_DIR)/gen-docs
+package_dir_structure:
+	mkdir -p $(BUILD_DIR) && \
+	mkdir -p $(CC_BUILD_DIR)/bin && \
+	mkdir -p $(CC_BUILD_LIB_DIR)
 
-thrift: build_dir
+build_plist_to_html:
+	$(MAKE) -C $(ROOT)/tools/plist_to_html build
 
-	if [ -d "$(BUILD_DIR)/thrift" ]; then rm -rf $(BUILD_DIR)/thrift; fi
-
-	mkdir $(BUILD_DIR)/thrift
-
-	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_WEB)/api/
-
-userguide: build_dir
-	$(MAKE) -C $(CC_SERVER)/www/userguide
-
-package: clean_package build_dir gen-docs thrift userguide build_plist_to_html build_tu_collector build_vendor
-	# Create directory structure.
-	mkdir -p $(CC_BUILD_BIN_DIR) && \
-	mkdir -p $(CC_BUILD_LIB_DIR) && \
-	mkdir -p $(CC_BUILD_PLUGIN_DIR)
-
+package_plist_to_html: build_plist_to_html package_dir_structure
 	# Copy plist-to-html files.
 	cp -r $(CC_TOOLS)/plist_to_html/build/plist_to_html/plist_to_html $(CC_BUILD_LIB_DIR)
 
+build_tu_collector:
+	$(MAKE) -C $(ROOT)/tools/tu_collector build
+
+package_tu_collector: build_tu_collector package_dir_structure
 	# Copy tu_collector files.
 	cp -r $(CC_TOOLS)/tu_collector/build/tu_collector/tu_collector $(CC_BUILD_LIB_DIR)
 
-	# Copy generated thrift files.
-	mkdir -p $(CC_BUILD_GEN_DIR) && \
-	mkdir -p $(CC_BUILD_API_DIR) && \
-	cp -r $(BUILD_DIR)/thrift/v*/gen-py/* $(CC_BUILD_GEN_DIR) && \
-	cp -r $(BUILD_DIR)/thrift/v*/gen-js/* $(CC_BUILD_API_DIR)
+package: package_dir_structure package_plist_to_html package_tu_collector
+	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_ANALYZER) package_analyzer
+	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_WEB) package_web
 
 	# Copy libraries.
 	mkdir -p $(CC_BUILD_LIB_DIR)/codechecker && \
@@ -70,16 +54,6 @@ package: clean_package build_dir gen-docs thrift userguide build_plist_to_html b
 	cp -r $(CC_WEB)/codechecker_web $(CC_BUILD_LIB_DIR) && \
 	cp -r $(CC_SERVER)/codechecker_server $(CC_BUILD_LIB_DIR) && \
 	cp -r $(CC_CLIENT)/codechecker_client $(CC_BUILD_LIB_DIR)
-
-	# Copy sub-commands.
-	cp $(ROOT)/bin/* $(CC_BUILD_DIR)/bin && \
-	cp $(CC_ANALYZER)/bin/* $(CC_BUILD_DIR)/bin
-
-	# Copy documentation files.
-	mkdir -p $(CC_BUILD_DOCS_DIR) && \
-	mkdir -p $(CC_BUILD_DOCS_DIR)/checker_md_docs && \
-	cp -r $(BUILD_DIR)/gen-docs/html/* $(CC_BUILD_DOCS_DIR) && \
-	cp -r $(ROOT)/docs/web/checker_docs/* $(CC_BUILD_DOCS_DIR)/checker_md_docs/
 
 	# Copy config files and extend 'version.json' file with git information.
 	cp -r $(ROOT)/config $(CC_BUILD_DIR) && \
@@ -98,69 +72,8 @@ package: clean_package build_dir gen-docs thrift userguide build_plist_to_html b
 		$(CC_CLIENT)/bin:codechecker_client/cmd \
 		$(CC_ANALYZER)/bin:codechecker_analyzer/cmd
 
-	# Copy web client files.
-	mkdir -p $(CC_BUILD_WEB_DIR) && \
-	cp -r $(CC_SERVER)/www/* $(CC_BUILD_WEB_DIR) && \
-	mv $(CC_BUILD_WEB_DIR)/userguide/images/* $(CC_BUILD_WEB_DIR)/images && \
-	rm -rf $(CC_BUILD_WEB_DIR)/userguide/images
-
-	# Rename gen-docs to doc.
-	mv $(CC_BUILD_WEB_DIR)/userguide/gen-docs $(CC_BUILD_WEB_DIR)/userguide/doc
-
 	# Copy license file.
 	cp $(ROOT)/LICENSE.TXT $(CC_BUILD_DIR)
-
-package_ld_logger:
-	mkdir -p $(CC_BUILD_DIR)/ld_logger && \
-	mkdir -p $(CC_BUILD_DIR)/bin && \
-	cp -r $(CC_ANALYZER)/tools/build-logger/build/* $(CC_BUILD_DIR)/ld_logger && \
-	ln -s $(CC_BUILD_DIR)/ld_logger/bin/ldlogger $(CC_BUILD_DIR)/bin/ldlogger
-
-build_ld_logger:
-	$(MAKE) -C $(CC_ANALYZER)/tools/build-logger -f Makefile.manual 2> /dev/null
-
-build_ld_logger_x86:
-	$(MAKE) -C $(CC_ANALYZER)/tools/build-logger -f Makefile.manual pack32bit 2> /dev/null
-
-build_ld_logger_x64:
-	$(MAKE) -C $(CC_ANALYZER)/tools/build-logger -f Makefile.manual pack64bit 2> /dev/null
-
-# NOTE: extra spaces are allowed and ignored at the beginning of the
-# conditional directive line, but a tab is not allowed.
-ifeq ($(OS),Windows_NT)
-  $(info Skipping ld logger from package)
-else
-  UNAME_S ?= $(shell uname -s)
-  ifeq ($(UNAME_S),Linux)
-    UNAME_P ?= $(shell uname -p)
-    ifeq ($(UNAME_P),x86_64)
-      package_ld_logger: build_ld_logger_x64
-      package: package_ld_logger
-    else ifneq ($(filter %86,$(UNAME_P)),)
-      package_ld_logger: build_ld_logger_x86
-      package: package_ld_logger
-    else
-      package_ld_logger: build_ld_logger
-      package: package_ld_logger
-    endif
-  else ifeq ($(UNAME_S),Darwin)
-    ifeq (, $(shell which intercept-build))
-      $(error "No intercept-build (scan-build-py) in $(PATH).")
-    endif
-  endif
-endif
-
-build_vendor:
-	$(MAKE) -C $(CC_SERVER)/vendor build BUILD_DIR=$(CC_BUILD_WEB_PLUGINS_DIR)
-
-build_dir:
-	mkdir -p $(BUILD_DIR)
-
-build_plist_to_html:
-	$(MAKE) -C $(CC_TOOLS)/plist_to_html build
-
-build_tu_collector:
-	$(MAKE) -C $(CC_TOOLS)/tu_collector build
 
 venv:
 	# Create a virtual environment which can be used to run the build package.
@@ -200,16 +113,12 @@ clean_venv_dev:
 
 clean: clean_package clean_vendor
 
-clean_package: clean_userguide clean_plist_to_html clean_tu_collector
+clean_package: clean_plist_to_html clean_tu_collector
 	rm -rf $(BUILD_DIR)
-	rm -rf gen-docs
 	find . -name "*.pyc" -delete
 
 clean_vendor:
 	$(MAKE) -C $(CC_SERVER)/vendor clean_vendor
-
-clean_userguide:
-	rm -rf www/userguide/gen-docs
 
 clean_plist_to_html:
 	$(MAKE) -C $(CC_TOOLS)/plist_to_html clean
@@ -246,29 +155,29 @@ pycodestyle_in_env:
 test: test_analyzer test_server
 
 test_analyzer:
-	$(MAKE) -C $(CC_ANALYZER) test
+	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_ANALYZER) test
 
 test_analyzer_in_env:
 	$(MAKE) -C $(CC_ANALYZER) test_in_env
 
 test_server:
-	$(MAKE) -C $(CC_WEB) test
+	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_WEB) test
 
 test_server_in_env:
 	$(MAKE) -C $(CC_WEB) test_in_env
 
 test_unit:
-	$(MAKE) -C $(CC_ANALYZER) test_unit
-	$(MAKE) -C $(CC_WEB) test_unit
+	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_ANALYZER) test_unit
+	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_WEB) test_unit
 
 test_unit_in_env:
-	$(MAKE) -C $(CC_ANALYZER) test_unit_in_env
-	$(MAKE) -C $(CC_WEB) test_unit_in_env
+	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_ANALYZER) test_unit_in_env
+	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_WEB) test_unit_in_env
 
 test_functional:
-	$(MAKE) -C $(CC_ANALYZER) test_functional
-	$(MAKE) -C $(CC_WEB) test_functional
+	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_ANALYZER) test_functional
+	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_WEB) test_functional
 
 test_functional_in_env:
-	$(MAKE) -C $(CC_ANALYZER) test_functional_in_env
-	$(MAKE) -C $(CC_WEB) test_functional_in_env
+	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_ANALYZER) test_functional_in_env
+	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_WEB) test_functional_in_env
