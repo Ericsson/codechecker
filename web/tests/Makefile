@@ -13,9 +13,9 @@ CLANG_VERSION ?= TEST_CLANG_VERSION=stable
 TEST_PROJECT ?= TEST_PROJ=$(CURRENT_DIR)/tests/projects
 
 REPO_ROOT ?= REPO_ROOT=$(ROOT)
-WORKSPACE = $(BUILD_DIR)/workspace
+WORKSPACE ?= $(BUILD_DIR)/workspace
 
-CLEAR_WORKSPACE_CMD = rm -rf $(BUILD_DIR)/workspace
+CLEAR_WORKSPACE_CMD = rm -rf $(WORKSPACE)
 
 # Nose test runner configuration options.
 NOSECFG = --config .noserc
@@ -137,7 +137,7 @@ test_psql_pg8000_novenv:
 		$(DBUNAME) $(DBPORT) $(PG8000) $(DROP_DB_CMD)
 
 test_clean:
-	rm -rf build/workspace
+	$(CLEAR_WORKSPACE_CMD)
 
 # Use the proper requirement file for the given test configuration
 test_matrix_sqlite: VENV_DEV_REQ_FILE = requirements_py/dev/requirements.txt
