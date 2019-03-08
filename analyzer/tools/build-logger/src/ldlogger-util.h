@@ -14,8 +14,22 @@
 #include <string.h>
 
 /**
+ * Predicts the size of the string after escaping including the closing \0
+ * character. For example:
+ *
+ * hello -> hello (length = 6)
+ * hello world -> hello\\ world (length = 14)
+ * "hello" -> \"hello\" (length = 10)
+ * "hello world" -> \"hello\\ world\" (length = 18)
+ */
+int predictEscapedSize(const char* str_);
+
+/**
  * Generates a shell-escaped version of the given string. The output buffer
- * must be large enough (recommended size is strlen(str_) * 2 + 1).
+ * must be large enough (recommended size is provided by predictEscapedSize()).
+ * This escaped version is safe to place in a JSON string. After reading this
+ * serialized form from the JSON, the original string will be returned. See
+ * the documentation of predictEscapedSize() for some examples.
  * 
  * @param str_ a string to escape (non null).
  * @param buff_ an output buffer (non null).

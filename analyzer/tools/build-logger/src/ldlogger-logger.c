@@ -23,23 +23,23 @@
 
 static char* createJsonCommandString(const LoggerVector* args_)
 {
-  size_t cmdSize = 0;
+  size_t cmdSize = 1;  /* For closing \0 character. */
   char* cmd;
   char* currEnd;
   size_t i;
 
-  /* Calculate */
+  /* Calculate the length of the output buffer. */
   for (i = 0; i < args_->size; ++i)
   {
-    cmdSize += strlen((const char*) args_->data[i]);
+    /*
+      In the output buffer the command line arguments will be separated by a
+      space character. However, the predictEscapedSize() returns the size of
+      the predicted length including the closing \0 characters which will be
+      replaced by space.
+    */
+    cmdSize += predictEscapedSize((const char*) args_->data[i]);
   }
 
-  /* The final size is:
-       The overall size of command * 2 for escaping +
-       args_->size character for word separator +
-       1 byte character trailing null
-  */
-  cmdSize = cmdSize * 2 + args_->size + 1;
   cmd = (char*) malloc(sizeof(char) * cmdSize);
   if (!cmd)
   {
