@@ -75,13 +75,18 @@ class Context(object):
         if not vfile_data:
             sys.exit(1)
 
+        db_versions = load_json_or_empty(self.db_version_file)
+
+        if not db_versions:
+            sys.exit(1)
+
         package_version = vfile_data['version']
         package_build_date = vfile_data['package_build_date']
         package_git_hash = vfile_data.get('git_hash')
         package_git_tag = vfile_data.get('git_describe', {}).get('tag')
         package_git_dirtytag = vfile_data.get('git_describe', {}).get('dirty')
-        product_database_version = vfile_data['product_db_version']
-        run_database_version = vfile_data['run_db_version']
+        product_database_version = db_versions['product_db_version']
+        run_database_version = db_versions['run_db_version']
 
         self.__package_version = package_version['major'] + '.' + \
             package_version['minor'] + '.' + \
@@ -128,8 +133,12 @@ class Context(object):
 
     @property
     def version_file(self):
-        return os.path.join(self._package_root,
-                            self.pckg_layout['version_file'])
+        return os.path.join(self._package_root, 'config', 'web_version.json')
+
+    @property
+    def db_version_file(self):
+        return os.path.join(self._package_root, 'config',
+                            'server_db_version.json')
 
     @property
     def path_plist_to_html_dist(self):

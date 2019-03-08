@@ -28,13 +28,10 @@ def run_cmd(cmd, cwd=None):
                                    cwd=cwd)
 
 
-def extend_version_file(repository_root, build_dir):
+def extend_version_file(repository_root, version_file):
     """
     Extend CodeChecker version file with git information.
     """
-    package_root = os.path.join(build_dir, 'CodeChecker')
-    version_file = os.path.join(package_root, 'config', 'version.json')
-
     with open(version_file) as v_file:
         version_json_data = json.load(v_file)
 
@@ -116,17 +113,16 @@ if __name__ == "__main__":
         formatter_class=argparse.RawDescriptionHelpFormatter,
         description=description)
 
-    parser.add_argument('-b', '--build-dir',
-                        required=True,
-                        action='store',
-                        dest='build_dir',
-                        help="Build directory of the source repository.")
-
     parser.add_argument('-r', '--repository',
                         required=True,
                         action='store',
                         dest='repository',
                         help="Root path of the source repository.")
+
+    parser.add_argument('versionfile',
+                        type=str,
+                        nargs='+',
+                        help="Version files which will be extended.")
 
     parser.add_argument('-v', '--verbose',
                         action='store_true',
@@ -138,4 +134,6 @@ if __name__ == "__main__":
     if 'verbose' in args and args['verbose']:
         LOG.setLevel(logging.DEBUG)
 
-    extend_version_file(args['repository'], args['build_dir'])
+    for version_file in args['versionfile']:
+        LOG.info("Extending version file '%s'.", version_file)
+        extend_version_file(args['repository'], version_file)
