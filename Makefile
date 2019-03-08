@@ -2,6 +2,7 @@
 
 CURRENT_DIR = $(shell pwd)
 BUILD_DIR = $(CURRENT_DIR)/build
+PKG_DIR = $(CURRENT_DIR)/package
 VENDOR_DIR = $(CURRENT_DIR)/vendor
 
 CC_BUILD_DIR = $(BUILD_DIR)/CodeChecker
@@ -66,15 +67,11 @@ package: clean_package build_dir gen-docs thrift userguide build_plist_to_html b
 
 	# Copy libraries.
 	mkdir -p $(CC_BUILD_LIB_DIR)/codechecker && \
-	cp -r $(ROOT)/codechecker_common $(CC_BUILD_LIB_DIR) && \
+	cp -r $(PKG_DIR)/codechecker_common $(CC_BUILD_LIB_DIR) && \
 	cp -r $(CC_ANALYZER)/codechecker_analyzer $(CC_BUILD_LIB_DIR) && \
 	cp -r $(CC_WEB)/codechecker_web $(CC_BUILD_LIB_DIR) && \
 	cp -r $(CC_SERVER)/codechecker_server $(CC_BUILD_LIB_DIR) && \
 	cp -r $(CC_CLIENT)/codechecker_client $(CC_BUILD_LIB_DIR)
-
-	# Copy sub-commands.
-	cp $(ROOT)/bin/* $(CC_BUILD_DIR)/bin && \
-	cp $(CC_ANALYZER)/bin/* $(CC_BUILD_DIR)/bin
 
 	# Copy documentation files.
 	mkdir -p $(CC_BUILD_DOCS_DIR) && \
@@ -84,10 +81,10 @@ package: clean_package build_dir gen-docs thrift userguide build_plist_to_html b
 
 	# Copy config files and extend 'version.json' file with git information.
 	cp -r $(ROOT)/config $(CC_BUILD_DIR) && \
-	./scripts/build/extend_version_file.py -r $(ROOT) -b $(BUILD_DIR) && \
+	$(PKG_DIR)/extend_version_file.py -r $(ROOT) -b $(BUILD_DIR) && \
 	mkdir -p $(CC_BUILD_DIR)/cc_bin && \
-	./scripts/build/create_commands.py -b $(BUILD_DIR) \
-		$(ROOT)/bin:codechecker_common/cmd \
+	$(PKG_DIR)/create_commands.py -b $(BUILD_DIR) \
+		$(PKG_DIR)/bin:codechecker_common/cmd \
 		$(CC_WEB)/bin:codechecker_web/cmd \
 		$(CC_SERVER)/bin:codechecker_server/cmd \
 		$(CC_CLIENT)/bin:codechecker_client/cmd \
