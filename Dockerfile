@@ -32,7 +32,7 @@ COPY . /codechecker
 WORKDIR "/codechecker"
 
 RUN pip install wheel
-RUN pip install -r requirements_py/requirements.txt
+RUN pip install -r analyzer/requirements_py/dev/requirements.txt
 
 RUN make package
 
