@@ -67,8 +67,9 @@ def preAnalyze(analyze_id, part_number, workspace):
                                'sources-root/file_path',
                                'sources-root/skipped_file_list']
 
-        if (len(zip_file.namelist()) > 0):
-            LOGGER.info('Load files to Redis: ' % zip_file.namelist())
+        if (len(set(zip_file.namelist()).difference(list_of_other_files)) != 0):
+            LOGGER.info('Store files in Redis: \n%s' % set(
+                zip_file.namelist()).difference(list_of_other_files))
             for file_name in zip_file.namelist():
                 if file_name not in list_of_other_files:
                     LOGGER.info(os.path.join(analyze_dir_path, file_name))
@@ -77,10 +78,11 @@ def preAnalyze(analyze_id, part_number, workspace):
                         readable_hash = hashlib.md5(bytes).hexdigest()
                         try:
                             REDIS_DATABASE.set(readable_hash, bytes)
-                            LOGGER.info(REDIS_DATABASE.get(readable_hash))
+                            LOGGER.debug(REDIS_DATABASE.get(readable_hash))
                         except Exception:
                             LOGGER.error(
-                                'Failed to read in file %s' % file_name)
+                                'Failed to store file %s in Redis.' % file_name)
+                            sys.exit(1)
 
     sources_root_path = os.path.join(analyze_dir_path, 'sources-root')
 
@@ -93,6 +95,7 @@ def preAnalyze(analyze_id, part_number, workspace):
             REDIS_DATABASE.hset(analyze_id, 'state',
                                 AnalyzeStatus.PREANALYZE_FAILED.name)
             LOGGER.error('Failed to read in build command.')
+            sys.exit(1)
 
     file_to_analyze_path = os.path.join(sources_root_path, 'file_path')
 
@@ -103,6 +106,7 @@ def preAnalyze(analyze_id, part_number, workspace):
             REDIS_DATABASE.hset(analyze_id, 'state',
                                 AnalyzeStatus.PREANALYZE_FAILED.name)
             LOGGER.error('Failed to read in file path.')
+            sys.exit(1)
 
     skipped_file_list_path = os.path.join(
         sources_root_path, 'skipped_file_list')
@@ -114,22 +118,25 @@ def preAnalyze(analyze_id, part_number, workspace):
             REDIS_DATABASE.hset(analyze_id, 'state',
                                 AnalyzeStatus.PREANALYZE_FAILED.name)
             LOGGER.error('Failed to read in skipped file list.')
+            sys.exit(1)
 
     skipped_file_list = json.loads(skipped_file_list)
 
-    for file_path in skipped_file_list:
-        LOGGER.info('Restore file to %s' % file_path)
-        LOGGER.info(analyze_dir_path)
-        LOGGER.info(os.path.join(analyze_dir_path, file_path))
-        if not os.path.exists(os.path.dirname(file_path)):
-            try:
-                os.makedirs(os.path.dirname(file_path))
-            except OSError:
-                LOGGER.error('Failed to create directories.')
+    if len(skipped_file_list) != 0:
+        LOGGER.info('Restore files from Redis: \n%s' % skipped_file_list.items())
 
-        with open(os.path.join(analyze_dir_path, file_path), 'wb+') as file_to_write_out:
-            file_to_write_out.write(
-                REDIS_DATABASE.get(skipped_file_list[file_path]))
+        for file_path in skipped_file_list:
+            new_file_path = os.path.join(sources_root_path, file_path[1:])
+            if not os.path.exists(os.path.dirname(new_file_path)):
+                try:
+                    os.makedirs(os.path.dirname(new_file_path))
+                except OSError:
+                    LOGGER.error('Failed to create directories.')
+                    sys.exit(1)
+
+            with open(new_file_path, 'wb+') as file_to_write_out:
+                file_to_write_out.write(
+                    REDIS_DATABASE.get(skipped_file_list[file_path]))
 
     return analyze_dir_path, build_command, read_in_file_path
 
@@ -221,6 +228,7 @@ def postAnalyze(analyze_id, part_number, workspace):
     if parts == completed_parts:
         REDIS_DATABASE.hset(analyze_id, 'state',
                             AnalyzeStatus.ANALYZE_COMPLETED.name)
+        LOGGER.info('Analyze %s is completed.' % analyze_id)
 
 
 def main():
@@ -247,7 +255,7 @@ def main():
 
             try:
                 analyze_dir_path, build_command, file_to_analyze_path = preAnalyze(
-                        analyze_id, part_number, args.workspace)
+                    analyze_id, part_number, args.workspace)
             except Exception:
                 REDIS_DATABASE.hset(analyze_id, 'state',
                                     AnalyzeStatus.PREANALYZE_FAILED.name)
