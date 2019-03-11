@@ -29,7 +29,7 @@ div.container {
   margin: 10px;
 }
 
-#report-nav {
+#side-bar {
   float: left;
   width: 260px;
   margin: 0px;
@@ -194,4 +194,18 @@ div.container {
 .right-arrow {
   transform: rotate(-45deg);
   -webkit-transform: rotate(-45deg);
+}
+
+.back-button {
+  background-color: #f1f1f1;
+  text-decoration: none;
+  display: inline-block;
+  padding: 8px 16px;
+  color: black;
+  cursor: pointer;
+}
+
+.back-button:hover {
+  background-color: #ddd;
+  color: black;
 }
