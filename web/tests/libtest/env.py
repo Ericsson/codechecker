@@ -18,7 +18,6 @@ import shutil
 import socket
 import stat
 import subprocess
-import sys
 
 from .thrift_client_to_db import get_auth_client
 from .thrift_client_to_db import get_config_client
@@ -257,15 +256,19 @@ def parts_to_url(codechecker_cfg):
 
 
 def get_workspace(test_id='test'):
-    tmp_dir = os.path.join(REPO_ROOT, 'build')
-    base_dir = os.path.join(tmp_dir, 'workspace')
-    if not os.path.exists(base_dir):
-        os.makedirs(base_dir)
+    """ return a temporary workspace for the tests """
+    workspace_root = os.environ.get("CC_TEST_WORKSPACE_ROOT")
+    if not workspace_root:
+        # if no external workspace is set create under the build dir
+        workspace_root = os.path.join(REPO_ROOT, 'build', 'workspace')
+
+    if not os.path.exists(workspace_root):
+        os.makedirs(workspace_root)
 
     if test_id:
-        return tempfile.mkdtemp(prefix=test_id+"-", dir=base_dir)
+        return tempfile.mkdtemp(prefix=test_id+"-", dir=workspace_root)
     else:
-        return base_dir
+        return workspace_root
 
 
 def clean_wp(workspace):

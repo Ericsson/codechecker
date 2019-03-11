@@ -13,9 +13,9 @@ CLANG_VERSION ?= TEST_CLANG_VERSION=stable
 TEST_PROJECT ?= TEST_PROJ=$(CURRENT_DIR)/tests/projects
 
 REPO_ROOT ?= REPO_ROOT=$(ROOT)
-WORKSPACE ?= $(BUILD_DIR)/workspace
+CC_TEST_WORKSPACE_ROOT ?= $(BUILD_DIR)/workspace
 
-CLEAR_WORKSPACE_CMD = rm -rf $(WORKSPACE)
+CLEAR_WORKSPACE_CMD = rm -rf $(CC_TEST_WORKSPACE_ROOT)
 
 # Nose test runner configuration options.
 NOSECFG = --config .noserc
@@ -49,12 +49,12 @@ pylint: venv_dev
 
 CODECHECKER_CMD = $(BUILD_DIR)/CodeChecker/bin/CodeChecker
 SHUTDOWN_SERVER_CMD = echo "Shutting down server..."; \
-    HOME="$(WORKSPACE)" ${CODECHECKER_CMD} server -l; \
-    HOME="$(WORKSPACE)" ${CODECHECKER_CMD} server \
-			--config-directory $(WORKSPACE) \
-	    --port `cat "$(WORKSPACE)/serverport"` --stop; \
-    rm -f "$(WORKSPACE)/serverport"; \
-    HOME="$(WORKSPACE)" ${CODECHECKER_CMD} server -l
+    HOME="$(CC_TEST_WORKSPACE_ROOT)" ${CODECHECKER_CMD} server -l; \
+    HOME="$(CC_TEST_WORKSPACE_ROOT)" ${CODECHECKER_CMD} server \
+			--config-directory $(CC_TEST_WORKSPACE_ROOT) \
+	    --port `cat "$(CC_TEST_WORKSPACE_ROOT)/serverport"` --stop; \
+    rm -f "$(CC_TEST_WORKSPACE_ROOT)/serverport"; \
+    HOME="$(CC_TEST_WORKSPACE_ROOT)" ${CODECHECKER_CMD} server -l
 
 # Preserve the error status of the previous command but always be able to
 # shut down servers.
