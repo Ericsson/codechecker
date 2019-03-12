@@ -63,26 +63,27 @@ def preAnalyze(analyze_id, part_number, workspace):
         except Exception:
             LOGGER.error('Failed to extract all files from the ZIP.')
 
-        list_of_other_files = ['sources-root/build_command',
-                               'sources-root/file_path',
-                               'sources-root/skipped_file_list']
+        if args.use_cache:
+            list_of_other_files = ['sources-root/build_command',
+                                'sources-root/file_path',
+                                'sources-root/cached_files']
 
-        if (len(set(zip_file.namelist()).difference(list_of_other_files)) != 0):
-            LOGGER.info('Store files in Redis: \n%s' % set(
-                zip_file.namelist()).difference(list_of_other_files))
-            for file_name in zip_file.namelist():
-                if file_name not in list_of_other_files:
-                    LOGGER.info(os.path.join(analyze_dir_path, file_name))
-                    with open(os.path.join(analyze_dir_path, file_name), 'rb') as file:
-                        bytes = file.read()
-                        readable_hash = hashlib.md5(bytes).hexdigest()
-                        try:
-                            REDIS_DATABASE.set(readable_hash, bytes)
-                            LOGGER.debug(REDIS_DATABASE.get(readable_hash))
-                        except Exception:
-                            LOGGER.error(
-                                'Failed to store file %s in Redis.' % file_name)
-                            sys.exit(1)
+            if (len(set(zip_file.namelist()).difference(list_of_other_files)) != 0):
+                LOGGER.info('Store files in Redis: \n%s' % set(
+                    zip_file.namelist()).difference(list_of_other_files))
+                for file_name in zip_file.namelist():
+                    if file_name not in list_of_other_files:
+                        LOGGER.info(os.path.join(analyze_dir_path, file_name))
+                        with open(os.path.join(analyze_dir_path, file_name), 'rb') as file:
+                            bytes = file.read()
+                            readable_hash = hashlib.md5(bytes).hexdigest()
+                            try:
+                                REDIS_DATABASE.set(readable_hash, bytes)
+                                LOGGER.debug(REDIS_DATABASE.get(readable_hash))
+                            except Exception:
+                                LOGGER.error(
+                                    'Failed to store file %s in Redis.' % file_name)
+                                sys.exit(1)
 
     sources_root_path = os.path.join(analyze_dir_path, 'sources-root')
 
@@ -108,35 +109,35 @@ def preAnalyze(analyze_id, part_number, workspace):
             LOGGER.error('Failed to read in file path.')
             sys.exit(1)
 
-    skipped_file_list_path = os.path.join(
-        sources_root_path, 'skipped_file_list')
+    if args.use_cache:
+        cached_files_path = os.path.join(
+            sources_root_path, 'cached_files')
 
-    with open(skipped_file_list_path) as read_in_skipped_file_list:
-        try:
-            skipped_file_list = read_in_skipped_file_list.readline()
-        except Exception:
-            REDIS_DATABASE.hset(analyze_id, 'state',
-                                AnalyzeStatus.PREANALYZE_FAILED.name)
-            LOGGER.error('Failed to read in skipped file list.')
-            sys.exit(1)
+        with open(cached_files_path) as read_in_cached_files:
+            try:
+                cached_files = read_in_cached_files.readline()
+            except Exception:
+                REDIS_DATABASE.hset(analyze_id, 'state',
+                                    AnalyzeStatus.PREANALYZE_FAILED.name)
+                LOGGER.error('Failed to read in skipped file list.')
+                sys.exit(1)
 
-    skipped_file_list = json.loads(skipped_file_list)
+        cached_files = json.loads(cached_files)
 
-    if len(skipped_file_list) != 0:
-        LOGGER.info('Restore files from Redis: \n%s' % skipped_file_list.items())
+        if len(cached_files) != 0:
+            LOGGER.info('Restore files from Redis: \n%s' % cached_files.items())
 
-        for file_path in skipped_file_list:
-            new_file_path = os.path.join(sources_root_path, file_path[1:])
-            if not os.path.exists(os.path.dirname(new_file_path)):
-                try:
-                    os.makedirs(os.path.dirname(new_file_path))
-                except OSError:
-                    LOGGER.error('Failed to create directories.')
-                    sys.exit(1)
+            for hash in cached_files:
+                new_file_path = os.path.join(sources_root_path, cached_files[hash][1:])
+                if not os.path.exists(os.path.dirname(new_file_path)):
+                    try:
+                        os.makedirs(os.path.dirname(new_file_path))
+                    except OSError:
+                        LOGGER.error('Failed to create directories.')
+                        sys.exit(1)
 
-            with open(new_file_path, 'wb+') as file_to_write_out:
-                file_to_write_out.write(
-                    REDIS_DATABASE.get(skipped_file_list[file_path]))
+                with open(new_file_path, 'wb+') as file_to_write_out:
+                    file_to_write_out.write(REDIS_DATABASE.get(hash))
 
     return analyze_dir_path, build_command, read_in_file_path
 
@@ -236,6 +237,8 @@ def main():
 
     parser.add_argument('-w', '--workspace', type=str, dest='workspace',
                         default='/workspace', help="...")
+
+    parser.add_argument('--no-cache', dest='use_cache', default=True, action='store_false')
 
     args = parser.parse_args()
 
