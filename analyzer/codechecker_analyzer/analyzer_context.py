@@ -151,8 +151,8 @@ class Context(object):
 
     @property
     def version_file(self):
-        return os.path.join(self._package_root,
-                            self.pckg_layout['version_file'])
+        return os.path.join(self._package_root, 'config',
+                            'analyzer_version.json')
 
     @property
     def env_var_cc_logger_bin(self):

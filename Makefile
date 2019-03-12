@@ -84,7 +84,13 @@ package: clean_package build_dir gen-docs thrift userguide build_plist_to_html b
 
 	# Copy config files and extend 'version.json' file with git information.
 	cp -r $(ROOT)/config $(CC_BUILD_DIR) && \
-	./scripts/build/extend_version_file.py -r $(ROOT) -b $(BUILD_DIR) && \
+	cp -r $(CC_ANALYZER)/config/* $(CC_BUILD_DIR)/config && \
+	cp -r $(CC_WEB)/config/* $(CC_BUILD_DIR)/config && \
+	cp -r $(CC_SERVER)/config/* $(CC_BUILD_DIR)/config && \
+	./scripts/build/extend_version_file.py -r $(ROOT) \
+	  $(CC_BUILD_DIR)/config/analyzer_version.json \
+	  $(CC_BUILD_DIR)/config/web_version.json
+
 	mkdir -p $(CC_BUILD_DIR)/cc_bin && \
 	./scripts/build/create_commands.py -b $(BUILD_DIR) \
 		$(ROOT)/bin:codechecker_common/cmd \

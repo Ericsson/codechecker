@@ -36,7 +36,6 @@
     "ld_logger_lib_path": "ld_logger/lib",
     "plist_to_html_bin": "bin/plist-to-html",
     "plist_to_html_dist_path": "plist_to_html/dist",
-    "version_file": "config/version.json",
     "checkers_severity_map_file": "config/checker_severity_map.json",
     "gdb_config_file": "config/gdbScript.gdb",
     "ctu_func_map_cmd": "clang-func-mapping"
