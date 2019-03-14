@@ -1,0 +1,13 @@
+[nosetests]
+
+# increase verbosity level
+verbosity=3
+
+# more detailed error messages on failed asserts
+detailed-errors=1
+
+# stop running tests on first error
+stop=1
+
+# do not capture stdout
+#nocapture=1

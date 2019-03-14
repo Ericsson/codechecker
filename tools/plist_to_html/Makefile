@@ -16,6 +16,22 @@ STATIC_DIR = $(CURRENT_DIR)/plist_to_html/static
 VENDOR_DIR = $(STATIC_DIR)/vendor
 CODEMIRROR_DIR = $(VENDOR_DIR)/codemirror
 
+ACTIVATE_DEV_VENV ?= . venv_dev/bin/activate
+ACTIVATE_RUNTIME_VENV ?= . venv/bin/activate
+
+VENV_TEST_REQ_FILE ?= requirements_py/test/requirements.txt
+
+include tests/Makefile
+
+venv:
+	# Create a virtual environment which can be used to run the build package.
+	virtualenv -p python2 venv && $(ACTIVATE_RUNTIME_VENV)
+
+venv_dev:
+	# Create a virtual environment for development.
+	virtualenv -p python2 venv_dev && \
+		$(ACTIVATE_DEV_VENV) && pip install -r $(VENV_TEST_REQ_FILE)
+
 default: all
 
 all: package
