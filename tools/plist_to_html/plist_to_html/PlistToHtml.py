@@ -38,16 +38,23 @@ class HtmlBuilder(object):
         self.layout_dir = layout_dir
         self.generated_html_reports = {}
 
+        css_dir = os.path.join(self.layout_dir, 'css')
+        js_dir = os.path.join(self.layout_dir, 'js')
+        codemirror_dir = os.path.join(self.layout_dir, 'vendor',
+                                      'codemirror')
+
         # Mapping layout tags to files.
         self._layout_tag_files = {
-            'STYLE_CSS': 'style.css',
-            'ICON_CSS': 'icon.css',
-            'CODEMIRROR_LICENSE': 'codemirror.LICENSE',
-            'CODEMIRROR_CSS': 'codemirror.min.css',
-            'CODEMIRROR_JS': 'codemirror.min.js',
-            'CLIKE_JS': 'clike.min.js',
-            'BUG_VIEWER': 'bugviewer.js',
-            'BROWSER_SUPPORT': 'browsersupport.js'
+            'STYLE_CSS': os.path.join(css_dir, 'style.css'),
+            'ICON_CSS': os.path.join(css_dir, 'icon.css'),
+            'CODEMIRROR_LICENSE': os.path.join(codemirror_dir,
+                                               'codemirror.LICENSE'),
+            'CODEMIRROR_CSS': os.path.join(codemirror_dir,
+                                           'codemirror.min.css'),
+            'CODEMIRROR_JS': os.path.join(codemirror_dir, 'codemirror.min.js'),
+            'CLIKE_JS': os.path.join(codemirror_dir, 'clike.min.js'),
+            'BUG_VIEWER': os.path.join(js_dir, 'bugviewer.js'),
+            'BROWSER_SUPPORT': os.path.join(js_dir, 'browsersupport.js')
         }
 
         # Get the HTML layout file content.
@@ -61,7 +68,7 @@ class HtmlBuilder(object):
         self._tag_contents = {}
         for tag in self._layout_tag_files:
             self._tag_contents[tag] = get_file_content(
-                os.path.join(self.layout_dir, self._layout_tag_files[tag]))
+                self._layout_tag_files[tag])
 
             self._layout = self._layout.replace('<${0}$>'.format(tag),
                                                 self._tag_contents[tag])
@@ -358,8 +365,7 @@ def __add_arguments_to_parser(parser):
                         dest="layout_dir",
                         required=False,
                         default=os.path.join(curr_file_dir,
-                                             '..',
-                                             'dist'),
+                                             '..', 'plist_to_html', 'static'),
                         help="Directory which contains dependency HTML, CSS "
                              "and JavaScript files.")
 

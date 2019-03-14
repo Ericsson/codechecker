@@ -5,6 +5,7 @@ BUILD_DIR = $(CURRENT_DIR)/build
 VENDOR_DIR = $(CURRENT_DIR)/vendor
 
 CC_BUILD_DIR = $(BUILD_DIR)/CodeChecker
+CC_BUILD_BIN_DIR = $(CC_BUILD_DIR)/bin
 CC_BUILD_WEB_DIR = $(CC_BUILD_DIR)/www
 CC_BUILD_PLUGIN_DIR = $(CC_BUILD_DIR)/plugin
 CC_BUILD_SCRIPTS_DIR = $(CC_BUILD_WEB_DIR)/scripts
@@ -44,14 +45,13 @@ userguide: build_dir
 
 package: clean_package build_dir gen-docs thrift userguide build_plist_to_html build_tu_collector build_vendor
 	# Create directory structure.
-	mkdir -p $(CC_BUILD_DIR)/bin && \
+	mkdir -p $(CC_BUILD_BIN_DIR) && \
 	mkdir -p $(CC_BUILD_LIB_DIR) && \
 	mkdir -p $(CC_BUILD_PLUGIN_DIR)
 
 	# Copy plist-to-html files.
 	cp -r $(ROOT)/tools/plist_to_html/plist_to_html $(CC_BUILD_LIB_DIR) && \
-	cp -r $(ROOT)/tools/plist_to_html/build $(CC_BUILD_DIR)/plist_to_html && \
-	ln -s $(CC_BUILD_DIR)/plist_to_html/bin/plist-to-html $(CC_BUILD_DIR)/bin/plist-to-html
+	ln -s $(CC_BUILD_LIB_DIR)/plist_to_html/PlistToHtml.py $(CC_BUILD_BIN_DIR)/plist-to-html
 
 	# Copy tu_collector files.
 	cp -r $(ROOT)/tools/tu_collector/tu_collector $(CC_BUILD_LIB_DIR) && \
