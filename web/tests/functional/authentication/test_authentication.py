@@ -115,6 +115,15 @@ class DictAuth(unittest.TestCase):
 
         self.assertTrue(result, "Server did not allow us to destroy session.")
 
+        self.sessionToken = auth_client.performLogin("Username:Password",
+                                                     "colon:my:password")
+        self.assertIsNotNone(self.sessionToken,
+                             "Valid credentials didn't give us a token!")
+
+        result = auth_client.destroySession()
+
+        self.assertTrue(result, "Server did not allow us to destroy session.")
+
         # Kill the session token that was created by login() too.
         codechecker.logout(self._test_cfg['codechecker_cfg'],
                            self._test_workspace)

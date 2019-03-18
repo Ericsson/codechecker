@@ -348,7 +348,7 @@ class SessionManager(object):
         if not self.__database_connection:
             return None
 
-        user_name, token = auth_string.split(':')
+        user_name, token = auth_string.split(':', 1)
 
         transaction = None
         try:
@@ -402,7 +402,7 @@ class SessionManager(object):
         Try to authenticate user based on the PAM configuration.
         """
         if self.__is_method_enabled('pam'):
-            username, password = auth_string.split(':')
+            username, password = auth_string.split(':', 1)
             if cc_pam.auth_user(self.__auth_config['method_pam'],
                                 username, password):
                 # PAM does not hold a group membership list we can reliably
@@ -416,7 +416,7 @@ class SessionManager(object):
         Try to authenticate user to all the configured authorities.
         """
         if self.__is_method_enabled('ldap'):
-            username, password = auth_string.split(':')
+            username, password = auth_string.split(':', 1)
 
             ldap_authorities = self.__auth_config['method_ldap'] \
                 .get('authorities')
