@@ -76,7 +76,7 @@ class ThriftAuthHandler(object):
     @timeit
     def performLogin(self, auth_method, auth_string):
         if auth_method == "Username:Password":
-            user_name, _ = auth_string.split(':')
+            user_name, _ = auth_string.split(':', 1)
             LOG.info("'%s' logged in.", user_name)
 
             session = self.__manager.create_or_get_session(auth_string)
