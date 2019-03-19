@@ -60,7 +60,7 @@ SHUTDOWN_SERVER_CMD = echo "Shutting down server..."; \
 # shut down servers.
 EXIT_ERROR = { ${SHUTDOWN_SERVER_CMD}; exit 1; }
 
-FUNCTIONAL_TEST_CMD = $(REPO_ROOT) $(CLANG_VERSION) $(TEST_PROJECT) \
+FUNCTIONAL_TEST_CMD = $(REPO_ROOT) BUILD_DIR=$(BUILD_DIR) $(CLANG_VERSION) $(TEST_PROJECT) \
 		nosetests $(NOSECFG) tests/functional \
 		&& { ${SHUTDOWN_SERVER_CMD}; } || ${EXIT_ERROR}
 
