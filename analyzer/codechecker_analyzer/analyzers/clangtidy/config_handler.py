@@ -17,7 +17,7 @@ import shlex
 
 from codechecker_common.logger import get_logger
 
-from . import config_handler
+from .. import config_handler
 
 LOG = get_logger('analyzer.tidy')
 

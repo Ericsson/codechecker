@@ -20,13 +20,15 @@ from codechecker_common.env import get_check_env
 from codechecker_common.logger import get_logger
 from codechecker_common.util import get_binary_in_path, replace_env_var
 
-from .. import host_check
-from ..analyzer_env import extend_analyzer_cmd_with_resource_dir
+from codechecker_analyzer import host_check
+from codechecker_analyzer.analyzer_env import \
+    extend_analyzer_cmd_with_resource_dir
 
-from . import analyzer_base
-from . import config_handler_clangsa
+from .. import analyzer_base
+
+from . import config_handler
 from . import ctu_triple_arch
-from .result_handler_clangsa import ResultHandlerClangSA
+from .result_handler import ResultHandlerClangSA
 
 LOG = get_logger('analyzer')
 
@@ -296,7 +298,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
 
     @classmethod
     def construct_config_handler(cls, args, context):
-        handler = config_handler_clangsa.ClangSAConfigHandler()
+        handler = config_handler.ClangSAConfigHandler()
         handler.analyzer_plugins_dir = context.checker_plugin
         handler.analyzer_binary = context.analyzer_binaries.get(
             cls.ANALYZER_NAME)

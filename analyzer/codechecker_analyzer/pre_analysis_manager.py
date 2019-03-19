@@ -21,11 +21,10 @@ import uuid
 from codechecker_common.env import get_check_env
 from codechecker_common.logger import get_logger
 
-from . import ctu_manager
-from . import statistics_collector
 from .analyzers import analyzer_base
-from .analyzers import ctu_triple_arch
-from .analyzers.analyzer_clangsa import ClangSA
+from .analyzers.clangsa import ctu_manager, ctu_triple_arch
+from .analyzers.clangsa import statistics_collector
+from .analyzers.clangsa.analyzer import ClangSA
 
 
 LOG = get_logger('analyzer')

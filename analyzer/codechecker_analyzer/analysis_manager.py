@@ -26,9 +26,10 @@ from codechecker_common.env import get_check_env
 from codechecker_common.logger import get_logger
 
 from . import gcc_toolchain
-from .analyzers import analyzer_clangsa
+
 from .analyzers import analyzer_types
-from .statistics_collector import SpecialReturnValueCollector
+from .analyzers.clangsa.analyzer import ClangSA
+from .analyzers.clangsa.statistics_collector import SpecialReturnValueCollector
 
 LOG = get_logger('analyzer')
 
@@ -166,7 +167,7 @@ def is_ctu_active(source_analyzer):
     """
     Check if CTU analysis is active for Clang Static Analyzer.
     """
-    if not isinstance(source_analyzer, analyzer_clangsa.ClangSA):
+    if not isinstance(source_analyzer, ClangSA):
         return False
 
     return source_analyzer.is_ctu_available() and \
@@ -192,7 +193,7 @@ def prepare_check(action, analyzer_config_map, output_dir,
         # Needs to be called before construct_analyzer_cmd
         source_analyzer.disable_ctu()
 
-    if action.analyzer_type == analyzer_clangsa.ClangSA.ANALYZER_NAME and \
+    if action.analyzer_type == ClangSA.ANALYZER_NAME and \
        statistics_data:
         # WARNING! Statistical checkers are only supported by Clang
         # Static Analyzer right now.

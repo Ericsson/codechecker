@@ -20,8 +20,8 @@ from codechecker_common.logger import get_logger
 
 from .. import host_check
 
-from .analyzer_clang_tidy import ClangTidy
-from .analyzer_clangsa import ClangSA
+from .clangtidy.analyzer import ClangTidy
+from .clangsa.analyzer import ClangSA
 
 LOG = get_logger('analyzer')
 

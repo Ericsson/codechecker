@@ -13,9 +13,9 @@ from __future__ import absolute_import
 from codechecker_common import report
 from codechecker_common.logger import get_logger
 
-from .. import tidy_output_converter
+from ..result_handler_base import ResultHandler
 
-from .result_handler_base import ResultHandler
+from . import output_converter
 
 LOG = get_logger('report')
 
@@ -24,11 +24,11 @@ def generate_plist_from_tidy_result(output_file, tidy_stdout):
     """
     Generate a plist file from the clang tidy analyzer results.
     """
-    parser = tidy_output_converter.OutputParser()
+    parser = output_converter.OutputParser()
 
     messages = parser.parse_messages(tidy_stdout)
 
-    plist_converter = tidy_output_converter.PListConverter()
+    plist_converter = output_converter.PListConverter()
     plist_converter.add_messages(messages)
 
     plist_converter.write_to_file(output_file)
