@@ -52,8 +52,7 @@ package: clean_package build_dir gen-docs thrift userguide build_plist_to_html b
 	mkdir -p $(CC_BUILD_PLUGIN_DIR)
 
 	# Copy plist-to-html files.
-	cp -r $(CC_TOOLS)/plist_to_html/plist_to_html $(CC_BUILD_LIB_DIR) && \
-	ln -s $(CC_BUILD_LIB_DIR)/plist_to_html/PlistToHtml.py $(CC_BUILD_BIN_DIR)/plist-to-html
+	cp -r $(CC_TOOLS)/plist_to_html/build/plist_to_html/plist_to_html $(CC_BUILD_LIB_DIR)
 
 	# Copy tu_collector files.
 	cp -r $(CC_TOOLS)/tu_collector/tu_collector $(CC_BUILD_LIB_DIR) && \
@@ -160,7 +159,7 @@ build_dir:
 	mkdir -p $(BUILD_DIR)
 
 build_plist_to_html:
-	$(MAKE) -C $(CC_TOOLS)/plist_to_html
+	$(MAKE) -C $(CC_TOOLS)/plist_to_html build
 
 build_tu_collector:
 	$(MAKE) -C $(CC_TOOLS)/tu_collector
@@ -209,7 +208,7 @@ clean_userguide:
 	rm -rf www/userguide/gen-docs
 
 clean_plist_to_html:
-	rm -rf $(CC_TOOLS)/plist_to_html/build
+	$(MAKE) -C $(CC_TOOLS)/plist_to_html clean
 
 clean_tu_collector:
 	rm -rf $(CC_TOOLS)/tu_collector/build

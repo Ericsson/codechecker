@@ -10,11 +10,14 @@ CURRENT_DIR = $(shell pwd)
 ROOT = $(CURRENT_DIR)
 
 BUILD_DIR = $(CURRENT_DIR)/build
-BIN_DIR ?= $(BUILD_DIR)/bin
+PLIST_TO_HTML_DIR = $(BUILD_DIR)/plist_to_html
 
 STATIC_DIR = $(CURRENT_DIR)/plist_to_html/static
 VENDOR_DIR = $(STATIC_DIR)/vendor
 CODEMIRROR_DIR = $(VENDOR_DIR)/codemirror
+
+PKG_NAME := $(shell python setup.py --name)
+PKG_VERSION := $(shell python setup.py --version)
 
 ACTIVATE_DEV_VENV ?= . venv_dev/bin/activate
 ACTIVATE_RUNTIME_VENV ?= . venv/bin/activate
@@ -37,9 +40,23 @@ default: all
 all: package
 
 package: dep
-	mkdir -p $(BIN_DIR)
-	cp -r plist_to_html $(BUILD_DIR)
-	ln -sf $(BUILD_DIR)/plist_to_html/PlistToHtml.py $(BIN_DIR)/plist-to-html
+	# Install package in 'development mode'.
+	python setup.py develop
+
+build: dep
+	python setup.py build --build-purelib $(PLIST_TO_HTML_DIR)
+
+dist: dep
+	# Create a source distribution.
+	python setup.py sdist
+
+upload_test: dist
+	# Upload package to the TestPyPI repository.
+	twine upload -r testpypi dist/$(PKG_NAME)-$(PKG_VERSION).tar.gz
+
+upload: dist
+	# Upload package to the PyPI repository.
+	twine upload -r pypi dist/$(PKG_NAME)-$(PKG_VERSION).tar.gz
 
 vendor_dir:
 	mkdir -p $(VENDOR_DIR)
@@ -80,6 +97,8 @@ $(CODEMIRROR_DIR)/clike.min.js: codemirror_dir
 
 clean:
 	rm -rf $(BUILD_DIR)
+	rm -rf dist
+	rm -rf plist_to_html.egg-info
 
 clean_vendor:
 	rm -rf $(VENDOR_DIR)
