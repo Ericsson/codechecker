@@ -56,9 +56,7 @@ package: clean_package build_dir gen-docs thrift userguide build_plist_to_html b
 	ln -s $(CC_BUILD_LIB_DIR)/plist_to_html/PlistToHtml.py $(CC_BUILD_BIN_DIR)/plist-to-html
 
 	# Copy tu_collector files.
-	cp -r $(CC_TOOLS)/tu_collector/tu_collector $(CC_BUILD_LIB_DIR) && \
-	cp -r $(CC_TOOLS)/tu_collector/build $(CC_BUILD_DIR)/tu_collector && \
-	ln -s $(CC_BUILD_DIR)/tu_collector/bin/tu-collector $(CC_BUILD_DIR)/bin/tu-collector
+	cp -r $(CC_TOOLS)/tu_collector/build/tu_collector/tu_collector $(CC_BUILD_LIB_DIR)
 
 	# Copy generated thrift files.
 	mkdir -p $(CC_BUILD_GEN_DIR) && \
@@ -163,7 +161,7 @@ build_plist_to_html:
 	$(MAKE) -C $(CC_TOOLS)/plist_to_html
 
 build_tu_collector:
-	$(MAKE) -C $(CC_TOOLS)/tu_collector
+	$(MAKE) -C $(CC_TOOLS)/tu_collector build
 
 venv:
 	# Create a virtual environment which can be used to run the build package.
@@ -215,7 +213,7 @@ clean_plist_to_html:
 	rm -rf $(CC_TOOLS)/plist_to_html/build
 
 clean_tu_collector:
-	rm -rf $(CC_TOOLS)/tu_collector/build
+	$(MAKE) -C $(CC_TOOLS)/tu_collector clean
 
 clean_travis:
 	# Clean CodeChecker config files stored in the users home directory.
