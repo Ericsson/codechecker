@@ -161,6 +161,12 @@ class ClangSA(analyzer_base.SourceAnalyzer):
                                  '-analyzer-output=' + analyzer_mode,
                                  '-o', analyzer_output_file])
 
+            # Expand macros in plist output on the bug path.
+            analyzer_cmd.extend(['-Xclang',
+                                 '-analyzer-config',
+                                 '-Xclang',
+                                 'expand-macros=true'])
+
             # Checker configuration arguments needs to be set before
             # the checkers.
             if self.__checker_configs:
