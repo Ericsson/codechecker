@@ -5,6 +5,7 @@ BUILD_DIR = $(CURRENT_DIR)/build
 VENDOR_DIR = $(CURRENT_DIR)/vendor
 
 CC_BUILD_DIR = $(BUILD_DIR)/CodeChecker
+CC_BUILD_BIN_DIR = $(CC_BUILD_DIR)/bin
 CC_BUILD_WEB_DIR = $(CC_BUILD_DIR)/www
 CC_BUILD_PLUGIN_DIR = $(CC_BUILD_DIR)/plugin
 CC_BUILD_SCRIPTS_DIR = $(CC_BUILD_WEB_DIR)/scripts
@@ -18,6 +19,8 @@ CC_WEB = $(CURRENT_DIR)/web
 CC_SERVER = $(CC_WEB)/server/
 CC_CLIENT = $(CC_WEB)/client/
 CC_ANALYZER = $(CURRENT_DIR)/analyzer
+
+CC_TOOLS = $(CURRENT_DIR)/tools
 
 # Root of the repository.
 ROOT = $(CURRENT_DIR)
@@ -44,18 +47,17 @@ userguide: build_dir
 
 package: clean_package build_dir gen-docs thrift userguide build_plist_to_html build_tu_collector build_vendor
 	# Create directory structure.
-	mkdir -p $(CC_BUILD_DIR)/bin && \
+	mkdir -p $(CC_BUILD_BIN_DIR) && \
 	mkdir -p $(CC_BUILD_LIB_DIR) && \
 	mkdir -p $(CC_BUILD_PLUGIN_DIR)
 
 	# Copy plist-to-html files.
-	cp -r $(ROOT)/tools/plist_to_html/plist_to_html $(CC_BUILD_LIB_DIR) && \
-	cp -r $(ROOT)/tools/plist_to_html/build $(CC_BUILD_DIR)/plist_to_html && \
-	ln -s $(CC_BUILD_DIR)/plist_to_html/bin/plist-to-html $(CC_BUILD_DIR)/bin/plist-to-html
+	cp -r $(CC_TOOLS)/plist_to_html/plist_to_html $(CC_BUILD_LIB_DIR) && \
+	ln -s $(CC_BUILD_LIB_DIR)/plist_to_html/PlistToHtml.py $(CC_BUILD_BIN_DIR)/plist-to-html
 
 	# Copy tu_collector files.
-	cp -r $(ROOT)/tools/tu_collector/tu_collector $(CC_BUILD_LIB_DIR) && \
-	cp -r $(ROOT)/tools/tu_collector/build $(CC_BUILD_DIR)/tu_collector && \
+	cp -r $(CC_TOOLS)/tu_collector/tu_collector $(CC_BUILD_LIB_DIR) && \
+	cp -r $(CC_TOOLS)/tu_collector/build $(CC_BUILD_DIR)/tu_collector && \
 	ln -s $(CC_BUILD_DIR)/tu_collector/bin/tu-collector $(CC_BUILD_DIR)/bin/tu-collector
 
 	# Copy generated thrift files.
@@ -158,10 +160,10 @@ build_dir:
 	mkdir -p $(BUILD_DIR)
 
 build_plist_to_html:
-	$(MAKE) -C tools/plist_to_html
+	$(MAKE) -C $(CC_TOOLS)/plist_to_html
 
 build_tu_collector:
-	$(MAKE) -C tools/tu_collector
+	$(MAKE) -C $(CC_TOOLS)/tu_collector
 
 venv:
 	# Create a virtual environment which can be used to run the build package.
@@ -187,7 +189,8 @@ venv_dev:
 		pip install -r $(CC_ANALYZER)/requirements_py/dev/requirements.txt && \
 		pip install -r $(CC_ANALYZER)/requirements_py/test/requirements.txt && \
 		pip install -r $(CC_WEB)/requirements_py/dev/requirements.txt && \
-		pip install -r $(CC_WEB)/requirements_py/test/requirements.txt
+		pip install -r $(CC_WEB)/requirements_py/test/requirements.txt && \
+		pip install -r $(CC_TOOLS)/plist_to_html/requirements_py/test/requirements.txt
 
 clean_venv_dev:
 	rm -rf venv_dev
@@ -206,10 +209,10 @@ clean_userguide:
 	rm -rf www/userguide/gen-docs
 
 clean_plist_to_html:
-	rm -rf tools/plist_to_html/build
+	rm -rf $(CC_TOOLS)/plist_to_html/build
 
 clean_tu_collector:
-	rm -rf tools/tu_collector/build
+	rm -rf $(CC_TOOLS)/tu_collector/build
 
 clean_travis:
 	# Clean CodeChecker config files stored in the users home directory.

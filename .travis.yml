@@ -7,13 +7,13 @@ services:
 matrix:
   include:
     - os: linux
-      name: "Analyzer and web test cases (sqlite, psycopg2, pg8000)"
+      name: "Analyzer, web (sqlite, psycopg2, pg8000) and tools test cases."
       sudo: required
       dist: xenial
       python: "2.7"
     - os: osx
       osx_image: xcode9.4
-      name: "Analyzer and web test cases (sqlite, psycopg2, pg8000)"
+      name: "Analyzer, web (sqlite, psycopg2, pg8000) and tools test cases."
       sudo: false
       language: generic
       env:
@@ -84,6 +84,7 @@ addons:
 script:
     - make clean_travis
     - make package
+    - make -C tools/plist_to_html test
     - make -C analyzer test_unit test_functional
     - if [[ "$TRAVIS_OS_NAME" = "linux" ]]; then make -C analyzer test_tu_collector test_build_logger; fi
     - make -C web test_unit test_functional
