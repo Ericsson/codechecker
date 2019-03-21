@@ -23,7 +23,7 @@ before_install:
     # Download macOS specific extra dependencies.
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then git clone https://github.com/llvm-mirror/clang.git ~/llvm --branch master --single-branch --depth 1; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install doxygen; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install llvm@7; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install llvm@8; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install thrift@0.9; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PATH=/usr/local/Cellar/thrift@0.9/0.9.3/bin:$PATH; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then which thrift; fi
