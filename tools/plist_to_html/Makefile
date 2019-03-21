@@ -32,6 +32,9 @@ venv_dev:
 	virtualenv -p python2 venv_dev && \
 		$(ACTIVATE_DEV_VENV) && pip install -r $(VENV_TEST_REQ_FILE)
 
+clean_venv_dev:
+	rm -rf venv_dev
+
 default: all
 
 all: package

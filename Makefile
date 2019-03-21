@@ -194,6 +194,9 @@ venv_dev:
 
 clean_venv_dev:
 	rm -rf venv_dev
+	$(MAKE) -C $(CC_ANALYZER) clean_venv_dev
+	$(MAKE) -C $(CC_WEB) clean_venv_dev
+	$(MAKE) -C $(CC_TOOLS)/plist_to_html clean_venv_dev
 
 clean: clean_package clean_vendor
 
