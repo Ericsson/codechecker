@@ -21,7 +21,9 @@ ACTIVATE_RUNTIME_VENV ?= . venv/bin/activate
 
 VENV_TEST_REQ_FILE ?= requirements_py/test/requirements.txt
 
-include tests/Makefile
+default: all
+
+all: package
 
 venv:
 	# Create a virtual environment which can be used to run the build package.
@@ -35,9 +37,7 @@ venv_dev:
 clean_venv_dev:
 	rm -rf venv_dev
 
-default: all
-
-all: package
+include tests/Makefile
 
 package: dep
 	mkdir -p $(BIN_DIR)
