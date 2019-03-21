@@ -636,11 +636,13 @@ def __get_language(flag_iterator, details):
     """
     # TODO: Known issue: a -x flag may precede all source files in the build
     # command with different languages.
-    if flag_iterator.item == '-x':
-        next(flag_iterator)
-        details['lang'] = flag_iterator.item
+    if flag_iterator.item.startswith('-x'):
+        if flag_iterator.item == '-x':
+            next(flag_iterator)
+            details['lang'] = flag_iterator.item
+        else:
+            details['lang'] = flag_iterator.item[2:]  # 2 == len('-x')
         return True
-
     return False
 
 
@@ -688,6 +690,19 @@ def __skip(flag_iterator, _):
     return False
 
 
+def __keep_except(substring):
+    def f(flag_iterator, details):
+        """
+        This function keeps the flag pointed by the given flag_iterator except
+        if it contains the given substring.
+        """
+        if substring not in flag_iterator.item:
+            details['analyzer_options'].append(flag_iterator.item)
+            return True
+        return False
+    return f
+
+
 def parse_options(compilation_db_entry):
     """
     This function parses a GCC compilation action and returns a BuildAction
@@ -726,15 +741,22 @@ def parse_options(compilation_db_entry):
     if '++' in details['compiler'] or 'cpp' in details['compiler']:
         details['lang'] = 'c++'
 
-    flag_transformers = [
-        __skip,
-        __replace,
-        __collect_compile_opts,
-        __determine_action_type,
-        __skip_sources,
-        __get_arch,
-        __get_language,
-        __get_output]
+    if 'clang' in details['compiler']:
+        flag_transformers = [
+            __determine_action_type,
+            __get_language,
+            __get_output,
+            __keep_except(compilation_db_entry['file'])]
+    else:
+        flag_transformers = [
+            __skip,
+            __replace,
+            __collect_compile_opts,
+            __determine_action_type,
+            __skip_sources,
+            __get_arch,
+            __get_language,
+            __get_output]
 
     for it in OptionIterator(gcc_command[1:]):
         for flag_transformer in flag_transformers:

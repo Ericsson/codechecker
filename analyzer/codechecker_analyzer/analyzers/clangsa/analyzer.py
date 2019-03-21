@@ -201,10 +201,17 @@ class ClangSA(analyzer_base.SourceAnalyzer):
                     analyzer_cmd.extend(['-Xclang',
                                          '-analyzer-display-ctu-progress'])
 
-            # Set language.
-            analyzer_cmd.extend(['-x', self.buildaction.lang])
-            if self.buildaction.target != "":
+            def has_flag(flag):
+                return bool(next((x for x in analyzer_cmd if
+                                 x.startswith(flag)),
+                                 False))
+
+            if not has_flag('-x'):
+                analyzer_cmd.extend(['-x', self.buildaction.lang])
+            if not has_flag('--target') and self.buildaction.target != "":
                 analyzer_cmd.append("--target=" + self.buildaction.target)
+            if not has_flag('-std') and not has_flag('--std'):
+                analyzer_cmd.append(self.buildaction.compiler_standard)
 
             analyzer_cmd.extend(config.analyzer_extra_arguments)
 
@@ -214,11 +221,6 @@ class ClangSA(analyzer_base.SourceAnalyzer):
                                                   config.compiler_resource_dir)
 
             analyzer_cmd.extend(self.buildaction.compiler_includes)
-
-            if not next((x for x in analyzer_cmd if x.startswith('-std=') or
-                        x.startswith('--std')),
-                        False):
-                analyzer_cmd.append(self.buildaction.compiler_standard)
 
             analyzer_cmd.append(self.source_file)
 
