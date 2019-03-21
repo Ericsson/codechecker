@@ -58,13 +58,6 @@ class AnalyzerConfigHandler(object):
                             and f.endswith(".so")]
         return analyzer_plugins
 
-    @abstractmethod
-    def get_checker_configs(self):
-        """
-        Return a list of (checker_name, key, key_value) tuples.
-        """
-        raise NotImplementedError("Subclasses should implement this!")
-
     def add_checker(self, checker_name, enabled, description):
         """
         Add additional checker.
