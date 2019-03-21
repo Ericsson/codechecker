@@ -219,7 +219,8 @@ class ImplicitCompilerInfo(object):
     @staticmethod
     def __get_compiler_err(cmd):
         """
-        Returns the stderr of a compiler invocation as string.
+        Returns the stderr of a compiler invocation as string
+        or None in case of error.
         """
         try:
             LOG.debug("Retrieving default includes via '" + cmd + "'")
@@ -243,6 +244,9 @@ class ImplicitCompilerInfo(object):
         end_mark = "End of search list."
 
         include_paths = []
+
+        if not lines:
+            return include_paths
 
         do_append = False
         for line in lines.splitlines():
