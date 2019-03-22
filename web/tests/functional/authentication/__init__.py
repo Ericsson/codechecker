@@ -13,10 +13,8 @@ from __future__ import absolute_import
 import multiprocessing
 import os
 import shutil
-import subprocess
 import time
 
-from libtest import project
 from libtest import codechecker
 from libtest import env
 
@@ -61,8 +59,9 @@ def setup_package():
 
     # Enable authentication and start the CodeChecker server.
     env.enable_auth(TEST_WORKSPACE)
+
     print("Starting server to get results")
-    _start_server(codechecker_cfg, test_config, False)
+    codechecker.start_server(codechecker_cfg, __STOP_SERVER)
 
 
 def teardown_package():
@@ -78,40 +77,5 @@ def teardown_package():
 
     __STOP_SERVER.set()
 
-    # The custom server stated in a separate home needs to be waited, so it
-    # can properly execute its finalizers.
-    time.sleep(5)
-
     print("Removing: " + TEST_WORKSPACE)
     shutil.rmtree(TEST_WORKSPACE, ignore_errors=True)
-
-
-# This server uses custom server configuration, which is brought up here
-# and torn down by the package itself --- it does not connect to the
-# test run's "master" server.
-def _start_server(codechecker_cfg, test_config, auth=False):
-    """Start the CodeChecker server."""
-    def start_server_proc(event, server_cmd, checking_env):
-        """Target function for starting the CodeChecker server."""
-        proc = subprocess.Popen(server_cmd, env=checking_env)
-
-        # Blocking termination until event is set.
-        event.wait()
-
-        # If proc is still running, stop it.
-        if proc.poll() is None:
-            proc.terminate()
-
-    server_cmd = codechecker.serv_cmd(codechecker_cfg['workspace'],
-                                      str(codechecker_cfg['viewer_port']),
-                                      env.get_postgresql_cfg())
-
-    server_proc = multiprocessing.Process(
-        name='server',
-        target=start_server_proc,
-        args=(__STOP_SERVER, server_cmd, codechecker_cfg['check_env']))
-
-    server_proc.start()
-
-    # Wait for server to start and connect to database.
-    time.sleep(20)

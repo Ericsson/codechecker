@@ -34,39 +34,6 @@ from libtest import env
 EVENT = multiprocessing.Event()
 
 
-# This test uses multiple custom servers, which are brought up here
-# and torn down by the module itself --- it does not only connect to the
-# test run's "master" server.
-def start_server(codechecker_cfg, event):
-    """Start the CodeChecker server."""
-
-    def start_server_proc(event, server_cmd, checking_env):
-        """Target function for starting the CodeChecker server."""
-        proc = subprocess.Popen(server_cmd, env=checking_env)
-
-        # Blocking termination until event is set.
-        event.wait()
-
-        # If proc is still running, stop it.
-        if proc.poll() is None:
-            proc.terminate()
-
-    # The server is started in the same folder as the "master" one.
-    server_cmd = codechecker.serv_cmd(env.get_workspace(None),
-                                      str(codechecker_cfg['viewer_port']),
-                                      env.get_postgresql_cfg())
-
-    server_proc = multiprocessing.Process(
-        name='server',
-        target=start_server_proc,
-        args=(event, server_cmd, codechecker_cfg['check_env']))
-
-    server_proc.start()
-
-    # Wait for server to start and connect to database.
-    time.sleep(5)
-
-
 class TestProductConfigShare(unittest.TestCase):
 
     def setUp(self):
@@ -140,7 +107,12 @@ class TestProductConfigShare(unittest.TestCase):
             self.test_workspace_secondary
         env.export_test_cfg(self.test_workspace_secondary,
                             {'codechecker_cfg': self.codechecker_cfg_2})
-        start_server(self.codechecker_cfg_2, EVENT)
+
+        server_config = dict(self.codechecker_cfg_2)
+        server_config['workspace'] = env.get_workspace(None)
+
+        codechecker.start_server(server_config, EVENT, None,
+                                 env.get_postgresql_cfg())
 
         # Set up API clients for the secondary server.
         self._auth_client_2 = env.setup_auth_client(
