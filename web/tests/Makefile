@@ -74,7 +74,7 @@ DROP_DB_CMD = bash -c 'psql -h localhost \
 
 run_test: venv_dev
 	$(ACTIVATE_DEV_VENV) && \
-		$(REPO_ROOT) $(CLANG_VERSION) $(TEST_PROJECT) \
+		$(REPO_ROOT) BUILD_DIR=$(BUILD_DIR) $(CLANG_VERSION) $(TEST_PROJECT) \
 		nosetests $(NOSECFG) $(ROOT)/web/${TEST} \
 		&& { ${SHUTDOWN_SERVER_CMD}; } || ${EXIT_ERROR}
 
