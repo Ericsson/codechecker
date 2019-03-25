@@ -19,7 +19,7 @@ CODEMIRROR_DIR = $(VENDOR_DIR)/codemirror
 ACTIVATE_DEV_VENV ?= . venv_dev/bin/activate
 ACTIVATE_RUNTIME_VENV ?= . venv/bin/activate
 
-VENV_TEST_REQ_FILE ?= requirements_py/test/requirements.txt
+VENV_DEV_REQ_FILE ?= requirements_py/dev/requirements.txt
 
 include tests/Makefile
 
@@ -30,7 +30,7 @@ venv:
 venv_dev:
 	# Create a virtual environment for development.
 	virtualenv -p python2 venv_dev && \
-		$(ACTIVATE_DEV_VENV) && pip install -r $(VENV_TEST_REQ_FILE)
+		$(ACTIVATE_DEV_VENV) && pip install -r $(VENV_DEV_REQ_FILE)
 
 clean_venv_dev:
 	rm -rf venv_dev
