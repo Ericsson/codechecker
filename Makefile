@@ -182,15 +182,18 @@ venv_osx:
 clean_venv:
 	rm -rf venv
 
+PIP_DEV_DEPS_CMD = make -C $(CC_ANALYZER) pip_dev_deps && \
+  make -C $(CC_WEB) pip_dev_deps && \
+  make -C $(CC_TOOLS)/plist_to_html pip_dev_deps
+
+pip_dev_deps:
+	# Install the depencies for analyze, web and the tools.
+	$(PIP_DEV_DEPS_CMD)
+
 venv_dev:
 	# Create a virtual environment for development.
 	virtualenv -p python2 venv_dev && \
-		$(ACTIVATE_DEV_VENV) && \
-		pip install -r $(CC_ANALYZER)/requirements_py/dev/requirements.txt && \
-		pip install -r $(CC_ANALYZER)/requirements_py/test/requirements.txt && \
-		pip install -r $(CC_WEB)/requirements_py/dev/requirements.txt && \
-		pip install -r $(CC_WEB)/requirements_py/test/requirements.txt && \
-		pip install -r $(CC_TOOLS)/plist_to_html/requirements_py/test/requirements.txt
+		$(ACTIVATE_DEV_VENV) && $(PIP_DEV_DEPS_CMD)
 
 clean_venv_dev:
 	rm -rf venv_dev
@@ -221,38 +224,54 @@ clean_travis:
 	# Clean CodeChecker config files stored in the users home directory.
 	rm -rf ~/.codechecker*
 
-pylint: venv_dev
-	$(MAKE) -C $(CC_ANALYZER) pylint && \
-	$(MAKE) -C $(CC_WEB) pylint && \
-	pylint ./bin ./codechecker_common ./scripts \
-	  --disable=all \
-	  --enable=logging-format-interpolation,old-style-class
+PYLINT_CMD = $(MAKE) -C $(CC_ANALYZER) pylint && \
+  $(MAKE) -C $(CC_WEB) pylint && \
+  pylint ./bin ./codechecker_common ./scripts \
+    --disable=all \
+    --enable=logging-format-interpolation,old-style-class
 
-pycodestyle: venv_dev
-	$(MAKE) -C $(CC_ANALYZER) pycodestyle && \
+pylint:
+	$(PYLINT_CMD)
+
+pylint_in_env: venv_dev
+	$(ACTIVATE_DEV_VENV) && $(PYLINT_CMD)
+
+PYCODE_CMD = $(MAKE) -C $(CC_ANALYZER) pycodestyle && \
 	$(MAKE) -C $(CC_WEB) pycodestyle && \
 	pycodestyle bin codechecker_common scripts
+
+pycodestyle:
+	$(PYCODE_CMD)
+
+pycodestyle_in_env:
+	$(ACTIVATE_DEV_VENV) && $(PYCODE_CMD)
 
 test: test_analyzer test_server
 
 test_analyzer:
 	$(MAKE) -C $(CC_ANALYZER) test
 
+test_analyzer_in_env:
+	$(MAKE) -C $(CC_ANALYZER) test_in_env
+
 test_server:
 	$(MAKE) -C $(CC_WEB) test
+
+test_server_in_env:
+	$(MAKE) -C $(CC_WEB) test_in_env
 
 test_unit:
 	$(MAKE) -C $(CC_ANALYZER) test_unit
 	$(MAKE) -C $(CC_WEB) test_unit
 
-test_unit_novenv:
-	$(MAKE) -C $(CC_ANALYZER) test_unit_novenv
-	$(MAKE) -C $(CC_WEB) test_unit_novenv
+test_unit_in_env:
+	$(MAKE) -C $(CC_ANALYZER) test_unit_in_env
+	$(MAKE) -C $(CC_WEB) test_unit_in_env
 
-test_functional: package
+test_functional:
 	$(MAKE) -C $(CC_ANALYZER) test_functional
 	$(MAKE) -C $(CC_WEB) test_functional
 
-test_functional_novenv: package
-	$(MAKE) -C $(CC_ANALYZER) test_functional_novenv
-	$(MAKE) -C $(CC_WEB) test_functional_novenv
+test_functional_in_env:
+	$(MAKE) -C $(CC_ANALYZER) test_functional_in_env
+	$(MAKE) -C $(CC_WEB) test_functional_in_env

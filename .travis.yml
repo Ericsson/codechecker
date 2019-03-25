@@ -43,7 +43,8 @@ before_install:
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then while ! pg_isready; do sleep 1; done; createuser -s postgres; fi
 
 install:
-    - pip install nose pycodestyle
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pip install --ignore-installed nose --user; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PATH=/Users/travis/Library/Python/2.7/bin:$PATH; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pip install virtualenv; fi
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-7 100; fi
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-7 100; fi
@@ -82,6 +83,9 @@ addons:
     postgresql: "9.6"
 
 script:
+    - make pip_dev_deps
+    - make pycodestyle
+    - make pylint
     - make clean_travis
     - make package
     - make -C tools/plist_to_html test

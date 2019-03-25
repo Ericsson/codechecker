@@ -13,6 +13,9 @@ VENV_DEV_REQ_FILE ?= requirements_py/dev/requirements.txt
 include tests/Makefile
 include server/tests/Makefile
 
+pip_dev_deps:
+	pip install -r $(VENV_DEV_REQ_FILE)
+
 thrift: build_dir
 	if [ -d "$(BUILD_DIR)/thrift" ]; then rm -rf $(BUILD_DIR)/thrift; fi
 	mkdir $(BUILD_DIR)/thrift

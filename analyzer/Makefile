@@ -11,6 +11,9 @@ VENV_DEV_REQ_FILE ?= requirements_py/dev/requirements.txt
 
 include tests/Makefile
 
+pip_dev_deps:
+	pip install -r $(VENV_DEV_REQ_FILE)
+
 venv_dev:
 	# Create a virtual environment for development.
 	virtualenv -p python2 venv_dev && \
