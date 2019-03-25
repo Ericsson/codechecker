@@ -178,7 +178,6 @@ int f(int x) { return 1 / x; }
         files_in_report_after = self.__get_files_in_report()
 
         event.set()
-        time.sleep(5)
 
         event.clear()
 
@@ -216,4 +215,3 @@ int f(int x) { return 1 / x; }
         self.__check_serverity_of_reports()
 
         event.set()
-        time.sleep(5)

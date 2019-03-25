@@ -440,7 +440,7 @@ def wait_for_server_start(stdoutfile):
 # This server uses multiple custom servers, which are brought up here
 # and torn down by the package itself --- it does not connect to the
 # test run's "master" server.
-def start_server(codechecker_cfg, event, server_args=None):
+def start_server(codechecker_cfg, event, server_args=None, pg_config=None):
     """Start the CodeChecker server."""
     def start_server_proc(event, server_cmd, checking_env):
         """Target function for starting the CodeChecker server."""
@@ -462,7 +462,7 @@ def start_server(codechecker_cfg, event, server_args=None):
 
     server_cmd = serv_cmd(codechecker_cfg['workspace'],
                           str(codechecker_cfg['viewer_port']),
-                          None,
+                          pg_config,
                           server_args or [])
 
     server_proc = multiprocessing.Process(
