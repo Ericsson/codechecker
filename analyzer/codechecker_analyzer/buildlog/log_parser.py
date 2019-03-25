@@ -590,16 +590,19 @@ def __skip_sources(flag_iterator, _):
 def __determine_action_type(flag_iterator, details):
     """
     This function determines whether this is a preprocessing, compilation or
-    linking action and sets it in the buildaction object.
+    linking action and sets it in the buildaction object. If the action type is
+    set to COMPILE earlier then we don't set it to anything else.
     """
     if flag_iterator.item == '-c':
         details['action_type'] = BuildAction.COMPILE
         return True
     elif flag_iterator.item.startswith('-print-prog-name'):
-        details['action_type'] = BuildAction.INFO
+        if details['action_type'] != BuildAction.COMPILE:
+            details['action_type'] = BuildAction.INFO
         return True
     elif PRECOMPILATION_OPTION.match(flag_iterator.item):
-        details['action_type'] = BuildAction.PREPROCESS
+        if details['action_type'] != BuildAction.COMPILE:
+            details['action_type'] = BuildAction.PREPROCESS
         return True
 
     return False
@@ -722,7 +725,7 @@ def parse_options(compilation_db_entry):
         raise KeyError("No valid 'command' or 'arguments' entry found!")
 
     details['directory'] = compilation_db_entry['directory']
-    details['action_type'] = BuildAction.COMPILE
+    details['action_type'] = None
     details['compiler'] = determine_compiler(gcc_command)
     if '++' in details['compiler'] or 'cpp' in details['compiler']:
         details['lang'] = 'c++'
@@ -744,6 +747,9 @@ def parse_options(compilation_db_entry):
         else:
             pass
             # print('Unhandled argument: ' + it.item)
+
+    if details['action_type'] is None:
+        details['action_type'] = BuildAction.COMPILE
 
     details['source'] = os.path.normpath(
         os.path.join(compilation_db_entry['directory'],

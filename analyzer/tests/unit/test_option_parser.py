@@ -211,6 +211,21 @@ class OptionParserTest(unittest.TestCase):
         self.assertTrue(set(compiler_options) == set(res.analyzer_options))
         self.assertEqual(BuildAction.LINK, res.action_type)
 
+    def test_preprocess_and_compile(self):
+        """
+        If the compile command contains a preprocessor related flag like -MP
+        and -c which results compilation then we consider the action as
+        compilation instead of preprocessing.
+        """
+        action = {
+            'file': 'main.cpp',
+            'command': 'g++ -c -MP main.cpp',
+            'directory': ''}
+
+        res = log_parser.parse_options(action)
+        print(res)
+        self.assertEqual(BuildAction.COMPILE, res.action_type)
+
     def test_ignore_flags(self):
         """
         Test if special compiler options are ignored properly.
