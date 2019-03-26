@@ -10,10 +10,12 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
+import glob
 import json
 import multiprocessing
 import os
 import shlex
+import shutil
 import stat
 import subprocess
 from subprocess import CalledProcessError
@@ -224,6 +226,58 @@ def check(codechecker_cfg, test_project_name, test_project_path):
         return cerr.returncode
 
 
+def modify_plist_files(report_dir, source_file_dir):
+    """
+    Iterates over the plist files in the given report directory and overrides
+    file paths in it by using the given source file directory.
+    """
+    for file_name in os.listdir(report_dir):
+        if file_name.endswith(".plist"):
+            test_file_path = os.path.join(report_dir, file_name)
+            with open(test_file_path, 'r+') as plist_file:
+                content = plist_file.read()
+                new_content = content.replace("$FILE_PATH$", source_file_dir)
+                plist_file.seek(0)
+                plist_file.truncate()
+                plist_file.write(new_content)
+
+
+def add_analyzer_reports(report_dir, workspace_dir, source_files_dir):
+    """
+    Copy analyzer report directory to the given workspace directory and
+    overrides file paths in the plist files.
+    """
+    test_dir = os.path.join(workspace_dir, 'test_files')
+
+    if os.path.exists(test_dir):
+        shutil.rmtree(test_dir)
+
+    os.makedirs(test_dir)
+
+    # Copy analyzer report files.
+    test_analyzer_reports_dir = os.path.join(test_dir, 'analyzer_reports')
+    os.makedirs(test_analyzer_reports_dir)
+
+    for input_file in glob.glob(os.path.join(report_dir, '*')):
+        shutil.copy(input_file, test_analyzer_reports_dir)
+
+    # Copy source files.
+    test_source_files_dir = os.path.join(test_dir, 'source_files')
+    os.makedirs(test_source_files_dir)
+
+    for input_file in glob.glob(os.path.join(source_files_dir, '*')):
+        shutil.copy(input_file, test_source_files_dir)
+
+    # Modify analyzer report files.
+    modify_plist_files(test_analyzer_reports_dir, test_source_files_dir)
+
+    return {
+        'test_files_dir': test_dir,
+        'analyzer_reports_dir': test_analyzer_reports_dir,
+        'source_files_dir': test_source_files_dir
+    }
+
+
 def analyze(codechecker_cfg, test_project_name, test_project_path):
     """
     Analyze a test project.
@@ -320,6 +374,10 @@ def store(codechecker_cfg, test_project_name):
                  '--url', env.parts_to_url(codechecker_cfg),
                  '--name', test_project_name,
                  codechecker_cfg['reportdir']]
+
+    tag = codechecker_cfg.get('tag')
+    if tag:
+        store_cmd.extend(['--tag', tag])
 
     try:
         print("STORE:")

@@ -9,7 +9,6 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
-import json
 import os
 import unittest
 
@@ -25,6 +24,13 @@ class TestDetectionStatus(unittest.TestCase):
         # TEST_WORKSPACE is automatically set by test package __init__.py .
         self.test_workspace = os.environ['TEST_WORKSPACE']
 
+        self.src_dir = os.path.dirname(__file__)
+        self.test_files_dir = os.path.join(self.src_dir, 'test_files')
+        self.analyzer_reports_dir = os.path.join(self.test_files_dir,
+                                                 'analyzer_reports')
+        self.source_files_dir = os.path.join(self.test_files_dir,
+                                             'source_files')
+
         test_class = self.__class__.__name__
         print('Running ' + test_class + ' tests in ' + self.test_workspace)
 
@@ -32,95 +38,23 @@ class TestDetectionStatus(unittest.TestCase):
 
         # Get the CodeChecker cmd if needed for the tests.
         self._codechecker_cmd = env.codechecker_cmd()
-        self._test_dir = os.path.join(self.test_workspace, 'test_files')
-
-        try:
-            os.makedirs(self._test_dir)
-        except os.error:
-            # Directory already exists.
-            pass
 
         # Setup a viewer client to test viewer API calls.
         self._cc_client = env.setup_viewer_client(self.test_workspace)
         self.assertIsNotNone(self._cc_client)
 
-        # Change working dir to testfile dir so CodeChecker can be run easily.
-        self.__old_pwd = os.getcwd()
-        os.chdir(self._test_dir)
+    def store(self, reports_dir, test_files_dir):
+        """ Store the given version of analyzer reports to the server. """
+        print("Storing analyzer reports: " + reports_dir)
+        test_files_data = codechecker.add_analyzer_reports(reports_dir,
+                                                           self.test_workspace,
+                                                           test_files_dir)
 
-        self._source_file = "main.cpp"
+        self._codechecker_cfg['reportdir'] = \
+            test_files_data['analyzer_reports_dir']
 
-        # Init project dir.
-        makefile = "all:\n\t$(CXX) -c main.cpp -Wno-division-by-zero " \
-                   "-Wno-all -Wno-extra -o /dev/null\n"
-        project_info = {
-            "name": "hello",
-            "clean_cmd": "",
-            "build_cmd": "make"
-        }
-
-        with open(os.path.join(self._test_dir, 'Makefile'), 'w') as f:
-            f.write(makefile)
-        with open(os.path.join(self._test_dir, 'project_info.json'), 'w') as f:
-            json.dump(project_info, f)
-
-        self.sources = ["""
-int main()
-{
-  int i = 1 / 0;
-
-  sizeof(42);
-  sizeof(42);
-  sizeof(42);
-}""", """
-int main()
-{
-  int i = 1 / 0;
-
-  int* p = 0;
-
-  i = *p + 42;
-
-  sizeof(42);
-  sizeof(42);
-  sizeof(42);
-}""", """
-int main()
-{
-  int i = 1 / 2;
-
-  int* p = 0;
-
-  i = *p + 42;
-
-  sizeof(42);
-  sizeof(42);
-  sizeof(42);
-}""", """
-
-
-int main()
-{
-  int i = 1 / 0;
-
-  int* p = 0;
-
-  i = *p + 42;
-
-  sizeof(42);
-  sizeof(42);
-}"""]
-
-    def tearDown(self):
-        """Restore environment after tests have ran."""
-        os.chdir(self.__old_pwd)
-
-    def _create_source_file(self, version):
-        with open(os.path.join(self._test_dir, self._source_file), 'w') as f:
-            f.write(self.sources[version])
-
-    def _check_source_file(self, cfg):
-        codechecker.check(cfg, 'hello', self._test_dir)
+        project_name = 'hello'
+        codechecker.store(self._codechecker_cfg, project_name)
 
     def test_same_file_change(self):
         """
@@ -133,9 +67,9 @@ int main()
             run_id = max(map(lambda run: run.runId, runs))
             self._cc_client.removeRun(run_id)
 
-        # Check the first file version
-        self._create_source_file(0)
-        self._check_source_file(self._codechecker_cfg)
+        reports_dir = os.path.join(self.analyzer_reports_dir, 'v1')
+        test_files_dir = os.path.join(self.source_files_dir, 'v1')
+        self.store(reports_dir, test_files_dir)
 
         runs = self._cc_client.getRunData(None)
         run_id = max(map(lambda run: run.runId, runs))
@@ -152,9 +86,10 @@ int main()
             lambda r: r.detectionStatus == DetectionStatus.NEW,
             reports)))
 
-        # Check the second file version
-        self._create_source_file(1)
-        self._check_source_file(self._codechecker_cfg)
+        reports_dir = os.path.join(self.analyzer_reports_dir, 'v2', 'simple')
+        test_files_dir = os.path.join(self.source_files_dir, 'v2')
+        self.store(reports_dir, test_files_dir)
+
         reports = self._cc_client.getRunResults([run_id],
                                                 100,
                                                 0,
@@ -173,9 +108,11 @@ int main()
             else:
                 self.assertTrue(False)
 
+        reports_dir = os.path.join(self.analyzer_reports_dir, 'v3')
+        test_files_dir = os.path.join(self.source_files_dir, 'v3')
+        self.store(reports_dir, test_files_dir)
+
         # Check the third file version
-        self._create_source_file(2)
-        self._check_source_file(self._codechecker_cfg)
         reports = self._cc_client.getRunResults([run_id],
                                                 100,
                                                 0,
@@ -193,10 +130,14 @@ int main()
                     True,
                     Encoding.DEFAULT).fileContent
 
-                self.assertEqual(
-                    file_content,
-                    self.sources[1],
-                    "Resolved bugs should be shown with the old file content.")
+                source_file_path = os.path.join(self.source_files_dir, 'v2',
+                                                'main.cpp')
+                with open(source_file_path) as source_file:
+                    self.assertEqual(
+                        file_content,
+                        source_file.read(),
+                        "Resolved bugs should be shown with the old file "
+                        "content.")
 
             elif report.detectionStatus == DetectionStatus.NEW:
                 self.assertIn(report.bugHash,
@@ -211,18 +152,23 @@ int main()
                     True,
                     Encoding.DEFAULT).fileContent
 
-                self.assertEqual(
-                    file_content,
-                    self.sources[2],
-                    "Unresolved bug should be shown with the new file "
-                    "content.")
+                source_file_path = os.path.join(self.source_files_dir, 'v3',
+                                                'main.cpp')
+                with open(source_file_path) as source_file:
+                    self.assertEqual(
+                        file_content,
+                        source_file.read(),
+                        "Unresolved bug should be shown with the new file "
+                        "content.")
 
             else:
                 self.assertTrue(False)
 
         # Check the second file version again
-        self._create_source_file(1)
-        self._check_source_file(self._codechecker_cfg)
+        reports_dir = os.path.join(self.analyzer_reports_dir, 'v2', 'simple')
+        test_files_dir = os.path.join(self.source_files_dir, 'v2')
+        self.store(reports_dir, test_files_dir)
+
         reports = self._cc_client.getRunResults([run_id],
                                                 100,
                                                 0,
@@ -243,8 +189,10 @@ int main()
                               ['ac147b31a745d91be093bd70bbc5567c'])
 
         # Check the fourth file version
-        self._create_source_file(3)
-        self._check_source_file(self._codechecker_cfg)
+        reports_dir = os.path.join(self.analyzer_reports_dir, 'v4')
+        test_files_dir = os.path.join(self.source_files_dir, 'v4')
+        self.store(reports_dir, test_files_dir)
+
         reports = self._cc_client.getRunResults([run_id],
                                                 100,
                                                 0,
@@ -264,10 +212,14 @@ int main()
                     True,
                     Encoding.DEFAULT).fileContent
 
-                self.assertEqual(
-                    file_content,
-                    self.sources[3],
-                    "Reopened bugs should be shown with the new file content.")
+                source_file_path = os.path.join(self.source_files_dir, 'v4',
+                                                'main.cpp')
+                with open(source_file_path) as source_file:
+                    self.assertEqual(
+                        file_content,
+                        source_file.read(),
+                        "Reopened bugs should be shown with the new file "
+                        "content.")
 
             elif report.detectionStatus == DetectionStatus.RESOLVED:
                 self.assertIn(report.bugHash,
@@ -284,21 +236,9 @@ int main()
             # Remove the run.
             self._cc_client.removeRun(run_id)
 
-        self._create_source_file(0)
-
-        codechecker.analyze(self._codechecker_cfg,
-                            'hello',
-                            self._test_dir)
-
-        try:
-            # Test storage without metadata.json.
-            os.remove(os.path.join(self._codechecker_cfg['reportdir'],
-                                   'metadata.json'))
-        except OSError:
-            # metadata.json already removed.
-            pass
-
-        codechecker.store(self._codechecker_cfg, 'hello')
+        reports_dir = os.path.join(self.analyzer_reports_dir, 'v1')
+        test_files_dir = os.path.join(self.source_files_dir, 'v1')
+        self.store(reports_dir, test_files_dir)
 
         runs = self._cc_client.getRunData(None)
         run_id = max(map(lambda run: run.runId, runs))
@@ -310,7 +250,7 @@ int main()
                                                 None,
                                                 None)
 
-        self.assertEqual(len(reports), 2)
+        self.assertEqual(len(reports), 5)
 
     def test_detection_status_off(self):
         """
@@ -325,11 +265,13 @@ int main()
 
         cfg = dict(self._codechecker_cfg)
 
-        self._create_source_file(0)
-        self._check_source_file(cfg)
+        reports_dir = os.path.join(self.analyzer_reports_dir, 'v1')
+        test_files_dir = os.path.join(self.source_files_dir, 'v1')
+        self.store(reports_dir, test_files_dir)
 
-        self._create_source_file(1)
-        self._check_source_file(cfg)
+        reports_dir = os.path.join(self.analyzer_reports_dir, 'v2', 'simple')
+        test_files_dir = os.path.join(self.source_files_dir, 'v2')
+        self.store(reports_dir, test_files_dir)
 
         reports = self._cc_client.getRunResults(None,
                                                 100,
@@ -345,10 +287,10 @@ int main()
                            if r.detectionStatus == DetectionStatus.UNAVAILABLE]
         self.assertEqual(len(unavail_reports), 0)
 
-        cfg['checkers'] = ['-d', 'core.DivideZero']
-
-        self._create_source_file(1)
-        self._check_source_file(cfg)
+        reports_dir = os.path.join(self.analyzer_reports_dir, 'v2',
+                                   'disable_dividezero_checker')
+        test_files_dir = os.path.join(self.source_files_dir, 'v2')
+        self.store(reports_dir, test_files_dir)
 
         reports = self._cc_client.getRunResults(None,
                                                 100,

@@ -1,0 +1,12 @@
+{
+  "checkers": {
+    "clang-tidy": {
+      "bugprone-sizeof-expression": true
+    },
+    "clangsa": {
+      "core.DivideZero": false,
+      "deadcode.DeadStores": true,
+      "core.UndefinedBinaryOperatorResult": true
+    }
+  }
+}
