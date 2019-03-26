@@ -86,7 +86,7 @@ export PATH="$PWD/build/CodeChecker/bin:$PATH"
 Once the package is installed and the PostgreSQL server is running, a
 CodeChecker server can be started by specifying the **configuration**
 database's connection arguments. (Read more about the [`CodeChecker server`
-command](user_guide.md#7-server-mode).)
+command](user_guide.md#server).)
 
 The `codechecker_config` database will contain server-specific configurations.
 

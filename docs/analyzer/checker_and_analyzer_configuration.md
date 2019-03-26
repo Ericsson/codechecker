@@ -1,20 +1,29 @@
 # Configure Clang Static Analyzer and checkers
 
-Checker configuration can be done through the `--saargs` analysis option which forwards arguments without modification to the Clang Static Analyzer:
+Checker configuration can be done through the `--saargs` analysis option which
+forwards arguments without modification to the Clang Static Analyzer:
 ```
 CodeChecker analyze --saargs static_analyzer.cfg
 ```
 
-In the `static_analyzer.cfg` file various static analyzer and checker related configuration options can be configured like this:
+In the `static_analyzer.cfg` file various static analyzer and checker related
+configuration options can be configured like this:
 ```
 -Xclang -analyzer-config -Xclang unix.Malloc:Optimistic=true -Xclang -analyzer-max-loop -Xclang 20
 ```
-__Before every configuration option '-Xclang' argument should be written and all the configuration options sould be in one line!__
+__Before every configuration option '-Xclang' argument should be written and
+all the configuration options sould be in one line!__
 
-In the `static_analyzer.cfg` example file we set a checker specific configuration option `unix.Malloc:Optimistic=true` for the `unix.Malloc` checker and a static analyzer configuration option `analyzer-max-loop` (the maximum number of times the analyzer will go through a loop, the default value is 4).
+In the `static_analyzer.cfg` example file we set a checker specific
+configuration option `unix.Malloc:Optimistic=true` for the `unix.Malloc`
+checker and a static analyzer configuration option `analyzer-max-loop` (the
+maximum number of times the analyzer will go through a loop, the default
+value is 4).
 
 ## Checker specific configuration options  
-This is not a comprehensive list view checker [documentation or implementation](https://github.com/llvm-mirror/clang/tree/master/lib/StaticAnalyzer/Checkers) for available configuration options:
+This is not a comprehensive list view checker
+[documentation or implementation](https://github.com/llvm-mirror/clang/tree/master/lib/StaticAnalyzer/Checkers)
+for available configuration options:
 
 | checker name | configuration option           | default value | available values | description                                                                            |
 |--------------|--------------------------------|---------------|------------------|----------------------------------------------------------------------------------------|
@@ -23,7 +32,9 @@ This is not a comprehensive list view checker [documentation or implementation](
 
 
 ## Clang Static Analyzer configuration options
-This is not a comprehesive list, check out the [clang static analyzer documentation](https://github.com/llvm-mirror/clang/tree/master/docs) or source code for more details about the configuration options.
+This is not a comprehesive list, check out the
+[clang static analyzer documentation](https://github.com/llvm-mirror/clang/tree/master/docs)
+or source code for more details about the configuration options.
 
 | configuration option                  | default value     | available values                         | description                                                                                         |
 |---------------------------------------|-------------------|------------------------------------------|-----------------------------------------------------------------------------------------------------|
@@ -57,7 +68,9 @@ This is not a comprehesive list, check out the [clang static analyzer documentat
 
 ## Using Clang tidy configuration files
 
-__clang-tidy__ attempts to read configuration for each analyzed source file from a `.clang-tidy` file located in the closest parent directory of the analyzed source file.
+__clang-tidy__ attempts to read configuration for each analyzed source file
+from a `.clang-tidy` file located in the closest parent directory of the
+analyzed source file.
 
 The `.clang-tidy` configuration file can be in JSON or YAML format.
 
@@ -111,11 +124,13 @@ CheckOptions:
 
 ## Using tidyargs option in CodeChecker
 
-The `--tidyargs` analysis argument can be used to forward configuration options through CodeChecker to the clang-tidy analyzer.
+The `--tidyargs` analysis argument can be used to forward configuration options
+through CodeChecker to the clang-tidy analyzer.
 ```
 CodeChecker analyze --tidyargs tidy_analyzer.cfg
 ```
-Where the ```tidy_analyzer.cfg``` config file content looks like this where the configuration arguments (json in this case) should be in one line :
+Where the ```tidy_analyzer.cfg``` config file content looks like this where the
+configuration arguments (json in this case) should be in one line :
 
 ```
 -config="{ "Checks": "clang-diagnostic-*,clang-analyzer-*", "WarningsAsErrors": "", "HeaderFilterRegex": "", "AnalyzeTemporaryDtors": false, "CheckOptions": [ { "key": "google-readability-braces-around-statements.ShortStatementLines", "value": "1" }, { "key": "modernize-loop-convert.MaxCopySize", "value": "16" }, { "key": "modernize-loop-convert.NamingStyle", "value": "CamelCase" }, { "key": "modernize-use-nullptr.NullMacros", "value": "NULL" } ] }"

@@ -46,12 +46,13 @@ macOS (OS X) development environment.
 # User documentation
 
 * [Getting started (How-To with examples)](usage.md)
-* [User guide](user_guide.md)
-* [Requiring credentials to view analysis results](authentication.md)
-* [Overview about connecting multiple analysis run databases](products.md)
-* [Permission management](permissions.md)
-* [Usage of PostgreSQL database](postgresql_setup.md)
-* [How to deal with false positives](false_positives.md)
+* [Analyzer User guide](analyzer/user_guide.md)
+* [Webserver User guide](web/user_guide.md)
+* [Requiring credentials to view analysis results](web/authentication.md)
+* [Overview about connecting multiple analysis run databases](web/products.md)
+* [Permission management](web/permissions.md)
+* [Usage of PostgreSQL database](web/postgresql_setup.md)
+* [How to deal with false positives](analyzer/false_positives.md)
 
 # Install guide
 
@@ -244,32 +245,32 @@ If you have Clang `3.7` installed you might see the following warning message:
 
 ## Static analysis
 
-* [False Positives](false_positives.md)
-* [Checker and Static Analyzer configuration](checker_and_analyzer_configuration.md)
-* [Checker documentation](checker_docs.md)
-* [GCC incompatibilities](gcc_incompatibilities.md)
+* [False Positives](analyzer/false_positives.md)
+* [Checker and Static Analyzer configuration](analyzer/checker_and_analyzer_configuration.md)
+* [Checker documentation](analyzer/checker_docs.md)
+* [GCC incompatibilities](analyzer/gcc_incompatibilities.md)
 
 ## Security configuration
-* [Authentication](authentication.md)
-* [Permissions](permissions.md)
+* [Authentication](web/authentication.md)
+* [Permissions](web/permissions.md)
 
 ## Continuous Integration (CI)
 * [Jenkins Gerrit integration](jenkins_gerrit_integration.md)
 * [Daily Scripts](script_daily.md)
 
 ## Database configuration
-* [PostgreSQL setup](postgresql_setup.md)
-* [Schema Guide](db_schema_guide.md)
+* [PostgreSQL setup](web/postgresql_setup.md)
+* [Schema Guide](web/db_schema_guide.md)
 
 ## Server configuration
-* [Products](products.md)
+* [Products](web/products.md)
 * [Logging](logging.md)
 
 ## Developer documentations
 * [Architecture](architecture.md)
 * [Package layout](package_layout.md)
 * [Dependencies](deps.md)
-* [Thrift interface](api/README.md)
+* [Thrift interface](web/api/README.md)
 * [Package and integration tests](tests/README.md)
 
 ## Conference papers, presentations

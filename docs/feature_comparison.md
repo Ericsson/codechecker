@@ -22,7 +22,7 @@ Table of Contents
 # Analysis invocation
 
 * Analyzers can only be invoked through the command-line command,
-[`analyze`](user_guide.md#analyze).
+[`analyze`](analyzer/user_guide.md#analyze).
 
 * Analysis runs locally on the user's computer.
 
@@ -32,37 +32,37 @@ which supports it](http://github.com/Ericsson/clang).
 # Storage of reports to a server
 
 * Storage of reports can only be done through the command-line command,
-[`store`](user_guide.md#store).
+[`store`](web/user_guide.md#store).
 
 # Report navigation and visualisation
 
-| Feature name | [Command-line](user_guide.md#cmd) | [Web GUI](/www/userguide/userguide.md) |
+| Feature name | [Command-line](web/user_guide.md#cmd) | [Web GUI](/www/userguide/userguide.md) |
 |--------------|-----------------------------------------|----------------------------------------|
 | Listing basic (file, check message, ...) report summary| ✓ | ✓ |
 | Listing advanced (detection status, review, ...) report summary | ✗ | ✓ |
 | Basic (file path, check name, ...) filtering of reports | ✓ | ✓ |
 | Advanced (detection status, detection date, ...) filtering | ✗ | ✓ |
-| Printing bug path for report | [Only for local output folder](user_guide.md#parse) | ✓ |
-| Visualisation of bug path in the code | [Only through exporting to HTML](user_guide.md#parse) | ✓ |
+| Printing bug path for report | [Only for local output folder](analyzer/user_guide.md#parse) | ✓ |
+| Visualisation of bug path in the code | [Only through exporting to HTML](analyzer/user_guide.md#parse) | ✓ |
 | Listing reports in the same file | Only through filters | ✓ |
 | Listing all reports in a product | ✗ | ✓ |
 
 ## Report management, triaging tools
 
-| Feature name | [Command-line](user_guide.md#cmd) | [Web GUI](/www/userguide/userguide.md) |
+| Feature name | [Command-line](web/user_guide.md#cmd) | [Web GUI](/www/userguide/userguide.md) |
 |--------------|-----------------------------------------|----------------------------------------|
 | Showing comments for a particular report | ✗ | ✓ |
 | Commenting on reports | ✗ | ✓ |
 | Comment management (edit, delete) | ✗ | ✓ |
 | Showing review status of a report | ✗ | ✓ |
 | Changing review status of a report | ✗ | ✓ |
-| *(Legacy)* Importing [suppressions](user_guide.md#manage-suppressions) of `< 6.0` CodeChecker | ✓ | ✗ |
+| *(Legacy)* Importing [suppressions](web/user_guide.md#manage-suppressions) of `< 6.0` CodeChecker | ✓ | ✗ |
 | Difference of two runs | ✓ | ✓ |
 | Difference of a stored run to a local output folder | ✓ | ✗ |
 
 ## Statistics, summary views
 
-| Feature name | [Command-line](user_guide.md#cmd) | [Web GUI](/www/userguide/userguide.md) |
+| Feature name | [Command-line](web/user_guide.md#cmd) | [Web GUI](/www/userguide/userguide.md) |
 |--------------|-----------------------------------------|----------------------------------------|
 | Run overview | Basic (only report count and timestamp) | ✓ |
 | Breakdown of reports per run, per check | ✓ | ✓ |
@@ -70,7 +70,7 @@ which supports it](http://github.com/Ericsson/clang).
 
 # Run management
 
-| Feature name | [Command-line](user_guide.md#cmd) | [Web GUI](/www/userguide/userguide.md) |
+| Feature name | [Command-line](web/user_guide.md#cmd) | [Web GUI](/www/userguide/userguide.md) |
 |--------------|-----------------------------------------|----------------------------------------|
 | Listing runs in a product | ✓ | ✓ |
 | Listing store actions to a run (history) | ✗ | ✓ |
@@ -80,21 +80,21 @@ which supports it](http://github.com/Ericsson/clang).
 
 ## Starting a server
 
-The command-line command [`CodeChecker server`](user_guide.md#server) is
+The command-line command [`CodeChecker server`](web/user_guide.md#server) is
 used to start a CodeChecker server.
 
 This command is also responsible for handling schema upgrades.
 
-## [Product management](products.md)
+## [Product management](web/products.md)
 
-| Feature name | [Command-line](user_guide.md#cmd) | [Web GUI](/www/userguide/userguide.md) |
+| Feature name | [Command-line](web/user_guide.md#cmd) | [Web GUI](/www/userguide/userguide.md) |
 |--------------|-----------------------------------------|----------------------------------------|
 | Listing products on a server | ✓ | ✓ |
 | Addition, modification and removal of products | ✓ | ✓ |
 
-## [Authentication](authentication.md) and [access control](permissions.md)
+## [Authentication](web/authentication.md) and [access control](web/permissions.md)
 
-| Feature name | [Command-line](user_guide.md#cmd) | [Web GUI](/www/userguide/userguide.md) |
+| Feature name | [Command-line](web/user_guide.md#cmd) | [Web GUI](/www/userguide/userguide.md) |
 |--------------|-----------------------------------------|----------------------------------------|
 | Configuration of authentication system | Through configuration file | ✗ |
 | Managing permissions granted to users | ✗ | ✓ |
