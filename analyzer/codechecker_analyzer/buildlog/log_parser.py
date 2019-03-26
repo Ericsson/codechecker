@@ -736,9 +736,9 @@ def parse_options(compilation_db_entry):
 
     flag_transformers = [
         __skip,
+        __replace,
         __collect_compile_opts,
         __determine_action_type,
-        __replace,
         __skip_sources,
         __get_arch,
         __get_language,
