@@ -8,7 +8,7 @@ REPO_ROOT ?= REPO_ROOT=$(ROOT)
 # Nose test runner configuration options.
 NOSECFG = --config .noserc
 
-test: test_unit test_functional test_build_logger test_tu_collector
+test: pylint pycodestyle test_unit test_functional test_build_logger test_tu_collector
 
 test_novenv: test_unit_novenv test_functional_novenv
 

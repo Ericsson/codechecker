@@ -10,7 +10,7 @@ LAYOUT_DIR ?= LAYOUT_DIR=$(STATIC_DIR)
 # Nose test runner configuration options.
 NOSECFG = --config .noserc
 
-test: test_unit
+test: pylint pycodestyle test_unit
 
 test_novenv: test_unit_novenv
 
