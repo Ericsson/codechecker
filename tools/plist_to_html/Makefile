@@ -32,6 +32,9 @@ venv:
 	# Create a virtual environment which can be used to run the build package.
 	virtualenv -p python2 venv && $(ACTIVATE_RUNTIME_VENV)
 
+pip_dev_deps:
+	pip install -r $(VENV_DEV_REQ_FILE)
+
 venv_dev:
 	# Create a virtual environment for development.
 	virtualenv -p python2 venv_dev && \
