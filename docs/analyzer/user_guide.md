@@ -6,6 +6,7 @@ Table of Contents
     * [`log`](#log)
         * [BitBake](#bitbake)
         * [CCache](#ccache)
+        * [intercept-build](#intercept-build)
     * [`analyze`](#analyze)
         * [_Skip_ file](#skip)
             * [Absolute path examples](#skip-abs-example)
@@ -255,6 +256,16 @@ variable.
 
 Currently CodeChecker supports only the first case where the compiler name is
 also included in the build command.
+
+### intercept-build <a name="intercept-build"></a>
+[`intercept-build`](https://github.com/rizsotto/scan-build) is an alternative
+tool for logging the compilation actions. Note that its first version (1.1) had
+a bug in case the original build command contained a space character:
+```bash
+intercept-build bash -c 'g++ -DVARIABLE="hello world" main.cpp'
+```
+When analysing this build action, CodeChecker will most probably give a
+compilation error on the underlying Clang invocation.
 
 ## `analyze` <a name="analyze"></a>
 
