@@ -56,7 +56,7 @@ install:
 # Run brew cleanup at before_cache stage otherwise, the cache will grow
 # indefinitely as new package versions are released.
 before_cache:
-  - brew cleanup
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; brew cleanup; fi
   - rm -f $HOME/.cache/pip/log/debug.log
 
 # Cache downloaded bottles (binary packages) to speed up our build process.
