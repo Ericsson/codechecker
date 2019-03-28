@@ -54,7 +54,8 @@ class AnalyzerConfigHandler(object):
 
         analyzer_plugins = [os.path.join(plugin_dir, f)
                             for f in os.listdir(plugin_dir)
-                            if os.path.isfile(os.path.join(plugin_dir, f))]
+                            if os.path.isfile(os.path.join(plugin_dir, f))
+                            and f.endswith(".so")]
         return analyzer_plugins
 
     @abstractmethod
