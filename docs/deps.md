@@ -48,4 +48,5 @@ update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy
 
 ## PostgreSQL
 
-For the additional PostgreSQL dependencies see the [PostgreSQL setup](postgresql_setup.md) documentation.
+For the additional PostgreSQL dependencies see the
+[PostgreSQL setup](web/postgresql_setup.md) documentation.

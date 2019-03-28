@@ -247,7 +247,7 @@ If you have Clang `3.7` installed you might see the following warning message:
 
 * [False Positives](analyzer/false_positives.md)
 * [Checker and Static Analyzer configuration](analyzer/checker_and_analyzer_configuration.md)
-* [Checker documentation](analyzer/checker_docs.md)
+* [Checker documentation](web/checker_docs.md)
 * [GCC incompatibilities](analyzer/gcc_incompatibilities.md)
 
 ## Security configuration
