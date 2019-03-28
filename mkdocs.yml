@@ -9,5 +9,6 @@ docs_dir: 'docs'
 nav:
   - Home: README.md
   - 'Quick Howto': usage.md
-  - 'User Guide': user_guide.md
+  - 'Analyzer User Guide': analyzer/user_guide.md
+  - 'Web User Guide': web/user_guide.md
 

@@ -303,7 +303,7 @@ version of the same source file.
   would introduce any new issues.
 * Store daily runs of a module every day in a new run post-fixed with date.
 * You can query *new* and *resolved* bugs using the
-  [`cmd diff`](user_guide.md#show-differences-between-two-runs-diff) or the
+  [`cmd diff`](web/user_guide.md#show-differences-between-two-runs-diff) or the
   Web GUI.
 * Programmers should use
   [in-code-suppression](web/user_guide.md#source-code-comments)
