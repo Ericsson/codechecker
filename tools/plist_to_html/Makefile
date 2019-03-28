@@ -16,8 +16,6 @@ STATIC_DIR = $(CURRENT_DIR)/plist_to_html/static
 VENDOR_DIR = $(STATIC_DIR)/vendor
 CODEMIRROR_DIR = $(VENDOR_DIR)/codemirror
 
-PKG_NAME := $(shell python setup.py --name)
-PKG_VERSION := $(shell python setup.py --version)
 
 ACTIVATE_DEV_VENV ?= . venv_dev/bin/activate
 ACTIVATE_RUNTIME_VENV ?= . venv/bin/activate
@@ -58,10 +56,14 @@ dist: dep
 
 upload_test: dist
 	# Upload package to the TestPyPI repository.
+	PKG_NAME := $(shell python setup.py --name)
+	PKG_VERSION := $(shell python setup.py --version)
 	twine upload -r testpypi dist/$(PKG_NAME)-$(PKG_VERSION).tar.gz
 
 upload: dist
 	# Upload package to the PyPI repository.
+	PKG_NAME := $(shell python setup.py --name)
+	PKG_VERSION := $(shell python setup.py --version)
 	twine upload -r pypi dist/$(PKG_NAME)-$(PKG_VERSION).tar.gz
 
 vendor_dir:

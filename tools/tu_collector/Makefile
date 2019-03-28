@@ -9,9 +9,6 @@ BIN_DIR = $(BUILD_DIR)/bin
 
 TU_COLLECTOR_DIR = $(BUILD_DIR)/tu_collector
 
-PKG_NAME := $(shell python setup.py --name)
-PKG_VERSION := $(shell python setup.py --version)
-
 ACTIVATE_VENV ?= . venv/bin/activate
 
 venv:
@@ -35,10 +32,14 @@ dist:
 
 upload_test: dist
 	# Upload package to the TestPyPI repository.
+	PKG_NAME := $(shell python setup.py --name)
+	PKG_VERSION := $(shell python setup.py --version)
 	twine upload -r testpypi dist/$(PKG_NAME)-$(PKG_VERSION).tar.gz
 
 upload: dist
 	# Upload package to the PyPI repository.
+	PKG_NAME := $(shell python setup.py --name)
+	PKG_VERSION := $(shell python setup.py --version)
 	twine upload -r pypi dist/$(PKG_NAME)-$(PKG_VERSION).tar.gz
 
 clean:
