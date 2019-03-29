@@ -1939,6 +1939,11 @@ class ThriftRequestHandler(object):
             session.query(Run) \
                 .filter(Run.id == run_id) \
                 .delete(synchronize_session=False)
+
+            # Delete files and contents that are not present
+            # in any bug paths.
+            db_cleanup.remove_unused_files(session)
+
             session.commit()
             session.close()
 
