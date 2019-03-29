@@ -23,18 +23,19 @@ before_install:
     # Download macOS specific extra dependencies.
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then git clone https://github.com/llvm-mirror/clang.git ~/llvm --branch master --single-branch --depth 1; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install doxygen; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install llvm@8; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install llvm@7; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install thrift@0.9; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PATH=/usr/local/Cellar/thrift@0.9/0.9.3/bin:$PATH; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then which thrift; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PATH=/usr/local/opt/llvm/bin:$PATH; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PATH=/usr/local/opt/llvm@7/bin:$PATH; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PYTHONPATH=~/llvm/tools/scan-build-py/; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PATH=~/llvm/tools/scan-build-py/bin:$PATH; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then chmod a+x ~/llvm/tools/scan-build-py/bin/intercept-build; fi
 
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then which clang; which clang-tidy; fi
+
     # Set the proper Clang versions early in the PATH.
     - export PATH=$HOME:$PATH
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then which clang; ln -s $(which clang) $HOME/clang; fi
 
     # PostgreSQL is not started automatically on macOS.
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then rm -rf /usr/local/var/postgres; fi
