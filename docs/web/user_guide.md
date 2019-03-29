@@ -1164,11 +1164,11 @@ not found, the user will be asked, in the command-line, to provide credentials.
 
 # Source code comments for review status <a name="source-code-comments"></a>
 
-Source code comments can be used in the source files to change the review status
-of a specific or all checker results found in a particular line of code.
-Source code comment should be above the line where the defect was found, and __no__
-empty lines are allowed between the line with the bug and the source code
-comment.
+Source code comments can be used in the source files to change the review
+status of a specific or all checker results found in a particular line of code.
+Source code comment should be above the line where the defect was found, and
+__no__ empty lines are allowed between the line with the bug and the source
+code comment.
 
 Comment lines staring with `//` or C style `/**/` comments are supported.
 Watch out for the comment format!
@@ -1202,6 +1202,20 @@ void test() {
   x = 1; // warn
 }
 ```
+
+## Change review status of a specific checker result by using a substring of the checker name
+There is no need to specify the whole checker name in the source code comment
+like `deadcode.DeadStores`, because it will not be resilient to package name
+changes. You are able to specify only a substring of the checker name for the
+source code comment:
+```cpp
+void test() {
+  int x;
+  // codechecker_confirmed [DeadStores] suppress deadcode
+  x = 1; // warn
+}
+```
+
 
 ## Change review status of all checker result
 ```cpp
