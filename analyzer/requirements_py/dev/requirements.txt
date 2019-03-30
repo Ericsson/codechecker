@@ -2,5 +2,5 @@ pycodestyle==2.4.0
 psycopg2==2.7.1
 psutil==5.2.2
 portalocker==1.1.0
-redis==3.0.1
+redis==3.2.0
 enum34==1.1.6

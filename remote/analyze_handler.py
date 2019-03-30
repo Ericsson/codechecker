@@ -131,7 +131,7 @@ def pre_analyze(analyze_id, part_number, workspace, use_cache):
 
         cached_files = json.loads(cached_files)
 
-        if not cached_files:
+        if cached_files:
             LOG.debug('Restore files from Redis: \n%s', cached_files.items())
 
             for file_hash in cached_files:
@@ -184,11 +184,11 @@ def analyze(analyze_id, analyze_dir_path, build_command, read_in_file_path):
     stdout, stderr = process.communicate()
     returncode = process.wait()
 
-    if returncode == 0:
-        LOG.debug('Command output: \n%s', stdout)
-        with open("stdout", "w") as text_file:
-            text_file.write(stdout)
-    else:
+    LOG.debug('Command output: \n%s', stdout)
+    with open("stdout", "w") as text_file:
+        text_file.write(stdout)
+
+    if returncode != 0:
         REDIS_DATABASE.hset(analyze_id, 'state',
                             AnalyzeStatus.ANALYZE_FAILED.name)
 
@@ -227,8 +227,8 @@ def post_analyze(analyze_id, part_number, workspace):
 
     REDIS_DATABASE.hincrby(analyze_id, 'completed_parts', 1)
 
-    parts = REDIS_DATABASE.hget(analyze_id, 'parts')
-    completed_parts = REDIS_DATABASE.hget(analyze_id, 'completed_parts')
+    parts = REDIS_DATABASE.hget(analyze_id, 'parts').decode('utf-8')
+    completed_parts = REDIS_DATABASE.hget(analyze_id, 'completed_parts').decode('utf-8')
 
     if parts == completed_parts:
         REDIS_DATABASE.hset(analyze_id, 'state',
@@ -259,7 +259,7 @@ def main():
         if task is not None:
             LOG.info(
                 'Got a task: %s, starting analyze it, leftover task(s) %s', task, len(tasks))
-            analyze_id, part_number = str(task).split('-')
+            analyze_id, part_number = str(task.decode('utf-8')).split('-')
 
             try:
                 analyze_dir_path, build_command, file_to_analyze_path = pre_analyze(
@@ -296,6 +296,5 @@ def main():
 
 
 if __name__ == "__main__":
-    REDIS_DATABASE = redis.Redis(
-        host='redis', port=6379, db=0, charset="utf-8", decode_responses=True)
+    REDIS_DATABASE = redis.Redis(host='redis', port=6379, db=0)
     main()
