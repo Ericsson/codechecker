@@ -103,7 +103,7 @@ class BuildCmdTestNose(unittest.TestCase):
             print(cwd)
 
             ret_val, stdout, stderr = analyzer_base.SourceAnalyzer \
-                .run_proc(' '.join(cmd), cwd=cwd)
+                .run_proc(cmd, cwd=cwd)
 
             print(stdout)
             print(stderr)
@@ -128,7 +128,7 @@ class BuildCmdTestNose(unittest.TestCase):
             print(cwd)
 
             ret_val, stdout, stderr = analyzer_base.SourceAnalyzer \
-                .run_proc(' '.join(cmd), cwd=cwd)
+                .run_proc(cmd, cwd=cwd)
 
             print(stdout)
             print(stderr)

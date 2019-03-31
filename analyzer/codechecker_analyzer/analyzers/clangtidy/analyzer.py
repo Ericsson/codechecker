@@ -118,8 +118,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
 
             analyzer_cmd.append("-checks='%s'" % checkers_cmdline.lstrip(','))
 
-            LOG.debug(config.analyzer_extra_arguments)
-            analyzer_cmd.append(config.analyzer_extra_arguments)
+            analyzer_cmd.extend(config.analyzer_extra_arguments)
 
             if config.checker_config:
                 analyzer_cmd.append('-config="' + config.checker_config + '"')
@@ -246,6 +245,8 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
                 handler.analyzer_extra_arguments = \
                     re.sub(r'\$\((.*?)\)', replace_env_var,
                            tidy_cfg.read().strip())
+                handler.analyzer_extra_arguments = \
+                    shlex.split(handler.analyzer_extra_arguments)
         except IOError as ioerr:
             LOG.debug_analyzer(ioerr)
         except AttributeError as aerr:

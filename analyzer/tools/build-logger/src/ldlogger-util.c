@@ -56,10 +56,31 @@ static char* makePathAbsRec(const char* path_, char* resolved_)
   return NULL;
 }
 
+int predictEscapedSize(const char* str_)
+{
+  int size = 0;
+
+  while (*str_)
+  {
+    if (strchr("\\\t\b\f\n\"", *str_))
+      ++size;
+
+    if (*str_ == ' ')
+      size += 2;
+
+    ++size;
+    ++str_;
+  }
+
+  /* For closing \0 character. */
+  ++size;
+
+  return size;
+}
+
 char* shellEscapeStr(const char* str_, char* buff_)
 {
   char* out = buff_;
-  int hasSpace = strchr(str_, ' ') != NULL;
 
   while (*str_)
   {
@@ -71,6 +92,12 @@ char* shellEscapeStr(const char* str_, char* buff_)
       case '\b':
       case '\f':
       case '\n':
+        *out++ = '\\';
+        *out++ = *str_++;
+        break;
+
+      case ' ':
+        *out++ = '\\';
         *out++ = '\\';
         *out++ = *str_++;
         break;

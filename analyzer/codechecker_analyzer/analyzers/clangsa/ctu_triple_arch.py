@@ -30,7 +30,7 @@ def get_compile_command(action, config, source='', output=''):
     cmd.extend(action.compiler_includes)
     cmd.append('-c')
     cmd.extend(['-x', action.lang])
-    cmd.append(config.analyzer_extra_arguments)
+    cmd.extend(config.analyzer_extra_arguments)
     cmd.extend(action.analyzer_options)
     if output:
         cmd.extend(['-o', output])
@@ -49,8 +49,7 @@ def get_triple_arch(action, source, config, env):
 
     cmd = get_compile_command(action, config, source)
     cmd.insert(1, '-###')
-    cmdstr = ' '.join(cmd)
-    _, stdout, stderr = analyzer_base.SourceAnalyzer.run_proc(cmdstr,
+    _, stdout, stderr = analyzer_base.SourceAnalyzer.run_proc(cmd,
                                                               env,
                                                               action.directory)
     last_line = (stdout + stderr).splitlines()[-1]

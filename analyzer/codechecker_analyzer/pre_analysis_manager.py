@@ -43,11 +43,10 @@ def collect_statistics(action, source, config, environ, statistics_data):
         LOG.debug('Can not collect statistical data.')
         return
 
-    cmdstr = ' '.join(cmd)
     LOG.debug_analyzer(cmd)
 
     ret_code, analyzer_out, analyzer_err = \
-        analyzer_base.SourceAnalyzer.run_proc(cmdstr, env=environ)
+        analyzer_base.SourceAnalyzer.run_proc(cmd, env=environ)
 
     LOG.debug(analyzer_out)
     LOG.debug(analyzer_err)
