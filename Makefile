@@ -29,6 +29,9 @@ package_dir_structure:
 	mkdir -p $(CC_BUILD_DIR)/bin && \
 	mkdir -p $(CC_BUILD_LIB_DIR)
 
+mkdocs_build:
+	mkdocs build
+
 build_plist_to_html:
 	$(MAKE) -C $(ROOT)/tools/plist_to_html build
 
