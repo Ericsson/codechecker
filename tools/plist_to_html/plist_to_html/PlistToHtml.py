@@ -46,6 +46,7 @@ class HtmlBuilder(object):
         # Mapping layout tags to files.
         self._layout_tag_files = {
             'STYLE_CSS': os.path.join(css_dir, 'style.css'),
+            'BUGLIST_CSS': os.path.join(css_dir, 'buglist.css'),
             'ICON_CSS': os.path.join(css_dir, 'icon.css'),
             'CODEMIRROR_LICENSE': os.path.join(codemirror_dir,
                                                'codemirror.LICENSE'),
@@ -54,6 +55,7 @@ class HtmlBuilder(object):
             'CODEMIRROR_JS': os.path.join(codemirror_dir, 'codemirror.min.js'),
             'CLIKE_JS': os.path.join(codemirror_dir, 'clike.min.js'),
             'BUG_VIEWER': os.path.join(js_dir, 'bugviewer.js'),
+            'BUG_LIST': os.path.join(js_dir, 'buglist.js'),
             'BROWSER_SUPPORT': os.path.join(js_dir, 'browsersupport.js')
         }
 
@@ -103,12 +105,12 @@ class HtmlBuilder(object):
         # Create table header.
         table_reports = '''
             <tr>
-              <th>&nbsp;</th>
-              <th>File</th>
-              <th>Severity</th>
-              <th>Checker name</th>
-              <th>Message</th>
-              <th>Bug path length</th>
+              <th id="report-id">&nbsp;</th>
+              <th id="file-path">File</th>
+              <th id="severity">Severity</th>
+              <th id="checker-name">Checker name</th>
+              <th id="message">Message</th>
+              <th id="bug-path-length">Bug path length</th>
             </tr>'''
 
         # Sort reports based on file path levels.
@@ -131,10 +133,10 @@ class HtmlBuilder(object):
             table_reports += '''
               <tr>
                 <td>{0}</td>
-                <td>
+                <td file="{3}" line="{4}">
                   <a href="{1}#reportHash={2}">{3} @ Line {4}</a>
                 </td>
-                <td class="severity">
+                <td class="severity" severity="{5}">
                   <i class="severity-{5}"></i>
                 </td>
                 <td>{6}</td>
