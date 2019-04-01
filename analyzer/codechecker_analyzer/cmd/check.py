@@ -183,6 +183,39 @@ used to generate a log file on the fly.""")
                                     "overwrites only those files that were "
                                     "update by the current build command).")
 
+    parser.add_argument('--compile-uniqueing',
+                        type=str,
+                        dest="compile_uniqueing",
+                        default="none",
+                        required=False,
+                        help="Specify the method the compilation "
+                             "actions in the  compilation database are "
+                             "uniqued before analysis. "
+                             "CTU analysis works properly only if "
+                             "there is exactly one "
+                             "compilation action per source file. "
+                             "none(default in non CTU mode): "
+                             "no uniqueing is done. "
+                             "strict: no uniqueing is done, "
+                             "and an error is given if "
+                             "there is more than one compilation "
+                             "action for a source file. "
+                             "alpha(default in CTU mode): If there is more "
+                             "than one compilation action for a source "
+                             "file, only the one is kept that belongs to the "
+                             "alphabetically first "
+                             "compilation target. "
+                             "If none of the above given, "
+                             "this parameter should "
+                             "be a python regular expression."
+                             "If there is more than one compilation action "
+                             "for a source, "
+                             "only the one is kept which matches the "
+                             "given python regex. If more than one "
+                             "matches an error is given. "
+                             "The whole compilation "
+                             "action text is searched for match.")
+
     analyzer_opts.add_argument('--report-hash',
                                dest="report_hash",
                                default=argparse.SUPPRESS,
@@ -560,6 +593,7 @@ def main(args):
                           'enable_all',
                           'ordered_checkers',  # --enable and --disable.
                           'timeout',
+                          'compile_uniqueing',
                           'report_hash'
                           ]
         for key in args_to_update:

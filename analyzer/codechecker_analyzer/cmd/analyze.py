@@ -151,6 +151,39 @@ def add_arguments_to_parser(parser):
                              "reports and overwrites only those files that "
                              "were update by the current build command).")
 
+    parser.add_argument('--compile-uniqueing',
+                        type=str,
+                        dest="compile_uniqueing",
+                        default="none",
+                        required=False,
+                        help="Specify the method the compilation "
+                             "actions in the  compilation database are "
+                             "uniqued before analysis. "
+                             "CTU analysis works properly only if "
+                             "there is exactly one "
+                             "compilation action per source file. "
+                             "none(default in non CTU mode): "
+                             "no uniqueing is done. "
+                             "strict: no uniqueing is done, "
+                             "and an error is given if "
+                             "there is more than one compilation "
+                             "action for a source file. "
+                             "alpha(default in CTU mode): If there is more "
+                             "than one compilation action for a source "
+                             "file, only the one is kept that belongs to the "
+                             "alphabetically first "
+                             "compilation target. "
+                             "If none of the above given, "
+                             "this parameter should "
+                             "be a python regular expression."
+                             "If there is more than one compilation action "
+                             "for a source, "
+                             "only the one is kept which matches the "
+                             "given python regex. If more than one "
+                             "matches an error is given. "
+                             "The whole compilation "
+                             "action text is searched for match.")
+
     parser.add_argument('--report-hash',
                         dest="report_hash",
                         default=argparse.SUPPRESS,
@@ -512,6 +545,10 @@ def main(args):
     # Process the skip list if present.
     skip_handler = __get_skip_handler(args)
 
+    # Enable alpha uniqueing by default if ctu analysis is used.
+    if 'none' in args.compile_uniqueing and 'ctu_phases' in args:
+        args.compile_uniqueing = "alpha"
+
     # Parse the JSON CCDBs and retrieve the compile commands.
     actions = []
     for log_file in args.logfile:
@@ -520,14 +557,22 @@ def main(args):
                       log_file)
             continue
 
-        actions += log_parser.parse_log(
+        actions += log_parser.parse_unique_log(
             load_json_or_empty(log_file),
+            args.compile_uniqueing,
             skip_handler,
-            os.path.join(args.output_path, 'compiler_info.json'))
+            os.path.join(args.output_path, 'compiler_info.json')
+            )
     if not actions:
         LOG.info("None of the specified build log files contained "
                  "valid compilation commands. No analysis needed...")
         sys.exit(1)
+
+    uniqued_compilation_db_file = os.path.join(
+        args.output_path, "unique_compile_commands.json")
+    with open(uniqued_compilation_db_file, 'w') as f:
+        json.dump(actions, f,
+                  cls=log_parser.CompileCommandEncoder)
 
     context = analyzer_context.get_context()
     metadata = {'action_num': len(actions),

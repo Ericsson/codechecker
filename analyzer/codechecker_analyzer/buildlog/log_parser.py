@@ -25,7 +25,6 @@ from .build_action import BuildAction
 
 LOG = get_logger('buildlogger')
 
-
 # Replace gcc/g++ build target options with values accepted by Clang.
 REPLACE_OPTIONS_MAP = {
     '-mips32': ['-target', 'mips', '-mips32'],
@@ -33,7 +32,6 @@ REPLACE_OPTIONS_MAP = {
     '-mpowerpc': ['-target', 'powerpc'],
     '-mpowerpc64': ['-target', 'powerpc64']
 }
-
 
 # The compilation flags of which the prefix is any of these regular expressions
 # will not be included in the output Clang command.
@@ -129,7 +127,6 @@ IGNORED_OPTIONS = [
 
 IGNORED_OPTIONS = re.compile('|'.join(IGNORED_OPTIONS))
 
-
 # The compilation flags of which the prefix is any of these regular expressions
 # will not be included in the output Clang command. These flags have further
 # parameters which are also omitted. The number of parameters is indicated in
@@ -155,7 +152,6 @@ IGNORED_PARAM_OPTIONS = {
     re.compile('-filelist'): 1
 }
 
-
 COMPILE_OPTIONS = [
     '-nostdinc',
     r'-nostdinc\+\+',
@@ -172,7 +168,6 @@ COMPILE_OPTIONS = [
 
 COMPILE_OPTIONS = re.compile('|'.join(COMPILE_OPTIONS))
 
-
 COMPILE_OPTIONS_MERGED = [
     '--sysroot',
     '--include',
@@ -188,9 +183,9 @@ COMPILE_OPTIONS_MERGED = [
     '-iwithprefixbefore'
 ]
 
+
 COMPILE_OPTIONS_MERGED = \
     re.compile('(' + '|'.join(COMPILE_OPTIONS_MERGED) + ')')
-
 
 PRECOMPILATION_OPTION = re.compile('-(E|M[T|Q|F|J|P|V|M]*)$')
 
@@ -319,7 +314,7 @@ class ImplicitCompilerInfo(object):
         extra_opts = filter(pattern.match, compiler_flags)
 
         pos = next((pos for pos, val in enumerate(compiler_flags)
-                   if val.startswith('--sysroot')), None)
+                    if val.startswith('--sysroot')), None)
         if pos is not None:
             if compiler_flags[pos] == '--sysroot':
                 extra_opts.append('--sysroot=' + compiler_flags[pos + 1])
@@ -433,8 +428,8 @@ class ImplicitCompilerInfo(object):
                 standard = '-std=iso9899:199409'
             else:
                 standard = '-std=gnu' \
-                         + ('' if language == 'c' else '++') \
-                         + standard
+                    + ('' if language == 'c' else '++') \
+                    + standard
 
         return standard
 
@@ -478,6 +473,7 @@ class ImplicitCompilerInfo(object):
 
 
 class OptionIterator(object):
+
     def __init__(self, args):
         self._item = None
         self._it = iter(args)
@@ -782,9 +778,27 @@ def parse_options(compilation_db_entry):
     return BuildAction(**details)
 
 
-def parse_log(compilation_database,
-              skip_handler=None,
-              compiler_info_file=None):
+class CompileCommandEncoder(json.JSONEncoder):
+    """JSON serializer for objects not serializable by default json code"""
+    def default(self, o):
+        if isinstance(o, BuildAction):
+            return o.to_dict()
+        # Let the base class default method raise the TypeError
+        return json.JSONEncoder.default(self, o)
+
+
+class CompileActionUniqueingType(object):
+    NONE = 0  # Full Action text
+    SOURCE_ALPHA = 1  # Based on source file, uniqueing by
+    # on alphanumerically first target
+    SOURCE_REGEX = 2  # Based on source file, uniqueing by regex filter
+    STRICT = 3  # Gives error in case of duplicate
+
+
+def parse_unique_log(compilation_database,
+                     compile_uniqueing="none",
+                     skip_handler=None,
+                     compiler_info_file=None):
     """
     compilation_database -- A compilation database as a list of dict objects.
                             These object should contain "file", "dictionary"
@@ -792,6 +806,9 @@ def parse_log(compilation_database,
                             by "arguments" which is a split command. Older
                             versions of intercept-build provide the build
                             command this way.
+    compile_uniqueing -- Compilation database uniqueing mode.
+                         If there are more than one compile commands for a
+                         target file, only a single one is kept.
     skip_handler -- A SkipListHandler object which helps to skip build actions
                     that shouldn't be analyzed. The build actions described by
                     this handler will not be the part of the result list.
@@ -800,28 +817,77 @@ def parse_log(compilation_database,
                           targets, default standard version).
     """
     try:
-        filtered_build_actions = set()
+        uniqued_build_actions = dict()
+
+        if compile_uniqueing == "alpha":
+            build_action_uniqueing = CompileActionUniqueingType.SOURCE_ALPHA
+        elif compile_uniqueing == "none":
+            build_action_uniqueing = CompileActionUniqueingType.NONE
+        elif compile_uniqueing == "strict":
+            build_action_uniqueing = CompileActionUniqueingType.STRICT
+        else:
+            build_action_uniqueing = CompileActionUniqueingType.SOURCE_REGEX
+            uniqueing_re = re.compile(compile_uniqueing)
 
         for entry in compilation_database:
             if skip_handler and skip_handler.should_skip(entry['file']):
+                LOG.debug("SKIPPING FILE %s", entry['file'])
                 continue
 
             action = parse_options(entry)
+            LOG.debug(action)
 
             if not action.lang:
                 continue
             if action.action_type != BuildAction.COMPILE:
                 continue
+            if build_action_uniqueing == CompileActionUniqueingType.NONE:
+                if action.__hash__ not in uniqued_build_actions:
+                    uniqued_build_actions[action.__hash__] = action
+            elif build_action_uniqueing == CompileActionUniqueingType.STRICT:
+                if action.source not in uniqued_build_actions:
+                    uniqued_build_actions[action.source] = action
+                else:
+                    LOG.error("Build Action uniqueing failed"
+                              " as both '%s' and '%s'",
+                              uniqued_build_actions[action.source]
+                              .original_command,
+                              action.original_command)
+                    sys.exit(1)
+            elif build_action_uniqueing ==\
+                    CompileActionUniqueingType.SOURCE_ALPHA:
+                if action.source not in uniqued_build_actions:
+                    uniqued_build_actions[action.source] = action
+                elif action.output <\
+                        uniqued_build_actions[action.source].output:
+                    uniqued_build_actions[action.source] = action
+            elif build_action_uniqueing ==\
+                    CompileActionUniqueingType.SOURCE_REGEX:
+                LOG.debug("uniqueing regex")
+                if action.source not in uniqued_build_actions:
+                    uniqued_build_actions[action.source] = action
+                elif uniqueing_re.match(action.original_command) and\
+                    not uniqueing_re.match(
+                        uniqued_build_actions[action.source].original_command):
+                    uniqued_build_actions[action.source] = action
+                elif uniqueing_re.match(action.original_command) and\
+                    uniqueing_re.match(
+                        uniqued_build_actions[action.source].original_command):
+                    LOG.error("Build Action uniqueing failed as both \n %s"
+                              "\n and \n %s \n match regex pattern:%s",
+                              uniqued_build_actions[action.source].
+                              original_command,
+                              action.original_command,
+                              compile_uniqueing)
+                    sys.exit(1)
 
-            # Filter out duplicate compilation commands.
-            filtered_build_actions.add(action)
-
+        # Filter out duplicate compilation commands.
         if compiler_info_file:
             with open(compiler_info_file, 'w') as f:
                 json.dump(ImplicitCompilerInfo.get(), f)
 
         LOG.debug('Parsing log file done.')
-        return list(filtered_build_actions)
+        return list(uniqued_build_actions.values())
 
     except (ValueError, KeyError, TypeError) as ex:
         if not compilation_database:
