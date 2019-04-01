@@ -96,7 +96,7 @@ function test_quote {
   bash -c "gcc -DVARIABLE=\\\"hello\\\" $source_file"
 
   assert_json \
-    "-DVARIABLE=\\\"hello\\\" $source_file" \
+    "-DVARIABLE=\\\\\\\"hello\\\\\\\" $source_file" \
     gcc
 }
 
@@ -104,7 +104,7 @@ function test_space_quote {
   bash -c "gcc -DVARIABLE=\\\"hello\\ world\\\" $source_file"
 
   assert_json \
-    "-DVARIABLE=\\\"hello\\\\ world\\\" $source_file" \
+    "-DVARIABLE=\\\\\\\"hello\\\\ world\\\\\\\" $source_file" \
     gcc
 }
 

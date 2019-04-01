@@ -62,11 +62,12 @@ int predictEscapedSize(const char* str_)
 
   while (*str_)
   {
-    if (strchr("\\\t\b\f\n\"", *str_))
-      ++size;
-
-    if (*str_ == ' ')
+    if (strchr("\\\t\b\f\n ", *str_))
       size += 2;
+    else if (*str_ == '"')
+      /* The quote (") needs an extra escaped escape character because the
+         JSON string literals are surrounded by quote by default. */
+      size += 3;
 
     ++size;
     ++str_;
@@ -87,16 +88,18 @@ char* shellEscapeStr(const char* str_, char* buff_)
     switch (*str_)
     {
       case '\\':
-      case '\"':
       case '\t':
       case '\b':
       case '\f':
       case '\n':
+      case ' ':
+        *out++ = '\\';
         *out++ = '\\';
         *out++ = *str_++;
         break;
 
-      case ' ':
+      case '\"':
+        *out++ = '\\';
         *out++ = '\\';
         *out++ = '\\';
         *out++ = *str_++;
