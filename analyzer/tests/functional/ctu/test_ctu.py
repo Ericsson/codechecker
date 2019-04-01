@@ -129,8 +129,10 @@ class TestCtu(unittest.TestCase):
         ctu_dir = os.path.join(self.report_dir, 'ctu-dir')
         self.assertTrue(os.path.isdir(ctu_dir))
         for arch in glob.glob(os.path.join(ctu_dir, '*')):
-            fn_map_file = os.path.join(ctu_dir, arch, 'externalFnMap.txt')
-            self.assertTrue(os.path.isfile(fn_map_file))
+            old_map_file = os.path.join(ctu_dir, arch, 'externalFnMap.txt')
+            new_map_file = os.path.join(ctu_dir, arch, 'externalDefMap.txt')
+            self.assertTrue(any(os.path.isfile(mapfile) for mapfile in
+                            [old_map_file, new_map_file]))
 
     def __do_ctu_analyze(self):
         """ Execute CTU analyze phase. """

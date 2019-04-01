@@ -213,18 +213,6 @@ class Context(object):
         return self.__analyzers
 
     @property
-    def ctu_func_map_cmd(self):
-        ctu_func_mapping = self.pckg_layout['ctu_func_map_cmd']
-
-        if os.path.dirname(ctu_func_mapping):
-            # If it is a relative path, it is by definition relative to
-            # the package_root, just like how analyzers are set up.
-            ctu_func_mapping = os.path.join(self._package_root,
-                                            ctu_func_mapping)
-
-        return ctu_func_mapping
-
-    @property
     def package_root(self):
         return self._package_root
 

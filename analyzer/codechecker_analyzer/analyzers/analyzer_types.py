@@ -13,7 +13,6 @@ from __future__ import absolute_import
 
 import os
 import re
-import subprocess
 
 from codechecker_common.env import get_check_env
 from codechecker_common.logger import get_logger
@@ -31,12 +30,10 @@ supported_analyzers = {ClangSA.ANALYZER_NAME: ClangSA,
 
 def is_ctu_capable(context):
     """ Detects if the current clang is CTU compatible. """
-    ctu_func_map_cmd = context.ctu_func_map_cmd
-    try:
-        version = subprocess.check_output([ctu_func_map_cmd, '-version'])
-    except (subprocess.CalledProcessError, OSError):
-        version = 'ERROR'
-    return version != 'ERROR'
+    check_supported_analyzers([ClangSA.ANALYZER_NAME], context)
+    clangsa_cfg = ClangSA.construct_config_handler([], context)
+
+    return clangsa_cfg.ctu_capability.is_ctu_capable
 
 
 def is_statistics_capable(context):

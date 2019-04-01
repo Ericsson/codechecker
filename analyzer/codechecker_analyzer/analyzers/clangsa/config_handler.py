@@ -14,6 +14,7 @@ from __future__ import absolute_import
 import re
 
 from codechecker_common.logger import get_logger
+from .ctu_autodetection import CTUAutodetection
 
 from .. import config_handler
 
@@ -40,3 +41,7 @@ class ClangSAConfigHandler(config_handler.AnalyzerConfigHandler):
         Add a (checker_name, key, value) tuple to the list.
         """
         self.__checker_configs.append(config)
+
+    @property
+    def ctu_capability(self):
+        return CTUAutodetection(self.analyzer_binary)
