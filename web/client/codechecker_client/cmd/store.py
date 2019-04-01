@@ -30,6 +30,8 @@ from codechecker_common import logger
 from codechecker_common import util
 from codechecker_common import plist_parser
 from codechecker_common.output_formatters import twodim_to_str
+from codechecker_common.source_code_comment_handler import \
+    SourceCodeCommentHandler
 from codechecker_common.util import sizeof_fmt
 from codechecker_common.util import split_product_url
 
@@ -191,6 +193,7 @@ def assemble_zip(inputs, zip_file, client):
     file_to_hash = {}
     file_to_mtime = {}
     missing_source_files = set()
+    file_hash_with_review_status = set()
 
     def collect_file_hashes_from_plist(plist_file):
         """
@@ -202,7 +205,7 @@ def assemble_zip(inputs, zip_file, client):
         """
         missing_files = []
         try:
-            files, _ = plist_parser.parse_plist(plist_file)
+            files, reports = plist_parser.parse_plist(plist_file)
 
             for f in files:
                 if not os.path.isfile(f):
@@ -214,6 +217,22 @@ def assemble_zip(inputs, zip_file, client):
                 hash_to_file[content_hash] = f
                 file_to_hash[f] = content_hash
                 file_to_mtime[f] = util.get_last_mod_time(f)
+
+            # Get file hashes which contain source code comments.
+            for report in reports:
+                last_report_event = report.bug_path[-1]
+                file_path = files[last_report_event['location']['file']]
+                if not os.path.isfile(file_path):
+                    continue
+
+                file_hash = file_to_hash[file_path]
+                if file_hash in file_hash_with_review_status:
+                    continue
+
+                report_line = last_report_event['location']['line']
+                sc_handler = SourceCodeCommentHandler(file_path)
+                if sc_handler.has_source_line_comments(report_line):
+                    file_hash_with_review_status.add(file_hash)
 
             return missing_files
         except Exception as ex:
@@ -279,7 +298,7 @@ def assemble_zip(inputs, zip_file, client):
             if file_hashes else []
 
         for f, h in file_to_hash.items():
-            if h in necessary_hashes:
+            if h in necessary_hashes or h in file_hash_with_review_status:
                 LOG.debug("File contents for '%s' needed by the server", f)
 
                 zipf.write(f, os.path.join('root', f.lstrip('/')))

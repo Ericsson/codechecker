@@ -191,6 +191,18 @@ class TestSuppress(unittest.TestCase):
             self.assertTrue(success)
             logging.debug("Bug review status changed successfully")
 
+        # Get the results to compare.
+        updated_results = get_all_run_results(self._cc_client, self._runid)
+        self.assertIsNotNone(updated_results)
+        self.assertNotEqual(len(updated_results), 0)
+
+        for bug_hash in hash_to_suppress_msgs:
+            report = [x for x in updated_results if x.bugHash == bug_hash][0]
+
+            # Check the stored suppress comment
+            self.assertEqual(report.reviewData.comment, "This is really a bug")
+            self.assertEqual(report.reviewData.status, ReviewStatus.CONFIRMED)
+
         # Check the same project again.
         codechecker_cfg = env.import_test_cfg(
             self._test_workspace)['codechecker_cfg']
@@ -209,8 +221,10 @@ class TestSuppress(unittest.TestCase):
         self.assertNotEqual(len(updated_results), 0)
 
         for bug_hash in hash_to_suppress_msgs:
+            expected = hash_to_suppress_msgs[bug_hash]
             report = [x for x in updated_results if x.bugHash == bug_hash][0]
 
-            # Check the stored suppress comment
-            self.assertEqual(report.reviewData.comment, "This is really a bug")
-            self.assertEqual(report.reviewData.status, ReviewStatus.CONFIRMED)
+            # Check that source code comments in the database are changed back
+            # after storage.
+            self.assertEqual(report.reviewData.comment, expected['message'])
+            self.assertEqual(report.reviewData.status, expected['status'])
