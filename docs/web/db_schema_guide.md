@@ -17,7 +17,8 @@ http://alembic.readthedocs.org/en/latest/autogenerate.html#what-does-autogenerat
 
 # Updating configuration database schema
 
-Config database schema scripts can be found under the `config_db_migrate` directory.
+Config database schema scripts can be found under the `config_db_migrate`
+directory.
 
 ## Automatic migration script generation (Online)
 
@@ -26,7 +27,8 @@ version.
 
 ### **Step 1**: Update the database model
 
-The configuration database schema file can be found here: `libcodechecker/server/config_db_model.py`
+The configuration database schema file can be found here:
+`server/codechecker_server/database/config_db_model.py`
 
 ### **Step 2**: Check the alembic.ini configuration settings
 
@@ -40,9 +42,10 @@ Edit the sqlalchemy.url option in [alembic.ini](
 `alembic --name config_db revision --autogenerate -m "Change description"`
 
 ### **Step 4**: Check the generated scripts
-The new migration script `config_db_migrate/versions/{hash}_change_description.py` is
-   generated. **You must always check the generated script because sometimes it
-   isn't correct.**
+The new migration script
+`config_db_migrate/versions/{hash}_change_description.py` is generated.
+**You must always check the generated script because sometimes it isn't
+correct.**
 
 ### **Step 5**: Run all test cases.
 
@@ -57,11 +60,13 @@ Don't forget to commit the migration script with your other changes.
 
 ## Automatic migration script generation (Online)
 
-A Codechecker server should be started and a product should be configured with a previous database schema version.
+A Codechecker server should be started and a product should be configured with
+a previous database schema version.
 
 ### **Step 1**: Update the database model
 
-The run database schema file can be found here: `libcodechecker/server/run_db_model.py`
+The run database schema file can be found here:
+`server/codechecker_server/database/run_db_model.py`
 
 ### **Step 2**: Check alembic.ini configuration
 
@@ -94,8 +99,9 @@ migration script using `alembic revision`:
 
 `alembic --name run_db revision -m "Change description"`
 
-The new file `db_migrate/versions/{hash}_change_description.py` is generated. This
-file contains an empty `upgrade` and a `downgrade` function.
+The new file
+`server/codechecker_server/migrations/report/versions/{hash}_change_description.py`
+is generated. This file contains an empty `upgrade` and a `downgrade` function.
 
 The empty `upgrade` and `downgrade` should be written by hand.
 
@@ -122,22 +128,23 @@ previous version and there will be no data loss.
 ### Migration at server start
 
 Schema migration can be done at server start. The database for the config
-and product databases will be automatically checked. If there are databases which can
-be upgraded you will be asked if you want to upgrade the schema to the latest
-version.
+and product databases will be automatically checked. If there are databases
+which can be upgraded you will be asked if you want to upgrade the schema to
+the latest version.
 
 NOTE: Before running the migration you should make a full backup of your
 config and product databases!
 
 The config database location will be printed first at the server start.
-Migration of the config database is done independently from the product databases.
-The product database locations can be viewed with the `CodeChecker server
---db-status all` command.
+Migration of the config database is done independently from the product
+databases. The product database locations can be viewed with the
+`CodeChecker server --db-status all` command.
 
 ## Checking if migration will be required.
 
-Running the `CodeChecker server --db-status all` command with the new CodeChecker
-release will show you if database upgrade is needed for the new release.
+Running the `CodeChecker server --db-status all` command with the new
+CodeChecker release will show you if database upgrade is needed for the new
+release.
 
 NOTE: Use the same arguments which were used to start the server to check
 the status. It is required to find the used configuration database.

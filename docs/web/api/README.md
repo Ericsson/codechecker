@@ -42,7 +42,7 @@ For example:
 
     https://example.com:8001/Default/v6.0/CodeCheckerService
 
-Executing `make thrift` in the main folder of CodeChecker will automatically
+Executing `make thrift` in the web folder of CodeChecker will automatically
 build each API version to the `build/` dir.
 
 ## How to add new API versions <a name="how-to-add-new-api-versions"></a>
@@ -57,11 +57,11 @@ already existing functions, only extend the API:
 
  1. After implementing the changes to the existing API files and handlers,
  you need to increase the `SUPPORTED_VERSIONS` tag in
- `libcodechecker/version.py`. This dict stores for each major version, which
- is the highest supported minor version. In this case, simply increase the
- number by `1`.
- 2. Change the `www/scripts/version.js` file to represent the newest version,
- e.g. `6.1`.
+ `codechecker_web/shared/version.py`. This dict stores for each major
+ version, which is the highest supported minor version. In this case, simply
+ increase the number by `1`.
+ 2. Change the `web/server/www/scripts/version.js` file to represent the newest
+ version, e.g. `6.1`.
 
 ### Major API changes <a name="major-api-changes"></a>
 
@@ -75,15 +75,15 @@ copy of the previous version's API to a new folder, e.g. `v7`.
  1. The new API definition (`thrift`) files must have the `namespace` tag
  appropriately suffixed, e.g. `_v7`.
  2. Register a new *major* version in the `SUPPORTED_VERSIONS` dict in
- `libcodechecker/version.py`, but do **NOT** change the previous major
- version's setting. The first *minor* version for every *major* version is `0`,
- i.e. `7.0`.
- 3. Change the `www/scripts/version.js` to use the newest API, `7.0` in this
- case.
- 4. Change the imports used in `www/scripts/<site>/<site>.js` (`<site>` is
- `codecheckerviewer` or `productlist`) to load the API client from the new
+ `codechecker_web/shared/version.py`, but do **NOT** change the previous
+ major version's setting. The first *minor* version for every *major* version
+ is `0`, i.e. `7.0`.
+ 3. Change the `server/www/scripts/version.js` to use the newest API, `7.0` in
+ this case.
+ 4. Change the imports used in `server/www/scripts/<site>/<site>.js` (`<site>`
+ is `codecheckerviewer` or `productlist`) to load the API client from the new
  version. Do the same with the Python code everywhere (including the tests)
- where API clients are used (`libcodechecker/libclient`).
+ where API clients are used (`client/codechecker_client`).
  5. Implement requesting actions via the new API in the command-line and the
  Web client.
  6. In the server, implement the API handlers for the new version **as
