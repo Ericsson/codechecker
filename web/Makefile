@@ -19,6 +19,8 @@ CC_CLIENT = $(CURRENT_DIR)/client/
 # Root of the repository.
 ROOT = $(CURRENT_DIR)/..
 
+CC_TOOLS = $(ROOT)/tools
+
 ACTIVATE_DEV_VENV ?= . venv_dev/bin/activate
 
 VENV_DEV_REQ_FILE ?= requirements_py/dev/requirements.txt
@@ -92,13 +94,11 @@ package_vendor: package_dir_structure
 package_web: package_thrift package_userguide package_vendor package_docs
 
 build_plist_to_html:
-	$(MAKE) -C $(ROOT)/tools/plist_to_html
+	$(MAKE) -C $(ROOT)/tools/plist_to_html build
 
 package_plist_to_html: build_plist_to_html package_dir_structure
 	# Copy plist-to-html files.
-	cp -r $(ROOT)/tools/plist_to_html/plist_to_html $(CC_BUILD_LIB_DIR) && \
-	cp -r $(ROOT)/tools/plist_to_html/build $(CC_BUILD_DIR)/plist_to_html && \
-	ln -sf $(CC_BUILD_DIR)/plist_to_html/bin/plist-to-html $(CC_BUILD_DIR)/bin/plist-to-html
+	cp -r $(CC_TOOLS)/plist_to_html/build/plist_to_html/plist_to_html $(CC_BUILD_LIB_DIR)
 
 package: package_plist_to_html package_web
 	# Copy libraries.
