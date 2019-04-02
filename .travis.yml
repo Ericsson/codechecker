@@ -90,7 +90,7 @@ script:
     - make clean_travis
     - make package
     - make -C tools/plist_to_html test
-    - make -C analyzer test_unit test_functional
+    - BUILD_DIR=$TRAVIS_BUILD_DIR/build make -C analyzer test_unit test_functional
     - if [[ "$TRAVIS_OS_NAME" = "linux" ]]; then make -C analyzer test_tu_collector test_build_logger; fi
-    - make -C web test_unit test_functional
+    - BUILD_DIR=$TRAVIS_BUILD_DIR/build make -C web test_unit test_functional
     - make clean_travis
