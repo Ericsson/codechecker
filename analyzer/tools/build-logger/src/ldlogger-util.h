@@ -19,8 +19,8 @@
  *
  * hello -> hello (length = 6)
  * hello world -> hello\\ world (length = 14)
- * "hello" -> \"hello\" (length = 10)
- * "hello world" -> \"hello\\ world\" (length = 18)
+ * "hello" -> \\\"hello\\\" (length = 14)
+ * "hello world" -> \\\"hello\\ world\\\" (length = 22)
  */
 int predictEscapedSize(const char* str_);
 
