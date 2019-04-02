@@ -9,6 +9,8 @@ CC_BUILD_LIB_DIR = $(CC_BUILD_DIR)/lib/python2.7
 # Root of the repository.
 ROOT = $(CURRENT_DIR)/..
 
+CC_TOOLS = $(ROOT)/tools
+
 ACTIVATE_DEV_VENV ?= . venv_dev/bin/activate
 
 VENV_DEV_REQ_FILE ?= requirements_py/dev/requirements.txt
@@ -32,22 +34,18 @@ package_dir_structure:
 	mkdir -p $(CC_BUILD_LIB_DIR)
 
 build_plist_to_html:
-	$(MAKE) -C $(ROOT)/tools/plist_to_html
+	$(MAKE) -C $(ROOT)/tools/plist_to_html build
 
 package_plist_to_html: build_plist_to_html package_dir_structure
 	# Copy plist-to-html files.
-	cp -r $(ROOT)/tools/plist_to_html/plist_to_html $(CC_BUILD_LIB_DIR) && \
-	cp -r $(ROOT)/tools/plist_to_html/build $(CC_BUILD_DIR)/plist_to_html && \
-	ln -sf $(CC_BUILD_DIR)/plist_to_html/bin/plist-to-html $(CC_BUILD_DIR)/bin/plist-to-html
+	cp -r $(CC_TOOLS)/plist_to_html/build/plist_to_html/plist_to_html $(CC_BUILD_LIB_DIR)
 
 build_tu_collector:
-	$(MAKE) -C $(ROOT)/tools/tu_collector
+	$(MAKE) -C $(ROOT)/tools/tu_collector build
 
 package_tu_collector: build_tu_collector package_dir_structure
 	# Copy tu_collector files.
-	cp -r $(ROOT)/tools/tu_collector/tu_collector $(CC_BUILD_LIB_DIR) && \
-	cp -r $(ROOT)/tools/tu_collector/build $(CC_BUILD_DIR)/tu_collector && \
-	ln -sf $(CC_BUILD_DIR)/tu_collector/bin/tu-collector $(CC_BUILD_DIR)/bin/tu-collector
+	cp -r $(CC_TOOLS)/tu_collector/build/tu_collector/tu_collector $(CC_BUILD_LIB_DIR)
 
 # This target should be used from the top level Makefile to build the package
 # together with the web part. This way we will not build plist-to-html
