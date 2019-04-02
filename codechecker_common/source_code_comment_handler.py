@@ -304,8 +304,11 @@ class SourceCodeCommentHandler(object):
             comment_len = len(checker_name_comments)
             if 'all' in line_comment['checkers'] and not comment_len:
                 all_checker_comment = line_comment
-            if checker_name in line_comment['checkers']:
-                checker_name_comments.append(line_comment)
+
+            for c in line_comment['checkers']:
+                if c in checker_name and c != 'all':
+                    checker_name_comments.append(line_comment)
+                    break
 
         if not comment_len and all_checker_comment:
             checker_name_comments.append(all_checker_comment)
