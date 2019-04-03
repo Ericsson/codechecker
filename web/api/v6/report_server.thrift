@@ -93,6 +93,11 @@ enum ExtendedReportDataType {
   FIXIT = 20,
 }
 
+enum CommentKind {
+  USER,    // User-given comments.
+  SYSTEM   // System events.
+}
+
 struct SourceFileData {
   1: i64             fileId,
   2: string          filePath,
@@ -280,7 +285,8 @@ struct CommentData {
   1: i64     id,
   2: string  author,
   3: string  message,
-  4: string  createdAt
+  4: string  createdAt,
+  5: CommentKind kind
 }
 typedef list<CommentData> CommentDataList
 

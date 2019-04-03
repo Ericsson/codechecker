@@ -16,10 +16,23 @@ import os
 import unittest
 
 from codechecker_api_shared.ttypes import RequestFailed
-from codeCheckerDBAccess_v6.ttypes import CommentData
+from codeCheckerDBAccess_v6.ttypes import CommentData, CommentKind
 
 from libtest import env
 from libtest.thrift_client_to_db import get_all_run_results
+
+
+def separate_comments(comments):
+    """
+    Separate comments and returns a tuple of user comments and system.
+    """
+    user_comments = [c for c in comments
+                     if c.kind == CommentKind.USER]
+
+    system_comments = [c for c in comments
+                       if c.kind == CommentKind.SYSTEM]
+
+    return user_comments, system_comments
 
 
 class TestComment(unittest.TestCase):
@@ -99,6 +112,11 @@ class TestComment(unittest.TestCase):
         self.assertTrue(success)
         logging.debug('Bug commented successfully')
 
+        # Try to add another new comment with empty message.
+        with self.assertRaises(RequestFailed):
+            self._cc_client.addComment(bug.reportId,
+                                       CommentData(author='anybody'))
+
         # Add new comment for a second bug with a different hash!
         bug2 = None
         for b in run_results:
@@ -146,25 +164,34 @@ class TestComment(unittest.TestCase):
         self.assertTrue(success)
         logging.debug('Comment edited successfully')
 
+        # Update comment with empty message.
+        with self.assertRaises(RequestFailed):
+            self._cc_client.updateComment(comments[0].id,
+                                          '       ')
+
         john_msg = 'John cannot edit'
         with self.assertRaises(RequestFailed):
             self._cc_client_john.updateComment(comments[0].id, john_msg)
             logging.debug('Comment was edited by john')
 
         comments = self._cc_client.getComments(bug.reportId)
-        self.assertEqual(len(comments), 1)
-        self.assertEqual(comments[0].message, new_msg)
+        user_comments, system_comments = separate_comments(comments)
+
+        self.assertEqual(len(user_comments), 1)
+        self.assertEqual(user_comments[0].message, new_msg)
+        self.assertEqual(len(system_comments), 1)
 
         # Remove the last comment for the first bug
-        success = self._cc_client.removeComment(comments[0].id)
+        success = self._cc_client.removeComment(user_comments[0].id)
         self.assertTrue(success)
         logging.debug('Comment removed successfully')
 
         comments = self._cc_client.getComments(bug.reportId)
-        self.assertEqual(len(comments), 0)
+        self.assertEqual(len(comments), 1)
+        self.assertEqual(comments[0].kind, CommentKind.SYSTEM)
 
         num_comment = self._cc_client.getCommentCount(bug.reportId)
-        self.assertEqual(num_comment, 0)
+        self.assertEqual(num_comment, 1)
 
         # Remove the last comment for the second bug.
         comments = self._cc_client.getComments(bug2.reportId)
@@ -213,10 +240,12 @@ class TestComment(unittest.TestCase):
 
         # There are no comments available for the bug.
         comments = self._cc_client.getComments(bug_base.reportId)
-        self.assertEqual(len(comments), 0)
+        user_comments, _ = separate_comments(comments)
+        self.assertEqual(len(user_comments), 0)
 
         comments = self._cc_client.getComments(bug_new.reportId)
-        self.assertEqual(len(comments), 0)
+        user_comments, _ = separate_comments(comments)
+        self.assertEqual(len(user_comments), 0)
 
         # Try to add a new comment for the first bug
         comment = CommentData(author='Anonymous', message='First msg')
@@ -225,10 +254,12 @@ class TestComment(unittest.TestCase):
         logging.debug('Bug commented successfully')
 
         comments = self._cc_client.getComments(bug_base.reportId)
-        self.assertEqual(len(comments), 1)
+        user_comments, _ = separate_comments(comments)
+        self.assertEqual(len(user_comments), 1)
 
         comments = self._cc_client.getComments(bug_new.reportId)
-        self.assertEqual(len(comments), 1)
+        user_comments, _ = separate_comments(comments)
+        self.assertEqual(len(user_comments), 1)
 
         # Remove the comment for the bug.
         success = self._cc_client.removeComment(comments[0].id)
@@ -236,7 +267,9 @@ class TestComment(unittest.TestCase):
         logging.debug('Comment removed successfully')
 
         comments = self._cc_client.getComments(bug_base.reportId)
-        self.assertEqual(len(comments), 0)
+        user_comments, _ = separate_comments(comments)
+        self.assertEqual(len(user_comments), 0)
 
         comments = self._cc_client.getComments(bug_new.reportId)
-        self.assertEqual(len(comments), 0)
+        user_comments, _ = separate_comments(comments)
+        self.assertEqual(len(user_comments), 0)

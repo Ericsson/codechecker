@@ -360,12 +360,19 @@ class Comment(Base):
     bug_hash = Column(String, nullable=False, index=True)
     author = Column(String, nullable=False)
     message = Column(Binary, nullable=False)
+
+    # Default value is 0 which means a user given comment.
+    kind = Column(Integer,
+                  nullable=False,
+                  server_default="0")
+
     created_at = Column(DateTime, nullable=False)
 
-    def __init__(self, bug_hash, author, message, created_at):
+    def __init__(self, bug_hash, author, message, kind, created_at):
         self.bug_hash = bug_hash
         self.author = author
         self.message = message
+        self.kind = kind
         self.created_at = created_at
 
 
