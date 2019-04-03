@@ -149,6 +149,9 @@ def collect_paths_events(report, file_ids, files):
             file_ids[file_path]))
 
     for macro in report.macro_expansions:
+        if not macro['expansion']:
+            continue
+
         file_path = files[macro['location']['file']]
 
         start_loc = macro['location']
@@ -170,6 +173,9 @@ def collect_paths_events(report, file_ids, files):
             file_ids[file_path]))
 
     for note in report.notes:
+        if not note['message']:
+            continue
+
         file_path = files[note['location']['file']]
 
         start_loc = note['location']

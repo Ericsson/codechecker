@@ -391,3 +391,29 @@ span[class*="severity-"] {
 .customIcon.check:before {
   content: "\e01d";
 }
+
+.customIcon.macro-expansions:before {
+  content: "\e989";
+}
+
+.customIcon.macro-expansion:before {
+  content: "\e98b";
+}
+
+.customIcon.macro-expansions:before,
+.customIcon.macro-expansion:before {
+  color: #696d54;
+}
+
+.customIcon.notes:before {
+  content: "\e903";
+}
+
+.customIcon.note:before {
+  content: "\e901";
+}
+
+.customIcon.notes:before,
+.customIcon.note:before {
+  color: #9299a1;
+}
