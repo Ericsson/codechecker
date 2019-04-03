@@ -185,7 +185,7 @@ def analyze(analyze_id, analyze_dir_path, build_command, read_in_file_path):
     returncode = process.wait()
 
     LOG.debug('Command output: \n%s', stdout)
-    with open("stdout", "w") as text_file:
+    with open(os.path.join(analyze_dir_path, 'output', 'stdout'), "w") as text_file:
         text_file.write(stdout)
 
     if returncode != 0:
@@ -194,12 +194,12 @@ def analyze(analyze_id, analyze_dir_path, build_command, read_in_file_path):
 
         LOG.error('Error output: %s', stderr)
 
-        with open("stderr", "w") as text_file:
+        with open(os.path.join(analyze_dir_path, 'output', 'stderr'), "w") as text_file:
             text_file.write(stderr)
 
         LOG.error('Return code: %s', returncode)
 
-        with open("returncode", "w") as text_file:
+        with open(os.path.join(analyze_dir_path, 'output', 'returncode'), "w") as text_file:
             text_file.write(str(returncode))
 
 
