@@ -289,7 +289,7 @@ The client's configuration file is expected to be at
 by using the package's `config/session_client.json` as an example.
 
 > Please make sure, as a security precaution, that **only you** are allowed to
-> access this file. Executing `chmod 0600 ~/.codechecker_passwords.json` will
+> access this file. Executing `chmod 0600 ~/.codechecker.passwords.json` will
 > limit access to your user only.
 
 ```
