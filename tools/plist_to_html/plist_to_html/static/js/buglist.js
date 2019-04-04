@@ -112,7 +112,7 @@ var BugList = {
   sort : function (columnId, asc) {
     var rows = null,
         switching = true,
-        i, x, y;
+        i, j, x, y, minIdx;
 
     var table = document.getElementById('report-list');
     var column = document.getElementById(columnId);
@@ -122,20 +122,20 @@ var BugList = {
       asc = column.getAttribute('sort') === 'desc' ? false : true;
     }
 
-    while (switching) {
-      switching = false;
-      rows = table.rows;
-
-      for (i = 1; i < (rows.length - 1); i++) {
-        x = rows[i].getElementsByTagName('td')[cellIndex];
-        y = rows[i + 1].getElementsByTagName('td')[cellIndex];
-
+    var n = table.rows.length;
+    for (i = 1; i < n - 1; i++)
+    {
+      minIdx = i;
+      for (j = i + 1; j < n; j++) {
+        x = table.rows[i].getElementsByTagName('td')[cellIndex];
+        y = table.rows[j].getElementsByTagName('td')[cellIndex];
         if (this.compare(columnId, x, y, asc)) {
-          rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
-          switching = true;
-          break;
+          minIdx = j;
         }
       }
+
+      table.rows[i].parentNode.insertBefore(
+        table.rows[minIdx], table.rows[i]);
     }
 
     table.querySelectorAll('th').forEach(function (column) {
