@@ -293,35 +293,36 @@ by using the package's `config/session_client.json` as an example.
 > limit access to your user only.
 
 ```
-usage: CodeChecker cmd login [-h] [-u USERNAME] [-d] [--host HOST] [-p PORT]
+usage: CodeChecker cmd login [-h] [-d] [--url SERVER_URL]
                              [--verbose {info,debug,debug_analyzer}]
+                             [USERNAME]
 
 Certain CodeChecker servers can require elevated privileges to access analysis
 results. In such cases it is mandatory to authenticate to the server. This
 action is used to perform an authentication in the command-line.
 
+positional arguments:
+  USERNAME              The username to authenticate with. (default: <username>)
+
 optional arguments:
   -h, --help            show this help message and exit
-  -u USERNAME, --username USERNAME
-                        The username to authenticate with. (default: <username>)
   -d, --deactivate, --logout
                         Send a logout request to end your privileged session.
 
 common arguments:
-  --host HOST           The address of the CodeChecker viewer server to
-                        connect to. (default: localhost)
-  -p PORT, --port PORT  The port the server is running on. (default: 8001)
+  --url SERVER_URL      The URL of the server to access, in the format of
+                        '[http[s]://]host:port'. (default: localhost:8001)
   --verbose {info,debug,debug_analyzer}
                         Set verbosity level.
 ```
 
 The user can log in onto the server by issuing the command `CodeChecker cmd
-login -h host -p port -u username -pw passphrase`. After receiving an
-*Authentication successful!* message, access to the analysis information is
-given; otherwise, *Invalid access* is shown instead of real data.
+login <username>`. After receiving an *Authentication successful!* message,
+access to the analysis information is given; otherwise, *Invalid access* is
+shown instead of real data.
 
 Privileged session expire after a set amount of time. To log out manually,
-issue the command `CodeChecker cmd login -h host -p port --logout`.
+issue the command `CodeChecker cmd login -d`.
 
 ### Preconfigured credentials <a name="preconfigured-credentials"></a>
 

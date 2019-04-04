@@ -1149,6 +1149,8 @@ optional arguments:
                         Send a logout request to end your privileged session.
 
 common arguments:
+  --url SERVER_URL      The URL of the server to access, in the format of
+                        '[http[s]://]host:port'. (default: localhost:8001)
   --verbose {info,debug,debug_analyzer}
                         Set verbosity level.
 ```
