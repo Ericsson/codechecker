@@ -14,6 +14,8 @@ import json
 import os
 import plistlib
 import shutil
+
+from collections import defaultdict
 from xml.parsers.expat import ExpatError
 
 
@@ -27,6 +29,48 @@ def get_last_mod_time(file_path):
 def get_file_content(filename):
     with io.open(filename, 'r', encoding='UTF-8', errors='replace') as f:
         return f.read()
+
+
+def twodim_to_table(lines, separate_head=True, separate_footer=False):
+    """
+    Pretty-prints the given two-dimensional array's lines.
+    """
+
+    str_parts = []
+
+    # Count the column width.
+    widths = []
+    for line in lines:
+        for i, size in enumerate([len(str(x)) for x in line]):
+            while i >= len(widths):
+                widths.append(0)
+            if size > widths[i]:
+                widths[i] = size
+
+    # Generate the format string to pad the columns.
+    print_string = ""
+    for i, width in enumerate(widths):
+        print_string += "{" + str(i) + ":" + str(width) + "} | "
+    if len(print_string) == 0:
+        return
+    print_string = print_string[:-3]
+
+    # Print the actual data.
+    str_parts.append("-" * (sum(widths) + 3 * (len(widths) - 1)))
+    for i, line in enumerate(lines):
+        try:
+            str_parts.append(print_string.format(*line))
+        except IndexError:
+            raise TypeError("One of the rows have a different number of "
+                            "columns than the others")
+        if i == 0 and separate_head:
+            str_parts.append("-" * (sum(widths) + 3 * (len(widths) - 1)))
+        if separate_footer and i == len(lines) - 2:
+            str_parts.append("-" * (sum(widths) + 3 * (len(widths) - 1)))
+
+    str_parts.append("-" * (sum(widths) + 3 * (len(widths) - 1)))
+
+    return '\n'.join(str_parts)
 
 
 class HtmlBuilder(object):
@@ -47,7 +91,10 @@ class HtmlBuilder(object):
         self._layout_tag_files = {
             'STYLE_CSS': os.path.join(css_dir, 'style.css'),
             'BUGLIST_CSS': os.path.join(css_dir, 'buglist.css'),
+            'BUGVIEW_CSS': os.path.join(css_dir, 'bugview.css'),
+            'STATISTICS_CSS': os.path.join(css_dir, 'statistics.css'),
             'ICON_CSS': os.path.join(css_dir, 'icon.css'),
+            'TABLE_CSS': os.path.join(css_dir, 'table.css'),
             'CODEMIRROR_LICENSE': os.path.join(codemirror_dir,
                                                'codemirror.LICENSE'),
             'CODEMIRROR_CSS': os.path.join(codemirror_dir,
@@ -66,6 +113,9 @@ class HtmlBuilder(object):
         self._index = get_file_content(
             os.path.join(self.layout_dir, 'index.html'))
 
+        self._statistics = get_file_content(
+            os.path.join(self.layout_dir, 'statistics.html'))
+
         # Get the content of the HTML layout dependencies.
         self._tag_contents = {}
         for tag in self._layout_tag_files:
@@ -77,6 +127,10 @@ class HtmlBuilder(object):
 
             self._index = self._index.replace('<${0}$>'.format(tag),
                                               self._tag_contents[tag])
+
+            self._statistics = \
+                self._statistics.replace('<${0}$>'.format(tag),
+                                         self._tag_contents[tag])
 
     def create(self, output_path, report_data):
         """
@@ -157,6 +211,54 @@ class HtmlBuilder(object):
         with io.open(output_path, 'w+', encoding='UTF-8',
                      errors='replace') as html_output:
             html_output.write(content)
+
+    def create_statistics_html(self, output_dir):
+        """
+        Creates an statistics.html file which contains statistics information
+        from the HTML generation process.
+        """
+        num_of_plist_files = len(self.generated_html_reports)
+
+        num_of_reports = 0
+        for html_file in self.generated_html_reports:
+            num_of_reports += len(self.generated_html_reports[html_file])
+
+        checker_statistics = defaultdict(int)
+        for html_file in self.generated_html_reports:
+            for report in self.generated_html_reports[html_file]:
+                checker = report['checkerName']
+                checker_statistics[checker] += 1
+
+        rows = []
+        checker_statistics_content = ''
+        for checker_name in sorted(checker_statistics):
+            checker_statistics_content += '''
+              <tr>
+                <td>{0}</td>
+                <td>{1}</td>
+              </tr>
+            '''.format(checker_name, checker_statistics[checker_name])
+            rows.append([checker_name, checker_statistics[checker_name]])
+
+        content = self._statistics \
+            .replace('<$NUMBER_OF_PLIST_FILES$>', str(num_of_plist_files)) \
+            .replace('<$NUMBER_OF_REPORTS$>', str(num_of_reports)) \
+            .replace('<$CHECKER_STATISTICS$>', checker_statistics_content)
+
+        output_path = os.path.join(output_dir, 'statistics.html')
+        with io.open(output_path, 'w+', encoding='UTF-8',
+                     errors='ignore') as html_output:
+            html_output.write(content)
+
+        print("\n----======== Statistics ========----")
+        statistics_rows = [
+            ["Number of processed plist files", num_of_plist_files],
+            ["Number of analyzer reports", num_of_reports]]
+        print(twodim_to_table(statistics_rows, False))
+
+        print("\n----==== Checker Statistics ====----")
+        header = ["Checker name", "Number of reports"]
+        print(twodim_to_table([header] + rows))
 
 
 def get_report_data_from_plist(plist, skip_report_handler=None):
@@ -339,14 +441,7 @@ def parse(input_path, output_path, layout_dir, skip_report_handler=None,
         if sr:
             skipped_report.add(sr)
 
-    print('\nTo view the results in a browser run:\n> firefox {0}'.format(
-        os.path.join(output_path, 'index.html')))
-
-    if changed_source_files:
-        changed_files = '\n'.join([' - ' + f for f in changed_source_files])
-        print("\nThe following source file contents changed since the "
-              "latest analysis:\n{0}\nPlease analyze your project again to "
-              "update the reports!".format(changed_files))
+    return changed_source_files
 
 
 def __add_arguments_to_parser(parser):
@@ -389,11 +484,29 @@ def main():
     if isinstance(args.input, str):
         args.input = [args.input]
 
+    # Source files which modification time changed since the last analysis.
+    changed_source_files = set()
+
     html_builder = HtmlBuilder(args.layout_dir)
     for input_path in args.input:
-        parse(input_path, args.output_dir, args.layout_dir, None, html_builder)
+        changed_files = parse(input_path, args.output_dir, args.layout_dir,
+                              None, html_builder)
+        changed_source_files.union(changed_files)
 
     html_builder.create_index_html(args.output_dir)
+    html_builder.create_statistics_html(args.output_dir)
+
+    print('\nTo view statistics in a browser run:\n> firefox {0}'.format(
+        os.path.join(args.output_dir, 'statistics.html')))
+
+    print('\nTo view the results in a browser run:\n> firefox {0}'.format(
+        os.path.join(args.output_dir, 'index.html')))
+
+    if changed_source_files:
+        changed_files = '\n'.join([' - ' + f for f in changed_source_files])
+        print("\nThe following source file contents changed since the "
+              "latest analysis:\n{0}\nPlease analyze your project again to "
+              "update the reports!".format(changed_files))
 
 
 if __name__ == "__main__":
