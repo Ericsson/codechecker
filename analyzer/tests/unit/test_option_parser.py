@@ -226,22 +226,40 @@ class OptionParserTest(unittest.TestCase):
         print(res)
         self.assertEqual(BuildAction.COMPILE, res.action_type)
 
-    def test_ignore_flags(self):
+    def test_ignore_flags_gcc(self):
         """
         Test if special compiler options are ignored properly.
         """
-        ignore = ["-Werror", "-MT hello", "-M", "-fsyntax-only",
+        ignore = ["-Werror", "-fsyntax-only",
                   "-mfloat-gprs=double", "-mfloat-gprs=yes",
                   "-mabi=spe", "-mabi=eabi",
                   '-Xclang', '-mllvm',
                   '-Xclang', '-instcombine-lower-dbg-declare=0']
-        build_cmd = "g++ {} main.cpp".format(' '.join(ignore))
         action = {
             'file': 'main.cpp',
-            'command': build_cmd,
+            'command': "g++ {} main.cpp".format(' '.join(ignore)),
             'directory': ''}
         res = log_parser.parse_options(action)
         self.assertEqual(res.analyzer_options, ["-fsyntax-only"])
+
+    def test_ignore_flags_clang(self):
+        """
+        Test if Clang compiler preserves the compiler flags except for the
+        preprocessor related flags.
+        """
+        ignore = ["-Werror", "-E", "-M", "-fsyntax-only",
+                  "-mfloat-gprs=double", "-mfloat-gprs=yes",
+                  "-mabi=spe", "-mabi=eabi",
+                  '-Xclang', '-mllvm',
+                  '-Xclang', '-instcombine-lower-dbg-declare=0']
+        action = {
+            'file': 'main.cpp',
+            'command': "clang++ {} main.cpp".format(' '.join(ignore)),
+            'directory': ''}
+        res = log_parser.parse_options(action)
+        ignore.remove("-E")
+        ignore.remove("-M")
+        self.assertEqual(res.analyzer_options, ignore)
 
     def test_preserve_flags(self):
         """
