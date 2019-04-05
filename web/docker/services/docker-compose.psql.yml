@@ -1,0 +1,27 @@
+version: '2'
+
+services:
+  db:
+    image: postgres:11.2-alpine
+    ports:
+      - 5433:5432
+    volumes:
+      - /home/$USER/codechecker_database:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=$USER
+      - POSTGRES_DB=config
+    networks:
+      - codechecker
+
+  codechecker:
+    image: codechecker-server:latest
+    ports:
+      - 8001:8001
+    volumes:
+      - /home/$USER/codechecker_workspace:/workspace
+    networks:
+      - codechecker
+
+networks:
+  codechecker:
+    driver: bridge

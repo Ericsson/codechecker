@@ -1,0 +1,9 @@
+version: '2'
+
+services:
+  codechecker:
+    image: codechecker-server:latest
+    ports:
+      - 8001:8001
+    volumes:
+      - /home/$USER/codechecker_workspace:/workspace
