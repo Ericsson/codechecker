@@ -38,6 +38,12 @@ void foo6()
   sizeof(45);
 }
 
+void foo7()
+{
+  // codechecker_confirmed [sizeof-expression] substring of the checker name
+  sizeof(46);
+}
+
 int main()
 {
   return 0;

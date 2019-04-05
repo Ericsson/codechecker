@@ -355,3 +355,123 @@ class TestAnalyze(unittest.TestCase):
         errcode = process.returncode
         self.assertEquals(errcode, 0)
         self.assertFalse(os.path.isdir(failed_dir))
+
+    def unique_json_helper(self, unique_json, is_a, is_b, is_s):
+        with open(unique_json) as json_file:
+            data = json.load(json_file)
+            simple_a = False
+            simple_b = False
+            success = False
+            for d in data:
+                if "simple_a.o" in d["command"]:
+                    simple_a = True
+                if "simple_b.o" in d["command"]:
+                    simple_b = True
+                if "success.o" in d["command"]:
+                    success = True
+            self.assertEqual(simple_a, is_a)
+            self.assertEqual(simple_b, is_b)
+            self.assertEqual(success, is_s)
+
+    def test_compile_uniqueing(self):
+        """
+        Test complilation uniqueing
+        """
+        build_json = os.path.join(self.test_workspace, "build_simple_rel.json")
+        report_dir = os.path.join(self.test_workspace, "reports_relative")
+        source_file = os.path.join(self.test_dir, "simple.c")
+        source_file2 = os.path.join(self.test_dir, "success.c")
+        failed_dir = os.path.join(report_dir, "failed")
+        unique_json = os.path.join(report_dir, "unique_compile_commands.json")
+
+        # Create a compilation database.
+        build_log = [{"directory": self.test_dir,
+                      "command": "cc -c " + source_file +
+                      " -Iincludes -o simple_b.o",
+                      "file": source_file},
+                     {"directory": self.test_dir,
+                      "command": "cc -c " + source_file +
+                      " -Iincludes -o simple_a.o",
+                      "file": source_file},
+                     {"directory": self.test_dir,
+                      "command": "cc -c " + source_file2 +
+                      " -Iincludes -o success.o",
+                      "file": source_file2}]
+
+        with open(build_json, 'w') as outfile:
+            json.dump(build_log, outfile)
+
+        # Testing alphabetic uniqueing mode.
+        analyze_cmd = [self._codechecker_cmd, "analyze", build_json,
+                       "--analyzers", "clangsa", "-o", report_dir,
+                       "--compile-uniqueing", "alpha"]
+
+        process = subprocess.Popen(
+            analyze_cmd, stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE, cwd=self.test_workspace)
+        process.communicate()
+
+        errcode = process.returncode
+        self.assertEquals(errcode, 0)
+        self.assertFalse(os.path.isdir(failed_dir))
+
+        self.unique_json_helper(unique_json, True, False, True)
+
+        # Testing regex mode.
+        analyze_cmd = [self._codechecker_cmd, "analyze", build_json,
+                       "--analyzers", "clangsa", "-o", report_dir,
+                       "--compile-uniqueing", ".*_b.*"]
+        process = subprocess.Popen(
+            analyze_cmd, stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE, cwd=self.test_workspace)
+        process.communicate()
+
+        errcode = process.returncode
+        self.assertEquals(errcode, 0)
+        self.assertFalse(os.path.isdir(failed_dir))
+
+        self.unique_json_helper(unique_json, False, True, True)
+
+        # Testing regex mode.error handling
+        analyze_cmd = [self._codechecker_cmd, "analyze", build_json,
+                       "--analyzers", "clangsa", "-o", report_dir,
+                       "--compile-uniqueing", ".*simple.*"]
+        process = subprocess.Popen(
+            analyze_cmd, stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE, cwd=self.test_workspace)
+        process.communicate()
+
+        errcode = process.returncode
+        # Since .*simple.* matches 2 files, thus we get an error
+        self.assertEquals(errcode, 1)
+
+        # Testing strict mode
+        analyze_cmd = [self._codechecker_cmd, "analyze", build_json,
+                       "--analyzers", "clangsa", "-o", report_dir,
+                       "--compile-uniqueing", "strict", "--verbose", "debug"]
+
+        process = subprocess.Popen(
+            analyze_cmd, stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE, cwd=self.test_workspace)
+        process.communicate()
+
+        # In strict mode the analysis must fail
+        # if there are more than one build
+        # commands for a single source.
+        errcode = process.returncode
+        self.assertEquals(errcode, 1)
+        self.assertFalse(os.path.isdir(failed_dir))
+
+        # Testing None mode.
+        analyze_cmd = [self._codechecker_cmd, "analyze", build_json,
+                       "--analyzers", "clangsa", "-o", report_dir,
+                       "--compile-uniqueing", "none"]
+        process = subprocess.Popen(
+            analyze_cmd, stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE, cwd=self.test_workspace)
+        process.communicate()
+
+        errcode = process.returncode
+        self.assertEquals(errcode, 0)
+        self.assertFalse(os.path.isdir(failed_dir))
+        self.unique_json_helper(unique_json, True, True, True)

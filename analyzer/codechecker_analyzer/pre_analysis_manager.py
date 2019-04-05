@@ -21,11 +21,10 @@ import uuid
 from codechecker_common.env import get_check_env
 from codechecker_common.logger import get_logger
 
-from . import ctu_manager
-from . import statistics_collector
 from .analyzers import analyzer_base
-from .analyzers import ctu_triple_arch
-from .analyzers.analyzer_clangsa import ClangSA
+from .analyzers.clangsa import ctu_manager, ctu_triple_arch
+from .analyzers.clangsa import statistics_collector
+from .analyzers.clangsa.analyzer import ClangSA
 
 
 LOG = get_logger('analyzer')
@@ -44,11 +43,10 @@ def collect_statistics(action, source, config, environ, statistics_data):
         LOG.debug('Can not collect statistical data.')
         return
 
-    cmdstr = ' '.join(cmd)
     LOG.debug_analyzer(cmd)
 
     ret_code, analyzer_out, analyzer_err = \
-        analyzer_base.SourceAnalyzer.run_proc(cmdstr, env=environ)
+        analyzer_base.SourceAnalyzer.run_proc(cmd, env=environ)
 
     LOG.debug(analyzer_out)
     LOG.debug(analyzer_err)

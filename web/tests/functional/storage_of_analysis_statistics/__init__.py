@@ -82,9 +82,5 @@ def teardown_package():
     # Let the remaining CodeChecker servers die.
     EVENT_1.set()
 
-    # The custom server stated in a separate home needs to be waited, so it
-    # can properly execute its finalizers.
-    time.sleep(5)
-
     print("Removing: " + TEST_WORKSPACE)
     shutil.rmtree(TEST_WORKSPACE, ignore_errors=True)

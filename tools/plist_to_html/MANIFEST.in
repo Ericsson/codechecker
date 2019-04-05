@@ -1,0 +1,3 @@
+include README.md
+include *.txt
+recursive-include plist_to_html/static *

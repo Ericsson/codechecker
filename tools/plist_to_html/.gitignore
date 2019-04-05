@@ -1,0 +1,4 @@
+build/
+dist/
+plist_to_html.egg-info
+plist_to_html/static/vendor

@@ -33,7 +33,7 @@ class AnalyzerConfigHandler(object):
         self.analyzer_binary = None
         self.analyzer_plugins_dir = None
         self.compiler_resource_dir = ''
-        self.analyzer_extra_arguments = ''
+        self.analyzer_extra_arguments = []
         self.checker_config = ''
         self.report_hash = None
 
@@ -54,15 +54,9 @@ class AnalyzerConfigHandler(object):
 
         analyzer_plugins = [os.path.join(plugin_dir, f)
                             for f in os.listdir(plugin_dir)
-                            if os.path.isfile(os.path.join(plugin_dir, f))]
+                            if os.path.isfile(os.path.join(plugin_dir, f))
+                            and f.endswith(".so")]
         return analyzer_plugins
-
-    @abstractmethod
-    def get_checker_configs(self):
-        """
-        Return a list of (checker_name, key, key_value) tuples.
-        """
-        raise NotImplementedError("Subclasses should implement this!")
 
     def add_checker(self, checker_name, enabled, description):
         """

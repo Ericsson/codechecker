@@ -33,12 +33,16 @@ def codechecker_cmd():
 
 
 def get_workspace(test_id='test'):
-    tmp_dir = os.path.join(REPO_ROOT, 'build')
-    base_dir = os.path.join(tmp_dir, 'workspace')
-    if not os.path.exists(base_dir):
-        os.makedirs(base_dir)
+    """ return a temporary workspace for the tests """
+    workspace_root = os.environ.get("CC_TEST_WORKSPACE_ROOT")
+    if not workspace_root:
+        # if no external workspace is set create under the build dir
+        workspace_root = os.path.join(REPO_ROOT, 'build', 'workspace')
+
+    if not os.path.exists(workspace_root):
+        os.makedirs(workspace_root)
 
     if test_id:
-        return tempfile.mkdtemp(prefix=test_id+"-", dir=base_dir)
+        return tempfile.mkdtemp(prefix=test_id+"-", dir=workspace_root)
     else:
-        return base_dir
+        return workspace_root

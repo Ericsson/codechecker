@@ -56,21 +56,51 @@ static char* makePathAbsRec(const char* path_, char* resolved_)
   return NULL;
 }
 
+int predictEscapedSize(const char* str_)
+{
+  int size = 0;
+
+  while (*str_)
+  {
+    if (strchr("\\\t\b\f\n ", *str_))
+      size += 2;
+    else if (*str_ == '"')
+      /* The quote (") needs an extra escaped escape character because the
+         JSON string literals are surrounded by quote by default. */
+      size += 3;
+
+    ++size;
+    ++str_;
+  }
+
+  /* For closing \0 character. */
+  ++size;
+
+  return size;
+}
+
 char* shellEscapeStr(const char* str_, char* buff_)
 {
   char* out = buff_;
-  int hasSpace = strchr(str_, ' ') != NULL;
 
   while (*str_)
   {
     switch (*str_)
     {
       case '\\':
-      case '\"':
       case '\t':
       case '\b':
       case '\f':
       case '\n':
+      case ' ':
+        *out++ = '\\';
+        *out++ = '\\';
+        *out++ = *str_++;
+        break;
+
+      case '\"':
+        *out++ = '\\';
+        *out++ = '\\';
         *out++ = '\\';
         *out++ = *str_++;
         break;

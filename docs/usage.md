@@ -48,25 +48,29 @@ make clean
 ```sh
 CodeChecker log -b "make" -o compilation.json
 ```
-4. Check the contents of compilation.json. If everything goes well it should contain the `gcc` calls.
+4. Check the contents of compilation.json. If everything goes well it should
+contain the `gcc` calls.
 ```sh
 cat ./compilation.json
 ```
 
 **What to do if the `compilation.json` is empty?**
 
-* Make sure that your build system actually invoked the compiler (e.g. `gcc`,`g++`).
-  In case your software was built once (and the binaries are already generated),
-  the compiler will not be invoked. In this case do a build cleanup (e.g. `make clean`) and
-  retry to log your build.
-* Make sure that the `CC_LOGGER_GCC_LIKE` environment variable is set correctly and contains your compilers.
-  For detailed description see the [user guide](user_guide.md#1-log-mode).
+* Make sure that your build system actually invoked the compiler (e.g. `gcc`,
+`g++`).
+  In case your software was built once (and the binaries are already
+  generated), the compiler will not be invoked. In this case do a build
+  cleanup (e.g. `make clean`) and retry to log your build.
+* Make sure that the `CC_LOGGER_GCC_LIKE` environment variable is set correctly
+  and contains your compilers. For detailed description see the
+  [user guide](analyzer/user_guide.md#log).
 * MacOS users need `intercept-build` to be available on the system,
   and in most cases, _System Integrity Protection_ needs to be turned off.
   See the [README](/README.md#mac-os-x) for details.
 
 ## Step 2: Analyze your code <a name="step-2"></a>
-Once the build is logged successfully (and the `compilation.json`) was created, you can analyze your project.
+Once the build is logged successfully (and the `compilation.json`) was created,
+you can analyze your project.
 
 1. Run the analysis:
 ```sh
@@ -90,15 +94,17 @@ CodeChecker check -j22 -b "make clean;make -j22" -o ./reports
 ```
 
 ### Cross-Compilation <a name="cross-compilation"></a>
-Cross-compilers are auto-detected by CodeChecker, so the `--target` and the compiler pre-configured
+Cross-compilers are auto-detected by CodeChecker, so the `--target` and the
+compiler pre-configured
 include paths of `gcc/g++` are automatically passed to `clang` when analyzing.
 
-**Make sure that the compilers used for building the project (e.g. `/usr/bin/gcc`) are
-accessible when `CodeChecker analyze` or `check` is invoked.**
+**Make sure that the compilers used for building the project (e.g.
+`/usr/bin/gcc`) are accessible when `CodeChecker analyze` or `check` is
+invoked.**
 
 ### Incremental Analysis <a name="incremental-analysis"></a>
-The analysis can be run for only the changed files and the `report-directory` will be
-correctly updated with the new results.
+The analysis can be run for only the changed files and the `report-directory`
+will be correctly updated with the new results.
 
 ```sh
 cd tmux
@@ -127,34 +133,40 @@ Possible reasons for failed analysis:
 
 * The original GCC compiler options were not recognized by Clang.
 * There are included headers for [GCC features which are
-  not supported by Clang](gcc_incompatibilities.md).
-* Clang was more strict when parsing the C/C++ code than the original compiler (GCC).
- Any non-standard compliant or GCC specific code needs to be removed to successfully analyze the file.
- One other solution may be to use the `__clang_analyzer__` macro. When the
- static analyzer is using clang to parse source files, it implicitly defines
- the preprocessor macro
- [__clang_analyzer__](https://clang-analyzer.llvm.org/faq.html#exclude_code). One can use this macro to
- selectively exclude code the analyzer examines.
+  not supported by Clang](analyzer/gcc_incompatibilities.md).
+* Clang was more strict when parsing the C/C++ code than the original compiler
+ (GCC). Any non-standard compliant or GCC specific code needs to be removed to
+ successfully analyze the file. One other solution may be to use the
+ `__clang_analyzer__` macro. When the static analyzer is using clang to parse
+ source files, it implicitly defines the preprocessor macro
+ [__clang_analyzer__](https://clang-analyzer.llvm.org/faq.html#exclude_code).
+ One can use this macro to selectively exclude code the analyzer examines.
 * Clang crashed during the analysis.
 
 ### Avoiding or Suppressing False positives <a name="false-positives"></a>
 
-Sometimes the analyzer reports correct code as incorrect. These findings are called false positives.
-Having a false positive indicates that the analyzer does not understand some properties of the code.
+Sometimes the analyzer reports correct code as incorrect. These findings are
+called false positives. Having a false positive indicates that the analyzer
+does not understand some properties of the code.
 
 CodeChecker provides two ways to get rid off false positives.
 
-1. The first and the preferred way is to make your code understood by the analyzer.
-E.g. by adding `assert`s to your code, analyze in `debug` build mode and annotate your function parameters.
-For details please read the [False Positives Guide](false_positives.md).
+1. The first and the preferred way is to make your code understood by the
+analyzer. E.g. by adding `assert`s to your code, analyze in `debug` build mode
+and annotate your function parameters. For details please read the
+[False Positives Guide](analyzer/false_positives.md).
 
-2. If step 1) does not help, use CodeChecker provided [in-code-suppression](user_guide.md#suppression-code)
-to mark false positives in the source code. This way the suppression information is kept close to the suspicious
-line of code. Although it is possible, it is not recommended to suppress false positives
-on the Web UI only, because this way the suppression will be stored in a database that is unrelated to the source code.
+2. If step 1) does not help, use CodeChecker provided
+[in-code-suppression](web/user_guide.md#source-code-comments) to mark
+false positives in the source code. This way the suppression information is
+kept close to the suspicious line of code. Although it is possible, it is not
+recommended to suppress false positives on the Web UI only, because this way
+the suppression will be stored in a database that is unrelated to the source
+code.
 
 ## Step 3: View analysis results in command line or generate static HTML files <a name="step-3"></a>
-You can print detailed results (including the control flow) in command line by running:
+You can print detailed results (including the control flow) in command line by
+running:
 
 ```sh
 CodeChecker parse --print-steps ./reports
@@ -172,7 +184,8 @@ Found 1 defect(s) in log.c
 ...
 ```
 
-It is possible to generate reports as plain `HTML` files using the `CodeChecker parse` command.
+It is possible to generate reports as plain `HTML` files using the
+`CodeChecker parse` command.
 ```sh
 CodeChecker parse ./reports -e html -o ./reports_html
 ...
@@ -180,33 +193,41 @@ To view the results in a browser run:
 > firefox ./reports_html/index.html
 ```
 
-`./reports_html` directory will contain an `index.html` with a link to all findings that are stored in separate `HTML` files (one per
-analyzed build action).
+`./reports_html` directory will contain an `index.html` with a link to all
+findings that are stored in separate `HTML` files (one per analyzed build
+action).
 
 ![Analysis results in static HTML files](images/static_html.png)
 
 ## Step 4: Store analysis results in a CodeChecker DB and visualize results <a name="step-4"></a>
 
-You can store the analysis results in a central database and view the results in a web viewer:
+You can store the analysis results in a central database and view the results
+in a web viewer:
 
-1. Start the CodeChecker server locally on port 8555 (using SQLite DB, which is not recommended for multi-user central deployment) create a workspace directory, where the database will be stored.
+1. Start the CodeChecker server locally on port 8555 (using SQLite DB, which is
+not recommended for multi-user central deployment) create a workspace
+directory, where the database will be stored.
 
 ```
 mkdir ./ws
 CodeChecker server -w ./ws -v 8555
 ```
-A default product called `Default` will be automatically created where you can store your results.
+A default product called `Default` will be automatically created where you can
+store your results.
 
-2. Store the results in the server under run name "tmux" (in the `Default` product):
+2. Store the results in the server under run name "tmux" (in the `Default`
+product):
 
 ```
 CodeChecker store ./reports --name tmux --url http://localhost:8555/Default
 ```
 The URL is in `PRODUCT_URL` format:
 `[http[s]://]host:port/ProductEndpoint`
-Please note that if you start the server in secure mode (with SSL) you will need to use the `https` protocol prefix.
+Please note that if you start the server in secure mode (with SSL) you will
+need to use the `https` protocol prefix.
 The default protocol is `http`.
-See [user guide](user_guide.md#product_url-format) for detailed description of the `PRODUCT_URL` format.
+See [user guide](web/user_guide.md#product_url-format) for detailed
+description of the `PRODUCT_URL` format.
 
 3. View the results in your web browser
 `http://localhost:8555/Default`
@@ -222,7 +243,7 @@ For that use the `-i` parameter of the analyze command:
                         should be omitted from analysis. Please consult the
                         User guide on how a Skipfile should be laid out.
 ```
-For the skip file format see the [user guide](user_guide.md#skip-file).
+For the skip file format see the [user guide](analyzer/user_guide.md#skip).
 
 ```sh
 CodeChecker analyze -b "make" -i ./skip.file" -o ./reports
@@ -236,7 +257,8 @@ CodeChecker checkers --details
 ```
 those marked with (+) are enabled by default.
 
-You may want to enable more checkers or disable some of them using the -e, -d switches of the analyze command.
+You may want to enable more checkers or disable some of them using the -e, -d
+switches of the analyze command.
 
 For example to enable alpha checkers additionally to the defaults
 ```sh
@@ -245,7 +267,8 @@ CodeChecker analyze -e alpha  -b "make" -i ./skip.file" -o ./reports
 
 ### Configure Checkers <a name="configure-checkers"></a>
 
-See [Configure Clang Static Analyzer and checkers](checker_and_analyzer_configuration.md) documentation for a detailed description.
+See [Configure Clang Static Analyzer and checkers](analyzer/checker_and_analyzer_configuration.md)
+documentation for a detailed description.
 
 ### Identify files that failed analysis <a name="identify-files"></a>
 
@@ -255,7 +278,8 @@ CodeChecker analyze build.json -o reports
 ```
 the failed analysis output is collected into `./reports/failed` directory.
 
-This means that analysis of these files failed and there is no Clang Static Analyzer output for these compilation commands.
+This means that analysis of these files failed and there is no Clang Static
+Analyzer output for these compilation commands.
 
 ## Step 6: Integrate CodeChecker into your CI loop <a name="step-6"></a>
 
@@ -279,9 +303,10 @@ version of the same source file.
   would introduce any new issues.
 * Store daily runs of a module every day in a new run post-fixed with date.
 * You can query *new* and *resolved* bugs using the
-  [`cmd diff`](user_guide.md#show-differences-between-two-runs-diff) or the
+  [`cmd diff`](web/user_guide.md#show-differences-between-two-runs-diff) or the
   Web GUI.
-* Programmers should use [in-code-suppression](user_guide.md#suppression-code)
+* Programmers should use
+  [in-code-suppression](web/user_guide.md#source-code-comments)
   to tell the CI guard that a report is false positive and should be ignored.
   This way your suppressions remain also resistant to eventual changes of the
   bug hash (generated by clang).
@@ -331,7 +356,8 @@ CodeChecker analyze compilation.json -o ./reports-PR
 CodeChecker cmd diff -b tmux_master -n ./reports-PR --new --url http://localhost:8555/Default
 ```
 
-If new bugs were found, reject the commit and send an email with the new bugs to John.
+If new bugs were found, reject the commit and send an email with the new bugs
+to John.
 
 If no new bugs were found:
 
@@ -345,7 +371,8 @@ CodeChecker store ./reports-john-doe --url http://localhost:8555/Default --name 
 If John finds a false positive report in his code and so the CI loop would
 prevent the merge of his pull request, he can suppress the false positive by
 amending the following suppression comment in his code a line above the bug or
-add `assertions` or `annotations` so that the false positive reports are avoided (see [False Positives Guide](false_positives.md)).
+add `assertions` or `annotations` so that the false positive reports are
+avoided (see [False Positives Guide](analyzer/false_positives.md)).
 
 An example, as follows:
 
@@ -360,7 +387,7 @@ if (x)
 int z = x / y; // warn
 ~~~
 
-See [User guide](user_guide.md#suppression-in-the-source-code) for more
+See [User guide](web/user_guide.md#source-code-comments) for more
 information on the exact syntax.
 
 Please find a [Shell Script](script_update.md) that can be used
@@ -435,14 +462,14 @@ CodeChecker cmd diff -b tmux_master -n ./reports --new --url http://localhost:85
 
 ### Setting up user authentication <a name="authentication"></a>
 You can set up authentication for your server and (web,command line) clients
-as described in the [Authentication Guide](authentication.md).
+as described in the [Authentication Guide](web/authentication.md).
 
 ## Updating CodeChecker to new version <a name="upgrade"></a>
 
 If a new CodeChecker release is available it might be possible that there are
 some database changes compared to the previous release.
 If you run into database migration warnings during the server start please
-check our [database schema upgrade guide's](db_schema_guide.md)
+check our [database schema upgrade guide's](web/db_schema_guide.md)
 `Database upgrade for running servers` section.
 
 # Unique Report Identifier (RI) <a name="unique-report-identifier"></a>
@@ -454,7 +481,7 @@ enclosing scope of the bug location (function signature, class, namespace).
 ## Listing and Counting Reports <a name="listing-reports"></a>
 
 See a more detailed description in the [analyzer report identification
-documentation](report_identification.md).
+documentation](analyzer/report_identification.md).
 
 ### How reports are counted? <a name="how-report-are-counted"></a>
 
@@ -505,7 +532,8 @@ int h(){
 }
 ```
 
-Calling `CodeChecker check --ctu -b "g++ -c ./a.c ./b.c lib.c" --print-steps` shows:
+Calling `CodeChecker check --ctu -b "g++ -c ./a.c ./b.c lib.c" --print-steps`
+shows:
 
 ```
 [2018-03-22 10:52] - ----=================----

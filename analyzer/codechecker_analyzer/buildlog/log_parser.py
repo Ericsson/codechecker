@@ -25,7 +25,6 @@ from .build_action import BuildAction
 
 LOG = get_logger('buildlogger')
 
-
 # Replace gcc/g++ build target options with values accepted by Clang.
 REPLACE_OPTIONS_MAP = {
     '-mips32': ['-target', 'mips', '-mips32'],
@@ -33,7 +32,6 @@ REPLACE_OPTIONS_MAP = {
     '-mpowerpc': ['-target', 'powerpc'],
     '-mpowerpc64': ['-target', 'powerpc64']
 }
-
 
 # The compilation flags of which the prefix is any of these regular expressions
 # will not be included in the output Clang command.
@@ -129,7 +127,6 @@ IGNORED_OPTIONS = [
 
 IGNORED_OPTIONS = re.compile('|'.join(IGNORED_OPTIONS))
 
-
 # The compilation flags of which the prefix is any of these regular expressions
 # will not be included in the output Clang command. These flags have further
 # parameters which are also omitted. The number of parameters is indicated in
@@ -155,7 +152,6 @@ IGNORED_PARAM_OPTIONS = {
     re.compile('-filelist'): 1
 }
 
-
 COMPILE_OPTIONS = [
     '-nostdinc',
     r'-nostdinc\+\+',
@@ -172,7 +168,6 @@ COMPILE_OPTIONS = [
 
 COMPILE_OPTIONS = re.compile('|'.join(COMPILE_OPTIONS))
 
-
 COMPILE_OPTIONS_MERGED = [
     '--sysroot',
     '--include',
@@ -188,9 +183,9 @@ COMPILE_OPTIONS_MERGED = [
     '-iwithprefixbefore'
 ]
 
+
 COMPILE_OPTIONS_MERGED = \
     re.compile('(' + '|'.join(COMPILE_OPTIONS_MERGED) + ')')
-
 
 PRECOMPILATION_OPTION = re.compile('-(E|M[T|Q|F|J|P|V|M]*)$')
 
@@ -219,7 +214,8 @@ class ImplicitCompilerInfo(object):
     @staticmethod
     def __get_compiler_err(cmd):
         """
-        Returns the stderr of a compiler invocation as string.
+        Returns the stderr of a compiler invocation as string
+        or None in case of error.
         """
         try:
             LOG.debug("Retrieving default includes via '" + cmd + "'")
@@ -243,6 +239,9 @@ class ImplicitCompilerInfo(object):
         end_mark = "End of search list."
 
         include_paths = []
+
+        if not lines:
+            return include_paths
 
         do_append = False
         for line in lines.splitlines():
@@ -315,7 +314,7 @@ class ImplicitCompilerInfo(object):
         extra_opts = filter(pattern.match, compiler_flags)
 
         pos = next((pos for pos, val in enumerate(compiler_flags)
-                   if val.startswith('--sysroot')), None)
+                    if val.startswith('--sysroot')), None)
         if pos is not None:
             if compiler_flags[pos] == '--sysroot':
                 extra_opts.append('--sysroot=' + compiler_flags[pos + 1])
@@ -429,8 +428,8 @@ class ImplicitCompilerInfo(object):
                 standard = '-std=iso9899:199409'
             else:
                 standard = '-std=gnu' \
-                         + ('' if language == 'c' else '++') \
-                         + standard
+                    + ('' if language == 'c' else '++') \
+                    + standard
 
         return standard
 
@@ -474,6 +473,7 @@ class ImplicitCompilerInfo(object):
 
 
 class OptionIterator(object):
+
     def __init__(self, args):
         self._item = None
         self._it = iter(args)
@@ -590,16 +590,19 @@ def __skip_sources(flag_iterator, _):
 def __determine_action_type(flag_iterator, details):
     """
     This function determines whether this is a preprocessing, compilation or
-    linking action and sets it in the buildaction object.
+    linking action and sets it in the buildaction object. If the action type is
+    set to COMPILE earlier then we don't set it to anything else.
     """
     if flag_iterator.item == '-c':
         details['action_type'] = BuildAction.COMPILE
         return True
     elif flag_iterator.item.startswith('-print-prog-name'):
-        details['action_type'] = BuildAction.INFO
+        if details['action_type'] != BuildAction.COMPILE:
+            details['action_type'] = BuildAction.INFO
         return True
     elif PRECOMPILATION_OPTION.match(flag_iterator.item):
-        details['action_type'] = BuildAction.PREPROCESS
+        if details['action_type'] != BuildAction.COMPILE:
+            details['action_type'] = BuildAction.PREPROCESS
         return True
 
     return False
@@ -629,11 +632,13 @@ def __get_language(flag_iterator, details):
     """
     # TODO: Known issue: a -x flag may precede all source files in the build
     # command with different languages.
-    if flag_iterator.item == '-x':
-        next(flag_iterator)
-        details['lang'] = flag_iterator.item
+    if flag_iterator.item.startswith('-x'):
+        if flag_iterator.item == '-x':
+            next(flag_iterator)
+            details['lang'] = flag_iterator.item
+        else:
+            details['lang'] = flag_iterator.item[2:]  # 2 == len('-x')
         return True
-
     return False
 
 
@@ -681,6 +686,19 @@ def __skip(flag_iterator, _):
     return False
 
 
+def __keep_except(substring):
+    def f(flag_iterator, details):
+        """
+        This function keeps the flag pointed by the given flag_iterator except
+        if it contains the given substring.
+        """
+        if substring not in flag_iterator.item:
+            details['analyzer_options'].append(flag_iterator.item)
+            return True
+        return False
+    return f
+
+
 def parse_options(compilation_db_entry):
     """
     This function parses a GCC compilation action and returns a BuildAction
@@ -709,33 +727,32 @@ def parse_options(compilation_db_entry):
         details['original_command'] = ' '.join(gcc_command)
     elif 'command' in compilation_db_entry:
         details['original_command'] = compilation_db_entry['command']
-        # This is needed so shlex.split() leaves the quotation mark in the
-        # output list:
-        # gcc -DHELLO="hello world" main.cpp
-        # -->
-        # ['gcc', '-DHELLO="hello world"', 'main.cpp']
-        gcc_command = compilation_db_entry['command'] \
-            .replace(r'\"', '"') \
-            .replace(r'"', r'"\"')
-        gcc_command = shlex.split(gcc_command)
+        gcc_command = shlex.split(compilation_db_entry['command'])
     else:
         raise KeyError("No valid 'command' or 'arguments' entry found!")
 
     details['directory'] = compilation_db_entry['directory']
-    details['action_type'] = BuildAction.COMPILE
+    details['action_type'] = None
     details['compiler'] = determine_compiler(gcc_command)
     if '++' in details['compiler'] or 'cpp' in details['compiler']:
         details['lang'] = 'c++'
 
-    flag_transformers = [
-        __skip,
-        __collect_compile_opts,
-        __determine_action_type,
-        __replace,
-        __skip_sources,
-        __get_arch,
-        __get_language,
-        __get_output]
+    if 'clang' in details['compiler']:
+        flag_transformers = [
+            __determine_action_type,
+            __get_language,
+            __get_output,
+            __keep_except(compilation_db_entry['file'])]
+    else:
+        flag_transformers = [
+            __skip,
+            __replace,
+            __collect_compile_opts,
+            __determine_action_type,
+            __skip_sources,
+            __get_arch,
+            __get_language,
+            __get_output]
 
     for it in OptionIterator(gcc_command[1:]):
         for flag_transformer in flag_transformers:
@@ -745,6 +762,9 @@ def parse_options(compilation_db_entry):
             pass
             # print('Unhandled argument: ' + it.item)
 
+    if details['action_type'] is None:
+        details['action_type'] = BuildAction.COMPILE
+
     details['source'] = os.path.normpath(
         os.path.join(compilation_db_entry['directory'],
                      compilation_db_entry['file']))
@@ -752,13 +772,6 @@ def parse_options(compilation_db_entry):
     # In case the file attribute in the entry is empty.
     if details['source'] == '.':
         details['source'] = ''
-
-    # Escape the spaces in the source path, but make sure not to
-    # over-escape already escaped spaces. A filename containing a space
-    # character should be passed to the analyzers escaped, otherwise it would
-    # be considered multiple command line arguments.
-    details['source'] = \
-        r'\ '.join(details['source'].replace(r'\ ', ' ').split(' '))
 
     lang = get_language(os.path.splitext(details['source'])[1])
     if lang:
@@ -780,11 +793,6 @@ def parse_options(compilation_db_entry):
     toolchain = \
         gcc_toolchain.toolchain_in_args(details['analyzer_options'])
 
-    # Quotation marks must be preserved when passed to the analyzers, so these
-    # have to be escaped.
-    details['analyzer_options'] = \
-        map(lambda x: x.replace('"', r'"\"'), details['analyzer_options'])
-
     # Store the compiler built in include paths and defines.
     if not toolchain and 'ccache' not in details['compiler']:
         ImplicitCompilerInfo.set(details)
@@ -792,9 +800,27 @@ def parse_options(compilation_db_entry):
     return BuildAction(**details)
 
 
-def parse_log(compilation_database,
-              skip_handler=None,
-              compiler_info_file=None):
+class CompileCommandEncoder(json.JSONEncoder):
+    """JSON serializer for objects not serializable by default json code"""
+    def default(self, o):
+        if isinstance(o, BuildAction):
+            return o.to_dict()
+        # Let the base class default method raise the TypeError
+        return json.JSONEncoder.default(self, o)
+
+
+class CompileActionUniqueingType(object):
+    NONE = 0  # Full Action text
+    SOURCE_ALPHA = 1  # Based on source file, uniqueing by
+    # on alphanumerically first target
+    SOURCE_REGEX = 2  # Based on source file, uniqueing by regex filter
+    STRICT = 3  # Gives error in case of duplicate
+
+
+def parse_unique_log(compilation_database,
+                     compile_uniqueing="none",
+                     skip_handler=None,
+                     compiler_info_file=None):
     """
     compilation_database -- A compilation database as a list of dict objects.
                             These object should contain "file", "dictionary"
@@ -802,6 +828,9 @@ def parse_log(compilation_database,
                             by "arguments" which is a split command. Older
                             versions of intercept-build provide the build
                             command this way.
+    compile_uniqueing -- Compilation database uniqueing mode.
+                         If there are more than one compile commands for a
+                         target file, only a single one is kept.
     skip_handler -- A SkipListHandler object which helps to skip build actions
                     that shouldn't be analyzed. The build actions described by
                     this handler will not be the part of the result list.
@@ -810,28 +839,77 @@ def parse_log(compilation_database,
                           targets, default standard version).
     """
     try:
-        filtered_build_actions = set()
+        uniqued_build_actions = dict()
+
+        if compile_uniqueing == "alpha":
+            build_action_uniqueing = CompileActionUniqueingType.SOURCE_ALPHA
+        elif compile_uniqueing == "none":
+            build_action_uniqueing = CompileActionUniqueingType.NONE
+        elif compile_uniqueing == "strict":
+            build_action_uniqueing = CompileActionUniqueingType.STRICT
+        else:
+            build_action_uniqueing = CompileActionUniqueingType.SOURCE_REGEX
+            uniqueing_re = re.compile(compile_uniqueing)
 
         for entry in compilation_database:
             if skip_handler and skip_handler.should_skip(entry['file']):
+                LOG.debug("SKIPPING FILE %s", entry['file'])
                 continue
 
             action = parse_options(entry)
+            LOG.debug(action)
 
             if not action.lang:
                 continue
             if action.action_type != BuildAction.COMPILE:
                 continue
+            if build_action_uniqueing == CompileActionUniqueingType.NONE:
+                if action.__hash__ not in uniqued_build_actions:
+                    uniqued_build_actions[action.__hash__] = action
+            elif build_action_uniqueing == CompileActionUniqueingType.STRICT:
+                if action.source not in uniqued_build_actions:
+                    uniqued_build_actions[action.source] = action
+                else:
+                    LOG.error("Build Action uniqueing failed"
+                              " as both '%s' and '%s'",
+                              uniqued_build_actions[action.source]
+                              .original_command,
+                              action.original_command)
+                    sys.exit(1)
+            elif build_action_uniqueing ==\
+                    CompileActionUniqueingType.SOURCE_ALPHA:
+                if action.source not in uniqued_build_actions:
+                    uniqued_build_actions[action.source] = action
+                elif action.output <\
+                        uniqued_build_actions[action.source].output:
+                    uniqued_build_actions[action.source] = action
+            elif build_action_uniqueing ==\
+                    CompileActionUniqueingType.SOURCE_REGEX:
+                LOG.debug("uniqueing regex")
+                if action.source not in uniqued_build_actions:
+                    uniqued_build_actions[action.source] = action
+                elif uniqueing_re.match(action.original_command) and\
+                    not uniqueing_re.match(
+                        uniqued_build_actions[action.source].original_command):
+                    uniqued_build_actions[action.source] = action
+                elif uniqueing_re.match(action.original_command) and\
+                    uniqueing_re.match(
+                        uniqued_build_actions[action.source].original_command):
+                    LOG.error("Build Action uniqueing failed as both \n %s"
+                              "\n and \n %s \n match regex pattern:%s",
+                              uniqued_build_actions[action.source].
+                              original_command,
+                              action.original_command,
+                              compile_uniqueing)
+                    sys.exit(1)
 
-            # Filter out duplicate compilation commands.
-            filtered_build_actions.add(action)
-
+        # Filter out duplicate compilation commands.
         if compiler_info_file:
             with open(compiler_info_file, 'w') as f:
                 json.dump(ImplicitCompilerInfo.get(), f)
 
         LOG.debug('Parsing log file done.')
-        return list(filtered_build_actions)
+        return list(uniqued_build_actions.values())
 
     except (ValueError, KeyError, TypeError) as ex:
         if not compilation_database:

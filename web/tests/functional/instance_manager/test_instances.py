@@ -56,7 +56,6 @@ class TestInstances(unittest.TestCase):
         EVENT_1.clear()
         start_server(codechecker_1, EVENT_1, ['--skip-db-cleanup'])
 
-        time.sleep(5)
         instance = [i for i in instance_manager.get_instances(self.home)
                     if i['port'] == codechecker_1['viewer_port'] and
                     i['workspace'] == self._test_workspace]
@@ -75,7 +74,6 @@ class TestInstances(unittest.TestCase):
         start_server(codechecker_2, EVENT_2, ['--skip-db-cleanup'])
 
         # Workspaces must match, servers were started in the same workspace.
-        time.sleep(5)
         instance_workspaces = [
             i['workspace'] for i in instance_manager.get_instances(self.home)
             if i['workspace'] == self._test_workspace]
@@ -146,7 +144,6 @@ class TestInstances(unittest.TestCase):
                                           '--workspace',
                                           self._test_workspace]),
                          "The stop command didn't return exit code 0.")
-        time.sleep(5)
 
         # Check if the remaining server is still there,
         # we need to make sure that --stop only kills the specified server!
@@ -173,7 +170,6 @@ class TestInstances(unittest.TestCase):
                                           '--workspace',
                                           self._test_workspace]),
                          "The stop command didn't return exit code 0.")
-        time.sleep(5)
 
         instance_1 = [i for i in instance_manager.get_instances(self.home)
                       if i['port'] == codechecker_1['viewer_port'] and
@@ -211,7 +207,6 @@ class TestInstances(unittest.TestCase):
         self.assertEqual(0, self.run_cmd([env.codechecker_cmd(),
                                           'server', '--stop-all']),
                          "The stop-all command didn't return exit code 0.")
-        time.sleep(5)
 
         self.assertEqual(len(instance_manager.get_instances(self.home)), 0,
                          "Both servers were allegedly stopped but they "

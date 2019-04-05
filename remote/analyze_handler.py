@@ -171,7 +171,7 @@ def analyze(analyze_id, analyze_dir_path, build_command, read_in_file_path):
     command.append("-o")
     command.append("%s" % os.path.join(analyze_dir_path, 'output'))
 
-    LOG.info('CodeChecker command: %s', command)
+    LOG.debug('CodeChecker command: %s', command)
 
     REDIS_DATABASE.hset(analyze_id, 'state',
                         AnalyzeStatus.ANALYZE_IN_PROGRESS.name)

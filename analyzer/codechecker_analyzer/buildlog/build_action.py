@@ -58,6 +58,14 @@ class BuildAction(object):
     def __eq__(self, other):
         return other.original_command == self.original_command
 
+    def to_dict(self):
+        """Reverting to original compilation database
+        record for JSON conversion.
+        """
+        return {"command": self.original_command,
+                "directory": self.directory,
+                "file": self.source}
+
     def __hash__(self):
         """
         If the compilation database contains the same compilation action

@@ -3,19 +3,31 @@
 __At least Clang 7.0 and Clant-tidy 7.0 is required to run the tests.__  
 
 **Before running the tests the CodeChecker package needs to be built!**
-~~~~~~{.sh}
+```sh
 # Build the package
 make package
-~~~~~~
+```
 
+__Every test target has an `*in_env` version (Eg. `make test_in_env`) which automatically creates and sources a virtualenv for the tests.__
 |cmd||  
 |----|---|  
 |`make test`| run all tests (unit and functional)|  
+|`make test_in_env`| run all tests (unit and functional), automatically setup and source a virtualenv|  
 |`make test_unit` | unittests |  
 |`make test_functional` | functional tests (SQLite and PostgreSQL) |  
 |`make test_sqlite` | functional test (SQLite) |  
 |`make test_psql` | functional tests (PostgreSQL)
 |`make TEST="tests/functional/cmdline" run_test` | run only a specific test (SQLite) |
+
+### Change test workspace root
+
+With the `CC_TEST_WORKSPACE` environment variable the root directory for the tests can be changed. With this environment variable multiple test types (sqlite, postgresql) can be run parallel. Every test should create the temporary directories under the given root directory.
+
+Sqlite tests with a changed workspace root can be run like this:
+
+```sh
+CC_TEST_WORKSPACE=/tmp/sqlite_test_workspace make -C web test_sqlite
+```
 
 ### Clean test workspace
 ~~~~~~{.sh}

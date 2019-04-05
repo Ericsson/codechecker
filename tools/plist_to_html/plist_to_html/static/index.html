@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Plist HTML Viewer</title>
+
+    <meta charset="UTF-8">
+
+    <style type="text/css">
+      <$BUGLIST_CSS$>
+      <$ICON_CSS$>
+    </style>
+
+    <script>
+      <$BROWSER_SUPPORT$>
+      <$BUG_LIST$>
+
+      window.onload = function () {
+        if (!browserCompatible) {
+          setNonCompatibleBrowserMessage();
+        } else {
+          BugList.init()
+        }
+      }
+    </script>
+  </head>
+  <body>
+  <div class="container">
+    <table id="report-list">
+      <$TABLE_REPORTS$>
+    </table>
+  </div>
+  </body>
+</html>

@@ -1,0 +1,10 @@
+{
+    "product_db_version": {
+        "major" : "6",
+        "minor" : "0"
+    },
+    "run_db_version": {
+        "major" : "6",
+        "minor" : "0"
+    }
+}
