@@ -1,5 +1,6 @@
 [![Build status](https://travis-ci.org/Ericsson/codechecker.png?branch=master)](https://travis-ci.org/Ericsson/codechecker)
 [![Gitter](https://badges.gitter.im/codecheckerHQ/Lobby.svg)](https://gitter.im/codecheckerHQ/Lobby?utm_source=share-link&utm_medium=link&utm_campaign=share-link)
+[![Documentation Status](https://readthedocs.org/projects/codechecker/badge/?version=latest)](https://codechecker.readthedocs.io/en/latest/?badge=latest)
 
 # CodeChecker
 
