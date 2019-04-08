@@ -6,14 +6,14 @@
     <meta charset="UTF-8">
 
     <style type="text/css">
-      <$ICON_CSS$>
-      <$TABLE_CSS$>
-      <$STYLE_CSS$>
-      <$STATISTICS_CSS$>
+      ${icon_css}
+      ${table_css}
+      ${style_css}
+      ${statistics_css}
     </style>
 
     <script>
-      <$BROWSER_SUPPORT$>
+      ${browser_support}
 
       window.onload = function () {
         if (!browserCompatible) {
@@ -30,11 +30,11 @@
       <table id="statistics">
         <tr>
           <td>Number of processed plist files</td>
-          <td><$NUMBER_OF_PLIST_FILES$></td>
+          <td>${number_of_plist_files}</td>
         </tr>
         <tr>
           <td>Number of analyzer reports</td>
-          <td><$NUMBER_OF_REPORTS$></td>
+          <td>${number_of_reports}</td>
         </tr>
       </table>
       <h1>Checker statistics</h1>
@@ -43,7 +43,7 @@
           <th>Checker name</th>
           <th>Number of reports</th>
         </tr>
-        <$CHECKER_STATISTICS$>
+        ${checker_statistics}
       </table>
     </div>
   </body>

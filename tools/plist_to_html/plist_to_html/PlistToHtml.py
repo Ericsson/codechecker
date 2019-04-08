@@ -16,6 +16,7 @@ import plistlib
 import shutil
 
 from collections import defaultdict
+from string import Template
 from xml.parsers.expat import ExpatError
 
 
@@ -89,48 +90,38 @@ class HtmlBuilder(object):
 
         # Mapping layout tags to files.
         self._layout_tag_files = {
-            'STYLE_CSS': os.path.join(css_dir, 'style.css'),
-            'BUGLIST_CSS': os.path.join(css_dir, 'buglist.css'),
-            'BUGVIEW_CSS': os.path.join(css_dir, 'bugview.css'),
-            'STATISTICS_CSS': os.path.join(css_dir, 'statistics.css'),
-            'ICON_CSS': os.path.join(css_dir, 'icon.css'),
-            'TABLE_CSS': os.path.join(css_dir, 'table.css'),
-            'CODEMIRROR_LICENSE': os.path.join(codemirror_dir,
+            'style_css': os.path.join(css_dir, 'style.css'),
+            'buglist_css': os.path.join(css_dir, 'buglist.css'),
+            'bugview_css': os.path.join(css_dir, 'bugview.css'),
+            'statistics_css': os.path.join(css_dir, 'statistics.css'),
+            'icon_css': os.path.join(css_dir, 'icon.css'),
+            'table_css': os.path.join(css_dir, 'table.css'),
+            'codemirror_license': os.path.join(codemirror_dir,
                                                'codemirror.LICENSE'),
-            'CODEMIRROR_CSS': os.path.join(codemirror_dir,
+            'codemirror_css': os.path.join(codemirror_dir,
                                            'codemirror.min.css'),
-            'CODEMIRROR_JS': os.path.join(codemirror_dir, 'codemirror.min.js'),
-            'CLIKE_JS': os.path.join(codemirror_dir, 'clike.min.js'),
-            'BUG_VIEWER': os.path.join(js_dir, 'bugviewer.js'),
-            'BUG_LIST': os.path.join(js_dir, 'buglist.js'),
-            'BROWSER_SUPPORT': os.path.join(js_dir, 'browsersupport.js')
+            'codemirror_js': os.path.join(codemirror_dir, 'codemirror.min.js'),
+            'clike_js': os.path.join(codemirror_dir, 'clike.min.js'),
+            'bug_viewer': os.path.join(js_dir, 'bugviewer.js'),
+            'bug_list': os.path.join(js_dir, 'buglist.js'),
+            'browser_support': os.path.join(js_dir, 'browsersupport.js')
         }
 
         # Get the HTML layout file content.
-        self._layout = get_file_content(
-            os.path.join(self.layout_dir, 'layout.html'))
+        self._layout = Template(get_file_content(
+            os.path.join(self.layout_dir, 'layout.html')))
 
-        self._index = get_file_content(
-            os.path.join(self.layout_dir, 'index.html'))
+        self._index = Template(get_file_content(
+            os.path.join(self.layout_dir, 'index.html')))
 
-        self._statistics = get_file_content(
-            os.path.join(self.layout_dir, 'statistics.html'))
+        self._statistics = Template(get_file_content(
+            os.path.join(self.layout_dir, 'statistics.html')))
 
         # Get the content of the HTML layout dependencies.
         self._tag_contents = {}
         for tag in self._layout_tag_files:
             self._tag_contents[tag] = get_file_content(
                 self._layout_tag_files[tag])
-
-            self._layout = self._layout.replace('<${0}$>'.format(tag),
-                                                self._tag_contents[tag])
-
-            self._index = self._index.replace('<${0}$>'.format(tag),
-                                              self._tag_contents[tag])
-
-            self._statistics = \
-                self._statistics.replace('<${0}$>'.format(tag),
-                                         self._tag_contents[tag])
 
     def create(self, output_path, report_data):
         """
@@ -142,8 +133,11 @@ class HtmlBuilder(object):
             report['severity'] = self._severity_map.get(checker, 'UNSPECIFIED')
 
         self.generated_html_reports[output_path] = report_data['reports']
-        content = self._layout.replace('<$REPORT_DATA$>',
-                                       json.dumps(report_data))
+
+        substitute_data = self._tag_contents
+        substitute_data.update({'report_data': json.dumps(report_data)})
+
+        content = self._layout.substitute(substitute_data)
 
         with io.open(output_path, 'w+', encoding='UTF-8',
                      errors='replace') as html_output:
@@ -206,7 +200,10 @@ class HtmlBuilder(object):
                               events[-1]['message'],
                               len(events))
 
-        content = self._index.replace('<$TABLE_REPORTS$>', table_reports)
+        substitute_data = self._tag_contents
+        substitute_data.update({'table_reports': table_reports})
+
+        content = self._index.substitute(substitute_data)
         output_path = os.path.join(output_dir, 'index.html')
         with io.open(output_path, 'w+', encoding='UTF-8',
                      errors='replace') as html_output:
@@ -240,10 +237,13 @@ class HtmlBuilder(object):
             '''.format(checker_name, checker_statistics[checker_name])
             rows.append([checker_name, checker_statistics[checker_name]])
 
-        content = self._statistics \
-            .replace('<$NUMBER_OF_PLIST_FILES$>', str(num_of_plist_files)) \
-            .replace('<$NUMBER_OF_REPORTS$>', str(num_of_reports)) \
-            .replace('<$CHECKER_STATISTICS$>', checker_statistics_content)
+        substitute_data = self._tag_contents
+        substitute_data.update({
+            'number_of_plist_files': num_of_plist_files,
+            'number_of_reports': num_of_reports,
+            'checker_statistics': checker_statistics_content})
+
+        content = self._statistics.substitute(substitute_data)
 
         output_path = os.path.join(output_dir, 'statistics.html')
         with io.open(output_path, 'w+', encoding='UTF-8',
