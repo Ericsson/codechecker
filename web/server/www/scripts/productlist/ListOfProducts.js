@@ -149,6 +149,62 @@ function (declare, domClass, domBase, dom, ItemFileWriteStore, topic, DataGrid,
 
   //--- Product grid ---//
 
+  function formatProductStatus(item) {
+    if (!item.accessible) {
+      return '<span class="customIcon product-noaccess"></span>';
+    } else if (item.databaseStatus !== DBStatus.OK) {
+      return '<span class="customIcon product-error"></span>';
+    }
+    return '';
+  }
+
+  function formatProductIcon(item) {
+    var name = util.atou(item.displayedName_b64);
+
+    return '<div class="product-avatar" '
+      + 'style="background-color: '
+      + util.strToColorBlend(item.endpoint, "white", 0.75).toHex() + '">'
+      + '<span class="product-avatar">'
+      + name[0].toUpperCase()
+      + '</span></div>';
+  }
+
+  function formatProductName(item) {
+    var name = util.atou(item.displayedName_b64);
+
+    if (item.databaseStatus !== DBStatus.OK || !item.accessible) {
+      return '<span class="product-error">' + name + '</span>';
+    } else {
+      return '<span class="link">' + name + '</span>';
+    }
+  }
+
+  function formatProductDescription(item) {
+    var description = item.description_b64
+                      ? util.atou(item.description_b64)
+                      : "";
+
+      var dbStatus = item.databaseStatus;
+      var dbStatusMsg = util.dbStatusFromCodeToString(dbStatus);
+
+      if (!item.accessible) {
+        return '<span class="product-description-error access">'
+          + 'You do not have access to this product!'
+          + '</span><br />' + description;
+      } else if (dbStatus !== DBStatus.OK) {
+          var upgradeMsg = '';
+
+          if(dbStatus === DBStatus.SCHEMA_MISMATCH_OK ||
+             dbStatus === DBStatus.SCHEMA_MISSING) {
+            upgradeMsg = ' (use <kbd>server</kbd> command for schema '
+                          + 'upgrade/initialization)';
+          }
+        return '<span class="product-description-error database">'
+          + dbStatusMsg + upgradeMsg + '</span><br />' + description ;
+      }
+      return description;
+  }
+
   var ListOfProductsGrid = declare(DataGrid, {
     constructor : function () {
       this.store = new ItemFileWriteStore({
@@ -158,10 +214,10 @@ function (declare, domClass, domBase, dom, ItemFileWriteStore, topic, DataGrid,
       // TODO: Support access control for products and handle locks well.
       // TODO: Support showing the last checkin's information for products.
       this.structure = [
-        { name : '&nbsp;', field : 'status', cellClasses : 'status', width : '20px', noresize : true },
-        { name : '&nbsp;', field : 'icon', cellClasses : 'product-icon', width : '40px', noresize : true },
-        { name : 'Name', field : 'name', cellClasses : 'product-name', width : '25%' },
-        { name : 'Description', field : 'description', styles : 'text-align: left;', width : '70%' },
+        { name : '&nbsp;', field : 'status', cellClasses : 'status', formatter : formatProductStatus, width : '20px', noresize : true },
+        { name : '&nbsp;', field : 'icon', cellClasses : 'product-icon', formatter : formatProductIcon, width : '40px', noresize : true },
+        { name : 'Name', field : 'name', cellClasses : 'product-name', formatter : formatProductName, width : '25%' },
+        { name : 'Description', field : 'description', formatter : formatProductDescription, styles : 'text-align: left;', width : '70%' },
         { name : 'Admins', field : 'admins', styles : 'text-align: left;', width : '70%' },
         { name : 'Number of runs', field : 'runCount', styles : 'text-align: center;', width : '25%' },
         { name : 'Latest store to product', field : 'latestStoreToProduct', styles : 'text-align: center;', width : '25%' },
@@ -175,6 +231,26 @@ function (declare, domClass, domBase, dom, ItemFileWriteStore, topic, DataGrid,
       this.keepSelection = true;
       this.escapeHTMLInData = false;
       this.sortInfo = '+3';
+      this.store.comparatorMap = {
+        'name' : function (itemA, itemB) {
+          // Case insensitive sort.
+          var nameA = util.atou(itemA.displayedName_b64);
+          var nameB = util.atou(itemB.displayedName_b64);
+          return nameA.toLowerCase().localeCompare(nameB.toLowerCase());
+        },
+        'description' : function (itemA, itemB) {
+          // Case insensitive sort.
+          var descriptionA = itemA.description_b64
+            ? util.atou(itemA.description_b64)
+            : '';
+          var descriptionB = itemB.description_b64
+            ? util.atou(itemB.description_b64)
+            : '';
+
+          return descriptionA.toLowerCase().localeCompare(
+            descriptionB.toLowerCase());
+        }
+      };
     },
 
     postCreate : function () {
@@ -226,57 +302,13 @@ function (declare, domClass, domBase, dom, ItemFileWriteStore, topic, DataGrid,
     },
 
     _addProductData : function (item) {
-      var name = util.atou(item.displayedName_b64);
-      var description = item.description_b64
-                      ? util.atou(item.description_b64)
-                      : "";
-      var statusIcon = '';
-      var icon ='<div class="product-avatar" '
-        + 'style="background-color: '
-        + util.strToColorBlend(item.endpoint, "white", 0.75).toHex() + '">'
-        + '<span class="product-avatar">'
-        + name[0].toUpperCase()
-        + '</span></div>';
-
-      var dbStatus = item.databaseStatus;
-
-      var dbStatusMsg = util.dbStatusFromCodeToString(dbStatus);
-
-      if (dbStatus !== DBStatus.OK || !item.accessible) {
-        name = '<span class="product-error">'
-          + name + '</span>';
-
-        if (!item.accessible) {
-          statusIcon = '<span class="customIcon product-noaccess"></span>';
-          description = '<span class="product-description-error access">'
-            + 'You do not have access to this product!'
-            + '</span><br />' + description;
-        } else if (dbStatus !== DBStatus.OK) {
-
-          var upgradeMsg = '';
-          statusIcon = '<span class="customIcon product-error"></span>';
-
-          if(dbStatus === DBStatus.SCHEMA_MISMATCH_OK ||
-             dbStatus === DBStatus.SCHEMA_MISSING){
-            upgradeMsg = ' (use <kbd>server</kbd> command for schema '
-                          + 'upgrade/initialization)';
-          }
-
-          description = '<span class="product-description-error database">'
-          + dbStatusMsg + upgradeMsg + '</span><br />' + description ;
-
-        }
-      } else {
-        name = '<span class="link">' + name + '</span>';
-      }
-
       this.store.newItem({
-        status : statusIcon,
-        icon : icon,
+        status : item,
+        icon : item,
         id : item.id,
         endpoint : item.endpoint,
-        name : name,
-        description : description,
+        name : item,
+        description : item,
         databaseStatus : item.databaseStatus,
         accessible : item.accessible,
         administrating : item.administrating,
