@@ -387,6 +387,13 @@ def main(args):
 
     os.chdir(original_cwd)
 
-    # Create index.html for the generated html files.
+    # Create index.html and statistics.html for the generated html files.
     if html_builder:
         html_builder.create_index_html(args.output_path)
+        html_builder.create_statistics_html(args.output_path)
+
+        print('\nTo view statistics in a browser run:\n> firefox {0}'.format(
+            os.path.join(args.output_path, 'statistics.html')))
+
+        print('\nTo view the results in a browser run:\n> firefox {0}'.format(
+            os.path.join(args.output_path, 'index.html')))

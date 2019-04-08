@@ -68,6 +68,7 @@ class PlistToHtmlTest(unittest.TestCase):
         self.assertTrue(os.path.exists(output_path))
 
         html_builder.create_index_html(output_dir)
+        html_builder.create_statistics_html(output_dir)
 
         index_html = os.path.join(output_dir, 'index.html')
         self.assertTrue(os.path.exists(index_html))
