@@ -6,22 +6,22 @@
     <meta charset="UTF-8">
 
     <style type="text/css">
-      <$CODEMIRROR_CSS$>
+      ${codemirror_css}
 
-      <$ICON_CSS$>
-      <$STYLE_CSS$>
-      <$BUGVIEW_CSS$>
+      ${icon_css}
+      ${style_css}
+      ${bugview_css}
     </style>
 
     <script type="text/javascript">
-      <$BROWSER_SUPPORT$>
+      ${browser_support}
 
-      /* <$CODEMIRROR_LICENSE$> */
-      <$CODEMIRROR_JS$>
-      <$CLIKE_JS$>
-      <$BUG_VIEWER$>
+      /* ${codemirror_license} */
+      ${codemirror_js}
+      ${clike_js}
+      ${bug_viewer}
 
-      var data = <$REPORT_DATA$>;
+      var data = ${report_data};
       window.onload = function() {
         if (!browserCompatible) {
           setNonCompatibleBrowserMessage();
