@@ -200,11 +200,17 @@ function (declare, Deferred, dom, DateTextBox, TimeTextBox, SelectFilter,
 
       var fromDate = this._fromDate.get('displayedValue');
       var fromTime = this._fromTime.get('displayedValue');
-      state[this._fromDate.class] = fromDate ? fromDate + ' ' + fromTime : null;
+      if (fromDate) {
+        fromDate += ' ' + (fromTime ? fromTime : '00:00:00');
+      }
+      state[this._fromDate.class] = fromDate ? fromDate : null;
 
       var toDate = this._toDate.get('displayedValue');
       var toTime = this._toTime.get('displayedValue');
-      state[this._toDate.class] = toDate ? toDate + ' ' + toTime : null;
+      if (toDate && toTime) {
+        toDate += ' ' + (toTime ? toTime : '00:00:00');
+      }
+      state[this._toDate.class] = toDate ? toDate : null;
 
       return state;
     },
@@ -225,8 +231,13 @@ function (declare, Deferred, dom, DateTextBox, TimeTextBox, SelectFilter,
         return;
       }
 
+      detectedAt = detectedAt.trim();
       var date = new Date(detectedAt);
       date.setMilliseconds(0);
+
+      if (detectedAt.split(' ').length === 1) {
+         date.setHours(0, 0, 0, 0);
+      }
 
       this._fromDate.set('value', date , false);
       this._fromTime.set('value', date, false);
@@ -240,8 +251,13 @@ function (declare, Deferred, dom, DateTextBox, TimeTextBox, SelectFilter,
         return;
       }
 
+      fixedAt = fixedAt.trim();
       var date = new Date(fixedAt);
       date.setMilliseconds(0);
+
+      if (fixedAt.split(' ').length === 1) {
+        date.setHours(0, 0, 0, 0);
+      }
 
       this._toDate.set('value', date , false);
       this._toTime.set('value', date, false);
