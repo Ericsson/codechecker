@@ -44,7 +44,7 @@ var BugList = {
     });
 
     var column = state['sort'] ? state['sort'] : 'file-path';
-    var asc = state['asc'] ? !!parseInt(state['asc']) : false;
+    var asc = state['asc'] ? !!parseInt(state['asc']) : true;
     this.sort(column, asc);
   },
 
