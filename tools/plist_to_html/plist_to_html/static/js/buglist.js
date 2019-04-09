@@ -127,15 +127,17 @@ var BugList = {
     {
       minIdx = i;
       for (j = i + 1; j < n; j++) {
-        x = table.rows[i].getElementsByTagName('td')[cellIndex];
+        x = table.rows[minIdx].getElementsByTagName('td')[cellIndex];
         y = table.rows[j].getElementsByTagName('td')[cellIndex];
         if (this.compare(columnId, x, y, asc)) {
           minIdx = j;
         }
       }
 
-      table.rows[i].parentNode.insertBefore(
-        table.rows[minIdx], table.rows[i]);
+      if (minIdx !== i) {
+        table.rows[i].parentNode.insertBefore(
+          table.rows[minIdx], table.rows[i]);
+      }
     }
 
     table.querySelectorAll('th').forEach(function (column) {
