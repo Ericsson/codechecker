@@ -320,14 +320,27 @@ def assemble_zip(inputs, zip_file, client):
             map(lambda f_: " - " + f_, missing_source_files)))
 
 
+def should_be_zipped(input_file, input_files):
+    """
+    Determine whether a given input file should be included in the zip.
+    Compiler includes and target files should only be included if there is
+    no compiler info file present.
+    """
+    return (input_file in ['metadata.json', 'compiler_info.json']
+            or (input_file in ['compiler_includes.json',
+                               'compiler_target.json']
+                and 'compiler_info.json' not in input_files))
+
+
 def get_analysis_statistics(inputs, limits):
     """
     Collects analysis statistics information and returns them.
 
     This function will return the path of failed zips and the following files:
       - compile_cmd.json
-      - compiler_includes.json
-      - compiler_target.json
+      - either
+        - compiler_info.json, or
+        - compiler_includes.json and compiler_target.json
       - metadata.json
 
     If the input directory doesn't contain any failed zip this function will
@@ -361,10 +374,7 @@ def get_analysis_statistics(inputs, limits):
                     LOG.debug("Copying file '%s' to analyzer statistics "
                               "ZIP...", compilation_db)
                     statistics_files.append(compilation_db)
-            elif inp_f in ['compiler_includes.json',
-                           'compiler_target.json',
-                           'compiler_info.json',
-                           'metadata.json']:
+            elif should_be_zipped(inp_f, files):
                 analyzer_file = os.path.join(input_path, inp_f)
                 statistics_files.append(analyzer_file)
         for inp_dir in dirs:

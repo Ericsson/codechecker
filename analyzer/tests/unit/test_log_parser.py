@@ -51,7 +51,7 @@ class LogParserTest(unittest.TestCase):
         # define being considered a file and ignored, for now.
 
         build_action = log_parser.\
-            parse_unique_log(load_json_or_empty(logfile))[0]
+            parse_unique_log(load_json_or_empty(logfile), self.__this_dir)[0]
 
         self.assertEqual(build_action.source, r'/tmp/a.cpp')
         self.assertEqual(len(build_action.analyzer_options), 1)
@@ -70,7 +70,7 @@ class LogParserTest(unittest.TestCase):
         # and --target=x86_64-linux-gnu.
 
         build_action = log_parser.\
-            parse_unique_log(load_json_or_empty(logfile))[0]
+            parse_unique_log(load_json_or_empty(logfile), self.__this_dir)[0]
 
         self.assertEqual(build_action.source, r'/tmp/a.cpp')
         self.assertEqual(len(build_action.analyzer_options), 1)
@@ -82,7 +82,7 @@ class LogParserTest(unittest.TestCase):
         logfile = os.path.join(self.__test_files, "ldlogger-new-space.json")
 
         build_action = log_parser.\
-            parse_unique_log(load_json_or_empty(logfile))[0]
+            parse_unique_log(load_json_or_empty(logfile), self.__this_dir)[0]
 
         self.assertEqual(build_action.source, r'/tmp/a b.cpp')
         self.assertEqual(build_action.lang, 'c++')
@@ -99,7 +99,7 @@ class LogParserTest(unittest.TestCase):
         # The define is passed to the analyzer properly.
 
         build_action = log_parser.\
-            parse_unique_log(load_json_or_empty(logfile))[0]
+            parse_unique_log(load_json_or_empty(logfile), self.__this_dir)[0]
 
         self.assertEqual(build_action.source, r'/tmp/a.cpp')
         self.assertEqual(len(build_action.analyzer_options), 1)
@@ -111,7 +111,7 @@ class LogParserTest(unittest.TestCase):
         logfile = os.path.join(self.__test_files, "intercept-old-space.json")
 
         build_action = log_parser.\
-            parse_unique_log(load_json_or_empty(logfile))[0]
+            parse_unique_log(load_json_or_empty(logfile), self.__this_dir)[0]
 
         self.assertEqual(build_action.source, '/tmp/a b.cpp')
         self.assertEqual(build_action.lang, 'c++')
@@ -132,7 +132,7 @@ class LogParserTest(unittest.TestCase):
         # The define is passed to the analyzer properly.
 
         build_action = log_parser.\
-            parse_unique_log(load_json_or_empty(logfile))[0]
+            parse_unique_log(load_json_or_empty(logfile), self.__this_dir)[0]
 
         self.assertEqual(build_action.source, r'/tmp/a.cpp')
         self.assertEqual(len(build_action.analyzer_options), 1)
@@ -144,7 +144,7 @@ class LogParserTest(unittest.TestCase):
         logfile = os.path.join(self.__test_files, "intercept-new-space.json")
 
         build_action = log_parser.\
-            parse_unique_log(load_json_or_empty(logfile))[0]
+            parse_unique_log(load_json_or_empty(logfile), self.__this_dir)[0]
 
         self.assertEqual(build_action.source, '/tmp/a b.cpp')
         self.assertEqual(build_action.lang, 'c++')
@@ -173,7 +173,8 @@ class LogParserTest(unittest.TestCase):
              "command": "g++ /tmp/a.cpp -M /tmp/a.cpp",
              "file": "/tmp/a.cpp"}]
 
-        build_actions = log_parser.parse_unique_log(preprocessor_actions)
+        build_actions = log_parser.parse_unique_log(preprocessor_actions,
+                                                    self.__this_dir)
         self.assertEqual(len(build_actions), 1)
         self.assertTrue('-M' not in build_actions[0].original_command)
         self.assertTrue('-E' not in build_actions[0].original_command)
@@ -188,7 +189,8 @@ class LogParserTest(unittest.TestCase):
              "command": "g++ /tmp/a.cpp -MD /tmp/a.cpp",
              "file": "/tmp/a.cpp"}]
 
-        build_actions = log_parser.parse_unique_log(preprocessor_actions)
+        build_actions = log_parser.parse_unique_log(preprocessor_actions,
+                                                    self.__this_dir)
         self.assertEqual(len(build_actions), 1)
         self.assertTrue('-MD' in build_actions[0].original_command)
 
@@ -203,7 +205,8 @@ class LogParserTest(unittest.TestCase):
              "command": "g++ /tmp/a.cpp -E -MD /tmp/a.cpp",
              "file": "/tmp/a.cpp"}]
 
-        build_actions = log_parser.parse_unique_log(preprocessor_actions)
+        build_actions = log_parser.parse_unique_log(preprocessor_actions,
+                                                    self.__this_dir)
         self.assertEqual(len(build_actions), 0)
 
     def test_include_rel_to_abs(self):
@@ -213,7 +216,7 @@ class LogParserTest(unittest.TestCase):
         logfile = os.path.join(self.__test_files, "include.json")
 
         build_action = log_parser.\
-            parse_unique_log(load_json_or_empty(logfile))[0]
+            parse_unique_log(load_json_or_empty(logfile), self.__this_dir)[0]
 
         self.assertEqual(len(build_action.analyzer_options), 4)
         self.assertEqual(build_action.analyzer_options[0], '-I')
