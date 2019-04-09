@@ -35,10 +35,7 @@ def get_argparser_ctor_args():
 
         # Description is shown when the command's help is queried directly
         'description': "Get the list of checkers available and their enabled "
-                       "status in the supported analyzers. Currently "
-                       "supported analyzers are: " +
-                       ', '.join(analyzer_types.supported_analyzers) +
-                       ".",
+                       "status in the supported analyzers.",
 
         # Epilogue is shown after the arguments when the help is queried
         # directly.
@@ -66,7 +63,9 @@ def add_arguments_to_parser(parser):
                         choices=analyzer_types.supported_analyzers,
                         default=argparse.SUPPRESS,
                         help="Show checkers only from the analyzers "
-                             "specified.")
+                             "specified. Currently supported analyzers are: " +
+                             ', '.join(analyzer_types.
+                                       supported_analyzers) + ".")
 
     parser.add_argument('--details',
                         dest='details',
