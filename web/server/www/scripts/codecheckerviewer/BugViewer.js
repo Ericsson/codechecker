@@ -279,7 +279,7 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
 
     addExtraPathEvents : function (events) {
       var that = this;
-      events.forEach(function (event) {
+      events.forEach(function (event, index) {
         var left =
           that.codeMirror.defaultCharWidth() * event.startCol + 'px';
 
@@ -289,7 +289,8 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
         var element = dom.create('div', {
           style : 'margin-left: ' + left,
           class : 'check-msg ' + myClass,
-          innerHTML : that.getExtraPathEventMessage(event)
+          innerHTML : that.getExtraPathEventMessage(event),
+          idx : myClass + '_' + (index + 1)
         });
 
         that._lineWidgets.push(that.codeMirror.addLineWidget(
@@ -316,7 +317,7 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
           var element = dom.create('div', {
             style : 'margin-left: ' + left,
             class : 'check-msg ' + enumType,
-            idx : event.bugEventNumber
+            idx : 'event_' + event.bugEventNumber
           });
 
           var enumeration =
@@ -445,7 +446,7 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
     highlightCurrentBubble : function (idx) {
       this._lineWidgets.forEach(function (widget) {
         var lineIdx = widget.node.getAttribute('idx');
-        domClass.toggle(widget.node, 'current', parseInt(lineIdx) === idx);
+        domClass.toggle(widget.node, 'current', lineIdx === idx);
       });
     },
 
@@ -784,6 +785,12 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
 
             return 'customIcon detection-status-' + status.toLowerCase() + ' '
               + (opened ? 'pathOpened' : 'pathClosed');
+          case 'macro-expansion':
+            return "customIcon macro-expansions" + ' '
+              + (opened ? 'pathOpened' : 'pathClosed');
+          case 'note':
+            return "customIcon notes" + ' '
+              + (opened ? 'pathOpened' : 'pathClosed');
           default:
             return (opened ? "dijitFolderOpened" : "dijitFolderClosed");
         }
@@ -796,6 +803,10 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
                                       : "customIcon msg");
           case 'result':
             return "customIcon result";
+          case 'macro-expansion':
+            return "customIcon macro-expansion";
+          case 'note':
+            return "customIcon note";
           default:
             return "dijitLeaf";
         }
@@ -887,13 +898,65 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
         ? reportDetails.pathEvents[reportDetails.pathEvents.length - 1]
         : null;
 
+      var macros = reportDetails.extendedData.filter(function (data) {
+        return data.type === CC_OBJECTS.ExtendedReportDataType.MACRO;
+      });
+
+      var notes = reportDetails.extendedData.filter(function (data) {
+        return data.type === CC_OBJECTS.ExtendedReportDataType.NOTE;
+      });
+
+      [
+        {
+          id : report.reportId + '_macros',
+          name : '<b>Macro expansions</b>',
+          kind : 'macro-expansion',
+          items : macros
+        },
+        {
+          id : report.reportId + '_notes',
+          name : '<b>Notes</b>',
+          kind : 'note',
+          items : notes
+        }
+      ].forEach(function (data) {
+        if (!data.items.length) {
+          return;
+        }
+
+        res.push({
+          id : data.id,
+          name : data.name,
+          parent : report.reportId + '',
+          kind : data.kind,
+          getChildren : function () {
+            return data.items.sort(function (a, b) {
+              return a.startLine - b.startLine;
+            }).map(function (item, index) {
+              var type = util.reportExtendedTypeFromCodeToString(item.type);
+              var idx = type.toLowerCase() + '_' + (index + 1);
+              return {
+                id : report.reportId + '_' + idx,
+                name : 'L' + item.startLine + ' &ndash; ' + item.message,
+                idx : idx,
+                parent : report.reportId,
+                bugPathEvent : item,
+                isLeaf : true,
+                kind: data.kind,
+                report : report
+              };
+            });
+          }
+        });
+      });
+
       res.push({
         id : report.reportId + '_0',
         name : '<b><u>' + entities.encode(report.checkerMsg) + '</u></b>',
         parent : report.reportId + '',
         report : report,
         isLeaf : true,
-        idx : reportDetails.pathEvents.length,
+        idx : 'event_' + reportDetails.pathEvents.length,
         kind : 'msg',
         bugPathEvent : lastBugEvent
       });
@@ -978,7 +1041,7 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
         res.push({
           id : report.reportId + '_' + (index + 1),
           name : name,
-          idx : (index + 1),
+          idx : 'event_' + (index + 1),
           tooltip : tooltip,
           backgroundColor : highlightData.background,
           iconOverride : highlightData.iconOverride,
