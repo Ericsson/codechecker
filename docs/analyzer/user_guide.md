@@ -897,12 +897,14 @@ usage: CodeChecker checkers [-h] [--analyzers ANALYZER [ANALYZER ...]]
                             [--verbose {info,debug,debug_analyzer}]
 
 Get the list of checkers available and their enabled status in the supported
-analyzers. Currently supported analyzers are: clangsa, clang-tidy.
+analyzers.
 
 optional arguments:
   -h, --help            show this help message and exit
   --analyzers ANALYZER [ANALYZER ...]
                         Show checkers only from the analyzers specified.
+                        Currently supported analyzers are: clangsa, clang-
+                        tidy.
   --details             Show details about the checker, such as description,
                         if available.
   --profile {PROFILE/list}
