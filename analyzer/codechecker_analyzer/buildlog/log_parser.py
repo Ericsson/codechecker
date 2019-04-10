@@ -328,8 +328,11 @@ class ImplicitCompilerInfo(object):
         ICI = ImplicitCompilerInfo
         include_dirs = ICI.__filter_compiler_includes(
             ICI.__parse_compiler_includes(ICI.__get_compiler_err(cmd)))
-
-        return ["-isystem " + os.path.normpath(idir) for idir in include_dirs]
+        idirs = []
+        for idir in include_dirs:
+            idirs.append("-isystem")
+            idirs.append(os.path.normpath(idir))
+        return idirs
 
     @staticmethod
     def get_compiler_target(compiler):
