@@ -185,7 +185,7 @@ def main(args):
                 LOG.error("Checker profile '%s' does not exist!",
                           args.profile)
                 LOG.error("To list available profiles, use '--profile list'.")
-                return
+                sys.exit(1)
 
             profile_checkers = [(args.profile, True)]
 
