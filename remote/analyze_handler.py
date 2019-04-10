@@ -67,8 +67,7 @@ def pre_analyze(analyze_id, part_number, workspace, use_cache):
             LOG.error('Failed to extract all files from the ZIP.')
 
         if use_cache:
-            list_of_other_files = ['sources-root/build_command',
-                                   'sources-root/file_path',
+            list_of_other_files = ['sources-root/compile_commands.json',
                                    'sources-root/cached_files']
 
             difference = set(zip_file.namelist()).difference(
@@ -94,27 +93,16 @@ def pre_analyze(analyze_id, part_number, workspace, use_cache):
 
     sources_root_path = os.path.join(analyze_dir_path, 'sources-root')
 
-    build_command_file_path = os.path.join(sources_root_path, 'build_command')
+    compile_commands_path = os.path.join(
+        sources_root_path, 'compile_commands.json')
 
-    with open(build_command_file_path) as build_action:
+    with open(compile_commands_path) as compile_commands_json:
         try:
-            build_command = build_action.readline()
+            compile_commands = json.loads(compile_commands_json.readline())[0]
         except Exception:
             REDIS_DATABASE.hset(analyze_id, 'state',
                                 AnalyzeStatus.PREANALYZE_FAILED.name)
-            LOG.error('Failed to read in build command.')
-            sys.exit(1)
-
-    file_to_analyze_path = os.path.join(sources_root_path, 'file_path')
-
-    with open(file_to_analyze_path) as read_in_file:
-        try:
-            read_in_file_path = read_in_file.readline()
-        except Exception:
-            REDIS_DATABASE.hset(analyze_id, 'state',
-                                AnalyzeStatus.PREANALYZE_FAILED.name)
-            LOG.error('Failed to read in file path.')
-            sys.exit(1)
+            LOG.error('Failed to read in compile command.')
 
     if use_cache:
         cached_files_path = os.path.join(
@@ -122,14 +110,11 @@ def pre_analyze(analyze_id, part_number, workspace, use_cache):
 
         with open(cached_files_path) as read_in_cached_files:
             try:
-                cached_files = read_in_cached_files.readline()
+                cached_files = json.loads(read_in_cached_files.readline())
             except Exception:
                 REDIS_DATABASE.hset(analyze_id, 'state',
                                     AnalyzeStatus.PREANALYZE_FAILED.name)
                 LOG.error('Failed to read in skipped file list.')
-                sys.exit(1)
-
-        cached_files = json.loads(cached_files)
 
         if cached_files:
             LOG.debug('Restore files from Redis: \n%s', cached_files.items())
@@ -142,32 +127,87 @@ def pre_analyze(analyze_id, part_number, workspace, use_cache):
                         os.makedirs(os.path.dirname(new_file_path))
                     except OSError:
                         LOG.error('Failed to create directories.')
-                        sys.exit(1)
 
                 with open(new_file_path, 'wb+') as file_to_write_out:
                     file_to_write_out.write(REDIS_DATABASE.get(file_hash))
 
-    return analyze_dir_path, build_command, read_in_file_path
+    compile_commands['directory'] = os.path.join(
+        sources_root_path, compile_commands['directory'][1:])
+
+    if 'command' in compile_commands:
+        command = compile_commands['command']
+
+        modified_command = []
+
+        # Update existing paths in build command
+        for command_part in command:
+            if command_part == 'cc':
+                modified_command.append('gcc')
+            else:
+                modified_command.append(command_part)
+
+        # Add missing paths in build command
+        paths_of_dependencies = os.path.join(
+            sources_root_path, 'paths_of_dependencies.json')
+
+        with open(paths_of_dependencies) as paths:
+            try:
+                path_list = json.loads(paths.readline())
+            except Exception:
+                REDIS_DATABASE.hset(analyze_id, 'state',
+                                    AnalyzeStatus.PREANALYZE_FAILED.name)
+                LOG.error('Failed to read in paths of dependencies.')
+
+        for path in path_list:
+            if 'usr/include/' not in path:
+                modified_command.append('-I' + sources_root_path + path)
+
+        compile_commands['command'] = modified_command
+
+        # This is needed because tu_collector accepts only 'command'
+        # but CodeChecker only works with 'arguments'
+        compile_commands['arguments'] = compile_commands['command']
+
+    modified_compile_commands = os.path.join(
+        sources_root_path, 'modified_compile_commands.json')
+
+    with open(modified_compile_commands, 'w') as modified_cdb:
+        modified_cdb.write('[' + json.dumps(compile_commands) + ']')
+
+    return analyze_dir_path
 
 
-def analyze(analyze_id, analyze_dir_path, build_command, read_in_file_path):
+def analyze(analyze_id, analyze_dir_path):
     """
     This method execute the analysation.
     """
 
     LOG.info('Analyze Step')
 
-    build_command_for_codechecker = build_command.replace(
-        read_in_file_path, analyze_dir_path + '/sources-root' + read_in_file_path)
+    if logging.getLogger().isEnabledFor(logging.DEBUG):
+        with open('modified_compile_commands.json') as compile_commands_json:
+            try:
+                compile_commands = json.loads(
+                    compile_commands_json.readline())[0]
+            except Exception:
+                REDIS_DATABASE.hset(analyze_id, 'state',
+                                    AnalyzeStatus.PREANALYZE_FAILED.name)
+                LOG.error('Failed to read in compile command.')
+
+        LOG.info(compile_commands['arguments'])
+        LOG.info(compile_commands['directory'])
+        LOG.info(compile_commands['file'])
 
     codechecker_path = os.path.join(
         os.getcwd(), "build/CodeChecker/bin/CodeChecker")
 
+    modified_compile_commands = os.path.join(
+        analyze_dir_path, 'sources-root', 'modified_compile_commands.json')
+
     command = []
     command.append("%s" % codechecker_path)
-    command.append("check")
-    command.append("-b")
-    command.append("%s" % build_command_for_codechecker)
+    command.append("analyze")
+    command.append("%s" % modified_compile_commands)
     command.append("-o")
     command.append("%s" % os.path.join(analyze_dir_path, 'output'))
 
@@ -228,7 +268,8 @@ def post_analyze(analyze_id, part_number, workspace):
     REDIS_DATABASE.hincrby(analyze_id, 'completed_parts', 1)
 
     parts = REDIS_DATABASE.hget(analyze_id, 'parts').decode('utf-8')
-    completed_parts = REDIS_DATABASE.hget(analyze_id, 'completed_parts').decode('utf-8')
+    completed_parts = REDIS_DATABASE.hget(
+        analyze_id, 'completed_parts').decode('utf-8')
 
     if parts == completed_parts:
         REDIS_DATABASE.hset(analyze_id, 'state',
@@ -262,27 +303,26 @@ def main():
             analyze_id, part_number = str(task.decode('utf-8')).split('-')
 
             try:
-                analyze_dir_path, build_command, file_to_analyze_path = pre_analyze(
-                    analyze_id, part_number, args.workspace, args.use_cache)
+                analyze_dir_path = pre_analyze(analyze_id, part_number,
+                                               args.workspace, args.use_cache)
             except Exception:
                 REDIS_DATABASE.hset(analyze_id, 'state',
                                     AnalyzeStatus.PREANALYZE_FAILED.name)
-                LOG.error('Failed pre-analyze step to read in file path.')
+                LOG.error('Failed int pre-analyze step.')
 
             try:
-                analyze(analyze_id, analyze_dir_path,
-                        build_command, file_to_analyze_path)
+                analyze(analyze_id, analyze_dir_path)
             except Exception:
                 REDIS_DATABASE.hset(analyze_id, 'state',
                                     AnalyzeStatus.ANALYZE_FAILED.name)
-                LOG.error('Failed to read in file path.')
+                LOG.error('Failed in analyze step.')
 
             try:
                 post_analyze(analyze_id, part_number, args.workspace)
             except Exception:
                 REDIS_DATABASE.hset(analyze_id, 'state',
                                     AnalyzeStatus.PREANALYZE_FAILED.name)
-                LOG.error('Failed to read in file path.')
+                LOG.error('Failed in post analyze steps.')
 
         else:
             LOG.info('No task.')
