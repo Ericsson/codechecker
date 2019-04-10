@@ -77,7 +77,7 @@ function (declare, dom, style, Deferred, ObjectStore, Store, QueryResults,
           deferred.reject('Failed to get report ' + id + ': ' + reportData);
         else
           deferred.resolve(reportData);
-      });
+      }).fail(function (xhr) { util.handleAjaxFailure(xhr); });
 
       return deferred;
     },
@@ -110,7 +110,7 @@ function (declare, dom, style, Deferred, ObjectStore, Store, QueryResults,
             deferred.resolve(that._formatItems(reportDataList));
             filterHook(query.reportFilters, false);
           }
-        });
+        }).fail(function (xhr) { util.handleAjaxFailure(xhr); });
 
       return deferred;
     },
@@ -260,7 +260,7 @@ function (declare, dom, style, Deferred, ObjectStore, Store, QueryResults,
       CC_SERVICE.getRunResultCount(runIds, reportFilter, cmpData,
         function (count) {
           total.resolve(count);
-        });
+        }).fail(function (xhr) { util.handleAjaxFailure(xhr); });
 
       this.setQuery({
         runIds : runIds,
@@ -465,7 +465,7 @@ function (declare, dom, style, Deferred, ObjectStore, Store, QueryResults,
             !(reportData instanceof CC_OBJECTS.ReportData)) {
           try {
             reportData = CC_SERVICE.getReport(reportData);
-          } catch (ex) { console.warn(ex); }
+          } catch (ex) { util.handleThriftException(ex);}
         }
 
         var getAndUseReportHash = reportHash && (!reportData ||
@@ -494,8 +494,13 @@ function (declare, dom, style, Deferred, ObjectStore, Store, QueryResults,
           if (opt.cmpData && opt.cmpData.runIds)
             runIds = runIds.concat(opt.cmpData.runIds);
 
-          var reports = CC_SERVICE.getRunResults(runIds.length ? runIds : null,
-            CC_OBJECTS.MAX_QUERY_SIZE, 0, [sortMode], reportFilter, null);
+          var reports = [];
+          try {
+            reports = CC_SERVICE.getRunResults(
+              runIds.length ? runIds : null,
+              CC_OBJECTS.MAX_QUERY_SIZE, 0, [sortMode], reportFilter, null);
+          } catch (ex) { util.handleThriftException(ex); }
+
           reportData = reports[0];
         }
 

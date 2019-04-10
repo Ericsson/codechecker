@@ -10,9 +10,10 @@ define([
   'dojo/Deferred',
   'dijit/Dialog',
   'codechecker/filter/SelectFilter',
-  'codechecker/SourceComponentManager'],
+  'codechecker/SourceComponentManager',
+  'codechecker/util'],
 function (dom, declare, Deferred, Dialog, SelectFilter,
-  SourceComponentManager) {
+  SourceComponentManager, util) {
 
   return declare(SelectFilter, {
     search : {
@@ -73,7 +74,7 @@ function (dom, declare, Deferred, Dialog, SelectFilter,
             description : that.formatDescription(component.value)
           };
         }));
-      });
+      }).fail(function (xhr) { util.handleAjaxFailure(xhr); });
       return deferred;
     }
   });

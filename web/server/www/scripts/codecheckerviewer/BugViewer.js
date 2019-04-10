@@ -124,17 +124,23 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
           sortMode.type = CC_OBJECTS.SortType.FILENAME;
           sortMode.ord = CC_OBJECTS.Order.ASC;
 
-          var res = CC_SERVICE.getRunResults(
-            null,
-            CC_OBJECTS.MAX_QUERY_SIZE,
-            0,
-            [sortMode],
-            reportFilter, null);
+          var res = [];
+          try {
+            res = CC_SERVICE.getRunResults(
+              null,
+              CC_OBJECTS.MAX_QUERY_SIZE,
+              0,
+              [sortMode],
+              reportFilter, null);
+          } catch (ex) { util.handleThriftException(ex); }
 
           var runFilter = new CC_OBJECTS.RunFilter();
           runFilter.ids = res.map(function (report) { return report.runId; });
 
-          var runDataSet = CC_SERVICE.getRunData(runFilter);
+          var runDataSet = [];
+          try{
+            runDataSet = CC_SERVICE.getRunData(runFilter);
+          } catch (ex) { util.handleThriftException(ex); }
 
           var options = res.map(function (reportData) {
             var filename = reportData.checkedFile.replace(/^.*[\\\/]/, '');
@@ -263,7 +269,7 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
 
           that.addLines(points);
         }
-      });
+      }).fail(function (xhr) { util.handleAjaxFailure(xhr); });
     },
 
     getExtraPathEventMessage : function (event) {
@@ -362,9 +368,12 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
       if (!this.sourceFileData ||
            this.sourceFileData.fileId !== event.fileId
       ) {
-        this.set(
-          'sourceFileData',
-          CC_SERVICE.getSourceFileData(event.fileId, true));
+        var sourceFileData = null;
+        try {
+          sourceFileData = CC_SERVICE.getSourceFileData(event.fileId, true);
+        } catch (ex) { util.handleThriftException(ex); }
+
+        this.set('sourceFileData', sourceFileData);
 
         this.drawBugPath();
       }
@@ -381,9 +390,11 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
           class : 'otherFileMsg',
           innerHTML : label + ':<br>' + path.filePath.split('/').pop(),
           onclick : function () {
-            that.set(
-              'sourceFileData',
-              CC_SERVICE.getSourceFileData(path.fileId, true));
+            var sourceFileData = null;
+            try {
+              sourceFileData = CC_SERVICE.getSourceFileData(path.fileId, true);
+            } catch (ex) { util.handleThriftException(ex); }
+            that.set('sourceFileData', sourceFileData);
             that.drawBugPath();
             that.jumpTo(path.startLine, path.startCol);
           }
@@ -701,7 +712,7 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
             that.reportData.reportId + '_0'
           ]);
 
-        });
+        }).fail(function (xhr) { util.handleAjaxFailure(xhr); });
     },
 
     onClick : function (item) {
@@ -721,10 +732,14 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
       var isOtherFile = fileId !== this.editor.get('sourceFileData').fileId;
       var isOtherReport = item.parent != this.editor.get('reportData').reportId;
 
-      if (isOtherFile)
-        this.editor.set(
-          'sourceFileData',
-          CC_SERVICE.getSourceFileData(fileId, true));
+      if (isOtherFile) {
+        var sourceFileData = null;
+        try {
+          sourceFileData = CC_SERVICE.getSourceFileData(fileId, true);
+        } catch (ex) { util.handleThriftException(ex); }
+
+        this.editor.set('sourceFileData', sourceFileData);
+      }
 
       if (isOtherReport) {
         this.editor.set('reportData', item.report);
@@ -1100,7 +1115,11 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
         kind : 'bugpath',
         tooltip : this._getTooltip(report),
         getChildren : function (node) {
-          var reportDetails = CC_SERVICE.getReportDetails(report.reportId);
+          var reportDetails = [];
+          try {
+            reportDetails = CC_SERVICE.getReportDetails(report.reportId);
+          } catch (ex) { util.handleThriftException(ex); }
+
           return that._formatReportDetails(report, reportDetails);
         }
       });
@@ -1140,7 +1159,11 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
       var message = this._messageBox.get('value');
       var status = this.reviewStatusSelector.get('value');
 
-      var user = CC_AUTH_SERVICE.getLoggedInUser();
+      var user = '';
+      try {
+        user = CC_AUTH_SERVICE.getLoggedInUser();
+      } catch (ex) { util.handleThriftException(ex); }
+
       if (!user)
         user = 'Anonymous';
 
@@ -1155,8 +1178,10 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
 
       //--- Change the review status. ---//
 
-      CC_SERVICE.changeReviewStatus(this.buttonPane.reportData.reportId,
-        status, message);
+      try {
+        CC_SERVICE.changeReviewStatus(this.buttonPane.reportData.reportId,
+          status, message);
+      } catch (ex) { util.handleThriftException(ex); }
 
       //--- Set the previous value to the new one. ---//
 
@@ -1237,7 +1262,13 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
         }
       }));
 
-      if (!CC_SERVICE.isReviewStatusChangeDisabled()) {
+      var isReviewStatusChangeDisabled = false;
+      try {
+        isReviewStatusChangeDisabled =
+          CC_SERVICE.isReviewStatusChangeDisabled();
+      } catch (ex) { util.handleThriftException(ex); }
+
+      if (!isReviewStatusChangeDisabled) {
         this.addChild(this._reviewStatusSelector);
       }
 
@@ -1269,7 +1300,11 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
             if (sender !== that.editor)
               return;
 
-            var count = CC_SERVICE.getCommentCount(reportId);
+            var count = 0;
+            try {
+              count = CC_SERVICE.getCommentCount(reportId);
+            } catch (ex) { util.handleThriftException(ex); }
+
             _that.set('label', 'Comments'
               + '<span class="comment-count">(' + count + ')</span>');
           });
@@ -1372,7 +1407,7 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
       function (sourceFileData) {
         that._editor.set('sourceFileData', sourceFileData);
         that._editor.drawBugPath();
-      });
+      }).fail(function (xhr) { util.handleAjaxFailure(xhr); });
 
       this.addChild(this._editor);
 

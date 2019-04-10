@@ -172,7 +172,7 @@ function (declare, lang, ItemFileWriteStore, dom, Deferred, all, Memory,
           var obj = {};
           res.forEach(function (item) { obj[item.name] = item; });
           deferred.resolve(obj);
-        });
+        }).fail(function (xhr) { util.handleAjaxFailure(xhr); });
 
         return deferred.promise;
       });
@@ -299,7 +299,7 @@ function (declare, lang, ItemFileWriteStore, dom, Deferred, all, Memory,
         }
         that.sort();
         that.standBy.hide();
-      });
+      }).fail(function (xhr) { util.handleAjaxFailure(xhr); });
     },
 
     notify : function () {

@@ -43,7 +43,7 @@ function (dom, declare, Deferred, SelectFilter, util) {
             time : tag.time
           };
         }));
-      });
+      }).fail(function (xhr) { util.handleAjaxFailure(xhr); });
       return deferred;
     },
 
@@ -90,15 +90,22 @@ function (dom, declare, Deferred, SelectFilter, util) {
 
       var runFilter = new CC_OBJECTS.RunFilter();
       runFilter.names = [runName];
-      var runIds = CC_SERVICE.getRunData(runFilter).map(function (run) {
-        return run.runId;
-      });
+
+      var runIds = [];
+      try {
+        runIds = CC_SERVICE.getRunData(runFilter).map(function (run) {
+          return run.runId;
+        });
+      } catch (ex) { util.handleThriftException(ex); }
 
       var runHistoryFilter = new CC_OBJECTS.RunHistoryFilter();
       runHistoryFilter.tagNames = [tagName];
 
-      var runHistoryData =
-        CC_SERVICE.getRunHistory(runIds, null, null, runHistoryFilter);
+      var runHistoryData = [];
+      try {
+        runHistoryData =
+          CC_SERVICE.getRunHistory(runIds, null, null, runHistoryFilter);
+      } catch (ex) { util.handleThriftException(ex); }
 
       return runHistoryData.map(function (history) { return history.id; });
     }

@@ -101,11 +101,18 @@ function (declare, cookie, topic, Lightbox, Dialog, Button, BorderContainer,
     var runsTab = new TabContainer({ region : 'center' });
     layout.addChild(runsTab);
 
-    CURRENT_PRODUCT = CC_PROD_SERVICE.getCurrentProduct();
+    CURRENT_PRODUCT = new CC_PROD_OBJECTS.Product();
+    try {
+      CURRENT_PRODUCT = CC_PROD_SERVICE.getCurrentProduct();
+    } catch (ex) { util.handleThriftException(ex); }
+
     var currentProductName = util.atou(CURRENT_PRODUCT.displayedName_b64);
     document.title = currentProductName + ' - CodeChecker';
 
-    IS_ADMIN_OF_ANY_PRODUCT = CC_PROD_SERVICE.isAdministratorOfAnyProduct();
+    IS_ADMIN_OF_ANY_PRODUCT = false;
+    try {
+      IS_ADMIN_OF_ANY_PRODUCT = CC_PROD_SERVICE.isAdministratorOfAnyProduct();
+    } catch (ex) { util.handleThriftException(ex); }
 
     //--- Back button to product list ---//
 
@@ -178,7 +185,10 @@ function (declare, cookie, topic, Lightbox, Dialog, Button, BorderContainer,
     document.body.appendChild(layout.domNode);
     layout.startup();
 
-    var packageVersion = CC_PROD_SERVICE.getPackageVersion();
+    var packageVersion = '';
+    try {
+      packageVersion = CC_PROD_SERVICE.getPackageVersion();
+    } catch (ex) { util.handleThriftException(ex); }
 
     //------------------------------- Control --------------------------------//
 
@@ -230,11 +240,13 @@ function (declare, cookie, topic, Lightbox, Dialog, Button, BorderContainer,
             },
           };
 
-      CC_SERVICE.getCheckerDoc(checkerId, function (documentation) {
-        docDialog.set('title', 'Documentation for <b>' + checkerId + '</b>');
-        docDialog.set('content', marked(documentation, markedOptions));
-        docDialog.show();
-      });
+      try {
+        CC_SERVICE.getCheckerDoc(checkerId, function (documentation) {
+          docDialog.set('title', 'Documentation for <b>' + checkerId + '</b>');
+          docDialog.set('content', marked(documentation, markedOptions));
+          docDialog.show();
+        });
+      } catch (ex) { util.handleThriftException(ex); }
     });
 
     topic.subscribe('showReviewComment', function (reviewData) {

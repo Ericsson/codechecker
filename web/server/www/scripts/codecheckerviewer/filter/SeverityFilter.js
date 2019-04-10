@@ -39,7 +39,7 @@ function (declare, Deferred, SelectFilter, util) {
               count : res[value] !== undefined ? res[value] : 0
             };
           }));
-      });
+      }).fail(function (xhr) { util.handleAjaxFailure(xhr); });
 
       return deferred;
     }

@@ -12,9 +12,10 @@ define([
   'dijit/layout/TabContainer',
   'codechecker/HeaderPane',
   'codechecker/TabCount',
+  'codechecker/util',
   'products/ListOfProducts'],
 function (declare, Button, BorderContainer, ContentPane, TabContainer,
-  HeaderPane, TabCount, ListOfProducts) {
+  HeaderPane, TabCount, util, ListOfProducts) {
 
   return function () {
 
@@ -69,8 +70,11 @@ function (declare, Button, BorderContainer, ContentPane, TabContainer,
 
     layout.set('adminLevel', 0);
 
-    var isSuperuser = CC_AUTH_SERVICE.hasPermission(Permission.SUPERUSER, "");
-    var isAdminOfAnyProduct = CC_PROD_SERVICE.isAdministratorOfAnyProduct();
+    var isSuperuser = false;
+    try {
+      isSuperuser = CC_AUTH_SERVICE.hasPermission(Permission.SUPERUSER, "");
+      var isAdminOfAnyProduct = CC_PROD_SERVICE.isAdministratorOfAnyProduct();
+    } catch (ex) { util.handleThriftException(ex); }
 
     var menuButton = new Button({
       class : 'main-menu-button admin-button',

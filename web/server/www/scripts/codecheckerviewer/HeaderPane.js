@@ -30,9 +30,14 @@ function (declare, cookie, dom, topic, Button, ContentPane, popup,
         id : 'notification-container'
       }, this.domNode);
 
+      var notificationBannerText = '';
+      try {
+        notificationBannerText = CC_CONF_SERVICE.getNotificationBannerText();
+      } catch (ex) { util.handleThriftException(ex); }
+
       dom.create('div', {
         id : 'notification-text',
-        innerHTML : util.atou(CC_CONF_SERVICE.getNotificationBannerText())
+        innerHTML : util.atou(notificationBannerText)
       }, notificationContainer);
 
       //--- Logo ---//
@@ -43,9 +48,14 @@ function (declare, cookie, dom, topic, Button, ContentPane, popup,
 
       dom.create('span', { id : 'logo' }, logoContainer);
 
+      var packageVersion = '';
+      try {
+        packageVersion = CC_PROD_SERVICE.getPackageVersion();
+      } catch (ex) { util.handleThriftException(ex); }
+
       var logoText = dom.create('div', {
         id : 'logo-text',
-        innerHTML : 'CodeChecker ' + CC_PROD_SERVICE.getPackageVersion()
+        innerHTML : 'CodeChecker ' + packageVersion
       }, logoContainer);
 
       //--- Title ---//
@@ -63,7 +73,11 @@ function (declare, cookie, dom, topic, Button, ContentPane, popup,
 
       //--- Logged in user ---//
 
-      var user = CC_AUTH_SERVICE.getLoggedInUser();
+      var user = '';
+      try {
+        user = CC_AUTH_SERVICE.getLoggedInUser();
+      } catch (ex) { util.handleThriftException(ex); }
+
       if (user.length > 0) {
 
         //--- Tooltip ---//
@@ -80,7 +94,10 @@ function (declare, cookie, dom, topic, Button, ContentPane, popup,
           label   : 'Log out',
           onClick : function () {
             try {
-              var logoutResult = CC_AUTH_SERVICE.destroySession();
+              var logoutResult = false;
+              try {
+                logoutResult = CC_AUTH_SERVICE.destroySession();
+              } catch (ex) { util.handleThriftException(ex); }
 
               if (logoutResult) {
                 cookie(CC_AUTH_COOKIE_NAME, 'LOGGED_OUT',
@@ -101,19 +118,25 @@ function (declare, cookie, dom, topic, Button, ContentPane, popup,
         //--- Permissions ---//
 
         var filter = new CC_AUTH_OBJECTS.PermissionFilter({ given : true });
-        var permissions =
-          CC_AUTH_SERVICE.getPermissionsForUser('SYSTEM', {}, filter).map(
-          function (p) {
-            return util.enumValueToKey(Permission, p);
-          });
-
-        if (typeof CURRENT_PRODUCT !== 'undefined') {
-          var productPermissions =
-            CC_AUTH_SERVICE.getPermissionsForUser('PRODUCT', JSON.stringify({
-              productID : CURRENT_PRODUCT.id
-            }), filter).map(function (p) {
+        var permissions = [];
+        try {
+          permissions =
+            CC_AUTH_SERVICE.getPermissionsForUser('SYSTEM', {}, filter).map(
+            function (p) {
               return util.enumValueToKey(Permission, p);
             });
+        } catch (ex) { util.handleThriftException(ex); }
+
+        if (typeof CURRENT_PRODUCT !== 'undefined') {
+          var productPermissions = [];
+          try {
+            productPermissions =
+              CC_AUTH_SERVICE.getPermissionsForUser('PRODUCT', JSON.stringify({
+                productID : CURRENT_PRODUCT.id
+              }), filter).map(function (p) {
+                return util.enumValueToKey(Permission, p);
+              });
+          } catch (ex) { util.handleThriftException(ex); }
           permissions = permissions.concat(productPermissions);
         }
 

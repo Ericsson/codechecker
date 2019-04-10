@@ -7,8 +7,9 @@
 define([
   'dojo/_base/declare',
   'dojo/Deferred',
-  'codechecker/filter/SelectFilter'],
-function (declare, Deferred, SelectFilter) {
+  'codechecker/filter/SelectFilter',
+  'codechecker/util'],
+function (declare, Deferred, SelectFilter, util) {
   return declare(SelectFilter, {
     search : {
       enable : true,
@@ -34,7 +35,7 @@ function (declare, Deferred, SelectFilter) {
             count : res[msg]
           };
         }));
-      });
+      }).fail(function (xhr) { util.handleAjaxFailure(xhr); });
       return deferred;
     }
   });

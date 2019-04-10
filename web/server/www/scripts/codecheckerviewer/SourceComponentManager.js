@@ -16,10 +16,11 @@ define([
   'dijit/form/SimpleTextarea',
   'dijit/form/TextBox',
   'dijit/layout/BorderContainer',
-  'dijit/layout/ContentPane'],
+  'dijit/layout/ContentPane',
+  'codechecker/util'],
 function (dom, domAttr, domClass, declare, ItemFileWriteStore, DataGrid,
   ConfirmDialog, Button, SimpleTextarea, TextBox, BorderContainer,
-  ContentPane) {
+  ContentPane, util) {
 
   var DeleteComponentDialog = declare(ConfirmDialog, {
     constructor : function () {
@@ -36,7 +37,10 @@ function (dom, domAttr, domClass, declare, ItemFileWriteStore, DataGrid,
     },
 
     onExecute : function () {
-      CC_SERVICE.removeSourceComponent(this.componentName);
+      try {
+        CC_SERVICE.removeSourceComponent(this.componentName);
+      } catch (ex) { util.handleThriftException(ex); }
+
       this.listSourceComponent.refreshGrid();
     }
   });
@@ -100,7 +104,9 @@ function (dom, domAttr, domClass, declare, ItemFileWriteStore, DataGrid,
             : null;
 
           if (origComponentName && origComponentName !== componentName) {
-            CC_SERVICE.removeSourceComponent(origComponentName);
+            try {
+              CC_SERVICE.removeSourceComponent(origComponentName);
+            } catch (ex) { util.handleThriftException(ex); }
           }
 
           CC_SERVICE.addSourceComponent(componentName, componentValue,
@@ -118,6 +124,7 @@ function (dom, domAttr, domClass, declare, ItemFileWriteStore, DataGrid,
           }).fail(function (jsReq, status, exc) {
             if (status === 'parsererror') {
               that.showError(exc.message);
+              util.handleAjaxFailure(jsReq);
             }
           });
         }
@@ -270,7 +277,7 @@ function (dom, domAttr, domClass, declare, ItemFileWriteStore, DataGrid,
         sourceComponents.forEach(function (item) {
           that._addSourceComponent(item);
         });
-      });
+      }).fail(function (xhr) { util.handleAjaxFailure(xhr); });
     },
 
     _addSourceComponent : function (component) {

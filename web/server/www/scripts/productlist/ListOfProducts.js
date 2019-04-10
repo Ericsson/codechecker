@@ -35,7 +35,9 @@ function (declare, domClass, domBase, dom, ItemFileWriteStore, topic, DataGrid,
         if(node){
           var input = this.notificationView._txtAlert.get('value');
           node.innerHTML = input;
-          CC_CONF_SERVICE.setNotificationBannerText(util.utoa(input));
+          try {
+            CC_CONF_SERVICE.setNotificationBannerText(util.utoa(input));
+          } catch (ex) { util.handleThriftException(ex); }
         }
     },
 
@@ -70,6 +72,7 @@ function (declare, domClass, domBase, dom, ItemFileWriteStore, topic, DataGrid,
         }
         catch (exc) {
           errors.push(record);
+          util.handleThriftException(exc);
         }
       });
 
@@ -135,7 +138,7 @@ function (declare, domClass, domBase, dom, ItemFileWriteStore, topic, DataGrid,
                 });
               }
             });
-          });
+          }).fail(function (xhr) { util.handleAjaxFailure(xhr); });
       }
     },
 
@@ -300,7 +303,7 @@ function (declare, domClass, domBase, dom, ItemFileWriteStore, topic, DataGrid,
 
         that.productsPane.set('tabCount', productList.length);
         that.onLoaded(productList);
-      });
+      }).fail(function (xhr) { util.handleAjaxFailure(xhr); });
     },
 
     /**

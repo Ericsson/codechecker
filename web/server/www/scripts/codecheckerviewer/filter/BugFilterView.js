@@ -140,6 +140,7 @@ function (declare, lang, Deferred, domClass, dom, domStyle, topic,
               }
             }).fail(function (jsReq, status, exc) {
               self.handleFailure(exc.message);
+              util.handleAjaxFailure(jsReq);
             });
         }
       });
@@ -418,10 +419,13 @@ function (declare, lang, Deferred, domClass, dom, domStyle, topic,
       this.register(this._checkerMessageFilter);
       this.addChild(this._checkerMessageFilter);
 
-      var hasStore = CC_AUTH_SERVICE.hasPermission(
-        Permission.PRODUCT_STORE, util.createPermissionParams({
-          productID : CURRENT_PRODUCT.id
-        }));
+      var hasStore = false;
+      try {
+        hasStore = CC_AUTH_SERVICE.hasPermission(
+          Permission.PRODUCT_STORE, util.createPermissionParams({
+            productID : CURRENT_PRODUCT.id
+          }));
+      } catch (ex) { util.handleThriftException(ex); }
 
       //--- Footer bar ---//
 
