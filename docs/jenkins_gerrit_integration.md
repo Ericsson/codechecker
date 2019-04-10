@@ -16,6 +16,7 @@ Table of Contents
 =================
 * [Gerrit requirements](#gerrit-requirements)
 * [Jenkins requirements](#jenkins-requirements)
+* [Template Scripts](#template-scripts)
 * [Gerrit Trigger plugin setup](#gerrit-plugin-setup)
 * [Configuring the Jenkins job](#configuring-the-jenkins-job)
     * [Source Code Managament](#jenkins-source-code-management)
@@ -46,6 +47,16 @@ Requirements of the Jenkins machine
 * CodeChecker >= 6.4
 * Python >= 2.7
 * Access to Gerrit (i.e. proper firewall settings)
+
+# Template scripts <a name="template-scripts"></a>
+
+You can find template scripts
+in the [/scripts/gerrit_jenkins](/scripts/gerrit_jenkins) directory:
+
+* [create_skipfile.py](/scripts/gerrit_jenkins/create_skipfile.py): Converts
+Gerrit Review changed files `json` to CodeChecker skipfile.
+* [parse_output_parser.py](/scripts/gerrit_jenkins/parse_output_parser.py):
+Generates Gerrit Review json' from CodeChecker parse\'s output. 
 
 # Gerrit Trigger plugin setup <a name="gerrit-plugin-setup"></a>
 If Gerrit Trigger plugin is installed correctly, its settings
