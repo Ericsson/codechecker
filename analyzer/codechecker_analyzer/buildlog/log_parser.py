@@ -153,6 +153,14 @@ IGNORED_PARAM_OPTIONS = {
     re.compile('-filelist'): 1
 }
 
+# These flag groups are ignored together.
+# TODO: This list is not used yet, but will be applied in the next release.
+IGNORED_FLAG_LISTS = [
+  ['-Xclang', '-mllvm'],
+  ['-Xclang', '-emit-llvm'],
+  ['-Xclang', '-instcombine-lower-dbg-declare=0']
+]
+
 COMPILE_OPTIONS = [
     '-nostdinc',
     r'-nostdinc\+\+',
@@ -759,6 +767,7 @@ def parse_options(compilation_db_entry, compiler_info_file=None):
 
     if 'clang' in details['compiler']:
         flag_transformers = [
+            __skip,
             __determine_action_type,
             __get_language,
             __get_output,
