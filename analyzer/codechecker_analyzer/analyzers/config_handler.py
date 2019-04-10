@@ -168,12 +168,8 @@ class AnalyzerConfigHandler(object):
                         sys.exit(1)
 
                     if profile_name in reserved_names:
-                        LOG.error("Profile name '%s' conflicts with a "
-                                  "checker(-group) name.", profile_name)
-                        LOG.error("Please choose another profile name in "
-                                  "'%s'/config/config.json and rebuild.",
-                                  package_root)
-                        sys.exit(1)
+                        LOG.warning("Profile name '%s' conflicts with a "
+                                    "checker(-group) name.", profile_name)
 
                     profile_checkers = (name for name, profile_list
                                         in checker_config.items()
