@@ -344,6 +344,9 @@ class ImplicitCompilerInfo(object):
         """
         lines = ImplicitCompilerInfo.__get_compiler_err(compiler + ' -v')
 
+        if lines is None:
+            return ""
+
         target_label = "Target:"
         target = ""
 
