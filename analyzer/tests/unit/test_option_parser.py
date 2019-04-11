@@ -248,9 +248,7 @@ class OptionParserTest(unittest.TestCase):
         """
         ignore = ["-Werror", "-fsyntax-only",
                   "-mfloat-gprs=double", "-mfloat-gprs=yes",
-                  "-mabi=spe", "-mabi=eabi",
-                  '-Xclang', '-mllvm',
-                  '-Xclang', '-instcombine-lower-dbg-declare=0']
+                  "-mabi=spe", "-mabi=eabi"]
         action = {
             'file': 'main.cpp',
             'command': "g++ {} main.cpp".format(' '.join(ignore)),
@@ -260,10 +258,9 @@ class OptionParserTest(unittest.TestCase):
 
     def test_ignore_flags_clang(self):
         """
-        Test if Clang compiler preserves the compiler flags except for the
-        preprocessor related flags.
+        Clang has some further flags which should be omitted.
         """
-        ignore = ["-Werror", "-E", "-M", "-fsyntax-only",
+        ignore = ["-Werror", "-fsyntax-only",
                   "-mfloat-gprs=double", "-mfloat-gprs=yes",
                   "-mabi=spe", "-mabi=eabi",
                   '-Xclang', '-mllvm',
@@ -273,9 +270,26 @@ class OptionParserTest(unittest.TestCase):
             'command': "clang++ {} main.cpp".format(' '.join(ignore)),
             'directory': ''}
         res = log_parser.parse_options(action)
-        ignore.remove("-E")
-        ignore.remove("-M")
-        self.assertEqual(res.analyzer_options, ignore)
+        self.assertEqual(res.analyzer_options, ["-fsyntax-only"])
+
+    @unittest.skip("This will be enabled when we distinguish -Xclang params.")
+    def test_ignore_xclang_groups(self):
+        """
+        In case a flag has a parameter, we'd like to skip only the ones with a
+        specific parameter. Currently Clang compiler has such parameters after
+        -Xclang flag.
+        """
+        ignore = ["-Werror", "-fsyntax-only",
+                  '-Xclang', '-mllvm',
+                  '-Xclang', '-instcombine-lower-dbg-declare=0',
+                  '-Xclang', '-something']
+        action = {
+            'file': 'main.cpp',
+            'command': "clang++ {} main.cpp".format(' '.join(ignore)),
+            'directory': ''}
+        res = log_parser.parse_options(action)
+        self.assertEqual(res.analyzer_options,
+                         ["-fsyntax-only", "-Xclang", "-something"])
 
     def test_preserve_flags(self):
         """
