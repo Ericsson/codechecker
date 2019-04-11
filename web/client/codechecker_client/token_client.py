@@ -47,7 +47,13 @@ def handle_list_tokens(args):
     """
     List personal access tokens of the currently logged in user.
     """
-    init_logger(args.verbose if 'verbose' in args else None)
+    # If the given output format is not 'table', redirect logger's output to
+    # the stderr.
+    stream = None
+    if 'output_format' in args and args.output_format != 'table':
+        stream = 'stderr'
+
+    init_logger(args.verbose if 'verbose' in args else None, stream)
 
     protocol, host, port = split_server_url(args.server_url)
     client, curr_token = setup_auth_client(protocol, host, port)

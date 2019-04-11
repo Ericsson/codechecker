@@ -86,6 +86,12 @@ def main(args):
     Get and print the version information from the version config
     file and Thrift API definition.
     """
-    logger.setup_logger(args.verbose if 'verbose' in args else None)
+    # If the given output format is not 'table', redirect logger's output to
+    # the stderr.
+    stream = None
+    if 'output_format' in args and args.output_format != 'table':
+        stream = 'stderr'
+
+    logger.setup_logger(args.verbose if 'verbose' in args else None, stream)
 
     print_version(args.output_format)

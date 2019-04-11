@@ -73,7 +73,13 @@ def handle_add_component(args):
 
 
 def handle_list_components(args):
-    init_logger(args.verbose if 'verbose' in args else None)
+    # If the given output format is not 'table', redirect logger's output to
+    # the stderr.
+    stream = None
+    if 'output_format' in args and args.output_format != 'table':
+        stream = 'stderr'
+
+    init_logger(args.verbose if 'verbose' in args else None, stream)
 
     client = setup_client(args.product_url)
     components = client.getSourceComponents(None)
