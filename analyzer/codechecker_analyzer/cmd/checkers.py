@@ -12,6 +12,7 @@ from __future__ import absolute_import
 
 import argparse
 import os
+import sys
 
 from codechecker_analyzer import analyzer_context
 from codechecker_analyzer.analyzers import analyzer_types
