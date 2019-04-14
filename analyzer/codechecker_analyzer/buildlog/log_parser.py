@@ -311,7 +311,7 @@ class ImplicitCompilerInfo(object):
 
         compiler -- The compiler binary of which the implicit include paths are
                     fetched.
-        language -- The programming lenguage being compiled (e.g. 'c' or 'c++')
+        language -- The programming language being compiled (e.g. 'c' or 'c++')
         compiler_flags -- A list of compiler flags which may affect the list
                           of implicit compiler include paths, like -std=,
                           --sysroot= or -m32, -m64.
@@ -775,6 +775,7 @@ def parse_options(compilation_db_entry, compiler_info_file=None):
         flag_transformers = [
             __skip,
             __determine_action_type,
+            __skip_sources,
             __get_language,
             __get_output,
             __keep_except(compilation_db_entry['file'])]
