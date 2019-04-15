@@ -242,6 +242,22 @@ class OptionParserTest(unittest.TestCase):
         self.assertEqual(res.source, 'main.cpp')
         self.assertEqual(BuildAction.COMPILE, res.action_type)
 
+    def test_preprocess_and_compile_with_extra_file_clang(self):
+        """
+        -MF flag is followed by a dependency file. We shouldn't consider this
+        a source file.
+        """
+        action = {
+            'file': 'main.cpp',
+            'command': 'clang++ -c -MF deps.txt main.cpp',
+            'directory': ''}
+
+        res = log_parser.parse_options(action)
+        print(res)
+        self.assertEqual(res.analyzer_options, [])
+        self.assertEqual(res.source, 'main.cpp')
+        self.assertEqual(BuildAction.COMPILE, res.action_type)
+
     def test_ignore_flags_gcc(self):
         """
         Test if special compiler options are ignored properly.
