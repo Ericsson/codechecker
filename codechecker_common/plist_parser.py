@@ -326,6 +326,7 @@ class PlistToPlaintextFormatter(object):
                  skip_handler,
                  severity_map,
                  processed_path_hashes,
+                 trim_path_prefixes,
                  analyzer_type="clangsa"):
 
         self.__analyzer_type = analyzer_type
@@ -334,6 +335,7 @@ class PlistToPlaintextFormatter(object):
         self.src_comment_handler = src_comment_handler
         self.skiplist_handler = skip_handler
         self._processed_path_hashes = processed_path_hashes
+        self._trim_path_prefixes = trim_path_prefixes
 
     @staticmethod
     def __format_location(event, source_file):
@@ -451,6 +453,10 @@ class PlistToPlaintextFormatter(object):
                 last_report_event = report.bug_path[-1]
                 source_file = \
                     report.files[last_report_event['location']['file']]
+                trimmed_source_file = \
+                    util.trim_path_prefixes(source_file,
+                                            self._trim_path_prefixes)
+
                 report_line = last_report_event['location']['line']
                 report_hash = \
                     report.main['issue_hash_content_of_line_in_context']
@@ -468,7 +474,7 @@ class PlistToPlaintextFormatter(object):
                 output.write(self.__format_bug_event(checker_name,
                                                      severity,
                                                      last_report_event,
-                                                     source_file))
+                                                     trimmed_source_file))
                 output.write('\n')
                 output.write(self.__format_location(last_report_event,
                                                     source_file))
@@ -519,10 +525,11 @@ class PlistToPlaintextFormatter(object):
                     for index, event in enumerate(events):
                         output.write(index_format % (index + 1))
                         source_file = report.files[event['location']['file']]
-                        output.write(self.__format_bug_event(None,
-                                                             None,
-                                                             event,
-                                                             source_file))
+                        output.write(
+                            self.__format_bug_event(None,
+                                                    None,
+                                                    event,
+                                                    trimmed_source_file))
                         output.write('\n')
                 output.write('\n')
 

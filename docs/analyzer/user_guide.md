@@ -869,6 +869,12 @@ optional arguments:
                         Path to the Skipfile dictating which project files
                         should be omitted from analysis. Please consult the
                         User guide on how a Skipfile should be laid out.
+  --trim-path-prefix [TRIM_PATH_PREFIX [TRIM_PATH_PREFIX ...]]
+                        Removes leading path from files which will be
+                        printed. So if you have /a/b/c/x.cpp and /a/b/c/y.cpp
+                        then by removing "/a/b/" prefix will print files like
+                        c/x.cpp and c/y.cpp. If multiple prefix is given, the
+                        longest match will be removed.                        
   --verbose {info,debug,debug_analyzer}
                         Set verbosity level.
 
