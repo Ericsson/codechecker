@@ -318,6 +318,18 @@ used to generate a log file on the fly.""")
                                     "one.")
 
     context = analyzer_context.get_context()
+
+    if analyzer_types.is_z3_capable(context):
+        analyzer_opts.add_argument('--z3',
+                                   action='store_true',
+                                   dest='enable_z3',
+                                   default=argparse.SUPPRESS,
+                                   help="Enable the z3 solver backend. This "
+                                        "allows reasoning over more complex "
+                                        "queries, but performance is worse "
+                                        "than the default range-based "
+                                        "constraint solver.")
+
     if analyzer_types.is_ctu_capable(context):
         ctu_opts = parser.add_argument_group(
             "cross translation unit analysis arguments",

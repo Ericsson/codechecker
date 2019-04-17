@@ -64,6 +64,22 @@ or source code for more details about the configuration options.
 | graph-trim-interval                   | 1000              |                                          |                                                                                                     |
 
 
+## Z3 Theorem Prover
+The static analyzer supports using the
+[Z3 Theorem Prover](https://github.com/Z3Prover/z3) from Microsoft Research as
+an external constraint solver. This allows reasoning over more complex queries,
+but performance is `~15x` slower than the default range-based constraint
+solver. To enable the Z3 solver backend, Clang must be built with the
+`CLANG_ANALYZER_BUILD_Z3=ON` option, and the
+`-Xanalyzer -analyzer-constraints=z3` arguments passed at runtime. CodeChecker
+will automatically detects that the Clang was built with this option and you
+don't have to pass these arguments to the analyzer command itself when using
+CodeChecker, you just have to run the CodeChecker analyze command with the
+`--z3` option.
+
+You can read more about Z3 Theorem Prover
+[here](https://github.com/Z3Prover/z3/wiki).
+
 # Configure Clang tidy checkers
 
 ## Using Clang tidy configuration files
