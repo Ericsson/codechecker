@@ -142,6 +142,19 @@ def add_arguments_to_parser(parser):
                              "consult the User guide on how a Skipfile "
                              "should be laid out.")
 
+    parser.add_argument('--trim-path-prefix',
+                        type=str,
+                        nargs='*',
+                        dest="trim_path_prefix",
+                        required=False,
+                        default=argparse.SUPPRESS,
+                        help="Removes leading path from files which will be "
+                             "printed. So if you have /a/b/c/x.cpp and "
+                             "/a/b/c/y.cpp then by removing \"/a/b/\" prefix "
+                             "will print files like c/x.cpp and c/y.cpp. "
+                             "If multiple prefix is given, the longest match "
+                             "will be removed.")
+
     logger.add_verbose_arguments(parser)
 
     def __handle(args):
@@ -290,6 +303,16 @@ def main(args):
         with open(args.skipfile, 'r') as skip_file:
             skip_handler = SkipListHandler(skip_file.read())
 
+    trim_path_prefixes = args.trim_path_prefix if \
+        'trim_path_prefix' in args else None
+
+    def trim_path_prefixes_handler(source_file):
+        """
+        Callback to util.trim_path_prefixes to prevent module dependency
+        of plist_to_html
+        """
+        return util.trim_path_prefixes(source_file, trim_path_prefixes)
+
     html_builder = None
 
     for input_path in args.input:
@@ -312,7 +335,8 @@ def main(args):
                               output_path,
                               context.path_plist_to_html_dist,
                               skip_html_report_data_handler,
-                              html_builder)
+                              html_builder,
+                              trim_path_prefixes_handler)
             continue
 
         files = []
@@ -346,7 +370,8 @@ def main(args):
         rh = plist_parser.PlistToPlaintextFormatter(suppr_handler,
                                                     skip_handler,
                                                     context.severity_map,
-                                                    processed_path_hashes)
+                                                    processed_path_hashes,
+                                                    trim_path_prefixes)
         rh.print_steps = 'print_steps' in args
 
         for file_path in files:

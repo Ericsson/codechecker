@@ -261,7 +261,8 @@ class HtmlBuilder(object):
         print(twodim_to_table([header] + rows))
 
 
-def get_report_data_from_plist(plist, skip_report_handler=None):
+def get_report_data_from_plist(plist, skip_report_handler=None,
+                               trim_path_prefixes_handler=None):
     """
     Returns a dictionary with the source file contents and the reports parsed
     from the plist.
@@ -279,6 +280,9 @@ def get_report_data_from_plist(plist, skip_report_handler=None):
             file_path = files[file_id]
             with io.open(file_path, 'r', encoding='UTF-8',
                          errors='ignore') as source_data:
+                # trim path prefixes after file loading
+                if trim_path_prefixes_handler:
+                    file_path = trim_path_prefixes_handler(file_path)
                 file_sources[file_id] = {'id': file_id,
                                          'path': file_path,
                                          'content': source_data.read()}
@@ -328,6 +332,10 @@ def get_report_data_from_plist(plist, skip_report_handler=None):
 
             update_source_file(note['location']['file'])
 
+        # trim path prefixes after skip_report_handler filtering
+        if trim_path_prefixes_handler:
+            source_file = trim_path_prefixes_handler(source_file)
+
         reports.append({'events': events,
                         'macros': macros,
                         'notes': notes,
@@ -340,7 +348,7 @@ def get_report_data_from_plist(plist, skip_report_handler=None):
 
 
 def plist_to_html(file_path, output_path, html_builder,
-                  skip_report_handler=None):
+                  skip_report_handler=None, trim_path_prefixes_handler=None):
     """
     Prints the results in the given file to HTML file.
 
@@ -358,7 +366,9 @@ def plist_to_html(file_path, output_path, html_builder,
     try:
         plist = plistlib.readPlist(file_path)
 
-        report_data = get_report_data_from_plist(plist, skip_report_handler)
+        report_data = get_report_data_from_plist(plist,
+                                                 skip_report_handler,
+                                                 trim_path_prefixes_handler)
 
         plist_mtime = get_last_mod_time(file_path)
 
@@ -401,7 +411,7 @@ def plist_to_html(file_path, output_path, html_builder,
 
 
 def parse(input_path, output_path, layout_dir, skip_report_handler=None,
-          html_builder=None):
+          html_builder=None, trim_path_prefixes_handler=None):
     files = []
     input_path = os.path.abspath(input_path)
     output_dir = os.path.abspath(output_path)
@@ -435,7 +445,8 @@ def parse(input_path, output_path, layout_dir, skip_report_handler=None,
         sr, changed_source = plist_to_html(file_path,
                                            output_path,
                                            html_builder,
-                                           skip_report_handler)
+                                           skip_report_handler,
+                                           trim_path_prefixes_handler)
         if changed_source:
             changed_source_files = changed_source_files.union(changed_source)
         if sr:
