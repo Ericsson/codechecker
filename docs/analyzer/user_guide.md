@@ -23,7 +23,7 @@ Table of Contents
         * [Cross Translation Unit (CTU) analysis mode](#ctu)
         * [Statistical analysis mode](#statistical)
     * [`parse`](#parse)
-            * [Exporting source code suppression to suppress file](#suppress-file)
+        * [Exporting source code suppression to suppress file](#suppress-file)
     * [`checkers`](#checkers)
     * [`analyzers`](#analyzers)
 
