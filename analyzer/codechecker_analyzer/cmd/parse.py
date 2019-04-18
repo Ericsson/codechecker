@@ -273,6 +273,23 @@ def main(args):
 
     processed_path_hashes = set()
 
+    skip_handler = None
+    if 'skipfile' in args:
+        with open(args.skipfile, 'r') as skip_file:
+            skip_handler = SkipListHandler(skip_file.read())
+
+    trim_path_prefixes = args.trim_path_prefix if \
+        'trim_path_prefix' in args else None
+
+    def trim_path_prefixes_handler(source_file):
+        """
+        Callback to util.trim_path_prefixes to prevent module dependency
+        of plist_to_html
+        """
+        return util.trim_path_prefixes(source_file, trim_path_prefixes)
+
+    html_builder = None
+
     def skip_html_report_data_handler(report_hash, source_file, report_line,
                                       checker_name, diag, files):
         """
@@ -293,27 +310,13 @@ def main(args):
                                         report_line,
                                         checker_name,
                                         suppr_handler)
+        if skip_handler:
+            skip |= skip_handler.should_skip(source_file)
+
         if not skip:
             processed_path_hashes.add(path_hash)
 
         return skip
-
-    skip_handler = None
-    if 'skipfile' in args:
-        with open(args.skipfile, 'r') as skip_file:
-            skip_handler = SkipListHandler(skip_file.read())
-
-    trim_path_prefixes = args.trim_path_prefix if \
-        'trim_path_prefix' in args else None
-
-    def trim_path_prefixes_handler(source_file):
-        """
-        Callback to util.trim_path_prefixes to prevent module dependency
-        of plist_to_html
-        """
-        return util.trim_path_prefixes(source_file, trim_path_prefixes)
-
-    html_builder = None
 
     for input_path in args.input:
 
