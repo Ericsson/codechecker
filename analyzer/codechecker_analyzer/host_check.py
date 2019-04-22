@@ -54,8 +54,7 @@ def has_analyzer_feature(clang_bin, feature, env=None):
             proc = subprocess.Popen(cmd,
                                     stdout=subprocess.PIPE,
                                     stderr=subprocess.PIPE,
-                                    env=env
-                                    )
+                                    env=env)
             out, err = proc.communicate()
             LOG.debug("stdout:\n%s", out)
             LOG.debug("stderr:\n%s", err)
@@ -80,14 +79,15 @@ def get_resource_dir(clang_bin, context, env=None):
         proc = subprocess.Popen(cmd,
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE,
-                                env=env)
+                                env=env,
+                                universal_newlines=True)
         out, err = proc.communicate()
 
         LOG.debug("stdout:\n%s", out)
         LOG.debug("stderr:\n%s", err)
 
         if proc.returncode == 0:
-            return out.decode("utf-8").rstrip()
+            return out.rstrip()
         else:
             return None
     except OSError:

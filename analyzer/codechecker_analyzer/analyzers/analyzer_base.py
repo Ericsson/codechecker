@@ -134,7 +134,8 @@ class SourceAnalyzer(object):
                                 preexec_fn=os.setsid,
                                 cwd=cwd,
                                 stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE)
+                                stderr=subprocess.PIPE,
+                                universal_newlines=True)
 
         # Send the created analyzer process' object if somebody wanted it.
         if proc_callback:

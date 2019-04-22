@@ -94,7 +94,8 @@ class ResultHandler(object):
                 self.buildaction.original_command
 
             out_file_name = analyzed_file_name + '_' + \
-                hashlib.md5(build_info).hexdigest() + '.plist'
+                hashlib.md5(build_info.encode(errors='ignore')).hexdigest() \
+                + '.plist'
 
             out_file = os.path.join(self.__workspace, out_file_name)
             self.__result_file = out_file

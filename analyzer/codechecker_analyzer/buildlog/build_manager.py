@@ -36,14 +36,15 @@ def execute_buildcmd(command, silent=False, env=None, cwd=None):
                             stdout=subprocess.PIPE,
                             stderr=subprocess.STDOUT,
                             cwd=cwd,
-                            shell=True)
+                            shell=True,
+                            universal_newlines=True)
 
     while True:
         line = proc.stdout.readline()
-        if not silent:
-            sys.stdout.write(line)
-        if line == '' and proc.poll() is not None:
+        if not line and proc.poll() is not None:
             break
+        if not silent:
+            print(line)
 
     return proc.returncode
 

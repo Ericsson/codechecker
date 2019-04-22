@@ -625,7 +625,7 @@ def start_workers(actions_map, actions, context, analyzer_config_map,
                            callback=lambda results: worker_result_handler(
                                results, metadata, output_path,
                                context.analyzer_binaries)
-                           ).get(float('inf'))
+                           ).get(31557600)
 
             pool.close()
         except Exception:
