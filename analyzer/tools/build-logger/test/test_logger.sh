@@ -10,6 +10,7 @@ export CC_LOGGER_GCC_LIKE="gcc:g++:clang"
 export CC_LOGGER_FILE=/tmp/logger_test_compilation_database.json
 
 source_file=/tmp/logger_test_source.cpp
+response_file=/tmp/logger_test_source.cpp.rsp
 reference_file=/tmp/logger_test_reference.json
 
 function assert_json {
@@ -18,7 +19,7 @@ function assert_json {
 	{
 		"directory": "$(pwd)",
 		"command": "$(which $2) $1",
-		"file": "$source_file"
+		"file": "$3"
 	}
 ]
 EOF
@@ -36,7 +37,7 @@ function test_compiler_path1 {
 
   if [ -n $compiler ]; then
     CC_LOGGER_GCC_LIKE="g++-" bash -c "$compiler $source_file"
-    assert_json "$source_file" $compiler
+    assert_json "$source_file" $compiler "$source_file"
   fi
 }
 
@@ -53,7 +54,7 @@ function test_compiler_path2 {
 function test_simple {
   bash -c "g++ $source_file"
 
-  assert_json "$source_file" g++
+  assert_json "$source_file" g++ "$source_file"
 }
 
 function test_cpath {
@@ -62,7 +63,8 @@ function test_cpath {
 
   assert_json \
     "-I path1 $source_file" \
-    g++
+    g++ \
+    "$source_file"
 }
 
 function test_cpath_after_last_I {
@@ -71,7 +73,8 @@ function test_cpath_after_last_I {
 
   assert_json \
     "-I p0 $source_file -I p1 -I p2 -I . -I path1 -I path2 -I ." \
-    g++
+    g++ \
+    "$source_file"
 }
 
 function test_cplus {
@@ -81,7 +84,8 @@ function test_cplus {
 
   assert_json \
     "-I p0 -isystem p1 -isystem path1 -isystem path2 $source_file" \
-    g++
+    g++ \
+    "$source_file"
 }
 
 function test_c {
@@ -91,7 +95,8 @@ function test_c {
 
   assert_json \
     "-I p0 -isystem p1 -isystem path3 -isystem path4 $source_file" \
-    gcc
+    gcc \
+    "$source_file"
 }
 
 function test_cpp {
@@ -101,7 +106,8 @@ function test_cpp {
 
   assert_json \
     "-I p0 -isystem p1 -isystem path1 -isystem path2 -x c++ $source_file" \
-    gcc
+    gcc \
+    "$source_file"
 }
 
 function test_space {
@@ -109,7 +115,8 @@ function test_space {
 
   assert_json \
     "-DVARIABLE=hello\\\\ world $source_file" \
-    gcc
+    gcc \
+    "$source_file"
 }
 
 function test_quote {
@@ -117,7 +124,8 @@ function test_quote {
 
   assert_json \
     "-DVARIABLE=\\\\\\\"hello\\\\\\\" $source_file" \
-    gcc
+    gcc \
+    "$source_file"
 }
 
 function test_space_quote {
@@ -125,7 +133,22 @@ function test_space_quote {
 
   assert_json \
     "-DVARIABLE=\\\\\\\"hello\\\\ world\\\\\\\" $source_file" \
-    gcc
+    gcc \
+    "$source_file"
+}
+
+function test_response_file {
+  echo "-I p0 -isystem p1" > $response_file
+  bash -c "clang @$response_file $source_file"
+
+  assert_json "@$response_file $source_file" clang "$source_file"
+}
+
+function test_response_file_contain_source_file {
+  echo "-I p0 -isystem p1 $source_file" > $response_file
+  bash -c "clang @$response_file"
+
+  assert_json "@$response_file" clang "@$response_file"
 }
 
 function test_compiler_abs {
@@ -133,7 +156,8 @@ function test_compiler_abs {
 
   assert_json \
     "$source_file" \
-    /usr/bin/gcc
+    /usr/bin/gcc \
+    "$source_file"
 }
 
 #--- Run tests ---#

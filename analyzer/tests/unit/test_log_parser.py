@@ -9,7 +9,10 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
+import json
 import os
+import shutil
+import tempfile
 import unittest
 
 from codechecker_analyzer.buildlog import log_parser
@@ -32,14 +35,24 @@ class LogParserTest(unittest.TestCase):
         cls.__test_files = os.path.join(cls.__this_dir,
                                         'logparser_test_files')
 
+        cls.tmp_dir = tempfile.mkdtemp()
+        cls.src_file_path = os.path.join(cls.tmp_dir, "main.cpp")
+        cls.rsp_file_path = os.path.join(cls.tmp_dir, "main.rsp")
+        cls.compile_command_file_path = os.path.join(cls.tmp_dir,
+                                                     "compile_command.json")
+        with open(cls.src_file_path, "w") as src_file:
+            src_file.write("int main() { return 0; }")
+
     @classmethod
     def teardown_class(cls):
         """
-        Remove compiler_info.json file.
+        Clean temporary directory and remove compiler_info.json file.
         """
         compiler_info = os.path.join(cls.__this_dir, 'compiler_info.json')
         if os.path.exists(compiler_info):
             os.remove(compiler_info)
+
+        shutil.rmtree(cls.tmp_dir)
 
     def test_old_ldlogger(self):
         """
@@ -368,3 +381,91 @@ class LogParserTest(unittest.TestCase):
                              pre_analysis_skip_handler=pre_analysis_skip)
 
         self.assertEqual(len(build_actions), 3)
+
+    def test_response_file_simple(self):
+        """
+        Test simple response file where the source file comes outside the
+        response file.
+        """
+        with open(self.compile_command_file_path, "w") as build_json:
+            build_json.write(json.dumps([dict(
+                directory=self.tmp_dir,
+                command="g++ {0} @{1}".format(self.src_file_path,
+                                              self.rsp_file_path),
+                file=self.src_file_path
+            )]))
+
+        with open(self.rsp_file_path, "w") as rsp_file:
+            rsp_file.write("""-DVARIABLE="some value" """)
+
+        logfile = os.path.join(self.compile_command_file_path)
+
+        build_action = log_parser. \
+            parse_unique_log(load_json_or_empty(logfile), self.__this_dir)[0]
+        self.assertEqual(len(build_action.analyzer_options), 1)
+        self.assertEqual(build_action.analyzer_options[0], '-DVARIABLE=some')
+
+    def test_response_file_contains_source_file(self):
+        """
+        Test response file where the source file comes from the response file.
+        """
+        with open(self.compile_command_file_path, "w") as build_json:
+            build_json.write(json.dumps([dict(
+                directory=self.tmp_dir,
+                command="g++ @{0}".format(self.rsp_file_path),
+                file="@{0}".format(self.rsp_file_path)
+            )]))
+
+        with open(self.rsp_file_path, "w") as rsp_file:
+            rsp_file.write("""-DVARIABLE="some value" {0}""".format(
+                self.src_file_path))
+
+        logfile = os.path.join(self.compile_command_file_path)
+
+        build_action = log_parser. \
+            parse_unique_log(load_json_or_empty(logfile), self.__this_dir)[0]
+
+        self.assertEqual(len(build_action.analyzer_options), 1)
+        self.assertEqual(build_action.source, self.src_file_path)
+        self.assertEqual(build_action.analyzer_options[0], '-DVARIABLE=some')
+
+    def test_response_file_contains_multiple_source_files(self):
+        """
+        Test response file where multiple source files come from the response
+        file.
+        """
+        with open(self.compile_command_file_path, "w") as build_json:
+            build_json.write(json.dumps([dict(
+                directory=self.tmp_dir,
+                command="g++ @{0}".format(self.rsp_file_path),
+                file="@{0}".format(self.rsp_file_path)
+            )]))
+
+        a_file_path = os.path.join(self.tmp_dir, "a.cpp")
+        with open(a_file_path, "w") as src_file:
+            src_file.write("int main() { return 0; }")
+
+        b_file_path = os.path.join(self.tmp_dir, "b.cpp")
+        with open(b_file_path, "w") as src_file:
+            src_file.write("void foo() {}")
+
+        with open(self.rsp_file_path, "w") as rsp_file:
+            rsp_file.write("""-DVARIABLE="some value" {0} {1}""".format(
+                a_file_path, b_file_path))
+
+        logfile = os.path.join(self.compile_command_file_path)
+
+        build_actions = log_parser. \
+            parse_unique_log(load_json_or_empty(logfile), self.__this_dir)
+
+        self.assertEqual(len(build_actions), 2)
+
+        a_build_action = [b for b in build_actions
+                          if b.source == a_file_path][0]
+        self.assertEqual(len(a_build_action.analyzer_options), 1)
+        self.assertEqual(a_build_action.analyzer_options[0], '-DVARIABLE=some')
+
+        b_build_action = [b for b in build_actions
+                          if b.source == b_file_path][0]
+        self.assertEqual(len(b_build_action.analyzer_options), 1)
+        self.assertEqual(b_build_action.analyzer_options[0], '-DVARIABLE=some')
