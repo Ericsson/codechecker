@@ -5,9 +5,7 @@
 #   License. See LICENSE.TXT for details.
 # -----------------------------------------------------------------------------
 """ CTU function test."""
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import json
 import os
@@ -63,7 +61,8 @@ class TestCtuFailure(unittest.TestCase):
         # Fix the "template" build JSONs to contain a proper directory
         # so the tests work.
         raw_buildlog = os.path.join(self.test_dir, 'buildlog.json')
-        with open(raw_buildlog) as log_file:
+        with open(raw_buildlog,
+                  encoding="utf-8", errors="ignore") as log_file:
             build_json = json.load(log_file)
             for command in build_json:
                 command['directory'] = self.test_dir
@@ -71,7 +70,8 @@ class TestCtuFailure(unittest.TestCase):
         self.__old_pwd = os.getcwd()
         os.chdir(self.test_workspace)
         self.buildlog = os.path.join(self.test_workspace, 'buildlog.json')
-        with open(self.buildlog, 'w') as log_file:
+        with open(self.buildlog, 'w',
+                  encoding="utf-8", errors="ignore") as log_file:
             json.dump(build_json, log_file)
 
     def tearDown(self):
@@ -111,13 +111,13 @@ class TestCtuFailure(unittest.TestCase):
                                    ])
 
         # lib.c should be logged as its AST is loaded by Clang
-        self.assertRegexpMatches(output, r"CTU loaded AST file: .*lib\.c.ast")
+        self.assertRegex(output, r"CTU loaded AST file: .*lib\.c.ast")
 
         # We expect a failure archive to be in the failed directory.
         failed_dir = os.path.join(self.report_dir, "failed")
         failed_files = os.listdir(failed_dir)
 
-        self.assertEquals(len(failed_files), 1)
+        self.assertEqual(len(failed_files), 1)
         # Ctu should fail during analysis of main.c
         self.assertIn("main.c", failed_files[0])
 
@@ -135,8 +135,10 @@ class TestCtuFailure(unittest.TestCase):
                 self.assertIn(source_in_archive, files)
                 # Check file content.
                 with archive.open(source_in_archive, 'r') as archived_code:
-                    with open(source_file, 'r') as source_code:
-                        self.assertEqual(archived_code.read(),
+                    with open(source_file, 'r',
+                              encoding="utf-8",
+                              errors="ignore") as source_code:
+                        self.assertEqual(archived_code.read().decode("utf-8"),
                                          source_code.read())
 
             check_source_in_archive("main.c")
@@ -162,12 +164,12 @@ class TestCtuFailure(unittest.TestCase):
                                    ])
 
         # lib.c should be logged as its AST is loaded by Clang
-        self.assertRegexpMatches(output, r"CTU loaded AST file: .*lib\.c.ast")
+        self.assertRegex(output, r"CTU loaded AST file: .*lib\.c.ast")
 
         # We expect a failure archive to be in the failed directory.
         failed_dir = os.path.join(self.report_dir, "failed")
         failed_files = os.listdir(failed_dir)
-        self.assertEquals(len(failed_files), 1)
+        self.assertEqual(len(failed_files), 1)
         # Ctu should fail during analysis of main.c
         self.assertIn("main.c", failed_files[0])
 
@@ -186,8 +188,10 @@ class TestCtuFailure(unittest.TestCase):
                 self.assertIn(source_in_archive, files)
                 # Check file content.
                 with archive.open(source_in_archive, 'r') as archived_code:
-                    with open(source_file, 'r') as source_code:
-                        self.assertEqual(archived_code.read(),
+                    with open(source_file, 'r',
+                              encoding="utf-8",
+                              errors="ignore") as source_code:
+                        self.assertEqual(archived_code.read().decode("utf-8"),
                                          source_code.read())
 
             check_source_in_archive("main.c")
@@ -211,7 +215,7 @@ class TestCtuFailure(unittest.TestCase):
                                    ])
 
         # lib.c should be logged as its AST is loaded by Clang
-        self.assertRegexpMatches(output, r"CTU loaded AST file: .*lib\.c.ast")
+        self.assertRegex(output, r"CTU loaded AST file: .*lib\.c.ast")
 
         # We expect two failure archives to be in the failed directory.
         # One failure archive is produced by the CTU analysis and the
@@ -219,7 +223,7 @@ class TestCtuFailure(unittest.TestCase):
         failed_dir = os.path.join(self.report_dir, "failed")
         failed_files = os.listdir(failed_dir)
         print(failed_files)
-        self.assertEquals(len(failed_files), 2)
+        self.assertEqual(len(failed_files), 2)
         # Ctu should fail during analysis of main.c
         self.assertIn("main.c", failed_files[0])
 

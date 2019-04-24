@@ -8,9 +8,7 @@
 """
     report_server_api function tests.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 from collections import defaultdict
 import os
@@ -32,15 +30,15 @@ def _generate_content(cols, lines):
     content = ""
     for _ in range(1, lines):
         for _ in range(1, cols):
-            content += random.choice(string.letters)
+            content += random.choice(string.ascii_letters)
         content += '\n'
     return content
 
 
 def _replace_path(file_path, path):
-    with open(file_path, 'r') as f:
+    with open(file_path, 'r', encoding="utf-8", errors="ignore") as f:
         content = f.read().replace('$$$', path)
-    with open(file_path, 'w') as f:
+    with open(file_path, 'w', encoding="utf-8", errors="ignore") as f:
         f.write(content)
 
 
@@ -95,7 +93,7 @@ class HashClash(unittest.TestCase):
 
     def _reports_for_latest_run(self):
         runs = self._report.getRunData(None, None, 0, None)
-        max_run_id = max(map(lambda run: run.runId, runs))
+        max_run_id = max([run.runId for run in runs])
         return self._report.getRunResults([max_run_id],
                                           100,
                                           0,

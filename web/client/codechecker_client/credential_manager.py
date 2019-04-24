@@ -7,9 +7,7 @@
 Handles the management of stored user credentials and currently known session
 tokens.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import json
 import os
@@ -98,7 +96,8 @@ class UserCredentials(object):
 
             self.__tokens = token_dict.get('tokens')
         else:
-            with open(self.token_file, 'w') as f:
+            with open(self.token_file, 'w',
+                      encoding="utf-8", errors="ignore") as f:
                 json.dump({'tokens': {}}, f)
             os.chmod(self.token_file, stat.S_IRUSR | stat.S_IWUSR)
 
@@ -127,7 +126,8 @@ class UserCredentials(object):
         else:
             self.__tokens['{0}:{1}'.format(host, port)] = token
 
-        with open(self.token_file, 'w') as scfg:
+        with open(self.token_file, 'w',
+                  encoding="utf-8", errors="ignore") as scfg:
             portalocker.lock(scfg, portalocker.LOCK_EX)
             json.dump({'tokens': self.__tokens}, scfg,
                       indent=2, sort_keys=True)

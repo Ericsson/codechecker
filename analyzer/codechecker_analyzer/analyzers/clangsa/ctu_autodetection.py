@@ -7,9 +7,6 @@
 Clang Static Analyzer related functions.
 """
 
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
 
 import subprocess
 
@@ -37,7 +34,11 @@ def invoke_binary_checked(binary_path, args=None, environ=None):
     invocation = [binary_path]
     invocation.extend(args)
     try:
-        output = subprocess.check_output(invocation, env=environ)
+        output = subprocess.check_output(
+            invocation,
+            env=environ,
+            encoding="utf-8",
+            errors="ignore")
     except (subprocess.CalledProcessError, OSError) as e:
         LOG.debug(
             'Command invocation failed because of non-zero exit code!'

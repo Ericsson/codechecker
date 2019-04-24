@@ -49,11 +49,11 @@ FUNCTIONAL_TEST_CMD = $(REPO_ROOT) $(TEST_PROJECT) \
 		nosetests $(NOSECFG) tests/functional || exit 1
 
 test_functional:
-	python $(ROOT)/scripts/test/check_clang.py || exit 1;
+	python3 $(ROOT)/scripts/test/check_clang.py || exit 1;
 	$(FUNCTIONAL_TEST_CMD)
 
 test_functional_in_env: venv_dev
-		python $(ROOT)/scripts/test/check_clang.py || exit 1;
+		python3 $(ROOT)/scripts/test/check_clang.py || exit 1;
 		$(ACTIVATE_DEV_VENV) && $(FUNCTIONAL_TEST_CMD)
 
 test_build_logger:

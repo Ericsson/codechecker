@@ -6,9 +6,7 @@
 """
 Argument handlers for the 'CodeChecker cmd components' subcommands.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import sys
 
@@ -44,7 +42,8 @@ def handle_add_component(args):
 
     client = setup_client(args.product_url)
 
-    with open(args.component_file, 'r') as component_file:
+    with open(args.component_file, 'r',
+              encoding="utf-8", errors="ignore") as component_file:
         value = component_file.read().strip()
 
     description = args.description if 'description' in args else None

@@ -8,18 +8,11 @@
 This module tests the correctness of the OutputParser and PListConverter, which
 used in sequence transform a Clang Tidy output file to a plist file.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
-
 import copy
 import os
 import unittest
 
-try:
-    from StringIO import StringIO
-except ImportError:
-    from io import BytesIO as StringIO
+import io
 
 import codechecker_analyzer.analyzers.clangtidy.output_converter as \
     tidy_out_conv
@@ -369,11 +362,13 @@ class TidyPListConverterTestCase(unittest.TestCase):
         self.plist_conv.add_messages([])
         self.assertDictEqual(orig_plist, self.plist_conv.plist)
 
-        output = StringIO()
+        output = io.BytesIO()
         self.plist_conv.write(output)
 
-        with open('empty.plist') as pfile:
+        with open('empty.plist', 'rb') as pfile:
             exp = pfile.read()
+            print(exp.decode('utf-8'))
+            print(output.getvalue().decode('utf-8'))
             self.assertEqual(exp, output.getvalue())
 
         output.close()
@@ -385,10 +380,10 @@ class TidyPListConverterTestCase(unittest.TestCase):
         # use relative path for this test
         self.plist_conv.plist['files'][0] = 'files/test.cpp'
 
-        output = StringIO()
+        output = io.BytesIO()
         self.plist_conv.write(output)
 
-        with open('tidy1.plist') as pfile:
+        with open('tidy1.plist', 'rb') as pfile:
             exp = pfile.read()
             self.assertEqual(exp, output.getvalue())
 
@@ -401,10 +396,10 @@ class TidyPListConverterTestCase(unittest.TestCase):
         # use relative path for this test
         self.plist_conv.plist['files'][0] = 'files/test2.cpp'
 
-        output = StringIO()
+        output = io.BytesIO()
         self.plist_conv.write(output)
 
-        with open('tidy2.plist') as pfile:
+        with open('tidy2.plist', 'rb') as pfile:
             exp = pfile.read()
             self.assertEqual(exp, output.getvalue())
 
@@ -418,10 +413,10 @@ class TidyPListConverterTestCase(unittest.TestCase):
         self.plist_conv.plist['files'][0] = 'files/test3.cpp'
         self.plist_conv.plist['files'][1] = 'files/test3.hh'
 
-        output = StringIO()
+        output = io.BytesIO()
         self.plist_conv.write(output)
 
-        with open('tidy3.plist') as pfile:
+        with open('tidy3.plist', 'rb') as pfile:
             exp = pfile.read()
             self.assertEqual(exp, output.getvalue())
 

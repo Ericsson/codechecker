@@ -6,7 +6,7 @@ from os import path
 from io import open
 
 # Get the long description from the README file
-with open('README.md', encoding='utf-8') as f:
+with open('README.md', encoding='utf-8', errors="ignore") as f:
     long_description = f.read()
 
 api_version = '6.26.0'

@@ -5,9 +5,7 @@
 #   License. See LICENSE.TXT for details.
 # -----------------------------------------------------------------------------
 """ detection_status function test. """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import json
 import os
@@ -60,9 +58,11 @@ class TestDetectionStatus(unittest.TestCase):
             "build_cmd": "make"
         }
 
-        with open(os.path.join(self._test_dir, 'Makefile'), 'w') as f:
+        with open(os.path.join(self._test_dir, 'Makefile'), 'w',
+                  encoding="utf-8", errors="ignore") as f:
             f.write(makefile)
-        with open(os.path.join(self._test_dir, 'project_info.json'), 'w') as f:
+        with open(os.path.join(self._test_dir, 'project_info.json'), 'w',
+                  encoding="utf-8", errors="ignore") as f:
             json.dump(project_info, f)
 
         self.sources = ["""
@@ -117,7 +117,8 @@ int main()
         os.chdir(self.__old_pwd)
 
     def _create_source_file(self, version):
-        with open(os.path.join(self._test_dir, self._source_file), 'w') as f:
+        with open(os.path.join(self._test_dir, self._source_file), 'w',
+                  encoding="utf-8", errors="ignore") as f:
             f.write(self.sources[version])
 
     def _check_source_file(self, cfg):
@@ -131,7 +132,7 @@ int main()
         runs = self._cc_client.getRunData(None, None, 0, None)
 
         if runs:
-            run_id = max(map(lambda run: run.runId, runs))
+            run_id = max([run.runId for run in runs])
             self._cc_client.removeRun(run_id, None)
 
         # Check the first file version
@@ -139,7 +140,7 @@ int main()
         self._check_source_file(self._codechecker_cfg)
 
         runs = self._cc_client.getRunData(None, None, 0, None)
-        run_id = max(map(lambda run: run.runId, runs))
+        run_id = max([run.runId for run in runs])
 
         reports = self._cc_client.getRunResults([run_id],
                                                 100,
@@ -150,9 +151,8 @@ int main()
                                                 False)
 
         self.assertEqual(len(reports), 5)
-        self.assertTrue(all(map(
-            lambda r: r.detectionStatus == DetectionStatus.NEW,
-            reports)))
+        self.assertTrue(
+            all([r.detectionStatus == DetectionStatus.NEW for r in reports]))
 
         # Check the second file version
         self._create_source_file(1)
@@ -285,7 +285,7 @@ int main()
         """
         runs = self._cc_client.getRunData(None, None, 0, None)
         if runs:
-            run_id = max(map(lambda run: run.runId, runs))
+            run_id = max([run.runId for run in runs])
 
             # Remove the run.
             self._cc_client.removeRun(run_id, None)
@@ -306,7 +306,7 @@ int main()
         codechecker.store(self._codechecker_cfg, 'hello')
 
         runs = self._cc_client.getRunData(None, None, 0, None)
-        run_id = max(map(lambda run: run.runId, runs))
+        run_id = max([run.runId for run in runs])
 
         reports = self._cc_client.getRunResults([run_id],
                                                 100,
@@ -324,7 +324,7 @@ int main()
         """
         runs = self._cc_client.getRunData(None, None, 0, None)
         if runs:
-            run_id = max(map(lambda run: run.runId, runs))
+            run_id = max([run.runId for run in runs])
 
             # Remove the run.
             self._cc_client.removeRun(run_id, None)

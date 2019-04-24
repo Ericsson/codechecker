@@ -6,9 +6,7 @@
 """
 Performance tester for the server.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import argparse
 import csv
@@ -140,7 +138,7 @@ class StatManager(object):
         if not self._stats:
             return
 
-        with open(file_name, 'w') as f:
+        with open(file_name, 'w', encoding="utf-8", errors="ignore") as f:
             writer = csv.writer(f)
 
             longest = []
@@ -148,12 +146,12 @@ class StatManager(object):
                 if len(durations) > len(longest):
                     longest = durations
 
-            header = ['User'] + map(lambda x: x[0], longest)
+            header = ['User'] + [x[0] for x in longest]
 
             writer.writerow(header)
 
-            for user_id, durations in self._stats.iteritems():
-                writer.writerow([user_id] + map(lambda x: x[1], durations))
+            for user_id, durations in self._stats.items():
+                writer.writerow([user_id] + [x[1] for x in durations])
 
 
 class UserSimulator(object):
@@ -214,7 +212,7 @@ def store_report_dir(report_dir, run_name, server_url):
         '--name', run_name,
         report_dir],
         stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE)
+        stderr=subprocess.PIPE, encoding="utf-8", errors="ignore")
 
     global PROCESSES
     PROCESSES.append(store_process)
@@ -240,7 +238,7 @@ def local_compare(report_dir, run_name, server_url):
         '-n', report_dir,
         '--unresolved'],
         stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE)
+        stderr=subprocess.PIPE, encoding="utf-8", errors="ignore")
 
     global PROCESSES
     PROCESSES.append(compare_process)
@@ -264,7 +262,7 @@ def get_reports(run_name, server_url):
         '--url', server_url,
         run_name],
         stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE)
+        stderr=subprocess.PIPE, encoding="utf-8", errors="ignore")
 
     global PROCESSES
     PROCESSES.append(report_process)
@@ -288,7 +286,7 @@ def delete_run(run_name, server_url):
         '--url', server_url,
         '-n', run_name],
         stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE)
+        stderr=subprocess.PIPE, encoding="utf-8", errors="ignore")
 
     global PROCESSES
     PROCESSES.append(delete_process)

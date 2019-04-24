@@ -11,9 +11,7 @@ Multiple bug identification hash-es can be generated.
 All hash generation algorithms should be documented and implemented here.
 
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import hashlib
 import json
@@ -180,7 +178,7 @@ def remove_whitespace(line_content, old_col):
                                                              = 10
     """
     content_begin = line_content[:old_col]
-    content_begin_strip = u''.join(content_begin.split())
+    content_begin_strip = ''.join(content_begin.split())
     line_strip_len = len(content_begin) - len(content_begin_strip)
 
     return ''.join(line_content.split()), \
@@ -247,7 +245,7 @@ def get_report_path_hash(report, files):
     deduplications of multiple reports.
     """
     report_path_hash = ''
-    events = filter(lambda i: i.get('kind') == 'event', report.bug_path)
+    events = [i for i in report.bug_path if i.get('kind') == 'event']
 
     for event in events:
         file_name = os.path.basename(files[event['location']['file']])
@@ -331,18 +329,20 @@ def use_context_free_hashes(path):
     Override issue hash in the given file by using context free hashes.
     """
     try:
-        plist = plistlib.readPlist(path)
+        with open(path, 'rb+') as plist_file:
+            plist = plistlib.load(plist_file)
+            plist_file.seek(0)
+            plist_file.truncate()
+            files = plist['files']
 
-        files = plist['files']
+            for diag in plist['diagnostics']:
+                file_path = files[diag['location']['file']]
 
-        for diag in plist['diagnostics']:
-            file_path = files[diag['location']['file']]
+                report_hash = generate_report_hash_no_bugpath(diag, file_path)
+                diag['issue_hash_content_of_line_in_context'] = report_hash
 
-            report_hash = generate_report_hash_no_bugpath(diag, file_path)
-            diag['issue_hash_content_of_line_in_context'] = report_hash
-
-        if plist['diagnostics']:
-            plistlib.writePlist(plist, path)
+            if plist['diagnostics']:
+                plistlib.dump(plist, plist_file)
 
     except (ExpatError, TypeError, AttributeError) as err:
         LOG.warning('Failed to process plist file: %s wrong file format?',

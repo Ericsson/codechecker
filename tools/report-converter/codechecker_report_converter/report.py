@@ -11,12 +11,8 @@ Multiple bug identification hash-es can be generated.
 All hash generation algorithms should be documented and implemented here.
 """
 
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
 
 import hashlib
-import io
 import logging
 import os
 
@@ -36,17 +32,17 @@ def get_line(file_name, line_no, errors='ignore'):
     Changing the encoding error handling can influence the hash content!
     """
     try:
-        with io.open(file_name, mode='r',
-                     encoding='utf-8',
-                     errors=errors) as source_file:
+        with open(file_name, mode='r',
+                  encoding='utf-8',
+                  errors=errors) as source_file:
             for line in source_file:
                 line_no -= 1
                 if line_no == 0:
                     return line
-            return u''
+            return ''
     except IOError:
         LOG.error("Failed to open file %s", file_name)
-        return u''
+        return ''
 
 
 def remove_whitespace(line_content, old_col):
@@ -69,7 +65,7 @@ def remove_whitespace(line_content, old_col):
                                                              = 10
     """
     content_begin = line_content[:old_col]
-    content_begin_strip = u''.join(content_begin.split())
+    content_begin_strip = ''.join(content_begin.split())
     line_strip_len = len(content_begin) - len(content_begin_strip)
 
     return ''.join(line_content.split()), \

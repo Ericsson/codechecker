@@ -1,17 +1,15 @@
 NORMAL#CodeChecker log --output $LOGFILE$ --build "make context_hash" --quiet
-NORMAL#CodeChecker analyze $LOGFILE$ --output $OUTPUT$ --report-hash=context-free
+NORMAL#CodeChecker analyze $LOGFILE$ --output $OUTPUT$ --report-hash=context-free --analyzer clangsa
 NORMAL#CodeChecker parse $OUTPUT$ --print-steps
-CHECK#CodeChecker check --build "make context_hash" --output $OUTPUT$ --quiet --print-steps --report-hash=context-free
+CHECK#CodeChecker check --build "make context_hash" --output $OUTPUT$ --quiet --print-steps --report-hash=context-free --analyzer clangsa
 --------------------------------------------------------------------------------
 [] - Starting build ...
 [] - Build finished successfully.
 [] - Starting static analysis ...
-[] - [1/2] clangsa analyzed context_hash.cpp successfully.
-[] - [2/2] clang-tidy analyzed context_hash.cpp successfully.
+[] - [1/1] clangsa analyzed context_hash.cpp successfully.
 [] - ----==== Summary ====----
 [] - Successfully analyzed
 [] -   clangsa: 1
-[] -   clang-tidy: 1
 [] - Total analyzed compilation commands: 1
 [] - ----=================----
 [] - Analysis finished.
@@ -40,42 +38,20 @@ CHECK#CodeChecker check --build "make context_hash" --output $OUTPUT$ --quiet --
   Steps:
     1, context_hash.cpp:19:3: Value stored to 'z' is never read
 
-[HIGH] context_hash.cpp:23:23: suspicious usage of 'sizeof(K)'; did you mean 'K'? [bugprone-sizeof-expression]
-  std::memset(buf, 0, sizeof(BUFLEN));  // sizeof(42) ==> sizeof(int)
-                      ^
-  Report hash: 21edaae2826b623859de550d4d68ff0c
-  Steps:
-    1, context_hash.cpp:23:23: suspicious usage of 'sizeof(K)'; did you mean 'K'?
-
-[HIGH] context_hash.cpp:34:23: suspicious usage of 'sizeof(K)'; did you mean 'K'? [bugprone-sizeof-expression]
-  std::memset(buf, 0, sizeof(BUFLEN));  // sizeof(42) ==> sizeof(int)
-                      ^
-  Report hash: 21edaae2826b623859de550d4d68ff0c
-  Steps:
-    1, context_hash.cpp:34:23: suspicious usage of 'sizeof(K)'; did you mean 'K'?
-
-[HIGH] context_hash.cpp:37:21: suspicious usage of 'sizeof(K)'; did you mean 'K'? [bugprone-sizeof-expression]
-std::memset(buf, 0, sizeof(BUFLEN));  // sizeof(42) ==> sizeof(int)
-                    ^
-  Report hash: e68149020a8ecd03f0bc5421f9c036bb
-  Steps:
-    1, context_hash.cpp:37:21: suspicious usage of 'sizeof(K)'; did you mean 'K'?
-
-Found 6 defect(s) in context_hash.cpp
+Found 3 defect(s) in context_hash.cpp
 
 
 ----==== Summary ====----
 -------------------------------
 Filename         | Report count
 -------------------------------
-context_hash.cpp |            6
+context_hash.cpp |            3
 -------------------------------
 -----------------------
 Severity | Report count
 -----------------------
-HIGH     |            3
 LOW      |            3
 -----------------------
 ----=================----
-Total number of reports: 6
+Total number of reports: 3
 ----=================----

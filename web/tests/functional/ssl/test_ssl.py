@@ -7,9 +7,8 @@
 """
 SSL test.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
+
 import os
 import subprocess
 import unittest
@@ -146,4 +145,5 @@ class TestSSL(unittest.TestCase):
                      report_file]
 
         with self.assertRaises(subprocess.CalledProcessError):
-            subprocess.check_output(store_cmd)
+            subprocess.check_output(
+                store_cmd, encoding="utf-8", errors="ignore")

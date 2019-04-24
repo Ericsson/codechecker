@@ -1,23 +1,17 @@
-#!/usr/bin/env python
 # -------------------------------------------------------------------------
 #                     The CodeChecker Infrastructure
 #   This file is distributed under the University of Illinois Open Source
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
 
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
 
 from abc import ABCMeta
 import copy
 import json
 
 
-class PlistConverter(object):
+class PlistConverter(object, metaclass=ABCMeta):
     """ Warning messages to plist converter. """
-
-    __metaclass__ = ABCMeta
 
     def __init__(self, tool_name):
         self.tool_name = tool_name
@@ -25,7 +19,7 @@ class PlistConverter(object):
 
     def get_plist_results(self):
         """ Returns a list of plist results. """
-        return self.path_to_plist.values()
+        return list(self.path_to_plist.values())
 
     def add_messages(self, messages):
         """ Adds the given messages to the plist. """

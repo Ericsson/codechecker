@@ -5,9 +5,6 @@
 # -------------------------------------------------------------------------
 """Parse the 'clang --version' command output."""
 
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
 
 import re
 import subprocess
@@ -38,11 +35,11 @@ class ClangVersionInfoParser(object):
 
     def __init__(self):
         self.clang_version_pattern = (
-            r'(?P<vendor>clang|Apple LLVM) version (?P<major_version>[0-9]+)'
-            r'\.(?P<minor_version>[0-9]+)\.(?P<patch_version>[0-9]+)')
+            r"(?P<vendor>clang|Apple LLVM) version (?P<major_version>[0-9]+)"
+            r"\.(?P<minor_version>[0-9]+)\.(?P<patch_version>[0-9]+)")
 
         self.clang_installed_dir_pattern =\
-            r'InstalledDir: (?P<installed_dir>[^\s]*)'
+            r"InstalledDir: (?P<installed_dir>[^\s]*)"
 
     def parse(self, version_string):
         """Try to parse the version string using the predefined patterns."""
@@ -67,8 +64,11 @@ def get(clang_binary, env=None):
     Should return False for getting the version
     information not from a clang compiler.
     """
-    compiler_version = subprocess.check_output([clang_binary, '--version'],
-                                               env=env)
+    compiler_version = subprocess.check_output(
+        [clang_binary, '--version'],
+        env=env,
+        encoding="utf-8",
+        errors="ignore")
     version_parser = ClangVersionInfoParser()
     version_info = version_parser.parse(compiler_version)
     return version_info

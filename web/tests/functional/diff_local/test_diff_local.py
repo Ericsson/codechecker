@@ -10,9 +10,7 @@
 Diff local tests the diff comarison feature between local report directories.
 
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import json
 import os
@@ -57,7 +55,8 @@ class DiffLocal(unittest.TestCase):
                                '-n', self.new_reports,
                                '--resolved', '-o', 'json']
         print(unresolved_diff_cmd)
-        out_json = subprocess.check_output(unresolved_diff_cmd)
+        out_json = subprocess.check_output(
+            unresolved_diff_cmd, encoding="utf-8", errors="ignore")
         resolved_results = json.loads(out_json)
         print(resolved_results)
 
@@ -75,7 +74,8 @@ class DiffLocal(unittest.TestCase):
                         '-n', self.new_reports,
                         '--new', '-o', 'json']
         print(new_diff_cmd)
-        out_json = subprocess.check_output(new_diff_cmd)
+        out_json = subprocess.check_output(
+            new_diff_cmd, encoding="utf-8", errors="ignore")
         resolved_results = json.loads(out_json)
         print(resolved_results)
 
@@ -95,7 +95,8 @@ class DiffLocal(unittest.TestCase):
                             '--severity', 'low',
                             '--new', '-o', 'json']
         print(low_severity_cmd)
-        out_json = subprocess.check_output(low_severity_cmd)
+        out_json = subprocess.check_output(
+            low_severity_cmd, encoding="utf-8", errors="ignore")
         print(out_json)
         low_severity_res = json.loads(out_json)
         self.assertEqual((len(low_severity_res)), 0)
@@ -113,7 +114,8 @@ class DiffLocal(unittest.TestCase):
                              '--severity', 'high',
                              '--new', '-o', 'json']
         print(high_severity_cmd)
-        out_json = subprocess.check_output(high_severity_cmd)
+        out_json = subprocess.check_output(
+            high_severity_cmd, encoding="utf-8", errors="ignore")
         print(out_json)
         high_severity_res = json.loads(out_json)
         self.assertEqual((len(high_severity_res)), 4)
@@ -130,7 +132,10 @@ class DiffLocal(unittest.TestCase):
                              '--severity', 'high',
                              '--new']
         print(high_severity_cmd)
-        out = subprocess.check_output(high_severity_cmd)
+        out = subprocess.check_output(
+            high_severity_cmd,
+            encoding="utf-8",
+            errors="ignore")
         print(out)
         self.assertEqual(len(re.findall(r'\[HIGH\]', out)), 4)
         self.assertEqual(len(re.findall(r'\[LOW\]', out)), 0)
@@ -143,7 +148,10 @@ class DiffLocal(unittest.TestCase):
                              '--severity', 'high', 'low',
                              '--unresolved']
         print(high_severity_cmd)
-        out = subprocess.check_output(high_severity_cmd)
+        out = subprocess.check_output(
+            high_severity_cmd,
+            encoding="utf-8",
+            errors="ignore")
         print(out)
         self.assertEqual(len(re.findall(r'\[HIGH\]', out)), 15)
         self.assertEqual(len(re.findall(r'\[LOW\]', out)), 6)
@@ -158,7 +166,8 @@ class DiffLocal(unittest.TestCase):
                              '--severity', 'high', 'low',
                              '--unresolved', '-o', 'json']
         print(high_severity_cmd)
-        out_json = subprocess.check_output(high_severity_cmd)
+        out_json = subprocess.check_output(
+            high_severity_cmd, encoding="utf-8", errors="ignore")
         print(out_json)
         high_low_unresolved_results = json.loads(out_json)
         print(high_low_unresolved_results)
@@ -172,7 +181,8 @@ class DiffLocal(unittest.TestCase):
                                '-n', self.new_reports, self.base_reports,
                                '--unresolved', '-o', 'json']
         print(unresolved_diff_cmd)
-        out_json = subprocess.check_output(unresolved_diff_cmd)
+        out_json = subprocess.check_output(
+            unresolved_diff_cmd, encoding="utf-8", errors="ignore")
         print(out_json)
         unresolved_results = json.loads(out_json)
         self.assertNotEqual(len(unresolved_results), 0)

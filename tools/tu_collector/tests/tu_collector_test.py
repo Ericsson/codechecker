@@ -9,9 +9,7 @@ The TU collector collects the files which constitute the translation unit.
 These files are compressed in a .zip file. This test intends to check if the
 .zip file contains some files which are required to be there for sure.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import json
 import os
@@ -52,15 +50,11 @@ class TUCollectorTest(unittest.TestCase):
         os.remove(zip_file_name)
 
         self.assertTrue(
-            any(map(lambda path: path.endswith(os.path.join('/', 'main.c')),
-                    files)))
+            any([path.endswith(os.path.join('/', 'main.c')) for path in files]))
         self.assertTrue(
-            any(map(lambda path: path.endswith(os.path.join('/', 'main.cpp')),
-                    files)))
+            any([path.endswith(os.path.join('/', 'main.cpp')) for path in files]))
         self.assertTrue(
-            any(map(lambda path: path.endswith(os.path.join('/', 'vector')),
-                    files)))
+            any([path.endswith(os.path.join('/', 'vector')) for path in files]))
         self.assertTrue(
-            any(map(lambda path: path.endswith(os.path.join('/', 'hello.c')),
-                    files)))
+            any([path.endswith(os.path.join('/', 'hello.c')) for path in files]))
         self.assertIn('compilation_database.json', files)

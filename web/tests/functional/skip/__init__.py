@@ -6,9 +6,7 @@
 # -----------------------------------------------------------------------------
 
 """Setup for the package tests."""
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import os
 import shutil
@@ -139,7 +137,7 @@ def _generate_skip_list_file(skip_list_file):
     print('Skip list file content: ' + skip_list_file)
     print('\n'.join(skip_list_content))
 
-    s_file = open(skip_list_file, 'w')
+    s_file = open(skip_list_file, 'w', encoding="utf-8", errors="ignore")
     for k in skip_list_content:
         s_file.write(k + '\n')
 

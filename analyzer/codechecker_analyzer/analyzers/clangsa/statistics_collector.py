@@ -7,14 +7,10 @@
 """
 Calculates call statistics from analysis output
 """
-from __future__ import division
-from __future__ import print_function
-from __future__ import absolute_import
 
-try:
-    from StringIO import StringIO
-except ImportError:
-    from io import BytesIO as StringIO
+
+from io import StringIO
+
 from collections import defaultdict
 import os
 import re
@@ -341,7 +337,8 @@ def postprocess_stats(clang_output_dir, stats_dir, stats_min_sample_count,
                                     stats_relevance_threshold)
 
     for clang_output in clang_outs:
-        with open(clang_output, 'r') as out:
+        with open(clang_output, 'r',
+                  encoding='utf-8', errors='ignore') as out:
             clang_output = ""
             for line in out:
                 clang_output += line + "\n"
@@ -352,10 +349,12 @@ def postprocess_stats(clang_output_dir, stats_dir, stats_min_sample_count,
     # Write out statistics.
     unchecked_yaml = ReturnValueCollector.stats_file(stats_dir)
     LOG.debug("Writing out statistics to %s", unchecked_yaml)
-    with open(unchecked_yaml, 'w') as uyaml:
+    with open(unchecked_yaml, 'w',
+              encoding='utf-8', errors='ignore') as uyaml:
         uyaml.write(ret_collector.get_yaml())
 
     special_ret_yaml = SpecialReturnValueCollector.stats_file(stats_dir)
     LOG.debug("Writing out statistics to %s", special_ret_yaml)
-    with open(special_ret_yaml, 'w') as uyaml:
+    with open(special_ret_yaml, 'w',
+              encoding='utf-8', errors='ignore') as uyaml:
         uyaml.write(special_ret_collector.get_yaml())

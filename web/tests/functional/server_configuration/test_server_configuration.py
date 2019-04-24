@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-#
 # -----------------------------------------------------------------------------
 #                     The CodeChecker Infrastructure
 #   This file is distributed under the University of Illinois Open Source
@@ -10,15 +7,15 @@
 """
 server_configuration function test.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
-import base64
+
+
 import os
 import unittest
 
 from codechecker_api_shared.ttypes import Permission
 from codechecker_api_shared.ttypes import RequestFailed
+
+from codechecker_web.shared import convert
 
 from libtest import env
 
@@ -58,9 +55,9 @@ class ConfigTests(unittest.TestCase):
         self.assertEqual(user, "")
 
         # Server without authentication should allow notification setting.
-        self.config_client.setNotificationBannerText(base64.b64encode(
-            'noAuth notif'))
-        self.assertEqual(base64.b64decode(
+        self.config_client.setNotificationBannerText(
+            convert.to_b64('noAuth notif'))
+        self.assertEqual(convert.from_b64(
             self.config_client.getNotificationBannerText()), 'noAuth notif')
 
     def test_auth_su_notification_edit(self):
@@ -91,8 +88,8 @@ class ConfigTests(unittest.TestCase):
         # we are root
 
         su_config_client.setNotificationBannerText(
-                base64.b64encode('su notification'))
-        self.assertEqual(base64.b64decode(
+                convert.to_b64('su notification'))
+        self.assertEqual(convert.from_b64(
             su_config_client.getNotificationBannerText()),
                 'su notification')
 
@@ -116,7 +113,7 @@ class ConfigTests(unittest.TestCase):
 
         with self.assertRaises(RequestFailed):
             authd_config_client.setNotificationBannerText(
-                    base64.b64encode('non su notification'))
+                    convert.to_b64('non su notification'))
 
             print("You are not authorized to modify notifications!")
 
@@ -132,7 +129,7 @@ class ConfigTests(unittest.TestCase):
 
         # Check if utf-8 encoded strings are okay.
         self.config_client.setNotificationBannerText(
-                base64.b64encode('árvíztűrő tükörfúrógép'))
-        self.assertEqual(base64.b64decode(
+                convert.to_b64('árvíztűrő tükörfúrógép'))
+        self.assertEqual(convert.from_b64(
             self.config_client.getNotificationBannerText()),
             'árvíztűrő tükörfúrógép')

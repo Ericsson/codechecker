@@ -82,19 +82,19 @@ RUN apt-get install -qqy --no-install-recommends \
   gcc \
   \
   # Install necessary runtime environment files.
-  && pip install -r /requirements_py/requirements.txt \
+  && pip3 install -r /requirements_py/requirements.txt \
   && if [ "$INSTALL_AUTH" = "yes" ] ; then \
-       pip install -r /requirements_py/auth/requirements.txt; \
+       pip3 install -r /requirements_py/auth/requirements.txt; \
      fi \
   && if [ "$INSTALL_PG8000" = "yes" ] ; then \
-       pip install -r /requirements_py/db_pg8000/requirements.txt; \
+       pip3 install -r /requirements_py/db_pg8000/requirements.txt; \
      fi \
   && if [ "$INSTALL_PSYCOPG2" = "yes" ] ; then \
-       pip install -r /requirements_py/db_psycopg2/requirements.txt; \
+       pip3 install -r /requirements_py/db_psycopg2/requirements.txt; \
      fi \
   \
   # Remove unnecessary packages.
-  && pip uninstall -y wheel \
+  && pip3 uninstall -y wheel \
   && apt-get purge -y --auto-remove \
     gcc \
     python-dev \

@@ -6,9 +6,7 @@
 """
 Arranges the 1st phase of 2 phase executions for CTU
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import glob
 import os
@@ -28,7 +26,8 @@ def generate_func_map_lines(fnmap_dir):
 
     files = glob.glob(os.path.join(fnmap_dir, '*'))
     for filename in files:
-        with open(filename, 'r') as in_file:
+        with open(filename, 'r', encoding='utf-8',
+                  errors="ignore") as in_file:
             for line in in_file:
                 yield line
 
@@ -62,7 +61,8 @@ def write_global_map(ctu_dir, arch, ctu_func_map_file, mangled_ast_pairs):
     """ Write (mangled function name, ast file) pairs into final file. """
 
     extern_fns_map_file = os.path.join(ctu_dir, arch, ctu_func_map_file)
-    with open(extern_fns_map_file, 'w') as out_file:
+    with open(extern_fns_map_file, 'w',
+              encoding='utf-8', errors='ignore') as out_file:
         for mangled_name, ast_file in mangled_ast_pairs:
             out_file.write('%s %s\n' % (mangled_name, ast_file))
 
@@ -171,5 +171,6 @@ def map_functions(triple_arch, action, source, config, env,
     if func_ast_list:
         with tempfile.NamedTemporaryFile(mode='w',
                                          dir=extern_fns_map_folder,
-                                         delete=False) as out_file:
+                                         delete=False,
+                                         encoding='utf-8') as out_file:
             out_file.write("\n".join(func_ast_list) + "\n")

@@ -6,9 +6,7 @@
 # -----------------------------------------------------------------------------
 
 """ Test review status functionality."""
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import logging
 import os
@@ -79,7 +77,7 @@ class TestReviewStatus(unittest.TestCase):
         success = self._cc_client.changeReviewStatus(
             bug.reportId,
             status,
-            u'')
+            '')
 
         self.assertTrue(success)
         logging.debug("Bug review status changed successfully")
@@ -102,7 +100,7 @@ class TestReviewStatus(unittest.TestCase):
         self.assertEqual(report.reviewData.status, status)
 
         # Change review status to intentional.
-        review_comment = u''
+        review_comment = ''
         status = ReviewStatus.INTENTIONAL
         success = self._cc_client.changeReviewStatus(
             bug.reportId, status, review_comment)

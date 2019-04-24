@@ -7,9 +7,7 @@
 """
 Test storage of analysis statistics.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import json
 import os
@@ -81,11 +79,12 @@ class TestStorageOfAnalysisStatistics(unittest.TestCase):
         }
 
         makefile = os.path.join(self._test_dir, 'Makefile')
-        with open(makefile, 'w') as make_f:
+        with open(makefile, 'w', encoding="utf-8", errors="ignore") as make_f:
             make_f.write(makefile_content)
 
         project_info = os.path.join(self._test_dir, 'project_info.json')
-        with open(project_info, 'w') as info_f:
+        with open(project_info, 'w',
+                  encoding="utf-8", errors="ignore") as info_f:
             json.dump(project_info_content, info_f)
 
         self.sources = ["""
@@ -105,7 +104,8 @@ int main()
 
     def _create_source_file(self, version):
         source_file = os.path.join(self._test_dir, self._source_file)
-        with open(source_file, 'w') as source_f:
+        with open(source_file, 'w',
+                  encoding='utf-8', errors='ignore') as source_f:
             source_f.write(self.sources[version])
 
         build_json = os.path.join(self._test_dir, "build.json")
@@ -124,7 +124,8 @@ int main()
             }
         ]
 
-        with open(build_json, 'w') as outfile:
+        with open(build_json, 'w',
+                  encoding="utf-8", errors="ignore") as outfile:
             json.dump(build_log, outfile)
 
         # Create analyze command.
@@ -133,8 +134,12 @@ int main()
 
         # Run analyze.
         process = subprocess.Popen(
-            analyze_cmd, stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE, cwd=self._test_dir)
+            analyze_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=self._test_dir,
+            encoding="utf-8",
+            errors="ignore")
         process.communicate()
 
         codechecker.store(self._codechecker_cfg, 'example')

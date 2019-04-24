@@ -7,9 +7,6 @@
 Clang Static analyzer configuration handler.
 """
 
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
 
 from codechecker_common.logger import get_logger
 from .ctu_autodetection import CTUAutodetection

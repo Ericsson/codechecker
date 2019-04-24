@@ -2,7 +2,7 @@ VENDOR_DIR = $(shell pwd)
 BUILD_DIR = $(VENDOR_DIR)/build
 
 # Git tag versions of external dependencies.
-THRIFT_VERSION = 0.9.2
+THRIFT_VERSION = 0.11.0
 CODEMIRROR_VERSION = 5.25.0
 JSPLUMB_VERSION = 2.2.0
 MARKED_VERSION = v0.3.3
@@ -102,7 +102,7 @@ $(VENDOR_DIR)/highlightjs/css/xcode.min.css: $(VENDOR_DIR)/highlightjs/css
 $(VENDOR_DIR)/codechecker-api-js: vendor_dir
 	[ -d $(VENDOR_DIR)/codechecker-api-js ] && : || (\
 	rm -rf $(VENDOR_DIR)/codechecker-api-js-$(CODECHECKER_API_VERSION).tar.gz && \
-	curl -sSfLk --get https://registry.npmjs.org/codechecker-api-js/-/codechecker-api-js-6.24.0.tgz \
+	curl -sSfLk --get https://registry.npmjs.org/codechecker-api-js/-/codechecker-api-js-6.26.0.tgz \
 		-z $(VENDOR_DIR)/codechecker-api-js-$(CODECHECKER_API_VERSION).tar.gz \
 		-o $(VENDOR_DIR)/codechecker-api-js-$(CODECHECKER_API_VERSION).tar.gz && \
 	mkdir -p $(VENDOR_DIR)/codechecker-api-js && \

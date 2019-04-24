@@ -5,10 +5,6 @@ Revises: bb5278995f41
 Create Date: 2018-03-13 10:44:38.446589
 
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
-
 # revision identifiers, used by Alembic.
 revision = '6b9f832d0b20'
 down_revision = 'bb5278995f41'
@@ -36,6 +32,6 @@ def downgrade():
         sa.Column('auth_string', sa.CHAR(length=64), nullable=False),
         sa.Column('token', sa.CHAR(length=32), nullable=False),
         sa.Column('last_access', sa.DATETIME(), nullable=False),
-        sa.PrimaryKeyConstraint('auth_string', name=u'pk_sessions'))
+        sa.PrimaryKeyConstraint('auth_string', name='pk_sessions'))
     op.drop_index(op.f('ix_user_sessions_token'), table_name='user_sessions')
     op.drop_table('user_sessions')

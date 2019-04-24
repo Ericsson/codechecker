@@ -6,9 +6,7 @@
 """
 Environment module.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import os
 import stat
@@ -32,7 +30,7 @@ def get_user_input(msg):
 
     :returns: True/False based on the asnwer from the user
     """
-    return raw_input(msg).lower() in ['y', 'yes']
+    return input(msg).lower() in ['y', 'yes']
 
 
 def check_file_owner_rw(file_to_check):

@@ -6,9 +6,7 @@
 """
 Handles the management of authentication sessions on the server's side.
 """
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import division
+
 
 from datetime import datetime
 import hashlib
@@ -171,7 +169,8 @@ class SessionManager(object):
         self.__database_connection = None
         self.__logins_since_prune = 0
         self.__sessions = []
-        self.__session_salt = hashlib.sha1(session_salt).hexdigest()
+        self.__session_salt = hashlib.sha1(
+            session_salt.encode('utf-8')).hexdigest()
         self.__configuration_file = configuration_file
 
         scfg_dict = self.__get_config_dict()
@@ -365,7 +364,7 @@ class SessionManager(object):
         Try to authenticate the user against the root username:password's hash.
         """
         if 'method_root' in self.__auth_config and \
-                hashlib.sha256(auth_string).hexdigest() == \
+                hashlib.sha256(auth_string.encode('utf8')).hexdigest() == \
                 self.__auth_config['method_root']:
             return {
                 'username': SessionManager.get_user_name(auth_string),

@@ -1,6 +1,4 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
+#!/usr/bin/env python3
 # -----------------------------------------------------------------------------
 #                     The CodeChecker Infrastructure
 #   This file is distributed under the University of Illinois Open Source
@@ -10,9 +8,7 @@
 """
 Generate a new unit test based on the skeleton
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import os
 import sys
@@ -36,7 +32,7 @@ def main():
 
     template = os.path.join(unit_test_path, 'unit_template.py')
 
-    with open(template, 'r') as init:
+    with open(template, 'r', encoding="utf-8", errors="ignore") as init:
         new_test_content = init.read()
 
     string_to_replace = "$MODULE_NAME$"
@@ -44,7 +40,7 @@ def main():
                                                 tested_module)
 
     print('Generating new test file ...')
-    with open(new_test, 'w') as n_test:
+    with open(new_test, 'w', encoding="utf-8", errors="ignore") as n_test:
         n_test.write(new_test_content)
 
     print('Done.')

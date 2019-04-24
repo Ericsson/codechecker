@@ -61,7 +61,7 @@ def create_wrapper_file(path, content):
     if not exists(dir):
         makedirs(dir)
 
-    with open(path, 'w') as wrapper_file:
+    with open(path, 'w', encoding="utf-8", errors="ignore") as wrapper_file:
         wrapper_file.write(content)
 
     add_executable_permission(path)

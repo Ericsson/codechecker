@@ -8,9 +8,7 @@
 """
 Tests for source file changes
 """
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+
 
 import os
 import time
@@ -24,7 +22,7 @@ def touch(fname, times=None):
     """
     Modify the update and last modification times for a file.
     """
-    with open(fname, 'a'):
+    with open(fname, 'a', encoding="utf-8", errors="ignore"):
         os.utime(fname, times)
 
 

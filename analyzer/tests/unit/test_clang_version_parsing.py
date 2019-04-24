@@ -7,9 +7,6 @@
 """ Test the CTU autodetection feature, which determines the mapping tool and
 the mapping file name used for CTU analysis. """
 
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
 
 import unittest
 import os
@@ -25,7 +22,7 @@ def setup_module():
     global OLD_PWD
     OLD_PWD = os.getcwd()
     os.chdir(os.path.join(os.path.dirname(__file__),
-             'ctu_autodetection_test_files'))
+                          'ctu_autodetection_test_files'))
 
 
 def teardown_module():
@@ -56,7 +53,8 @@ class CTUAutodetectionVersionParsingTest(unittest.TestCase):
         correctly.
         """
 
-        with open('clang_7_src_version_output') as version_output:
+        with open('clang_7_src_version_output',
+                  encoding="utf-8", errors="ignore") as version_output:
             version_string = version_output.read()
 
         parser = version.ClangVersionInfoParser()
@@ -74,7 +72,8 @@ class CTUAutodetectionVersionParsingTest(unittest.TestCase):
         correctly.
         """
 
-        with open('clang_8_src_version_output') as version_output:
+        with open('clang_8_src_version_output',
+                  encoding="utf-8", errors="ignore") as version_output:
             version_string = version_output.read()
 
         parser = version.ClangVersionInfoParser()
@@ -92,7 +91,8 @@ class CTUAutodetectionVersionParsingTest(unittest.TestCase):
         correctly.
         """
 
-        with open('clang_7_bin_dist_version_output') as version_output:
+        with open('clang_7_bin_dist_version_output',
+                  encoding="utf-8", errors="ignore") as version_output:
             version_string = version_output.read()
 
         parser = version.ClangVersionInfoParser()
@@ -110,7 +110,8 @@ class CTUAutodetectionVersionParsingTest(unittest.TestCase):
         correctly.
         """
 
-        with open('clang_9_monorepo_src_version_output') as version_output:
+        with open('clang_9_monorepo_src_version_output',
+                  encoding="utf-8", errors="ignore") as version_output:
             version_string = version_output.read()
 
         parser = version.ClangVersionInfoParser()
@@ -125,7 +126,8 @@ class CTUAutodetectionVersionParsingTest(unittest.TestCase):
     def test_built_from_gcc(self):
         """ Test if parsing a gcc version info returns False. """
 
-        with open('gcc_version') as version_output:
+        with open('gcc_version',
+                  encoding="utf-8", errors="ignore") as version_output:
             version_string = version_output.read()
 
         parser = version.ClangVersionInfoParser()

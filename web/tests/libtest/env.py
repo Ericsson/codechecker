@@ -6,9 +6,7 @@
 """
 Test environment setup and configuration helpers.
 """
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import division
+
 
 from hashlib import sha256
 import os
@@ -84,7 +82,11 @@ def add_database(dbname, env=None):
             psql_command += ['-U', pg_config['dbusername']]
 
         print(psql_command)
-        subprocess.call(psql_command, env=env)
+        subprocess.call(
+            psql_command,
+            env=env,
+            encoding="utf-8",
+            errors="ignore")
 
 
 def del_database(dbname, env=None):
@@ -110,7 +112,7 @@ def del_database(dbname, env=None):
         """.format(dbname)
 
         with tempfile.NamedTemporaryFile(suffix='.sql') as sql_file:
-            sql_file.write(remove_cmd)
+            sql_file.write(remove_cmd.encode('utf-8'))
             sql_file.flush()
 
             psql_command = ['psql',
@@ -126,7 +128,7 @@ def del_database(dbname, env=None):
             subprocess.call(psql_command,
                             stdout=subprocess.PIPE,
                             stderr=subprocess.STDOUT,
-                            env=env)
+                            env=env, encoding="utf-8", errors="ignore")
 
 
 def clang_to_test():
@@ -287,14 +289,16 @@ def clean_wp(workspace):
 def import_test_cfg(workspace):
     cfg_file = os.path.join(workspace, "test_config.json")
     test_cfg = {}
-    with open(cfg_file, 'r') as cfg:
+    with open(cfg_file, 'r',
+              encoding="utf-8", errors="ignore") as cfg:
         test_cfg = json.loads(cfg.read())
     return test_cfg
 
 
 def export_test_cfg(workspace, test_cfg):
     cfg_file = os.path.join(workspace, "test_config.json")
-    with open(cfg_file, 'w') as cfg:
+    with open(cfg_file, 'w',
+              encoding="utf-8", errors="ignore") as cfg:
         cfg.write(json.dumps(test_cfg, sort_keys=True, indent=2))
 
 
@@ -351,13 +355,15 @@ def enable_auth(workspace):
     scfg_dict["authentication"]["method_dictionary"]["groups"] = \
         {"admin_group_user": ["admin_GROUP"]}
 
-    with open(server_cfg_file, 'w') as scfg:
+    with open(server_cfg_file, 'w',
+              encoding="utf-8", errors="ignore") as scfg:
         json.dump(scfg_dict, scfg, indent=2, sort_keys=True)
 
     # Create a root user.
     root_file = os.path.join(workspace, 'root.user')
-    with open(root_file, 'w') as rootf:
-        rootf.write(sha256("root:root").hexdigest())
+    with open(root_file, 'w',
+              encoding='utf-8', errors='ignore') as rootf:
+        rootf.write(sha256(b"root:root").hexdigest())
     os.chmod(root_file, stat.S_IRUSR | stat.S_IWUSR)
 
 
@@ -382,7 +388,8 @@ def enable_storage_of_analysis_statistics(workspace):
     scfg_dict["store"]["analysis_statistics_dir"] = \
         os.path.join(workspace, 'analysis_statistics')
 
-    with open(server_cfg_file, 'w') as scfg:
+    with open(server_cfg_file, 'w',
+              encoding="utf-8", errors="ignore") as scfg:
         json.dump(scfg_dict, scfg, indent=2, sort_keys=True)
 
 
@@ -414,12 +421,16 @@ def get_session_token(workspace, viewer_host, viewer_port):
 
     try:
         session_file = os.path.join(workspace, '.codechecker.session.json')
-        with open(session_file, 'r') as sess_file:
+        with open(session_file, 'r',
+                  encoding="utf-8", errors="ignore") as sess_file:
             sess_dict = json.load(sess_file)
 
         host_port_key = viewer_host + ':' + str(viewer_port)
         return sess_dict['tokens'][host_port_key]
-    except (IOError, KeyError) as err:
+    except IOError as ioerr:
         print("Could not load session for session getter because " +
-              err.message)
+              ioerr.strerror)
+        return None
+    except KeyError as err:
+        print("Could not load session for session getter because " + str(err))
         return None

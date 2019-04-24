@@ -22,9 +22,7 @@ With the newer clang releases more information is available in the plist files.
   - Report hash is available
 
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import os
 import unittest
@@ -216,7 +214,7 @@ class PlistParserTestCaseNose(unittest.TestCase):
         for report in reports:
             checker_name = report.main['check_name']
             # Checker name should be available for all the reports.
-            self.assertNotEquals(checker_name, 'NOT FOUND')
+            self.assertNotEqual(checker_name, 'NOT FOUND')
 
             if checker_name == 'core.DivideZero':
                 test_data = div_zero_skel_name
@@ -239,8 +237,8 @@ class PlistParserTestCaseNose(unittest.TestCase):
         files, reports = plist_parser.parse_plist_file(empty_plist,
                                                        None,
                                                        False)
-        self.assertEquals(files, [])
-        self.assertEquals(reports, [])
+        self.assertEqual(files, [])
+        self.assertEqual(reports, [])
 
     def test_no_bug_file(self):
         """There was no bug in the checked file."""
@@ -249,8 +247,8 @@ class PlistParserTestCaseNose(unittest.TestCase):
         files, reports = plist_parser.parse_plist_file(no_bug_plist,
                                                        None,
                                                        False)
-        self.assertEquals(files, [])
-        self.assertEquals(reports, [])
+        self.assertEqual(files, [])
+        self.assertEqual(reports, [])
 
     def test_clang37_plist(self):
         """
@@ -263,8 +261,8 @@ class PlistParserTestCaseNose(unittest.TestCase):
                                                        None,
                                                        False)
 
-        self.assertEquals(files, self.__found_file_names)
-        self.assertEquals(len(reports), 3)
+        self.assertEqual(files, self.__found_file_names)
+        self.assertEqual(len(reports), 3)
 
         self.missing_hash(reports)
 
@@ -279,8 +277,8 @@ class PlistParserTestCaseNose(unittest.TestCase):
                                                        None,
                                                        False)
 
-        self.assertEquals(files, self.__found_file_names)
-        self.assertEquals(len(reports), 3)
+        self.assertEqual(files, self.__found_file_names)
+        self.assertEqual(len(reports), 3)
 
         valid_checker_names = []
         valid_checker_names.extend(self.__found_checker_names)
@@ -309,8 +307,8 @@ class PlistParserTestCaseNose(unittest.TestCase):
                                                        None,
                                                        False)
 
-        self.assertEquals(files, self.__found_file_names)
-        self.assertEquals(len(reports), 3)
+        self.assertEqual(files, self.__found_file_names)
+        self.assertEqual(len(reports), 3)
 
         valid_checker_names = []
         valid_checker_names.extend(self.__found_checker_names)
@@ -340,8 +338,8 @@ class PlistParserTestCaseNose(unittest.TestCase):
         files, reports = plist_parser.parse_plist_file(clang50_trunk_plist,
                                                        None,
                                                        False)
-        self.assertEquals(files, self.__found_file_names)
-        self.assertEquals(len(reports), 3)
+        self.assertEqual(files, self.__found_file_names)
+        self.assertEqual(len(reports), 3)
 
         valid_checker_names = []
         valid_checker_names.extend(self.__found_checker_names)

@@ -9,11 +9,8 @@
 Test accessing products that were added in a "Shared configuration database"
 environment.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
 
-import base64
+
 from copy import deepcopy
 import multiprocessing
 import os
@@ -24,6 +21,8 @@ from codechecker_api_shared.ttypes import Permission
 
 from codechecker_api.ProductManagement_v6.ttypes import ProductConfiguration
 from codechecker_api.ProductManagement_v6.ttypes import DatabaseConnection
+
+from codechecker_web.shared import convert
 
 from libtest import codechecker
 from libtest import env
@@ -137,7 +136,7 @@ class TestProductConfigShare(unittest.TestCase):
 
         def create_test_product(product_name, product_endpoint):
             # Create a new product on the secondary server.
-            name = base64.b64encode(product_name)
+            name = convert.to_b64(product_name)
             return ProductConfiguration(
                 endpoint=product_endpoint,
                 displayedName_b64=name,

@@ -7,9 +7,7 @@
 This module is responsible for parsing clang-tidy output and generating plist
 for the plist_parser module.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import copy
 import json
@@ -111,7 +109,7 @@ class OutputParser(object):
         Parse clang-tidy output dump (redirected output).
         """
 
-        with open(path, 'r') as file:
+        with open(path, 'r', encoding="utf-8", errors="ignore") as file:
             return self.parse_messages(file)
 
     def parse_messages(self, tidy_out):
@@ -389,8 +387,7 @@ class PListConverter(object):
         """
         Writes out the plist XML using the given file object.
         """
-
-        plistlib.writePlist(self.plist, file)
+        plistlib.dump(self.plist, file)
 
     def __str__(self):
         return str(json.dumps(self.plist, indent=4, separators=(',', ': ')))

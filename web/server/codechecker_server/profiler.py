@@ -6,9 +6,7 @@
 """
 Helpers to profile.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 from datetime import datetime
 import cProfile
@@ -16,10 +14,7 @@ import pstats
 
 from functools import wraps
 
-try:
-    from StringIO import StringIO
-except ImportError:
-    from io import BytesIO as StringIO
+from io import StringIO
 
 from codechecker_common import logger
 from codechecker_common.logger import get_logger

@@ -7,10 +7,6 @@
 Contains housekeeping routines that are used to remove expired, obsolete,
 or dangling records from the database.
 """
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import division
-
 from datetime import datetime, timedelta
 
 import sqlalchemy
@@ -82,7 +78,7 @@ def upgrade_severity_levels(session, severity_map):
         for i, checker_id in enumerate(severity_map)]) \
         .alias('new_severities')
 
-    checker_ids = severity_map.keys()
+    checker_ids = list(severity_map.keys())
 
     # Get checkers which has been changed.
     changed_checker_q = select([Report.checker_id, Report.severity]) \

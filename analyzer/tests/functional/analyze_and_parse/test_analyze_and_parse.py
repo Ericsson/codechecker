@@ -5,14 +5,13 @@
 # -----------------------------------------------------------------------------
 
 """This module tests the CodeChecker 'analyze' and 'parse' feature."""
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import glob
 import json
 import os
 import re
+import shlex
 import shutil
 import subprocess
 import unittest
@@ -50,10 +49,10 @@ class AnalyzeParseTestCaseMeta(type):
         return type.__new__(mcs, name, bases, test_dict)
 
 
-class AnalyzeParseTestCase(unittest.TestCase):
+class AnalyzeParseTestCase(
+        unittest.TestCase,
+        metaclass=AnalyzeParseTestCaseMeta):
     """This class tests the CodeChecker 'analyze' and 'parse' feature."""
-
-    __metaclass__ = AnalyzeParseTestCaseMeta
 
     @classmethod
     def setup_class(cls):
@@ -82,7 +81,9 @@ class AnalyzeParseTestCase(unittest.TestCase):
             for test_file in os.listdir(test_project_path):
                 if test_file.endswith(".plist"):
                     test_file_path = os.path.join(test_project_path, test_file)
-                    with open(test_file_path, 'r+') as plist_file:
+                    with open(test_file_path, 'r+',
+                              encoding="utf-8",
+                              errors="ignore") as plist_file:
                         content = plist_file.read()
                         new_content = content.replace("$FILE_PATH$",
                                                       test_project_path)
@@ -113,7 +114,7 @@ class AnalyzeParseTestCase(unittest.TestCase):
 
         mode specifies which command prefixes to execute.
         """
-        with open(path, 'r') as ofile:
+        with open(path, 'r', encoding="utf-8", errors="ignore") as ofile:
             lines = ofile.readlines()
 
         only_dash = re.compile(r'^[-]+$')
@@ -151,7 +152,11 @@ class AnalyzeParseTestCase(unittest.TestCase):
                 command = command.replace("$WORKSPACE$", workspace)
 
                 result = subprocess.check_output(
-                    ['bash', '-c', command], env=self.env, cwd=self.test_dir)
+                    shlex.split(command),
+                    env=self.env,
+                    cwd=self.test_dir,
+                    encoding="utf-8",
+                    errors="ignore")
                 output += result.splitlines(True)
 
             post_processed_output = []

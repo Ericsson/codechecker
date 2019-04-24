@@ -102,18 +102,18 @@ test_functional: test_sqlite test_psql
 test_functional_in_env: test_sqlite_in_env test_psql_in_env
 
 test_sqlite:
-	python $(ROOT)/scripts/test/check_clang.py || exit 1;
+	python3 $(ROOT)/scripts/test/check_clang.py || exit 1;
 	$(CLEAR_WORKSPACE_CMD) && $(FUNCTIONAL_TEST_CMD)
 
 test_sqlite_in_env: venv_dev
-	python $(ROOT)/scripts/test/check_clang.py || exit 1;
+	python3 $(ROOT)/scripts/test/check_clang.py || exit 1;
 	$(ACTIVATE_DEV_VENV) && $(CLEAR_WORKSPACE_CMD) && $(FUNCTIONAL_TEST_CMD)
 
 test_psql: test_psql_psycopg2 test_psql_pg8000
 
 test_psql_in_env: test_psql_psycopg2_in_env test_psql_pg8000_in_env
 
-PSYCOPG2_TEST_CMD = python $(ROOT)/scripts/test/check_clang.py || exit 1; \
+PSYCOPG2_TEST_CMD = python3 $(ROOT)/scripts/test/check_clang.py || exit 1; \
   $(DBUNAME) $(DBPORT) $(PSYCOPG2) $(DROP_DB_CMD) && \
   $(DBUNAME) $(DBPORT) $(PSYCOPG2) $(MAKE_DB_CMD) && \
   $(CLEAR_WORKSPACE_CMD) && \
@@ -127,7 +127,7 @@ test_psql_psycopg2:
 test_psql_psycopg2_in_env: venv_dev
 	$(ACTIVATE_DEV_VENV) && $(PSYCOPG2_TEST_CMD)
 
-PG8000_TEST_CMD = python $(ROOT)/scripts/test/check_clang.py || exit 1; \
+PG8000_TEST_CMD = python3 $(ROOT)/scripts/test/check_clang.py || exit 1; \
   $(DBUNAME) $(DBPORT) $(PG8000) $(DROP_DB_CMD) && \
   $(DBUNAME) $(DBPORT) $(PG8000) $(MAKE_DB_CMD) && \
   $(CLEAR_WORKSPACE_CMD) && \

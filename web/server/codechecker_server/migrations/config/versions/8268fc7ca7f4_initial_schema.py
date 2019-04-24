@@ -5,10 +5,6 @@ Revises:
 Create Date: 2017-09-18 20:57:11.098460
 
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
-
 # revision identifiers, used by Alembic.
 revision = '8268fc7ca7f4'
 down_revision = None
@@ -48,7 +44,7 @@ def upgrade():
     sa.Column('product_id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(), nullable=False),
     sa.Column('is_group', sa.Boolean(), nullable=False),
-    sa.ForeignKeyConstraint(['product_id'], [u'products.id'], name=op.f('fk_permissions_product_product_id_products'), ondelete=u'CASCADE', initially=u"IMMEDIATE", deferrable=False),
+    sa.ForeignKeyConstraint(['product_id'], ['products.id'], name=op.f('fk_permissions_product_product_id_products'), ondelete='CASCADE', initially="IMMEDIATE", deferrable=False),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_permissions_product'))
     )
     # ### end Alembic commands ###

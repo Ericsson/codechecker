@@ -29,17 +29,11 @@ With the newer clang releases more information is available in the plist files.
     for Clang versions before v3.7
 
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
-
-import imp
-import io
+import importlib
 import os
 import sys
 import traceback
-from plistlib import PlistParser, writePlist, writePlistToString, \
-    readPlistFromString
+import plistlib
 from xml.parsers.expat import ExpatError
 
 from codechecker_common.logger import get_logger
@@ -68,20 +62,20 @@ class LXMLPlistEventHandler(object):
         return "closed!"
 
 
-class LXMLPlistParser(PlistParser):
+class LXMLPlistParser(plistlib._PlistParser):
     """
     Plist parser which uses the lxml library to parse XML data.
 
     The benefit of this library that this is faster than other libraries so it
     will improve the performance of the plist parsing.
     """
-    def __init__(self):
-        PlistParser.__init__(self)
+    def __init__(self, use_builtin_types=True, dict_type=dict):
+        plistlib._PlistParser.__init__(self, use_builtin_types, dict_type)
 
         self.event_handler = LXMLPlistEventHandler()
-        self.event_handler.start = self.handleBeginElement
-        self.event_handler.end = self.handleEndElement
-        self.event_handler.data = self.handleData
+        self.event_handler.start = self.handle_begin_element
+        self.event_handler.end = self.handle_end_element
+        self.event_handler.data = self.handle_data
 
         from lxml.etree import XMLParser
         self.parser = XMLParser(target=self.event_handler)
@@ -101,14 +95,13 @@ def parse_plist(plist_file_obj):
     otherwise use 'plistlib' library.
     """
     try:
-        imp.find_module('lxml')
+        importlib.import_module('lxml')
         parser = LXMLPlistParser()
         return parser.parse(plist_file_obj)
     except ImportError:
         LOG.debug("lxml library is not available. Use plistlib to parse plist "
                   "files.")
-        return readPlistFromString(
-            plist_file_obj.read().encode('utf8', errors='ignore'))
+    return plistlib.load(plist_file_obj)
 
 
 def get_checker_name(diagnostic, path=""):
@@ -149,9 +142,7 @@ def parse_plist_file(path, source_root=None, allow_plist_update=True):
     reports = []
     files = []
     try:
-        with io.open(path, 'r',
-                     encoding='utf-8',
-                     errors='ignore') as plist_file_obj:
+        with open(path, 'rb') as plist_file_obj:
             plist = parse_plist(plist_file_obj)
 
         files = plist['files']
@@ -159,7 +150,7 @@ def parse_plist_file(path, source_root=None, allow_plist_update=True):
         diag_changed = False
         for diag in plist['diagnostics']:
 
-            available_keys = diag.keys()
+            available_keys = list(diag.keys())
 
             main_section = {}
             for key in available_keys:
@@ -196,7 +187,7 @@ def parse_plist_file(path, source_root=None, allow_plist_update=True):
             # If the diagnostic section has changed we update the plist file.
             # This way the client will always send a plist file where the
             # report hash field is filled.
-            writePlist(plist, path)
+            plistlib.dump(plist, path)
     except (ExpatError, TypeError, AttributeError) as err:
         LOG.warning('Failed to process plist file: %s wrong file format?',
                     path)
@@ -315,8 +306,7 @@ def remove_report_from_plist(plist_file_obj, skip_handler):
         _, kept_diagnostics = fids_in_path(report_data, file_ids_to_remove)
         report_data['diagnostics'] = kept_diagnostics
 
-        res = writePlistToString(report_data)
-        return res
+        return plistlib.dumps(report_data)
 
     except KeyError:
         LOG.error("Failed to modify plist content, "
@@ -329,13 +319,10 @@ def skip_report_from_plist(plist_file, skip_handler):
     Rewrites the provided plist file where reports
     were removed if they should be skipped.
     """
-    with io.open(plist_file, 'r+',
-                 encoding='utf-8',
-                 errors='ignore') as plist:
+    new_plist_content = None
+    with open(plist_file, 'rb') as plist:
         new_plist_content = remove_report_from_plist(plist,
                                                      skip_handler)
-        if new_plist_content:
-            new_plist_content = new_plist_content.decode("utf8")
-            plist.seek(0)
+    if new_plist_content:
+        with open(plist_file, 'wb') as plist:
             plist.write(new_plist_content)
-            plist.truncate()

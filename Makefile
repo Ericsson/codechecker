@@ -7,7 +7,7 @@ VENDOR_DIR = $(CURRENT_DIR)/vendor
 CC_BUILD_DIR = $(BUILD_DIR)/CodeChecker
 CC_BUILD_BIN_DIR = $(CC_BUILD_DIR)/bin
 CC_BUILD_WEB_DIR = $(CC_BUILD_DIR)/www
-CC_BUILD_LIB_DIR = $(CC_BUILD_DIR)/lib/python2.7
+CC_BUILD_LIB_DIR = $(CC_BUILD_DIR)/lib/python3
 
 CC_WEB = $(CURRENT_DIR)/web
 CC_SERVER = $(CC_WEB)/server/
@@ -51,7 +51,7 @@ package_tu_collector: build_tu_collector package_dir_structure
 	cp -rp $(CC_TOOLS)/tu_collector/build/tu_collector/tu_collector $(CC_BUILD_LIB_DIR) && \
 	chmod u+x $(CC_BUILD_LIB_DIR)/tu_collector/tu_collector.py && \
 	cd $(CC_BUILD_DIR) && \
-	ln -sf ../lib/python2.7/tu_collector/tu_collector.py bin/tu_collector
+	ln -sf ../lib/python3/tu_collector/tu_collector.py bin/tu_collector
 
 build_report_converter:
 	$(MAKE) -C $(ROOT)/tools/report-converter build
@@ -61,7 +61,7 @@ package_report_converter: build_report_converter package_dir_structure
 	cp -rp $(CC_TOOLS)/report-converter/build/report_converter/codechecker_report_converter $(CC_BUILD_LIB_DIR) && \
 	chmod u+x $(CC_BUILD_LIB_DIR)/codechecker_report_converter/cli.py && \
 	cd $(CC_BUILD_DIR) && \
-	ln -sf ../lib/python2.7/codechecker_report_converter/cli.py bin/report-converter
+	ln -sf ../lib/python3/codechecker_report_converter/cli.py bin/report-converter
 
 package: package_dir_structure set_git_commit_template package_plist_to_html package_tu_collector package_report_converter
 	BUILD_DIR=$(BUILD_DIR) BUILD_LOGGER_64_BIT_ONLY=$(BUILD_LOGGER_64_BIT_ONLY) $(MAKE) -C $(CC_ANALYZER) package_analyzer
@@ -111,17 +111,17 @@ standalone_package: venv package
 
 venv:
 	# Create a virtual environment which can be used to run the build package.
-	virtualenv -p python2 venv && \
+	virtualenv -p python3 venv && \
 		$(ACTIVATE_RUNTIME_VENV) && \
-		pip install -r $(CC_ANALYZER)/requirements.txt && \
-		pip install -r $(CC_WEB)/requirements.txt
+		pip3 install -r $(CC_ANALYZER)/requirements.txt && \
+		pip3 install -r $(CC_WEB)/requirements.txt
 
 venv_osx:
 	# Create a virtual environment which can be used to run the build package.
-	virtualenv -p python2.7 venv && \
+	virtualenv -p python3 venv && \
 		$(ACTIVATE_RUNTIME_VENV) && \
-		pip install -r $(CC_ANALYZER)/requirements_py/osx/requirements.txt && \
-		pip install -r $(CC_WEB)/requirements_py/osx/requirements.txt
+		pip3 install -r $(CC_ANALYZER)/requirements_py/osx/requirements.txt && \
+		pip3 install -r $(CC_WEB)/requirements_py/osx/requirements.txt
 
 clean_venv:
 	rm -rf venv
@@ -136,7 +136,7 @@ pip_dev_deps:
 
 venv_dev:
 	# Create a virtual environment for development.
-	virtualenv -p python2 venv_dev && \
+	virtualenv -p python3 venv_dev && \
 		$(ACTIVATE_DEV_VENV) && $(PIP_DEV_DEPS_CMD)
 
 clean_venv_dev:

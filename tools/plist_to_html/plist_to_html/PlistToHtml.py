@@ -1,15 +1,12 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -------------------------------------------------------------------------
 #                     The CodeChecker Infrastructure
 #   This file is distributed under the University of Illinois Open Source
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
 
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 import argparse
-import io
 import json
 import os
 import plistlib
@@ -28,7 +25,7 @@ def get_last_mod_time(file_path):
 
 
 def get_file_content(filename):
-    with io.open(filename, 'r', encoding='UTF-8', errors='replace') as f:
+    with open(filename, 'r', encoding='utf-8', errors='replace') as f:
         return f.read()
 
 
@@ -139,8 +136,8 @@ class HtmlBuilder(object):
 
         content = self._layout.substitute(substitute_data)
 
-        with io.open(output_path, 'w+', encoding='UTF-8',
-                     errors='replace') as html_output:
+        with open(output_path, 'w+', encoding='utf-8',
+                  errors='replace') as html_output:
             html_output.write(content)
 
     def create_index_html(self, output_dir):
@@ -205,8 +202,8 @@ class HtmlBuilder(object):
 
         content = self._index.substitute(substitute_data)
         output_path = os.path.join(output_dir, 'index.html')
-        with io.open(output_path, 'w+', encoding='UTF-8',
-                     errors='replace') as html_output:
+        with open(output_path, 'w+', encoding='utf-8',
+                  errors='replace') as html_output:
             html_output.write(content)
 
     def create_statistics_html(self, output_dir):
@@ -246,8 +243,8 @@ class HtmlBuilder(object):
         content = self._statistics.substitute(substitute_data)
 
         output_path = os.path.join(output_dir, 'statistics.html')
-        with io.open(output_path, 'w+', encoding='UTF-8',
-                     errors='ignore') as html_output:
+        with open(output_path, 'w+', encoding='utf-8',
+                  errors='ignore') as html_output:
             html_output.write(content)
 
         print("\n----==== Summary ====----")
@@ -284,8 +281,8 @@ def get_report_data_from_plist(plist, skip_report_handler=None,
         """
         if file_id not in file_sources:
             file_path = files[file_id]
-            with io.open(file_path, 'r', encoding='UTF-8',
-                         errors='ignore') as source_data:
+            with open(file_path, 'r', encoding='utf-8',
+                      errors='ignore') as source_data:
                 # trim path prefixes after file loading
                 if trim_path_prefixes_handler:
                     file_path = trim_path_prefixes_handler(file_path)
@@ -369,7 +366,9 @@ def plist_to_html(file_path, output_path, html_builder,
 
     print("\nParsing input file '" + file_path + "'")
     try:
-        plist = plistlib.readPlist(file_path)
+        plist = {}
+        with open(file_path, 'rb') as plist_file:
+            plist = plistlib.load(plist_file)
 
         report_data = get_report_data_from_plist(plist,
                                                  skip_report_handler,

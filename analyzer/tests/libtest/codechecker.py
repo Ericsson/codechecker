@@ -6,9 +6,7 @@
 """
 Helper commands to run CodeChecker in the tests easier.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import os
 import shlex
@@ -21,32 +19,37 @@ def call_command(cmd, cwd, env):
     """
     Execute a process in a test case.  If the run is successful do not bloat
     the test output, but in case of any failure dump stdout and stderr.
-    Returns the utf decoded (stdout, stderr) pair of strings.
+    Returns (stdout, stderr) pair of strings.
     """
     def show(out, err):
         print("\nTEST execute stdout:\n")
-        print(out.decode("utf-8"))
+        print(out)
         print("\nTEST execute stderr:\n")
-        print(err.decode("utf-8"))
+        print(err)
     try:
-        proc = subprocess.Popen(cmd,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE,
-                                cwd=cwd, env=env)
+        proc = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=cwd,
+            env=env,
+            encoding="utf-8",
+            errors="ignore")
         out, err = proc.communicate()
         if proc.returncode != 0:
             show(out, err)
             print('Unsuccessful run: "' + ' '.join(cmd) + '"')
+            print(proc.returncode)
             raise Exception("Unsuccessful run of command.")
-        return out.decode("utf-8"), err.decode("utf-8")
-    except OSError:
+        return out, err
+    except OSError as oerr:
+        print(oerr)
         show(out, err)
         print('Failed to run: "' + ' '.join(cmd) + '"')
         raise
 
 
 def log_and_analyze(codechecker_cfg, test_project_path, clean_project=True):
-
     """
     Analyze a test project.
 
@@ -83,22 +86,30 @@ def log_and_analyze(codechecker_cfg, test_project_path, clean_project=True):
     analyze_cmd.extend(codechecker_cfg['checkers'])
     try:
         print("LOG: " + ' '.join(log_cmd))
-        proc = subprocess.Popen(shlex.split(' '.join(log_cmd)),
-                                cwd=test_project_path,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE,
-                                env=codechecker_cfg['check_env'])
+        proc = subprocess.Popen(
+            shlex.split(
+                ' '.join(log_cmd)),
+            cwd=test_project_path,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            env=codechecker_cfg['check_env'],
+            encoding="utf-8",
+            errors="ignore")
         out, err = proc.communicate()
         print(out)
         print(err)
 
         print("ANALYZE:")
         print(shlex.split(' '.join(analyze_cmd)))
-        proc = subprocess.Popen(shlex.split(' '.join(analyze_cmd)),
-                                cwd=test_project_path,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE,
-                                env=codechecker_cfg['check_env'])
+        proc = subprocess.Popen(
+            shlex.split(
+                ' '.join(analyze_cmd)),
+            cwd=test_project_path,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            env=codechecker_cfg['check_env'],
+            encoding="utf-8",
+            errors="ignore")
         out, err = proc.communicate()
         print(out)
         print(err)

@@ -5,9 +5,7 @@
 # -----------------------------------------------------------------------------
 
 """ Test the log parser which builds build actions from JSON CCDBs. """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import json
 import os
@@ -40,7 +38,8 @@ class LogParserTest(unittest.TestCase):
         cls.rsp_file_path = os.path.join(cls.tmp_dir, "main.rsp")
         cls.compile_command_file_path = os.path.join(cls.tmp_dir,
                                                      "compile_command.json")
-        with open(cls.src_file_path, "w") as src_file:
+        with open(cls.src_file_path, "w",
+                  encoding="utf-8", errors="ignore") as src_file:
             src_file.write("int main() { return 0; }")
 
     @classmethod
@@ -433,7 +432,8 @@ class LogParserTest(unittest.TestCase):
         Test simple response file where the source file comes outside the
         response file.
         """
-        with open(self.compile_command_file_path, "w") as build_json:
+        with open(self.compile_command_file_path, "w",
+                  encoding="utf-8", errors="ignore") as build_json:
             build_json.write(json.dumps([dict(
                 directory=self.tmp_dir,
                 command="g++ {0} @{1}".format(self.src_file_path,
@@ -441,7 +441,8 @@ class LogParserTest(unittest.TestCase):
                 file=self.src_file_path
             )]))
 
-        with open(self.rsp_file_path, "w") as rsp_file:
+        with open(self.rsp_file_path, "w",
+                  encoding="utf-8", errors="ignore") as rsp_file:
             rsp_file.write("""-DVARIABLE="some value" """)
 
         logfile = os.path.join(self.compile_command_file_path)
@@ -456,14 +457,16 @@ class LogParserTest(unittest.TestCase):
         """
         Test response file where the source file comes from the response file.
         """
-        with open(self.compile_command_file_path, "w") as build_json:
+        with open(self.compile_command_file_path, "w",
+                  encoding="utf-8", errors="ignore") as build_json:
             build_json.write(json.dumps([dict(
                 directory=self.tmp_dir,
                 command="g++ @{0}".format(self.rsp_file_path),
                 file="@{0}".format(self.rsp_file_path)
             )]))
 
-        with open(self.rsp_file_path, "w") as rsp_file:
+        with open(self.rsp_file_path, "w",
+                  encoding="utf-8", errors="ignore") as rsp_file:
             rsp_file.write("""-DVARIABLE="some value" {0}""".format(
                 self.src_file_path))
 
@@ -482,7 +485,8 @@ class LogParserTest(unittest.TestCase):
         Test response file where multiple source files come from the response
         file.
         """
-        with open(self.compile_command_file_path, "w") as build_json:
+        with open(self.compile_command_file_path, "w",
+                  encoding="utf-8", errors="ignore") as build_json:
             build_json.write(json.dumps([dict(
                 directory=self.tmp_dir,
                 command="g++ @{0}".format(self.rsp_file_path),
@@ -490,14 +494,17 @@ class LogParserTest(unittest.TestCase):
             )]))
 
         a_file_path = os.path.join(self.tmp_dir, "a.cpp")
-        with open(a_file_path, "w") as src_file:
+        with open(a_file_path, "w",
+                  encoding="utf-8", errors="ignore") as src_file:
             src_file.write("int main() { return 0; }")
 
         b_file_path = os.path.join(self.tmp_dir, "b.cpp")
-        with open(b_file_path, "w") as src_file:
+        with open(b_file_path, "w",
+                  encoding="utf-8", errors="ignore") as src_file:
             src_file.write("void foo() {}")
 
-        with open(self.rsp_file_path, "w") as rsp_file:
+        with open(self.rsp_file_path, "w",
+                  encoding="utf-8", errors="ignore") as rsp_file:
             rsp_file.write("""-DVARIABLE="some value" {0} {1}""".format(
                 a_file_path, b_file_path))
 

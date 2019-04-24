@@ -8,9 +8,7 @@
 This module defines the list of permissions of a CodeChecker server, and
 provides the handling of permission matching and databases.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 from abc import ABCMeta
 from abc import abstractmethod
@@ -25,12 +23,10 @@ LOG = get_logger('server')
 config_db_model = None  # Module will be loaded later...
 
 
-class Permission(object):
+class Permission(object, metaclass=ABCMeta):
     """
     The base class for a permission declaration.
     """
-
-    __metaclass__ = ABCMeta
 
     def __init__(self, name, default_enable=True,
                  inherited_from=None, managed_by=None, manages_self=False):
@@ -106,13 +102,11 @@ class Permission(object):
         pass
 
 
-class PermissionHandler(object):
+class PermissionHandler(object, metaclass=ABCMeta):
     """
     The abstract base class for an object that interfaces with the permission
     database to query and manage permissions.
     """
-
-    __metaclass__ = ABCMeta
 
     def __init__(self, permission):
         """

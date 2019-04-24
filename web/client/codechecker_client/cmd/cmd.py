@@ -7,9 +7,7 @@
 The CodeChechecker command-line client can be used to view information about
 analysis reports found on a running viewer 'server' from a command-line.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import argparse
 import getpass
@@ -68,7 +66,7 @@ def valid_time(t):
     """
 
     try:
-        parts = map(int, t.split(':'))
+        parts = list(map(int, t.split(':')))
         parts = parts + [0] * (6 - len(parts))
         year, month, day, hour, minute, second = parts
         return datetime.datetime(year, month, day, hour, minute, second)
@@ -994,7 +992,7 @@ def __register_runs(parser):
                             "midnight (00:00:00) is used).")
 
     # Get available sort types.
-    sort_type_values = ttypes.RunSortType._NAMES_TO_VALUES.values()
+    sort_type_values = list(ttypes.RunSortType._NAMES_TO_VALUES.values())
     sort_types = [cmd_line_client.run_sort_type_str(s)
                   for s in sort_type_values]
 
@@ -1010,11 +1008,11 @@ def __register_runs(parser):
                         help="Sort run data by this column.")
 
     # Get available order types.
-    order_type_names = ttypes.Order._NAMES_TO_VALUES.keys()
+    order_type_names = list(ttypes.Order._NAMES_TO_VALUES.keys())
     order_types = [s.lower() for s in order_type_names]
 
     # Set 'desc' as a default order type.
-    order_type_values = ttypes.Order._NAMES_TO_VALUES.values()
+    order_type_values = list(ttypes.Order._NAMES_TO_VALUES.values())
     default_order_type = order_types[
         order_type_values.index(ttypes.Order.DESC)]
 

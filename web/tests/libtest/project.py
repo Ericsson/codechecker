@@ -6,9 +6,7 @@
 """
 Test project helpers.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import fnmatch
 import json
@@ -51,7 +49,7 @@ def get_info(test_project):
     test_proj_cfg = os.path.join(os.path.realpath(path(test_project)),
                                  'project_info.json')
     project_info = \
-        json.load(open(test_proj_cfg))
+        json.load(open(test_proj_cfg, encoding="utf-8", errors="ignore"))
     return project_info
 
 
@@ -79,11 +77,14 @@ def clean(test_project, environment=None):
         return 0
     try:
         print(clean_cmd)
-        proc = subprocess.Popen(shlex.split(clean_cmd),
-                                cwd=project_path,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE,
-                                env=environment)
+        proc = subprocess.Popen(
+            shlex.split(clean_cmd),
+            cwd=project_path,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            env=environment,
+            encoding="utf-8",
+            errors="ignore")
         _, _ = proc.communicate()
         return 0
     except subprocess.CalledProcessError as cerr:
@@ -96,9 +97,9 @@ def insert_suppression(source_file_name):
     An insert_suppress_here comment in the source file will be replaced
     by a suppress comment.
     """
-    with open(source_file_name, 'r') as f:
+    with open(source_file_name, 'r', encoding="utf-8", errors="ignore") as f:
         content = f.read()
     content = content.replace("insert_suppress_here",
                               "codechecker_suppress [all] test suppression!")
-    with open(source_file_name, 'w') as f:
+    with open(source_file_name, 'w', encoding="utf-8", errors="ignore") as f:
         f.write(content)

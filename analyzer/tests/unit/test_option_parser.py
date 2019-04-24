@@ -5,9 +5,7 @@
 # -----------------------------------------------------------------------------
 
 """ Test the option parsing and filtering form the compilation commands. """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import os
 import shlex
@@ -43,7 +41,7 @@ class OptionParserTest(unittest.TestCase):
         self.assertFalse("-fno-merge-const-bfstores" in res.analyzer_options)
         self.assertTrue('main.cpp' == res.source)
         self.assertTrue(BuildAction.COMPILE, res.action_type)
-        self.assertEquals(0, len(res.analyzer_options))
+        self.assertEqual(0, len(res.analyzer_options))
 
     @unittest.skipIf(clangsa.version.get("g++") is not None,
                      "If gcc or g++ is a symlink to clang this test should be "
@@ -61,7 +59,7 @@ class OptionParserTest(unittest.TestCase):
         res = log_parser.parse_options(action)
         print(res)
         self.assertTrue('main.cpp' == res.source)
-        self.assertEquals(BuildAction.COMPILE, res.action_type)
+        self.assertEqual(BuildAction.COMPILE, res.action_type)
 
     def test_compile_onefile(self):
         """
@@ -75,7 +73,7 @@ class OptionParserTest(unittest.TestCase):
         res = log_parser.parse_options(action)
         print(res)
         self.assertTrue('main.cpp' == res.source)
-        self.assertEquals(BuildAction.COMPILE, res.action_type)
+        self.assertEqual(BuildAction.COMPILE, res.action_type)
 
     def test_preprocess_onefile(self):
         """
@@ -204,7 +202,7 @@ class OptionParserTest(unittest.TestCase):
             'directory': ''}
         res = log_parser.parse_options(action)
         print(res)
-        self.assertEquals(BuildAction.LINK, res.action_type)
+        self.assertEqual(BuildAction.LINK, res.action_type)
 
     @unittest.skipIf(clangsa.version.get("g++") is not None,
                      "If gcc or g++ is a symlink to clang this test should be "
@@ -479,13 +477,12 @@ class OptionParserTest(unittest.TestCase):
         # In this test we assume that there will always be an "include-fixed"
         # directory among the implicit include paths. Otherwise this test may
         # fail.
-
         res = log_parser.parse_options(action, keep_gcc_include_fixed=False)
-        self.assertFalse(any(map(lambda x: x.endswith('include-fixed'),
-                                 res.compiler_includes['c++'])))
+        self.assertFalse(any([x.endswith('include-fixed')
+                              for x in res.compiler_includes['c++']]))
         res = log_parser.parse_options(action, keep_gcc_include_fixed=True)
-        self.assertTrue(any(map(lambda x: x.endswith('include-fixed'),
-                                res.compiler_includes['c++'])))
+        self.assertTrue(any([x.endswith('include-fixed')
+                             for x in res.compiler_includes['c++']]))
 
     def test_compiler_intrin_headers(self):
         """ Include directories with *intrin.h files should be skipped."""
@@ -506,11 +503,11 @@ class OptionParserTest(unittest.TestCase):
 
             res = log_parser.parse_options(action, keep_gcc_intrin=False)
             print(res)
-            self.assertEquals(len(res.analyzer_options), 1)
+            self.assertEqual(len(res.analyzer_options), 1)
             self.assertIn("-I/usr/include", res.analyzer_options)
 
             res = log_parser.parse_options(action, keep_gcc_intrin=True)
-            self.assertEquals(include_dirs, res.analyzer_options)
+            self.assertEqual(include_dirs, res.analyzer_options)
 
     @unittest.skipIf(clangsa.version.get("g++") is not None,
                      "If gcc or g++ is a symlink to clang this test should be "
@@ -547,7 +544,8 @@ class OptionParserTest(unittest.TestCase):
 
         with tempfile.NamedTemporaryFile(
                 mode='w',
-                suffix='.json') as info_file_tmp:
+                suffix='.json',
+                encoding='utf-8') as info_file_tmp:
 
             info_file_tmp.write('''{
   "g++": {

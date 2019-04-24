@@ -6,9 +6,7 @@
 """
 Test source-code level suppression data writing to suppress file.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import logging
 import os
@@ -33,7 +31,7 @@ def call_cmd(command, cwd, env):
             cwd=cwd,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            env=env)
+            env=env, encoding="utf-8", errors="ignore")
         out, err = proc.communicate()
         print(out)
         print(err)
@@ -112,8 +110,8 @@ class TestSuppress(unittest.TestCase):
                       str(runid))
 
         hash_to_suppress_msgs = {}
-        with open(os.path.join(self._test_project_path,
-                               "suppress.expected"), 'r') as expected:
+        with open(os.path.join(self._test_project_path, "suppress.expected"),
+                  'r', encoding="utf-8", errors="ignore") as expected:
             for line in expected:
                 src_code_info = line.strip().split('||')
 

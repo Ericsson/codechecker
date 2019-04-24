@@ -6,9 +6,7 @@
 """
 Test source-code level suppression data writing to suppress file.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import os
 import shlex
@@ -26,7 +24,7 @@ def call_cmd(command, cwd, env):
             cwd=cwd,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            env=env)
+            env=env, encoding="utf-8", errors="ignore")
         out, err = proc.communicate()
         print(out)
         print(err)
@@ -68,9 +66,12 @@ class TestSuppress(unittest.TestCase):
                        env.test_env(self._test_workspace))
         self.assertEqual(ret, 0, "Failed to generate suppress file.")
 
-        with open(generated_file, 'r') as generated:
-            with open(os.path.join(self._test_project_path,
-                      "suppress.expected"), 'r') as expected:
+        with open(generated_file, 'r',
+                  encoding='utf-8', errors='ignore') as generated:
+            expected_file = os.path.join(self._test_project_path,
+                                         "suppress.expected")
+            with open(expected_file, 'r', encoding='utf-8',
+                      errors='ignore') as expected:
                 generated_content = generated.read()
                 expected_content = expected.read()
                 print("generated")

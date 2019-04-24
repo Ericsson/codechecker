@@ -6,9 +6,7 @@
 """
 Contains functions to format and pretty-print data from two-dimensional arrays.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import json
 from operator import itemgetter

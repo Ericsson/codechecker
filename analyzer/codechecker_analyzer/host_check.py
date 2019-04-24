@@ -6,9 +6,7 @@
 """
 Check static analyzer and features on the host machine.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import errno
 import re
@@ -27,10 +25,13 @@ def check_clang(compiler_bin, env):
     clang_version_cmd = [compiler_bin, '--version']
     LOG.debug_analyzer(' '.join(clang_version_cmd))
     try:
-        res = subprocess.call(clang_version_cmd,
-                              env=env,
-                              stdout=subprocess.PIPE,
-                              stderr=subprocess.PIPE)
+        res = subprocess.call(
+            clang_version_cmd,
+            env=env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            encoding="utf-8",
+            errors="ignore")
         if not res:
             return True
 
@@ -54,7 +55,7 @@ def has_analyzer_config_option(clang_bin, config_option_name, env=None):
         proc = subprocess.Popen(cmd,
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE,
-                                env=env)
+                                env=env, encoding="utf-8", errors="ignore")
         out, err = proc.communicate()
         LOG.debug("stdout:\n%s", out)
         LOG.debug("stderr:\n%s", err)
@@ -73,7 +74,7 @@ def has_analyzer_option(clang_bin, feature, env=None):
     """Test if the analyzer has a specific option.
 
     Testing a feature is done by compiling a dummy file."""
-    with tempfile.NamedTemporaryFile() as inputFile:
+    with tempfile.NamedTemporaryFile("w", encoding='utf-8') as inputFile:
         inputFile.write("void foo(){}")
         inputFile.flush()
         cmd = [clang_bin, "-x", "c", "--analyze"]
@@ -85,7 +86,7 @@ def has_analyzer_option(clang_bin, feature, env=None):
             proc = subprocess.Popen(cmd,
                                     stdout=subprocess.PIPE,
                                     stderr=subprocess.PIPE,
-                                    env=env)
+                                    env=env, encoding="utf-8", errors="ignore")
             out, err = proc.communicate()
             LOG.debug("stdout:\n%s", out)
             LOG.debug("stderr:\n%s", err)
@@ -107,11 +108,14 @@ def get_resource_dir(clang_bin, context, env=None):
     cmd = [clang_bin, "-print-resource-dir"]
     LOG.debug('run: "%s"', ' '.join(cmd))
     try:
-        proc = subprocess.Popen(cmd,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE,
-                                env=env,
-                                universal_newlines=True)
+        proc = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            env=env,
+            universal_newlines=True,
+            encoding="utf-8",
+            errors="ignore")
         out, err = proc.communicate()
 
         LOG.debug("stdout:\n%s", out)

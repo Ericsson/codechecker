@@ -8,11 +8,8 @@
 """
 Test product management related features.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
 
-import base64
+
 from copy import deepcopy
 import os
 import unittest
@@ -21,6 +18,8 @@ from codechecker_api_shared.ttypes import RequestFailed
 from codechecker_api_shared.ttypes import DBStatus
 from codechecker_api.ProductManagement_v6.ttypes import ProductConfiguration
 from codechecker_api.ProductManagement_v6.ttypes import DatabaseConnection
+
+from codechecker_web.shared import convert
 
 from libtest import env
 
@@ -77,7 +76,7 @@ class TestProducts(unittest.TestCase):
         """
         Test the server prohibiting the addition of bogus product configs.
         """
-        error = base64.b64encode("bogus")
+        error = convert.to_b64("bogus")
         product_cfg = ProductConfiguration(
             displayedName_b64=error,
             description_b64=error
@@ -160,7 +159,7 @@ class TestProducts(unittest.TestCase):
                       "The product's database (name|file) should contain "
                       "the product's endpoint -- in the test context.")
 
-        name = base64.b64decode(pr_conf.displayedName_b64) \
+        name = convert.from_b64(pr_conf.displayedName_b64) \
             if pr_conf.displayedName_b64 else ''
         self.assertEqual(name,
                          # libtest/codechecker.py uses the workspace's name.
@@ -180,7 +179,7 @@ class TestProducts(unittest.TestCase):
 
         old_name = config.displayedName_b64
 
-        new_name = base64.b64encode("edited product name")
+        new_name = convert.to_b64("edited product name")
         config.displayedName_b64 = new_name
         with self.assertRaises(RequestFailed):
             self._pr_client.editProduct(product_id, config)

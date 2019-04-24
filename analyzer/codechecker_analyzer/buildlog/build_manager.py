@@ -6,9 +6,7 @@
 """
 Build and log related functionality.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import os
 import pickle
@@ -30,14 +28,17 @@ def execute_buildcmd(command, silent=False, env=None, cwd=None):
     Execute the the build command and continuously write
     the output from the process to the standard output.
     """
-    proc = subprocess.Popen(command,
-                            bufsize=-1,
-                            env=env,
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.STDOUT,
-                            cwd=cwd,
-                            shell=True,
-                            universal_newlines=True)
+    proc = subprocess.Popen(
+        command,
+        bufsize=-1,
+        env=env,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        cwd=cwd,
+        shell=True,
+        universal_newlines=True,
+        encoding="utf-8",
+        errors="ignore")
 
     while True:
         line = proc.stdout.readline()
@@ -84,7 +85,8 @@ def perform_build_command(logfile, command, context, keep_link, silent=False):
         # TODO: better platform detection.
         if platform.system() == 'Linux':
             LOG.debug_analyzer("with ld logger ...")
-            open(logfile, 'a').close()  # Same as linux's touch.
+            # Same as linux's touch.
+            open(logfile, 'a', encoding="utf-8", errors="ignore").close()
             log_env = env.get_log_env(logfile, context, original_env)
             if 'CC_LOGGER_GCC_LIKE' not in log_env:
                 log_env['CC_LOGGER_GCC_LIKE'] = 'gcc:g++:clang:clang++:cc:c++'

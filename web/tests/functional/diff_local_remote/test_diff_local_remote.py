@@ -10,9 +10,7 @@
 Tests for the diff feature when comparing a local report directory
 with a remote run in the database.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import json
 import os
@@ -59,10 +57,15 @@ class LocalRemote(unittest.TestCase):
         self._env = self._test_cfg['codechecker_cfg']['check_env']
 
     def run_cmd(self, diff_cmd):
+        diff_cmd.extend(["--verbose", "debug"])
+
         print(diff_cmd)
-        out = subprocess.check_output(diff_cmd,
-                                      env=self._env,
-                                      cwd=os.environ['TEST_WORKSPACE'])
+        out = subprocess.check_output(
+            diff_cmd,
+            env=self._env,
+            cwd=os.environ['TEST_WORKSPACE'],
+            encoding="utf-8",
+            errors="ignore")
         print(out)
         return out
 
@@ -88,9 +91,12 @@ class LocalRemote(unittest.TestCase):
             diff_cmd.extend(extra_args)
 
         print(diff_cmd)
-        out = subprocess.check_output(diff_cmd,
-                                      env=self._env,
-                                      cwd=os.environ['TEST_WORKSPACE'])
+        out = subprocess.check_output(
+            diff_cmd,
+            env=self._env,
+            cwd=os.environ['TEST_WORKSPACE'],
+            encoding="utf-8",
+            errors="ignore")
         print(out)
         return out
 
@@ -271,12 +277,17 @@ class LocalRemote(unittest.TestCase):
                     "-b", base_run_name,
                     "-n", self._local_reports,
                     "-o", "html",
-                    "-e", html_reports
+                    "-e", html_reports,
+                    "--verbose", "debug"
                     ]
 
         print(diff_cmd)
-        out = subprocess.check_output(diff_cmd, env=self._env,
-                                      cwd=os.environ['TEST_WORKSPACE'])
+        out = subprocess.check_output(
+            diff_cmd,
+            env=self._env,
+            cwd=os.environ['TEST_WORKSPACE'],
+            encoding="utf-8",
+            errors="ignore")
         print(out)
 
         diff_res = json.loads(self.get_local_remote_diff(['-o', 'json']))
@@ -316,8 +327,12 @@ class LocalRemote(unittest.TestCase):
                     "--url", self._url]
 
         with self.assertRaises(subprocess.CalledProcessError):
-            subprocess.check_output(diff_cmd, env=self._env,
-                                    cwd=os.environ['TEST_WORKSPACE'])
+            subprocess.check_output(
+                diff_cmd,
+                env=self._env,
+                cwd=os.environ['TEST_WORKSPACE'],
+                encoding="utf-8",
+                errors="ignore")
 
     def test_different_newname_types(self):
         """ Test different newname types.
@@ -334,5 +349,9 @@ class LocalRemote(unittest.TestCase):
                     "--url", self._url]
 
         with self.assertRaises(subprocess.CalledProcessError):
-            subprocess.check_output(diff_cmd, env=self._env,
-                                    cwd=os.environ['TEST_WORKSPACE'])
+            subprocess.check_output(
+                diff_cmd,
+                env=self._env,
+                cwd=os.environ['TEST_WORKSPACE'],
+                encoding="utf-8",
+                errors="ignore")

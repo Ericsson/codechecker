@@ -6,9 +6,7 @@
 # -----------------------------------------------------------------------------
 
 """ statistics collector feature test.  """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import os
 import unittest
@@ -131,8 +129,8 @@ class TestSkeleton(unittest.TestCase):
         print(stat_files)
         self.assertIn('SpecialReturn.yaml', stat_files)
         self.assertIn('UncheckedReturn.yaml', stat_files)
-        with open(os.path.join(stats_dir,
-                               'UncheckedReturn.yaml'), 'r') as statfile:
+        with open(os.path.join(stats_dir, 'UncheckedReturn.yaml'), 'r',
+                  encoding="utf-8", errors="ignore") as statfile:
             unchecked_stats = statfile.read()
         self.assertIn("c:@F@readFromFile#*1C#*C#", unchecked_stats)
 

@@ -20,9 +20,7 @@ Example configuration for PAM based authentication.
 }
 
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import pam
 import grp

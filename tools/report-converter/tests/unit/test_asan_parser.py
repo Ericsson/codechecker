@@ -8,9 +8,7 @@
 This module tests the correctness of the OutputParser and PListConverter, which
 used in sequence transform AddressSanitizer output to a plist file.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import os
 import plistlib
@@ -56,12 +54,12 @@ class ASANAnalyzerResultTestCase(unittest.TestCase):
         """ Test for the asan.plist file. """
         self.analyzer_result.transform('asan.out', self.cc_result_dir)
 
-        with open('asan.plist') as pfile:
-            exp = plistlib.readPlist(pfile)
+        with open('asan.plist', mode='rb') as pfile:
+            exp = plistlib.load(pfile)
 
         plist_file = os.path.join(self.cc_result_dir, 'asan.cpp_asan.plist')
-        with open(plist_file) as pfile:
-            res = plistlib.readPlist(pfile)
+        with open(plist_file, mode='rb') as pfile:
+            res = plistlib.load(pfile)
 
             # Use relative path for this test.
             res['files'][0] = 'files/asan.cpp'

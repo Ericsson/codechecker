@@ -6,9 +6,7 @@
 """
 Temporary directory module.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import datetime
 import hashlib
@@ -55,7 +53,7 @@ def get_tmp_dir_hash():
     data = str(pid) + str(time)
 
     dir_hash = hashlib.md5()
-    dir_hash.update(data)
+    dir_hash.update(data.encode("utf-8"))
 
     LOG.debug('The generated temporary directory hash is %s.',
               dir_hash.hexdigest())

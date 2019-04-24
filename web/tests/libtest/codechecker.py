@@ -6,9 +6,7 @@
 """
 Helper commands to run CodeChecker in the tests easier.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import json
 import multiprocessing
@@ -36,24 +34,28 @@ def call_command(cmd, cwd, env):
     """
     Execute a process in a test case.  If the run is successful do not bloat
     the test output, but in case of any failure dump stdout and stderr.
-    Returns the utf decoded (stdout, stderr) pair of strings.
+    Returns (stdout, stderr) pair of strings.
     """
     def show(out, err):
         print("\nTEST execute stdout:\n")
-        print(out.decode("utf-8"))
+        print(out)
         print("\nTEST execute stderr:\n")
-        print(err.decode("utf-8"))
+        print(err)
     try:
-        proc = subprocess.Popen(cmd,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE,
-                                cwd=cwd, env=env)
+        proc = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=cwd,
+            env=env,
+            encoding="utf-8",
+            errors="ignore")
         out, err = proc.communicate()
         if proc.returncode != 0:
             show(out, err)
             print('Unsuccessful run: "' + ' '.join(cmd) + '"')
             raise Exception("Unsuccessful run of command.")
-        return out.decode("utf-8"), err.decode("utf-8")
+        return out, err
     except OSError:
         show(out, err)
         print('Failed to run: "' + ' '.join(cmd) + '"')
@@ -86,7 +88,8 @@ def login(codechecker_cfg, test_project_path, username, password,
     print("Logging in")
     port = str(codechecker_cfg['viewer_port'])
     login_cmd = ['CodeChecker', 'cmd', 'login', username,
-                 '--url', protocol + '://' + 'localhost:' + port]
+                 '--url', protocol + '://' + 'localhost:' + port,
+                 '--verbose', 'debug']
 
     auth_creds = {'client_autologin': True,
                   'credentials': {}}
@@ -94,15 +97,18 @@ def login(codechecker_cfg, test_project_path, username, password,
     if not os.path.exists(auth_file):
         # Create a default authentication file for the user, which has
         # proper structure.
-        with open(auth_file, 'w') as outfile:
+        with open(auth_file, 'w',
+                  encoding="utf-8", errors="ignore") as outfile:
             json.dump(auth_creds, outfile)
     else:
-        with open(auth_file, 'r') as infile:
+        with open(auth_file, 'r',
+                  encoding="utf-8", errors="ignore") as infile:
             auth_creds = json.load(infile)
 
     # Write the new credentials to the file and save it.
     auth_creds['credentials']['localhost:' + port] = username + ':' + password
-    with open(auth_file, 'w') as outfile:
+    with open(auth_file, 'w',
+              encoding="utf-8", errors="ignore") as outfile:
         json.dump(auth_creds, outfile)
         print("Added '" + username + ':' + password + "' to credentials file.")
 
@@ -110,14 +116,18 @@ def login(codechecker_cfg, test_project_path, username, password,
 
     try:
         print(' '.join(login_cmd))
-        out = subprocess.call(shlex.split(' '.join(login_cmd)),
-                              cwd=test_project_path,
-                              env=codechecker_cfg['check_env'])
+        out = subprocess.call(
+            shlex.split(
+                ' '.join(login_cmd)),
+            cwd=test_project_path,
+            env=codechecker_cfg['check_env'],
+            encoding="utf-8",
+            errors="ignore")
         print(out)
         return 0
     except OSError as cerr:
         print("Failed to call:\n" + ' '.join(login_cmd))
-        print(str(cerr.errno) + ' ' + cerr.message)
+        print(str(cerr.errno) + ' ' + cerr.strerror)
         return cerr.errno
 
 
@@ -135,13 +145,15 @@ def logout(codechecker_cfg, test_project_path, protocol='http'):
     auth_file = os.path.join(test_project_path, ".codechecker.passwords.json")
     if os.path.exists(auth_file):
         # Remove the credentials associated with the throw-away test server.
-        with open(auth_file, 'r') as infile:
+        with open(auth_file, 'r',
+                  encoding="utf-8", errors="ignore") as infile:
             auth_creds = json.load(infile)
 
         try:
             del auth_creds['credentials']['localhost:' + port]
 
-            with open(auth_file, 'w') as outfile:
+            with open(auth_file, 'w',
+                      encoding="utf-8", errors="ignore") as outfile:
                 json.dump(auth_creds, outfile)
                 print("Removed credentials from 'localhost:" + port + "'.")
         except KeyError:
@@ -152,14 +164,18 @@ def logout(codechecker_cfg, test_project_path, protocol='http'):
 
     try:
         print(' '.join(logout_cmd))
-        out = subprocess.call(shlex.split(' '.join(logout_cmd)),
-                              cwd=test_project_path,
-                              env=codechecker_cfg['check_env'])
+        out = subprocess.call(
+            shlex.split(
+                ' '.join(logout_cmd)),
+            cwd=test_project_path,
+            env=codechecker_cfg['check_env'],
+            encoding="utf-8",
+            errors="ignore")
         print(out)
         return 0
     except OSError as cerr:
         print("Failed to call:\n" + ' '.join(logout_cmd))
-        print(str(cerr.errno) + ' ' + cerr.message)
+        print(str(cerr.errno) + ' ' + cerr.strerror)
         return cerr.errno
 
 
@@ -206,9 +222,13 @@ def check_and_store(codechecker_cfg, test_project_name, test_project_path,
     try:
         print("RUNNING CHECK")
         print(' '.join(check_cmd))
-        subprocess.call(shlex.split(' '.join(check_cmd)),
-                        cwd=test_project_path,
-                        env=codechecker_cfg['check_env'])
+        subprocess.call(
+            shlex.split(
+                ' '.join(check_cmd)),
+            cwd=test_project_path,
+            env=codechecker_cfg['check_env'],
+            encoding="utf-8",
+            errors="ignore")
 
     except CalledProcessError as cerr:
         print("Failed to call:\n" + ' '.join(cerr.cmd))
@@ -228,9 +248,13 @@ def check_and_store(codechecker_cfg, test_project_name, test_project_path,
 
     try:
         print('STORE' + ' '.join(store_cmd))
-        subprocess.call(shlex.split(' '.join(store_cmd)),
-                        cwd=test_project_path,
-                        env=codechecker_cfg['check_env'])
+        subprocess.call(
+            shlex.split(
+                ' '.join(store_cmd)),
+            cwd=test_project_path,
+            env=codechecker_cfg['check_env'],
+            encoding="utf-8",
+            errors="ignore")
         return 0
 
     except CalledProcessError as cerr:
@@ -254,11 +278,15 @@ def log(codechecker_cfg, test_project_path, clean_project=False):
                ]
 
     try:
-        proc = subprocess.Popen(shlex.split(' '.join(log_cmd)),
-                                cwd=test_project_path,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE,
-                                env=codechecker_cfg['check_env'])
+        proc = subprocess.Popen(
+            shlex.split(
+                ' '.join(log_cmd)),
+            cwd=test_project_path,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            env=codechecker_cfg['check_env'],
+            encoding="utf-8",
+            errors="ignore")
         out, err = proc.communicate()
         print(out)
         print(err)
@@ -293,11 +321,15 @@ def analyze(codechecker_cfg, test_project_path):
     analyze_cmd.extend(codechecker_cfg['checkers'])
     try:
         print('ANALYZE: ' + ' '.join(analyze_cmd))
-        proc = subprocess.Popen(shlex.split(' '.join(analyze_cmd)),
-                                cwd=test_project_path,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE,
-                                env=codechecker_cfg['check_env'])
+        proc = subprocess.Popen(
+            shlex.split(
+                ' '.join(analyze_cmd)),
+            cwd=test_project_path,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            env=codechecker_cfg['check_env'],
+            encoding="utf-8",
+            errors="ignore")
         out, err = proc.communicate()
         print(out)
         print(err)
@@ -346,22 +378,30 @@ def log_and_analyze(codechecker_cfg, test_project_path, clean_project=True):
     analyze_cmd.extend(codechecker_cfg['checkers'])
     try:
         print("LOG: " + ' '.join(log_cmd))
-        proc = subprocess.Popen(shlex.split(' '.join(log_cmd)),
-                                cwd=test_project_path,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE,
-                                env=codechecker_cfg['check_env'])
+        proc = subprocess.Popen(
+            shlex.split(
+                ' '.join(log_cmd)),
+            cwd=test_project_path,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            env=codechecker_cfg['check_env'],
+            encoding="utf-8",
+            errors="ignore")
         out, err = proc.communicate()
         print(out)
         print(err)
 
         print("ANALYZE:")
         print(shlex.split(' '.join(analyze_cmd)))
-        proc = subprocess.Popen(shlex.split(' '.join(analyze_cmd)),
-                                cwd=test_project_path,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE,
-                                env=codechecker_cfg['check_env'])
+        proc = subprocess.Popen(
+            shlex.split(
+                ' '.join(analyze_cmd)),
+            cwd=test_project_path,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            env=codechecker_cfg['check_env'],
+            encoding="utf-8",
+            errors="ignore")
         out, err = proc.communicate()
         print(out)
         print(err)
@@ -380,11 +420,15 @@ def parse(codechecker_cfg):
 
     try:
         print("PARSE: " + ' '.join(parse_cmd))
-        proc = subprocess.Popen(shlex.split(' '.join(parse_cmd)),
-                                cwd=codechecker_cfg['workspace'],
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE,
-                                env=codechecker_cfg['check_env'])
+        proc = subprocess.Popen(
+            shlex.split(
+                ' '.join(parse_cmd)),
+            cwd=codechecker_cfg['workspace'],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            env=codechecker_cfg['check_env'],
+            encoding="utf-8",
+            errors="ignore")
         out, err = proc.communicate()
         print(out)
         print(err)
@@ -415,10 +459,14 @@ def store(codechecker_cfg, test_project_name):
 
     try:
         print('STORE: ' + ' '.join(store_cmd))
-        proc = subprocess.Popen(shlex.split(' '.join(store_cmd)),
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE,
-                                env=codechecker_cfg['check_env'])
+        proc = subprocess.Popen(
+            shlex.split(
+                ' '.join(store_cmd)),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            env=codechecker_cfg['check_env'],
+            encoding="utf-8",
+            errors="ignore")
         out, err = proc.communicate()
         print(out)
         print(err)
@@ -470,7 +518,7 @@ def start_or_get_server(auth_required=False):
 
     if os.path.exists(portfile):
         print("A server appears to be already running...")
-        with open(portfile, 'r') as f:
+        with open(portfile, 'r', encoding="utf-8", errors="ignore") as f:
             port = int(f.read())
     else:
         if auth_required:
@@ -481,7 +529,7 @@ def start_or_get_server(auth_required=False):
         print("Setting up CodeChecker server in " + config_dir + " :" +
               str(port))
 
-        with open(portfile, 'w') as f:
+        with open(portfile, 'w', encoding="utf-8", errors="ignore") as f:
             f.write(str(port))
 
         pg_config = env.get_postgresql_cfg()
@@ -492,11 +540,15 @@ def start_or_get_server(auth_required=False):
         server_stdout = os.path.join(config_dir,
                                      str(os.getpid()) + ".out")
 
-        with open(server_stdout, "w") as server_out:
-            subprocess.Popen(server_cmd,
-                             stdout=server_out,
-                             stderr=server_out,
-                             env=env.test_env(config_dir))
+        with open(server_stdout, "w",
+                  encoding="utf-8", errors="ignore") as server_out:
+            subprocess.Popen(
+                server_cmd,
+                stdout=server_out,
+                stderr=server_out,
+                env=env.test_env(config_dir),
+                encoding="utf-8",
+                errors="ignore")
 
             wait_for_server_start(server_stdout)
 
@@ -526,7 +578,7 @@ def wait_for_server_start(stdoutfile):
     n = 0
     while True:
         if os.path.isfile(stdoutfile):
-            with open(stdoutfile) as f:
+            with open(stdoutfile, encoding="utf-8", errors="ignore") as f:
                 out = f.read()
                 if "Server waiting for client requests" in out:
                     return
@@ -546,10 +598,15 @@ def start_server(codechecker_cfg, event, server_args=None, pg_config=None):
         server_stdout = os.path.join(codechecker_cfg['workspace'],
                                      str(os.getpid()) + ".out")
         print("Redirecting server output to " + server_stdout)
-        with open(server_stdout, "w") as server_out:
-            proc = subprocess.Popen(server_cmd, env=checking_env,
-                                    stdout=server_out,
-                                    stderr=server_out)
+        with open(server_stdout, "w",
+                  encoding="utf-8", errors="ignore") as server_out:
+            proc = subprocess.Popen(
+                server_cmd,
+                env=checking_env,
+                stdout=server_out,
+                stderr=server_out,
+                encoding="utf-8",
+                errors="ignore")
 
             # Blocking termination until event is set.
             event.wait()
@@ -606,7 +663,8 @@ def add_test_package_product(server_data, test_folder, check_env=None,
                    server_data['viewer_product'],
                    '--url', url,
                    '--name', os.path.basename(test_folder),
-                   '--description', "Automatically created product for test."]
+                   '--description', "Automatically created product for test.",
+                   '--verbose', 'debug']
 
     # If tests are running on postgres, we need to create a database.
     pg_config = env.get_postgresql_cfg()
@@ -626,7 +684,11 @@ def add_test_package_product(server_data, test_folder, check_env=None,
     # Authenticate as SUPERUSER to be able to create the product.
     login(codechecker_cfg, test_folder, "root", "root", protocol)
     # The schema creation is a synchronous call.
-    returncode = subprocess.call(add_command, env=check_env)
+    returncode = subprocess.call(
+        add_command,
+        env=check_env,
+        encoding="utf-8",
+        errors="ignore")
 
     pr_client = env.setup_product_client(test_folder,
                                          product=server_data['viewer_product'],
@@ -688,7 +750,11 @@ def remove_test_package_product(test_folder, check_env=None, protocol='http'):
 
     # Authenticate as SUPERUSER to be able to create the product.
     login(server_data, test_folder, "root", "root", protocol)
-    returncode = subprocess.call(del_command, env=check_env)
+    returncode = subprocess.call(
+        del_command,
+        env=check_env,
+        encoding="utf-8",
+        errors="ignore")
     logout(server_data, test_folder, protocol)
 
     # If tests are running on postgres, we need to delete the database.

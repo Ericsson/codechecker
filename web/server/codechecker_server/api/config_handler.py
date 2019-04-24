@@ -6,17 +6,15 @@
 """
 Handle Thrift requests for configuration.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
 
-import base64
 
 import codechecker_api_shared
 
 from codechecker_common.logger import get_logger
 
 from codechecker_server.profiler import timeit
+
+from codechecker_web.shared import convert
 
 from ..database.config_db_model import Configuration
 from .db import DBSession
@@ -61,7 +59,7 @@ class ThriftConfigHandler(object):
             if notificationQuery is not None:
                 notificationString = notificationQuery.config_value
 
-        return base64.b64encode(notificationString.encode('utf-8'))
+        return convert.to_b64(notificationString)
 
     @timeit
     def setNotificationBannerText(self, notification_b64):
@@ -72,7 +70,7 @@ class ThriftConfigHandler(object):
 
         self.__require_supermission()
 
-        notification = base64.b64decode(notification_b64).decode('utf-8')
+        notification = convert.from_b64(notification_b64)
 
         with DBSession(self.__session) as session:
             notificationQuery = session.query(Configuration) \

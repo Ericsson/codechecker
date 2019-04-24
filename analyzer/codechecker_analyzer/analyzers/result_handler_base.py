@@ -7,9 +7,6 @@
 Result handlers to manage the output of the static analyzers.
 """
 
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
 
 from abc import ABCMeta
 import hashlib
@@ -20,7 +17,7 @@ from codechecker_common.logger import get_logger
 LOG = get_logger('analyzer')
 
 
-class ResultHandler(object):
+class ResultHandler(object, metaclass=ABCMeta):
     """
     Handle and store the results at runtime for the analyzer:
     stdout, stderr, temporarily generated files.
@@ -41,8 +38,6 @@ class ResultHandler(object):
     postprocess_result()
     handle_results()
     """
-
-    __metaclass__ = ABCMeta
     # Handle the output stdout, or plist or both for an analyzer.
 
     def __init__(self, action, workspace, report_hash_type=None):

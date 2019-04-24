@@ -6,9 +6,7 @@
 """
 Converts Gerrit Review changed files list to CodeChecker skipfile.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import argparse
 import json
@@ -24,9 +22,9 @@ def create_skipfile(files_changed, skipfile):
             for filename in json.loads(line):
                 if "/COMMIT_MSG" in filename:
                     continue
-                skipfile.write(u"+*/%s\n" % filename)
+                skipfile.write("+*/%s\n" % filename)
 
-    skipfile.write(u"-*\n")
+    skipfile.write("-*\n")
 
 
 def main():

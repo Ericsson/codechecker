@@ -6,9 +6,7 @@
 # -----------------------------------------------------------------------------
 
 """Setup for the test package extended_report_data."""
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import os
 import shutil
@@ -60,7 +58,8 @@ def setup_package():
         for test_file in os.listdir(test_project_path):
             if test_file.endswith(".plist"):
                 test_file_path = os.path.join(test_project_path, test_file)
-                with open(test_file_path, 'r+') as plist_file:
+                with open(test_file_path, 'r+',
+                          encoding="utf-8", errors="ignore") as plist_file:
                     content = plist_file.read()
                     new_content = content.replace("$FILE_PATH$",
                                                   test_project_path)

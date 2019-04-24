@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 # -------------------------------------------------------------------------
 #                     The CodeChecker Infrastructure
 #   This file is distributed under the University of Illinois Open Source
@@ -8,7 +8,7 @@
 Script to check clang and clang-tidy version requirements
 to run the tests.
 """
-from __future__ import print_function
+
 
 import re
 import subprocess
@@ -32,7 +32,8 @@ def run_cmd(cmd):
     Return None if execution fails.
     """
     try:
-        version = subprocess.check_output(cmd)
+        version = subprocess.check_output(
+            cmd, encoding="utf-8", errors="ignore")
         return version
     except subprocess.CalledProcessError as err:
         eprint(err)

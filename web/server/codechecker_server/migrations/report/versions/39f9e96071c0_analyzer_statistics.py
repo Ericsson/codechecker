@@ -26,10 +26,10 @@ def upgrade():
                     sa.Column('failed', sa.Integer(), nullable=True),
                     sa.Column('failed_files', sa.Binary(), nullable=True),
                     sa.ForeignKeyConstraint(['run_history_id'],
-                                            [u'run_histories.id'],
+                                            ['run_histories.id'],
                                             name=op.f('fk_analyzer_statistics_run_history_id_run_histories'),
-                                            ondelete=u'CASCADE',
-                                            initially=u'DEFERRED',
+                                            ondelete='CASCADE',
+                                            initially='DEFERRED',
                                             deferrable=True),
                     sa.PrimaryKeyConstraint('id', name=op.f('pk_analyzer_statistics'))
                     )

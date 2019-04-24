@@ -5,9 +5,7 @@
 # -------------------------------------------------------------------------
 """
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import os
 import re
@@ -72,8 +70,12 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
 
         try:
             command = shlex.split(' '.join(command))
-            result = subprocess.check_output(command, env=environ,
-                                             universal_newlines=True)
+            result = subprocess.check_output(
+                command,
+                env=environ,
+                universal_newlines=True,
+                encoding="utf-8",
+                errors="ignore")
             return parse_checkers(result)
         except (subprocess.CalledProcessError, OSError):
             return []
@@ -269,7 +271,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
             # cannot consume it.
             with open(args.tidy_config, 'rb') as tidy_config:
                 lines = tidy_config.readlines()
-                lines = filter(lambda x: x != '...\n', lines)
+                lines = [x for x in lines if x != '...\n']
                 handler.checker_config = ''.join(lines)
         except IOError as ioerr:
             LOG.debug_analyzer(ioerr)

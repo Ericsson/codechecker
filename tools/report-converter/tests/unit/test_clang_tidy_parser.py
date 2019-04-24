@@ -8,9 +8,7 @@
 This module tests the correctness of the OutputParser and PListConverter, which
 used in sequence transform a Clang Tidy output file to a plist file.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import os
 import plistlib
@@ -355,14 +353,14 @@ class ClangTidyAnalyzerResultTestCase(unittest.TestCase):
         self.analyzer_result.transform(analyzer_result, self.cc_result_dir)
 
         plist_file = os.path.join(self.cc_result_dir, analyzer_result_plist)
-        with open(plist_file) as pfile:
-            res = plistlib.readPlist(pfile)
+        with open(plist_file, mode='rb') as pfile:
+            res = plistlib.load(pfile)
 
             # Use relative path for this test.
             res['files'] = source_files
 
-        with open(expected_plist) as pfile:
-            exp = plistlib.readPlist(pfile)
+        with open(expected_plist, mode='rb') as pfile:
+            exp = plistlib.load(pfile)
 
         self.assertEqual(res, exp)
 

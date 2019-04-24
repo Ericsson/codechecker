@@ -6,11 +6,8 @@
 """
 Argument handlers for the 'CodeChecker cmd product' subcommands.
 """
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import division
 
-import base64
+
 import sys
 
 from codechecker_api.ProductManagement_v6.ttypes import DatabaseConnection, \
@@ -19,7 +16,7 @@ from codechecker_api.ProductManagement_v6.ttypes import DatabaseConnection, \
 from codechecker_common import logger
 from codechecker_common.output_formatters import twodim_to_str
 
-from codechecker_web.shared import database_status
+from codechecker_web.shared import database_status, convert
 
 from .client import setup_product_client
 from .cmd_line import CmdLineOutputEncoder
@@ -58,9 +55,9 @@ def handle_list_products(args):
         header = ['Database status', 'Endpoint', 'Name', 'Description']
         rows = []
         for product in products:
-            name = base64.b64decode(product.displayedName_b64) \
+            name = convert.from_b64(product.displayedName_b64) \
                 if product.displayedName_b64 else ''
-            description = base64.b64decode(product.description_b64) \
+            description = convert.from_b64(product.description_b64) \
                 if product.description_b64 else ''
 
             if not product.accessible:
@@ -103,14 +100,14 @@ def handle_add_product(args):
         engine=db_engine,
         host=db_host,
         port=db_port,
-        username_b64=base64.b64encode(db_user),
-        password_b64=base64.b64encode(db_pass),
+        username_b64=convert.to_b64(db_user),
+        password_b64=convert.to_b64(db_pass),
         database=db_name)
 
     # Put together the product configuration.
-    name = base64.b64encode(args.display_name) \
+    name = convert.to_b64(args.display_name) \
         if 'display_name' in args else None
-    desc = base64.b64encode(args.description) \
+    desc = convert.to_b64(args.description) \
         if 'description' in args else None
 
     prod = ProductConfiguration(

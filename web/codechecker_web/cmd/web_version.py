@@ -6,9 +6,7 @@
 """
 Defines a subcommand for CodeChecker which prints version information.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import argparse
 import json
@@ -63,7 +61,8 @@ def print_version(output_format=None):
     context = webserver_context.get_context()
 
     server_versions = ['{0}.{1}'.format(major, minor) for
-                       major, minor in version.SUPPORTED_VERSIONS.items()]
+                       major, minor in
+                       version.SUPPORTED_VERSIONS.items()]
 
     if output_format != 'json':
         server_versions = ', '.join(server_versions)

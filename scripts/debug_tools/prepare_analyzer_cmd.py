@@ -1,12 +1,11 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -------------------------------------------------------------------------
 #                     The CodeChecker Infrastructure
 #   This file is distributed under the University of Illinois Open Source
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
+
 import argparse
 import re
 import failure_lib as lib
@@ -15,7 +14,7 @@ import sys
 
 
 def get_first_line_of_file(fname):
-    with open(fname) as f:
+    with open(fname, encoding="utf-8", errors="ignore") as f:
         return f.readline()
 
 

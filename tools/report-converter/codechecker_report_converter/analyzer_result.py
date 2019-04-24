@@ -1,16 +1,12 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -------------------------------------------------------------------------
 #                     The CodeChecker Infrastructure
 #   This file is distributed under the University of Illinois Open Source
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
 
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
 
 from abc import ABCMeta, abstractmethod
-import io
 import logging
 import os
 import plistlib
@@ -20,10 +16,8 @@ from .report import generate_report_hash
 LOG = logging.getLogger('ReportConverter')
 
 
-class AnalyzerResult(object):
+class AnalyzerResult(object, metaclass=ABCMeta):
     """ Base class to transform analyzer result. """
-
-    __metaclass__ = ABCMeta
 
     TOOL_NAME = None
 
@@ -38,8 +32,7 @@ class AnalyzerResult(object):
 
         self._post_process_result(plist_objs)
 
-        ret = self._write(plist_objs, output_dir)
-        if not ret:
+        if self._write(plist_objs, output_dir) is None:
             return False
 
         return True
@@ -71,8 +64,8 @@ class AnalyzerResult(object):
 
     def _get_analyzer_result_file_content(self, result_file):
         """ Return the content of the given file. """
-        with io.open(result_file, 'r', encoding='utf-8',
-                     errors='replace') as analyzer_result:
+        with open(result_file, 'r', encoding='utf-8',
+                  errors='replace') as analyzer_result:
             return analyzer_result.readlines()
 
     def _write(self, plist_objs, output_dir):
@@ -95,7 +88,8 @@ class AnalyzerResult(object):
             LOG.debug(plist_data)
 
             try:
-                plistlib.writePlist(plist_data, out_file)
+                with open(out_file, 'wb') as plist_file:
+                    plistlib.dump(plist_data, plist_file)
             except TypeError as err:
                 LOG.error('Failed to write plist file: %s', out_file)
                 LOG.error(err)
