@@ -13,8 +13,8 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
+import json
 import os
-import subprocess
 import tempfile
 import unittest
 import zipfile
@@ -29,26 +29,30 @@ class TUCollectorTest(unittest.TestCase):
         TU_COLLECTOR_DIR = os.path.join(os.environ['REPO_ROOT'],
                                         'tools', 'tu_collector')
 
-        self._codechecker_cmd = os.path.join(PKG_ROOT, 'bin', 'CodeChecker')
-        self._test_proj_dir = os.path.join(TU_COLLECTOR_DIR,
-                                           'tests', 'project')
+        self._test_proj_dir = os.path.abspath(os.path.join(TU_COLLECTOR_DIR,
+                                              'tests', 'project'))
 
     def test_file_existence(self):
-        source_file = os.path.join(self._test_proj_dir, 'main.cpp')
 
-        build_json = tempfile.mkstemp('.json')[1]
-        proc = subprocess.Popen([self._codechecker_cmd, 'log',
-                                 '-b', 'g++ -o /dev/null ' + source_file,
-                                 '-o', build_json])
-        proc.communicate()
+        compile_json = os.path.join(self._test_proj_dir,
+                                    'compile_command.json')
+
+        compile_cmd_data = {}
+        with open(compile_json, mode='rb') as cmpjson:
+            compile_cmd_data = json.load(cmpjson)
+
+        # Overwrite the directory paths.
+        # This is needed because the tests run on different machines
+        # so the directory path changes in each case.
+        for cmp in compile_cmd_data:
+            cmp['directory'] = self._test_proj_dir
 
         zip_file_name = tempfile.mkstemp(suffix='.zip')[1]
-        tu_collector.zip_tu_files(zip_file_name, build_json)
+        tu_collector.zip_tu_files(zip_file_name, compile_cmd_data)
 
         with zipfile.ZipFile(zip_file_name) as archive:
             files = archive.namelist()
 
-        os.remove(build_json)
         os.remove(zip_file_name)
 
         self.assertTrue(
