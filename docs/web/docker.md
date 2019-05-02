@@ -9,7 +9,7 @@ sections.
 You can create a Docker image by running the following command in the root
 directory of this repository:
 ```bash
-docker build -t codechecker-server:latest web/docker
+docker build -t codechecker-web:latest web/docker
 ```
 
 Multiple build-time variables can be specified:
@@ -32,16 +32,16 @@ Example:
 docker build \
   --build-arg INSTALL_AUTH=yes \
   --build-arg INSTALL_PSYCOPG2=yes \
-  --tag codechecker-server:latest web/docker
+  --tag codechecker-web:latest web/docker
 ```
 
 ## Usage
 To run a CodeChecker server docker container use the following command:
 ```sh
 docker run -d \
-  -p 80:80 \
+  -p 8001:8001 \
   -v /home/$USER/codechecker_workspace:/workspace \
-  codechecker-server:latest
+  codechecker-web:latest
 ```
 
 ## Docker Compose
