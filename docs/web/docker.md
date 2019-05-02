@@ -13,6 +13,7 @@ docker build -t codechecker-server:latest web/docker
 ```
 
 Multiple build-time variables can be specified:
+
 - `CC_VERSION` (default: *master*): branch or tag version which will be cloned
 from Git. Use `master` if you would like to build an image from the latest
 CodeChecker.
@@ -71,27 +72,28 @@ to define the superuser password in the PostgreSQL instance and to define a
 `.pgpass` file in the CodeChecker server container for database connections.
 
 Let's create 2 files in your host machine:
-  - `/home/$USER/codechecker_secrets/postgres-passwd`: this file will
-  contain the superuser password which will be used in the `initdb` script
-  during initial container startup. For more information see `Docker Secrets`
-  section of the official [readme](https://hub.docker.com/_/postgres).
-  E.g.:
-  ```sh
-  mkdir -p /home/$USER/codechecker_secrets/ && \
-  echo 'mySecretPassword' > /home/$USER/codechecker_secrets/postgres-passwd && \
-  chmod 0600 /home/$USER/codechecker_secrets/postgres-passwd
-  ```
-  - `/home/$USER/codechecker_secrets/pgpass`: this file can contain
-  passwords to be used if the connection requires a password. This file should
-  contain lines of the following format:
-  `hostname:port:database:username:password`. For more information
-  [see](https://www.postgresql.org/docs/9.6/libpq-pgpass.html).
-  E.g.:
-  ```sh
-  mkdir -p /home/$USER/codechecker_secrets/ && \
-  echo "*:5433:*:$USER:mySecretPassword" > /home/$USER/codechecker_secrets/pgpass && \
-  chmod 0600 /home/$USER/codechecker_secrets/pgpass
-  ```
+
+- `/home/$USER/codechecker_secrets/postgres-passwd`: this file will
+contain the superuser password which will be used in the `initdb` script
+during initial container startup. For more information see `Docker Secrets`
+section of the official [readme](https://hub.docker.com/_/postgres).
+E.g.:
+```sh
+mkdir -p /home/$USER/codechecker_secrets/ && \
+echo 'mySecretPassword' > /home/$USER/codechecker_secrets/postgres-passwd && \
+chmod 0600 /home/$USER/codechecker_secrets/postgres-passwd
+```
+- `/home/$USER/codechecker_secrets/pgpass`: this file can contain
+passwords to be used if the connection requires a password. This file should
+contain lines of the following format:
+`hostname:port:database:username:password`. For more information
+[see](https://www.postgresql.org/docs/9.6/libpq-pgpass.html).
+E.g.:
+```sh
+mkdir -p /home/$USER/codechecker_secrets/ && \
+echo "*:5433:*:$USER:mySecretPassword" > /home/$USER/codechecker_secrets/pgpass && \
+chmod 0600 /home/$USER/codechecker_secrets/pgpass
+```
 
 To run a CodeChecker server and a PostgreSQL database cluster which requires
 authentication you have write a compose file which should be similar to
