@@ -15,7 +15,8 @@ docker build -t codechecker-server:latest web/docker
 Multiple build-time variables can be specified:
 - `CC_VERSION` (default: *master*): branch or tag version which will be cloned
 from Git. Use `master` if you would like to build an image from the latest
-CodeChecker.
+CodeChecker. Git tag version can be `v6.9.1` or newer. Please see the section
+below if you would like to build a Docker image from an older version.
 - `CC_UID` (default: *950*): id of the *codechecker* user which will be created
 during the image build and which will be used to start CodeChecker server.
 - `CC_GID` (default: *950*): id of the *codechecker* group which will be
@@ -33,6 +34,20 @@ docker build \
   --build-arg INSTALL_AUTH=yes \
   --build-arg INSTALL_PSYCOPG2=yes \
   --tag codechecker-server:latest web/docker
+```
+
+### Build Docker image from an older version of CodeChecker
+If you would like to build a Docker image from an older CodeChecker than
+version `6.9.1`, please use the
+[`Dockerfile.old`](../../web/docker/Dockerfile.old) Dockerfile.
+
+Example:
+```bash
+docker build \
+  --build-arg CC_VERSION=v6.8.1 \
+  --tag codechecker/codechecker-web:6.8.1 \
+  --file web/docker/Dockerfile.old \
+  web/docker
 ```
 
 ## Usage
