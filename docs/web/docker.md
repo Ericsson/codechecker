@@ -2,6 +2,8 @@
 Docker provides a way to run applications securely isolated in a container,
 packaged with all its dependencies and libraries.
 
+ [![Docker](../images/docker.jpg)](https://hub.docker.com/r/codechecker/codechecker-web)
+
 To see how you can run a CodeChecker server in Docker read the following
 sections.
 
@@ -36,13 +38,18 @@ docker build \
   --tag codechecker-web:latest web/docker
 ```
 
+
+## Pre-built CodeChecker Docker images
+You can use our pre-built Docker images which can be found in the
+[Docker Hub](https://hub.docker.com/r/codechecker/codechecker-web).
+
 ## Usage
 To run a CodeChecker server docker container use the following command:
 ```sh
 docker run -d \
   -p 8001:8001 \
   -v /home/$USER/codechecker_workspace:/workspace \
-  codechecker-web:latest
+  codechecker/codechecker-web:latest
 ```
 
 ## Docker Compose
