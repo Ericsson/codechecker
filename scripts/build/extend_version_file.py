@@ -28,12 +28,21 @@ def run_cmd(cmd, cwd=None):
                                    cwd=cwd)
 
 
-def extend_version_file(repository_root, version_file):
+def extend_with_git_information(repository_root, version_json_data):
     """
     Extend CodeChecker version file with git information.
     """
-    with open(version_file) as v_file:
-        version_json_data = json.load(v_file)
+    version = version_json_data['version']
+    version_string = str(version['major'])
+    if int(version['minor']) != 0 or int(version['revision']) != 0:
+        version_string += ".{0}".format(version['minor'])
+    if int(version['revision']) != 0:
+        version_string += ".{0}".format(version['revision'])
+
+    LOG.info("This is CodeChecker v%s", version_string)
+
+    if not os.path.exists(os.path.join(repository_root, '.git')):
+        return
 
     git_hash = ''
     try:
@@ -46,12 +55,7 @@ def extend_version_file(repository_root, version_file):
         LOG.exception('Failed to run command: %s', ' '.join(git_hash_cmd))
         sys.exit(1)
 
-    version = version_json_data['version']
-    version_string = str(version['major'])
-    if int(version['minor']) != 0 or int(version['revision']) != 0:
-        version_string += ".{0}".format(version['minor'])
-    if int(version['revision']) != 0:
-        version_string += ".{0}".format(version['revision'])
+    LOG.info("Built from Git commit hash: %s", git_hash)
 
     git_describe = git_describe_dirty = version_string
     try:
@@ -79,12 +83,32 @@ def extend_version_file(repository_root, version_file):
     except subprocess.CalledProcessError:
         LOG.exception('Failed to get last commit describe.')
     except OSError:
-        LOG.exception('Failed to run command: %s', ' '.join(git_describe_cmd))
+        LOG.exception('Failed to run command: %s',
+                      ' '.join(git_describe_cmd))
         sys.exit(1)
 
     version_json_data['git_hash'] = git_hash
     version_json_data['git_describe'] = {'tag': git_tag,
                                          'dirty': git_tag_dirty}
+
+    # Show the original, Git-given describe information.
+    LOG.info("Built from Git tags: %s (%s)", git_describe,
+             git_describe_dirty)
+
+    # Show the touched-up version information that uses the configuration
+    # file.
+    LOG.info("Baked with Git tag information merged with configured "
+             "version: %s (%s)", git_tag, git_tag_dirty)
+
+
+def extend_version_file(repository_root, version_file):
+    """
+    Extend CodeChecker version file with build date and git information.
+    """
+    with open(version_file) as v_file:
+        version_json_data = json.load(v_file)
+
+    extend_with_git_information(repository_root, version_json_data)
 
     time_now = time.strftime("%Y-%m-%dT%H:%M")
     version_json_data['package_build_date'] = time_now
@@ -96,14 +120,6 @@ def extend_version_file(repository_root, version_file):
 
     # Show version information on the command-line.
     LOG.debug(json.dumps(version_json_data, sort_keys=True, indent=2))
-    LOG.info("This is CodeChecker v%s (%s)", version_string, git_hash)
-
-    # Show the original, Git-given describe information.
-    LOG.info("Built from Git tags: %s (%s)", git_describe, git_describe_dirty)
-
-    # Show the touched-up version information that uses the configuration file.
-    LOG.info("Baked with Git tag information merged with configured version: "
-             "%s (%s)", git_tag, git_tag_dirty)
 
 
 if __name__ == "__main__":
