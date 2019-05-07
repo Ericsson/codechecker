@@ -87,6 +87,12 @@ export PATH="$PWD/build/CodeChecker/bin:$PATH"
 cd ..
 ```
 
+**Note**: By default `make package` will build ldlogger shared objects for
+`32bit` and `64bit` too. If you would like to build and package `64 bit only`
+shared objects and ldlogger binary you can set `BUILD_LOGGER_64_BIT_ONLY`
+environment variable to `YES` before the package build:
+`BUILD_LOGGER_64_BIT_ONLY=YES make package`.
+
 ### Upgrading environment after system or Python upgrade
 
 If you have upgraded your system's Python to a newer version (e.g. from

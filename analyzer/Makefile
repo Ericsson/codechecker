@@ -15,6 +15,10 @@ ACTIVATE_DEV_VENV ?= . venv_dev/bin/activate
 
 VENV_DEV_REQ_FILE ?= requirements_py/dev/requirements.txt
 
+# Set it to YES if you would like to build and package 64 bit only shared
+# objects and ldlogger binary.
+BUILD_LOGGER_64_BIT_ONLY ?= NO
+
 include tests/Makefile
 
 pip_dev_deps:
@@ -80,13 +84,11 @@ package_ld_logger:
 	ln -sf ../ld_logger/bin/ldlogger bin/ldlogger
 
 build_ld_logger:
-	$(MAKE) -C tools/build-logger -f Makefile.manual 2> /dev/null
-
-build_ld_logger_x86:
-	$(MAKE) -C tools/build-logger -f Makefile.manual pack32bit 2> /dev/null
-
-build_ld_logger_x64:
-	$(MAKE) -C tools/build-logger -f Makefile.manual pack64bit 2> /dev/null
+  ifeq ($(BUILD_LOGGER_64_BIT_ONLY),YES)
+		$(MAKE) -C tools/build-logger -f Makefile.manual pack64bit 2> /dev/null
+  else
+		$(MAKE) -C tools/build-logger -f Makefile.manual 2> /dev/null
+  endif
 
 # NOTE: extra spaces are allowed and ignored at the beginning of the
 # conditional directive line, but a tab is not allowed.
@@ -95,17 +97,8 @@ ifeq ($(OS),Windows_NT)
 else
   UNAME_S ?= $(shell uname -s)
   ifeq ($(UNAME_S),Linux)
-    UNAME_P ?= $(shell uname -p)
-    ifeq ($(UNAME_P),x86_64)
-      package_ld_logger: build_ld_logger_x64
-      package_analyzer: package_ld_logger
-    else ifneq ($(filter %86,$(UNAME_P)),)
-      package_ld_logger: build_ld_logger_x86
-      package_analyzer: package_ld_logger
-    else
-      package_ld_logger: build_ld_logger
-      package_analyzer: package_ld_logger
-    endif
+    package_ld_logger: build_ld_logger
+    package_analyzer: package_ld_logger
   else ifeq ($(UNAME_S),Darwin)
     ifeq (, $(shell which intercept-build))
       $(info "No intercept-build (scan-build-py) in $(PATH).")

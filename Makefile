@@ -19,6 +19,10 @@ CC_TOOLS = $(CURRENT_DIR)/tools
 # Root of the repository.
 ROOT = $(CURRENT_DIR)
 
+# Set it to YES if you would like to build and package 64 bit only shared
+# objects and ldlogger binary.
+BUILD_LOGGER_64_BIT_ONLY ?= NO
+
 ACTIVATE_RUNTIME_VENV ?= . venv/bin/activate
 ACTIVATE_DEV_VENV ?= . venv_dev/bin/activate
 
@@ -47,7 +51,7 @@ package_tu_collector: build_tu_collector package_dir_structure
 	cp -r $(CC_TOOLS)/tu_collector/build/tu_collector/tu_collector $(CC_BUILD_LIB_DIR)
 
 package: package_dir_structure package_plist_to_html package_tu_collector
-	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_ANALYZER) package_analyzer
+	BUILD_DIR=$(BUILD_DIR) BUILD_LOGGER_64_BIT_ONLY=$(BUILD_LOGGER_64_BIT_ONLY) $(MAKE) -C $(CC_ANALYZER) package_analyzer
 	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_WEB) package_web
 
 	# Copy libraries.
