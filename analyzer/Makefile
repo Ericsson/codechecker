@@ -76,7 +76,7 @@ package_ld_logger:
 	mkdir -p $(CC_BUILD_DIR)/ld_logger && \
 	mkdir -p $(CC_BUILD_DIR)/bin && \
 	cp -r $(CURRENT_DIR)/tools/build-logger/build/* $(CC_BUILD_DIR)/ld_logger && \
-	ln -rsf $(CC_BUILD_DIR)/ld_logger/bin/ldlogger $(CC_BUILD_DIR)/bin/ldlogger
+	ln -sf $(CC_BUILD_DIR)/ld_logger/bin/ldlogger $(CC_BUILD_DIR)/bin/ldlogger
 
 build_ld_logger:
 	$(MAKE) -C tools/build-logger -f Makefile.manual 2> /dev/null
