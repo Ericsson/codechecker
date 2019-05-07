@@ -46,7 +46,7 @@ def change_paths(string, pathModifierFun):
             if pattern.match(string[:i]):
                 out_dir = "./sources-root" + os.path.dirname(path)
                 if not os.path.isdir(out_dir):
-                    os.mkdir(out_dir)
+                    os.makedirs(out_dir)
             path = pathModifierFun(path)
             result += path
             i = path_end - 1
