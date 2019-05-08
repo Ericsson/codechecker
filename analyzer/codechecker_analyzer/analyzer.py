@@ -79,7 +79,8 @@ def __get_analyzer_version(context, analyzer_config_map):
         version = [analyzer_bin, u' --version']
         try:
             output = subprocess.check_output(shlex.split(' '.join(version)),
-                                             env=check_env)
+                                             env=check_env,
+                                             universal_newlines=True)
             versions[analyzer_bin] = output
         except (subprocess.CalledProcessError, OSError) as oerr:
             LOG.warning("Failed to get analyzer version: %s",

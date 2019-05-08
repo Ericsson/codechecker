@@ -77,7 +77,7 @@ class BuildAction(object):
         hash_content.append(str(self.analyzer_type))
         hash_content.append(self.target)
         hash_content.append(self.source)
-        return hash(hashlib.sha1(''.join(hash_content)).hexdigest())
+        return hash(''.join(hash_content))
 
     def with_attr(self, attr, value):
         details = {key: getattr(self, key) for key in BuildAction.__slots__}

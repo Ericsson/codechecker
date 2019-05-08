@@ -123,8 +123,8 @@ class ClangSA(analyzer_base.SourceAnalyzer):
 
         try:
             command = shlex.split(' '.join(command))
-            result = subprocess.check_output(command,
-                                             env=env)
+            result = subprocess.check_output(command, env=env,
+                                             universal_newlines=True)
             return parse_checkers(result)
         except (subprocess.CalledProcessError, OSError):
             return []

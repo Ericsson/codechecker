@@ -339,9 +339,7 @@ class OptionParserTest(unittest.TestCase):
         self.assertEqual(BuildAction.COMPILE, res.action_type)
 
     def test_ccache_compiler(self):
-        action = {
-            'file': 'main.cpp',
-            'directory': ''}
+        action = {'file': 'main.cpp', 'directory': ''}
 
         action['command'] = 'ccache g++ main.cpp'
         res = log_parser.parse_options(action)

@@ -11,7 +11,10 @@ from __future__ import division
 from __future__ import absolute_import
 
 import re
-import urlparse
+try:
+    from urlparse import urlparse
+except ImportError:
+    from urllib.parse import urlparse
 
 from codechecker_web.shared.version import SUPPORTED_VERSIONS
 
@@ -91,7 +94,7 @@ def split_client_GET_request(path):
     # http://localhost:8001/[product-name]/#{request-parts}
     # where the parts are, e.g.: run=[run_id]&report=[report_id]
 
-    parsed_path = urlparse.urlparse(path).path
+    parsed_path = urlparse(path).path
     split_path = parsed_path.split('/', 2)
 
     endpoint_part = split_path[1]
@@ -115,7 +118,7 @@ def split_client_POST_request(path):
     # http://localhost:8001/[product-name]/<API version>/<API service>
     # where specifying the product name is optional.
 
-    split_path = urlparse.urlparse(path).path.split('/', 3)
+    split_path = urlparse(path).path.split('/', 3)
 
     endpoint_part = split_path[1]
     if is_valid_product_endpoint(split_path[1]):

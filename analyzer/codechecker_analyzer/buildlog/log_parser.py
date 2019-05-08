@@ -231,7 +231,8 @@ class ImplicitCompilerInfo(object):
             proc = subprocess.Popen(shlex.split(cmd),
                                     stdin=subprocess.PIPE,
                                     stdout=subprocess.PIPE,
-                                    stderr=subprocess.PIPE)
+                                    stderr=subprocess.PIPE,
+                                    universal_newlines=True)
 
             _, err = proc.communicate("")
             return err
@@ -418,24 +419,19 @@ class ImplicitCompilerInfo(object):
 
         standard = ""
         with tempfile.NamedTemporaryFile(
+                mode='w+',
                 suffix=('.c' if language == 'c' else '.cpp')) as source:
 
             with source.file as f:
                 f.write(VERSION_C if language == 'c' else VERSION_CPP)
 
-            try:
-                proc = subprocess.Popen([compiler, source.name],
-                                        stdout=subprocess.PIPE,
-                                        stderr=subprocess.PIPE)
-                _, err = proc.communicate()  # Wait for execution.
+            err = ImplicitCompilerInfo.\
+                __get_compiler_err(" ".join([compiler, source.name]))
 
+            if err is not None:
                 finding = re.search('CC_FOUND_STANDARD_VER#(.+)', err)
-
                 if finding:
                     standard = finding.group(1)
-            except OSError:
-                LOG.error("Error during the compilation of compiler "
-                          "standard detector.")
 
         if standard:
             if standard == '94':
