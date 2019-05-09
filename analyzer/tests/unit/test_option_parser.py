@@ -9,6 +9,7 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
+import tempfile
 import unittest
 
 from codechecker_analyzer.buildlog import log_parser
@@ -352,3 +353,23 @@ class OptionParserTest(unittest.TestCase):
         action['command'] = 'ccache -Ihello main.cpp'
         res = log_parser.parse_options(action)
         self.assertEqual(res.original_command, 'ccache -Ihello main.cpp')
+
+    def test_compiler_include_file(self):
+        action = {
+            'file': 'main.cpp',
+            'directory': '',
+            'command': 'g++ main.cpp'}
+
+        with tempfile.NamedTemporaryFile(
+                mode='w',
+                suffix='.json') as info_file_tmp:
+
+            info_file_tmp.write(
+                    '{"g++": {"default_standard": "-std=FAKE_STD", '
+                    '"target": "FAKE_TARGET", "includes": ["-isystem '
+                    '/FAKE_INCLUDE_DIR"]}}')
+            info_file_tmp.flush()
+
+            res = log_parser.parse_options(action, info_file_tmp.name)
+            self.assertEqual(res.compiler_includes,
+                             ['-isystem', '/FAKE_INCLUDE_DIR'])
