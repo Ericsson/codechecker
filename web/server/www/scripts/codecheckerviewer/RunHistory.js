@@ -45,7 +45,7 @@ function (declare, dom, topic, Dialog, Standby, ContentPane,
       function (historyData) {
         that.renderRunHistoryTable(historyData);
         that._standBy.hide();
-      });
+      }).fail(function (xhr) { util.handleAjaxFailure(xhr); });
     },
 
     initRunHistory : function (runNames) {
@@ -68,7 +68,7 @@ function (declare, dom, topic, Dialog, Standby, ContentPane,
         CC_SERVICE.getRunData(runFilter, function (runData) {
           var runIds = runData.map(function (run) { return run.runId; });
           that.getRunHistory(runIds);
-        });
+        }).fail(function (xhr) { util.handleAjaxFailure(xhr); });
       } else {
         that.getRunHistory(null);
       }

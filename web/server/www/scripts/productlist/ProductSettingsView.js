@@ -213,9 +213,11 @@ function (declare, domAttr, domClass, domConstruct, Dialog, Button, CheckBox,
                   if (that.successCallback !== undefined)
                     that.successCallback(success);
             }).fail(function (jsReq, status, exc) {
-              if (status === "parsererror")
+              if (status === "parsererror") {
                 that._showMessageBox('error',
                   "Adding the product failed!", exc.message);
+              }
+              util.handleAjaxFailure(jsReq);
             });
           } else if (that.get('settingsMode') === 'edit') {
             CC_PROD_SERVICE.editProduct(that.productConfig['_id'], product,
@@ -228,9 +230,11 @@ function (declare, domAttr, domClass, domConstruct, Dialog, Button, CheckBox,
                     "Successfully edited the product settings!", "");
                 }
             }).fail(function (jsReq, status, exc) {
-              if (status === "parsererror")
+              if (status === "parsererror") {
                 that._showMessageBox('error',
                   "Saving new settings failed!", exc.message);
+              }
+              util.handleAjaxFailure(jsReq);
             });
           }
         }
@@ -600,6 +604,7 @@ function (declare, domAttr, domClass, domConstruct, Dialog, Button, CheckBox,
             }
             catch (exc) {
               errors.push(record);
+              util.handleThriftException(exc);
             }
           });
 
@@ -704,7 +709,11 @@ function (declare, domAttr, domClass, domConstruct, Dialog, Button, CheckBox,
         this._metadataPane.set('settingsMode', 'add');
         this._permissionPane.set('disabled', true);
       } else if (mode === 'edit') {
-        var configuration = CC_PROD_SERVICE.getProductConfiguration(productID);
+        var configuration = new CC_PROD_OBJECTS.ProductConfiguration();
+        try {
+          configuration = CC_PROD_SERVICE.getProductConfiguration(productID);
+        } catch (ex) { util.handleThriftException(ex); }
+
         this.set(
           'title', "Edit product '" + configuration.endpoint + "'");
         this._metadataPane.setProductConfig(configuration);

@@ -8,8 +8,9 @@ define([
   'dojo/dom-construct',
   'dojo/_base/declare',
   'dojo/Deferred',
-  'codechecker/filter/SelectFilter'],
-function (dom, declare, Deferred, SelectFilter) {
+  'codechecker/filter/SelectFilter',
+  'codechecker/util'],
+function (dom, declare, Deferred, SelectFilter, util) {
   return declare(SelectFilter, {
     search : {
       enable : true,
@@ -41,7 +42,7 @@ function (dom, declare, Deferred, SelectFilter) {
             count : res[file]
           };
         }));
-      });
+      }).fail(function (xhr) { util.handleAjaxFailure(xhr); });
       return deferred;
     }
   });

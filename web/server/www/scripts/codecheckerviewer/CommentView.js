@@ -41,7 +41,9 @@ function (declare, dom, style, topic, Memory, Observable, ConfirmDialog,
           var commentData = new CC_OBJECTS.CommentData({
             message   : that._content.get('value')
           });
-          CC_SERVICE.addComment(that.reportId, commentData);
+          try {
+            CC_SERVICE.addComment(that.reportId, commentData);
+          } catch (ex) { util.handleThriftException(ex); }
           topic.publish('showComments', that.reportId, that.sender);
         }
       });
@@ -75,7 +77,10 @@ function (declare, dom, style, topic, Memory, Observable, ConfirmDialog,
       dom.create('span', { class : 'time', innerHTML: time }, vb);
 
       //--- Comment operations (edit, remove) ---//
-      var user = CC_AUTH_SERVICE.getLoggedInUser();
+      var user = '';
+      try {
+        user = CC_AUTH_SERVICE.getLoggedInUser();
+      } catch (ex) { util.handleThriftException(ex); }
       
       if (this.author == 'Anonymous' || user == this.author) { 
           var operations = dom.create('div', { class : 'operations'}, header);
@@ -102,7 +107,9 @@ function (declare, dom, style, topic, Memory, Observable, ConfirmDialog,
         title     : 'Remove comment',
         content   : 'Are you sure you want to delete this?',
         onExecute : function () {
-          CC_SERVICE.removeComment(that.cId);
+          try {
+            CC_SERVICE.removeComment(that.cId);
+          } catch (ex) { util.handleThriftException(ex); }
           topic.publish('showComments', that.reportId, that.sender);
         }
       });
@@ -122,7 +129,9 @@ function (declare, dom, style, topic, Memory, Observable, ConfirmDialog,
         onClick : function () {
           var newContent = that._commentContent.get('value');
 
-          CC_SERVICE.updateComment(that.cId, newContent);
+          try {
+            CC_SERVICE.updateComment(that.cId, newContent);
+          } catch (ex) { util.handleThriftException(ex); }
 
           that._message.set('content', newContent);
           that._editDialog.hide();
@@ -192,7 +201,11 @@ function (declare, dom, style, topic, Memory, Observable, ConfirmDialog,
           sender   : sender
         }));
 
-        var comments = CC_SERVICE.getComments(reportId);
+        var comments = [];
+        try {
+          comments = CC_SERVICE.getComments(reportId);
+        } catch (ex) { util.handleThriftException(ex); }
+
         comments.forEach(function (comment) {
           that._comments.addChild(new Comment({
             class    : 'comment',

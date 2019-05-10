@@ -36,9 +36,14 @@ function (declare, cookie, dom, domConstruct, domClass, ioQuery, keys, on,
         id : 'notification-container'
       }, this.domNode);
 
+      var notificationBannerText = '';
+      try {
+        notificationBannerText = CC_CONF_SERVICE.getNotificationBannerText();
+      } catch (ex) { util.handleThriftException(ex); }
+
       var notificationText = domConstruct.create('div', {
         id : 'notification-text',
-        innerHTML : util.atou(CC_CONF_SERVICE.getNotificationBannerText())
+        innerHTML : util.atou(notificationBannerText)
       }, notificationContainer);
 
       //--- Logo ---//
@@ -100,6 +105,7 @@ function (declare, cookie, dom, domConstruct, domClass, ioQuery, keys, on,
             that.txtPass.focus();
             that.set('isAlreadyLoggingIn', false);
           }
+          util.handleThriftException(jsReq);
         });
     },
 
@@ -142,7 +148,10 @@ function (declare, cookie, dom, domConstruct, domClass, ioQuery, keys, on,
       });
       this.addChild(this._standBy);
 
-      var authParams = CC_AUTH_SERVICE.getAuthParameters();
+      var authParams = new CC_AUTH_OBJECTS.HandshakeInformation();
+      try {
+        authParams = CC_AUTH_SERVICE.getAuthParameters();
+      } catch (ex) { util.handleThriftException(ex); }
 
       if (!authParams.requiresAuthentication || authParams.sessionStillActive) {
         domClass.add(this._mbox.domNode, 'mbox-success');
@@ -157,7 +166,11 @@ function (declare, cookie, dom, domConstruct, domClass, ioQuery, keys, on,
         var returnTo = hash.getState('returnto') || '';
         window.location = window.location.origin + '/' + returnTo;
       } else {
-        var authMethods = CC_AUTH_SERVICE.getAcceptedAuthMethods();
+        var authMethods = [];
+        try {
+          authMethods = CC_AUTH_SERVICE.getAcceptedAuthMethods();
+        } catch (ex) { util.handleThriftException(ex); }
+
         if (authMethods.indexOf('Username:Password') === -1) {
           domClass.add(this._mbox.domNode, 'mbox-error');
           this._mbox.show("Server rejects username-password authentication!",

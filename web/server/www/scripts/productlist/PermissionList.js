@@ -245,8 +245,11 @@ function (declare, domAttr, domClass, domConstruct, ItemFileWriteStore,
       var filter = new CC_AUTH_OBJECTS.PermissionFilter({
         canManage : true
       });
-      var permissions = CC_AUTH_SERVICE.getPermissionsForUser(
-        scope, this.get('extraParamsJSON'), filter);
+      var permissions = [];
+      try {
+        permissions = CC_AUTH_SERVICE.getPermissionsForUser(
+          scope, this.get('extraParamsJSON'), filter);
+      } catch (ex) { util.handleThriftException(ex); }
 
       permissions.forEach(function(enumValue) {
         optionsToAdd.push({
@@ -254,8 +257,11 @@ function (declare, domAttr, domClass, domConstruct, ItemFileWriteStore,
           value : enumValue
         });
 
-        var authedUsersAndGroups = CC_AUTH_SERVICE.getAuthorisedNames(
-          enumValue, that.get('extraParamsJSON'));
+        var authedUsersAndGroups = new CC_AUTH_OBJECTS.AuthorisationList();
+        try {
+          authedUsersAndGroups = CC_AUTH_SERVICE.getAuthorisedNames(
+            enumValue, that.get('extraParamsJSON'));
+        } catch (ex) { util.handleThriftException(ex); }
 
         rightsMap[enumValue] = {
           users  : authedUsersAndGroups.users,

@@ -509,6 +509,29 @@ function (locale, dom, style, json) {
 
     getTooltip : function (name) {
       return tooltips[name] ? tooltips[name] : '';
+    },
+
+    handleAjaxFailure : function (xhr) {
+      if (xhr.status === 401) {
+        var returnTo = '';
+        var pathName = window.location.pathname || '';
+        var hash = window.location.hash || '';
+        if (pathName || hash) {
+          returnTo = '?returnto=' + pathName.replace('/', '') +
+            window.location.hash;
+        }
+        window.location = window.location.origin + '/login.html' + returnTo;
+      } else {
+        console.warn(xhr);
+      }
+    },
+
+    handleThriftException : function (ex) {
+      if (ex.indexOf(': 401') !== -1) {
+        this.handleAjaxFailure({status: 401});
+      } else {
+        console.warn(ex);
+      }
     }
   };
 });

@@ -267,7 +267,7 @@ function (declare, dom, ItemFileWriteStore, topic, Dialog, Button,
         runDataList.forEach(function (item) {
           that._addRunData(item);
         });
-      });
+      }).fail(function (xhr) { util.handleAjaxFailure(xhr); });
     },
 
     /**
@@ -312,7 +312,7 @@ function (declare, dom, ItemFileWriteStore, topic, Dialog, Button,
         });
 
         that.render();
-      });
+      }).fail(function (xhr) { util.handleAjaxFailure(xhr); });
     },
 
     _updateRunCount : function (num) {
@@ -388,6 +388,7 @@ function (declare, dom, ItemFileWriteStore, topic, Dialog, Button,
                 title : 'Failure!',
                 content : exc.message
               }).show();
+              util.handleAjaxFailure(jsReq);
             });
           });
 
@@ -453,10 +454,13 @@ function (declare, dom, ItemFileWriteStore, topic, Dialog, Button,
     postCreate : function () {
       this.inherited(arguments);
 
-      var showDelete = CC_AUTH_SERVICE.hasPermission(
-        Permission.PRODUCT_STORE, util.createPermissionParams({
-          productID : CURRENT_PRODUCT.id
-        }));
+      var showDelete = false;
+      try {
+        showDelete = CC_AUTH_SERVICE.hasPermission(
+          Permission.PRODUCT_STORE, util.createPermissionParams({
+            productID : CURRENT_PRODUCT.id
+          }));
+      } catch (ex) { util.handleThriftException(ex); }
 
       var runsInfoPane = new RunsInfoPane({
         region : 'top',

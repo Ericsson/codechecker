@@ -71,7 +71,7 @@ function (declare, Deferred, dom, all, Standby, ContentPane, SelectFilter,
           var state = {};
           state[key] = res;
           d.resolve(state);
-        });
+        }).fail(function (xhr) { util.handleAjaxFailure(xhr); });
         return d.promise;
       });
 

@@ -7,7 +7,8 @@
 define([
   'dojo/dom-construct',
   'dojo/_base/declare',
-  'codechecker/filter/FilterBase'],
+  'codechecker/filter/FilterBase',
+  'codechecker/util'],
 function (dom, declare, FilterBase) {
   return declare(FilterBase, {
     constructor : function () {
@@ -45,7 +46,7 @@ function (dom, declare, FilterBase) {
       CC_SERVICE.getRunResultCount(runIds, reportFilter, cmpData,
       function (count) {
         that.setReportCount(count);
-      });
+      }).fail(function (xhr) { util.handleAjaxFailure(xhr); });
     }
   });
 });
