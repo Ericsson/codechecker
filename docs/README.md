@@ -152,6 +152,12 @@ export PATH="$PWD/build/CodeChecker/bin:$PATH"
 cd ..
 ```
 
+
+## Docker
+To run CodeChecker server in Docker see the [Docker](web/docker.md) documentation.
+
+[![Docker](images/docker.jpg)](https://hub.docker.com/r/codechecker/codechecker-web)
+
 # Check your first project
 
 ## Configuring Clang version

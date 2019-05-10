@@ -11,6 +11,7 @@ Table of Contents
         * [Using SQLite for database](#sqlite)
     * [`server`](#server)
         * [Creating a public server](#public-server)
+        * [Run CodeChecker server in Docker](#server-in-docker)
         * [Configuring database and server settings' location](#server-settings)
         * [Master superuser and authentication forcing](#auth-force)
         * [Enfore secure socket (SSL)](#ssl)
@@ -342,6 +343,9 @@ CodeChecker server
 By default, the running server can only be accessed from the same machine
 (`localhost`) where it is running. This can be overridden by specifying
 `--host ""`, instructing the server to listen on all available interfaces.
+
+### Run CodeChecker server in Docker <a name="server-in-docker"></a>
+To run CodeChecker server in Docker see the [Docker](docker.md) documentation.
 
 ### Configuring database and server settings location  <a name="server-settings"></a>
 

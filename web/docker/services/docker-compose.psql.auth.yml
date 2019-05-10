@@ -17,7 +17,7 @@ services:
       - codechecker
 
   codechecker:
-    image: codechecker-web:latest
+    image: codechecker/codechecker-web:latest
     ports:
       - 8001:8001
     volumes:
