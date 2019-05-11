@@ -155,7 +155,7 @@ pycodestyle:
 pycodestyle_in_env:
 	$(ACTIVATE_DEV_VENV) && $(PYCODE_CMD)
 
-test: test_analyzer test_server
+test: test_analyzer test_web
 
 test_analyzer:
 	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_ANALYZER) test
@@ -163,10 +163,22 @@ test_analyzer:
 test_analyzer_in_env:
 	$(MAKE) -C $(CC_ANALYZER) test_in_env
 
-test_server:
+# Run a specific analyzer test.
+test_analyzer_feature:
+	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_ANALYZER) run_test
+
+test_web:
 	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_WEB) test
 
-test_server_in_env:
+# Run all the functional tests for the web with SQLite.
+test_web_sqlite:
+	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_WEB) test_sqlite
+
+# Run a specific web test.
+test_web_feature:
+	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_WEB) run_test
+
+test_web_in_env:
 	$(MAKE) -C $(CC_WEB) test_in_env
 
 test_unit:
