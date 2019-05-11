@@ -145,7 +145,7 @@ class SessionManager(object):
         self.__database_connection = None
         self.__logins_since_prune = 0
         self.__sessions = []
-        self.__session_salt = hashlib.sha1(session_salt).hexdigest()
+        self.__session_salt = hashlib.sha1(session_salt.encode()).hexdigest()
         self.__configuration_file = configuration_file
 
         scfg_dict = self.__get_config_dict()

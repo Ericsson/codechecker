@@ -24,7 +24,10 @@ import socket
 import ssl
 import sys
 import stat
-import urllib
+try:
+    from urllib import unquote, quote_plus
+except ImportError:
+    from urllib.parse import unquote, quote_plus
 
 try:
     from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
@@ -157,7 +160,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
         if self.server.manager.is_enabled and not self.auth_session \
                 and routing.is_protected_GET_entrypoint(path):
             # If necessary, prompt the user for authentication.
-            returnto = '?returnto=' + urllib.quote_plus(self.path.lstrip('/'))\
+            returnto = '?returnto=' + quote_plus(self.path.lstrip('/'))\
                 if self.path != '/' else ''
 
             self.send_response(307)  # 307 Temporary Redirect
@@ -472,7 +475,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
         # Abandon query parameters.
         path = path.split('?', 1)[0]
         path = path.split('#', 1)[0]
-        path = posixpath.normpath(urllib.unquote(path))
+        path = posixpath.normpath(unquote(path))
         words = path.split('/')
         words = filter(None, words)
         path = self.server.www_root

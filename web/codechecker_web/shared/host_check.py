@@ -27,7 +27,7 @@ def check_zlib():
     """
     try:
         import zlib
-        zlib.compress('Compress this')
+        zlib.compress(b'Compress this')
         return True
     except Exception as ex:
         LOG.error(str(ex))
