@@ -77,9 +77,9 @@ def setup_package():
 
     test_project_name = project_info['name'] + '_' + uuid.uuid4().hex + '**'
 
-    ret = codechecker.check(codechecker_cfg,
-                            test_project_name,
-                            project.path(test_project))
+    ret = codechecker.check_and_store(codechecker_cfg,
+                                      test_project_name,
+                                      project.path(test_project))
     if ret:
         sys.exit(1)
     print("Analyzing the test project was successful.")
@@ -93,9 +93,9 @@ def setup_package():
                                    '-d', 'unix.Malloc'
                                    ]
     codechecker_cfg['tag'] = None
-    ret = codechecker.check(codechecker_cfg,
-                            test_project_name_new,
-                            project.path(test_project))
+    ret = codechecker.check_and_store(codechecker_cfg,
+                                      test_project_name_new,
+                                      project.path(test_project))
 
     if ret:
         sys.exit(1)
@@ -104,9 +104,9 @@ def setup_package():
     test_project_name_third = project_info['name'] + uuid.uuid4().hex
 
     # Let's run the third analysis.
-    ret = codechecker.check(codechecker_cfg,
-                            test_project_name_third,
-                            project.path(test_project))
+    ret = codechecker.check_and_store(codechecker_cfg,
+                                      test_project_name_third,
+                                      project.path(test_project))
 
     if ret:
         sys.exit(1)

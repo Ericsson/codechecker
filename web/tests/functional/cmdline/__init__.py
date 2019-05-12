@@ -77,18 +77,18 @@ def setup_package():
     # Generate a unique name for this test run.
     test_project_name_1 = project_info['name'] + '1_' + uuid.uuid4().hex
 
-    ret = codechecker.check(codechecker_cfg,
-                            test_project_name_1,
-                            project.path(test_project))
+    ret = codechecker.check_and_store(codechecker_cfg,
+                                      test_project_name_1,
+                                      project.path(test_project))
     if ret:
         sys.exit(1)
     print("Analyzing the test project was successful.")
 
     test_project_name_2 = project_info['name'] + '2_' + uuid.uuid4().hex
 
-    ret = codechecker.check(codechecker_cfg,
-                            test_project_name_2,
-                            project.path(test_project))
+    ret = codechecker.check_and_store(codechecker_cfg,
+                                      test_project_name_2,
+                                      project.path(test_project))
     if ret:
         sys.exit(1)
     print("Analyzing the test project was successful.")

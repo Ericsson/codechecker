@@ -67,9 +67,9 @@ def setup_package():
 
     test_project_name = project_info['name'] + '_' + uuid.uuid4().hex
 
-    ret = codechecker.check(codechecker_cfg,
-                            test_project_name,
-                            project.path(test_project))
+    ret = codechecker.check_and_store(codechecker_cfg,
+                                      test_project_name,
+                                      project.path(test_project))
 
     if ret:
         sys.exit(1)

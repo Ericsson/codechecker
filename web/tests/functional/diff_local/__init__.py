@@ -5,7 +5,8 @@
 #   License. See LICENSE.TXT for details.
 # -----------------------------------------------------------------------------
 
-"""Setup for the test package delete_runs."""
+"""Setup part for the test package diff_local. """
+
 from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
@@ -13,40 +14,49 @@ from __future__ import absolute_import
 import os
 import shutil
 import sys
-import time
+import uuid
 
 from libtest import codechecker
 from libtest import env
 from libtest import project
+
 
 # Test workspace should be initialized in this module.
 TEST_WORKSPACE = None
 
 
 def setup_package():
-    """Setup the environment for testing delete_runs."""
+    """Setup the environment for testing diff_local."""
 
     global TEST_WORKSPACE
-    TEST_WORKSPACE = env.get_workspace('delete_runs')
+    TEST_WORKSPACE = env.get_workspace('diff_local')
 
     # Set the TEST_WORKSPACE used by the tests.
     os.environ['TEST_WORKSPACE'] = TEST_WORKSPACE
 
+    # Get the clang version which is used for testing.
+    # Important because different clang releases might
+    # find different errors.
+    clang_version = env.clang_to_test()
+
     test_config = {}
 
-    test_project = 'simple'
+    test_project = 'cpp'
 
     project_info = project.get_info(test_project)
 
     # Copy the test project to the workspace. The tests should
     # work only on this test project.
-    test_proj_path = os.path.join(TEST_WORKSPACE, "test_proj")
-    shutil.copytree(project.path(test_project), test_proj_path)
+    test_proj_path_base = os.path.join(TEST_WORKSPACE, "test_proj_base")
+    shutil.copytree(project.path(test_project), test_proj_path_base)
 
-    project_info['project_path'] = test_proj_path
+    # Copy the test project to the workspace. The tests should
+    # work only on this test project.
+    test_proj_path_new = os.path.join(TEST_WORKSPACE, "test_proj_new")
+    shutil.copytree(project.path(test_project), test_proj_path_new)
 
-    # Generate a unique name for this test run.
-    test_project_name = project_info['name']
+    project_info['project_path_base'] = test_proj_path_base
+    project_info['project_path_new'] = test_proj_path_new
 
     test_config['test_project'] = project_info
 
@@ -70,41 +80,30 @@ def setup_package():
         'checkers': []
     }
 
-    # Start or connect to the running CodeChecker server and get connection
-    # details.
-    print("This test uses a CodeChecker server... connecting...")
-    server_access = codechecker.start_or_get_server()
-    server_access['viewer_product'] = 'delete_runs'
-    codechecker.add_test_package_product(server_access, TEST_WORKSPACE)
+    # Base analysis
+    codechecker_cfg['reportdir'] = os.path.join(test_proj_path_base,
+                                                'reports')
+    codechecker_cfg['checkers'] = ['-e', 'core.CallAndMessage',
+                                   '-d', 'core.NullDereference']
 
-    # Extend the checker configuration with the server access.
-    codechecker_cfg.update(server_access)
+    ret = codechecker.log_and_analyze(codechecker_cfg, test_proj_path_base)
+    if ret:
+        sys.exit(1)
 
-    for i in range(0, 5):
-        # Clean the test project, if needed by the tests.
-        ret = project.clean(test_project)
-        if ret:
-            sys.exit(ret)
+    # New analysis
+    codechecker_cfg['reportdir'] = os.path.join(test_proj_path_new,
+                                                'reports')
+    codechecker_cfg['checkers'] = ['-d', 'core.CallAndMessage',
+                                   '-e', 'core.NullDereference']
 
-        # Check the test project, if needed by the tests.
-        ret = codechecker.check_and_store(codechecker_cfg,
-                                          test_project_name + '_' + str(i),
-                                          test_proj_path)
-        if ret:
-            sys.exit(1)
+    ret = codechecker.log_and_analyze(codechecker_cfg, test_proj_path_new)
+    if ret:
+        sys.exit(1)
 
-        print("Analyzing the test project was successful {}.".format(str(i)))
-
-        # If the check process is very fast, datetime of multiple runs can be
-        # almost the same different in microseconds. Test cases of delete runs
-        # can be failed for this reason because we didn't process microseconds
-        # in command line arguments.
-        time.sleep(1)
-
-    # Save the run names in the configuration.
-    codechecker_cfg['run_names'] \
-        = [test_project_name + '_' + str(i) for i in range(0, 5)]
-
+    codechecker_cfg['reportdir_base'] = os.path.join(test_proj_path_base,
+                                                     'reports')
+    codechecker_cfg['reportdir_new'] = os.path.join(test_proj_path_new,
+                                                    'reports')
     test_config['codechecker_cfg'] = codechecker_cfg
 
     # Export the test configuration to the workspace.
@@ -117,10 +116,6 @@ def teardown_package():
     # TODO: If environment variable is set keep the workspace
     # and print out the path.
     global TEST_WORKSPACE
-
-    check_env = env.import_test_cfg(TEST_WORKSPACE)[
-        'codechecker_cfg']['check_env']
-    codechecker.remove_test_package_product(TEST_WORKSPACE, check_env)
 
     print("Removing: " + TEST_WORKSPACE)
     shutil.rmtree(TEST_WORKSPACE)

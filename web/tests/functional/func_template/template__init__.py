@@ -98,9 +98,9 @@ def setup_package():
         sys.exit(ret)
 
     # Check the test project, if needed by the tests.
-    ret = codechecker.check(codechecker_cfg,
-                            test_project_name,
-                            project.path(test_project))
+    ret = codechecker.check_and_store(codechecker_cfg,
+                                      test_project_name,
+                                      project.path(test_project))
     if ret:
         sys.exit(1)
     print("Analyzing the test project was successful.")

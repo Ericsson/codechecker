@@ -96,9 +96,9 @@ int f(int x) { return 1 / x; }
         run_filter.names = ['db_cleanup_test']
         run_filter.exactMatch = True
 
-        codechecker.check(self.codechecker_cfg,
-                          'db_cleanup_test',
-                          self.test_dir)
+        codechecker.check_and_store(self.codechecker_cfg,
+                                    'db_cleanup_test',
+                                    self.test_dir)
 
         runs = self._cc_client.getRunData(run_filter)
         run_id = runs[0].runId

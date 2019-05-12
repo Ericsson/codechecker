@@ -34,29 +34,41 @@ def get_build_cmd(test_project):
 
 
 def get_clean_cmd(test_project):
-    return get_info(test_project)['clean_cmd']
+    try:
+        return get_info(test_project)['clean_cmd']
+    except KeyError:
+        return ""
 
 
-def clean(test_project, env=None):
+def clean(test_project, environment=None):
     """Clean the test project."""
-
     project_path = path(test_project)
     clean_cmd = get_clean_cmd(project_path)
-    print(clean_cmd)
-    command = ['bash', '-c']
-    command.extend(shlex.split(clean_cmd))
-    print(project_path)
+    if not clean_cmd:
+        # If the clean command is missing do nothing.
+        return 0
     try:
-        print(command)
-        proc = subprocess.Popen(command,
+        print(clean_cmd)
+        proc = subprocess.Popen(shlex.split(clean_cmd),
                                 cwd=project_path,
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE,
-                                env=env)
-        out, err = proc.communicate()
-        print(out)
-        print(err)
+                                env=environment)
+        _, _ = proc.communicate()
         return 0
     except subprocess.CalledProcessError as cerr:
-        print("Failed to call:\n" + ' '.join(cerr.cmd))
         return cerr.returncode
+
+
+def insert_suppression(source_file_name):
+    """Insert a suppression comment to a source file.
+
+    An insert_suppress_here comment in the source file will be replaced
+    by a suppress comment.
+    """
+    with open(source_file_name, 'r') as f:
+        content = f.read()
+    content = content.replace("insert_suppress_here",
+                              "codechecker_suppress [all] test suppression!")
+    with open(source_file_name, 'w') as f:
+        f.write(content)

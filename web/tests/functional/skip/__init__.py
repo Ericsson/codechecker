@@ -82,9 +82,8 @@ def setup_package():
     codechecker_cfg['reportdir'] = output_dir
 
     # Analyze without skip.
-    ret = codechecker.analyze(codechecker_cfg,
-                              test_project_name,
-                              project.path(test_project))
+    ret = codechecker.log_and_analyze(codechecker_cfg,
+                                      project.path(test_project))
     if ret:
         print("Analyzing the test project without a skip file failed.")
         sys.exit(1)
@@ -92,9 +91,8 @@ def setup_package():
     codechecker_cfg['skip_file'] = skip_file
 
     # Analyze with skip.
-    ret = codechecker.analyze(codechecker_cfg,
-                              test_project_name,
-                              project.path(test_project))
+    ret = codechecker.log_and_analyze(codechecker_cfg,
+                                      project.path(test_project))
 
     if ret:
         print("Analyzing the test project with a skip file failed.")

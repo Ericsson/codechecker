@@ -120,7 +120,7 @@ int main()
             f.write(self.sources[version])
 
     def _check_source_file(self, cfg):
-        codechecker.check(cfg, 'hello', self._test_dir)
+        codechecker.check_and_store(cfg, 'hello', self._test_dir)
 
     def test_same_file_change(self):
         """
@@ -291,9 +291,8 @@ int main()
 
         self._create_source_file(0)
 
-        codechecker.analyze(self._codechecker_cfg,
-                            'hello',
-                            self._test_dir)
+        codechecker.log_and_analyze(self._codechecker_cfg,
+                                    self._test_dir)
 
         try:
             # Test storage without metadata.json.

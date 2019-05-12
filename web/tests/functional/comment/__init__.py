@@ -71,9 +71,9 @@ def setup_package():
     test_project_name = project_info['name'] + '_' + uuid.uuid4().hex
     test_project_names.append(test_project_name)
 
-    ret = codechecker.check(codechecker_cfg,
-                            test_project_name,
-                            test_project_path)
+    ret = codechecker.check_and_store(codechecker_cfg,
+                                      test_project_name,
+                                      test_project_path)
     if ret:
         sys.exit(1)
     print("Analyzing test project was successful.")
@@ -82,9 +82,9 @@ def setup_package():
     test_project_name = project_info['name'] + '_' + uuid.uuid4().hex
     test_project_names.append(test_project_name)
 
-    ret = codechecker.check(codechecker_cfg,
-                            test_project_name,
-                            test_project_path)
+    ret = codechecker.check_and_store(codechecker_cfg,
+                                      test_project_name,
+                                      test_project_path)
     if ret:
         sys.exit(1)
     print("Analyzing test project was succcessful.")

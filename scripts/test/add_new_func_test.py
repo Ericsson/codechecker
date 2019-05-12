@@ -26,8 +26,7 @@ def main():
         print("Please provide a function test name")
         sys.exit(1)
 
-    current_dir = os.path.dirname(os.path.realpath(__file__))
-    function_test_path = os.path.join(current_dir, 'functional')
+    function_test_path = os.path.join(os.getcwd())
     new_test_path = os.path.join(function_test_path, test_name)
     if os.path.exists(new_test_path):
         print("Functional test directory already exists.")

@@ -79,7 +79,6 @@ def login(codechecker_cfg, test_project_path, username, password,
     print("Logging in")
     port = str(codechecker_cfg['viewer_port'])
     login_cmd = ['CodeChecker', 'cmd', 'login', username,
-                 '--verbose', 'debug',
                  '--url', protocol + '://' + 'localhost:' + port]
 
     auth_creds = {'client_autologin': True,
@@ -124,7 +123,6 @@ def logout(codechecker_cfg, test_project_path, protocol='http'):
     port = str(codechecker_cfg['viewer_port'])
     logout_cmd = ['CodeChecker', 'cmd', 'login',
                   '--logout',
-                  '--verbose', 'debug',
                   '--url', protocol + '://'+'localhost:' + port]
 
     auth_file = os.path.join(test_project_path, ".codechecker.passwords.json")
@@ -158,7 +156,8 @@ def logout(codechecker_cfg, test_project_path, protocol='http'):
         return cerr.errno
 
 
-def check(codechecker_cfg, test_project_name, test_project_path):
+def check_and_store(codechecker_cfg, test_project_name, test_project_path,
+                    clean_project=True):
     """
     Check a test project and store the results into the database.
 
@@ -172,6 +171,11 @@ def check(codechecker_cfg, test_project_name, test_project_path):
         else os.path.join(codechecker_cfg['workspace'], 'reports')
 
     build_cmd = project.get_build_cmd(test_project_path)
+
+    if clean_project:
+        ret = project.clean(test_project_path)
+        if ret:
+            return ret
 
     check_cmd = ['CodeChecker', 'check',
                  '-o', output_dir,
@@ -211,9 +215,12 @@ def check(codechecker_cfg, test_project_name, test_project_path):
     if tag:
         store_cmd.extend(['--tag', tag])
 
+    force = codechecker_cfg.get('force')
+    if force:
+        store_cmd.extend(['--force'])
+
     try:
-        print("RUNNING STORE")
-        print(' '.join(store_cmd))
+        print('STORE' + ' '.join(store_cmd))
         subprocess.call(shlex.split(' '.join(store_cmd)),
                         cwd=test_project_path,
                         env=codechecker_cfg['check_env'])
@@ -224,7 +231,76 @@ def check(codechecker_cfg, test_project_name, test_project_path):
         return cerr.returncode
 
 
-def analyze(codechecker_cfg, test_project_name, test_project_path):
+def log(codechecker_cfg, test_project_path, clean_project=False):
+    """Log a test project."""
+    build_cmd = project.get_build_cmd(test_project_path)
+    build_json = os.path.join(codechecker_cfg['workspace'], "build.json")
+
+    if clean_project:
+        ret = project.clean(test_project_path)
+        if ret:
+            return ret
+
+    log_cmd = ['CodeChecker', 'log',
+               '-o', build_json,
+               '-b', "'" + build_cmd + "'",
+               ]
+
+    try:
+        proc = subprocess.Popen(shlex.split(' '.join(log_cmd)),
+                                cwd=test_project_path,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE,
+                                env=codechecker_cfg['check_env'])
+        out, err = proc.communicate()
+        print(out)
+        print(err)
+
+        return 0
+    except CalledProcessError as cerr:
+        print("Failed to call:\n" + ' '.join(cerr.cmd))
+        return cerr.returncode
+
+
+def analyze(codechecker_cfg, test_project_path):
+    """Analyze a test project.
+
+    A build.json file should be in the workspace directory!
+    """
+    build_json = os.path.join(codechecker_cfg['workspace'], "build.json")
+
+    analyze_cmd = ['CodeChecker', 'analyze',
+                   build_json,
+                   '-o', codechecker_cfg['reportdir'],
+                   '--analyzers', 'clangsa'
+                   ]
+
+    suppress_file = codechecker_cfg.get('suppress_file')
+    if suppress_file:
+        analyze_cmd.extend(['--suppress', suppress_file])
+
+    skip_file = codechecker_cfg.get('skip_file')
+    if skip_file:
+        analyze_cmd.extend(['--skip', skip_file])
+
+    analyze_cmd.extend(codechecker_cfg['checkers'])
+    try:
+        print('ANALYZE: ' + ' '.join(analyze_cmd))
+        proc = subprocess.Popen(shlex.split(' '.join(analyze_cmd)),
+                                cwd=test_project_path,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE,
+                                env=codechecker_cfg['check_env'])
+        out, err = proc.communicate()
+        print(out)
+        print(err)
+        return 0
+    except CalledProcessError as cerr:
+        print("Failed to call:\n" + ' '.join(cerr.cmd))
+        return cerr.returncode
+
+
+def log_and_analyze(codechecker_cfg, test_project_path, clean_project=True):
     """
     Analyze a test project.
 
@@ -235,6 +311,11 @@ def analyze(codechecker_cfg, test_project_name, test_project_path):
 
     build_cmd = project.get_build_cmd(test_project_path)
     build_json = os.path.join(codechecker_cfg['workspace'], "build.json")
+
+    if clean_project:
+        ret = project.clean(test_project_path)
+        if ret:
+            return ret
 
     log_cmd = ['CodeChecker', 'log',
                '-o', build_json,
@@ -255,13 +336,9 @@ def analyze(codechecker_cfg, test_project_name, test_project_path):
     if skip_file:
         analyze_cmd.extend(['--skip', skip_file])
 
-    force = codechecker_cfg.get('force')
-    if force:
-        analyze_cmd.extend(['--force'])
-
     analyze_cmd.extend(codechecker_cfg['checkers'])
     try:
-        print("LOG:")
+        print("LOG: " + ' '.join(log_cmd))
         proc = subprocess.Popen(shlex.split(' '.join(log_cmd)),
                                 cwd=test_project_path,
                                 stdout=subprocess.PIPE,
@@ -295,7 +372,7 @@ def parse(codechecker_cfg):
     parse_cmd = ['CodeChecker', 'parse', codechecker_cfg['reportdir']]
 
     try:
-        print("LOG:")
+        print("PARSE: " + ' '.join(parse_cmd))
         proc = subprocess.Popen(shlex.split(' '.join(parse_cmd)),
                                 cwd=codechecker_cfg['workspace'],
                                 stdout=subprocess.PIPE,
@@ -321,8 +398,16 @@ def store(codechecker_cfg, test_project_name):
                  '--name', test_project_name,
                  codechecker_cfg['reportdir']]
 
+    tag = codechecker_cfg.get('tag')
+    if tag:
+        store_cmd.extend(['--tag', tag])
+
+    force = codechecker_cfg.get('force')
+    if force:
+        store_cmd.extend(['--force'])
+
     try:
-        print("STORE:")
+        print('STORE: ' + ' '.join(store_cmd))
         proc = subprocess.Popen(shlex.split(' '.join(store_cmd)),
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE,

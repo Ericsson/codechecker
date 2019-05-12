@@ -87,7 +87,8 @@ int main()
             f.write(self.sources[version])
 
         self._codechecker_cfg['tag'] = self.tags[version]
-        codechecker.check(self._codechecker_cfg, run_name, self._test_dir)
+        codechecker.check_and_store(self._codechecker_cfg,
+                                    run_name, self._test_dir)
 
     def __get_run_tag_counts(self, run_id):
         """
