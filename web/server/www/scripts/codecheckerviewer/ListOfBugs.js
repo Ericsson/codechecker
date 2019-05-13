@@ -374,12 +374,13 @@ function (declare, dom, style, Deferred, ObjectStore, Store, QueryResults,
             var self = this;
             setTimeout(function () {
               that._bugFilterView.initAll(state);
-              that._grid.scrollToLastSelected();
               self._showInProgress = false;
             }, 0);
           } else {
             this._showInProgress = false;
           }
+
+          that._grid.scrollToLastSelected();
 
           if (that._grid.rowCount === 0)
             // Call the notify explicitly to initalize grid filters.
