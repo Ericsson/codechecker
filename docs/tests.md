@@ -11,13 +11,13 @@ make package
 __Every test target has an `*in_env` version (Eg. `make test_in_env`) which automatically creates and sources a virtualenv for the tests.__
 |cmd||  
 |----|---|  
-|`make test`| run all tests (unit and functional)|  
-|`make test_in_env`| run all tests (unit and functional), automatically setup and source a virtualenv|  
-|`make test_unit` | unittests |  
-|`make test_functional` | functional tests (SQLite and PostgreSQL) |  
-|`make test_sqlite` | functional test (SQLite) |  
-|`make test_psql` | functional tests (PostgreSQL)
-|`make TEST="tests/functional/cmdline" run_test` | run only a specific test (SQLite) |
+|`make test`| run all tests (unit and functional for the analyzer and the web)|  
+|`make test_in_env`| run all tests (unit and functional), automatically setup and source a virtualenv| 
+|`make test_unit` | unittests for the analyzer and the web | 
+|`make test_functional` | functional tests for the analyzer and the web (SQLite and PostgreSQL) | 
+|`make test_web_sqlite` | functional test for the web part (SQLite) | 
+|`make TEST="tests/functional/cmdline" test_web_feature` | run only a specific web test (SQLite) |
+|`make TEST="tests/functional/analyze" test_analyzer_feature` | run only a specific analyzer test |
 
 ### Change test workspace root
 
