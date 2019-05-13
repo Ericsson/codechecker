@@ -19,6 +19,8 @@ define([
 function (declare, cookie, dom, topic, Button, ContentPane, popup,
   TooltipDialog, hashHelper, HeaderMenu, util) {
   return declare(ContentPane, {
+    packageVersion : '',
+
     postCreate : function () {
       this.inherited(arguments);
 
@@ -48,14 +50,13 @@ function (declare, cookie, dom, topic, Button, ContentPane, popup,
 
       dom.create('span', { id : 'logo' }, logoContainer);
 
-      var packageVersion = '';
       try {
-        packageVersion = CC_PROD_SERVICE.getPackageVersion();
+        this.packageVersion = CC_PROD_SERVICE.getPackageVersion();
       } catch (ex) { util.handleThriftException(ex); }
 
       var logoText = dom.create('div', {
         id : 'logo-text',
-        innerHTML : 'CodeChecker ' + packageVersion
+        innerHTML : 'CodeChecker ' + this.packageVersion
       }, logoContainer);
 
       //--- Title ---//
@@ -231,6 +232,32 @@ function (declare, cookie, dom, topic, Button, ContentPane, popup,
 
         hashHelper.resetStateValues({ 'tab' : 'userguide' });
         that.mainTab.selectChild(that.userguide);
+      });
+
+      topic.subscribe('tab/changelog', function (param) {
+        if (!that.changelogPage) {
+          that.changelogPage = new ContentPane({
+            id    : 'changelog',
+            href  : 'changelog.html',
+            title : '<span class="tab-new-features-label">New features</span>',
+            style : 'padding: 10px',
+            iconClass : 'customIcon bulb',
+            closable : true,
+            onShow : function () {
+              hashHelper.resetStateValues({ 'tab' : 'changelog' });
+            },
+            onClose : function () {
+              delete that.changelogPage;
+              cookie('changelog', that.packageVersion, { expires: 365 });
+              return true;
+            }
+          });
+          that.mainTab.addChild(that.changelogPage);
+        }
+
+        if (!param || !param.preventSelect) {
+          that.mainTab.selectChild(that.changelogPage);
+        }
       });
     }
   });
