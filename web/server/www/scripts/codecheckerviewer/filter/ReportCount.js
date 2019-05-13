@@ -9,7 +9,7 @@ define([
   'dojo/_base/declare',
   'codechecker/filter/FilterBase',
   'codechecker/util'],
-function (dom, declare, FilterBase) {
+function (dom, declare, FilterBase, util) {
   return declare(FilterBase, {
     constructor : function () {
       this._reportCount = 0;
