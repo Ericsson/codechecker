@@ -56,7 +56,7 @@ class TestGetLinesInFile(unittest.TestCase):
         # Returns file id for the given file path in the given run.
         file_filter = ReportFilter(filepath=[file_path])
         run_results = self._cc_client.getRunResults(
-            [run_id], 1, 0, None, file_filter, None)
+            [run_id], 1, 0, None, file_filter, None, False)
 
         self.assertTrue(len(run_results))
         return run_results[0].fileId

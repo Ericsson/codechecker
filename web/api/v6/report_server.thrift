@@ -214,6 +214,7 @@ struct ReportData {
   13: string          detectedAt,      // Detection date of the report.
   14: string          fixedAt          // Date when the report was fixed.
   15: i64             bugPathLength,   // Length of the bug path.
+  16: optional ReportDetails details,  // Details of the report.
 }
 typedef list<ReportData> ReportDataList
 
@@ -338,7 +339,8 @@ service codeCheckerDBAccess {
                                3: i64            offset,
                                4: list<SortMode> sortType,
                                5: ReportFilter   reportFilter,
-                               6: CompareData    cmpData)
+                               6: CompareData    cmpData,
+                               7: optional bool  getDetails)
                                throws (1: shared.RequestFailed requestError),
 
 

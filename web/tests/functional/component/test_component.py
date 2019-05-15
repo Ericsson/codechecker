@@ -171,7 +171,8 @@ class TestComponent(unittest.TestCase):
                                                     0,
                                                     None,
                                                     r_filter,
-                                                    None)
+                                                    None,
+                                                    False)
         self.assertIsNotNone(run_results)
 
         # Check that reports which can be found in file what the source
@@ -213,7 +214,8 @@ class TestComponent(unittest.TestCase):
                                                     0,
                                                     None,
                                                     r_filter,
-                                                    None)
+                                                    None,
+                                                    False)
         self.assertIsNotNone(run_results)
 
         # Check that reports which can be found in file what the source
@@ -268,7 +270,8 @@ class TestComponent(unittest.TestCase):
                                                     0,
                                                     None,
                                                     r_filter,
-                                                    None)
+                                                    None,
+                                                    False)
         self.assertIsNotNone(run_results)
 
         # Check that reports which can be found in file what the source
@@ -311,7 +314,8 @@ class TestComponent(unittest.TestCase):
                                                     0,
                                                     None,
                                                     r_filter,
-                                                    None)
+                                                    None,
+                                                    False)
         self.assertIsNotNone(run_results)
 
         # No reports for this component.

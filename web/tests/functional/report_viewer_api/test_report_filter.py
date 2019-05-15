@@ -73,7 +73,8 @@ class TestReportFilter(unittest.TestCase):
                                                     0,
                                                     sort_types,
                                                     simple_filters,
-                                                    None)
+                                                    None,
+                                                    False)
         self.assertIsNotNone(run_results)
         self.assertEqual(run_result_count, len(run_results))
 
@@ -93,7 +94,8 @@ class TestReportFilter(unittest.TestCase):
                                                     0,
                                                     sort_types,
                                                     f,
-                                                    None)
+                                                    None,
+                                                    False)
         self.assertIsNotNone(run_results)
         self.assertEqual(run_result_count, len(run_results))
 
@@ -115,7 +117,8 @@ class TestReportFilter(unittest.TestCase):
                 run_result_count = self._cc_client.getRunResultCount(
                     [runid], sev_f, None)
                 run_results = self._cc_client.getRunResults(
-                    [runid], run_result_count, 0, sort_types, sev_f, None)
+                    [runid], run_result_count, 0, sort_types, sev_f, None,
+                    False)
                 self.assertIsNotNone(run_results)
                 self.assertEqual(test_result_count, len(run_results))
 
@@ -138,7 +141,8 @@ class TestReportFilter(unittest.TestCase):
                                                             0,
                                                             sort_types,
                                                             cid_f,
-                                                            None)
+                                                            None,
+                                                            False)
                 for r in run_results:
                     print(r)
                 self.assertIsNotNone(run_results)
@@ -166,7 +170,8 @@ class TestReportFilter(unittest.TestCase):
                                                             0,
                                                             sort_types,
                                                             fp_f,
-                                                            None)
+                                                            None,
+                                                            False)
                 self.assertIsNotNone(run_results)
                 self.assertEqual(test_result_count, len(run_results))
 
@@ -192,7 +197,8 @@ class TestReportFilter(unittest.TestCase):
                                                             0,
                                                             sort_types,
                                                             fp_f,
-                                                            None)
+                                                            None,
+                                                            False)
                 self.assertIsNotNone(run_results)
                 self.assertEqual(test_result_count, len(run_results))
 
@@ -213,7 +219,8 @@ class TestReportFilter(unittest.TestCase):
                                                     0,
                                                     [],
                                                     None,
-                                                    None)
+                                                    None,
+                                                    False)
 
         self.assertIsNotNone(run_results)
         self.assertEqual(run_result_count, len(run_results))
@@ -233,7 +240,8 @@ class TestReportFilter(unittest.TestCase):
                                                     0,
                                                     [],
                                                     None,
-                                                    None)
+                                                    None,
+                                                    False)
 
         report_ids = [r.reportId for r in run_results]
 
@@ -259,7 +267,8 @@ class TestReportFilter(unittest.TestCase):
                                                             0,
                                                             sort_types,
                                                             s_f,
-                                                            None)
+                                                            None,
+                                                            False)
 
                 self.assertIsNotNone(run_results)
                 self.assertEqual(test_result_count, len(run_results))
@@ -275,14 +284,14 @@ class TestReportFilter(unittest.TestCase):
 
         # Get unique results.
         run_results = self._cc_client.getRunResults(
-            None, 500, 0, sort_types, unique_filter, None)
+            None, 500, 0, sort_types, unique_filter, None, False)
         unique_result_count = self._cc_client.getRunResultCount(
             None, unique_filter, None)
         unique_bughash = set([res.bugHash for res in run_results])
 
         # Get simple results.
         run_results = self._cc_client.getRunResults(
-            None, 500, 0, sort_types, simple_filter, None)
+            None, 500, 0, sort_types, simple_filter, None, False)
         simple_result_count = self._cc_client.getRunResultCount(
             None, simple_filter, None)
         simple_bughash = set([res.bugHash for res in run_results])

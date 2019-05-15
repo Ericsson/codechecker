@@ -104,7 +104,8 @@ int f(int x) { return 1 / x; }
         run_id = runs[0].runId
 
         reports \
-            = self._cc_client.getRunResults([run_id], 10, 0, [], None, None)
+            = self._cc_client.getRunResults([run_id], 10, 0, [], None, None,
+                                            False)
 
         details = self._cc_client.getReportDetails(reports[0].reportId)
 
@@ -133,7 +134,8 @@ int f(int x) { return 1 / x; }
         run_id = runs[0].runId
 
         reports \
-            = self._cc_client.getRunResults([run_id], 10, 0, [], None, None)
+            = self._cc_client.getRunResults([run_id], 10, 0, [], None, None,
+                                            False)
 
         with open(self.workspace_severity_cfg, 'r') as severity_cgf_file:
             severity_map = json.load(severity_cgf_file)

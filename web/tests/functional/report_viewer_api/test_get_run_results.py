@@ -257,7 +257,8 @@ class RunResults(unittest.TestCase):
                                                     0,
                                                     [sortMode1],
                                                     simple_filter,
-                                                    None)
+                                                    None,
+                                                    False)
         self.__check_bug_path_order(run_results, Order.ASC)
 
         run_results = self._cc_client.getRunResults([runid],
@@ -265,5 +266,39 @@ class RunResults(unittest.TestCase):
                                                     0,
                                                     [sortMode2],
                                                     unique_filter,
-                                                    None)
+                                                    None,
+                                                    False)
         self.__check_bug_path_order(run_results, Order.DESC)
+
+    def test_report_details(self):
+        """
+        Get run results and check that report details are correctly set.
+        """
+        runid = self._runid
+        simple_filter = ReportFilter()
+        run_results = self._cc_client.getRunResults([runid],
+                                                    100,
+                                                    0,
+                                                    None,
+                                                    simple_filter,
+                                                    None,
+                                                    True)
+
+        self.assertTrue(any(res.details for res in run_results))
+
+    def test_unqiue_report_details(self):
+        """
+        Get uniqued run results and check that report details are correctly
+        set.
+        """
+        runid = self._runid
+        unique_filter = ReportFilter(isUnique=True)
+        run_results = self._cc_client.getRunResults([runid],
+                                                    100,
+                                                    0,
+                                                    None,
+                                                    unique_filter,
+                                                    None,
+                                                    True)
+
+        self.assertTrue(any(res.details for res in run_results))

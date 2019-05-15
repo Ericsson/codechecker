@@ -131,7 +131,7 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
               CC_OBJECTS.MAX_QUERY_SIZE,
               0,
               [sortMode],
-              reportFilter, null);
+              reportFilter, null, false);
           } catch (ex) { util.handleThriftException(ex); }
 
           var runFilter = new CC_OBJECTS.RunFilter();
@@ -687,6 +687,7 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
         null,
         fileFilter,
         null,
+        false,
         function (result) {
           result.sort(function (r1, r2) {
             // Order reports by line.

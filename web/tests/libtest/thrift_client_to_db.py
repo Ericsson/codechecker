@@ -260,7 +260,8 @@ def get_all_run_results(client, run_id, sort_mode=None, filters=None):
                                            offset,
                                            sort_mode,
                                            filters,
-                                           None)
+                                           None,
+                                           False)
 
         offset += len(partial_res)
         if len(partial_res) == 0:

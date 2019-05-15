@@ -51,7 +51,8 @@ class TestExtendedReportData(unittest.TestCase):
         runs = self._cc_client.getRunData(run_filter)
         run_id = runs[0].runId
 
-        return self._cc_client.getRunResults([run_id], None, 0, [], None, None)
+        return self._cc_client.getRunResults([run_id], None, 0, [], None, None,
+                                             False)
 
     def test_notes(self):
         """

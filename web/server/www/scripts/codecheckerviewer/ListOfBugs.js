@@ -103,6 +103,7 @@ function (declare, dom, style, Deferred, ObjectStore, Store, QueryResults,
         options.sort ? options.sort.map(this._toSortMode) : null,
         query.reportFilter,
         query.cmpData,
+        false,
         function (reportDataList) {
           if (reportDataList instanceof RequestFailed)
             deferred.reject('Failed to get reports: ' + reportDataList.message);
@@ -499,7 +500,8 @@ function (declare, dom, style, Deferred, ObjectStore, Store, QueryResults,
           try {
             reports = CC_SERVICE.getRunResults(
               runIds.length ? runIds : null,
-              CC_OBJECTS.MAX_QUERY_SIZE, 0, [sortMode], reportFilter, null);
+              CC_OBJECTS.MAX_QUERY_SIZE, 0, [sortMode], reportFilter, null,
+              false);
           } catch (ex) { util.handleThriftException(ex); }
 
           reportData = reports[0];
