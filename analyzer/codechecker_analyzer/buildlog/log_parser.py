@@ -453,7 +453,9 @@ class ImplicitCompilerInfo(object):
                       compiler, filename)
 
         ICI = ImplicitCompilerInfo
-        ICI.compiler_includes[compiler] = compiler_info.get('includes')
+        ICI.compiler_includes[compiler] = []
+        for element in map(shlex.split, compiler_info.get('includes')):
+            ICI.compiler_includes[compiler].extend(element)
         ICI.compiler_standard[compiler] = compiler_info.get('default_standard')
         ICI.compiler_target[compiler] = compiler_info.get('target')
 
