@@ -59,7 +59,7 @@
   "bugprone-misplaced-widening-cast":                           "HIGH",
   "bugprone-move-forwarding-reference":                         "MEDIUM",
   "bugprone-multiple-statement-macro":                          "MEDIUM",
-  "bugprone-narrowing-conversions":                             "MEDIUM", 
+  "bugprone-narrowing-conversions":                             "MEDIUM",
   "bugprone-parent-virtual-call":                               "MEDIUM",
   "bugprone-sizeof-container":                                  "HIGH",
   "bugprone-sizeof-expression":                                 "HIGH",
