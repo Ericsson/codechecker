@@ -146,11 +146,13 @@ class LOG_CFG_SERVER(object):
             self.log_server.join()
 
 
-def setup_logger(log_level=None):
+def setup_logger(log_level=None, stream=None):
     """
     Modifies the log configuration.
     Overwrites the log levels for the loggers and handlers in the
     configuration.
+    Redirects the output of all handlers to the given stream. Short names can
+    be given (stderr -> ext://sys.stderr, 'stdout' -> ext://sys.stdout).
     """
 
     LOG_CONFIG = json.loads(DEFAULT_LOG_CONFIG)
@@ -166,5 +168,17 @@ def setup_logger(log_level=None):
             LOG_CONFIG['handlers'][k]['level'] = log_level
             if log_level == 'DEBUG' or log_level == 'DEBUG_ANALYZER':
                 LOG_CONFIG['handlers'][k]['formatter'] = 'precise'
+
+    if stream:
+        if stream == 'stderr':
+            stream = 'ext://sys.stderr'
+        elif stream == 'stdout':
+            stream = 'ext://sys.stdout'
+
+        handlers = LOG_CONFIG.get("handlers", {})
+        for k in handlers.keys():
+            handler = LOG_CONFIG['handlers'][k]
+            if 'stream' in handler:
+                handler['stream'] = stream
 
     config.dictConfig(LOG_CONFIG)

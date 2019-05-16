@@ -243,8 +243,13 @@ def add_filter_conditions(client, report_filter, args):
 
 
 def handle_list_runs(args):
+    # If the given output format is not 'table', redirect logger's output to
+    # the stderr.
+    stream = None
+    if 'output_format' in args and args.output_format != 'table':
+        stream = 'stderr'
 
-    init_logger(args.verbose if 'verbose' in args else None)
+    init_logger(args.verbose if 'verbose' in args else None, stream)
 
     client = setup_client(args.product_url)
 
@@ -293,7 +298,14 @@ def handle_list_runs(args):
 
 
 def handle_list_results(args):
-    init_logger(args.verbose if 'verbose' in args else None)
+    # If the given output format is not 'table', redirect logger's output to
+    # the stderr.
+    stream = None
+    if 'output_format' in args and args.output_format != 'table':
+        stream = 'stderr'
+
+    init_logger(args.verbose if 'verbose' in args else None, stream)
+
     check_deprecated_arg_usage(args)
 
     client = setup_client(args.product_url)
@@ -352,8 +364,14 @@ def handle_list_results(args):
 
 
 def handle_diff_results(args):
+    # If the given output format is not 'table', redirect logger's output to
+    # the stderr.
+    stream = None
+    if 'output_format' in args and args.output_format != 'table':
+        stream = 'stderr'
 
-    init_logger(args.verbose if 'verbose' in args else None)
+    init_logger(args.verbose if 'verbose' in args else None, stream)
+
     check_deprecated_arg_usage(args)
 
     f_severities, f_checkers, f_file_path, _, _ = check_filter_values(args)
@@ -1239,7 +1257,13 @@ def handle_login(args):
 
 
 def handle_list_run_histories(args):
-    init_logger(args.verbose if 'verbose' in args else None)
+    # If the given output format is not 'table', redirect logger's output to
+    # the stderr.
+    stream = None
+    if 'output_format' in args and args.output_format != 'table':
+        stream = 'stderr'
+
+    init_logger(args.verbose if 'verbose' in args else None, stream)
 
     client = setup_client(args.product_url)
     run_ids = None

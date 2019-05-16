@@ -36,7 +36,13 @@ def init_logger(level, logger_name='system'):
 
 def handle_list_products(args):
 
-    init_logger(args.verbose if 'verbose' in args else None)
+    # If the given output format is not 'table', redirect logger's output to
+    # the stderr.
+    stream = None
+    if 'output_format' in args and args.output_format != 'table':
+        stream = 'stderr'
+
+    init_logger(args.verbose if 'verbose' in args else None, stream)
 
     protocol, host, port = split_server_url(args.server_url)
     client = setup_product_client(protocol, host, port)

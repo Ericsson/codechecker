@@ -99,7 +99,13 @@ def main(args):
     """
     List the analyzers' basic information supported by CodeChecker.
     """
-    logger.setup_logger(args.verbose if 'verbose' in args else None)
+    # If the given output format is not 'table', redirect logger's output to
+    # the stderr.
+    stream = None
+    if 'output_format' in args and args.output_format != 'table':
+        stream = 'stderr'
+
+    logger.setup_logger(args.verbose if 'verbose' in args else None, stream)
 
     context = analyzer_context.get_context()
     working, errored = \
