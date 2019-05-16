@@ -270,33 +270,6 @@ function (declare, cookie, topic, Lightbox, Dialog, Button, BorderContainer,
       runsTab.selectChild(listOfRuns);
     });
 
-    topic.subscribe('tab/changelog', function (param) {
-      if (!changelogPage) {
-        changelogPage = new ContentPane({
-          id    : 'changelog',
-          href  : 'changelog.html',
-          title : '<span class="tab-new-features-label">New features</span>',
-          style : 'padding: 10px',
-          iconClass : 'customIcon bulb',
-          closable : true,
-          onShow : function () {
-            hashHelper.resetStateValues({
-              'tab' : 'changelog'
-            });
-          },
-          onClose : function () {
-            changelogPage = null;
-            cookie('changelog', packageVersion, { expires: 365 });
-            return true;
-          }
-        });
-        runsTab.addChild(changelogPage);
-      }
-
-      if (!param || !param.preventSelect)
-        runsTab.selectChild(changelogPage);
-    });
-
     //--- Handle main tabs ---//
 
     topic.subscribe('/dojo/hashchange', function (url) {
