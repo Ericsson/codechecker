@@ -321,18 +321,17 @@ def handle_list_results(args):
     offset = 0
 
     report_filter = ttypes.ReportFilter()
-
     add_filter_conditions(client, report_filter, args)
 
     all_results = []
-    results = client.getRunResults(run_ids, limit, offset, None,
-                                   report_filter, None)
-
-    while results:
-        all_results.extend(results)
-        offset += limit
+    while True:
         results = client.getRunResults(run_ids, limit, offset, None,
                                        report_filter, None)
+        all_results.extend(results)
+        offset += limit
+
+        if len(results) < limit:
+            break
 
     if args.output_format == 'json':
         print(CmdLineOutputEncoder().encode(all_results))
@@ -453,32 +452,32 @@ def handle_diff_results(args):
         return ""
 
     def get_diff_base_results(client, baseids, base_hashes, suppressed_hashes):
-        base_results = []
         report_filter = ttypes.ReportFilter()
         add_filter_conditions(client, report_filter, args)
+        report_filter.reportHash = base_hashes + suppressed_hashes
 
         sort_mode = [(ttypes.SortMode(
             ttypes.SortType.FILENAME,
             ttypes.Order.ASC))]
+
         limit = constants.MAX_QUERY_SIZE
         offset = 0
 
-        report_filter.reportHash = base_hashes + suppressed_hashes
-        results = client.getRunResults(baseids,
-                                       limit,
-                                       offset,
-                                       sort_mode,
-                                       report_filter,
-                                       None)
-        while results:
-            base_results.extend(results)
-            offset += limit
+        base_results = []
+        while True:
             results = client.getRunResults(baseids,
                                            limit,
                                            offset,
                                            sort_mode,
                                            report_filter,
                                            None)
+
+            base_results.extend(results)
+            offset += limit
+
+            if len(results) < limit:
+                break
+
         return base_results
 
     def get_suppressed_reports(reports):
@@ -641,22 +640,20 @@ def handle_diff_results(args):
         offset = 0
 
         all_results = []
-        results = client.getRunResults(base_ids,
-                                       limit,
-                                       offset,
-                                       sort_mode,
-                                       report_filter,
-                                       cmp_data)
-
-        while results:
-            all_results.extend(results)
-            offset += limit
+        while True:
             results = client.getRunResults(base_ids,
                                            limit,
                                            offset,
                                            sort_mode,
                                            report_filter,
                                            cmp_data)
+
+            all_results.extend(results)
+            offset += limit
+
+            if len(results) < limit:
+                break
+
         return all_results, base_run_names, new_run_names
 
     def get_diff_local_dirs(basename, newname):
