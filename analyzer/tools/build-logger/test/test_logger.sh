@@ -17,7 +17,7 @@ function assert_json {
 [
 	{
 		"directory": "$(pwd)",
-		"command": "$(readlink -f $(which $2)) $1",
+		"command": "$(which $2) $1",
 		"file": "$source_file"
 	}
 ]
