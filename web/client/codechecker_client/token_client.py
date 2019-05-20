@@ -12,9 +12,10 @@ from __future__ import absolute_import
 
 from codechecker_common import logger
 from codechecker_common.output_formatters import twodim_to_str
-from codechecker_common.util import CmdLineOutputEncoder, split_server_url
 
 from .client import setup_auth_client
+from .cmd_line import CmdLineOutputEncoder
+from .product import split_server_url
 
 # Needs to be set in the handler functions.
 LOG = None

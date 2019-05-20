@@ -4,7 +4,7 @@
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
 """
-Helper for the product thrift api.
+Helper for the configuration thrift api.
 """
 from __future__ import absolute_import
 from __future__ import print_function
@@ -13,7 +13,7 @@ from __future__ import division
 from thrift.transport import THttpClient
 from thrift.protocol import TJSONProtocol
 
-from ProductManagement_v6 import codeCheckerProductService
+from Configuration_v6 import configurationService
 
 from codechecker_common.logger import get_logger
 
@@ -24,14 +24,14 @@ from .thrift_call import ThriftClientCall
 LOG = get_logger('system')
 
 
-class ThriftProductHelper(object):
+class ThriftConfigHelper(object):
     def __init__(self, protocol, host, port, uri, session_token=None):
         self.__host = host
         self.__port = port
         url = create_product_url(protocol, host, port, uri)
         self.transport = THttpClient.THttpClient(url)
         self.protocol = TJSONProtocol.TJSONProtocol(self.transport)
-        self.client = codeCheckerProductService.Client(self.protocol)
+        self.client = configurationService.Client(self.protocol)
 
         if session_token:
             headers = {'Cookie': SESSION_COOKIE_NAME + '=' + session_token}
@@ -39,27 +39,5 @@ class ThriftProductHelper(object):
 
     # -----------------------------------------------------------------------
     @ThriftClientCall
-    def getPackageVersion(self):
-        pass
-
-    # -----------------------------------------------------------------------
-    @ThriftClientCall
-    def getProducts(self, product_endpoint_filter, product_name_filter):
-        pass
-
-    @ThriftClientCall
-    def getCurrentProduct(self):
-        pass
-
-    @ThriftClientCall
-    def getProductConfiguration(self, product_id):
-        pass
-
-    # -----------------------------------------------------------------------
-    @ThriftClientCall
-    def addProduct(self, product):
-        pass
-
-    @ThriftClientCall
-    def removeProduct(self, product_id):
+    def getNotificationBannerText(self):
         pass

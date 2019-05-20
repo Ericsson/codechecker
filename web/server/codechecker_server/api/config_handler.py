@@ -17,9 +17,9 @@ from Configuration_v6.ttypes import *
 
 from codechecker_common.logger import get_logger
 from codechecker_common.profiler import timeit
-from codechecker_common.util import DBSession
 
 from ..database.config_db_model import Configuration
+from .db import DBSession
 
 LOG = get_logger('server')
 

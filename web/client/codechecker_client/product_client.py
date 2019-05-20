@@ -17,12 +17,12 @@ from ProductManagement_v6.ttypes import *
 
 from codechecker_common import logger
 from codechecker_common.output_formatters import twodim_to_str
-from codechecker_common.util import split_server_url
 
 from codechecker_web.shared import database_status
 
 from .client import setup_product_client
-from .cmd_line_client import CmdLineOutputEncoder
+from .cmd_line import CmdLineOutputEncoder
+from .product import split_server_url
 
 # Needs to be set in the handler functions.
 LOG = None

@@ -13,11 +13,13 @@ from __future__ import division
 from datetime import datetime
 import hashlib
 import json
+import os
+import uuid
 
 from codechecker_common.logger import get_logger
-from codechecker_common.util import check_file_owner_rw, load_json_or_empty, \
-    generate_session_token
+from codechecker_common.util import load_json_or_empty
 
+from codechecker_web.shared.env import check_file_owner_rw
 from codechecker_web.shared.version import SESSION_COOKIE_NAME as _SCN
 
 from .database.config_db_model import Session as SessionRecord
@@ -38,6 +40,13 @@ except ImportError:
 
 LOG = get_logger("server")
 SESSION_COOKIE_NAME = _SCN
+
+
+def generate_session_token():
+    """
+    Returns a random session token.
+    """
+    return uuid.UUID(bytes=os.urandom(16)).hex
 
 
 class _Session(object):

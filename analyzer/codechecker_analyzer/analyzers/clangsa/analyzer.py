@@ -18,11 +18,11 @@ import subprocess
 
 from codechecker_common.env import get_check_env
 from codechecker_common.logger import get_logger
-from codechecker_common.util import get_binary_in_path, replace_env_var
+from codechecker_common.util import get_binary_in_path
 
 from codechecker_analyzer import host_check
-from codechecker_analyzer.analyzer_env import \
-    extend_analyzer_cmd_with_resource_dir
+from codechecker_analyzer.env import extend_analyzer_cmd_with_resource_dir, \
+    replace_env_var
 
 from .. import analyzer_base
 

@@ -11,9 +11,8 @@ from __future__ import absolute_import
 
 import unittest
 
-from codechecker_common.util import expand_whole_protocol_and_port
-from codechecker_common.util import split_product_url
-from codechecker_common.util import split_server_url
+from codechecker_client.product import expand_whole_protocol_and_port, \
+    split_server_url, split_product_url
 
 
 def expected_protocol(protocol=None, port=None):

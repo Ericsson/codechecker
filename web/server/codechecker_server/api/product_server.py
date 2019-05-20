@@ -30,6 +30,8 @@ from ..database.database import SQLServer, conv
 from ..database.run_db_model import Run, RunLock
 from ..routing import is_valid_product_endpoint
 
+from .db import escape_like
+
 LOG = get_logger('server')
 
 
@@ -209,12 +211,12 @@ class ThriftProductHandler(object):
 
             if product_endpoint_filter:
                 prods = prods.filter(Product.endpoint.ilike(
-                    conv(util.escape_like(product_endpoint_filter, '\\')),
+                    conv(escape_like(product_endpoint_filter, '\\')),
                     escape='\\'))
 
             if product_name_filter:
                 prods = prods.filter(Product.display_name.ilike(
-                    conv(util.escape_like(product_name_filter, '\\')),
+                    conv(escape_like(product_name_filter, '\\')),
                     escape='\\'))
 
             prods = prods.all()

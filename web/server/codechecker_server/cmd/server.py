@@ -38,9 +38,11 @@ from codechecker_server.database.config_db_model \
     import Product as ORMProduct
 from codechecker_server.database.run_db_model \
     import IDENTIFIER as RUN_META
+from codechecker_server.env import is_localhost
 
 from codechecker_web.shared import webserver_context, database_status, \
     host_check
+from codechecker_web.shared.env import get_default_workspace, get_user_input
 
 LOG = logger.get_logger('server')
 
@@ -73,12 +75,14 @@ def add_arguments_to_parser(parser):
     Add the subcommand's arguments to the given argparse.ArgumentParser.
     """
 
+    default_workspace = get_default_workspace()
+
     # TODO: --workspace is an outdated concept in 'store'. Later on,
     # it shall be deprecated, as changes to db_handler commence.
     parser.add_argument('-w', '--workspace',
                         type=str,
                         dest="workspace",
-                        default=util.get_default_workspace(),
+                        default=default_workspace,
                         required=False,
                         help="Directory where CodeChecker can store analysis "
                              "result related data, such as the database. "
@@ -88,7 +92,7 @@ def add_arguments_to_parser(parser):
     parser.add_argument('-f', '--config-directory',
                         type=str,
                         dest="config_directory",
-                        default=util.get_default_workspace(),
+                        default=default_workspace,
                         required=False,
                         help="Directory where CodeChecker server should read "
                              "server-specific configuration (such as "
@@ -581,7 +585,7 @@ def __db_migration(cfg_sql_server, context, product_to_upgrade='all',
         if db_status == DBStatus.SCHEMA_MISSING:
             question = 'Do you want to initialize a new schema for ' \
                         + product.endpoint + '? Y(es)/n(o) '
-            if force_upgrade or util.get_user_input(question):
+            if force_upgrade or get_user_input(question):
                 ret = db.connect(init=True)
                 msg = database_status.db_status_msg.get(
                     ret, 'Unknown database status')
@@ -592,7 +596,7 @@ def __db_migration(cfg_sql_server, context, product_to_upgrade='all',
         elif db_status == DBStatus.SCHEMA_MISMATCH_OK:
             question = 'Do you want to upgrade to new schema for ' \
                         + product.endpoint + '? Y(es)/n(o) '
-            if force_upgrade or util.get_user_input(question):
+            if force_upgrade or get_user_input(question):
                 LOG.info("Upgrading schema ...")
                 ret = db.upgrade()
                 LOG.info("Done.")
@@ -708,7 +712,7 @@ def server_init_start(args):
     # WARNING
     # In case of SQLite args.dbaddress default value is used
     # for which the is_localhost should return true.
-    if util.is_localhost(args.dbaddress) and \
+    if is_localhost(args.dbaddress) and \
             not os.path.exists(args.config_directory):
         os.makedirs(args.config_directory)
 
@@ -774,7 +778,7 @@ def server_init_start(args):
 
         question = 'Do you want to upgrade to the new schema?' \
                    ' Y(es)/n(o) '
-        if force_upgrade or util.get_user_input(question):
+        if force_upgrade or get_user_input(question):
             print("Upgrading schema ...")
             ret = cfg_sql_server.upgrade()
             msg = database_status.db_status_msg.get(
@@ -871,7 +875,7 @@ def server_init_start(args):
         msg = "There are some database issues. " \
               "Do you want to start the " \
               "server? Y(es)/n(o) "
-        if not util.get_user_input(msg):
+        if not get_user_input(msg):
             sys.exit(1)
 
     # Start database viewer.

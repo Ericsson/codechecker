@@ -16,6 +16,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 import io
 import os
+import re
 import tempfile
 import zipfile
 import zlib
@@ -35,7 +36,6 @@ from codechecker_common import util
 from codechecker_common.logger import get_logger
 from codechecker_common.profiler import timeit
 from codechecker_common.report import get_report_path_hash
-from codechecker_common.util import DBSession, slugify
 
 from codechecker_web.shared import webserver_context
 
@@ -47,7 +47,9 @@ from ..database.run_db_model import \
     AnalyzerStatistic, Report, ReviewStatus, File, Run, RunHistory, \
     RunLock, Comment, BugPathEvent, BugReportPoint, \
     FileContent, SourceComponent, ExtendedReportData
+from ..tmp import TemporaryDirectory
 
+from .db import DBSession, escape_like
 from .thrift_enum_helper import detection_status_enum, \
     detection_status_str, review_status_enum, review_status_str, \
     report_extended_data_type_enum
@@ -55,6 +57,19 @@ from .thrift_enum_helper import detection_status_enum, \
 from . import store_handler
 
 LOG = get_logger('server')
+
+
+def slugify(text):
+    """
+    Removes and replaces special characters in a given text.
+    """
+    # Removes non-alpha characters.
+    norm_text = re.sub(r'[^\w\s\-/]', '', text)
+
+    # Converts spaces and slashes to underscores.
+    norm_text = re.sub(r'([\s]+|[/]+)', '_', norm_text)
+
+    return norm_text
 
 
 def exc_to_thrift_reqfail(func):
@@ -592,7 +607,7 @@ class ThriftRequestHandler(object):
                         q = q.filter(Run.name.in_(run_filter.names))
                     else:
                         OR = [Run.name.ilike('{0}'.format(conv(
-                            util.escape_like(name, '\\'))), escape='\\') for
+                            escape_like(name, '\\'))), escape='\\') for
                             name in run_filter.names]
                         q = q.filter(or_(*OR))
 
@@ -2419,7 +2434,7 @@ class ThriftRequestHandler(object):
 
         wrong_src_code_comments = []
         try:
-            with util.TemporaryDirectory() as zip_dir:
+            with TemporaryDirectory() as zip_dir:
                 unzip(b64zip, zip_dir)
 
                 LOG.debug("Using unzipped folder '%s'", zip_dir)

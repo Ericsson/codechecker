@@ -19,7 +19,7 @@ from uuid import uuid4
 
 from codechecker_common.logger import get_logger
 
-from .. import analyzer_env
+from .. import env
 from . import host_check
 
 LOG = get_logger('buildlogger')
@@ -85,7 +85,7 @@ def perform_build_command(logfile, command, context, keep_link, silent=False):
         if platform.system() == 'Linux':
             LOG.debug_analyzer("with ld logger ...")
             open(logfile, 'a').close()  # Same as linux's touch.
-            log_env = analyzer_env.get_log_env(logfile, context, original_env)
+            log_env = env.get_log_env(logfile, context, original_env)
             if 'CC_LOGGER_GCC_LIKE' not in log_env:
                 log_env['CC_LOGGER_GCC_LIKE'] = 'gcc:g++:clang:clang++:cc:c++'
             if keep_link or ('CC_LOGGER_KEEP_LINK' in log_env and

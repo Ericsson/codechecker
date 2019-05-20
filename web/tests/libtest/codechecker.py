@@ -19,7 +19,7 @@ import subprocess
 from subprocess import CalledProcessError
 import time
 
-from codechecker_common import util
+from codechecker_client.product import create_product_url
 
 from . import env
 from . import project
@@ -499,9 +499,9 @@ def add_test_package_product(server_data, test_folder, check_env=None,
     # Clean the previous session if any exists.
     logout(codechecker_cfg, test_folder, protocol)
 
-    url = util.create_product_url(protocol, server_data['viewer_host'],
-                                  str(server_data['viewer_port']),
-                                  '')
+    url = create_product_url(protocol, server_data['viewer_host'],
+                             str(server_data['viewer_port']),
+                             '')
 
     add_command = ['CodeChecker', 'cmd', 'products', 'add',
                    server_data['viewer_product'],
@@ -555,9 +555,9 @@ def remove_test_package_product(test_folder, check_env=None, protocol='http'):
 
     # Clean the previous session if any exists.
     logout(server_data, test_folder, protocol)
-    url = util.create_product_url(protocol, server_data['viewer_host'],
-                                  str(server_data['viewer_port']),
-                                  '')
+    url = create_product_url(protocol, server_data['viewer_host'],
+                             str(server_data['viewer_port']),
+                             '')
     del_command = ['CodeChecker', 'cmd', 'products', 'del',
                    server_data['viewer_product'],
                    '--url', url]

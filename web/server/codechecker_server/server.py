@@ -46,7 +46,6 @@ from codeCheckerDBAccess_v6 import codeCheckerDBAccess as ReportAPI_v6
 from ProductManagement_v6 import codeCheckerProductService as ProductAPI_v6
 
 from codechecker_common.logger import get_logger
-from codechecker_common.util import get_tmp_dir_hash
 
 from codechecker_web.shared.version import get_version_str
 
@@ -54,6 +53,9 @@ from . import instance_manager
 from . import permissions
 from . import routing
 from . import session_manager
+
+from .tmp import get_tmp_dir_hash
+
 from .api.authentication import ThriftAuthHandler as AuthHandler_v6
 from .api.config_handler import ThriftConfigHandler as ConfigHandler_v6
 from .api.product_server import ThriftProductHandler as ProductHandler_v6
