@@ -44,21 +44,6 @@ def check_preconfigured_username(username, host, port):
         sys.exit(1)
 
 
-def check_api_version(auth_client):
-    """
-    Check if server API is supported by the client.
-    """
-
-    try:
-        auth_client.checkAPIVersion()
-    except shared.ttypes.RequestFailed as reqfail:
-        LOG.critical("Incompatible client/server API. "
-                     "Please check your client version.")
-        LOG.critical("Client API version: v%s", CLIENT_API)
-        LOG.critical(reqfail.message)
-        sys.exit(1)
-
-
 def setup_auth_client(protocol, host, port, session_token=None):
     """
     Setup the Thrift authentication client. Returns the client object and the
@@ -79,7 +64,6 @@ def setup_auth_client(protocol, host, port, session_token=None):
                                                     '/v' + CLIENT_API +
                                                     '/Authentication',
                                                     session_token)
-    check_api_version(client)
 
     return client, session_token
 
@@ -107,7 +91,6 @@ def handle_auth(protocol, host, port, username, login=False):
                                                          CLIENT_API +
                                                          '/Authentication',
                                                          auth_token)
-    check_api_version(auth_client)
 
     if not login:
         logout_done = auth_client.destroySession()
@@ -177,7 +160,6 @@ def perform_auth_for_handler(protocol, manager, host, port,
                                                          CLIENT_API +
                                                          '/Authentication',
                                                          session_token)
-    check_api_version(auth_client)
 
     try:
         auth_response = auth_client.getAuthParameters()
