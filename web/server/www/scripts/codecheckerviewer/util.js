@@ -527,7 +527,7 @@ function (locale, dom, style, json) {
     },
 
     handleThriftException : function (ex) {
-      if (ex.indexOf(': 401') !== -1) {
+      if (typeof(ex) === 'string' && ex.indexOf(': 401') !== -1) {
         this.handleAjaxFailure({status: 401});
       } else {
         console.warn(ex);
