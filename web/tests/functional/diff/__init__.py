@@ -68,7 +68,7 @@ def setup_package():
         'suppress_file': suppress_file,
         'skip_list_file': skip_list_file,
         'check_env': test_env,
-        'force': True,
+        'clean': True,
         'workspace': TEST_WORKSPACE,
         'reportdir': os.path.join(TEST_WORKSPACE, 'reports'),
         'checkers': ['-d', 'core.CallAndMessage',

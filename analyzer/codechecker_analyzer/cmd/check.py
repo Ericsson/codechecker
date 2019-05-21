@@ -128,13 +128,14 @@ def add_arguments_to_parser(parser):
                         default=argparse.SUPPRESS,
                         action='store_true',
                         required=False,
-                        help="Delete analysis results stored in the database "
-                             "for the current analysis run's name and store "
-                             "only the results reported in the 'input' files. "
-                             "(By default, CodeChecker would keep reports "
-                             "that were coming from files not affected by the "
-                             "analysis, and only incrementally update defect "
-                             "reports for source files that were analysed.)")
+                        help="DEPRECATED. Delete analysis results stored in "
+                             "the database for the current analysis run's "
+                             "name and store only the results reported in the "
+                             "'input' files. (By default, CodeChecker would "
+                             "keep reports that were coming from files not "
+                             "affected by the analysis, and only "
+                             "incrementally update defect reports for source "
+                             "files that were analysed.)")
 
     log_args = parser.add_argument_group(
         "log arguments",
@@ -534,6 +535,12 @@ def main(args):
         if key in source:
             setattr(target, key, getattr(source, key))
 
+    if 'force' in args:
+        LOG.warning('"--force" option has been deprecated and it will be '
+                    'removed in the future version of CodeChecker. Use the '
+                    '"--clean" option to delete analysis reports stored in '
+                    'the output directory.')
+
     # If no output directory is given then the checker results go to a
     # temporary directory. This way the subsequent "quick" checks don't pollute
     # the result list of a previous check. If the detection status function is
@@ -610,7 +617,7 @@ def main(args):
                           ]
         for key in args_to_update:
             __update_if_key_exists(args, analyze_args, key)
-        if 'force' in args or 'clean' in args:
+        if 'clean' in args:
             setattr(analyze_args, 'clean', True)
         __update_if_key_exists(args, analyze_args, 'verbose')
 
