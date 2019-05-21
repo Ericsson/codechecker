@@ -248,7 +248,7 @@
   "misc-use-after-move":                                        "HIGH",
   "misc-virtual-near-miss":                                     "HIGH",
   "modernize-avoid-bind":                                       "STYLE",
-  "modernize-avoid-c-arrays"                                    "LOW",
+  "modernize-avoid-c-arrays":                                   "LOW",
   "modernize-deprecated-headers":                               "LOW",
   "modernize-loop-convert":                                     "STYLE",
   "modernize-make-shared":                                      "LOW",
