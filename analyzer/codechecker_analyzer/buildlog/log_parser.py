@@ -552,6 +552,8 @@ def determine_compiler(gcc_command):
     In the second case the compiler can be given by config files or an
     environment variable. Currently we don't handle this version, and in this
     case the compiler remanis "ccache" and the gcc_command is not changed.
+    The two cases are distinguished by checking whether the second parameter is
+    an executable or not.
 
     gcc_command -- A split build action as a list which may or may not start
                    with ccache.
@@ -561,11 +563,6 @@ def determine_compiler(gcc_command):
     files or environment variables.
     """
     if 'ccache' in gcc_command[0]:
-        gcc_like = os.environ.get('CC_LOGGER_GCC_LIKE')
-        if gcc_like:
-            if all(l not in gcc_command[1] for l in gcc_like.split(':')):
-                return gcc_command[0]
-
         if ImplicitCompilerInfo.is_executable_compiler(gcc_command[1]):
             return gcc_command[1]
 
