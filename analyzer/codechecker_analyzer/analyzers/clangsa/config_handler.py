@@ -32,6 +32,7 @@ class ClangSAConfigHandler(config_handler.AnalyzerConfigHandler):
         self.log_file = ''
         self.path_env_extra = ''
         self.ld_lib_path_extra = ''
+        self.enable_z3 = False
 
     def add_checker_config(self, config):
         """

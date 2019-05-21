@@ -191,6 +191,10 @@ class ClangSA(analyzer_base.SourceAnalyzer):
                                  'aggressive-binary-operation-simplification'
                                  '=true'])
 
+            # Enable the z3 solver backend.
+            if config.enable_z3:
+                analyzer_cmd.extend(['-Xclang', '-analyzer-constraints=z3'])
+
             if config.ctu_dir and not self.__disable_ctu:
                 analyzer_cmd.extend(
                     ['-Xclang', '-analyzer-config', '-Xclang',
@@ -318,6 +322,8 @@ class ClangSA(analyzer_base.SourceAnalyzer):
 
         check_env = get_check_env(context.path_env_extra,
                                   context.ld_lib_path_extra)
+
+        handler.enable_z3 = 'enable_z3' in args and args.enable_z3
 
         if 'ctu_phases' in args:
             handler.ctu_dir = os.path.join(args.output_path,

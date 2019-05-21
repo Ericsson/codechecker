@@ -59,6 +59,15 @@ def is_statistics_capable(context):
     return False
 
 
+def is_z3_capable(context):
+    """ Detects if the current clang is Z3 compatible. """
+    check_supported_analyzers([ClangSA.ANALYZER_NAME], context)
+    analyzer_binary = context.analyzer_binaries.get(ClangSA.ANALYZER_NAME)
+
+    return host_check.has_analyzer_feature(analyzer_binary,
+                                           '-analyzer-constraints=z3')
+
+
 def check_supported_analyzers(analyzers, context):
     """
     Checks the given analyzers in the current context for their executability

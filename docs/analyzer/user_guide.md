@@ -199,6 +199,9 @@ analyzer arguments:
                         analysis of a particular file takes longer than this
                         time, the analyzer is killed and the analysis is
                         considered as a failed one.
+  --z3                  Enable the z3 solver backend. This allows reasoning
+                        over more complex queries, but performance is worse
+                        than the default range-based constraint solver.
 
 checker configuration:
   
@@ -542,6 +545,9 @@ analyzer arguments:
                         analysis of a particular file takes longer than this
                         time, the analyzer is killed and the analysis is
                         considered as a failed one.
+  --z3                  Enable the z3 solver backend. This allows reasoning
+                        over more complex queries, but performance is worse
+                        than the default range-based constraint solver.
 ```
 
 CodeChecker supports several analyzer tools. Currently, these analyzers are
@@ -551,8 +557,9 @@ used to specify which analyzer tool should be used (by default, all supported
 are used). The tools are completely independent, so either can be omitted if
 not present as they are provided by different binaries.
 
-See [Configure Clang Static Analyzer and checkers](checker_and_analyzer_configuration.md) documentation for
-a more detailed description how to use the `saargs` and `tidyargs` arguments.
+See [Configure Clang Static Analyzer and checkers](checker_and_analyzer_configuration.md)
+documentation for a more detailed description how to use the `saargs`,
+`tidyargs` and `z3` arguments.
 
 
 #### Compiler-specific include path and define detection (cross compilation) <a name="include-path"></a>
