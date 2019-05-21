@@ -523,6 +523,14 @@ thus the `--url` parameter can be omitted.
 Most result-giving commands also take an `--output` format parameter. If this
 is set to `json`, a more detailed output is given, in JSON format.
 
+If the given output format is not `table` we redirect logger's output to the
+`stderr`, so the output of the commands will not be an invalid `json`, `csv`,
+etc. because of the log messages. To get a valid json output you can redirect
+`stderr` output to `/dev/null` so you can for example send the json output to
+another command for further processing:
+`CodeChecker cmd sum -n my_run -o json 2>/dev/null | python -m json.tool`.
+
+
 ```
 common arguments:
   --host HOST           The address of the CodeChecker viewer server to

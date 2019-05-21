@@ -1028,8 +1028,13 @@ def handle_diff_results(args):
 
 
 def handle_list_result_types(args):
+    # If the given output format is not 'table', redirect logger's output to
+    # the stderr.
+    stream = None
+    if 'output_format' in args and args.output_format != 'table':
+        stream = 'stderr'
 
-    init_logger(args.verbose if 'verbose' in args else None)
+    init_logger(args.verbose if 'verbose' in args else None, stream)
     check_deprecated_arg_usage(args)
 
     if 'disable_unique' in args:
