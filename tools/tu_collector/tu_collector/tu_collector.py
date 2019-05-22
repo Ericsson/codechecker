@@ -125,7 +125,6 @@ def __gather_dependencies(command, build_dir):
     try:
         output = subprocess.check_output(command,
                                          bufsize=-1,
-                                         stderr=subprocess.STDOUT,
                                          cwd=build_dir)
         rc = 0
     except subprocess.CalledProcessError as ex:
