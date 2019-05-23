@@ -23,11 +23,12 @@ def run_cmd(cmd, env=None):
     print(cmd)
     proc = subprocess.Popen(cmd,
                             env=env,
-                            stdout=subprocess.PIPE)
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE)
 
-    out, _ = proc.communicate()
+    out, err = proc.communicate()
     print(out)
-    return proc.returncode, out
+    return proc.returncode, out, err
 
 
 class TestCmdline(unittest.TestCase):
@@ -107,7 +108,7 @@ class TestCmdline(unittest.TestCase):
         # Get runs without filter.
         res_cmd = [self._codechecker_cmd, 'cmd', 'runs',
                    '-o', 'json', '--url', str(self.server_url)]
-        ret, res = run_cmd(res_cmd, env=env)
+        ret, res, _ = run_cmd(res_cmd, env=env)
 
         self.assertEqual(0, ret)
         self.assertEqual(2, len(json.loads(res)))
@@ -116,7 +117,7 @@ class TestCmdline(unittest.TestCase):
         res_cmd = [self._codechecker_cmd, 'cmd', 'runs',
                    '-o', 'json', '-n', 'test_files*',
                    '--url', str(self.server_url)]
-        ret, res = run_cmd(res_cmd, env=env)
+        ret, res, _ = run_cmd(res_cmd, env=env)
 
         self.assertEqual(0, ret)
         self.assertEqual(2, len(json.loads(res)))
@@ -125,7 +126,38 @@ class TestCmdline(unittest.TestCase):
         res_cmd = [self._codechecker_cmd, 'cmd', 'runs',
                    '-o', 'json', '-n', 'test_files1*',
                    '--url', str(self.server_url)]
-        ret, res = run_cmd(res_cmd, env=env)
+        ret, res, _ = run_cmd(res_cmd, env=env)
 
         self.assertEqual(0, ret)
         self.assertEqual(1, len(json.loads(res)))
+
+    def test_stderr_results(self):
+        """
+        Test results command that we redirect logger's output to the stderr if
+        the given output format is not table.
+        """
+        check_env = self._test_config['codechecker_cfg']['check_env']
+
+        res_cmd = [self._codechecker_cmd, 'cmd', 'results', 'non_existing_run',
+                   '-o', 'json', '--url', str(self.server_url)]
+
+        ret, res, err = run_cmd(res_cmd, env=check_env)
+        self.assertEqual(1, ret)
+        self.assertEqual(res, '')
+        self.assertIn('No runs were found!', err)
+
+    def test_stderr_sum(self):
+        """
+        Test sum command that we redirect logger's output to the stderr if
+        the given output format is not table.
+        """
+        check_env = self._test_config['codechecker_cfg']['check_env']
+
+        res_cmd = [self._codechecker_cmd, 'cmd', 'sum', '-n',
+                   'non_existing_run', '-o', 'json', '--url',
+                   str(self.server_url)]
+
+        ret, res, err = run_cmd(res_cmd, env=check_env)
+        self.assertEqual(1, ret)
+        self.assertEqual(res, '')
+        self.assertIn('No runs were found!', err)
