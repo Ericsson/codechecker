@@ -225,12 +225,13 @@ def perform_auth_for_handler(protocol, manager, host, port,
         sys.exit(1)
 
 
-def setup_product_client(protocol, host, port, product_name=None):
+def setup_product_client(protocol, host, port, product_name=None,
+                         session_token=None):
     """
     Setup the Thrift client for the product management endpoint.
     """
 
-    _, session_token = setup_auth_client(protocol, host, port)
+    _, session_token = setup_auth_client(protocol, host, port, session_token)
 
     if not product_name:
         # Attach to the server-wide product service.
@@ -273,7 +274,8 @@ def setup_client(product_url, product_client=False):
     _, session_token = setup_auth_client(protocol, host, port)
 
     # Check if the product exists.
-    client = setup_product_client(protocol, host, port, product_name=None)
+    client = setup_product_client(protocol, host, port, product_name=None,
+                                  session_token=session_token)
     product = client.getProducts(product_name, None)
     product_error_str = None
     if not product:
