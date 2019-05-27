@@ -512,7 +512,7 @@ function (locale, dom, style, json) {
     },
 
     handleAjaxFailure : function (xhr) {
-      if (xhr.status === 401) {
+      if (xhr.responseText.indexOf('Error code 401:') !== -1) {
         var returnTo = '';
         var pathName = window.location.pathname || '';
         var hash = window.location.hash || '';
@@ -527,8 +527,10 @@ function (locale, dom, style, json) {
     },
 
     handleThriftException : function (ex) {
-      if (typeof(ex) === 'string' && ex.indexOf(': 401') !== -1) {
-        this.handleAjaxFailure({status: 401});
+      if (ex instanceof Thrift.TApplicationException &&
+          ex.message.indexOf('Error code 401:') !== -1
+      ) {
+        this.handleAjaxFailure({responseText: ex.message});
       } else {
         console.warn(ex);
       }

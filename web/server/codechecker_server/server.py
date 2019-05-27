@@ -363,7 +363,9 @@ class RequestHandler(SimpleHTTPRequestHandler):
             # but the user is expected to properly authenticate first.
             LOG.debug("%s:%s Invalid access, credentials not found "
                       "- session refused.", client_host, str(client_port))
-            self.send_error(401)
+
+            self.send_thrift_exception("Error code 401: Unauthorized!", iprot,
+                                       oprot, otrans)
             return
 
         # Authentication is handled, we may now respond to the user.
