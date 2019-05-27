@@ -38,11 +38,6 @@ Table of Contents
         * [`login` (Authenticate to the server)](#cmd-login)
 * [Source code comments (review status)](#source-code-comments)
     * [Supported formats](#supported-formats)
-* [Advanced usage](#advanced-usage)
-    * [Run CodeChecker distributed in a cluster](#distributed-in-cluster)
-    * [Setup PostgreSQL (one time only)](#pgsql)
-    * [Run CodeChecker on multiple hosts](#multiple-hosts)
-        * [PostgreSQL authentication (optional)](#pgsql-auth)
 * [Debugging CodeChecker](#debug)
 
 # CodeChecker <a name="codechecker"></a>
@@ -1301,55 +1296,6 @@ void test() {
 ```sh
 CodeChecker parse ./my_plists --suppress generated.suppress --export-source-suppress
 ```
-
-# Advanced usage <a name="advanced-usage"></a>
-
-## Run CodeChecker distributed in a cluster <a name="distributed-in-cluster"></a>
-
-You may want to configure CodeChecker to do the analysis on separate machines in a distributed way.
-Start the postgres database on a central machine (in this example it is called codechecker.central) on a remotely accessible address and port and then run
-```CodeChecker check``` on multiple machines (called host1 and host2), specify the remote dbaddress and dbport and use the same run name.
-
-Create and start an empty database to which the CodeChecker server can connect.
-
-## Setup PostgreSQL (one time only) <a name="pgsql"></a>
-
-Before the first use, you have to setup PostgreSQL.
-PostgreSQL stores its data files in a data directory, so before you start the PostgreSQL server you have to create and init this data directory.
-I will call the data directory to pgsql_data.
-
-Do the following steps:
-
-```sh
-# on machine codechecker.central
-
-mkdir -p /path/to/pgsql_data
-initdb -U codechecker -D /path/to/pgsql_data -E "SQL_ASCII"
-# Start PostgreSQL server on port 5432
-postgres -U codechecker -D /path/to/pgsql_data -p 5432 &>pgsql_log &
-# Start the central CodeChecker server
-CodeChecker server -w ~/codechecker_workspace --dbaddress localhost --dbport 5432 --view-port 8001
-```
-
-## Run CodeChecker on multiple hosts <a name="multiple-hosts"></a>
-
-Then you can run CodeChecker on multiple hosts but using the same run name (in this example this is called "distributed_run".
-CodeChecker server is listening on codechecker.central port 8001.
-
-```sh
-# On host1 we check module1
-CodeChecker check -w /tmp/codechecker_ws -b "cd module_1;make" --port 8001 --host codechecker.central distributed_run
-
-# On host2 we check module2
-CodeChecker check -w /tmp/codechecker_ws -b "cd module_2;make" --port 8001 --host codechecker.central disributed_run
-```
-
-### PostgreSQL authentication (optional) <a name="pgsql-auth"></a>
-
-If a CodeChecker is run with a user that needs database authentication, the
-PGPASSFILE environment variable should be set to a pgpass file
-For format and further information see PostgreSQL documentation:
-http://www.postgresql.org/docs/current/static/libpq-pgpass.html
 
 # Debugging CodeChecker <a name="debug"></a>
 
