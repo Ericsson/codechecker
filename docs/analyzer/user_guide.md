@@ -106,13 +106,13 @@ optional arguments:
                         (default: plist)
   -q, --quiet           If specified, the build tool's and the analyzers'
                         output will not be printed to the standard output.
-  -f, --force           Delete analysis results stored in the database for the
-                        current analysis run's name and store only the results
-                        reported in the 'input' files. (By default,
-                        CodeChecker would keep reports that were coming from
-                        files not affected by the analysis, and only
-                        incrementally update defect reports for source files
-                        that were analysed.)
+  -f, --force           DEPRECATED. Delete analysis results stored in the
+                        database for the current analysis run's name and store
+                        only the results reported in the 'input' files. (By
+                        default, CodeChecker would keep reports that were
+                        coming from files not affected by the analysis, and
+                        only incrementally update defect reports for source
+                        files that were analysed.)
   --compile-uniqueing COMPILE_UNIQUEING
                         Specify the method the compilation actions in the
                         compilation database are uniqued before analysis. CTU
