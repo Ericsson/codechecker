@@ -176,8 +176,8 @@ binaries you intend to use.
 
 ```json
 "analyzers" : {
-  "clangsa" : "/path/to/clang/bin/clang-4.0",
-  "clang-tidy" : "/path/to/clang/bin/clang-tidy-3.8"
+  "clangsa" : "/path/to/clang/bin/clang-8",
+  "clang-tidy" : "/path/to/clang/bin/clang-tidy-8"
 },
 ```
 
