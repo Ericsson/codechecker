@@ -55,7 +55,6 @@ from . import permissions
 from . import routing
 from . import session_manager
 from .api.authentication import ThriftAuthHandler as AuthHandler_v6
-from .api.bad_api_version import ThriftAPIMismatchHandler as BadAPIHandler
 from .api.config_handler import ThriftConfigHandler as ConfigHandler_v6
 from .api.product_server import ThriftProductHandler as ProductHandler_v6
 from .api.report_server import ThriftRequestHandler as ReportHandler_v6
@@ -83,6 +82,25 @@ class RequestHandler(SimpleHTTPRequestHandler):
     def log_message(self, msg_format, *args):
         """ Silencing http server. """
         return
+
+    def send_thrift_exception(self, error_msg, iprot, oprot, otrans):
+        """
+        Send an exception response to the client in a proper format which can
+        be parsed by the Thrift clients expecting JSON responses.
+        """
+        ex = TApplicationException(TApplicationException.INTERNAL_ERROR,
+                                   error_msg)
+        fname, _, seqid = iprot.readMessageBegin()
+        oprot.writeMessageBegin(fname, TMessageType.EXCEPTION, seqid)
+        ex.write(oprot)
+        oprot.writeMessageEnd()
+        oprot.trans.flush()
+        result = otrans.getvalue()
+        self.send_response(200)
+        self.send_header("content-type", "application/x-thrift")
+        self.send_header("Content-Length", len(result))
+        self.end_headers()
+        self.wfile.write(result)
 
     def __check_session_cookie(self):
         """
@@ -415,18 +433,11 @@ class RequestHandler(SimpleHTTPRequestHandler):
                         raise ValueError(error_msg)
 
             else:
-                if request_endpoint == 'Authentication':
-                    # API-version checking is supported on the auth endpoint.
-                    handler = BadAPIHandler(api_ver)
-                    processor = AuthAPI_v6.Processor(handler)
-                else:
-                    # Send a custom, but valid Thrift error message to the
-                    # client requesting this action.
-                    error_msg = "Incompatible client/server API." \
-                                "API versions supported by this server {0}." \
-                                .format(get_version_str())
-
-                    raise ValueError(error_msg)
+                error_msg = "The API version you are using is not supported " \
+                            "by this server (server API version: {0})!".format(
+                                get_version_str())
+                self.send_thrift_exception(error_msg, iprot, oprot, otrans)
+                return
 
             processor.process(iprot, oprot)
             result = otrans.getvalue()
@@ -439,24 +450,10 @@ class RequestHandler(SimpleHTTPRequestHandler):
             return
 
         except Exception as exn:
-            # Convert every Exception to the proper format which can be parsed
-            # by the Thrift clients expecting JSON responses.
             LOG.warning(str(exn))
             import traceback
             traceback.print_exc()
-            ex = TApplicationException(TApplicationException.INTERNAL_ERROR,
-                                       str(exn))
-            fname, _, seqid = iprot.readMessageBegin()
-            oprot.writeMessageBegin(fname, TMessageType.EXCEPTION, seqid)
-            ex.write(oprot)
-            oprot.writeMessageEnd()
-            oprot.trans.flush()
-            result = otrans.getvalue()
-            self.send_response(200)
-            self.send_header("content-type", "application/x-thrift")
-            self.send_header("Content-Length", len(result))
-            self.end_headers()
-            self.wfile.write(result)
+            self.send_thrift_exception(str(exn), iprot, oprot, otrans)
             return
 
     def list_directory(self, path):
