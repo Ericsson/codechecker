@@ -20,8 +20,8 @@ from .client import setup_auth_client
 LOG = None
 
 
-def init_logger(level, logger_name='system'):
-    logger.setup_logger(level)
+def init_logger(level, stream=None, logger_name='system'):
+    logger.setup_logger(level, stream)
     global LOG
     LOG = logger.get_logger(logger_name)
 
