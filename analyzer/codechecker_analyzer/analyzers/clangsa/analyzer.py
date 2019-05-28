@@ -195,6 +195,12 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             if config.enable_z3:
                 analyzer_cmd.extend(['-Xclang', '-analyzer-constraints=z3'])
 
+            if config.enable_z3_refutation and not config.enable_z3:
+                analyzer_cmd.extend(['-Xclang',
+                                     '-analyzer-config',
+                                     '-Xclang',
+                                     'crosscheck-with-z3=true'])
+
             if config.ctu_dir and not self.__disable_ctu:
                 analyzer_cmd.extend(
                     ['-Xclang', '-analyzer-config', '-Xclang',
@@ -324,6 +330,9 @@ class ClangSA(analyzer_base.SourceAnalyzer):
                                   context.ld_lib_path_extra)
 
         handler.enable_z3 = 'enable_z3' in args and args.enable_z3
+
+        handler.enable_z3_refutation = 'enable_z3_refutation' in args and \
+            args.enable_z3_refutation
 
         if 'ctu_phases' in args:
             handler.ctu_dir = os.path.join(args.output_path,

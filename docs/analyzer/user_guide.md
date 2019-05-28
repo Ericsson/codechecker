@@ -202,6 +202,12 @@ analyzer arguments:
   --z3                  Enable the z3 solver backend. This allows reasoning
                         over more complex queries, but performance is worse
                         than the default range-based constraint solver.
+  --z3-refutation       Enable the Z3 SMT Solver backend to reduce false
+                        positives. The results of the ranged based constraint
+                        solver in the Clang Static Analyzer will be cross
+                        checked with the Z3 SMT solver. This should not cause
+                        that much of a slowdown compared to using the Z3
+                        solver only.
 
 checker configuration:
   
@@ -548,6 +554,12 @@ analyzer arguments:
   --z3                  Enable the z3 solver backend. This allows reasoning
                         over more complex queries, but performance is worse
                         than the default range-based constraint solver.
+  --z3-refutation       Enable the Z3 SMT Solver backend to reduce false
+                        positives. The results of the ranged based constraint
+                        solver in the Clang Static Analyzer will be cross
+                        checked with the Z3 SMT solver. This should not cause
+                        that much of a slowdown compared to using the Z3
+                        solver only.
 ```
 
 CodeChecker supports several analyzer tools. Currently, these analyzers are

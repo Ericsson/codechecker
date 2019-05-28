@@ -302,6 +302,19 @@ def add_arguments_to_parser(parser):
                                         "than the default range-based "
                                         "constraint solver.")
 
+        analyzer_opts.add_argument('--z3-refutation',
+                                   action='store_true',
+                                   dest='enable_z3_refutation',
+                                   default=argparse.SUPPRESS,
+                                   help="Enable the Z3 SMT Solver backend to "
+                                        "reduce false positives. The results "
+                                        "of the ranged based constraint "
+                                        "solver in the Clang Static Analyzer "
+                                        "will be cross checked with the Z3 "
+                                        "SMT solver. This should not cause "
+                                        "that much of a slowdown compared to "
+                                        "using the Z3 solver only.")
+
     if analyzer_types.is_ctu_capable(context):
         ctu_opts = parser.add_argument_group(
             "cross translation unit analysis arguments",
