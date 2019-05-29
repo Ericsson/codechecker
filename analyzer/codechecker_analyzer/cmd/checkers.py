@@ -11,17 +11,84 @@ from __future__ import division
 from __future__ import absolute_import
 
 import argparse
+from distutils.spawn import find_executable
 import os
+import subprocess
 import sys
 
 from codechecker_analyzer import analyzer_context
 from codechecker_analyzer.analyzers import analyzer_types
+from codechecker_analyzer.analyzers.clangsa.analyzer import ClangSA
 
 from codechecker_common import logger
 from codechecker_common import output_formatters
 from codechecker_common.env import get_check_env
 
 LOG = logger.get_logger('system')
+
+
+def get_diagtool_bin(env=None):
+    """
+    Return full path of diagtool.
+
+    Select clang binary, check for a 'diagtool' binary next to the selected
+    clang binary and return full path of this binary if it exists.
+    """
+    context = analyzer_context.get_context()
+    analyzer_binary = context.analyzer_binaries.get(ClangSA.ANALYZER_NAME)
+
+    clang_bin = analyzer_binary
+    if not os.path.isabs(clang_bin):
+        clang_bin = find_executable(analyzer_binary,
+                                    env['PATH'] if env else None)
+
+    if not clang_bin:
+        return None
+
+    # Resolve symlink.
+    clang_bin = os.path.realpath(clang_bin)
+
+    # Find diagtool next to the clang binary.
+    diagtool_bin = os.path.join(os.path.dirname(clang_bin), 'diagtool')
+    if os.path.exists(diagtool_bin):
+        return diagtool_bin
+
+    LOG.debug("'diagtool' can not be found next to the clang binary (%s)!",
+              clang_bin)
+
+    return None
+
+
+def get_warnings(env=None):
+    """
+    Returns list of warning flags by using diagtool.
+    """
+    diagtool_bin = get_diagtool_bin(env)
+
+    if not diagtool_bin:
+        return []
+
+    command = [diagtool_bin, 'tree']
+    try:
+        result = subprocess.check_output(command, env=env,
+                                         universal_newlines=True)
+        return parse_warnings(result)
+    except (subprocess.CalledProcessError, OSError):
+        return []
+
+
+def parse_warnings(diagtool_output):
+    """
+    Parse diagtool warning list output and return a list of clang warnings.
+    """
+    warnings = []
+
+    for line in diagtool_output.splitlines():
+        if line.startswith('GREEN = enabled by default') or line == '':
+            continue
+        warnings.append(line.strip())
+
+    return warnings
 
 
 def get_argparser_ctor_args():
@@ -67,6 +134,18 @@ def add_arguments_to_parser(parser):
                              "specified. Currently supported analyzers are: " +
                              ', '.join(analyzer_types.
                                        supported_analyzers) + ".")
+
+    context = analyzer_context.get_context()
+    analyzer_environment = get_check_env(context.path_env_extra,
+                                         context.ld_lib_path_extra)
+
+    if get_diagtool_bin(analyzer_environment):
+        parser.add_argument('-w', '--warnings',
+                            dest='show_warnings',
+                            default=argparse.SUPPRESS,
+                            action='store_true',
+                            required=False,
+                            help="Show available warning flags.")
 
     parser.add_argument('--details',
                         dest='details',
@@ -222,6 +301,17 @@ def main(args):
                 severity = context.severity_map.get(checker_name)
                 rows.append([enabled, checker_name, analyzer,
                              severity, description])
+
+        show_warnings = True if 'show_warnings' in args and \
+            args.show_warnings else False
+
+        if show_warnings:
+            severity = context.severity_map.get('clang-diagnostic-')
+            for warning in get_warnings(analyzer_environment):
+                if 'details' not in args:
+                    rows.append([warning])
+                else:
+                    rows.append(['', warning, '-', severity, '-'])
 
     if rows:
         print(output_formatters.twodim_to_str(args.output_format,
