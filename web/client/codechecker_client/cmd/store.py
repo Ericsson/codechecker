@@ -191,18 +191,20 @@ def assemble_zip(inputs, zip_file, client):
     # There can be files with same hash,
     # but different path.
     file_to_hash = {}
-    file_to_mtime = {}
     missing_source_files = set()
     file_hash_with_review_status = set()
 
     def collect_file_hashes_from_plist(plist_file):
         """
-        Collects file content hashes and last modification times of files which
-        can be found in the given plist file.
+        Collects file content hashes and last modification times for the
+        source files which can be found in the given plist file.
 
         :returns List of file paths which are in the processed plist file but
-        missing from the user's disk.
+        missing from the user's disk and the source file modification times
+        for the still available source files.
+
         """
+        source_file_mod_times = {}
         missing_files = []
         try:
             files, reports = plist_parser.parse_plist(plist_file)
@@ -216,7 +218,7 @@ def assemble_zip(inputs, zip_file, client):
                 content_hash = util.get_file_content_hash(f)
                 hash_to_file[content_hash] = f
                 file_to_hash[f] = content_hash
-                file_to_mtime[f] = util.get_last_mod_time(f)
+                source_file_mod_times[f] = util.get_last_mod_time(f)
 
             # Get file hashes which contain source code comments.
             for report in reports:
@@ -234,11 +236,11 @@ def assemble_zip(inputs, zip_file, client):
                 if sc_handler.has_source_line_comments(report_line):
                     file_hash_with_review_status.add(file_hash)
 
-            return missing_files
+            return missing_files, source_file_mod_times
         except Exception as ex:
             LOG.error('Parsing the plist failed: %s', str(ex))
 
-    plist_report_files = []
+    files_to_compress = []
 
     changed_files = set()
     for input_path in inputs:
@@ -254,27 +256,31 @@ def assemble_zip(inputs, zip_file, client):
             _, _, files = next(os.walk(input_path), ([], [], []))
 
         for f in files:
+
             plist_file = os.path.join(input_path, f)
             if f.endswith(".plist"):
-                missing_files = collect_file_hashes_from_plist(plist_file)
+                missing_files, source_file_mod_times = \
+                    collect_file_hashes_from_plist(plist_file)
                 if not missing_files:
                     LOG.debug("Copying file '%s' to ZIP assembly dir...",
                               plist_file)
-                    plist_report_files.append(os.path.join(input_path, f))
+                    files_to_compress.append(os.path.join(input_path, f))
+
+                    plist_mtime = util.get_last_mod_time(plist_file)
+
+                    # Check if any source file corresponding to a plist
+                    # file changed since the plist file was generated.
+                    for k, v in source_file_mod_times.items():
+                        if v > plist_mtime:
+                            changed_files.add(k)
                 else:
                     LOG.warning("Skipping '%s' because it refers "
                                 "the following missing source files: %s",
                                 plist_file, missing_files)
             elif f == 'metadata.json':
-                plist_report_files.append(os.path.join(input_path, f))
+                files_to_compress.append(os.path.join(input_path, f))
             elif f == 'skip_file':
-                plist_report_files.append(os.path.join(input_path, f))
-
-            plist_mtime = util.get_last_mod_time(plist_file)
-
-            for k, v in file_to_mtime.items():
-                if v > plist_mtime:
-                    changed_files.add(k)
+                files_to_compress.append(os.path.join(input_path, f))
 
     if changed_files:
         changed_files = '\n'.join([' - ' + f for f in changed_files])
@@ -284,10 +290,11 @@ def assemble_zip(inputs, zip_file, client):
         sys.exit(1)
 
     with zipfile.ZipFile(zip_file, 'a', allowZip64=True) as zipf:
-        for pl in plist_report_files:
-            _, plist_filename = os.path.split(pl)
-            zip_target = os.path.join('reports', plist_filename)
-            zipf.write(pl, zip_target)
+        # Add the files to the zip which will be sent to the server.
+        for ftc in files_to_compress:
+            _, filename = os.path.split(ftc)
+            zip_target = os.path.join('reports', filename)
+            zipf.write(ftc, zip_target)
 
         if len(hash_to_file) == 0:
             LOG.warning("There is no report to store. After uploading these "
