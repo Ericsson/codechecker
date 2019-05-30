@@ -356,7 +356,6 @@ def plist_to_html(file_path, output_path, html_builder,
     file content change.
     """
     changed_source = set()
-    file_paths = []
     if not file_path.endswith(".plist"):
         print("\nSkipping input file {0} as it is not a plist.".format(
             file_path))

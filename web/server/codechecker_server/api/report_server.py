@@ -1395,7 +1395,7 @@ class ThriftRequestHandler(object):
                 try:
                     with io.open(md_file, 'r') as md_content:
                         missing_doc = md_content.read()
-                except (IOError, OSError) as oerr:
+                except (IOError, OSError):
                     LOG.warning("Failed to read checker documentation: %s",
                                 md_file)
 

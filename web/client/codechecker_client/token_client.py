@@ -57,7 +57,7 @@ def handle_list_tokens(args):
     init_logger(args.verbose if 'verbose' in args else None, stream)
 
     protocol, host, port = split_server_url(args.server_url)
-    client, curr_token = setup_auth_client(protocol, host, port)
+    client, _ = setup_auth_client(protocol, host, port)
     tokens = client.getTokens()
 
     if args.output_format == 'json':
