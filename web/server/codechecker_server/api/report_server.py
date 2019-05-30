@@ -1970,7 +1970,7 @@ class ThriftRequestHandler(object):
                     q = q.filter(Report.bug_id.in_(diff_hashes))
 
                 reports_to_delete = [r[0] for r in q]
-                if len(reports_to_delete) != 0:
+                if reports_to_delete:
                     self.__removeReports(session, reports_to_delete)
 
                 # Delete files and contents that are not present
@@ -2057,7 +2057,7 @@ class ThriftRequestHandler(object):
         with DBSession(self.__Session) as session:
             q = session.query(SourceComponent)
 
-            if component_filter and len(component_filter):
+            if component_filter and component_filter:
                 sql_component_filter = [SourceComponent.name.ilike(conv(cf))
                                         for cf in component_filter]
                 q = q.filter(*sql_component_filter)
@@ -2335,7 +2335,7 @@ class ThriftRequestHandler(object):
 
                     report.fixed_at = run_history_time
 
-        if len(reports_to_delete) != 0:
+        if reports_to_delete:
             self.__removeReports(session, list(reports_to_delete))
 
     @staticmethod
@@ -2521,7 +2521,7 @@ class ThriftRequestHandler(object):
                                          for com in check_commands])
 
                 durations = 0
-                if len(check_durations) > 0:
+                if check_durations:
                     # Round the duration to seconds.
                     durations = int(sum(check_durations))
 
@@ -2585,7 +2585,7 @@ class ThriftRequestHandler(object):
             with DBSession(self.__Session) as session:
                 ThriftRequestHandler.__free_run_lock(session, name)
 
-            if len(wrong_src_code_comments):
+            if wrong_src_code_comments:
                 raise shared.ttypes.RequestFailed(
                     shared.ttypes.ErrorCode.SOURCE_FILE,
                     "Multiple source code comment can be found with the same "

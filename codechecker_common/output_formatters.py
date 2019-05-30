@@ -29,7 +29,7 @@ def twodim_to_str(format_name, keys, rows,
         rows.sort(key=itemgetter(sort_by_column_number), reverse=rev)
 
     all_rows = rows
-    if keys is not None and len(keys) > 0:
+    if keys is not None and keys:
         all_rows = [keys] + rows
 
     if format_name == 'rows':
@@ -70,7 +70,7 @@ def twodim_to_rows(lines):
             print_string += "{" + str(i) + "} "
         else:
             print_string += "{" + str(i) + ":" + str(width) + "} "
-    if len(print_string) == 0:
+    if not print_string:
         return
     print_string = print_string[:-1]
 
@@ -105,7 +105,7 @@ def twodim_to_table(lines, separate_head=True, separate_footer=False):
     print_string = ""
     for i, width in enumerate(widths):
         print_string += "{" + str(i) + ":" + str(width) + "} | "
-    if len(print_string) == 0:
+    if not print_string:
         return
     print_string = print_string[:-3]
 
@@ -144,7 +144,7 @@ def twodim_to_csv(lines):
     for i in range(columns):
         print_string += "{" + str(i) + "},"
 
-    if len(print_string) == 0:
+    if not print_string:
         return
     print_string = print_string[:-1]
 

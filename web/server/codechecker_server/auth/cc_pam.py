@@ -48,7 +48,7 @@ def auth_user(pam_config, username, password):
         allowed_group = pam_config.get("groups")\
             or []
 
-        if len(allowed_users) == 0 and len(allowed_group) == 0:
+        if not allowed_users and not allowed_group:
             # If no filters are set, only authentication is needed.
             return True
         else:

@@ -52,7 +52,7 @@ def twodim_to_table(lines, separate_head=True, separate_footer=False):
     print_string = ""
     for i, width in enumerate(widths):
         print_string += "{" + str(i) + ":" + str(width) + "} | "
-    if len(print_string) == 0:
+    if not print_string:
         return
     print_string = print_string[:-3]
 
@@ -382,7 +382,7 @@ def plist_to_html(file_path, output_path, html_builder,
         if source_changed:
             return file_path, changed_source
 
-        if report_data is None or not len(report_data['reports']):
+        if report_data is None or not report_data['reports']:
             print('No report data in {0} file.'.format(file_path))
             return file_path, changed_source
 

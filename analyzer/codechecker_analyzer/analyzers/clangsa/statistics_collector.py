@@ -319,7 +319,7 @@ def postprocess_stats(clang_output_dir, stats_dir, stats_min_sample_count,
         LOG.debug("Analyzer output error.")
         return
 
-    if not len(clang_outs):
+    if not clang_outs:
         LOG.warning("No output files were found to collect statistics.")
         return
     ret_collector = ReturnValueCollector(stats_min_sample_count,

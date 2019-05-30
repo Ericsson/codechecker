@@ -314,7 +314,7 @@ def handle_list_results(args):
     run_names = map(lambda x: x.strip(), args.name.split(':'))
     run_ids = [run.runId for run in get_runs(client, run_names)]
 
-    if not len(run_ids):
+    if not run_ids:
         LOG.warning("No runs were found!")
         sys.exit(1)
 
@@ -945,7 +945,7 @@ def handle_diff_results(args):
         run_histories = client.getRunHistory(run_ids, None, None,
                                              run_history_filter)
 
-        return run_histories[0] if len(run_histories) else None
+        return run_histories[0] if run_histories else None
 
     def process_run_arg(run_arg_with_tag):
         """
@@ -1067,7 +1067,7 @@ def handle_list_result_types(args):
     run_ids = None
     if 'all_results' not in args:
         run_ids = [run.runId for run in get_runs(client, args.names)]
-        if not len(run_ids):
+        if not run_ids:
             LOG.warning("No runs were found!")
             sys.exit(1)
 

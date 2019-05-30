@@ -137,7 +137,7 @@ PYLINT_CMD = $(MAKE) -C $(CC_ANALYZER) pylint && \
   $(MAKE) -C $(CC_WEB) pylint && \
   pylint ./bin ./codechecker_common ./scripts \
     --disable=all \
-    --enable=logging-format-interpolation,old-style-class,unused-import,unused-variable
+    --enable=logging-format-interpolation,old-style-class,unused-import,unused-variable,len-as-condition
 
 pylint:
 	$(PYLINT_CMD)

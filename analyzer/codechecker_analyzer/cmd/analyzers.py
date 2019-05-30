@@ -160,6 +160,6 @@ def main(args):
                              context.analyzer_binaries.get(analyzer),
                              err_reason])
 
-    if len(rows) > 0:
+    if rows:
         print(output_formatters.twodim_to_str(args.output_format,
                                               header, rows))

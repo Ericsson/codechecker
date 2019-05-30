@@ -356,7 +356,7 @@ def add_arguments_to_parser(parser):
                          "\"\"")
         else:
             # Apply the shortcut.
-            if len(arg_match(['--not-host-only'])) > 0:
+            if arg_match(['--not-host-only']):
                 args.listen_address = ""  # Listen on every interface.
 
             # --not-host-only is just a shortcut optstring, no actual use
@@ -383,7 +383,7 @@ def add_arguments_to_parser(parser):
 
         # If workspace is specified, sqlite is workspace/config.sqlite
         # and config_directory is the workspace directory.
-        if len(arg_match(['--workspace', '-w'])) > 0:
+        if arg_match(['--workspace', '-w']):
             args.config_directory = args.workspace
             args.sqlite = os.path.join(args.workspace,
                                        'config.sqlite')

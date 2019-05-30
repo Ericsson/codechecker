@@ -140,7 +140,7 @@ def handle_del_product(args):
     products = [product for product in products
                 if product.endpoint == args.endpoint]
 
-    if len(products) == 0:
+    if not products:
         LOG.error("The product '%s' does not exist!", args.endpoint)
         return
 

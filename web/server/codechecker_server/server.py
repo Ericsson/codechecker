@@ -1032,7 +1032,7 @@ def add_initial_run_database(config_sql_server, product_connection):
     # Load the initial list of products and create the connections.
     sess = product_session()
     products = sess.query(ORMProduct).all()
-    if len(products) != 0:
+    if products:
         raise ValueError("Called create_initial_run_database on non-empty "
                          "config database -- you shouldn't have done this!")
 
