@@ -49,6 +49,30 @@ def init_logger(level, stream=None, logger_name='system'):
     LOG = logger.get_logger(logger_name)
 
 
+def report_to_report_data(report, context=None):
+    """
+    Convert a report object to a Thrift ReportData type.
+    """
+    events = [i for i in report.bug_path if i.get('kind') == 'event']
+
+    report_hash = report.main['issue_hash_content_of_line_in_context']
+    checker_name = report.main['check_name']
+
+    severity = None
+    if context:
+        severity_name = context.severity_map.get(checker_name)
+        severity = ttypes.Severity._NAMES_TO_VALUES[severity_name]
+
+    return ttypes.ReportData(checkerId=checker_name,
+                             bugHash=report_hash,
+                             checkedFile=report.main['location']['file_name'],
+                             checkerMsg=report.main['description'],
+                             line=report.main['location']['line'],
+                             column=report.main['location']['col'],
+                             severity=severity,
+                             bugPathLength=len(events))
+
+
 def str_to_timestamp(date_str):
     """
     Return timestamp parsed from the given string parameter.
@@ -854,7 +878,8 @@ def handle_diff_results(args):
             output = []
             for report in reports:
                 if isinstance(report, Report):
-                    output.append(report.main)
+                    report = report_to_report_data(report, context)
+                    output.append(report)
                 else:
                     output.append(report)
             print(CmdLineOutputEncoder().encode(output))
