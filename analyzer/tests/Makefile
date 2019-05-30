@@ -23,7 +23,7 @@ pycodestyle_in_env: venv_dev
 PYLINT_TEST_CMD = pylint ./bin ./cmd ./codechecker_analyzer ./tests \
 	--rcfile=$(ROOT)/.pylintrc \
   --disable=all \
-  --enable=logging-format-interpolation,old-style-class
+  --enable=logging-format-interpolation,old-style-class,unused-import
 
 pylint:
 	$(PYLINT_TEST_CMD)

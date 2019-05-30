@@ -13,7 +13,6 @@ from __future__ import absolute_import
 
 from abc import ABCMeta, abstractmethod
 import os
-import shlex
 import signal
 import subprocess
 import sys

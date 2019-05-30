@@ -13,7 +13,8 @@ from __future__ import division
 import base64
 import sys
 
-from ProductManagement_v6.ttypes import *
+from ProductManagement_v6.ttypes import DatabaseConnection, \
+    ProductConfiguration
 
 from codechecker_common import logger
 from codechecker_common.output_formatters import twodim_to_str

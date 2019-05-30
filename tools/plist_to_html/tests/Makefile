@@ -24,7 +24,7 @@ pycodestyle_in_env: venv_dev
 
 PYLINT_TEST_CMD = pylint ./plist_to_html ./tests \
   --disable=all \
-  --enable=logging-format-interpolation,old-style-class
+  --enable=logging-format-interpolation,old-style-class,unused-import
 
 pylint:
 	$(PYLINT_TEST_CMD)
