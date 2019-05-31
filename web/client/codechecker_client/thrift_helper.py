@@ -107,7 +107,7 @@ class ThriftClientHelper(object):
 
     @ThriftClientCall
     def getRunResults(self, runIds, limit, offset, sortType, reportFilter,
-                      cmpData):
+                      cmpData, getDetails):
         pass
 
     @ThriftClientCall

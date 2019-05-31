@@ -102,7 +102,7 @@ int main()
     def __reports_by_tag(self, tag_ids):
         report_filter = ReportFilter(runTag=tag_ids)
         return self._cc_client.getRunResults(None, 100, 0, [],
-                                             report_filter, None)
+                                             report_filter, None, False)
 
     def __check_reports(self, tag):
         reports = self.__reports_by_tag([tag.id])

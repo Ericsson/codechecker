@@ -324,10 +324,14 @@ def handle_list_results(args):
     report_filter = ttypes.ReportFilter()
     add_filter_conditions(client, report_filter, args)
 
+    query_report_details = args.details and args.output_format == 'json' \
+        if 'details' in args else None
+
     all_results = []
     while True:
         results = client.getRunResults(run_ids, limit, offset, None,
-                                       report_filter, None)
+                                       report_filter, None,
+                                       query_report_details)
         all_results.extend(results)
         offset += limit
 
@@ -471,7 +475,8 @@ def handle_diff_results(args):
                                            offset,
                                            sort_mode,
                                            report_filter,
-                                           None)
+                                           None,
+                                           False)
 
             base_results.extend(results)
             offset += limit
@@ -647,7 +652,8 @@ def handle_diff_results(args):
                                            offset,
                                            sort_mode,
                                            report_filter,
-                                           cmp_data)
+                                           cmp_data,
+                                           False)
 
             all_results.extend(results)
             offset += limit
@@ -1238,7 +1244,7 @@ def handle_suppress(args):
                                                   reportHash=[bug_id])
             reports = client.getRunResults([run.runId], limit, 0, None,
                                            bug_hash_filter,
-                                           None)
+                                           None, False)
 
             for report in reports:
                 rw_status = ttypes.ReviewStatus.FALSE_POSITIVE

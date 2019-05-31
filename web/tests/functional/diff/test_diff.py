@@ -125,7 +125,8 @@ class Diff(unittest.TestCase):
                                                  0,
                                                  [],
                                                  None,
-                                                 cmp_data)
+                                                 cmp_data,
+                                                 False)
         # 5 new core.CallAndMessage issues.
         self.assertEqual(len(diff_res), 5)
 
@@ -144,7 +145,8 @@ class Diff(unittest.TestCase):
                                                  0,
                                                  [],
                                                  None,
-                                                 cmp_data)
+                                                 cmp_data,
+                                                 False)
         self.assertEqual(len(diff_res), 3)
 
     def test_get_diff_results_unresolved(self):
@@ -162,7 +164,8 @@ class Diff(unittest.TestCase):
                                                  0,
                                                  [],
                                                  None,
-                                                 cmp_data)
+                                                 cmp_data,
+                                                 False)
         self.assertEqual(len(diff_res), 26)
 
     def test_get_diff_res_count_resolved(self):
@@ -767,7 +770,8 @@ class Diff(unittest.TestCase):
                                                  0,
                                                  [],
                                                  tag_filter,
-                                                 cmp_data)
+                                                 cmp_data,
+                                                 False)
 
         # 5 new core.CallAndMessage issues.
         self.assertEqual(len(diff_res), 5)
@@ -778,7 +782,8 @@ class Diff(unittest.TestCase):
                                                  0,
                                                  [],
                                                  tag_filter,
-                                                 cmp_data)
+                                                 cmp_data,
+                                                 False)
         self.assertEqual(len(diff_res), 3)
 
         cmp_data.diffType = DiffType.UNRESOLVED
@@ -787,7 +792,8 @@ class Diff(unittest.TestCase):
                                                  0,
                                                  [],
                                                  tag_filter,
-                                                 cmp_data)
+                                                 cmp_data,
+                                                 False)
         self.assertEqual(len(diff_res), 26)
 
     def test_local_compare_res_html_output_unresolved(self):
@@ -824,7 +830,8 @@ class Diff(unittest.TestCase):
                                                  0,
                                                  [],
                                                  None,
-                                                 cmp_data)
+                                                 cmp_data,
+                                                 False)
         checked_files = set()
         for res in diff_res:
             checked_files.add(os.path.basename(res.checkedFile))

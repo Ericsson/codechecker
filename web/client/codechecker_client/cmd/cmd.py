@@ -334,6 +334,14 @@ def __register_results(parser):
                              "runs. Use 'CodeChecker cmd runs' to get the "
                              "available runs.")
 
+    parser.add_argument('--details',
+                        dest="details",
+                        action="store_true",
+                        required=False,
+                        default=argparse.SUPPRESS,
+                        help="Get report details for reports such as bug path "
+                             "events, bug report points etc.")
+
     __add_filtering_arguments(parser, DEFAULT_FILTER_VALUES)
 
 

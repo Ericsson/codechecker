@@ -298,6 +298,62 @@ def get_diff_hashes_for_query(base_run_ids, base_line_hashes, new_run_ids,
                                           msg)
 
 
+def get_report_details(session, report_ids):
+        """
+        Returns report details for the given report ids.
+        """
+        details = {}
+
+        # Get bug path events.
+        bug_path_events = session.query(BugPathEvent, File.filepath) \
+            .filter(BugPathEvent.report_id.in_(report_ids)) \
+            .outerjoin(File,
+                       File.id == BugPathEvent.file_id) \
+            .order_by(BugPathEvent.report_id, BugPathEvent.order)
+
+        bug_events_list = defaultdict(list)
+        for event, file_path in bug_path_events:
+            report_id = event.report_id
+            event = bugpathevent_db_to_api(event)
+            event.filePath = file_path
+            bug_events_list[report_id].append(event)
+
+        # Get bug report points.
+        bug_report_points = session.query(BugReportPoint, File.filepath) \
+            .filter(BugReportPoint.report_id.in_(report_ids)) \
+            .outerjoin(File,
+                       File.id == BugReportPoint.file_id) \
+            .order_by(BugReportPoint.report_id, BugReportPoint.order)
+
+        bug_point_list = defaultdict(list)
+        for bug_point, file_path in bug_report_points:
+            report_id = bug_point.report_id
+            bug_point = bugreportpoint_db_to_api(bug_point)
+            bug_point.filePath = file_path
+            bug_point_list[report_id].append(bug_point)
+
+        # Get extended report data.
+        extended_data_list = defaultdict(list)
+        q = session.query(ExtendedReportData, File.filepath) \
+            .filter(ExtendedReportData.report_id.in_(report_ids)) \
+            .outerjoin(File,
+                       File.id == ExtendedReportData.file_id)
+
+        for data, file_path in q:
+            report_id = data.report_id
+            extended_data = extended_data_db_to_api(data)
+            extended_data.filePath = file_path
+            extended_data_list[report_id].append(extended_data)
+
+        for report_id in report_ids:
+            details[report_id] = \
+                ReportDetails(pathEvents=bug_events_list[report_id],
+                              executionPath=bug_point_list[report_id],
+                              extendedData=extended_data_list[report_id])
+
+        return details
+
+
 def bugpathevent_db_to_api(bpe):
     return ttypes.BugPathEvent(
         startLine=bpe.line_begin,
@@ -840,7 +896,7 @@ class ThriftRequestHandler(object):
     @exc_to_thrift_reqfail
     @timeit
     def getRunResults(self, run_ids, limit, offset, sort_types,
-                      report_filter, cmp_data):
+                      report_filter, cmp_data, get_details):
         self.__require_access()
         max_query_limit = constants.MAX_QUERY_SIZE
         if limit > max_query_limit:
@@ -919,9 +975,17 @@ class ThriftRequestHandler(object):
                                        sort_type_map,
                                        order_type_map)
 
+                query_result = q.all()
+
+                # Get report details if it is required.
+                report_details = {}
+                if get_details:
+                    report_ids = [r[0] for r in query_result]
+                    report_details = get_report_details(session, report_ids)
+
                 for report_id, bug_id, checker_msg, checker, severity, \
                     detected_at, fixed_at, status, filename, path, \
-                        bug_path_len in q:
+                        bug_path_len in query_result:
                     review_data = create_review_data(status)
 
                     results.append(
@@ -933,7 +997,8 @@ class ThriftRequestHandler(object):
                                    reviewData=review_data,
                                    detectedAt=str(detected_at),
                                    fixedAt=str(fixed_at),
-                                   bugPathLength=bug_path_len))
+                                   bugPathLength=bug_path_len,
+                                   details=report_details.get(report_id)))
             else:
                 q = session.query(Report.run_id, Report.id, Report.file_id,
                                   Report.line, Report.column,
@@ -962,10 +1027,18 @@ class ThriftRequestHandler(object):
 
                 q = q.limit(limit).offset(offset)
 
+                query_result = q.all()
+
+                # Get report details if it is required.
+                report_details = {}
+                if get_details:
+                    report_ids = [r[1] for r in query_result]
+                    report_details = get_report_details(session, report_ids)
+
                 for run_id, report_id, file_id, line, column, d_status, \
                     bug_id, checker_msg, checker, severity, detected_at,\
                     fixed_at, r_status, path, bug_path_len \
-                        in q:
+                        in query_result:
 
                     review_data = create_review_data(r_status)
                     results.append(
@@ -984,7 +1057,8 @@ class ThriftRequestHandler(object):
                                        d_status),
                                    detectedAt=str(detected_at),
                                    fixedAt=str(fixed_at) if fixed_at else None,
-                                   bugPathLength=bug_path_len))
+                                   bugPathLength=bug_path_len,
+                                   details=report_details.get(report_id)))
 
             return results
 
@@ -1084,41 +1158,7 @@ class ThriftRequestHandler(object):
         """
         self.__require_access()
         with DBSession(self.__Session) as session:
-
-            report = session.query(Report).get(reportId)
-
-            events = ThriftRequestHandler.__construct_bug_item_list(
-                session, report.id, BugPathEvent)
-            bug_events_list = []
-            for event, file_path in events:
-                event = bugpathevent_db_to_api(event)
-                event.filePath = file_path
-                bug_events_list.append(event)
-
-            points = ThriftRequestHandler.__construct_bug_item_list(
-                session, report.id, BugReportPoint)
-
-            bug_point_list = []
-            for bug_point, file_path in points:
-                bug_point = bugreportpoint_db_to_api(bug_point)
-                bug_point.filePath = file_path
-                bug_point_list.append(bug_point)
-
-            # Get extended report data.
-            extended_data_list = []
-            q = session.query(ExtendedReportData, File.filepath) \
-                .filter(ExtendedReportData.report_id == report.id) \
-                .outerjoin(File,
-                           File.id == ExtendedReportData.file_id)
-
-            for data, file_path in q:
-                extended_data = extended_data_db_to_api(data)
-                extended_data.filePath = file_path
-                extended_data_list.append(extended_data)
-
-            return ReportDetails(pathEvents=bug_events_list,
-                                 executionPath=bug_point_list,
-                                 extendedData=extended_data_list)
+            return get_report_details(session, [reportId])[reportId]
 
     def _setReviewStatus(self, report_id, status, message, session):
         """

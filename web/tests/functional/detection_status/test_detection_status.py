@@ -145,7 +145,8 @@ int main()
                                                 0,
                                                 [],
                                                 None,
-                                                None)
+                                                None,
+                                                False)
 
         self.assertEqual(len(reports), 5)
         self.assertTrue(all(map(
@@ -160,7 +161,8 @@ int main()
                                                 0,
                                                 [],
                                                 None,
-                                                None)
+                                                None,
+                                                False)
         for report in reports:
             if report.detectionStatus == DetectionStatus.UNRESOLVED:
                 self.assertIn(report.bugHash,
@@ -181,7 +183,8 @@ int main()
                                                 0,
                                                 [],
                                                 None,
-                                                None)
+                                                None,
+                                                False)
         for report in reports:
             if report.detectionStatus == DetectionStatus.RESOLVED:
                 self.assertIn(report.bugHash,
@@ -228,7 +231,8 @@ int main()
                                                 0,
                                                 [],
                                                 None,
-                                                None)
+                                                None,
+                                                False)
         for report in reports:
             if report.detectionStatus == DetectionStatus.UNRESOLVED:
                 self.assertIn(report.bugHash,
@@ -250,7 +254,8 @@ int main()
                                                 0,
                                                 [],
                                                 None,
-                                                None)
+                                                None,
+                                                False)
         for report in reports:
             if report.detectionStatus == DetectionStatus.UNRESOLVED:
                 self.assertIn(report.bugHash,
@@ -308,7 +313,8 @@ int main()
                                                 0,
                                                 [],
                                                 None,
-                                                None)
+                                                None,
+                                                False)
 
         self.assertEqual(len(reports), 2)
 
@@ -336,7 +342,8 @@ int main()
                                                 0,
                                                 [],
                                                 None,
-                                                None)
+                                                None,
+                                                False)
         offed_reports = [r for r in reports
                          if r.detectionStatus == DetectionStatus.OFF]
         self.assertEqual(len(offed_reports), 0)
@@ -355,7 +362,8 @@ int main()
                                                 0,
                                                 [],
                                                 None,
-                                                None)
+                                                None,
+                                                False)
         print(reports)
         offed_reports = [r for r in reports
                          if r.detectionStatus == DetectionStatus.OFF]

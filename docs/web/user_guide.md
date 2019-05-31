@@ -819,6 +819,8 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
+  --details             Get report details for reports such as bug path
+                        events, bug report points etc.
 ```
 
 #### Example <a name="cmd-results-example"></a>
@@ -835,6 +837,9 @@ CodeChecker cmd results "my_run*"
 # Get analysis results for a run and filter the analysis results:
 CodeChecker cmd results my_run --severity critical high medium \
     --file "/home/username/my_project/*"
+
+# Get detailed analysis results for a run in JSON format.
+CodeChecker cmd results -o json --details my_run
 ```
 
 ### Show differences between two runs (`diff`) <a name="cmd-diff"></a>

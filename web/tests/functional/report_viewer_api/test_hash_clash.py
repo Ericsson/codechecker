@@ -90,7 +90,8 @@ class HashClash(unittest.TestCase):
                                           0,
                                           [],
                                           None,
-                                          None)
+                                          None,
+                                          False)
 
     def test_hash_clash(self):
         """Runs the following tests:
