@@ -354,7 +354,7 @@ int loggerGccParserCollectActions(
   size_t i;
   /* Position of the last include path + 1 */
   char full_prog_path[PATH_MAX+1];
-  char *path_ptr;
+  char *path_ptr = NULL;
 
   size_t lastIncPos = 1;
   size_t lastSysIncPos = 1;
@@ -364,16 +364,22 @@ int loggerGccParserCollectActions(
   char* keepLinkVar = getenv("CC_LOGGER_KEEP_LINK");
   int keepLink = keepLinkVar && strcmp(keepLinkVar, "true") == 0;
 
-  /* If prog_ is a relative path we try to
-   * convert it to absolute path.
-   */
-  path_ptr = realpath(prog_, full_prog_path);
-
-  /* If we cannot convert it, we try to find the
+  /* If toolName_ is not an absolute path, we try to find it as an
    * executable in the PATH.
+   * Earlier there was an approach to use realpath() in order to fetch
+   * the absolute path of the binary. However, realpath() resolves the
+   * symlinks in the path and it is not good for us.
+   * The build environment can be set so "g++" is a symlink to
+   * /usr/bin/ccache. CCache can detect whether it was run through this
+   * symlink or it was run directly. In the former case CCache forwards
+   * the command line arguments to the original g++ compiler. This way
+   * we can query the implicit include paths from the compiler later in
+   * CodeChecker. If we resolve the symlink, then the implicit include
+   * path getter command line arguments go to CCache binary. The solution
+   * is not to resolve the symlinks in the logger.
    */
-  if (!path_ptr)
-	  path_ptr = findFullPath(toolName_, full_prog_path);
+  if (toolName_ && toolName_[0] != '/')
+  	path_ptr = findFullPath(toolName_, full_prog_path);
   if (path_ptr) /* Log compiler with full path. */
 	  loggerVectorAdd(&action->arguments, loggerStrDup(full_prog_path));
   else  /* Compiler was not found in path, log the binary name only. */
