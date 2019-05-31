@@ -26,10 +26,11 @@ from sqlalchemy.pool import NullPool
 
 from shared.ttypes import DBStatus
 
-from codechecker_common import util
 from codechecker_common.logger import get_logger
 
 from codechecker_web.shared import host_check, pgpass
+
+from ..env import call_command
 
 
 LOG = get_logger('system')
@@ -525,7 +526,7 @@ class PostgreSQLServer(SQLServer):
         if self.password:
             env['PGPASSWORD'] = self.password
 
-        err, code = util.call_command(check_db, env)
+        err, code = call_command(check_db, env)
 
         if code:
             LOG.debug(err)

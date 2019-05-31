@@ -19,7 +19,7 @@ from sqlalchemy import MetaData, Column, Integer, Enum, String, Boolean, \
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.sql.expression import false, true
 
-from ..server import permissions
+from ..permissions import get_permissions
 
 CC_META = MetaData(naming_convention={
     "ix": 'ix_%(column_0_label)s',
@@ -80,7 +80,7 @@ def __get_permission_names(scope=None):
       of the given scope.
     """
 
-    return [perm.name for perm in permissions.get_permissions(scope)]
+    return [perm.name for perm in get_permissions(scope)]
 
 
 class SystemPermission(Base):

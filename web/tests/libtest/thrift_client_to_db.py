@@ -22,8 +22,7 @@ from thrift.Thrift import TApplicationException
 
 import shared
 
-from codechecker_common import util
-
+from codechecker_client.product import create_product_url
 from codechecker_web.shared.version import CLIENT_API as VERSION
 
 
@@ -122,9 +121,8 @@ class CCViewerHelper(ThriftAPIHelper):
         from codechecker_client.credential_manager import SESSION_COOKIE_NAME
 
         self.max_query_size = MAX_QUERY_SIZE
-        url = util.create_product_url(protocol, host, port,
-                                      '/' + product + '/v' +
-                                      VERSION + endpoint)
+        url = create_product_url(protocol, host, port, '/' + product + '/v' +
+                                 VERSION + endpoint)
         print("Setup viewer client: "+url)
         transport = THttpClient.THttpClient(url)
         protocol = TJSONProtocol.TJSONProtocol(transport)
@@ -175,8 +173,7 @@ class CCAuthHelper(ThriftAPIHelper):
         # Import only if necessary; some tests may not add this to PYTHONPATH.
         from Authentication_v6 import codeCheckerAuthentication
         from codechecker_client.credential_manager import SESSION_COOKIE_NAME
-        url = util.create_product_url(proto, host, port,
-                                      '/v' + VERSION + uri)
+        url = create_product_url(proto, host, port, '/v' + VERSION + uri)
         transport = THttpClient.THttpClient(url)
         protocol = TJSONProtocol.TJSONProtocol(transport)
         client = codeCheckerAuthentication.Client(protocol)
@@ -201,8 +198,7 @@ class CCProductHelper(ThriftAPIHelper):
         full_uri = '/v' + VERSION + uri
         if product:
             full_uri = '/' + product + full_uri
-        url = util.create_product_url(proto, host, port,
-                                      full_uri)
+        url = create_product_url(proto, host, port, full_uri)
         transport = THttpClient.THttpClient(url)
         protocol = TJSONProtocol.TJSONProtocol(transport)
         client = codeCheckerProductService.Client(protocol)
@@ -225,8 +221,7 @@ class CCConfigHelper(ThriftAPIHelper):
         from codechecker_client.credential_manager import SESSION_COOKIE_NAME
 
         full_uri = '/v' + VERSION + uri
-        url = util.create_product_url(proto, host, port,
-                                      full_uri)
+        url = create_product_url(proto, host, port, full_uri)
         transport = THttpClient.THttpClient(url)
         protocol = TJSONProtocol.TJSONProtocol(transport)
         client = configurationService.Client(protocol)

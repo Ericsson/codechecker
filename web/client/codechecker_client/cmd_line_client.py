@@ -33,11 +33,12 @@ from codechecker_common.output_formatters import twodim_to_str
 from codechecker_common.report import Report, get_report_path_hash
 from codechecker_common.source_code_comment_handler import \
     SourceCodeCommentHandler
-from codechecker_common.util import split_server_url, CmdLineOutputEncoder
 
 from codechecker_web.shared import webserver_context
 
 from .client import handle_auth, setup_client
+from .cmd_line import CmdLineOutputEncoder
+from .product import split_server_url
 
 # Needs to be set in the handler functions.
 LOG = None

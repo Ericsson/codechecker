@@ -23,3 +23,5 @@ PKG_ROOT = os.path.join(REPO_ROOT, 'build', 'CodeChecker')
 
 sys.path.append(REPO_ROOT)
 sys.path.append(os.path.join(REPO_ROOT, 'web'))
+sys.path.append(os.path.join(REPO_ROOT, 'web', 'client'))
+sys.path.append(os.path.join(REPO_ROOT, 'web', 'server'))

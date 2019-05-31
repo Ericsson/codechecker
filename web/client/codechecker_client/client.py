@@ -20,7 +20,6 @@ import shared
 from Authentication_v6 import ttypes as AuthTypes
 
 from codechecker_common.logger import get_logger
-from codechecker_common.util import split_product_url
 
 from codechecker_web.shared.version import CLIENT_API
 
@@ -28,6 +27,7 @@ from . import authentication_helper
 from . import product_helper
 from . import thrift_helper
 from .credential_manager import UserCredentials
+from .product import split_product_url
 
 LOG = get_logger('system')
 

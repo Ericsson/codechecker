@@ -77,3 +77,19 @@ def extend_analyzer_cmd_with_resource_dir(analyzer_cmd,
 
     analyzer_cmd.extend(['-nobuiltininc',
                          '-isystem', resource_inc])
+
+
+def replace_env_var(cfg_file):
+    """
+    Returns a replacement function which can be used in RegEx functions such as
+    re.sub to replace matches with a string from the OS environment.
+    """
+    def replacer(matchobj):
+        env_var = matchobj.group(1)
+        if env_var not in os.environ:
+            LOG.error('%s environment variable not set in %s', env_var,
+                      cfg_file)
+            return ''
+        return os.environ[env_var]
+
+    return replacer

@@ -12,8 +12,7 @@ from __future__ import absolute_import
 
 import shlex
 
-from codechecker_analyzer.analyzer_env import \
-    extend_analyzer_cmd_with_resource_dir
+from codechecker_analyzer.env import extend_analyzer_cmd_with_resource_dir
 
 from .. import analyzer_base
 

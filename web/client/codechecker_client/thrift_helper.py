@@ -15,11 +15,11 @@ from thrift.protocol import TJSONProtocol
 
 from codeCheckerDBAccess_v6 import codeCheckerDBAccess
 
-from codechecker_common import util
 from codechecker_common.logger import get_logger
 
-from .thrift_call import ThriftClientCall
 from .credential_manager import SESSION_COOKIE_NAME
+from .product import create_product_url
+from .thrift_call import ThriftClientCall
 
 LOG = get_logger('system')
 
@@ -29,7 +29,7 @@ class ThriftClientHelper(object):
     def __init__(self, protocol, host, port, uri, session_token=None):
         self.__host = host
         self.__port = port
-        url = util.create_product_url(protocol, host, port, uri)
+        url = create_product_url(protocol, host, port, uri)
         self.transport = THttpClient.THttpClient(url)
         self.protocol = TJSONProtocol.TJSONProtocol(self.transport)
         self.client = codeCheckerDBAccess.Client(self.protocol)

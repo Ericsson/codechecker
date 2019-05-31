@@ -14,6 +14,7 @@ from __future__ import absolute_import
 import argparse
 import base64
 import errno
+import hashlib
 import json
 import os
 import sys
@@ -25,6 +26,7 @@ from codeCheckerDBAccess_v6.ttypes import StoreLimitKind
 from shared.ttypes import Permission, RequestFailed, ErrorCode
 
 from codechecker_client import client as libclient
+from codechecker_client.product import split_product_url
 
 from codechecker_common import logger
 from codechecker_common import util
@@ -32,14 +34,36 @@ from codechecker_common import plist_parser
 from codechecker_common.output_formatters import twodim_to_str
 from codechecker_common.source_code_comment_handler import \
     SourceCodeCommentHandler
-from codechecker_common.util import sizeof_fmt
-from codechecker_common.util import split_product_url
 
 from codechecker_web.shared import webserver_context, host_check
+from codechecker_web.shared.env import get_default_workspace
 
 LOG = logger.get_logger('system')
 
 MAX_UPLOAD_SIZE = 1 * 1024 * 1024 * 1024  # 1GiB
+
+
+def sizeof_fmt(num, suffix='B'):
+    """
+    Pretty print storage units.
+    Source: https://stackoverflow.com/questions/1094841/
+        reusable-library-to-get-human-readable-version-of-file-size
+    """
+    for unit in ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi']:
+        if abs(num) < 1024.0:
+            return "%3.1f%s%s" % (num, unit, suffix)
+        num /= 1024.0
+    return "%.1f%s%s" % (num, 'Yi', suffix)
+
+
+def get_file_content_hash(file_path):
+    """
+    Return the file content hash for a file.
+    """
+    with open(file_path) as content:
+        hasher = hashlib.sha256()
+        hasher.update(content.read())
+        return hasher.hexdigest()
 
 
 def get_argparser_ctor_args():
@@ -76,7 +100,7 @@ def add_arguments_to_parser(parser):
                         type=str,
                         nargs='*',
                         metavar='file/folder',
-                        default=os.path.join(util.get_default_workspace(),
+                        default=os.path.join(get_default_workspace(),
                                              'reports'),
                         help="The analysis result files and/or folders "
                              "containing analysis results which should be "
@@ -215,7 +239,7 @@ def assemble_zip(inputs, zip_file, client):
                     missing_source_files.add(f)
                     continue
 
-                content_hash = util.get_file_content_hash(f)
+                content_hash = get_file_content_hash(f)
                 hash_to_file[content_hash] = f
                 file_to_hash[f] = content_hash
                 source_file_mod_times[f] = util.get_last_mod_time(f)

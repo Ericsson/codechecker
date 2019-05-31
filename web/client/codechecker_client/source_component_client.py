@@ -14,9 +14,10 @@ import sys
 
 from codechecker_common import logger
 from codechecker_common.output_formatters import twodim_to_str
-from codechecker_common.util import get_user_input, CmdLineOutputEncoder
+from codechecker_web.shared.env import get_user_input
 
 from .client import setup_client
+from .cmd_line import CmdLineOutputEncoder
 
 # Needs to be set in the handler functions.
 LOG = None
