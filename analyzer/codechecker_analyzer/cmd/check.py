@@ -331,6 +331,19 @@ used to generate a log file on the fly.""")
                                         "than the default range-based "
                                         "constraint solver.")
 
+        analyzer_opts.add_argument('--z3-refutation',
+                                   action='store_true',
+                                   dest='enable_z3_refutation',
+                                   default=argparse.SUPPRESS,
+                                   help="Enable the Z3 SMT Solver backend to "
+                                        "reduce false positives. The results "
+                                        "of the ranged based constraint "
+                                        "solver in the Clang Static Analyzer "
+                                        "will be cross checked with the Z3 "
+                                        "SMT solver. This should not cause "
+                                        "that much of a slowdown compared to "
+                                        "using the Z3 solver only.")
+
     if analyzer_types.is_ctu_capable(context):
         ctu_opts = parser.add_argument_group(
             "cross translation unit analysis arguments",
@@ -613,8 +626,9 @@ def main(args):
                           'ordered_checkers',  # --enable and --disable.
                           'timeout',
                           'compile_uniqueing',
-                          'report_hash'
-                          ]
+                          'report_hash',
+                          'enable_z3',
+                          'enable_z3_refutation']
         for key in args_to_update:
             __update_if_key_exists(args, analyze_args, key)
         if 'clean' in args:

@@ -72,13 +72,30 @@ but performance is `~15x` slower than the default range-based constraint
 solver. To enable the Z3 solver backend, Clang must be built with the
 `CLANG_ANALYZER_BUILD_Z3=ON` option, and the
 `-Xanalyzer -analyzer-constraints=z3` arguments passed at runtime. CodeChecker
-will automatically detects that the Clang was built with this option and you
+will automatically detect that the Clang was built with this option and you
 don't have to pass these arguments to the analyzer command itself when using
 CodeChecker, you just have to run the CodeChecker analyze command with the
 `--z3` option.
 
 You can read more about Z3 Theorem Prover
 [here](https://github.com/Z3Prover/z3/wiki).
+
+## Use Z3 SMT Solver to validate reports
+Z3 SMT Solver can reduce the number of false positive bugs reported to the user
+by the Clang Static Analyzer (CSA), without introducing too much overhead to
+the analysis.
+
+The bug refutation in the static analyzer is disabled by default and it’s
+hidden behind the flag `--crosscheck-with-z3`. Once the user has a version of
+clang built with Z3, the bug refutation can be enabled by passing
+`-analyzer-config crosscheck-with-z3=true` when calling the clang static
+analyzer. CodeChecker will automatically detect that the Clang was built with
+this option and you don't have to pass these arguments to the analyzer command
+itself when using CodeChecker, you just have to run the CodeChecker analyze
+command with the `--z3-refutation` option.
+
+You can read more about refutation with the Z3 SMT Solver
+[here](https://docs.google.com/document/d/1-HEblH92VxdxDp04vDKjFa4_ZL9l2oPVLFtQUfLKSOo/).
 
 # Configure Clang tidy checkers
 
