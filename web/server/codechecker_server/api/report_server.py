@@ -302,59 +302,59 @@ def get_diff_hashes_for_query(base_run_ids, base_line_hashes, new_run_ids,
 
 
 def get_report_details(session, report_ids):
-        """
-        Returns report details for the given report ids.
-        """
-        details = {}
+    """
+    Returns report details for the given report ids.
+    """
+    details = {}
 
-        # Get bug path events.
-        bug_path_events = session.query(BugPathEvent, File.filepath) \
-            .filter(BugPathEvent.report_id.in_(report_ids)) \
-            .outerjoin(File,
-                       File.id == BugPathEvent.file_id) \
-            .order_by(BugPathEvent.report_id, BugPathEvent.order)
+    # Get bug path events.
+    bug_path_events = session.query(BugPathEvent, File.filepath) \
+        .filter(BugPathEvent.report_id.in_(report_ids)) \
+        .outerjoin(File,
+                   File.id == BugPathEvent.file_id) \
+        .order_by(BugPathEvent.report_id, BugPathEvent.order)
 
-        bug_events_list = defaultdict(list)
-        for event, file_path in bug_path_events:
-            report_id = event.report_id
-            event = bugpathevent_db_to_api(event)
-            event.filePath = file_path
-            bug_events_list[report_id].append(event)
+    bug_events_list = defaultdict(list)
+    for event, file_path in bug_path_events:
+        report_id = event.report_id
+        event = bugpathevent_db_to_api(event)
+        event.filePath = file_path
+        bug_events_list[report_id].append(event)
 
-        # Get bug report points.
-        bug_report_points = session.query(BugReportPoint, File.filepath) \
-            .filter(BugReportPoint.report_id.in_(report_ids)) \
-            .outerjoin(File,
-                       File.id == BugReportPoint.file_id) \
-            .order_by(BugReportPoint.report_id, BugReportPoint.order)
+    # Get bug report points.
+    bug_report_points = session.query(BugReportPoint, File.filepath) \
+        .filter(BugReportPoint.report_id.in_(report_ids)) \
+        .outerjoin(File,
+                   File.id == BugReportPoint.file_id) \
+        .order_by(BugReportPoint.report_id, BugReportPoint.order)
 
-        bug_point_list = defaultdict(list)
-        for bug_point, file_path in bug_report_points:
-            report_id = bug_point.report_id
-            bug_point = bugreportpoint_db_to_api(bug_point)
-            bug_point.filePath = file_path
-            bug_point_list[report_id].append(bug_point)
+    bug_point_list = defaultdict(list)
+    for bug_point, file_path in bug_report_points:
+        report_id = bug_point.report_id
+        bug_point = bugreportpoint_db_to_api(bug_point)
+        bug_point.filePath = file_path
+        bug_point_list[report_id].append(bug_point)
 
-        # Get extended report data.
-        extended_data_list = defaultdict(list)
-        q = session.query(ExtendedReportData, File.filepath) \
-            .filter(ExtendedReportData.report_id.in_(report_ids)) \
-            .outerjoin(File,
-                       File.id == ExtendedReportData.file_id)
+    # Get extended report data.
+    extended_data_list = defaultdict(list)
+    q = session.query(ExtendedReportData, File.filepath) \
+        .filter(ExtendedReportData.report_id.in_(report_ids)) \
+        .outerjoin(File,
+                   File.id == ExtendedReportData.file_id)
 
-        for data, file_path in q:
-            report_id = data.report_id
-            extended_data = extended_data_db_to_api(data)
-            extended_data.filePath = file_path
-            extended_data_list[report_id].append(extended_data)
+    for data, file_path in q:
+        report_id = data.report_id
+        extended_data = extended_data_db_to_api(data)
+        extended_data.filePath = file_path
+        extended_data_list[report_id].append(extended_data)
 
-        for report_id in report_ids:
-            details[report_id] = \
-                ReportDetails(pathEvents=bug_events_list[report_id],
-                              executionPath=bug_point_list[report_id],
-                              extendedData=extended_data_list[report_id])
+    for report_id in report_ids:
+        details[report_id] = \
+            ReportDetails(pathEvents=bug_events_list[report_id],
+                          executionPath=bug_point_list[report_id],
+                          extendedData=extended_data_list[report_id])
 
-        return details
+    return details
 
 
 def bugpathevent_db_to_api(bpe):
