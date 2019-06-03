@@ -45,19 +45,14 @@ typedef struct _LoggerAction
    * Source files.
    */
   LoggerVector sources;
-  /**
-   * Tool`s name.
-   */
-  char toolName[PATH_MAX];
 } LoggerAction;
 
 /**
  * Creates a new action structure.
  *
- * @param toolName_ the name of the tool.
  * @return a new action instance or NULL on error.
  */
-LoggerAction* loggerActionNew(const char* toolName_);
+LoggerAction* loggerActionNew();
 
 /**
  * Frees an action instance.
@@ -84,14 +79,12 @@ int loggerCollectActionsByProgName(
  * Parser function for GCC like commands.
  *
  * @param prog_ the command path or the program name.
- * @param toolName_ the tools name.
  * @param argv_ the arguments of the program (including the first one)
  * @param actions_ output vector for the build actions.
  * @return zero on error, non zero on success.
  */
 int loggerGccParserCollectActions(
   const char* prog_,
-  const char* toolName_,
   const char* const argv_[],
   LoggerVector* actions_);
 
@@ -99,14 +92,12 @@ int loggerGccParserCollectActions(
  * Parser function for JavaC like commands.
  *
  * @param prog_ the command path or the program name.
- * @param toolName_ the tools name.
  * @param argv_ the arguments of the program (including the first one)
  * @param actions_ output vector for the build actions.
  * @return zero on error, non zero on success.
  */
 int loggerJavacParserCollectActions(
   const char* prog_,
-  const char* toolName_,
   const char* const argv_[],
   LoggerVector* actions_);
 

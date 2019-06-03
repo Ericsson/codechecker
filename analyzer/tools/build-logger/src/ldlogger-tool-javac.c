@@ -263,7 +263,6 @@ static void processArg(const char* arg_, ParserData* data_)
 
 int loggerJavacParserCollectActions(
   const char* prog_,
-  const char* toolName_,
   const char* const argv_[],
   LoggerVector* actions_)
 {
@@ -278,7 +277,7 @@ int loggerJavacParserCollectActions(
   loggerVectorInit(&data.sources);
   memset(data.classdir, 0, sizeof(data.classdir));
 
-  loggerVectorAdd(&data.commonArgs, loggerStrDup(toolName_));
+  loggerVectorAdd(&data.commonArgs, loggerStrDup(prog_));
 
   for (i = 1; argv_[i]; ++i)
   {
@@ -317,7 +316,7 @@ int loggerJavacParserCollectActions(
   {
     char outputFile[PATH_MAX];
     const char* src = (char*) data.sources.data[i];
-    LoggerAction* action = loggerActionNew(toolName_);
+    LoggerAction* action = loggerActionNew();
     if (!action)
     {
       continue;

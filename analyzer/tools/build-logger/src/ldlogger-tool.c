@@ -89,7 +89,7 @@ LoggerFile* loggerFileInitFromPath(LoggerFile* file_, const char* path_)
   return file_;
 }
 
-LoggerAction* loggerActionNew(char const* toolName_)
+LoggerAction* loggerActionNew()
 {
   LoggerAction* act = (LoggerAction*) malloc(sizeof(LoggerAction));
   if (!act)
@@ -100,7 +100,6 @@ LoggerAction* loggerActionNew(char const* toolName_)
   loggerFileInitFromPath(&act->output, "./_noobj");
   loggerVectorInit(&act->arguments);
   loggerVectorInit(&act->sources);
-  strcpy(act->toolName, toolName_);
 
   return act;
 }
@@ -138,13 +137,13 @@ int loggerCollectActionsByProgName(
   {
     int ret;
     turnLogging(0);
-    ret = loggerGccParserCollectActions(prog_, toolName, argv_, actions_);
+    ret = loggerGccParserCollectActions(prog_, argv_, actions_);
     turnLogging(1);
     return ret;
   }
   else if (matchToProgramList("CC_LOGGER_JAVAC_LIKE", toolName))
   {
-    return loggerJavacParserCollectActions(prog_, toolName, argv_, actions_);
+    return loggerJavacParserCollectActions(prog_, argv_, actions_);
   }
 
   return 0;
