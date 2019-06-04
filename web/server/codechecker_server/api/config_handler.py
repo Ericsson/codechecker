@@ -11,7 +11,6 @@ from __future__ import division
 from __future__ import absolute_import
 
 import base64
-import sqlalchemy
 
 import shared
 
@@ -37,25 +36,13 @@ class ThriftConfigHandler(object):
         """
         Checks if the current user isn't a SUPERUSER.
         """
+        if (not (self.__auth_session is None) and
+                not self.__auth_session.is_root):
+            raise shared.ttypes.RequestFailed(
+                shared.ttypes.ErrorCode.UNAUTHORIZED,
+                "You are not authorized to modify the notification.")
 
-        try:
-            session = self.__session()
-            if (not (self.__auth_session is None)
-                    and not (self.__auth_session.is_root)):
-                raise shared.ttypes.RequestFailed(
-                    shared.ttypes.ErrorCode.UNAUTHORIZED,
-                    "You are not authorized to modify the notification.")
-
-            return True
-
-        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
-            msg = str(alchemy_ex)
-            LOG.error(msg)
-            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
-                                              msg)
-        finally:
-            if session:
-                session.close()
+        return True
 
     @timeit
     def getNotificationBannerText(self):

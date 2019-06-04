@@ -14,7 +14,6 @@ import base64
 import os
 import random
 
-import sqlalchemy
 from sqlalchemy.sql.expression import and_
 
 import shared
@@ -29,7 +28,7 @@ from ..database.database import SQLServer, conv
 from ..database.run_db_model import Run, RunLock
 from ..routing import is_valid_product_endpoint
 
-from .db import escape_like
+from .db import DBSession, escape_like
 
 LOG = get_logger('server')
 
@@ -62,10 +61,9 @@ class ThriftProductHandler(object):
         have any of the given permissions.
         """
 
-        try:
+        with DBSession(self.__session) as session:
             if args is None:
                 args = dict(self.__permission_args)
-                session = self.__session()
                 args['config_db_session'] = session
 
             if not any([permissions.require_permission(
@@ -76,15 +74,6 @@ class ThriftProductHandler(object):
                     "You are not authorized to execute this action.")
 
             return True
-
-        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
-            msg = str(alchemy_ex)
-            LOG.error(msg)
-            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
-                                              msg)
-        finally:
-            if session:
-                session.close()
 
     def __get_product(self, session, product):
         """
@@ -106,21 +95,21 @@ class ThriftProductHandler(object):
         runs_in_progress = set()
         latest_store_to_product = ""
         if server_product.db_status == shared.ttypes.DBStatus.OK:
-            run_db_session = server_product.session_factory()
-            run_locks = run_db_session.query(RunLock.name) \
-                .filter(RunLock.locked_at.isnot(None)) \
-                .all()
+            with DBSession(server_product.session_factory) as run_db_session:
+                run_locks = run_db_session.query(RunLock.name) \
+                    .filter(RunLock.locked_at.isnot(None)) \
+                    .all()
 
-            runs_in_progress = set([run_lock[0] for run_lock in run_locks])
+                runs_in_progress = set([run_lock[0] for run_lock in run_locks])
 
-            num_of_runs = run_db_session.query(Run).count()
-            if num_of_runs:
-                last_updated_run = run_db_session.query(Run) \
-                    .order_by(Run.date.desc()) \
-                    .limit(1) \
-                    .one_or_none()
+                num_of_runs = run_db_session.query(Run).count()
+                if num_of_runs:
+                    last_updated_run = run_db_session.query(Run) \
+                        .order_by(Run.date.desc()) \
+                        .limit(1) \
+                        .one_or_none()
 
-                latest_store_to_product = last_updated_run.date
+                    latest_store_to_product = last_updated_run.date
 
         name = base64.b64encode(product.display_name.encode('utf-8'))
         descr = base64.b64encode(product.description.encode('utf-8')) \
@@ -159,8 +148,7 @@ class ThriftProductHandler(object):
 
     @timeit
     def isAdministratorOfAnyProduct(self):
-        try:
-            session = self.__session()
+        with DBSession(self.__session) as session:
             prods = session.query(Product).all()
 
             for prod in prods:
@@ -173,14 +161,6 @@ class ThriftProductHandler(object):
 
             return False
 
-        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
-            msg = str(alchemy_ex)
-            LOG.error(msg)
-            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
-                                              msg)
-        finally:
-            session.close()
-
     @timeit
     def getProducts(self, product_endpoint_filter, product_name_filter):
         """
@@ -189,8 +169,7 @@ class ThriftProductHandler(object):
 
         result = []
 
-        try:
-            session = self.__session()
+        with DBSession(self.__session) as session:
             prods = session.query(Product)
 
             num_all_products = prods.count()  # prods get filtered later.
@@ -225,14 +204,6 @@ class ThriftProductHandler(object):
 
             return result
 
-        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
-            msg = str(alchemy_ex)
-            LOG.error(msg)
-            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
-                                              msg)
-        finally:
-            session.close()
-
     @timeit
     def getCurrentProduct(self):
         """
@@ -248,8 +219,7 @@ class ThriftProductHandler(object):
             raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.IOERROR,
                                               msg)
 
-        try:
-            session = self.__session()
+        with DBSession(self.__session) as session:
             prod = session.query(Product).get(self.__product.id)
 
             if not prod:
@@ -262,13 +232,6 @@ class ThriftProductHandler(object):
 
             _, ret = self.__get_product(session, prod)
             return ret
-        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
-            msg = str(alchemy_ex)
-            LOG.error(msg)
-            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
-                                              msg)
-        finally:
-            session.close()
 
     @timeit
     def getProductConfiguration(self, product_id):
@@ -277,8 +240,7 @@ class ThriftProductHandler(object):
         given product.
         """
 
-        try:
-            session = self.__session()
+        with DBSession(self.__session) as session:
             product = session.query(Product).get(product_id)
             if product is None:
                 LOG.error("Product with ID %d does not exist!", product_id)
@@ -326,14 +288,6 @@ class ThriftProductHandler(object):
                 isReviewStatusChangeDisabled=is_review_status_change_disabled)
 
             return prod
-
-        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
-            msg = str(alchemy_ex)
-            LOG.error(msg)
-            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
-                                              msg)
-        finally:
-            session.close()
 
     @timeit
     def addProduct(self, product):
@@ -409,7 +363,7 @@ class ThriftProductHandler(object):
         is_rws_change_disabled = product.isReviewStatusChangeDisabled
 
         # Create the product's entity in the database.
-        try:
+        with DBSession(self.__session) as session:
             orm_prod = Product(
                 endpoint=product.endpoint,
                 conn_str=conn_str,
@@ -435,7 +389,6 @@ class ThriftProductHandler(object):
                     shared.ttypes.ErrorCode.IOERROR, msg)
 
             LOG.debug("Product database successfully connected to.")
-            session = self.__session()
             session.add(orm_prod)
             session.flush()
 
@@ -459,23 +412,13 @@ class ThriftProductHandler(object):
             LOG.debug("Product database connected and ready to serve.")
             return True
 
-        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
-            msg = str(alchemy_ex)
-            LOG.error(msg)
-            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
-                                              msg)
-        finally:
-            if session:
-                session.close()
-
     @timeit
     def editProduct(self, product_id, new_config):
         """
         Edit the given product's properties to the one specified by
         new_configuration.
         """
-        try:
-            session = self.__session()
+        with DBSession(self.__session) as session:
             product = session.query(Product).get(product_id)
             if product is None:
                 msg = "Product with ID {0} does not exist!".format(product_id)
@@ -642,14 +585,6 @@ class ThriftProductHandler(object):
 
             return True
 
-        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
-            msg = str(alchemy_ex)
-            LOG.error(msg)
-            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
-                                              msg)
-        finally:
-            session.close()
-
     @timeit
     def removeProduct(self, product_id):
         """
@@ -657,8 +592,7 @@ class ThriftProductHandler(object):
         """
         self.__require_permission([permissions.SUPERUSER])
 
-        try:
-            session = self.__session()
+        with DBSession(self.__session) as session:
             product = session.query(Product).get(product_id)
             if product is None:
                 LOG.erorr("Product with ID %d does not exist!", product_id)
@@ -671,11 +605,3 @@ class ThriftProductHandler(object):
             session.delete(product)
             session.commit()
             return True
-
-        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
-            msg = str(alchemy_ex)
-            LOG.error(msg)
-            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
-                                              msg)
-        finally:
-            session.close()
