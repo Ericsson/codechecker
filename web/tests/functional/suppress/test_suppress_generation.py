@@ -209,9 +209,9 @@ class TestSuppress(unittest.TestCase):
 
         initial_test_project_name = self._run_name
 
-        ret = codechecker.check(codechecker_cfg,
-                                initial_test_project_name,
-                                self._test_project_path)
+        ret = codechecker.check_and_store(codechecker_cfg,
+                                          initial_test_project_name,
+                                          self._test_project_path)
         if ret:
             sys.exit(1)
 

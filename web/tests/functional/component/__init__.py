@@ -70,13 +70,13 @@ def setup_package():
     codechecker_cfg.update(server_access)
 
     # Clean the test project, if needed by the tests.
-    ret = project.clean(test_project)
+    ret = project.clean(test_project_path)
     if ret:
         sys.exit(ret)
 
-    ret = codechecker.check(codechecker_cfg,
-                            test_project_name,
-                            test_project_path)
+    ret = codechecker.check_and_store(codechecker_cfg,
+                                      test_project_name,
+                                      test_project_path)
     if ret:
         sys.exit(1)
     print("Analyzing test project was succcessful.")

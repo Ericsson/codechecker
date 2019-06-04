@@ -8,9 +8,10 @@
 """
 Tests for source file changes
 """
-from __future__ import print_function
-from __future__ import division
 from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 import os
 import time
 import unittest
@@ -55,7 +56,7 @@ class TestSkeleton(unittest.TestCase):
 
     def test_parse(self):
         """
-        Test if parse there are skip messages in the output of the parse if
+        Test if there are skip messages in the output of the parse command if
         the source files did change between the analysis and the parse.
         """
 
@@ -66,9 +67,8 @@ class TestSkeleton(unittest.TestCase):
 
         null_deref_file = os.path.join(test_proj_path, 'null_dereference.cpp')
 
-        codechecker.analyze(self._codechecker_cfg,
-                            'hash_change',
-                            test_proj_path)
+        codechecker.log_and_analyze(self._codechecker_cfg,
+                                    test_proj_path)
 
         ret, out, _ = codechecker.parse(self._codechecker_cfg)
         self.assertEqual(ret, 0)
@@ -81,7 +81,6 @@ class TestSkeleton(unittest.TestCase):
 
         ret, out, _ = codechecker.parse(self._codechecker_cfg)
         self.assertEqual(ret, 0)
-        print(out)
 
         msg = 'did change since the last analysis.'
         self.assertTrue(msg in out,
@@ -95,9 +94,9 @@ class TestSkeleton(unittest.TestCase):
 
         test_proj = os.path.join(self.test_workspace, 'test_proj')
 
-        ret = codechecker.check(self._codechecker_cfg,
-                                'test_proj',
-                                test_proj)
+        ret = codechecker.check_and_store(self._codechecker_cfg,
+                                          'test_proj',
+                                          test_proj)
 
         self.assertEqual(ret, 0)
 

@@ -65,9 +65,9 @@ class RemoveRunResults(unittest.TestCase):
         if ret:
             sys.exit(ret)
 
-        codechecker.check(self._codechecker_cfg,
-                          'remove_run_results',
-                          test_project_path)
+        codechecker.check_and_store(self._codechecker_cfg,
+                                    'remove_run_results',
+                                    test_project_path)
 
         run_filter = RunFilter(names=['remove_run_results'], exactMatch=True)
         runs = self._cc_client.getRunData(run_filter)
