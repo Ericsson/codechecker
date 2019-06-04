@@ -40,8 +40,6 @@ from codechecker_common.logger import get_logger
 from codechecker_common.profiler import timeit
 from codechecker_common.report import get_report_path_hash
 
-from codechecker_web.shared import webserver_context
-
 from .. import permissions
 from ..database import db_cleanup
 from ..database.config_db_model import Product
@@ -561,7 +559,8 @@ class ThriftRequestHandler(object):
                  checker_md_docs,
                  checker_md_docs_map,
                  src_comment_handler,
-                 package_version):
+                 package_version,
+                 context):
 
         if not product:
             raise ValueError("Cannot initialize request handler without "
@@ -576,7 +575,7 @@ class ThriftRequestHandler(object):
         self.__src_comment_handler = src_comment_handler
         self.__package_version = package_version
         self.__Session = Session
-
+        self.__context = context
         self.__permission_args = {
             'productID': product.id
         }
@@ -2473,8 +2472,6 @@ class ThriftRequestHandler(object):
         with DBSession(self.__Session) as session:
             ThriftRequestHandler.__store_run_lock(session, name, user)
 
-        context = webserver_context.get_context()
-
         wrong_src_code_comments = []
         try:
             with TemporaryDirectory() as zip_dir:
@@ -2561,7 +2558,7 @@ class ThriftRequestHandler(object):
                                          run_id,
                                          file_path_to_id,
                                          run_history_time,
-                                         context.severity_map,
+                                         self.__context.severity_map,
                                          wrong_src_code_comments,
                                          skip_handler,
                                          checkers)
