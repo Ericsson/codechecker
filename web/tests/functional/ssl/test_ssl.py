@@ -114,11 +114,11 @@ class TestSSL(unittest.TestCase):
                            self._test_workspace,
                            access_protocol)
 
-        with self.assertRaises(TProtocolException):
-            # The server reports a HTTP 401 error which is not a valid
-            # Thrift response. But if it does so, it passes the test!
-            client.getPackageVersion()
-            print("Privileged client allowed access after logout.")
+        # The server reports a HTTP 401 error which is not a valid
+        # Thrift response. But if it does so, it passes the test!
+        version = client.getPackageVersion()
+        self.assertIsNone(version,
+                          "Privileged client allowed access after logout.")
 
         handshake = auth_client.getAuthParameters()
         self.assertFalse(handshake.sessionStillActive,

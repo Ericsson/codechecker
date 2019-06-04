@@ -14,8 +14,6 @@ import os
 import subprocess
 import unittest
 
-from thrift.protocol.TProtocol import TProtocolException
-
 from shared.ttypes import RequestFailed
 
 from libtest import codechecker
@@ -168,11 +166,11 @@ class DictAuth(unittest.TestCase):
 
         self.assertTrue(result, "Server did not allow us to destroy session.")
 
-        with self.assertRaises(TProtocolException):
-            # The server reports a HTTP 401 error which is not a valid
-            # Thrift response. But if it does so, it passes the test!
-            client.getPackageVersion()
-            print("Privileged client allowed access after logout.")
+        # The server reports a HTTP 401 error which is not a valid
+        # Thrift response. But if it does so, it passes the test!
+        version = client.getPackageVersion()
+        self.assertIsNone(version,
+                          "Privileged client allowed access after logout.")
 
         handshake = auth_client.getAuthParameters()
         self.assertFalse(handshake.sessionStillActive,
