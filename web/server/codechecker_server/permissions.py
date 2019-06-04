@@ -626,12 +626,12 @@ PRODUCT_ADMIN = _create_permission(ProductPermission, 'PRODUCT_ADMIN',
                                    manages_self=True)
 
 PRODUCT_STORE = _create_permission(ProductPermission, 'PRODUCT_STORE',
-                                   default_enable=True,
+                                   default_enable=False,
                                    inherited_from=[PRODUCT_ADMIN],
                                    managed_by=[PRODUCT_ADMIN])
 
 PRODUCT_ACCESS = _create_permission(ProductPermission, 'PRODUCT_ACCESS',
-                                    default_enable=True,
+                                    default_enable=False,
                                     inherited_from=[PRODUCT_ADMIN,
                                                     PRODUCT_STORE],
                                     managed_by=[PRODUCT_ADMIN])

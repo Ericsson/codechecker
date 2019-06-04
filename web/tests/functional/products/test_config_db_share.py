@@ -109,7 +109,8 @@ class TestProductConfigShare(unittest.TestCase):
                             {'codechecker_cfg': self.codechecker_cfg_2})
 
         server_config = dict(self.codechecker_cfg_2)
-        server_config['workspace'] = env.get_workspace(None)
+        server_config['workspace'] = os.path.join(env.get_workspace(None),
+                                                  'global_auth_server')
 
         codechecker.start_server(server_config, EVENT, None,
                                  env.get_postgresql_cfg())

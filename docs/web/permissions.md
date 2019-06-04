@@ -83,13 +83,9 @@ Each permission has a unique name, such as `SUPERUSER` or `PRODUCT_ADMIN`.
 
 Permissions can either be *not granted* or *granted* by default.
 
-Some permissions are *default not granted*, which means that only users whom
-are explicitly given the permission have it.
-
-Some permissions are *default granted*, which means that initially, every user
-has the permission. However, if at least one user or group is explicitly
-given the permission, only the users who have the permission given will be
-able to utilise it.
+If the server is running with authentication &ndash; all permissions are
+*default not granted*, which means only the users (or LDAP groups) where the
+permission is explicitly set will have various access rights.
 
 If the server is running without authentication &ndash; in this case there are
 no "users" as everyone is a guest &ndash; **every permission is automatically

@@ -59,7 +59,7 @@ def setup_package():
     # Start or connect to the running CodeChecker server and get connection
     # details.
     print("This test uses a CodeChecker server... connecting...")
-    server_access = codechecker.start_or_get_server()
+    server_access = codechecker.start_or_get_server(auth_required=True)
     server_access['viewer_product'] = 'comment'
     codechecker.add_test_package_product(server_access, TEST_WORKSPACE)
 

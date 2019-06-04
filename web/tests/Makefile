@@ -14,6 +14,8 @@ TEST_PROJECT ?= TEST_PROJ=$(CURRENT_DIR)/tests/projects
 
 REPO_ROOT ?= REPO_ROOT=$(ROOT)
 CC_TEST_WORKSPACE_ROOT ?= $(BUILD_DIR)/workspace
+WOKSPACE_GLOBAL_AUTH_SERVER = $(CC_TEST_WORKSPACE_ROOT)/global_auth_server
+WOKSPACE_GLOBAL_SIMPLE_SERVER = $(CC_TEST_WORKSPACE_ROOT)/global_simple_server
 
 CLEAR_WORKSPACE_CMD = rm -rf $(CC_TEST_WORKSPACE_ROOT)
 
@@ -52,23 +54,28 @@ pylint:
 
 pylint_in_env:
 	$(ACTIVATE_DEV_VENV) && $(PYLINT_TEST_CMD)
- 
+
 CODECHECKER_CMD = $(BUILD_DIR)/CodeChecker/bin/CodeChecker
-SHUTDOWN_SERVER_CMD = echo "Shutting down server..."; \
-  HOME="$(CC_TEST_WORKSPACE_ROOT)" ${CODECHECKER_CMD} server -l; \
-  HOME="$(CC_TEST_WORKSPACE_ROOT)" ${CODECHECKER_CMD} server \
-    --config-directory $(CC_TEST_WORKSPACE_ROOT) \
-    --port `cat "$(CC_TEST_WORKSPACE_ROOT)/serverport"` --stop; \
-  rm -f "$(CC_TEST_WORKSPACE_ROOT)/serverport"; \
-  HOME="$(CC_TEST_WORKSPACE_ROOT)" ${CODECHECKER_CMD} server -l
+SHUTDOWN_GLOBAL_SERVERS_CMD = \
+  for TEST_ROOT in ${WOKSPACE_GLOBAL_AUTH_SERVER} ${WOKSPACE_GLOBAL_SIMPLE_SERVER}; do \
+    if [ -d "$${TEST_ROOT}" ]; then \
+      echo "Shutting down server..."; \
+      HOME="$${TEST_ROOT}" ${CODECHECKER_CMD} server -l; \
+      HOME="$${TEST_ROOT}" ${CODECHECKER_CMD} server \
+        --config-directory $${TEST_ROOT} \
+        --port `cat "$${TEST_ROOT}/serverport"` --stop; \
+      rm -f "$${TEST_ROOT}/serverport"; \
+      HOME="$${TEST_ROOT}" ${CODECHECKER_CMD} server -l; \
+    fi \
+  done
 
 # Preserve the error status of the previous command but always be able to
 # shut down servers.
-EXIT_ERROR = { ${SHUTDOWN_SERVER_CMD}; exit 1; }
+EXIT_ERROR = { ${SHUTDOWN_GLOBAL_SERVERS_CMD}; exit 1; }
 
 FUNCTIONAL_TEST_CMD = $(REPO_ROOT) BUILD_DIR=$(BUILD_DIR) $(CLANG_VERSION) $(TEST_PROJECT) \
   nosetests $(NOSECFG) tests/functional \
-  && { ${SHUTDOWN_SERVER_CMD}; } || ${EXIT_ERROR}
+  && { ${SHUTDOWN_GLOBAL_SERVERS_CMD}; } || ${EXIT_ERROR}
 
 MAKE_DB_CMD = bash -c 'psql -h localhost \
   -p $${TEST_DBPORT} -U $${TEST_DBUSERNAME} postgres \
@@ -78,9 +85,10 @@ DROP_DB_CMD = bash -c 'psql -h localhost \
   -p $${TEST_DBPORT} -U $${TEST_DBUSERNAME} postgres \
   -c "DROP DATABASE IF EXISTS codechecker_config_$${CODECHECKER_DB_DRIVER}"'
 
-RUN_TEST_CMD = $(REPO_ROOT) BUILD_DIR=$(BUILD_DIR) $(CLANG_VERSION) $(TEST_PROJECT) \
+RUN_TEST_CMD = $(CLEAR_WORKSPACE_CMD) && \
+  $(REPO_ROOT) BUILD_DIR=$(BUILD_DIR) $(CLANG_VERSION) $(TEST_PROJECT) \
   nosetests $(NOSECFG) $(ROOT)/web/${TEST} \
-  && { ${SHUTDOWN_SERVER_CMD}; } || ${EXIT_ERROR}
+  && { ${SHUTDOWN_GLOBAL_SERVERS_CMD}; } || ${EXIT_ERROR}
 
 run_test:
 	$(RUN_TEST_CMD)
