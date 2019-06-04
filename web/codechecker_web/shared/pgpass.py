@@ -25,20 +25,20 @@ def _match_field(line, field):
         return line[2:]
 
     escaped = False
-    while len(line) > 0:
+    while line:
         if not escaped and line[0] == '\\':
             line = line[1:]
             escaped = True
 
-        if len(line) == 0:
+        if not line:
             return None
 
-        if not escaped and line[0] == ':' and len(field) == 0:
+        if not escaped and line[0] == ':' and not field:
             # match
             return line[1:]
 
         escaped = False
-        if len(field) == 0:
+        if not field:
             return None
         elif field[0] == line[0]:
             line = line[1:]
@@ -86,8 +86,7 @@ def get_password_from_file(passfile_path, hostname, port, database, username):
     http://www.postgresql.org/docs/current/static/libpq-pgpass.html
     """
 
-    if len(hostname) == 0 or len(port) == 0 or len(database) == 0 or \
-       len(username) == 0:
+    if not hostname or not port or not database or not username:
         return None
 
     with open(passfile_path, 'r') as passfile:

@@ -223,7 +223,7 @@ def main(args):
                 rows.append([enabled, checker_name, analyzer,
                              severity, description])
 
-    if len(rows) > 0:
+    if rows:
         print(output_formatters.twodim_to_str(args.output_format,
                                               header, rows))
 

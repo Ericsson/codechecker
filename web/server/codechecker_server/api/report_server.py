@@ -27,7 +27,10 @@ from sqlalchemy.sql.expression import or_, and_, not_, func, \
 
 import shared
 from codeCheckerDBAccess_v6 import constants, ttypes
-from codeCheckerDBAccess_v6.ttypes import *
+from codeCheckerDBAccess_v6.ttypes import BugPathPos, CheckerCount, \
+    CommentData, DiffType, Encoding, RunHistoryData, Order, ReportData, \
+    ReportDetails, ReviewData, RunData, RunReportCount, RunTagCount, \
+    SourceComponentData, SourceFileData, SortMode, SortType
 
 from codechecker_common import plist_parser, skiplist_handler
 from codechecker_common.source_code_comment_handler import \
@@ -299,59 +302,59 @@ def get_diff_hashes_for_query(base_run_ids, base_line_hashes, new_run_ids,
 
 
 def get_report_details(session, report_ids):
-        """
-        Returns report details for the given report ids.
-        """
-        details = {}
+    """
+    Returns report details for the given report ids.
+    """
+    details = {}
 
-        # Get bug path events.
-        bug_path_events = session.query(BugPathEvent, File.filepath) \
-            .filter(BugPathEvent.report_id.in_(report_ids)) \
-            .outerjoin(File,
-                       File.id == BugPathEvent.file_id) \
-            .order_by(BugPathEvent.report_id, BugPathEvent.order)
+    # Get bug path events.
+    bug_path_events = session.query(BugPathEvent, File.filepath) \
+        .filter(BugPathEvent.report_id.in_(report_ids)) \
+        .outerjoin(File,
+                   File.id == BugPathEvent.file_id) \
+        .order_by(BugPathEvent.report_id, BugPathEvent.order)
 
-        bug_events_list = defaultdict(list)
-        for event, file_path in bug_path_events:
-            report_id = event.report_id
-            event = bugpathevent_db_to_api(event)
-            event.filePath = file_path
-            bug_events_list[report_id].append(event)
+    bug_events_list = defaultdict(list)
+    for event, file_path in bug_path_events:
+        report_id = event.report_id
+        event = bugpathevent_db_to_api(event)
+        event.filePath = file_path
+        bug_events_list[report_id].append(event)
 
-        # Get bug report points.
-        bug_report_points = session.query(BugReportPoint, File.filepath) \
-            .filter(BugReportPoint.report_id.in_(report_ids)) \
-            .outerjoin(File,
-                       File.id == BugReportPoint.file_id) \
-            .order_by(BugReportPoint.report_id, BugReportPoint.order)
+    # Get bug report points.
+    bug_report_points = session.query(BugReportPoint, File.filepath) \
+        .filter(BugReportPoint.report_id.in_(report_ids)) \
+        .outerjoin(File,
+                   File.id == BugReportPoint.file_id) \
+        .order_by(BugReportPoint.report_id, BugReportPoint.order)
 
-        bug_point_list = defaultdict(list)
-        for bug_point, file_path in bug_report_points:
-            report_id = bug_point.report_id
-            bug_point = bugreportpoint_db_to_api(bug_point)
-            bug_point.filePath = file_path
-            bug_point_list[report_id].append(bug_point)
+    bug_point_list = defaultdict(list)
+    for bug_point, file_path in bug_report_points:
+        report_id = bug_point.report_id
+        bug_point = bugreportpoint_db_to_api(bug_point)
+        bug_point.filePath = file_path
+        bug_point_list[report_id].append(bug_point)
 
-        # Get extended report data.
-        extended_data_list = defaultdict(list)
-        q = session.query(ExtendedReportData, File.filepath) \
-            .filter(ExtendedReportData.report_id.in_(report_ids)) \
-            .outerjoin(File,
-                       File.id == ExtendedReportData.file_id)
+    # Get extended report data.
+    extended_data_list = defaultdict(list)
+    q = session.query(ExtendedReportData, File.filepath) \
+        .filter(ExtendedReportData.report_id.in_(report_ids)) \
+        .outerjoin(File,
+                   File.id == ExtendedReportData.file_id)
 
-        for data, file_path in q:
-            report_id = data.report_id
-            extended_data = extended_data_db_to_api(data)
-            extended_data.filePath = file_path
-            extended_data_list[report_id].append(extended_data)
+    for data, file_path in q:
+        report_id = data.report_id
+        extended_data = extended_data_db_to_api(data)
+        extended_data.filePath = file_path
+        extended_data_list[report_id].append(extended_data)
 
-        for report_id in report_ids:
-            details[report_id] = \
-                ReportDetails(pathEvents=bug_events_list[report_id],
-                              executionPath=bug_point_list[report_id],
-                              extendedData=extended_data_list[report_id])
+    for report_id in report_ids:
+        details[report_id] = \
+            ReportDetails(pathEvents=bug_events_list[report_id],
+                          executionPath=bug_point_list[report_id],
+                          extendedData=extended_data_list[report_id])
 
-        return details
+    return details
 
 
 def bugpathevent_db_to_api(bpe):
@@ -1392,7 +1395,7 @@ class ThriftRequestHandler(object):
                 try:
                     with io.open(md_file, 'r') as md_content:
                         missing_doc = md_content.read()
-                except (IOError, OSError) as oerr:
+                except (IOError, OSError):
                     LOG.warning("Failed to read checker documentation: %s",
                                 md_file)
 
@@ -1967,7 +1970,7 @@ class ThriftRequestHandler(object):
                     q = q.filter(Report.bug_id.in_(diff_hashes))
 
                 reports_to_delete = [r[0] for r in q]
-                if len(reports_to_delete) != 0:
+                if reports_to_delete:
                     self.__removeReports(session, reports_to_delete)
 
                 # Delete files and contents that are not present
@@ -2054,7 +2057,7 @@ class ThriftRequestHandler(object):
         with DBSession(self.__Session) as session:
             q = session.query(SourceComponent)
 
-            if component_filter and len(component_filter):
+            if component_filter and component_filter:
                 sql_component_filter = [SourceComponent.name.ilike(conv(cf))
                                         for cf in component_filter]
                 q = q.filter(*sql_component_filter)
@@ -2332,7 +2335,7 @@ class ThriftRequestHandler(object):
 
                     report.fixed_at = run_history_time
 
-        if len(reports_to_delete) != 0:
+        if reports_to_delete:
             self.__removeReports(session, list(reports_to_delete))
 
     @staticmethod
@@ -2518,7 +2521,7 @@ class ThriftRequestHandler(object):
                                          for com in check_commands])
 
                 durations = 0
-                if len(check_durations) > 0:
+                if check_durations:
                     # Round the duration to seconds.
                     durations = int(sum(check_durations))
 
@@ -2582,7 +2585,7 @@ class ThriftRequestHandler(object):
             with DBSession(self.__Session) as session:
                 ThriftRequestHandler.__free_run_lock(session, name)
 
-            if len(wrong_src_code_comments):
+            if wrong_src_code_comments:
                 raise shared.ttypes.RequestFailed(
                     shared.ttypes.ErrorCode.SOURCE_FILE,
                     "Multiple source code comment can be found with the same "

@@ -66,7 +66,7 @@ def get_binary_in_path(basename_list, versioning_pattern, env):
 
     binaries = find_by_regex_in_envpath(versioning_pattern, env)
 
-    if len(binaries) == 0:
+    if not binaries:
         return False
     elif len(binaries) == 1:
         # Return the first found (earliest in PATH) binary for the only

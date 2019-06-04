@@ -57,7 +57,7 @@ def handle_add_component(args):
     # Check that the given source component is exists.
     source_component = client.getSourceComponents([args.name])
 
-    if len(source_component):
+    if source_component:
         LOG.info("The source component '%s' already exist!", args.name)
 
         question = 'Do you want to update? Y(es)/n(o) '

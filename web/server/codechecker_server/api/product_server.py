@@ -20,7 +20,6 @@ from sqlalchemy.sql.expression import and_
 import shared
 from ProductManagement_v6 import ttypes
 
-from codechecker_common import util
 from codechecker_common.logger import get_logger
 from codechecker_common.profiler import timeit
 

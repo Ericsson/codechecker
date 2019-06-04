@@ -320,7 +320,7 @@ def assemble_zip(inputs, zip_file, client):
             zip_target = os.path.join('reports', filename)
             zipf.write(ftc, zip_target)
 
-        if len(hash_to_file) == 0:
+        if not hash_to_file:
             LOG.warning("There is no report to store. After uploading these "
                         "results the previous reports become resolved.")
 

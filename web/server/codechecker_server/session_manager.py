@@ -535,7 +535,7 @@ class SessionManager(object):
         # return old token. This is fetched either locally or from the db.
         user_name = validation['username']
         tokens = self.get_db_auth_session_tokens(user_name)
-        token = tokens[0].token if len(tokens) else generate_session_token()
+        token = tokens[0].token if tokens else generate_session_token()
 
         local_session = self.get_session(token)
 

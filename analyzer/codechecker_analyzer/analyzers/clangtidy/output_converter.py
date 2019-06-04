@@ -273,7 +273,7 @@ class PListConverter(object):
         """
 
         parts = checker.split('-')
-        if len(parts) == 0:
+        if not parts:
             # I don't know if it's possible.
             return 'unknown'
         else:

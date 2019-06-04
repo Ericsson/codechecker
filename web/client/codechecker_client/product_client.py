@@ -13,7 +13,8 @@ from __future__ import division
 import base64
 import sys
 
-from ProductManagement_v6.ttypes import *
+from ProductManagement_v6.ttypes import DatabaseConnection, \
+    ProductConfiguration
 
 from codechecker_common import logger
 from codechecker_common.output_formatters import twodim_to_str
@@ -139,7 +140,7 @@ def handle_del_product(args):
     products = [product for product in products
                 if product.endpoint == args.endpoint]
 
-    if len(products) == 0:
+    if not products:
         LOG.error("The product '%s' does not exist!", args.endpoint)
         return
 

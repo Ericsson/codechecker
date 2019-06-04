@@ -13,7 +13,8 @@ from __future__ import absolute_import
 import json
 import shared
 
-from Authentication_v6.ttypes import *
+from Authentication_v6.ttypes import AuthorisationList, HandshakeInformation, \
+    SessionTokenData
 
 from codechecker_common.logger import get_logger
 from codechecker_common.profiler import timeit

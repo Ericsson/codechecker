@@ -13,7 +13,7 @@ from __future__ import absolute_import
 import base64
 import sqlalchemy
 
-from Configuration_v6.ttypes import *
+import shared
 
 from codechecker_common.logger import get_logger
 from codechecker_common.profiler import timeit

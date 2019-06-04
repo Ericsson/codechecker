@@ -10,11 +10,6 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
-import argparse
-import json
-import re
-import shlex
-
 from codechecker_common.logger import get_logger
 
 from .. import config_handler

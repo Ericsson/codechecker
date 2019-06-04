@@ -36,6 +36,7 @@ def check_zlib():
 
 
 def get_postgresql_driver_name():
+    # pylint: disable=unused-variable
     try:
         driver = os.getenv('CODECHECKER_DB_DRIVER')
         if driver:
@@ -63,6 +64,7 @@ def check_postgresql_driver():
 
 
 def check_sql_driver(check_postgresql):
+    # pylint: disable=unused-variable
     if check_postgresql:
         try:
             get_postgresql_driver_name()

@@ -23,7 +23,7 @@ def get_check_env(path_env_extra, ld_lib_path_extra):
     """
     new_env = os.environ.copy()
 
-    if len(path_env_extra) > 0:
+    if path_env_extra:
         extra_path = ':'.join(path_env_extra)
         LOG.debug_analyzer(
             'Extending PATH environment variable with: ' + extra_path)
@@ -33,7 +33,7 @@ def get_check_env(path_env_extra, ld_lib_path_extra):
         except KeyError:
             new_env['PATH'] = extra_path
 
-    if len(ld_lib_path_extra) > 0:
+    if ld_lib_path_extra:
         extra_lib = ':'.join(ld_lib_path_extra)
         LOG.debug_analyzer(
             'Extending LD_LIBRARY_PATH environment variable with: ' +

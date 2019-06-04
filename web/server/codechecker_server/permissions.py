@@ -168,7 +168,7 @@ class PermissionHandler(object):
                 # If a user was added (and this is the first add to a default
                 # enabled permission) the table must contain '*' and the user,
                 # otherwise a '*' and the currently added group.
-                if (not is_group and len(users) == 2 and len(groups) == 0) or \
+                if (not is_group and len(users) == 2 and not groups) or \
                         (is_group and len(users) == 1 and len(groups) == 1):
                     self._rem_perm_impl("*", False)
         else:
@@ -196,7 +196,7 @@ class PermissionHandler(object):
             # Set the invariant for default_enable.
             if self._permission.default_enable:
                 users, groups = self.list_permitted()
-                if len(users) == 0 and len(groups) == 0:
+                if not users and not groups:
                     self._add_perm_impl("*", False)
         else:
             LOG.info("Permission '%s' already removed from %s '%s'!",
@@ -318,7 +318,7 @@ class SystemPermission(Permission):
                 return True
 
         def _has_perm_impl(self, auth_names, are_groups=False):
-            if len(auth_names) == 0:
+            if not auth_names:
                 return False
 
             SysPerm = config_db_model.SystemPermission
@@ -411,7 +411,7 @@ class ProductPermission(Permission):
                 return True
 
         def _has_perm_impl(self, auth_names, are_groups=False):
-            if len(auth_names) == 0:
+            if not auth_names:
                 return False
 
             ProdPerm = config_db_model.ProductPermission
@@ -551,7 +551,7 @@ def initialise_defaults(scope, extra_params):
         handler = handler_from_scope_params(perm, extra_params)
         users, groups = handler.list_permitted()
 
-        if perm.default_enable and len(users) == 0 and len(groups) == 0:
+        if perm.default_enable and not users and not groups:
             # Calling the implementation method directly as this call is
             # needed to set an invariant which the interface method would
             # presume to be already standing.
@@ -578,7 +578,7 @@ def require_permission(permission, extra_params, user):
     # If the user for some reason does not have the permission directly
     # (or by default), we need to walk the inheritance chain of the permission.
     ancestors = permission.inherited_from
-    while len(ancestors) > 0:
+    while ancestors:
         handler = handler_from_scope_params(ancestors[0], extra_params)
 
         if handler.has_permission(user):

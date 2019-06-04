@@ -295,7 +295,7 @@ class SourceCodeCommentHandler(object):
         """
         source_line_comments = self.get_source_line_comments(bug_line)
 
-        if not len(source_line_comments):
+        if not source_line_comments:
             return []
 
         all_checker_comment = None
@@ -314,7 +314,7 @@ class SourceCodeCommentHandler(object):
             checker_name_comments.append(all_checker_comment)
 
         # More than one source code comment found for this line.
-        if not len(checker_name_comments):
+        if not checker_name_comments:
             LOG.debug("No source code comments are found for checker %s",
                       checker_name)
         elif len(checker_name_comments) > 1:

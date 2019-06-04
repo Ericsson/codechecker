@@ -16,11 +16,12 @@ from datetime import datetime, timedelta
 import sqlalchemy
 from sqlalchemy.sql.expression import bindparam, union_all, select, cast
 
-from codeCheckerDBAccess_v6.ttypes import *
+from codeCheckerDBAccess_v6.ttypes import Severity
 
 from codechecker_common.logger import get_logger
 
-from .run_db_model import *
+from .run_db_model import BugPathEvent, BugReportPoint, File, \
+    FileContent, Report, RunLock
 
 LOG = get_logger('server')
 RUN_LOCK_TIMEOUT_IN_DATABASE = 30 * 60  # 30 minutes.

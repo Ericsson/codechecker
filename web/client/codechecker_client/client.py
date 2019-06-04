@@ -326,6 +326,6 @@ def check_permission(auth_client, permission_enum, extra_params):
 
     try:
         return auth_client.hasPermission(permission_enum, args_string)
-    except Exception as e:
+    except Exception:
         LOG.exception("Failed to query the permission.")
         return False
