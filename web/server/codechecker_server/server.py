@@ -706,7 +706,9 @@ class CCSimpleHttpServer(HTTPServer):
                 if not product.cleanup_run_db():
                     LOG.warning("Cleaning database for %s Failed.", endpoint)
 
-        self.__request_handlers = ThreadPool(processes=10)
+        worker_processes = self.manager.worker_processes
+        self.__request_handlers = ThreadPool(processes=worker_processes)
+
         try:
             HTTPServer.__init__(self, server_address,
                                 RequestHandlerClass,

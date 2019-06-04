@@ -49,6 +49,23 @@ def generate_session_token():
     return uuid.UUID(bytes=os.urandom(16)).hex
 
 
+def get_worker_processes(scfg_dict, default=10):
+    """
+    Return number of worker processes from the config dictionary.
+
+    Return 'worker_process' field from the config dictionary or returns the
+    default value if this field is not set or the value is negative.
+    """
+    worker_processes = scfg_dict.get('worker_process', default)
+
+    if worker_processes < 0:
+        LOG.warning("Number of worker processes can not be negative! Default "
+                    "value will be used: %s", default)
+        worker_processes = default
+
+    return worker_processes
+
+
 class _Session(object):
     """A session for an authenticated, privileged client connection."""
 
@@ -163,6 +180,7 @@ class SessionManager(object):
         # so it should NOT be handled by session_manager. A separate config
         # handler for the server's stuff should be created, that can properly
         # instantiate SessionManager with the found configuration.
+        self.__worker_process = get_worker_processes(scfg_dict)
         self.__max_run_count = scfg_dict.get('max_run_count', None)
         self.__store_config = scfg_dict.get('store', {})
         self.__auth_config = scfg_dict['authentication']
@@ -289,6 +307,10 @@ class SessionManager(object):
     @property
     def is_enabled(self):
         return self.__auth_config.get('enabled')
+
+    @property
+    def worker_processes(self):
+        return self.__worker_process
 
     def get_realm(self):
         return {
