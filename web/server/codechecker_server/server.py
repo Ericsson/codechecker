@@ -428,7 +428,8 @@ class RequestHandler(SimpleHTTPRequestHandler):
                             checker_md_docs,
                             checker_md_docs_map,
                             suppress_handler,
-                            version)
+                            version,
+                            self.server.context)
                         processor = ReportAPI_v6.Processor(acc_handler)
                     else:
                         LOG.debug("This API endpoint does not exist.")
