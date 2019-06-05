@@ -1118,9 +1118,6 @@ def handle_list_result_types(args):
     intentional_checkers = get_statistics(client, run_ids, 'reviewStatus',
                                           [ttypes.ReviewStatus.INTENTIONAL])
 
-    resolved_checkers = get_statistics(client, run_ids, 'detectionStatus',
-                                       [ttypes.DetectionStatus.RESOLVED])
-
     # Get severity counts
     report_filter = ttypes.ReportFilter()
     add_filter_conditions(client, report_filter, args)
@@ -1147,11 +1144,9 @@ def handle_list_result_types(args):
             unreviewed=checker_count(unrev_checkers, key),
             confirmed=checker_count(confirmed_checkers, key),
             false_positive=checker_count(false_checkers, key),
-            intentional=checker_count(intentional_checkers, key),
-            resolved=checker_count(resolved_checkers, key),
+            intentional=checker_count(intentional_checkers, key)
          ))
         total['total_reports'] += checker_data.count
-        total['total_resolved'] += checker_count(resolved_checkers, key)
         total['total_unreviewed'] += checker_count(unrev_checkers, key)
         total['total_confirmed'] += checker_count(confirmed_checkers, key)
         total['total_false_positive'] += checker_count(false_checkers, key)
@@ -1160,26 +1155,25 @@ def handle_list_result_types(args):
     if args.output_format == 'json':
         print(CmdLineOutputEncoder().encode(all_results))
     else:
-        header = ['Checker', 'Severity', 'All reports', 'Resolved',
-                  'Unreviewed', 'Confirmed', 'False positive', "Intentional"]
+        header = ['Checker', 'Severity', 'Unreviewed', 'Confirmed',
+                  'False positive', 'Intentional', 'All reports']
 
         rows = []
         for stat in all_results:
             rows.append((stat['checker'],
                          stat['severity'],
-                         str(stat['reports']),
-                         str(stat['resolved']),
                          str(stat['unreviewed']),
                          str(stat['confirmed']),
                          str(stat['false_positive']),
-                         str(stat['intentional'])))
+                         str(stat['intentional']),
+                         str(stat['reports'])))
 
-        rows.append(('Total', '-', str(total['total_reports']),
-                     str(total['total_resolved']),
+        rows.append(('Total', '-',
                      str(total['total_unreviewed']),
                      str(total['total_confirmed']),
                      str(total['total_false_positive']),
-                     str(total['total_intentional'])))
+                     str(total['total_intentional']),
+                     str(total['total_reports'])))
 
         print(twodim_to_str(args.output_format, header, rows,
                             separate_footer=True))
