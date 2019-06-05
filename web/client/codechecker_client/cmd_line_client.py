@@ -838,6 +838,28 @@ def handle_diff_results(args):
         return {'files': file_sources,
                 'reports': report_data}
 
+    def print_stats(reports, file_stats, severity_stats):
+        """
+        Print summary of the diff results.
+        """
+        print("\n----==== Summary ====----")
+        if file_stats:
+            vals = [[os.path.basename(k), v] for k, v in
+                    dict(file_stats).items()]
+            keys = ['Filename', 'Report count']
+            table = twodim_to_str('table', keys, vals, 1, True)
+            print(table)
+
+        if severity_stats:
+            vals = [[k, v] for k, v in dict(severity_stats).items()]
+            keys = ['Severity', 'Report count']
+            table = twodim_to_str('table', keys, vals, 1, True)
+            print(table)
+
+        print("----=================----")
+        print("Total number of reports: {}".format(len(reports)))
+        print("----=================----\n")
+
     def report_to_html(client, reports, output_dir):
         """
         Generate HTML output files for the given reports in the given output
@@ -847,13 +869,22 @@ def handle_diff_results(args):
             context.path_plist_to_html_dist,
             context.severity_map)
 
+        file_stats = defaultdict(int)
+        severity_stats = defaultdict(int)
         file_report_map = defaultdict(list)
         for report in reports:
             if isinstance(report, Report):
                 file_path = report.main['location']['file_name']
+
+                check_name = report.main['check_name']
+                sev = context.severity_map.get(check_name)
             else:
                 file_path = report.checkedFile
+                sev = ttypes.Severity._VALUES_TO_NAMES[report.severity]
+
             file_report_map[file_path].append(report)
+            file_stats[file_path] += 1
+            severity_stats[sev] += 1
 
         file_cache = {}
         for file_path, file_reports in file_report_map.items():
@@ -873,6 +904,7 @@ def handle_diff_results(args):
                 checked_file, output_path))
 
         html_builder.create_index_html(output_dir)
+        print_stats(reports, file_stats, severity_stats)
 
     def print_reports(client, reports, output_format):
         output_dir = args.export_dir if 'export_dir' in args else None
@@ -903,8 +935,8 @@ def handle_diff_results(args):
             report_to_html(client, reports, output_dir)
 
             print('\nTo view the results in a browser run:\n'
-                  '  $ firefox {0}'.format(os.path.join(args.export_dir,
-                                                        'index.html')))
+                  '  $ firefox {0}\n'.format(os.path.join(args.export_dir,
+                                                          'index.html')))
             return
 
         header = ['File', 'Checker', 'Severity', 'Msg', 'Source']
@@ -921,13 +953,17 @@ def handle_diff_results(args):
                 ttypes.LinesInFilesRequested(fileId=key,
                                              lines=source_lines[key]))
 
+        file_stats = defaultdict(int)
+        severity_stats = defaultdict(int)
+
         for report in reports:
             source_line = ''
             if isinstance(report, Report):
                 # report is coming from a plist file.
                 bug_line = report.main['location']['line']
                 bug_col = report.main['location']['col']
-                checked_file = report.main['location']['file_name']\
+                file_name = report.main['location']['file_name']
+                checked_file = file_name \
                     + ':' + str(bug_line) + ":" + str(bug_col)
                 check_name = report.main['check_name']
                 sev = context.severity_map.get(check_name)
@@ -940,7 +976,8 @@ def handle_diff_results(args):
                 bug_line = report.line
                 bug_col = report.column
                 sev = ttypes.Severity._VALUES_TO_NAMES[report.severity]
-                checked_file = report.checkedFile
+                file_name = report.checkedFile
+                checked_file = file_name
                 if bug_line is not None:
                     checked_file += ':' + str(bug_line) + ":" + str(bug_col)
 
@@ -954,12 +991,18 @@ def handle_diff_results(args):
                         source_line_contents[report.fileId][bug_line])
             rows.append(
                 (sev, checked_file, check_msg, check_name, source_line))
+
+            severity_stats[sev] += 1
+            file_stats[file_name] += 1
+
         if output_format == 'plaintext':
             for row in rows:
                 print("[{0}] {1}: {2} [{3}]\n{4}\n".format(
                     row[0], row[1], row[2], row[3], row[4]))
         else:
             print(twodim_to_str(output_format, header, rows))
+
+        print_stats(reports, file_stats, severity_stats)
 
     def get_run_tag(client, run_ids, tag_name):
         """
