@@ -114,3 +114,38 @@ class TestSkeleton(unittest.TestCase):
 
         ret = codechecker.store(self._codechecker_cfg, 'test_proj')
         self.assertEqual(ret, 1)
+
+    def test_store_config_file_mod(self):
+        """Storage should be successful if a non report related file changed.
+
+        Checking the modification time stamps should be done only for
+        the source files mentioned in the report plist files.
+        Modifying any non report related file should not prevent the storage
+        of the reports.
+        """
+        test_proj = os.path.join(self.test_workspace, 'test_proj')
+
+        ret = codechecker.log(self._codechecker_cfg, test_proj,
+                              clean_project=True)
+        self.assertEqual(ret, 0)
+
+        ret = codechecker.analyze(self._codechecker_cfg, test_proj)
+        self.assertEqual(ret, 0)
+
+        test_proj_path = self._testproject_data['project_path']
+
+        # touch one file so it will be analyzed again
+        touch(os.path.join(test_proj_path, 'null_dereference.cpp'))
+
+        ret = codechecker.log(self._codechecker_cfg, test_proj)
+        self.assertEqual(ret, 0)
+
+        ret = codechecker.analyze(self._codechecker_cfg,
+                                  test_proj)
+        self.assertEqual(ret, 0)
+
+        touch(os.path.join(self._codechecker_cfg['reportdir'],
+                           'compile_cmd.json'))
+
+        ret = codechecker.store(self._codechecker_cfg, 'test_proj')
+        self.assertEqual(ret, 0)
