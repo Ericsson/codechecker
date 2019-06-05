@@ -50,6 +50,14 @@ class TestSkeleton(unittest.TestCase):
 
         test_project_path = self._testproject_data['project_path']
         test_project_build = shlex.split(self._testproject_data['build_cmd'])
+        test_project_clean = shlex.split(self._testproject_data['clean_cmd'])
+
+        # Clean the test project before logging the compiler commands.
+        output, err = call_command(test_project_clean,
+                                   cwd=test_project_path,
+                                   env=self.env)
+        print(output)
+        print(err)
 
         # Create compilation log used in the tests.
         log_cmd = [self._codechecker_cmd, 'log', '-o', 'compile_command.json',
