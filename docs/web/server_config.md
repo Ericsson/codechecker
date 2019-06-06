@@ -17,6 +17,14 @@ Table of Contents
     * [Size of the compilation database](#size-of-the-compilation-database)
 * [Authentication](#authentication)
 
+## Number of worker processes
+The `worker_processes` section of the config file controls how many processes
+will be started on the server to process API requests.
+
+*Default value*: 10
+
+The server needs to be restarted if the value is changed in the config file.
+
 ## Run limitation
 The `max_run_count` section of the config file controls how many runs can be
 stored on the server for a product.
