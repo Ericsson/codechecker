@@ -77,7 +77,9 @@ function (dom, declare, domClass, TextBox, SelectFilter) {
 
     getUrlState : function () {
       var state = {};
-      state[this.class] = this.getValue();
+
+      var value = this.getValue();
+      state[this.class] = value && value.length ? value : null;
 
       return state;
     },
