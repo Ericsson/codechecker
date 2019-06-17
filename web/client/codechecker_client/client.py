@@ -11,7 +11,6 @@ from __future__ import print_function
 from __future__ import division
 
 import getpass
-import json
 import sys
 
 from thrift.Thrift import TApplicationException
@@ -49,37 +48,12 @@ def setup_auth_client(protocol, host, port, session_token=None):
     Setup the Thrift authentication client. Returns the client object and the
     session token for the session.
     """
-
-    if not session_token:
-        manager = UserCredentials()
-        session_token = manager.get_token(host, port)
-        session_token_new = perform_auth_for_handler(protocol,
-                                                     manager, host,
-                                                     port,
-                                                     session_token)
-        if session_token_new:
-            session_token = session_token_new
-
     client = authentication_helper.ThriftAuthHelper(protocol, host, port,
                                                     '/v' + CLIENT_API +
                                                     '/Authentication',
                                                     session_token)
 
-    return client, session_token
-
-
-def setup_auth_client_from_url(product_url, session_token=None):
-    """
-    Setup a Thrift authentication client to the server pointed by the given
-    product URL.
-    """
-    try:
-        protocol, host, port, _ = split_product_url(product_url)
-        return setup_auth_client(protocol, host, port, session_token)
-    except ValueError:
-        LOG.error("Malformed product URL was provided. A valid product URL "
-                  "looks like this: 'http://my.server.com:80/ProductName'.")
-        sys.exit(2)  # 2 for argument error.
+    return client
 
 
 def handle_auth(protocol, host, port, username, login=False):
@@ -149,17 +123,9 @@ def handle_auth(protocol, host, port, username, login=False):
         sys.exit(1)
 
 
-def perform_auth_for_handler(protocol, manager, host, port,
-                             session_token):
+def perform_auth_for_handler(auth_client, host, port, manager):
     # Before actually communicating with the server,
     # we need to check authentication first.
-    auth_client = authentication_helper.ThriftAuthHelper(protocol,
-                                                         host,
-                                                         port,
-                                                         '/v' +
-                                                         CLIENT_API +
-                                                         '/Authentication',
-                                                         session_token)
 
     try:
         auth_response = auth_client.getAuthParameters()
@@ -207,13 +173,17 @@ def perform_auth_for_handler(protocol, manager, host, port,
         sys.exit(1)
 
 
-def setup_product_client(protocol, host, port, product_name=None,
+def setup_product_client(protocol, host, port, auth_client=None,
+                         product_name=None,
                          session_token=None):
-    """
-    Setup the Thrift client for the product management endpoint.
-    """
+    """Setup the Thrift client for the product management endpoint."""
+    cred_manager = UserCredentials()
+    session_token = cred_manager.get_token(host, port)
 
-    _, session_token = setup_auth_client(protocol, host, port, session_token)
+    if not session_token:
+        auth_client = setup_auth_client(protocol, host, port)
+        session_token = perform_auth_for_handler(auth_client, host, port,
+                                                 cred_manager)
 
     if not product_name:
         # Attach to the server-wide product service.
@@ -240,9 +210,8 @@ def setup_product_client(protocol, host, port, product_name=None,
     return product_client
 
 
-def setup_client(product_url, product_client=False):
-    """
-    Setup the Thrift Product or Service client and
+def setup_client(product_url):
+    """Setup the Thrift Product or Service client and
     check API version and authentication needs.
     """
 
@@ -253,51 +222,18 @@ def setup_client(product_url, product_client=False):
                   "looks like this: 'http://my.server.com:80/ProductName'.")
         sys.exit(2)  # 2 for argument error.
 
-    _, session_token = setup_auth_client(protocol, host, port)
+    # Check if local token is available.
+    cred_manager = UserCredentials()
+    session_token = cred_manager.get_token(host, port)
 
-    # Check if the product exists.
-    client = setup_product_client(protocol, host, port, product_name=None,
-                                  session_token=session_token)
-    product = client.getProducts(product_name, None)
-    product_error_str = None
-    if not product:
-        product_error_str = "It does not exist."
-    elif len(product) != 1:
-        product_error_str = "Multiple products can be found with the given " \
-                            "name."
-    else:
-        if product[0].endpoint != product_name:
-            # Only a "substring" match was found. We explicitly reject it
-            # on the command-line!
-            product_error_str = "It does not exist."
+    # Local token is missing ask remote server.
+    if not session_token:
+        auth_client = setup_auth_client(protocol, host, port)
+        session_token = perform_auth_for_handler(auth_client, host, port,
+                                                 cred_manager)
 
-        elif not product[0].accessible:
-            product_error_str = "You do not have access."
-
-        elif product[0].databaseStatus != shared.ttypes.DBStatus.OK:
-            product_error_str = "The database has issues, or the connection " \
-                                "is badly configured."
-
-    if product_error_str:
-        LOG.error("The given product '%s' can not be used! %s", product_name,
-                  product_error_str)
-        sys.exit(1)
-
-    if product_client:
-        LOG.debug("returning product client")
-        return client
-    else:
-        LOG.debug("returning service client")
-        # Service client was requested, setup
-        # and return it.
-        return setup_service_client(protocol,
-                                    host,
-                                    port,
-                                    product_name,
-                                    session_token)
-
-
-def setup_service_client(protocol, host, port, product_name, session_token):
+    LOG.debug("Initializing client connecting to %s:%d/%s done.",
+              host, port, product_name)
 
     client = thrift_helper.ThriftClientHelper(
         protocol, host, port,
@@ -305,27 +241,3 @@ def setup_service_client(protocol, host, port, product_name, session_token):
         session_token)
 
     return client
-
-
-def check_permission(auth_client, permission_enum, extra_params):
-    """
-    Returns whether or not the current client has the given permission.
-
-    :param auth_client:     The auth_client usually created by
-      setup_auth_client() via which the communication with the server will
-      take place.
-    :param permission_enum: The Thrift API enum value of the permission. Refer
-      to the Authentication API on which permissions exist.
-    :param extra_params:    The extra arguments based on the required
-      permission's scope (refer to the API documentation) as a Python dict.
-    :return: boolean
-    """
-
-    # Encode the extra_params into a string over the API.
-    args_string = json.dumps(extra_params)
-
-    try:
-        return auth_client.hasPermission(permission_enum, args_string)
-    except Exception:
-        LOG.exception("Failed to query the permission.")
-        return False

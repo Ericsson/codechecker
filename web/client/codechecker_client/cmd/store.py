@@ -23,10 +23,9 @@ import zipfile
 import zlib
 
 from codeCheckerDBAccess_v6.ttypes import StoreLimitKind
-from shared.ttypes import Permission, RequestFailed, ErrorCode
+from shared.ttypes import RequestFailed, ErrorCode
 
 from codechecker_client import client as libclient
-from codechecker_client.product import split_product_url
 
 from codechecker_common import logger
 from codechecker_common import util
@@ -511,28 +510,8 @@ def main(args):
         LOG.info("argument --force was specified: the run with name '" +
                  args.name + "' will be deleted.")
 
-    protocol, host, port, product_name = split_product_url(args.product_url)
-
-    # Before any transmission happens, check if we have the PRODUCT_STORE
-    # permission to prevent a possibly long ZIP operation only to get an
-    # error later on.
-    product_client = libclient.setup_product_client(protocol,
-                                                    host, port, product_name)
-    product_id = product_client.getCurrentProduct().id
-
-    auth_client, _ = libclient.setup_auth_client(protocol, host, port)
-    has_perm = libclient.check_permission(
-        auth_client, Permission.PRODUCT_STORE, {'productID': product_id})
-    if not has_perm:
-        LOG.error("You are not authorised to store analysis results in "
-                  "product '%s'", product_name)
-        sys.exit(1)
-
     # Setup connection to the remote server.
-    client = libclient.setup_client(args.product_url, product_client=False)
-
-    LOG.debug("Initializing client connecting to %s:%d/%s done.",
-              host, port, product_name)
+    client = libclient.setup_client(args.product_url)
 
     _, zip_file = tempfile.mkstemp('.zip')
     LOG.debug("Will write mass store ZIP to '%s'...", zip_file)
