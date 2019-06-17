@@ -34,11 +34,13 @@ from __future__ import division
 from __future__ import absolute_import
 
 from collections import defaultdict
+import imp
+import io
 import math
 import os
-import plistlib
 import sys
 import traceback
+from plistlib import PlistParser, writePlist, readPlist
 from xml.parsers.expat import ExpatError
 
 from codechecker_common import util
@@ -49,6 +51,70 @@ from codechecker_common.source_code_comment_handler import \
     SourceCodeCommentHandler, skip_suppress_status
 
 LOG = get_logger('report')
+
+
+class LXMLPlistEventHandler(object):
+    """
+    Basic lxml event handler.
+    """
+    def start(self, tag, attrib):
+        pass
+
+    def end(self, tag):
+        pass
+
+    def data(self, data):
+        pass
+
+    def comment(self, text):
+        pass
+
+    def close(self):
+        return "closed!"
+
+
+class LXMLPlistParser(PlistParser):
+    """
+    Plist parser which uses the lxml library to parse XML data.
+
+    The benefit of this library that this is faster than other libraries so it
+    will improve the performance of the plist parsing.
+    """
+    def __init__(self):
+        PlistParser.__init__(self)
+
+        self.event_handler = LXMLPlistEventHandler()
+        self.event_handler.start = self.handleBeginElement
+        self.event_handler.end = self.handleEndElement
+        self.event_handler.data = self.handleData
+
+        from lxml.etree import XMLParser
+        self.parser = XMLParser(target=self.event_handler)
+
+    def parse(self, fileobj):
+        from lxml.etree import parse
+        parse(fileobj, self.parser)
+        return self.root
+
+
+def read_plist(path):
+    """
+    Read a .plist file. Return the unpacked root object (which usually is a
+    dictionary).
+
+    Use 'lxml' library to read the given plist file if it is available,
+    otherwise use 'plistlib' library.
+    """
+    try:
+        imp.find_module('lxml')
+
+        with io.open(path, 'r') as data:
+            parser = LXMLPlistParser()
+            return parser.parse(data)
+    except ImportError:
+        LOG.debug("lxml library is not available. Use plistlib to parse plist "
+                  "files.")
+        return readPlist(path)
 
 
 def get_checker_name(diagnostic, path=""):
@@ -89,7 +155,7 @@ def parse_plist(path, source_root=None, allow_plist_update=True):
     reports = []
     files = []
     try:
-        plist = plistlib.readPlist(path)
+        plist = read_plist(path)
 
         files = plist['files']
 
@@ -133,7 +199,7 @@ def parse_plist(path, source_root=None, allow_plist_update=True):
             # If the diagnostic section has changed we update the plist file.
             # This way the client will always send a plist file where the
             # report hash field is filled.
-            plistlib.writePlist(plist, path)
+            writePlist(plist, path)
     except (ExpatError, TypeError, AttributeError) as err:
         LOG.warning('Failed to process plist file: %s wrong file format?',
                     path)
