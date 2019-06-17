@@ -207,14 +207,21 @@ class LocalRemote(unittest.TestCase):
     def test_local_cmp_filter_unres_filepath(self):
         """Filter unresolved results by file path."""
         res = self.get_local_remote_diff(['--file', '*divide_zero.cpp'])
-        self.assertEqual(len(re.findall(r'divide_zero.cpp', res)), 4)
+
+        # Only 4 bugs can be found in the following file but in the
+        # output the file names are printed again because of the summary.
+        self.assertEqual(len(re.findall(r'divide_zero.cpp', res)), 5)
+
         self.assertEqual(len(re.findall(r'new_delete.cpp', res)), 0)
 
         res = self.get_local_remote_diff(['--file',
                                           'divide_zero.cpp',  # Exact match.
                                           '*new_delete.cpp'])
         self.assertEqual(len(re.findall(r'divide_zero.cpp', res)), 0)
-        self.assertEqual(len(re.findall(r'new_delete.cpp', res)), 6)
+
+        # Only 6 bugs can be found in the following file but in the
+        # output the file names are printed again because of the summary.
+        self.assertEqual(len(re.findall(r'new_delete.cpp', res)), 7)
 
     def test_local_cmp_filter_unres_checker_name(self):
         """Filter by checker name."""
@@ -233,7 +240,11 @@ class LocalRemote(unittest.TestCase):
         """Filter by multiple filters file and severity."""
         res = self.get_local_remote_diff(['--file', '*divide_zero.cpp',
                                           '--severity', 'high'])
-        self.assertEqual(len(re.findall(r'divide_zero.cpp', res)), 2)
+
+        # Only 2 bugs can be found in the following file but in the
+        # output the file names are printed again because of the summary.
+        self.assertEqual(len(re.findall(r'divide_zero.cpp', res)), 3)
+
         self.assertEqual(len(re.findall(r'\[HIGH\]', res)), 2)
 
     def test_local_cmp_filter_unres_filter_mix_json(self):
