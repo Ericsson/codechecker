@@ -144,7 +144,7 @@ def setup_viewer_client(workspace,
     product = codechecker_cfg['viewer_product']
 
     if session_token is None:
-        session_token = get_session_token(workspace)
+        session_token = get_session_token(workspace, host, port)
 
     if session_token == '_PROHIBIT':
         session_token = None
@@ -159,16 +159,19 @@ def setup_viewer_client(workspace,
 
 
 def setup_auth_client(workspace,
+                      host=None, port=None,
                       uri='/Authentication',
                       auto_handle_connection=True,
                       session_token=None, proto='http'):
 
-    codechecker_cfg = import_test_cfg(workspace)['codechecker_cfg']
-    port = codechecker_cfg['viewer_port']
-    host = codechecker_cfg['viewer_host']
+    # If the host is not set try to get it from the workspace config file.
+    if not host and not port:
+        codechecker_cfg = import_test_cfg(workspace)['codechecker_cfg']
+        port = codechecker_cfg['viewer_port']
+        host = codechecker_cfg['viewer_host']
 
     if session_token is None:
-        session_token = get_session_token(workspace)
+        session_token = get_session_token(workspace, host, port)
 
     if session_token == '_PROHIBIT':
         session_token = None
@@ -181,17 +184,20 @@ def setup_auth_client(workspace,
 
 
 def setup_product_client(workspace,
+                         host=None, port=None,
                          product=None,
                          uri='/Products',
                          auto_handle_connection=True,
                          session_token=None, proto='http'):
 
-    codechecker_cfg = import_test_cfg(workspace)['codechecker_cfg']
-    port = codechecker_cfg['viewer_port']
-    host = codechecker_cfg['viewer_host']
+    # If the host is not set try to get it from the workspace config file.
+    if not host and not port:
+        codechecker_cfg = import_test_cfg(workspace)['codechecker_cfg']
+        host = codechecker_cfg['viewer_host']
+        port = codechecker_cfg['viewer_port']
 
     if session_token is None:
-        session_token = get_session_token(workspace)
+        session_token = get_session_token(workspace, host, port)
 
     if session_token == '_PROHIBIT':
         session_token = None
@@ -214,7 +220,7 @@ def setup_config_client(workspace,
     host = codechecker_cfg['viewer_host']
 
     if session_token is None:
-        session_token = get_session_token(workspace)
+        session_token = get_session_token(workspace, host, port)
 
     if session_token == '_PROHIBIT':
         session_token = None
@@ -397,20 +403,18 @@ def enable_ssl(workspace):
     print("copied "+ssl_cert+" to "+workspace)
 
 
-def get_session_token(test_folder):
+def get_session_token(workspace, viewer_host, viewer_port):
     """
     Retrieve the session token for the server in the test workspace.
     This function assumes that only one entry exists in the session file.
     """
 
     try:
-        server_data = import_test_cfg(test_folder)['codechecker_cfg']
-        session_file = os.path.join(test_folder, '.codechecker.session.json')
+        session_file = os.path.join(workspace, '.codechecker.session.json')
         with open(session_file, 'r') as sess_file:
             sess_dict = json.load(sess_file)
 
-        host_port_key = server_data['viewer_host'] + ':' + \
-            str(server_data['viewer_port'])
+        host_port_key = viewer_host + ':' + str(viewer_port)
         return sess_dict['tokens'][host_port_key]
     except (IOError, KeyError) as err:
         print("Could not load session for session getter because " +

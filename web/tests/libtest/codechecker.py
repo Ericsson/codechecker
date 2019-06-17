@@ -19,10 +19,17 @@ import subprocess
 from subprocess import CalledProcessError
 import time
 
+from shared.ttypes import Permission
+
 from codechecker_client.product import create_product_url
 
 from . import env
 from . import project
+
+
+DEFAULT_USER_PERMISSIONS = [("cc", Permission.PRODUCT_STORE),
+                            ("john", Permission.PRODUCT_STORE),
+                            ("admin", Permission.PRODUCT_ADMIN)]
 
 
 def call_command(cmd, cwd, env):
@@ -446,11 +453,19 @@ def serv_cmd(config_dir, port, pg_config=None, serv_args=None):
     return server_cmd
 
 
-def start_or_get_server():
+def start_or_get_server(auth_required=False):
     """
     Create a global CodeChecker server with the given configuration.
     """
-    config_dir = env.get_workspace(None)
+    workspace_root = env.get_workspace(None)
+
+    server_type = 'global_auth_server' if auth_required else \
+        'global_simple_server'
+
+    config_dir = os.path.join(workspace_root, server_type)
+    if not os.path.exists(config_dir):
+        os.makedirs(config_dir)
+
     portfile = os.path.join(config_dir, 'serverport')
 
     if os.path.exists(portfile):
@@ -458,8 +473,9 @@ def start_or_get_server():
         with open(portfile, 'r') as f:
             port = int(f.read())
     else:
-        # Set up the root user and the authentication for the server.
-        env.enable_auth(config_dir)
+        if auth_required:
+            # Set up the root user and the authentication for the server.
+            env.enable_auth(config_dir)
 
         port = env.get_free_port()
         print("Setting up CodeChecker server in " + config_dir + " :" +
@@ -489,19 +505,16 @@ def start_or_get_server():
             # 'Default' product in SQLite mode, if the server was started
             # brand new. But certain test modules might make use of a
             # default product, so we now manually have to create it.
-            print("PostgreSQL server does not create 'Default' product...")
-            print("Creating it now!")
-            default_path = os.path.join(config_dir, 'Default')
-            try:
+            default_path = os.path.join(workspace_root, 'Default')
+            if not os.path.exists(default_path):
+                print("PostgreSQL server does not create 'Default' product...")
+                print("Creating it now!")
+
                 os.makedirs(default_path)
-            except OSError:
-                pass  # Directory already exists.
-
-            add_test_package_product({'viewer_host': 'localhost',
-                                      'viewer_port': port,
-                                      'viewer_product': 'Default'},
-                                     default_path)
-
+                add_test_package_product({'viewer_host': 'localhost',
+                                          'viewer_port': port,
+                                          'viewer_product': 'Default'},
+                                         default_path)
     return {
         'viewer_host': 'localhost',
         'viewer_port': port
@@ -567,7 +580,8 @@ def start_server(codechecker_cfg, event, server_args=None, pg_config=None):
 
 
 def add_test_package_product(server_data, test_folder, check_env=None,
-                             protocol='http'):
+                             protocol='http',
+                             user_permissions=DEFAULT_USER_PERMISSIONS):
     """
     Add a product for a test suite to the server provided by server_data.
     Server must be running before called.
@@ -613,6 +627,29 @@ def add_test_package_product(server_data, test_folder, check_env=None,
     login(codechecker_cfg, test_folder, "root", "root", protocol)
     # The schema creation is a synchronous call.
     returncode = subprocess.call(add_command, env=check_env)
+
+    pr_client = env.setup_product_client(test_folder,
+                                         product=server_data['viewer_product'],
+                                         host=server_data['viewer_host'],
+                                         port=server_data['viewer_port'])
+    product_id = pr_client.getCurrentProduct().id
+
+    # Setup an authentication client for creating sessions.
+    auth_client = env.setup_auth_client(test_folder,
+                                        host=server_data['viewer_host'],
+                                        port=server_data['viewer_port'])
+
+    extra_params = '{"productID":' + str(product_id) + '}'
+
+    # Give permissions for the users.
+    for user, permission in user_permissions:
+        ret = auth_client.addPermission(permission,
+                                        user,
+                                        False,
+                                        extra_params)
+        if not ret:
+            raise Exception("Failed to add permission to " + user)
+
     logout(codechecker_cfg, test_folder, protocol)
 
     # After login as SUPERUSER, continue running the test as a normal user.
