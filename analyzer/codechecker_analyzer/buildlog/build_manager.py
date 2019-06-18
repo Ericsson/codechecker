@@ -10,11 +10,14 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
+import errno
 import os
 import pickle
 import platform
+import shutil
 import subprocess
 import sys
+
 from uuid import uuid4
 
 from codechecker_common.logger import get_logger
@@ -62,6 +65,16 @@ def perform_build_command(logfile, command, context, keep_link, silent=False):
 
         with open(original_env_file, 'rb') as env_file:
             original_env = pickle.load(env_file)
+
+        # The env is loaded we do not need it anymore.
+        # Remove temporary directory.
+        try:
+            tmp_dir, _ = os.path.split(original_env_file)
+            shutil.rmtree(tmp_dir)
+        except OSError as ex:
+            if ex.errno != errno.ENOENT:
+                LOG.warning('Failed to remove temporary directory: %s.'
+                            'Manual cleanup is required.', tmp_dir)
 
     except Exception as ex:
         LOG.warning(str(ex))
