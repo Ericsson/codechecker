@@ -19,7 +19,7 @@ from codechecker_analyzer.analyzers import analyzer_types
 
 from codechecker_common import logger
 from codechecker_common import output_formatters
-from codechecker_common.env import get_check_env
+from codechecker_analyzer import env
 
 LOG = logger.get_logger('system')
 
@@ -133,8 +133,8 @@ def main(args):
     working, errored = analyzer_types.check_supported_analyzers(analyzers,
                                                                 context)
 
-    analyzer_environment = get_check_env(context.path_env_extra,
-                                         context.ld_lib_path_extra)
+    analyzer_environment = env.extend(context.path_env_extra,
+                                      context.ld_lib_path_extra)
 
     analyzer_config_map = analyzer_types.build_config_handlers(args,
                                                                context,

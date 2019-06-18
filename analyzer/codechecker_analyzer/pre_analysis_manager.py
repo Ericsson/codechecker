@@ -18,7 +18,7 @@ import sys
 import traceback
 import uuid
 
-from codechecker_common.env import get_check_env
+from codechecker_analyzer import env
 from codechecker_common.logger import get_logger
 
 from .analyzers import analyzer_base
@@ -87,8 +87,8 @@ def pre_analyze(params):
     action, context, analyzer_config_map, skip_handler, \
         ctu_data, statistics_data = params
 
-    analyzer_environment = get_check_env(context.path_env_extra,
-                                         context.ld_lib_path_extra)
+    analyzer_environment = env.extend(context.path_env_extra,
+                                      context.ld_lib_path_extra)
 
     progress_checked_num.value += 1
 

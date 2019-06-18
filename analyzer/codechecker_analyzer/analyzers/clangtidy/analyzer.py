@@ -14,13 +14,11 @@ import re
 import shlex
 import subprocess
 
-from codechecker_common.env import get_check_env
 from codechecker_common.logger import get_logger
 from codechecker_common.util import get_binary_in_path
 
 from codechecker_analyzer import host_check
-from codechecker_analyzer.env import extend_analyzer_cmd_with_resource_dir, \
-    replace_env_var
+from codechecker_analyzer import env
 
 from .. import analyzer_base
 from ..clangsa.analyzer import ClangSA
@@ -62,17 +60,17 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
         LOG.error("Not implemented yet")
 
     @classmethod
-    def get_analyzer_checkers(cls, config_handler, env):
+    def get_analyzer_checkers(cls, cfg_handler, environ):
         """
         Return the list of the supported checkers.
         """
-        analyzer_binary = config_handler.analyzer_binary
+        analyzer_binary = cfg_handler.analyzer_binary
 
         command = [analyzer_binary, "-list-checks", "-checks='*'"]
 
         try:
             command = shlex.split(' '.join(command))
-            result = subprocess.check_output(command, env=env,
+            result = subprocess.check_output(command, env=environ,
                                              universal_newlines=True)
             return parse_checkers(result)
         except (subprocess.CalledProcessError, OSError):
@@ -141,8 +139,8 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
 
             analyzer_cmd.extend(self.buildaction.analyzer_options)
 
-            extend_analyzer_cmd_with_resource_dir(analyzer_cmd,
-                                                  config.compiler_resource_dir)
+            env.extend_analyzer_cmd_with_resource_dir(
+                analyzer_cmd, config.compiler_resource_dir)
 
             analyzer_cmd.extend(self.buildaction.compiler_includes)
 
@@ -188,7 +186,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
         return set(paths)
 
     @classmethod
-    def resolve_missing_binary(cls, configured_binary, env):
+    def resolve_missing_binary(cls, configured_binary, environ):
         """
         In case of the configured binary for the analyzer is not found in the
         PATH, this method is used to find a callable binary.
@@ -204,7 +202,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
         # clang-tidy, clang-tidy-5.0, ...
         clangtidy = get_binary_in_path(['clang-tidy'],
                                        r'^clang-tidy(-\d+(\.\d+){0,2})?$',
-                                       env)
+                                       environ)
 
         if clangtidy:
             LOG.debug("Using '%s' for Clang-tidy!", clangtidy)
@@ -231,8 +229,8 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
         # FIXME We cannot get the resource dir from the clang-tidy binary,
         # therefore we get a sibling clang binary which of clang-tidy.
         # TODO Support "clang-tidy -print-resource-dir" .
-        check_env = get_check_env(context.path_env_extra,
-                                  context.ld_lib_path_extra)
+        check_env = env.extend(context.path_env_extra,
+                               context.ld_lib_path_extra)
         # Overwrite PATH to contain only the parent of the clang binary.
         if os.path.isabs(handler.analyzer_binary):
             check_env['PATH'] = os.path.dirname(handler.analyzer_binary)
@@ -244,7 +242,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
         try:
             with open(args.tidy_args_cfg_file, 'rb') as tidy_cfg:
                 handler.analyzer_extra_arguments = \
-                    re.sub(r'\$\((.*?)\)', replace_env_var,
+                    re.sub(r'\$\((.*?)\)', env.replace_env_var,
                            tidy_cfg.read().strip())
                 handler.analyzer_extra_arguments = \
                     shlex.split(handler.analyzer_extra_arguments)
@@ -268,8 +266,8 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
             # No clang tidy config file was given in the command line.
             LOG.debug_analyzer(aerr)
 
-        check_env = get_check_env(context.path_env_extra,
-                                  context.ld_lib_path_extra)
+        check_env = env.extend(context.path_env_extra,
+                               context.ld_lib_path_extra)
 
         checkers = ClangTidy.get_analyzer_checkers(handler, check_env)
 

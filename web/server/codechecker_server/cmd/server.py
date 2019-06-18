@@ -28,7 +28,6 @@ from codechecker_common import suppress_handler
 from codechecker_common import logger
 from codechecker_common import output_formatters
 from codechecker_common import util
-from codechecker_common.env import get_check_env
 
 from codechecker_server import instance_manager, server
 from codechecker_server.database import database
@@ -42,7 +41,7 @@ from codechecker_server.env import is_localhost
 
 from codechecker_web.shared import webserver_context, database_status, \
     host_check
-from codechecker_web.shared.env import get_default_workspace, get_user_input
+from codechecker_web.shared import env
 
 LOG = logger.get_logger('server')
 
@@ -75,7 +74,7 @@ def add_arguments_to_parser(parser):
     Add the subcommand's arguments to the given argparse.ArgumentParser.
     """
 
-    default_workspace = get_default_workspace()
+    default_workspace = env.get_default_workspace()
 
     # TODO: --workspace is an outdated concept in 'store'. Later on,
     # it shall be deprecated, as changes to db_handler commence.
@@ -453,14 +452,12 @@ def get_schema_version_from_package(migration_root):
     return pckg_schema_ver.get_current_head()
 
 
-def check_product_db_status(cfg_sql_server, context):
+def check_product_db_status(cfg_sql_server, migration_root, environ):
     """
     Check the products for database statuses.
 
     :returns: dictionary of product endpoints with database statuses
     """
-
-    migration_root = context.run_migration_root
 
     engine = cfg_sql_server.create_engine()
     config_session = sessionmaker(bind=engine)
@@ -481,15 +478,13 @@ def check_product_db_status(cfg_sql_server, context):
                  DBStatus.SCHEMA_INIT_ERROR,
                  DBStatus.SCHEMA_MISSING]
 
-    cc_env = get_check_env(context.path_env_extra,
-                           context.ld_lib_path_extra)
     prod_status = {}
     for pd in products:
         db = database.SQLServer.from_connection_string(pd.connection,
                                                        RUN_META,
                                                        migration_root,
                                                        interactive=False,
-                                                       env=cc_env)
+                                                       env=environ)
         db_location = db.get_db_location()
         ret = db.connect()
         s_ver = db.get_schema_version()
@@ -504,7 +499,8 @@ def check_product_db_status(cfg_sql_server, context):
     return prod_status
 
 
-def __db_status_check(cfg_sql_server, context, product_name=None):
+def __db_status_check(cfg_sql_server, migration_root, environ,
+                      product_name=None):
     """
     Check and print database statuses for the given product.
     """
@@ -513,7 +509,8 @@ def __db_status_check(cfg_sql_server, context, product_name=None):
 
     LOG.debug("Checking database status for %s product.", product_name)
 
-    prod_statuses = check_product_db_status(cfg_sql_server, context)
+    prod_statuses = check_product_db_status(cfg_sql_server, migration_root,
+                                            environ)
 
     if product_name != 'all':
         avail = prod_statuses.get(product_name)
@@ -529,8 +526,8 @@ def __db_status_check(cfg_sql_server, context, product_name=None):
     return 0
 
 
-def __db_migration(cfg_sql_server, context, product_to_upgrade='all',
-                   force_upgrade=False):
+def __db_migration(cfg_sql_server, migration_root, environ,
+                   product_to_upgrade='all', force_upgrade=False):
     """
     Handle database management.
     Schema checking and migration.
@@ -538,7 +535,9 @@ def __db_migration(cfg_sql_server, context, product_to_upgrade='all',
     LOG.info("Preparing schema upgrade for %s", str(product_to_upgrade))
     product_name = product_to_upgrade
 
-    prod_statuses = check_product_db_status(cfg_sql_server, context)
+    prod_statuses = check_product_db_status(cfg_sql_server,
+                                            migration_root,
+                                            environ)
     prod_to_upgrade = []
 
     if product_name != 'all':
@@ -551,16 +550,12 @@ def __db_migration(cfg_sql_server, context, product_to_upgrade='all',
     else:
         prod_to_upgrade = list(prod_statuses.keys())
 
-    migration_root = context.run_migration_root
-
     LOG.warning("Please note after migration only "
                 "newer CodeChecker versions can be used "
                 "to start the server")
     LOG.warning("It is advised to make a full backup of your "
                 "run databases.")
 
-    cc_env = get_check_env(context.path_env_extra,
-                           context.ld_lib_path_extra)
     for prod in prod_to_upgrade:
         LOG.info("========================")
         LOG.info("Checking: %s", prod)
@@ -574,7 +569,7 @@ def __db_migration(cfg_sql_server, context, product_to_upgrade='all',
                                                        RUN_META,
                                                        migration_root,
                                                        interactive=False,
-                                                       env=cc_env)
+                                                       env=environ)
 
         db_status = db.connect()
 
@@ -585,7 +580,7 @@ def __db_migration(cfg_sql_server, context, product_to_upgrade='all',
         if db_status == DBStatus.SCHEMA_MISSING:
             question = 'Do you want to initialize a new schema for ' \
                         + product.endpoint + '? Y(es)/n(o) '
-            if force_upgrade or get_user_input(question):
+            if force_upgrade or env.get_user_input(question):
                 ret = db.connect(init=True)
                 msg = database_status.db_status_msg.get(
                     ret, 'Unknown database status')
@@ -596,7 +591,7 @@ def __db_migration(cfg_sql_server, context, product_to_upgrade='all',
         elif db_status == DBStatus.SCHEMA_MISMATCH_OK:
             question = 'Do you want to upgrade to new schema for ' \
                         + product.endpoint + '? Y(es)/n(o) '
-            if force_upgrade or get_user_input(question):
+            if force_upgrade or env.get_user_input(question):
                 LOG.info("Upgrading schema ...")
                 ret = db.upgrade()
                 LOG.info("Done.")
@@ -738,12 +733,12 @@ def server_init_start(args):
     context.codechecker_workspace = args.config_directory
     context.db_username = args.dbusername
 
-    check_env = get_check_env(context.path_env_extra,
-                              context.ld_lib_path_extra)
+    environ = env.extend(context.path_env_extra,
+                         context.ld_lib_path_extra)
 
     cfg_sql_server = database.SQLServer.from_cmdline_args(
         vars(args), CONFIG_META, context.config_migration_root,
-        interactive=True, env=check_env)
+        interactive=True, env=environ)
 
     LOG.info("Checking configuration database ...")
     db_status = cfg_sql_server.connect()
@@ -778,7 +773,7 @@ def server_init_start(args):
 
         question = 'Do you want to upgrade to the new schema?' \
                    ' Y(es)/n(o) '
-        if force_upgrade or get_user_input(question):
+        if force_upgrade or env.get_user_input(question):
             print("Upgrading schema ...")
             ret = cfg_sql_server.upgrade()
             msg = database_status.db_status_msg.get(
@@ -800,15 +795,17 @@ def server_init_start(args):
     # statuses can be checked.
     try:
         if args.status:
-            ret = __db_status_check(cfg_sql_server, context, args.status)
+            ret = __db_status_check(cfg_sql_server, context.migration_root,
+                                    environ, args.status)
             sys.exit(ret)
     except AttributeError:
         LOG.debug('Status was not in the arguments.')
 
     try:
         if args.product_to_upgrade:
-            ret = __db_migration(cfg_sql_server, context,
-                                 args.product_to_upgrade, force_upgrade)
+            ret = __db_migration(cfg_sql_server, context.migration_root,
+                                 environ, args.product_to_upgrade,
+                                 force_upgrade)
             sys.exit(ret)
     except AttributeError:
         LOG.debug('Product upgrade was not in the arguments.')
@@ -828,7 +825,7 @@ def server_init_start(args):
 
         prod_server = database.SQLiteDatabase(
             default_product_path, RUN_META,
-            context.run_migration_root, check_env)
+            context.run_migration_root, environ)
 
         LOG.debug("Checking 'Default' product database.")
         db_status = prod_server.connect()
@@ -847,7 +844,9 @@ def server_init_start(args):
         LOG.info("Product 'Default' at '%s' created and set up.",
                  default_product_path)
 
-    prod_statuses = check_product_db_status(cfg_sql_server, context)
+    prod_statuses = check_product_db_status(cfg_sql_server,
+                                            context.run_migration_root,
+                                            environ)
 
     upgrade_available = {}
     for k, v in prod_statuses.items():
@@ -859,9 +858,12 @@ def server_init_start(args):
     if upgrade_available:
         print_prod_status(prod_statuses)
         LOG.warning("Multiple products can be upgraded, make a backup!")
-        __db_migration(cfg_sql_server, context, 'all', force_upgrade)
+        __db_migration(cfg_sql_server, context.run_migration_root,
+                       environ, 'all', force_upgrade)
 
-    prod_statuses = check_product_db_status(cfg_sql_server, context)
+    prod_statuses = check_product_db_status(cfg_sql_server,
+                                            context.run_migration_root,
+                                            environ)
     print_prod_status(prod_statuses)
 
     non_ok_db = False
@@ -875,7 +877,7 @@ def server_init_start(args):
         msg = "There are some database issues. " \
               "Do you want to start the " \
               "server? Y(es)/n(o) "
-        if not get_user_input(msg):
+        if not env.get_user_input(msg):
             sys.exit(1)
 
     # Start database viewer.
@@ -903,7 +905,7 @@ def server_init_start(args):
                             'force_auth' in args,
                             args.skip_db_cleanup,
                             context,
-                            check_env)
+                            environ)
     except socket.error as err:
         if err.errno == errno.EADDRINUSE:
             LOG.error("Server can't be started, maybe the given port number "

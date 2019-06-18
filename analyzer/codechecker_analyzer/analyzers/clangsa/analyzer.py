@@ -16,13 +16,11 @@ import re
 import shlex
 import subprocess
 
-from codechecker_common.env import get_check_env
 from codechecker_common.logger import get_logger
 from codechecker_common.util import get_binary_in_path
 
 from codechecker_analyzer import host_check
-from codechecker_analyzer.env import extend_analyzer_cmd_with_resource_dir, \
-    replace_env_var
+from codechecker_analyzer import env
 
 from .. import analyzer_base
 
@@ -70,8 +68,8 @@ class ClangSA(analyzer_base.SourceAnalyzer):
     """
     ANALYZER_NAME = 'clangsa'
 
-    def __init__(self, config_handler, buildaction):
-        super(ClangSA, self).__init__(config_handler, buildaction)
+    def __init__(self, cfg_handler, buildaction):
+        super(ClangSA, self).__init__(cfg_handler, buildaction)
         self.__disable_ctu = False
         self.__checker_configs = []
 
@@ -110,20 +108,20 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         self.__checker_configs.append(checker_cfg)
 
     @classmethod
-    def get_analyzer_checkers(cls, config_handler, env):
+    def get_analyzer_checkers(cls, cfg_handler, environ):
         """
         Return the list of the supported checkers.
         """
-        analyzer_binary = config_handler.analyzer_binary
+        analyzer_binary = cfg_handler.analyzer_binary
 
         command = [analyzer_binary, "-cc1"]
-        for plugin in config_handler.analyzer_plugins:
+        for plugin in cfg_handler.analyzer_plugins:
             command.extend(["-load", plugin])
         command.append("-analyzer-checker-help")
 
         try:
             command = shlex.split(' '.join(command))
-            result = subprocess.check_output(command, env=env,
+            result = subprocess.check_output(command, env=environ,
                                              universal_newlines=True)
             return parse_checkers(result)
         except (subprocess.CalledProcessError, OSError):
@@ -227,8 +225,8 @@ class ClangSA(analyzer_base.SourceAnalyzer):
 
             analyzer_cmd.extend(self.buildaction.analyzer_options)
 
-            extend_analyzer_cmd_with_resource_dir(analyzer_cmd,
-                                                  config.compiler_resource_dir)
+            env.extend_analyzer_cmd_with_resource_dir(
+                analyzer_cmd, config.compiler_resource_dir)
 
             analyzer_cmd.extend(self.buildaction.compiler_includes)
 
@@ -245,11 +243,11 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         Returns the path of the ctu directory (containing the triple).
         """
         config = self.config_handler
-        env = get_check_env(config.path_env_extra,
-                            config.ld_lib_path_extra)
+        environ = env.extend(config.path_env_extra,
+                             config.ld_lib_path_extra)
         triple_arch = ctu_triple_arch.get_triple_arch(self.buildaction,
                                                       self.source_file,
-                                                      config, env)
+                                                      config, environ)
         ctu_dir = os.path.join(config.ctu_dir, triple_arch)
         return ctu_dir
 
@@ -279,7 +277,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         return paths
 
     @classmethod
-    def resolve_missing_binary(cls, configured_binary, env):
+    def resolve_missing_binary(cls, configured_binary, environ):
         """
         In case of the configured binary for the analyzer is not found in the
         PATH, this method is used to find a callable binary.
@@ -295,7 +293,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         # clang, clang-5.0, clang++, clang++-5.1, ...
         clang = get_binary_in_path(['clang', 'clang++'],
                                    r'^clang(\+\+)?(-\d+(\.\d+){0,2})?$',
-                                   env)
+                                   environ)
 
         if clang:
             LOG.debug("Using '%s' for ClangSA!", clang)
@@ -326,8 +324,8 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         handler.report_hash = args.report_hash \
             if 'report_hash' in args else None
 
-        check_env = get_check_env(context.path_env_extra,
-                                  context.ld_lib_path_extra)
+        environ = env.extend(context.path_env_extra,
+                             context.ld_lib_path_extra)
 
         handler.enable_z3 = 'enable_z3' in args and args.enable_z3
 
@@ -342,7 +340,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
                 host_check.has_analyzer_feature(
                     context.analyzer_binaries.get(cls.ANALYZER_NAME),
                     '-analyzer-display-ctu-progress',
-                    check_env)
+                    environ)
             handler.log_file = args.logfile
             handler.path_env_extra = context.path_env_extra
             handler.ld_lib_path_extra = context.ld_lib_path_extra
@@ -351,7 +349,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             with open(args.clangsa_args_cfg_file, 'rb') as sa_cfg:
                 handler.analyzer_extra_arguments = \
                     re.sub(r'\$\((.*?)\)',
-                           replace_env_var(args.clangsa_args_cfg_file),
+                           env.replace_env_var(args.clangsa_args_cfg_file),
                            sa_cfg.read().strip())
                 handler.analyzer_extra_arguments = \
                     shlex.split(handler.analyzer_extra_arguments)
@@ -361,7 +359,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             # No clangsa arguments file was given in the command line.
             LOG.debug_analyzer(aerr)
 
-        checkers = ClangSA.get_analyzer_checkers(handler, check_env)
+        checkers = ClangSA.get_analyzer_checkers(handler, environ)
 
         # Read clang-sa checkers from the config file.
         clang_sa_checkers = context.checker_config.get(cls.ANALYZER_NAME +
