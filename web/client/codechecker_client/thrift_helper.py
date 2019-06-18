@@ -39,7 +39,7 @@ class ThriftClientHelper(object):
             self.transport.setCustomHeaders(headers)
 
     @ThriftClientCall
-    def getRunData(self, run_name_filter):
+    def getRunData(self, run_name_filter, limit, offset):
         pass
 
     @ThriftClientCall

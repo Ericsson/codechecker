@@ -89,7 +89,6 @@ function (declare, ObjectStore, Store, Deferred, DataGrid, Dialog, ContentPane,
 
   var ListOfRunHistoryGrid = declare(DataGrid, {
     constructor : function () {
-
       this.store = new ObjectStore({
         objectStore : new RunHistoryStore()
       });

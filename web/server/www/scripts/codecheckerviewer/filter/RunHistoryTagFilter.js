@@ -93,7 +93,8 @@ function (dom, declare, Deferred, SelectFilter, util) {
 
       var runIds = [];
       try {
-        runIds = CC_SERVICE.getRunData(runFilter).map(function (run) {
+        runIds = CC_SERVICE.getRunData(runFilter, null, 0).map(
+        function (run) {
           return run.runId;
         });
       } catch (ex) { util.handleThriftException(ex); }

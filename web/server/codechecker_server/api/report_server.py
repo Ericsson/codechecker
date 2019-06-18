@@ -29,8 +29,8 @@ import shared
 from codeCheckerDBAccess_v6 import constants, ttypes
 from codeCheckerDBAccess_v6.ttypes import BugPathPos, CheckerCount, \
     CommentData, DiffType, Encoding, RunHistoryData, Order, ReportData, \
-    ReportDetails, ReviewData, RunData, RunReportCount, RunTagCount, \
-    SourceComponentData, SourceFileData, SortMode, SortType
+    ReportDetails, ReviewData, RunData, RunFilter, RunReportCount, \
+    RunTagCount, SourceComponentData, SourceFileData, SortMode, SortType
 
 from codechecker_common import plist_parser, skiplist_handler
 from codechecker_common.source_code_comment_handler import \
@@ -297,6 +297,27 @@ def process_run_history_filter(query, run_ids, run_history_filter):
     if run_history_filter and run_history_filter.tagNames:
         query = query.filter(RunHistory.version_tag.in_(
             run_history_filter.tagNames))
+
+    return query
+
+
+def process_run_filter(query, run_filter):
+    """
+    Process run filter.
+    """
+    if run_filter is None:
+        return query
+
+    if run_filter.ids:
+        query = query.filter(Run.id.in_(run_filter.ids))
+    if run_filter.names:
+        if run_filter.exactMatch:
+            query = query.filter(Run.name.in_(run_filter.names))
+        else:
+            OR = [Run.name.ilike('{0}'.format(conv(
+                escape_like(name, '\\'))), escape='\\') for
+                name in run_filter.names]
+            query = query.filter(or_(*OR))
 
     return query
 
@@ -660,8 +681,11 @@ class ThriftRequestHandler(object):
 
     @exc_to_thrift_reqfail
     @timeit
-    def getRunData(self, run_filter):
+    def getRunData(self, run_filter, limit, offset):
         self.__require_access()
+
+        limit = verify_limit_range(limit)
+
         with DBSession(self.__Session) as session:
 
             # Count the reports subquery.
@@ -685,17 +709,7 @@ class ThriftRequestHandler(object):
                               RunHistory.cc_version,
                               stmt.c.report_count)
 
-            if run_filter is not None:
-                if run_filter.ids:
-                    q = q.filter(Run.id.in_(run_filter.ids))
-                if run_filter.names:
-                    if run_filter.exactMatch:
-                        q = q.filter(Run.name.in_(run_filter.names))
-                    else:
-                        OR = [Run.name.ilike('{0}'.format(conv(
-                            escape_like(name, '\\'))), escape='\\') for
-                            name in run_filter.names]
-                        q = q.filter(or_(*OR))
+            q = process_run_filter(q, run_filter)
 
             q = q.outerjoin(stmt, Run.id == stmt.c.run_id) \
                 .outerjoin(tag_q, Run.id == tag_q.c.run_id) \
@@ -706,6 +720,18 @@ class ThriftRequestHandler(object):
                           RunHistory.cc_version,
                           stmt.c.report_count) \
                 .order_by(Run.date)
+
+            if limit:
+                q = q.limit(limit).offset(offset)
+
+            # Get the runs.
+            run_data = q.all()
+
+            # Set run ids filter by using the previous results.
+            if not run_filter:
+                run_filter = RunFilter()
+
+            run_filter.ids = [r[0].id for r in run_data]
 
             # Get report count for each detection statuses.
             status_q = session.query(Report.run_id,
@@ -750,7 +776,7 @@ class ThriftRequestHandler(object):
 
             results = []
 
-            for instance, tag, cc_version, report_count in q:
+            for instance, tag, cc_version, report_count in run_data:
                 if report_count is None:
                     report_count = 0
 
@@ -765,6 +791,17 @@ class ThriftRequestHandler(object):
                                        cc_version,
                                        analyzer_statistics[instance.id]))
             return results
+
+    @exc_to_thrift_reqfail
+    @timeit
+    def getRunCount(self, run_filter):
+        self.__require_access()
+
+        with DBSession(self.__Session) as session:
+            query = session.query(Run.id)
+            query = process_run_filter(query, run_filter)
+
+        return query.count()
 
     @exc_to_thrift_reqfail
     @timeit

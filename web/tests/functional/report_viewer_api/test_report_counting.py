@@ -54,7 +54,7 @@ class TestReportFilter(unittest.TestCase):
         # Get the run names which belong to this test.
         run_names = env.get_run_names(test_workspace)
 
-        runs = self._cc_client.getRunData(None)
+        runs = self._cc_client.getRunData(None, None, 0)
 
         self._test_runs = [run for run in runs if run.name in run_names]
         self._runids = [r.runId for r in self._test_runs]
@@ -586,7 +586,7 @@ class TestReportFilter(unittest.TestCase):
         Run name is randomly generated for all of the test runs.
         """
 
-        runs = self._cc_client.getRunData(None)
+        runs = self._cc_client.getRunData(None, None, 0)
 
         separate_report_counts = 0
         for run in runs:

@@ -33,7 +33,7 @@ class TestExtendedReportData(unittest.TestCase):
         # Get the run names which belong to this test
         run_names = env.get_run_names(self._test_workspace)
 
-        runs = self._cc_client.getRunData(None)
+        runs = self._cc_client.getRunData(None, None, 0)
 
         test_runs = [run for run in runs if run.name in run_names]
 
@@ -48,7 +48,7 @@ class TestExtendedReportData(unittest.TestCase):
         run_filter.names = [run_name]
         run_filter.exactMatch = True
 
-        runs = self._cc_client.getRunData(run_filter)
+        runs = self._cc_client.getRunData(run_filter, None, 0)
         run_id = runs[0].runId
 
         return self._cc_client.getRunResults([run_id], None, 0, [], None, None,

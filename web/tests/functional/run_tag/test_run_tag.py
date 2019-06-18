@@ -144,7 +144,7 @@ int main()
         self._create_source_file(0, 'test_run_tag_update')
 
         # Get the run names which belong to this test
-        runs = self._cc_client.getRunData(None)
+        runs = self._cc_client.getRunData(None, None, 0)
         test_run_ids = [run.runId for run in runs]
 
         self.assertEqual(len(test_run_ids), 2)

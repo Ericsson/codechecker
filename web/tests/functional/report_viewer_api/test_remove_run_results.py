@@ -49,7 +49,7 @@ class RemoveRunResults(unittest.TestCase):
         # Get the run names which belong to this test.
         run_names = env.get_run_names(test_workspace)
 
-        runs = self._cc_client.getRunData(None)
+        runs = self._cc_client.getRunData(None, None, 0)
 
         test_runs = [run for run in runs if run.name in run_names]
 
@@ -70,7 +70,7 @@ class RemoveRunResults(unittest.TestCase):
                                     test_project_path)
 
         run_filter = RunFilter(names=['remove_run_results'], exactMatch=True)
-        runs = self._cc_client.getRunData(run_filter)
+        runs = self._cc_client.getRunData(run_filter, None, 0)
         self.assertEqual(len(runs), 1)
 
         run_id = runs[0].runId
