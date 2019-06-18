@@ -61,6 +61,10 @@ class TestUpdate(unittest.TestCase):
 
         print_run_results(run_results)
 
+        # Get check command for the first storage.
+        original_check_command = \
+            self._cc_client.getCheckCommand(None, self._runid)
+
         # Run the anaysis again with different setup.
         test_project_path = self._testproject_data['project_path']
         ret = project.clean(test_project_path)
@@ -93,3 +97,12 @@ class TestUpdate(unittest.TestCase):
         self.assertTrue(all(map(
             lambda b: b.detectionStatus == 'unresolved',
             filter(lambda x: x in deadcode_bugs, updated_results))))
+
+        # Get check command for the updated storage.
+        updated_check_command = \
+            self._cc_client.getCheckCommand(None, self._runid)
+
+        # Check that the check command is changed.
+        self.assertNotEqual(original_check_command, updated_check_command)
+        self.assertTrue(deadcode not in original_check_command)
+        self.assertTrue(deadcode in updated_check_command)

@@ -83,24 +83,7 @@ function (declare, dom, ObjectStore, Store, Deferred, topic, Dialog, Button,
 
   function runNameFormatter(args) {
     var runData = args.runData;
-
-    var label = '<span class="link">' + runData.name + '</span>';
-
-    var ctuEnabled = runData.runCmd.indexOf('--ctu') !== -1;
-    var statsEnabled = runData.runCmd.indexOf('--stats') !== -1;
-    if (ctuEnabled || statsEnabled) {
-      label += '<span class="run-name-labels">';
-      if (ctuEnabled) {
-        label += '<span class="label ctu">ctu</span>';
-      }
-
-      if (statsEnabled) {
-        label += '<span class="label stats">stats</span>';
-      }
-      label += '</span>';
-    }
-
-    return label;
+    return '<span class="link">' + runData.name + '</span>';
   }
 
   var RunStore = declare(Store, {
@@ -211,6 +194,8 @@ function (declare, dom, ObjectStore, Store, Deferred, topic, Dialog, Button,
     },
 
     onRowClick : function (evt) {
+      var that = this;
+
       var item = this.getItem(evt.rowIndex);
       var runId = item.runid;
 
@@ -241,9 +226,15 @@ function (declare, dom, ObjectStore, Store, Deferred, topic, Dialog, Button,
           break;
 
         case 'checkcmd':
-          this._dialog.set('title', 'Check command');
-          this._dialog.set('content', item.runData.runCmd);
-          this._dialog.show();
+          CC_SERVICE.getCheckCommand(null, runId, function (checkCommand) {
+            if (!checkCommand) {
+              checkCommand = 'Unavailable!';
+            }
+
+            that._dialog.set('title', 'Check command');
+            that._dialog.set('content', checkCommand);
+            that._dialog.show();
+          }).fail(function (xhr) { util.handleAjaxFailure(xhr); });
 
           break;
 

@@ -704,7 +704,10 @@ class ThriftRequestHandler(object):
                 .group_by(RunHistory.run_id) \
                 .subquery()
 
-            q = session.query(Run,
+            q = session.query(Run.id,
+                              Run.date,
+                              Run.name,
+                              Run.duration,
                               RunHistory.version_tag,
                               RunHistory.cc_version,
                               stmt.c.report_count)
@@ -731,7 +734,7 @@ class ThriftRequestHandler(object):
             if not run_filter:
                 run_filter = RunFilter()
 
-            run_filter.ids = [r[0].id for r in run_data]
+            run_filter.ids = [r[0] for r in run_data]
 
             # Get report count for each detection statuses.
             status_q = session.query(Report.run_id,
@@ -776,20 +779,23 @@ class ThriftRequestHandler(object):
 
             results = []
 
-            for instance, tag, cc_version, report_count in run_data:
+            for run_id, run_date, run_name, duration, tag, cc_version, \
+                report_count \
+                    in run_data:
+
                 if report_count is None:
                     report_count = 0
 
-                results.append(RunData(instance.id,
-                                       str(instance.date),
-                                       instance.name,
-                                       instance.duration,
-                                       report_count,
-                                       instance.command,
-                                       status_sum[instance.id],
-                                       tag,
-                                       cc_version,
-                                       analyzer_statistics[instance.id]))
+                analyzer_stats = analyzer_statistics[run_id]
+                results.append(RunData(runId=run_id,
+                                       runDate=str(run_date),
+                                       name=run_name,
+                                       duration=duration,
+                                       resultCount=report_count,
+                                       detectionStatusCount=status_sum[run_id],
+                                       versionTag=tag,
+                                       codeCheckerVersion=cc_version,
+                                       analyzerStatistics=analyzer_stats))
             return results
 
     @exc_to_thrift_reqfail
@@ -802,6 +808,29 @@ class ThriftRequestHandler(object):
             query = process_run_filter(query, run_filter)
 
         return query.count()
+
+    def getCheckCommand(self, run_history_id, run_id):
+        self.__require_access()
+
+        if not run_history_id and not run_id:
+            return ""
+
+        with DBSession(self.__Session) as session:
+            query = session.query(RunHistory.check_command)
+
+            if run_history_id:
+                query = query.filter(RunHistory.id == run_history_id)
+            elif run_id:
+                query = query.filter(RunHistory.run_id == run_id) \
+                    .order_by(RunHistory.time.desc()) \
+                    .limit(1)
+
+            history = query.first()
+
+            if not history or not history[0]:
+                return ""
+
+        return zlib.decompress(history[0])
 
     @exc_to_thrift_reqfail
     @timeit
@@ -823,9 +852,6 @@ class ThriftRequestHandler(object):
 
             results = []
             for history in res:
-                check_command = zlib.decompress(history.check_command) \
-                  if history.check_command else None
-
                 analyzer_statistics = {}
                 for stat in history.analyzer_statistics:
                     failed_files = zlib.decompress(stat.failed_files) \
@@ -847,7 +873,6 @@ class ThriftRequestHandler(object):
                     versionTag=history.version_tag,
                     user=history.user,
                     time=str(history.time),
-                    checkCommand=check_command,
                     codeCheckerVersion=history.cc_version,
                     analyzerStatistics=analyzer_statistics))
 
