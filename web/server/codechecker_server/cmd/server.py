@@ -37,11 +37,9 @@ from codechecker_server.database.config_db_model \
     import Product as ORMProduct
 from codechecker_server.database.run_db_model \
     import IDENTIFIER as RUN_META
-from codechecker_server.env import is_localhost
 
 from codechecker_web.shared import webserver_context, database_status, \
-    host_check
-from codechecker_web.shared import env
+    host_check, env
 
 LOG = logger.get_logger('server')
 
@@ -685,6 +683,28 @@ def __reload_config(args):
             LOG.error("Couldn't reload configuration file for process PID #%s",
                       str(i['pid']))
             raise
+
+
+def is_localhost(address):
+    """
+    Check if address is one of the valid values and try to get the
+    IP-addresses from the system.
+    """
+
+    valid_values = ['localhost', '0.0.0.0', '*', '::1']
+
+    try:
+        valid_values.append(socket.gethostbyname('localhost'))
+    except socket.herror:
+        LOG.debug("Failed to get IP address for localhost.")
+
+    try:
+        valid_values.append(socket.gethostbyname(socket.gethostname()))
+    except (socket.herror, socket.gaierror):
+        LOG.debug("Failed to get IP address for hostname '%s'",
+                  socket.gethostname())
+
+    return address in valid_values
 
 
 def server_init_start(args):

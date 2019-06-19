@@ -20,13 +20,12 @@ import time
 
 from codechecker_common.logger import get_logger
 
-from . import analysis_manager, pre_analysis_manager
+from . import analysis_manager, pre_analysis_manager, env
 from .analyzers import analyzer_types
 from .analyzers.clangsa.analyzer import ClangSA
 from .analyzers.clangsa.statistics_collector import \
     SpecialReturnValueCollector
 from .analyzers.clangsa.statistics_collector import ReturnValueCollector
-from . import env
 
 LOG = get_logger('analyzer')
 
