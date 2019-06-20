@@ -58,12 +58,13 @@ from .tmp import get_tmp_dir_hash
 
 from .api.authentication import ThriftAuthHandler as AuthHandler_v6
 from .api.config_handler import ThriftConfigHandler as ConfigHandler_v6
+from .api.db import DBSession
 from .api.product_server import ThriftProductHandler as ProductHandler_v6
 from .api.report_server import ThriftRequestHandler as ReportHandler_v6
 from .database import database
 from .database import db_cleanup
 from .database.config_db_model import Product as ORMProduct
-from .database.run_db_model import IDENTIFIER as RUN_META
+from .database.run_db_model import IDENTIFIER as RUN_META, Run, RunLock
 
 LOG = get_logger('server')
 
@@ -608,6 +609,33 @@ class Product(object):
                           " connected to.", self.endpoint)
             self.__db_status = DBStatus.FAILED_TO_CONNECT
             self.__last_connect_attempt = (datetime.datetime.now(), str(ex))
+
+    def get_details(self):
+        """
+        Get details for a product from the database.
+
+        It may throw different error messages depending on the used SQL driver
+        adapter in case of connection error.
+        """
+        with DBSession(self.session_factory) as run_db_session:
+            run_locks = run_db_session.query(RunLock.name) \
+                .filter(RunLock.locked_at.isnot(None)) \
+                .all()
+
+            runs_in_progress = set([run_lock[0] for run_lock in run_locks])
+
+            num_of_runs = run_db_session.query(Run).count()
+
+            latest_store_to_product = ""
+            if num_of_runs:
+                last_updated_run = run_db_session.query(Run) \
+                    .order_by(Run.date.desc()) \
+                    .limit(1) \
+                    .one_or_none()
+
+                latest_store_to_product = last_updated_run.date
+
+        return num_of_runs, runs_in_progress, latest_store_to_product
 
     def teardown(self):
         """
