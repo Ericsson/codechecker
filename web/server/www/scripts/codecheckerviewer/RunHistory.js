@@ -62,6 +62,7 @@ function (declare, ObjectStore, Store, Deferred, DataGrid, Dialog, ContentPane,
     _formatItems : function(runHistories) {
       return runHistories.map(function (runHistory) {
         return {
+          id: runHistory.id,
           name: runHistory.runName,
           user: runHistory.user,
           date: util.prettifyDate(runHistory.time),
@@ -142,6 +143,8 @@ function (declare, ObjectStore, Store, Deferred, DataGrid, Dialog, ContentPane,
     },
 
     onRowClick : function (evt) {
+      var that = this;
+
       var item = this.getItem(evt.rowIndex);
 
       switch (evt.cell.field) {
@@ -161,10 +164,9 @@ function (declare, ObjectStore, Store, Deferred, DataGrid, Dialog, ContentPane,
           break;
 
         case 'analyzerStatistics':
-          var stats = item.analyzerStatistics;
-          if (Object.keys(stats).length) {
-            this._analyzerStatDialog.show(stats);
-          }
+            CC_SERVICE.getAnalysisStatistics(null, item.id, function (stats) {
+              that._analyzerStatDialog.show(stats);
+            });
 
           break;
       }

@@ -156,7 +156,9 @@ struct RunData {
   7: map<DetectionStatus, i32> detectionStatusCount, // Number of reports with a particular detection status.
   8: string                    versionTag,           // Version tag of the latest run.
   9: string                    codeCheckerVersion,   // CodeChecker client version of the latest analysis.
-  10: AnalyzerStatisticsData   analyzerStatistics,   // Statistics for each analyzers.
+  10: AnalyzerStatisticsData   analyzerStatistics,   // Statistics for analyzers. Only number of failed and successfully analyzed
+                                                     // files field will be set. To get full analyzer statistics please use the
+                                                     // 'getAnalysisStatistics' API function.
 }
 typedef list<RunData> RunDataList
 
@@ -169,7 +171,9 @@ struct RunHistoryData {
   6: i64                     id,                 // Id of the run history tag.
   7: string                  checkCommand,       // Check command.
   8: string                  codeCheckerVersion, // CodeChecker client version of the latest analysis.
-  9: AnalyzerStatisticsData  analyzerStatistics, // Statistics for analyzers.
+  9: AnalyzerStatisticsData  analyzerStatistics, // Statistics for analyzers. Only number of failed and successfully analyzed
+                                                 // files field will be set. To get full analyzer statistics please use the
+                                                 // 'getAnalysisStatistics' API function.
 }
 typedef list<RunHistoryData> RunHistoryDataList
 
@@ -610,4 +614,10 @@ service codeCheckerDBAccess {
   bool storeAnalysisStatistics(1: string runName
                                2: string zipfile)
                                throws (1: shared.RequestFailed requestError),
+
+  // Get analysis statistics for a run.
+  // PERMISSION: PRODUCT_ACCESS
+  AnalyzerStatisticsData getAnalysisStatistics(1: i64 runId,
+                                               2: i64 runHistoryId)
+                                               throws (1: shared.RequestFailed requestError),
 }
