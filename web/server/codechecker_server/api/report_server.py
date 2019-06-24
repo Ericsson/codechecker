@@ -60,6 +60,20 @@ from . import store_handler
 LOG = get_logger('server')
 
 
+def verify_limit_range(limit):
+    """Verify limit value for the queries.
+
+    Query limit should not be larger than the max allowed value.
+    Max is returned if the value is larger than max.
+    """
+    max_query_limit = constants.MAX_QUERY_SIZE
+    if limit > max_query_limit:
+        LOG.warning('Query limit %d was larger than max query limit %d, '
+                    'setting limit to %d', limit, max_query_limit, max)
+        limit = max_query_limit
+    return limit
+
+
 def slugify(text):
     """
     Removes and replaces special characters in a given text.
@@ -757,6 +771,8 @@ class ThriftRequestHandler(object):
     def getRunHistory(self, run_ids, limit, offset, run_history_filter):
         self.__require_access()
 
+        limit = verify_limit_range(limit)
+
         with DBSession(self.__Session) as session:
 
             res = session.query(RunHistory)
@@ -922,11 +938,8 @@ class ThriftRequestHandler(object):
     def getRunResults(self, run_ids, limit, offset, sort_types,
                       report_filter, cmp_data, get_details):
         self.__require_access()
-        max_query_limit = constants.MAX_QUERY_SIZE
-        if limit > max_query_limit:
-            LOG.debug('Query limit %d was larger than max query limit %d,'
-                      ' setting limit to %d', limit, max_query_limit, max)
-            limit = max_query_limit
+
+        limit = verify_limit_range(limit)
 
         with DBSession(self.__Session) as session:
             results = []
