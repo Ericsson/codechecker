@@ -204,12 +204,10 @@ class ImplicitCompilerInfo(object):
     This class helps to fetch and set some additional compiler flags which are
     implicitly added when using GCC.
     """
-    # TODO: These dicts are mapping compiler to the corresponding information.
+    # TODO: This dict is mapping compiler to the corresponding information.
     # It may not be enough to use the compiler as a key, because the implicit
     # information depends on other data like language or target architecture.
-    compiler_includes = {}
-    compiler_target = {}
-    compiler_standard = {}
+    compiler_info = defaultdict(dict)
     compiler_isexecutable = {}
 
     @staticmethod
@@ -453,11 +451,12 @@ class ImplicitCompilerInfo(object):
                       compiler, filename)
 
         ICI = ImplicitCompilerInfo
-        ICI.compiler_includes[compiler] = []
+        ICI.compiler_info[compiler]['includes'] = []
         for element in map(shlex.split, compiler_info.get('includes')):
-            ICI.compiler_includes[compiler].extend(element)
-        ICI.compiler_standard[compiler] = compiler_info.get('default_standard')
-        ICI.compiler_target[compiler] = compiler_info.get('target')
+            ICI.compiler_info[compiler]['includes'].extend(element)
+        ICI.compiler_info[compiler]['default_standard'] = \
+            compiler_info.get('default_standard')
+        ICI.compiler_info[compiler]['target'] = compiler_info.get('target')
 
     @staticmethod
     def set(details, compiler_info_file=None):
@@ -468,39 +467,27 @@ class ImplicitCompilerInfo(object):
             ICI.load_compiler_info(compiler_info_file, details['compiler'])
         else:
             # Invoke compiler to gather implicit compiler info.
-            if details['compiler'] not in ICI.compiler_includes:
-                ICI.compiler_includes[details['compiler']] = \
+            if details['compiler'] not in ICI.compiler_info:
+                ICI.compiler_info[details['compiler']]['includes'] = \
                     ICI.get_compiler_includes(details['compiler'],
                                               details['lang'],
                                               details['analyzer_options'])
-            if details['compiler'] not in ICI.compiler_standard:
-                ICI.compiler_standard[details['compiler']] = \
+                ICI.compiler_info[details['compiler']]['target'] = \
+                    ICI.get_compiler_target(details['compiler'])
+                ICI.compiler_info[details['compiler']]['default_standard'] = \
                     ICI.get_compiler_standard(details['compiler'],
                                               details['lang'])
-            if details['compiler'] not in ICI.compiler_target:
-                ICI.compiler_target[details['compiler']] = \
-                    ICI.get_compiler_target(details['compiler'])
 
         details['compiler_includes'] = details['compiler_includes'] or \
-            ICI.compiler_includes[details['compiler']]
+            ICI.compiler_info[details['compiler']]['includes']
         details['compiler_standard'] = details['compiler_standard'] or \
-            ICI.compiler_standard[details['compiler']]
+            ICI.compiler_info[details['compiler']]['default_standard']
         details['target'] = details['target'] or \
-            ICI.compiler_target[details['compiler']]
+            ICI.compiler_info[details['compiler']]['target']
 
     @staticmethod
     def get():
-        ICI = ImplicitCompilerInfo
-
-        result = defaultdict(dict)
-        for compiler, includes in ICI.compiler_includes.items():
-            result[compiler]['includes'] = includes
-        for compiler, target in ICI.compiler_target.items():
-            result[compiler]['target'] = target
-        for compiler, standard in ICI.compiler_standard.items():
-            result[compiler]['default_standard'] = standard
-
-        return result
+        return ImplicitCompilerInfo.compiler_info
 
 
 class OptionIterator(object):
