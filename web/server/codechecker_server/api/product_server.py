@@ -25,7 +25,6 @@ from codechecker_common.profiler import timeit
 from .. import permissions
 from ..database.config_db_model import IDENTIFIER, Product, ProductPermission
 from ..database.database import SQLServer, conv
-from ..database.run_db_model import Run, RunLock
 from ..routing import is_valid_product_endpoint
 
 from .db import DBSession, escape_like
@@ -90,26 +89,24 @@ class ThriftProductHandler(object):
             self.__server.add_product(product)
             server_product = self.__server.get_product(product.endpoint)
 
-        server_product.connect()
         num_of_runs = 0
         runs_in_progress = set()
         latest_store_to_product = ""
-        if server_product.db_status == shared.ttypes.DBStatus.OK:
-            with DBSession(server_product.session_factory) as run_db_session:
-                run_locks = run_db_session.query(RunLock.name) \
-                    .filter(RunLock.locked_at.isnot(None)) \
-                    .all()
 
-                runs_in_progress = set([run_lock[0] for run_lock in run_locks])
+        # Try to get product details. It may throw different error messages
+        # depending on the used SQL driver adapter in case of connection error,
+        # so we should try to connect to the database and get the results
+        # again on failure.
+        try:
+            num_of_runs, runs_in_progress, latest_store_to_product = \
+                server_product.get_details()
+        except Exception:
+            # Try to connect to the product and try to get details again.
+            server_product.connect()
 
-                num_of_runs = run_db_session.query(Run).count()
-                if num_of_runs:
-                    last_updated_run = run_db_session.query(Run) \
-                        .order_by(Run.date.desc()) \
-                        .limit(1) \
-                        .one_or_none()
-
-                    latest_store_to_product = last_updated_run.date
+            if server_product.db_status == shared.ttypes.DBStatus.OK:
+                num_of_runs, runs_in_progress, latest_store_to_product = \
+                    server_product.get_details()
 
         name = base64.b64encode(product.display_name.encode('utf-8'))
         descr = base64.b64encode(product.description.encode('utf-8')) \
