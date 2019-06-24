@@ -45,9 +45,7 @@ PYLINT_TEST_CMD = pylint ./bin/codechecker-web-version \
   ./client/codechecker_client \
   ./server/bin/codechecker-server ./server/codechecker_server \
   ./server/tests/unit \
-	--rcfile=$(ROOT)/.pylintrc \
-  --disable=all \
-  --enable=logging-format-interpolation,old-style-class,unused-import,unused-variable,len-as-condition,bad-indentation
+	--rcfile=$(ROOT)/.pylintrc
 
 pylint:
 	 $(PYLINT_TEST_CMD)
