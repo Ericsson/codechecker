@@ -320,6 +320,12 @@ service codeCheckerDBAccess {
                                    4: RunHistoryFilter runHistoryFilter)
                                    throws (1: shared.RequestFailed requestError),
 
+  // Get the number of run history for runs.
+  // PERMISSION: PRODUCT_ACCESS
+  i64 getRunHistoryCount(1: list<i64> runIds,
+                         2: RunHistoryFilter runHistoryFilter)
+                         throws (1: shared.RequestFailed requestError),
+
   // Returns report hashes based on the diffType parameter.
   // PERMISSION: PRODUCT_ACCESS
   list<string> getDiffResultsHash(1: list<i64>    runIds,

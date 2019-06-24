@@ -273,6 +273,20 @@ def process_report_filter(session, report_filter):
     return filter_expr
 
 
+def process_run_history_filter(query, run_ids, run_history_filter):
+    """
+    Process run history filter.
+    """
+    if run_ids:
+        query = query.filter(RunHistory.run_id.in_(run_ids))
+
+    if run_history_filter and run_history_filter.tagNames:
+        query = query.filter(RunHistory.version_tag.in_(
+            run_history_filter.tagNames))
+
+    return query
+
+
 def get_diff_hashes_for_query(base_run_ids, base_line_hashes, new_run_ids,
                               new_check_hashes, diff_type):
     """
@@ -747,12 +761,7 @@ class ThriftRequestHandler(object):
 
             res = session.query(RunHistory)
 
-            if run_ids:
-                res = res.filter(RunHistory.run_id.in_(run_ids))
-
-            if run_history_filter and run_history_filter.tagNames:
-                res = res.filter(RunHistory.version_tag.in_(
-                    run_history_filter.tagNames))
+            res = process_run_history_filter(res, run_ids, run_history_filter)
 
             res = res.order_by(RunHistory.time.desc())
 
@@ -790,6 +799,19 @@ class ThriftRequestHandler(object):
                     analyzerStatistics=analyzer_statistics))
 
             return results
+
+    @exc_to_thrift_reqfail
+    @timeit
+    def getRunHistoryCount(self, run_ids, run_history_filter):
+        self.__require_access()
+
+        with DBSession(self.__Session) as session:
+            query = session.query(RunHistory.id)
+            query = process_run_history_filter(query,
+                                               run_ids,
+                                               run_history_filter)
+
+        return query.count()
 
     @exc_to_thrift_reqfail
     @timeit

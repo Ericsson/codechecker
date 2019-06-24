@@ -6,57 +6,212 @@
 
 define([
   'dojo/_base/declare',
-  'dojo/dom-construct',
-  'dojo/topic',
+  'dojo/data/ObjectStore',
+  'dojo/store/api/Store',
+  'dojo/Deferred',
+  'dojox/grid/DataGrid',
   'dijit/Dialog',
-  'dojox/widget/Standby',
   'dijit/layout/ContentPane',
   'codechecker/AnalyzerStatisticsDialog',
   'codechecker/hashHelper',
   'codechecker/util'],
-function (declare, dom, topic, Dialog, Standby, ContentPane,
+function (declare, ObjectStore, Store, Deferred, DataGrid, Dialog, ContentPane,
   AnalyzerStatisticsDialog, hashHelper, util) {
 
-  return declare(ContentPane, {
-    constructor : function () {
-      this.runNames = null;
+  var formatDate = function (date) {
+    var mm = date.getMonth() + 1; // getMonth() is zero-based
+    var dd = date.getDate();
+
+    return [date.getFullYear(),
+            (mm > 9 ? '' : '0') + mm,
+            (dd > 9 ? '' : '0') + dd
+            ].join('-') + ' ' +
+            [date.getHours(),
+            date.getMinutes(),
+            date.getSeconds() + (date.getMilliseconds() > 0 ? 1 : 0)
+            ].join(':');
+  };
+
+  var RunHistoryStore = declare(Store, {
+    query : function (query, options) {
+      var deferred = new Deferred();
+      if (!query.total) {
+        return deferred.reject('ERROR!');
+      }
+
+      deferred.total = query.total;
+
+      var that = this;
+      CC_SERVICE.getRunHistory(
+        query.runIds,
+        CC_OBJECTS.MAX_QUERY_SIZE,
+        options.start,
+        null,
+        function (runHistories) {
+          if (runHistories instanceof RequestFailed) {
+            deferred.reject('Failed to get run histories: ' +
+              runHistories.message);
+          } else {
+            deferred.resolve(that._formatItems(runHistories));
+          }
+        }).fail(function (xhr) { util.handleAjaxFailure(xhr); });
+
+      return deferred;
     },
 
-    postCreate : function () {
+    _formatItems : function(runHistories) {
+      return runHistories.map(function (runHistory) {
+        return {
+          name: runHistory.runName,
+          user: runHistory.user,
+          date: util.prettifyDate(runHistory.time),
+          checkCommand: '<span class="link">Show</span>',
+          versionTag: { runName : runHistory.runName,
+                        versionTag : runHistory.versionTag },
+          codeCheckerVersion : runHistory.codeCheckerVersion,
+          analyzerStatistics : runHistory.analyzerStatistics,
+          runCmd: runHistory.checkCommand
+        };
+      });
+    }
+  });
+
+  function runNameFormatter(runName) {
+    return '<span class="link">' + runName + '</span>';
+  }
+
+  function versionTagFormatter(param) {
+    var versionTag = util.createRunTag(param.runName, param.versionTag,
+      util.getTooltip('versionTag'));
+
+    return versionTag ? versionTag.outerHTML : '';
+  }
+
+  var ListOfRunHistoryGrid = declare(DataGrid, {
+    constructor : function () {
+
+      this.store = new ObjectStore({
+        objectStore : new RunHistoryStore()
+      });
+
+      this.structure = [
+        { name : 'Name', field : 'name', styles : 'text-align: left;', width : '100%', formatter: runNameFormatter },
+        { name : 'Analyzer statistics', field : 'analyzerStatistics', styles : 'text-align: center;', width : '30%', formatter : util.analyzerStatisticsFormatter },
+        { name : 'Date', field : 'date', styles : 'text-align: center;', width : '25%' },
+        { name : 'User', field : 'user', styles : 'text-align: center;', width : '25%' },
+        { name : 'Check command', field : 'checkCommand', styles : 'text-align: center;' },
+        { name : '<span title="' + util.getTooltip('versionTag') + '">Version tag</span>', field : 'versionTag', formatter: versionTagFormatter },
+        { name : 'CodeChecker version', field : 'codeCheckerVersion', width : '25%' },
+      ];
+
+      this.focused = true;
+      this.selectable = true;
+      this.keepSelection = true;
+      this.escapeHTMLInData = false;
+      this.rowsPerPage = CC_OBJECTS.MAX_QUERY_SIZE;
+
       this._dialog = new Dialog({
-        title : 'Check command',
-        style : 'max-width: 75%;'
+        style : 'max-width: 75%; min-width: 25%'
       });
 
       this._analyzerStatDialog = new AnalyzerStatisticsDialog();
-
-      this._standBy = new Standby({
-        target : this.domNode,
-        color : '#ffffff'
-      });
-      this.addChild(this._standBy);
     },
 
-    getRunHistory : function (runIds) {
-      var that = this;
+    canSort : function () {
+      return false;
+    },
 
-      this._standBy.show();
-      CC_SERVICE.getRunHistory(runIds, CC_OBJECTS.MAX_QUERY_SIZE, 0, null,
-      function (historyData) {
-        that.renderRunHistoryTable(historyData);
-        that._standBy.hide();
-      }).fail(function (xhr) { util.handleAjaxFailure(xhr); });
+    openRunHistory : function (runName, versionTag, time) {
+      var filter = this.bugFilterView;
+      this.bugFilterView.clearAll();
+
+      if (filter._runBaseLineFilter)
+        filter._runBaseLineFilter.select(runName);
+
+      filter._detectionStatusFilter.selectDefaultValues();
+      filter._reviewStatusFilter.selectDefaultValues();
+
+      if (!versionTag) {
+        var date = new Date(time.replace(/ /g,'T'));
+        filter._detectionDateFilter.initFixedDateInterval(formatDate(date));
+      } else {
+        filter._runHistoryTagFilter.select(runName + ':' + versionTag);
+      }
+
+      this.bugFilterView.notifyAll();
+      hashHelper.setStateValues({subtab : null});
+    },
+
+    onRowClick : function (evt) {
+      var item = this.getItem(evt.rowIndex);
+
+      switch (evt.cell.field) {
+        case 'name':
+          if (!evt.target.classList.contains('link')) {
+            return;
+          }
+
+          this.openRunHistory(item.name, item.versionTag.versionTag, item.date);
+          break;
+
+        case 'checkCommand':
+          this._dialog.set('title', 'Check command');
+          this._dialog.set('content', item.runCmd);
+          this._dialog.show();
+
+          break;
+
+        case 'analyzerStatistics':
+          var stats = item.analyzerStatistics;
+          if (Object.keys(stats).length) {
+            this._analyzerStatDialog.show(stats);
+          }
+
+          break;
+      }
+    },
+
+    /**
+     * This function refreshes grid with available run history data based on
+     * the given run history filter.
+     */
+    refreshGrid : function (runIds, filter) {
+      var total = new Deferred();
+      CC_SERVICE.getRunHistoryCount(runIds, filter, function (count) {
+          total.resolve(count);
+        }).fail(function (xhr) { util.handleAjaxFailure(xhr); });
+
+      this.setQuery({
+        runIds: runIds,
+        runHistoryFilter: filter,
+        total: total
+      });
+    }
+  });
+
+  return declare(ContentPane, {
+    postCreate : function () {
+      this._runHistoryGrid = new ListOfRunHistoryGrid({
+        bugFilterView : this.bugFilterView
+      });
+
+      this.addChild(this._runHistoryGrid);
     },
 
     initRunHistory : function (runNames) {
       var that = this;
 
+      this.startup();
+
       if (!runNames)
         runNames = [];
 
       // Check if we should update the current run history.
-      if (this.runNames && runNames.sort().toString() == this.runNames.sort().toString())
+      if (this.runNames &&
+          runNames.sort().toString() === this.runNames.sort().toString()
+      ) {
         return;
+      }
 
       this.runNames = runNames;
 
@@ -65,148 +220,13 @@ function (declare, dom, topic, Dialog, Standby, ContentPane,
         var runFilter = new CC_OBJECTS.RunFilter();
         runFilter.names = runNames;
 
-        CC_SERVICE.getRunData(runFilter, function (runData) {
+        CC_SERVICE.getRunData(runFilter, null, 0, function (runData) {
           var runIds = runData.map(function (run) { return run.runId; });
-          that.getRunHistory(runIds);
+          that._runHistoryGrid.refreshGrid(runIds);
         }).fail(function (xhr) { util.handleAjaxFailure(xhr); });
       } else {
-        that.getRunHistory(null);
+        this._runHistoryGrid.refreshGrid();
       }
     },
-
-    // Renders the list of run histories.
-    renderRunHistoryTable : function (historyData) {
-      var that = this;
-
-      // Clear the DOM node.
-      dom.empty(this.domNode);
-
-      var historyGroupByDate = {};
-      historyData.forEach(function (data) {
-        var date = new Date(data.time.replace(/ /g,'T'));
-        var groupDate = date.getDate() + ' '
-          + util.getMonthName(date.getMonth()) + ', '
-          + date.getFullYear();
-
-        if (!historyGroupByDate[groupDate])
-          historyGroupByDate[groupDate] = [];
-
-        historyGroupByDate[groupDate].push(data);
-      });
-
-      Object.keys(historyGroupByDate).forEach(function (key) {
-        var group = dom.create('div', { class : 'history-group' }, that.domNode);
-        dom.create('div', { class : 'header', innerHTML : key }, group);
-        var content = dom.create('div', { class : 'content' }, group);
-
-        historyGroupByDate[key].forEach(function (data) {
-          var date = new Date(data.time.replace(/ /g,'T'));
-          var time = util.formatDateAMPM(date);
-
-          var history = dom.create('div', {
-            class : 'history',
-          }, content);
-
-          var wrapper = dom.create('span', {
-            onclick : function () {
-              that.onRunHistoryClick(data);
-            }
-          }, history);
-
-          dom.create('span', { class : 'time', innerHTML : time }, wrapper);
-
-          var runNameWrapper = dom.create('span', { class : 'wrapper', title: 'Run name'}, wrapper);
-          dom.create('span', { class : 'customIcon run-name' }, runNameWrapper);
-          dom.create('span', { class : 'run-name', innerHTML : data.runName }, runNameWrapper);
-
-          if (data.versionTag) {
-            var runTag = util.createRunTag(data.runName, data.versionTag);
-            dom.place(runTag, wrapper);
-          }
-
-          var userWrapper = dom.create('span', {class : 'wrapper', title: 'User name' }, wrapper);
-          dom.create('span', { class : 'customIcon user' }, userWrapper);
-          dom.create('span', { class : 'user', innerHTML : data.user }, userWrapper);
-
-          // CodeChecker client version.
-          if (data.codeCheckerVersion) {
-            var versionWrapper = dom.create('span', {
-              class : 'wrapper',
-              title: 'CodeChecker version'
-            }, wrapper);
-
-            dom.create('span', {
-              class : 'customIcon version'
-            }, versionWrapper);
-
-            dom.create('span', {
-              innerHTML : data.codeCheckerVersion
-            }, versionWrapper);
-          }
-
-          // Analyzer statistics.
-          if (Object.keys(data.analyzerStatistics).length) {
-            dom.create('span', {
-              class : 'wrapper link',
-              innerHTML : '<i class="customIcon statistics"></i> '
-                        + 'Analyzer statistics',
-              onclick : function () {
-                that._analyzerStatDialog.show(data.analyzerStatistics);
-              }
-            }, history);
-          }
-
-          // Check command.
-          if (data.checkCommand) {
-            dom.create('span', {
-              class : 'check-command wrapper link',
-              innerHTML : 'Check command',
-              onclick : function () {
-                that._dialog.set('title', 'Check command');
-                that._dialog.set('content', data.checkCommand);
-                that._dialog.show();
-              }
-            }, history);
-          }
-        })
-      });
-    },
-
-    onRunHistoryClick : function (item) {
-      var filter = this.bugFilterView;
-      this.bugFilterView.clearAll();
-
-      if (filter._runBaseLineFilter)
-        filter._runBaseLineFilter.select(item.runName);
-
-      filter._detectionStatusFilter.selectDefaultValues();
-      filter._reviewStatusFilter.selectDefaultValues();
-
-      if (!item.versionTag) {
-        var date = new Date(item.time.replace(/ /g,'T'));
-        filter._detectionDateFilter.initFixedDateInterval(
-          this._formatDate(date));
-      } else {
-        filter._runHistoryTagFilter.select(
-          item.runName + ":" + item.versionTag);
-      }
-
-      this.bugFilterView.notifyAll();
-      hashHelper.setStateValues({subtab : null});
-    },
-
-    _formatDate : function (date) {
-      var mm = date.getMonth() + 1; // getMonth() is zero-based
-      var dd = date.getDate();
-
-      return [date.getFullYear(),
-              (mm > 9 ? '' : '0') + mm,
-              (dd > 9 ? '' : '0') + dd
-             ].join('-') + ' ' +
-             [date.getHours(),
-              date.getMinutes(),
-              date.getSeconds() + (date.getMilliseconds() > 0 ? 1 : 0)
-             ].join(':');
-    }
   });
 });

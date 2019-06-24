@@ -534,6 +534,44 @@ function (locale, dom, style, json) {
       } else {
         console.warn(ex);
       }
+    },
+
+    analyzerStatisticsFormatter : function (stats) {
+      var ul = dom.create('ul', { class: 'analyzer-statistics' });
+
+      Object.keys(stats).forEach(function (analyzer) {
+        var items = dom.create('ul', { class : 'items' });
+
+        if (stats[analyzer].successful) {
+          var successLi = dom.create('li', {
+            title : 'Number of successfully analyzed files.'
+          }, items);
+
+          dom.create('i', { class : 'customIcon check' }, successLi);
+          dom.create('span', {
+            class : 'num',
+            innerHTML : '(' + stats[analyzer].successful + ')'
+          }, successLi);
+        }
+
+        if (stats[analyzer].failed) {
+          var failedLi = dom.create('li', {
+            title : 'Number of files which failed to analyze.'
+          }, items);
+
+          dom.create('i', { class : 'customIcon remove' }, failedLi);
+          dom.create('span', {
+            class : 'num link',
+            innerHTML : '(' + stats[analyzer].failed + ')'
+          }, failedLi);
+        }
+
+        dom.create('li', {
+          innerHTML : analyzer + ': ' + items.outerHTML
+        }, ul);
+      });
+
+      return ul.outerHTML;
     }
   };
 });
