@@ -10,11 +10,13 @@ Authentication tests.
 from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
+
+import json
 import os
 import subprocess
 import unittest
 
-from shared.ttypes import RequestFailed
+from shared.ttypes import RequestFailed, Permission
 
 from libtest import codechecker
 from libtest import env
@@ -57,15 +59,6 @@ class DictAuth(unittest.TestCase):
         # A non-authenticated session should return an empty user.
         user = auth_client.getLoggedInUser()
         self.assertEqual(user, "")
-
-        # We still need to create a product on the new server, because
-        # in PostgreSQL mode, the same database is used for configuration
-        # by the newly started instance of this test suite too.
-        codechecker.add_test_package_product(
-            self._test_cfg['codechecker_cfg'],
-            self._test_workspace,
-            # Use the test's home directory to find the session token file.
-            self._test_cfg['codechecker_cfg']['check_env'])
 
         self.sessionToken = auth_client.performLogin("Username:Password",
                                                      "cc:test")
@@ -196,3 +189,60 @@ class DictAuth(unittest.TestCase):
 
         with self.assertRaises(subprocess.CalledProcessError):
             subprocess.check_output(store_cmd)
+
+    def test_group_auth(self):
+        """
+        Test for case insensitive group comparison at authorization.
+        """
+        auth_client = env.setup_auth_client(self._test_workspace,
+                                            session_token='_PROHIBIT')
+
+        # A non-authenticated session should return an empty user.
+        user = auth_client.getLoggedInUser()
+        self.assertEqual(user, "")
+
+        # Create a SUPERUSER login.
+        self.sessionToken = auth_client.performLogin("Username:Password",
+                                                     "root:root")
+
+        self.assertIsNotNone(self.sessionToken,
+                             "Valid credentials didn't give us a token!")
+
+        authd_auth_client = \
+            env.setup_auth_client(self._test_workspace,
+                                  session_token=self.sessionToken)
+        user = authd_auth_client.getLoggedInUser()
+        self.assertEqual(user, "root")
+
+        product_name = self._test_cfg['codechecker_cfg']['viewer_product']
+        pr_client = env.setup_product_client(
+            self._test_workspace, product=product_name)
+        product_id = pr_client.getCurrentProduct().id
+
+        extra_params = {'productID': product_id}
+        ret = authd_auth_client.addPermission(Permission.PRODUCT_ADMIN,
+                                              "ADMIN_group",
+                                              True,
+                                              json.dumps(extra_params))
+        self.assertTrue(ret)
+
+        result = auth_client.destroySession()
+        self.assertTrue(result, "Server did not allow us to destroy session.")
+
+        # Perform login with a user who is in ADMIN_GROUP and check that
+        # he has permission to perform operations.
+        self.sessionToken = \
+            auth_client.performLogin("Username:Password",
+                                     "admin_group_user:admin123")
+
+        self.assertIsNotNone(self.sessionToken,
+                             "Valid credentials didn't give us a token!")
+
+        client = env.setup_viewer_client(self._test_workspace,
+                                         session_token=self.sessionToken)
+
+        self.assertIsNotNone(client.allowsStoringAnalysisStatistics(),
+                             "Privileged server didn't respond properly.")
+
+        result = auth_client.destroySession()
+        self.assertTrue(result, "Server did not allow us to destroy session.")

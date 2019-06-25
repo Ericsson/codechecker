@@ -15,7 +15,7 @@ from __future__ import absolute_import
 from abc import ABCMeta
 from abc import abstractmethod
 
-from sqlalchemy import and_
+from sqlalchemy import and_, func
 
 from shared.ttypes import Permission as PermissionEnum
 
@@ -415,14 +415,27 @@ class ProductPermission(Permission):
                 return False
 
             ProdPerm = config_db_model.ProductPermission
-            query = self.__session. \
-                query(ProdPerm). \
-                filter(and_(
-                    ProdPerm.permission == self._perm_name,
-                    ProdPerm.product_id == self.__product_id,
-                    ProdPerm.name.in_(auth_names),
-                    ProdPerm.is_group == are_groups
-                ))
+            if are_groups:
+                # Compare group membership information in a case insensitive
+                # way.
+                auth_names = [name.lower() for name in auth_names]
+                query = self.__session. \
+                    query(ProdPerm). \
+                    filter(and_(
+                        ProdPerm.permission == self._perm_name,
+                        ProdPerm.product_id == self.__product_id,
+                        func.lower(ProdPerm.name).in_(auth_names),
+                        ProdPerm.is_group.is_(True)
+                    ))
+            else:
+                query = self.__session. \
+                    query(ProdPerm). \
+                    filter(and_(
+                        ProdPerm.permission == self._perm_name,
+                        ProdPerm.product_id == self.__product_id,
+                        ProdPerm.name.in_(auth_names),
+                        ProdPerm.is_group.is_(False)
+                    ))
 
             exists = self.__session.query(query.exists()).scalar()
             return exists

@@ -63,6 +63,8 @@ def setup_package():
     print("Starting server to get results")
     codechecker.start_server(codechecker_cfg, __STOP_SERVER)
 
+    codechecker.add_test_package_product(host_port_cfg, TEST_WORKSPACE)
+
 
 def teardown_package():
     """Stop the CodeChecker server and clean up after the tests."""
