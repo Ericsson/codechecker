@@ -301,7 +301,7 @@ function (declare, dom, ItemFileWriteStore, topic, Dialog, Button,
           var runNameFilter = this.get('value');
           this.timer = setTimeout(function () {
             var runFilter = new CC_OBJECTS.RunFilter();
-            runFilter.names = [runNameFilter + '*'];
+            runFilter.names = ['*' + runNameFilter + '*'];
             that.listOfRunsGrid.refreshGrid(runFilter);
           }, 500);
         }
