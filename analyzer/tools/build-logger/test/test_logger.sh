@@ -108,6 +108,14 @@ function test_space_quote {
     gcc
 }
 
+function test_compiler_abs {
+  bash -c "/usr/bin/gcc $source_file"
+
+  assert_json \
+    "$source_file" \
+    /usr/bin/gcc
+}
+
 #--- Run tests ---#
 
 echo "int main() {}" > $source_file

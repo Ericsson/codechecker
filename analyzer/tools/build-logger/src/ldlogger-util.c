@@ -442,10 +442,12 @@ char* loggerGetFilePathWithoutExt(const char* absPath_)
 char* loggerGetFileName(const char* absPath_, int withoutExt_)
 {
   const char* fileName = strrchr(absPath_, '/');
-  if (!fileName || fileName[1] == 0)
-  {
+
+  if (!fileName)
+    fileName = absPath_;
+
+  if (fileName[1] == 0)
     return NULL;
-  }
 
   ++fileName;
   if (withoutExt_)

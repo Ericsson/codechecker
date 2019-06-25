@@ -16,26 +16,13 @@
 #include <ctype.h>
 #include <unistd.h>
 #include <string.h>
-/**
- * States for GCCargument parser.
- */
-typedef enum _GccArgsState
-{
-  /**
-   * Normal state (default).
-   */
-  Normal,
-  /**
-   * After a -o paramater.
-   */
-  InOutputArg
-} GccArgsState;
 
 /**
- * List of file extensions accepted as source file.
+ * List of file extensions accepted as source file. Binaries can also be
+ * sources of linker actions.
  */
 static const char* const srcExts[] = {
-  "c", "cc", "cpp", "cxx", "o", "so", "a", NULL
+  "c", "cc", "cp", "cpp", "cxx", "c++", "o", "so", "a", NULL
 };
 
 /**
@@ -78,99 +65,6 @@ static int isGccLibPath(const char* path_)
    *   /usr/lib/gcc/x86_64-linux-gnu/4.8/include
    *   /usr/lib/gcc/x86_64-linux-gnu/4.8/include-fixed */
   return strstr(gccStart, "include") != NULL;
-}
-
-/**
- * Processes an command line argument for a GCC like command.
- *
- * @param state_ the current state of the parser.
- * @param arg_ the current command line argument.
- * @param action the current action.
- * @return the new state.
- */
-static GccArgsState processArgument(
-  GccArgsState state_,
-  const char* arg_,
-  LoggerAction* action_)
-{
-  char argToAdd[PATH_MAX];
-  strcpy(argToAdd, arg_);
-
-  if (state_ == InOutputArg)
-  {
-    if (!loggerMakePathAbs(arg_, argToAdd, 0))
-    {
-      strcpy(argToAdd, arg_);
-    }
-
-    loggerFileInitFromPath(&action_->output, argToAdd);
-    state_ = Normal;
-  }
-  else if (strcmp(arg_, "-o") == 0)
-  {
-    state_ = InOutputArg;
-  }
-  else if (arg_[0] == '-' && ((arg_[1] == 'W' && (arg_[2] == 'l' || arg_[2] == 'p')) || arg_[1] == 'M'))
-  {
-    /* This is a -Wl linker option
-     *  -Wl,-Map,output.map
-     *  or a -Wp prepocessor option
-     *  -Wp,option
-     *  also matches for options like -Wpedantic
-     *  handled here to skip for matching source files in
-     *  these arguments
-     */
-    strcpy(argToAdd, arg_);
-  }
-  else if (arg_[0] == '-' && arg_[1] == 'D')
-  {
-    /*  Match for macro definition -D
-     *  handled here to skip for matching source files in
-     *  these arguments
-     */
-    strcpy(argToAdd, arg_);
-  }
-  else if (arg_[0] == '-' && (arg_[1] == 'I' || arg_[1] == 'L') && arg_[2])
-  {
-    /* This is a -I or -L option with a path */
-    char fullPath[PATH_MAX];
-    if (loggerMakePathAbs(arg_ + 2, fullPath, 0))
-    {
-      argToAdd[2] = 0;
-      strcat(argToAdd, fullPath);
-    }
-  }
-  else
-  {
-    char fullPath[PATH_MAX];
-    if (loggerMakePathAbs(argToAdd, fullPath, 1))
-    {
-      char* ext = loggerGetFileExt(fullPath, 1);
-      if (ext)
-      {
-        int i;
-        for (i = 0; srcExts[i]; ++i)
-        {
-          if (strcmp(srcExts[i], ext) == 0)
-          {
-            strcpy(argToAdd, fullPath);
-            loggerVectorAddUnique(&action_->sources,  loggerStrDup(fullPath),
-              (LoggerCmpFuc) &strcmp);
-            break;
-          }
-        }
-      }
-
-      free(ext);
-    }
-  }
-
-  if (argToAdd[0])
-  {
-    loggerVectorAdd(&action_->arguments, loggerStrDup(argToAdd));
-  }
-
-  return state_;
 }
 
 /**
@@ -262,7 +156,7 @@ static void getDefaultArguments(const char* prog_, LoggerVector* args_)
  * working directory
  * (see https://gcc.gnu.org/onlinedocs/cpp/Environment-Variables.html).
  *
- * &param paths_ A vector in which the items from envVar_ are added.
+ * @param paths_ A vector in which the items from envVar_ are added.
  * @param envVar_ An environment variable which contains paths separated by
  * color (:) character. If no such environment variable is set then the vector
  * remains untouched.
@@ -345,7 +239,6 @@ int isObjectFile(const char* filename_)
 
 int loggerGccParserCollectActions(
   const char* prog_,
-  const char* toolName_,
   const char* const argv_[],
   LoggerVector* actions_)
 {
@@ -358,13 +251,18 @@ int loggerGccParserCollectActions(
 
   size_t lastIncPos = 1;
   size_t lastSysIncPos = 1;
-  GccArgsState state = Normal;
-  LoggerAction* action = loggerActionNew(toolName_);
+  LoggerAction* action = loggerActionNew();
 
   char* keepLinkVar = getenv("CC_LOGGER_KEEP_LINK");
   int keepLink = keepLinkVar && strcmp(keepLinkVar, "true") == 0;
 
-  /* If toolName_ is not an absolute path, we try to find it as an
+  const char* toolName = strrchr(prog_, '/');
+  if (toolName)
+    ++toolName;
+  else
+    toolName = prog_;
+
+  /* If prog_ is not an absolute path, we try to find it as an
    * executable in the PATH.
    * Earlier there was an approach to use realpath() in order to fetch
    * the absolute path of the binary. However, realpath() resolves the
@@ -378,26 +276,29 @@ int loggerGccParserCollectActions(
    * path getter command line arguments go to CCache binary. The solution
    * is not to resolve the symlinks in the logger.
    */
-  if (toolName_ && toolName_[0] != '/')
-  	path_ptr = findFullPath(toolName_, full_prog_path);
+  if (prog_ && prog_[0] != '/')
+    path_ptr = findFullPath(prog_, full_prog_path);
+
   if (path_ptr) /* Log compiler with full path. */
-	  loggerVectorAdd(&action->arguments, loggerStrDup(full_prog_path));
+    loggerVectorAdd(&action->arguments, loggerStrDup(full_prog_path));
   else  /* Compiler was not found in path, log the binary name only. */
-  	  loggerVectorAdd(&action->arguments, loggerStrDup(toolName_));
+    loggerVectorAdd(&action->arguments, loggerStrDup(prog_));
 
   /* Determine programming language based on compiler name. */
   for (i = 0; cCompiler[i]; ++i)
-    if (strstr(toolName_, cCompiler[i]))
+    if (strstr(toolName, cCompiler[i]))
       lang = C;
 
   for (i = 0; cppCompiler[i]; ++i)
-    if (strstr(toolName_, cppCompiler[i]))
+    if (strstr(toolName, cppCompiler[i]))
       lang = CPP;
 
   for (i = 1; argv_[i]; ++i)
   {
     const char* current = argv_[i];
-    state = processArgument(state, current, action);
+
+    if (current[0])
+      loggerVectorAdd(&action->arguments, loggerStrDup(current));
 
     if (current[0] == '-')
     {
@@ -406,26 +307,56 @@ int loggerGccParserCollectActions(
        * from the flag by a space character.
        * 2 == strlen("-I") && 8 == strlen("-isystem")
        */
-      if (current[1] == 'I')
+      if (strstr(current, "-I") == current)
         lastIncPos = action->arguments.size + (current[2] ? 0 : 1);
       else if (strstr(current, "-isystem") == current)
         lastSysIncPos = action->arguments.size + (current[8] ? 0 : 1);
 
       /* Determine the programming language based on -x flag.
        */
-      else if (strcmp(current, "-x") == 0)
+      else if (strstr(current, "-x") == current)
       {
         /* TODO: The language value after -x can be others too. See the man
          * page of GCC.
          * TODO: According to a GCC warning the -x flag has no effect when it
          * is placed after the last input file to be compiled.
          */
-        const char* l = argv_[i + 1];
+        const char* l = current[2] ? current[2] : argv_[i + 1];
         if (strcmp(l, "c") == 0 || strcmp(l, "c-header") == 0)
           lang = C;
         else if (strcmp(l, "c++") == 0 || strcmp(l, "c++-header") == 0)
           lang = CPP;
       }
+
+      /* Determining the output of the build command. In some cases some .o or
+       * or other files may be considered a source file when they are a
+       * parameter of a flag other than -o, such as -MT. The only usage of
+       * collecting action->output is to remove it from action->sources later.
+       */
+      else if (strstr(current, "-o") == current)
+      {
+        loggerFileInitFromPath(
+          &action->output,
+          current[2] ? current[2] : argv_[i + 1]);
+      }
+    }
+    else
+    {
+      char* ext = loggerGetFileExt(current, 1);
+      if (ext)
+      {
+        int i;
+        for (i = 0; srcExts[i]; ++i)
+        {
+          if (strcmp(srcExts[i], ext) == 0)
+          {
+            loggerVectorAddUnique(&action->sources, loggerStrDup(current),
+              (LoggerCmpFuc) &strcmp);
+            break;
+          }
+        }
+      }
+      free(ext);
     }
   }
 
