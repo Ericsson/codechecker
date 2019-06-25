@@ -31,6 +31,15 @@ class LogParserTest(unittest.TestCase):
         cls.__test_files = os.path.join(cls.__this_dir,
                                         'logparser_test_files')
 
+    @classmethod
+    def teardown_class(cls):
+        """
+        Remove compiler_info.json file.
+        """
+        compiler_info = os.path.join(cls.__this_dir, 'compiler_info.json')
+        if os.path.exists(compiler_info):
+            os.remove(compiler_info)
+
     def test_old_ldlogger(self):
         """
         Test log file parsing escape behaviour with pre-2017 Q2 LD-LOGGER.
