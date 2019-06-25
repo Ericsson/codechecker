@@ -11,6 +11,7 @@ from __future__ import division
 from __future__ import absolute_import
 
 import base64
+import codecs
 from datetime import datetime
 from hashlib import sha256
 import os
@@ -481,7 +482,25 @@ def changePathAndEvents(session, run_id, report_path_map):
         store_bug_events(session, events, report_id)
 
 
-def addFileContent(session, filepath, content, content_hash, encoding):
+def get_file_content(filepath, encoding):
+    """Return the file content for the given filepath.
+
+    If the client sent the file contents encoded decode
+    the file content based on the encoding method.
+    This encoding is optionally used during network transfer
+    between the client an the server.
+    """
+    with codecs.open(filepath, 'r', 'UTF-8', 'replace') as source_file:
+        content = source_file.read()
+        content = codecs.encode(content, 'utf-8')
+
+    if encoding == ttypes.Encoding.BASE64:
+        content = base64.b64decode(content)
+    return content
+
+
+def addFileContent(session, filepath, source_file_name, content_hash,
+                   encoding):
     """
     Add the necessary file contents. If the file is already stored in the
     database then its ID returns. If content_hash in None then this function
@@ -496,18 +515,19 @@ def addFileContent(session, filepath, content, content_hash, encoding):
     transaction times out.
     """
 
-    if encoding == ttypes.Encoding.BASE64:
-        content = base64.b64decode(content)
-
+    source_file_content = None
     if not content_hash:
+        source_file_content = get_file_content(source_file_name, encoding)
         hasher = sha256()
-        hasher.update(content)
+        hasher.update(source_file_content)
         content_hash = hasher.hexdigest()
 
     file_content = session.query(FileContent).get(content_hash)
     if not file_content:
+        if not source_file_content:
+            source_file_content = get_file_content(source_file_name, encoding)
         try:
-            compressed_content = zlib.compress(content,
+            compressed_content = zlib.compress(source_file_content,
                                                zlib.Z_BEST_COMPRESSION)
             fc = FileContent(content_hash, compressed_content)
             session.add(fc)
