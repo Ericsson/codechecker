@@ -21,8 +21,8 @@ import zipfile
 
 from tu_collector import tu_collector
 
+from codechecker_analyzer import env
 from codechecker_common import util, plist_parser
-from codechecker_common.env import get_check_env
 from codechecker_common.logger import get_logger
 
 from . import gcc_toolchain
@@ -591,8 +591,8 @@ def start_workers(actions_map, actions, context, analyzer_config_map,
                    'failed': failed_dir}
 
     # Construct analyzer env.
-    analyzer_environment = get_check_env(context.path_env_extra,
-                                         context.ld_lib_path_extra)
+    analyzer_environment = env.extend(context.path_env_extra,
+                                      context.ld_lib_path_extra)
 
     actions, skipped_actions = skip_cpp(actions, skip_handler)
 

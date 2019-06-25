@@ -12,6 +12,7 @@ from __future__ import absolute_import
 
 from abc import ABCMeta, abstractmethod
 import os
+import subprocess
 
 from alembic import command, config
 from alembic import script
@@ -30,10 +31,30 @@ from codechecker_common.logger import get_logger
 
 from codechecker_web.shared import host_check, pgpass
 
-from ..env import call_command
-
 
 LOG = get_logger('system')
+
+
+def call_command(cmd, env=None, cwd=None):
+    """ Call an external cmd and return with (output, return_code)."""
+
+    try:
+        LOG.debug('Run %s', ' '.join(cmd))
+        out = subprocess.check_output(cmd,
+                                      bufsize=-1,
+                                      env=env,
+                                      stderr=subprocess.STDOUT,
+                                      cwd=cwd)
+        LOG.debug(out)
+        return out, 0
+    except subprocess.CalledProcessError as ex:
+        LOG.debug('Running command "%s" Failed.', ' '.join(cmd))
+        LOG.debug(str(ex.returncode))
+        LOG.debug(ex.output)
+        return ex.output, ex.returncode
+    except OSError as oerr:
+        LOG.warning(oerr.strerror)
+        return oerr.strerror, oerr.errno
 
 
 class DBContext(object):

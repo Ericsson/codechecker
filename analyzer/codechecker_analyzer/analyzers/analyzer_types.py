@@ -15,7 +15,7 @@ import os
 import re
 import subprocess
 
-from codechecker_common.env import get_check_env
+from codechecker_analyzer import env
 from codechecker_common.logger import get_logger
 
 from .. import host_check
@@ -45,8 +45,8 @@ def is_statistics_capable(context):
     check_supported_analyzers([ClangSA.ANALYZER_NAME], context)
     clangsa_cfg = ClangSA.construct_config_handler([], context)
 
-    check_env = get_check_env(context.path_env_extra,
-                              context.ld_lib_path_extra)
+    check_env = env.extend(context.path_env_extra,
+                           context.ld_lib_path_extra)
 
     checkers = ClangSA.get_analyzer_checkers(clangsa_cfg, check_env)
 
@@ -80,8 +80,8 @@ def check_supported_analyzers(analyzers, context):
      and failed is a list of (analyzer, reason) tuple.
     """
 
-    check_env = get_check_env(context.path_env_extra,
-                              context.ld_lib_path_extra)
+    check_env = env.extend(context.path_env_extra,
+                           context.ld_lib_path_extra)
 
     analyzer_binaries = context.analyzer_binaries
 

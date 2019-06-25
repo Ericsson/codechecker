@@ -47,7 +47,7 @@ class SourceAnalyzer(object):
         raise NotImplementedError("Subclasses should implement this!")
 
     @classmethod
-    def resolve_missing_binary(cls, configured_binary, env):
+    def resolve_missing_binary(cls, configured_binary, environ):
         """
         In case of the configured binary for the analyzer is not found in the
         PATH, this method is used to find a callable binary.
@@ -104,7 +104,7 @@ class SourceAnalyzer(object):
             return res_handler
 
     @classmethod
-    def get_analyzer_checkers(cls, config_handler, env):
+    def get_analyzer_checkers(cls, cfg_handler, environ):
         """
         Return the checkers available in the analyzer.
         """

@@ -19,9 +19,8 @@ import subprocess
 import time
 
 from codechecker_common.logger import get_logger
-from codechecker_common.env import get_check_env
 
-from . import analysis_manager, pre_analysis_manager
+from . import analysis_manager, pre_analysis_manager, env
 from .analyzers import analyzer_types
 from .analyzers.clangsa.analyzer import ClangSA
 from .analyzers.clangsa.statistics_collector import \
@@ -68,8 +67,8 @@ def __get_analyzer_version(context, analyzer_config_map):
     """
     Get the path and the version of the analyzer binaries.
     """
-    check_env = get_check_env(context.path_env_extra,
-                              context.ld_lib_path_extra)
+    check_env = env.extend(context.path_env_extra,
+                           context.ld_lib_path_extra)
 
     # Get the analyzer binaries from the config_map which
     # contains only the checked and available analyzers.

@@ -40,6 +40,40 @@ def get_log_env(logfile, context, original_env):
     return new_env
 
 
+def extend(path_env_extra, ld_lib_path_extra):
+    """Extend the checker environment.
+
+    The default environment is extended with the given PATH and
+    LD_LIBRARY_PATH values to find tools if they ar not on
+    the default places.
+    """
+    new_env = os.environ.copy()
+
+    if path_env_extra:
+        extra_path = ':'.join(path_env_extra)
+        LOG.debug_analyzer(
+            'Extending PATH environment variable with: ' + extra_path)
+
+        try:
+            new_env['PATH'] = extra_path + ':' + new_env['PATH']
+        except KeyError:
+            new_env['PATH'] = extra_path
+
+    if ld_lib_path_extra:
+        extra_lib = ':'.join(ld_lib_path_extra)
+        LOG.debug_analyzer(
+            'Extending LD_LIBRARY_PATH environment variable with: ' +
+            extra_lib)
+        try:
+            original_ld_library_path = new_env['LD_LIBRARY_PATH']
+            new_env['LD_LIBRARY_PATH'] = \
+                extra_lib + ':' + original_ld_library_path
+        except KeyError:
+            new_env['LD_LIBRARY_PATH'] = extra_lib
+
+    return new_env
+
+
 def extend_analyzer_cmd_with_resource_dir(analyzer_cmd,
                                           compiler_resource_dir):
     """
