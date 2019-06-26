@@ -768,7 +768,6 @@ class CCSimpleHttpServer(HTTPServer):
         Terminating the server.
         """
         try:
-            LOG.info("Shutting down...")
             self.server_close()
             self.__engine.dispose()
 
@@ -1007,9 +1006,10 @@ def start_server(config_directory, package_data, port, config_sql_server,
         """
         Handle SIGTERM to stop the server running.
         """
-        LOG.info("Received shutdown request.")
+        LOG.info("Shutting down the WEB server on [%s:%d].",
+                 listen_address, port)
+
         http_server.terminate()
-        LOG.info("WEB server is shut down.")
         sys.exit(0)
 
     signal.signal(signal.SIGINT, signal_handler)
