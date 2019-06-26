@@ -2176,18 +2176,14 @@ class ThriftRequestHandler(object):
                 LOG.debug("%d fileid found", fid)
                 continue
 
-            with codecs.open(source_file_name, 'r',
-                             'UTF-8', 'replace') as source_file:
-                file_content = source_file.read()
-                file_content = codecs.encode(file_content, 'utf-8')
+            with DBSession(self.__Session) as session:
+                file_path_to_id[file_name] = \
+                    store_handler.addFileContent(session,
+                                                 trimmed_file_path,
+                                                 source_file_name,
+                                                 file_hash,
+                                                 None)
 
-                with DBSession(self.__Session) as session:
-                    file_path_to_id[file_name] = \
-                        store_handler.addFileContent(session,
-                                                     trimmed_file_path,
-                                                     file_content,
-                                                     file_hash,
-                                                     None)
         return file_path_to_id
 
     def __store_reports(self, session, report_dir, source_root, run_id,
