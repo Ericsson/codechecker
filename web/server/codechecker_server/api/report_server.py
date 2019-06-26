@@ -763,15 +763,8 @@ class ThriftRequestHandler(object):
                            Run.id == RunHistory.run_id)
 
             for stat, run_id in stat_q:
-                failed_files = zlib.decompress(stat.failed_files).split('\n') \
-                    if stat.failed_files else None
-                analyzer_version = zlib.decompress(stat.version) \
-                    if stat.version else None
-
                 analyzer_statistics[run_id][stat.analyzer_type] = \
-                    ttypes.AnalyzerStatistics(version=analyzer_version,
-                                              failed=stat.failed,
-                                              failedFilePaths=failed_files,
+                    ttypes.AnalyzerStatistics(failed=stat.failed,
                                               successful=stat.successful)
 
             results = []
@@ -828,16 +821,9 @@ class ThriftRequestHandler(object):
 
                 analyzer_statistics = {}
                 for stat in history.analyzer_statistics:
-                    failed_files = zlib.decompress(stat.failed_files) \
-                        .split('\n') if stat.failed_files else None
-                    analyzer_version = zlib.decompress(stat.version) \
-                        if stat.version else None
-
                     analyzer_statistics[stat.analyzer_type] = \
                         ttypes.AnalyzerStatistics(
-                            version=analyzer_version,
                             failed=stat.failed,
-                            failedFilePaths=failed_files,
                             successful=stat.successful)
 
                 results.append(RunHistoryData(
@@ -2713,3 +2699,38 @@ class ThriftRequestHandler(object):
                 return False
 
         return False
+
+    @exc_to_thrift_reqfail
+    @timeit
+    def getAnalysisStatistics(self, run_id, run_history_id):
+        self.__require_access()
+
+        analyzer_statistics = {}
+
+        with DBSession(self.__Session) as session:
+            query = session.query(AnalyzerStatistic,
+                                  Run.id)
+
+            if run_id:
+                query = query.filter(Run.id == run_id)
+            elif run_history_id:
+                query = query.filter(RunHistory.id == run_history_id)
+
+            query = query \
+                .outerjoin(RunHistory,
+                           RunHistory.id == AnalyzerStatistic.run_history_id) \
+                .outerjoin(Run,
+                           Run.id == RunHistory.run_id)
+
+            for stat, run_id in query:
+                failed_files = zlib.decompress(stat.failed_files).split('\n') \
+                    if stat.failed_files else None
+                analyzer_version = zlib.decompress(stat.version) \
+                    if stat.version else None
+
+                analyzer_statistics[stat.analyzer_type] = \
+                    ttypes.AnalyzerStatistics(version=analyzer_version,
+                                              failed=stat.failed,
+                                              failedFilePaths=failed_files,
+                                              successful=stat.successful)
+        return analyzer_statistics

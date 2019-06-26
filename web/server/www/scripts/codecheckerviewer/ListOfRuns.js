@@ -211,6 +211,8 @@ function (declare, dom, ObjectStore, Store, Deferred, topic, Dialog, Button,
     },
 
     onRowClick : function (evt) {
+      var that = this;
+
       var item = this.getItem(evt.rowIndex);
       var runId = item.runid;
 
@@ -248,10 +250,9 @@ function (declare, dom, ObjectStore, Store, Deferred, topic, Dialog, Button,
           break;
 
         case 'analyzerStatistics':
-          var stats = item.runData.analyzerStatistics;
-          if (Object.keys(stats).length) {
-            this._analyzerStatDialog.show(item.runData.analyzerStatistics);
-          }
+          CC_SERVICE.getAnalysisStatistics(runId, null, function (stats) {
+            that._analyzerStatDialog.show(stats);
+          });
 
           break;
       }
