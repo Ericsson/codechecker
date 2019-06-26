@@ -95,6 +95,13 @@ def __gather_dependencies(command, build_dir):
     command = __eliminate_argument(command, '-o', True)
     command = __eliminate_argument(command, '--output', True)
 
+    # This flag can be given a .specs file which contains the config options of
+    # cc1, cc1plus, as, ld, etc. Sometimes this file is just a temporary during
+    # the compilation. However, if the file doesn't exist, this flag fails the
+    # compilation. Since this flag is not necessary for dependency generation,
+    # we can skip it.
+    command = __eliminate_argument(command, '-specs')
+
     # Remove potential dependency-file-generator options from the string
     # too. These arguments found in the logged build command would derail
     # us and generate dependencies, e.g. into the build directory used.

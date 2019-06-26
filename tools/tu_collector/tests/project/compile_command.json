@@ -1,7 +1,7 @@
 [
 	{
 		"directory": "/tmp",
-		"command": "g++ -o /dev/null main.cpp",
+		"command": "g++ -specs=NON_EXISTENT_FILE -o /dev/null main.cpp",
 		"file": "main.cpp"
 	},
   {
