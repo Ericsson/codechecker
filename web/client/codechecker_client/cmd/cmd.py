@@ -469,7 +469,8 @@ def __register_sum(parser):
                              "the bugs a report will be appeared only once "
                              "even if it is found on several paths.")
 
-    default_filter_values = {'uniqueing': 'on'}
+    default_filter_values = DEFAULT_FILTER_VALUES
+    default_filter_values['uniqueing'] = 'on'
     __add_filtering_arguments(parser, default_filter_values)
 
 
