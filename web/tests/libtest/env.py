@@ -346,7 +346,10 @@ def enable_auth(workspace):
     scfg_dict["authentication"]["enabled"] = True
     scfg_dict["authentication"]["method_dictionary"]["enabled"] = True
     scfg_dict["authentication"]["method_dictionary"]["auths"] = \
-        ["cc:test", "john:doe", "admin:admin123", "colon:my:password"]
+        ["cc:test", "john:doe", "admin:admin123", "colon:my:password",
+         "admin_group_user:admin123"]
+    scfg_dict["authentication"]["method_dictionary"]["groups"] = \
+        {"admin_group_user": ["admin_GROUP"]}
 
     with open(server_cfg_file, 'w') as scfg:
         json.dump(scfg_dict, scfg, indent=2, sort_keys=True)
