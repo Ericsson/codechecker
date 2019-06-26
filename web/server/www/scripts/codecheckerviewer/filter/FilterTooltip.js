@@ -175,7 +175,11 @@ function (declare, domClass, dom, keys, Standby, TextBox, popup, Tooltip,
       var that = this;
       if (!this.cachedIems) {
         if (opt.filter) {
-          opt.query = [ opt.filter + (this.search.regex ? '*' : '') ];
+          opt.query = [
+            (this.search.regex ? '*' : '') +
+            opt.filter +
+            (this.search.regex ? '*' : '')
+          ];
         }
 
         this.reportFilter.getItems(opt).then(function (items) {

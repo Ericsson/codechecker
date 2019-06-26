@@ -322,7 +322,7 @@ function (declare, domClass, domBase, dom, ItemFileWriteStore, topic, DataGrid,
         }
       });
 
-      this._populateProducts(productNameFilter + '*');
+      this._populateProducts('*' + productNameFilter + '*');
     },
 
     toggleAdminButtons : function (adminLevel) {
