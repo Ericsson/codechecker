@@ -307,8 +307,15 @@ service codeCheckerDBAccess {
 
   // Gives back all analyzed runs.
   // PERMISSION: PRODUCT_ACCESS
-  RunDataList getRunData(1: RunFilter runFilter)
+  RunDataList getRunData(1: RunFilter runFilter,
+                         2: optional i64 limit,
+                         3: optional i64 offset)
                          throws (1: shared.RequestFailed requestError),
+
+  // Returns the number of available runs based on the run filter parameter.
+  // PERMISSION: PRODUCT_ACCESS
+  i64 getRunCount(1: RunFilter runFilter)
+                  throws (1: shared.RequestFailed requestError),
 
   // Get run history for runs.
   // If an empty run id list is provided the history

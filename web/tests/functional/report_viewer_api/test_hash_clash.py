@@ -83,7 +83,7 @@ class HashClash(unittest.TestCase):
                           'test_hash_clash_' + uuid4().hex)
 
     def _reports_for_latest_run(self):
-        runs = self._report.getRunData(None)
+        runs = self._report.getRunData(None, None, 0)
         max_run_id = max(map(lambda run: run.runId, runs))
         return self._report.getRunResults([max_run_id],
                                           100,

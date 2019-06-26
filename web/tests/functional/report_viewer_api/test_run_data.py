@@ -44,7 +44,7 @@ class TestRunData(unittest.TestCase):
         if run_name_filter is not None:
             run_filter.names = [run_name_filter]
 
-        runs = self._cc_client.getRunData(run_filter)
+        runs = self._cc_client.getRunData(run_filter, None, 0)
         return [run for run in runs if run.name in self._run_names]
 
     def test_filter_run_names(self):

@@ -96,7 +96,7 @@ def check_run_names(client, check_names):
     run_filter.names = check_names
     run_filter.exactMatch = check_names is not None
 
-    run_info = {run.name: run for run in client.getRunData(run_filter)}
+    run_info = {run.name: run for run in get_run_data(client, run_filter)}
 
     if not check_names:
         return run_info
@@ -128,11 +128,22 @@ def check_deprecated_arg_usage(args):
                     'results. For more information see the help.')
 
 
-def get_runs(client, run_names):
-    run_filter = ttypes.RunFilter()
-    run_filter.names = run_names
+def get_run_data(client, run_filter, limit=constants.MAX_QUERY_SIZE):
+    """
+    Get all runs based on the given run filter.
+    """
+    all_runs = []
 
-    return client.getRunData(run_filter)
+    offset = 0
+    while True:
+        runs = runs = client.getRunData(run_filter, limit, offset)
+        all_runs.extend(runs)
+        offset += limit
+
+        if len(runs) < limit:
+            break
+
+    return all_runs
 
 
 def validate_filter_values(user_values, valid_values, value_type):
@@ -283,7 +294,7 @@ def handle_list_runs(args):
         run_filter = ttypes.RunFilter()
         run_filter.names = args.names
 
-    runs = client.getRunData(run_filter)
+    runs = get_run_data(client, run_filter)
 
     if args.output_format == 'json':
         results = []
@@ -336,7 +347,8 @@ def handle_list_results(args):
     client = setup_client(args.product_url)
 
     run_names = map(lambda x: x.strip(), args.name.split(':'))
-    run_ids = [run.runId for run in get_runs(client, run_names)]
+    run_filter = ttypes.RunFilter(names=run_names)
+    run_ids = [run.runId for run in get_run_data(client, run_filter)]
 
     if not run_ids:
         LOG.warning("No runs were found!")
@@ -1022,8 +1034,9 @@ def handle_diff_results(args):
         """
         run_with_tag = run_arg_with_tag.split(':')
         run_name = run_with_tag[0]
+        run_filter = ttypes.RunFilter(names=[run_name])
 
-        runs = get_runs(client, [run_name])
+        runs = get_run_data(client, run_filter)
         run_ids = map(lambda run: run.runId, runs)
         run_names = map(lambda run: run.name, runs)
 
@@ -1134,7 +1147,8 @@ def handle_list_result_types(args):
 
     run_ids = None
     if 'all_results' not in args:
-        run_ids = [run.runId for run in get_runs(client, args.names)]
+        run_filter = ttypes.RunFilter(names=args.names)
+        run_ids = [run.runId for run in get_run_data(client, run_filter)]
         if not run_ids:
             LOG.warning("No runs were found!")
             sys.exit(1)
@@ -1278,7 +1292,7 @@ def handle_remove_run_results(args):
         def condition(name, runid, date):
             return False
 
-    for run_id in [run.runId for run in client.getRunData(None)
+    for run_id in [run.runId for run in get_run_data(client, None)
                    if condition(run.name, run.runId, run.runDate)]:
         client.removeRun(run_id)
 
@@ -1339,7 +1353,8 @@ def handle_list_run_histories(args):
     client = setup_client(args.product_url)
     run_ids = None
     if 'names' in args:
-        runs = get_runs(client, args.names)
+        run_filter = ttypes.RunFilter(names=args.names)
+        runs = get_run_data(client, run_filter)
         run_ids = [r.runId for r in runs]
 
     run_history = client.getRunHistory(run_ids, None, None, None)

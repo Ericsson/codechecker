@@ -7,7 +7,9 @@
 define([
   'dojo/_base/declare',
   'dojo/dom-construct',
-  'dojo/data/ItemFileWriteStore',
+  'dojo/data/ObjectStore',
+  'dojo/store/api/Store',
+  'dojo/Deferred',
   'dojo/topic',
   'dijit/Dialog',
   'dijit/form/Button',
@@ -19,7 +21,7 @@ define([
   'codechecker/AnalyzerStatisticsDialog',
   'codechecker/TabCount',
   'codechecker/util'],
-function (declare, dom, ItemFileWriteStore, topic, Dialog, Button,
+function (declare, dom, ObjectStore, Store, Deferred, topic, Dialog, Button,
   RadioButton, TextBox, BorderContainer, ContentPane, DataGrid,
   AnalyzerStatisticsDialog, TabCount, util) {
 
@@ -101,10 +103,67 @@ function (declare, dom, ItemFileWriteStore, topic, Dialog, Button,
     return label;
   }
 
+  var RunStore = declare(Store, {
+    constructor : function (listOfRunsGrid) {
+      this.listOfRunsGrid = listOfRunsGrid;
+    },
+
+    getIdentity : function (run) {
+      return run.runId;
+    },
+
+    query : function (query, options) {
+      var deferred = new Deferred();
+      deferred.total = query.total;
+
+      var that = this;
+      CC_SERVICE.getRunData(
+        query.runFilter,
+        CC_OBJECTS.MAX_QUERY_SIZE,
+        options.start,
+        function (runDataList) {
+          if (runDataList instanceof RequestFailed) {
+            deferred.reject('Failed to get runs: ' + runDataList.message);
+          } else {
+            deferred.resolve(that._formatItems(runDataList));
+          }
+        }).fail(function (xhr) { util.handleAjaxFailure(xhr); });
+
+      return deferred;
+    },
+
+    _formatItems : function(runDataList) {
+      var that = this;
+      runDataList = runDataList.map(function (runData) {
+        return {
+          id           : runData.runId,
+          runid        : runData.runId,
+          name         : { 'runData' : runData },
+          versionTag   : { runName : runData.name,
+                           versionTag : runData.versionTag },
+          date         : util.prettifyDate(runData.runDate),
+          numberofbugs : runData.resultCount,
+          duration     : util.prettifyDuration(runData.duration),
+          runData      : runData,
+          checkcmd     : '<span class="link">Show</span>',
+          del          : false,
+          diff         : { 'runData' : runData,
+                           'listOfRunsGrid' : that.listOfRunsGrid },
+          detectionstatus : prettifyStatus(runData.detectionStatusCount),
+          codeCheckerVersion : runData.codeCheckerVersion,
+          analyzerStatistics : runData.analyzerStatistics
+        };
+      });
+
+      return runDataList;
+    }
+  });
+
   var ListOfRunsGrid = declare(DataGrid, {
     constructor : function () {
-      this.store = new ItemFileWriteStore({
-        data : { identifier : 'id', items : [] }
+
+      this.store = new ObjectStore({
+        objectStore : new RunStore(this)
       });
 
       this.structure = [
@@ -147,19 +206,20 @@ function (declare, dom, ItemFileWriteStore, topic, Dialog, Button,
     postCreate : function () {
       this.inherited(arguments);
       this.layout.setColumnVisibility(7, this.get('showDelete'));
-      this._populateRuns();
+
+      this.refreshGrid();
     },
 
     onRowClick : function (evt) {
       var item = this.getItem(evt.rowIndex);
-      var runId = item.runid[0];
+      var runId = item.runid;
 
       switch (evt.cell.field) {
         case 'name':
           if (!evt.target.classList.contains('link'))
             return;
 
-          var runName = item.runData[0].name;
+          var runName = item.runData.name;
           topic.publish('openRun', {
             baseline : runName,
             tabId : runName,
@@ -169,11 +229,11 @@ function (declare, dom, ItemFileWriteStore, topic, Dialog, Button,
 
         case 'del':
           if (evt.target.type !== 'checkbox') {
-            item.del[0] = !item.del[0];
+            item.del = !item.del;
             this.update();
           }
 
-          if (item.del[0])
+          if (item.del)
             this.infoPane.addToDeleteList(runId);
           else
             this.infoPane.removeFromDeleteList(runId);
@@ -182,15 +242,15 @@ function (declare, dom, ItemFileWriteStore, topic, Dialog, Button,
 
         case 'checkcmd':
           this._dialog.set('title', 'Check command');
-          this._dialog.set('content', item.runData[0].runCmd);
+          this._dialog.set('content', item.runData.runCmd);
           this._dialog.show();
 
           break;
 
         case 'analyzerStatistics':
-          var stats = item.runData[0].analyzerStatistics;
+          var stats = item.runData.analyzerStatistics;
           if (Object.keys(stats).length) {
-            this._analyzerStatDialog.show(item.runData[0].analyzerStatistics);
+            this._analyzerStatDialog.show(item.runData.analyzerStatistics);
           }
 
           break;
@@ -213,68 +273,20 @@ function (declare, dom, ItemFileWriteStore, topic, Dialog, Button,
     refreshGrid : function (runFilter) {
       var that = this;
 
-      this.store.fetch({
-        onComplete : function (runs) {
-          runs.forEach(function (run) {
-            that.store.deleteItem(run);
-          });
-          that.store.save();
-        }
+      var total = new Deferred();
+      CC_SERVICE.getRunCount(runFilter, function (count) {
+          total.resolve(count);
+          that._updateRunCount(count);
+        }).fail(function (xhr) { util.handleAjaxFailure(xhr); });
+
+      this.setQuery({
+        runFilter: runFilter,
+        total: total
       });
 
-      CC_SERVICE.getRunData(runFilter, function (runDataList) {
-        that._updateRunCount(runDataList.length);
-        that._sortRunData(runDataList);
-
-        runDataList.forEach(function (item) {
-          that._addRunData(item);
-        });
-      }).fail(function (xhr) { util.handleAjaxFailure(xhr); });
-    },
-
-    /**
-     * This function adds a new run data to the store.
-     */
-    _addRunData : function (runData) {
-      this.store.newItem({
-        id           : runData.runId,
-        runid        : runData.runId,
-        name         : { 'runData' : runData },
-        versionTag   : { runName : runData.name,
-                         versionTag : runData.versionTag },
-        date         : util.prettifyDate(runData.runDate),
-        numberofbugs : runData.resultCount,
-        duration     : util.prettifyDuration(runData.duration),
-        runData      : runData,
-        checkcmd     : '<span class="link">Show</span>',
-        del          : false,
-        diff         : { 'runData' : runData, 'listOfRunsGrid' : this },
-        detectionstatus : prettifyStatus(runData.detectionStatusCount),
-        codeCheckerVersion : runData.codeCheckerVersion,
-        analyzerStatistics : runData.analyzerStatistics,
-      });
-    },
-
-    _populateRuns : function (runFilter) {
-      var that = this;
-
-      CC_SERVICE.getRunData(runFilter, function (runDataList) {
-        that._updateRunCount(runDataList.length);
-        that._sortRunData(runDataList);
-
-        // In Firefox the onLoaded function called immediately before topics
-        // have been registered.
-        setTimeout(function () { that.onLoaded(runDataList); }, 0);
-
-        topic.publish("hooks/RunsListed", runDataList.length);
-
-        runDataList.forEach(function (item) {
-          topic.publish("hooks/run/Observed", item);
-          that._addRunData(item);
-        });
-
-        that.render();
-      }).fail(function (xhr) { util.handleAjaxFailure(xhr); });
+      // In Firefox the onLoaded function called immediately before topics
+      // have been registered.
+      setTimeout(function () { that.onLoaded(); }, 0);
     },
 
     _updateRunCount : function (num) {

@@ -64,12 +64,14 @@ class TestCmdLineDeletion(unittest.TestCase):
         """
 
         def all_exists(runs):
-            run_names = [run.name for run in self._cc_client.getRunData(None)]
+            run_names = [run.name for run in
+                         self._cc_client.getRunData(None, None, 0)]
             print(run_names)
             return set(runs) <= set(run_names)
 
         def none_exists(runs):
-            run_names = [run.name for run in self._cc_client.getRunData(None)]
+            run_names = [run.name for run in
+                         self._cc_client.getRunData(None, None, 0)]
             return not bool(set(runs).intersection(run_names))
 
         project_name = self._testproject_data['name']
@@ -96,7 +98,7 @@ class TestCmdLineDeletion(unittest.TestCase):
         # Remove runs before run 2 by run date.
 
         run2 = next(itertools.ifilter(lambda run: run.name == run2_name,
-                    self._cc_client.getRunData(None)), None)
+                    self._cc_client.getRunData(None, None, 0)), None)
 
         date_run2 = datetime.strptime(run2.runDate, '%Y-%m-%d %H:%M:%S.%f')
         date_run2 = \

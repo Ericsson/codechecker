@@ -65,7 +65,7 @@ class DiffRemote(unittest.TestCase):
         # Name order matters from __init__ !
         run_names = env.get_run_names(test_workspace)
 
-        runs = self._cc_client.getRunData(None)
+        runs = self._cc_client.getRunData(None, None, 0)
         self._test_runs = [run for run in runs if run.name in run_names]
 
         # There should be at least two runs for this test.
