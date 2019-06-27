@@ -152,7 +152,7 @@ struct RunData {
   3: string                    name,                 // Human-given identifier.
   4: i64                       duration,             // Duration of the run (-1 if not finished).
   5: i64                       resultCount,          // Number of unresolved results (review status is not FALSE_POSITIVE or INTENTIONAL) in the run.
-  6: string                    runCmd,               // The used check command.
+  6: string                    runCmd,               // The used check command. !!!DEPRECATED!!! This field will be empty so use the getCheckCommand API function to get the check command for a run.
   7: map<DetectionStatus, i32> detectionStatusCount, // Number of reports with a particular detection status.
   8: string                    versionTag,           // Version tag of the latest run.
   9: string                    codeCheckerVersion,   // CodeChecker client version of the latest analysis.
@@ -169,7 +169,7 @@ struct RunHistoryData {
   4: string                  user,               // User name who analysed the run.
   5: string                  time,               // Date time when the run was analysed.
   6: i64                     id,                 // Id of the run history tag.
-  7: string                  checkCommand,       // Check command.
+  7: string                  checkCommand,       // Check command. !!!DEPRECATED!!! This field will be empty so use the getCheckCommand API function to get the check command for a run.
   8: string                  codeCheckerVersion, // CodeChecker client version of the latest analysis.
   9: AnalyzerStatisticsData  analyzerStatistics, // Statistics for analyzers. Only number of failed and successfully analyzed
                                                  // files field will be set. To get full analyzer statistics please use the
@@ -320,6 +320,12 @@ service codeCheckerDBAccess {
   // PERMISSION: PRODUCT_ACCESS
   i64 getRunCount(1: RunFilter runFilter)
                   throws (1: shared.RequestFailed requestError),
+
+  // Get check command for a run.
+  // PERMISSION: PRODUCT_ACCESS
+  string getCheckCommand(1: i64 runHistoryId,
+                         2: i64 runId)
+                         throws (1: shared.RequestFailed requestError),
 
   // Get run history for runs.
   // If an empty run id list is provided the history

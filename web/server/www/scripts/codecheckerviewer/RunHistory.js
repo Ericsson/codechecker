@@ -157,9 +157,16 @@ function (declare, ObjectStore, Store, Deferred, DataGrid, Dialog, ContentPane,
           break;
 
         case 'checkCommand':
-          this._dialog.set('title', 'Check command');
-          this._dialog.set('content', item.runCmd);
-          this._dialog.show();
+          CC_SERVICE.getCheckCommand(item.id, null,
+          function (checkCommand) {
+            if (!checkCommand) {
+              checkCommand = 'Unavailable!';
+            }
+
+            that._dialog.set('title', 'Check command');
+            that._dialog.set('content', checkCommand);
+            that._dialog.show();
+          }).fail(function (xhr) { util.handleAjaxFailure(xhr); });
 
           break;
 
