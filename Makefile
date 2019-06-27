@@ -44,7 +44,10 @@ build_tu_collector:
 
 package_tu_collector: build_tu_collector package_dir_structure
 	# Copy tu_collector files.
-	cp -r $(CC_TOOLS)/tu_collector/build/tu_collector/tu_collector $(CC_BUILD_LIB_DIR)
+	cp -rp $(CC_TOOLS)/tu_collector/build/tu_collector/tu_collector $(CC_BUILD_LIB_DIR) && \
+	chmod u+x $(CC_BUILD_LIB_DIR)/tu_collector/tu_collector.py && \
+	cd $(CC_BUILD_DIR) && \
+	ln -sf ../lib/python2.7/tu_collector/tu_collector.py bin/tu_collector
 
 package: package_dir_structure package_plist_to_html package_tu_collector
 	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_ANALYZER) package_analyzer
