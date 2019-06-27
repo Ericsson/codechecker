@@ -105,10 +105,10 @@ class OptionParserTest(unittest.TestCase):
         Test if the compilation architecture is
         detected correctly from the command line.
         """
-        arch = 'x86_64'
+        arch = {'c': 'x86_64'}
         action = {
             'file': 'main.c',
-            'command': "gcc -c -arch " + arch + ' main.c',
+            'command': "gcc -c -arch " + arch['c'] + ' main.c',
             'directory': ''
         }
 
@@ -116,7 +116,7 @@ class OptionParserTest(unittest.TestCase):
         print(res)
 
         self.assertTrue('main.c' == res.source)
-        self.assertEqual(arch, res.target)
+        self.assertEqual(arch['c'], res.target['c'])
         self.assertEqual(BuildAction.COMPILE, res.action_type)
 
     def test_compile_optimized(self):
@@ -383,12 +383,19 @@ class OptionParserTest(unittest.TestCase):
                 mode='w',
                 suffix='.json') as info_file_tmp:
 
-            info_file_tmp.write(
-                    '{"g++": {"default_standard": "-std=FAKE_STD", '
-                    '"target": "FAKE_TARGET", "includes": ["-isystem '
-                    '/FAKE_INCLUDE_DIR"]}}')
+            info_file_tmp.write('''{
+  "g++": {
+    "c++": {
+      "compiler_standard": "-std=FAKE_STD",
+      "target": "FAKE_TARGET",
+      "compiler_includes": [
+        "-isystem /FAKE_INCLUDE_DIR"
+      ]
+    }
+  }
+}''')
             info_file_tmp.flush()
 
             res = log_parser.parse_options(action, info_file_tmp.name)
-            self.assertEqual(res.compiler_includes,
+            self.assertEqual(res.compiler_includes['c++'],
                              ['-isystem', '/FAKE_INCLUDE_DIR'])

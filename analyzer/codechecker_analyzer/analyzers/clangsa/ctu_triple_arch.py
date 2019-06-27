@@ -15,6 +15,7 @@ import shlex
 from codechecker_analyzer.env import extend_analyzer_cmd_with_resource_dir
 
 from .. import analyzer_base
+from ..flag import has_flag
 
 
 def get_compile_command(action, config, source='', output=''):
@@ -22,13 +23,20 @@ def get_compile_command(action, config, source='', output=''):
     for other operations. """
 
     cmd = [config.analyzer_binary]
-    if action.target != "":
-        cmd.append("--target=" + action.target)
+
+    compile_lang = action.lang
+
+    if not has_flag('--target', cmd) and \
+            action.target[compile_lang] != "":
+        cmd.append("--target=" + action.target[compile_lang])
+
     extend_analyzer_cmd_with_resource_dir(cmd,
                                           config.compiler_resource_dir)
-    cmd.extend(action.compiler_includes)
+
+    cmd.extend(action.compiler_includes[compile_lang])
     cmd.append('-c')
-    cmd.extend(['-x', action.lang])
+    if not has_flag('-x', cmd):
+        cmd.extend(['-x', action.lang])
     cmd.extend(config.analyzer_extra_arguments)
     cmd.extend(action.analyzer_options)
     if output:
@@ -36,8 +44,8 @@ def get_compile_command(action, config, source='', output=''):
     if source:
         cmd.append(source)
 
-    if all(not opt.startswith('-std=') for opt in action.analyzer_options):
-        cmd.append(action.compiler_standard)
+    if not has_flag('-std', cmd) and not has_flag('--std', cmd):
+        cmd.append(action.compiler_standard[compile_lang])
 
     return cmd
 
