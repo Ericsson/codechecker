@@ -109,6 +109,7 @@ def pre_analyze(params):
         if ctu_data:
             LOG.debug("running CTU pre analysis")
             ctu_temp_fnmap_folder = ctu_data.get('ctu_temp_fnmap_folder')
+            ctu_func_map_cmd = ctu_data.get('ctu_func_map_cmd')
 
             triple_arch = \
                 ctu_triple_arch.get_triple_arch(action, action.source,
@@ -118,7 +119,7 @@ def pre_analyze(params):
                                      config, analyzer_environment)
             ctu_manager.map_functions(triple_arch, action, action.source,
                                       config, analyzer_environment,
-                                      context.ctu_func_map_cmd,
+                                      ctu_func_map_cmd,
                                       ctu_temp_fnmap_folder)
 
     except Exception as ex:
@@ -202,7 +203,10 @@ def run_pre_analysis(actions, context, analyzer_config_map,
 
     # Postprocessing the pre analysis results.
     if ctu_data:
-        ctu_manager.merge_ctu_func_maps(**ctu_data)
+        ctu_manager.merge_ctu_func_maps(
+                ctu_data.get('ctu_dir'),
+                ctu_data.get('ctu_func_map_file'),
+                ctu_data.get('ctu_temp_fnmap_folder'))
 
     if statistics_data:
 

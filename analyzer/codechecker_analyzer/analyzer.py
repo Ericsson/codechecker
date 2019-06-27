@@ -205,8 +205,12 @@ def perform_analysis(args, skip_handler, context, actions, metadata):
     if ctu_collect or statistics_data:
         ctu_data = None
         if ctu_collect or ctu_analyze:
+            ctu_capability = config_map[ClangSA.ANALYZER_NAME].ctu_capability
             ctu_data = manager.dict({'ctu_dir': ctu_dir,
-                                     'ctu_func_map_file': 'externalFnMap.txt',
+                                     'ctu_func_map_cmd':
+                                     ctu_capability.mapping_tool_path,
+                                     'ctu_func_map_file':
+                                     ctu_capability.mapping_file_name,
                                      'ctu_temp_fnmap_folder':
                                      'tmpExternalFnMaps'})
 
