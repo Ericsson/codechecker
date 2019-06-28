@@ -40,7 +40,7 @@ import math
 import os
 import sys
 import traceback
-from plistlib import PlistParser, writePlist, readPlist
+from plistlib import PlistParser, writePlist, writePlistToString, readPlist
 from xml.parsers.expat import ExpatError
 
 from codechecker_common import util
@@ -97,7 +97,7 @@ class LXMLPlistParser(PlistParser):
         return self.root
 
 
-def read_plist(path):
+def parse_plist(plist_file_obj):
     """
     Read a .plist file. Return the unpacked root object (which usually is a
     dictionary).
@@ -107,14 +107,12 @@ def read_plist(path):
     """
     try:
         imp.find_module('lxml')
-
-        with io.open(path, 'r') as data:
-            parser = LXMLPlistParser()
-            return parser.parse(data)
+        parser = LXMLPlistParser()
+        return parser.parse(plist_file_obj)
     except ImportError:
         LOG.debug("lxml library is not available. Use plistlib to parse plist "
                   "files.")
-        return readPlist(path)
+        return readPlist(plist_file_obj)
 
 
 def get_checker_name(diagnostic, path=""):
@@ -145,7 +143,7 @@ def get_report_hash(diagnostic, source_file):
     return report_hash
 
 
-def parse_plist(path, source_root=None, allow_plist_update=True):
+def parse_plist_file(path, source_root=None, allow_plist_update=True):
     """
     Parse the reports from a plist file.
     One plist file can contain multiple reports.
@@ -155,7 +153,8 @@ def parse_plist(path, source_root=None, allow_plist_update=True):
     reports = []
     files = []
     try:
-        plist = read_plist(path)
+        with io.open(path, 'r') as plist_file_obj:
+            plist = parse_plist(plist_file_obj)
 
         files = plist['files']
 
@@ -287,7 +286,7 @@ def fids_in_path(report_data, file_ids_to_remove):
     return all_fids, kept_diagnostics
 
 
-def remove_report_from_plist(plist_content, skip_handler):
+def remove_report_from_plist(plist_file_obj, skip_handler):
     """
     Parse the original plist content provided by the analyzer
     and return a new plist content where reports were removed
@@ -298,8 +297,9 @@ def remove_report_from_plist(plist_content, skip_handler):
     diagnostic section (control, event ...) nodes should be
     re indexed to use the proper file array indexes!!!
     """
+    report_data = None
     try:
-        report_data = plistlib.readPlistFromString(plist_content)
+        report_data = parse_plist(plist_file_obj)
     except (ExpatError, TypeError, AttributeError) as ex:
         LOG.error("Failed to parse plist content, "
                   "keeping the original version")
@@ -317,7 +317,7 @@ def remove_report_from_plist(plist_content, skip_handler):
         _, kept_diagnostics = fids_in_path(report_data, file_ids_to_remove)
         report_data['diagnostics'] = kept_diagnostics
 
-        res = plistlib.writePlistToString(report_data)
+        res = writePlistToString(report_data)
         return res
 
     except KeyError:
@@ -331,9 +331,10 @@ def skip_report_from_plist(plist_file, skip_handler):
     Rewrites the provided plist file where reports
     were removed if they should be skipped.
     """
-    with open(plist_file, 'r+') as plist:
-        new_plist_content = remove_report_from_plist(plist.read(),
+    with io.open(plist_file, 'r+') as plist:
+        new_plist_content = remove_report_from_plist(plist,
                                                      skip_handler)
+        new_plist_content = new_plist_content.decode("utf8")
         plist.seek(0)
         plist.write(new_plist_content)
         plist.truncate()
@@ -467,7 +468,7 @@ class PlistToPlaintextFormatter(object):
         """
         files, reports = [], []
         try:
-            files, reports = parse_plist(plist_file)
+            files, reports = parse_plist_file(plist_file)
         except Exception as ex:
             traceback.print_stack()
             LOG.error('The generated plist is not valid!')

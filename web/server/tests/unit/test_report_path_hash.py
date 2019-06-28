@@ -33,8 +33,9 @@ class ReportPathHashHandler(unittest.TestCase):
         """
         clang50_trunk_plist = os.path.join(
             self.__plist_test_files, 'clang-5.0-trunk.plist')
-        files, reports = plist_parser.parse_plist(clang50_trunk_plist, None,
-                                                  False)
+        files, reports = plist_parser.parse_plist_file(clang50_trunk_plist,
+                                                       None,
+                                                       False)
         self.assertEqual(len(reports), 3)
 
         # Generate dummy file_ids which should come from the database.
