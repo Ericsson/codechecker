@@ -167,7 +167,7 @@ function (declare, dom, ObjectStore, Store, Deferred, topic, Dialog, Button,
       this.selectable = true;
       this.keepSelection = true;
       this.escapeHTMLInData = false;
-      this.rowsPerPage = CC_OBJECTS.MAX_QUERY_SIZE;
+      this.rowsPerPage = 50;
 
       this._dialog = new Dialog({
         style : 'max-width: 75%; min-width: 25%'

@@ -248,7 +248,7 @@ function (declare, dom, style, Deferred, ObjectStore, Store, QueryResults,
       this.store = new ObjectStore({ objectStore : new BugStore() });
       this.escapeHTMLInData = false;
       this.selectionMode = 'single';
-      this.rowsPerPage = CC_OBJECTS.MAX_QUERY_SIZE;
+      this.rowsPerPage = 50;
       this._lastSelectedRow = 0;
     },
 
