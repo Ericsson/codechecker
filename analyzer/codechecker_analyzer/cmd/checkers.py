@@ -136,8 +136,8 @@ def add_arguments_to_parser(parser):
                                        supported_analyzers) + ".")
 
     context = analyzer_context.get_context()
-    analyzer_environment = get_check_env(context.path_env_extra,
-                                         context.ld_lib_path_extra)
+    analyzer_environment = env.extend(context.path_env_extra,
+                                      context.ld_lib_path_extra)
 
     if get_diagtool_bin(analyzer_environment):
         parser.add_argument('-w', '--warnings',
