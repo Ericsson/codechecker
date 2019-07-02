@@ -237,7 +237,7 @@ class CTUAutodetection(object):
         if os.path.isfile(tool_path):
             return tool_path
 
-        postfixed_tool_path = ''.join([tool_path, '-', major_version])
+        postfixed_tool_path = ''.join([tool_path, '-', str(major_version)])
 
         if os.path.isfile(postfixed_tool_path):
             return postfixed_tool_path
