@@ -313,6 +313,13 @@ struct SourceComponentData {
 }
 typedef list<SourceComponentData> SourceComponentDataList
 
+struct ReportFilterData {
+  1: i64    id,    // Unique id of the report filter.
+  2: string name,  // Name of the report filter.
+  3: string value, // Value of the report filter in JSON format.
+}
+typedef list<ReportFilterData> ReportFilterDataList
+
 service codeCheckerDBAccess {
 
   // Gives back all analyzed runs.
@@ -633,4 +640,20 @@ service codeCheckerDBAccess {
   AnalyzerStatisticsData getAnalysisStatistics(1: i64 runId,
                                                2: i64 runHistoryId)
                                                throws (1: shared.RequestFailed requestError),
+
+  // Add a new filter.
+  // PERMISSION: PRODUCT_ACCESS
+  bool addReportFilter(1: string name,
+                       2: string values)
+                       throws (1: shared.RequestFailed requestError),
+
+  // Get filter values.
+  // PERMISSION: PRODUCT_ACCESS
+  ReportFilterDataList getReportFilters(1: string name)
+                                        throws (1: shared.RequestFailed requestError),
+
+  // Remove an existing filter.
+  // PERMISSION: PRODUCT_ACCESS
+  bool removeReportFilter(1: i64 reportFilterId)
+                          throws (1: shared.RequestFailed requestError),
 }

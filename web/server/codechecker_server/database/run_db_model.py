@@ -403,6 +403,20 @@ class SourceComponent(Base):
         self.username = user_name
 
 
+class ReportFilter(Base):
+    __tablename__ = 'report_filters'
+
+    id = Column(Integer, autoincrement=True, primary_key=True)
+    name = Column(String, nullable=False)
+    value = Column(String, nullable=False)
+    username = Column(String)
+
+    def __init__(self, name, value, username):
+        self.name = name
+        self.value = value
+        self.username = username
+
+
 IDENTIFIER = {
     'identifier': "RunDatabase",
     'orm_meta': CC_META,

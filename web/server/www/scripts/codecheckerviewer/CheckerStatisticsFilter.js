@@ -6,9 +6,6 @@
 
 define([
   'dojo/_base/declare',
-  'dojo/_base/lang',
-  'dojo/dom-construct',
-  'dijit/form/Button',
   'codechecker/hashHelper',
   'codechecker/filter/BugFilterView',
   'codechecker/filter/BugPathLengthFilter',
@@ -17,37 +14,32 @@ define([
   'codechecker/filter/DateFilter',
   'codechecker/filter/DetectionStatusFilter',
   'codechecker/filter/FileFilter',
+  'codechecker/filter/ManageFilters',
   'codechecker/filter/ReportCount',
   'codechecker/filter/RunBaseFilter',
   'codechecker/filter/RunHistoryTagFilter',
   'codechecker/filter/SeverityFilter',
   'codechecker/filter/SourceComponentFilter',
   'codechecker/filter/UniqueFilter'],
-function (declare, lang, dom, Button, hashHelper, BugFilterView,
-  BugPathLengthFilter, CheckerMessageFilter, CheckerNameFilter, DateFilter,
-  DetectionStatusFilter, FileFilter, ReportCount, RunBaseFilter,
-  RunHistoryTagFilter, SeverityFilter, SourceComponentFilter, UniqueFilter) {
+function (declare, hashHelper, BugFilterView, BugPathLengthFilter,
+  CheckerMessageFilter, CheckerNameFilter, DateFilter, DetectionStatusFilter,
+  FileFilter, ManageFilters, ReportCount, RunBaseFilter, RunHistoryTagFilter,
+  SeverityFilter, SourceComponentFilter, UniqueFilter) {
 
   return declare(BugFilterView, {
     postCreate : function () {
       var that = this;
 
-      //--- Clear all filter button ---//
-
-      this._topBarPane = dom.create('div', { class : 'top-bar'}, this.domNode);
-      this._clearAllButton = new Button({
-        class   : 'clear-all-btn',
-        label   : 'Clear All Filters',
-        onClick : function () {
-          that.clearAll();
-          that.notifyAll();
-        }
-      }, this._topBarPane);
+      this._filterManager = new ManageFilters({
+        filterView : this
+      });
+      this.addChild(this._filterManager);
 
       //--- Unique reports filter ---//
 
       this._uniqueFilter = new UniqueFilter({
         class : 'is-unique',
+        title : 'Unique reports',
         parent : this,
         defaultValue : true,
         defaultValues : function () {

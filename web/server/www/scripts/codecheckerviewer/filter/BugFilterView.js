@@ -7,7 +7,6 @@
 define([
   'dojo/_base/declare',
   'dojo/_base/lang',
-  'dojo/Deferred',
   'dojo/dom-class',
   'dojo/dom-construct',
   'dojo/dom-style',
@@ -24,22 +23,22 @@ define([
   'codechecker/filter/DetectionStatusFilter',
   'codechecker/filter/DiffTypeFilter',
   'codechecker/filter/FileFilter',
+  'codechecker/filter/ManageFilters',
   'codechecker/filter/ReportCount',
   'codechecker/filter/ReportHashFilter',
   'codechecker/filter/ReviewStatusFilter',
   'codechecker/filter/RunBaseFilter',
   'codechecker/filter/RunHistoryTagFilter',
-  'codechecker/filter/SelectFilter',
   'codechecker/filter/SeverityFilter',
   'codechecker/filter/SourceComponentFilter',
   'codechecker/filter/UniqueFilter',
   'codechecker/util'],
-function (declare, lang, Deferred, domClass, dom, domStyle, topic,
-  ConfirmDialog, Dialog, Button, ContentPane, hashHelper, BugPathLengthFilter,
-  CheckerMessageFilter, CheckerNameFilter, DateFilter, DetectionStatusFilter,
-  DiffTypeFilter, FileFilter, ReportCount, ReportHashFilter, ReviewStatusFilter,
-  RunBaseFilter, RunHistoryTagFilter, SelectFilter, SeverityFilter,
-  SourceComponentFilter, UniqueFilter, util) {
+function (declare, lang, domClass, dom, domStyle, topic, ConfirmDialog, Dialog,
+  Button, ContentPane, hashHelper, BugPathLengthFilter, CheckerMessageFilter,
+  CheckerNameFilter, DateFilter, DetectionStatusFilter, DiffTypeFilter,
+  FileFilter, ManageFilters, ReportCount, ReportHashFilter, ReviewStatusFilter,
+  RunBaseFilter, RunHistoryTagFilter, SeverityFilter, SourceComponentFilter,
+  UniqueFilter, util) {
 
   var FilterToggle = declare(ContentPane, {
     class : 'filter-toggle',
@@ -109,18 +108,10 @@ function (declare, lang, Deferred, domClass, dom, domStyle, topic,
 
       var queryParams = hashHelper.getState();
 
-      //--- Clear all filter button ---//
-
-      this._topBarPane = dom.create('div', { class : 'top-bar'}, this.domNode);
-      this._clearAllButton = new Button({
-        class   : 'clear-all-btn',
-        label   : 'Clear All Filters',
-        onClick : function () {
-          that.clearAll();
-          that.notifyAll();
-        }
+      this._filterManager = new ManageFilters({
+        filterView : this
       });
-      dom.place(this._clearAllButton.domNode, this._topBarPane);
+      this.addChild(this._filterManager);
 
       this._removeDialog = new ConfirmDialog({
         title     : 'Remove filtered results',
@@ -150,6 +141,7 @@ function (declare, lang, Deferred, domClass, dom, domStyle, topic,
 
       this._uniqueFilter = new UniqueFilter({
         class : 'is-unique',
+        title : 'Unique reports',
         parent : this,
         updateReportFilter : function (isUnique) {
           that.reportFilter.isUnique = isUnique;
@@ -458,7 +450,7 @@ function (declare, lang, Deferred, domClass, dom, domStyle, topic,
         }, this.domNode);
 
         this._removeAllButton = new Button({
-          class : 'remove-all-btn',
+          class : 'remove-all-btn filter-btn',
           label : 'Remove Filtered Reports',
           onClick : function () {
             var count = that._reportCount.getReportCount();
@@ -556,6 +548,16 @@ function (declare, lang, Deferred, domClass, dom, domStyle, topic,
           });
       });
       return state;
+    },
+
+    getFilter : function (className) {
+      var filter = null;
+      for (var i = 0; i < this._filters.length; ++i) {
+        filter = this._filters[i];
+        if (filter.class === className) {
+          return filter;
+        }
+      }
     },
 
     // Initalize all filter by URL parameters.

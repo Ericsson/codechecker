@@ -328,7 +328,8 @@
   content : 'C';
 }
 
-span[class*="severity-"] {
+span[class*="severity-"],
+i[class*="severity-"] {
   line-height: normal;
   text-transform: capitalize;
   font-size: 1em;

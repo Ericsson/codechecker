@@ -15,6 +15,7 @@ import codecs
 from collections import defaultdict
 from datetime import datetime, timedelta
 import io
+import json
 import os
 import re
 import tempfile
@@ -29,8 +30,9 @@ import shared
 from codeCheckerDBAccess_v6 import constants, ttypes
 from codeCheckerDBAccess_v6.ttypes import BugPathPos, CheckerCount, \
     CommentData, DiffType, Encoding, RunHistoryData, Order, ReportData, \
-    ReportDetails, ReviewData, RunData, RunFilter, RunReportCount, \
-    RunTagCount, SourceComponentData, SourceFileData, SortMode, SortType
+    ReportDetails, ReportFilterData, ReviewData, RunData, RunFilter, \
+    RunReportCount, RunTagCount, SourceComponentData, SourceFileData, \
+    SortMode, SortType
 
 from codechecker_common import plist_parser, skiplist_handler
 from codechecker_common.source_code_comment_handler import \
@@ -46,8 +48,8 @@ from ..database import db_cleanup
 from ..database.config_db_model import Product
 from ..database.database import conv
 from ..database.run_db_model import \
-    AnalyzerStatistic, Report, ReviewStatus, File, Run, RunHistory, \
-    RunLock, Comment, BugPathEvent, BugReportPoint, \
+    AnalyzerStatistic, Report, ReviewStatus, File, ReportFilter, Run, \
+    RunHistory, RunLock, Comment, BugPathEvent, BugReportPoint, \
     FileContent, SourceComponent, ExtendedReportData
 from ..tmp import TemporaryDirectory
 
@@ -2767,3 +2769,80 @@ class ThriftRequestHandler(object):
                                               failedFilePaths=failed_files,
                                               successful=stat.successful)
         return analyzer_statistics
+
+    @exc_to_thrift_reqfail
+    @timeit
+    def addReportFilter(self, name, value):
+        self.__require_access()
+
+        try:
+            json.loads(value)
+        except ValueError:
+            LOG.warning("'%s' tried to add a report filter (%s) which value "
+                        "is an invalid JSON: '%s'.", self.__get_username(),
+                        name, value)
+            return False
+
+        with DBSession(self.__Session) as session:
+            user = self.__auth_session.user if self.__auth_session else None
+            report_filter = ReportFilter(name, value, user)
+
+            session.add(report_filter)
+            session.commit()
+
+            return True
+
+    @exc_to_thrift_reqfail
+    @timeit
+    def getReportFilters(self, name):
+        """
+        Return the list of saved report filters.
+        """
+        self.__require_access()
+
+        with DBSession(self.__Session) as session:
+            query = session.query(ReportFilter)
+
+            if name:
+                query = query \
+                    .filter(ReportFilter.name.ilike(conv(name)))
+
+            user = self.__auth_session.user if self.__auth_session else None
+            if user:
+                query = query \
+                    .filter(ReportFilter.username == user)
+
+            return list(map(lambda rf:
+                            ReportFilterData(id=rf.id,
+                                             name=rf.name,
+                                             value=rf.value), query))
+
+    @exc_to_thrift_reqfail
+    @timeit
+    def removeReportFilter(self, report_filter_id):
+        self.__require_access()
+
+        user = self.__get_username()
+
+        with DBSession(self.__Session) as session:
+
+            report_filter = session.query(ReportFilter).get(report_filter_id)
+            if report_filter:
+                user_name = report_filter.username
+                if user_name is not None and user_name != user:
+                    raise shared.ttypes.RequestFailed(
+                        shared.ttypes.ErrorCode.UNAUTHORIZED,
+                        'Unathorized report filter modification!')
+                session.delete(report_filter)
+                session.commit()
+
+                LOG.info("Report filter '%s' was removed by '%s'.",
+                         report_filter.name,
+                         self.__get_username())
+
+                return True
+            else:
+                msg = 'Report filter id ' + str(comment_id) + \
+                      ' was not found in the database.'
+                raise shared.ttypes.RequestFailed(
+                    shared.ttypes.ErrorCode.DATABASE, msg)

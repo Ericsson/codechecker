@@ -30,8 +30,6 @@
 .bug-filters .clear-all-btn,
 .bug-filters .remove-all-btn {
   margin-left: 10px;
-  margin-top: 5px;
-  display: block;
 }
 
 .bug-filters .remove-all-btn {
@@ -39,14 +37,12 @@
   float: right;
 }
 
-.bug-filters .clear-all-btn > .dijitButtonNode,
-.bug-filters .remove-all-btn > .dijitButtonNode {
+.bug-filters .filter-btn > .dijitButtonNode {
   background-color: #fff;
   background-image: none;
 }
 
-.bug-filters .clear-all-btn:hover > .dijitButtonNode
-.bug-filters .remove-all-btn:hover > .dijitButtonNode {
+.bug-filters .filter-btn:hover > .dijitButtonNode {
   background-color: #007ea7;
   color: white;
 }
