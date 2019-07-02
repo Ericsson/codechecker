@@ -525,15 +525,16 @@ def get_language(extension):
     return mapping.get(extension)
 
 
-def determine_compiler(gcc_command):
+def determine_compiler(gcc_command, is_executable_compiler_fun):
     """
     This function determines the compiler from the given compilation command.
     If the first part of the gcc_command is ccache invocation then the rest
     should be a complete compilation command.
 
-    CCache may have two forms:
+    CCache may have three forms:
     1. ccache g++ main.cpp
     2. ccache main.cpp
+    3. /usr/lib/ccache/gcc main.cpp
     In the first case this function drops "ccache" from gcc_command and returns
     the next compiler name.
     In the second case the compiler can be given by config files or an
@@ -541,6 +542,8 @@ def determine_compiler(gcc_command):
     case the compiler remanis "ccache" and the gcc_command is not changed.
     The two cases are distinguished by checking whether the second parameter is
     an executable or not.
+    In the third case gcc is a symlink to ccache, but we can handle
+    it as a normal compiler.
 
     gcc_command -- A split build action as a list which may or may not start
                    with ccache.
@@ -549,8 +552,8 @@ def determine_compiler(gcc_command):
     used compiler from ccache. This can be configured for ccache in config
     files or environment variables.
     """
-    if 'ccache' in gcc_command[0]:
-        if ImplicitCompilerInfo.is_executable_compiler(gcc_command[1]):
+    if gcc_command[0].endswith('ccache'):
+        if is_executable_compiler_fun(gcc_command[1]):
             return gcc_command[1]
 
     return gcc_command[0]
@@ -736,7 +739,9 @@ def parse_options(compilation_db_entry, compiler_info_file=None):
 
     details['directory'] = compilation_db_entry['directory']
     details['action_type'] = None
-    details['compiler'] = determine_compiler(gcc_command)
+    details['compiler'] =\
+        determine_compiler(gcc_command,
+                           ImplicitCompilerInfo.is_executable_compiler)
     if '++' in details['compiler'] or 'cpp' in details['compiler']:
         details['lang'] = 'c++'
 
