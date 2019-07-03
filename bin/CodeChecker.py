@@ -52,12 +52,12 @@ def main(subcommands=None):
     CodeChecker main command line.
     """
 
-    def signal_handler(sig, frame):
+    def signal_handler(signum, frame):
         """
         Without this handler the PostgreSQL
         server does not terminate at signal.
         """
-        sys.exit(1)
+        sys.exit(128 + signum)
 
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)

@@ -98,13 +98,13 @@ def main(subcommand=None):
         print('Saving original build environment failed.')
         print(ex)
 
-    def signal_term_handler(sig, frame):
+    def signal_term_handler(signum, frame):
         global proc_pid
         if proc_pid:
             os.kill(proc_pid, signal.SIGINT)
 
         _remove_tmp()
-        sys.exit(0)
+        sys.exit(128 + signum)
 
     signal.signal(signal.SIGTERM, signal_term_handler)
     signal.signal(signal.SIGINT, signal_term_handler)

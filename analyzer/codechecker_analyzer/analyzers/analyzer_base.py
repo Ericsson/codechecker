@@ -117,13 +117,13 @@ class SourceAnalyzer(object):
         and the stdout and stderr outputs of the process.
         """
 
-        def signal_handler(*args, **kwargs):
+        def signal_handler(signum, frame):
             # Clang does not kill its child processes, so I have to.
             try:
                 g_pid = proc.pid
                 os.killpg(g_pid, signal.SIGTERM)
             finally:
-                sys.exit(os.EX_OK)
+                sys.exit(128 + signum)
 
         signal.signal(signal.SIGINT, signal_handler)
 

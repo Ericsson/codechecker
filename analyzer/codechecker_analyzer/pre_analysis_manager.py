@@ -153,12 +153,12 @@ def run_pre_analysis(actions, context, analyzer_config_map,
     if statistics_data:
         LOG.info("Collecting data for statistical analysis.")
 
-    def signal_handler(*arg, **kwarg):
+    def signal_handler(signum, frame):
         try:
             pool.terminate()
             manager.shutdown()
         finally:
-            sys.exit(1)
+            sys.exit(128 + signum)
 
     signal.signal(signal.SIGINT, signal_handler)
 
