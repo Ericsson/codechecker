@@ -886,11 +886,9 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
 
           highlight.iconOverride = "returning";
         } else {
-          throw {
-            name : 'StackError',
-            message : "Returned from " + func + " while the last function " +
-                      "was " + stack.funcStack[stack.funcStack.length - 1]
-          };
+          console.warn("StackError: Returned from " + func
+            + " while the last function " + "was "
+            + stack.funcStack[stack.funcStack.length - 1]);
         }
       } else if (msg.startsWith("Assuming the condition")) {
         highlight.iconOverride = "assume_switch";
