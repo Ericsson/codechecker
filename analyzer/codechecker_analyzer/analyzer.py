@@ -171,6 +171,15 @@ def perform_analysis(args, skip_handler, context, actions, metadata):
         config_map[ClangSA.ANALYZER_NAME].set_checker_enabled(
             ReturnValueCollector.checker_analyze)
 
+    # Statistics collector checkers must be explicitly disabled
+    # as they trash the output.
+    if "clangsa" in analyzers:
+        config_map[ClangSA.ANALYZER_NAME].set_checker_enabled(
+            SpecialReturnValueCollector.checker_collect, False)
+
+        config_map[ClangSA.ANALYZER_NAME].set_checker_enabled(
+            ReturnValueCollector.checker_collect, False)
+
     # Save some metadata information.
     versions = __get_analyzer_version(context, config_map)
     metadata['versions'].update(versions)
