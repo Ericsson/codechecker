@@ -559,12 +559,12 @@ def start_workers(actions_map, actions, context, analyzer_config_map,
     """
 
     # Handle SIGINT to stop this script running.
-    def signal_handler(*arg, **kwarg):
+    def signal_handler(signum, frame):
         try:
             pool.terminate()
             manager.shutdown()
         finally:
-            sys.exit(1)
+            sys.exit(128 + signum)
 
     signal.signal(signal.SIGINT, signal_handler)
 

@@ -359,7 +359,8 @@ def main():
                 pass
 
         stat.print_stats(args.output)
-        sys.exit("Performance test has timed out or killed.")
+        print("Performance test has timed out or killed.")
+        sys.exit(128 + signum)
 
     signal.signal(signal.SIGINT, finish_test)
 

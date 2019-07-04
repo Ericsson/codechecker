@@ -1002,7 +1002,7 @@ def start_server(config_directory, package_data, port, config_sql_server,
                                      check_env,
                                      manager)
 
-    def signal_handler(*args, **kwargs):
+    def signal_handler(signum, frame):
         """
         Handle SIGTERM to stop the server running.
         """
@@ -1010,7 +1010,7 @@ def start_server(config_directory, package_data, port, config_sql_server,
                  listen_address, port)
 
         http_server.terminate()
-        sys.exit(0)
+        sys.exit(128 + signum)
 
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
