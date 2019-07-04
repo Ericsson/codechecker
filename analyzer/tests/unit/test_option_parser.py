@@ -9,6 +9,7 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
+import shlex
 import tempfile
 import unittest
 
@@ -320,6 +321,12 @@ class OptionParserTest(unittest.TestCase):
         res = log_parser.parse_options(action)
         self.assertEqual(res.analyzer_options, preserve)
 
+    def is_compiler_executable_fun(self, compiler):
+        return True
+
+    def is_compiler_executable_fun_false(self, compiler):
+        return False
+
     def test_compiler_toolchain(self):
         """
         Test if compiler toolchain is parsed and forwarded properly.
@@ -342,17 +349,29 @@ class OptionParserTest(unittest.TestCase):
     def test_ccache_compiler(self):
         action = {'file': 'main.cpp', 'directory': ''}
 
-        action['command'] = 'ccache g++ main.cpp'
-        res = log_parser.parse_options(action)
-        self.assertEqual(res.original_command, 'ccache g++ main.cpp')
+        compiler_action = shlex.split('ccache g++ main.cpp')
+        res = log_parser.determine_compiler(compiler_action,
+                                            self.is_compiler_executable_fun)
+        self.assertEqual(res, 'g++')
 
-        action['command'] = 'ccache main.cpp'
-        res = log_parser.parse_options(action)
-        self.assertEqual(res.original_command, 'ccache main.cpp')
+        compiler_action = shlex.split('ccache main.cpp')
+        res = log_parser.determine_compiler(
+            compiler_action,
+            self.is_compiler_executable_fun_false)
+        self.assertEqual(res, 'ccache')
 
-        action['command'] = 'ccache -Ihello main.cpp'
-        res = log_parser.parse_options(action)
-        self.assertEqual(res.original_command, 'ccache -Ihello main.cpp')
+        compiler_action = shlex.split('ccache -Ihello main.cpp')
+        res = log_parser.determine_compiler(
+            compiler_action,
+            self.is_compiler_executable_fun_false)
+        self.assertEqual(res, 'ccache')
+
+        compiler_action = shlex.split('/usr/lib/ccache/g++ -Ihello main.cpp')
+        res = log_parser.determine_compiler(
+            compiler_action,
+            self.is_compiler_executable_fun_false)
+        self.assertEqual(res,
+                         '/usr/lib/ccache/g++')
 
     def test_compiler_include_file(self):
         action = {
