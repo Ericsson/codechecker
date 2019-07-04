@@ -803,19 +803,19 @@ usage: CodeChecker cmd results [-h] [--uniqueing {on,off}]
                                [--url PRODUCT_URL]
                                [-o {plaintext,rows,table,csv,json}]
                                [--verbose {info,debug,debug_analyzer}]
-                               RUN_NAMES
+                               RUN_NAMES [RUN_NAMES ...]
 
 Show the individual analysis reports' summary.
 
 positional arguments:
-  RUN_NAME              Names of the analysis runs to show result summaries of.
-                        This has the following format:
-                        <run_name_1>:<run_name_2>:<run_name_3> where run names
-                        can contain * quantifiers which matches any number of
-                        characters (zero or more). So if you have
-                        run_1_a_name, run_2_b_name, run_2_c_name, run_3_d_name
-                        then "run_2*:run_3_d_name" selects the last three runs.
-                        Use 'CodeChecker cmd runs' to get the available runs.
+  RUN_NAMES             Names of the analysis runs to show result summaries
+                        of. This has the following format: <run_name_1>
+                        <run_name_2> <run_name_3> where run names can contain
+                        * quantifiers which matches any number of characters
+                        (zero or more). So if you have run_1_a_name,
+                        run_2_b_name, run_2_c_name, run_3_d_name then "run_2*
+                        run_3_d_name" selects the last three runs. Use
+                        'CodeChecker cmd runs' to get the available runs.
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -829,7 +829,7 @@ optional arguments:
 CodeChecker cmd results my_run
 
 # Get analysis results for multiple runs:
-CodeChecker cmd results "my_run1:my_run2"
+CodeChecker cmd results my_run1 my_run2
 
 # Get analysis results by using regex:
 CodeChecker cmd results "my_run*"

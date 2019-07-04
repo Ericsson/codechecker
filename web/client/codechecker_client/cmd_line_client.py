@@ -346,8 +346,7 @@ def handle_list_results(args):
 
     client = setup_client(args.product_url)
 
-    run_names = map(lambda x: x.strip(), args.name.split(':'))
-    run_filter = ttypes.RunFilter(names=run_names)
+    run_filter = ttypes.RunFilter(names=args.names)
     run_ids = [run.runId for run in get_run_data(client, run_filter)]
 
     if not run_ids:
