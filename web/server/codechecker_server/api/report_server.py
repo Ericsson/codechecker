@@ -2288,7 +2288,7 @@ class ThriftRequestHandler(object):
             LOG.debug("Parsing input file '%s'", f)
 
             try:
-                files, reports = plist_parser.parse_plist(
+                files, reports = plist_parser.parse_plist_file(
                     os.path.join(report_dir, f), source_root)
             except Exception as ex:
                 LOG.error('Parsing the plist failed: %s', str(ex))

@@ -459,7 +459,7 @@ def handle_diff_results(args):
                 file_path = os.path.join(reportdir, filename)
                 LOG.debug("Parsing: %s", file_path)
                 try:
-                    files, reports = plist_parser.parse_plist(file_path)
+                    files, reports = plist_parser.parse_plist_file(file_path)
                     for report in reports:
                         path_hash = get_report_path_hash(report, files)
                         if path_hash in processed_path_hashes:

@@ -230,7 +230,7 @@ def assemble_zip(inputs, zip_file, client):
         source_file_mod_times = {}
         missing_files = []
         try:
-            files, reports = plist_parser.parse_plist(plist_file)
+            files, reports = plist_parser.parse_plist_file(plist_file)
 
             for f in files:
                 if not os.path.isfile(f):

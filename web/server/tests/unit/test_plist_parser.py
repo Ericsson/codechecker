@@ -236,7 +236,9 @@ class PlistParserTestCaseNose(unittest.TestCase):
     def test_empty_file(self):
         """Plist file is empty."""
         empty_plist = os.path.join(self.__plist_test_files, 'empty_file')
-        files, reports = plist_parser.parse_plist(empty_plist, None, False)
+        files, reports = plist_parser.parse_plist_file(empty_plist,
+                                                       None,
+                                                       False)
         self.assertEquals(files, [])
         self.assertEquals(reports, [])
 
@@ -244,7 +246,9 @@ class PlistParserTestCaseNose(unittest.TestCase):
         """There was no bug in the checked file."""
         no_bug_plist = os.path.join(
             self.__plist_test_files, 'clang-3.7-noerror.plist')
-        files, reports = plist_parser.parse_plist(no_bug_plist, None, False)
+        files, reports = plist_parser.parse_plist_file(no_bug_plist,
+                                                       None,
+                                                       False)
         self.assertEquals(files, [])
         self.assertEquals(reports, [])
 
@@ -255,7 +259,9 @@ class PlistParserTestCaseNose(unittest.TestCase):
         """
         clang37_plist = os.path.join(
             self.__plist_test_files, 'clang-3.7.plist')
-        files, reports = plist_parser.parse_plist(clang37_plist, None, False)
+        files, reports = plist_parser.parse_plist_file(clang37_plist,
+                                                       None,
+                                                       False)
 
         self.assertEquals(files, self.__found_file_names)
         self.assertEquals(len(reports), 3)
@@ -269,7 +275,9 @@ class PlistParserTestCaseNose(unittest.TestCase):
         """
         clang38_plist = os.path.join(
             self.__plist_test_files, 'clang-3.8-trunk.plist')
-        files, reports = plist_parser.parse_plist(clang38_plist, None, False)
+        files, reports = plist_parser.parse_plist_file(clang38_plist,
+                                                       None,
+                                                       False)
 
         self.assertEquals(files, self.__found_file_names)
         self.assertEquals(len(reports), 3)
@@ -297,7 +305,9 @@ class PlistParserTestCaseNose(unittest.TestCase):
         """
         clang40_plist = os.path.join(
             self.__plist_test_files, 'clang-4.0.plist')
-        files, reports = plist_parser.parse_plist(clang40_plist, None, False)
+        files, reports = plist_parser.parse_plist_file(clang40_plist,
+                                                       None,
+                                                       False)
 
         self.assertEquals(files, self.__found_file_names)
         self.assertEquals(len(reports), 3)
@@ -327,8 +337,9 @@ class PlistParserTestCaseNose(unittest.TestCase):
         """
         clang50_trunk_plist = os.path.join(
             self.__plist_test_files, 'clang-5.0-trunk.plist')
-        files, reports = plist_parser.parse_plist(clang50_trunk_plist, None,
-                                                  False)
+        files, reports = plist_parser.parse_plist_file(clang50_trunk_plist,
+                                                       None,
+                                                       False)
         self.assertEquals(files, self.__found_file_names)
         self.assertEquals(len(reports), 3)
 
