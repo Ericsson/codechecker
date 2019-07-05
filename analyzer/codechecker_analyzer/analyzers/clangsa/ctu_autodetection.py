@@ -16,6 +16,7 @@ import re
 import subprocess
 
 from codechecker_common.logger import get_logger
+from codechecker_analyzer import host_check
 
 LOG = get_logger('analyzer.clangsa')
 
@@ -245,6 +246,28 @@ class CTUAutodetection(object):
             return postfixed_tool_path
 
         return False
+
+    @property
+    def display_progress(self):
+        """Return analyzer args if it is capable to display ctu progress.
+
+        Returns None if the analyzer can not display ctu progress.
+        The ctu display progress arguments depend on
+        the clang analyzer version.
+        """
+
+        if not self.analyzer_version_info:
+            return None
+        ctu_display_progress_args = ['-Xclang',
+                                     '-analyzer-config',
+                                     '-Xclang',
+                                     'display-ctu-progress=true']
+
+        ok = host_check.has_analyzer_config_option(
+            self.__analyzer_binary, "display-ctu-progress", self.environ)
+        if not ok:
+            return None
+        return ctu_display_progress_args
 
     @property
     def mapping_file_name(self):

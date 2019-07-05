@@ -205,9 +205,9 @@ class ClangSA(analyzer_base.SourceAnalyzer):
                      'experimental-enable-naive-ctu-analysis=true',
                      '-Xclang', '-analyzer-config', '-Xclang',
                      'ctu-dir=' + self.get_ctu_dir()])
-                if config.ctu_has_analyzer_display_ctu_progress:
-                    analyzer_cmd.extend(['-Xclang',
-                                         '-analyzer-display-ctu-progress'])
+                ctu_display_progress = config.ctu_capability.display_progress
+                if ctu_display_progress:
+                    analyzer_cmd.extend(ctu_display_progress)
 
             def has_flag(flag):
                 return bool(next((x for x in analyzer_cmd if
@@ -261,7 +261,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             return set()
 
         regex_for_ctu_ast_load = re.compile(
-            r"ANALYZE \(CTU loaded AST for source file\): (.*)")
+            r"CTU loaded AST file: (.*).ast")
 
         paths = set()
 
@@ -337,11 +337,6 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             handler.ctu_dir = os.path.join(args.output_path,
                                            args.ctu_dir)
 
-            handler.ctu_has_analyzer_display_ctu_progress = \
-                host_check.has_analyzer_feature(
-                    context.analyzer_binaries.get(cls.ANALYZER_NAME),
-                    '-analyzer-display-ctu-progress',
-                    environ)
             handler.log_file = args.logfile
             handler.path_env_extra = context.path_env_extra
             handler.ld_lib_path_extra = context.ld_lib_path_extra

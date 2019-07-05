@@ -53,9 +53,11 @@ class TestCtuFailure(unittest.TestCase):
         print("'analyze' reported CTU-compatibility? " + str(self.ctu_capable))
 
         self.ctu_has_analyzer_display_ctu_progress = \
-            host_check.has_analyzer_feature(self.__getClangSaPath(),
-                                            '-analyzer-display-ctu-progress')
-        print("Has -analyzer-display-ctu-progress? " +
+            host_check.has_analyzer_config_option(self.__getClangSaPath(),
+                                                  'display-ctu-progress',
+                                                  self.env)
+
+        print("Has display-ctu-progress=true? " +
               str(self.ctu_has_analyzer_display_ctu_progress))
 
         # Fix the "template" build JSONs to contain a proper directory
@@ -89,7 +91,7 @@ class TestCtuFailure(unittest.TestCase):
 
         output = self.__do_ctu_all(reparse=False,
                                    extra_args=["--verbose", "debug"])
-        self.assertIn("ANALYZE (CTU loaded AST for source file)", output)
+        self.assertIn("CTU loaded AST file", output)
 
     def test_ctu_failure_zip(self):
         """ Test the failure zip contains the source of imported TU
@@ -109,9 +111,7 @@ class TestCtuFailure(unittest.TestCase):
                                    ])
 
         # lib.c should be logged as its AST is loaded by Clang
-        self.assertRegexpMatches(
-                output,
-                r"ANALYZE \(CTU loaded AST for source file\): .*lib\.c")
+        self.assertRegexpMatches(output, r"CTU loaded AST file: .*lib\.c.ast")
 
         # We expect a failure archive to be in the failed directory.
         failed_dir = os.path.join(self.report_dir, "failed")
@@ -162,9 +162,7 @@ class TestCtuFailure(unittest.TestCase):
                                    ])
 
         # lib.c should be logged as its AST is loaded by Clang
-        self.assertRegexpMatches(
-                output,
-                r"ANALYZE \(CTU loaded AST for source file\): .*lib\.c")
+        self.assertRegexpMatches(output, r"CTU loaded AST file: .*lib\.c.ast")
 
         # We expect a failure archive to be in the failed directory.
         failed_dir = os.path.join(self.report_dir, "failed")
@@ -213,9 +211,7 @@ class TestCtuFailure(unittest.TestCase):
                                    ])
 
         # lib.c should be logged as its AST is loaded by Clang
-        self.assertRegexpMatches(
-                output,
-                r"ANALYZE \(CTU loaded AST for source file\): .*lib\.c")
+        self.assertRegexpMatches(output, r"CTU loaded AST file: .*lib\.c.ast")
 
         # We expect two failure archives to be in the failed directory.
         # One failure archive is produced by the CTU analysis and the
