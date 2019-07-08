@@ -40,7 +40,8 @@ import math
 import os
 import sys
 import traceback
-from plistlib import PlistParser, writePlist, writePlistToString, readPlist
+from plistlib import PlistParser, writePlist, writePlistToString, \
+    readPlistFromString
 from xml.parsers.expat import ExpatError
 
 from codechecker_common import util
@@ -112,7 +113,8 @@ def parse_plist(plist_file_obj):
     except ImportError:
         LOG.debug("lxml library is not available. Use plistlib to parse plist "
                   "files.")
-        return readPlist(plist_file_obj)
+        return readPlistFromString(
+            plist_file_obj.read().encode('utf8', errors='ignore'))
 
 
 def get_checker_name(diagnostic, path=""):
