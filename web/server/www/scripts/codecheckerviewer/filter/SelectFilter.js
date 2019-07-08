@@ -42,7 +42,7 @@ function (declare, dom, Standby, ContentPane, Tooltip, FilterBase,
       this.addChild(this._standBy);
     },
 
-    // Initalize filter header with a clear and list available option ability.
+    // Initialize filter header with a clear and list available option ability.
     initHeader : function (disableClean, disableEdit) {
       var that = this;
 

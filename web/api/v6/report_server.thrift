@@ -222,6 +222,11 @@ struct ReportData {
 }
 typedef list<ReportData> ReportDataList
 
+struct BugPathLengthRange {
+  1: i64  min, // Minimum value of bug path length.
+  2: i64  max, // Maximum value of bug path length.
+}
+
 /**
  * Members of this struct are interpreted in "OR" relation with each other.
  * Between the elements of the list there is "AND" relation.
@@ -241,6 +246,7 @@ struct ReportFilter {
   12: list<string>         runName,
   13: list<i64>            runTag,             // Ids of the run history tags.
   14: list<string>         componentNames,     // Names of the source components.
+  15: optional BugPathLengthRange bugPathLength, // Minimum and maximum values of bug path length.
 }
 
 struct RunReportCount {

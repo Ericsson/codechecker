@@ -218,6 +218,15 @@ def __add_filtering_arguments(parser, defaults=None, diff_mode=False):
                          default=init_default('severity'),
                          help="Filter results by severities.")
 
+    f_group.add_argument('--bug-path-length',
+                         type=str,
+                         dest='bug_path_length',
+                         default=argparse.SUPPRESS,
+                         help="Filter results by bug path length. This has "
+                              "the following format: <minimum_bug_path_length>"
+                              ":<maximum_bug_path_length>. Valid values are: "
+                              "\"4:10\", \"4:\", \":10\"")
+
     f_group.add_argument('--tag',
                          nargs='*',
                          dest="tag",

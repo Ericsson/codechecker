@@ -218,6 +218,9 @@ etc. reports.
 in different severity levels. For example, a division by zero or a null pointer
 dereference is more serious than an unused variable. By this field you can
 select the reports on the given severity levels.
+- **Bug path length** - A bug path length interval can restrict the list of
+displayed bug reports. In these fields you can choose the minimum and maximum
+values of bug path length.
 - **Detection date** - A date interval can also restrict the list of displayed
 bug reports. In this field you can choose the date of detection or fixing.
 - **File path**: You can choose a set of files to restrict the list of bug

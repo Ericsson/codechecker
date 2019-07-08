@@ -12,7 +12,7 @@ from __future__ import division
 from __future__ import absolute_import
 
 import base64
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 from datetime import datetime, timedelta
 import hashlib
 import io
@@ -42,6 +42,9 @@ from .product import split_server_url
 
 # Needs to be set in the handler functions.
 LOG = None
+
+
+BugPathLengthRange = namedtuple('BugPathLengthRange', ['min', 'max'])
 
 
 def init_logger(level, stream=None, logger_name='system'):
@@ -174,6 +177,7 @@ def check_filter_values(args):
     or exit from the interpreter.
     """
     severities = checkers = file_path = dt_statuses = rw_statuses = None
+    bug_path_length = None
 
     filter_str = args.filter if 'filter' in args else None
     if filter_str:
@@ -205,6 +209,18 @@ def check_filter_values(args):
     if 'file_path' in args:
         file_path = args.file_path
 
+    if 'bug_path_length' in args:
+        path_lengths = args.bug_path_length.split(':')
+
+        min_bug_path_length = int(path_lengths[0]) if \
+            path_lengths and path_lengths[0].isdigit() else None
+
+        max_bug_path_length = int(path_lengths[1]) if \
+            len(path_lengths) > 1 and path_lengths[1].isdigit() else None
+
+        bug_path_length = BugPathLengthRange(min=min_bug_path_length,
+                                             max=max_bug_path_length)
+
     values_to_check = [
         (severities, ttypes.Severity._NAMES_TO_VALUES, 'severity'),
         (dt_statuses, ttypes.DetectionStatus._NAMES_TO_VALUES,
@@ -215,7 +231,8 @@ def check_filter_values(args):
     if not all(valid for valid in
                [validate_filter_values(*x) for x in values_to_check]):
         sys.exit(1)
-    return severities, checkers, file_path, dt_statuses, rw_statuses
+    return severities, checkers, file_path, dt_statuses, rw_statuses, \
+        bug_path_length
 
 
 def add_filter_conditions(client, report_filter, args):
@@ -224,8 +241,8 @@ def add_filter_conditions(client, report_filter, args):
     the arguments which is provided in the command line.
     """
 
-    severities, checkers, file_path, dt_statuses, rw_statuses = \
-        check_filter_values(args)
+    severities, checkers, file_path, dt_statuses, rw_statuses, \
+        bug_path_length = check_filter_values(args)
 
     report_filter.isUnique = args.uniqueing == 'on'
 
@@ -258,6 +275,11 @@ def add_filter_conditions(client, report_filter, args):
 
     if file_path:
         report_filter.filepath = file_path
+
+    if bug_path_length:
+        report_filter.bugPathLength = \
+            ttypes.BugPathLengthRange(min=bug_path_length.min,
+                                      max=bug_path_length.max)
 
     if 'tag' in args:
         run_history_filter = ttypes.RunHistoryFilter(tagNames=args.tag)
@@ -376,8 +398,8 @@ def handle_list_results(args):
     if args.output_format == 'json':
         print(CmdLineOutputEncoder().encode(all_results))
     else:
-        header = ['File', 'Checker', 'Severity', 'Msg', 'Review status',
-                  'Detection status']
+        header = ['File', 'Checker', 'Severity', 'Message', 'Bug path length',
+                  'Review status', 'Detection status']
 
         rows = []
         for res in all_results:
@@ -396,8 +418,8 @@ def handle_list_results(args):
             if status is not None:
                 dt_status = ttypes.DetectionStatus._VALUES_TO_NAMES[status]
 
-            rows.append((checked_file, res.checkerId, sev,
-                         res.checkerMsg, rw_status, dt_status))
+            rows.append((checked_file, res.checkerId, sev, res.checkerMsg,
+                         res.bugPathLength, rw_status, dt_status))
 
         print(twodim_to_str(args.output_format, header, rows))
 
@@ -413,7 +435,7 @@ def handle_diff_results(args):
 
     check_deprecated_arg_usage(args)
 
-    f_severities, f_checkers, f_file_path, _, _ = check_filter_values(args)
+    f_severities, f_checkers, f_file_path, _, _, _ = check_filter_values(args)
 
     context = webserver_context.get_context()
 
