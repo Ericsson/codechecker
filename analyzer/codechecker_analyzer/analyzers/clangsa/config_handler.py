@@ -24,7 +24,7 @@ class ClangSAConfigHandler(config_handler.AnalyzerConfigHandler):
     Configuration handler for the clang static analyzer.
     """
 
-    def __init__(self):
+    def __init__(self, environ):
         super(ClangSAConfigHandler, self).__init__()
         self.__checker_configs = []
         self.ctu_dir = ''
@@ -33,6 +33,7 @@ class ClangSAConfigHandler(config_handler.AnalyzerConfigHandler):
         self.ld_lib_path_extra = ''
         self.enable_z3 = False
         self.enable_z3_refutation = False
+        self.environ = environ
 
     def add_checker_config(self, config):
         """
@@ -42,4 +43,4 @@ class ClangSAConfigHandler(config_handler.AnalyzerConfigHandler):
 
     @property
     def ctu_capability(self):
-        return CTUAutodetection(self.analyzer_binary)
+        return CTUAutodetection(self.analyzer_binary, self.environ)

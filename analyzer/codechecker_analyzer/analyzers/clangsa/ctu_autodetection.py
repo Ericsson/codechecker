@@ -20,10 +20,11 @@ from codechecker_common.logger import get_logger
 LOG = get_logger('analyzer.clangsa')
 
 
-def test_binary_existence(tool_path):
+def test_binary_existence(tool_path, environ):
     """ Test the executable for existence by checking its version. """
     try:
-        version = subprocess.check_output([tool_path, '-version'])
+        version = subprocess.check_output([tool_path, '-version'],
+                                          env=environ)
     except (subprocess.CalledProcessError, OSError):
         version = 'ERROR'
     return version != 'ERROR'
@@ -156,9 +157,10 @@ class CTUAutodetection(object):
     name.
     """
 
-    def __init__(self, analyzer_binary):
+    def __init__(self, analyzer_binary, environ):
         self.__analyzer_binary = analyzer_binary
         self.__analyzer_version_info = None
+        self.environ = environ
         self.parser = ClangVersionInfoParser()
 
     @property
@@ -176,7 +178,7 @@ class CTUAutodetection(object):
 
         try:
             analyzer_output = subprocess.check_output(
-                [self.__analyzer_binary, '--version'])
+                [self.__analyzer_binary, '--version'], env=self.environ)
         except (subprocess.CalledProcessError, OSError):
             return False
 
@@ -267,4 +269,4 @@ class CTUAutodetection(object):
         if not tool_path:
             return False
 
-        return test_binary_existence(tool_path)
+        return test_binary_existence(tool_path, self.environ)

@@ -314,7 +314,11 @@ class ClangSA(analyzer_base.SourceAnalyzer):
 
     @classmethod
     def construct_config_handler(cls, args, context):
-        handler = config_handler.ClangSAConfigHandler()
+
+        environ = env.extend(context.path_env_extra,
+                             context.ld_lib_path_extra)
+
+        handler = config_handler.ClangSAConfigHandler(environ)
         handler.analyzer_plugins_dir = context.checker_plugin
         handler.analyzer_binary = context.analyzer_binaries.get(
             cls.ANALYZER_NAME)
@@ -323,9 +327,6 @@ class ClangSA(analyzer_base.SourceAnalyzer):
 
         handler.report_hash = args.report_hash \
             if 'report_hash' in args else None
-
-        environ = env.extend(context.path_env_extra,
-                             context.ld_lib_path_extra)
 
         handler.enable_z3 = 'enable_z3' in args and args.enable_z3
 
