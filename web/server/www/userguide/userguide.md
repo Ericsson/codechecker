@@ -225,7 +225,7 @@ values of bug path length.
 bug reports. In this field you can choose the date of detection or fixing.
 - **File path**: You can choose a set of files to restrict the list of bug
 reports.
-- [**Source component**](https://github.com/Ericsson/codechecker/blob/master/docs/user_guide.md#source-components) -
+- [**Source component**](https://github.com/Ericsson/codechecker/blob/master/docs/web/user_guide.md#source-components) -
 Here you can select multiple source components which are named collection of
 directories specified as directory filter.
 - **Checker name** - If you are interested in specific type of bugs then here
@@ -292,7 +292,7 @@ Reports can be assigned a review status of the following values:
 This is really a bug.
 - <span class="customIcon review-status-false-positive"></span>
 **False positive**: This is not a bug. Before marking a bug false positive
-you should read the [false positive how to](https://github.com/Ericsson/codechecker/blob/master/docs/false_positives.md).
+you should read the [false positive how to](https://github.com/Ericsson/codechecker/blob/master/docs/analyzer/false_positives.md).
 - <span class="customIcon review-status-intentional"></span> **Intentional**:
 This report is a bug but we don't want to fix it.
 
