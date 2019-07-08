@@ -522,3 +522,81 @@ class TestAnalyze(unittest.TestCase):
         self.assertEquals(errcode, 0)
         self.assertFalse(os.path.isdir(failed_dir))
         self.unique_json_helper(unique_json, True, True, True)
+
+    def test_invalid_enabled_checker_name(self):
+        """Exit in case of an invalid enabled checker."""
+        build_json = os.path.join(self.test_workspace, "build_success.json")
+        analyze_cmd = [self._codechecker_cmd, "analyze", build_json,
+                       "--analyzers", "clangsa", "-o", self.report_dir,
+                       "-e", "non-existing-checker-name"]
+
+        source_file = os.path.join(self.test_dir, "success.c")
+        build_log = [{"directory": self.test_workspace,
+                      "command": "gcc -c " + source_file,
+                      "file": source_file
+                      }]
+
+        with open(build_json, 'w') as outfile:
+            json.dump(build_log, outfile)
+
+        print(analyze_cmd)
+        process = subprocess.Popen(
+            analyze_cmd, stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE, cwd=self.test_dir)
+        out, err = process.communicate()
+
+        errcode = process.returncode
+        self.assertEquals(errcode, 1)
+
+    def test_invalid_disabled_checker_name(self):
+        """Exit in case of an invalid disabled checker."""
+        build_json = os.path.join(self.test_workspace, "build_success.json")
+        analyze_cmd = [self._codechecker_cmd, "analyze", build_json,
+                       "--analyzers", "clangsa", "-o", self.report_dir,
+                       "-d", "non-existing-checker-name"]
+
+        source_file = os.path.join(self.test_dir, "success.c")
+        build_log = [{"directory": self.test_workspace,
+                      "command": "gcc -c " + source_file,
+                      "file": source_file
+                      }]
+
+        with open(build_json, 'w') as outfile:
+            json.dump(build_log, outfile)
+
+        print(analyze_cmd)
+        process = subprocess.Popen(
+            analyze_cmd, stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE, cwd=self.test_dir)
+        out, err = process.communicate()
+
+        errcode = process.returncode
+        self.assertEquals(errcode, 1)
+
+    def test_multiple_invalid_checker_names(self):
+        """Exit in case of multiple invalid checker names."""
+        build_json = os.path.join(self.test_workspace, "build_success.json")
+        analyze_cmd = [self._codechecker_cmd, "analyze", build_json,
+                       "--analyzers", "clangsa", "-o", self.report_dir,
+                       "-e", "non-existing-checker-name",
+                       "-e", "non-existing-checker",
+                       "-d", "missing.checker",
+                       "-d", "other.missing.checker"]
+
+        source_file = os.path.join(self.test_dir, "success.c")
+        build_log = [{"directory": self.test_workspace,
+                      "command": "gcc -c " + source_file,
+                      "file": source_file
+                      }]
+
+        with open(build_json, 'w') as outfile:
+            json.dump(build_log, outfile)
+
+        print(analyze_cmd)
+        process = subprocess.Popen(
+            analyze_cmd, stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE, cwd=self.test_dir)
+        out, err = process.communicate()
+
+        errcode = process.returncode
+        self.assertEquals(errcode, 1)
