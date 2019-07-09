@@ -14,10 +14,11 @@ from __future__ import absolute_import
 
 import json
 import os
-import unittest
-import subprocess
-import zipfile
+import re
 import shutil
+import subprocess
+import unittest
+import zipfile
 
 from libtest import env
 
@@ -40,6 +41,9 @@ class TestAnalyze(unittest.TestCase):
         # Change working dir to testfile dir so CodeChecker can be run easily.
         self.__old_pwd = os.getcwd()
         os.chdir(self.test_dir)
+
+        self.missing_checker_regex = re.compile(
+            r"No checker\(s\) with these names was found")
 
     def tearDown(self):
         """Restore environment after tests have ran."""
@@ -524,7 +528,7 @@ class TestAnalyze(unittest.TestCase):
         self.unique_json_helper(unique_json, True, True, True)
 
     def test_invalid_enabled_checker_name(self):
-        """Exit in case of an invalid enabled checker."""
+        """Warn in case of an invalid enabled checker."""
         build_json = os.path.join(self.test_workspace, "build_success.json")
         analyze_cmd = [self._codechecker_cmd, "analyze", build_json,
                        "--analyzers", "clangsa", "-o", self.report_dir,
@@ -545,11 +549,15 @@ class TestAnalyze(unittest.TestCase):
             stderr=subprocess.PIPE, cwd=self.test_dir)
         out, err = process.communicate()
 
+        match = self.missing_checker_regex.search(out)
+        self.assertIsNotNone(match)
+        self.assertTrue("non-existing-checker-name" in out)
+
         errcode = process.returncode
-        self.assertEquals(errcode, 1)
+        self.assertEquals(errcode, 0)
 
     def test_invalid_disabled_checker_name(self):
-        """Exit in case of an invalid disabled checker."""
+        """Warn in case of an invalid disabled checker."""
         build_json = os.path.join(self.test_workspace, "build_success.json")
         analyze_cmd = [self._codechecker_cmd, "analyze", build_json,
                        "--analyzers", "clangsa", "-o", self.report_dir,
@@ -570,11 +578,15 @@ class TestAnalyze(unittest.TestCase):
             stderr=subprocess.PIPE, cwd=self.test_dir)
         out, err = process.communicate()
 
+        match = self.missing_checker_regex.search(out)
+        self.assertIsNotNone(match)
+        self.assertTrue("non-existing-checker-name" in out)
+
         errcode = process.returncode
-        self.assertEquals(errcode, 1)
+        self.assertEquals(errcode, 0)
 
     def test_multiple_invalid_checker_names(self):
-        """Exit in case of multiple invalid checker names."""
+        """Warn in case of multiple invalid checker names."""
         build_json = os.path.join(self.test_workspace, "build_success.json")
         analyze_cmd = [self._codechecker_cmd, "analyze", build_json,
                        "--analyzers", "clangsa", "-o", self.report_dir,
@@ -598,5 +610,12 @@ class TestAnalyze(unittest.TestCase):
             stderr=subprocess.PIPE, cwd=self.test_dir)
         out, err = process.communicate()
 
+        match = self.missing_checker_regex.search(out)
+        self.assertIsNotNone(match)
+        self.assertTrue("non-existing-checker-name" in out)
+        self.assertTrue("non-existing-checker" in out)
+        self.assertTrue("missing.checker" in out)
+        self.assertTrue("other.missing.checker" in out)
+
         errcode = process.returncode
-        self.assertEquals(errcode, 1)
+        self.assertEquals(errcode, 0)
