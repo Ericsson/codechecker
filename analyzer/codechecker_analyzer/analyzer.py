@@ -16,7 +16,6 @@ import shlex
 import shutil
 import signal
 import subprocess
-import sys
 import time
 
 from codechecker_common.logger import get_logger
@@ -181,10 +180,11 @@ def perform_analysis(args, skip_handler, context, actions, metadata):
         missing_checkers = checkers.available(args.ordered_checkers,
                                               available_checkers)
         if missing_checkers:
-            LOG.error("No checker(s) with these names was found:\n%s",
-                      '\n'.join(missing_checkers))
-            LOG.error("See checkers list for the available checkers.")
-            sys.exit(1)
+            LOG.warning("No checker(s) with these names was found:\n%s",
+                        '\n'.join(missing_checkers))
+            LOG.warning("Please review the checker names.\n"
+                        "In the next release the analysis will not start "
+                        "with invalid checker names.")
 
     if 'stats_enabled' in args:
         config_map[ClangSA.ANALYZER_NAME].set_checker_enabled(
