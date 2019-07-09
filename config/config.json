@@ -13,7 +13,7 @@
       "sensitive" : "Default checks + more comprehensive checks with a low false positive rate.",
       "extreme" : "Sensitive checks + more comprehensive checks with a manageable false positive rate.",
       "portability" : "Checks that aim to detect code issues emerging from platform differences (eg. between 32-bit and 64-bit architectures).",
-      "security" : "Checkers that warn for potentially vulnerable code"
+      "security" : "Checkers that warn for potentially vulnerable code. Contains all SEI Cert C/C++ rules."
   },
   "checker_config": {
       "clangsa_checkers" : {
@@ -26,8 +26,6 @@
         "alpha.core.SizeofPtr" : ["sensitive", "extreme"],
         "alpha.core.TestAfterDivZero" : ["sensitive", "extreme"],
         "alpha.cplusplus.DeleteWithNonVirtualDtor" : ["sensitive", "extreme"],
-        "alpha.cplusplus.IteratorRange" : [],
-        "alpha.cplusplus.MisusedMovedObject" : ["sensitive", "extreme"],
         "alpha.cplusplus.UninitializedObject" : ["sensitive", "extreme"],
         "alpha.security.ArrayBound" : ["extreme","security"],
         "alpha.security.ArrayBoundV2" : ["extreme","security"],
@@ -44,6 +42,7 @@
         "alpha.unix.SimpleStream" : ["sensitive", "extreme"],
         "alpha.unix.Stream" : ["sensitive", "extreme"],
         "apiModeling.google.GTest" : ["default", "sensitive", "extreme"],
+        "apiModeling.StdCLibraryFunctions" : ["default", "sensitive", "extreme"],       
         "core.builtin.BuiltinFunctions" : ["default", "sensitive", "extreme"],
         "core.builtin.NoReturnFunctions" : ["default", "sensitive", "extreme"],
         "core.CallAndMessage" : ["default", "sensitive", "extreme"],
@@ -64,6 +63,7 @@
         "cplusplus.NewDelete" : ["default", "sensitive", "extreme"],
         "cplusplus.NewDeleteLeaks" : ["default", "sensitive", "extreme"],
         "cplusplus.SelfAssignment" : ["default", "sensitive", "extreme"],
+        "cplusplus.Move" :  ["default", "sensitive", "extreme"],
         "deadcode.DeadStores" : ["default", "sensitive", "extreme"],
         "nullability.NullableDereferenced" : ["sensitive", "extreme"],
         "nullability.NullablePassedToNonnull" : ["sensitive", "extreme"],
@@ -92,7 +92,6 @@
         "unix.Malloc" : ["default", "sensitive", "extreme"],
         "unix.MallocSizeof" : ["default", "sensitive", "extreme"],
         "unix.MismatchedDeallocator" : ["default", "sensitive", "extreme"],
-        "unix.StdCLibraryFunctions" : ["default", "sensitive", "extreme"],
         "unix.Vfork" : ["default", "sensitive", "extreme"],
         "valist.CopyToSelf" : ["default", "sensitive", "extreme"],
         "valist.Uninitialized" : ["default", "sensitive", "extreme"],
@@ -134,6 +133,7 @@
         "bugprone-swapped-arguments" : ["default", "sensitive", "extreme"],
         "bugprone-terminating-continue" : ["default", "sensitive", "extreme"],
         "bugprone-throw-keyword-missing" : ["default", "sensitive", "extreme"],
+        "bugprone-too-small-loop-variable" : ["default", "sensitive", "extreme"],
         "bugprone-undefined-memory-manipulation" : ["default", "sensitive", "extreme"],
         "bugprone-undelegated-constructor" : ["default", "sensitive", "extreme"],
         "bugprone-unused-raii" : ["default", "sensitive", "extreme"],
