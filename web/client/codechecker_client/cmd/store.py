@@ -229,6 +229,8 @@ def assemble_zip(inputs, zip_file, client):
         """
         source_file_mod_times = {}
         missing_files = []
+        sc_handler = SourceCodeCommentHandler()
+
         try:
             files, reports = plist_parser.parse_plist_file(plist_file)
 
@@ -255,8 +257,7 @@ def assemble_zip(inputs, zip_file, client):
                     continue
 
                 report_line = last_report_event['location']['line']
-                sc_handler = SourceCodeCommentHandler(file_path)
-                if sc_handler.has_source_line_comments(report_line):
+                if sc_handler.has_source_line_comments(file_path, report_line):
                     file_hash_with_review_status.add(file_hash)
 
             return missing_files, source_file_mod_times

@@ -354,10 +354,11 @@ def skip_report(report_hash, source_file, report_line, checker_name,
                   report_line, checker_name, report_hash)
         return True
 
-    sc_handler = SourceCodeCommentHandler(source_file)
+    sc_handler = SourceCodeCommentHandler()
 
     # Check for source code comment.
     src_comment_data = sc_handler.filter_source_line_comments(
+        source_file,
         report_line,
         checker_name)
 

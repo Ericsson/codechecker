@@ -2289,6 +2289,8 @@ class ThriftRequestHandler(object):
             return not checker_name.startswith('clang-diagnostic-') and \
                 enabled_checkers and checker_name not in enabled_checkers
 
+        sc_handler = SourceCodeCommentHandler()
+
         # Processing PList files.
         _, _, report_files = next(os.walk(report_dir), ([], [], []))
         for f in report_files:
@@ -2367,12 +2369,11 @@ class ThriftRequestHandler(object):
                     os.path.join(source_root, file_name.strip("/")))
 
                 if os.path.isfile(source_file_name):
-                    sc_handler = SourceCodeCommentHandler(source_file_name)
-
                     report_line = last_report_event['location']['line']
                     source_file = os.path.basename(file_name)
 
                     src_comment_data = sc_handler.filter_source_line_comments(
+                        source_file_name,
                         report_line,
                         checker_name)
 
