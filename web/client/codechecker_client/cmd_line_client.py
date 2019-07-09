@@ -548,14 +548,16 @@ def handle_diff_results(args):
         Returns suppressed reports.
         """
         suppressed_in_code = []
+        sc_handler = SourceCodeCommentHandler()
+
         for rep in reports:
             bughash = rep.report_hash
             source_file = rep.main['location']['file_name']
             bug_line = rep.main['location']['line']
             checker_name = rep.main['check_name']
 
-            sc_handler = SourceCodeCommentHandler(source_file)
             src_comment_data = sc_handler.filter_source_line_comments(
+                source_file,
                 bug_line,
                 checker_name)
 

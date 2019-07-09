@@ -84,9 +84,6 @@ class SourceCodeCommentHandler(object):
         'codechecker_intentional',
         'codechecker_confirmed']
 
-    def __init__(self, source_file):
-        self.__source_file = source_file
-
     @staticmethod
     def __check_if_comment(source_line):
         """
@@ -172,21 +169,20 @@ class SourceCodeCommentHandler(object):
                     'message': message,
                     'status': review_status}
 
-    def has_source_line_comments(self, line):
+    def has_source_line_comments(self, source_file, line):
         """
         Return True if there is any source code comment or False if not.
         """
-        comments = self.get_source_line_comments(line)
+        comments = self.get_source_line_comments(source_file, line)
         return len(comments)
 
-    def get_source_line_comments(self, bug_line):
+    def get_source_line_comments(self, source_file, bug_line):
         """
         This function returns the available preprocessed source code comments
         for a bug line.
         """
-        source_file = self.__source_file
         LOG.debug("Checking for source code comments in the source file '%s'"
-                  "at line %s", self.__source_file, bug_line)
+                  "at line %s", source_file, bug_line)
 
         previous_line_num = bug_line - 1
 
@@ -266,7 +262,7 @@ class SourceCodeCommentHandler(object):
 
         return source_line_comments
 
-    def filter_source_line_comments(self, bug_line, checker_name):
+    def filter_source_line_comments(self, source_file, bug_line, checker_name):
         """
         This function filters the available source code comments for bug line
         by the checker name and returns a list of source code comments.
@@ -293,7 +289,8 @@ class SourceCodeCommentHandler(object):
                  comment1 */
 
         """
-        source_line_comments = self.get_source_line_comments(bug_line)
+        source_line_comments = self.get_source_line_comments(source_file,
+                                                             bug_line)
 
         if not source_line_comments:
             return []
@@ -320,7 +317,7 @@ class SourceCodeCommentHandler(object):
         elif len(checker_name_comments) > 1:
             LOG.debug("Multiple source code comment can be found for '%s' "
                       "checker in '%s' at line %s.", checker_name,
-                      self.__source_file, bug_line)
+                      source_file, bug_line)
             LOG.debug(checker_name_comments)
         else:
             LOG.debug("The following source code comment is found for"
