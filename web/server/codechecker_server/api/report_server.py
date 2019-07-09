@@ -1261,8 +1261,6 @@ class ThriftRequestHandler(object):
         a session parameter which represents a database transaction. This is
         needed because during storage a specific session object has to be used.
         """
-        self.__require_permission([permissions.PRODUCT_ACCESS,
-                                   permissions.PRODUCT_STORE])
         report = session.query(Report).get(report_id)
         if report:
             review_status = session.query(ReviewStatus).get(report.bug_id)
@@ -1302,6 +1300,9 @@ class ThriftRequestHandler(object):
         """
         Change review status of the bug by report id.
         """
+        self.__require_permission([permissions.PRODUCT_ACCESS,
+                                   permissions.PRODUCT_STORE])
+
         if self.isReviewStatusChangeDisabled():
             msg = "Review status change is disabled!"
             raise shared.ttypes.RequestFailed(
