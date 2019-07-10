@@ -10,6 +10,42 @@
 <div class="separator"></div>
 
 <div class="blocks">
+  <h2>Highlights of <a href="https://github.com/Ericsson/codechecker/releases/tag/v6.10.0" class="link">CodeChecker 6.10.0</a> release</h2>
+
+  <div class="items">
+    <div class="intro-row">
+      <h3>Filter results by bug path length</h3>
+      <div class="content">
+        <div class="intro-col intro-col-left col-md-2">
+          We are showing bug path length for each report at the
+          <i>Bug overview</i> page and now it is possible to filter run results
+          by bug path length on the GUI and at the command line too.
+        </div>
+        <div class="intro-col intro-col-right col-md-2">
+          <a href="/images/bug_path_length_filter.png" data-dojo-type="dojox.image.Lightbox" title="Bug path length filter">
+            <img src="/images/bug_path_length_filter.png" alt="Bug path length filter" />
+          </a>
+        </div>
+        <div class="clear example">
+          <b>Examples:</b>
+          <ul>
+            <li>
+              <span class="code">CodeChecker cmd results my_run --bug-path-length 1:4</span>
+            </li>
+            <li>
+              <span class="code">CodeChecker cmd results my_run --bug-path-length :10</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="separator"></div>
+
+<div class="blocks">
   <h2>Highlights of <a href="https://github.com/Ericsson/codechecker/releases/tag/v6.9.1" class="link">CodeChecker 6.9.1</a> release</h2>
 
   <div class="items">
