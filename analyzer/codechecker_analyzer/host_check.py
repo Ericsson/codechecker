@@ -11,6 +11,7 @@ from __future__ import division
 from __future__ import absolute_import
 
 import errno
+import re
 import subprocess
 import tempfile
 
@@ -43,12 +44,42 @@ def check_clang(compiler_bin, env):
             return False
 
 
-def has_analyzer_feature(clang_bin, feature, env=None):
+def has_analyzer_config_option(clang_bin, config_option_name, env=None):
+    """Check if an analyzer config option is available."""
+    cmd = [clang_bin, "-cc1", "-analyzer-config-help"]
+
+    LOG.debug('run: "%s"', ' '.join(cmd))
+
+    try:
+        proc = subprocess.Popen(cmd,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE,
+                                env=env)
+        out, err = proc.communicate()
+        LOG.debug("stdout:\n%s", out)
+        LOG.debug("stderr:\n%s", err)
+
+        match = re.search(config_option_name, out)
+        if match:
+            LOG.debug("Config option '%s' is available.", config_option_name)
+        return (True if match else False)
+
+    except OSError:
+        LOG.error('Failed to run: "%s"', ' '.join(cmd))
+        raise
+
+
+def has_analyzer_option(clang_bin, feature, env=None):
+    """Test if the analyzer has a specific option.
+
+    Testing a feature is done by compiling a dummy file."""
     with tempfile.NamedTemporaryFile() as inputFile:
         inputFile.write("void foo(){}")
         inputFile.flush()
-        cmd = [clang_bin, "-x", "c", "--analyze",
-               "-Xclang", feature, inputFile.name, "-o", "-"]
+        cmd = [clang_bin, "-x", "c", "--analyze"]
+        cmd.extend(feature)
+        cmd.extend([inputFile.name, "-o", "-"])
+
         LOG.debug('run: "%s"', ' '.join(cmd))
         try:
             proc = subprocess.Popen(cmd,

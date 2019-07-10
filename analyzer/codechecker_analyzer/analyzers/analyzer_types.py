@@ -61,8 +61,8 @@ def is_z3_capable(context):
     check_supported_analyzers([ClangSA.ANALYZER_NAME], context)
     analyzer_binary = context.analyzer_binaries.get(ClangSA.ANALYZER_NAME)
 
-    return host_check.has_analyzer_feature(analyzer_binary,
-                                           '-analyzer-constraints=z3')
+    return host_check.has_analyzer_option(analyzer_binary,
+                                          ['-analyzer-constraints=z3'])
 
 
 def check_supported_analyzers(analyzers, context):
