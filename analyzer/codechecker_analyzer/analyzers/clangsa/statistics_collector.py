@@ -67,21 +67,21 @@ def build_stat_coll_cmd(action, config, source):
         cmd.extend(['-Xclang',
                     '-analyzer-checker=' + coll_check])
 
-    compile_lang = self.action.lang
+    compile_lang = action.lang
     if not has_flag('-x', cmd):
         analyzer_cmd.extend(['-x', compile_lang])
 
     if not has_flag('--target', cmd) and \
-            self.action.target[compile_lang] != "":
-        analyzer_cmd.append("--target=" + self.action.target[compile_lang])
+            action.target.get(compile_lang, "") != "":
+        analyzer_cmd.append("--target=" + action.target[compile_lang])
 
     if not has_flag('-std', cmd) and not has_flag('--std', cmd):
-        analyzer_cmd.append(self.action.compiler_standard[compile_lang])
+        analyzer_cmd.append(action.compiler_standard.get(compile_lang, ""))
 
     extend_analyzer_cmd_with_resource_dir(cmd,
                                           config.compiler_resource_dir)
 
-    analyzer_cmd.extend(self.buildaction.compiler_includes[comile_lang])
+    analyzer_cmd.extend(action.compiler_includes.get(compile_lang, []))
 
     if source:
         cmd.append(source)
