@@ -61,8 +61,26 @@ def is_z3_capable(context):
     check_supported_analyzers([ClangSA.ANALYZER_NAME], context)
     analyzer_binary = context.analyzer_binaries.get(ClangSA.ANALYZER_NAME)
 
+    analyzer_env = env.extend(context.path_env_extra,
+                              context.ld_lib_path_extra)
+
     return host_check.has_analyzer_option(analyzer_binary,
-                                          ['-analyzer-constraints=z3'])
+                                          ['-Xclang',
+                                           '-analyzer-constraints=z3'],
+                                          analyzer_env)
+
+
+def is_z3_refutation_capable(context):
+    """ Detects if the current clang is Z3 refutation compatible. """
+    check_supported_analyzers([ClangSA.ANALYZER_NAME], context)
+    analyzer_binary = context.analyzer_binaries.get(ClangSA.ANALYZER_NAME)
+
+    analyzer_env = env.extend(context.path_env_extra,
+                              context.ld_lib_path_extra)
+
+    return host_check.has_analyzer_config_option(analyzer_binary,
+                                                 'crosscheck-with-z3',
+                                                 analyzer_env)
 
 
 def check_supported_analyzers(analyzers, context):

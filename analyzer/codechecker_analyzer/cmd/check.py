@@ -319,23 +319,29 @@ used to generate a log file on the fly.""")
                                     "one.")
 
     context = analyzer_context.get_context()
+    clang_has_z3 = analyzer_types.is_z3_capable(context)
 
-    if analyzer_types.is_z3_capable(context):
+    if clang_has_z3:
         analyzer_opts.add_argument('--z3',
-                                   action='store_true',
                                    dest='enable_z3',
-                                   default=argparse.SUPPRESS,
+                                   choices=['on', 'off'],
+                                   default='off',
                                    help="Enable the z3 solver backend. This "
                                         "allows reasoning over more complex "
                                         "queries, but performance is worse "
                                         "than the default range-based "
                                         "constraint solver.")
 
+    clang_has_z3_refutation = analyzer_types.is_z3_refutation_capable(context)
+
+    if clang_has_z3_refutation:
         analyzer_opts.add_argument('--z3-refutation',
-                                   action='store_true',
                                    dest='enable_z3_refutation',
-                                   default=argparse.SUPPRESS,
-                                   help="Enable the Z3 SMT Solver backend to "
+                                   choices=['on', 'off'],
+                                   default='on' if clang_has_z3_refutation
+                                   else 'off',
+                                   help="Switch on/off the Z3 SMT Solver "
+                                        "backend to "
                                         "reduce false positives. The results "
                                         "of the ranged based constraint "
                                         "solver in the Clang Static Analyzer "
