@@ -23,6 +23,8 @@ from codechecker_common.logger import get_logger
 
 from codechecker_analyzer.env import extend_analyzer_cmd_with_resource_dir
 
+from ..flag import has_flag
+
 LOG = get_logger('analyzer')
 
 
@@ -65,11 +67,21 @@ def build_stat_coll_cmd(action, config, source):
         cmd.extend(['-Xclang',
                     '-analyzer-checker=' + coll_check])
 
-    if action.target != "":
-        cmd.append("--target=" + action.target)
+    compile_lang = self.action.lang
+    if not has_flag('-x', cmd):
+        analyzer_cmd.extend(['-x', compile_lang])
+
+    if not has_flag('--target', cmd) and \
+            self.action.target[compile_lang] != "":
+        analyzer_cmd.append("--target=" + self.action.target[compile_lang])
+
+    if not has_flag('-std', cmd) and not has_flag('--std', cmd):
+        analyzer_cmd.append(self.action.compiler_standard[compile_lang])
+
     extend_analyzer_cmd_with_resource_dir(cmd,
                                           config.compiler_resource_dir)
-    cmd.extend(action.compiler_includes)
+
+    analyzer_cmd.extend(self.buildaction.compiler_includes[comile_lang])
 
     if source:
         cmd.append(source)

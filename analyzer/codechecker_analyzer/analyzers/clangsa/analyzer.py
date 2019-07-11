@@ -23,6 +23,7 @@ from codechecker_analyzer import host_check
 from codechecker_analyzer import env
 
 from .. import analyzer_base
+from ..flag import has_flag
 
 from . import config_handler
 from . import ctu_triple_arch
@@ -209,17 +210,20 @@ class ClangSA(analyzer_base.SourceAnalyzer):
                 if ctu_display_progress:
                     analyzer_cmd.extend(ctu_display_progress)
 
-            def has_flag(flag):
-                return bool(next((x for x in analyzer_cmd if
-                                 x.startswith(flag)),
-                                 False))
+            compile_lang = self.buildaction.lang
+            if not has_flag('-x', analyzer_cmd):
+                analyzer_cmd.extend(['-x', compile_lang])
 
-            if not has_flag('-x'):
-                analyzer_cmd.extend(['-x', self.buildaction.lang])
-            if not has_flag('--target') and self.buildaction.target != "":
-                analyzer_cmd.append("--target=" + self.buildaction.target)
-            if not has_flag('-std') and not has_flag('--std'):
-                analyzer_cmd.append(self.buildaction.compiler_standard)
+            if not has_flag('--target', analyzer_cmd) and \
+                    self.buildaction.target.get(compile_lang, "") != "":
+                analyzer_cmd.append("--target=" +
+                                    self.buildaction.target.get(compile_lang))
+
+            if not has_flag('-std', analyzer_cmd) and \
+                    self.buildaction.compiler_standard.get(compile_lang, "") \
+                    != "":
+                analyzer_cmd.append(
+                        self.buildaction.compiler_standard[compile_lang])
 
             analyzer_cmd.extend(config.analyzer_extra_arguments)
 
@@ -228,7 +232,8 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             env.extend_analyzer_cmd_with_resource_dir(
                 analyzer_cmd, config.compiler_resource_dir)
 
-            analyzer_cmd.extend(self.buildaction.compiler_includes)
+            analyzer_cmd.extend(
+                self.buildaction.compiler_includes[compile_lang])
 
             analyzer_cmd.append(self.source_file)
 

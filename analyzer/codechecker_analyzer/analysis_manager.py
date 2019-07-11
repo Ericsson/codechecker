@@ -293,7 +293,7 @@ def handle_failure(source_analyzer, rh, zip_file, result_base, actions_map):
 
     for of in other_files:
         mentioned_file = os.path.abspath(os.path.join(action.directory, of))
-        key = mentioned_file, action.target
+        key = mentioned_file, action.target[action.lang]
         mentioned_file_action = actions_map.get(key)
         if mentioned_file_action is not None:
             buildactions.append({

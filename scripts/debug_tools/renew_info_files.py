@@ -143,10 +143,20 @@ def create_compiler_info_json(old_info, filepath):
         include_paths = process_includes(old_info[compiler]['includes'])
         for idx, _ in enumerate(include_paths):
             include_paths[idx] = "-isystem %s" % include_paths[idx]
-        info[compiler] = {
+        compiler_data = {
             "includes": include_paths,
             "target": process_target(old_info[compiler]['target']),
             "default_standard": old_info[compiler]['default_standard']}
+
+        # There was no language information in the previous
+        # compiler_info.json files. To be compatible with the new format
+        # are duplicating the information for both languages.
+        # It is possible that the wrong include path will be set
+        # for the wrong language (C includes for C++) but at least one of them
+        # will be right. We can not do better here because the
+        # original compiler might not be available in the current environment.
+        info[compiler]["c"] = compiler_data
+        info[compiler]["c++"] = compiler_data
 
     with io.open(filepath, 'w', encoding='UTF-8') as dest:
         json.dump(info, dest)

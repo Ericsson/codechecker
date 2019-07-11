@@ -154,7 +154,8 @@ class TestAnalyze(unittest.TestCase):
                 self.assertEquals(len(data), 2)
                 self.assertTrue("clang++" in data)
                 self.assertTrue("g++" in data)
-                self.assertEqual(data["clang++"]["includes"][0], "-isystem")
+                self.assertEqual(
+                    data["clang++"]['c++']["compiler_includes"][0], "-isystem")
             except ValueError:
                 self.fail("json.load should successfully parse the file %s"
                           % info_File)
@@ -185,22 +186,29 @@ class TestAnalyze(unittest.TestCase):
             source.write(simple_file_content)
 
         with open(compiler_info_file, 'w') as source:
-            source.write('{"clang++": {"default_standard": "-std=FAKE_STD", '
-                         '"target": "FAKE_TARGET", "includes": ["-isystem '
-                         '/FAKE_INCLUDE_DIR"]}}')
+            source.write('''{
+  "clang++": {
+    "c++": {
+      "compiler_standard": "-std=FAKE_STD",
+      "target": "FAKE_TARGET",
+      "compiler_includes": [
+        "-isystem /FAKE_INCLUDE_DIR"
+      ]
+    }
+  }
+}''')
 
         # Create analyze command.
         analyze_cmd = [self._codechecker_cmd, "analyze", build_json,
                        "--compiler-info-file", compiler_info_file,
                        "--analyzers", "clangsa", "--verbose", "debug",
                        "-o", reports_dir]
-
         # Run analyze.
         process = subprocess.Popen(
             analyze_cmd, stdout=subprocess.PIPE,
             stderr=subprocess.PIPE, cwd=self.test_dir)
         out, _ = process.communicate()
-
+        print(out)
         self.assertTrue("-std=FAKE_STD" in out)
         self.assertTrue("--target=FAKE_TARGET" in out)
         self.assertTrue("-isystem /FAKE_INCLUDE_DIR" in out)
@@ -230,7 +238,8 @@ class TestAnalyze(unittest.TestCase):
             analyze_cmd, stdout=subprocess.PIPE,
             stderr=subprocess.PIPE, cwd=self.test_dir)
         out, err = process.communicate()
-
+        print(out)
+        print(err)
         errcode = process.returncode
         self.assertEquals(errcode, 0)
 

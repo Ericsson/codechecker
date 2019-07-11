@@ -21,6 +21,7 @@ from codechecker_analyzer import host_check
 from codechecker_analyzer import env
 
 from .. import analyzer_base
+from ..flag import has_flag
 from ..clangsa.analyzer import ClangSA
 
 from . import config_handler
@@ -131,23 +132,29 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
             # Enable these compiler warnings by default.
             analyzer_cmd.extend(['-Wall', '-Wextra'])
 
-            # Set language.
-            analyzer_cmd.extend(['-x', self.buildaction.lang])
+            compile_lang = self.buildaction.lang
 
-            if self.buildaction.target != "":
-                analyzer_cmd.append("--target=" + self.buildaction.target)
+            if not has_flag('-x', analyzer_cmd):
+                analyzer_cmd.extend(['-x', compile_lang])
+
+            if not has_flag('--target', analyzer_cmd) and \
+                    self.buildaction.target.get(compile_lang, "") != "":
+                analyzer_cmd.append(
+                    "--target=" + self.buildaction.target.get(compile_lang,
+                                                              ""))
 
             analyzer_cmd.extend(self.buildaction.analyzer_options)
 
             env.extend_analyzer_cmd_with_resource_dir(
                 analyzer_cmd, config.compiler_resource_dir)
 
-            analyzer_cmd.extend(self.buildaction.compiler_includes)
+            analyzer_cmd.extend(
+                self.buildaction.compiler_includes[compile_lang])
 
-            if not next((x for x in analyzer_cmd if x.startswith('-std=') or
-                        x.startswith('--std')),
-                        False):
-                analyzer_cmd.append(self.buildaction.compiler_standard)
+            if not has_flag('-std', analyzer_cmd) and not \
+                    has_flag('--std', analyzer_cmd):
+                analyzer_cmd.append(
+                    self.buildaction.compiler_standard.get(compile_lang, ""))
 
             analyzer_cmd.extend(compiler_warnings)
 
@@ -213,8 +220,10 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
         """
         See base class for docs.
         """
-        res_handler = result_handler.ClangTidyPlistToFile(
-            buildaction, report_output, self.config_handler.report_hash)
+        report_hash = self.config_handler.report_hash
+        res_handler = result_handler.ClangTidyPlistToFile(buildaction,
+                                                          report_output,
+                                                          report_hash)
 
         res_handler.severity_map = severity_map
         res_handler.skiplist_handler = skiplist_handler

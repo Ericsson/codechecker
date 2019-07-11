@@ -211,6 +211,14 @@ class ImplicitCompilerInfo(object):
     compiler_isexecutable = {}
 
     @staticmethod
+    def c():
+        return "c"
+
+    @staticmethod
+    def cpp():
+        return "c++"
+
+    @staticmethod
     def is_executable_compiler(compiler):
         if compiler not in ImplicitCompilerInfo.compiler_isexecutable:
             ImplicitCompilerInfo.compiler_isexecutable[compiler] = \
@@ -444,46 +452,111 @@ class ImplicitCompilerInfo(object):
 
     @staticmethod
     def load_compiler_info(filename, compiler):
+        """Load compiler information from a file."""
         contents = load_json_or_empty(filename, {})
         compiler_info = contents.get(compiler)
         if compiler_info is None:
             LOG.error("Could not find compiler %s in file %s",
                       compiler, filename)
+            return
 
         ICI = ImplicitCompilerInfo
-        ICI.compiler_info[compiler]['includes'] = []
-        for element in map(shlex.split, compiler_info.get('includes')):
-            ICI.compiler_info[compiler]['includes'].extend(element)
-        ICI.compiler_info[compiler]['default_standard'] = \
-            compiler_info.get('default_standard')
-        ICI.compiler_info[compiler]['target'] = compiler_info.get('target')
+
+        if not ICI.compiler_info.get(compiler):
+            ICI.compiler_info[compiler] = defaultdict(dict)
+
+        # Load for language C
+        ICI.compiler_info[compiler][ICI.c()]['compiler_includes'] = []
+        c_lang_data = compiler_info.get(ICI.c())
+        if c_lang_data:
+            for element in map(shlex.split,
+                               c_lang_data.get("compiler_includes")):
+                ICI.compiler_info[compiler][ICI.c()]['compiler_includes'] \
+                    .extend(element)
+            ICI.compiler_info[compiler][ICI.c()]['compiler_standard'] = \
+                c_lang_data.get('compiler_standard')
+            ICI.compiler_info[compiler][ICI.c()]['target'] = \
+                c_lang_data.get('target')
+
+        # Load for language C++
+        ICI.compiler_info[compiler][ICI.cpp()]['compiler_includes'] = []
+        cpp_lang_data = compiler_info.get(ICI.cpp())
+        if cpp_lang_data:
+            for element in map(shlex.split,
+                               cpp_lang_data.get('compiler_includes')):
+                ICI.compiler_info[compiler][ICI.cpp()]['compiler_includes'] \
+                    .extend(element)
+            ICI.compiler_info[compiler][ICI.cpp()]['compiler_standard'] = \
+                cpp_lang_data.get('compiler_standard')
+            ICI.compiler_info[compiler][ICI.cpp()]['target'] = \
+                cpp_lang_data.get('target')
 
     @staticmethod
     def set(details, compiler_info_file=None):
+        """Detect and set the impicit compiler information.
+
+        If compiler_info_file is available the implicit compiler
+        information will be loaded and set from it.
+        """
         ICI = ImplicitCompilerInfo
 
+        compiler = details['compiler']
         if compiler_info_file and os.path.exists(compiler_info_file):
             # Compiler info file exists, load it.
-            ICI.load_compiler_info(compiler_info_file, details['compiler'])
+            ICI.load_compiler_info(compiler_info_file, compiler)
         else:
             # Invoke compiler to gather implicit compiler info.
-            if details['compiler'] not in ICI.compiler_info:
-                ICI.compiler_info[details['compiler']]['includes'] = \
-                    ICI.get_compiler_includes(details['compiler'],
-                                              details['lang'],
-                                              details['analyzer_options'])
-                ICI.compiler_info[details['compiler']]['target'] = \
-                    ICI.get_compiler_target(details['compiler'])
-                ICI.compiler_info[details['compiler']]['default_standard'] = \
-                    ICI.get_compiler_standard(details['compiler'],
-                                              details['lang'])
+            # Independently of the actual compilation language in the
+            # compile command collect the iformation for C and C++.
+            if not ICI.compiler_info.get(compiler):
 
-        details['compiler_includes'] = details['compiler_includes'] or \
-            ICI.compiler_info[details['compiler']]['includes']
-        details['compiler_standard'] = details['compiler_standard'] or \
-            ICI.compiler_info[details['compiler']]['default_standard']
-        details['target'] = details['target'] or \
-            ICI.compiler_info[details['compiler']]['target']
+                ICI.compiler_info[compiler] = defaultdict(dict)
+                # Collect for C
+                c_includes = \
+                    ICI.get_compiler_includes(compiler,
+                                              ICI.c(),
+                                              details['analyzer_options'])
+                ICI.compiler_info[compiler][ICI.c()]['compiler_includes'] = \
+                    c_includes
+                ICI.compiler_info[compiler][ICI.c()]['target'] = \
+                    ICI.get_compiler_target(compiler)
+                ICI.compiler_info[compiler][ICI.c()]['compiler_standard'] = \
+                    ICI.get_compiler_standard(compiler, ICI.c())
+
+                # Collect for C++
+                ICI.compiler_info[compiler][ICI.cpp()]['compiler_includes'] = \
+                    ICI.get_compiler_includes(compiler, ICI.cpp(),
+                                              details['analyzer_options'])
+                ICI.compiler_info[compiler][ICI.cpp()]['target'] = \
+                    ICI.get_compiler_target(compiler)
+                ICI.compiler_info[compiler][ICI.cpp()]['compiler_standard'] = \
+                    ICI.get_compiler_standard(compiler, ICI.cpp())
+
+        def set_details_from_ICI(key, lang):
+            """Set compiler related information in the 'details' dictionary.
+
+            If the language dependent value is not set yet, get the compiler
+            information from ICI.
+            """
+
+            parsed_value = details[key].get(lang)
+            if parsed_value:
+                details[key][lang] = parsed_value
+            else:
+                # Only set what is available from ICI.
+                compiler_data = ICI.compiler_info.get(compiler)
+                if compiler_data:
+                    language_data = compiler_data.get(lang)
+                    if language_data:
+                        details[key][lang] = language_data.get(key)
+
+        set_details_from_ICI('compiler_includes', ICI.c())
+        set_details_from_ICI('compiler_standard', ICI.c())
+        set_details_from_ICI('target', ICI.c())
+
+        set_details_from_ICI('compiler_includes', ICI.cpp())
+        set_details_from_ICI('compiler_standard', ICI.cpp())
+        set_details_from_ICI('target', ICI.cpp())
 
     @staticmethod
     def get():
@@ -637,7 +710,7 @@ def __get_arch(flag_iterator, details):
     # Where do we use this architecture during analysis and why?
     if flag_iterator.item == '-arch':
         next(flag_iterator)
-        details['target'] = flag_iterator.item
+        details['arch'] = flag_iterator.item
         return True
 
     return False
@@ -718,14 +791,15 @@ def parse_options(compilation_db_entry, compiler_info_file=None):
 
     details = {
         'analyzer_options': [],
-        'compiler_includes': [],
-        'compiler_standard': '',
+        'compiler_includes': defaultdict(dict),  # For each language c/cpp.
+        'compiler_standard': defaultdict(dict),  # For each language c/cpp.
         'analyzer_type': -1,
         'original_command': '',
         'directory': '',
         'output': '',
         'lang': None,
-        'target': '',
+        'arch': '',  # Target in the compile command set by -arch.
+        'target': defaultdict(dict),
         'source': ''}
 
     if 'arguments' in compilation_db_entry:
@@ -781,6 +855,11 @@ def parse_options(compilation_db_entry, compiler_info_file=None):
     else:
         details['action_type'] = BuildAction.LINK
 
+    # Option parser detects target architecture but does not know about the
+    # language during parsing. Set the collected compilation target for the
+    # language detected language.
+    details['target'][lang] = details['arch']
+
     # With gcc-toolchain a non default compiler toolchain can be set. Clang
     # will search for include paths and libraries based on the gcc-toolchain
     # parameter. Detecting extra include paths from the host compiler could
@@ -795,7 +874,7 @@ def parse_options(compilation_db_entry, compiler_info_file=None):
         gcc_toolchain.toolchain_in_args(details['analyzer_options'])
 
     # Store the compiler built in include paths and defines.
-    if not toolchain and 'ccache' not in details['compiler']:
+    if not toolchain:
         ImplicitCompilerInfo.set(details, compiler_info_file)
 
     return BuildAction(**details)
