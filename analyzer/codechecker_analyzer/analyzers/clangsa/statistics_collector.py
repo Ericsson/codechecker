@@ -69,19 +69,19 @@ def build_stat_coll_cmd(action, config, source):
 
     compile_lang = action.lang
     if not has_flag('-x', cmd):
-        analyzer_cmd.extend(['-x', compile_lang])
+        cmd.extend(['-x', compile_lang])
 
     if not has_flag('--target', cmd) and \
             action.target.get(compile_lang, "") != "":
-        analyzer_cmd.append("--target=" + action.target[compile_lang])
+        cmd.append("--target=" + action.target[compile_lang])
 
     if not has_flag('-std', cmd) and not has_flag('--std', cmd):
-        analyzer_cmd.append(action.compiler_standard.get(compile_lang, ""))
+        cmd.append(action.compiler_standard.get(compile_lang, ""))
 
     extend_analyzer_cmd_with_resource_dir(cmd,
                                           config.compiler_resource_dir)
 
-    analyzer_cmd.extend(action.compiler_includes.get(compile_lang, []))
+    cmd.extend(action.compiler_includes.get(compile_lang, []))
 
     if source:
         cmd.append(source)
