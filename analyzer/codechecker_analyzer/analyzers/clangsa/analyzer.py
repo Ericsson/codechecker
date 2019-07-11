@@ -331,7 +331,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         handler.enable_z3 = 'enable_z3' in args and args.enable_z3
 
         handler.enable_z3_refutation = 'enable_z3_refutation' in args and \
-            args.enable_z3_refutation
+            args.enable_z3_refutation == 'on'
 
         if 'ctu_phases' in args:
             handler.ctu_dir = os.path.join(args.output_path,

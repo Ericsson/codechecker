@@ -332,10 +332,11 @@ used to generate a log file on the fly.""")
                                         "constraint solver.")
 
         analyzer_opts.add_argument('--z3-refutation',
-                                   action='store_true',
                                    dest='enable_z3_refutation',
-                                   default=argparse.SUPPRESS,
-                                   help="Enable the Z3 SMT Solver backend to "
+                                   choices=['on', 'off'],
+                                   default='on',
+                                   help="Switch on/off the Z3 SMT Solver "
+                                        "backend to "
                                         "reduce false positives. The results "
                                         "of the ranged based constraint "
                                         "solver in the Clang Static Analyzer "
