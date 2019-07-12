@@ -15,6 +15,7 @@ import codecs
 from collections import defaultdict
 from datetime import datetime, timedelta
 import io
+import json
 import os
 import re
 import tempfile
@@ -2294,14 +2295,23 @@ class ThriftRequestHandler(object):
         # Processing PList files.
         _, _, report_files = next(os.walk(report_dir), ([], [], []))
         for f in report_files:
-            if not f.endswith('.plist'):
+            if not f.endswith('.plist') and not f.endswith('.plist.json'):
                 continue
 
             LOG.debug("Parsing input file '%s'", f)
 
             try:
-                files, reports = plist_parser.parse_plist_file(
-                    os.path.join(report_dir, f), source_root)
+                if f.endswith('.plist.json'):
+                    with open(os.path.join(report_dir, f)) as plist_json:
+                        plist = json.load(plist_json)
+
+                    reports, files, _ = \
+                        plist_parser.get_reports_from_plist_data(plist,
+                                                                 f,
+                                                                 source_root)
+                else:
+                    files, reports, _ = plist_parser.parse_plist_file(
+                        os.path.join(report_dir, f), source_root)
             except Exception as ex:
                 LOG.error('Parsing the plist failed: %s', str(ex))
                 continue

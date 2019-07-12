@@ -145,6 +145,48 @@ def get_report_hash(diagnostic, source_file):
     return report_hash
 
 
+def get_reports_from_plist_data(plist, path, source_root=None):
+    """
+    Creates reports from the given plist data.
+    """
+    files = plist['files']
+    reports = []
+
+    diag_changed = False
+    for diag in plist['diagnostics']:
+
+        available_keys = diag.keys()
+
+        main_section = {}
+        for key in available_keys:
+            # Skip path it is handled separately.
+            if key != 'path':
+                main_section.update({key: diag[key]})
+
+        # We need to extend information for plist files generated
+        # by older clang version (before 3.7).
+        main_section['check_name'] = get_checker_name(diag, path)
+
+        # We need to extend information for plist files generated
+        # by older clang version (before 3.8).
+        file_path = files[diag['location']['file']]
+        if source_root:
+            file_path = os.path.join(source_root, file_path.lstrip('/'))
+
+        if 'issue_hash_content_of_line_in_context' not in diag:
+            report_hash = get_report_hash(diag, file_path)
+            main_section['issue_hash_content_of_line_in_context'] = \
+                report_hash
+            diag_changed = True
+
+        bug_path_items = [item for item in diag['path']]
+
+        report = Report(main_section, bug_path_items, files)
+        reports.append(report)
+
+    return reports, files, diag_changed
+
+
 def parse_plist_file(path, source_root=None, allow_plist_update=True):
     """
     Parse the reports from a plist file.
@@ -158,43 +200,8 @@ def parse_plist_file(path, source_root=None, allow_plist_update=True):
         with io.open(path, 'r') as plist_file_obj:
             plist = parse_plist(plist_file_obj)
 
-        files = plist['files']
-
-        diag_changed = False
-        for diag in plist['diagnostics']:
-
-            available_keys = diag.keys()
-
-            main_section = {}
-            for key in available_keys:
-                # Skip path it is handled separately.
-                if key != 'path':
-                    main_section.update({key: diag[key]})
-
-            # We need to extend information for plist files generated
-            # by older clang version (before 3.7).
-            main_section['check_name'] = get_checker_name(diag, path)
-
-            # We need to extend information for plist files generated
-            # by older clang version (before 3.8).
-            file_path = files[diag['location']['file']]
-            if source_root:
-                file_path = os.path.join(source_root, file_path.lstrip('/'))
-
-            report_hash = get_report_hash(diag, file_path)
-            main_section['issue_hash_content_of_line_in_context'] = \
-                report_hash
-
-            if 'issue_hash_content_of_line_in_context' not in diag:
-                # If the report hash was not in the plist, we set it in the
-                # diagnostic section for later update.
-                diag['issue_hash_content_of_line_in_context'] = report_hash
-                diag_changed = True
-
-            bug_path_items = [item for item in diag['path']]
-
-            report = Report(main_section, bug_path_items, files)
-            reports.append(report)
+        reports, files, diag_changed = \
+            get_reports_from_plist_data(plist, path, source_root)
 
         if diag_changed and allow_plist_update:
             # If the diagnostic section has changed we update the plist file.
@@ -218,7 +225,7 @@ def parse_plist_file(path, source_root=None, allow_plist_update=True):
         LOG.warning(type(ex))
         LOG.warning(ex)
     finally:
-        return files, reports
+        return files, reports, plist
 
 
 def fids_in_range(rng):
@@ -471,7 +478,7 @@ class PlistToPlaintextFormatter(object):
         """
         files, reports = [], []
         try:
-            files, reports = parse_plist_file(plist_file)
+            files, reports, _ = parse_plist_file(plist_file)
         except Exception as ex:
             traceback.print_stack()
             LOG.error('The generated plist is not valid!')

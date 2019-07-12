@@ -217,7 +217,7 @@ def assemble_zip(inputs, zip_file, client):
     missing_source_files = set()
     file_hash_with_review_status = set()
 
-    def collect_file_hashes_from_plist(plist_file):
+    def collect_file_hashes_from_plist_data(files, reports):
         """
         Collects file content hashes and last modification times for the
         source files which can be found in the given plist file.
@@ -231,42 +231,38 @@ def assemble_zip(inputs, zip_file, client):
         missing_files = []
         sc_handler = SourceCodeCommentHandler()
 
-        try:
-            files, reports = plist_parser.parse_plist_file(plist_file)
+        for f in files:
+            if not os.path.isfile(f):
+                missing_files.append(f)
+                missing_source_files.add(f)
+                continue
 
-            for f in files:
-                if not os.path.isfile(f):
-                    missing_files.append(f)
-                    missing_source_files.add(f)
-                    continue
+            content_hash = get_file_content_hash(f)
+            hash_to_file[content_hash] = f
+            file_to_hash[f] = content_hash
+            source_file_mod_times[f] = util.get_last_mod_time(f)
 
-                content_hash = get_file_content_hash(f)
-                hash_to_file[content_hash] = f
-                file_to_hash[f] = content_hash
-                source_file_mod_times[f] = util.get_last_mod_time(f)
+        # Get file hashes which contain source code comments.
+        for report in reports:
+            last_report_event = report.bug_path[-1]
+            file_path = files[last_report_event['location']['file']]
+            if not os.path.isfile(file_path):
+                continue
 
-            # Get file hashes which contain source code comments.
-            for report in reports:
-                last_report_event = report.bug_path[-1]
-                file_path = files[last_report_event['location']['file']]
-                if not os.path.isfile(file_path):
-                    continue
+            file_hash = file_to_hash[file_path]
+            if file_hash in file_hash_with_review_status:
+                continue
 
-                file_hash = file_to_hash[file_path]
-                if file_hash in file_hash_with_review_status:
-                    continue
+            report_line = last_report_event['location']['line']
+            if sc_handler.has_source_line_comments(file_path, report_line):
+                file_hash_with_review_status.add(file_hash)
 
-                report_line = last_report_event['location']['line']
-                if sc_handler.has_source_line_comments(file_path, report_line):
-                    file_hash_with_review_status.add(file_hash)
-
-            return missing_files, source_file_mod_times
-        except Exception as ex:
-            LOG.error('Parsing the plist failed: %s', str(ex))
+        return missing_files, source_file_mod_times
 
     files_to_compress = []
 
     changed_files = set()
+    parsed_plist_data = {}
     for input_path in inputs:
         input_path = os.path.abspath(input_path)
 
@@ -280,16 +276,16 @@ def assemble_zip(inputs, zip_file, client):
             _, _, files = next(os.walk(input_path), ([], [], []))
 
         for f in files:
-
             plist_file = os.path.join(input_path, f)
             if f.endswith(".plist"):
-                missing_files, source_file_mod_times = \
-                    collect_file_hashes_from_plist(plist_file)
-                if not missing_files:
-                    LOG.debug("Copying file '%s' to ZIP assembly dir...",
-                              plist_file)
-                    files_to_compress.append(os.path.join(input_path, f))
+                src_files, reports, plist = \
+                    plist_parser.parse_plist_file(plist_file)
 
+                missing_files, source_file_mod_times = \
+                    collect_file_hashes_from_plist_data(src_files, reports)
+
+                if not missing_files:
+                    parsed_plist_data[f] = plist
                     plist_mtime = util.get_last_mod_time(plist_file)
 
                     # Check if any source file corresponding to a plist
@@ -319,6 +315,12 @@ def assemble_zip(inputs, zip_file, client):
             _, filename = os.path.split(ftc)
             zip_target = os.path.join('reports', filename)
             zipf.write(ftc, zip_target)
+
+        # Create json files from the plist data.
+        for filename in parsed_plist_data:
+            zip_target = os.path.join('reports', filename)
+            zipf.writestr(zip_target + '.json',
+                          json.dumps(parsed_plist_data[filename]))
 
         if not hash_to_file:
             LOG.warning("There is no report to store. After uploading these "
