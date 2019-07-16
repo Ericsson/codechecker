@@ -72,6 +72,8 @@ def is_z3_capable(context):
 
 def is_z3_refutation_capable(context):
     """ Detects if the current clang is Z3 refutation compatible. """
+    if not is_z3_capable(context):
+        return False
     check_supported_analyzers([ClangSA.ANALYZER_NAME], context)
     analyzer_binary = context.analyzer_binaries.get(ClangSA.ANALYZER_NAME)
 
