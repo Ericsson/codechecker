@@ -67,8 +67,6 @@ class CTUAutodetectionVersionParsingTest(unittest.TestCase):
         self.assertEqual(version_info.major_version, 7)
         self.assertEqual(version_info.minor_version, 1)
         self.assertEqual(version_info.patch_version, 0)
-        self.assertEqual(version_info.target, 'x86_64-unknown-linux-gnu')
-        self.assertEqual(version_info.thread_model, 'posix')
         self.assertEqual(version_info.installed_dir, '/path/to/clang/bin')
 
     def test_built_from_source_clang_8(self):
@@ -87,8 +85,6 @@ class CTUAutodetectionVersionParsingTest(unittest.TestCase):
         self.assertEqual(version_info.major_version, 8)
         self.assertEqual(version_info.minor_version, 0)
         self.assertEqual(version_info.patch_version, 1)
-        self.assertEqual(version_info.target, 'x86_64-unknown-linux-gnu')
-        self.assertEqual(version_info.thread_model, 'posix')
         self.assertEqual(version_info.installed_dir, '/path/to/clang/bin')
 
     def test_binary_distribution_clang_7(self):
@@ -107,6 +103,22 @@ class CTUAutodetectionVersionParsingTest(unittest.TestCase):
         self.assertEqual(version_info.major_version, 7)
         self.assertEqual(version_info.minor_version, 0)
         self.assertEqual(version_info.patch_version, 0)
-        self.assertEqual(version_info.target, 'x86_64-unknown-linux-gnu')
-        self.assertEqual(version_info.thread_model, 'posix')
+        self.assertEqual(version_info.installed_dir, '/path/to/clang/bin')
+
+    def test_built_from_monorepo_source_clang_9(self):
+        """
+        Test that monorepo source-built clang 9 master string is parsed
+        correctly.
+        """
+
+        with open('clang_9_monorepo_src_version_output') as version_output:
+            version_string = version_output.read()
+
+        parser = ClangVersionInfoParser()
+        version_info = parser.parse(version_string)
+
+        self.assertIsNot(version_info, False)
+        self.assertEqual(version_info.major_version, 9)
+        self.assertEqual(version_info.minor_version, 0)
+        self.assertEqual(version_info.patch_version, 0)
         self.assertEqual(version_info.installed_dir, '/path/to/clang/bin')
