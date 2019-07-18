@@ -552,6 +552,26 @@ def __register_delete(parser):
                             "midnight (00:00:00) is used).")
 
 
+def __register_update(parser):
+    """
+    Add argparse subcommand parser for the "update" run action.
+    """
+
+    parser.add_argument('run_name',
+                        type=str,
+                        default=argparse.SUPPRESS,
+                        help="Full name of the analysis run to update.")
+
+    group = parser.add_mutually_exclusive_group(required=True)
+
+    group.add_argument('-n', '--name',
+                       type=str,
+                       dest="new_run_name",
+                       metavar='NEW_RUN_NAME',
+                       default=argparse.SUPPRESS,
+                       help="Name name of the analysis run.")
+
+
 def __register_suppress(parser):
     """
     Add argparse subcommand parser for the "suppress file management" action.
@@ -1136,6 +1156,15 @@ full runs.""",
     __register_delete(del_p)
     del_p.set_defaults(func=cmd_line_client.handle_remove_run_results)
     __add_common_arguments(del_p)
+
+    update_p = subcommands.add_parser(
+        'update',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description="Update the name of an analysis run.",
+        help="Update an analysis run.")
+    __register_update(update_p)
+    update_p.set_defaults(func=cmd_line_client.handle_update_run)
+    __add_common_arguments(update_p)
 
     suppress = subcommands.add_parser(
         'suppress',

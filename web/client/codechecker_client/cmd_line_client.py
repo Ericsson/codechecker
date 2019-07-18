@@ -26,6 +26,7 @@ import time
 from plist_to_html import PlistToHtml
 
 from codeCheckerDBAccess_v6 import constants, ttypes
+from codechecker_api_shared.ttypes import RequestFailed
 
 from codechecker_common import logger
 from codechecker_common import plist_parser
@@ -106,16 +107,10 @@ def check_run_names(client, check_names):
     if not check_names:
         return run_info
 
-    missing_name = False
-    for name in check_names:
-        if not run_info.get(name):
-            LOG.warning("The run named '%s' was not found.", name)
-            missing_name = True
-
-    if missing_name:
-        print("Possible run names are:")
-        for name, _ in run_info.items():
-            print(name)
+    missing_names = [name for name in check_names if not run_info.get(name)]
+    if missing_names:
+        LOG.warning("The following runs were not found in the database: %s.",
+                    ', '.join(missing_names))
         sys.exit(1)
 
     return run_info
@@ -1335,6 +1330,30 @@ def handle_remove_run_results(args):
     for run_id in [run.runId for run in get_run_data(client, None)
                    if condition(run.name, run.runId, run.runDate)]:
         client.removeRun(run_id)
+
+    LOG.info("Done.")
+
+
+def handle_update_run(args):
+    """
+    Argument handler for the 'CodeChecker cmd update' subcommand.
+    """
+    init_logger(args.verbose if 'verbose' in args else None)
+
+    if not args.new_run_name:
+        LOG.error("The new run name can not be empty!")
+        sys.exit(1)
+
+    client = setup_client(args.product_url)
+
+    run_info = check_run_names(client, [args.run_name])
+    run = run_info.get(args.run_name)
+
+    try:
+        client.updateRunData(run.runId, args.new_run_name)
+    except RequestFailed as reqfail:
+        LOG.error(reqfail.message)
+        sys.exit(1)
 
     LOG.info("Done.")
 

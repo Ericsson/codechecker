@@ -119,6 +119,58 @@ class TestCmdline(unittest.TestCase):
         self.assertEqual(0, ret)
         self.assertEqual(1, len(json.loads(res)))
 
+    def test_run_update(self):
+        """ Test to update run name from the command line. """
+
+        env = self._test_config['codechecker_cfg']['check_env']
+
+        # Get runs.
+        res_cmd = [self._codechecker_cmd, 'cmd', 'runs',
+                   '-o', 'json', '--url', str(self.server_url)]
+        ret, res, _ = run_cmd(res_cmd, env=env)
+        self.assertEqual(0, ret)
+
+        runs = json.loads(res)
+        self.assertEqual(2, len(runs))
+
+        # Get the first run.
+        run = runs[0]
+        run_name = run.keys()[0]
+        new_run_name = "updated#@&_" + run_name
+
+        # Empty string as new name.
+        res_cmd = [self._codechecker_cmd, 'cmd', 'update', run_name,
+                   '-n', '', '--url', str(self.server_url)]
+        ret, res, _ = run_cmd(res_cmd, env=env)
+        self.assertEqual(1, ret)
+
+        # Update the run name.
+        res_cmd = [self._codechecker_cmd, 'cmd', 'update',
+                   '-n', new_run_name, run_name, '--url', str(self.server_url)]
+        ret, res, _ = run_cmd(res_cmd, env=env)
+        self.assertEqual(0, ret)
+
+        # See that the run was renamed.
+        res_cmd = [self._codechecker_cmd, 'cmd', 'runs',
+                   '-o', 'json', '-n', run_name,
+                   '--url', str(self.server_url)]
+        ret, res, _ = run_cmd(res_cmd, env=env)
+
+        self.assertEqual(0, ret)
+        self.assertEqual(0, len(json.loads(res)))
+
+        res_cmd = [self._codechecker_cmd, 'cmd', 'update',
+                   '-n', new_run_name, new_run_name,
+                   '--url', str(self.server_url)]
+        ret, res, _ = run_cmd(res_cmd, env=env)
+        self.assertEqual(1, ret)
+
+        # Rename the run back to the original name.
+        res_cmd = [self._codechecker_cmd, 'cmd', 'update',
+                   '-n', run_name, new_run_name, '--url', str(self.server_url)]
+        ret, res, _ = run_cmd(res_cmd, env=env)
+        self.assertEqual(0, ret)
+
     def test_results_multiple_runs(self):
         """
         Test cmd results with multiple run names.

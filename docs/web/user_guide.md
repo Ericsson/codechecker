@@ -32,6 +32,7 @@ Table of Contents
         * [`sum` (Show summarised count of results)](#cmd-sum)
             * [Example](#cmd-sum-example)
         * [`del` (Remove analysis runs)](#cmd-del)
+        * [`update` (Update an analysis run)](#cmd-update)
         * [`suppress` (Manage and export/import suppressions)](#manage-suppressions)
             * [Import suppressions between server and suppress file](#import-suppressions)
         * [`products` (Manage product configuration of a server)](#cmd-product)
@@ -478,7 +479,8 @@ viewer server on its port is available in the `cmd` tool.
 
 ```
 usage: CodeChecker cmd [-h]
-                       {runs,results,diff,sum,del,suppress,products,login} ...
+                       {runs,history,results,diff,sum,token,del,update,suppress,products,components,login}
+                       ...
 
 The command-line client is used to connect to a running 'CodeChecker server'
 (either remote or local) and quickly inspect analysis results, such as runs,
@@ -489,17 +491,23 @@ optional arguments:
   -h, --help            show this help message and exit
 
 available actions:
-  {runs,results,diff,sum,del,suppress,products,login}
+  {runs,history,results,diff,sum,token,del,update,suppress,products,components,login}
     runs                List the available analysis runs.
+    history             Show run history of multiple runs.
     results             List analysis result (finding) summary for a given
                         run.
     diff                Compare two analysis runs and show the difference.
-    sum                 Show number of reports per checker.
+    sum                 Show statistics of checkers.
+    token               Access subcommands related to configuring personal
+                        access tokens managed by a CodeChecker server.
     del                 Delete analysis runs.
-    suppress            Manage and export/import suppressions of a CodeChecker
+    update              Update an analysis run.
+    suppress            Manage and import suppressions of a CodeChecker
                         server.
     products            Access subcommands related to configuring the products
                         managed by a CodeChecker server.
+    components          Access subcommands related to configuring the source
+                        components managed by a CodeChecker server.
     login               Authenticate into CodeChecker servers that require
                         privileges.
 ```
@@ -1116,6 +1124,24 @@ optional arguments:
                         TIMESTAMP is 'year:month:day:hour:minute:second' (the
                         "time" part can be omitted, in which case midnight
                         (00:00:00) is used).
+```
+
+### Update an analysis run (`update`) <a name="cmd-update"></a>
+
+```
+usage: CodeChecker cmd update [-h] -n NEW_RUN_NAME [--url PRODUCT_URL]
+                              [--verbose {info,debug,debug_analyzer}]
+                              run_name
+
+Update the name of an analysis run.
+
+positional arguments:
+  run_name              Full name of the analysis run to update.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -n NEW_RUN_NAME, --name NEW_RUN_NAME
+                        Name name of the analysis run.
 ```
 
 ### Manage and export/import suppressions (`suppress`) <a name="manage-suppressions"></a>

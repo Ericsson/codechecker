@@ -80,6 +80,10 @@ class ThriftClientHelper(object):
         pass
 
     @ThriftClientCall
+    def updateRunData(self, run_id, new_run_name):
+        pass
+
+    @ThriftClientCall
     def getSuppressedBugs(self, run_id):
         pass
 
