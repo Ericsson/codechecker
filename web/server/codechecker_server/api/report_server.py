@@ -2538,7 +2538,7 @@ class ThriftRequestHandler(object):
                 bug_paths, bug_events, bug_extended_data = \
                     store_handler.collect_paths_events(report, file_ids,
                                                        files)
-                report_path_hash = get_report_path_hash(report.bug_path, files)
+                report_path_hash = get_report_path_hash(report)
                 if report_path_hash in already_added:
                     LOG.debug('Not storing report. Already added')
                     LOG.debug(report)

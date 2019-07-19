@@ -43,6 +43,10 @@ class Report(object):
         return self.__main['issue_hash_content_of_line_in_context']
 
     @property
+    def check_name(self):
+        return self.__main['check_name']
+
+    @property
     def bug_path(self):
         return self.__bug_path
 

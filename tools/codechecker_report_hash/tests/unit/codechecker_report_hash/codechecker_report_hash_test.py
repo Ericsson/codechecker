@@ -11,6 +11,7 @@ import plistlib
 import unittest
 import shutil
 import tempfile
+from collections import namedtuple
 
 from codechecker_report_hash.hash import get_report_hash, \
     get_report_path_hash, HashType, replace_report_hash
@@ -92,15 +93,15 @@ class CodeCheckerReportHashTest(unittest.TestCase):
 
         expected_path_hash = {
             'f48840093ef89e291fb68a95a5181612':
-                'a92b18ee6ee267cd82d0f056ef2bbe4b',
+                '93cb93bdcee10434f9cf9f486947c88e',
             'e4907182b363faf2ec905fc32cc5a4ab':
-                '2b010e31810074749d485f1db8e419e9'}
+                '71a4dc24bf88af2b13be83d8d15bd6f0'}
 
-        files = plist['files']
         for diag in plist['diagnostics']:
-            file_path = files[diag['location']['file']]
-            path_hash = get_report_path_hash(diag['path'],
-                                             file_path)
+            diag['bug_path'] = diag['path']
+            diag['files'] = plist['files']
+            path_hash = get_report_path_hash(
+                    namedtuple('Report', diag.keys())(*diag.values()))
             actual_report_hash = diag['issue_hash_content_of_line_in_context']
             self.assertEqual(path_hash,
                              expected_path_hash[actual_report_hash])

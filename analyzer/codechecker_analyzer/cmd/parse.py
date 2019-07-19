@@ -151,7 +151,7 @@ class PlistToPlaintextFormatter(object):
                                     key=lambda r: r.main['location']['line'])
 
             for report in sorted_reports:
-                path_hash = get_report_path_hash(report.bug_path, report.files)
+                path_hash = get_report_path_hash(report)
                 if path_hash in self._processed_path_hashes:
                     LOG.debug("Not showing report because it is a "
                               "deduplication of an already processed report!")
@@ -609,7 +609,7 @@ def main(args):
         comments.
         """
         report = Report(None, diag['path'], files)
-        path_hash = get_report_path_hash(report.bug_path, files)
+        path_hash = get_report_path_hash(report)
         if path_hash in processed_path_hashes:
             LOG.debug("Skip report because it is a deduplication of an "
                       "already processed report!")
@@ -617,13 +617,13 @@ def main(args):
             LOG.debug(diag)
             return True
 
-        skip = skip_report(report_hash,
-                           source_file,
-                           report_line,
-                           checker_name,
-                           suppr_handler)
-        if skip_handler:
-            skip |= skip_handler.should_skip(source_file)
+        skip = plist_parser.skip_report(report_hash,
+                                        source_file,
+                                        report_line,
+                                        checker_name,
+                                        suppr_handler)
+        if skip_handler and not skip:
+            skip = skip_handler.should_skip(source_file)
 
         if not skip:
             processed_path_hashes.add(path_hash)

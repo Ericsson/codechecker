@@ -550,8 +550,7 @@ def handle_diff_results(args):
                     LOG.debug("Parsing: %s", file_path)
                     files, reports = plist_parser.parse_plist_file(file_path)
                     for report in reports:
-                        path_hash = get_report_path_hash(report.bug_path,
-                                                         files)
+                        path_hash = get_report_path_hash(report)
                         if path_hash in processed_path_hashes:
                             LOG.debug("Not showing report because it is a "
                                       "deduplication of an already processed "
