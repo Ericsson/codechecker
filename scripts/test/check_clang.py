@@ -43,7 +43,7 @@ def get_version(output):
     """
     Return the version information from the command output.
     """
-    version_regex = r"version \b(?P<major>[0-9])+(?:\.[0-9]+)?(?:\.[0-9]+)?\b"
+    version_regex = r"version \b(?P<major>[0-9]+)(?:\.[0-9]+)?(?:\.[0-9]+)?\b"
     version_matcher = re.compile(version_regex)
     match = version_matcher.search(output)
     if match:
