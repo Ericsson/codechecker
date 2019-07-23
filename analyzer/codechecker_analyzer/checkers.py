@@ -20,7 +20,7 @@ def available(ordered_checkers, available_checkers):
         checker_name, _ = checker
         name_match = False
         for available_checker in available_checkers:
-            regex = "^" + str(checker_name) + ".*$"
+            regex = "^" + re.escape(str(checker_name)) + ".*$"
             c_name = available_checker
             match = re.match(regex, c_name)
             if match:

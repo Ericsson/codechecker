@@ -53,14 +53,16 @@ class TestCheckers(unittest.TestCase):
         ordered_checkers = [("unix.Malloc", True),
                             ("core.VLASize", True),
                             ("core.DivideZero", True),
-                            ("cppcoreguidelines-avoid-goto", False)]
+                            ("cppcoreguidelines-avoid-goto", False),
+                            ("Wc++11-extensions", False)]
 
         missing_checkers = available(ordered_checkers,
                                      self.__available_checkers)
 
         self.assertSetEqual(missing_checkers,
                             {"core.VLASize",
-                             "cppcoreguidelines-avoid-goto"})
+                             "cppcoreguidelines-avoid-goto",
+                             "Wc++11-extensions"})
 
     def test_profile_not_available(self):
         """Test for missing profile."""
