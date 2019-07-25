@@ -13,68 +13,12 @@ from __future__ import absolute_import
 import io
 import json
 import os
-import re
 
 import portalocker
 
 from codechecker_common.logger import get_logger
 
 LOG = get_logger('system')
-
-
-def find_by_regex_in_envpath(pattern, environment):
-    """
-    Searches for files matching the pattern string in the environment's PATH.
-    """
-
-    regex = re.compile(pattern)
-
-    binaries = {}
-    for path in environment['PATH'].split(os.pathsep):
-        _, _, filenames = next(os.walk(path), ([], [], []))
-        for f in filenames:
-            if re.match(regex, f):
-                if binaries.get(f) is None:
-                    binaries[f] = [os.path.join(path, f)]
-                else:
-                    binaries[f].append(os.path.join(path, f))
-
-    return binaries
-
-
-def get_binary_in_path(basename_list, versioning_pattern, env):
-    """
-    Select the most matching binary for the given pattern in the given
-    environment. Works well for binaries that contain versioning.
-    """
-
-    binaries = find_by_regex_in_envpath(versioning_pattern, env)
-
-    if not binaries:
-        return False
-    elif len(binaries) == 1:
-        # Return the first found (earliest in PATH) binary for the only
-        # found binary name group.
-        return list(binaries.values())[0][0]
-    else:
-        keys = list(binaries.keys())
-        keys.sort()
-
-        # If one of the base names match, select that version.
-        files = None
-        for base_key in basename_list:
-            # Cannot use set here as it would destroy precendence.
-            if base_key in keys:
-                files = binaries[base_key]
-                break
-
-        if not files:
-            # Select the "newest" available version if there are multiple and
-            # none of the base names matched.
-            files = binaries[keys[-1]]
-
-        # Return the one earliest in PATH.
-        return files[0]
 
 
 def arg_match(options, args):
