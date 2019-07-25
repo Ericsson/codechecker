@@ -14,12 +14,8 @@ import io
 import json
 import os
 import re
-import time
-
-from threading import Timer
 
 import portalocker
-import psutil
 
 from codechecker_common.logger import get_logger
 
@@ -79,111 +75,6 @@ def get_binary_in_path(basename_list, versioning_pattern, env):
 
         # Return the one earliest in PATH.
         return files[0]
-
-
-def kill_process_tree(parent_pid, recursive=False):
-    proc = psutil.Process(parent_pid)
-    children = proc.children(recursive)
-
-    # Send a SIGTERM (Ctrl-C) to the main process
-    proc.terminate()
-
-    # If children processes don't stop gracefully in time,
-    # slaughter them by force.
-    _, still_alive = psutil.wait_procs(children, timeout=5)
-    for p in still_alive:
-        p.kill()
-
-    # Wait until this process is running.
-    n = 0
-    timeout = 10
-    while proc.is_running():
-        if n > timeout:
-            LOG.warning("Waiting for process %s to stop has been timed out"
-                        "(timeout = %s)! Process is still running!",
-                        parent_pid, timeout)
-            break
-
-        time.sleep(1)
-        n += 1
-
-
-def setup_process_timeout(proc, timeout,
-                          failure_callback=None):
-    """
-    Setup a timeout on a process. After `timeout` seconds, the process is
-    killed by `signal_at_timeout` signal.
-
-    :param proc: The subprocess.Process object representing the process to
-      attach the watcher to.
-    :param timeout: The timeout the process is allowed to run for, in seconds.
-      This timeout is counted down some moments after calling
-      setup_process_timeout(), and due to OS scheduling, might not be exact.
-    :param failure_callback: An optional function which is called when the
-      process is killed by the timeout. This is called with no arguments
-      passed.
-
-    :return: A function is returned which should be called when the client code
-      (usually via subprocess.Process.wait() or
-      subprocess.Process.communicate())) figures out that the called process
-      has terminated. (See below for what this called function returns.)
-    """
-
-    # The watch dict encapsulated the captured variables for the timeout watch.
-    watch = {'pid': proc.pid,
-             'timer': None,  # Will be created later.
-             'counting': False,
-             'killed': False}
-
-    def __kill():
-        """
-        Helper function to execute the killing of a hung process.
-        """
-        LOG.debug("Process %s has ran for too long, killing it!",
-                  watch['pid'])
-        watch['counting'] = False
-        watch['killed'] = True
-        kill_process_tree(watch['pid'], True)
-
-        if failure_callback:
-            failure_callback()
-
-    timer = Timer(timeout, __kill)
-    watch['timer'] = timer
-
-    LOG.debug("Setup timeout of %s for PID %s", proc.pid, timeout)
-    timer.start()
-    watch['counting'] = True
-
-    def __cleanup_timeout():
-        """
-        Stops the timer associated with the timeout watch if the process
-        finished within the grace period.
-
-        Due to race conditions and the possibility of the OS, or another
-        process also using signals to kill the watched process in particular,
-        it is possible that checking subprocess.Process.returncode on the
-        watched process is not enough to see if the timeout watched killed it,
-        or something else.
-
-        (Note: returncode is -N where N is the signal's value, but only on Unix
-        systems!)
-
-        It is safe to call this function multiple times to check for the result
-        of the watching.
-
-        :return: Whether or not the process was killed by the watcher. If this
-          is False, the process could have finished gracefully, or could have
-          been destroyed by other means.
-        """
-        if watch['counting'] and not watch['killed'] and watch['timer']:
-            watch['timer'].cancel()
-            watch['timer'] = None
-            watch['counting'] = False
-
-        return watch['killed']
-
-    return __cleanup_timeout
 
 
 def arg_match(options, args):

@@ -17,7 +17,9 @@ import os
 import signal
 import socket
 import sys
+import time
 
+import psutil
 from alembic import config
 from alembic import script
 from sqlalchemy.orm import sessionmaker
@@ -606,6 +608,42 @@ def __db_migration(cfg_sql_server, migration_root, environ,
     return 0
 
 
+def kill_process_tree(parent_pid, recursive=False):
+    """Stop the process tree try it gracefully first.
+
+    Try to stop the parent and child processes gracefuly
+    first if they do not stop in time send a kill signal
+    to every member of the process tree.
+
+    There is a similar function in the analyzer part please
+    consider to update that in case of changing this.
+    """
+    proc = psutil.Process(parent_pid)
+    children = proc.children(recursive)
+
+    # Send a SIGTERM (Ctrl-C) to the main process
+    proc.terminate()
+
+    # If children processes don't stop gracefully in time,
+    # slaughter them by force.
+    _, still_alive = psutil.wait_procs(children, timeout=5)
+    for p in still_alive:
+        p.kill()
+
+    # Wait until this process is running.
+    n = 0
+    timeout = 10
+    while proc.is_running():
+        if n > timeout:
+            LOG.warning("Waiting for process %s to stop has been timed out"
+                        "(timeout = %s)! Process is still running!",
+                        parent_pid, timeout)
+            break
+
+        time.sleep(1)
+        n += 1
+
+
 def __instance_management(args):
     """Handles the instance-manager commands --list/--stop/--stop-all."""
 
@@ -650,7 +688,7 @@ def __instance_management(args):
                 continue
 
             try:
-                util.kill_process_tree(i['pid'])
+                kill_process_tree(i['pid'])
                 LOG.info("Stopped CodeChecker server running on port %s "
                          "in workspace %s (PID: %s)",
                          i['port'], i['workspace'], i['pid'])
